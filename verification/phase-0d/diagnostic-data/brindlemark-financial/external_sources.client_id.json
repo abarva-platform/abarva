@@ -1,0 +1,210 @@
+[
+  {
+    "id": "firstcap_ext_source_banking_trade_press",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Banking trade press and market reporting",
+    "description": "Trade reporting used to track executive moves, product shifts, and franchise repositioning across regional banks.",
+    "source_tier": "tier_2_third_party_research",
+    "source_type": "trade_press",
+    "publisher": "American Banker / industry press",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "executive moves",
+      "deposit competition",
+      "wealth strategy",
+      "AI adoption"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-04-21T22:13:45.223Z"
+  },
+  {
+    "id": "firstcap_ext_source_bank_benchmarks",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Bank benchmark and peer datasets",
+    "description": "Banking and wealth benchmark feeds for margin, balance-sheet, customer, and productivity metrics.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "industry_dataset",
+    "publisher": "S&P Global / FDIC / FFIEC / JD Power",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "NIM",
+      "efficiency ratio",
+      "deposit pricing",
+      "customer satisfaction"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-04-21T22:13:45.223Z"
+  },
+  {
+    "id": "firstcap_ext_source_macro_rate_and_credit_signals",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Macro rate and credit signals",
+    "description": "Rate, credit, and economic signals used to contextualize balance-sheet and credit performance.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "market_dataset",
+    "publisher": "Federal Reserve / macro data providers",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "yield curve",
+      "credit trend",
+      "commercial real estate",
+      "deposit behavior"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-04-21T22:13:45.223Z"
+  },
+  {
+    "id": "firstcap_ext_source_analyst_research",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Sell-side and sector research",
+    "description": "Sector research used for franchise positioning, earnings expectations, and regulatory posture analysis.",
+    "source_tier": "tier_2_third_party_research",
+    "source_type": "analyst_research",
+    "publisher": "Banking sector analysts",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "investor sentiment",
+      "peer moves",
+      "valuation",
+      "earnings quality"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-04-21T22:13:45.223Z"
+  },
+  {
+    "id": "firstcap_ext_source_sec_filings",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "SEC filings and earnings materials",
+    "description": "10-K, 10-Q, earnings decks, investor presentations, and public management remarks for Brindlemark and peers.",
+    "source_tier": "tier_1_public_disclosure",
+    "source_type": "public_filing",
+    "publisher": "SEC EDGAR / investor relations",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "financial performance",
+      "capital allocation",
+      "deposits",
+      "digital strategy"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-05-09T17:13:33.380Z"
+  },
+  {
+    "id": "firstcap_ext_source_earnings_transcripts",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Bank earnings call transcripts",
+    "description": "Quarterly earnings transcripts and investor Q&A across Brindlemark and super-regional peers.",
+    "source_tier": "tier_1_public_disclosure",
+    "source_type": "earnings_transcript",
+    "publisher": "Investor relations / transcript providers",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "rate environment",
+      "deposit competition",
+      "wealth growth",
+      "operating efficiency"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-05-09T17:13:33.380Z"
+  },
+  {
+    "id": "firstcap_ext_source_rating_agencies",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Rating agency and capital-market commentary",
+    "description": "S&P, Moody’s, and Fitch commentary on Brindlemark’s balance-sheet posture, liquidity, and risk profile.",
+    "source_tier": "tier_2_third_party_research",
+    "source_type": "rating_agency",
+    "publisher": "S&P / Moody’s / Fitch",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "credit outlook",
+      "capital structure",
+      "deposit franchise",
+      "regulatory pressure"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-05-09T17:13:33.380Z"
+  },
+  {
+    "id": "firstcap_ext_source_regulatory_and_risk_watch",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Regulatory, AML, and cybersecurity watch",
+    "description": "External monitoring of prudential, AML, privacy, cyber, and enforcement developments relevant to Brindlemark.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "event_stream",
+    "publisher": "Regulatory notices / risk intelligence providers",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "BSA/AML",
+      "consent orders",
+      "privacy",
+      "cybersecurity incidents"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T22:13:45.223Z",
+    "updated_at": "2026-05-09T17:13:33.380Z"
+  }
+]

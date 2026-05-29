@@ -39,8 +39,9 @@ describe('canonical tenant aliases', () => {
   it('normalizes app keys, substrate keys, and legacy names through one map', () => {
     expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
     expect(canonicalTenantKey('skyharbor-air')).toBe('skyharbor-air');
-    expect(canonicalTenantKey('northstar')).toBe('northstar-medtech');
-    expect(canonicalTenantKey('northstar-clinical-tech')).toBe('northstar-medtech');
+    expect(canonicalTenantKey('northstar')).toBe('northstar-clinical');
+    expect(canonicalTenantKey('northstar-medtech')).toBe('northstar-clinical');
+    expect(canonicalTenantKey('northstar-clinical-tech')).toBe('northstar-clinical');
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
@@ -94,7 +95,7 @@ describe('resolveTenant', () => {
 
     await expect(resolveTenant({ requestedClient: 'northstar' })).resolves.toMatchObject({
       appClientKey: 'northstar',
-      canonicalKey: 'northstar-medtech',
+      canonicalKey: 'northstar-clinical',
       source: 'body',
     });
   });
@@ -120,7 +121,7 @@ describe('resolveTenant', () => {
 
     await expect(resolveTenant({ surfaceClientKey: 'northstar' })).resolves.toMatchObject({
       appClientKey: 'northstar',
-      canonicalKey: 'northstar-medtech',
+      canonicalKey: 'northstar-clinical',
       source: 'body',
     });
   });

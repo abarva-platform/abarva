@@ -1,0 +1,60 @@
+[
+  {
+    "id": "e23158ac-1493-45c0-9474-fa79f30398c4",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "requested_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "requested_at": "2026-05-02T15:30:17.389Z",
+    "request_status": "approved",
+    "decided_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "decided_at": "2026-05-02T15:31:48.516Z",
+    "decision_rationale": null,
+    "brief_snapshot": {
+      "timeline": "FY2026 — complete through P5 Approval & Mobilization before execution starts outside AbarVa",
+      "topic_code": "core_banking_ai_operating_model_analytics_modernization",
+      "program_name": "Core Banking AI Operating Model & Analytics Modernization",
+      "submitted_at": "2026-05-02T15:30:17.284Z",
+      "function_code": "FRONT_OFFICE",
+      "classification": "platform_modernization",
+      "lead_person_id": "88bed96a-f281-44a6-bd2f-233166ff2272",
+      "objective_code": "OPTIMISE",
+      "target_outcome": "Faster digital banking product analytics delivery, improved data trust for fraud and servicing signals, and a fundable roadmap with clear execution phases — with analytics cycle time, data lineage completeness, model deployment lead time, payments/fraud signal latency, servicing insight adoption, and rework rate as baseline measures.",
+      "problem_statement": "Brindlemark's digital banking product delivery is constrained by slow analytics cycles, uneven data trust across core banking, payments, fraud signals, customer servicing, and product analytics domains, and the absence of a strategy-to-funding path before execution starts. Core banking, payments, fraud signals, customer servicing, and product analytics operate in silos, creating rework, delayed insights, and a blocked funding path for product teams. Baseline evidence will include analytics cycle time, data lineage completeness, model deployment lead time, payments/fraud signal latency, servicing insight adoption rate, and rework rate.",
+      "sponsor_person_id": "321dc9e1-2daf-4b1a-b1ee-1e4a199f7eaf",
+      "matched_pattern_id": null,
+      "submitted_from_surface": "/programs"
+    },
+    "created_at": "2026-05-02T15:30:17.389Z",
+    "updated_at": "2026-05-16T03:24:51.563Z"
+  },
+  {
+    "id": "2461d85b-82cf-4baa-8240-c30152920508",
+    "tenant_key": "first-capital",
+    "program_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "requested_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "requested_at": "2026-05-02T22:13:29.404Z",
+    "request_status": "approved",
+    "decided_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "decided_at": "2026-05-02T22:14:29.480Z",
+    "decision_rationale": null,
+    "brief_snapshot": {
+      "timeline": "P1 Discovery this quarter",
+      "lead_name": "Lena Ortiz",
+      "topic_code": "first_capital_digital_banking_risk_controls_modernization_e2e_2026_05_02",
+      "program_name": "Brindlemark Digital Banking Risk Controls Modernization - E2E 2026-05-02",
+      "sponsor_name": "Ethan Brooks",
+      "submitted_at": "2026-05-02T22:13:29.386Z",
+      "function_code": "MIDDLE_OFFICE",
+      "classification": "ai_product_enablement",
+      "lead_person_id": "88bed96a-f281-44a6-bd2f-233166ff2272",
+      "objective_code": "CONTROL",
+      "target_outcome": "Faster controlled launch decisions, cleaner attestation, stronger risk evidence; cohort 1 scoped to digital onboarding + payments/fraud controls",
+      "problem_statement": "Pilots moving faster than controls; evidence fragmented across core banking, digital onboarding, fraud, payments, and risk systems; audit trails not consistent for board-level approval",
+      "sponsor_person_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "matched_pattern_id": null,
+      "submitted_from_surface": "/programs/new"
+    },
+    "created_at": "2026-05-02T22:13:29.404Z",
+    "updated_at": "2026-05-16T03:24:51.563Z"
+  }
+]

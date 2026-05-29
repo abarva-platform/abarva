@@ -1,0 +1,82 @@
+[
+  {
+    "id": "25035d40-317d-4076-a844-73e38717bbdd",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "rule_id": "contradiction_rule_a_r2",
+    "trigger_type": "manual_seed",
+    "run_started_at": "2026-03-07T00:00:00.000Z",
+    "run_finished_at": "2026-04-21T00:00:00.000Z",
+    "contradictions_created": 1,
+    "contradictions_updated": 0,
+    "run_payload": {
+      "rule": "A-R2",
+      "tenant": "first_capital",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T20:38:30.004Z"
+  },
+  {
+    "id": "1650c44e-a10e-4985-a930-d4a6ee6b8a78",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "rule_id": "contradiction_rule_b_r2",
+    "trigger_type": "manual_seed",
+    "run_started_at": "2026-03-14T00:00:00.000Z",
+    "run_finished_at": "2026-04-21T00:00:00.000Z",
+    "contradictions_created": 1,
+    "contradictions_updated": 0,
+    "run_payload": {
+      "rule": "B-R2",
+      "tenant": "first_capital",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T20:38:30.004Z"
+  },
+  {
+    "id": "ae0af7e4-168a-45f3-aa6d-5674ffa15aee",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "rule_id": "contradiction_rule_c_r1",
+    "trigger_type": "manual_seed",
+    "run_started_at": "2026-04-04T00:00:00.000Z",
+    "run_finished_at": "2026-04-21T00:00:00.000Z",
+    "contradictions_created": 1,
+    "contradictions_updated": 0,
+    "run_payload": {
+      "rule": "C-R1",
+      "tenant": "first_capital",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T20:38:30.004Z"
+  },
+  {
+    "id": "86e6c6fb-f603-4681-afd5-155623f317f1",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "rule_id": "contradiction_rule_d_r1",
+    "trigger_type": "manual_seed",
+    "run_started_at": "2026-03-19T00:00:00.000Z",
+    "run_finished_at": "2026-04-21T00:00:00.000Z",
+    "contradictions_created": 1,
+    "contradictions_updated": 0,
+    "run_payload": {
+      "rule": "D-R1",
+      "tenant": "first_capital",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T20:38:30.004Z"
+  },
+  {
+    "id": "1d29daba-c13b-484e-a87d-b05f581b7eb3",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "rule_id": "contradiction_rule_e_r3",
+    "trigger_type": "manual_seed",
+    "run_started_at": "2026-03-10T00:00:00.000Z",
+    "run_finished_at": "2026-04-21T00:00:00.000Z",
+    "contradictions_created": 1,
+    "contradictions_updated": 0,
+    "run_payload": {
+      "rule": "E-R3",
+      "tenant": "first_capital",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T20:38:30.004Z"
+  }
+]

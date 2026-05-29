@@ -1,0 +1,208 @@
+[
+  {
+    "id": "keystone_ext_source_sec_filings",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "SEC filings and earnings materials",
+    "description": "10-K, 10-Q, 8-K, proxy, earnings slides, and transcripts for Keystone and peer utilities.",
+    "source_tier": "tier_1_public_disclosure",
+    "source_type": "public_filing",
+    "publisher": "SEC EDGAR / investor relations",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "financial performance",
+      "capital deployment",
+      "strategic priorities"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_state_pucs",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "State PUC rate case records",
+    "description": "Illinois, Maryland, Pennsylvania, New Jersey, Delaware, and DC public utility commission materials.",
+    "source_tier": "tier_1_public_disclosure",
+    "source_type": "regulatory_filing",
+    "publisher": "State public utility commissions",
+    "source_url": null,
+    "geography_scope": [
+      "Illinois",
+      "Maryland",
+      "Pennsylvania",
+      "New Jersey",
+      "Delaware",
+      "District of Columbia"
+    ],
+    "topic_scope": [
+      "rate cases",
+      "allowed ROE",
+      "customer affordability"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_ferc_pjm",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "FERC and PJM proceedings",
+    "description": "Federal and regional rulemakings affecting transmission planning, interconnection, and tariff design.",
+    "source_tier": "tier_1_public_disclosure",
+    "source_type": "regulatory_filing",
+    "publisher": "FERC / PJM",
+    "source_url": null,
+    "geography_scope": [
+      "United States",
+      "PJM states"
+    ],
+    "topic_scope": [
+      "interconnection",
+      "large load management",
+      "capacity markets"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_rating_agencies",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Rating agency commentary",
+    "description": "S&P, Moody’s, and Fitch commentary on utility capital deployment pace and credit outlook.",
+    "source_tier": "tier_2_third_party_research",
+    "source_type": "rating_agency",
+    "publisher": "S&P / Moody’s / Fitch",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "capital structure",
+      "credit outlook"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_epri_eei",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Industry association benchmarks",
+    "description": "EEI and EPRI benchmark materials for reliability, operations, and utility AI adoption.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "industry_dataset",
+    "publisher": "EEI / EPRI",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "reliability",
+      "grid modernization",
+      "utility AI"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_doe_nerc",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "DOE and NERC publications",
+    "description": "Policy publications, standards updates, and reliability guidance relevant to Keystone.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "government_publication",
+    "publisher": "DOE / NERC",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "reliability",
+      "NERC CIP",
+      "interconnection"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_analyst_research",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Analyst and sector research",
+    "description": "Sell-side and sector research used as contextual input for utility peer movements and investor sentiment.",
+    "source_tier": "tier_2_third_party_research",
+    "source_type": "analyst_research",
+    "publisher": "Utility sector analysts",
+    "source_url": null,
+    "geography_scope": [
+      "United States"
+    ],
+    "topic_scope": [
+      "investor sentiment",
+      "peer moves",
+      "valuation"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  },
+  {
+    "id": "keystone_ext_source_weather_events",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Extreme weather and outage reporting",
+    "description": "Industry-level event stream for storms, restoration complexity, and resilience implications.",
+    "source_tier": "tier_3_specialized_data",
+    "source_type": "event_stream",
+    "publisher": "NOAA / industry operations reports",
+    "source_url": null,
+    "geography_scope": [
+      "Midwest",
+      "Mid-Atlantic"
+    ],
+    "topic_scope": [
+      "storm response",
+      "resilience",
+      "customer communications"
+    ],
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {},
+    "created_at": "2026-04-21T20:54:13.511Z",
+    "updated_at": "2026-04-21T20:54:13.511Z"
+  }
+]

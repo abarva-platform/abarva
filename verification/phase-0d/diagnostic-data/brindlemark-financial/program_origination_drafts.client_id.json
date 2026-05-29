@@ -1,0 +1,76 @@
+[
+  {
+    "id": "991f6f13-2220-4c51-8123-9ec878b66e45",
+    "user_id": "ecbca928-544c-4e5e-8ec4-4c78252b503c",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "surface": "/strategic-moves/new",
+    "state": {
+      "brief": {
+        "lead": null,
+        "sponsor": null,
+        "timeline": null,
+        "programName": null,
+        "targetOutcome": null,
+        "classification": null,
+        "matchedPatternId": null,
+        "problemStatement": null,
+        "crossProgramDependencies": []
+      },
+      "turns": [
+        {
+          "id": "originate-open-2a",
+          "role": "assistant",
+          "text": "To start a new Strategic Move, I need four things from you: the outcome you're targeting, who cares about it, what evidence you have, and a rough sense of what value is at stake. You can type a description or paste something — a CEO note, email thread, board memo, or problem statement. Where do you want to start?",
+          "agentName": "Nexus"
+        }
+      ],
+      "patternMatch": null
+    },
+    "committed_engagement_id": null,
+    "created_at": "2026-05-13T02:18:34.847Z",
+    "updated_at": "2026-05-29T10:21:36.926Z"
+  },
+  {
+    "id": "1a6c00af-c84c-43b5-aa7b-88ea79e2dd0c",
+    "user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "surface": "/programs/new",
+    "state": {
+      "brief": {
+        "lead": "Lena Ortiz (Director, Payments Program Management)",
+        "sponsor": "Ethan Brooks (Director, IT Sourcing)",
+        "timeline": "P1 Discovery this quarter",
+        "programName": "Brindlemark Digital Banking Risk Controls Modernization - E2E 2026-05-02",
+        "targetOutcome": "Faster controlled launch decisions, cleaner attestation, stronger risk evidence; cohort 1 scoped to digital onboarding + payments/fraud controls",
+        "classification": "Risk Controls Modernization / AI Governance",
+        "matchedPatternId": null,
+        "problemStatement": "Pilots moving faster than controls; evidence fragmented across core banking, digital onboarding, fraud, payments, and risk systems; audit trails not consistent for board-level approval",
+        "crossProgramDependencies": []
+      },
+      "turns": [
+        {
+          "id": "cold-open-production",
+          "role": "assistant",
+          "text": "Morning, Ethan. Let's stand up a new program.\n\nWhat are we solving? Tell me the problem in your own words — I'll classify it against the AbarVa pattern library and assemble a brief on the right as we talk. When the brief looks right, I'll register the program for you.",
+          "agentName": "Steward"
+        },
+        {
+          "id": "turn_moowdtu7_9cgrtp",
+          "role": "user",
+          "text": "Create a program named Brindlemark Digital Banking Risk Controls Modernization - E2E 2026-05-02. We need to modernize digital banking risk controls for AI-enabled onboarding, fraud, payments, KYC/AML, and model-risk governance. Current pain: pilots are moving faster than controls, evidence is fragmented across core banking, digital onboarding, fraud platforms, payments, and risk systems, and audit trails are not consistent enough for board-level approval. Target outcome: faster controlled launch decisions, cleaner attestation, and stronger risk evidence without exposing exact financial values. Sponsor is Ethan Brooks. Program lead is Lena Ortiz. Timeline: P1 discovery this quarter. Scope the first cohort to digital onboarding plus payments/fraud controls, not full core replacement."
+        },
+        {
+          "id": "turn_moowdtu7_2rarla",
+          "role": "assistant",
+          "text": "On it, Ethan. Let me resolve both of you in Brindlemark's people records simultaneously.Good news on both. Ethan Brooks (you, Director IT Sourcing) is confirmed as sponsor, and Lena Ortiz (Director, Payments Program Management) is a clean match for program lead — her Payments background is a natural fit for this scope.\n\nHere's what I'm about to submit:\n\n- **Program:** Brindlemark Digital Banking Risk Controls Modernization - E2E 2026-05-02\n- **Sponsor:** Ethan Brooks\n- **Lead:** Lena Ortiz\n- **Problem:** Pilots outpacing controls; evidence fragmented across core banking, digital onboarding, fraud, payments, and risk systems; audit trails insufficient for board-level attestation\n- **Target outcome:** Faster controlled launch decisions, cleaner attestation, stronger risk evidence — first cohort scoped to digital onboarding and payments/fraud controls\n- **Timeline:** P1 Discovery this quarter\n\n\n\nShall I submit this for approval?",
+          "agentName": "Steward"
+        }
+      ],
+      "sessionId": "orig_moowdc6l_d6nuqsxa",
+      "patternMatch": null
+    },
+    "committed_engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "created_at": "2026-05-02T22:12:26.728Z",
+    "updated_at": "2026-05-09T17:13:47.470Z"
+  }
+]

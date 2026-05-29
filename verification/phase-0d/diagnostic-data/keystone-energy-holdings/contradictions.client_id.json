@@ -1,0 +1,516 @@
+[
+  {
+    "id": "8e9c3487-d71c-4153-aadd-c545e6374826",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "use_case_id": null,
+    "contradiction_type": "strategy_allocation",
+    "severity": "medium",
+    "description": "Keystone's new customer-and-technology mandate is strategically important, yet leadership time continues to skew toward grid capital, rate cases, and reliability topics. Customer experience remains a visible goal without matching executive attention density.",
+    "suggested_action": "This is not an accusation. It is a leadership-time reality check against a newly declared enterprise priority.",
+    "evidence": {
+      "chain": [
+        {
+          "id": "contradiction_evidence_keystone_a-r2_1",
+          "role": "supporting",
+          "title": "Executive time-tag review",
+          "summary": "Customer-experience tagged time remains below the level expected for a top enterprise mandate.",
+          "observed_at": "2026-04-16"
+        },
+        {
+          "id": "contradiction_evidence_keystone_a-r2_2",
+          "role": "contextualizing",
+          "title": "Strategic priority framing",
+          "summary": "Top-quartile customer satisfaction and digital self-service remain explicit board-facing commitments.",
+          "observed_at": "2026-02-01"
+        }
+      ],
+      "source_count": 2
+    },
+    "detected_at": "2026-03-05T00:00:00.000Z",
+    "resolved_at": null,
+    "resolution_notes": null,
+    "triggered_engagement_id": null,
+    "created_at": "2026-04-21T20:38:30.192Z",
+    "summary": "Customer experience is strategic, but leadership time still clusters around grid and rate-case work",
+    "impact": {
+      "stakes_score": 62,
+      "implied_action": "This is not an accusation. It is a leadership-time reality check against a newly declared enterprise priority.",
+      "implicated_people": [
+        "Jonathan Aldridge",
+        "Marcus W. Kittrell"
+      ],
+      "stakes_components": {
+        "financial": 10,
+        "strategic": 16,
+        "regulatory": 6,
+        "reputational": 7
+      }
+    },
+    "short_title": "Customer experience is strategic, but leadership time still clusters around grid and rate-case work",
+    "long_description": "Keystone's new customer-and-technology mandate is strategically important, yet leadership time continues to skew toward grid capital, rate cases, and reliability topics. Customer experience remains a visible goal without matching executive attention density.",
+    "category": "A_strategy_allocation",
+    "subcategory": "leadership_time_gap",
+    "temporal_state": "persistent",
+    "severity_label": "significant",
+    "confidence_level": "medium",
+    "sensitivity": "medium",
+    "stakes_score": 62,
+    "stakes_components": {
+      "financial": 10,
+      "strategic": 16,
+      "regulatory": 6,
+      "reputational": 7
+    },
+    "evidence_ids": [
+      "contradiction_evidence_keystone_a-r2_1",
+      "contradiction_evidence_keystone_a-r2_2"
+    ],
+    "source_count": 2,
+    "implicated_priority_refs": [
+      "Customer experience transformation"
+    ],
+    "implicated_initiative_refs": [
+      "Integrated customer and technology transformation"
+    ],
+    "implicated_person_ids": [
+      "a9477509-cb22-4ab6-b691-ec19e3f1135b",
+      "e27ff611-5df7-4a1d-8793-4643c9583c42"
+    ],
+    "implicated_kpi_ids": [
+      "keystone_jd_power_customer_satisfaction",
+      "keystone_digital_selfservice_adoption"
+    ],
+    "implicated_external_event_ids": [],
+    "related_pattern_ids": [
+      "keystone_pattern_customer_experience_operating_model_fragmentation"
+    ],
+    "first_detected_at": "2026-03-05T00:00:00.000Z",
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "last_evidence_change_at": "2026-04-21T00:00:00.000Z",
+    "resolution_state": "open",
+    "resolution_evidence_ids": [],
+    "reasoning_scope_id": "keystone_scope_contradictions_reasoning_broad",
+    "disclosure_scope_id": "keystone_scope_contradictions_program_leadership",
+    "suppress_until": null,
+    "surfacing_priority": 69,
+    "recommended_conversation_context": "This is not an accusation. It is a leadership-time reality check against a newly declared enterprise priority.",
+    "detection_rule_id": "contradiction_rule_a_r2",
+    "detection_run_id": "468abc01-2060-45d6-a496-c564262bf648",
+    "created_by": "automated",
+    "reviewer_notes": [],
+    "updated_at": "2026-04-21T20:56:38.911Z"
+  },
+  {
+    "id": "f9ec6c68-a67e-4ae2-a57b-47b2cb542395",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "use_case_id": null,
+    "contradiction_type": "commitment_pace",
+    "severity": "high",
+    "description": "Keystone continues to position itself as ready for accelerating large-load demand, but the current queue, engineering capacity, and milestone plan still point to a gap between the promise and the operating trajectory.",
+    "suggested_action": "This is a pace-and-disclosure conversation. Either queue throughput has to improve materially, or the promise needs more caveats and sequencing language.",
+    "evidence": {
+      "chain": [
+        {
+          "id": "contradiction_evidence_keystone_b-r1_1",
+          "role": "supporting",
+          "title": "Interconnection queue KPI",
+          "summary": "Queue duration remains materially above the pace needed for the external growth narrative.",
+          "observed_at": "2026-04-14"
+        },
+        {
+          "id": "contradiction_evidence_keystone_b-r1_2",
+          "role": "contextualizing",
+          "title": "Tariff and investor messaging",
+          "summary": "External language still projects readiness for accelerating large-load demand.",
+          "observed_at": "2026-03-31"
+        }
+      ],
+      "source_count": 3
+    },
+    "detected_at": "2026-03-11T00:00:00.000Z",
+    "resolved_at": null,
+    "resolution_notes": null,
+    "triggered_engagement_id": null,
+    "created_at": "2026-04-21T20:38:30.192Z",
+    "summary": "Large-load interconnection commitments are outpacing the actual delivery plan",
+    "impact": {
+      "stakes_score": 74,
+      "implied_action": "This is a pace-and-disclosure conversation. Either queue throughput has to improve materially, or the promise needs more caveats and sequencing language.",
+      "implicated_people": [
+        "James Oppenheim",
+        "Marcus W. Kittrell"
+      ],
+      "stakes_components": {
+        "financial": 18,
+        "strategic": 17,
+        "regulatory": 8,
+        "reputational": 17
+      }
+    },
+    "short_title": "Large-load interconnection commitments are outpacing the actual delivery plan",
+    "long_description": "Keystone continues to position itself as ready for accelerating large-load demand, but the current queue, engineering capacity, and milestone plan still point to a gap between the promise and the operating trajectory.",
+    "category": "B_commitment_pace",
+    "subcategory": "promise_vs_plan",
+    "temporal_state": "widening",
+    "severity_label": "material",
+    "confidence_level": "high",
+    "sensitivity": "high",
+    "stakes_score": 74,
+    "stakes_components": {
+      "financial": 18,
+      "strategic": 17,
+      "regulatory": 8,
+      "reputational": 17
+    },
+    "evidence_ids": [
+      "contradiction_evidence_keystone_b-r1_1",
+      "contradiction_evidence_keystone_b-r1_2"
+    ],
+    "source_count": 3,
+    "implicated_priority_refs": [
+      "Large-load and interconnection growth"
+    ],
+    "implicated_initiative_refs": [
+      "Transmission capacity expansion"
+    ],
+    "implicated_person_ids": [
+      "e9ee83ca-f72e-41b0-9f63-60a6ff3a851e",
+      "e27ff611-5df7-4a1d-8793-4643c9583c42"
+    ],
+    "implicated_kpi_ids": [
+      "keystone_interconnection_queue_duration"
+    ],
+    "implicated_external_event_ids": [
+      "keystone_event_large_load_tariff_filing"
+    ],
+    "related_pattern_ids": [
+      "keystone_pattern_data_center_load_interconnection_queue_bottleneck"
+    ],
+    "first_detected_at": "2026-03-11T00:00:00.000Z",
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "last_evidence_change_at": "2026-04-21T00:00:00.000Z",
+    "resolution_state": "open",
+    "resolution_evidence_ids": [],
+    "reasoning_scope_id": "keystone_scope_contradictions_reasoning_broad",
+    "disclosure_scope_id": "keystone_scope_contradictions_program_leadership",
+    "suppress_until": null,
+    "surfacing_priority": 83,
+    "recommended_conversation_context": "This is a pace-and-disclosure conversation. Either queue throughput has to improve materially, or the promise needs more caveats and sequencing language.",
+    "detection_rule_id": "contradiction_rule_b_r1",
+    "detection_run_id": "066ff9fa-d708-49b6-a7cc-07a9025a8aae",
+    "created_by": "automated",
+    "reviewer_notes": [],
+    "updated_at": "2026-04-21T20:56:38.911Z"
+  },
+  {
+    "id": "99a8047f-4abd-4ba1-a2ae-6e8c8f1038b1",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "use_case_id": null,
+    "contradiction_type": "sponsor_behavior",
+    "severity": "medium",
+    "description": "Jonathan Aldridge's first months created a burst of visible sponsorship for customer transformation, but the ongoing cadence has become less regular as enterprise operating load reasserted itself.",
+    "suggested_action": "The point is to stabilize sponsorship while the new combined function is still taking shape, not to overreact to the first-quarter volatility.",
+    "evidence": {
+      "chain": [
+        {
+          "id": "contradiction_evidence_keystone_c-r2_1",
+          "role": "supporting",
+          "title": "Transformation cadence review",
+          "summary": "Sponsor time dipped versus the onboarding quarter, though still above minimum viability.",
+          "observed_at": "2026-04-18"
+        },
+        {
+          "id": "contradiction_evidence_keystone_c-r2_2",
+          "role": "contextualizing",
+          "title": "Function operating load review",
+          "summary": "Rate cases and reliability work are absorbing more of the combined customer-and-technology leadership bandwidth.",
+          "observed_at": "2026-04-12"
+        }
+      ],
+      "source_count": 2
+    },
+    "detected_at": "2026-04-06T00:00:00.000Z",
+    "resolved_at": null,
+    "resolution_notes": "Acknowledged trade-off; kept open for monitoring.",
+    "triggered_engagement_id": null,
+    "created_at": "2026-04-21T20:38:30.192Z",
+    "summary": "Customer transformation sponsorship is still fragile after the initial Jonathan Aldridge onboarding surge",
+    "impact": {
+      "stakes_score": 47,
+      "implied_action": "The point is to stabilize sponsorship while the new combined function is still taking shape, not to overreact to the first-quarter volatility.",
+      "implicated_people": [
+        "Jonathan Aldridge"
+      ],
+      "stakes_components": {
+        "financial": 6,
+        "strategic": 9,
+        "regulatory": 6,
+        "reputational": 12
+      }
+    },
+    "short_title": "Customer transformation sponsorship is still fragile after the initial Jonathan Aldridge onboarding surge",
+    "long_description": "Jonathan Aldridge's first months created a burst of visible sponsorship for customer transformation, but the ongoing cadence has become less regular as enterprise operating load reasserted itself.",
+    "category": "C_sponsor_behavior",
+    "subcategory": "calendar_time_decline",
+    "temporal_state": "narrowing",
+    "severity_label": "significant",
+    "confidence_level": "medium",
+    "sensitivity": "severe",
+    "stakes_score": 47,
+    "stakes_components": {
+      "financial": 6,
+      "strategic": 9,
+      "regulatory": 6,
+      "reputational": 12
+    },
+    "evidence_ids": [
+      "contradiction_evidence_keystone_c-r2_1",
+      "contradiction_evidence_keystone_c-r2_2"
+    ],
+    "source_count": 2,
+    "implicated_priority_refs": [
+      "Customer experience transformation"
+    ],
+    "implicated_initiative_refs": [
+      "Integrated customer and technology transformation"
+    ],
+    "implicated_person_ids": [
+      "a9477509-cb22-4ab6-b691-ec19e3f1135b"
+    ],
+    "implicated_kpi_ids": [
+      "keystone_digital_selfservice_adoption",
+      "keystone_first_call_resolution_pct"
+    ],
+    "implicated_external_event_ids": [],
+    "related_pattern_ids": [
+      "keystone_pattern_customer_experience_operating_model_fragmentation"
+    ],
+    "first_detected_at": "2026-04-06T00:00:00.000Z",
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "last_evidence_change_at": "2026-04-21T00:00:00.000Z",
+    "resolution_state": "acknowledged",
+    "resolution_evidence_ids": [],
+    "reasoning_scope_id": "keystone_scope_contradictions_reasoning_broad",
+    "disclosure_scope_id": "keystone_scope_contradictions_executive_sponsor",
+    "suppress_until": null,
+    "surfacing_priority": 44,
+    "recommended_conversation_context": "The point is to stabilize sponsorship while the new combined function is still taking shape, not to overreact to the first-quarter volatility.",
+    "detection_rule_id": "contradiction_rule_c_r2",
+    "detection_run_id": "e376d21c-412e-4396-adfd-8db747ba81c6",
+    "created_by": "automated",
+    "reviewer_notes": [],
+    "updated_at": "2026-04-21T20:56:38.911Z"
+  },
+  {
+    "id": "81e458b5-90db-433a-ac25-49794a450e01",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "use_case_id": null,
+    "contradiction_type": "budget_priority",
+    "severity": "medium",
+    "description": "Customer-experience transformation remains visible in Keystone's strategy language, but the budget mix still shifts toward grid, reliability, and rate-case work faster than customer capital ramps. The result is a strategy signal that outruns the funding mix.",
+    "suggested_action": "Frame this as a capital-sequencing choice, not as a moral failing. Customer transformation may still be the right goal, but the budget currently tells a slower story.",
+    "evidence": {
+      "chain": [
+        {
+          "id": "contradiction_evidence_keystone_d-r2_1",
+          "role": "supporting",
+          "title": "Capital allocation trend review",
+          "summary": "Customer-experience budget share has declined relative to the prior period while grid capital accelerated.",
+          "observed_at": "2026-04-01"
+        },
+        {
+          "id": "contradiction_evidence_keystone_d-r2_2",
+          "role": "contextualizing",
+          "title": "Customer ambition statement",
+          "summary": "Top-quartile customer outcomes remain in the strategic narrative.",
+          "observed_at": "2026-02-01"
+        }
+      ],
+      "source_count": 2
+    },
+    "detected_at": "2026-03-24T00:00:00.000Z",
+    "resolved_at": null,
+    "resolution_notes": null,
+    "triggered_engagement_id": null,
+    "created_at": "2026-04-21T20:38:30.192Z",
+    "summary": "Customer-experience capital is shrinking relative to the strategic rhetoric",
+    "impact": {
+      "stakes_score": 61,
+      "implied_action": "Frame this as a capital-sequencing choice, not as a moral failing. Customer transformation may still be the right goal, but the budget currently tells a slower story.",
+      "implicated_people": [
+        "Jonathan Aldridge",
+        "Nicole Hargrave-Park"
+      ],
+      "stakes_components": {
+        "financial": 15,
+        "strategic": 13,
+        "regulatory": 6,
+        "reputational": 8
+      }
+    },
+    "short_title": "Customer-experience capital is shrinking relative to the strategic rhetoric",
+    "long_description": "Customer-experience transformation remains visible in Keystone's strategy language, but the budget mix still shifts toward grid, reliability, and rate-case work faster than customer capital ramps. The result is a strategy signal that outruns the funding mix.",
+    "category": "D_budget_priority",
+    "subcategory": "budget_decay",
+    "temporal_state": "persistent",
+    "severity_label": "significant",
+    "confidence_level": "medium",
+    "sensitivity": "medium",
+    "stakes_score": 61,
+    "stakes_components": {
+      "financial": 15,
+      "strategic": 13,
+      "regulatory": 6,
+      "reputational": 8
+    },
+    "evidence_ids": [
+      "contradiction_evidence_keystone_d-r2_1",
+      "contradiction_evidence_keystone_d-r2_2"
+    ],
+    "source_count": 2,
+    "implicated_priority_refs": [
+      "Customer experience transformation",
+      "Grid modernization 2030"
+    ],
+    "implicated_initiative_refs": [
+      "Integrated customer and technology transformation",
+      "Grid Modernization 2030"
+    ],
+    "implicated_person_ids": [
+      "a9477509-cb22-4ab6-b691-ec19e3f1135b",
+      "995a163d-e64a-4f58-9013-8d55e159ed53"
+    ],
+    "implicated_kpi_ids": [
+      "keystone_digital_selfservice_adoption"
+    ],
+    "implicated_external_event_ids": [],
+    "related_pattern_ids": [
+      "keystone_pattern_customer_experience_operating_model_fragmentation"
+    ],
+    "first_detected_at": "2026-03-24T00:00:00.000Z",
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "last_evidence_change_at": "2026-04-21T00:00:00.000Z",
+    "resolution_state": "open",
+    "resolution_evidence_ids": [],
+    "reasoning_scope_id": "keystone_scope_contradictions_reasoning_broad",
+    "disclosure_scope_id": "keystone_scope_contradictions_program_leadership",
+    "suppress_until": null,
+    "surfacing_priority": 64,
+    "recommended_conversation_context": "Frame this as a capital-sequencing choice, not as a moral failing. Customer transformation may still be the right goal, but the budget currently tells a slower story.",
+    "detection_rule_id": "contradiction_rule_d_r2",
+    "detection_run_id": "e9faa88d-e0ba-473b-a88b-4d545645b6c6",
+    "created_by": "automated",
+    "reviewer_notes": [],
+    "updated_at": "2026-04-21T20:56:38.911Z"
+  },
+  {
+    "id": "09281e91-8a9a-4872-a0b2-0136c07dee9d",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "use_case_id": null,
+    "contradiction_type": "external_internal_messaging",
+    "severity": "high",
+    "description": "Keystone's external narrative increasingly frames the company as an AI-first operator, but internal maturity remains Stage 2 of 5 and shadow AI activity still sits outside formal governance. The claim is directionally true as an aspiration, but not yet as an operating reality.",
+    "suggested_action": "This belongs with the CEO and the chief customer-and-technology officer together. The resolution path is either to lift internal maturity faster, soften the message, or explicitly position Keystone as early-stage rather than already-there.",
+    "evidence": {
+      "chain": [
+        {
+          "id": "contradiction_evidence_keystone_e-r1_1",
+          "role": "supporting",
+          "title": "AI governance maturity assessment",
+          "summary": "Internal maturity remains Stage 2 of 5 with uneven governance coverage.",
+          "observed_at": "2026-04-10"
+        },
+        {
+          "id": "contradiction_evidence_keystone_e-r1_2",
+          "role": "supporting",
+          "title": "Shadow AI evidence set",
+          "summary": "Eleven shadow or quasi-shadow tools remain active outside the formal operating model.",
+          "observed_at": "2026-04-10"
+        },
+        {
+          "id": "contradiction_evidence_keystone_e-r1_3",
+          "role": "contextualizing",
+          "title": "External positioning review",
+          "summary": "Recent language positioned Keystone as an AI-first grid operator rather than as a company building toward that state.",
+          "observed_at": "2026-03-15"
+        }
+      ],
+      "source_count": 6
+    },
+    "detected_at": "2026-02-20T00:00:00.000Z",
+    "resolved_at": null,
+    "resolution_notes": null,
+    "triggered_engagement_id": null,
+    "created_at": "2026-04-21T20:42:55.535Z",
+    "summary": "\"AI-first grid operator\" positioning is ahead of Keystone's internal maturity and governance reality",
+    "impact": {
+      "stakes_score": 78,
+      "implied_action": "This belongs with the CEO and the chief customer-and-technology officer together. The resolution path is either to lift internal maturity faster, soften the message, or explicitly position Keystone as early-stage rather than already-there.",
+      "implicated_people": [
+        "Jonathan Aldridge",
+        "Marcus W. Kittrell"
+      ],
+      "stakes_components": {
+        "financial": 15,
+        "strategic": 16,
+        "regulatory": 17,
+        "reputational": 19
+      }
+    },
+    "short_title": "\"AI-first grid operator\" positioning is ahead of Keystone's internal maturity and governance reality",
+    "long_description": "Keystone's external narrative increasingly frames the company as an AI-first operator, but internal maturity remains Stage 2 of 5 and shadow AI activity still sits outside formal governance. The claim is directionally true as an aspiration, but not yet as an operating reality.",
+    "category": "E_external_internal_messaging",
+    "subcategory": "capability_claim_gap",
+    "temporal_state": "persistent",
+    "severity_label": "material",
+    "confidence_level": "high",
+    "sensitivity": "high",
+    "stakes_score": 78,
+    "stakes_components": {
+      "financial": 15,
+      "strategic": 16,
+      "regulatory": 17,
+      "reputational": 19
+    },
+    "evidence_ids": [
+      "contradiction_evidence_keystone_e-r1_1",
+      "contradiction_evidence_keystone_e-r1_2",
+      "contradiction_evidence_keystone_e-r1_3"
+    ],
+    "source_count": 6,
+    "implicated_priority_refs": [
+      "Enterprise AI platform and governance"
+    ],
+    "implicated_initiative_refs": [
+      "Enterprise AI Platform and Governance Program"
+    ],
+    "implicated_person_ids": [
+      "a9477509-cb22-4ab6-b691-ec19e3f1135b",
+      "e27ff611-5df7-4a1d-8793-4643c9583c42"
+    ],
+    "implicated_kpi_ids": [
+      "keystone_ai_governance_maturity_stage"
+    ],
+    "implicated_external_event_ids": [
+      "keystone_event_ai_first_positioning"
+    ],
+    "related_pattern_ids": [
+      "keystone_pattern_shadow_ai_in_customer_operations_and_grid_analytics"
+    ],
+    "first_detected_at": "2026-02-20T00:00:00.000Z",
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "last_evidence_change_at": "2026-04-21T00:00:00.000Z",
+    "resolution_state": "open",
+    "resolution_evidence_ids": [],
+    "reasoning_scope_id": "keystone_scope_contradictions_reasoning_broad",
+    "disclosure_scope_id": "keystone_scope_contradictions_program_leadership",
+    "suppress_until": null,
+    "surfacing_priority": 94,
+    "recommended_conversation_context": "This belongs with the CEO and the chief customer-and-technology officer together. The resolution path is either to lift internal maturity faster, soften the message, or explicitly position Keystone as early-stage rather than already-there.",
+    "detection_rule_id": "contradiction_rule_e_r1",
+    "detection_run_id": "32dae234-0189-4251-aaf3-401c551c829c",
+    "created_by": "automated",
+    "reviewer_notes": [],
+    "updated_at": "2026-04-21T20:56:38.911Z"
+  }
+]

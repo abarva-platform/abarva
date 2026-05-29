@@ -53,12 +53,13 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
   },
   {
     appClientKey: 'northstar',
-    canonicalKey: 'northstar-medtech',
-    brokerKey: 'northstar',
+    canonicalKey: 'northstar-clinical',
+    brokerKey: 'northstar-clinical',
     displayName: 'Northstar Clinical Technologies',
     industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.northstar,
     aliases: [
       'northstar',
+      'northstar-clinical',
       'northstar-medtech',
       'northstar-clinical-tech',
       'northstar clinical technologies',

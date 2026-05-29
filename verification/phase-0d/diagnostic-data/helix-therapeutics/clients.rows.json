@@ -1,0 +1,35 @@
+[
+  {
+    "id": "4cddbcfe-c17c-41f7-91b0-52854a561218",
+    "name": "Helix Therapeutics",
+    "type": null,
+    "industry": null,
+    "revenue": null,
+    "intelligence_brief": null,
+    "confidence_score": 0,
+    "created_at": "2026-04-19T23:04:17.615Z",
+    "updated_at": "2026-04-27T21:10:09.621Z",
+    "legal_name": "Helix Therapeutics, Inc.",
+    "billing_email": null,
+    "stripe_customer_id": null,
+    "industry_code": "HEALTHCARE_IDN",
+    "annual_revenue_usd": "22000000000.00",
+    "it_budget_usd": "420000000.00",
+    "ai_budget_usd": "95000000.00",
+    "employee_count": 18000,
+    "operational_units": 6,
+    "business_description": "$22B mid-cap biotech · 14 approved drugs · 280 pipeline compounds (Phase 1-4) · 340 active trials · 6 manufacturing sites · HQ US East Coast with research hubs in Basel + Singapore + Cambridge MA",
+    "slug": "helix-therapeutics",
+    "tenant_key": null,
+    "ai_policy": {
+      "allowGamma": false,
+      "allowClaude": false,
+      "maxDataClass": "internal",
+      "kernelOnlyMode": true,
+      "allowExternalAI": false,
+      "requireRedaction": true,
+      "promptResponseRetentionDays": 0,
+      "requireHumanApprovalForExports": true
+    }
+  }
+]

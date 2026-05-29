@@ -1,0 +1,35 @@
+[
+  {
+    "id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Brindlemark Financial",
+    "type": null,
+    "industry": null,
+    "revenue": null,
+    "intelligence_brief": null,
+    "confidence_score": 0,
+    "created_at": "2026-04-19T19:22:10.620Z",
+    "updated_at": "2026-05-23T00:17:26.495Z",
+    "legal_name": "Brindlemark Financial Composite Seed",
+    "billing_email": null,
+    "stripe_customer_id": null,
+    "industry_code": "FINSERV",
+    "annual_revenue_usd": "28000000000.00",
+    "it_budget_usd": "2100000000.00",
+    "ai_budget_usd": "180000000.00",
+    "employee_count": 34000,
+    "operational_units": 890,
+    "business_description": "$28B regional bank · consumer + commercial + wealth · 890 branches + 2,400 ATMs across 6 East Coast states · Finxact core + legacy · Snowflake + AWS primary",
+    "slug": "brindlemark-financial",
+    "tenant_key": "first-capital",
+    "ai_policy": {
+      "allowGamma": false,
+      "allowClaude": true,
+      "maxDataClass": "confidential",
+      "kernelOnlyMode": false,
+      "allowExternalAI": true,
+      "requireRedaction": false,
+      "promptResponseRetentionDays": 30,
+      "requireHumanApprovalForExports": true
+    }
+  }
+]

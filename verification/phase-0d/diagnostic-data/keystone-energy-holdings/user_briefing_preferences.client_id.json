@@ -1,0 +1,25 @@
+[
+  {
+    "id": "10000000-0000-0000-0000-00000000a002",
+    "user_id": "a9477509-cb22-4ab6-b691-ec19e3f1135b",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "preferred_length": "standard",
+    "category_weights": {
+      "kpi_drift": 1,
+      "peer_move": 1,
+      "pattern_shift": 1,
+      "commitment_status": 1,
+      "regulatory_change": 1,
+      "contradiction_emergence": 0.9
+    },
+    "always_include_entities": [],
+    "never_include_entities": [],
+    "preferred_generation_time": "7am local",
+    "delivery_channel": "in_app",
+    "metadata": {
+      "source": "wave2 seed briefing"
+    },
+    "created_at": "2026-04-21T22:07:19.068Z",
+    "updated_at": "2026-04-21T22:13:50.945Z"
+  }
+]

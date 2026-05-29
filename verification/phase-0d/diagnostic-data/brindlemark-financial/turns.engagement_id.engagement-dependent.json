@@ -1,0 +1,834 @@
+[
+  {
+    "id": "5ba8e0d4-6fdc-4dbc-808b-0b419132fa48",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "Constraints are real: No advisor-facing disruption in quarter close windows and no regulatory reporting miss during migration waves.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T06:56:40.526Z"
+  },
+  {
+    "id": "ab25985a-ed45-4b27-bc23-eb02cc456d20",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "That gives me the execution guardrails. We need a plan that respects those constraints instead of assuming the organization will bend for the work.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T08:56:40.526Z"
+  },
+  {
+    "id": "2924a063-855a-4e96-9b53-4e9c2ca0b455",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "Understood. I see the forcing event, the business pain, and the sponsor pressure. If we do this well, the first visible win should be a narrowed release path that cuts shadow-workbook dependency on the most painful reporting workflow. Before I lock the charter spine, what's the one metric your team would defend in an executive review?",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T00:56:40.526Z"
+  },
+  {
+    "id": "f617bb39-daa7-4491-9b33-136469e93bb8",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "If I had to pick one lens, it would be Advisor shadow workbook hours. Right now we're sitting at 340 hours / week, which is not acceptable.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T06:56:40.526Z"
+  },
+  {
+    "id": "dc9f9828-9e5b-461e-a4a1-558d9668ebd4",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "Good. Advisor shadow workbook hours at 340 hours / week gives us the anchor. I also want the surrounding context: Alt-asset reporting lag is 3 business days, and Release-window defects is 17 / quarter. When those move together, the story becomes much harder to dispute.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T08:56:40.526Z"
+  },
+  {
+    "id": "2f05acaf-9cd1-493d-a256-5ca0b982ec3c",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "The sponsor dynamic is straightforward on paper and messy in reality. CTO, wealth operations lead, advisor platform lead, compliance, and finance transformation.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T14:56:40.526Z"
+  },
+  {
+    "id": "3180ffdc-9424-47f2-8997-1f0950c96b35",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "That's exactly the kind of political map I needed. It says the technical work matters, but the operating compromise matters just as much. I want the charter to reflect that this is a decision-rights problem, not just a system upgrade.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T16:56:40.526Z"
+  },
+  {
+    "id": "93724997-9b64-4b5c-93a5-b8cadb5d7082",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "Scope-wise, Focus on the wealth data model, advisor workflow, and reporting continuity. Avoid core banking scope creep.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-21T22:56:40.526Z"
+  },
+  {
+    "id": "5816fb9a-a8c3-4f01-a9dc-e39e636bc0da",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "Good boundary. That keeps us on the business proof path. I do not want this to accidentally become a catch-all transformation with no clean gate language.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T00:56:40.526Z"
+  },
+  {
+    "id": "2626249f-e740-4d32-afff-b413a331a0f9",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "The baseline conversation usually derails because each team defends a different number. That's what I want to avoid.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T14:56:40.526Z"
+  },
+  {
+    "id": "70bc2727-302e-4acd-92b9-811025dce5a7",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "That's helpful. I'm locking the success lens around advisor workbook hours, reporting lag, release windows, and exception tickets. That gives us a way to talk about modernize the wealth platform without breaking advisor workflows or regulatory reporting continuity without drifting into generic transformation language.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T16:56:40.526Z"
+  },
+  {
+    "id": "291f0f14-9b44-430c-91db-58c4d74d326a",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "Then let's keep the first win tight. a narrowed release path that cuts shadow-workbook dependency on the most painful reporting workflow feels like the right proving ground.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-22T22:56:40.526Z"
+  },
+  {
+    "id": "588aa21a-e749-43a0-b8dc-413124581554",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "Good. I also want the working team constrained to a narrowed release path that cuts shadow-workbook dependency on the most painful reporting workflow. That's small enough to move quickly and big enough to prove the program has teeth.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-23T00:56:40.526Z"
+  },
+  {
+    "id": "b5011b3d-3b6b-4136-97e0-de9e8b91b9f9",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "Approved. Move it forward. a narrowed release path that cuts shadow-workbook dependency on the most painful reporting workflow is the right boundary and advisor workbook hours, reporting lag, release windows, and exception tickets is the right scorecard.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-23T06:56:40.526Z"
+  },
+  {
+    "id": "a678a611-3331-455a-a1fb-207cf4d54ff9",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "agent",
+    "text": "I think we have enough to call Start complete. Here's the charter spine I would write now: The platform works just well enough to survive, but every release inherits manual workarounds, slow data movement, and regulatory reporting anxiety. In scope: Focus on the wealth data model, advisor workflow, and reporting continuity. Avoid core banking scope creep. Stakeholders: CTO, wealth operations lead, advisor platform lead, compliance, and finance transformation Success lens: advisor workbook hours, reporting lag, release windows, and exception tickets.",
+    "mode_label": "Start",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-23T08:56:40.526Z"
+  },
+  {
+    "id": "3d05385d-4900-45db-9d6b-a8f7f202dcf7",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "Let's pressure-test the diagnosis. What's your honest read on why the platform works just well enough to survive, but every release inherits manual workarounds, slow data movement, and regulatory reporting anxiety.?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-28T22:56:40.526Z"
+  },
+  {
+    "id": "1de65dcb-155a-4db2-8312-ba469d5fc8af",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "That matches what the team is feeling. The most common complaint is that the work keeps routing around itself.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T06:56:40.526Z"
+  },
+  {
+    "id": "9533d5e7-0697-46fa-80f0-af57067c72fe",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "Exactly. That's a routing and accountability smell, not just a tooling complaint. When I map it back to the baseline, the issue compounds across advisor workbook hours, reporting lag, release windows, and exception tickets.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T08:56:40.526Z"
+  },
+  {
+    "id": "9c1ba5e7-a463-4e17-a559-f85ab28f5baa",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "If you had to name the root cause in one line, what would you say?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T14:56:40.526Z"
+  },
+  {
+    "id": "327b9cc1-bd1e-4a15-b039-b4dda47705fe",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "I'd say this: the data model is brittle, reporting logic is embedded in side workflows, and modernization planning keeps underweighting migration sequencing risk. That's the sentence I would defend in front of the sponsor.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T16:56:40.526Z"
+  },
+  {
+    "id": "8e429bbf-7445-4aba-b3f1-da76f9a10f10",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "How does this compare to what you've seen elsewhere?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T22:56:40.526Z"
+  },
+  {
+    "id": "8fcbcb3a-a877-4dc8-b82d-d7f35725eed3",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "In similar programs, the failure pattern isn't that people ignore the problem. It's that they try to solve it everywhere at once and never create a falsifiable first win.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T00:56:40.526Z"
+  },
+  {
+    "id": "c7e03f07-bd76-4f88-85ea-86434f35b49d",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "So where would you start if we wanted the clearest signal fast?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T06:56:40.526Z"
+  },
+  {
+    "id": "ef066bea-18fe-4373-9f6c-d94b091f233d",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "The first-win scope should be a narrowed release path that cuts shadow-workbook dependency on the most painful reporting workflow. It is narrow enough to diagnose honestly and broad enough to reveal whether the data model is brittle, reporting logic is embedded in side workflows, and modernization planning keeps underweighting migration sequencing risk.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T08:56:40.526Z"
+  },
+  {
+    "id": "2c45b825-a61c-4fe7-8169-8c8b7445cee2",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "That first-win boundary makes sense. What would success in Diagnose look like?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T14:56:40.526Z"
+  },
+  {
+    "id": "a3c16658-4c14-43be-97c0-8a936bd29683",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "Diagnose succeeds if we can quantify the current drag, tie it to one operating cause, and give the sponsor a design decision that feels inevitable rather than speculative.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T16:56:40.526Z"
+  },
+  {
+    "id": "cc7a3a62-ed73-49fe-9735-84e1d892d922",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "I'm comfortable with that diagnosis. It is specific enough to design against.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-30T22:56:40.526Z"
+  },
+  {
+    "id": "a4b27b9b-166f-4c07-8935-5596cdb1f099",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "Good. Then the design brief should test three things: path choice, owner model, and what we refuse to do in the first wave.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-31T00:56:40.526Z"
+  },
+  {
+    "id": "0efa11b8-f267-46b4-b828-470a197197e7",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Walk me through the honest option set. What are the viable paths?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-05T22:56:40.526Z"
+  },
+  {
+    "id": "2cbb0e73-1c3b-43e6-bf2c-4db24704aedb",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "There are only three credible paths from here. incremental wrapper strategy around the current platform. full platform and data-stack modernization in one integrated program. two-speed path with reporting continuity first and advisor workflow rebuild second. Each can work; they just fail in different ways.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T00:56:40.526Z"
+  },
+  {
+    "id": "ba19a91a-197e-4052-8184-b687515eea42",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Which one would you rule out first?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T06:56:40.526Z"
+  },
+  {
+    "id": "71134dce-423e-40b8-9c0b-6d43dae92d63",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "I'd rule out the path that looks clean on paper but ignores the organizational constraint. In this case that's the one that assumes the team can absorb full breadth before the first win is visible.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T08:56:40.526Z"
+  },
+  {
+    "id": "a2984848-2343-41b2-a6b7-68d45af5d6d5",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Then what's your recommendation?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T14:56:40.526Z"
+  },
+  {
+    "id": "7bb90b5e-2d7f-4d85-9d7b-ac8c70199498",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "I would recommend Option C because it lowers regulatory exposure while still moving the platform to a modern control plane.. It matches the constraints, gives us a faster proof point, and avoids pretending the organization can absorb every change at once.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T16:56:40.526Z"
+  },
+  {
+    "id": "6661c219-dd49-4383-b787-1d217b1da9ae",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "What's the tradeoff I am accepting if I choose that path?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-06T22:56:40.526Z"
+  },
+  {
+    "id": "054314ef-6da6-4c2d-b123-ba0cffd9b62d",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "You're accepting a narrower first wave in exchange for a much higher probability of sponsor-visible proof. That's the right bargain here.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T00:56:40.526Z"
+  },
+  {
+    "id": "4bba5805-4da8-4592-a37e-10f07ff1c4ea",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Okay. If we choose it, what do you need nailed down before Execute starts?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T06:56:40.526Z"
+  },
+  {
+    "id": "12b71918-94f9-4bb0-8041-2b803f1be9f6",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "Three things: named owners, a 30-day target, and the one dependency the team is not allowed to hand-wave.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T08:56:40.526Z"
+  },
+  {
+    "id": "84f18fa6-5b7d-49a5-8fb3-9dfe56e901e8",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Let's make the 30-day target explicit then.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T14:56:40.526Z"
+  },
+  {
+    "id": "bb7e3dc4-52c0-4597-83ac-abb9fd9203ec",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "I'm also locking the first execution target around lock the reporting-continuity blueprint, freeze the first migration scope, and name the release owner for each wealth workflow. If the team cannot hit that, the design was not actionable enough.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T16:56:40.526Z"
+  },
+  {
+    "id": "4acf0dd2-c7bf-45d5-a84a-a51909fe942a",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "That's clear enough. I'm ready to lock the design.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-07T22:56:40.526Z"
+  },
+  {
+    "id": "5cedfea6-62d2-4414-9174-b6a94bbf49ac",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "Perfect. That means Execute should start from a plan the sponsor can actually govern, not a vague set of workstreams.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-08T00:56:40.526Z"
+  },
+  {
+    "id": "50519392-0e11-497d-826d-3885f0dd790e",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "agent",
+    "text": "Then we're aligned on the design. Options considered: incremental wrapper strategy around the current platform; full platform and data-stack modernization in one integrated program; two-speed path with reporting continuity first and advisor workflow rebuild second. Recommended path: Option C because it lowers regulatory exposure while still moving the platform to a modern control plane.. Critical tradeoff: speed versus breadth, and we are deliberately choosing proof over sprawl.",
+    "mode_label": "Design",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-08T08:56:40.526Z"
+  },
+  {
+    "id": "c0c26b42-a485-4d05-adc9-4a6b106ad9aa",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Give me the execution readout. Are we actually moving or just opening workstreams?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-13T22:56:40.526Z"
+  },
+  {
+    "id": "92e6469f-0599-45eb-940b-609ce2ac5a4a",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "We're moving, but the distinction that matters is whether the work is landing against the month-one proof point. Right now the answer is yes, with one visible risk.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T00:56:40.526Z"
+  },
+  {
+    "id": "f1714691-67ab-4c54-8e6d-3353c1144370",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "What's the risk you're most worried about?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T06:56:40.526Z"
+  },
+  {
+    "id": "e01d36b7-4333-4ec1-a191-83abeef193f2",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "What needs to happen in the next 30 days for you to call this on track?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T14:56:40.526Z"
+  },
+  {
+    "id": "64494a8b-b56b-491f-8034-0ae97903b6da",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "I need to see lock the reporting-continuity blueprint, freeze the first migration scope, and name the release owner for each wealth workflow. If the team hits that, the program is translating design into owned work. If it misses, we revisit the plan rather than rationalize the miss.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T16:56:40.526Z"
+  },
+  {
+    "id": "483f1798-3629-44a0-abdc-e79206cdaf82",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Log that as the operating commitment.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T22:56:40.526Z"
+  },
+  {
+    "id": "c5b51fac-8b05-4dc2-823d-1164fe782aaa",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "I'm logging the execution decision this way: lock the reporting-continuity blueprint, freeze the first migration scope, and name the release owner for each wealth workflow. That's the line I want every workstream lead repeating back.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T00:56:40.526Z"
+  },
+  {
+    "id": "b4d358dc-3901-4934-9903-4f3e95a85297",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Where do owners tend to get fuzzy on work like this?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T06:56:40.526Z"
+  },
+  {
+    "id": "99632770-543b-44ec-ae57-c012432bb669",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "Usually around dependencies and exception paths. Everyone thinks someone else owns the blocker until the date slips. That's why I want the owner map repeated back in every weekly review.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T08:56:40.526Z"
+  },
+  {
+    "id": "92af6886-22f3-4c3c-bb74-aa817a965fac",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Then assume I'm reviewing this next Friday. What will I ask first?",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T14:56:40.526Z"
+  },
+  {
+    "id": "ad08842c-526c-4efc-be38-1464efc0377d",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "You will ask whether the 30-day target is still real, who owns the most fragile dependency, and what changed since last week that should alter your confidence.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T16:56:40.526Z"
+  },
+  {
+    "id": "de71b84c-2eff-44ba-aa99-cbb1185702f8",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Not yet. I want to see one more milestone land before I call Execute complete.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-15T22:56:40.526Z"
+  },
+  {
+    "id": "d8c43ffe-1fdc-4b16-a302-280f7ab59ed0",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "Fair. Then the team should treat the next checkpoint as a credibility test, not a routine status readout.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-16T00:56:40.526Z"
+  },
+  {
+    "id": "a92e9c56-3e36-4737-b805-7c186d9b5745",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "user",
+    "text": "Let's hold the gate until the next milestone lands cleanly.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-16T06:56:40.526Z"
+  },
+  {
+    "id": "28b7decf-3a4c-406c-8dc9-3293bbb7d24f",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "Execution is in a credible place. The critical path is lock the reporting-continuity blueprint, freeze the first migration scope, and name the release owner for each wealth workflow, and the main watch-out is if Brindlemark lets release governance remain implicit, the same shadow-workbook behaviors will survive the platform rebuild. We are not at gate yet because the team still has to prove the critical path is under control.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-16T08:56:40.526Z"
+  },
+  {
+    "id": "aebeb980-6070-4475-a36f-87e4702c52a9",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 0,
+    "sender": "user",
+    "text": "James Park here. We need to kick off Brindlemark Wealth Platform Modernization. advisor teams are still building shadow workbooks because the current platform cannot support alt-asset reporting at scale. The platform works just well enough to survive, but every release inherits manual workarounds, slow data movement, and regulatory reporting anxiety.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-20T22:56:40.526Z"
+  },
+  {
+    "id": "feb1dd96-be43-487d-b5fa-ea498ed0ead1",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "My honest read: Brindlemark has a platform modernization problem that is amplified by reporting dependency and release-window fragility. The symptom shows up in Advisor shadow workbook hours, but the real story is the operating model underneath it.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-29T00:56:40.526Z"
+  },
+  {
+    "id": "82d5320f-d770-482a-9631-dbd762499d81",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "user",
+    "text": "Approved. Move Brindlemark Wealth Platform Modernization into Design.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-31T06:56:40.526Z"
+  },
+  {
+    "id": "c11c5b6a-d9ab-4565-8eca-d76e05e6c296",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 1,
+    "sender": "agent",
+    "text": "That gets us to a hard diagnosis: Brindlemark has a platform modernization problem that is amplified by reporting dependency and release-window fragility. Root cause: the data model is brittle, reporting logic is embedded in side workflows, and modernization planning keeps underweighting migration sequencing risk. The measured lens is Advisor shadow workbook hours, Alt-asset reporting lag, and Release-window defects.",
+    "mode_label": "Diagnose",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-03-31T08:56:40.526Z"
+  },
+  {
+    "id": "249ffc1d-76c6-4c36-bacd-5bde5e64cb09",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 2,
+    "sender": "user",
+    "text": "Approved. Move Brindlemark Wealth Platform Modernization into Execute.",
+    "mode_label": null,
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-08T06:56:40.526Z"
+  },
+  {
+    "id": "511c54e8-08b6-4356-a67d-8c07d6e76521",
+    "engagement_id": "c109477f-ddcd-4864-af1b-5194e09b51b6",
+    "phase": 3,
+    "sender": "agent",
+    "text": "The risk is if Brindlemark lets release governance remain implicit, the same shadow-workbook behaviors will survive the platform rebuild. It won't announce itself as a crisis immediately; it will show up as slower-than-expected execution and sponsor anxiety unless we manage it directly.",
+    "mode_label": "Execute",
+    "retrieved_refs": {
+      "source": "demo_turn_history_seed",
+      "seeded_at": "2026-04-21T22:56:40.566Z"
+    },
+    "created_at": "2026-04-14T08:56:40.526Z"
+  }
+]

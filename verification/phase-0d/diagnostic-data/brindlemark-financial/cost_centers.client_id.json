@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "LLM and model usage",
+    "annual_budget_usd": "12600000.00",
+    "spent_ytd_usd": "4200000.00",
+    "run_vs_change_pct": "50.00",
+    "leader_name": "Head of AI Platform",
+    "is_demo_data": true
+  },
+  {
+    "id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "AI SaaS licenses",
+    "annual_budget_usd": "25800000.00",
+    "spent_ytd_usd": "8600000.00",
+    "run_vs_change_pct": "72.00",
+    "leader_name": "Head of AI Applications",
+    "is_demo_data": true
+  },
+  {
+    "id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Copilot seats",
+    "annual_budget_usd": "8808000.00",
+    "spent_ytd_usd": "2936000.00",
+    "run_vs_change_pct": "82.00",
+    "leader_name": "SVP Enterprise Productivity",
+    "is_demo_data": true
+  },
+  {
+    "id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Fraud and AML compute",
+    "annual_budget_usd": "13200000.00",
+    "spent_ytd_usd": "4400000.00",
+    "run_vs_change_pct": "45.00",
+    "leader_name": "Chief Risk Officer",
+    "is_demo_data": true
+  },
+  {
+    "id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Data platform and governance",
+    "annual_budget_usd": "7440000.00",
+    "spent_ytd_usd": "2480000.00",
+    "run_vs_change_pct": "58.00",
+    "leader_name": "Chief Data Officer",
+    "is_demo_data": true
+  },
+  {
+    "id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "AI staff and services",
+    "annual_budget_usd": "13752000.00",
+    "spent_ytd_usd": "4584000.00",
+    "run_vs_change_pct": "35.00",
+    "leader_name": "Chief Transformation Officer",
+    "is_demo_data": true
+  }
+]

@@ -1,0 +1,865 @@
+[
+  {
+    "id": "firstcap_scope_broad",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "broad",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_broad_public",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "broad (public)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (public)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_risk_credit_executive_full_regulatory_sensitive_for_others",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (Risk, Credit, Executive — full; regulatory-sensitive for others)",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped (Risk, Credit, Executive — full; regulatory-sensitive for others)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_broad_required",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "broad (required)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (required)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_commercial_banking_risk_executive_disclosable_others_aggregate_only",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (Commercial Banking, Risk, Executive disclosable; others aggregate only)",
+    "scope_type": "program",
+    "program_ids": [
+      "commercial_banking"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "commercial_banking"
+      ],
+      "raw_summary": "program-scoped (Commercial Banking, Risk, Executive disclosable; others aggregate only)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_legal_privileged_bsa_aml_compliance_legal_disclosable_aggregate_only_for_ot",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped + legal-privileged (BSA/AML, Compliance, Legal disclosable; aggregate only for others)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "legal-privileged",
+      "BSA/AML"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped + legal-privileged (BSA/AML, Compliance, Legal disclosable; aggregate only for others)",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "legal-privileged",
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_legal_privileged",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped + legal-privileged",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "legal-privileged"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped + legal-privileged",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "legal-privileged"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_bsa_aml_compliance_legal_only",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (BSA/AML, Compliance, Legal only)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "BSA/AML"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped (BSA/AML, Compliance, Legal only)",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_legal_privileged_bsa_aml_disclosable_aggregate_only_cross_program_external_",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped + legal-privileged (BSA/AML disclosable; aggregate-only cross-program; external disclosure prohibited)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "legal-privileged",
+      "BSA/AML"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped + legal-privileged (BSA/AML disclosable; aggregate-only cross-program; external disclosure prohibited)",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "legal-privileged",
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_affected_programs_compliance_legal_executive",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (affected programs, Compliance, Legal, Executive)",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped (affected programs, Compliance, Legal, Executive)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_aggregate_for_most_programs_specifics_for_risk_management",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (aggregate for most programs; specifics for Risk Management)",
+    "scope_type": "program",
+    "program_ids": [
+      "risk_management"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "risk_management"
+      ],
+      "raw_summary": "program-scoped (aggregate for most programs; specifics for Risk Management)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_cybersecurity_executive_full_others_aggregate_only_given_bank_specific_crit",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (Cybersecurity, Executive full; others aggregate only given bank-specific critical infrastructure sensitivity)",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped (Cybersecurity, Executive full; others aggregate only given bank-specific critical infrastructure sensitivity)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_finance_transformation_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Finance Transformation, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "finance_transformation"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "finance_transformation"
+      ],
+      "raw_summary": "Finance Transformation, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_finance_full_executive_advisory_full_others_reasoning_only_specific_values_never_disclosed",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Finance (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed externally to programs)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary",
+      "specific_values_never_disclosed"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "Finance (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed externally to programs)",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_credit_risk_executive_advisory_risk_management",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Credit Risk, Executive Advisory, Risk Management",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "risk_management"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "risk_management"
+      ],
+      "raw_summary": "Credit Risk, Executive Advisory, Risk Management",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_specific_with_regulatory_commentary_treatment",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-specific with regulatory-commentary treatment",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-specific with regulatory-commentary treatment",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_bsa_aml_modernization_program_compliance_legal_executive_advisory_limited",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "BSA/AML Modernization program, Compliance, Legal, Executive Advisory (limited)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [
+      "executive_advisory",
+      "bsa_aml_modernization"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "BSA/AML"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "bsa_aml_modernization"
+      ],
+      "raw_summary": "BSA/AML Modernization program, Compliance, Legal, Executive Advisory (limited)",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": [
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_legal_privileged_extreme_constraint_bsa_aml_program_disclosable_internally_",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "**program-scoped + legal-privileged** (extreme constraint); BSA/AML program disclosable internally; cross-program reasoning-only with specific values never surfaced outside program",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [
+      "legal-privileged",
+      "BSA/AML"
+    ],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "**program-scoped + legal-privileged** (extreme constraint); BSA/AML program disclosable internally; cross-program reasoning-only with specific values never surfaced outside program",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "legal-privileged",
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_treasury_finance_consumer_banking_commercial_banking_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Treasury, Finance, Consumer Banking, Commercial Banking, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "commercial_banking",
+      "consumer_banking"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "commercial_banking",
+        "consumer_banking"
+      ],
+      "raw_summary": "Treasury, Finance, Consumer Banking, Commercial Banking, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_specific",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-specific",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-specific",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_wealth_programs_cross_franchise_programs_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Wealth programs, Cross-Franchise programs, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "Wealth programs, Cross-Franchise programs, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_tightly_scoped_client_specific_never_disclosed_advisor_specific_program_scoped",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "tightly scoped; client-specific never disclosed; advisor-specific program-scoped",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "tightly scoped; client-specific never disclosed; advisor-specific program-scoped",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_consumer_banking_programs_digital_transformation_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Consumer Banking programs, Digital Transformation, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "consumer_banking",
+      "digital_transformation"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "consumer_banking",
+        "digital_transformation"
+      ],
+      "raw_summary": "Consumer Banking programs, Digital Transformation, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_specific_aggregate_customer_specific_never_disclosed",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-specific aggregate; customer-specific never disclosed",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-specific aggregate; customer-specific never disclosed",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_commercial_banking_programs_treasury_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Commercial Banking programs, Treasury, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "commercial_banking"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "commercial_banking"
+      ],
+      "raw_summary": "Commercial Banking programs, Treasury, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_specific_specific_commercial_relationships_never_disclosed_cross_program",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-specific; specific commercial relationships never disclosed cross-program",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-specific; specific commercial relationships never disclosed cross-program",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_compliance_programs_legal_executive_advisory_risk_management",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Compliance programs, Legal, Executive Advisory, Risk Management",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "risk_management"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "risk_management"
+      ],
+      "raw_summary": "Compliance programs, Legal, Executive Advisory, Risk Management",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_legal_privileged_extreme_constraint_affected_program_only_external_disclosu",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "**program-scoped + legal-privileged** (extreme constraint); affected-program-only; external disclosure prohibited",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "legal-privileged"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "**program-scoped + legal-privileged** (extreme constraint); affected-program-only; external disclosure prohibited",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "legal-privileged"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_technology_cybersecurity_ai_platform_programs_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Technology, Cybersecurity, AI Platform programs, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "Technology, Cybersecurity, AI Platform programs, Executive Advisory",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_cybersecurity_specifics_tightly_restricted_critical_infrastructure_sensitive_for_banking",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "Cybersecurity specifics tightly restricted (critical-infrastructure-sensitive for banking)",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "Cybersecurity specifics tightly restricted (critical-infrastructure-sensitive for banking)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped_bsa_aml_modernization_compliance_legal_executive_advisory",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped (BSA/AML Modernization, Compliance, Legal, Executive Advisory)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [
+      "executive_advisory",
+      "bsa_aml_modernization"
+    ],
+    "role_filter": [
+      "Executive Advisory"
+    ],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "BSA/AML"
+    ],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "bsa_aml_modernization"
+      ],
+      "raw_summary": "program-scoped (BSA/AML Modernization, Compliance, Legal, Executive Advisory)",
+      "role_filter": [
+        "Executive Advisory"
+      ],
+      "regulatory_constraints": [
+        "BSA/AML"
+      ]
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  },
+  {
+    "id": "firstcap_scope_program_scoped",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "summary": "program-scoped",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T22:13:45.044Z",
+    "updated_at": "2026-04-21T22:13:45.044Z"
+  }
+]

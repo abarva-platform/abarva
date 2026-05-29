@@ -1,0 +1,28 @@
+[
+  {
+    "id": "pattern_shadow_ai_governance_firstcap",
+    "foundational_pattern_id": "pattern_shadow_ai_governance",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "variant_pattern_pack_id": "firstcap_pattern_shadow_ai_in_lending_and_customer_operations",
+    "tenant_key": "first_capital",
+    "variant_name": "Shadow AI in Lending and Customer Operations",
+    "sector": "financial_services",
+    "evidence_summary": "12 AI tools identified, 7 below governance threshold, 3 credit-adjacent workflows, 2 customer-facing uses.",
+    "linked_kpi_ids": [
+      "firstcap_ai_governance_maturity",
+      "firstcap_model_risk_management_maturity",
+      "firstcap_cybersecurity_maturity"
+    ],
+    "sensitivities": [
+      "fair lending",
+      "SR 11-7",
+      "GLBA data handling"
+    ],
+    "metadata": {
+      "source_spec": "pattern-pack-01-shadow-ai-governance.md",
+      "variant_section": "11.3"
+    },
+    "created_at": "2026-04-21T22:06:41.494Z",
+    "updated_at": "2026-04-21T22:13:48.744Z"
+  }
+]

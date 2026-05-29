@@ -1,0 +1,650 @@
+[
+  {
+    "id": "d52cd124-a7d0-4369-ba3d-6ecfc2e45873",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "2fc81dc8-5860-4e1f-9c3f-9eeea95b775f",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "016de935-6c33-4771-a878-23eda80dd1c1",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "549e9aef-0533-4c73-adb3-20d7ed6d3b99",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "98ea431d-167f-4ff3-bce9-e9e25517cf7e",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "88c243d9-c075-428e-a56a-86d4b26cbd7d",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "fdbbba40-317c-4e53-bb4e-0fee158c4981",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "32ea0fe7-b4af-4675-a6e5-befee88189bb",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "777c4393-c12c-447d-8033-816677326654",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "265a8e2d-6d65-41f3-9a7e-44f1fd3a4ad5",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "a1489b16-e99b-40f8-b0ea-811e448cec63",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "c01923ae-2db2-4bf1-a1d8-7b215dec850e",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "ba23d078-9f4a-400f-8201-4af80e28fbe0",
+    "category": "cloud_infra",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "1050000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "99016ef7-62c6-4fa0-a51e-832db4960ac9",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "7e012149-de79-4ecf-81ca-183fa55f306d",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "fd98b57a-c9c5-443a-9c70-006209adec25",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "444e49fb-fe14-428b-9776-4f557535f5e7",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "b90a1188-2375-4a6d-8c28-5b8385fa8a3a",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "6df4be22-1d0a-4b2f-ab9b-9c52cf768f21",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "30ab21f5-f290-4a62-8405-dae368c9bf7a",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "bfeb89dc-1e1e-4683-a693-e2ac9b92380c",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "2083358f-336c-45db-a5eb-bd72a40ac75a",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "2d0de75e-1e02-4785-aa62-db96dedd9d7e",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "1df16fbe-c766-4289-97d1-183612753d35",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "5b605248-b649-4c92-8837-9550e3d26f89",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "d327c227-13da-4198-ac49-4e65c6dd4173",
+    "category": "software_license",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "2150000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "d87fe4fc-7534-4fd0-88ab-1d10e08a2fb0",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "90216c82-f707-4075-b497-09b3db384a18",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "63c2e453-d5af-4d96-90b3-97a4a92cf197",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "7371b459-4bb1-4281-99ea-b630619643b8",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "70fe4359-c50b-4e8a-a1ec-27a937c9d786",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "a31921cd-378c-4e50-b5c8-7d6ba4ff6a06",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "e7554799-8e29-41d0-ac39-d39ee6b97de4",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "dbbc0850-b30e-4599-9267-75beb1d7d8ec",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "37844445-8037-4160-ada1-a9b1e391a62d",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "887de9ef-ef1a-409d-97d6-24e95bc181bc",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "89fc68e6-1d1c-45c7-9a06-3291bdd805b3",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "c036613a-c07f-425f-b92f-759b4b893130",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c4c823a3-c401-468f-b8f9-843d55e9731f",
+    "category": "software_license",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "734000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "16e08480-6f6e-4ad2-9add-f1e8f8cbd8a3",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "629fcdea-7e0b-4d6b-9324-f0c1c3175c96",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "88a68884-aec5-4db0-8891-d9da342ef766",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "ad789354-c9a7-4fe5-923c-1d9934fd670c",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "7fdb5d4e-9eeb-4f62-bafc-28707726a798",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "371bad93-3ca7-491c-93ec-4013486a6810",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "94347633-8d87-41f7-a117-61ab60018fbf",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "188b5eaa-3192-4627-9c2f-8223254446df",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "fa74416c-6311-4df5-b500-f17d01a80aef",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "dba7e752-cfc5-4715-8f7e-25e04a1a2dc8",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "e6e4e223-76c0-49ea-8fa0-fc273e6e6541",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "44cbbdeb-5ff3-46d2-94bc-ac14962d9632",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "c483b476-7350-4981-83e5-10db635ce6a4",
+    "category": "cloud_infra",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "1100000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "b76f54ae-32ea-49f0-8c5e-fd971b0b3a31",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "fb94c6e9-cbfd-4e0e-a647-499170d933eb",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "a66e2c63-4d16-4175-b0bd-3c396c84f260",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "99e65b63-c372-4212-84f2-157561e23c63",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "15552138-a03e-47fb-80fd-c52c37338e1b",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "c56047a1-211b-4af5-8c5c-39df121583fe",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "181adaa5-18f2-49db-a1eb-cd4a0ce14c9f",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "75369d81-096e-468a-a9c8-76fcf9a6d669",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "b457d2a0-7d4f-49ae-afeb-6933061b9902",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "b0fb6ead-42a2-4c79-ab89-c0f3db4beb6b",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "9683f7aa-87b8-4062-b7c1-b69d6a7a6ab5",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "f4af5bfa-1647-4dcf-95cb-0605b9ca886e",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "a7a8a932-3249-4d23-b587-41cb4240216b",
+    "category": "software_license",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "620000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "016bf192-ac86-44a2-a3ba-afe4fd0fef2e",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-05-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "0df63196-a39a-4d4a-a5f4-67d15472cd8a",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-06-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "dfb51f4d-9811-49c6-9419-730beaf0e069",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-07-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "28dd8a3c-b3ff-4020-b46f-2132e8382b85",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-08-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "313b2a65-299d-40a7-8235-8d642f0f89ed",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-09-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "2a94296f-0655-4de7-a84a-217ecfa4f53a",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-10-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "aaeaf92e-2518-4450-ba6d-81c3bf4a5f5d",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-11-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "d647d750-534b-4ec9-99c5-57f39d46d869",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2025-12-01T06:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "c80a7839-8962-4657-b23d-1919e00397e8",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2026-01-01T06:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "b7eee74f-2526-4e0f-b525-dd2cfcc382c0",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2026-02-01T06:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "add21d09-b264-4b70-a456-55c5f6354b41",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2026-03-01T06:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  },
+  {
+    "id": "dd1737f7-2c5d-4ad5-a789-f935e4eb7020",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "cost_center_id": "03985e68-0d04-4438-b973-b9f435d97ff6",
+    "category": "labor_contract",
+    "month": "2026-04-01T05:00:00.000Z",
+    "amount_usd": "1146000.00",
+    "is_demo_data": true
+  }
+]

@@ -1,0 +1,1140 @@
+{
+  "generatedAt": "2026-05-29T12:11:42.987Z",
+  "canonicalRows": [
+    {
+      "key": "apex-retail",
+      "industry": "retail",
+      "clientRows": [
+        {
+          "id": "bb8ed961-a049-4d0c-a38f-f8912138fceb",
+          "name": "Apex Retail",
+          "type": null,
+          "industry": null,
+          "revenue": "$24.8B",
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-19T19:22:10.620Z",
+          "updated_at": "2026-05-24T01:36:49.343Z",
+          "legal_name": "Apex Retail Group Composite Seed",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "RETAIL",
+          "annual_revenue_usd": "24800000000.00",
+          "it_budget_usd": "545000000.00",
+          "ai_budget_usd": "72000000.00",
+          "employee_count": 96000,
+          "operational_units": 480,
+          "business_description": "Fictional specialty retailer used as AbarVa's richest synthetic enterprise tenant: $24.8B revenue, 480 stores across 42 states, 96,000 employees, and a $545M IT budget.",
+          "slug": "apex-retail",
+          "tenant_key": "apex-retail",
+          "ai_policy": {
+            "allowGamma": true,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ]
+    },
+    {
+      "key": "meridian-health",
+      "industry": "healthcare_provider",
+      "clientRows": [
+        {
+          "id": "a20ecef5-f0ea-4890-b9d5-7375fab223ff",
+          "name": "Meridian Health",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-19T19:22:10.620Z",
+          "updated_at": "2026-05-23T00:17:26.495Z",
+          "legal_name": "Meridian Health",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "HEALTHCARE_IDN",
+          "annual_revenue_usd": "18600000000.00",
+          "it_budget_usd": "930000000.00",
+          "ai_budget_usd": "142000000.00",
+          "employee_count": 62000,
+          "operational_units": 165,
+          "business_description": "$18.6B integrated provider-payer network across the Pacific Northwest, Northern California, and Mountain West · 23 hospitals, 142 clinics · Meridian Health Plans ~$7.1B premium revenue, 1.45M covered lives, MA-heavy growth · Sierra Coast Health ($3.8B West Coast provider) acquisition in diligence",
+          "slug": "meridian-health",
+          "tenant_key": "meridian-health",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ]
+    },
+    {
+      "key": "northstar-clinical",
+      "industry": "healthcare_medtech",
+      "clientRows": [
+        {
+          "id": "2702b525-4c6a-4fbe-973d-99a8480d8318",
+          "name": "Northstar Clinical Technologies",
+          "type": null,
+          "industry": null,
+          "revenue": "$22.6B",
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-05-21T09:27:28.347Z",
+          "updated_at": "2026-05-26T10:38:33.242Z",
+          "legal_name": "Northstar Clinical Technologies",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "HEALTHCARE_MEDTECH",
+          "annual_revenue_usd": "22600000000.00",
+          "it_budget_usd": "1150000000.00",
+          "ai_budget_usd": "24000000.00",
+          "employee_count": 58000,
+          "operational_units": 42,
+          "business_description": "Northstar Clinical Technologies synthetic enterprise tenant; $22.6B revenue; 58,000 employees; 42 plants; 85 countries; strategic posture: newly independent, margin expansion, ERP simplification, TSA exit, AI product modernization",
+          "slug": null,
+          "tenant_key": "northstar-medtech",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ]
+    },
+    {
+      "key": "first-capital",
+      "industry": "financial_services_banking",
+      "clientRows": [
+        {
+          "id": "7dbf2cc9-79c2-44bd-98f7-95337b882807",
+          "name": "First Capital",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-05-10T18:59:28.586Z",
+          "updated_at": "2026-05-23T00:17:26.495Z",
+          "legal_name": "First Capital Financial Group",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "finserv",
+          "annual_revenue_usd": null,
+          "it_budget_usd": null,
+          "ai_budget_usd": null,
+          "employee_count": null,
+          "operational_units": null,
+          "business_description": null,
+          "slug": null,
+          "tenant_key": null,
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        },
+        {
+          "id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+          "name": "Brindlemark Financial",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-19T19:22:10.620Z",
+          "updated_at": "2026-05-23T00:17:26.495Z",
+          "legal_name": "Brindlemark Financial Composite Seed",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "FINSERV",
+          "annual_revenue_usd": "28000000000.00",
+          "it_budget_usd": "2100000000.00",
+          "ai_budget_usd": "180000000.00",
+          "employee_count": 34000,
+          "operational_units": 890,
+          "business_description": "$28B regional bank · consumer + commercial + wealth · 890 branches + 2,400 ATMs across 6 East Coast states · Finxact core + legacy · Snowflake + AWS primary",
+          "slug": "brindlemark-financial",
+          "tenant_key": "first-capital",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ]
+    },
+    {
+      "key": "skyharbor-air",
+      "industry": "airline",
+      "clientRows": [
+        {
+          "id": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+          "name": "SkyHarbor Air",
+          "type": null,
+          "industry": null,
+          "revenue": "$52.1B",
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-05-27T13:50:16.426Z",
+          "updated_at": "2026-05-28T08:21:08.752Z",
+          "legal_name": "SkyHarbor Air",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "AIRLINE",
+          "annual_revenue_usd": "52100000000.00",
+          "it_budget_usd": "3200000000.00",
+          "ai_budget_usd": null,
+          "employee_count": 95000,
+          "operational_units": null,
+          "business_description": "SkyHarbor Air synthetic enterprise tenant; $52.1B revenue; 95,000 employees; strategic posture: Five-year CTO-led IBM mainframe to AWS modernization program entering evidence-led acceleration phase.",
+          "slug": "skyharbor-air",
+          "tenant_key": "skyharbor-air",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ]
+    }
+  ],
+  "reports": [
+    {
+      "key": "brindlemark-financial",
+      "label": "Brindlemark Financial",
+      "action": "merge-then-delete",
+      "aliases": [
+        "brindlemark-financial",
+        "brindlemark",
+        "brindlemark-financial-services"
+      ],
+      "clientRows": [
+        {
+          "id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+          "name": "Brindlemark Financial",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-19T19:22:10.620Z",
+          "updated_at": "2026-05-23T00:17:26.495Z",
+          "legal_name": "Brindlemark Financial Composite Seed",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "FINSERV",
+          "annual_revenue_usd": "28000000000.00",
+          "it_budget_usd": "2100000000.00",
+          "ai_budget_usd": "180000000.00",
+          "employee_count": 34000,
+          "operational_units": 890,
+          "business_description": "$28B regional bank · consumer + commercial + wealth · 890 branches + 2,400 ATMs across 6 East Coast states · Finxact core + legacy · Snowflake + AWS primary",
+          "slug": "brindlemark-financial",
+          "tenant_key": "first-capital",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": true,
+            "maxDataClass": "confidential",
+            "kernelOnlyMode": false,
+            "allowExternalAI": true,
+            "requireRedaction": false,
+            "promptResponseRetentionDays": 30,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ],
+      "tableReports": [
+        {
+          "table": "access_scopes",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 32,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/access_scopes.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "ai_business_goals",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 4,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/ai_business_goals.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "ai_egress_audit",
+          "columns": [
+            {
+              "column": "tenant_id",
+              "count": 160,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/ai_egress_audit.tenant_id.json"
+            }
+          ]
+        },
+        {
+          "table": "ai_initiatives",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 49,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/ai_initiatives.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "applications",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 180,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/applications.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "atlas_reasoning_traces",
+          "columns": [
+            {
+              "column": "tenant_id",
+              "count": 206,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/atlas_reasoning_traces.tenant_id.json"
+            }
+          ]
+        },
+        {
+          "table": "benchmark_cohorts",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 3,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/benchmark_cohorts.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "briefings",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/briefings.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "contradiction_detection_runs",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 5,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/contradiction_detection_runs.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "contradictions",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 21,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/contradictions.client_id.json"
+            },
+            {
+              "column": "triggered_engagement_id",
+              "count": 10,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/contradictions.triggered_engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "cost_centers",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/cost_centers.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "engagements",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 9,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/engagements.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "enterprise_context_chunks",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 400,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/enterprise_context_chunks.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "evidence",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 66,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/evidence.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "executive_profiles",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/executive_profiles.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "external_events",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/external_events.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "external_sources",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 8,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/external_sources.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "foundational_pattern_variants",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/foundational_pattern_variants.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "intelligence_ask_sessions",
+          "columns": [
+            {
+              "column": "tenant_id",
+              "count": 2,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/intelligence_ask_sessions.tenant_id.json"
+            }
+          ]
+        },
+        {
+          "table": "intelligence_ask_turns",
+          "columns": [
+            {
+              "column": "tenant_id",
+              "count": 40,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/intelligence_ask_turns.tenant_id.json"
+            }
+          ]
+        },
+        {
+          "table": "kpis",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 44,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/kpis.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "legal_privileged_contexts",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 4,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/legal_privileged_contexts.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "pattern_packs",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 7,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/pattern_packs.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "person_client_memberships",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 35,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/person_client_memberships.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "program_origination_drafts",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 2,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_origination_drafts.client_id.json"
+            },
+            {
+              "column": "committed_engagement_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_origination_drafts.committed_engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "spend_breakdown",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 72,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/spend_breakdown.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "staff_augmentation",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 7,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/staff_augmentation.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "tech_projects",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 15,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/tech_projects.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "tech_stack_items",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 33,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/tech_stack_items.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "telemetry_sources",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 9,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/telemetry_sources.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "tower_user_preferences",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/tower_user_preferences.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "use_cases",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 34,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/use_cases.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "user_briefing_preferences",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/user_briefing_preferences.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "vendor_contracts",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 70,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/vendor_contracts.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "volumetrics_snapshots",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 30,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/volumetrics_snapshots.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "deliverables_v2",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 152,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/deliverables_v2.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "module_state_log",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 52,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/module_state_log.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "phase_snapshots",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 12,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/phase_snapshots.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_approval_requests",
+          "columns": [
+            {
+              "column": "program_id",
+              "count": 2,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_approval_requests.program_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_attachments",
+          "columns": [
+            {
+              "column": "program_id",
+              "count": 5,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_attachments.program_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_audit_log",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 138,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_audit_log.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_evidence_items",
+          "columns": [
+            {
+              "column": "program_id",
+              "count": 5,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_evidence_items.program_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_milestones",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 70,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_milestones.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_modules",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 7,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/program_modules.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "turns",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 64,
+              "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/turns.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        }
+      ],
+      "recentEgress": {
+        "count": 160,
+        "archive": "verification/phase-0d/diagnostic-data/brindlemark-financial/ai_egress_audit.recent_30d.json"
+      },
+      "clerk": {
+        "status": "ok",
+        "reason": null,
+        "users": [],
+        "archive": null
+      }
+    },
+    {
+      "key": "helix-therapeutics",
+      "label": "Helix Therapeutics",
+      "action": "hard-delete",
+      "aliases": [
+        "helix-therapeutics",
+        "helix"
+      ],
+      "clientRows": [
+        {
+          "id": "4cddbcfe-c17c-41f7-91b0-52854a561218",
+          "name": "Helix Therapeutics",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-19T23:04:17.615Z",
+          "updated_at": "2026-04-27T21:10:09.621Z",
+          "legal_name": "Helix Therapeutics, Inc.",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "HEALTHCARE_IDN",
+          "annual_revenue_usd": "22000000000.00",
+          "it_budget_usd": "420000000.00",
+          "ai_budget_usd": "95000000.00",
+          "employee_count": 18000,
+          "operational_units": 6,
+          "business_description": "$22B mid-cap biotech · 14 approved drugs · 280 pipeline compounds (Phase 1-4) · 340 active trials · 6 manufacturing sites · HQ US East Coast with research hubs in Basel + Singapore + Cambridge MA",
+          "slug": "helix-therapeutics",
+          "tenant_key": null,
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": false,
+            "maxDataClass": "internal",
+            "kernelOnlyMode": true,
+            "allowExternalAI": false,
+            "requireRedaction": true,
+            "promptResponseRetentionDays": 0,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ],
+      "tableReports": [
+        {
+          "table": "staff_augmentation",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/helix-therapeutics/staff_augmentation.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "tech_projects",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 12,
+              "archive": "verification/phase-0d/diagnostic-data/helix-therapeutics/tech_projects.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "tech_stack_items",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 30,
+              "archive": "verification/phase-0d/diagnostic-data/helix-therapeutics/tech_stack_items.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "use_cases",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 43,
+              "archive": "verification/phase-0d/diagnostic-data/helix-therapeutics/use_cases.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "volumetrics_snapshots",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 30,
+              "archive": "verification/phase-0d/diagnostic-data/helix-therapeutics/volumetrics_snapshots.client_id.json"
+            }
+          ]
+        }
+      ],
+      "recentEgress": {
+        "count": 0,
+        "archive": null
+      },
+      "clerk": {
+        "status": "ok",
+        "reason": null,
+        "users": [],
+        "archive": null
+      }
+    },
+    {
+      "key": "keystone-energy-holdings",
+      "label": "Keystone Energy Holdings",
+      "action": "hard-delete",
+      "aliases": [
+        "keystone-energy-holdings",
+        "keystone-energy",
+        "keystone"
+      ],
+      "clientRows": [
+        {
+          "id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+          "name": "Keystone Energy Holdings",
+          "type": null,
+          "industry": null,
+          "revenue": null,
+          "intelligence_brief": null,
+          "confidence_score": 0,
+          "created_at": "2026-04-21T18:39:14.590Z",
+          "updated_at": "2026-05-06T15:56:39.774Z",
+          "legal_name": "Keystone Energy Composite Seed",
+          "billing_email": null,
+          "stripe_customer_id": null,
+          "industry_code": "ENERGY",
+          "annual_revenue_usd": null,
+          "it_budget_usd": null,
+          "ai_budget_usd": null,
+          "employee_count": null,
+          "operational_units": null,
+          "business_description": null,
+          "slug": "keystone-energy-holdings",
+          "tenant_key": "keystone",
+          "ai_policy": {
+            "allowGamma": false,
+            "allowClaude": false,
+            "maxDataClass": "internal",
+            "kernelOnlyMode": true,
+            "allowExternalAI": false,
+            "requireRedaction": true,
+            "promptResponseRetentionDays": 0,
+            "requireHumanApprovalForExports": true
+          }
+        }
+      ],
+      "tableReports": [
+        {
+          "table": "access_scopes",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 35,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/access_scopes.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "benchmark_cohorts",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 3,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/benchmark_cohorts.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "briefings",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/briefings.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "clients",
+          "columns": [
+            {
+              "column": "tenant_key",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/clients.tenant_key.json"
+            }
+          ]
+        },
+        {
+          "table": "contradiction_detection_runs",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/contradiction_detection_runs.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "contradictions",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 5,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/contradictions.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "engagements",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/engagements.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "evidence",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 74,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/evidence.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "executive_profiles",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/executive_profiles.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "external_events",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 6,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/external_events.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "external_sources",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 8,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/external_sources.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "foundational_pattern_variants",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/foundational_pattern_variants.client_id.json"
+            },
+            {
+              "column": "tenant_key",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/foundational_pattern_variants.tenant_key.json"
+            }
+          ]
+        },
+        {
+          "table": "kpis",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 41,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/kpis.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "pattern_packs",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 7,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/pattern_packs.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "person_client_memberships",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 41,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/person_client_memberships.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "program_audit_log",
+          "columns": [
+            {
+              "column": "tenant_key",
+              "count": 67,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/program_audit_log.tenant_key.json"
+            },
+            {
+              "column": "engagement_id",
+              "count": 67,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/program_audit_log.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "telemetry_sources",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 9,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/telemetry_sources.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "user_briefing_preferences",
+          "columns": [
+            {
+              "column": "client_id",
+              "count": 1,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/user_briefing_preferences.client_id.json"
+            }
+          ]
+        },
+        {
+          "table": "deliverables_v2",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 118,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/deliverables_v2.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        },
+        {
+          "table": "program_milestones",
+          "columns": [
+            {
+              "column": "engagement_id",
+              "count": 34,
+              "archive": "verification/phase-0d/diagnostic-data/keystone-energy-holdings/program_milestones.engagement_id.engagement-dependent.json",
+              "note": "engagement-dependent"
+            }
+          ]
+        }
+      ],
+      "recentEgress": {
+        "count": 0,
+        "archive": null
+      },
+      "clerk": {
+        "status": "ok",
+        "reason": null,
+        "users": [],
+        "archive": null
+      }
+    }
+  ]
+}

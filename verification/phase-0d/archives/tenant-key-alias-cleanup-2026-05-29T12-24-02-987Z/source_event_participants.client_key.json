@@ -1,0 +1,140 @@
+[
+  {
+    "id": "29216dad-4089-472f-a57d-a314b65fe540",
+    "client_key": "apexretail",
+    "source_event_id": "2e25fb4d-97e5-4bda-9d9b-906efe2fe81c",
+    "source_event_row_id": "2e25fb4d-97e5-4bda-9d9b-906efe2fe81c",
+    "user_id": "aa140ad8-f736-412c-8307-016826e6c560",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T04:11:06.025Z",
+    "updated_at": "2026-05-24T04:11:06.025Z"
+  },
+  {
+    "id": "95168048-2ad5-48fe-abd9-d7abce80a6a6",
+    "client_key": "apexretail",
+    "source_event_id": "925b4459-4106-49fb-a651-7b3f73d91ddd",
+    "source_event_row_id": "925b4459-4106-49fb-a651-7b3f73d91ddd",
+    "user_id": "aa140ad8-f736-412c-8307-016826e6c560",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T04:40:38.679Z",
+    "updated_at": "2026-05-24T04:40:38.679Z"
+  },
+  {
+    "id": "e46e64a5-a113-4ce7-8f74-0fdd184dfc76",
+    "client_key": "apexretail",
+    "source_event_id": "d2001b83-d636-4b5a-a3d4-be3c876f8bbd",
+    "source_event_row_id": "d2001b83-d636-4b5a-a3d4-be3c876f8bbd",
+    "user_id": "aa140ad8-f736-412c-8307-016826e6c560",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T17:42:35.627Z",
+    "updated_at": "2026-05-24T17:42:35.627Z"
+  },
+  {
+    "id": "8b337990-4e8a-48ce-8bd7-94f5b98038c6",
+    "client_key": "apexretail",
+    "source_event_id": "c1ed0a9e-ee3c-47b3-9df7-1a9f299d6c29",
+    "source_event_row_id": "c1ed0a9e-ee3c-47b3-9df7-1a9f299d6c29",
+    "user_id": "aa140ad8-f736-412c-8307-016826e6c560",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T18:07:51.591Z",
+    "updated_at": "2026-05-24T18:07:51.591Z"
+  },
+  {
+    "id": "6de807f0-bb7d-49a6-9116-9f51bb5d52c9",
+    "client_key": "meridian",
+    "source_event_id": "f805ea35-4ffa-4134-afc0-54c59f7fba27",
+    "source_event_row_id": "f805ea35-4ffa-4134-afc0-54c59f7fba27",
+    "user_id": "1422b940-34db-45e8-8934-336d9f551ce1",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T17:42:30.045Z",
+    "updated_at": "2026-05-24T17:42:30.045Z"
+  },
+  {
+    "id": "86bc264d-089d-4be1-bdf1-5862807b6e4d",
+    "client_key": "meridian",
+    "source_event_id": "c90947c8-f1fb-4206-8b94-982794ad3871",
+    "source_event_row_id": "c90947c8-f1fb-4206-8b94-982794ad3871",
+    "user_id": "1422b940-34db-45e8-8934-336d9f551ce1",
+    "user_name": null,
+    "role": "source creator",
+    "approval_authority": "contributor",
+    "source_access_level": "source_member",
+    "can_view_financial": false,
+    "can_upload_source_artifacts": true,
+    "can_generate_sourcing_artifacts": true,
+    "can_publish_sourcing_artifacts": false,
+    "can_approve_source_stages": false,
+    "can_approve_award": false,
+    "notify_on": [
+      "source_event_update",
+      "approval_needed"
+    ],
+    "created_at": "2026-05-24T18:08:00.450Z",
+    "updated_at": "2026-05-24T18:08:00.450Z"
+  }
+]

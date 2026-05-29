@@ -1,0 +1,439 @@
+[
+  {
+    "id": "keystone_wbr_deck",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Weekly Business Review Deck",
+    "description": "CEO's weekly business review materials presented to Executive Committee every Monday",
+    "modality": "export",
+    "connector_type": "PowerPoint or PDF",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh",
+    "kpi_ids_populated": [
+      "keystone_saidi_enterprise",
+      "keystone_saifi_enterprise",
+      "keystone_jdpower_residential_csat",
+      "keystone_adj_eps",
+      "keystone_employee_engagement"
+    ],
+    "scope_description": "2.1.1 (SAIDI), 2.1.2 (SAIFI), 2.2.1 (JD Power CSAT, quarterly), 2.3.5 (Adj EPS), 2.6.1 (Engagement, quarterly), plus leading indicators",
+    "data_format": "PowerPoint or PDF",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "PII (customer data aggregates only)",
+      "SOX (financial metrics)"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_executive_advisory_program_all_cross_functional_transformation_programs",
+    "disclosure_scope_id": "keystone_scope_executive_advisory_full_transformation_programs_relevant_subset_other_programs_reasoning_o",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_wbr_deck",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.1 · Weekly Business Review Deck\n\n- **ID:** `keystone_wbr_deck`\n- **Description:** CEO's weekly business review materials presented to Executive Committee every Monday\n- **Modality:** Export (PowerPoint or PDF) · weekly refresh\n- **KPIs populated:** 2.1.1 (SAIDI), 2.1.2 (SAIFI), 2.2.1 (JD Power CSAT, quarterly), 2.3.5 (Adj EPS), 2.6.1 (Engagement, quarterly), plus leading indicators\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** PII (customer data aggregates only), SOX (financial metrics)\n- **Reasoning scope:** Executive Advisory program + all cross-functional transformation programs\n- **Disclosure scope:** Executive Advisory (full) · transformation programs (relevant subset) · other programs (reasoning-only for leading indicators)",
+    "metadata": {
+      "kpis_text": "2.1.1 (SAIDI), 2.1.2 (SAIFI), 2.2.1 (JD Power CSAT, quarterly), 2.3.5 (Adj EPS), 2.6.1 (Engagement, quarterly), plus leading indicators",
+      "modality_text": "Export (PowerPoint or PDF) · weekly refresh"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_cfo_scorecard_pbi",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "CFO Scorecard Power BI Dashboard",
+    "description": "Elena Vosburgh's weekly financial and treasury scorecard",
+    "modality": "api",
+    "connector_type": "Power BI API",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh",
+    "kpi_ids_populated": [
+      "keystone_rate_base_growth",
+      "keystone_allowed_roe_wtd_avg",
+      "keystone_rate_case_cycle_time",
+      "keystone_capital_per_customer",
+      "keystone_adj_eps",
+      "keystone_rate_base_total",
+      "keystone_opex_per_customer",
+      "keystone_bad_debt_pct"
+    ],
+    "scope_description": "2.3.1-2.3.8 (all financial KPIs), cash position, debt metrics, financing execution tracking",
+    "data_format": "Power BI API",
+    "residency_mode": "client_owned_client_hosted (Power BI stays in client tenant; AbarVa agents access via API)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "SOX, material non-public information",
+      "SEC disclosure considerations"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_finance_transformation_program_executive_advisory_program",
+    "disclosure_scope_id": "keystone_scope_finance_transformation_full_executive_advisory_full_others_reasoning_only_specific_values_",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "finance_transformation"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_cfo_scorecard_pbi",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.2 · CFO Scorecard Power BI Dashboard\n\n- **ID:** `keystone_cfo_scorecard_pbi`\n- **Description:** Elena Vosburgh's weekly financial and treasury scorecard\n- **Modality:** API integration (Power BI API) · weekly refresh\n- **KPIs populated:** 2.3.1-2.3.8 (all financial KPIs), cash position, debt metrics, financing execution tracking\n- **Residency mode:** client_owned_client_hosted (Power BI stays in client tenant; AbarVa agents access via API)\n- **Compliance tags:** SOX, material non-public information, SEC disclosure considerations\n- **Reasoning scope:** Finance Transformation program, Executive Advisory program\n- **Disclosure scope:** Finance Transformation (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed)",
+    "metadata": {
+      "kpis_text": "2.3.1-2.3.8 (all financial KPIs), cash position, debt metrics, financing execution tracking",
+      "modality_text": "API integration (Power BI API) · weekly refresh"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_pmo_tracker",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Enterprise PMO Initiative Tracker",
+    "description": "Christopher Reede's PMO office tracker covering all 22 active initiatives",
+    "modality": "api",
+    "connector_type": "ServiceNow or equivalent",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh",
+    "kpi_ids_populated": [],
+    "scope_description": "initiative status, milestone tracking, budget-vs-actual, risk registry",
+    "data_format": "ServiceNow or equivalent",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "internal-confidential"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_all_transformation_programs_at_tenant",
+    "disclosure_scope_id": "keystone_scope_per_initiative_initiative_specific_programs_can_disclose_others_reasoning_only",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_pmo_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.3 · Enterprise PMO Initiative Tracker\n\n- **ID:** `keystone_pmo_tracker`\n- **Description:** Christopher Reede's PMO office tracker covering all 22 active initiatives\n- **Modality:** API (ServiceNow or equivalent) · weekly refresh\n- **KPIs populated:** initiative status, milestone tracking, budget-vs-actual, risk registry\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** internal-confidential\n- **Reasoning scope:** all transformation programs at tenant\n- **Disclosure scope:** per initiative — initiative-specific programs can disclose; others reasoning-only",
+    "metadata": {
+      "kpis_text": "initiative status, milestone tracking, budget-vs-actual, risk registry",
+      "modality_text": "API (ServiceNow or equivalent) · weekly refresh"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_customer_ops_dashboards",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Customer Operations Dashboard Suite",
+    "description": "Sophia Lindqvist's customer operations performance dashboards (Tableau)",
+    "modality": "api",
+    "connector_type": "Tableau REST",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily refresh",
+    "kpi_ids_populated": [
+      "keystone_fcr_rate",
+      "keystone_digital_selfservice_adoption",
+      "keystone_complaint_rate",
+      "keystone_outage_notification_timeliness",
+      "keystone_bill_accuracy"
+    ],
+    "scope_description": "2.2.2 (FCR), 2.2.3 (Digital Self-Service), 2.2.4 (Complaint Rate), 2.2.5 (Outage Notification Timeliness), 2.2.6 (Bill Accuracy), plus granular call center, digital channel, and billing metrics",
+    "data_format": "Tableau REST",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "PII (customer-level data, aggregated for AbarVa view), state privacy laws"
+    ],
+    "regulatory_notes": "CX Transformation (full) · Executive Advisory (full) · others (aggregate metrics disclosable, customer-level data never disclosable)",
+    "reasoning_scope_id": "keystone_scope_customer_experience_transformation_program_jonathan_aldridge_s_executive_advisory",
+    "disclosure_scope_id": "keystone_scope_cx_transformation_full_executive_advisory_full_others_aggregate_metrics_disclosable_custom",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "customer_experience_transformation"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_customer_ops_dashboards",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.4 · Customer Operations Dashboard Suite\n\n- **ID:** `keystone_customer_ops_dashboards`\n- **Description:** Sophia Lindqvist's customer operations performance dashboards (Tableau)\n- **Modality:** API (Tableau REST) · daily refresh\n- **KPIs populated:** 2.2.2 (FCR), 2.2.3 (Digital Self-Service), 2.2.4 (Complaint Rate), 2.2.5 (Outage Notification Timeliness), 2.2.6 (Bill Accuracy), plus granular call center, digital channel, and billing metrics\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** PII (customer-level data, aggregated for AbarVa view), state privacy laws\n- **Reasoning scope:** Customer Experience Transformation program, Jonathan Aldridge's Executive Advisory\n- **Disclosure scope:** CX Transformation (full) · Executive Advisory (full) · others (aggregate metrics disclosable, customer-level data never disclosable)",
+    "metadata": {
+      "kpis_text": "2.2.2 (FCR), 2.2.3 (Digital Self-Service), 2.2.4 (Complaint Rate), 2.2.5 (Outage Notification Timeliness), 2.2.6 (Bill Accuracy), plus granular call center, digital channel, and billing metrics",
+      "modality_text": "API (Tableau REST) · daily refresh"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_reliability_dashboard",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Reliability Performance Dashboard",
+    "description": "Nicole Hargrave-Park's reliability scorecard covering all six subsidiaries",
+    "modality": "api",
+    "connector_type": "internal enterprise dashboard platform",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily refresh with storm-event real-time",
+    "kpi_ids_populated": [
+      "keystone_saidi_enterprise",
+      "keystone_saifi_enterprise",
+      "keystone_caidi_enterprise",
+      "keystone_maifi_enterprise",
+      "keystone_interconnection_queue_duration",
+      "keystone_distribution_losses",
+      "keystone_transmission_losses",
+      "keystone_substation_availability",
+      "keystone_storm_restoration_p95",
+      "keystone_ami_data_utilization",
+      "keystone_der_interconnection_throughput"
+    ],
+    "scope_description": "2.1.1-2.1.5 (all reliability), 2.4.1-2.4.6 (grid operational), 2.4.4 (storm restoration)",
+    "data_format": "internal enterprise dashboard platform",
+    "residency_mode": "client_owned_abarva_hosted (aggregate metrics); client_owned_client_hosted (substation-specific detail due to NERC CIP)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "NERC CIP (critical infrastructure — partitioned access), state PUC reporting obligations"
+    ],
+    "regulatory_notes": "Operational Excellence programs (aggregate full; specific substation reasoning-only due to NERC CIP) · Storm Response (relevant subset) · Executive Advisory (aggregate) · others (public-level metrics only)",
+    "reasoning_scope_id": "keystone_scope_operational_excellence_programs_storm_response_coordination_program_executive_advisory",
+    "disclosure_scope_id": "keystone_scope_operational_excellence_programs_aggregate_full_specific_substation_reasoning_only_due_to_n",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "operational_excellence",
+      "storm_response_coordination"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_reliability_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.5 · Reliability Performance Dashboard\n\n- **ID:** `keystone_reliability_dashboard`\n- **Description:** Nicole Hargrave-Park's reliability scorecard covering all six subsidiaries\n- **Modality:** API (internal enterprise dashboard platform) · daily refresh with storm-event real-time\n- **KPIs populated:** 2.1.1-2.1.5 (all reliability), 2.4.1-2.4.6 (grid operational), 2.4.4 (storm restoration)\n- **Residency mode:** client_owned_abarva_hosted (aggregate metrics); client_owned_client_hosted (substation-specific detail due to NERC CIP)\n- **Compliance tags:** NERC CIP (critical infrastructure — partitioned access), state PUC reporting obligations\n- **Reasoning scope:** Operational Excellence programs, Storm Response Coordination program, Executive Advisory\n- **Disclosure scope:** Operational Excellence programs (aggregate full; specific substation reasoning-only due to NERC CIP) · Storm Response (relevant subset) · Executive Advisory (aggregate) · others (public-level metrics only)",
+    "metadata": {
+      "kpis_text": "2.1.1-2.1.5 (all reliability), 2.4.1-2.4.6 (grid operational), 2.4.4 (storm restoration)",
+      "modality_text": "API (internal enterprise dashboard platform) · daily refresh with storm-event real-time"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_tech_investment_tracker",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Technology Investment and Architecture Tracker",
+    "description": "Hideki Tanaka's enterprise technology portfolio and architecture tracker",
+    "modality": "share_link",
+    "connector_type": "Excel monthly",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "share-link for architecture diagrams",
+    "kpi_ids_populated": [],
+    "scope_description": "application portfolio inventory, vendor spend, cloud utilization, cybersecurity metrics (aggregate), technical debt indicators",
+    "data_format": "Excel monthly",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "cybersecurity-sensitive, vendor-confidential"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_cloud_migration_program_cybersecurity_modernization_program_ai_platform_program_executive_",
+    "disclosure_scope_id": "keystone_scope_per_program_scope_aligned_cybersecurity_specifics_tightly_controlled",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "cloud_migration",
+      "cybersecurity_modernization",
+      "ai_platform"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_tech_investment_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.6 · Technology Investment and Architecture Tracker\n\n- **ID:** `keystone_tech_investment_tracker`\n- **Description:** Hideki Tanaka's enterprise technology portfolio and architecture tracker\n- **Modality:** Export (Excel monthly) · share-link for architecture diagrams\n- **KPIs populated:** application portfolio inventory, vendor spend, cloud utilization, cybersecurity metrics (aggregate), technical debt indicators\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** cybersecurity-sensitive, vendor-confidential\n- **Reasoning scope:** Cloud Migration program, Cybersecurity Modernization program, AI Platform program, Executive Advisory\n- **Disclosure scope:** per-program scope aligned · cybersecurity specifics tightly controlled",
+    "metadata": {
+      "kpis_text": "application portfolio inventory, vendor spend, cloud utilization, cybersecurity metrics (aggregate), technical debt indicators",
+      "modality_text": "Export (Excel monthly) · share-link for architecture diagrams"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_safety_dashboard",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Safety Performance Dashboard",
+    "description": "Yolanda Pettigrew's safety metrics dashboard",
+    "modality": "api",
+    "connector_type": "daily during high-activity periods",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh (daily during high-activity periods)",
+    "kpi_ids_populated": [
+      "keystone_osha_dart",
+      "keystone_osha_trir",
+      "keystone_public_safety_incidents"
+    ],
+    "scope_description": "2.5.1 (OSHA DART), 2.5.2 (TRIR), 2.5.3 (Public Safety Incidents), contractor safety, leading indicators",
+    "data_format": "daily during high-activity periods",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "OSHA reporting obligations, contractor liability sensitivities"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_safety_programs_executive_advisory",
+    "disclosure_scope_id": "keystone_scope_safety_programs_full_executive_advisory_full_aggregate_publicly_disclosable_specific_incid",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "safety"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_safety_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.7 · Safety Performance Dashboard\n\n- **ID:** `keystone_safety_dashboard`\n- **Description:** Yolanda Pettigrew's safety metrics dashboard\n- **Modality:** API · weekly refresh (daily during high-activity periods)\n- **KPIs populated:** 2.5.1 (OSHA DART), 2.5.2 (TRIR), 2.5.3 (Public Safety Incidents), contractor safety, leading indicators\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** OSHA reporting obligations, contractor liability sensitivities\n- **Reasoning scope:** Safety programs, Executive Advisory\n- **Disclosure scope:** Safety programs (full) · Executive Advisory (full) · aggregate publicly disclosable; specific incident details program-scoped",
+    "metadata": {
+      "kpis_text": "2.5.1 (OSHA DART), 2.5.2 (TRIR), 2.5.3 (Public Safety Incidents), contractor safety, leading indicators",
+      "modality_text": "API · weekly refresh (daily during high-activity periods)"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_regulatory_tracker",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Regulatory Proceedings Tracker",
+    "description": "Danielle Westergaard's rate case and regulatory proceedings tracker",
+    "modality": "api",
+    "connector_type": "internal regulatory system",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh; event-driven during active filings",
+    "kpi_ids_populated": [
+      "keystone_allowed_roe_wtd_avg",
+      "keystone_rate_case_cycle_time",
+      "keystone_decision_latency_capital"
+    ],
+    "scope_description": "2.3.2 (Allowed ROE), 2.3.3 (Rate Case Cycle Time), 2.8.3 (Decision Latency Capital), procedural status by case",
+    "data_format": "internal regulatory system",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "legal-privileged material (for case strategy), public-record material (for procedural status)"
+    ],
+    "regulatory_notes": "Rate Case programs (full, including privileged in appropriate context) · Regulatory Affairs (full) · Executive Advisory (procedural full, strategy program-scoped) · other programs (public-record information only)",
+    "reasoning_scope_id": "keystone_scope_rate_case_strategy_program_regulatory_affairs_programs_executive_advisory",
+    "disclosure_scope_id": "keystone_scope_rate_case_programs_full_including_privileged_in_appropriate_context_regulatory_affairs_ful",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "rate_case_strategy",
+      "regulatory_affairs"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_regulatory_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.8 · Regulatory Proceedings Tracker\n\n- **ID:** `keystone_regulatory_tracker`\n- **Description:** Danielle Westergaard's rate case and regulatory proceedings tracker\n- **Modality:** API (internal regulatory system) · weekly refresh; event-driven during active filings\n- **KPIs populated:** 2.3.2 (Allowed ROE), 2.3.3 (Rate Case Cycle Time), 2.8.3 (Decision Latency Capital), procedural status by case\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** legal-privileged material (for case strategy), public-record material (for procedural status)\n- **Reasoning scope:** Rate Case Strategy program, Regulatory Affairs programs, Executive Advisory\n- **Disclosure scope:** Rate Case programs (full, including privileged in appropriate context) · Regulatory Affairs (full) · Executive Advisory (procedural full, strategy program-scoped) · other programs (public-record information only)",
+    "metadata": {
+      "kpis_text": "2.3.2 (Allowed ROE), 2.3.3 (Rate Case Cycle Time), 2.8.3 (Decision Latency Capital), procedural status by case",
+      "modality_text": "API (internal regulatory system) · weekly refresh; event-driven during active filings"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  },
+  {
+    "id": "keystone_workforce_dashboard",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Workforce Analytics Dashboard",
+    "description": "Derek Braithwaite's HR analytics dashboard",
+    "modality": "api",
+    "connector_type": "Workday",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly refresh",
+    "kpi_ids_populated": [
+      "keystone_employee_engagement",
+      "keystone_turnover_enterprise",
+      "keystone_transmission_engineering_turnover",
+      "keystone_apprenticeship_completion",
+      "keystone_workforce_diversity_leadership"
+    ],
+    "scope_description": "2.6.1-2.6.5 (all workforce KPIs), compensation analytics, talent pipeline, exit analytics",
+    "data_format": "Workday",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "PII (employee-level), labor relations (union-sensitive data), state employment law"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "keystone_scope_hr_strategy_program_workforce_transformation_program_executive_advisory",
+    "disclosure_scope_id": "keystone_scope_hr_strategy_aggregate_full_employee_specific_reasoning_only_workforce_transformation_aggre",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "hr_strategy",
+      "workforce_transformation"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://keystone_workforce_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.9 · Workforce Analytics Dashboard\n\n- **ID:** `keystone_workforce_dashboard`\n- **Description:** Derek Braithwaite's HR analytics dashboard\n- **Modality:** API (Workday) · weekly refresh\n- **KPIs populated:** 2.6.1-2.6.5 (all workforce KPIs), compensation analytics, talent pipeline, exit analytics\n- **Residency mode:** client_owned_abarva_hosted\n- **Compliance tags:** PII (employee-level), labor relations (union-sensitive data), state employment law\n- **Reasoning scope:** HR Strategy program, Workforce Transformation program, Executive Advisory\n- **Disclosure scope:** HR Strategy (aggregate full; employee-specific reasoning-only) · Workforce Transformation (aggregate full) · Executive Advisory (aggregate) · other programs (aggregate metrics only, no individual employee data)",
+    "metadata": {
+      "kpis_text": "2.6.1-2.6.5 (all workforce KPIs), compensation analytics, talent pipeline, exit analytics",
+      "modality_text": "API (Workday) · weekly refresh"
+    },
+    "created_at": "2026-04-21T20:54:14.199Z",
+    "updated_at": "2026-04-21T20:54:14.199Z"
+  }
+]

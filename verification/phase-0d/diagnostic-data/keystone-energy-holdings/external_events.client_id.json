@@ -1,0 +1,200 @@
+[
+  {
+    "id": "keystone_event_role_launch_jonathan_aldridge",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_sec_filings",
+    "title": "Jonathan Aldridge appointed EVP and Chief Customer and Technology Officer",
+    "summary": "Keystone unified customer strategy, customer operations, enterprise technology, and digital under Jonathan Aldridge in February 2026, signaling Phase 4 integrated transformation.",
+    "event_type": "executive_move",
+    "event_date": "2026-02-01T06:00:00.000Z",
+    "entities": [
+      "Jonathan Aldridge",
+      "Keystone Energy Holdings"
+    ],
+    "topics": [
+      "customer experience transformation",
+      "technology modernization"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone base seed Part 2 / Part 4"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  },
+  {
+    "id": "keystone_event_illinois_large_load_tariff_filing",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_state_pucs",
+    "title": "Illinois large-load tariff filing submitted",
+    "summary": "Riverbend submitted its large-load tariff filing in March 2026, advancing Keystone’s strategy to allocate data-center load costs more explicitly.",
+    "event_type": "regulatory_filing",
+    "event_date": "2026-03-15T05:00:00.000Z",
+    "entities": [
+      "Riverbend Electric Company",
+      "Illinois Commerce Commission"
+    ],
+    "topics": [
+      "large load management",
+      "rate design",
+      "interconnection"
+    ],
+    "geography": [
+      "Illinois"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone base seed Part 6 / pattern 7.2"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  },
+  {
+    "id": "keystone_event_multistate_rate_case_cycle",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_state_pucs",
+    "title": "Four active rate cases entered peak decision cycle",
+    "summary": "As of April 2026, Keystone had active rate case proceedings in Illinois, Maryland, New Jersey, and Delaware with decisions expected between Q2 and Q4 2026.",
+    "event_type": "regulatory_cycle",
+    "event_date": "2026-04-01T05:00:00.000Z",
+    "entities": [
+      "Elena Vosburgh",
+      "Danielle Westergaard",
+      "Keystone Energy Holdings"
+    ],
+    "topics": [
+      "rate cases",
+      "allowed ROE",
+      "capital recovery"
+    ],
+    "geography": [
+      "Illinois",
+      "Maryland",
+      "New Jersey",
+      "Delaware"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone base seed Part 1 / Part 6"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  },
+  {
+    "id": "keystone_event_q1_capital_plan_deployment",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_sec_filings",
+    "title": "Grid modernization capital plan at 22% of full-year pace through Q1",
+    "summary": "Grid Modernization 2030 Phase 2 had deployed 22% of annual plan through Q1 2026, increasing scrutiny on rate recovery timing and capital sequencing.",
+    "event_type": "financial_update",
+    "event_date": "2026-03-31T05:00:00.000Z",
+    "entities": [
+      "Grid Modernization 2030",
+      "Elena Vosburgh",
+      "Nicole Hargrave-Park"
+    ],
+    "topics": [
+      "capital deployment",
+      "grid modernization",
+      "rate recovery"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "medium",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone base seed Part 6.1.1"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  },
+  {
+    "id": "keystone_event_pjm_large_load_rulemaking",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_ferc_pjm",
+    "title": "PJM and FERC large-load rulemaking intensified",
+    "summary": "Federal-state tension on large-load interconnection remained elevated after the December 2025 PJM/FERC rulemaking activity, increasing uncertainty for Keystone’s 32 GW queue strategy.",
+    "event_type": "rulemaking",
+    "event_date": "2026-01-15T06:00:00.000Z",
+    "entities": [
+      "PJM Interconnection",
+      "FERC",
+      "Angela Yamamoto"
+    ],
+    "topics": [
+      "interconnection",
+      "federal-state jurisdiction",
+      "large load management"
+    ],
+    "geography": [
+      "PJM states"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone overlay pattern 3.2 / base seed Part 7.2"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  },
+  {
+    "id": "keystone_event_shadow_ai_governance_gap",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "source_id": "keystone_ext_source_analyst_research",
+    "title": "Shadow AI governance exposure surfaced across 17 teams",
+    "summary": "Composite signal synthesis identified 11 AI-adjacent tools across 17 teams, with four tools carrying unreviewed data-sharing posture and seven set to auto-renew, escalating governance urgency.",
+    "event_type": "internal_signal",
+    "event_date": "2026-04-10T05:00:00.000Z",
+    "entities": [
+      "Jonathan Aldridge",
+      "Hideki Tanaka",
+      "Keystone Energy Holdings"
+    ],
+    "topics": [
+      "AI governance",
+      "shadow AI",
+      "NERC CIP sensitivity"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Keystone overlay pattern 3.1"
+    },
+    "created_at": "2026-04-21T20:54:13.659Z",
+    "updated_at": "2026-04-21T20:54:13.659Z"
+  }
+]
