@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead, type AzureReadSelect } from '@/lib/data-plane/azureRead';
 
 export type IngestionStageName =
   | 'Upload Received'
@@ -97,7 +97,7 @@ type AuditRow = {
   request_metadata?: Record<string, unknown> | null;
 };
 
-const CHUNK_SELECT = [
+const CHUNK_COLUMNS = [
   'chunk_id',
   'source_doc',
   'chunk_index',
@@ -110,9 +110,9 @@ const CHUNK_SELECT = [
   'updated_at',
   'provenance',
   'chunk_metadata',
-].join(',');
+] as const;
 
-const AUDIT_SELECT = [
+const AUDIT_COLUMNS = [
   'id',
   'artifact_id',
   'provider',
@@ -120,7 +120,7 @@ const AUDIT_SELECT = [
   'policy_decision',
   'created_at',
   'request_metadata',
-].join(',');
+] as const;
 
 const STAGE_NAMES: IngestionStageName[] = [
   'Upload Received',
@@ -187,43 +187,53 @@ function latestIso(values: Array<string | null | undefined>): string | null {
   return sorted[0] ?? null;
 }
 
-async function fetchClientRow(clientId: string): Promise<ClientRow | null> {
-  const { data, error } = await getServerSupabase()
-    .from('clients')
-    .select('id,tenant_key,slug,name')
-    .eq('id', clientId)
-    .limit(1)
-    .maybeSingle();
+async function safeSelect<R = Record<string, unknown>>(request: AzureReadSelect): Promise<R[]> {
+  try {
+    return await azureRead.select<R>({ ...request, missingTable: request.missingTable ?? 'empty' });
+  } catch {
+    return [];
+  }
+}
 
-  if (error || !data) return null;
-  return data as ClientRow;
+async function safeMaybeSingle<R = Record<string, unknown>>(request: AzureReadSelect): Promise<R | null> {
+  try {
+    return await azureRead.maybeSingle<R>({ ...request, missingTable: request.missingTable ?? 'empty' });
+  } catch {
+    return null;
+  }
+}
+
+async function fetchClientRow(clientId: string): Promise<ClientRow | null> {
+  return safeMaybeSingle<ClientRow>({
+    table: 'clients',
+    columns: ['id', 'tenant_key', 'slug', 'name'],
+    where: { id: clientId },
+  });
 }
 
 async function fetchContextChunks(clientId: string): Promise<ContextChunkRow[]> {
-  const { data, error } = await getServerSupabase()
-    .from('enterprise_context_chunks')
-    .select(CHUNK_SELECT)
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false });
-
-  if (error || !data) return [];
-  return data as ContextChunkRow[];
+  return safeSelect<ContextChunkRow>({
+    table: 'enterprise_context_chunks',
+    columns: CHUNK_COLUMNS,
+    where: { client_id: clientId },
+    orderBy: { column: 'created_at', direction: 'desc' },
+  });
 }
 
 async function fetchEmbeddingAudits(
   clientId: string,
   limit = 100,
 ): Promise<AuditRow[]> {
-  const { data, error } = await getServerSupabase()
-    .from('ai_egress_audit')
-    .select(AUDIT_SELECT)
-    .eq('tenant_id', clientId)
-    .eq('workflow', 'substrate-loader-embed')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error || !data) return [];
-  return data as AuditRow[];
+  return safeSelect<AuditRow>({
+    table: 'ai_egress_audit',
+    columns: AUDIT_COLUMNS,
+    where: {
+      tenant_id: clientId,
+      workflow: 'substrate-loader-embed',
+    },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit,
+  });
 }
 
 export async function getTenantContextSummary(clientId: string): Promise<TenantContextSummary> {
@@ -324,15 +334,17 @@ export async function getTenantEvidenceMapForFile(
   clientId: string,
   sourceDoc: string,
 ): Promise<TenantEvidenceMapRow[]> {
-  const { data, error } = await getServerSupabase()
-    .from('enterprise_context_chunks')
-    .select('chunk_id,chunk_index,chunk_text,embedding_status,embedded_at')
-    .eq('client_id', clientId)
-    .eq('source_doc', sourceDoc)
-    .order('chunk_index', { ascending: true });
+  const rows = await safeSelect<ContextChunkRow>({
+    table: 'enterprise_context_chunks',
+    columns: ['chunk_id', 'chunk_index', 'chunk_text', 'embedding_status', 'embedded_at'],
+    where: {
+      client_id: clientId,
+      source_doc: sourceDoc,
+    },
+    orderBy: { column: 'chunk_index', direction: 'asc' },
+  });
 
-  if (error || !data) return [];
-  return (data as ContextChunkRow[]).map((row) => ({
+  return rows.map((row) => ({
     chunk_id: asString(row.chunk_id) ?? '',
     chunk_index: asNumber(row.chunk_index),
     chunk_text: asString(row.chunk_text) ?? '',
@@ -345,16 +357,18 @@ export async function getTenantPendingChunks(
   clientId: string,
   opts: { limit?: number } = {},
 ): Promise<TenantPendingChunkRow[]> {
-  const { data, error } = await getServerSupabase()
-    .from('enterprise_context_chunks')
-    .select('chunk_id,source_doc,chunk_index,embedding_status,embedded_at,updated_at,embedding_error')
-    .eq('client_id', clientId)
-    .in('embedding_status', ['pending', 'failed'])
-    .order('updated_at', { ascending: false })
-    .limit(opts.limit ?? 100);
+  const rows = await safeSelect<ContextChunkRow>({
+    table: 'enterprise_context_chunks',
+    columns: ['chunk_id', 'source_doc', 'chunk_index', 'embedding_status', 'embedded_at', 'updated_at', 'embedding_error'],
+    where: {
+      client_id: clientId,
+      embedding_status: { op: 'in', value: ['pending', 'failed'] },
+    },
+    orderBy: { column: 'updated_at', direction: 'desc' },
+    limit: opts.limit ?? 100,
+  });
 
-  if (error || !data) return [];
-  return (data as ContextChunkRow[]).map((row) => ({
+  return rows.map((row) => ({
     chunk_id: asString(row.chunk_id) ?? '',
     source_doc: asString(row.source_doc) ?? 'unknown-source',
     chunk_index: asNumber(row.chunk_index),
