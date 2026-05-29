@@ -12,8 +12,10 @@
 // default; `azure-postgres` is opt-in via `ABARVA_DATA_PLANE` and runs the
 // update inside a real `BEGIN`/`COMMIT` (design doc §2).
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -57,7 +59,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * verbatim pre-seam call. The client factory is injectable for tests.
  */
 export function createSupabaseThreadWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): ThreadWriteAdapter {
   return {
     name: 'supabase',

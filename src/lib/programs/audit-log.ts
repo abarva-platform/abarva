@@ -2,7 +2,7 @@ import 'server-only';
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from './types.db';
 
 export interface ProgramAuditLogInput {
@@ -38,7 +38,7 @@ export async function writeProgramAuditLog(
   if (!input.action) throw new Error('[program-audit-log] action is required');
 
   const tenantKey = await resolveTenantKey(input.tenantKey);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { error } = await sb.from('program_audit_log').insert({
     tenant_key: tenantKey,
     program_id: input.programId,

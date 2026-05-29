@@ -110,8 +110,8 @@ function makeQueryBuilder(table: string) {
 
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({ from: fromMock }),
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 import {

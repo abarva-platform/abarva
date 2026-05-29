@@ -12,8 +12,10 @@
 // Every write is audit-stamped — `created_by` carries the acting user, so a
 // VP (and an auditor) can see who served notice and when.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {
   NewSourcingWorkItem,
@@ -120,7 +122,7 @@ export interface SourcingWorkItemsWriteAdapter {
 export type SupabaseFactory = () => SupabaseClient;
 
 export function createSupabaseSourcingWorkItemsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): SourcingWorkItemsWriteAdapter {
   return {
     name: 'supabase',

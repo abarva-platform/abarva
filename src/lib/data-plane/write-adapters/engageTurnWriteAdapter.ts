@@ -18,8 +18,10 @@
 // shape returned. Default behavior is unchanged — `ABARVA_DATA_PLANE` selects
 // the plane, `supabase` unless explicitly opted out.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -72,7 +74,7 @@ function turnColumns(input: AppendTurnInput): Record<string, unknown> {
  * service-role client, exactly as the pre-seam `appendTurn` did.
  */
 export function createSupabaseEngageTurnWriteAdapter(
-  getClient: () => SupabaseClient = getServerSupabase,
+  getClient: () => SupabaseClient = getAzureWriteFluentClient,
 ): EngageTurnWriteAdapter {
   return {
     name: 'supabase',

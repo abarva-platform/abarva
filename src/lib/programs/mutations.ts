@@ -3,9 +3,11 @@
 // publishDeliverable. Plus supporting writes (create milestone, create
 // risk, module state transitions). All tenancy-asserted.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { industryCodeForClientName } from '@/lib/client-config';
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type {
   MilestoneStatus,
   ModuleStatus,
@@ -132,7 +134,7 @@ async function resolveClientIndustryCode(
   fallback?: string | null,
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data } = await sb
     .from('clients')
     .select('name, industry_code')
@@ -165,7 +167,7 @@ export async function originateProgram(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<ProgramCore> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint, { supabase: sb });
   const classificationCodes = resolveProgramClassificationCodes({
     name: input.name,
@@ -263,7 +265,7 @@ export async function advancePhase(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<{ programId: string; newPhase: number; snapshotId: string }> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, input.programId, { supabase: sb });
 
   // Physical write goes through the data-plane write seam (Slice 3f): the
@@ -309,7 +311,7 @@ export async function publishDeliverable(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('deliverables_v2')
@@ -330,7 +332,7 @@ export async function signOffDeliverable(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('deliverables_v2')
@@ -398,7 +400,7 @@ function titleizeDeliverableType(typeKey: string): string {
     .join(' ');
 }
 
-async function ensureDeliverableType(sb: ReturnType<typeof getServerSupabase>, deliverableTypeKey: string): Promise<void> {
+async function ensureDeliverableType(sb: ReturnType<typeof getAzureWriteFluentClient>, deliverableTypeKey: string): Promise<void> {
   const { error } = await sb
     .from('deliverable_types')
     .upsert(
@@ -434,7 +436,7 @@ export async function completeDeliverable(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<{ deliverableId: string; versionId: string | null; status: 'draft' | 'signed_off' }> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const deliverableTypeKey = input.deliverableTypeKey.trim();
   const title = input.title.trim();
@@ -556,7 +558,7 @@ export async function setModuleStatus(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
 
   // Read current state for audit log
@@ -612,7 +614,7 @@ export async function createMilestone(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const phaseNumber = input.phaseNumber ?? null;
   const moduleKey = input.moduleKey ?? null;
@@ -675,7 +677,7 @@ export async function updateMilestoneStatus(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('program_milestones')
@@ -705,7 +707,7 @@ export async function createWorkItem(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('program_work_items')
@@ -736,7 +738,7 @@ export async function updateWorkItemStatus(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const update: Record<string, unknown> = { status };
   if (status === 'done') update.completed_at = new Date().toISOString();
@@ -767,7 +769,7 @@ export async function createRisk(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('program_risks')

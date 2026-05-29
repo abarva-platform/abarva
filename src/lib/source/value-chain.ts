@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { recordEvidence } from '@/lib/evidence/ledger';
 
 export type SourceValueStateLayer = 'baseline' | 'intervention' | 'negotiated' | 'realized';
@@ -89,7 +89,7 @@ function iso(value: string | Date | null | undefined): string | null {
 }
 
 async function loadSourceEvent(sourceEventId: string): Promise<SourceEventRowForValue> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('source_events')
     .select('id,client_key,event_code,event_name,estimated_value_usd,trigger_description,scope_description,decision_owner,updated_at')
     .eq('id', sourceEventId)
@@ -100,7 +100,7 @@ async function loadSourceEvent(sourceEventId: string): Promise<SourceEventRowFor
 }
 
 async function latestState(sourceEventId: string, layer: SourceValueStateLayer): Promise<SourceValueStateRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('source_value_states')
     .select('*')
     .eq('source_event_id', sourceEventId)
@@ -137,7 +137,7 @@ async function recordState(input: RecordStateInput): Promise<SourceValueStateRow
     created_by: input.createdBy,
   };
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('source_value_states')
     .insert(row)
     .select('*')
@@ -152,7 +152,7 @@ async function recordState(input: RecordStateInput): Promise<SourceValueStateRow
   const delta = state.amount_usd !== null && priorAmount !== null
     ? state.amount_usd - priorAmount
     : null;
-  const { error: chainError } = await getServerSupabase()
+  const { error: chainError } = await getAzureWriteFluentClient()
     .from('source_value_chain')
     .upsert({
       source_event_id: input.sourceEventId,
@@ -166,7 +166,7 @@ async function recordState(input: RecordStateInput): Promise<SourceValueStateRow
 }
 
 async function latestChainState(sourceEventId: string, step: number): Promise<SourceValueStateRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('source_value_chain')
     .select('state_id')
     .eq('source_event_id', sourceEventId)
@@ -175,7 +175,7 @@ async function latestChainState(sourceEventId: string, step: number): Promise<So
   if (error) throw new Error(`source value chain state lookup failed: ${error.message}`);
   const stateId = (data as { state_id?: string } | null)?.state_id;
   if (!stateId) return null;
-  const { data: state, error: stateError } = await getServerSupabase()
+  const { data: state, error: stateError } = await getAzureWriteFluentClient()
     .from('source_value_states')
     .select('*')
     .eq('id', stateId)
@@ -347,12 +347,12 @@ export async function attestRealized(
 
 export async function getValueChain(sourceEventId: string): Promise<SourceValueChainView> {
   const [statesResult, chainResult] = await Promise.all([
-    getServerSupabase()
+    getAzureWriteFluentClient()
       .from('source_value_states')
       .select('*')
       .eq('source_event_id', sourceEventId)
       .order('state_date', { ascending: true }),
-    getServerSupabase()
+    getAzureWriteFluentClient()
       .from('source_value_chain')
       .select('*')
       .eq('source_event_id', sourceEventId)
@@ -376,7 +376,7 @@ export async function getValueChain(sourceEventId: string): Promise<SourceValueC
 
 export async function computeCumulativeSavings(clientId: string, periodDays: number): Promise<number> {
   const since = new Date(Date.now() - periodDays * 86_400_000).toISOString();
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('source_value_states')
     .select('source_event_id,state_layer,amount_usd')
     .eq('client_id', clientId)

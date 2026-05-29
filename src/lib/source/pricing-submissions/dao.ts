@@ -15,7 +15,7 @@
 import 'server-only';
 
 import { azureRead } from '@/lib/data-plane/azureRead';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type {
   AssumptionDeviation,
   ParseStatus,
@@ -136,12 +136,12 @@ export async function insertSubmission(
 ): Promise<InsertSubmissionResult | InsertSubmissionFailure> {
   let supabase;
   try {
-    supabase = getServerSupabase();
+    supabase = getAzureWriteFluentClient();
   } catch (err) {
     return {
       ok: false,
       error: 'db_unavailable',
-      detail: err instanceof Error ? err.message : 'getServerSupabase() failed',
+      detail: err instanceof Error ? err.message : 'getAzureWriteFluentClient() failed',
     };
   }
 
@@ -201,7 +201,7 @@ export async function insertSubmission(
 export async function deleteSubmission(submissionId: string): Promise<boolean> {
   let supabase;
   try {
-    supabase = getServerSupabase();
+    supabase = getAzureWriteFluentClient();
   } catch {
     return false;
   }

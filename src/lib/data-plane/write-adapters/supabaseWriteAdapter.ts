@@ -24,8 +24,10 @@
 // `idempotency_key`). `appendAudit` surfaces a unique-violation as
 // `reason:'idempotent_replay'` rather than throwing.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {
   AuditEntry,
@@ -63,7 +65,7 @@ function isRlsDenied(err: unknown): boolean {
  * injectable so tests drive it without a live backend.
  */
 export function createSupabaseWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): DataPlaneWriteAdapter {
   return {
     name: 'supabase',

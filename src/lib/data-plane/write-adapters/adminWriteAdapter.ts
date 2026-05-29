@@ -21,8 +21,10 @@
 // behavior is unchanged: `ABARVA_DATA_PLANE` selects the plane, `supabase`
 // unless explicitly opted out.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -107,7 +109,7 @@ function errDetail(err: unknown): string {
  * pre-seam route relied on.
  */
 export function createSupabaseAdminWriteAdapter(
-  getClient: () => SupabaseClient = getServerSupabase,
+  getClient: () => SupabaseClient = getAzureWriteFluentClient,
 ): AdminWriteAdapter {
   return {
     name: 'supabase',

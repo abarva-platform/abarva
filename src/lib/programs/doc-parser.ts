@@ -25,7 +25,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   extractProgramEvidenceFromUploadBuffer,
   type ExtractedProgramEvidence,
@@ -186,7 +186,7 @@ export async function extractAndChunk(input: ExtractAndChunkInput): Promise<void
     },
   }));
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { error } = await sb.from('enterprise_context_chunks').insert(rows);
   if (error) {
     // Log but do not crash the upload response — chunking is best-effort.

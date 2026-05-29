@@ -21,8 +21,10 @@
 // a workflow integration plan. P5 gate-out (handoff to Tower) requires
 // execution team acceptance, not just Strategic Moves team signoff.
 
-import { getServerSupabase } from '@/lib/supabase-server';
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import {
   createSupabaseProgramsWriteAdapter,
   selectProgramsWriteAdapter,
@@ -199,7 +201,7 @@ export async function evaluateGate(
     };
   }
 
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
 
   // Collect state signals
   const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }, { data: milestones }] = await Promise.all([
@@ -551,7 +553,7 @@ export async function decideApproval(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
 
   // SECURITY (audit 2026-05-22, P1-3 / P1-4): before consuming the
   // approval, load the pending row so we can enforce separation of
@@ -623,7 +625,7 @@ export async function raiseMaestroFlag(
   },
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('maestro_oversight_flags')
     .insert({
@@ -649,7 +651,7 @@ export async function resolveMaestroFlag(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('maestro_oversight_flags')
     .update({
@@ -676,7 +678,7 @@ export async function hasAuthority(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data } = await sb
     .from('engagement_participants')
     .select('approval_authority')

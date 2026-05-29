@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-05-29T22:21:32.333Z",
+  "helper": "getAzureWriteFluentClient",
+  "appliedCount": 14,
+  "skippedCount": 0,
+  "results": [
+    {
+      "file": "src/lib/data-plane/write-adapters/adminWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/attachmentsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/deliverableWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/engageTurnWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/expertReviewsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/programsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourcingWorkItemsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/threadWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/uploadsWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/webhookWriteAdapter.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    }
+  ]
+}

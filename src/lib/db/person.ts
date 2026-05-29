@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface PersonRow {
   id: string;
@@ -17,13 +17,13 @@ export interface PersonRow {
 }
 
 export async function getPersonById(id: string): Promise<PersonRow | null> {
-  const { data, error } = await getServerSupabase().from('persons').select('*').eq('id', id).maybeSingle();
+  const { data, error } = await getAzureWriteFluentClient().from('persons').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return data as PersonRow | null;
 }
 
 export async function getPersonByGraphNodeId(graphNodeId: string): Promise<PersonRow | null> {
-  const { data, error } = await getServerSupabase().from('persons').select('*').eq('graph_node_id', graphNodeId).maybeSingle();
+  const { data, error } = await getAzureWriteFluentClient().from('persons').select('*').eq('graph_node_id', graphNodeId).maybeSingle();
   if (error) throw error;
   return data as PersonRow | null;
 }
@@ -47,7 +47,7 @@ export interface CreatePersonArgs {
 
 export async function appendPersonalThreads(personId: string, threads: string[]): Promise<void> {
   if (threads.length === 0) return;
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: existing } = await sb
     .from('persons')
     .select('personal_threads')
@@ -59,7 +59,7 @@ export async function appendPersonalThreads(personId: string, threads: string[])
 }
 
 export async function getAllPersons(): Promise<PersonRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('persons')
     .select('*')
     .order('created_at', { ascending: false });
@@ -74,7 +74,7 @@ export async function createPerson(args: CreatePersonArgs): Promise<PersonRow> {
     cxo_function: args.cxo_function,
     primary_focus: args.primary_focus,
   };
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('persons')
     .insert({
       graph_node_id: graphNodeId,

@@ -17,7 +17,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 import type { DeliverableFormat, DeliverableKind } from './types';
 
@@ -48,7 +48,7 @@ export interface ExportAuditInput {
 
 /** Insert one audit row for an export attempt. Throws on DB error. */
 export async function recordExportAudit(input: ExportAuditInput): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { error } = await supabase.from('program_export_log').insert({
     tenant_key: input.tenantKey,
     program_id: input.programId ?? null,

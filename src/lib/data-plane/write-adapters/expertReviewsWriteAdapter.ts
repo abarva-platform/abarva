@@ -10,8 +10,10 @@
 // `azure-postgres` is opt-in for the cutover rehearsal. Additive: it does not
 // edit the foundation write contracts.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type { ExpertReviewInput } from '@/lib/programs/expert-kernel';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
@@ -76,7 +78,7 @@ function validate(input: NewExpertReview): string | null {
 export type SupabaseFactory = () => SupabaseClient;
 
 export function createSupabaseExpertReviewsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): ExpertReviewsWriteAdapter {
   return {
     name: 'supabase',

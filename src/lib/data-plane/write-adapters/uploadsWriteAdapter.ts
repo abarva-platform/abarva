@@ -23,8 +23,10 @@
 // the inserted/updated rows are byte-faithful to the pre-seam `.insert()` /
 // `.update()` calls lifted verbatim from the routes.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -71,7 +73,7 @@ type SupabaseFactory = () => SupabaseClient;
 
 /** Supabase-backed uploads adapter — the DEFAULT path. */
 export function createSupabaseUploadsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): UploadsWriteAdapter {
   return {
     plane: 'supabase',

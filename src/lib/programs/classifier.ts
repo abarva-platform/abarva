@@ -11,7 +11,7 @@
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type {
   ClassifierInput,
   ClassifierOutput,
@@ -206,7 +206,7 @@ async function scoreAndRank(
   const patternKeys = vectorMatches.map((m) => m.patternKey);
 
   // Pull catalog rows for success-rate + canonical shape
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: catalog } = await sb
     .from('engagement_topics')
     .select('topic_key, title, industries, key_patterns, canonical_shape_json, deployment_count, successful_deployment_count, promotion_state')
@@ -316,7 +316,7 @@ export async function logClassifierDecision(input: {
   match: PatternClassifierMatch;
   accepted: boolean;
 }): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   await sb.from('pattern_match_logs').insert({
     engagement_id: input.programId,
     pattern_key: input.match.patternKey,

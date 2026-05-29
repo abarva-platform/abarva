@@ -551,3 +551,7 @@ export function getAzureReadFluentClient(): PostgresCompatClient {
   client ??= createPostgresCompatClient();
   return client;
 }
+
+export function getAzureWriteFluentClient(): PostgresCompatClient {
+  return getAzureReadFluentClient();
+}

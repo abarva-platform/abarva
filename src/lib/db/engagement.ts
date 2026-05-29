@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface EngagementRow {
   id: string;
@@ -29,7 +29,7 @@ export interface EngagementRow {
 }
 
 export async function getEngagementByGraphId(graphNodeId: string): Promise<EngagementRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagements')
     .select('*')
     .eq('graph_node_id', graphNodeId)
@@ -53,7 +53,7 @@ export async function getEngagementByAnyId(idOrGraphId: string): Promise<Engagem
   // UUID cast error on non-UUID inputs.
   if (!UUID_RE.test(idOrGraphId)) return null;
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagements')
     .select('*')
     .eq('id', idOrGraphId)
@@ -71,7 +71,7 @@ export interface DecisionEntry {
 }
 
 export async function appendDecision(engagementId: string, decision: DecisionEntry): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: current } = await sb
     .from('engagements')
     .select('decisions')
@@ -88,7 +88,7 @@ export async function updateActualMetrics(
   engagementId: string,
   items: Array<{ metric: string; actual_value: string; measurement_date?: string; source?: string }>,
 ): Promise<void> {
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('engagements')
     .update({
       actual_metrics: { items, captured_at: new Date().toISOString() },
@@ -100,7 +100,7 @@ export async function proposeOutcomeFee(
   engagementId: string,
   feeUsd: number,
 ): Promise<void> {
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('engagements')
     .update({ outcome_fee_usd: feeUsd, outcome_fee_status: 'proposed' })
     .eq('id', engagementId);
@@ -129,7 +129,7 @@ export interface RecordGateApprovalArgs {
 }
 
 export async function recordGateApproval(args: RecordGateApprovalArgs): Promise<EngagementRow> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: current, error: readErr } = await sb
     .from('engagements')
     .select('gates_passed, current_phase')
@@ -171,7 +171,7 @@ export async function createEngagement(args: CreateEngagementArgs): Promise<Enga
     .replace(/^_|_$/g, '');
   const graphNodeId = `eng_${slug}_${Date.now().toString(36)}`;
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagements')
     .insert({
       graph_node_id: graphNodeId,
@@ -201,7 +201,7 @@ export async function createEngagement(args: CreateEngagementArgs): Promise<Enga
 }
 
 export async function getEngagementById(id: string): Promise<EngagementRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagements')
     .select('*')
     .eq('id', id)
@@ -245,7 +245,7 @@ export async function getAllActiveEngagements(
   viewerPersonId?: string,
   clientId?: string | null,
 ): Promise<EngagementListItem[]> {
-  let query = getServerSupabase()
+  let query = getAzureWriteFluentClient()
     .from('engagements')
     .select(
       'id, graph_node_id, name, industry_code, current_phase, status, updated_at, sponsor_person_id, client_id, sponsor:persons!engagements_sponsor_person_id_fkey(name, role)',
@@ -296,7 +296,7 @@ function jsonNumber(obj: Record<string, unknown> | null, key: string): number {
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   const { data: active, error: activeErr } = await sb
     .from('engagements')

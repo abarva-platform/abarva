@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from './types.db';
 import { writeProgramAuditLogBestEffort } from './audit-log';
 
@@ -368,7 +368,7 @@ export async function recordProgramEvidence(
   ctx: TenancyCtx,
   input: RecordProgramEvidenceInput,
 ): Promise<string> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_evidence_items')
     .insert({

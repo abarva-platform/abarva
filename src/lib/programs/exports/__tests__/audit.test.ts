@@ -7,8 +7,8 @@
 const insertMock = jest.fn();
 
 jest.mock('server-only', () => ({}));
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: jest.fn(() => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: jest.fn(() => ({
     from: jest.fn(() => ({ insert: insertMock })),
   })),
 }));

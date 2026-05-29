@@ -4,7 +4,7 @@ import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { submitForApproval } from '@/lib/programs/approval';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import type { OriginSource } from '@/lib/programs/types.db';
@@ -219,7 +219,7 @@ async function resolvePersonByLabel(input: {
   clientName: string;
   fallbackUserId: string;
 }): Promise<ResolvedPerson> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const fallbackLooksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     input.fallbackUserId,
   );
@@ -272,7 +272,7 @@ async function insertParticipant(input: {
   role: string;
   approvalAuthority: 'sponsor' | 'contributor';
 }): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const basePayload = {
     engagement_id: input.programId,
     user_id: input.person.id,
@@ -427,7 +427,7 @@ async function persistOriginationTurns(
   turns: OriginationTurn[],
 ): Promise<void> {
   if (!turns.length) return;
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const rows = turns
     .filter((t) => t.text.trim().length > 0)
     .map((t) => ({
@@ -446,7 +446,7 @@ async function persistOriginationTurns(
 
 async function rollbackEngagement(programId: string): Promise<void> {
   try {
-    await getServerSupabase().from('engagements').delete().eq('id', programId);
+    await getAzureWriteFluentClient().from('engagements').delete().eq('id', programId);
   } catch (err) {
     console.error('[origination-submit] rollback failed', {
       programId,
@@ -516,7 +516,7 @@ export async function submitOriginationBrief(
       })
     : sponsor;
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
   const { data: existing } = await sb
     .from('engagements')
