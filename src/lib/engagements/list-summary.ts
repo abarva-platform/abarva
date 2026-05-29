@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+
 
 // Density-plan · engagements list · rich per-card summary data.
 // For each engagement, pull:
@@ -14,6 +14,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 // populated. Prat's demo engagement (Meridian demo seed) will show
 // fully populated; fresh engagements show partial.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 export interface EngagementSummaryExtras {
   engagementId: string;
   deliverablesCount: number;
@@ -108,7 +109,7 @@ export async function loadEngagementSummaries(
   engagementIds: string[],
 ): Promise<Record<string, EngagementSummaryExtras>> {
   if (engagementIds.length === 0) return {};
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const out: Record<string, EngagementSummaryExtras> = {};
   const deliverableKeysByEngagement = new Map<string, Set<string>>();
 

@@ -8,8 +8,10 @@
 //
 // Selected by the same `ABARVA_DATA_PLANE` switch as Slice 1.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -56,7 +58,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * `/api/turn/[turnId]/trace` — the `engagements!inner` join enforces tenancy.
  */
 export function createSupabaseTurnTraceReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): TurnTraceReadAdapter {
   return {
     name: 'supabase',

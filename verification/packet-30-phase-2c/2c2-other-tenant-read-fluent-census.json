@@ -1,0 +1,139 @@
+{
+  "generatedAt": "2026-05-29T22:02:36.595Z",
+  "mode": "warn",
+  "scannedDirs": [
+    "src/app",
+    "src/lib"
+  ],
+  "filesWithImportMatches": 85,
+  "importMatches": 386,
+  "filesWithBroadMatches": 294,
+  "broadMatches": 1187,
+  "topFiles": [
+    {
+      "file": "src/lib/programs/mutations.ts",
+      "importMatches": 16,
+      "broadMatches": 38
+    },
+    {
+      "file": "src/lib/intelligence/ask/session-memory.ts",
+      "importMatches": 13,
+      "broadMatches": 24
+    },
+    {
+      "file": "src/lib/db/engagement.ts",
+      "importMatches": 12,
+      "broadMatches": 25
+    },
+    {
+      "file": "src/lib/source/value-chain.ts",
+      "importMatches": 11,
+      "broadMatches": 20
+    },
+    {
+      "file": "src/lib/programs/governance.ts",
+      "importMatches": 8,
+      "broadMatches": 21
+    },
+    {
+      "file": "src/lib/programs/nexus.ts",
+      "importMatches": 8,
+      "broadMatches": 17
+    },
+    {
+      "file": "src/lib/decisions/auto-linker.ts",
+      "importMatches": 8,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/topics/db.ts",
+      "importMatches": 8,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/deliverables/generate.ts",
+      "importMatches": 8,
+      "broadMatches": 15
+    },
+    {
+      "file": "src/lib/source/artifact-registry/index.ts",
+      "importMatches": 8,
+      "broadMatches": 14
+    },
+    {
+      "file": "src/lib/deliverables/v2-generator.ts",
+      "importMatches": 7,
+      "broadMatches": 18
+    },
+    {
+      "file": "src/lib/programs/origination-submit.ts",
+      "importMatches": 7,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/db/person.ts",
+      "importMatches": 7,
+      "broadMatches": 14
+    },
+    {
+      "file": "src/lib/programs/approval.ts",
+      "importMatches": 7,
+      "broadMatches": 14
+    },
+    {
+      "file": "src/lib/programs/execute.ts",
+      "importMatches": 7,
+      "broadMatches": 13
+    },
+    {
+      "file": "src/lib/programs/attachments/index.ts",
+      "importMatches": 7,
+      "broadMatches": 11
+    },
+    {
+      "file": "src/lib/nexus/gateLifecycle.ts",
+      "importMatches": 6,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/agent/tools/program/commitProgram.ts",
+      "importMatches": 6,
+      "broadMatches": 15
+    },
+    {
+      "file": "src/lib/evidence/ledger.ts",
+      "importMatches": 6,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/lib/programs/origination-drafts.ts",
+      "importMatches": 5,
+      "broadMatches": 12
+    },
+    {
+      "file": "src/lib/security/quarantine-audit-supabase.ts",
+      "importMatches": 5,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/lib/source/queries.ts",
+      "importMatches": 5,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/lib/db/relationship-note.ts",
+      "importMatches": 5,
+      "broadMatches": 9
+    },
+    {
+      "file": "src/lib/source/pricing-submissions/dao.ts",
+      "importMatches": 5,
+      "broadMatches": 8
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/programsWriteAdapter.ts",
+      "importMatches": 4,
+      "broadMatches": 15
+    }
+  ]
+}

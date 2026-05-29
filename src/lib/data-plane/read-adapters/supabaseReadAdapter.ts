@@ -6,8 +6,10 @@
 // response shape and edge-case handling (errors -> zeros, never throw) are
 // unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import {
   TENANT_COUNT_TABLES,
@@ -144,7 +146,7 @@ async function gatherTenant(
  * so tests can supply a mock without a live database.
  */
 export function createSupabaseReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): ParallelRunReadAdapter {
   return {
     name: 'supabase',

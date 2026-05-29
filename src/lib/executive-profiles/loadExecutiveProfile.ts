@@ -1,5 +1,6 @@
-import { getServerSupabase } from '@/lib/supabase-server';
 
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 export interface ExecutiveProfileLookupArgs {
   personId?: string | null;
   displayName?: string | null;
@@ -106,7 +107,7 @@ export interface ExecutiveGreetingData {
 
 export async function loadExecutiveProfile(args: ExecutiveProfileLookupArgs): Promise<ExecutiveProfileRow | null> {
   if (!args.personId && !args.displayName) return null;
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   let row: ExecutiveProfileRow | null = null;
 
   if (args.personId) {
@@ -151,7 +152,7 @@ export async function loadExecutiveProfileDetail(args: ExecutiveProfileLookupArg
   const base = await loadExecutiveProfile(args);
   if (!base) return null;
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const [careerQ, statementsQ, relationshipsQ, interactionsQ, personaQ] = await Promise.all([
     sb
       .from('executive_career_history')

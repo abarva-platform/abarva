@@ -8,8 +8,10 @@
 //
 // Selected by the same `ABARVA_DATA_PLANE` switch as Slice 1.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { CLIENT_KEY_TO_DB_NAME, type ClientKey } from '@/lib/client-config';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
@@ -79,7 +81,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * from `/api/debug/tower-substrate` so the response is byte-identical.
  */
 export function createSupabaseTowerSubstrateReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): TowerSubstrateReadAdapter {
   const resolveClient = async (
     sb: SupabaseClient,

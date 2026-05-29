@@ -18,8 +18,10 @@
 // helper signature and `VendorsData` return shape are byte-identical and
 // every caller keeps working unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -87,7 +89,7 @@ interface SupabaseJoinedRow {
  * the pre-seam helper ran, so the returned rows are byte-identical.
  */
 export function createSupabaseIntelligenceVendorsReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): IntelligenceVendorsReadAdapter {
   return {
     name: 'supabase',

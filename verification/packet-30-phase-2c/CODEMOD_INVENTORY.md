@@ -4,12 +4,12 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T21:20:48.411Z`
+- Generated at: `2026-05-29T22:02:37.042Z`
 - Total files in inventory: `294`
-- Files with import-helper matches: `123`
-- Import-helper matches: `530`
+- Files with import-helper matches: `85`
+- Import-helper matches: `386`
 - Files with broad matches: `294`
-- Broad matches: `1331`
+- Broad matches: `1187`
 
 ## Classification Counts
 
@@ -279,52 +279,52 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/(maestro)/evidence-ledger/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 1 | evidence_ledger | - |
 | src/app/programs/expert-kernel/expert-review/export/route.ts | READ_ONLY_SELECT | app_routes | 0 | 1 | - | no static table names detected |
 | src/app/sponsor/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 1 | engagements | - |
-| src/lib/db/team.ts | READ_ONLY_SELECT | db | 5 | 11 | engagements, team_memberships | - |
-| src/lib/intelligence/library.ts | READ_ONLY_SELECT | intelligence | 3 | 8 | clients, engagement_topics, knowledge_sources | - |
-| src/lib/intelligence/canonical/runtime-pattern-index.ts | READ_ONLY_SELECT | intelligence | 3 | 4 | - | no static table names detected |
+| src/lib/db/team.ts | READ_ONLY_SELECT | db | 0 | 6 | engagements, team_memberships | - |
+| src/lib/intelligence/library.ts | READ_ONLY_SELECT | intelligence | 0 | 5 | clients, engagement_topics, knowledge_sources | - |
 | src/lib/intelligence/retrieval/structuredRetriever.ts | READ_ONLY_SELECT | intelligence | 0 | 5 | clients, knowledge_sources, spend_breakdown, tech_projects, tech_stack_items | - |
 | src/lib/intelligence/db/foundationRepository.ts | READ_ONLY_SELECT | intelligence | 0 | 3 | clients, persons | - |
 | src/lib/intelligence/retrieval/graphRetriever.ts | READ_ONLY_SELECT | intelligence | 0 | 3 | applications, contradictions, use_cases | - |
 | src/lib/intelligence/db/emergentRepository.ts | READ_ONLY_SELECT | intelligence | 0 | 2 | emergent_patterns | - |
+| src/lib/intelligence/canonical/runtime-pattern-index.ts | READ_ONLY_SELECT | intelligence | 0 | 1 | - | no static table names detected |
 | src/lib/intelligence/persistence.ts | READ_ONLY_SELECT | intelligence | 0 | 1 | enterprise_context_chunks | - |
-| src/lib/knowledge/tenant-data/supabase-adapter.ts | READ_ONLY_SELECT | knowledge | 4 | 9 | data_inventory_records, enterprise_context_chunks | - |
-| src/lib/knowledge/tenant-data/graph-traversal.ts | READ_ONLY_SELECT | knowledge | 4 | 8 | - | no static table names detected |
-| src/lib/data-plane/read-adapters/atlasRepositoryReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 18 | applications, atlas_message_traces, atlas_observations, atlas_threads, clients, cohort_benchmarks, cohort_peers, engagements, portfolio_aggregates, signal_evidence_chains, signal_firings, use_cases | - |
-| src/lib/executive-profiles/loadExecutiveProfile.ts | READ_ONLY_SELECT | other_lib | 4 | 13 | executive_career_history, executive_demo_persona_overrides, executive_interaction_log, executive_profiles, executive_public_statements, executive_relationships | - |
-| src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 12 | clients, contradictions, use_case_cost_metrics, use_case_risk, use_case_usage_metrics, use_case_value_metrics, use_cases | - |
-| src/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 10 | clients, contradictions, genome_patterns, intelligence_graph_edges, knowledge_sources, use_cases | - |
-| src/lib/atlas/tower-grounding.ts | READ_ONLY_SELECT | other_lib | 4 | 9 | ai_initiative_decisions, ai_initiative_kpis, ai_initiative_scenarios, ai_initiative_stakeholder_notes, clients | - |
-| src/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 9 | staff_augmentation, tech_projects, tech_stack_items, volumetrics_snapshots | - |
-| src/lib/data-plane/read-adapters/sourceEventsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 9 | source_events | - |
-| src/lib/data-plane/read-adapters/towerPageReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 9 | ai_initiatives, engagements, source_events | - |
-| src/lib/data-plane/read-adapters/towerSubstrateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 9 | ai_initiatives, clients | - |
-| src/lib/data-plane/read-adapters/intelligenceStagesReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 8 | ai_initiative_decisions, ai_initiative_kpis, ai_initiative_vendors | - |
-| src/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 8 | source_event_artifact_states, source_event_evidence_states, source_event_gate_criterion_states | - |
-| src/lib/data-plane/read-adapters/supabaseReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 8 | clients, engagements | - |
-| src/lib/graph/cross-client.ts | READ_ONLY_SELECT | other_lib | 4 | 8 | client_partnerships, tech_stack_items | - |
-| src/lib/auth/maestro.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | persons | - |
-| src/lib/auth/program-access-policy.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | engagement_participants, person_client_memberships | - |
-| src/lib/auth/source-access-policy.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | person_client_memberships, source_event_participants | - |
-| src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | contradictions, engagements, turns | - |
-| src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | sourcing_work_items | - |
-| src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | vip_profiles | - |
-| src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | ai_initiative_vendors | - |
-| src/lib/data-plane/read-adapters/programsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | engagements | - |
-| src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | tower_user_preferences | - |
-| src/lib/enterprise-context/intelligence-read-model.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | - | no static table names detected |
-| src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 5 | expert_reviews | - |
-| src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 5 | outcome_ledger | - |
-| src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 5 | turn_traces | - |
-| src/lib/engagements/list-summary.ts | READ_ONLY_SELECT | other_lib | 3 | 14 | clients, contradictions, deliverables_v2, engagement_topics, engagement_topics_map, engagements, turns | - |
-| src/lib/nexus/sessionContext.ts | READ_ONLY_SELECT | other_lib | 3 | 7 | clients, engagements, persons, vip_profiles | - |
-| src/lib/agent/prompts/_shared/user-context.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | vip_profiles | - |
-| src/lib/auth/current-user.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | clients, person_client_memberships, persons | - |
-| src/lib/data-plane/read-adapters/sourceDecisionQueueReadAdapter.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | data_inventory_records, data_inventory_segments | - |
-| src/lib/nexus/specialists/value.ts | READ_ONLY_SELECT | other_lib | 3 | 5 | spend_breakdown, tech_projects | - |
-| src/lib/agent/userContext.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | engagements | - |
+| src/lib/knowledge/tenant-data/supabase-adapter.ts | READ_ONLY_SELECT | knowledge | 0 | 5 | data_inventory_records, enterprise_context_chunks | - |
+| src/lib/knowledge/tenant-data/graph-traversal.ts | READ_ONLY_SELECT | knowledge | 0 | 4 | - | no static table names detected |
+| src/lib/data-plane/read-adapters/atlasRepositoryReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 14 | applications, atlas_message_traces, atlas_observations, atlas_threads, clients, cohort_benchmarks, cohort_peers, engagements, portfolio_aggregates, signal_evidence_chains, signal_firings, use_cases | - |
+| src/lib/engagements/list-summary.ts | READ_ONLY_SELECT | other_lib | 0 | 11 | clients, contradictions, deliverables_v2, engagement_topics, engagement_topics_map, engagements, turns | - |
+| src/lib/executive-profiles/loadExecutiveProfile.ts | READ_ONLY_SELECT | other_lib | 0 | 9 | executive_career_history, executive_demo_persona_overrides, executive_interaction_log, executive_profiles, executive_public_statements, executive_relationships | - |
+| src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 8 | clients, contradictions, use_case_cost_metrics, use_case_risk, use_case_usage_metrics, use_case_value_metrics, use_cases | - |
+| src/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 6 | clients, contradictions, genome_patterns, intelligence_graph_edges, knowledge_sources, use_cases | - |
+| src/lib/atlas/tower-grounding.ts | READ_ONLY_SELECT | other_lib | 0 | 5 | ai_initiative_decisions, ai_initiative_kpis, ai_initiative_scenarios, ai_initiative_stakeholder_notes, clients | - |
+| src/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 5 | staff_augmentation, tech_projects, tech_stack_items, volumetrics_snapshots | - |
+| src/lib/data-plane/read-adapters/sourceEventsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 5 | source_events | - |
+| src/lib/data-plane/read-adapters/towerPageReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 5 | ai_initiatives, engagements, source_events | - |
+| src/lib/data-plane/read-adapters/towerSubstrateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 5 | ai_initiatives, clients | - |
+| src/lib/data-plane/read-adapters/intelligenceStagesReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 4 | ai_initiative_decisions, ai_initiative_kpis, ai_initiative_vendors | - |
+| src/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 4 | source_event_artifact_states, source_event_evidence_states, source_event_gate_criterion_states | - |
+| src/lib/data-plane/read-adapters/supabaseReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 4 | clients, engagements | - |
+| src/lib/graph/cross-client.ts | READ_ONLY_SELECT | other_lib | 0 | 4 | client_partnerships, tech_stack_items | - |
+| src/lib/nexus/sessionContext.ts | READ_ONLY_SELECT | other_lib | 0 | 4 | clients, engagements, persons, vip_profiles | - |
+| src/lib/agent/prompts/_shared/user-context.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | vip_profiles | - |
+| src/lib/auth/current-user.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | clients, person_client_memberships, persons | - |
+| src/lib/auth/maestro.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | persons | - |
+| src/lib/auth/program-access-policy.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | engagement_participants, person_client_memberships | - |
+| src/lib/auth/source-access-policy.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | person_client_memberships, source_event_participants | - |
+| src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | contradictions, engagements, turns | - |
+| src/lib/data-plane/read-adapters/sourceDecisionQueueReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | data_inventory_records, data_inventory_segments | - |
+| src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | sourcing_work_items | - |
+| src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 3 | vip_profiles | - |
+| src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 2 | ai_initiative_vendors | - |
+| src/lib/data-plane/read-adapters/programsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 2 | engagements | - |
+| src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 2 | tower_user_preferences | - |
+| src/lib/enterprise-context/intelligence-read-model.ts | READ_ONLY_SELECT | other_lib | 0 | 2 | - | no static table names detected |
+| src/lib/nexus/specialists/value.ts | READ_ONLY_SELECT | other_lib | 0 | 2 | spend_breakdown, tech_projects | - |
+| src/lib/agent/userContext.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | engagements | - |
 | src/lib/azure-connectivity/smoke.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | 1 | - |
 | src/lib/azure-search/tenant-context-backfill.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |
 | src/lib/corpus/azure-search.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |
+| src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | expert_reviews | - |
+| src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | outcome_ledger | - |
+| src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | turn_traces | - |
 | src/lib/programs/queries.ts | READ_ONLY_SELECT | programs | 1 | 7 | founder_approval_requests, maestro_oversight_flags, program_milestones, program_modules, program_risks, program_work_items | - |
 | src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/expert-kernel/exports/board-grade/svg-raster.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |

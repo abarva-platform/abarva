@@ -26,8 +26,8 @@
 
 const fromMock = jest.fn<unknown, [string]>();
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: jest.fn(() => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: jest.fn(() => ({
     from: fromMock,
     schema: jest.fn(() => ({ from: fromMock })),
     storage: { from: jest.fn() },
@@ -41,7 +41,7 @@ jest.mock('pg', () => {
 });
 
 import { Pool as mockPgPoolImport } from 'pg';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 
 import {
   SupabaseTenantDataAdapter,
@@ -1011,18 +1011,18 @@ describe('SupabaseTenantDataAdapter.hasPersistedData', () => {
 describe('getSupabaseTenantDataAdapter() singleton', () => {
   beforeEach(() => {
     __resetSupabaseTenantDataAdapterForTests();
-    (getServerSupabase as jest.Mock).mockClear();
+    (getAzureReadFluentClient as jest.Mock).mockClear();
   });
 
   afterEach(() => {
     __resetSupabaseTenantDataAdapterForTests();
-    (getServerSupabase as jest.Mock).mockClear();
+    (getAzureReadFluentClient as jest.Mock).mockClear();
   });
 
   it('returns an adapter without legacy Supabase env vars', () => {
     __resetSupabaseTenantDataAdapterForTests();
     expect(getSupabaseTenantDataAdapter()).not.toBeNull();
-    expect(getServerSupabase).toHaveBeenCalledTimes(1);
+    expect(getAzureReadFluentClient).toHaveBeenCalledTimes(1);
   });
 
   it('caches the adapter instance across calls', () => {
@@ -1031,7 +1031,7 @@ describe('getSupabaseTenantDataAdapter() singleton', () => {
     const b = getSupabaseTenantDataAdapter();
     expect(a).not.toBeNull();
     expect(a).toBe(b);
-    expect(getServerSupabase).toHaveBeenCalledTimes(1);
+    expect(getAzureReadFluentClient).toHaveBeenCalledTimes(1);
   });
 });
 

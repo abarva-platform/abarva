@@ -20,8 +20,10 @@
 // signature and return shape is byte-identical and all callers keep working
 // unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -94,7 +96,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * pre-seam helpers logged and degraded rather than throwing.
  */
 export function createSupabaseSourceEventsReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): SourceEventsReadAdapter {
   return {
     name: 'supabase',

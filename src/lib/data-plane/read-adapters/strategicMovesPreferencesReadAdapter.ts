@@ -23,8 +23,10 @@
 // is a Moves/programs-query file. The Tower surface owns its own preference
 // reads separately.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -53,7 +55,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * helper ran, so the returned value is byte-identical.
  */
 export function createSupabaseStrategicMovesPreferencesReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): StrategicMovesPreferencesReadAdapter {
   return {
     name: 'supabase',

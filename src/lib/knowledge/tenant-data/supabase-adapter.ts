@@ -1,6 +1,9 @@
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient,
+} from '@/lib/data-plane/postgresCompat';
 import 'server-only';
 import { Pool, type QueryResultRow } from 'pg';
-import { getServerSupabase, type PostgresCompatClient } from '@/lib/supabase-server';
 import {
   getPineconeClient,
   privateTenantPineconeIndexConfig,
@@ -399,7 +402,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
 
   private publicTable(tableName: string) {
     if (this.publicFallbackClient === undefined) {
-      this.publicFallbackClient = getServerSupabase() as SupabaseClient;
+      this.publicFallbackClient = getAzureReadFluentClient() as SupabaseClient;
     }
     return (this.publicFallbackClient ?? this.client).from(tableName);
   }
@@ -853,7 +856,7 @@ let cachedAdapter: SupabaseTenantDataAdapter | null = null;
 
 export function getSupabaseTenantDataClient(): SupabaseClient | null {
   if (cachedClient) return cachedClient;
-  cachedClient = getServerSupabase() as SupabaseClient;
+  cachedClient = getAzureReadFluentClient() as SupabaseClient;
   return cachedClient;
 }
 

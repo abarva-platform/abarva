@@ -15,8 +15,10 @@
 // until the founder runs db:migrate) degrades to an empty list rather than
 // throwing, so the console keeps rendering the kernel case with zero reviews.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {
   ExpertReviewInput,
@@ -116,7 +118,7 @@ export interface ExpertReviewsReadAdapter {
 export type SupabaseFactory = () => SupabaseClient;
 
 export function createSupabaseExpertReviewsReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): ExpertReviewsReadAdapter {
   return {
     name: 'supabase',

@@ -1,11 +1,5 @@
-// Session context loader · pulls invoking user + tenant + recent
-// engagements + VIP profile so the Nexus system prompt is
-// personalization-aware without the user having to identify themselves.
-//
-// Used by orchestrator before Phase 5 composition (spec §8.3 context
-// budget section).
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from '@/lib/intelligence/types';
 
 export interface SessionContext {
@@ -32,7 +26,7 @@ export interface SessionContext {
 }
 
 export async function loadSessionContext(ctx: TenancyCtx): Promise<SessionContext> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
 
   const [personR, clientR, engagementsR, vipR] = await Promise.all([
     sb.from('persons').select('id, name, role, email').eq('id', ctx.userId).maybeSingle(),

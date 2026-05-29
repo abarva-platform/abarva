@@ -23,8 +23,10 @@
 // `queries.ts` consumed pre-seam (`SELECT *`) — so every helper signature
 // and return shape is byte-identical and all callers keep working unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import type {
   SourceEventArtifactStateRow,
   SourceEventEvidenceStateRow,
@@ -69,7 +71,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * already catches it and returns `[]`.
  */
 export function createSupabaseSourceCanvasSubstrateReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): SourceCanvasSubstrateReadAdapter {
   return {
     name: 'supabase',

@@ -1,5 +1,6 @@
-import { getServerSupabase } from '@/lib/supabase-server';
 
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 export interface Partnership {
   partnerClientId: string;
   partnerClientName: string;
@@ -27,7 +28,7 @@ export interface CrossClientContext {
  * "When I'm working with client X, what are my counterparty implications?"
  */
 export async function getClientPartnerships(clientId: string): Promise<Partnership[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const [outRes, inRes] = await Promise.all([
     sb
       .from('client_partnerships')
@@ -71,7 +72,7 @@ export async function getClientPartnerships(clientId: string): Promise<Partnersh
  * use Tempus Next — are their DPAs aligned?"
  */
 export async function getSharedVendorsWithPeers(clientId: string): Promise<SharedVendor[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
 
   // Step 1: vendors the current client uses.
   const { data: myVendors } = await sb

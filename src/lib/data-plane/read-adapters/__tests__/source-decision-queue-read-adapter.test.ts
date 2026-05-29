@@ -13,8 +13,8 @@ import { canonicalTenantKey } from '@/lib/tenant-keys';
 // Capture every `tenant_key` value the adapter filters on.
 const tenantKeyFilters: string[] = [];
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => {
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: () => {
     // A thin query-builder stub: `.from().select().eq().eq().limit()` and
     // `.from().select().eq().in()` both resolve to an empty result. Every
     // `.eq('tenant_key', value)` records the value.

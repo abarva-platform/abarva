@@ -1,6 +1,5 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
-
-import { getServerSupabase } from '@/lib/supabase-server';
 import {
   listInitiativesForClient,
   listVendorsForClient,
@@ -115,7 +114,7 @@ function toStringArray(value: unknown): string[] {
 }
 
 async function getClientProfile(clientId: string): Promise<ClientProfile> {
-  const { data } = await getServerSupabase()
+  const { data } = await getAzureReadFluentClient()
     .from('clients')
     .select('id, name, tenant_key, slug, industry_code, industry')
     .eq('id', clientId)
@@ -152,7 +151,7 @@ async function listSupportingRows(
 
   const initiativeIds = initiatives.map((initiative) => initiative.initiativeId);
   const initiativeById = new Map(initiatives.map((initiative) => [initiative.initiativeId, initiative] as const));
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const [kpiRes, decisionRes, scenarioRes, stakeholderRes] = await Promise.all([
     sb
       .from('ai_initiative_kpis')

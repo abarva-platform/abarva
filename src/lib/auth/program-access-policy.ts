@@ -1,6 +1,5 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
-
-import { getServerSupabase } from '@/lib/supabase-server';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export type ClientAccessLevel =
@@ -136,7 +135,7 @@ function buildPolicy(args: {
 
 async function loadClientMembership(ctx: TenancyCtx): Promise<ClientMembershipRow | null> {
   if (!isUuidLike(ctx.userId)) return null;
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { data } = await sb
     .from('person_client_memberships')
     .select('role, access_level, financial_visibility, can_admin_users, can_create_programs, can_approve_gates')
@@ -147,7 +146,7 @@ async function loadClientMembership(ctx: TenancyCtx): Promise<ClientMembershipRo
 }
 
 async function loadProgramParticipants(ctx: TenancyCtx): Promise<ParticipantRow[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { data } = await sb
     .from('engagement_participants')
     .select('engagement_id, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates, engagement:engagements!inner(client_id, archived_at, deleted_at)')

@@ -1,6 +1,5 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
-
-import { getServerSupabase } from '@/lib/supabase-server';
 
 import type {
   CanonicalConfidenceLevel,
@@ -179,7 +178,7 @@ async function readCanonicalPatternIndex(
   options: CanonicalPatternIndexOptions,
 ): Promise<CanonicalPatternIndexResult> {
   try {
-    const supabase = (options.supabase ?? getServerSupabase()) as CanonicalPatternIndexSupabase;
+    const supabase = (options.supabase ?? getAzureReadFluentClient()) as CanonicalPatternIndexSupabase;
     const response = await buildPatternRequest(supabase, query, { includeQueryClause: true })
       .order('confidence_level', { ascending: false })
       .order('updated_at', { ascending: false })
