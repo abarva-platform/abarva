@@ -11,6 +11,36 @@ const IMPORT_RE = /@supabase|supabase-server|createServerSupabase|createServiceR
 const BROAD_RE = /@supabase|supabase-js|supabase-server|createServerSupabase|createServiceRoleClient|createRouteHandlerClient|getServerSupabase|\.from\s*\(/g;
 const fail = process.argv.includes('--fail');
 
+function argValue(name) {
+  const prefix = `${name}=`;
+  const raw = process.argv.find((arg) => arg.startsWith(prefix));
+  return raw ? raw.slice(prefix.length) : null;
+}
+
+function numericArg(name) {
+  const raw = argValue(name);
+  if (raw === null) return null;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`Invalid ${name}: ${raw}`);
+  }
+  return value;
+}
+
+const maxFiles = numericArg('--max-files');
+const maxImportMatches = numericArg('--max-import-matches');
+const allowlistPath = argValue('--allowlist');
+
+function loadAllowlist(filePath) {
+  if (!filePath) return null;
+  const fullPath = path.resolve(ROOT, filePath);
+  const parsed = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+  const files = Array.isArray(parsed.files) ? parsed.files : [];
+  return new Set(files);
+}
+
+const allowlist = loadAllowlist(allowlistPath);
+
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
   const out = [];
@@ -51,12 +81,22 @@ const summary = {
   generatedAt: new Date().toISOString(),
   mode: fail ? 'fail' : 'warn',
   scannedDirs: RUNTIME_DIRS,
+  thresholds: {
+    maxFiles,
+    maxImportMatches,
+    allowlist: allowlistPath,
+  },
   filesWithImportMatches: rows.filter((row) => row.importMatches > 0).length,
   importMatches: rows.reduce((sum, row) => sum + row.importMatches, 0),
   filesWithBroadMatches: rows.length,
   broadMatches: rows.reduce((sum, row) => sum + row.broadMatches, 0),
   topFiles: rows.slice(0, 25),
 };
+
+const importRows = rows.filter((row) => row.importMatches > 0);
+const allowlistViolations = allowlist
+  ? importRows.filter((row) => !allowlist.has(row.file))
+  : [];
 
 console.log(JSON.stringify(summary, null, 2));
 
@@ -71,6 +111,9 @@ if (process.env.GITHUB_ACTIONS) {
       `- Mode: \`${summary.mode}\``,
       `- Files with import-helper matches: **${summary.filesWithImportMatches}**`,
       `- Import-helper matches: **${summary.importMatches}**`,
+      `- Max files: **${maxFiles ?? 'not set'}**`,
+      `- Max import-helper matches: **${maxImportMatches ?? 'not set'}**`,
+      `- Allowlist: \`${allowlistPath ?? 'not set'}\``,
       `- Files with broad matches: **${summary.filesWithBroadMatches}**`,
       `- Broad matches: **${summary.broadMatches}**`,
       '',
@@ -80,6 +123,24 @@ if (process.env.GITHUB_ACTIONS) {
   console.warn(`[warn] ${warning}`);
 }
 
-if (fail && summary.filesWithImportMatches > 0) {
-  process.exit(1);
+if (fail) {
+  const failures = [];
+  if (maxFiles === null && maxImportMatches === null && !allowlist) {
+    if (summary.filesWithImportMatches > 0) {
+      failures.push('runtime Supabase helper matches remain');
+    }
+  }
+  if (maxFiles !== null && summary.filesWithImportMatches > maxFiles) {
+    failures.push(`filesWithImportMatches ${summary.filesWithImportMatches} exceeds ${maxFiles}`);
+  }
+  if (maxImportMatches !== null && summary.importMatches > maxImportMatches) {
+    failures.push(`importMatches ${summary.importMatches} exceeds ${maxImportMatches}`);
+  }
+  if (allowlistViolations.length > 0) {
+    failures.push(`matches outside allowlist: ${allowlistViolations.map((row) => row.file).join(', ')}`);
+  }
+  if (failures.length > 0) {
+    for (const failure of failures) console.error(`[fail] ${failure}`);
+    process.exit(1);
+  }
 }

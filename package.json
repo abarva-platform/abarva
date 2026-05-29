@@ -91,6 +91,7 @@
     "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:runtime-supabase-imports": "node scripts/audit/runtime-supabase-import-census.mjs",
+    "audit:runtime-supabase-imports:guard": "node scripts/audit/runtime-supabase-import-census.mjs --fail --max-files=10 --max-import-matches=29 --allowlist=scripts/audit/runtime-supabase-import-allowlist.json",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
     "audit:categories": "npx tsx src/scripts/audit/audit-steward-categories.ts",
