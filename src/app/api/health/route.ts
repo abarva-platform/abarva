@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
 import { isNeo4jEnabled } from '@/lib/graph/neo4j-gate';
 import { Pool } from 'pg';
@@ -44,9 +44,8 @@ export async function GET() {
   const checks: Record<string, boolean | string> = {};
 
   try {
-    const { error } = await getServerSupabase().from('engagements').select('id').limit(1);
-    checks.postgres = !error;
-    if (error) checks.postgres_error = REVEAL_ERRORS ? error.message : 'error';
+    await azureRead.query('SELECT id FROM engagements LIMIT 1');
+    checks.postgres = true;
   } catch (err) {
     checks.postgres = false;
     checks.postgres_error = statusFromError(err);

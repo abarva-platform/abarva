@@ -1,8 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+type KnowledgeSourceRow = {
+  id: string;
+  source_key: string;
+  title: string;
+  publisher: string;
+  source_url: string | null;
+  license_class: string;
+};
+
+type KnowledgeChunkRow = {
+  pinecone_id: string | null;
+  chunk_text: string;
+  section: string | null;
+  page_number: number | null;
+  chunk_metadata: Record<string, unknown> | null;
+};
+
+type KnowledgeChunkWithSourceRow = KnowledgeChunkRow & {
+  source_key: string | null;
+  title: string | null;
+  publisher: string | null;
+  source_url: string | null;
+  license_class: string | null;
+};
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -15,49 +40,74 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'source_key or pinecone_id required' }, { status: 400 });
   }
 
-  const sb = getServerSupabase();
-
   if (pineconeId) {
-    const { data, error } = await sb
-      .from('knowledge_chunks')
-      .select('pinecone_id, chunk_text, section, page_number, chunk_metadata, source:knowledge_sources(source_key, title, publisher, source_url, license_class)')
-      .eq('pinecone_id', pineconeId)
-      .maybeSingle();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ chunk: shapeChunk(data) });
+    try {
+      const rows = await azureRead.query<KnowledgeChunkWithSourceRow>(
+        `
+          SELECT
+            kc.pinecone_id,
+            kc.chunk_text,
+            kc.section,
+            kc.page_number,
+            kc.chunk_metadata,
+            ks.source_key,
+            ks.title,
+            ks.publisher,
+            ks.source_url,
+            ks.license_class
+          FROM knowledge_chunks kc
+          LEFT JOIN knowledge_sources ks ON ks.id = kc.source_id
+          WHERE kc.pinecone_id = $1
+          LIMIT 1
+        `,
+        [pineconeId],
+      );
+      return NextResponse.json({ chunk: shapeChunk(rows[0] ?? null) });
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : 'db_error' }, { status: 500 });
+    }
   }
 
-  const { data: source, error: srcErr } = await sb
-    .from('knowledge_sources')
-    .select('id, source_key, title, publisher, source_url, license_class')
-    .eq('source_key', sourceKey!)
-    .maybeSingle();
-  if (srcErr) return NextResponse.json({ error: srcErr.message }, { status: 500 });
+  let source: KnowledgeSourceRow | null;
+  try {
+    source = await azureRead.maybeSingle<KnowledgeSourceRow>({
+      table: 'knowledge_sources',
+      columns: ['id', 'source_key', 'title', 'publisher', 'source_url', 'license_class'],
+      where: { source_key: sourceKey! },
+    });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'db_error' }, { status: 500 });
+  }
   if (!source) return NextResponse.json({ chunk: null });
 
-  let query = sb
-    .from('knowledge_chunks')
-    .select('pinecone_id, chunk_text, section, page_number, chunk_metadata')
-    .eq('source_id', (source as { id: string }).id);
-
-  if (section) query = query.eq('section', section);
-  if (pageStr) {
-    const page = parseInt(pageStr, 10);
-    if (Number.isFinite(page)) query = query.eq('page_number', page);
+  const chunkWhere: Record<string, string | number> = { source_id: source.id };
+  if (section) chunkWhere.section = section;
+  const page = pageStr ? parseInt(pageStr, 10) : null;
+  if (page !== null && Number.isFinite(page)) {
+    chunkWhere.page_number = page;
   }
 
-  const { data: chunks, error: chErr } = await query.limit(1);
-  if (chErr) return NextResponse.json({ error: chErr.message }, { status: 500 });
+  let chunks: KnowledgeChunkRow[];
+  try {
+    chunks = await azureRead.select<KnowledgeChunkRow>({
+      table: 'knowledge_chunks',
+      columns: ['pinecone_id', 'chunk_text', 'section', 'page_number', 'chunk_metadata'],
+      where: chunkWhere,
+      limit: 1,
+    });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'db_error' }, { status: 500 });
+  }
   if (!chunks || chunks.length === 0) {
     return NextResponse.json({
       chunk: {
-        source_key: (source as { source_key: string }).source_key,
-        title: (source as { title: string }).title,
-        publisher: (source as { publisher: string }).publisher,
-        source_url: (source as { source_url: string | null }).source_url,
-        license_class: (source as { license_class: string }).license_class,
+        source_key: source.source_key,
+        title: source.title,
+        publisher: source.publisher,
+        source_url: source.source_url,
+        license_class: source.license_class,
         section,
-        page_number: pageStr ? parseInt(pageStr, 10) : null,
+        page_number: page,
         chunk_text: '(Source metadata available; chunk text not yet ingested. Upstream ingestion pipeline populates chunks.)',
         attribution: null,
       },
@@ -68,11 +118,11 @@ export async function GET(req: NextRequest) {
   const md = (chunk.chunk_metadata ?? {}) as Record<string, unknown>;
   return NextResponse.json({
     chunk: {
-      source_key: (source as { source_key: string }).source_key,
-      title: (source as { title: string }).title,
-      publisher: (source as { publisher: string }).publisher,
-      source_url: (source as { source_url: string | null }).source_url,
-      license_class: (source as { license_class: string }).license_class,
+      source_key: source.source_key,
+      title: source.title,
+      publisher: source.publisher,
+      source_url: source.source_url,
+      license_class: source.license_class,
       section: chunk.section as string | null,
       page_number: chunk.page_number as number | null,
       chunk_text: chunk.chunk_text as string,
@@ -84,14 +134,13 @@ export async function GET(req: NextRequest) {
 function shapeChunk(data: unknown): unknown {
   if (!data) return null;
   const d = data as Record<string, unknown>;
-  const source = d.source as Record<string, unknown> | null;
   const md = (d.chunk_metadata ?? {}) as Record<string, unknown>;
   return {
-    source_key: source?.source_key ?? '',
-    title: source?.title ?? '',
-    publisher: source?.publisher ?? '',
-    source_url: (source?.source_url as string | null) ?? null,
-    license_class: source?.license_class ?? '',
+    source_key: d.source_key ?? '',
+    title: d.title ?? '',
+    publisher: d.publisher ?? '',
+    source_url: (d.source_url as string | null) ?? null,
+    license_class: d.license_class ?? '',
     section: d.section ?? null,
     page_number: d.page_number ?? null,
     chunk_text: d.chunk_text ?? '',
