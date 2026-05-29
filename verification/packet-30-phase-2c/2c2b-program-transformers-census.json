@@ -1,0 +1,77 @@
+{
+  "slice": "packet-30-phase-2c-program-transformers",
+  "generatedAt": "2026-05-29T16:53:45.794Z",
+  "runtimeSupabaseCensus": {
+    "mode": "warn",
+    "startOfSlice": {
+      "filesWithImportMatches": 156,
+      "importMatches": 649,
+      "filesWithBroadMatches": 311,
+      "broadMatches": 1519
+    },
+    "endOfSlice": {
+      "filesWithImportMatches": 155,
+      "importMatches": 631,
+      "filesWithBroadMatches": 311,
+      "broadMatches": 1470
+    },
+    "delta": {
+      "filesWithImportMatches": -1,
+      "importMatches": -18,
+      "filesWithBroadMatches": 0,
+      "broadMatches": -49
+    }
+  },
+  "phase2CBaseline": {
+    "filesWithImportMatches": 176,
+    "importMatches": 725
+  },
+  "phase2CToDateDelta": {
+    "filesWithImportMatches": -21,
+    "importMatches": -94
+  },
+  "codemodInventory": {
+    "totalFiles": 311,
+    "filesWithImportMatches": 155,
+    "importMatches": 631,
+    "filesWithBroadMatches": 311,
+    "broadMatches": 1470,
+    "classificationCounts": {
+      "DEFER_MANUAL": 126,
+      "MIXED_READ_WRITE": 82,
+      "MUTATION_WRITE": 1,
+      "READ_ONLY_SELECT": 98,
+      "READ_WITH_STORAGE": 4
+    },
+    "groupCounts": {
+      "admin": 2,
+      "api_routes": 41,
+      "app_routes": 12,
+      "db": 5,
+      "intelligence": 31,
+      "knowledge": 5,
+      "other_lib": 143,
+      "programs": 36,
+      "source": 34,
+      "tower": 2
+    }
+  },
+  "deferredProgramsResidue": [
+    {
+      "file": "src/lib/programs/governance.ts",
+      "reason": "gate evaluation includes approval/write-adjacent flows; defer to mixed read/write phase"
+    },
+    {
+      "file": "src/lib/programs/mutations.ts",
+      "reason": "mutation module; out of pure-read Phase 2C scope"
+    },
+    {
+      "file": "src/app/api/v1/programs/**",
+      "reason": "route handlers need route-level parity and Next.js route validation"
+    },
+    {
+      "file": "src/app/api/programs/**",
+      "reason": "route handlers include storage/upload or export semantics"
+    }
+  ]
+}
