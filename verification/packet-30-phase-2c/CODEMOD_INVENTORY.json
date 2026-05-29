@@ -1,20 +1,20 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T18:16:36.479Z",
+    "generatedAt": "2026-05-29T18:31:04.070Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
     "totalFiles": 303,
-    "filesWithImportMatches": 151,
-    "importMatches": 617,
+    "filesWithImportMatches": 150,
+    "importMatches": 614,
     "filesWithBroadMatches": 303,
-    "broadMatches": 1440,
+    "broadMatches": 1436,
     "classificationCounts": {
-      "DEFER_MANUAL": 126,
+      "DEFER_MANUAL": 127,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 90,
+      "READ_ONLY_SELECT": 89,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
@@ -214,6 +214,53 @@
       "rpcCalls": 0,
       "notes": [
         "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/app/api/programs/phase-gate/route.ts",
+      "group": "api_routes",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "advanceEngagementPhase",
+        "cwd",
+        "error",
+        "filter",
+        "find",
+        "from",
+        "get",
+        "getUser",
+        "isArray",
+        "join",
+        "json",
+        "maybeSingle",
+        "now",
+        "parse",
+        "push",
+        "sort",
+        "stringify",
+        "toISOString",
+        "toLowerCase",
+        "trim",
+        "warn"
+      ],
+      "readMethods": [
+        "maybeSingle"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
       ]
     },
     {
@@ -8930,61 +8977,6 @@
       "storageWriteMethods": [],
       "supabaseFromCalls": 3,
       "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/programs/phase-gate/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements"
-      ],
-      "methodNames": [
-        "advanceEngagementPhase",
-        "cwd",
-        "eq",
-        "error",
-        "filter",
-        "find",
-        "from",
-        "get",
-        "getUser",
-        "isArray",
-        "join",
-        "json",
-        "maybeSingle",
-        "now",
-        "parse",
-        "push",
-        "select",
-        "sort",
-        "stringify",
-        "toISOString",
-        "toLowerCase",
-        "trim",
-        "warn"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 1,
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": []

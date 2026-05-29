@@ -1,0 +1,54 @@
+{
+  "slice": "2c2h-program-phase-gate-route",
+  "generatedAt": "2026-05-29T18:31:04Z",
+  "runtimeSupabaseImportCensus": {
+    "before": {
+      "filesWithImportMatches": 151,
+      "importMatches": 617,
+      "filesWithBroadMatches": 303,
+      "broadMatches": 1440
+    },
+    "after": {
+      "filesWithImportMatches": 150,
+      "importMatches": 614,
+      "filesWithBroadMatches": 303,
+      "broadMatches": 1436
+    },
+    "delta": {
+      "filesWithImportMatches": -1,
+      "importMatches": -3,
+      "filesWithBroadMatches": 0,
+      "broadMatches": -4
+    }
+  },
+  "codemodInventory": {
+    "before": {
+      "totalFiles": 303,
+      "readOnlySelect": 90,
+      "apiRoutes": 33
+    },
+    "after": {
+      "totalFiles": 303,
+      "readOnlySelect": 89,
+      "apiRoutes": 33
+    },
+    "delta": {
+      "totalFiles": 0,
+      "readOnlySelect": -1,
+      "apiRoutes": 0
+    }
+  },
+  "targetFilesReclassified": [
+    {
+      "file": "src/app/api/programs/phase-gate/route.ts",
+      "from": "READ_ONLY_SELECT",
+      "to": "DEFER_MANUAL"
+    }
+  ],
+  "validation": {
+    "focusedJest": "pass: 1 suite / 1 test",
+    "focusedEslint": "pass",
+    "runtimeSupabaseImportCensus": "pass/warn: expected warn mode, import-helper delta -1 file / -3 matches",
+    "phase2cInventory": "pass: READ_ONLY_SELECT 90 -> 89"
+  }
+}
