@@ -12,7 +12,7 @@
 // thread lifecycle + context assembly; composer calls are stubbed with
 // a clear attachment point.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { NexusThreadMode, TenancyCtx } from './types.db';
 import { getProgramById, getModuleState } from './queries';
 import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
@@ -83,7 +83,7 @@ export async function createThread(
   const program = await getProgramById(ctx, input.programId);
   if (!program) throw new Error('[programs/nexus] program not accessible');
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const metadata: Record<string, unknown> = { mode: input.mode };
   if (input.triggeredByDeliverableId) metadata.triggered_by_deliverable_id = input.triggeredByDeliverableId;
 
@@ -106,7 +106,7 @@ export async function createThread(
 
 export async function listThreads(ctx: TenancyCtx, programId: string, opts: { mode?: NexusThreadMode } = {}): Promise<NexusThread[]> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_threads')
     .select('*')
@@ -119,7 +119,7 @@ export async function listThreads(ctx: TenancyCtx, programId: string, opts: { mo
 }
 
 export async function touchThread(threadId: string): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { error } = await sb
     .from('program_threads')
     .update({ last_turn_at: new Date().toISOString() })
@@ -148,7 +148,7 @@ export async function assembleContext(ctx: TenancyCtx, programId: string): Promi
   if (!program) throw new Error('[programs/nexus] program not accessible');
   const modules = await getModuleState(ctx, programId);
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const [delivQ, flagsQ, patternQ] = await Promise.all([
     sb.from('deliverables_v2').select('id, title, status, deliverable_type_key').eq('engagement_id', programId).order('updated_at', { ascending: false }).limit(10),
     sb.from('maestro_oversight_flags').select('id, headline, severity').eq('engagement_id', programId).is('resolved_at', null).limit(10),
@@ -192,7 +192,7 @@ export async function sidePanelTurn(
   input: { threadId: string; query: string },
 ): Promise<{ threadId: string; deferredToComposer: true; context: ProgramContextBundle }> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: thread } = await sb
     .from('program_threads')
     .select('engagement_id, user_id')
@@ -291,7 +291,7 @@ export async function commitCxoTranscript(
   },
 ): Promise<{ target: 'phase_findings' | 'outcome_report'; targetId: string }> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   if (input.phase === 3) {
     const { data, error } = await sb
       .from('program_modules')

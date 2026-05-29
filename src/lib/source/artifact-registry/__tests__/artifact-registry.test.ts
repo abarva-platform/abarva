@@ -129,8 +129,8 @@ const fakeClient = {
   from: jest.fn((table: string) => makeBuilder(table)),
 };
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => fakeClient,
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: () => fakeClient,
 }));
 
 import {

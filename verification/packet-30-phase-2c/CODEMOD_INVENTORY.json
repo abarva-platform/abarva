@@ -1,17 +1,17 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T22:02:37.042Z",
+    "generatedAt": "2026-05-29T22:21:59.209Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 294,
-    "filesWithImportMatches": 85,
-    "importMatches": 386,
-    "filesWithBroadMatches": 294,
-    "broadMatches": 1187,
+    "totalFiles": 293,
+    "filesWithImportMatches": 47,
+    "importMatches": 186,
+    "filesWithBroadMatches": 293,
+    "broadMatches": 987,
     "classificationCounts": {
-      "DEFER_MANUAL": 129,
+      "DEFER_MANUAL": 128,
       "MIXED_READ_WRITE": 82,
       "READ_ONLY_SELECT": 79,
       "READ_WITH_STORAGE": 4
@@ -23,7 +23,7 @@
       "intelligence": 31,
       "knowledge": 5,
       "other_lib": 136,
-      "programs": 36,
+      "programs": 35,
       "source": 34,
       "db": 5,
       "tower": 2
@@ -3246,38 +3246,6 @@
       ]
     },
     {
-      "file": "src/lib/programs/programs-auth-mode-server.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "DEFER_MANUAL",
-      "importMatches": 4,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "map",
-        "split",
-        "toLowerCase",
-        "trim"
-      ],
-      "readMethods": [],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 0,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
       "file": "src/lib/programs/approval-person-resolver.ts",
       "group": "programs",
       "sourceKind": "runtime",
@@ -5245,14 +5213,10 @@
       "group": "db",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 12,
-      "broadMatches": 25,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 13,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagements"
       ],
@@ -5311,14 +5275,10 @@
       "group": "db",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 7,
-      "broadMatches": 14,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 7,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "persons"
       ],
@@ -5360,14 +5320,10 @@
       "group": "db",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 5,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "relationship_notes"
       ],
@@ -5412,14 +5368,10 @@
       "group": "db",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "turns"
       ],
@@ -6329,161 +6281,6 @@
       "notes": []
     },
     {
-      "file": "src/lib/data-plane/write-adapters/programsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 15,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "deliverable_versions",
-        "deliverables_v2",
-        "engagement_participants",
-        "engagements",
-        "founder_approval_requests",
-        "module_state_log",
-        "phase_snapshots",
-        "program_modules"
-      ],
-      "methodNames": [
-        "eq",
-        "error",
-        "from",
-        "insert",
-        "maybeSingle",
-        "select",
-        "single",
-        "toISOString",
-        "update",
-        "warn"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 11,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 12,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "agent_attachment",
-        "source_event_approvals",
-        "source_event_artifact_states",
-        "source_event_gate_criterion_states",
-        "source_event_participants",
-        "source_events"
-      ],
-      "methodNames": [
-        "eq",
-        "error",
-        "from",
-        "in",
-        "insert",
-        "is",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single",
-        "test",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "is",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 8,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "atlas_message_traces",
-        "atlas_observations",
-        "atlas_reasoning_traces",
-        "atlas_threads"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "insert",
-        "select",
-        "single",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 5,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/lib/billing/stripe.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
@@ -6527,280 +6324,6 @@
       "storageReadMethods": [],
       "storageWriteMethods": [],
       "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/adminWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagement_participants",
-        "person_client_memberships",
-        "persons"
-      ],
-      "methodNames": [
-        "eq",
-        "filter",
-        "from",
-        "includes",
-        "insert",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single",
-        "update",
-        "upsert"
-      ],
-      "readMethods": [
-        "eq",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update",
-        "upsert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/attachmentsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "eq",
-        "from",
-        "insert",
-        "is",
-        "join",
-        "keys",
-        "map",
-        "maybeSingle",
-        "select",
-        "single",
-        "toISOString",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "is",
-        "maybeSingle",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/deliverableWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "deliverable_types",
-        "deliverable_versions",
-        "deliverables_v2"
-      ],
-      "methodNames": [
-        "from",
-        "insert",
-        "select",
-        "single",
-        "stringify",
-        "upsert"
-      ],
-      "readMethods": [
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "upsert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/sourcingWorkItemsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "sourcing_work_items"
-      ],
-      "methodNames": [
-        "entries",
-        "eq",
-        "from",
-        "insert",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single",
-        "toISOString",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/uploadsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "eq",
-        "from",
-        "insert",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/webhookWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements",
-        "invoices"
-      ],
-      "methodNames": [
-        "commit",
-        "eq",
-        "from",
-        "update"
-      ],
-      "readMethods": [
-        "eq"
-      ],
-      "writeMethods": [
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -6860,207 +6383,6 @@
       "storageReadMethods": [],
       "storageWriteMethods": [],
       "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/engageTurnWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "from",
-        "insert",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single"
-      ],
-      "readMethods": [
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/expertReviewsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "expert_reviews"
-      ],
-      "methodNames": [
-        "from",
-        "insert",
-        "join",
-        "keys",
-        "map",
-        "select",
-        "single",
-        "trim"
-      ],
-      "readMethods": [
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_artifacts"
-      ],
-      "methodNames": [
-        "entries",
-        "filter",
-        "from",
-        "insert",
-        "join",
-        "map",
-        "select",
-        "single"
-      ],
-      "readMethods": [
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "from",
-        "has",
-        "insert",
-        "maybeSingle",
-        "select",
-        "test"
-      ],
-      "readMethods": [
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [
-        "insert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
-      "file": "src/lib/data-plane/write-adapters/threadWriteAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "intelligence_threads"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "update"
-      ],
-      "readMethods": [
-        "eq"
-      ],
-      "writeMethods": [
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -7553,6 +6875,55 @@
       "notes": []
     },
     {
+      "file": "src/lib/data-plane/write-adapters/programsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 11,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "deliverable_versions",
+        "deliverables_v2",
+        "engagement_participants",
+        "engagements",
+        "founder_approval_requests",
+        "module_state_log",
+        "phase_snapshots",
+        "program_modules"
+      ],
+      "methodNames": [
+        "eq",
+        "error",
+        "from",
+        "insert",
+        "maybeSingle",
+        "select",
+        "single",
+        "toISOString",
+        "update",
+        "warn"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 11,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/onboarding/apex-p18-pack-ingestion.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
@@ -7617,6 +6988,341 @@
       "storageReadMethods": [],
       "storageWriteMethods": [],
       "supabaseFromCalls": 9,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 8,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "agent_attachment",
+        "source_event_approvals",
+        "source_event_artifact_states",
+        "source_event_gate_criterion_states",
+        "source_event_participants",
+        "source_events"
+      ],
+      "methodNames": [
+        "eq",
+        "error",
+        "from",
+        "in",
+        "insert",
+        "is",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single",
+        "test",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "is",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 8,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "atlas_message_traces",
+        "atlas_observations",
+        "atlas_reasoning_traces",
+        "atlas_threads"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "insert",
+        "select",
+        "single",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 5,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/adminWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "engagement_participants",
+        "person_client_memberships",
+        "persons"
+      ],
+      "methodNames": [
+        "eq",
+        "filter",
+        "from",
+        "includes",
+        "insert",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single",
+        "update",
+        "upsert"
+      ],
+      "readMethods": [
+        "eq",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update",
+        "upsert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/attachmentsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "eq",
+        "from",
+        "insert",
+        "is",
+        "join",
+        "keys",
+        "map",
+        "maybeSingle",
+        "select",
+        "single",
+        "toISOString",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "is",
+        "maybeSingle",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/deliverableWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "deliverable_types",
+        "deliverable_versions",
+        "deliverables_v2"
+      ],
+      "methodNames": [
+        "from",
+        "insert",
+        "select",
+        "single",
+        "stringify",
+        "upsert"
+      ],
+      "readMethods": [
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "upsert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourcingWorkItemsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "sourcing_work_items"
+      ],
+      "methodNames": [
+        "entries",
+        "eq",
+        "from",
+        "insert",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single",
+        "toISOString",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/uploadsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "eq",
+        "from",
+        "insert",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/webhookWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "engagements",
+        "invoices"
+      ],
+      "methodNames": [
+        "commit",
+        "eq",
+        "from",
+        "update"
+      ],
+      "readMethods": [
+        "eq"
+      ],
+      "writeMethods": [
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -7716,19 +7422,190 @@
       ]
     },
     {
+      "file": "src/lib/data-plane/write-adapters/engageTurnWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "from",
+        "insert",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single"
+      ],
+      "readMethods": [
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/expertReviewsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "expert_reviews"
+      ],
+      "methodNames": [
+        "from",
+        "insert",
+        "join",
+        "keys",
+        "map",
+        "select",
+        "single",
+        "trim"
+      ],
+      "readMethods": [
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_artifacts"
+      ],
+      "methodNames": [
+        "entries",
+        "filter",
+        "from",
+        "insert",
+        "join",
+        "map",
+        "select",
+        "single"
+      ],
+      "readMethods": [
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "from",
+        "has",
+        "insert",
+        "maybeSingle",
+        "select",
+        "test"
+      ],
+      "readMethods": [
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [
+        "insert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/lib/data-plane/write-adapters/threadWriteAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "intelligence_threads"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "update"
+      ],
+      "readMethods": [
+        "eq"
+      ],
+      "writeMethods": [
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/programs/mutations.ts",
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 16,
-      "broadMatches": 38,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 22,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "clients",
         "deliverable_types",
@@ -7797,15 +7674,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 8,
-      "broadMatches": 21,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 13,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverable_versions",
         "deliverables_v2",
@@ -7869,14 +7741,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 8,
-      "broadMatches": 17,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 9,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverables_v2",
         "engagement_topics",
@@ -7933,14 +7801,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 7,
-      "broadMatches": 16,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 9,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagement_participants",
         "engagements",
@@ -8012,14 +7876,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 7,
-      "broadMatches": 14,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 7,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagements",
         "program_approval_requests"
@@ -8059,19 +7919,55 @@
       "notes": []
     },
     {
+      "file": "src/lib/programs/origination-drafts.ts",
+      "group": "programs",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 7,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "program_origination_drafts"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "has",
+        "insert",
+        "is",
+        "isArray",
+        "maybeSingle",
+        "select",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "is",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [
+        "insert",
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 6,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/programs/execute.ts",
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 7,
-      "broadMatches": 13,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverables_v2",
         "maestro_oversight_flags",
@@ -8118,14 +8014,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 7,
-      "broadMatches": 11,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "program_attachments"
       ],
@@ -8170,35 +8062,29 @@
       "notes": []
     },
     {
-      "file": "src/lib/programs/origination-drafts.ts",
+      "file": "src/lib/programs/strategic-moves-preferences.ts",
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 5,
-      "broadMatches": 12,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
-        "program_origination_drafts"
+        "tower_user_preferences"
       ],
       "methodNames": [
         "eq",
         "from",
-        "has",
+        "getDefaultFilters",
         "insert",
-        "is",
-        "isArray",
         "maybeSingle",
         "select",
+        "test",
         "update"
       ],
       "readMethods": [
         "eq",
-        "is",
         "maybeSingle",
         "select"
       ],
@@ -8208,7 +8094,7 @@
       ],
       "storageReadMethods": [],
       "storageWriteMethods": [],
-      "supabaseFromCalls": 6,
+      "supabaseFromCalls": 3,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -8219,14 +8105,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagement_topics",
         "pattern_match_logs"
@@ -8278,61 +8160,14 @@
       "notes": []
     },
     {
-      "file": "src/lib/programs/strategic-moves-preferences.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "tower_user_preferences"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "getDefaultFilters",
-        "insert",
-        "maybeSingle",
-        "select",
-        "test",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [
-        "insert",
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/lib/programs/audit-log.ts",
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "program_audit_log"
       ],
@@ -8361,14 +8196,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "enterprise_context_chunks"
       ],
@@ -8404,14 +8235,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "program_evidence_items"
       ],
@@ -8468,14 +8295,10 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "program_export_log"
       ],
@@ -8490,127 +8313,6 @@
       "storageReadMethods": [],
       "storageWriteMethods": [],
       "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/source/value-chain.ts",
-      "group": "source",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 11,
-      "broadMatches": 20,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_events",
-        "source_value_chain",
-        "source_value_states"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "every",
-        "find",
-        "from",
-        "get",
-        "gte",
-        "insert",
-        "is",
-        "join",
-        "limit",
-        "maybeSingle",
-        "now",
-        "order",
-        "select",
-        "set",
-        "single",
-        "some",
-        "toISOString",
-        "trim",
-        "upsert",
-        "values"
-      ],
-      "readMethods": [
-        "eq",
-        "gte",
-        "is",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "insert",
-        "upsert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 9,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/source/artifact-registry/index.ts",
-      "group": "source",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 8,
-      "broadMatches": 14,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_artifacts"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "fromCharCode",
-        "insertArtifact",
-        "is",
-        "join",
-        "keys",
-        "lastIndexOf",
-        "map",
-        "maybeSingle",
-        "or",
-        "order",
-        "replace",
-        "select",
-        "single",
-        "slice",
-        "toISOString",
-        "toLowerCase",
-        "trim",
-        "update"
-      ],
-      "readMethods": [
-        "eq",
-        "is",
-        "maybeSingle",
-        "order",
-        "select",
-        "single"
-      ],
-      "writeMethods": [
-        "update"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 6,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -8698,18 +8400,175 @@
       "notes": []
     },
     {
+      "file": "src/lib/source/value-chain.ts",
+      "group": "source",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 9,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_events",
+        "source_value_chain",
+        "source_value_states"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "every",
+        "find",
+        "from",
+        "get",
+        "gte",
+        "insert",
+        "is",
+        "join",
+        "limit",
+        "maybeSingle",
+        "now",
+        "order",
+        "select",
+        "set",
+        "single",
+        "some",
+        "toISOString",
+        "trim",
+        "upsert",
+        "values"
+      ],
+      "readMethods": [
+        "eq",
+        "gte",
+        "is",
+        "limit",
+        "maybeSingle",
+        "order",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "insert",
+        "upsert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 9,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/source/artifact-registry/index.ts",
+      "group": "source",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_artifacts"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "fromCharCode",
+        "insertArtifact",
+        "is",
+        "join",
+        "keys",
+        "lastIndexOf",
+        "map",
+        "maybeSingle",
+        "or",
+        "order",
+        "replace",
+        "select",
+        "single",
+        "slice",
+        "toISOString",
+        "toLowerCase",
+        "trim",
+        "update"
+      ],
+      "readMethods": [
+        "eq",
+        "is",
+        "maybeSingle",
+        "order",
+        "select",
+        "single"
+      ],
+      "writeMethods": [
+        "update"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 6,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/source/artifact-registry/text-parser.ts",
+      "group": "source",
+      "sourceKind": "runtime",
+      "classification": "MIXED_READ_WRITE",
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_artifact_chunks",
+        "source_artifact_facts",
+        "source_meeting_outcomes",
+        "source_pricing_components",
+        "source_requirements",
+        "source_vendor_commitments"
+      ],
+      "methodNames": [
+        "exec",
+        "filter",
+        "flatMap",
+        "from",
+        "includes",
+        "insert",
+        "isFinite",
+        "map",
+        "match",
+        "padStart",
+        "push",
+        "replace",
+        "slice",
+        "split",
+        "test",
+        "toLowerCase",
+        "trim"
+      ],
+      "readMethods": [],
+      "writeMethods": [
+        "insert"
+      ],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 6,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/source/pricing-submissions/dao.ts",
       "group": "source",
       "sourceKind": "runtime",
       "classification": "MIXED_READ_WRITE",
-      "importMatches": 5,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "source_event_pricing_submissions"
       ],
@@ -8750,58 +8609,6 @@
       "notes": [
         "delete method present; may be Array.delete or Supabase delete"
       ]
-    },
-    {
-      "file": "src/lib/source/artifact-registry/text-parser.ts",
-      "group": "source",
-      "sourceKind": "runtime",
-      "classification": "MIXED_READ_WRITE",
-      "importMatches": 3,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_artifact_chunks",
-        "source_artifact_facts",
-        "source_meeting_outcomes",
-        "source_pricing_components",
-        "source_requirements",
-        "source_vendor_commitments"
-      ],
-      "methodNames": [
-        "exec",
-        "filter",
-        "flatMap",
-        "from",
-        "includes",
-        "insert",
-        "isFinite",
-        "map",
-        "match",
-        "padStart",
-        "push",
-        "replace",
-        "slice",
-        "split",
-        "test",
-        "toLowerCase",
-        "trim"
-      ],
-      "readMethods": [],
-      "writeMethods": [
-        "insert"
-      ],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 6,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
     },
     {
       "file": "src/lib/tower/ingest-portfolio.ts",
@@ -11868,11 +11675,9 @@
       "group": "programs",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 1,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
       "helperRefs": [],
       "tableNames": [
         "founder_approval_requests",

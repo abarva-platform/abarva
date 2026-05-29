@@ -3,9 +3,9 @@ const writeProgramAuditLogBestEffortMock = jest.fn();
 
 const fromMock = jest.fn();
 
-jest.mock('@/lib/supabase-server', () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
   __esModule: true,
-  getServerSupabase: () => ({ from: fromMock }),
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 jest.mock('../queries', () => ({

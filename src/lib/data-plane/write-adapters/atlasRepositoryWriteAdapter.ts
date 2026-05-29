@@ -23,8 +23,10 @@
 // resolution (a READ — handled by the read adapter), and error re-throwing
 // stay in the repository, which orchestrates the read + write adapters.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -133,7 +135,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * byte-identical. The client factory is injectable for tests.
  */
 export function createSupabaseAtlasRepositoryWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): AtlasRepositoryWriteAdapter {
   return {
     name: 'supabase',

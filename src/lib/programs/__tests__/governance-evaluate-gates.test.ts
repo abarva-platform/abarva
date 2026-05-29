@@ -21,9 +21,9 @@ jest.mock('@/lib/programs/queries', () => ({
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
   __esModule: true,
-  getServerSupabase: () => ({ from: fromMock }),
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 import { evaluateGate } from '@/lib/programs/governance';

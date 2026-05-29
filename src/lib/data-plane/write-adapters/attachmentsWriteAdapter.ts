@@ -24,8 +24,10 @@
 // `.update()` calls lifted verbatim from the routes (and from
 // `lib/programs/attachments`).
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -93,7 +95,7 @@ type SupabaseFactory = () => SupabaseClient;
 
 /** Supabase-backed attachments adapter — the DEFAULT path. */
 export function createSupabaseAttachmentsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): AttachmentsWriteAdapter {
   return {
     plane: 'supabase',

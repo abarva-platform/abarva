@@ -7,8 +7,10 @@
 // Blocked items auto-escalate to Maestro oversight after 48h per
 // Packet 11.
 
-import { getServerSupabase } from '@/lib/supabase-server';
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import type {
   MilestoneStatus,
   ProgramMilestoneRow,
@@ -60,7 +62,7 @@ export interface ExecuteRollup {
  */
 export async function getExecuteRollup(ctx: TenancyCtx, programId: string): Promise<ExecuteRollup> {
   assertTenancy(ctx);
-  return getExecuteRollupWithClient(ctx, programId, getServerSupabase());
+  return getExecuteRollupWithClient(ctx, programId, getAzureWriteFluentClient());
 }
 
 export async function getExecuteRollupWithClient(
@@ -168,7 +170,7 @@ export async function getExecuteRollupWithClient(
  */
 export async function escalateBlockedItems(ctx: TenancyCtx, programId: string): Promise<{ escalated: number; skipped: number }> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const workItems = await getWorkItems(ctx, programId);
 
   // Existing active flags referencing work items
@@ -223,7 +225,7 @@ export async function blockWorkItem(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data: current } = await sb
     .from('program_work_items')
     .select('metadata_jsonb')
@@ -256,7 +258,7 @@ export async function markWorkItemNexusDrafted(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data: current } = await sb
     .from('program_work_items')
     .select('metadata_jsonb')

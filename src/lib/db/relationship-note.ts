@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface RelationshipNoteRow {
   id: string;
@@ -23,7 +23,7 @@ export interface AppendNoteArgs {
 
 export async function appendRelationshipNote(args: AppendNoteArgs): Promise<RelationshipNoteRow> {
   const decayAt = new Date(Date.now() + args.decayDays * 86_400_000).toISOString();
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('relationship_notes')
     .insert({
       person_id: args.personId,
@@ -41,7 +41,7 @@ export async function appendRelationshipNote(args: AppendNoteArgs): Promise<Rela
 }
 
 export async function getActivePersonalThreads(personId: string, limit = 8): Promise<string[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('relationship_notes')
     .select('note_text')
     .eq('person_id', personId)
@@ -57,7 +57,7 @@ export async function getActivePersonalThreads(personId: string, limit = 8): Pro
 // Simpler than an RPC — fetch matching rows, bump each individually.
 export async function markThreadsSurfaced(personId: string, noteTexts: string[]): Promise<void> {
   if (noteTexts.length === 0) return;
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('relationship_notes')
     .select('id, surfaced_count, note_text')

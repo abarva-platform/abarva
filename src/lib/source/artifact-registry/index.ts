@@ -6,7 +6,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { selectSourceArtifactsWriteAdapter } from '@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter';
 import {
   parseDisclosureFlag,
@@ -275,7 +275,7 @@ export async function listSourceArtifactsForEvent(
 ): Promise<SourceArtifactRegistryRecord[]> {
   if (!tenantKey) throw new Error('[source-artifacts] tenantKey is required');
   if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .select(SELECT_COLUMNS)
@@ -292,7 +292,7 @@ export async function listSourceArtifactsForSourceEventId(
   sourceEventId: string,
 ): Promise<SourceArtifactRegistryRecord[]> {
   if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .select(SELECT_COLUMNS)
@@ -312,7 +312,7 @@ export async function listSourceArtifactsForStage(
   assertSourceStageKey(stageKey);
   if (!tenantKey) throw new Error('[source-artifacts] tenantKey is required');
   if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .select(SELECT_COLUMNS)
@@ -330,7 +330,7 @@ export async function getSourceArtifactRegistryRecord(
   artifactId: string,
 ): Promise<SourceArtifactRegistryRecord | null> {
   if (!artifactId) throw new Error('[source-artifacts] artifactId is required');
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .select(SELECT_COLUMNS)
@@ -364,7 +364,7 @@ export async function updateSourceArtifactProcessingState(
     throw new Error('[source-artifacts] at least one processing state must be provided');
   }
 
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .update(patch)
@@ -383,7 +383,7 @@ export async function softDeleteSourceArtifact(
 ): Promise<SourceArtifactRegistryRecord> {
   if (!artifactId) throw new Error('[source-artifacts] artifactId is required');
   if (!actingUserId) throw new Error('[source-artifacts] actingUserId is required');
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data, error } = await supabase
     .from('source_artifacts')
     .update({ deleted_at: new Date().toISOString(), validated_by: actingUserId })

@@ -1,0 +1,139 @@
+{
+  "generatedAt": "2026-05-29T22:21:58.749Z",
+  "mode": "warn",
+  "scannedDirs": [
+    "src/app",
+    "src/lib"
+  ],
+  "filesWithImportMatches": 47,
+  "importMatches": 186,
+  "filesWithBroadMatches": 293,
+  "broadMatches": 987,
+  "topFiles": [
+    {
+      "file": "src/lib/intelligence/ask/session-memory.ts",
+      "importMatches": 13,
+      "broadMatches": 24
+    },
+    {
+      "file": "src/lib/decisions/auto-linker.ts",
+      "importMatches": 8,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/topics/db.ts",
+      "importMatches": 8,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/deliverables/generate.ts",
+      "importMatches": 8,
+      "broadMatches": 15
+    },
+    {
+      "file": "src/lib/deliverables/v2-generator.ts",
+      "importMatches": 7,
+      "broadMatches": 18
+    },
+    {
+      "file": "src/lib/nexus/gateLifecycle.ts",
+      "importMatches": 6,
+      "broadMatches": 16
+    },
+    {
+      "file": "src/lib/agent/tools/program/commitProgram.ts",
+      "importMatches": 6,
+      "broadMatches": 15
+    },
+    {
+      "file": "src/lib/evidence/ledger.ts",
+      "importMatches": 6,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/lib/security/quarantine-audit-supabase.ts",
+      "importMatches": 5,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/lib/source/queries.ts",
+      "importMatches": 5,
+      "broadMatches": 10
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
+      "importMatches": 4,
+      "broadMatches": 8
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/upload/route.ts",
+      "importMatches": 4,
+      "broadMatches": 8
+    },
+    {
+      "file": "src/lib/billing/stripe.ts",
+      "importMatches": 4,
+      "broadMatches": 8
+    },
+    {
+      "file": "src/app/api/notifications/dispatch/route.ts",
+      "importMatches": 4,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/intelligence/synthesis/violationsSupabaseBackend.ts",
+      "importMatches": 4,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/notifications/store.ts",
+      "importMatches": 4,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/intelligence/db/client.ts",
+      "importMatches": 4,
+      "broadMatches": 4
+    },
+    {
+      "file": "src/lib/deliverables/live-sync.ts",
+      "importMatches": 3,
+      "broadMatches": 7
+    },
+    {
+      "file": "src/app/api/programs/[id]/attachments/upload/route.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/app/api/programs/workspace/[moveId]/upload/route.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/app/api/v1/agent/attachments/route.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/body/route.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/agent/maestro-extractor.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/agent/tools/program/assignSponsor.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    },
+    {
+      "file": "src/lib/rls/rls-audit.ts",
+      "importMatches": 3,
+      "broadMatches": 6
+    }
+  ]
+}

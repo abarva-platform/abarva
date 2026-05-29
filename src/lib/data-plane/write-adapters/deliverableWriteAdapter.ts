@@ -20,8 +20,10 @@
 // that repository's own callers. Migrating it is a follow-up so a
 // shared-helper change does not collide with parallel slices.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -89,7 +91,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * pre-seam call so the produced rows are byte-faithful.
  */
 export function createSupabaseDeliverableWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): DeliverableWriteAdapter {
   return {
     name: 'supabase',

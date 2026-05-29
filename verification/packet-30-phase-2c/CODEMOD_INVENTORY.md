@@ -4,16 +4,16 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T22:02:37.042Z`
-- Total files in inventory: `294`
-- Files with import-helper matches: `85`
-- Import-helper matches: `386`
-- Files with broad matches: `294`
-- Broad matches: `1187`
+- Generated at: `2026-05-29T22:21:59.209Z`
+- Total files in inventory: `293`
+- Files with import-helper matches: `47`
+- Import-helper matches: `186`
+- Files with broad matches: `293`
+- Broad matches: `987`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 129
+- `DEFER_MANUAL`: 128
 - `MIXED_READ_WRITE`: 82
 - `READ_ONLY_SELECT`: 79
 - `READ_WITH_STORAGE`: 4
@@ -27,7 +27,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 - `intelligence`: 31
 - `knowledge`: 5
 - `other_lib`: 136
-- `programs`: 36
+- `programs`: 35
 - `source`: 34
 - `tower`: 2
 
@@ -132,7 +132,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/reasoning/synthesis-telemetry-stats.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/reasoning/weekly-digest.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/sentinel/canonical-grounding.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
-| src/lib/programs/programs-auth-mode-server.ts | DEFER_MANUAL | programs | 4 | 4 | - | no static table names detected |
 | src/lib/programs/approval-person-resolver.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/deliverable-evidence-trace.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/phase-gate-advancement-flow.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -183,10 +182,10 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/v1/threads/[threadId]/attach/route.ts | MIXED_READ_WRITE | api_routes | 3 | 5 | engagements, intelligence_threads | - |
 | src/app/api/tower/upload/route.ts | MIXED_READ_WRITE | api_routes | 3 | 4 | - | no static table names detected |
 | src/app/api/v1/programs/[programId]/risks/[riskId]/route.ts | MIXED_READ_WRITE | api_routes | 0 | 1 | program_risks | - |
-| src/lib/db/engagement.ts | MIXED_READ_WRITE | db | 12 | 25 | engagements | - |
-| src/lib/db/person.ts | MIXED_READ_WRITE | db | 7 | 14 | persons | - |
-| src/lib/db/relationship-note.ts | MIXED_READ_WRITE | db | 5 | 9 | relationship_notes | - |
-| src/lib/db/turn.ts | MIXED_READ_WRITE | db | 4 | 6 | turns | - |
+| src/lib/db/engagement.ts | MIXED_READ_WRITE | db | 0 | 13 | engagements | - |
+| src/lib/db/person.ts | MIXED_READ_WRITE | db | 0 | 7 | persons | - |
+| src/lib/db/relationship-note.ts | MIXED_READ_WRITE | db | 0 | 4 | relationship_notes | - |
+| src/lib/db/turn.ts | MIXED_READ_WRITE | db | 0 | 2 | turns | - |
 | src/lib/intelligence/ask/session-memory.ts | MIXED_READ_WRITE | intelligence | 13 | 24 | intelligence_ask_sessions, intelligence_ask_turns, move_instances | - |
 | src/lib/intelligence/synthesis/violationsSupabaseBackend.ts | MIXED_READ_WRITE | intelligence | 4 | 6 | agent_quality_violation_events | - |
 | src/lib/intelligence/db/signalRepository.ts | MIXED_READ_WRITE | intelligence | 0 | 8 | contradictions, portfolio_signals | - |
@@ -203,22 +202,8 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/agent/tools/program/commitProgram.ts | MIXED_READ_WRITE | other_lib | 6 | 15 | engagement_participants, engagements, module_state_log, pattern_match_logs, persons, program_approval_requests | delete method present; may be Array.delete or Supabase delete |
 | src/lib/evidence/ledger.ts | MIXED_READ_WRITE | other_lib | 6 | 10 | evidence_ledger | - |
 | src/lib/security/quarantine-audit-supabase.ts | MIXED_READ_WRITE | other_lib | 5 | 10 | sensitive_upload_audit | - |
-| src/lib/data-plane/write-adapters/programsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 15 | deliverable_versions, deliverables_v2, engagement_participants, engagements, founder_approval_requests, module_state_log, phase_snapshots, program_modules | - |
-| src/lib/data-plane/write-adapters/sourceWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 12 | agent_attachment, source_event_approvals, source_event_artifact_states, source_event_gate_criterion_states, source_event_participants, source_events | - |
-| src/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 9 | atlas_message_traces, atlas_observations, atlas_reasoning_traces, atlas_threads | - |
 | src/lib/billing/stripe.ts | MIXED_READ_WRITE | other_lib | 4 | 8 | clients, engagements, invoices | - |
-| src/lib/data-plane/write-adapters/adminWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 8 | engagement_participants, person_client_memberships, persons | - |
-| src/lib/data-plane/write-adapters/attachmentsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 7 | - | no static table names detected |
-| src/lib/data-plane/write-adapters/deliverableWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 7 | deliverable_types, deliverable_versions, deliverables_v2 | - |
-| src/lib/data-plane/write-adapters/sourcingWorkItemsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 6 | sourcing_work_items | - |
-| src/lib/data-plane/write-adapters/uploadsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 6 | - | no static table names detected |
-| src/lib/data-plane/write-adapters/webhookWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 6 | engagements, invoices | - |
 | src/lib/notifications/store.ts | MIXED_READ_WRITE | other_lib | 4 | 6 | platform_notification_events | - |
-| src/lib/data-plane/write-adapters/engageTurnWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 5 | - | no static table names detected |
-| src/lib/data-plane/write-adapters/expertReviewsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 5 | expert_reviews | - |
-| src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 5 | source_artifacts | - |
-| src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 5 | - | no static table names detected |
-| src/lib/data-plane/write-adapters/threadWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 4 | 5 | intelligence_threads | - |
 | src/lib/deliverables/live-sync.ts | MIXED_READ_WRITE | other_lib | 3 | 7 | deliverable_versions, deliverables_v2 | - |
 | src/lib/agent/maestro-extractor.ts | MIXED_READ_WRITE | other_lib | 3 | 6 | persons | - |
 | src/lib/agent/tools/program/assignSponsor.ts | MIXED_READ_WRITE | other_lib | 3 | 6 | engagement_participants | - |
@@ -231,28 +216,42 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/artifacts/repository.ts | MIXED_READ_WRITE | other_lib | 3 | 4 | generated_artifacts | - |
 | src/lib/audit/log.ts | MIXED_READ_WRITE | other_lib | 3 | 4 | audit_log | - |
 | src/lib/integrations/ai-egress/supabase-audit.ts | MIXED_READ_WRITE | other_lib | 3 | 4 | ai_egress_audit | - |
+| src/lib/data-plane/write-adapters/programsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 11 | deliverable_versions, deliverables_v2, engagement_participants, engagements, founder_approval_requests, module_state_log, phase_snapshots, program_modules | - |
 | src/lib/onboarding/apex-p18-pack-ingestion.ts | MIXED_READ_WRITE | other_lib | 0 | 9 | clients, enterprise_context_chunks, onboarding_upload_sessions | - |
+| src/lib/data-plane/write-adapters/sourceWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 8 | agent_attachment, source_event_approvals, source_event_artifact_states, source_event_gate_criterion_states, source_event_participants, source_events | - |
+| src/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 5 | atlas_message_traces, atlas_observations, atlas_reasoning_traces, atlas_threads | - |
+| src/lib/data-plane/write-adapters/adminWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 4 | engagement_participants, person_client_memberships, persons | - |
+| src/lib/data-plane/write-adapters/attachmentsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 3 | - | no static table names detected |
+| src/lib/data-plane/write-adapters/deliverableWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 3 | deliverable_types, deliverable_versions, deliverables_v2 | - |
+| src/lib/data-plane/write-adapters/sourcingWorkItemsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 2 | sourcing_work_items | - |
+| src/lib/data-plane/write-adapters/uploadsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 2 | - | no static table names detected |
+| src/lib/data-plane/write-adapters/webhookWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 2 | engagements, invoices | - |
 | src/lib/data/ingest.ts | MIXED_READ_WRITE | other_lib | 0 | 2 | - | no static table names detected |
 | src/lib/workshops/render.ts | MIXED_READ_WRITE | other_lib | 0 | 2 | - | no static table names detected |
-| src/lib/programs/mutations.ts | MIXED_READ_WRITE | programs | 16 | 38 | clients, deliverable_types, deliverable_versions, deliverables_v2, engagements, module_state_log, pattern_match_logs, program_milestones, program_modules, program_risks, program_work_items | - |
-| src/lib/programs/governance.ts | MIXED_READ_WRITE | programs | 8 | 21 | deliverable_versions, deliverables_v2, engagement_participants, founder_approval_requests, maestro_oversight_flags, program_approval_requests, program_evidence_items, program_milestones, program_modules | - |
-| src/lib/programs/nexus.ts | MIXED_READ_WRITE | programs | 8 | 17 | deliverables_v2, engagement_topics, maestro_oversight_flags, pattern_match_logs, program_modules, program_threads | - |
-| src/lib/programs/origination-submit.ts | MIXED_READ_WRITE | programs | 7 | 16 | engagement_participants, engagements, persons, program_approval_requests, turns | delete method present; may be Array.delete or Supabase delete |
-| src/lib/programs/approval.ts | MIXED_READ_WRITE | programs | 7 | 14 | engagements, program_approval_requests | - |
-| src/lib/programs/execute.ts | MIXED_READ_WRITE | programs | 7 | 13 | deliverables_v2, maestro_oversight_flags, program_work_items | - |
-| src/lib/programs/attachments/index.ts | MIXED_READ_WRITE | programs | 7 | 11 | program_attachments | - |
-| src/lib/programs/origination-drafts.ts | MIXED_READ_WRITE | programs | 5 | 12 | program_origination_drafts | - |
-| src/lib/programs/classifier.ts | MIXED_READ_WRITE | programs | 4 | 6 | engagement_topics, pattern_match_logs | - |
-| src/lib/programs/strategic-moves-preferences.ts | MIXED_READ_WRITE | programs | 3 | 6 | tower_user_preferences | - |
-| src/lib/programs/audit-log.ts | MIXED_READ_WRITE | programs | 3 | 4 | program_audit_log | - |
-| src/lib/programs/doc-parser.ts | MIXED_READ_WRITE | programs | 3 | 4 | enterprise_context_chunks | - |
-| src/lib/programs/evidence-ingestion.ts | MIXED_READ_WRITE | programs | 3 | 4 | program_evidence_items | - |
-| src/lib/programs/exports/audit.ts | MIXED_READ_WRITE | programs | 3 | 4 | program_export_log | - |
-| src/lib/source/value-chain.ts | MIXED_READ_WRITE | source | 11 | 20 | source_events, source_value_chain, source_value_states | - |
-| src/lib/source/artifact-registry/index.ts | MIXED_READ_WRITE | source | 8 | 14 | source_artifacts | - |
+| src/lib/data-plane/write-adapters/engageTurnWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 1 | - | no static table names detected |
+| src/lib/data-plane/write-adapters/expertReviewsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 1 | expert_reviews | - |
+| src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 1 | source_artifacts | - |
+| src/lib/data-plane/write-adapters/supabaseWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 1 | - | no static table names detected |
+| src/lib/data-plane/write-adapters/threadWriteAdapter.ts | MIXED_READ_WRITE | other_lib | 0 | 1 | intelligence_threads | - |
+| src/lib/programs/mutations.ts | MIXED_READ_WRITE | programs | 0 | 22 | clients, deliverable_types, deliverable_versions, deliverables_v2, engagements, module_state_log, pattern_match_logs, program_milestones, program_modules, program_risks, program_work_items | - |
+| src/lib/programs/governance.ts | MIXED_READ_WRITE | programs | 0 | 13 | deliverable_versions, deliverables_v2, engagement_participants, founder_approval_requests, maestro_oversight_flags, program_approval_requests, program_evidence_items, program_milestones, program_modules | - |
+| src/lib/programs/nexus.ts | MIXED_READ_WRITE | programs | 0 | 9 | deliverables_v2, engagement_topics, maestro_oversight_flags, pattern_match_logs, program_modules, program_threads | - |
+| src/lib/programs/origination-submit.ts | MIXED_READ_WRITE | programs | 0 | 9 | engagement_participants, engagements, persons, program_approval_requests, turns | delete method present; may be Array.delete or Supabase delete |
+| src/lib/programs/approval.ts | MIXED_READ_WRITE | programs | 0 | 7 | engagements, program_approval_requests | - |
+| src/lib/programs/origination-drafts.ts | MIXED_READ_WRITE | programs | 0 | 7 | program_origination_drafts | - |
+| src/lib/programs/execute.ts | MIXED_READ_WRITE | programs | 0 | 6 | deliverables_v2, maestro_oversight_flags, program_work_items | - |
+| src/lib/programs/attachments/index.ts | MIXED_READ_WRITE | programs | 0 | 4 | program_attachments | - |
+| src/lib/programs/strategic-moves-preferences.ts | MIXED_READ_WRITE | programs | 0 | 3 | tower_user_preferences | - |
+| src/lib/programs/classifier.ts | MIXED_READ_WRITE | programs | 0 | 2 | engagement_topics, pattern_match_logs | - |
+| src/lib/programs/audit-log.ts | MIXED_READ_WRITE | programs | 0 | 1 | program_audit_log | - |
+| src/lib/programs/doc-parser.ts | MIXED_READ_WRITE | programs | 0 | 1 | enterprise_context_chunks | - |
+| src/lib/programs/evidence-ingestion.ts | MIXED_READ_WRITE | programs | 0 | 1 | program_evidence_items | - |
+| src/lib/programs/exports/audit.ts | MIXED_READ_WRITE | programs | 0 | 1 | program_export_log | - |
 | src/lib/source/queries.ts | MIXED_READ_WRITE | source | 5 | 10 | source-artifacts, source_event_artifact_states, source_event_evidence_states, source_event_gate_criterion_states, source_events | - |
-| src/lib/source/pricing-submissions/dao.ts | MIXED_READ_WRITE | source | 5 | 8 | source_event_pricing_submissions | delete method present; may be Array.delete or Supabase delete |
-| src/lib/source/artifact-registry/text-parser.ts | MIXED_READ_WRITE | source | 3 | 9 | source_artifact_chunks, source_artifact_facts, source_meeting_outcomes, source_pricing_components, source_requirements, source_vendor_commitments | - |
+| src/lib/source/value-chain.ts | MIXED_READ_WRITE | source | 0 | 9 | source_events, source_value_chain, source_value_states | - |
+| src/lib/source/artifact-registry/index.ts | MIXED_READ_WRITE | source | 0 | 6 | source_artifacts | - |
+| src/lib/source/artifact-registry/text-parser.ts | MIXED_READ_WRITE | source | 0 | 6 | source_artifact_chunks, source_artifact_facts, source_meeting_outcomes, source_pricing_components, source_requirements, source_vendor_commitments | - |
+| src/lib/source/pricing-submissions/dao.ts | MIXED_READ_WRITE | source | 0 | 3 | source_event_pricing_submissions | delete method present; may be Array.delete or Supabase delete |
 | src/lib/tower/ingest-portfolio.ts | MIXED_READ_WRITE | tower | 3 | 4 | use_cases | - |
 | src/lib/tower/outcome-context-writeback/persist.ts | MIXED_READ_WRITE | tower | 3 | 4 | - | no static table names detected |
 | src/app/api/admin/parallel-run-invariants/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | - | no static table names detected |
@@ -325,7 +324,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | expert_reviews | - |
 | src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | outcome_ledger | - |
 | src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | turn_traces | - |
-| src/lib/programs/queries.ts | READ_ONLY_SELECT | programs | 1 | 7 | founder_approval_requests, maestro_oversight_flags, program_milestones, program_modules, program_risks, program_work_items | - |
+| src/lib/programs/queries.ts | READ_ONLY_SELECT | programs | 0 | 6 | founder_approval_requests, maestro_oversight_flags, program_milestones, program_modules, program_risks, program_work_items | - |
 | src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/expert-kernel/exports/board-grade/svg-raster.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/exports/renderers/html.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |

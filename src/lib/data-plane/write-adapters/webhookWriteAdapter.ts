@@ -35,8 +35,10 @@
 // underlying writes are themselves idempotent — they set a target state by a
 // stable key, so a replay re-applies the same state.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { selectWriteAdapter } from './index';
 import type { DataPlaneWriteAdapter, WriteStatementRunner } from './types';
 
@@ -94,7 +96,7 @@ const WEBHOOK_ACTOR = 'system:stripe-webhook';
  * backend.
  */
 export function createSupabaseWebhookWriteDataSource(
-  getClient: () => SupabaseClient = getServerSupabase,
+  getClient: () => SupabaseClient = getAzureWriteFluentClient,
 ): WebhookWriteDataSource {
   return {
     async setInvoiceStatus({ stripeInvoiceId, status, paidAt }): Promise<void> {

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export type ProgramsAuthMode = 'service_role' | 'authenticated';
 export type ProgramsAuthRouteFamily =
@@ -35,7 +35,7 @@ export function resolveProgramsAuthMode(routeFamily: ProgramsAuthRouteFamily): P
 
 export async function getProgramsRouteSupabase(
   routeFamily: ProgramsAuthRouteFamily,
-): Promise<{ mode: ProgramsAuthMode; supabase: ReturnType<typeof getServerSupabase> }> {
+): Promise<{ mode: ProgramsAuthMode; supabase: ReturnType<typeof getAzureWriteFluentClient> }> {
   const mode = resolveProgramsAuthMode(routeFamily);
-  return { mode, supabase: getServerSupabase() };
+  return { mode, supabase: getAzureWriteFluentClient() };
 }

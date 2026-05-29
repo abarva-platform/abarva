@@ -17,7 +17,7 @@ import 'server-only';
 // layer for the decide path; the migration's RLS is the second line of
 // defense for any direct authenticated client.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   notifyApprovalApproved,
   notifyApprovalRejected,
@@ -169,7 +169,7 @@ export async function submitForApproval(
     );
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
     .from('program_approval_requests')
@@ -277,7 +277,7 @@ export async function decideApprovalRequest(
     }
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   // Conditional update — only succeeds if the row is still 'pending'.
   // This protects against double-decision races.
@@ -391,7 +391,7 @@ export async function withdrawApprovalRequest(
     );
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
     .from('program_approval_requests')
@@ -449,7 +449,7 @@ export async function getApprovalQueueForTenant(
     );
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
     .from('program_approval_requests')
@@ -480,7 +480,7 @@ export async function getApprovalRequestById(
     );
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
     .from('program_approval_requests')

@@ -10,8 +10,8 @@ jest.mock('@/lib/data-plane/azureRead', () => ({
   },
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: jest.fn(),
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: jest.fn(),
 }));
 
 const queryMock = azureRead.query as jest.MockedFunction<typeof azureRead.query>;

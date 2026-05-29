@@ -14,8 +14,10 @@
 // Supabase stays the default; `azure-postgres` is opt-in via `ABARVA_DATA_PLANE`
 // and runs the insert inside a real `BEGIN`/`COMMIT` (design doc §2).
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
@@ -89,7 +91,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * factory is injectable so tests drive it without a backend.
  */
 export function createSupabaseSourceArtifactsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): SourceArtifactsWriteAdapter {
   return {
     name: 'supabase',

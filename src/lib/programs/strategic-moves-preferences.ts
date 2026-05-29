@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { selectStrategicMovesPreferencesReadAdapter } from '@/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter';
 import type { TenancyCtx } from './types.db';
 
@@ -67,7 +67,7 @@ export async function setStrategicMovesPreferences(
   prefs: StrategicMovesPreferences,
 ): Promise<void> {
   if (!isUuid(ctx.userId)) return;
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: existing } = await sb
     .from('tower_user_preferences')
     .select('id, default_filters')

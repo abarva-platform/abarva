@@ -7,7 +7,7 @@
 // the draft (via markDraftCommitted) sets `committed_engagement_id`
 // and frees the slot for a new origination on the same surface.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export interface OriginationDraftState {
@@ -73,7 +73,7 @@ export async function getOpenDraft(
   surface: string,
 ): Promise<OriginationDraftRow | null> {
   assertSurface(surface);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_origination_drafts')
     .select('id, surface, state, committed_engagement_id, updated_at')
@@ -114,7 +114,7 @@ export async function saveDraft(
   state: OriginationDraftState,
 ): Promise<void> {
   assertSurface(surface);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   // Look up existing open draft so we can choose insert vs update —
   // upsert with the partial-unique index is finicky in supabase-js.
   const { data: existing } = await sb
@@ -154,7 +154,7 @@ export async function markDraftCommitted(
   engagementId: string,
 ): Promise<void> {
   assertSurface(surface);
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: existing } = await sb
     .from('program_origination_drafts')
     .select('id')

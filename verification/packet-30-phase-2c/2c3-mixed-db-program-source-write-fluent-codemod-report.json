@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-05-29T22:20:49.065Z",
+  "helper": "getAzureWriteFluentClient",
+  "appliedCount": 22,
+  "skippedCount": 0,
+  "results": [
+    {
+      "file": "src/lib/db/engagement.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/db/person.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/db/relationship-note.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/db/turn.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/mutations.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/programs/governance.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/programs/nexus.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/origination-submit.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/approval.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/execute.ts",
+      "status": "applied",
+      "hadTypeImport": true
+    },
+    {
+      "file": "src/lib/programs/attachments/index.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/origination-drafts.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/classifier.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/strategic-moves-preferences.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/audit-log.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/doc-parser.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/evidence-ingestion.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/programs/exports/audit.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/source/value-chain.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/source/artifact-registry/index.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/source/pricing-submissions/dao.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    },
+    {
+      "file": "src/lib/source/artifact-registry/text-parser.ts",
+      "status": "applied",
+      "hadTypeImport": false
+    }
+  ],
+  "expandedWithWriteAdaptersReport": "verification/packet-30-phase-2c/2c3-write-adapters-codemod-report.json"
+}

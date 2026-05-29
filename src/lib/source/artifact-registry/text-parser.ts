@@ -8,7 +8,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { SourceStageKey } from '../types';
 import { updateSourceArtifactProcessingState } from './index';
 import type {
@@ -193,7 +193,7 @@ export async function parseSourceTextArtifact(
     });
   }
 
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const chunks = chunkText(text);
   const labeledLines = extractLabeledLines(text);
   const pricing = isPricingFamily(artifact.artifactFamily) ? extractPricingComponents(text) : [];

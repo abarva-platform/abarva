@@ -17,8 +17,8 @@ const fakeClient = {
   })),
 };
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => fakeClient,
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: () => fakeClient,
 }));
 
 jest.mock('../index', () => ({

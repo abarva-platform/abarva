@@ -28,8 +28,10 @@
 // lacks (design doc §2). On Supabase the writes are the same per-row inserts
 // the pre-seam route issued; behavior is byte-identical.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
@@ -195,7 +197,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * The client factory is injectable so tests drive it without a backend.
  */
 export function createSupabaseProgramsWriteAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): ProgramsWriteAdapter {
   return {
     name: 'supabase',

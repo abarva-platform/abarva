@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface TurnRow {
   id: string;
@@ -12,7 +12,7 @@ export interface TurnRow {
 }
 
 export async function getRecentTurns(engagementId: string, limit = 50): Promise<TurnRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('turns')
     .select('*')
     .eq('engagement_id', engagementId)
@@ -32,7 +32,7 @@ export interface AppendTurnArgs {
 }
 
 export async function appendTurn(args: AppendTurnArgs): Promise<TurnRow> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('turns')
     .insert({
       engagement_id: args.engagementId,

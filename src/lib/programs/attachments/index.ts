@@ -10,7 +10,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { selectAttachmentsWriteAdapter } from '@/lib/data-plane/write-adapters/attachmentsWriteAdapter';
 import {
   ATTACHMENT_MIME_ALLOWLIST,
@@ -176,7 +176,7 @@ export async function listAttachmentsForProgram(
   programId: string,
 ): Promise<AttachmentRecord[]> {
   if (!programId) throw new Error('[attachments] programId is required');
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_attachments')
     .select(SELECT_COLUMNS)
@@ -195,7 +195,7 @@ export async function listAttachmentsForPhase(
   if (!Number.isInteger(phase) || phase < 0 || phase > 6) {
     throw new Error(`[attachments] phase ${phase} must be an integer in [0,6]`);
   }
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_attachments')
     .select(SELECT_COLUMNS)
@@ -211,7 +211,7 @@ export async function getAttachment(
   attachmentId: string,
 ): Promise<AttachmentRecord | null> {
   if (!attachmentId) throw new Error('[attachments] attachmentId is required');
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_attachments')
     .select(SELECT_COLUMNS)
@@ -225,7 +225,7 @@ export async function getAttachment(
  * Soft-delete an attachment row by setting `deleted_at`. The bytes in
  * the storage bucket are reaped by a separate retention job (OV2-4c).
  * RLS denies user-level UPDATE on this table; this helper relies on
- * the service-role client returned by getServerSupabase.
+ * the service-role client returned by getAzureWriteFluentClient.
  */
 export async function softDeleteAttachment(
   attachmentId: string,
@@ -233,7 +233,7 @@ export async function softDeleteAttachment(
 ): Promise<AttachmentRecord> {
   if (!attachmentId) throw new Error('[attachments] attachmentId is required');
   if (!actingUserId) throw new Error('[attachments] actingUserId is required');
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('program_attachments')
     .update({ deleted_at: new Date().toISOString() })
