@@ -35,7 +35,8 @@ describe('Source access-control wiring', () => {
     expect(route).toContain('loadUserSourceAccessPolicy');
     expect(route).toContain('canCreateSourceEvents');
     expect(route).toContain('createSourcingEvent');
-    expect(route).toContain('source_event_participants');
+    expect(route).toContain('selectSourceWriteAdapter');
+    expect(route).toContain('insertParticipant');
     expect(route).toContain('Response.json');
     expect(route).not.toContain('redirect(');
     expect(route).not.toContain('NextResponse.redirect');
@@ -50,8 +51,9 @@ describe('Source access-control wiring', () => {
     expect(route).toContain('inferClientKeyFromEmail');
     expect(route).toContain('canonicalAdminFallbackAllowed');
     expect(route).toContain(".from('source_events')");
-    expect(route).toContain(".update({");
-    expect(route).toContain('current_stage_key: stageKey');
+    expect(route).toContain('selectSourceWriteAdapter');
+    expect(route).toContain('updateStage');
+    expect(route).toContain('stageKey');
     expect(route).toContain("persisted: true");
     expect(route).toContain('getSourceEventSeed');
     expect(route).toContain('setStageOverride');
@@ -92,7 +94,7 @@ describe('Source access-control wiring', () => {
 
     expect(queries).toContain('getSourceArtifactRegistryRecord');
     expect(queries).toContain('sourceArtifactRegistryRecordToDetail');
-    expect(queries).toContain("supabase.storage.from('source-artifacts').download");
+    expect(queries).toContain("getObjectStorageAdapter().download('source-artifacts'");
     expect(queries).toContain('registryRecord.sourceEventId !== eventId');
     expect(queries).toContain('parser/vector/graph completion is not implied');
 

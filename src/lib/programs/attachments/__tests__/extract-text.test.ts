@@ -1,6 +1,6 @@
 // Programs · Attachments · extract-text tests (OV2-4c).
 //
-// We mock @/lib/supabase-server (signed-URL creation) and the global
+// We mock object storage (signed-URL creation) and the global
 // fetch (signed-URL byte download) so the test stays hermetic. mammoth
 // is mocked at the module level for the DOCX path — we don't need its
 // full XML pipeline to assert that we route docx mime types through it
@@ -8,23 +8,16 @@
 
 import type { AttachmentRecord } from '../index';
 
-// ── Mock @supabase/supabase-js client used by getServerSupabase ─────────────
+// ── Mock object storage signed-URL creation ─────────────────────────────────
 
-type SignedUrlResult = { data: { signedUrl: string } | null; error: unknown };
-let nextSignedUrl: SignedUrlResult = {
-  data: { signedUrl: 'https://signed.example/url' },
-  error: null,
-};
+let nextSignedUrl: string | Error = 'https://signed.example/url';
 
-const fakeStorage = {
-  from: jest.fn(() => ({
-    createSignedUrl: jest.fn(async () => nextSignedUrl),
-  })),
-};
-
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    storage: fakeStorage,
+jest.mock('@/lib/data-plane/objectStorage', () => ({
+  getObjectStorageAdapter: () => ({
+    createSignedUrl: jest.fn(async () => {
+      if (nextSignedUrl instanceof Error) throw nextSignedUrl;
+      return nextSignedUrl;
+    }),
   }),
 }));
 
@@ -48,10 +41,7 @@ let nextFetchPayload: { ok: boolean; status: number; bytes: Buffer } = {
 };
 
 beforeEach(() => {
-  nextSignedUrl = {
-    data: { signedUrl: 'https://signed.example/url' },
-    error: null,
-  };
+  nextSignedUrl = 'https://signed.example/url';
   nextFetchPayload = { ok: true, status: 200, bytes: Buffer.from('') };
   mammothExtractRawTextResult = {
     value: 'mammoth-extracted text from docx',
@@ -221,7 +211,7 @@ describe('extractAttachmentText', () => {
   });
 
   it('throws when the signed URL fetch fails (caller must catch)', async () => {
-    nextSignedUrl = { data: null, error: { message: 'bucket missing' } };
+    nextSignedUrl = new Error('bucket missing');
     await expect(
       extractAttachmentText({
         ...baseAttachment,

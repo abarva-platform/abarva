@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { classifyUploadContent, type TowerDataType } from '@/lib/tower/classify';
@@ -65,8 +65,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const sb = getServerSupabase();
-
   // 1. Classify data protection posture before storage or ingestion.
   const bytes = new Uint8Array(await file.arrayBuffer());
   const dataProtection = evaluateSensitiveUpload({
@@ -79,19 +77,24 @@ export async function POST(req: NextRequest) {
     return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
   }
 
-  // 2. Store to Supabase Storage (bucket must exist — see migration notes)
+  // 2. Store to object storage.
   const now = new Date();
   const storagePath = `${clientId}/${now.getUTCFullYear()}/${String(
     now.getUTCMonth() + 1,
   ).padStart(2, '0')}/${crypto.randomUUID()}-${file.name}`;
 
-  const { error: uploadErr } = await sb.storage.from(TOWER_BUCKET).upload(storagePath, bytes, {
-    contentType: file.type || 'application/octet-stream',
-    upsert: false,
-  });
-  if (uploadErr) {
+  try {
+    await getObjectStorageAdapter().upload(TOWER_BUCKET, storagePath, bytes, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false,
+    });
+  } catch (uploadErr) {
     return NextResponse.json(
-      { error: `storage upload failed: ${uploadErr.message}` },
+      {
+        error: `storage upload failed: ${
+          uploadErr instanceof Error ? uploadErr.message : 'object storage upload failed'
+        }`,
+      },
       { status: 500 },
     );
   }

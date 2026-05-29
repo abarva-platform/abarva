@@ -1,17 +1,8 @@
 {
-  "description": "Packet 30 Phase 2D temporary allowlist. Entries are storage/binary boundary paths that still require a dedicated storage-adapter decision.",
-  "maxFiles": 10,
-  "maxImportMatches": 29,
+  "description": "Packet 30 storage-adapter residual allowlist. Runtime storage paths now use the Azure object-storage adapter; only the legacy compatibility helper file remains.",
+  "maxFiles": 1,
+  "maxImportMatches": 1,
   "files": [
-    "src/app/api/programs/[id]/attachments/[attachmentId]/route.ts",
-    "src/app/api/programs/[id]/attachments/upload/route.ts",
-    "src/app/api/programs/workspace/[moveId]/upload/route.ts",
-    "src/app/api/tower/upload/route.ts",
-    "src/app/api/v1/agent/attachments/route.ts",
-    "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
-    "src/app/api/v1/source/[eventId]/artifacts/upload/route.ts",
-    "src/lib/programs/attachments/extract-text.ts",
-    "src/lib/source/queries.ts",
     "src/lib/supabase-server.ts"
   ]
 }
