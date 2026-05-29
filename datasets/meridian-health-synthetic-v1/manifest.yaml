@@ -30,6 +30,10 @@ files:
     row_count: 48
   - path: 13-context/client-data-corpus.jsonl
     row_count: 320
+  - path: 17-upload-templates/template-catalog.json
+    template_count: 26
+  - path: 18-upload-scenarios
+    scenario_count: 8
   - path: 99-verification/expected-sentinel-answers.json
     question_count: 14
 checksums:

@@ -1,0 +1,17 @@
+enterprise_profile:
+  - metric: net_patient_revenue_usd
+    value: 11200000000
+    period: FY2025
+    source: board-finance-pack
+  - metric: hospitals
+    value: 23
+    period: FY2025
+    source: enterprise-profile
+  - metric: covered_lives
+    value: 187000
+    period: FY2025
+    source: population-health-book
+  - metric: ehr_platform
+    value: Epic
+    period: FY2025
+    source: clinical-applications-inventory
