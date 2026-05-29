@@ -1,9 +1,15 @@
-import type { AskIntent, RetrievalResult } from './types';
+import type { AskIntent, AskSurfaceContext, RetrievalResult } from './types';
 import { retrieveVendor } from './retrievers/vendor';
 import { retrievePattern } from './retrievers/pattern';
 import { retrieveKnowledge } from './retrievers/knowledge';
 
-export async function route(intent: AskIntent, entities: string[]): Promise<RetrievalResult> {
+export interface RouteOptions {
+  query?: string;
+  tenantInventoryKey?: string | null;
+  surfaceContext?: AskSurfaceContext | null;
+}
+
+export async function route(intent: AskIntent, entities: string[], opts: RouteOptions = {}): Promise<RetrievalResult> {
   if (intent === 'vendor_lookup' || intent === 'vendor_comparison') {
     const primary = await retrieveVendor(entities);
     if (primary.sources.length === 0) {
@@ -14,7 +20,7 @@ export async function route(intent: AskIntent, entities: string[]): Promise<Retr
   }
 
   if (intent === 'pattern_inquiry') {
-    return retrievePattern(entities);
+    return retrievePattern(entities, opts);
   }
 
   if (intent === 'regulation_query') {
@@ -42,7 +48,7 @@ export async function route(intent: AskIntent, entities: string[]): Promise<Retr
   // general_synthesis — union of vendor + pattern + knowledge
   const [v, p, k] = await Promise.all([
     retrieveVendor(entities),
-    retrievePattern(entities),
+    retrievePattern(entities, opts),
     retrieveKnowledge(entities, null, 'GENERAL'),
   ]);
   const merged = [...v.sources, ...p.sources, ...k.sources].slice(0, 8);

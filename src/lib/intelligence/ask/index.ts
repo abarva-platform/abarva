@@ -108,7 +108,11 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       }),
       retrieveTenantStructuredFacts(opts.tenant ?? opts.tenantInventoryKey, trimmed),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
-      route(classification.intent, classification.entities),
+      route(classification.intent, classification.entities, {
+        query: trimmed,
+        tenantInventoryKey: opts.tenantInventoryKey,
+        surfaceContext: opts.surfaceContext,
+      }),
       retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId }),
       getTenantFactFingerprint({
         tenantId: opts.tenantId,

@@ -1,9 +1,7 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
-import {
-  searchCanonicalPatternIndex,
-  type CanonicalPatternIndexHit,
-} from '@/lib/intelligence/canonical/runtime-pattern-index';
-import type { RetrievalResult, AskSource } from '../types';
+import { searchCorpus } from '@/lib/corpus/retrieval';
+import type { CorpusSearchHit } from '@/lib/corpus/types';
+import type { AskSource, AskSurfaceContext, RetrievalResult } from '../types';
 
 // GP-1 · Supabase-native pattern retriever.
 //
@@ -47,45 +45,90 @@ function buildSource(row: PatternRow, confidence: number): AskSource {
   };
 }
 
-function buildCanonicalSource(hit: CanonicalPatternIndexHit): AskSource {
-  const kpis = [...hit.primary_kpis, ...hit.secondary_kpis].slice(0, 4);
+export interface PatternRetrievalOptions {
+  query?: string;
+  tenantInventoryKey?: string | null;
+  surfaceContext?: AskSurfaceContext | null;
+}
+
+function inferIndustry(opts: PatternRetrievalOptions): string | null {
+  const haystack = [
+    opts.tenantInventoryKey,
+    opts.surfaceContext?.clientKey,
+    opts.surfaceContext?.activeClient,
+    ...(opts.surfaceContext?.facts ?? []),
+    ...(opts.surfaceContext?.tenantFacts ?? []),
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(' ')
+    .toLowerCase();
+  if (/\b(apex|retail|merchandising|store|loyalty|inventory|assortment|sku)\b/.test(haystack)) return 'retail';
+  if (/\b(meridian|northstar|helix|health|healthcare|clinical|patient|payer|provider|epic|ehr|medtech|med-tech)\b/.test(haystack)) return 'healthcare';
+  if (/\b(first[- ]?capital|brindlemark|arcturus|financial|bank|wealth|aml|kyc|underwriting|fraud)\b/.test(haystack)) return 'financial_services';
+  if (/\b(keystone|energy|utility|utilities|grid)\b/.test(haystack)) return 'energy';
+  if (/\b(skyharbor|airline|aviation|air)\b/.test(haystack)) return 'airline';
+  return null;
+}
+
+function corpusVerticalOverlays(opts: PatternRetrievalOptions): string[] | undefined {
+  const industry = inferIndustry(opts);
+  if (!industry) return undefined;
+  return Array.from(new Set([industry, 'cross_industry']));
+}
+
+function buildCorpusSource(hit: CorpusSearchHit): AskSource {
+  const provenance = hit.synthesis?.provenance && typeof hit.synthesis.provenance === 'object'
+    ? hit.synthesis.provenance as Record<string, unknown>
+    : null;
+  const source = typeof provenance?.source === 'string' ? provenance.source : null;
+  const sourceBasis = typeof hit.synthesis?.source_basis === 'string' ? hit.synthesis.source_basis : source;
   const detailParts = [
-    hit.summary,
-    hit.source_basis ? `source_basis=${hit.source_basis}` : null,
-    hit.confidence_level ? `confidence=${hit.confidence_level}` : null,
-    kpis.length > 0 ? `KPIs: ${kpis.join(', ')}` : null,
+    hit.category ? `category=${hit.category}` : null,
+    hit.verticalOverlays.length > 0 ? `industry_scope=${hit.verticalOverlays.join(', ')}` : null,
+    sourceBasis ? `source_basis=${sourceBasis}` : null,
+    `depth_score=${hit.depthScore.toFixed(1)}`,
+    hit.markdownBody ? hit.markdownBody.replace(/\s+/g, ' ').slice(0, 280) : null,
   ].filter((part): part is string => Boolean(part));
   return {
     type: 'PATTERN',
     name: hit.title,
-    id: hit.canonical_id,
+    id: hit.slug,
     detail: detailParts.join(' · '),
-    confidence: hit.score,
+    confidence: Math.max(0, Math.min(1, hit.score || hit.confidence)),
   };
 }
 
-async function retrieveCanonicalFallback(
+async function retrieveCorpusFallback(
   entities: string[],
   seen: Set<string>,
+  opts: PatternRetrievalOptions,
 ): Promise<AskSource[]> {
   const sources: AskSource[] = [];
-  for (const entity of entities.slice(0, 3)) {
-    const result = await searchCanonicalPatternIndex({
-      query: entity,
+  const queries = Array.from(new Set([
+    opts.query?.trim(),
+    ...entities.slice(0, 3).map((entity) => entity.trim()),
+  ].filter((query): query is string => Boolean(query))));
+  const verticalOverlays = corpusVerticalOverlays(opts);
+  for (const query of queries) {
+    const hits = await searchCorpus(query, {
+      clientId: opts.tenantInventoryKey ?? opts.surfaceContext?.clientKey ?? 'global',
+      verticalOverlays,
+      minConfidence: 0,
+      minDepthScore: 0,
       limit: 5,
-    }, { useCache: false });
-    for (const hit of result.patterns) {
-      const key = hit.canonical_id;
+    }).catch(() => []);
+    for (const hit of hits) {
+      const key = hit.slug || hit.id;
       if (seen.has(key)) continue;
       seen.add(key);
-      sources.push(buildCanonicalSource(hit));
+      sources.push(buildCorpusSource(hit));
       if (sources.length >= 8) return sources;
     }
   }
   return sources;
 }
 
-export async function retrievePattern(entities: string[]): Promise<RetrievalResult> {
+export async function retrievePattern(entities: string[], opts: PatternRetrievalOptions = {}): Promise<RetrievalResult> {
   if (entities.length === 0) return { sources: [], averageConfidence: 0 };
 
   const sources: AskSource[] = [];
@@ -155,7 +198,7 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
     }
   }
   if (shouldTryCanonicalFallback || sources.length === 0) {
-    const fallbackSources = await retrieveCanonicalFallback(entities, seen);
+    const fallbackSources = await retrieveCorpusFallback(entities, seen, opts);
     sources.push(...fallbackSources);
   }
 
