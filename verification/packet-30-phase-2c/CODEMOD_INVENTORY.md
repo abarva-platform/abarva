@@ -4,25 +4,25 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T16:53:45.928Z`
-- Total files in inventory: `311`
-- Files with import-helper matches: `155`
-- Import-helper matches: `631`
-- Files with broad matches: `311`
-- Broad matches: `1470`
+- Generated at: `2026-05-29T17:12:49.187Z`
+- Total files in inventory: `307`
+- Files with import-helper matches: `154`
+- Import-helper matches: `628`
+- Files with broad matches: `307`
+- Broad matches: `1461`
 
 ## Classification Counts
 
 - `DEFER_MANUAL`: 126
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 98
+- `READ_ONLY_SELECT`: 94
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
 - `admin`: 2
-- `api_routes`: 41
+- `api_routes`: 37
 - `app_routes`: 12
 - `db`: 5
 - `intelligence`: 31
@@ -266,18 +266,14 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/admin/seed-clerk-metadata/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | persons | - |
 | src/app/api/engage/[engagementId]/turn/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagements | - |
 | src/app/api/health/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagements | - |
-| src/app/api/v1/programs/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagement_topics | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_event_artifact_states | - |
 | src/app/api/v1/source/[eventId]/stage/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
 | src/app/api/v1/source/events/[eventId]/approve/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
 | src/app/api/v1/programs/[programId]/nexus/ask/route.ts | READ_ONLY_SELECT | api_routes | 2 | 3 | program_threads | - |
-| src/app/api/v1/programs/originate/from-thread/route.ts | READ_ONLY_SELECT | api_routes | 0 | 3 | engagement_topics, intelligence_thread_turns, intelligence_threads | - |
 | src/app/api/admin/parallel-run-invariants/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | - | no static table names detected |
 | src/app/api/v1/programs/[programId]/module/[key]/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | deliverable_versions, deliverables_v2 | - |
 | src/app/api/v1/intelligence/brief/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/programs/[programId]/advance/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | founder_approval_requests | - |
-| src/app/api/v1/programs/originate/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | engagement_topics | - |
-| src/app/api/v1/programs/patterns/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | engagement_topics | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/cxo-report/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/deal-pack/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |

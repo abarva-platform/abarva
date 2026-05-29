@@ -77,18 +77,16 @@ describe('Programs auth-mode pilot routes', () => {
     });
   });
 
-  it('wraps portfolio GET with route-family auth mode', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({ mode: 'authenticated', supabase: { mocked: true } });
+  it('reads portfolio GET through the default read plane without route-local Supabase', async () => {
     getProgramPortfolio.mockResolvedValueOnce([{ id: 'eng_1' }]);
     buildProgramSummary.mockResolvedValueOnce({ id: 'eng_1', name: 'Move 1' });
 
     const { GET } = await import('@/app/api/v1/programs/route');
     const res = await GET();
 
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('portfolio');
     expect(getProgramPortfolio).toHaveBeenCalledWith(
       expect.objectContaining({ clientId: 'client_meridian' }),
-      expect.objectContaining({ limit: 100, supabase: { mocked: true } }),
+      expect.objectContaining({ limit: 100 }),
     );
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ programs: [{ id: 'eng_1', name: 'Move 1' }] });

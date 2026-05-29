@@ -6,7 +6,7 @@
 import { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '../_auth';
 import type { ArchetypeKey, PatternLibraryItem } from '@/lib/programs/types.ui';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,22 +16,23 @@ const CLIENT_VISIBLE_STATES = ['pilot', 'mature'] as const;
 export async function GET(req: NextRequest) {
   try {
     await requireTenancy(); // auth only · topics are shared across clients
-    const { supabase } = await getProgramsRouteSupabase('origination');
     const url = new URL(req.url);
     const archetypeFilter = url.searchParams.get('archetype') as ArchetypeKey | null;
     const industryFilter = url.searchParams.get('industry');
     const includeAll = url.searchParams.get('all') === '1'; // Maestro-only — add an auth check when admin endpoint lands
 
-    let q = supabase
-      .from('engagement_topics')
-      .select('topic_key, title, tagline, industries, deployment_count, successful_deployment_count, promotion_state, canonical_shape_json, maturity_version')
-      .order('successful_deployment_count', { ascending: false, nullsFirst: false });
-    if (!includeAll) q = q.in('promotion_state', CLIENT_VISIBLE_STATES as unknown as string[]);
-    if (industryFilter) q = q.contains('industries', [industryFilter]);
-    const { data, error } = await q.limit(100);
-    if (error) throw error;
-
-    const rows = (data as Array<{
+    const predicates: string[] = [];
+    const params: unknown[] = [];
+    if (!includeAll) {
+      params.push([...CLIENT_VISIBLE_STATES]);
+      predicates.push(`promotion_state = ANY($${params.length})`);
+    }
+    if (industryFilter) {
+      params.push(industryFilter);
+      predicates.push(`industries @> ARRAY[$${params.length}]::text[]`);
+    }
+    const where = predicates.length > 0 ? `WHERE ${predicates.join(' AND ')}` : '';
+    const rows = await azureRead.query<{
       topic_key: string;
       title: string;
       tagline: string | null;
@@ -41,7 +42,14 @@ export async function GET(req: NextRequest) {
       promotion_state: string | null;
       canonical_shape_json: Record<string, unknown> | null;
       maturity_version: number;
-    }> | null) ?? [];
+    }>(
+      `SELECT topic_key, title, tagline, industries, deployment_count, successful_deployment_count, promotion_state, canonical_shape_json, maturity_version
+       FROM engagement_topics
+       ${where}
+       ORDER BY successful_deployment_count DESC NULLS LAST
+       LIMIT 100`,
+      params,
+    );
 
     const patterns: PatternLibraryItem[] = rows
       .filter((r) => {

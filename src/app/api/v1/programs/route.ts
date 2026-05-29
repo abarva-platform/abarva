@@ -5,12 +5,10 @@
 import { NextRequest } from 'next/server';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 import { originateProgram } from '@/lib/programs/mutations';
-import { setModuleStatus, createMilestone } from '@/lib/programs/mutations';
 import { buildProgramSummary } from '@/lib/programs/transformers';
 import { logClassifierDecision } from '@/lib/programs/classifier';
 import { raiseMaestroFlag } from '@/lib/programs/governance';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import {
   selectProgramsWriteAdapter,
   type ProgramModuleSeed,
@@ -33,9 +31,8 @@ export const maxDuration = 30;
 
 export async function GET() {
   try {
-    const { supabase } = await getProgramsRouteSupabase('portfolio');
     const ctx = await requireTenancy();
-    const programs = await getProgramPortfolio(ctx, { limit: 100, supabase });
+    const programs = await getProgramPortfolio(ctx, { limit: 100 });
     const summaries: ProgramSummary[] = await Promise.all(programs.map(buildProgramSummary));
     return Response.json({ programs: summaries });
   } catch (err) {
@@ -118,10 +115,8 @@ export async function POST(req: NextRequest) {
       industryHint: form!.industryHint,
     });
 
-    const sb = getServerSupabase();
     // DB writes route through the data-plane write seam (Slice 3a); reads
-    // (the engagement_topics lookup below) stay direct — transitive per the
-    // write-path design doc §4. Supabase remains the default plane.
+    // use the Packet 30 Azure read plane.
     const writeAdapter = selectProgramsWriteAdapter();
 
     // Seed participants from form. Failures here are non-fatal — the program
@@ -149,12 +144,12 @@ export async function POST(req: NextRequest) {
 
     // Seed program_modules from canonical shape (if pattern accepted)
     if (payload.acceptedPatternKey) {
-      const { data: topic } = await sb
-        .from('engagement_topics')
-        .select('title, canonical_shape_json, phase_playbook')
-        .eq('topic_key', payload.acceptedPatternKey)
-        .maybeSingle();
-      const canonical = (topic as { canonical_shape_json: Record<string, unknown> | null } | null)?.canonical_shape_json ?? null;
+      const topic = await azureRead.maybeSingle<{ canonical_shape_json: Record<string, unknown> | null }>({
+        table: 'engagement_topics',
+        columns: ['canonical_shape_json'],
+        where: { topic_key: payload.acceptedPatternKey },
+      });
+      const canonical = topic?.canonical_shape_json ?? null;
       const moduleList: Array<{ moduleKey: string; name: string; phase: number }> = [];
       if (canonical && Array.isArray(canonical.modules)) {
         for (const m of canonical.modules as Array<{ moduleKey?: string; name?: string; phase?: number }>) {

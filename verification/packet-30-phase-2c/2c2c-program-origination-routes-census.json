@@ -1,0 +1,83 @@
+{
+  "slice": "packet-30-phase-2c-program-origination-routes",
+  "generatedAt": "2026-05-29T17:12:49.098Z",
+  "runtimeSupabaseCensus": {
+    "mode": "warn",
+    "startOfSlice": {
+      "filesWithImportMatches": 155,
+      "importMatches": 631,
+      "filesWithBroadMatches": 311,
+      "broadMatches": 1470
+    },
+    "endOfSlice": {
+      "filesWithImportMatches": 154,
+      "importMatches": 628,
+      "filesWithBroadMatches": 307,
+      "broadMatches": 1461
+    },
+    "delta": {
+      "filesWithImportMatches": -1,
+      "importMatches": -3,
+      "filesWithBroadMatches": -4,
+      "broadMatches": -9
+    }
+  },
+  "phase2CBaseline": {
+    "filesWithImportMatches": 176,
+    "importMatches": 725
+  },
+  "phase2CToDateDelta": {
+    "filesWithImportMatches": -22,
+    "importMatches": -97
+  },
+  "codemodInventory": {
+    "totalFiles": 307,
+    "filesWithImportMatches": 154,
+    "importMatches": 628,
+    "filesWithBroadMatches": 307,
+    "broadMatches": 1461,
+    "classificationCounts": {
+      "DEFER_MANUAL": 126,
+      "MIXED_READ_WRITE": 82,
+      "MUTATION_WRITE": 1,
+      "READ_ONLY_SELECT": 94,
+      "READ_WITH_STORAGE": 4
+    },
+    "groupCounts": {
+      "admin": 2,
+      "api_routes": 37,
+      "app_routes": 12,
+      "db": 5,
+      "intelligence": 31,
+      "knowledge": 5,
+      "other_lib": 143,
+      "programs": 36,
+      "source": 34,
+      "tower": 2
+    }
+  },
+  "convertedFiles": [
+    "src/app/api/v1/programs/route.ts",
+    "src/app/api/v1/programs/originate/route.ts",
+    "src/app/api/v1/programs/originate/from-thread/route.ts",
+    "src/app/api/v1/programs/patterns/route.ts"
+  ],
+  "deferredProgramsResidue": [
+    {
+      "file": "src/app/api/v1/programs/[programId]/generate/route.ts",
+      "reason": "larger generation route with phase-pack and deliverable reads; migrate as its own parity slice"
+    },
+    {
+      "file": "src/app/api/v1/programs/[programId]/module/[key]/route.ts",
+      "reason": "module content route; migrate as a focused detail-route slice"
+    },
+    {
+      "file": "src/app/api/v1/programs/[programId]/advance/route.ts",
+      "reason": "advance route is mutation-adjacent despite its current read-only census classification"
+    },
+    {
+      "file": "src/app/api/programs/**",
+      "reason": "legacy attachment/export/workspace routes include storage and upload semantics"
+    }
+  ]
+}
