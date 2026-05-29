@@ -1,0 +1,81 @@
+{
+  "slice": "packet-30-phase-2c-admin-residual-reads",
+  "generatedAt": "2026-05-29T16:21:38.244Z",
+  "runtimeSupabaseCensus": {
+    "mode": "warn",
+    "startOfSlice": {
+      "filesWithImportMatches": 167,
+      "importMatches": 688,
+      "filesWithBroadMatches": 320,
+      "broadMatches": 1592
+    },
+    "endOfSlice": {
+      "filesWithImportMatches": 160,
+      "importMatches": 661,
+      "filesWithBroadMatches": 314,
+      "broadMatches": 1544
+    },
+    "delta": {
+      "filesWithImportMatches": -7,
+      "importMatches": -27,
+      "filesWithBroadMatches": -6,
+      "broadMatches": -48
+    }
+  },
+  "phase2CBaseline": {
+    "filesWithImportMatches": 176,
+    "importMatches": 725
+  },
+  "phase2CToDateDelta": {
+    "filesWithImportMatches": -16,
+    "importMatches": -64
+  },
+  "codemodInventory": {
+    "totalFiles": 314,
+    "filesWithImportMatches": 160,
+    "importMatches": 661,
+    "filesWithBroadMatches": 314,
+    "broadMatches": 1544,
+    "classificationCounts": {
+      "DEFER_MANUAL": 124,
+      "MIXED_READ_WRITE": 82,
+      "MUTATION_WRITE": 1,
+      "READ_ONLY_SELECT": 103,
+      "READ_WITH_STORAGE": 4
+    },
+    "groupCounts": {
+      "admin": 2,
+      "api_routes": 41,
+      "app_routes": 12,
+      "db": 5,
+      "intelligence": 31,
+      "knowledge": 5,
+      "other_lib": 143,
+      "programs": 39,
+      "source": 34,
+      "tower": 2
+    }
+  },
+  "deferredAdminResidue": [
+    {
+      "file": "src/app/api/admin/users/provision/route.ts",
+      "reason": "POST route with Clerk side effects and data-plane writes; handle in mixed read/write phase"
+    },
+    {
+      "file": "src/app/api/admin/quarantine/[id]/release/route.ts",
+      "reason": "POST route with lifecycle write; handle in mixed read/write phase"
+    },
+    {
+      "file": "src/app/api/admin/quarantine/[id]/hard-delete/route.ts",
+      "reason": "POST route with lifecycle write; handle in mixed read/write phase"
+    },
+    {
+      "file": "src/app/api/admin/seed-clerk-metadata/route.ts",
+      "reason": "POST route with Clerk side effects; handle in mixed read/write or retire as admin utility"
+    },
+    {
+      "file": "src/app/(maestro)/admin/onboarding/[session]/confirm/page.tsx",
+      "reason": "onboarding compatibility path; keep for manual/storage-adjacent review"
+    }
+  ]
+}

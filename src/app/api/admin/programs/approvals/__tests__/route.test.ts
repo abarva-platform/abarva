@@ -20,24 +20,7 @@ const mockRequireAdminDecide = jest.fn();
 const mockGetApprovalQueueForTenant = jest.fn();
 const mockGetApprovalRequestById = jest.fn();
 const mockDecideApprovalRequest = jest.fn();
-
-const mockSupabaseSelect = jest.fn();
-interface SupabaseChain {
-  select: jest.Mock;
-  eq: jest.Mock;
-  in: jest.Mock;
-  gte: jest.Mock;
-}
-const supabaseChain: SupabaseChain = {
-  select: jest.fn(),
-  eq: jest.fn(),
-  in: jest.fn(),
-  gte: jest.fn(),
-};
-supabaseChain.select.mockReturnValue(supabaseChain);
-supabaseChain.eq.mockReturnValue(supabaseChain);
-supabaseChain.in.mockReturnValue(supabaseChain);
-supabaseChain.gte.mockResolvedValue({ data: [], error: null });
+const mockAzureSelect = jest.fn();
 
 jest.mock('@/app/api/admin/programs/approvals/_auth', () => ({
   requireAdminAuth: () => mockRequireAdminAuth(),
@@ -65,15 +48,10 @@ jest.mock('@/lib/programs/approval', () => ({
   decideApprovalRequest: (input: unknown) => mockDecideApprovalRequest(input),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    from: () => ({
-      select: (...args: unknown[]) => {
-        mockSupabaseSelect(...args);
-        return supabaseChain;
-      },
-    }),
-  }),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    select: (...args: unknown[]) => mockAzureSelect(...args),
+  },
 }));
 
 function fakeRequest(body: unknown): Request {
@@ -104,10 +82,7 @@ function approvalFixture(overrides: Partial<ApprovalRequest> = {}): ApprovalRequ
 
 beforeEach(() => {
   jest.clearAllMocks();
-  supabaseChain.select.mockReturnValue(supabaseChain);
-  supabaseChain.eq.mockReturnValue(supabaseChain);
-  supabaseChain.in.mockReturnValue(supabaseChain);
-  supabaseChain.gte.mockResolvedValue({ data: [], error: null });
+  mockAzureSelect.mockResolvedValue([]);
 });
 
 describe('GET /api/admin/programs/approvals', () => {
@@ -141,14 +116,11 @@ describe('GET /api/admin/programs/approvals', () => {
     });
     const fixtures = [approvalFixture(), approvalFixture({ id: 'req-2' })];
     mockGetApprovalQueueForTenant.mockResolvedValue(fixtures);
-    supabaseChain.gte.mockResolvedValue({
-      data: [
+    mockAzureSelect.mockResolvedValue([
         { request_status: 'approved' },
         { request_status: 'approved' },
         { request_status: 'rejected' },
-      ],
-      error: null,
-    });
+    ]);
 
     const { GET } = await import('../route');
     const res = await GET();
@@ -162,6 +134,10 @@ describe('GET /api/admin/programs/approvals', () => {
     expect(json.requests).toHaveLength(2);
     expect(json.counts).toEqual({ pending: 2, approved: 2, rejected: 1 });
     expect(mockGetApprovalQueueForTenant).toHaveBeenCalledWith('apex-retail');
+    expect(mockAzureSelect).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'program_approval_requests',
+      where: expect.objectContaining({ tenant_key: 'apex-retail' }),
+    }));
   });
 });
 

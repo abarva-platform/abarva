@@ -6,7 +6,7 @@ import 'server-only';
 // stakeholder notes, decisions, vendors, scenarios) in parallel.
 // All queries are tenant-scoped via client_id passed in.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import {
   type AIInitiative,
   type ConfidenceLevel,
@@ -97,52 +97,84 @@ export async function getInitiativeDetail(
   const initiative = all.find((i) => i.initiativeId === initiativeId);
   if (!initiative) return null;
 
-  const sb = getServerSupabase();
-  const [kpisRes, notesRes, decisionsRes, vendorsRes, scenariosRes] = await Promise.all([
-    sb
-      .from('ai_initiative_kpis')
-      .select(
-        'kpi_name, kpi_unit, quarter, kpi_value, target_value, peer_median, confidence_level, loaded_via_template',
-      )
-      .eq('initiative_id', initiativeId)
-      .order('quarter', { ascending: true }),
-    sb
-      .from('ai_initiative_stakeholder_notes')
-      .select(
-        'note_id, stakeholder_name, stakeholder_title, interview_date, quote, themes, attribution_consent, loaded_via_template',
-      )
-      .eq('initiative_id', initiativeId)
-      .order('interview_date', { ascending: false }),
-    sb
-      .from('ai_initiative_decisions')
-      .select(
-        'decision_id, decision_name, decision_date, sponsor_name, decision_status, dissent_recorded, dissent_summary, outcome_status, loaded_via_template',
-      )
-      .eq('initiative_id', initiativeId)
-      .order('decision_date', { ascending: false, nullsFirst: false }),
-    sb
-      .from('ai_initiative_vendors')
-      .select(
-        'vendor_id, vendor_name, contract_value_usd, renewal_date, financial_health, notes, loaded_via_template',
-      )
-      .eq('initiative_id', initiativeId)
-      .order('renewal_date', { ascending: true, nullsFirst: false }),
-    sb
-      .from('ai_initiative_scenarios')
-      .select(
-        'scenario_id, scenario_name, trigger_event, time_horizon_months, probability_pct, impact_summary, loaded_via_template',
-      )
-      .eq('initiative_id', initiativeId)
-      .order('probability_pct', { ascending: false, nullsFirst: false }),
+  const [kpisRows, notesRows, decisionsRows, vendorsRows, scenariosRows] = await Promise.all([
+    azureRead.select<Record<string, unknown>>({
+      table: 'ai_initiative_kpis',
+      columns: [
+        'kpi_name',
+        'kpi_unit',
+        'quarter',
+        'kpi_value',
+        'target_value',
+        'peer_median',
+        'confidence_level',
+        'loaded_via_template',
+      ],
+      where: { initiative_id: initiativeId },
+      orderBy: { column: 'quarter', direction: 'asc' },
+    }),
+    azureRead.select<Record<string, unknown>>({
+      table: 'ai_initiative_stakeholder_notes',
+      columns: [
+        'note_id',
+        'stakeholder_name',
+        'stakeholder_title',
+        'interview_date',
+        'quote',
+        'themes',
+        'attribution_consent',
+        'loaded_via_template',
+      ],
+      where: { initiative_id: initiativeId },
+      orderBy: { column: 'interview_date', direction: 'desc' },
+    }),
+    azureRead.select<Record<string, unknown>>({
+      table: 'ai_initiative_decisions',
+      columns: [
+        'decision_id',
+        'decision_name',
+        'decision_date',
+        'sponsor_name',
+        'decision_status',
+        'dissent_recorded',
+        'dissent_summary',
+        'outcome_status',
+        'loaded_via_template',
+      ],
+      where: { initiative_id: initiativeId },
+      orderBy: { column: 'decision_date', direction: 'desc', nulls: 'last' },
+    }),
+    azureRead.select<Record<string, unknown>>({
+      table: 'ai_initiative_vendors',
+      columns: [
+        'vendor_id',
+        'vendor_name',
+        'contract_value_usd',
+        'renewal_date',
+        'financial_health',
+        'notes',
+        'loaded_via_template',
+      ],
+      where: { initiative_id: initiativeId },
+      orderBy: { column: 'renewal_date', direction: 'asc', nulls: 'last' },
+    }),
+    azureRead.select<Record<string, unknown>>({
+      table: 'ai_initiative_scenarios',
+      columns: [
+        'scenario_id',
+        'scenario_name',
+        'trigger_event',
+        'time_horizon_months',
+        'probability_pct',
+        'impact_summary',
+        'loaded_via_template',
+      ],
+      where: { initiative_id: initiativeId },
+      orderBy: { column: 'probability_pct', direction: 'desc', nulls: 'last' },
+    }),
   ]);
 
-  if (kpisRes.error) throw new Error(`getInitiativeDetail: kpis ${kpisRes.error.message}`);
-  if (notesRes.error) throw new Error(`getInitiativeDetail: notes ${notesRes.error.message}`);
-  if (decisionsRes.error) throw new Error(`getInitiativeDetail: decisions ${decisionsRes.error.message}`);
-  if (vendorsRes.error) throw new Error(`getInitiativeDetail: vendors ${vendorsRes.error.message}`);
-  if (scenariosRes.error) throw new Error(`getInitiativeDetail: scenarios ${scenariosRes.error.message}`);
-
-  const kpis: ReadonlyArray<AIInitiativeKpi> = (kpisRes.data ?? []).map((r: Record<string, unknown>) => ({
+  const kpis: ReadonlyArray<AIInitiativeKpi> = kpisRows.map((r: Record<string, unknown>) => ({
     kpiName: r.kpi_name as string,
     kpiUnit: (r.kpi_unit as string | null) ?? null,
     quarter: r.quarter as string,
@@ -153,7 +185,7 @@ export async function getInitiativeDetail(
     loadedViaTemplate: r.loaded_via_template as string,
   }));
 
-  const stakeholderNotes: ReadonlyArray<AIInitiativeStakeholderNote> = (notesRes.data ?? []).map(
+  const stakeholderNotes: ReadonlyArray<AIInitiativeStakeholderNote> = notesRows.map(
     (r: Record<string, unknown>) => ({
       noteId: r.note_id as string,
       stakeholderName: r.stakeholder_name as string,
@@ -166,7 +198,7 @@ export async function getInitiativeDetail(
     }),
   );
 
-  const decisions: ReadonlyArray<AIInitiativeDecision> = (decisionsRes.data ?? []).map(
+  const decisions: ReadonlyArray<AIInitiativeDecision> = decisionsRows.map(
     (r: Record<string, unknown>) => ({
       decisionId: r.decision_id as string,
       decisionName: r.decision_name as string,
@@ -180,7 +212,7 @@ export async function getInitiativeDetail(
     }),
   );
 
-  const vendors: ReadonlyArray<AIInitiativeVendor> = (vendorsRes.data ?? []).map(
+  const vendors: ReadonlyArray<AIInitiativeVendor> = vendorsRows.map(
     (r: Record<string, unknown>) => ({
       vendorId: r.vendor_id as string,
       vendorName: r.vendor_name as string,
@@ -192,7 +224,7 @@ export async function getInitiativeDetail(
     }),
   );
 
-  const scenarios: ReadonlyArray<AIInitiativeScenario> = (scenariosRes.data ?? []).map(
+  const scenarios: ReadonlyArray<AIInitiativeScenario> = scenariosRows.map(
     (r: Record<string, unknown>) => ({
       scenarioId: r.scenario_id as string,
       scenarioName: r.scenario_name as string,

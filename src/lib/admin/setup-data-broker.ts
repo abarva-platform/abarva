@@ -24,7 +24,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type {
   InventoryActivityEvent,
   InventorySegmentRollup,
@@ -124,41 +124,56 @@ function describeActor(row: AuditLogRow): string {
 export async function getSetupInventorySnapshot(
   brokerTenantKey: string,
 ): Promise<SetupInventorySnapshot | null> {
-  const sb = (() => {
-    try {
-      return getServerSupabase();
-    } catch {
-      return null;
-    }
-  })();
-  if (!sb) return null;
+  let segmentRows: SegmentRollupRow[];
+  let auditRows: AuditLogRow[];
+  let ingestRows: IngestionRunRow[];
+  try {
+    [segmentRows, auditRows, ingestRows] = await Promise.all([
+      azureRead.select<SegmentRollupRow>({
+        table: 'data_inventory_segments',
+        columns: [
+          'segment_id',
+          'segment_name',
+          'family_number',
+          'record_count',
+          'coverage_score',
+          'stale_count',
+          'missing_count',
+          'health_state',
+          'last_reviewed_at',
+          'last_ingested_at',
+        ],
+        where: { tenant_key: brokerTenantKey },
+        orderBy: { column: 'family_number', direction: 'asc' },
+      }),
+      azureRead.select<AuditLogRow>({
+        table: 'data_inventory_audit_log',
+        columns: ['action', 'actor_id', 'actor_role', 'segment_id', 'source_doc', 'created_at'],
+        where: { tenant_key: brokerTenantKey },
+        orderBy: { column: 'created_at', direction: 'desc' },
+        limit: ACTIVITY_LIMIT,
+      }),
+      azureRead.select<IngestionRunRow>({
+        table: 'data_ingestion_runs',
+        columns: [
+          'source_label',
+          'records_loaded',
+          'chunks_loaded',
+          'nodes_loaded',
+          'edges_loaded',
+          'status',
+          'started_at',
+          'completed_at',
+        ],
+        where: { tenant_key: brokerTenantKey },
+        orderBy: { column: 'started_at', direction: 'desc' },
+        limit: 1,
+      }),
+    ]);
+  } catch {
+    return null;
+  }
 
-  const [segmentsResult, auditResult, ingestResult] = await Promise.all([
-    sb
-      .from('data_inventory_segments')
-      .select(
-        'segment_id, segment_name, family_number, record_count, coverage_score, stale_count, missing_count, health_state, last_reviewed_at, last_ingested_at',
-      )
-      .eq('tenant_key', brokerTenantKey)
-      .order('family_number'),
-    sb
-      .from('data_inventory_audit_log')
-      .select('action, actor_id, actor_role, segment_id, source_doc, created_at')
-      .eq('tenant_key', brokerTenantKey)
-      .order('created_at', { ascending: false })
-      .limit(ACTIVITY_LIMIT),
-    sb
-      .from('data_ingestion_runs')
-      .select(
-        'source_label, records_loaded, chunks_loaded, nodes_loaded, edges_loaded, status, started_at, completed_at',
-      )
-      .eq('tenant_key', brokerTenantKey)
-      .order('started_at', { ascending: false })
-      .limit(1),
-  ]);
-
-  if (segmentsResult.error || !segmentsResult.data) return null;
-  const segmentRows = segmentsResult.data as SegmentRollupRow[];
   if (segmentRows.length === 0) return null;
 
   const segments: InventorySegmentRollup[] = segmentRows.map((row) => ({
@@ -176,14 +191,13 @@ export async function getSetupInventorySnapshot(
 
   const totalRecords = segments.reduce((acc, s) => acc + s.recordCount, 0);
 
-  const auditRows = (auditResult.data ?? []) as AuditLogRow[];
   const recentActivity: InventoryActivityEvent[] = auditRows.map((row) => ({
     actor: describeActor(row),
     what: describeAuditEvent(row),
     timestampIso: row.created_at,
   }));
 
-  const lastIngestRow = (ingestResult.data?.[0] ?? null) as IngestionRunRow | null;
+  const lastIngestRow = ingestRows[0] ?? null;
   const totalChunks = lastIngestRow ? toNumber(lastIngestRow.chunks_loaded) : 0;
   const totalNodes = lastIngestRow ? toNumber(lastIngestRow.nodes_loaded) : 0;
   const totalEdges = lastIngestRow ? toNumber(lastIngestRow.edges_loaded) : 0;
@@ -260,38 +274,47 @@ export async function getSegmentRecordPage(
   brokerTenantKey: string,
   segmentKey: string,
 ): Promise<SegmentRecordPage | null> {
-  const sb = (() => {
-    try {
-      return getServerSupabase();
-    } catch {
-      return null;
-    }
-  })();
-  if (!sb) return null;
-
-  const [rollupResult, recordsResult] = await Promise.all([
-    sb
-      .from('data_inventory_segments')
-      .select(
-        'segment_id, segment_name, family_number, record_count, coverage_score, stale_count, missing_count, health_state, last_reviewed_at, last_ingested_at',
-      )
-      .eq('tenant_key', brokerTenantKey)
-      .eq('segment_id', segmentKey)
-      .maybeSingle(),
-    sb
-      .from('data_inventory_records')
-      .select(
-        'record_id, title, record_kind, record_payload, source_doc, data_classification, freshness_state, confidence, last_reviewed, uploaded_by, uploaded_at',
-      )
-      .eq('tenant_key', brokerTenantKey)
-      .eq('segment_id', segmentKey)
-      .order('uploaded_at', { ascending: false })
-      .limit(SEGMENT_RECORD_LIMIT),
+  const [rollupResult, recordsResult] = await Promise.allSettled([
+    azureRead.maybeSingle<SegmentRollupRow>({
+      table: 'data_inventory_segments',
+      columns: [
+        'segment_id',
+        'segment_name',
+        'family_number',
+        'record_count',
+        'coverage_score',
+        'stale_count',
+        'missing_count',
+        'health_state',
+        'last_reviewed_at',
+        'last_ingested_at',
+      ],
+      where: { tenant_key: brokerTenantKey, segment_id: segmentKey },
+    }),
+    azureRead.select<RecordRow>({
+      table: 'data_inventory_records',
+      columns: [
+        'record_id',
+        'title',
+        'record_kind',
+        'record_payload',
+        'source_doc',
+        'data_classification',
+        'freshness_state',
+        'confidence',
+        'last_reviewed',
+        'uploaded_by',
+        'uploaded_at',
+      ],
+      where: { tenant_key: brokerTenantKey, segment_id: segmentKey },
+      orderBy: { column: 'uploaded_at', direction: 'desc' },
+      limit: SEGMENT_RECORD_LIMIT,
+    }),
   ]);
 
-  if (rollupResult.error && recordsResult.error) return null;
+  if (rollupResult.status === 'rejected' && recordsResult.status === 'rejected') return null;
 
-  const rollupRow = rollupResult.data as SegmentRollupRow | null | undefined;
+  const rollupRow = rollupResult.status === 'fulfilled' ? rollupResult.value : null;
   const rollup: InventorySegmentRollup | null = rollupRow
     ? {
         segmentId: rollupRow.segment_id,
@@ -307,7 +330,7 @@ export async function getSegmentRecordPage(
       }
     : null;
 
-  const recordRows = (recordsResult.data ?? []) as RecordRow[];
+  const recordRows = recordsResult.status === 'fulfilled' ? recordsResult.value : [];
   const records: SegmentRecordSummary[] = recordRows.map((row) => ({
     recordId: row.record_id,
     title: deriveRecordTitle(row, segmentKey),
@@ -453,25 +476,17 @@ const SEVERITY_RANK: Record<SignalSeverityBucket, number> = {
 export async function getCrossProgramSignals(
   brokerTenantKey: string,
 ): Promise<CrossProgramSignal[]> {
-  const sb = (() => {
-    try {
-      return getServerSupabase();
-    } catch {
-      return null;
-    }
-  })();
-  if (!sb) return [];
-
-  const { data, error } = await sb
-    .from('data_inventory_records')
-    .select('record_id, title, record_payload')
-    .eq('tenant_key', brokerTenantKey)
-    .eq('segment_id', 'cross_program_signals')
-    .order('record_id');
-
-  if (error || !data) return [];
-
-  const rows = data as SignalRow[];
+  let rows: SignalRow[];
+  try {
+    rows = await azureRead.select<SignalRow>({
+      table: 'data_inventory_records',
+      columns: ['record_id', 'title', 'record_payload'],
+      where: { tenant_key: brokerTenantKey, segment_id: 'cross_program_signals' },
+      orderBy: { column: 'record_id', direction: 'asc' },
+    });
+  } catch {
+    return [];
+  }
   const signals: CrossProgramSignal[] = rows.map((row) => {
     const payload = row.record_payload ?? {};
     const severityRaw = payload.severity ?? '';
@@ -533,29 +548,19 @@ export interface SegmentChunkStat {
 export async function getContextChunkStats(
   tenantKey: string,
 ): Promise<SegmentChunkStat[]> {
-  const sb = (() => {
-    try {
-      return getServerSupabase();
-    } catch {
-      return null;
-    }
-  })();
-  if (!sb) return [];
-
-  // Supabase JS client doesn't support GROUP BY + conditional aggregates
-  // directly, so we use the rpc path or fall back to a raw SQL string.
-  // The simplest safe approach: run four separate count queries (one per
-  // embedding_status). This avoids RPC surface, stays fully typed, and
-  // is fast enough for ≤ 1000 chunks per tenant.
-  const { data, error } = await sb
-    .from('enterprise_context_chunks')
-    .select('source_segment_id, embedding_status')
-    .eq('tenant_key', tenantKey);
-
-  if (error || !data) return [];
+  let rows: { source_segment_id: string; embedding_status: string }[];
+  try {
+    rows = await azureRead.select<{ source_segment_id: string; embedding_status: string }>({
+      table: 'enterprise_context_chunks',
+      columns: ['source_segment_id', 'embedding_status'],
+      where: { tenant_key: tenantKey },
+    });
+  } catch {
+    return [];
+  }
 
   const map = new Map<string, SegmentChunkStat>();
-  for (const row of data as { source_segment_id: string; embedding_status: string }[]) {
+  for (const row of rows) {
     const seg = row.source_segment_id ?? 'unknown';
     if (!map.has(seg)) {
       map.set(seg, { segmentId: seg, totalChunks: 0, embeddedChunks: 0, pendingChunks: 0, failedChunks: 0 });

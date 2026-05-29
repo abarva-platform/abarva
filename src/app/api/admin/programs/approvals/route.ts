@@ -13,7 +13,7 @@
 // the [requestId] route; see _auth.ts for the RBAC posture note.
 
 import { NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import {
   adminAuthErrorResponse,
@@ -34,19 +34,22 @@ interface DecidedCountsRow {
 async function getDecidedThisWeekCounts(
   tenantKey: string,
 ): Promise<{ approved: number; rejected: number }> {
-  const sb = getServerSupabase();
   const sinceIso = new Date(
     Date.now() - 7 * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const { data, error } = await sb
-    .from('program_approval_requests')
-    .select('request_status')
-    .eq('tenant_key', tenantKey)
-    .in('request_status', ['approved', 'rejected'])
-    .gte('decided_at', sinceIso);
-
-  if (error) {
+  let rows: DecidedCountsRow[];
+  try {
+    rows = await azureRead.select<DecidedCountsRow>({
+      table: 'program_approval_requests',
+      columns: ['request_status'],
+      where: {
+        tenant_key: tenantKey,
+        request_status: { op: 'in', value: ['approved', 'rejected'] },
+        decided_at: { op: 'gte', value: sinceIso },
+      },
+    });
+  } catch (error) {
     // Soft-fail: counts are decorative; the queue itself is the load-bearing
     // surface. Log and return zeros so the page still renders.
     console.error(
@@ -56,7 +59,6 @@ async function getDecidedThisWeekCounts(
     return { approved: 0, rejected: 0 };
   }
 
-  const rows = (data ?? []) as DecidedCountsRow[];
   let approved = 0;
   let rejected = 0;
   for (const r of rows) {
