@@ -16,10 +16,8 @@ import {
 import { assembleContext, createThread, touchThread } from '@/lib/programs/nexus';
 import { requireTenancy, TenancyError } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
-
-type ProgramDbClient = ReturnType<typeof import('@/lib/supabase-server').getServerSupabase>;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,19 +46,16 @@ async function validateThreadOwnership(args: {
   threadId: string;
   programId: string;
   userId: string;
-  supabase: ProgramDbClient;
 }): Promise<boolean> {
-  const { data, error } = await args.supabase
-    .from('program_threads')
-    .select('id, engagement_id, user_id')
-    .eq('id', args.threadId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return false;
-
-  const thread = data as { engagement_id: string; user_id: string };
-  return thread.user_id === args.userId && thread.engagement_id === args.programId;
+  const thread = await azureRead.maybeSingle<{ user_id: string | null }>({
+    table: 'program_threads',
+    columns: ['user_id'],
+    where: {
+      id: args.threadId,
+      engagement_id: args.programId,
+    },
+  });
+  return thread?.user_id === args.userId;
 }
 
 export async function POST(
@@ -81,8 +76,7 @@ export async function POST(
   }
 
   const { programId } = await params;
-  const { supabase } = await getProgramsRouteSupabase('mutation');
-  const program = await getProgramById(ctx, programId, { supabase });
+  const program = await getProgramById(ctx, programId);
   if (!program) {
     return Response.json({ error: 'not_found' }, { status: 404 });
   }
@@ -110,7 +104,6 @@ export async function POST(
       threadId,
       programId,
       userId: ctx.userId,
-      supabase,
     });
     if (!isOwnedThread) {
       return Response.json({ error: 'thread_not_found' }, { status: 404 });
