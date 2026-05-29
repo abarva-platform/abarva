@@ -1,0 +1,260 @@
+{
+  "schema_version": "1.0",
+  "release_id": "2026-05-28-healthcare-corpus-foundation",
+  "artifact_type": "healthcare_industry_corpus_foundation",
+  "runtime_impact": "none",
+  "acceptance_thresholds": {
+    "minimum_dimensions": 20,
+    "minimum_target_patterns_per_dimension": 50,
+    "required_dimension_fields": [
+      "id",
+      "name",
+      "why_it_matters",
+      "target_pattern_count",
+      "example_pattern_families",
+      "data_evidence_sources",
+      "regulatory_overlays",
+      "agent_workflows_unlocked"
+    ],
+    "minimum_example_pattern_families": 4,
+    "minimum_data_evidence_sources": 4,
+    "minimum_regulatory_overlays": 2,
+    "minimum_agent_workflows": 3
+  },
+  "pattern_contract": {
+    "required_pattern_fields": [
+      "dimension_id",
+      "pattern_family",
+      "trigger_conditions",
+      "evidence_requirements",
+      "regulatory_overlays",
+      "recommended_actions",
+      "anti_patterns",
+      "workflow_unlocks"
+    ],
+    "minimum_evidence_grade_for_citation": "C",
+    "hypothesis_grade": "D"
+  },
+  "dimensions": [
+    {
+      "id": "patient-access-capacity",
+      "name": "Patient access and capacity",
+      "why_it_matters": "Access bottlenecks reveal revenue leakage, safety risk, network adequacy pressure, and patient abrasion before they show up in executive summaries.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["referral-to-visit lag", "abandoned appointment requests", "template under-release", "no-show risk", "call-center deflection gaps"],
+      "data_evidence_sources": ["scheduling systems", "call-center logs", "patient portal events", "referral queues", "clinic templates", "access dashboards"],
+      "regulatory_overlays": ["HIPAA", "CMS access measures", "state network adequacy rules", "ADA accessibility"],
+      "agent_workflows_unlocked": ["access bottleneck triage", "executive capacity briefing", "patient-friction root cause", "scheduling intervention planner"]
+    },
+    {
+      "id": "care-model-transitions",
+      "name": "Care model transitions",
+      "why_it_matters": "Hospitals need patterns that distinguish strategic site-of-care redesign from isolated virtual, ambulatory, post-acute, or home-health experiments.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["site-of-care migration", "hospital-at-home readiness", "ambulatory substitution", "virtual care decay", "post-acute handoff risk"],
+      "data_evidence_sources": ["service-line plans", "discharge data", "virtual visit telemetry", "home-health referrals", "care management notes", "payer policy bulletins"],
+      "regulatory_overlays": ["HIPAA", "CMS hospital-at-home waivers", "state licensure", "telehealth rules"],
+      "agent_workflows_unlocked": ["care-model opportunity scan", "transition-risk memo", "post-acute coordination plan", "service-line transformation backlog"]
+    },
+    {
+      "id": "revenue-cycle-denials",
+      "name": "Revenue cycle and denials",
+      "why_it_matters": "Denials, undercoding, payer friction, and cash lag are repeatable operating patterns that should translate into recovery moves.",
+      "target_pattern_count": 65,
+      "example_pattern_families": ["denial clustering", "authorization defects", "charge capture misses", "coding lag", "payer escalation", "appeal yield gaps"],
+      "data_evidence_sources": ["claims", "remits", "denial codes", "charge master changes", "coding queues", "payer contracts", "AR aging"],
+      "regulatory_overlays": ["HIPAA", "CMS billing rules", "No Surprises Act", "payer contract terms", "state prompt-pay rules"],
+      "agent_workflows_unlocked": ["denial root-cause analysis", "CFO leakage brief", "payer negotiation prep", "cash acceleration backlog"]
+    },
+    {
+      "id": "clinical-documentation-integrity",
+      "name": "Clinical documentation integrity",
+      "why_it_matters": "Documentation quality affects reimbursement, acuity, quality reporting, clinical handoffs, and audit exposure.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["incomplete problem lists", "query response lag", "DRG mismatch", "acuity undercapture", "note bloat", "copy-forward risk"],
+      "data_evidence_sources": ["EHR notes", "CDI queries", "coding outcomes", "audit samples", "DRG variance reports", "quality abstracts"],
+      "regulatory_overlays": ["HIPAA", "CMS CDI guidance", "OIG compliance guidance", "physician documentation standards"],
+      "agent_workflows_unlocked": ["CDI coaching plan", "audit-safe reimbursement brief", "documentation risk scan", "quality-coding reconciliation"]
+    },
+    {
+      "id": "prior-authorization-utilization",
+      "name": "Prior authorization and utilization management",
+      "why_it_matters": "Authorization delays and utilization controls shape patient access, cash timing, payer relationships, and safe care paths.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["authorization delay hotspots", "peer-to-peer conversion", "medical necessity mismatch", "referral authorization leakage", "utilization outliers"],
+      "data_evidence_sources": ["authorization portals", "payer policy files", "referral logs", "utilization reviews", "denial reason codes", "service-line dashboards"],
+      "regulatory_overlays": ["HIPAA", "CMS Interoperability and Prior Authorization rule", "medical necessity policies", "state utilization rules"],
+      "agent_workflows_unlocked": ["authorization playbook", "utilization review assistant", "payer-policy summarizer", "access-delay escalation"]
+    },
+    {
+      "id": "pharmacy-therapeutics-specialty-drug",
+      "name": "Pharmacy, therapeutics, and specialty drug economics",
+      "why_it_matters": "Drug spend, formulary policy, infusion capacity, 340B exposure, and specialty leakage create large financial and patient-affordability effects.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["specialty drug site-of-care shifts", "formulary exception patterns", "infusion chair constraints", "340B exposure", "biosimilar substitution"],
+      "data_evidence_sources": ["pharmacy spend", "formulary data", "PBM files", "infusion schedules", "claims", "340B audit files", "medication assistance records"],
+      "regulatory_overlays": ["HIPAA", "340B rules", "FDA REMS", "CMS Part B and Part D rules", "state pharmacy regulations"],
+      "agent_workflows_unlocked": ["pharmacy spend scan", "formulary change impact", "specialty drug leakage memo", "infusion capacity planner"]
+    },
+    {
+      "id": "quality-safety-events",
+      "name": "Quality, safety, and adverse events",
+      "why_it_matters": "Incident, quality, and operations signals need to become accountable interventions without exposing PHI.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["hospital-acquired condition risk", "readmission clusters", "sepsis bundle drift", "fall hotspots", "infection-control variance"],
+      "data_evidence_sources": ["quality registry extracts", "incident reports", "infection prevention logs", "readmission data", "mortality reviews", "RCA documents"],
+      "regulatory_overlays": ["HIPAA", "CMS quality programs", "The Joint Commission", "state adverse-event reporting"],
+      "agent_workflows_unlocked": ["safety trend brief", "quality-risk prioritizer", "RCA evidence pack", "executive quality narrative"]
+    },
+    {
+      "id": "population-health-risk",
+      "name": "Population health and risk stratification",
+      "why_it_matters": "Risk signals only matter when they translate into outreach, care-gap closure, quality outcomes, and contract performance.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["rising-risk cohorts", "care-gap closure", "chronic disease escalation", "social risk overlays", "outreach fatigue"],
+      "data_evidence_sources": ["registry exports", "claims", "HCC data", "care-gap files", "SDOH screenings", "outreach logs", "risk contracts"],
+      "regulatory_overlays": ["HIPAA", "CMS Stars", "HEDIS", "risk adjustment rules", "state Medicaid quality measures"],
+      "agent_workflows_unlocked": ["cohort opportunity finder", "care-gap campaign planner", "risk-adjustment evidence review", "population-health board brief"]
+    },
+    {
+      "id": "value-based-care-contracting",
+      "name": "Value-based care contracting",
+      "why_it_matters": "Shared savings and downside-risk contracts blend finance, quality, attribution, network, and operations evidence.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["contract leakage", "quality gate risk", "attribution volatility", "benchmark pressure", "specialist referral misalignment"],
+      "data_evidence_sources": ["payer contracts", "attribution files", "quality scorecards", "claims", "network data", "actuarial summaries"],
+      "regulatory_overlays": ["HIPAA", "CMS MSSP", "Medicare Advantage rules", "Stark and Anti-Kickback constraints"],
+      "agent_workflows_unlocked": ["VBC contract health scan", "payer QBR prep", "downside-risk scenario memo", "attribution issue triage"]
+    },
+    {
+      "id": "referral-network-leakage",
+      "name": "Referral network leakage",
+      "why_it_matters": "Referral leakage shows whether strategic networks, employed groups, partner relationships, and service lines are actually working.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["outbound leakage", "specialist access friction", "referral loop closure", "partner underperformance", "steerage failure"],
+      "data_evidence_sources": ["referral orders", "claims", "provider directory data", "CRM records", "network analytics", "patient access data"],
+      "regulatory_overlays": ["HIPAA", "Stark Law", "Anti-Kickback Statute", "network adequacy rules"],
+      "agent_workflows_unlocked": ["leakage root-cause brief", "provider-alignment planner", "service-line growth scan", "referral loop audit"]
+    },
+    {
+      "id": "perioperative-throughput",
+      "name": "Perioperative throughput",
+      "why_it_matters": "OR throughput exposes cross-functional defects in scheduling, pre-admission testing, staffing, supplies, anesthesia, and bed flow.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["block utilization gaps", "first-case delay", "case cancellation", "preference-card variance", "PACU boarding"],
+      "data_evidence_sources": ["OR schedules", "anesthesia records", "supply preference cards", "staffing rosters", "bed management data", "cancellation logs"],
+      "regulatory_overlays": ["HIPAA", "CMS Conditions of Participation", "sterile processing standards", "state surgical reporting"],
+      "agent_workflows_unlocked": ["periop throughput analysis", "block-time reallocation memo", "cancellation prevention plan", "surgical margin brief"]
+    },
+    {
+      "id": "emergency-department-flow",
+      "name": "Emergency department flow",
+      "why_it_matters": "ED flow links access, staffing, inpatient capacity, behavioral health, diagnostics, transfers, and safety exposure.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["door-to-provider lag", "left-without-being-seen risk", "boarding", "fast-track mismatch", "behavioral health hold risk"],
+      "data_evidence_sources": ["ED tracking boards", "ADT feeds", "staffing data", "lab turnaround", "imaging turnaround", "transfer center logs", "patient complaints"],
+      "regulatory_overlays": ["EMTALA", "HIPAA", "CMS ED measures", "behavioral health hold rules"],
+      "agent_workflows_unlocked": ["ED flow brief", "boarding escalation assistant", "diagnostic turnaround planner", "safety-risk watchlist"]
+    },
+    {
+      "id": "inpatient-bed-command-center",
+      "name": "Inpatient bed command center",
+      "why_it_matters": "Bed management should explain why beds are unavailable and what action changes flow, not merely report census.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["discharge barrier clusters", "observation conversion", "bed cleaning lag", "transfer acceptance friction", "ICU stepdown mismatch"],
+      "data_evidence_sources": ["ADT feeds", "bed boards", "discharge planning notes", "EVS systems", "transfer center records", "utilization review data"],
+      "regulatory_overlays": ["HIPAA", "CMS Conditions of Participation", "EMTALA transfer rules", "state capacity reporting"],
+      "agent_workflows_unlocked": ["capacity huddle prep", "discharge barrier triage", "transfer center optimization", "executive census narrative"]
+    },
+    {
+      "id": "nursing-workforce-productivity",
+      "name": "Nursing workforce and productivity",
+      "why_it_matters": "Nursing constraints determine safe capacity, agency spend, retention, patient experience, and transformation feasibility.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["agency dependency", "staffing grid variance", "float pool mismatch", "overtime spikes", "burnout indicators", "skill-mix risk"],
+      "data_evidence_sources": ["staffing systems", "payroll", "acuity tools", "engagement surveys", "vacancy reports", "incident data", "turnover data"],
+      "regulatory_overlays": ["HIPAA", "FLSA", "state nurse staffing rules", "union contracts", "OSHA workplace safety"],
+      "agent_workflows_unlocked": ["workforce risk brief", "agency-reduction plan", "staffing-grid analysis", "retention intervention planner"]
+    },
+    {
+      "id": "physician-alignment-governance",
+      "name": "Physician alignment and service-line governance",
+      "why_it_matters": "Physician behavior, governance, and incentives determine whether transformation survives beyond planning artifacts.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["medical director accountability", "referral split", "service-line standardization", "clinical council decision latency", "compensation-model friction"],
+      "data_evidence_sources": ["provider contracts", "governance minutes", "referral data", "service-line scorecards", "committee decisions", "RVU and quality data"],
+      "regulatory_overlays": ["Stark Law", "Anti-Kickback Statute", "HIPAA", "fair market value rules"],
+      "agent_workflows_unlocked": ["physician alignment brief", "governance backlog planner", "service-line operating review", "decision-rights mapper"]
+    },
+    {
+      "id": "digital-front-door-experience",
+      "name": "Digital front door and patient experience",
+      "why_it_matters": "Digital access, payment, messaging, and navigation are now operating surfaces that affect trust, throughput, and revenue.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["portal abandonment", "message backlog", "digital payment drop-off", "wayfinding friction", "online scheduling mismatch"],
+      "data_evidence_sources": ["portal analytics", "CRM", "call-center logs", "payment data", "patient complaints", "survey verbatims", "web analytics"],
+      "regulatory_overlays": ["HIPAA", "ADA", "TCPA", "CMS price transparency", "state privacy rules"],
+      "agent_workflows_unlocked": ["patient-experience diagnosis", "digital adoption planner", "portal queue triage", "journey friction map"]
+    },
+    {
+      "id": "interoperability-data-quality",
+      "name": "Interoperability and data quality",
+      "why_it_matters": "Poor data quality breaks clinical workflows, analytics, AI grounding, compliance reporting, and trust in recommendations.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["duplicate MRNs", "stale provider directory", "HL7 feed drift", "FHIR mapping gaps", "terminology mismatch", "consent flag defects"],
+      "data_evidence_sources": ["master patient index", "interface engine logs", "FHIR APIs", "HL7 feeds", "data quality dashboards", "consent systems"],
+      "regulatory_overlays": ["HIPAA", "ONC Information Blocking", "USCDI", "TEFCA", "21st Century Cures Act"],
+      "agent_workflows_unlocked": ["data-quality root cause", "integration-risk scan", "AI grounding readiness", "interoperability remediation backlog"]
+    },
+    {
+      "id": "cybersecurity-third-party-risk",
+      "name": "Cybersecurity and third-party risk",
+      "why_it_matters": "Healthcare cyber risk includes ransomware, connected devices, vendors, downtime operations, and patient-safety blast radius.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["ransomware exposure", "medical device vulnerability", "vendor breach posture", "backup recovery gaps", "privileged access drift"],
+      "data_evidence_sources": ["asset inventories", "vulnerability scans", "vendor risk files", "IAM logs", "incident response plans", "backup tests"],
+      "regulatory_overlays": ["HIPAA Security Rule", "HITECH", "NIST CSF", "SOC 2", "FDA medical device cybersecurity guidance"],
+      "agent_workflows_unlocked": ["cyber blast-radius brief", "vendor risk triage", "downtime readiness check", "board cyber evidence pack"]
+    },
+    {
+      "id": "cloud-erp-ehr-portfolio",
+      "name": "Cloud, ERP, EHR, and application portfolio modernization",
+      "why_it_matters": "Modernization requires patterns that weigh technical debt, clinical risk, run cost, contracts, and transformation sequencing together.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["EHR module rationalization", "ERP replacement risk", "cloud migration dependency", "application retirement blocker", "integration debt"],
+      "data_evidence_sources": ["CMDB", "application portfolio", "architecture diagrams", "run-cost ledgers", "incident data", "contract renewals", "roadmap artifacts"],
+      "regulatory_overlays": ["HIPAA", "SOC 2", "HITRUST", "data residency rules", "business associate agreements"],
+      "agent_workflows_unlocked": ["modernization roadmap critique", "retirement sequencing", "architecture risk memo", "CIO portfolio briefing"]
+    },
+    {
+      "id": "regulatory-compliance-audit-readiness",
+      "name": "Regulatory compliance and audit readiness",
+      "why_it_matters": "Healthcare pilots need agents that can reason from traceable evidence without inventing compliance claims.",
+      "target_pattern_count": 55,
+      "example_pattern_families": ["HIPAA evidence gap", "audit-control ownership", "policy-to-control mismatch", "consent process drift", "compliance training gaps"],
+      "data_evidence_sources": ["policies", "control matrices", "audit findings", "training records", "access logs", "BAA inventory", "risk assessments"],
+      "regulatory_overlays": ["HIPAA", "HITECH", "CMS Conditions of Participation", "OIG guidance", "state privacy laws"],
+      "agent_workflows_unlocked": ["audit evidence pack", "compliance gap triage", "control-owner briefing", "policy remediation plan"]
+    },
+    {
+      "id": "supply-chain-implants-devices",
+      "name": "Supply chain, implants, and medical devices",
+      "why_it_matters": "Supply reliability, implants, recalls, consignment, and device economics affect clinical schedules, safety, and margins.",
+      "target_pattern_count": 50,
+      "example_pattern_families": ["implant cost variance", "stockout risk", "expired inventory", "consignment blind spots", "preference-card overuse"],
+      "data_evidence_sources": ["ERP purchasing", "inventory systems", "OR preference cards", "vendor contracts", "recall feeds", "charge capture data"],
+      "regulatory_overlays": ["FDA recalls", "UDI rules", "HIPAA", "value analysis committee policies", "GPO contract rules"],
+      "agent_workflows_unlocked": ["supply-risk scan", "implant margin brief", "recall response planner", "value-analysis decision pack"]
+    },
+    {
+      "id": "ai-governance-clinical-decision-support",
+      "name": "AI governance and clinical decision support",
+      "why_it_matters": "Healthcare AI needs governance across safety, bias, privacy, explainability, procurement, monitoring, and human review.",
+      "target_pattern_count": 60,
+      "example_pattern_families": ["model-use inventory gaps", "CDS alert fatigue", "bias monitoring", "PHI prompt exposure", "human review failures", "vendor AI claims"],
+      "data_evidence_sources": ["AI inventory", "model cards", "procurement files", "alert logs", "clinical governance minutes", "prompt audit logs", "incident reviews"],
+      "regulatory_overlays": ["HIPAA", "FDA SaMD guidance", "ONC HTI-1", "NIST AI RMF", "state AI rules"],
+      "agent_workflows_unlocked": ["AI governance review", "unsafe-use triage", "model monitoring plan", "clinical AI procurement checklist"]
+    }
+  ]
+}
