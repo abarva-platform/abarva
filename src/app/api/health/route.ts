@@ -84,9 +84,12 @@ export async function GET() {
   }
 
   // `allOk` no longer requires `neo4j === true`. Postgres remains
-  // load-bearing; Neo4j is optional and may be skipped or missing.
+  // load-bearing; direct Postgres is an acceptable fallback when the
+  // read-adapter probe is degraded, because both probes exercise the same
+  // DATABASE_URL substrate in Vercel production.
   const neo4jOk = checks.neo4j === true || checks.neo4j === 'skipped';
-  const allOk = checks.postgres === true && neo4jOk;
+  const postgresOk = checks.postgres === true || checks.direct_postgres === true;
+  const allOk = postgresOk && neo4jOk;
 
   return new Response(JSON.stringify({ ok: allOk, checks }, null, 2), {
     status: allOk ? 200 : 503,
