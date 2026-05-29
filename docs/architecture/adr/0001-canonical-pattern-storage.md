@@ -286,7 +286,87 @@ Phase 0 ADR execution complete when:
 | Date | Status | Author | Note |
 |---|---|---|---|
 | 2026-05-29 | Proposed | Anand + Claude | Initial draft |
+| 2026-05-29 | Accepted | Anand | Founder sign-off |
+| 2026-05-29 | Amended | Anand + Claude | Amendment A1 — industry vocabulary split (see below) |
 
 ---
 
-*End of ADR-0001. Awaiting founder approval to authorize Codex Phase 0 execution.*
+## Amendment A1 — Industry vocabulary split (2026-05-29)
+
+**Trigger:** Founder canonical-tenant decision identified Northstar Clinical Technologies as a Solventum-shape medtech tenant, structurally distinct from Meridian (PHS-shape healthcare provider). Treating both as `industry = healthcare` collapses two materially different decision frameworks and forecloses overlay differentiation.
+
+### A1.1 — Updated industry vocabulary (supersedes §D.7)
+
+Replace `healthcare` in the §D.7 controlled vocabulary with two distinct values:
+
+- `healthcare_provider` — hospital systems, integrated delivery networks, ambulatory networks, payviders (Meridian, PHS, future provider customers)
+- `healthcare_medtech` — medical devices, healthcare products, clinical technologies, life sciences manufacturers (Northstar, Solventum-shape, future medtech customers)
+
+Full updated industry list:
+- `cross_industry`
+- `airline`
+- `retail`
+- `healthcare_provider`
+- `healthcare_medtech`
+- `financial_services_banking`
+- `financial_services_insurance` (placeholder — no current tenants)
+- `energy` (placeholder — no current canonical tenants)
+- `manufacturing` (placeholder)
+- `government` (placeholder)
+- `education` (placeholder)
+
+### A1.2 — Tenant industry assignments (post-Phase-0D canonical)
+
+| Tenant | Industry code |
+|---|---|
+| apex-retail | `retail` |
+| meridian-health | `healthcare_provider` |
+| northstar-clinical | `healthcare_medtech` |
+| first-capital | `financial_services_banking` |
+| skyharbor-air | `airline` |
+
+### A1.3 — Migration impact
+
+- Existing `canonical_industry_ai_patterns` rows currently tagged `healthcare` reclassify to `healthcare_provider` (default) **unless** a row originates from the Packet 22 Northstar Pattern Overlay, in which case it reclassifies to `healthcare_medtech`
+- Northstar Pattern Overlay (Packet 22) explicitly tagged `healthcare_medtech` going forward
+- Tenant `industry_code` column updated per §A1.2
+
+### A1.4 — Downstream overlay implications
+
+Future healthcare overlay authoring per Packet 35 sequencing splits into two distinct overlays:
+
+- `healthcare_provider_overlay` — for Meridian, future provider customers, PHS (priority — active sales path)
+- `healthcare_medtech_overlay` — for Northstar, future medtech customers (lower priority)
+
+Shared cross-industry patterns reused across both.
+
+### A1.5 — Tenant canonicalization (Phase 0D)
+
+Per founder directive 2026-05-29, the canonical tenant list is exactly 5:
+
+1. apex-retail
+2. meridian-health
+3. northstar-clinical
+4. first-capital
+5. skyharbor-air
+
+Non-canonical tenants retiring during Phase 0D:
+
+- `brindlemark-financial` — duplicate of First Capital; merge then hard-delete
+- `helix-therapeutics` — hard-delete with archive
+- `keystone-energy-holdings` — hard-delete with archive
+
+Class G authority pre-approved by founder for this Phase 0D scope only.
+
+### A1.6 — Companion invariants
+
+This amendment is accompanied by two new Packet 31 invariants:
+
+- **I9** — Industry isolation (mandatory industry filter at every retrieval call)
+- **I10** — Canonical tenant allowlist (tenant additions require explicit allowlist + ADR)
+
+See `docs/architecture/packet-31-amendments/2026-05-29-i9-i10-allowlist-drift.md`.
+
+---
+
+*End of ADR-0001 with Amendment A1. Phase 0 + 0D authorized for Codex execution.*
