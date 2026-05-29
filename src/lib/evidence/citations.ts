@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { EvidenceLedgerRow, EvidenceSourceType } from './ledger';
 
 export interface ResolvedCitation {
@@ -14,14 +14,15 @@ export interface ResolvedCitation {
 }
 
 export async function resolveCitation(ledgerId: string): Promise<ResolvedCitation> {
-  const { data, error } = await getServerSupabase()
-    .from('evidence_ledger')
-    .select('*')
-    .eq('id', ledgerId)
-    .single();
-
-  if (error) throw new Error(`evidence_ledger citation lookup failed: ${error.message}`);
-  return resolveCitationRow(data as EvidenceLedgerRow);
+  const row = await azureRead.maybeSingle<EvidenceLedgerRow>({
+    table: 'evidence_ledger',
+    columns: '*',
+    where: { id: ledgerId },
+  }).catch((error) => {
+    throw new Error(`evidence_ledger citation lookup failed: ${error instanceof Error ? error.message : String(error)}`);
+  });
+  if (!row) throw new Error(`evidence_ledger citation lookup failed: not_found ${ledgerId}`);
+  return resolveCitationRow(row);
 }
 
 export function resolveCitationRow(row: EvidenceLedgerRow): ResolvedCitation {

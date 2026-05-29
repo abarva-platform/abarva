@@ -1,5 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import {
   clientVectorMetadataFilter,
@@ -150,12 +150,11 @@ function lexicalScore(text: string, terms: ReadonlyArray<string>): number {
 
 async function resolveTenantKey(clientId: string | null): Promise<string | null> {
   if (!clientId) return null;
-  const { data } = await getServerSupabase()
-    .from('clients')
-    .select('tenant_key, slug')
-    .eq('id', clientId)
-    .maybeSingle();
-  const row = data as { tenant_key?: string | null; slug?: string | null } | null;
+  const row = await azureRead.maybeSingle<{ tenant_key: string | null; slug: string | null }>({
+    table: 'clients',
+    columns: ['tenant_key', 'slug'],
+    where: { id: clientId },
+  }).catch(() => null);
   return row?.tenant_key ?? row?.slug ?? null;
 }
 
@@ -169,20 +168,16 @@ async function queryPostgresContextChunks(args: {
   const tenantKey = await resolveTenantKey(args.clientId);
   if (!tenantKey) return { clientChunks: [], industryChunks: [], topicChunks: [] };
 
-  const { data } = await getServerSupabase()
-    .from('enterprise_context_chunks')
-    .select('chunk_text, source_doc, source_segment_id, chunk_index, chunk_metadata, provenance, embedded_at')
-    .eq('tenant_key', tenantKey)
-    // Segments the agent can pull tenant context from. Includes:
-    //  - industry_context, program_inventory, evidence_ledger, operating_telemetry,
-    //    vendor_contracts, compliance, cross_program_signals (long-standing).
-    //  - org_structure, it_landscape, it_financials, kpi_dictionary (added
-    //    2026-05-10 founder directive: "ensure the agents are intelligent to
-    //    tap into the current state and datasets"). Without these, function
-    //    capacity, FY2026 capital plan, funding authority matrix, system
-    //    inventory, and IT spend breakdown are loaded into Supabase but the
-    //    agent never sees them at retrieval time.
-    .in('source_segment_id', [
+  // Segments the agent can pull tenant context from. Includes:
+  //  - industry_context, program_inventory, evidence_ledger, operating_telemetry,
+  //    vendor_contracts, compliance, cross_program_signals (long-standing).
+  //  - org_structure, it_landscape, it_financials, kpi_dictionary (added
+  //    2026-05-10 founder directive: "ensure the agents are intelligent to
+  //    tap into the current state and datasets"). Without these, function
+  //    capacity, FY2026 capital plan, funding authority matrix, system
+  //    inventory, and IT spend breakdown are loaded into Supabase but the
+  //    agent never sees them at retrieval time.
+  const segmentIds = [
       'enterprise_profile',
       'org_structure',
       'it_landscape',
@@ -195,11 +190,27 @@ async function queryPostgresContextChunks(args: {
       'vendor_contracts',
       'compliance',
       'cross_program_signals',
-    ])
-    .limit(160);
+    ];
+  const data = await azureRead.select<Record<string, unknown>>({
+    table: 'enterprise_context_chunks',
+    columns: [
+      'chunk_text',
+      'source_doc',
+      'source_segment_id',
+      'chunk_index',
+      'chunk_metadata',
+      'provenance',
+      'embedded_at',
+    ],
+    where: {
+      tenant_key: tenantKey,
+      source_segment_id: { op: 'in', value: segmentIds },
+    },
+    limit: 160,
+  }).catch(() => []);
 
   const terms = queryTerms(args.userQuery);
-  const rows = ((data as Array<Record<string, unknown>> | null) ?? [])
+  const rows = data
     .map((row) => {
       const text = String(row.chunk_text ?? '');
       const segment = String(row.source_segment_id ?? '');

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 import {
   retrieveEnterpriseContextChunksFromRows,
@@ -29,19 +29,31 @@ export async function retrieveEnterpriseContextChunks(args: {
   query: string;
   filters?: EnterpriseContextChunkRetrievalFilters;
 }): Promise<EnterpriseContextChunkHit[]> {
-  const { data, error } = await getServerSupabase()
-    .from('enterprise_context_chunks')
-    .select('tenant_key,chunk_id,source_segment_id,source_record_id,source_doc,source_path,chunk_index,chunk_text,token_count,embedding_status,provenance,chunk_metadata')
-    .eq('tenant_key', args.tenantKey)
-    .order('updated_at', { ascending: false })
-    .limit(1200);
-
-  if (error) {
-    throw new Error(`enterprise_context_chunks retrieval failed: ${error.message}`);
-  }
+  const rows = await azureRead.select<DbChunkRow>({
+    table: 'enterprise_context_chunks',
+    columns: [
+      'tenant_key',
+      'chunk_id',
+      'source_segment_id',
+      'source_record_id',
+      'source_doc',
+      'source_path',
+      'chunk_index',
+      'chunk_text',
+      'token_count',
+      'embedding_status',
+      'provenance',
+      'chunk_metadata',
+    ],
+    where: { tenant_key: args.tenantKey },
+    orderBy: { column: 'updated_at', direction: 'desc' },
+    limit: 1200,
+  }).catch((error) => {
+    throw new Error(`enterprise_context_chunks retrieval failed: ${error instanceof Error ? error.message : String(error)}`);
+  });
 
   return retrieveEnterpriseContextChunksFromRows(
-    ((data ?? []) as DbChunkRow[]).map(toChunkRow),
+    rows.map(toChunkRow),
     args.query,
     { ...args.filters, tenantKey: args.tenantKey },
   );
