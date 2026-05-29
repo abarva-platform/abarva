@@ -72,10 +72,10 @@ describe('Canonical four hard gates', () => {
   });
 
   it('every gate label names the canonical exit phase concept', () => {
-    expect(CANONICAL_FOUR_GATES[0].label).toMatch(/Charter signed/i);
-    expect(CANONICAL_FOUR_GATES[1].label).toMatch(/CXO interview/i);
+    expect(CANONICAL_FOUR_GATES[0].label).toMatch(/Discovery findings accepted/i);
+    expect(CANONICAL_FOUR_GATES[1].label).toMatch(/Synthesis recommendation approved/i);
     expect(CANONICAL_FOUR_GATES[2].label).toMatch(/Design approved/i);
-    expect(CANONICAL_FOUR_GATES[3].label).toMatch(/CXO verification/i);
+    expect(CANONICAL_FOUR_GATES[3].label).toMatch(/Tower monitoring contract accepted/i);
   });
 });
 
@@ -141,12 +141,12 @@ describe('countDeliverableTiers', () => {
 });
 
 // ---------------------------------------------------------------------
-// Per-tenant summarization across the four canonical demo tenants
+// Per-tenant summarization across the active seeded demo tenants
 // ---------------------------------------------------------------------
 
 describe('summarizePortfolio · canonical demo tenants', () => {
   const plan = buildAllProgramsSeedPlan();
-  const TENANT_KEYS = ['apexretail', 'meridian', 'arcturus', 'keystone'] as const;
+  const TENANT_KEYS = ['apexretail', 'meridian', 'arcturus'] as const;
 
   it.each(TENANT_KEYS)(
     'produces a deterministic summary for %s',

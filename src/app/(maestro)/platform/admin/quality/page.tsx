@@ -117,8 +117,7 @@ const TENANTS: TenantSeed[] = [
       'Intervention suggestions outrun evidence depth in a few places.',
     ],
   },
-  // 'keystone' (Keystone Energy Holdings) retired 2026-05-07. Tenant
-  // removed from the quality matrix. If a 4th tenant returns, add a
+  // Retired energy tenant removed from the quality matrix. If another tenant returns, add a
   // canonical entry here.
 ]
 
@@ -223,7 +222,7 @@ const QUALITY_ACTIONS: QualityAction[] = [
     cta: 'Open anonymization queue',
   },
   // QUALITY_ACTIONS rows for 'keystone' tenant removed 2026-05-13 alongside
-  // retirement of the Keystone Energy Holdings demo entry above.
+  // retirement of the energy demo entry above.
 ]
 
 const BACKLOG_ITEMS: BacklogItem[] = [
@@ -374,7 +373,6 @@ export default function AdminQualityOps() {
   const [resolvedIds, setResolvedIds] = useState<string[]>([])
   const [selectedTrack, setSelectedTrack] = useState<BacklogTrack | 'all'>('all')
 
-  const scopedTenants = selectedTenant === 'all' ? TENANTS : TENANTS.filter((tenant) => tenant.key === selectedTenant)
   const scopedActions = QUALITY_ACTIONS.filter((action) => selectedTenant === 'all' || action.tenant === selectedTenant)
 
   const tenantScores = useMemo(() => {

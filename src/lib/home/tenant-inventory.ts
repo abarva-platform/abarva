@@ -193,17 +193,12 @@ const FIRST_CAPITAL_IT: ITStackRow[] = APEX_IT.slice(0, 12).map((r, i) => ({ ...
 const FIRST_CAPITAL_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 9).map((r, i) => ({ ...r, id: `fc-v-${i}` }));
 const FIRST_CAPITAL_DATA: UploadedDataRow[] = APEX_DATA.slice(0, 9).map((r, i) => ({ ...r, id: `fc-d-${i}` }));
 
-const KEYSTONE_IT: ITStackRow[] = APEX_IT.slice(0, 11).map((r, i) => ({ ...r, id: `key-it-${i}` }));
-const KEYSTONE_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 10).map((r, i) => ({ ...r, id: `key-v-${i}` }));
-const KEYSTONE_DATA: UploadedDataRow[] = APEX_DATA.slice(0, 10).map((r, i) => ({ ...r, id: `key-d-${i}` }));
-
 export function getITStack(tenantKey: string | null): ITStackRow[] {
   if (!tenantKey) return APEX_IT;
   const k = tenantKey.toLowerCase();
   if (k.includes('apex')) return APEX_IT;
   if (k.includes('meridian')) return MERIDIAN_IT;
   if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_IT;
-  if (k.includes('keystone')) return KEYSTONE_IT;
   return APEX_IT;
 }
 
@@ -213,7 +208,6 @@ export function getVendors(tenantKey: string | null): VendorRow[] {
   if (k.includes('apex')) return APEX_VENDORS;
   if (k.includes('meridian')) return MERIDIAN_VENDORS;
   if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_VENDORS;
-  if (k.includes('keystone')) return KEYSTONE_VENDORS;
   return APEX_VENDORS;
 }
 
@@ -223,6 +217,5 @@ export function getUploadedData(tenantKey: string | null): UploadedDataRow[] {
   if (k.includes('apex')) return APEX_DATA;
   if (k.includes('meridian')) return MERIDIAN_DATA;
   if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_DATA;
-  if (k.includes('keystone')) return KEYSTONE_DATA;
   return APEX_DATA;
 }

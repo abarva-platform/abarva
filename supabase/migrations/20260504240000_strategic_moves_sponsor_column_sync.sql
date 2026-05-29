@@ -24,8 +24,6 @@ WHERE ep.engagement_id = engagements.id
     SELECT id FROM clients WHERE name IN (
       'Apex Retail',
       'First Capital',
-      'Helix Therapeutics',
-      'Keystone Energy Holdings',
       'Meridian Health'
     )
   );

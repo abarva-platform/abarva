@@ -109,7 +109,6 @@ const INDUSTRY_CODE_BY_TENANT: Record<string, string> = {
   apexretail: 'RETAIL',
   meridian: 'HEALTHCARE_IDN',
   arcturus: 'FINSERV',
-  keystone: 'ENERGY',
 };
 
 const FUNCTION_CODE_BY_ARCHETYPE: Record<SpecArchetypeCode, string> = {
@@ -124,7 +123,6 @@ const LEGACY_CLIENT_ALIASES_BY_TENANT: Record<string, string[]> = {
   apexretail: ['Apex Retail', 'Apex Retail Group'],
   meridian: ['Meridian Health', 'Meridian Health System'],
   arcturus: ['First Capital', 'First Capital Financial', 'Arcturus Financial', 'Arcturus Financial Group'],
-  keystone: ['Keystone Energy', 'Keystone Energy Holdings', 'Keystone Energy Holdings, Inc.'],
 };
 
 export function clientAliasesForPortfolio(portfolio: Pick<TenantPortfolioSeed, 'tenantKey' | 'displayName' | 'displayAliases'>): string[] {

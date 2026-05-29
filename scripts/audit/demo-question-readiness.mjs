@@ -10,8 +10,8 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 loadEnv({ path: fs.existsSync(path.join(REPO_ROOT, '.env.local')) ? path.join(REPO_ROOT, '.env.local') : '/Users/anand/Projects/nexus/.env.local' });
 
 const TENANT_ALIASES = {
-  northstar: ['northstar-medtech', 'northstar', 'northstar-clinical-tech'],
-  'northstar-medtech': ['northstar-medtech', 'northstar', 'northstar-clinical-tech'],
+  northstar: ['northstar-clinical', 'northstar', 'northstar-clinical'],
+  'northstar-clinical': ['northstar-clinical', 'northstar', 'northstar-clinical'],
   apex: ['apex-retail', 'apexretail', 'apex'],
   'apex-retail': ['apex-retail', 'apexretail', 'apex'],
   meridian: ['meridian-health', 'meridian'],

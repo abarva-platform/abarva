@@ -17,8 +17,6 @@ describe('canonicalTenantKey', () => {
       'apex retail group': 'apex-retail',
       apexretail: 'apex-retail',
       arcturus: 'first-capital',
-      brindlemark: 'first-capital',
-      'brindlemark financial': 'first-capital',
       'first capital': 'first-capital',
       'first capital financial': 'first-capital',
       'first-capital-financial': 'first-capital',
@@ -30,9 +28,6 @@ describe('canonicalTenantKey', () => {
       'meridian health system': 'meridian-health',
       northstar: 'northstar-clinical',
       'northstar clinical technologies': 'northstar-clinical',
-      'northstar medtech': 'northstar-clinical',
-      'northstar-clinical-tech': 'northstar-clinical',
-      'northstar-medtech': 'northstar-clinical',
       skyharbor: 'skyharbor-air',
       'skyharbor air': 'skyharbor-air',
       'skyharbor airlines': 'skyharbor-air',
@@ -43,7 +38,7 @@ describe('canonicalTenantKey', () => {
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
-    expect(canonicalTenantKey('northstar-medtech')).toBe('northstar-clinical');
+    expect(canonicalTenantKey('northstar-clinical')).toBe('northstar-clinical');
     expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
   });
 
@@ -55,9 +50,7 @@ describe('canonicalTenantKey', () => {
   });
 
   it('passes unknown tenant keys through unchanged', () => {
-    expect(canonicalTenantKey('keystone-energy-holdings')).toBe('keystone-energy-holdings');
     expect(canonicalTenantKey('northstar-health')).toBe('northstar-health');
-    expect(canonicalTenantKey('helix-therapeutics')).toBe('helix-therapeutics');
   });
 
   it('passes the empty string through unchanged (validation lives elsewhere)', () => {

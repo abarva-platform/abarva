@@ -227,7 +227,6 @@ describe('tenantAbbreviationForAccount', () => {
     ['Meridian Health System', 'MER'],
     ['First Capital Financial', 'FCF'],
     ['Arcturus Financial', 'FCF'],
-    ['Keystone Energy Holdings', 'KEY'],
     ['Northstar Holdings', 'NSH'],
   ])('maps %s → %s', (name, expected) => {
     expect(tenantAbbreviationForAccount(name)).toBe(expected);

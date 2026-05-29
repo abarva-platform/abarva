@@ -30,8 +30,7 @@ BEGIN;
 
 CREATE TEMP TABLE _pex_demo_clients ON COMMIT DROP AS
 SELECT id, name FROM clients WHERE name IN (
-  'Apex Retail','First Capital','Helix Therapeutics',
-  'Keystone Energy Holdings','Meridian Health'
+  'Apex Retail','First Capital','Meridian Health'
 );
 
 -- Tenant-scoped person pool (same matching rule as Wave 2 migration B).
@@ -52,9 +51,7 @@ FROM _pex_demo_clients dc
 JOIN persons p ON (
   (dc.name = 'Apex Retail' AND p.organization ILIKE 'apex%') OR
   (dc.name = 'First Capital' AND (p.organization ILIKE '%first capital%' OR p.organization ILIKE '%arcturus%')) OR
-  (dc.name = 'Meridian Health' AND p.organization ILIKE '%meridian%') OR
-  (dc.name = 'Keystone Energy Holdings' AND p.organization ILIKE '%keystone%') OR
-  (dc.name = 'Helix Therapeutics' AND p.organization ILIKE '%helix%')
+  (dc.name = 'Meridian Health' AND p.organization ILIKE '%meridian%')
 );
 
 -- Move metadata + per-role hashed pick slots.

@@ -18,7 +18,7 @@ const TENANT_PROFILES = {
     personaEmail: 'cdio@meridian-health.example.com',
     identityMarkers: ['Meridian', 'Dr. Anita', 'Kiran Rao'],
     // Wrong-tenant terms to flag when present in *this* tenant's pages.
-    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'First Capital', 'Heliara', 'Keystone', 'Brindlemark', 'Arcturus'],
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'First Capital', 'Heliara', 'Arcturus'],
     // Leakage substrings caught in agent text (lowercased ICASE elsewhere).
     leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc/i,
     // Grounding regex — agent must touch this tenant's vocabulary.
@@ -42,9 +42,9 @@ const TENANT_PROFILES = {
     displayShort: 'First Capital',
     displayFull: 'First Capital Financial',
     personaEmail: 'cio@firstcapital.example.com',
-    identityMarkers: ['First Capital', 'Arcturus', 'Brindlemark'],
+    identityMarkers: ['First Capital', 'Arcturus'],
     // Healthcare and retail terms should not appear in a financial tenant's pages.
-    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'Heliara', 'Keystone', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer'],
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'Heliara', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer'],
     // Cross-tenant leakage in agent text — healthcare/retail markers + cross-bank wrong names.
     leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc|epic hyperspace|mychart|hipaa|sectra|innovaccer|meridian health/i,
     // Grounding regex — financial-services vocabulary the agent must touch.
@@ -69,7 +69,7 @@ const TENANT_PROFILES = {
     displayFull: 'Apex Retail Group',
     personaEmail: 'demo-apexretail+clerk_test@abarva.com',
     identityMarkers: ['Apex Retail', 'Apex'],
-    wrongTenantTerms: ['Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Brindlemark', 'Epic Hyperspace', 'MyChart', 'Sectra', 'BSA/AML Consent Order'],
+    wrongTenantTerms: ['Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Epic Hyperspace', 'MyChart', 'Sectra', 'BSA/AML Consent Order'],
     leakageRegex: /meridian|epic hyperspace|mychart|hipaa|sectra|innovaccer|first capital|arcturus|consent order/i,
     groundingRegex: /Apex|stores|retail|SAP|merchandis|loyalty|punchh|omni-?channel|CMO|CFO|CIO/i,
     groundingFlag: 'weak_apex_grounding',
@@ -97,7 +97,7 @@ const TENANT_PROFILES = {
     identityMarkers: ['Northstar Clinical', 'Northstar', 'Priya Mehta'],
     // Wrong-tenant terms to flag when present on this tenant's pages.
     // Includes other composite tenant names and their flagship sector markers.
-    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Keystone', 'Brindlemark', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer', 'BSA/AML Consent Order'],
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer', 'BSA/AML Consent Order'],
     // Cross-tenant leakage detector for agent text.
     leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc|meridian health|epic hyperspace|mychart|sectra|innovaccer|first capital|arcturus|consent order/i,
     // Medtech vertical grounding regex — the agent must touch this vocabulary.

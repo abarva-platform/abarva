@@ -268,27 +268,30 @@ import type {
 import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
 import { MERIDIAN_PROGRAMS_FIXTURE } from './meridian-fixture';
 
-export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health' | 'first-capital' | 'keystone-energy';
+export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-clinical' | 'skyharbor-air';
 
 const PROGRAM_FIXTURES_BY_TENANT: Record<ProgramsIndexTenant, ProgramRow[]> = {
   'apex-retail': APEX_PROGRAMS_FIXTURE,
   'meridian-health': MERIDIAN_PROGRAMS_FIXTURE,
   'first-capital': [],
-  'keystone-energy': [],
+  'northstar-clinical': [],
+  'skyharbor-air': [],
 };
 
 const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
   'first-capital': 'First Capital Financial',
-  'keystone-energy': 'Keystone Energy Holdings',
+  'northstar-clinical': 'Northstar Clinical Technologies',
+  'skyharbor-air': 'SkyHarbor Air',
 };
 
 const PHASE_FILTER_TENANT_BY_INDEX_TENANT: Record<ProgramsIndexTenant, string> = {
   'apex-retail': 'apex-retail',
   'meridian-health': 'meridian-health',
   'first-capital': 'first-capital',
-  'keystone-energy': 'keystone-energy',
+  'northstar-clinical': 'northstar-clinical',
+  'skyharbor-air': 'skyharbor-air',
 };
 
 export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';

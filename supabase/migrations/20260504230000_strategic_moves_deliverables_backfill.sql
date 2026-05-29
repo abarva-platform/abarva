@@ -52,8 +52,7 @@ WITH archetype_codes AS (
 ),
 demo_clients AS (
   SELECT id FROM clients WHERE name IN (
-    'Apex Retail','First Capital','Helix Therapeutics',
-    'Keystone Energy Holdings','Meridian Health'
+    'Apex Retail','First Capital','Meridian Health'
   )
 ),
 target_moves AS (

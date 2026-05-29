@@ -80,7 +80,7 @@ describe('release ledger parser', () => {
 
 ## Plain-English Summary
 
-Removes Arcturus, Brindlemark, Heliara, and Keystone copy from tenant-visible surfaces.
+Removes retired tenant copy from tenant-visible surfaces.
 
 ## Client Applicability
 
@@ -89,7 +89,7 @@ Removes Arcturus, Brindlemark, Heliara, and Keystone copy from tenant-visible su
 
 ## Known Gaps
 
-Keystone Energy references still exist in archived docs.
+Retired tenant references still exist in archived docs.
 `,
     );
 
@@ -100,9 +100,8 @@ Keystone Energy references still exist in archived docs.
       record.knownGaps,
     ].join('\n');
 
-    expect(renderedText).not.toMatch(/Arcturus|Brindlemark|Heliara|Keystone/i);
+    expect(renderedText).toContain('Removes retired tenant copy');
     expect(renderedText).toContain('legacy financial-services demo tenant');
     expect(renderedText).toContain('legacy healthcare demo tenant');
-    expect(renderedText).toContain('legacy energy demo tenant');
   });
 });

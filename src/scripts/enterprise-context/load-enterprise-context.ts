@@ -57,7 +57,7 @@ const CLIENT_PROFILES: Record<string, ClientProfile> = {
     legalName: 'First Capital Financial Group',
     industryCode: 'financial_services',
     slugs: ['first-capital', 'first-capital-financial', 'arcturus'],
-    aliases: ['First Capital', 'First Capital Financial', 'First Capital Financial Group', 'Brindlemark Financial'],
+    aliases: ['First Capital', 'First Capital Financial', 'First Capital Financial Group'],
   },
 };
 

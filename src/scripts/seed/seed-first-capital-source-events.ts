@@ -258,7 +258,7 @@ async function main(): Promise<void> {
     await client.query('commit');
 
     const count = await client.query<{ count: string }>(
-      `select count(*)::text from source_events where client_key in ('first-capital','firstcapital','arcturus','brindlemark')`,
+      `select count(*)::text from source_events where client_key in ('first-capital','firstcapital','arcturus')`,
     );
 
     console.log(JSON.stringify({

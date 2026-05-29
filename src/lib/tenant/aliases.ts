@@ -47,8 +47,6 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
       'first-capital-financial',
       'first capital',
       'first capital financial',
-      'brindlemark',
-      'brindlemark financial',
     ],
   },
   {
@@ -60,10 +58,7 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
     aliases: [
       'northstar',
       'northstar-clinical',
-      'northstar-medtech',
-      'northstar-clinical-tech',
       'northstar clinical technologies',
-      'northstar medtech',
     ],
   },
   {

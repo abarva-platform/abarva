@@ -130,9 +130,9 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToBrokerTenantKey('firstcapital')).toBe('first-capital');
   });
 
-  it('passes broker-aligned ClientKeys through unchanged (meridian, keystone)', () => {
+  it('passes broker-aligned ClientKeys through unchanged', () => {
     expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
-    expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
+    expect(clientKeyToBrokerTenantKey('skyharbor-air')).toBe('skyharbor-air');
   });
 
   it("substrate map points app client keys at persisted setup-data tenant keys", () => {
@@ -141,13 +141,12 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('first-capital');
     expect(clientKeyToInventorySubstrateKey('firstcapital')).toBe('first-capital');
     expect(clientKeyToInventorySubstrateKey('first-capital')).toBe('first-capital');
-    // STRESS-P0-010 regression — chunks have tenant_key='northstar-medtech'
+    // STRESS-P0-010 regression — chunks have tenant_key='northstar-clinical'
     // to match clients.tenant_key; resolver must map app key → that value
-    expect(clientKeyToInventorySubstrateKey('northstar')).toBe('northstar-medtech');
-    expect(clientKeyToInventorySubstrateKey('northstar-clinical-tech')).toBe('northstar-medtech');
+    expect(clientKeyToInventorySubstrateKey('northstar')).toBe('northstar-clinical');
+    expect(clientKeyToInventorySubstrateKey('northstar-clinical')).toBe('northstar-clinical');
     expect(clientKeyToInventorySubstrateKey('skyharbor')).toBe('skyharbor-air');
     expect(clientKeyToInventorySubstrateKey('skyharbor-air')).toBe('skyharbor-air');
-    expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 
   it('mapped tenant key resolves a non-blocked broker bundle for Apex', () => {

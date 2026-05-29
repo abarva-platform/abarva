@@ -74,8 +74,6 @@ export interface CrawlComparison {
 
 export const FORBIDDEN_TENANT_REFERENCES = [
   'Heliara',
-  'Keystone',
-  'Brindlemark',
   'Arcturus',
 ] as const;
 

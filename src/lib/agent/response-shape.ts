@@ -49,7 +49,6 @@ function humanizeInternalProgramId(id: string): string {
       'ar',
       'fcfi',
       'firstcapital',
-      'brindlemark',
       'meridian',
       'mh',
     ].includes(part));
@@ -71,7 +70,7 @@ function scrubInternalAdvisorText(text: string): string {
     .replace(/\bworldview:W\d+:\d{3}\b/gi, 'strategic framing')
     .replace(/\bsig:[a-z0-9:_-]+\b/gi, 'the cross-program signal')
     .replace(
-      /\b(?:fcfi|firstcapital|brindlemark|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/gi,
+      /\b(?:fcfi|firstcapital|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/gi,
       (match) => humanizeInternalProgramId(match),
     )
     .replace(

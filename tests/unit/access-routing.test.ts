@@ -16,7 +16,7 @@ describe('access-routing', () => {
   });
 
   test('falls back to default client when explicit clientId is missing', () => {
-    expect(resolveSessionClientKey({ defaultClientId: 'keystone' })).toBe('keystone');
+    expect(resolveSessionClientKey({ defaultClientId: 'skyharbor' })).toBe('skyharbor');
   });
 
   test('falls back to canonical client email domain when client metadata is missing', () => {
@@ -26,7 +26,7 @@ describe('access-routing', () => {
   });
 
   test('falls back to global default for invalid values', () => {
-    expect(resolveSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBe('meridian');
+    expect(resolveSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBe('apexretail');
   });
 
   test('strict pinned client resolver never falls back to the global default', () => {
@@ -45,11 +45,11 @@ describe('access-routing', () => {
 
   test('does not recognize the retired new-client setup alias', () => {
     expect(isNewClientSetupEmail('demo-new+clerk_test@abarva.com')).toBe(false);
-    expect(resolvePostSignInPath(undefined, { email: 'demo-new+clerk_test@abarva.com' })).toBe('/home?client=meridian');
+    expect(resolvePostSignInPath(undefined, { email: 'demo-new+clerk_test@abarva.com' })).toBe('/home?client=apexretail');
   });
 
   test('routes investors to investor surface when Clerk metadata says investor', () => {
-    expect(resolvePostSignInPath('investor', { defaultClientId: 'keystone' })).toBe('/investor?client=keystone');
+    expect(resolvePostSignInPath('investor', { defaultClientId: 'skyharbor' })).toBe('/investor?client=skyharbor');
   });
 
   test('routes admins to tenant home', () => {
@@ -64,7 +64,7 @@ describe('access-routing', () => {
   test('recognizes locked tenant roles from role or canonical email domain', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
     expect(isLockedTenantRole(undefined, 'ethan.brooks@firstcapital.example.com')).toBe(true);
-    expect(isLockedTenantRole(undefined, 'demo-keystone+clerk_test@abarva.com')).toBe(false);
+    expect(isLockedTenantRole(undefined, 'retired-energy-demo@example.com')).toBe(false);
     expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
   });
 

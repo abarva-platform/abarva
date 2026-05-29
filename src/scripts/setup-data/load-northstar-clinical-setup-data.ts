@@ -59,9 +59,9 @@ type GraphEdge = {
   properties?: Record<string, unknown>;
 };
 
-const TENANT_KEY = 'northstar-medtech';
+const TENANT_KEY = 'northstar-clinical';
 const SOURCE_BASIS = 'tenant_admin_upload';
-const UPLOADED_BY = 'Northstar MedTech synthetic dataset import · 2026-05-21';
+const UPLOADED_BY = 'Northstar Clinical Technologies synthetic dataset import · 2026-05-21';
 
 const SEGMENTS: SegmentConfig[] = [
   { familyNumber: 1, segmentId: 'enterprise_profile', segmentName: 'Enterprise profile', dir: '01_enterprise_profile', expectedRecordCount: 1, expectedFreshnessDays: 90, reasoningModes: ['tenant_grounded', 'cross_corpus'] },
@@ -85,7 +85,7 @@ function parseArgs() {
   const sourceIdx = args.indexOf('--source');
   const dryRun = args.includes('--dry-run');
   return {
-    sourceRoot: sourceIdx >= 0 ? args[sourceIdx + 1] : path.resolve(process.cwd(), 'src/scripts/setup-data/northstar-medtech-data'),
+    sourceRoot: sourceIdx >= 0 ? args[sourceIdx + 1] : path.resolve(process.cwd(), 'src/scripts/setup-data/northstar-clinical-data'),
     dryRun,
   };
 }
@@ -298,13 +298,13 @@ function buildGraph(records: RecordSeed[]): { nodes: GraphNode[]; edges: GraphEd
   const addNode = (node: GraphNode) => nodes.set(node.node_id, node);
   const addEdge = (edge: GraphEdge) => edges.set(edge.edge_id, edge);
 
-  addNode({ node_id: 'enterprise:northstar-medtech', node_type: 'enterprise', label: 'Northstar MedTech', source_segment_id: 'enterprise_profile', source_record_id: 'enterprise_profile:enterprise-profile', source_doc: 'enterprise_profile.md', confidence: 0.9 });
+  addNode({ node_id: 'enterprise:northstar-clinical', node_type: 'enterprise', label: 'Northstar Clinical Technologies', source_segment_id: 'enterprise_profile', source_record_id: 'enterprise_profile:enterprise-profile', source_doc: 'enterprise_profile.md', confidence: 0.9 });
 
   for (const record of records) {
     const p = record.recordPayload;
     if (typeof p.id === 'string' && p.id.startsWith('person:')) {
       addNode({ node_id: p.id, node_type: 'person', label: record.title, source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, data_classification: record.dataClassification, confidence: record.confidence, last_reviewed: record.lastReviewed, properties: p });
-      addEdge({ edge_id: `enterprise:northstar-medtech:has-executive:${p.id}`, from_node_id: 'enterprise:northstar-medtech', to_node_id: p.id, edge_type: 'HAS_EXECUTIVE', source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, confidence: record.confidence });
+      addEdge({ edge_id: `enterprise:northstar-clinical:has-executive:${p.id}`, from_node_id: 'enterprise:northstar-clinical', to_node_id: p.id, edge_type: 'HAS_EXECUTIVE', source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, confidence: record.confidence });
       if (typeof p.reports_to === 'string' && p.reports_to) {
         addEdge({ edge_id: `${p.id}:reports-to:${p.reports_to}`, from_node_id: p.id, to_node_id: p.reports_to, edge_type: 'REPORTS_TO', source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, confidence: record.confidence });
       }
@@ -313,7 +313,7 @@ function buildGraph(records: RecordSeed[]): { nodes: GraphNode[]; edges: GraphEd
     if (typeof p.system_id === 'string') {
       addNode({ node_id: p.system_id, node_type: 'system', label: String(p.name ?? record.title), source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, data_classification: record.dataClassification, confidence: record.confidence, last_reviewed: record.lastReviewed, properties: p });
       if (typeof p.vendor === 'string' && p.vendor) {
-        const vendorId = `vendor:northstar-medtech:${slugify(p.vendor)}`;
+        const vendorId = `vendor:northstar-clinical:${slugify(p.vendor)}`;
         addNode({ node_id: vendorId, node_type: 'vendor', label: p.vendor, source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, confidence: record.confidence, properties: { vendor_name: p.vendor } });
         addEdge({ edge_id: `${p.system_id}:licensed-from:${vendorId}`, from_node_id: p.system_id, to_node_id: vendorId, edge_type: 'LICENSED_FROM', source_segment_id: record.segmentId, source_record_id: record.recordId, source_doc: record.sourceDoc, confidence: record.confidence });
       }
@@ -385,17 +385,17 @@ async function ensureClient(client: SupabaseClient) {
   const existing = await client
     .from('clients')
     .select('id')
-    .or('tenant_key.eq.northstar-medtech,name.eq.Northstar MedTech,legal_name.eq.Northstar MedTech Group')
+    .or('tenant_key.eq.northstar-clinical,name.eq.Northstar Clinical Technologies,legal_name.eq.Northstar Clinical Technologies Group')
     .limit(1)
     .maybeSingle();
-  if (existing.error) throw new Error(`Northstar MedTech client lookup failed: ${existing.error.message}`);
+  if (existing.error) throw new Error(`Northstar Clinical Technologies client lookup failed: ${existing.error.message}`);
   if (existing.data?.id) return existing.data.id as string;
 
   const inserted = await client
     .from('clients')
     .insert({
-      name: 'Northstar MedTech',
-      legal_name: 'Northstar MedTech Group',
+      name: 'Northstar Clinical Technologies',
+      legal_name: 'Northstar Clinical Technologies Group',
       industry_code: 'HEALTHCARE_MEDTECH',
       tenant_key: TENANT_KEY,
       annual_revenue_usd: 8_600_000_000,
@@ -407,7 +407,7 @@ async function ensureClient(client: SupabaseClient) {
     })
     .select('id')
     .single();
-  if (inserted.error) throw new Error(`Northstar MedTech client insert failed: ${inserted.error.message}`);
+  if (inserted.error) throw new Error(`Northstar Clinical Technologies client insert failed: ${inserted.error.message}`);
   return inserted.data.id as string;
 }
 
@@ -435,7 +435,7 @@ async function main() {
 
   const client = getClient();
   const clientId = await ensureClient(client);
-  const runStart = await client.from('data_ingestion_runs').insert({ client_id: clientId, tenant_key: TENANT_KEY, source_label: 'Northstar MedTech synthetic setup dataset', source_root: sourceRoot, status: 'started' }).select('id').single();
+  const runStart = await client.from('data_ingestion_runs').insert({ client_id: clientId, tenant_key: TENANT_KEY, source_label: 'Northstar Clinical Technologies synthetic setup dataset', source_root: sourceRoot, status: 'started' }).select('id').single();
   if (runStart.error) throw new Error(`data_ingestion_runs insert failed: ${runStart.error.message}`);
   const runId = runStart.data.id as string;
 
@@ -550,7 +550,7 @@ async function main() {
       .select('segment_id')
       .eq('tenant_key', TENANT_KEY)
       .eq('action', 'segment_imported')
-      .eq('source_doc', 'northstar-medtech-synthetic-dataset.zip');
+      .eq('source_doc', 'northstar-clinical-synthetic-dataset.zip');
     if (existingAudit.error) throw new Error(`data_inventory_audit_log lookup failed: ${existingAudit.error.message}`);
     const auditedSegments = new Set((existingAudit.data ?? []).map((row) => row.segment_id as string));
     const auditRows = SEGMENTS
@@ -562,9 +562,9 @@ async function main() {
         action: 'segment_imported',
         segment_id: segment.segmentId,
         record_id: null,
-        after_state: { record_count: bySegment.get(segment.segmentId)?.length ?? 0, source_label: 'Northstar MedTech synthetic setup dataset' },
+        after_state: { record_count: bySegment.get(segment.segmentId)?.length ?? 0, source_label: 'Northstar Clinical Technologies synthetic setup dataset' },
         classification_at_action: 'Mixed',
-        source_doc: 'northstar-medtech-synthetic-dataset.zip',
+        source_doc: 'northstar-clinical-synthetic-dataset.zip',
       }));
     if (auditRows.length) {
       const auditInsert = await client.from('data_inventory_audit_log').insert(auditRows);

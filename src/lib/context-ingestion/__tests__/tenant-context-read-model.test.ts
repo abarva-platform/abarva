@@ -1,7 +1,11 @@
-const fromMock = jest.fn();
+const azureReadSelectMock = jest.fn();
+const azureReadMaybeSingleMock = jest.fn();
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({ from: fromMock }),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    select: (...args: unknown[]) => azureReadSelectMock(...args),
+    maybeSingle: (...args: unknown[]) => azureReadMaybeSingleMock(...args),
+  },
 }));
 
 import {
@@ -13,48 +17,16 @@ import {
   getTenantSourceFiles,
 } from '../tenant-context-read-model';
 
-interface BuilderResult {
-  data: unknown;
-  error: unknown;
-}
-
 type Operation = {
   op: string;
   column?: string;
   value?: unknown;
 };
 
-function makeBuilder(result: BuilderResult, operations: Operation[] = []) {
-  const builder: Record<string, unknown> = {};
-  builder.select = () => builder;
-  builder.eq = (column: string, value: unknown) => {
-    operations.push({ op: 'eq', column, value });
-    return builder;
-  };
-  builder.in = (column: string, value: unknown) => {
-    operations.push({ op: 'in', column, value });
-    return builder;
-  };
-  builder.order = () => builder;
-  builder.limit = () => builder;
-  builder.maybeSingle = () => Promise.resolve(result);
-  builder.then = (resolve: (r: BuilderResult) => unknown) =>
-    Promise.resolve(result).then(resolve);
-  return builder as {
-    select: () => unknown;
-    eq: (column: string, value: unknown) => unknown;
-    in: (column: string, value: unknown) => unknown;
-    order: () => unknown;
-    limit: () => unknown;
-    maybeSingle: () => Promise<BuilderResult>;
-    then: (r: (x: BuilderResult) => unknown) => Promise<unknown>;
-  };
-}
-
 const clientRow = {
   id: 'client-1',
-  tenant_key: 'northstar',
-  slug: 'northstar-medtech',
+  tenant_key: 'northstar-clinical',
+  slug: 'northstar-clinical',
   name: 'Northstar Clinical Technologies',
 };
 
@@ -134,24 +106,24 @@ function installMockData({
   audits?: unknown[];
 } = {}) {
   const operations: Operation[] = [];
-  fromMock.mockImplementation((table: string) => {
-    if (table === 'clients') {
-      return makeBuilder({ data: clients[0] ?? null, error: null }, operations);
-    }
-    if (table === 'enterprise_context_chunks') {
-      return makeBuilder({ data: chunks, error: null }, operations);
-    }
-    if (table === 'ai_egress_audit') {
-      return makeBuilder({ data: audits, error: null }, operations);
-    }
-    return makeBuilder({ data: null, error: { message: 'unknown table' } }, operations);
+  azureReadMaybeSingleMock.mockImplementation((request: { table: string; where?: Record<string, unknown> }) => {
+    operations.push({ op: 'maybeSingle', column: request.table, value: request.where });
+    if (request.table === 'clients') return Promise.resolve(clients[0] ?? null);
+    return Promise.resolve(null);
+  });
+  azureReadSelectMock.mockImplementation((request: { table: string; where?: Record<string, unknown> }) => {
+    operations.push({ op: 'select', column: request.table, value: request.where });
+    if (request.table === 'enterprise_context_chunks') return Promise.resolve(chunks);
+    if (request.table === 'ai_egress_audit') return Promise.resolve(audits);
+    return Promise.resolve([]);
   });
   return operations;
 }
 
 describe('tenant context read model', () => {
   beforeEach(() => {
-    fromMock.mockReset();
+    azureReadSelectMock.mockReset();
+    azureReadMaybeSingleMock.mockReset();
   });
 
   it('returns zero counts when tenant rows are absent', async () => {
@@ -182,7 +154,7 @@ describe('tenant context read model', () => {
 
     const summary = await getTenantContextSummary('client-1');
 
-    expect(summary.tenantKey).toBe('northstar');
+    expect(summary.tenantKey).toBe('northstar-clinical');
     expect(summary.displayName).toBe('Northstar Clinical Technologies');
     expect(summary.ingestionFilesCount).toBe(2);
     expect(summary.chunksCount).toBe(3);
@@ -232,8 +204,7 @@ describe('tenant context read model', () => {
     ]);
     expect(operations).toEqual(
       expect.arrayContaining([
-        { op: 'eq', column: 'client_id', value: 'client-1' },
-        { op: 'eq', column: 'source_doc', value: 'apps.csv' },
+        { op: 'select', column: 'enterprise_context_chunks', value: { client_id: 'client-1', source_doc: 'apps.csv' } },
       ]),
     );
   });

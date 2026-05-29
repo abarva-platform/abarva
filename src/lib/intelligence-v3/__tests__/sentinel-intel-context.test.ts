@@ -117,7 +117,7 @@ describe('buildSentinelIntelContext', () => {
   it('does not inject Apex as the active tenant for a non-Apex Sentinel call', () => {
     const context = buildSentinelIntelContext({
       activeClient: 'Northstar Clinical Technologies',
-      clientKey: 'northstar-medtech',
+      clientKey: 'northstar-clinical',
       stage: 'brief',
       isApexBound: false,
       status: null,
@@ -125,7 +125,7 @@ describe('buildSentinelIntelContext', () => {
       todayItems: [],
       aopBands: APEX_RETAIL_AOP_DEMO,
       enterpriseContext: {
-        tenantKey: 'northstar-medtech',
+        tenantKey: 'northstar-clinical',
         tenantName: 'Northstar Clinical Technologies',
         counts: {
           sources: 96,
@@ -155,6 +155,6 @@ describe('buildSentinelIntelContext', () => {
     expect(facts).toContain('Northstar Clinical Technologies Enterprise Context');
     expect(facts).not.toContain('Apex Retail is the active');
     expect(facts).not.toContain('This is the Apex Retail Intelligence layer');
-    expect(context).toMatchObject({ clientKey: 'northstar-medtech' });
+    expect(context).toMatchObject({ clientKey: 'northstar-clinical' });
   });
 });

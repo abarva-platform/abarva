@@ -54,8 +54,7 @@ const MIGRATIONS = [
 const REPORT_PATH = path.join(REPO_ROOT, 'docs/build/STRATEGIC_MOVES_SUBSTRATE_V2_REPORT_2026-05-04.md');
 
 const DEMO_CLIENTS = [
-  'Apex Retail','First Capital','Helix Therapeutics',
-  'Keystone Energy Holdings','Meridian Health',
+  'Apex Retail','First Capital','Meridian Health',
 ];
 
 const APPLY = process.argv.includes('--apply');

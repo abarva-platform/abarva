@@ -54,7 +54,7 @@ describe('buildAuthoredInventoryFallback', () => {
   });
 
   it('sparse tenant (no capability matrix) returns empty rollups + null totalRecords', () => {
-    const fallback = buildAuthoredInventoryFallback(getSetupActsContent('keystone'));
+    const fallback = buildAuthoredInventoryFallback(getSetupActsContent('skyharbor'));
     expect(fallback.segments).toHaveLength(0);
     expect(fallback.totalRecords).toBeNull();
     expect(fallback.segmentsTracked).toBeNull();
@@ -105,7 +105,7 @@ describe('getSetupSummaryCountsWithSnapshot — authored fallback', () => {
 
   it('truly sparse tenant (Keystone) still reports null totals — empty-state honesty', () => {
     const counts = getSetupSummaryCountsWithSnapshot(
-      getSetupActsContent('keystone'),
+      getSetupActsContent('skyharbor'),
       null,
     );
     expect(counts.totalRecords).toBeNull();

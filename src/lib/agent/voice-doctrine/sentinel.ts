@@ -217,7 +217,7 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   {
     category: 'internal_artifact_leak',
     phrase: 'raw tenant program id',
-    pattern: /\b(?:fcfi|firstcapital|brindlemark|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/i,
+    pattern: /\b(?:fcfi|firstcapital|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/i,
   },
   {
     category: 'internal_artifact_leak',

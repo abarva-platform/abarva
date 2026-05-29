@@ -9,7 +9,7 @@
 // debt is still at zero. Lock it in.
 //
 // Apex Retail (663 hits), Meridian Health (77), First Capital (57),
-// Heliara (204), Brindlemark (149), Arcturus Financial (1) all carry
+// Heliara (204), Arcturus Financial (1) all carry
 // existing debt. Those tenants are policed via the baseline-diff in
 // `scripts/audit/control-plane-tenant-purity.mjs` (run via
 // `npm run audit:control-plane-purity:check`). This test exists because

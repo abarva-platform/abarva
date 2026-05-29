@@ -54,8 +54,7 @@ WHERE description LIKE '[demo_milestones_backfill_2026_05_04]%'
 -- Step 2 · stage target moves (demo clients only, archetype-aware).
 CREATE TEMP TABLE _mv2_demo_clients ON COMMIT DROP AS
 SELECT id, name FROM clients WHERE name IN (
-  'Apex Retail','First Capital','Helix Therapeutics',
-  'Keystone Energy Holdings','Meridian Health'
+  'Apex Retail','First Capital','Meridian Health'
 );
 
 CREATE TEMP TABLE _mv2_target_moves ON COMMIT DROP AS

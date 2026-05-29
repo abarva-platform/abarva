@@ -1,6 +1,6 @@
 export type ProvisioningMembershipRole = 'maestro' | 'client_viewer' | 'observer';
 export type ProvisioningAppRole = 'client' | 'investor' | 'external';
-export type ProvisioningClientKey = 'meridian' | 'arcturus' | 'apexretail' | 'northstar' | 'keystone';
+export type ProvisioningClientKey = 'meridian' | 'arcturus' | 'apexretail' | 'northstar' | 'skyharbor';
 export type ProvisioningAccessLevel =
   | 'client_admin'
   | 'program_member'
@@ -84,8 +84,8 @@ export interface TestUserSpec {
 export const TEST_USER_PASSWORD = 'Demo2026!';
 
 interface CanonicalClientFixture {
-  key: Exclude<ProvisioningClientKey, 'keystone'>;
-  clientId: Exclude<ProvisioningClientKey, 'keystone'>;
+  key: ProvisioningClientKey;
+  clientId: ProvisioningClientKey;
   name: string;
   emailDomain: string;
   organization: string;
@@ -119,6 +119,13 @@ const CLIENTS = {
     name: 'Northstar Clinical Technologies',
     emailDomain: 'northstar-clinical.example.com',
     organization: 'Northstar Clinical Technologies',
+  },
+  skyharbor: {
+    key: 'skyharbor',
+    clientId: 'skyharbor',
+    name: 'SkyHarbor Air',
+    emailDomain: 'skyharbor-air.example.com',
+    organization: 'SkyHarbor Air',
   },
 } as const satisfies Record<string, CanonicalClientFixture>;
 

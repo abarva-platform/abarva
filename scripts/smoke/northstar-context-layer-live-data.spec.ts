@@ -23,11 +23,11 @@ async function main(): Promise<void> {
   const { data: client, error: clientError } = await supabase
     .from('clients')
     .select('id,name,tenant_key')
-    .eq('tenant_key', 'northstar-medtech')
+    .eq('tenant_key', 'northstar-clinical')
     .limit(1)
     .maybeSingle();
   if (clientError) throw new Error(`Northstar client lookup failed: ${clientError.message}`);
-  assert.ok(client, 'Expected Northstar MedTech client row');
+  assert.ok(client, 'Expected Northstar Clinical Technologies client row');
 
   const summary = await getTenantContextSummary(client.id as string);
   assert.ok(summary.chunksCount >= 878, 'Northstar context layer should expose the 720 base chunks plus 8 demo facts and 150 named-entity facts');

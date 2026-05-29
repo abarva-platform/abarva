@@ -202,7 +202,6 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     resolutionTimeline: 'Resolve after tenant-specific bypass examples are attached and mapped to the violated policy clauses.',
     sourceDocuments: [
       'docs/source-material/pattern-pack-01-shadow-ai-governance.md',
-      'docs/source-material/tenant-overlays/keystone-intelligence-layer-overlay.md',
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
@@ -322,7 +321,6 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     resolutionTimeline: 'Resolve after a tenant-specific owner map and at least one bypassing acquisition are attached.',
     sourceDocuments: [
       'docs/source-material/pattern-pack-01-shadow-ai-governance.md',
-      'docs/source-material/tenant-overlays/keystone-intelligence-layer-overlay.md',
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:

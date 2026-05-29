@@ -1,7 +1,7 @@
 // Vendor portfolio adapter · File 04 Z1-B
 //
 // Each seeded tenant has its own vendor seed schema (apex, meridian,
-// firstcapital, keystone). This adapter normalizes them into a common
+// firstcapital). This adapter normalizes them into a common
 // view model the VendorPortfolioSurface renders. One VM, three seeds,
 // zero re-authoring.
 

@@ -1174,8 +1174,8 @@ const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   meridian: 'Meridian Health System',
   arcturus: 'First Capital Financial',
   apexretail: 'Apex Retail Group',
-  // 'keystone' (Keystone Energy Holdings) retired 2026-05-07. Entry
-  // removed during audit 2026-05-13 cleanup.
+  northstar: 'Northstar Clinical Technologies',
+  skyharbor: 'SkyHarbor Air',
 };
 
 /**

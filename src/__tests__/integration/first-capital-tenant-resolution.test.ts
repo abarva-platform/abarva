@@ -9,7 +9,7 @@ describe('First Capital tenant resolution', () => {
     expect(home.title).toBe('First Capital Financial');
     expect(home.tagline).toContain('regional bank');
     expect(getClientOption('arcturus').name).toBe('First Capital Financial');
-    expect(canonicalClientDisplayName({ key: 'arcturus', name: 'Brindlemark Financial' })).toBe('First Capital Financial');
+    expect(canonicalClientDisplayName({ key: 'arcturus', name: 'First Capital Financial' })).toBe('First Capital Financial');
   });
 
   // The prior `getFirstCapitalBriefData` / `getFirstCapitalMapData`

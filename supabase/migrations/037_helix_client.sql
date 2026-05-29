@@ -1,7 +1,6 @@
--- Migration 037 · Pack K — client_partnerships table for Helix↔Meridian relationships
--- Idempotent. Helix Therapeutics client row inserted separately via
--- src/scripts/insert-helix-client.ts (clients.name has no UNIQUE constraint,
--- so DDL-side ON CONFLICT isn't available here).
+-- Migration 037 · Pack K — client_partnerships table.
+-- Idempotent. The retired Helix client seed entrypoint was removed in
+-- Phase 0D; this migration remains table-only for replay compatibility.
 
 BEGIN;
 
