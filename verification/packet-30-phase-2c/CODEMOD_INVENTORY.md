@@ -4,19 +4,19 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T19:19:35.325Z`
-- Total files in inventory: `301`
-- Files with import-helper matches: `148`
-- Import-helper matches: `608`
-- Files with broad matches: `301`
-- Broad matches: `1426`
+- Generated at: `2026-05-29T19:34:21.258Z`
+- Total files in inventory: `294`
+- Files with import-helper matches: `140`
+- Import-helper matches: `582`
+- Files with broad matches: `294`
+- Broad matches: `1383`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 127
+- `DEFER_MANUAL`: 128
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 87
+- `READ_ONLY_SELECT`: 79
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
@@ -27,7 +27,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 - `db`: 5
 - `intelligence`: 31
 - `knowledge`: 5
-- `other_lib`: 143
+- `other_lib`: 136
 - `programs`: 36
 - `source`: 34
 - `tower`: 2
@@ -68,6 +68,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/intelligence/canonical/normalizers.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/canonical/scoped-corpus-pattern-index.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/citation-renderer.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/intelligence/loadKpiDetail.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/metric-records.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/synthesis/violationsRecorder.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/knowledge/agent-context-broker.ts | DEFER_MANUAL | knowledge | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -280,7 +281,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/sponsor/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | engagements | - |
 | src/app/programs/expert-kernel/expert-review/export/route.ts | READ_ONLY_SELECT | app_routes | 0 | 1 | - | no static table names detected |
 | src/lib/db/team.ts | READ_ONLY_SELECT | db | 5 | 11 | engagements, team_memberships | - |
-| src/lib/intelligence/loadKpiDetail.ts | READ_ONLY_SELECT | intelligence | 4 | 12 | benchmark_cohorts, evidence, kpis, pattern_packs, telemetry_sources | - |
 | src/lib/intelligence/library.ts | READ_ONLY_SELECT | intelligence | 3 | 8 | clients, engagement_topics, knowledge_sources | - |
 | src/lib/intelligence/canonical/runtime-pattern-index.ts | READ_ONLY_SELECT | intelligence | 3 | 4 | - | no static table names detected |
 | src/lib/intelligence/retrieval/structuredRetriever.ts | READ_ONLY_SELECT | intelligence | 0 | 5 | clients, knowledge_sources, spend_breakdown, tech_projects, tech_stack_items | - |
@@ -309,7 +309,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | contradictions, engagements, turns | - |
 | src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | sourcing_work_items | - |
 | src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 7 | vip_profiles | - |
-| src/lib/agent/retrieval.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | clients, enterprise_context_chunks | - |
 | src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | ai_initiative_vendors | - |
 | src/lib/data-plane/read-adapters/programsReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | engagements | - |
 | src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts | READ_ONLY_SELECT | other_lib | 4 | 6 | tower_user_preferences | - |
@@ -322,14 +321,8 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/agent/prompts/_shared/user-context.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | vip_profiles | - |
 | src/lib/auth/current-user.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | clients, person_client_memberships, persons | - |
 | src/lib/data-plane/read-adapters/sourceDecisionQueueReadAdapter.ts | READ_ONLY_SELECT | other_lib | 3 | 6 | data_inventory_records, data_inventory_segments | - |
-| src/lib/agent/prompts/_shared/maestro-context.ts | READ_ONLY_SELECT | other_lib | 3 | 5 | persons, relationship_notes | - |
-| src/lib/agent/prompts/_shared/topic-intelligence.ts | READ_ONLY_SELECT | other_lib | 3 | 5 | engagement_topics, engagement_topics_map | - |
 | src/lib/nexus/specialists/value.ts | READ_ONLY_SELECT | other_lib | 3 | 5 | spend_breakdown, tech_projects | - |
-| src/lib/agent/tools/program/lookupPerson.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | persons | - |
 | src/lib/agent/userContext.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | engagements | - |
-| src/lib/enterprise-context/retrieval.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | enterprise_context_chunks | - |
-| src/lib/evidence/citations.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | evidence_ledger | - |
-| src/lib/integrations/ai-egress/tenant-policy.ts | READ_ONLY_SELECT | other_lib | 3 | 4 | clients | - |
 | src/lib/azure-connectivity/smoke.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | 1 | - |
 | src/lib/azure-search/tenant-context-backfill.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |
 | src/lib/corpus/azure-search.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |

@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { DiagnosticQuestion, TopicRow, VendorEntry } from '@/lib/topics/db';
 
 // Pack L v2 · TOPIC INTELLIGENCE system-prompt block.
@@ -70,25 +70,27 @@ function formatContradictions(
 }
 
 export async function assembleTopicIntelligenceBlock(args: TopicIntelligenceArgs): Promise<string> {
-  const sb = getServerSupabase();
-
   // Pull assigned topics + their progress
-  const { data: mapRows } = await sb
-    .from('engagement_topics_map')
-    .select('topic_key, is_primary, progress')
-    .eq('engagement_id', args.engagementId)
-    .order('is_primary', { ascending: false });
-
-  const mapList = (mapRows as Array<{ topic_key: string; is_primary: boolean; progress: Record<string, boolean> | null }> | null) ?? [];
+  const mapList = await azureRead.select<{
+    topic_key: string;
+    is_primary: boolean;
+    progress: Record<string, boolean> | null;
+  }>({
+    table: 'engagement_topics_map',
+    columns: ['topic_key', 'is_primary', 'progress'],
+    where: { engagement_id: args.engagementId },
+    orderBy: { column: 'is_primary', direction: 'desc' },
+    missingTable: 'empty',
+  }).catch(() => []);
   if (mapList.length === 0) return '';
 
   const topicKeys = mapList.map((m) => m.topic_key);
-  const { data: topicRows } = await sb
-    .from('engagement_topics')
-    .select('*')
-    .in('topic_key', topicKeys);
-
-  const topics = (topicRows as TopicRow[] | null) ?? [];
+  const topics = await azureRead.select<TopicRow>({
+    table: 'engagement_topics',
+    columns: '*',
+    where: { topic_key: { op: 'in', value: topicKeys } },
+    missingTable: 'empty',
+  }).catch(() => []);
   if (topics.length === 0) return '';
 
   // Concatenate recent user turns so we can mark questions likely-asked
