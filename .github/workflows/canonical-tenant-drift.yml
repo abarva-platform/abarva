@@ -6,7 +6,12 @@ on:
       - main
     paths:
       - src/config/tenants/CANONICAL_TENANTS.ts
+      - src/**
+      - scripts/**
+      - tests/**
+      - supabase/migrations/**
       - scripts/verify-canonical-tenants.ts
+      - scripts/verify-retired-tenant-references.mjs
       - .github/workflows/canonical-tenant-drift.yml
       - package.json
       - package-lock.json
@@ -37,3 +42,6 @@ jobs:
         run: npm run db:verify:canonical-tenants
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verify retired tenant references
+        run: npm run db:verify:retired-tenants

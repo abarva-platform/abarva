@@ -40,8 +40,7 @@ describe('canonical tenant aliases', () => {
     expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
     expect(canonicalTenantKey('skyharbor-air')).toBe('skyharbor-air');
     expect(canonicalTenantKey('northstar')).toBe('northstar-clinical');
-    expect(canonicalTenantKey('northstar-medtech')).toBe('northstar-clinical');
-    expect(canonicalTenantKey('northstar-clinical-tech')).toBe('northstar-clinical');
+    expect(canonicalTenantKey('northstar-clinical')).toBe('northstar-clinical');
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');

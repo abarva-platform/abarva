@@ -3,8 +3,8 @@
  * Control-plane tenant-purity scanner.
  *
  * Principle: tenant-specific names (Apex Retail, Meridian Health, First
- * Capital, Brindlemark, Heliara, Arcturus, Northstar Clinical, Northstar
- * MedTech) belong in the DATA PLANE — `datasets/`, Supabase rows, corpus
+ * Capital, Heliara, Arcturus, Northstar Clinical) belong in the DATA PLANE
+ * — `datasets/`, Supabase rows, corpus
  * chunks — not in the APP CONTROL PLANE (`src/lib/`, `src/app/`,
  * `src/components/`). Hardcoded tenant strings in control-plane code are
  * cross-tenant-leak landmines: the STRESS-P0-001..008 chain was each one
@@ -52,11 +52,9 @@ const TENANT_TERMS = [
   'Meridian Health',
   'Meridian Hospital',
   'First Capital',
-  'Brindlemark',
   'Heliara',
   'Arcturus Financial',
   'Northstar Clinical',
-  'Northstar MedTech',
 ];
 
 // Files explicitly allowed to contain tenant names because they ARE the

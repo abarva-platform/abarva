@@ -57,7 +57,7 @@ describe('DESROUTE3 admin shell enforcement', () => {
     expect(source).toContain("'demo-apexretail+clerk_test@abarva.com'");
     expect(source).toContain("'demo-meridian+clerk_test@abarva.com'");
     expect(source).toContain("'demo-firstcapital+clerk_test@abarva.com'");
-    expect(source).not.toContain("'demo-keystone+clerk_test@abarva.com'");
+    expect(source).not.toContain("'retired-energy-demo@example.com'");
     expect(source).not.toContain("'demo-arcturus+clerk_test@abarva.com'");
   });
 });

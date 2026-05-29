@@ -31,7 +31,7 @@ describe('resolveAdminTenant', () => {
       key: 'meridian',
       name: 'Meridian Health System',
       expectedSlug: 'meridian',
-      expectedName: 'Meridian Health System',
+      expectedName: 'Meridian Health',
     },
     {
       key: 'arcturus',
@@ -40,10 +40,10 @@ describe('resolveAdminTenant', () => {
       expectedName: 'First Capital Financial',
     },
     {
-      key: 'keystone',
-      name: 'Keystone Energy Holdings',
-      expectedSlug: 'keystone',
-      expectedName: 'Keystone Energy Holdings',
+      key: 'skyharbor',
+      name: 'SkyHarbor Air',
+      expectedSlug: 'skyharbor-air',
+      expectedName: 'SkyHarbor Air',
     },
   ])(
     'resolves $key → slug=$expectedSlug, name=$expectedName',

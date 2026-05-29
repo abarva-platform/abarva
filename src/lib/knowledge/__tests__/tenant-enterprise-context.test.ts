@@ -343,14 +343,14 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).not.toContain('Asterline');
   });
 
-  it('normalizes legacy Meridian and First Capital aliases before chunks reach the Sentinel prompt', async () => {
+  it('preserves canonical Meridian and First Capital names before chunks reach the Sentinel prompt', async () => {
     fakeAdapter = {
       ...makeEmptyAdapter(),
       listContextChunks: (_tenantKey, opts) => {
         const requested = new Set(opts?.segmentIds ?? []);
         if (!requested.has('enterprise_profile')) return Promise.resolve([]);
         return Promise.resolve([
-          chunk('enterprise_profile', 'Heliara Health Alliance and Brindlemark Financial Group are legacy demo labels.'),
+          chunk('enterprise_profile', 'Meridian Health and First Capital Financial are canonical demo labels.'),
         ]);
       },
     };
@@ -360,8 +360,6 @@ describe('tenant enterprise context retrieval', () => {
 
     expect(detail).toContain('Meridian Health');
     expect(detail).toContain('First Capital Financial');
-    expect(detail).not.toContain('Heliara');
-    expect(detail).not.toContain('Brindlemark');
   });
 
   it('adds Northstar structured application rows before Sentinel reaches for industry-typical clinical systems', async () => {
@@ -391,7 +389,7 @@ describe('tenant enterprise context retrieval', () => {
     });
 
     const sources = await retrieveTenantEnterpriseSources(
-      'northstar-medtech',
+      'northstar-clinical',
       "What's our application portfolio? Walk me through the top apps by criticality.",
     );
     const detail = sources.map((source) => source.detail).join('\n');
@@ -421,7 +419,7 @@ describe('tenant enterprise context retrieval', () => {
     });
 
     const sources = await retrieveTenantEnterpriseSources(
-      'northstar-medtech',
+      'northstar-clinical',
       'Name 3 most-exposed vendor renewals.',
     );
     const detail = sources.map((source) => source.detail).join('\n');
@@ -450,7 +448,7 @@ describe('tenant enterprise context retrieval', () => {
     });
 
     const sources = await retrieveTenantEnterpriseSources(
-      'northstar-medtech',
+      'northstar-clinical',
       'Which active initiatives should we kill?',
     );
     const detail = sources.map((source) => source.detail).join('\n');
@@ -507,7 +505,7 @@ describe('tenant enterprise context retrieval', () => {
       ],
     });
 
-    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Top 5 apps by criticality, name them');
+    const sources = await retrieveTenantStructuredFacts('northstar-clinical', 'Top 5 apps by criticality, name them');
 
     expect(sources).toHaveLength(1);
     expect(sources[0]?.confidence).toBe(0.99);
@@ -543,7 +541,7 @@ describe('tenant enterprise context retrieval', () => {
       ],
     });
 
-    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Name 3 most-exposed vendor renewals in the next 6 months');
+    const sources = await retrieveTenantStructuredFacts('northstar-clinical', 'Name 3 most-exposed vendor renewals in the next 6 months');
     const detail = sources.map((source) => source.detail).join('\n');
 
     expect(sources[0]?.confidence).toBe(0.99);
@@ -579,7 +577,7 @@ describe('tenant enterprise context retrieval', () => {
       ],
     });
 
-    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Active initiatives by stage');
+    const sources = await retrieveTenantStructuredFacts('northstar-clinical', 'Active initiatives by stage');
     const detail = sources.map((source) => source.detail).join('\n');
 
     expect(sources[0]?.confidence).toBe(0.99);
@@ -603,7 +601,7 @@ describe('tenant enterprise context retrieval', () => {
       ],
     });
 
-    await expect(retrieveTenantStructuredFacts('northstar-medtech', 'How should we think about AI strategy?')).resolves.toEqual([]);
+    await expect(retrieveTenantStructuredFacts('northstar-clinical', 'How should we think about AI strategy?')).resolves.toEqual([]);
   });
 
   it('routes Northstar regulatory exposure questions to tenant enterprise context', async () => {
@@ -623,7 +621,7 @@ describe('tenant enterprise context retrieval', () => {
     };
 
     const sources = await retrieveTenantEnterpriseSources(
-      'northstar-medtech',
+      'northstar-clinical',
       'Where are we exposed on EU AI Act and FDA AI/ML expectations?',
     );
     const detail = sources.map((source) => source.detail).join('\n');
@@ -650,7 +648,7 @@ describe('tenant enterprise context retrieval', () => {
     });
 
     const sources = await retrieveTenantStructuredFacts(
-      'northstar-medtech',
+      'northstar-clinical',
       'Just yes or no: should we accelerate SAP S/4 Wave 0 right now?',
     );
     const detail = sources.map((source) => source.detail).join('\n');

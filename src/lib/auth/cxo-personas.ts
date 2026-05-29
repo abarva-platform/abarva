@@ -43,7 +43,7 @@ export interface CxoPersona {
    * namespace per project memory ("App ClientKey is `apexretail`;
    * broker is `apex-retail`"). Kept for chrome rendering.
    */
-  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical-tech' | 'skyharbor-air';
+  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical' | 'skyharbor-air';
   /** Clerk publicMetadata.role override for demo operations accounts. */
   authRole?: 'maestro' | 'admin';
   /** Graph node id used by persons.graph_node_id (Supabase). */
@@ -281,7 +281,7 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleFull: 'Chief Executive Officer',
     tenant: 'Northstar Clinical Technologies',
     clientKey: 'northstar',
-    tenantKey: 'northstar-clinical-tech',
+    tenantKey: 'northstar-clinical',
     graphNodeId: 'person:northstar:maya-rangan',
     monogramBg: '#0F766E',
     bioShort: 'CEO. Leading a $22.6B post-carveout clinical technology company through margin expansion.',
@@ -302,7 +302,7 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleFull: 'Chief Financial Officer',
     tenant: 'Northstar Clinical Technologies',
     clientKey: 'northstar',
-    tenantKey: 'northstar-clinical-tech',
+    tenantKey: 'northstar-clinical',
     graphNodeId: 'person:northstar:daniel-okafor',
     monogramBg: '#0F766E',
     bioShort: 'CFO. Owns $250M margin expansion, TSA cost removal, and board-grade value proof.',
@@ -323,7 +323,7 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleFull: 'Chief Information Officer',
     tenant: 'Northstar Clinical Technologies',
     clientKey: 'northstar',
-    tenantKey: 'northstar-clinical-tech',
+    tenantKey: 'northstar-clinical',
     graphNodeId: 'person:northstar:priya-mehta',
     monogramBg: '#0F766E',
     bioShort: 'CIO. Owns ERP/TSA sequencing, CMDB truth, integration topology, and AI-ready IT estate.',
@@ -344,7 +344,7 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleFull: 'Chief Quality Officer',
     tenant: 'Northstar Clinical Technologies',
     clientKey: 'northstar',
-    tenantKey: 'northstar-clinical-tech',
+    tenantKey: 'northstar-clinical',
     graphNodeId: 'person:northstar:elena-kovacs',
     monogramBg: '#0F766E',
     bioShort: 'CQO. Protects QMS, CAPA, complaint, audit, and regulated-AI evidence chains.',
@@ -365,7 +365,7 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleFull: 'EVP Health Information Systems',
     tenant: 'Northstar Clinical Technologies',
     clientKey: 'northstar',
-    tenantKey: 'northstar-clinical-tech',
+    tenantKey: 'northstar-clinical',
     graphNodeId: 'person:northstar:marcus-lee',
     monogramBg: '#0F766E',
     bioShort: 'EVP HIS. Owns clinical coding/CDI software modernization and regulated AI product economics.',

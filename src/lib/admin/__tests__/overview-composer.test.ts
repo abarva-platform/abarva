@@ -39,7 +39,7 @@ describe('composeOverviewBlocks · Status block', () => {
       industryCode: null,
       clientKey: 'unknown',
       segments: [],
-      content: getSetupActsContent('keystone'),
+      content: getSetupActsContent('skyharbor'),
       programApprovalPendingCount: 0,
       atlasSignalCount: 0,
       atlasHighSeverityCount: 0,
@@ -126,11 +126,11 @@ describe('composeOverviewBlocks · Action queue', () => {
   });
 
   it('caps at 5 items', () => {
-    const sparseContent = getSetupActsContent('keystone');
+    const sparseContent = getSetupActsContent('skyharbor');
     const blocks = composeOverviewBlocks({
-      tenantName: 'Keystone Energy Holdings',
-      industryCode: 'ENERGY',
-      clientKey: 'keystone',
+      tenantName: 'SkyHarbor Air',
+      industryCode: 'AIRLINE',
+      clientKey: 'skyharbor',
       segments: [], // truly empty — all 14 are empty
       content: sparseContent,
       programApprovalPendingCount: 5,

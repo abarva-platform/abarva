@@ -103,7 +103,6 @@ export function tenantAbbreviationForAccount(accountName: string): string {
   if (normalized.includes('apex')) return 'APEX';
   if (normalized.includes('meridian')) return 'MER';
   if (normalized.includes('first capital') || normalized.includes('arcturus')) return 'FCF';
-  if (normalized.includes('keystone')) return 'KEY';
   if (normalized.includes('northstar')) return 'NSH';
   // Fallback: take first 3 letters of first significant word.
   const firstWord = normalized.split(/\s+/).find((w) => w.length > 0) ?? '';

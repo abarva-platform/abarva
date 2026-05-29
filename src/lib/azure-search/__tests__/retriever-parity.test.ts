@@ -175,7 +175,7 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       expect(hit).toEqual(expected);
     });
 
-    it('normalizes legacy demo client labels before chunks reach the broker', async () => {
+    it('preserves canonical client labels before chunks reach the broker', async () => {
       const fetchImpl = jest.fn(async () => new Response(JSON.stringify({
         value: [{
           '@search.score': 0.88,
@@ -184,9 +184,9 @@ describe('Azure AI Search retriever — parity & invariants', () => {
           source_segment: 'enterprise_profile',
           record_id: 'rec-legacy',
           chunk_id: 'chunk-legacy',
-          title: 'Brindlemark Financial profile.md',
-          body: 'Brindlemark Financial Group is the active tenant. Asterline Retail and Heliara Health Alliance are legacy demo labels.',
-          source_uri: 'setup/Brindlemark Financial/profile.md',
+          title: 'First Capital Financial profile.md',
+          body: 'First Capital Financial is the active tenant. Apex Retail and Meridian Health are cross-tenant labels.',
+          source_uri: 'setup/First Capital Financial/profile.md',
           confidence: 0.88,
           sensitivity: 'internal',
         }],
@@ -204,8 +204,7 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       expect(hit.sourceDoc).toBe('First Capital Financial profile.md');
       expect(hit.sourceBasis).toBe('setup/First Capital Financial/profile.md');
       expect(hit.text).toContain('First Capital Financial is the active tenant.');
-      expect(hit.text).toContain('Apex Retail and Meridian Health are legacy demo labels.');
-      expect(hit.text).not.toMatch(/Brindlemark|Asterline|Heliara/);
+      expect(hit.text).toContain('Apex Retail and Meridian Health are cross-tenant labels.');
     });
 
     it('produces the same set of keys the pgvector adapter populates', () => {

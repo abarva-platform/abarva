@@ -265,8 +265,6 @@ function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string):
   if (clientKey === 'arcturus') {
     return accountName.includes('arcturus') || accountName.includes('first capital');
   }
-  if (clientKey === 'keystone') return accountName.includes('keystone');
-
   return false;
 }
 

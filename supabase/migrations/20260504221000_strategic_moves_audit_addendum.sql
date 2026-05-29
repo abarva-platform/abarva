@@ -22,8 +22,7 @@ BEGIN;
 
 CREATE TEMP TABLE _adx_demo_clients ON COMMIT DROP AS
 SELECT id FROM clients WHERE name IN (
-  'Apex Retail','First Capital','Helix Therapeutics',
-  'Keystone Energy Holdings','Meridian Health'
+  'Apex Retail','First Capital','Meridian Health'
 );
 
 -- Step 1 · milestone_completed entries.

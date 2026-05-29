@@ -19,7 +19,8 @@ const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Record<ClientKey, string> = {
   apexretail: 'apex-retail',
   meridian: 'meridian',
   arcturus: 'first-capital',
-  keystone: 'keystone',
+  northstar: 'northstar-clinical',
+  skyharbor: 'skyharbor-air',
 };
 
 const FALLBACK_CLIENT_KEY: ClientKey = 'apexretail';

@@ -62,7 +62,7 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
       'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
       'commercial deposit', 'real-time payments rail',
     ],
-    offLimitsTenantNames: ['Meridian', 'Meridian Health', 'Meridian Health System', 'Heliara', 'Heliara Health', 'Brindlemark', 'First Capital', 'First Capital Financial', 'Arcturus'],
+    offLimitsTenantNames: ['Meridian', 'Meridian Health', 'Meridian Health System', 'Heliara', 'Heliara Health', 'First Capital', 'First Capital Financial', 'Arcturus'],
   },
   Healthcare: {
     verticalLabel: 'Healthcare',
@@ -73,7 +73,7 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
       'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
       'commercial deposit', 'real-time payments rail', 'BAFO on a banking platform',
     ],
-    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Brindlemark', 'First Capital', 'First Capital Financial', 'Arcturus'],
+    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'First Capital', 'First Capital Financial', 'Arcturus'],
   },
   'Financial Services': {
     verticalLabel: 'Financial Services',

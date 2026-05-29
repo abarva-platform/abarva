@@ -96,7 +96,7 @@ async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientR
     if (/Meridian/i.test(row.name) || row.tenant_key === 'meridian-health') byKey.set('meridian', row);
     if (/Arcturus|First Capital/i.test(row.name) || row.tenant_key === 'first-capital') byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name) || row.tenant_key === 'apex-retail') byKey.set('apexretail', row);
-    if (/Northstar/i.test(row.name) || row.tenant_key === 'northstar-medtech') byKey.set('northstar', row);
+    if (/Northstar/i.test(row.name) || row.tenant_key === 'northstar-clinical') byKey.set('northstar', row);
     if (/SkyHarbor/i.test(row.name) || row.tenant_key === 'skyharbor-air') byKey.set('skyharbor', row);
   }
   return byKey;

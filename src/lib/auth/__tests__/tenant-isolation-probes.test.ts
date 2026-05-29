@@ -75,12 +75,6 @@ const CANONICAL_TENANTS: ReadonlyArray<{
     programCodePrefix: 'FCF',
     exampleProgramCode: 'FCF-01',
   },
-  {
-    tenantKey: 'keystone',
-    routeSlug: 'keystone-energy',
-    programCodePrefix: 'KST',
-    exampleProgramCode: 'KST-01',
-  },
 ];
 
 // =====================================================================
@@ -106,8 +100,8 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
     expect(canAccessTenantClient(apexUser, 'meridian')).toBe(false);
   });
 
-  it('blocks every cross-tenant pair across the four canonical tenants', () => {
-    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus', 'keystone'];
+  it('blocks every cross-tenant pair across the active seeded tenants', () => {
+    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus'];
     for (const userTenant of tenants) {
       const user = snapshot({
         sessionRole: 'client',
@@ -135,10 +129,10 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
   it('allows a client pinned to the target tenant when membership list is empty', () => {
     const pinnedOnlyUser = snapshot({
       sessionRole: 'client',
-      pinnedClientKey: 'keystone',
+      pinnedClientKey: 'skyharbor',
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(pinnedOnlyUser, 'keystone')).toBe(true);
+    expect(canAccessTenantClient(pinnedOnlyUser, 'skyharbor')).toBe(true);
     expect(canAccessTenantClient(pinnedOnlyUser, 'meridian')).toBe(false);
   });
 
@@ -159,7 +153,7 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'keystone'] as ClientKey[]) {
+    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'] as ClientKey[]) {
       expect(canAccessTenantClient(orphanUser, tenant)).toBe(false);
     }
   });
@@ -176,7 +170,7 @@ describe('Probe 2 · canAccessTenantClient · admin role behavior', () => {
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'keystone'] as ClientKey[]) {
+    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'] as ClientKey[]) {
       expect(canAccessTenantClient(adminUser, tenant)).toBe(true);
     }
   });
@@ -317,7 +311,7 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
     expect(inferClientKeyFromEmail('anand+skyharbor@abarva.com')).toBe('skyharbor');
   });
 
-  it('infers keystone from retired Keystone demo emails', () => {
+  it('does not infer retired energy demo emails', () => {
     expect(inferClientKeyFromEmail('retired-energy-demo@example.com')).toBeNull();
     expect(inferClientKeyFromEmail('retired-energy-alias@example.com')).toBeNull();
   });

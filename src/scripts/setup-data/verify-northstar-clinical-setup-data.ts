@@ -24,14 +24,14 @@ async function main() {
   const client = createClient(url.trim(), key.trim(), { auth: { persistSession: false, autoRefreshToken: false } });
   const report: Record<string, number> = {};
   for (const table of tables) {
-    const { count, error } = await client.from(table).select('*', { count: 'exact', head: true }).eq('tenant_key', 'northstar-medtech');
+    const { count, error } = await client.from(table).select('*', { count: 'exact', head: true }).eq('tenant_key', 'northstar-clinical');
     if (error) throw new Error(`${table} count failed: ${error.message}`);
     report[table] = count ?? 0;
   }
   const { data: segments, error: segmentError } = await client
     .from('data_inventory_segments')
     .select('family_number, segment_id, segment_name, record_count, coverage_score, health_state, stale_count, missing_count')
-    .eq('tenant_key', 'northstar-medtech')
+    .eq('tenant_key', 'northstar-clinical')
     .order('family_number');
   if (segmentError) throw new Error(`segments query failed: ${segmentError.message}`);
   console.log(JSON.stringify({ counts: report, segments }, null, 2));

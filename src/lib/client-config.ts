@@ -54,9 +54,9 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // as recognized aliases so the DB-lookup fallback in active-client.ts
   // and canonicalClientDisplayName below resolve them to 'Meridian Health'.
   meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance', 'Heliara'],
-  arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
+  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
-  northstar: ['Northstar Clinical Technologies', 'Northstar MedTech', 'Northstar MedTech Group', 'Northstar'],
+  northstar: ['Northstar Clinical Technologies', 'Northstar'],
   skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
 };
 
@@ -126,9 +126,6 @@ export function canonicalClientDisplayName(args: {
     key === 'arcturus' ||
     key === 'firstcapital' ||
     key === 'first-capital' ||
-    normalizedName === 'brindlemark financial' ||
-    normalizedName === 'brindlemark financial group' ||
-    normalizedName === 'brindlemark' ||
     normalizedName === 'arcturus financial group' ||
     normalizedName === 'arcturus financial' ||
     normalizedName === 'first capital financial' ||
@@ -139,10 +136,8 @@ export function canonicalClientDisplayName(args: {
 
   if (
     key === 'northstar' ||
-    key === 'northstar-clinical-tech' ||
+    key === 'northstar-clinical' ||
     normalizedName === 'northstar clinical technologies' ||
-    normalizedName === 'northstar medtech' ||
-    normalizedName === 'northstar medtech group' ||
     normalizedName === 'northstar'
   ) {
     return 'Northstar Clinical Technologies';
@@ -181,7 +176,6 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
   ['meridian-health.example.com', 'meridian'],
   ['firstcapital.example.com', 'arcturus'],
   ['northstar-clinical.example.com', 'northstar'],
-  ['northstar-medtech.example.com', 'northstar'],
   ['skyharbor-air.example.com', 'skyharbor'],
   // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
   // by inference. Documented in demo_accounts memory. Anyone uncomfortable

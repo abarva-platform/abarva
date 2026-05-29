@@ -5,7 +5,7 @@ import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
-type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-medtech';
+type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-clinical';
 
 type ClientMap = Map<string, string>;
 type IdMap = Map<string, string>;
@@ -24,13 +24,13 @@ type ColumnMeta = {
   udtName: string;
 };
 
-const DEFAULT_TENANTS: TenantKey[] = ['apex-retail', 'meridian-health', 'first-capital', 'northstar-medtech'];
+const DEFAULT_TENANTS: TenantKey[] = ['apex-retail', 'meridian-health', 'first-capital', 'northstar-clinical'];
 
 const TENANT_ALIASES: Record<TenantKey, string[]> = {
   'apex-retail': ['apex-retail', 'apexretail'],
   'meridian-health': ['meridian-health', 'meridian'],
-  'first-capital': ['first-capital', 'firstcapital', 'arcturus', 'brindlemark'],
-  'northstar-medtech': ['northstar-medtech', 'northstar'],
+  'first-capital': ['first-capital', 'firstcapital', 'arcturus'],
+  'northstar-clinical': ['northstar-clinical', 'northstar'],
 };
 
 function parseArgs() {

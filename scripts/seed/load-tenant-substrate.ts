@@ -152,7 +152,7 @@ const TENANTS: Record<string, TenantConfig> = {
   northstar: {
     key: 'northstar',
     clientId: '2702b525-4c6a-4fbe-973d-99a8480d8318',
-    tenantKey: 'northstar-medtech',
+    tenantKey: 'northstar-clinical',
     datasetRoot: 'datasets/northstar-clinical-tech-synthetic-v1',
     profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '16-market-corpus/source-files',

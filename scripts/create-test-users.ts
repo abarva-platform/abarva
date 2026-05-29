@@ -96,7 +96,7 @@ async function loadClients(): Promise<Map<string, ClientRow>> {
     if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
     if (/Northstar/i.test(row.name)) byKey.set('northstar', row);
-    if (/Keystone/i.test(row.name)) byKey.set('keystone', row);
+    if (/SkyHarbor/i.test(row.name)) byKey.set('skyharbor', row);
   }
   return byKey;
 }

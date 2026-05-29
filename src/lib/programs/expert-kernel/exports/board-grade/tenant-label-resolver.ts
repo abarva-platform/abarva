@@ -77,8 +77,7 @@ export function resolveBoardGradeTenantLabel(
 
   // (2) When the threaded key is one of the recognised ClientKeys, run the
   // canonical-display-name resolution — it handles every aliased form
-  // ('arcturus' vs 'firstcapital' vs 'first-capital' for First Capital, the
-  // retired 'Heliara'/'Brindlemark' demo names, etc.).
+  // ('arcturus' vs 'firstcapital' vs 'first-capital' for First Capital, etc.).
   if (threadedKey && isRecognisedClientKey(threadedKey)) {
     const canonical = canonicalClientDisplayName({
       key: threadedKey,

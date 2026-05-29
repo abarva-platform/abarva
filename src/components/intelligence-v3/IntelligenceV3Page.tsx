@@ -124,7 +124,6 @@ export function IntelligenceV3Page({
   const isFirstCapitalBound =
     clientKey === 'arcturus' ||
     clientKey === 'firstcapital' ||
-    data.tenantName.toLowerCase().includes('brindlemark') ||
     data.tenantName.toLowerCase().includes('first capital');
   const aopBands = isApexBound
     ? APEX_RETAIL_AOP_DEMO

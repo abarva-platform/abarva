@@ -34,8 +34,8 @@
 --     append-only; rewriting prior audit rows would violate the audit control
 --     installed in 20260430140000_program_audit_log.sql. Reads and future
 --     writes canonicalize tenant keys outside this migration.
---   * The `keystone → keystone-energy-holdings` mapping. Out of scope:
---     the brief authorized only three tenants. Filed as follow-up.
+--   * Retired tenant cleanup. Phase 0D later removed non-canonical tenant rows
+--     rather than canonicalizing them into supported tenants.
 
 BEGIN;
 
@@ -51,7 +51,7 @@ INSERT INTO tenant_key_alias_map (alias, canonical) VALUES
   ('arcturus',   'first-capital');
 
 -- ── 1. clients table ──────────────────────────────────────────────────────
--- Updates the Brindlemark / Apex / Meridian seed rows. Unique partial index
+-- Updates the Apex / Meridian / First Capital seed rows. Unique partial index
 -- `idx_clients_tenant_key WHERE tenant_key IS NOT NULL` does not collide:
 -- no existing row carries the canonical form (verified pre-migration).
 UPDATE public.clients c
@@ -113,7 +113,7 @@ UPDATE public.source_events SET client_key = m.canonical
   FROM tenant_key_alias_map m WHERE client_key = m.alias;
 
 -- ── 5. foundational_pattern_variants ──────────────────────────────────────
--- Only `meridian` appears (1 row); `apex`, `first_capital`, `keystone` are a
+-- Only `meridian` appears (1 row); `apex` and `first_capital` are a
 -- distinct underscore-separated taxonomy used by this table, NOT historical
 -- aliases of the canonical client keys. Only the `meridian` value is mapped.
 UPDATE public.foundational_pattern_variants SET tenant_key = m.canonical

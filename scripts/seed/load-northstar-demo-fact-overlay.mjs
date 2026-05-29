@@ -11,7 +11,7 @@ const defaultEnv = '/Users/anand/Projects/nexus/.env.local';
 loadEnv({ path: fs.existsSync(localEnv) ? localEnv : defaultEnv });
 
 const CLIENT_ID = '2702b525-4c6a-4fbe-973d-99a8480d8318';
-const TENANT_KEY = 'northstar-medtech';
+const TENANT_KEY = 'northstar-clinical';
 const INPUT = path.join(
   repoRoot,
   'datasets/northstar-clinical-tech-synthetic-v1/16-market-corpus/demo-critical-facts.jsonl',

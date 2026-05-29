@@ -40,8 +40,6 @@ const SOURCE_TAG = 'strategic_moves_demo_value_backfill_2026_05_04';
 const DEMO_CLIENTS = [
   'Apex Retail',
   'First Capital',
-  'Helix Therapeutics',
-  'Keystone Energy Holdings',
   'Meridian Health',
 ];
 

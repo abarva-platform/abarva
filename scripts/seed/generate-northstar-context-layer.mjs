@@ -52,10 +52,6 @@ function csv(headers, rows) {
   ].join('\n') + '\n';
 }
 
-function slug(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
 function money(n) {
   return Math.round(n);
 }
@@ -440,7 +436,7 @@ write('11-org-roles/demo-personas.csv', csv(['email', 'password', 'name', 'role'
   name: leader[1],
   role: leader[2],
   client_key: 'northstar',
-  tenant_key: 'northstar-clinical-tech',
+  tenant_key: 'northstar-clinical',
 }))));
 
 const doraRows = [];

@@ -57,10 +57,6 @@ UPDATE clients SET tenant_key = 'arcturus'
   WHERE tenant_key IS NULL
     AND (name ILIKE '%Arcturus%' OR name ILIKE '%First Capital%');
 
-UPDATE clients SET tenant_key = 'keystone'
-  WHERE tenant_key IS NULL
-    AND (name ILIKE 'Keystone%');
-
 -- Unique index ensures the UUID→key lookup in helpers is an index scan.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_tenant_key
   ON clients (tenant_key)

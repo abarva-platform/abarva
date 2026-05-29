@@ -820,7 +820,6 @@ export const TENANT_HOME_BY_KEY: Record<string, TenantHomeData> = {
   firstcapital: FIRSTCAP_HOME,
   'first-capital': FIRSTCAP_HOME,
   arcturus: FIRSTCAP_HOME,
-  brindlemark: FIRSTCAP_HOME,
   skyharbor: SKYHARBOR_HOME,
   'skyharbor-air': SKYHARBOR_HOME,
   skyharborair: SKYHARBOR_HOME,

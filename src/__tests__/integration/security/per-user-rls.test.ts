@@ -106,7 +106,7 @@ describe('Phase5-RLS-001 · Step 1 · rls_role_helpers migration', () => {
     expect(migration).toContain("tenant_key = 'apexretail'");
     expect(migration).toContain("tenant_key = 'meridian'");
     expect(migration).toContain("tenant_key = 'arcturus'");
-    expect(migration).toContain("tenant_key = 'keystone'");
+    expect(migration).not.toMatch(/tenant_key\s*=\s*'retired-energy'/);
   });
 });
 

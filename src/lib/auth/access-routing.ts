@@ -20,7 +20,6 @@ export function hasExplicitTenantAlias(email: string | null | undefined): boolea
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@northstar-medtech.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
@@ -44,7 +43,6 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@northstar-medtech.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||

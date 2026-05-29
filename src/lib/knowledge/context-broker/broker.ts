@@ -187,7 +187,7 @@ const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
     industries: new Set<CanonicalIndustry>(['healthcare', 'cross_industry']),
   },
   {
-    pattern: /\b(?:first[-_]?capital|firstcapital|fcfi|brindlemark|arcturus|financial)\b/i,
+    pattern: /\b(?:first[-_]?capital|firstcapital|fcfi|arcturus|financial)\b/i,
     industries: new Set<CanonicalIndustry>(['financial_services', 'cross_industry']),
   },
 ];

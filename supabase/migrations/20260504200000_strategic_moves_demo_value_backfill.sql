@@ -9,8 +9,7 @@
 --   1. Non-destructive — only touches rows where
 --      value_projected_high_usd IS NULL.
 --   2. Scoped — only rows whose client_id is one of the 5 demo clients
---      (Apex Retail, First Capital, Helix Therapeutics,
---      Keystone Energy Holdings, Meridian Health). Any other tenant
+--      (Apex Retail, First Capital, Meridian Health). Any other tenant
 --      is left untouched.
 --   3. Idempotent — re-running is a no-op because the WHERE clause
 --      excludes rows already backfilled.
@@ -55,8 +54,6 @@ WITH demo_clients AS (
   WHERE name IN (
     'Apex Retail',
     'First Capital',
-    'Helix Therapeutics',
-    'Keystone Energy Holdings',
     'Meridian Health'
   )
 ),

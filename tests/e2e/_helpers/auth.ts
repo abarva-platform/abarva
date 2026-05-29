@@ -20,7 +20,7 @@ export const DEMO_ACCOUNTS = {
   meridian: { email: 'demo-meridian+clerk_test@abarva.com', password: 'Demo2026!' },
   arcturus: { email: 'demo-firstcapital+clerk_test@abarva.com', password: 'Demo2026!' },
   apexretail: { email: 'demo-apexretail+clerk_test@abarva.com', password: 'Demo2026!' },
-  keystone: { email: 'demo-keystone+clerk_test@abarva.com', password: 'Demo2026!' },
+  skyharbor: { email: 'cto@skyharbor-air.example.com', password: 'Demo2026!' },
   admin: { email: 'anand.sundaram@thesundaram.com', password: 'Archer2026!' },
   investor: { email: 'investor+clerk_test@abarva.com', password: 'Investor2026!' },
 } as const;
