@@ -64,7 +64,7 @@ describe('retrievePattern', () => {
       corpusHit({
         slug: 'aip-healthcare-prior-auth-agentic-workflow',
         title: 'Prior Authorization Agentic Workflow',
-        verticalOverlays: ['healthcare', 'cross_industry'],
+        verticalOverlays: ['healthcare_provider', 'cross_industry'],
       }),
     ]);
 
@@ -80,7 +80,7 @@ describe('retrievePattern', () => {
     );
     expect(mockSearchCorpus).toHaveBeenCalledWith('prior auth agentic workflow', {
       clientId: 'meridian-health',
-      verticalOverlays: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+      verticalOverlays: ['healthcare_provider', 'cross_industry'],
       minConfidence: 0,
       minDepthScore: 0,
       limit: 5,
@@ -90,7 +90,7 @@ describe('retrievePattern', () => {
       id: 'aip-healthcare-prior-auth-agentic-workflow',
       name: 'Prior Authorization Agentic Workflow',
       confidence: 0.74,
-      detail: expect.stringContaining('industry_scope=healthcare, cross_industry'),
+      detail: expect.stringContaining('industry_scope=healthcare_provider, cross_industry'),
     })]);
     expect(result.averageConfidence).toBe(0.74);
   });
@@ -99,9 +99,8 @@ describe('retrievePattern', () => {
     const allIndustryHits = [
       corpusHit({ slug: 'retail-pattern', title: 'Retail OMS Pattern', verticalOverlays: ['retail'] }),
       corpusHit({ slug: 'healthcare-provider-pattern', title: 'Healthcare Prior Auth Pattern', verticalOverlays: ['healthcare_provider'] }),
-      corpusHit({ slug: 'healthcare-pattern', title: 'Healthcare RCM Pattern', verticalOverlays: ['healthcare'] }),
+      corpusHit({ slug: 'healthcare-medtech-pattern', title: 'Healthcare Medtech QMS Pattern', verticalOverlays: ['healthcare_medtech'] }),
       corpusHit({ slug: 'financial-pattern', title: 'Financial Services Model Risk Pattern', verticalOverlays: ['financial_services_banking'] }),
-      corpusHit({ slug: 'energy-pattern', title: 'Energy Grid Reliability Pattern', verticalOverlays: ['energy'] }),
       corpusHit({ slug: 'airline-pattern', title: 'Airline Modernization Pattern', verticalOverlays: ['airline'] }),
       corpusHit({ slug: 'cross-pattern', title: 'Cross Industry Governance Pattern', verticalOverlays: ['cross_industry'] }),
     ];
@@ -115,38 +114,20 @@ describe('retrievePattern', () => {
       {
         tenantInventoryKey: 'meridian-health',
         activeClient: 'Meridian Health',
-        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
-        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+        allowed: new Set(['healthcare-provider-pattern', 'cross-pattern']),
+        expectedScopes: ['healthcare_provider', 'cross_industry'],
       },
       {
-        tenantInventoryKey: 'northstar-medtech',
+        tenantInventoryKey: 'northstar-clinical',
         activeClient: 'Northstar Clinical Technologies',
-        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
-        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
-      },
-      {
-        tenantInventoryKey: 'helix-therapeutics',
-        activeClient: 'Helix Therapeutics',
-        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
-        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+        allowed: new Set(['healthcare-medtech-pattern', 'cross-pattern']),
+        expectedScopes: ['healthcare_medtech', 'cross_industry'],
       },
       {
         tenantInventoryKey: 'first-capital',
         activeClient: 'First Capital',
         allowed: new Set(['financial-pattern', 'cross-pattern']),
-        expectedScopes: ['financial_services', 'financial_services_banking', 'financial_services_insurance', 'finserv', 'cross_industry'],
-      },
-      {
-        tenantInventoryKey: 'brindlemark-financial',
-        activeClient: 'Brindlemark Financial',
-        allowed: new Set(['financial-pattern', 'cross-pattern']),
-        expectedScopes: ['financial_services', 'financial_services_banking', 'financial_services_insurance', 'finserv', 'cross_industry'],
-      },
-      {
-        tenantInventoryKey: 'keystone-energy',
-        activeClient: 'Keystone Energy',
-        allowed: new Set(['energy-pattern', 'cross-pattern']),
-        expectedScopes: ['energy', 'cross_industry'],
+        expectedScopes: ['financial_services_banking', 'cross_industry'],
       },
       {
         tenantInventoryKey: 'skyharbor-air',

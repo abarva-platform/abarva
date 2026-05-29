@@ -23,7 +23,7 @@ Control/audit lane: records that legacy `pattern_packs` require founder classifi
 ## Client Applicability
 
 - All clients: corpus pattern retrieval applies platform-wide once deployed.
-- Specific clients: the regression matrix covers Apex Retail, Meridian, Northstar, Helix, First Capital, Brindlemark, Keystone, and SkyHarbor.
+- Specific clients: the regression matrix covers the five canonical tenants: Apex Retail, Meridian, Northstar, First Capital, and SkyHarbor.
 - Internal only: migration scripts and founder-classification export.
 - Public/demo only: none.
 - Feature flag: none.
@@ -50,7 +50,7 @@ Control/audit lane: records that legacy `pattern_packs` require founder classifi
 
 - PASS: `git diff --check`.
 - PASS: `npx jest src/lib/intelligence/ask/retrievers/pattern.test.ts --runInBand`.
-- PASS: I9 regression covers 5 industry-scope query classes across 8 tenants (40 retrieval checks) and asserts zero cross-industry leakage outside tenant industry plus `cross_industry`.
+- PASS: I9 regression covers 5 industry-scope query classes across 5 canonical tenants (25 retrieval checks) and asserts zero cross-industry leakage outside tenant industry plus `cross_industry`.
 - PASS: `rg "searchCorpus\\(" src/lib src/app scripts -g "*.ts" -g "*.tsx"` reviewed all runtime callsites; Sentinel Ask, Sentinel reasoning, and the corpus API now apply tenant industry scoping before returning patterns.
 - PASS: `verification/phase-0/PATTERN_PACKS_CLASSIFICATION_28_ROWS.md` exported all 28 `pattern_packs` rows with full content and recommended `corpus_patterns` vs `client_private_patterns` classification for founder review.
 - BLOCKED: `npx tsc --noEmit --pretty false` could not complete because this checkout is missing optional packages already referenced by the repo: `@azure/identity`, `@azure/storage-blob`, `@azure/service-bus`, `pptxgenjs`, and `@resvg/resvg-js`.

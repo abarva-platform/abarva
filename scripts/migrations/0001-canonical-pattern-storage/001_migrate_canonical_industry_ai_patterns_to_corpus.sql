@@ -34,7 +34,26 @@ WITH source_rows AS (
       NULLIF(c.function, ''),
       NULLIF(c.process_area, ''),
       NULLIF(c.use_case_category, '')
-    ], NULL) AS mapped_region_overlays
+    ], NULL) AS mapped_region_overlays,
+    ARRAY(
+      SELECT DISTINCT CASE lower(scope)
+        WHEN 'healthcare' THEN 'healthcare_provider'
+        WHEN 'healthcare_provider' THEN 'healthcare_provider'
+        WHEN 'healthcare_payer' THEN 'healthcare_provider'
+        WHEN 'healthcare_idn' THEN 'healthcare_provider'
+        WHEN 'medtech' THEN 'healthcare_medtech'
+        WHEN 'healthcare_medtech' THEN 'healthcare_medtech'
+        WHEN 'financial_services' THEN 'financial_services_banking'
+        WHEN 'finserv' THEN 'financial_services_banking'
+        WHEN 'financial_services_banking' THEN 'financial_services_banking'
+        WHEN 'financial_services_insurance' THEN 'financial_services_banking'
+        WHEN 'aviation' THEN 'airline'
+        WHEN 'global_network_airline' THEN 'airline'
+        ELSE lower(scope)
+      END
+      FROM unnest(coalesce(c.industry, ARRAY[]::text[])) AS scope
+      WHERE nullif(scope, '') IS NOT NULL
+    ) AS mapped_vertical_overlays
   FROM public.canonical_industry_ai_patterns c
 )
 INSERT INTO public.corpus_patterns (
@@ -65,7 +84,7 @@ SELECT
   CASE WHEN mapped_status = 'published' THEN coalesce(last_reviewed_at, source_snapshot_at, now()) ELSE NULL END,
   CASE WHEN mapped_status = 'retired' THEN coalesce(last_reviewed_at, source_snapshot_at, now()) ELSE NULL END,
   mapped_depth_score,
-  coalesce(industry, ARRAY[]::text[]),
+  mapped_vertical_overlays,
   mapped_region_overlays,
   coalesce(strategic_move_phases, ARRAY[]::text[]),
   coalesce(created_at, now()),

@@ -1,8 +1,8 @@
 export const CORPUS_INDUSTRY_SCOPE_ALIASES = {
   retail: ['retail'],
-  healthcare: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn'],
-  financial_services: ['financial_services', 'financial_services_banking', 'financial_services_insurance', 'finserv'],
-  energy: ['energy'],
+  healthcare_provider: ['healthcare_provider'],
+  healthcare_medtech: ['healthcare_medtech'],
+  financial_services_banking: ['financial_services_banking'],
   airline: ['airline', 'global_network_airline', 'aviation'],
 } as const;
 
@@ -31,9 +31,9 @@ export function inferCorpusIndustry(input: CorpusIndustryScopeInput): CorpusIndu
     .toLowerCase();
 
   if (/\b(apex|apexretail|retail|merchandising|store|loyalty|inventory|assortment|sku)\b/.test(haystack)) return 'retail';
-  if (/\b(meridian|northstar|helix|health|healthcare|clinical|patient|payer|provider|epic|ehr|medtech|med-tech|clinical[- ]?tech)\b/.test(haystack)) return 'healthcare';
-  if (/\b(first[- ]?capital|firstcapital|brindlemark|arcturus|financial|bank|wealth|aml|kyc|underwriting|fraud)\b/.test(haystack)) return 'financial_services';
-  if (/\b(keystone|energy|utility|utilities|grid)\b/.test(haystack)) return 'energy';
+  if (/\b(northstar|medtech|med-tech|clinical[- ]?technologies|medical[- ]?device|solventum|qms|iso[- ]?13485|510k|gxp)\b/.test(haystack)) return 'healthcare_medtech';
+  if (/\b(meridian|health|healthcare|clinical|hospital|patient|payer|provider|epic|ehr|phs)\b/.test(haystack)) return 'healthcare_provider';
+  if (/\b(first[- ]?capital|firstcapital|financial|bank|wealth|aml|kyc|underwriting|fraud)\b/.test(haystack)) return 'financial_services_banking';
   if (/\b(skyharbor|airline|aviation|air)\b/.test(haystack)) return 'airline';
   return null;
 }

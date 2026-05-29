@@ -80,7 +80,7 @@ These are non-negotiable. Violation = automatic CI failure. **Period.**
 | **I6** | Every AI egress call writes to `ai_egress_audit` with tenant context | Lint rule: ModelClient.call() must have audit context parameter |
 | **I7** | Every Tier-1 question category maps to required substrate segments (coverage contract) | `coverage.test.ts` asserts every category has ≥3 required segments |
 | **I8** | Every public-facing change has a release record with `## Audit Evidence` section | Release-control gate (already implemented) |
-| **I9** | Pattern retrieval is industry-isolated: tenants may retrieve only their allowed industry overlays plus `cross_industry` | `retrievePattern` tenant matrix test covers five query classes across Apex, Meridian, Northstar, Helix, First Capital, Brindlemark, Keystone, and SkyHarbor; ESLint blocks new Ask callsites that bypass the scoped retriever |
+| **I9** | Pattern retrieval is industry-isolated: tenants may retrieve only their allowed industry overlays plus `cross_industry` | `retrievePattern` tenant matrix test covers five query classes across Apex, Meridian, Northstar, First Capital, and SkyHarbor; ESLint blocks new Ask callsites that bypass the scoped retriever |
 
 ### 1.3 The Six Tenant-as-First-Class-Citizen Rules
 
