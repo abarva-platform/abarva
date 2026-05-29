@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import {
   searchCanonicalPatternIndex,
   type CanonicalPatternIndexHit,
@@ -88,7 +88,6 @@ async function retrieveCanonicalFallback(
 export async function retrievePattern(entities: string[]): Promise<RetrievalResult> {
   if (entities.length === 0) return { sources: [], averageConfidence: 0 };
 
-  const sb = getServerSupabase();
   const sources: AskSource[] = [];
   const seen = new Set<string>();
   let shouldTryCanonicalFallback = false;
@@ -97,14 +96,18 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
     const isCode = /^F\d{3}$/i.test(entity);
 
     if (isCode) {
-      const { data, error } = await sb
-        .from('genome_patterns')
-        .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
-        .eq('code', entity.toUpperCase())
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (error) shouldTryCanonicalFallback = true;
+      const rows = await azureRead.query<PatternRow>(
+        `SELECT id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags
+           FROM genome_patterns
+          WHERE code = $1 AND is_active = true
+          LIMIT 1`,
+        [entity.toUpperCase()],
+        { missingTable: 'empty' },
+      ).catch(() => {
+        shouldTryCanonicalFallback = true;
+        return [];
+      });
+      const data = rows[0] ?? null;
       if (data) {
         const key = String(data.code ?? data.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(data as PatternRow, 0.95)); }
@@ -113,14 +116,19 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
     }
 
     // Full-text search on name + description
-    const { data: ftsRows, error: ftsError } = await sb
-      .from('genome_patterns')
-      .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
-      .eq('is_active', true)
-      .textSearch('name', entity, { config: 'english', type: 'websearch' })
-      .limit(5);
-
-    if (ftsError) shouldTryCanonicalFallback = true;
+    const ftsRows = await azureRead.query<PatternRow>(
+      `SELECT id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags
+         FROM genome_patterns
+        WHERE is_active = true
+          AND to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, ''))
+              @@ websearch_to_tsquery('english', $1)
+        LIMIT 5`,
+      [entity],
+      { missingTable: 'empty' },
+    ).catch(() => {
+      shouldTryCanonicalFallback = true;
+      return [];
+    });
     for (const row of (ftsRows ?? [])) {
       const key = String(row.code ?? row.id);
       if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.85)); }
@@ -128,14 +136,18 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
 
     // Vertical / tag fallback for broad queries like "retail patterns" or "supply chain"
     if (sources.length < 3) {
-      const { data: tagRows, error: tagError } = await sb
-        .from('genome_patterns')
-        .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
-        .eq('is_active', true)
-        .or(`vertical.ilike.%${entity}%,name.ilike.%${entity}%`)
-        .limit(5);
-
-      if (tagError) shouldTryCanonicalFallback = true;
+      const tagRows = await azureRead.query<PatternRow>(
+        `SELECT id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags
+           FROM genome_patterns
+          WHERE is_active = true
+            AND (vertical ILIKE $1 OR name ILIKE $1)
+          LIMIT 5`,
+        [`%${entity}%`],
+        { missingTable: 'empty' },
+      ).catch(() => {
+        shouldTryCanonicalFallback = true;
+        return [];
+      });
       for (const row of (tagRows ?? [])) {
         const key = String(row.code ?? row.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.70)); }

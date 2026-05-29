@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { RetrievalResult, AskSource, SourceType } from '../types';
 
 /**
@@ -12,28 +12,48 @@ export async function retrieveKnowledge(
   contentTypes: Array<'regulation' | 'framework' | 'benchmark' | 'research_report' | 'vendor_doc' | 'vendor_posture' | 'news_article' | 'case_study' | 'enforcement_action'> | null = null,
   sourceTypeLabel: SourceType = 'GENERAL',
 ): Promise<RetrievalResult> {
-  const sb = getServerSupabase();
-  let query = sb
-    .from('knowledge_sources')
-    .select('id, source_key, title, publisher, content_type, industry_tags, topic_tags, published_at, status, summary')
-    .eq('status', 'active')
-    .limit(8);
+  const params: unknown[] = [];
+  const predicates = ['status = $1'];
+  params.push('active');
 
   if (contentTypes && contentTypes.length > 0) {
-    query = query.in('content_type', contentTypes);
+    params.push(contentTypes);
+    predicates.push(`content_type = ANY($${params.length}::text[])`);
   }
-  if (entities.length > 0) {
-    const pattern = entities
-      .slice(0, 3)
-      .map((e) => e.replace(/[%_]/g, ''))
-      .map((e) => `title.ilike.%${e}%,topic_tags.cs.{${e.toLowerCase()}},industry_tags.cs.{${e.toUpperCase()}}`)
-      .join(',');
-    query = query.or(pattern);
+  const normalizedEntities = entities
+    .slice(0, 3)
+    .map((e) => e.replace(/[%_]/g, '').trim())
+    .filter(Boolean);
+  if (normalizedEntities.length > 0) {
+    const entityPredicates: string[] = [];
+    for (const entity of normalizedEntities) {
+      params.push(`%${entity}%`);
+      const titleParam = `$${params.length}`;
+      params.push([entity.toLowerCase()]);
+      const topicParam = `$${params.length}`;
+      params.push([entity.toUpperCase()]);
+      const industryParam = `$${params.length}`;
+      entityPredicates.push(
+        `(title ILIKE ${titleParam} OR topic_tags @> ${topicParam}::text[] OR industry_tags @> ${industryParam}::text[])`,
+      );
+    }
+    predicates.push(`(${entityPredicates.join(' OR ')})`);
   }
 
-  const { data, error } = await query;
-  if (error) return { sources: [], averageConfidence: 0 };
-  const rows = (data as Array<{ id: string; source_key: string; title: string; publisher: string; content_type: string; industry_tags: string[] | null; topic_tags: string[] | null; published_at: string | null; summary: string | null }> | null) ?? [];
+  let rows: Array<{ id: string; source_key: string; title: string; publisher: string; content_type: string; industry_tags: string[] | null; topic_tags: string[] | null; published_at: string | null; summary: string | null }> = [];
+  try {
+    rows = await azureRead.query(
+      `SELECT id, source_key, title, publisher, content_type, industry_tags, topic_tags,
+              published_at, status, summary
+         FROM knowledge_sources
+        WHERE ${predicates.join(' AND ')}
+        LIMIT 8`,
+      params,
+      { missingTable: 'empty' },
+    );
+  } catch {
+    return { sources: [], averageConfidence: 0 };
+  }
 
   const sources: AskSource[] = rows.map((r) => ({
     type: typeMap(r.content_type) ?? sourceTypeLabel,
