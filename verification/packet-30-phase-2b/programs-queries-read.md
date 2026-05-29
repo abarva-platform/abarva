@@ -26,13 +26,11 @@ Results:
 
 ## Post-Merge Evidence
 
-To be completed after PR merge and production verification:
-
-- PR:
-- Merge commit:
-- Production deployment:
-- Production alias:
-- Production smoke:
-- Post-deploy crawl run:
-- Post-deploy crawl artifact:
-- P0/P1/P2 counts:
+- PR: https://github.com/anandsundaram-hash/abarva/pull/2403
+- Merge commit: `a1f23875e0bdb932ac4a50c9f487b165cf571212`
+- Production deployment: `dpl_2zQ8LuZhmvzmwGKkAwZQwDKfvptU`
+- Production alias: `https://app.abarva.ai`
+- Production smoke: `/` and `/product` returned HTTP 200 with `data-dpl-id="dpl_2zQ8LuZhmvzmwGKkAwZQwDKfvptU"`
+- Post-deploy crawl run: `26613027124`
+- Post-deploy crawl artifact: https://github.com/anandsundaram-hash/abarva/actions/runs/26613027124/artifacts/7281520621
+- P0/P1/P2 counts: `0 P0 / 82 P1 / 0 P2`
