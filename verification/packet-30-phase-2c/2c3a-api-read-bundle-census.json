@@ -1,0 +1,51 @@
+{
+  "slice": "2c3a-api-read-bundle",
+  "generatedAt": "2026-05-29T18:44:38Z",
+  "runtimeSupabaseImportCensus": {
+    "before": {
+      "filesWithImportMatches": 150,
+      "importMatches": 614,
+      "filesWithBroadMatches": 303,
+      "broadMatches": 1436
+    },
+    "after": {
+      "filesWithImportMatches": 148,
+      "importMatches": 608,
+      "filesWithBroadMatches": 301,
+      "broadMatches": 1426
+    },
+    "delta": {
+      "filesWithImportMatches": -2,
+      "importMatches": -6,
+      "filesWithBroadMatches": -2,
+      "broadMatches": -10
+    }
+  },
+  "codemodInventory": {
+    "before": {
+      "totalFiles": 303,
+      "readOnlySelect": 89,
+      "apiRoutes": 33
+    },
+    "after": {
+      "totalFiles": 301,
+      "readOnlySelect": 87,
+      "apiRoutes": 31
+    },
+    "delta": {
+      "totalFiles": -2,
+      "readOnlySelect": -2,
+      "apiRoutes": -2
+    }
+  },
+  "targetFilesRemovedFromInventory": [
+    "src/app/api/health/route.ts",
+    "src/app/api/knowledge/chunk/route.ts"
+  ],
+  "validation": {
+    "focusedJest": "pass: 2 suites / 3 tests",
+    "focusedEslint": "pass",
+    "runtimeSupabaseImportCensus": "pass/warn: expected warn mode, import-helper delta -2 files / -6 matches",
+    "phase2cInventory": "pass: READ_ONLY_SELECT 89 -> 87"
+  }
+}

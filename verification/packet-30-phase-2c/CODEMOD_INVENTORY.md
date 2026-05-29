@@ -4,25 +4,25 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T18:31:04.070Z`
-- Total files in inventory: `303`
-- Files with import-helper matches: `150`
-- Import-helper matches: `614`
-- Files with broad matches: `303`
-- Broad matches: `1436`
+- Generated at: `2026-05-29T18:44:38.487Z`
+- Total files in inventory: `301`
+- Files with import-helper matches: `148`
+- Import-helper matches: `608`
+- Files with broad matches: `301`
+- Broad matches: `1426`
 
 ## Classification Counts
 
 - `DEFER_MANUAL`: 127
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 89
+- `READ_ONLY_SELECT`: 87
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
 - `admin`: 2
-- `api_routes`: 33
+- `api_routes`: 31
 - `app_routes`: 12
 - `db`: 5
 - `intelligence`: 31
@@ -256,14 +256,12 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/tower/outcome-context-writeback/persist.ts | MIXED_READ_WRITE | tower | 3 | 4 | - | no static table names detected |
 | src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
 | src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
-| src/app/api/knowledge/chunk/route.ts | READ_ONLY_SELECT | api_routes | 3 | 6 | knowledge_chunks, knowledge_sources | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_artifact_states, source_events | - |
 | src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_gate_criterion_states, source_events | - |
 | src/app/api/admin/quarantine/[id]/hard-delete/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
 | src/app/api/admin/quarantine/[id]/release/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
 | src/app/api/admin/seed-clerk-metadata/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | persons | - |
 | src/app/api/engage/[engagementId]/turn/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagements | - |
-| src/app/api/health/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagements | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_event_artifact_states | - |
 | src/app/api/v1/source/[eventId]/stage/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
 | src/app/api/v1/source/events/[eventId]/approve/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |

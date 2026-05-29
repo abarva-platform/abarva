@@ -1,25 +1,25 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T18:31:04.070Z",
+    "generatedAt": "2026-05-29T18:44:38.487Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 303,
-    "filesWithImportMatches": 150,
-    "importMatches": 614,
-    "filesWithBroadMatches": 303,
-    "broadMatches": 1436,
+    "totalFiles": 301,
+    "filesWithImportMatches": 148,
+    "importMatches": 608,
+    "filesWithBroadMatches": 301,
+    "broadMatches": 1426,
     "classificationCounts": {
       "DEFER_MANUAL": 127,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 89,
+      "READ_ONLY_SELECT": 87,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
       "admin": 2,
-      "api_routes": 33,
+      "api_routes": 31,
       "app_routes": 12,
       "intelligence": 31,
       "knowledge": 5,
@@ -8940,48 +8940,6 @@
       "notes": []
     },
     {
-      "file": "src/app/api/knowledge/chunk/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "knowledge_chunks",
-        "knowledge_sources"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "get",
-        "isFinite",
-        "json",
-        "limit",
-        "maybeSingle",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts",
       "group": "api_routes",
       "sourceKind": "runtime",
@@ -9249,46 +9207,6 @@
       "readMethods": [
         "eq",
         "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/health/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements"
-      ],
-      "methodNames": [
-        "close",
-        "from",
-        "limit",
-        "query",
-        "run",
-        "select",
-        "session",
-        "stringify",
-        "trim"
-      ],
-      "readMethods": [
-        "limit",
         "select"
       ],
       "writeMethods": [],
