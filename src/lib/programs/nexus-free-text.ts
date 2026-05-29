@@ -817,8 +817,12 @@ export function normalizeProgramsNexusCanonicalIndustry(value: string | null | u
   const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   if (!normalized) return undefined;
   if (normalized.includes('retail')) return 'retail';
-  if (normalized.includes('health') || normalized === 'hc') return 'healthcare';
-  if (normalized.includes('fin') || normalized.includes('bank')) return 'financial_services';
+  if (normalized.includes('medtech') || normalized.includes('medical_device') || normalized.includes('clinical_technolog')) {
+    return 'healthcare_medtech';
+  }
+  if (normalized.includes('health') || normalized === 'hc' || normalized.includes('provider')) return 'healthcare_provider';
+  if (normalized.includes('fin') || normalized.includes('bank')) return 'financial_services_banking';
+  if (normalized.includes('airline') || normalized.includes('aviation') || normalized.includes('skyharbor')) return 'airline';
   if (normalized.includes('energy')) return 'energy';
   if (normalized.includes('public') || normalized.includes('government')) return 'public_sector';
   return undefined;

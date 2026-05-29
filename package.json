@@ -37,6 +37,7 @@
     "smoke:p19-evidence-ledger": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p19-evidence-ledger.spec.ts",
     "smoke:foundation-fix-1-retrieval-wiring": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-1-retrieval-wiring.spec.ts",
     "smoke:sentinel-tenant-pin": "npx tsx scripts/smoke/sentinel-tenant-pin.spec.ts",
+    "smoke:i9-industry-isolation": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/i9-industry-isolation-smoke.ts",
     "smoke:northstar-context-ingestion": "npx tsx scripts/smoke/northstar-context-ingestion.spec.ts",
     "smoke:northstar-context-layer-live-data": "npx tsx scripts/smoke/northstar-context-layer-live-data.spec.ts",
     "smoke:p20-board-pack-generator": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p20-board-pack-generator.spec.ts",

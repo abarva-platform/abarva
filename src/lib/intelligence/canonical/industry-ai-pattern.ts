@@ -9,7 +9,11 @@
 export const CANONICAL_INDUSTRIES = [
   'retail',
   'healthcare',
+  'healthcare_provider',
+  'healthcare_medtech',
   'financial_services',
+  'financial_services_banking',
+  'airline',
   'cross_industry',
   'energy',
   'public_sector',

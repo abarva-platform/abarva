@@ -149,6 +149,29 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // I9: tenant-facing pattern grounding must use the scoped corpus-pattern
+  // index. The legacy runtime index reads deprecated canonical storage and
+  // can be used only by its own implementation/tests/migration utilities.
+  {
+    files: [
+      "src/app/api/v1/programs/**/nexus/ask/route.ts",
+      "src/lib/sentinel/orchestrator.ts",
+      "src/lib/atlas/value-grounding.ts",
+      "src/lib/knowledge/context-broker/broker.ts",
+    ],
+    rules: {
+      "no-restricted-imports": ["error", {
+        paths: [
+          {
+            name: "@/lib/intelligence/canonical/runtime-pattern-index",
+            importNames: ["searchCanonicalPatternIndex"],
+            message:
+              "I9: tenant-facing pattern grounding must use searchIndustryScopedCorpusPatternIndex(), which reads corpus_patterns with tenant industry + cross_industry scoping.",
+          },
+        ],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

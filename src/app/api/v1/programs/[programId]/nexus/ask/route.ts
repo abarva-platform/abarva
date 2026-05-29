@@ -17,7 +17,7 @@ import { assembleContext, createThread, touchThread } from '@/lib/programs/nexus
 import { requireTenancy, TenancyError } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
-import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
 
 type ProgramDbClient = ReturnType<typeof import('@/lib/supabase-server').getServerSupabase>;
 
@@ -150,13 +150,21 @@ export async function POST(
           industryCode: activeClient.industry_code,
           userId: ctx.userId,
         };
-        const canonicalPatternIndex = await searchCanonicalPatternIndex(
+        const canonicalPatternIndex = await searchIndustryScopedCorpusPatternIndex(
           buildProgramsNexusCanonicalPatternQuery({
             ctx: nexusCtx,
             message: userQuery,
             context,
             clientId: activeClient.id ?? ctx.clientId,
           }),
+          {
+            scope: {
+              tenantKey: activeClient.key,
+              clientKey: activeClient.id ?? ctx.clientId,
+              activeClient: activeClient.name,
+              facts: [activeClient.industry_code ?? ''],
+            },
+          },
         );
 
         const result = await runProgramsNexusTurn({

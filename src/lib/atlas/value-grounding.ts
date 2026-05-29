@@ -6,11 +6,14 @@ import {
   type AgentGroundingDisclosure,
 } from '@/lib/intelligence/canonical/agent-grounding-disclosure';
 import {
-  searchCanonicalPatternIndex,
   type CanonicalPatternIndexOptions,
   type CanonicalPatternIndexQuery,
   type CanonicalPatternIndexResult,
 } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import {
+  searchIndustryScopedCorpusPatternIndex,
+  type IndustryScopedCorpusPatternIndexOptions,
+} from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
 import type {
   AtlasPortfolioSummary,
   AtlasTenancyCtx,
@@ -23,7 +26,7 @@ import type { CanonicalValueLever } from '@/lib/intelligence/canonical/industry-
 
 type SearchCanonicalPatternIndex = (
   query?: CanonicalPatternIndexQuery,
-  options?: CanonicalPatternIndexOptions,
+  options?: IndustryScopedCorpusPatternIndexOptions,
 ) => Promise<CanonicalPatternIndexResult>;
 
 export interface AtlasValueGroundingInput {
@@ -78,8 +81,8 @@ function nullableNumberPoint(
 
 function canonicalIndustryFromTower(state?: AtlasTowerCurrentState | null) {
   if (!state) return undefined;
-  if (state.client.industryCode === 'HEALTHCARE_IDN') return 'healthcare';
-  if (state.client.industryCode === 'FINSERV') return 'financial_services';
+  if (state.client.industryCode === 'HEALTHCARE_IDN') return 'healthcare_provider';
+  if (state.client.industryCode === 'FINSERV') return 'financial_services_banking';
   if (state.client.industryCode === 'RETAIL') return 'retail';
   const normalized = normalizeIndustry(state.client.industryCode);
   const industry = normalized.values[0];
@@ -190,13 +193,20 @@ export async function buildAtlasValueGrounding(
   options: AtlasValueGroundingOptions = {},
 ): Promise<AtlasValueGrounding> {
   const query = buildPatternQuery(input);
-  const search = options.search ?? searchCanonicalPatternIndex;
+  const search = options.search ?? searchIndustryScopedCorpusPatternIndex;
   const indexOptions: CanonicalPatternIndexOptions = {
     supabase: options.supabase,
     now: options.now,
     useCache: options.useCache,
   };
-  const result = await search(query, indexOptions);
+  const result = await search(query, {
+    ...indexOptions,
+    scope: {
+      tenantKey: input.towerState?.client.tenantKey,
+      clientKey: input.ctx.clientId,
+      facts: [input.towerState?.client.industryCode ?? ''],
+    },
+  });
 
   const valueSeparation: AtlasValueGrounding['valueSeparation'] = {
     projected: positiveMoneyPoint(
