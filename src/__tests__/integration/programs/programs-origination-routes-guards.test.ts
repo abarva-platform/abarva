@@ -13,6 +13,11 @@ const classifyOrigination = jest.fn();
 const classifierMatchToViewModel = jest.fn();
 const getOpenDraft = jest.fn();
 const saveDraft = jest.fn();
+const azureRead = {
+  maybeSingle: jest.fn(),
+  query: jest.fn(),
+  select: jest.fn(),
+};
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   TenancyError,
@@ -22,6 +27,10 @@ jest.mock('@/app/api/v1/programs/_auth', () => ({
 
 jest.mock('@/lib/programs/programs-auth-mode-server', () => ({
   getProgramsRouteSupabase,
+}));
+
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead,
 }));
 
 jest.mock('@/lib/programs/classifier', () => ({
@@ -80,47 +89,6 @@ function makeEngagementTopicsSupabase(topics: Array<Record<string, unknown>> = [
   };
 }
 
-function makeFromThreadSupabase(args: {
-  thread: Record<string, unknown> | null;
-  turns?: Array<Record<string, unknown>>;
-  topics?: Array<Record<string, unknown>>;
-}) {
-  return {
-    from: (table: string) => {
-      if (table === 'intelligence_threads') {
-        return {
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                maybeSingle: async () => ({ data: args.thread, error: null }),
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === 'intelligence_thread_turns') {
-        return {
-          select: () => ({
-            eq: () => ({
-              order: () => ({
-                limit: async () => ({ data: args.turns ?? [], error: null }),
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === 'engagement_topics') {
-        return {
-          select: () => ({
-            in: async () => ({ data: args.topics ?? [], error: null }),
-          }),
-        };
-      }
-      throw new Error(`unexpected table: ${table}`);
-    },
-  };
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   requireTenancy.mockResolvedValue(CTX);
@@ -131,6 +99,9 @@ beforeEach(() => {
     throw err;
   });
   getProgramsRouteSupabase.mockResolvedValue({ mode: 'service_role', supabase: makeEngagementTopicsSupabase([]) });
+  azureRead.maybeSingle.mockResolvedValue(null);
+  azureRead.query.mockResolvedValue([]);
+  azureRead.select.mockResolvedValue([]);
   classifyOrigination.mockResolvedValue({
     extracted: {
       archetype: 'strategic_transformation',
@@ -163,16 +134,16 @@ describe('POST /api/v1/programs/originate', () => {
     return mod.POST(makePost(body));
   }
 
-  it('allows own-tenant origination classification and uses origination auth family', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeEngagementTopicsSupabase([{ topic_key: 'PAT-1', title: 'Pattern One' }]),
-    });
+  it('allows own-tenant origination classification and reads catalog through azureRead', async () => {
+    azureRead.select.mockResolvedValueOnce([{ topic_key: 'PAT-1', title: 'Pattern One' }]);
     const res = await invoke({
       originationForm: { name: 'Move', useCase: 'Modernize analytics' },
     });
     expect(res.status).toBe(200);
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('origination');
+    expect(azureRead.select).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'engagement_topics',
+      where: expect.objectContaining({ topic_key: expect.objectContaining({ op: 'in' }) }),
+    }));
   });
 
   it('returns 400 for malformed payload', async () => {
@@ -213,34 +184,27 @@ describe('POST /api/v1/programs/originate/from-thread', () => {
     return mod.POST(makePost(body));
   }
 
-  it('allows own-tenant intelligence-thread handoff', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeFromThreadSupabase({
-        thread: { id: 'th_1', user_id: CTX.userId, client_id: CTX.clientId, title: 'Thread Title' },
-        turns: [{ role: 'user', payload_jsonb: { answer: 'Need data modernization' } }],
-        topics: [{ topic_key: 'PAT-1', title: 'Pattern One' }],
-      }),
-    });
+  it('allows own-tenant intelligence-thread handoff through azureRead', async () => {
+    azureRead.maybeSingle.mockResolvedValueOnce({ id: 'th_1', user_id: CTX.userId, client_id: CTX.clientId, title: 'Thread Title' });
+    azureRead.select
+      .mockResolvedValueOnce([{ role: 'user', payload_jsonb: { answer: 'Need data modernization' } }])
+      .mockResolvedValueOnce([{ topic_key: 'PAT-1', title: 'Pattern One' }]);
     const res = await invoke({ threadId: 'th_1' });
     expect(res.status).toBe(200);
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('origination');
+    expect(azureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'intelligence_threads',
+      where: expect.objectContaining({ id: 'th_1', client_id: CTX.clientId }),
+    }));
   });
 
   it('returns 404 for thread outside tenant scope', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeFromThreadSupabase({ thread: null }),
-    });
+    azureRead.maybeSingle.mockResolvedValueOnce(null);
     const res = await invoke({ threadId: 'th_foreign' });
     expect(res.status).toBe(404);
   });
 
   it('denies cross-tenant crafted thread payloads', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeFromThreadSupabase({ thread: null }),
-    });
+    azureRead.maybeSingle.mockResolvedValueOnce(null);
     const res = await invoke({ threadId: 'th_foreign', clientId: 'client_apex' });
     expect(res.status).toBe(404);
   });
@@ -261,26 +225,23 @@ describe('GET /api/v1/programs/patterns', () => {
     return mod.GET(new Request(url) as unknown as NextRequest);
   }
 
-  it('allows tenant-authenticated pattern browse and uses origination auth family', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeEngagementTopicsSupabase([
-        {
-          topic_key: 'PAT-1',
-          title: 'Pattern One',
-          tagline: 'tag',
-          industries: ['healthcare'],
-          deployment_count: 2,
-          successful_deployment_count: 1,
-          promotion_state: 'pilot',
-          canonical_shape_json: { archetype: 'strategic_transformation' },
-          maturity_version: 1,
-        },
-      ]),
-    });
+  it('allows tenant-authenticated pattern browse through azureRead', async () => {
+    azureRead.query.mockResolvedValueOnce([
+      {
+        topic_key: 'PAT-1',
+        title: 'Pattern One',
+        tagline: 'tag',
+        industries: ['healthcare'],
+        deployment_count: 2,
+        successful_deployment_count: 1,
+        promotion_state: 'pilot',
+        canonical_shape_json: { archetype: 'strategic_transformation' },
+        maturity_version: 1,
+      },
+    ]);
     const res = await invoke();
     expect(res.status).toBe(200);
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('origination');
+    expect(azureRead.query).toHaveBeenCalledWith(expect.stringContaining('FROM engagement_topics'), expect.any(Array));
   });
 
   it('returns filtered results without exposing cross-tenant data controls', async () => {

@@ -12,7 +12,7 @@ import { classifyOrigination } from '@/lib/programs/classifier';
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import type { ArchetypeKey, OriginationForm, PatternMatch } from '@/lib/programs/types.ui';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,30 +33,26 @@ interface TurnRow {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
-    const { supabase } = await getProgramsRouteSupabase('origination');
     const body = (await req.json()) as { threadId?: string; sponsorPersonId?: string; leadPersonId?: string };
     if (!body?.threadId) {
       return Response.json({ error: 'bad_request', detail: 'threadId required' }, { status: 400 });
     }
 
-    const { data: thread, error: tErr } = await supabase
-      .from('intelligence_threads')
-      .select('id, user_id, client_id, title')
-      .eq('id', body.threadId)
-      .eq('client_id', ctx.clientId)
-      .maybeSingle();
-    if (tErr) throw tErr;
-    const threadRow = thread as ThreadRow | null;
+    const threadRow = await azureRead.maybeSingle<ThreadRow>({
+      table: 'intelligence_threads',
+      columns: ['id', 'user_id', 'client_id', 'title'],
+      where: { id: body.threadId, client_id: ctx.clientId },
+    });
     if (!threadRow) return Response.json({ error: 'thread_not_found' }, { status: 404 });
 
     // Assemble use-case text from thread turns (last 5 user turns)
-    const { data: turns } = await supabase
-      .from('intelligence_thread_turns')
-      .select('role, payload_jsonb')
-      .eq('thread_id', body.threadId)
-      .order('index', { ascending: false })
-      .limit(10);
-    const turnRows = (turns as TurnRow[] | null) ?? [];
+    const turnRows = await azureRead.select<TurnRow>({
+      table: 'intelligence_thread_turns',
+      columns: ['role', 'payload_jsonb'],
+      where: { thread_id: body.threadId },
+      orderBy: { column: 'index', direction: 'desc' },
+      limit: 10,
+    });
     const userTurns = turnRows
       .filter((t) => t.role === 'user')
       .slice(0, 5)
@@ -74,11 +70,12 @@ export async function POST(req: NextRequest) {
     const keys = output.matches.map((m) => m.patternKey);
     const catalogByKey = new Map<string, Record<string, unknown>>();
     if (keys.length > 0) {
-      const { data: catalog } = await supabase
-        .from('engagement_topics')
-        .select('topic_key, title, canonical_shape_json, deployment_count, successful_deployment_count')
-        .in('topic_key', keys);
-      for (const row of (catalog as Array<Record<string, unknown>> | null) ?? []) {
+      const catalog = await azureRead.select<Record<string, unknown>>({
+        table: 'engagement_topics',
+        columns: ['topic_key', 'title', 'canonical_shape_json', 'deployment_count', 'successful_deployment_count'],
+        where: { topic_key: { op: 'in', value: keys } },
+      });
+      for (const row of catalog) {
         catalogByKey.set(row.topic_key as string, row);
       }
     }

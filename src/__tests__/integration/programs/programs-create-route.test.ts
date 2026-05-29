@@ -232,8 +232,8 @@ describe('POST /api/v1/programs', () => {
     );
     expect(res.status).toBe(200);
     expect(warn).toHaveBeenCalledWith(
-      '[POST /api/v1/programs] sponsor participant insert failed',
-      expect.objectContaining({ programId: 'eng_new_1' }),
+      '[programsWriteAdapter] participant insert failed',
+      expect.objectContaining({ engagementId: 'eng_new_1' }),
     );
     warn.mockRestore();
   });
