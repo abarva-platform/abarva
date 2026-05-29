@@ -5,13 +5,13 @@
 // legacy in-memory override path for demo fixtures, but DB rows must persist so
 // the production E2E crawler can resume the lifecycle.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { setStageOverride } from '@/lib/source/stage-overrides';
 import { getSourceEventSeed } from '@/lib/source/mock-seed';
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const supabase = getServerSupabase();
+    const supabase = getAzureReadFluentClient();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from('source_events')
       .select('id, client_key, current_stage_key, lifecycle_state')

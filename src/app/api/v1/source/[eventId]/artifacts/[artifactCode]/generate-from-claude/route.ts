@@ -14,6 +14,7 @@
 // simplicity in this slice; streaming arrives when the canvas surfaces
 // a progress UI.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
@@ -21,7 +22,6 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import {
   buildSourceGenerationContext,
@@ -145,7 +145,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   }
 
   // Find the substrate row for the artifact we're generating into.
-  const supabase = getServerSupabase();
+  const supabase = getAzureReadFluentClient();
   const { data: artifactRow, error: artifactFetchError } = await supabase
     .from('source_event_artifact_states')
     .select('*')

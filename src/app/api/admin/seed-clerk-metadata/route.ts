@@ -1,6 +1,6 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
-import { getServerSupabase } from '@/lib/supabase-server'
 
 const DEMO_PASSWORD = 'Demo2026!'
 
@@ -160,7 +160,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
-    const sb = getServerSupabase()
+    const sb = getAzureReadFluentClient()
     const results: { email: string; status: string; userId?: string; personId?: string | null }[] = []
 
     for (const demo of DEMO_USERS) {

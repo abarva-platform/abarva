@@ -1,8 +1,8 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 import { getCurrentPerson } from '@/lib/auth/maestro';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export default async function SponsorHomePage() {
     redirect('/sign-in');
   }
 
-  const { data } = await getServerSupabase()
+  const { data } = await getAzureReadFluentClient()
     .from('engagements')
     .select('id, graph_node_id, name, industry_code, current_phase, status')
     .eq('sponsor_person_id', person.id)

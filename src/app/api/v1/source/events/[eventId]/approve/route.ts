@@ -5,8 +5,8 @@
 // the event's lifecycle_state advances to 'active'; on rejection it moves
 // to 'archived'. An approval record is written to source_event_approvals.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
@@ -57,7 +57,7 @@ export async function POST(
     return Response.json({ error: 'invalid_action', detail: 'action must be "approve" or "reject"' }, { status: 400 });
   }
 
-  const supabase = getServerSupabase();
+  const supabase = getAzureReadFluentClient();
 
   // Fetch the event to check it exists and get current state
   const { data: event, error: fetchError } = await supabase

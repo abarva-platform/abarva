@@ -1,3 +1,4 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { notFound, redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,6 @@ import { EngagementMetaStrip } from '@/components/engagement/EngagementMetaStrip
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientKey } from '@/lib/active-client';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
 
@@ -174,7 +174,7 @@ export default async function EngagePage({
     ? await loadVipGreetingData({ personId: caller.id, displayName: caller.name })
     : null;
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const deliverables = Array.isArray(engagement.deliverables)
     ? normalizeDeliverables(engagement.deliverables, engagement.current_phase, engagement.updated_at)
     : [];

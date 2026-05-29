@@ -12,6 +12,7 @@
 // stage-approval rights can self-approve criteria; production hardens
 // to admin/maestro through the same flag.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -22,7 +23,6 @@ import {
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
 } from '@/lib/auth/gate-approval-strict-mode';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const supabase = getServerSupabase();
+    const supabase = getAzureReadFluentClient();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from('source_events')
       .select('id, client_key')

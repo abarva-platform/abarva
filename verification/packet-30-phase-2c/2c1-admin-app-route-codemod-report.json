@@ -1,0 +1,83 @@
+{
+  "dryRun": false,
+  "groups": [
+    "admin",
+    "api_routes",
+    "app_routes"
+  ],
+  "files": [],
+  "maxFiles": 100,
+  "candidateCount": 17,
+  "appliedCount": 17,
+  "skippedCount": 0,
+  "results": [
+    {
+      "file": "src/app/api/admin/users/provision/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/admin/quarantine/[id]/hard-delete/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/admin/quarantine/[id]/release/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/admin/seed-clerk-metadata/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/engage/[engagementId]/turn/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/stage/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/events/[eventId]/approve/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/engagements/[engagementId]/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/engagements/[engagementId]/deliverables/[deliverableId]/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/engagements/[engagementId]/charter/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/engagements/[engagementId]/deliverables/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/engagements/[engagementId]/turns/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/(maestro)/evidence-ledger/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/sponsor/page.tsx",
+      "status": "applied"
+    }
+  ]
+}

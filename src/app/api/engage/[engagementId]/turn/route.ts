@@ -1,3 +1,4 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextRequest } from 'next/server';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
@@ -12,7 +13,6 @@ import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { assembleCrossClientContext, formatCrossClientBlock } from '@/lib/graph/cross-client';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { TurnTrace } from '@/lib/agent/trace';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
@@ -212,7 +212,7 @@ export async function POST(
   let crossClientBlock = '';
   let engagementClientId: string | null = null;
   try {
-    const sb = getServerSupabase();
+    const sb = getAzureReadFluentClient();
     const { data: engRow } = await sb
       .from('engagements')
       .select('client_id, client:clients(id, name)')

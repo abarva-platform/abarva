@@ -1,3 +1,4 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
@@ -9,7 +10,6 @@ import {
   getStructuredEvidenceRefs,
   getStructuredSections,
 } from '@/lib/deliverables/structured';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,7 +96,7 @@ export default async function DeliverableDetailPage({
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { data: delivData } = await sb
     .from('deliverables_v2')
     .select('id, engagement_id, deliverable_type_key, title, status, current_version, created_by, signed_off_by, signed_off_at, created_at, updated_at')

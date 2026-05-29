@@ -1,3 +1,4 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -5,7 +6,6 @@ import {
   getStructuredSections,
 } from '@/lib/deliverables/structured';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +33,7 @@ export default async function CharterPage({
   const { engagementId: graphId } = await params;
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
 
   const { data: deliverableData } = await sb
     .from('deliverables_v2')

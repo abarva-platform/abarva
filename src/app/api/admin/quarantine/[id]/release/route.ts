@@ -16,9 +16,9 @@
 //
 // Response: { ok: true } on success; error JSON on failure.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { dataPlaneQuarantineAuditDataSource } from '@/lib/security/quarantine-audit-data-plane';
 
@@ -61,7 +61,7 @@ export async function POST(
   // release once Phase 5 RLS is fully load-bearing, but checking here
   // means we never even ask the data source to act on someone else's
   // row.
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { data: row, error: lookupErr } = await sb
     .from('sensitive_upload_audit')
     .select('tenant_client_key, final_decision')
