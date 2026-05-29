@@ -35,7 +35,11 @@ async function main() {
   await fs.mkdir(path.join(out, 'html'), { recursive: true });
   await fs.mkdir(path.join(out, 'transcripts'), { recursive: true });
 
-  const browser = await chromium.launch({ headless: true });
+  const browserChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL?.trim();
+  const browser = await chromium.launch({
+    headless: true,
+    ...(browserChannel ? { channel: browserChannel } : {}),
+  });
   const observations: CrawlPageObservation[] = [];
   let fatalError: unknown = null;
   try {

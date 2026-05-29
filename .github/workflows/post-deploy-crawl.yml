@@ -18,6 +18,7 @@ jobs:
       CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
       CRAWL_ENABLE_AUTO_ROLLBACK: ${{ vars.CRAWL_ENABLE_AUTO_ROLLBACK || 'false' }}
+      PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -25,16 +26,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-      - name: Install Playwright Chromium
-        timeout-minutes: 10
-        run: npx playwright install chromium
+      - name: Verify system Chrome
+        run: google-chrome --version
       - name: Wait briefly for production alias
         run: sleep 60
       - name: Run authenticated crawl
