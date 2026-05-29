@@ -6,7 +6,7 @@ import 'server-only';
 // tenant-scoped via client_id. Used by the /admin/ai-initiatives
 // page and (in AIR-4) the per-initiative detail page.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import {
   STAGE_LABELS as _STAGE_LABELS,
   STATUS_LABELS as _STATUS_LABELS,
@@ -109,13 +109,11 @@ function toNumber(v: number | string | null | undefined): number | null {
 }
 
 export async function listCategories(): Promise<ReadonlyArray<AICategory>> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('ai_categories')
-    .select('category_id, name, definition, display_order')
-    .order('display_order', { ascending: true });
-  if (error) throw new Error(`listCategories: ${error.message}`);
-  const rows = (data ?? []) as ReadonlyArray<CategoryRow>;
+  const rows = await azureRead.select<CategoryRow>({
+    table: 'ai_categories',
+    columns: ['category_id', 'name', 'definition', 'display_order'],
+    orderBy: { column: 'display_order', direction: 'asc' },
+  });
   return rows.map((r) => ({
     categoryId: r.category_id,
     name: r.name,
@@ -125,14 +123,12 @@ export async function listCategories(): Promise<ReadonlyArray<AICategory>> {
 }
 
 export async function listBusinessGoalsForClient(clientId: string): Promise<ReadonlyArray<AIBusinessGoal>> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('ai_business_goals')
-    .select('goal_id, name, strategic_context, display_order')
-    .eq('client_id', clientId)
-    .order('display_order', { ascending: true });
-  if (error) throw new Error(`listBusinessGoalsForClient: ${error.message}`);
-  const rows = (data ?? []) as ReadonlyArray<GoalRow>;
+  const rows = await azureRead.select<GoalRow>({
+    table: 'ai_business_goals',
+    columns: ['goal_id', 'name', 'strategic_context', 'display_order'],
+    where: { client_id: clientId },
+    orderBy: { column: 'display_order', direction: 'asc' },
+  });
   return rows.map((r) => ({
     goalId: r.goal_id,
     name: r.name,
@@ -142,16 +138,34 @@ export async function listBusinessGoalsForClient(clientId: string): Promise<Read
 }
 
 export async function listInitiativesForClient(clientId: string): Promise<ReadonlyArray<AIInitiative>> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('ai_initiatives')
-    .select(
-      'initiative_id, display_id, name, description, primary_category_id, secondary_category_id, primary_goal_id, stage, stage_detail, owner_name, owner_title, owner_function, committed_annual_usd, committed_total_usd, measured_value_usd, status_flag, status_summary, confidence_level, aligned_callout, aligned_rationale, loaded_via_template',
-    )
-    .eq('client_id', clientId)
-    .order('display_id', { ascending: true });
-  if (error) throw new Error(`listInitiativesForClient: ${error.message}`);
-  const rows = (data ?? []) as ReadonlyArray<InitiativeRow>;
+  const rows = await azureRead.select<InitiativeRow>({
+    table: 'ai_initiatives',
+    columns: [
+      'initiative_id',
+      'display_id',
+      'name',
+      'description',
+      'primary_category_id',
+      'secondary_category_id',
+      'primary_goal_id',
+      'stage',
+      'stage_detail',
+      'owner_name',
+      'owner_title',
+      'owner_function',
+      'committed_annual_usd',
+      'committed_total_usd',
+      'measured_value_usd',
+      'status_flag',
+      'status_summary',
+      'confidence_level',
+      'aligned_callout',
+      'aligned_rationale',
+      'loaded_via_template',
+    ],
+    where: { client_id: clientId },
+    orderBy: { column: 'display_id', direction: 'asc' },
+  });
 
   // Resolve category + goal names with two cheap parallel queries (small fixed sets).
   const [categories, goals] = await Promise.all([
@@ -270,21 +284,24 @@ interface VendorRow {
 export async function listVendorsForClient(
   clientId: string,
 ): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
-  const sb = getServerSupabase();
   const initiatives = await listInitiativesForClient(clientId);
   if (initiatives.length === 0) return [];
   const initiativeIds = initiatives.map((i) => i.initiativeId);
   const initiativeById = new Map(initiatives.map((i) => [i.initiativeId, i] as const));
 
-  const { data, error } = await sb
-    .from('ai_initiative_vendors')
-    .select(
-      'vendor_id, initiative_id, vendor_name, contract_value_usd, renewal_date, financial_health',
-    )
-    .in('initiative_id', initiativeIds)
-    .order('renewal_date', { ascending: true, nullsFirst: false });
-  if (error) throw new Error(`listVendorsForClient: ${error.message}`);
-  const rows = (data ?? []) as ReadonlyArray<VendorRow>;
+  const rows = await azureRead.select<VendorRow>({
+    table: 'ai_initiative_vendors',
+    columns: [
+      'vendor_id',
+      'initiative_id',
+      'vendor_name',
+      'contract_value_usd',
+      'renewal_date',
+      'financial_health',
+    ],
+    where: { initiative_id: { op: 'in', value: initiativeIds } },
+    orderBy: { column: 'renewal_date', direction: 'asc', nulls: 'last' },
+  });
 
   return rows.map((r) => {
     const initiative = initiativeById.get(r.initiative_id);
@@ -334,21 +351,26 @@ interface KpiRow {
 export async function listKpisForClient(
   clientId: string,
 ): Promise<ReadonlyArray<AIInitiativeKpiRow>> {
-  const sb = getServerSupabase();
   const initiatives = await listInitiativesForClient(clientId);
   if (initiatives.length === 0) return [];
   const initiativeIds = initiatives.map((i) => i.initiativeId);
   const initiativeById = new Map(initiatives.map((i) => [i.initiativeId, i] as const));
 
-  const { data, error } = await sb
-    .from('ai_initiative_kpis')
-    .select(
-      'initiative_id, kpi_name, kpi_unit, quarter, kpi_value, target_value, peer_median, confidence_level',
-    )
-    .in('initiative_id', initiativeIds)
-    .order('quarter', { ascending: true });
-  if (error) throw new Error(`listKpisForClient: ${error.message}`);
-  const rows = (data ?? []) as ReadonlyArray<KpiRow>;
+  const rows = await azureRead.select<KpiRow>({
+    table: 'ai_initiative_kpis',
+    columns: [
+      'initiative_id',
+      'kpi_name',
+      'kpi_unit',
+      'quarter',
+      'kpi_value',
+      'target_value',
+      'peer_median',
+      'confidence_level',
+    ],
+    where: { initiative_id: { op: 'in', value: initiativeIds } },
+    orderBy: { column: 'quarter', direction: 'asc' },
+  });
 
   return rows.map((r) => {
     const initiative = initiativeById.get(r.initiative_id);
