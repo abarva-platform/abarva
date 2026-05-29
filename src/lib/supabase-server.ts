@@ -5,6 +5,7 @@ import {
 
 export {
   isConnectionFallbackError,
+  resolvePostgresPoolMax,
   resolveDatabaseUrlCandidates,
 } from './data-plane/postgresCompat';
 export type { PostgresCompatClient } from './data-plane/postgresCompat';

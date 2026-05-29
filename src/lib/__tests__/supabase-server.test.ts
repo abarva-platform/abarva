@@ -2,6 +2,7 @@ jest.mock('server-only', () => ({}));
 
 import {
   isConnectionFallbackError,
+  resolvePostgresPoolMax,
   resolveDatabaseUrlCandidates,
 } from '@/lib/supabase-server';
 
@@ -34,5 +35,12 @@ describe('Postgres compatibility database URL fallback', () => {
     expect(isConnectionFallbackError(Object.assign(new Error('relation "enterprise_context_chunks" does not exist'), {
       code: '42P01',
     }))).toBe(false);
+  });
+
+  it('defaults Postgres compatibility pools to a serverless-safe size', () => {
+    expect(resolvePostgresPoolMax({} as NodeJS.ProcessEnv)).toBe(1);
+    expect(resolvePostgresPoolMax({ PGPOOL_MAX: '2' } as unknown as NodeJS.ProcessEnv)).toBe(2);
+    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '12' } as unknown as NodeJS.ProcessEnv)).toBe(5);
+    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '0' } as unknown as NodeJS.ProcessEnv)).toBe(1);
   });
 });

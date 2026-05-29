@@ -1,5 +1,6 @@
 import {
   isAzureSessionFallbackError,
+  resolveAzurePoolMax,
   resolveAzureUrlCandidates,
 } from '../azureSession';
 
@@ -30,5 +31,12 @@ describe('Azure read adapter session fallback', () => {
       new Error('relation "vendor_contracts" does not exist'),
       { code: '42P01' },
     ))).toBe(false);
+  });
+
+  it('keeps the default runtime pool tiny for Azure session-mode Postgres', () => {
+    expect(resolveAzurePoolMax({} as NodeJS.ProcessEnv)).toBe(1);
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '3' } as unknown as NodeJS.ProcessEnv)).toBe(3);
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: '99' } as unknown as NodeJS.ProcessEnv)).toBe(5);
+    expect(resolveAzurePoolMax({ ABARVA_PG_POOL_MAX: 'nope' } as unknown as NodeJS.ProcessEnv)).toBe(1);
   });
 });
