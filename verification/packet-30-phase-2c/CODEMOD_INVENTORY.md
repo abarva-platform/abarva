@@ -4,19 +4,19 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T18:16:36.479Z`
+- Generated at: `2026-05-29T18:31:04.070Z`
 - Total files in inventory: `303`
-- Files with import-helper matches: `151`
-- Import-helper matches: `617`
+- Files with import-helper matches: `150`
+- Import-helper matches: `614`
 - Files with broad matches: `303`
-- Broad matches: `1440`
+- Broad matches: `1436`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 126
+- `DEFER_MANUAL`: 127
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 90
+- `READ_ONLY_SELECT`: 89
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
@@ -50,6 +50,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/onboarding/[session]/commit/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
 | src/app/api/onboarding/[session]/status/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
 | src/app/api/onboarding/upload/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
+| src/app/api/programs/phase-gate/route.ts | DEFER_MANUAL | api_routes | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/app/(maestro)/admin/onboarding/[session]/confirm/page.tsx | DEFER_MANUAL | app_routes | 3 | 3 | - | no static table names detected |
 | src/app/_dev/agent-dock/page.tsx | DEFER_MANUAL | app_routes | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/app/(maestro)/admin/instruments/InstrumentAdminClient.tsx | DEFER_MANUAL | app_routes | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -256,7 +257,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
 | src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
 | src/app/api/knowledge/chunk/route.ts | READ_ONLY_SELECT | api_routes | 3 | 6 | knowledge_chunks, knowledge_sources | - |
-| src/app/api/programs/phase-gate/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | engagements | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_artifact_states, source_events | - |
 | src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_gate_criterion_states, source_events | - |
 | src/app/api/admin/quarantine/[id]/hard-delete/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |

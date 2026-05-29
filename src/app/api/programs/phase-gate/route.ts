@@ -7,7 +7,7 @@ import { requireTenancy } from '@/lib/auth/tenancy';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import { writeProgramAuditLog } from '@/lib/programs/audit-log';
 import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
@@ -43,6 +43,12 @@ interface PhaseGateLedger {
   schemaVersion: '1.0';
   entries: PhaseGateEntry[];
 }
+
+type PhaseGateEngagementRow = {
+  id: string;
+  current_phase: number | null;
+  gates_passed: unknown[] | null;
+};
 
 const LEDGER_DIR = join(process.cwd(), '.approvals');
 const LEDGER_PATH = join(LEDGER_DIR, 'phase-gates.json');
@@ -239,19 +245,15 @@ export async function POST(request: NextRequest) {
     const graphNodeId = seedProgram?.graphNodeId ?? null;
 
     if (graphNodeId) {
-      const sb = getServerSupabase();
-
       // 1. Look up the engagement row.
-      const { data: engRow, error: fetchErr } = await sb
-        .from('engagements')
-        .select('id, current_phase, gates_passed')
-        .eq('graph_node_id', graphNodeId)
-        .maybeSingle();
+      const engRow = await azureRead.maybeSingle<PhaseGateEngagementRow>({
+        table: 'engagements',
+        columns: ['id', 'current_phase', 'gates_passed'],
+        where: { graph_node_id: graphNodeId },
+      });
 
-      if (fetchErr) {
-        console.error('[phase-gate] supabase fetch failed', { programCode, graphNodeId, message: fetchErr.message });
-      } else if (engRow) {
-        engagementId = engRow.id as string;
+      if (engRow) {
+        engagementId = engRow.id;
 
         // 2. Build the deduplicated gates_passed array with the new phase appended.
         const existingGates: number[] = Array.isArray(engRow.gates_passed) ? (engRow.gates_passed as number[]) : [];
@@ -259,8 +261,7 @@ export async function POST(request: NextRequest) {
 
         // 3. UPDATE engagements.current_phase and gates_passed — routed through
         // the data-plane write seam (Slice 3a). The engagement-row lookup above
-        // is a read and stays direct (transitive per write-path design §4).
-        // Supabase remains the default plane; behavior is byte-identical.
+        // is read-only and now uses the Packet 30 read plane.
         const ok = await selectProgramsWriteAdapter().advanceEngagementPhase({
           engagementId,
           toPhase,
