@@ -14,7 +14,7 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { ApprovalQueueTable } from '@/components/admin/programs/ApprovalQueueTable';
 import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 
@@ -52,24 +52,27 @@ function collectQueuePersonIds(
 async function getDecidedThisWeekCounts(
   tenantKey: string,
 ): Promise<{ approved: number; rejected: number }> {
-  const sb = getServerSupabase();
   const sinceIso = new Date(
     Date.now() - 7 * 24 * 60 * 60 * 1000,
   ).toISOString();
-  const { data, error } = await sb
-    .from('program_approval_requests')
-    .select('request_status')
-    .eq('tenant_key', tenantKey)
-    .in('request_status', ['approved', 'rejected'])
-    .gte('decided_at', sinceIso);
-  if (error) {
+  let rows: DecidedRow[];
+  try {
+    rows = await azureRead.select<DecidedRow>({
+      table: 'program_approval_requests',
+      columns: ['request_status'],
+      where: {
+        tenant_key: tenantKey,
+        request_status: { op: 'in', value: ['approved', 'rejected'] },
+        decided_at: { op: 'gte', value: sinceIso },
+      },
+    });
+  } catch (error) {
     console.error(
       '[admin/programs/approvals] decided-counts query failed',
       error,
     );
     return { approved: 0, rejected: 0 };
   }
-  const rows = (data ?? []) as DecidedRow[];
   let approved = 0;
   let rejected = 0;
   for (const r of rows) {

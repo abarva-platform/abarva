@@ -4,30 +4,30 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T10:14:46.214Z`
-- Total files in inventory: `325`
-- Files with import-helper matches: `176`
-- Import-helper matches: `725`
-- Files with broad matches: `325`
-- Broad matches: `1647`
+- Generated at: `2026-05-29T16:21:38.244Z`
+- Total files in inventory: `314`
+- Files with import-helper matches: `160`
+- Import-helper matches: `661`
+- Files with broad matches: `314`
+- Broad matches: `1544`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 119
+- `DEFER_MANUAL`: 124
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 119
+- `READ_ONLY_SELECT`: 103
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
-- `admin`: 12
-- `api_routes`: 42
-- `app_routes`: 15
+- `admin`: 2
+- `api_routes`: 41
+- `app_routes`: 12
 - `db`: 5
-- `intelligence`: 29
+- `intelligence`: 31
 - `knowledge`: 5
-- `other_lib`: 142
+- `other_lib`: 143
 - `programs`: 39
 - `source`: 34
 - `tower`: 2
@@ -46,6 +46,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | File | Classification | Group | Import Matches | Broad Matches | Tables | Notes |
 |---|---:|---:|---:|---:|---|---|
 | src/lib/admin/release-ledger.ts | DEFER_MANUAL | admin | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/admin/setup-data-broker.ts | DEFER_MANUAL | admin | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/app/api/onboarding/[session]/commit/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
 | src/app/api/onboarding/[session]/status/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
 | src/app/api/onboarding/upload/route.ts | DEFER_MANUAL | api_routes | 3 | 3 | - | no static table names detected |
@@ -60,9 +61,11 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/intelligence/canonical/agent-grounding-disclosure.ts | DEFER_MANUAL | intelligence | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/tenant-metric-fixtures.ts | DEFER_MANUAL | intelligence | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/ai-program-failure-modes.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/intelligence/ask/retrievers/pattern.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/ask/retrievers/vendor.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/atlas-synthesis.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/canonical/normalizers.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/intelligence/canonical/scoped-corpus-pattern-index.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/citation-renderer.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/metric-records.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/intelligence/synthesis/violationsRecorder.ts | DEFER_MANUAL | intelligence | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -110,6 +113,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/context-ingestion/extractors/index.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/context-ingestion/schema-mapper.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/corpus/embedding.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/corpus/industry-scope.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/depth/lint-service.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/depth/rubrics/shared.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/instruments/render.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -152,6 +156,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/source/executive-decision-summary.ts | DEFER_MANUAL | source | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/source/multi-agent-briefing.ts | DEFER_MANUAL | source | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/source/nexus-api.ts | DEFER_MANUAL | source | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/source/adapters/apex-retail-adapter.ts | DEFER_MANUAL | source | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/source/agent-validation-fixtures.ts | DEFER_MANUAL | source | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/source/decision-queue/bundle.ts | DEFER_MANUAL | source | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/source/exports/payloads/ai-clause-gap-payload.ts | DEFER_MANUAL | source | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -247,17 +252,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/tower/ingest-portfolio.ts | MIXED_READ_WRITE | tower | 3 | 4 | use_cases | - |
 | src/lib/tower/outcome-context-writeback/persist.ts | MIXED_READ_WRITE | tower | 3 | 4 | - | no static table names detected |
 | src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
-| src/lib/admin/setup-data-broker.ts | READ_ONLY_SELECT | admin | 6 | 14 | data_ingestion_runs, data_inventory_audit_log, data_inventory_records, data_inventory_segments, enterprise_context_chunks | - |
-| src/lib/admin/data/admin-datasets-adapter.ts | READ_ONLY_SELECT | admin | 6 | 10 | admin_dataset_approvals, admin_dataset_quality, admin_datasets | - |
-| src/lib/admin/data/admin-connectors-adapter.ts | READ_ONLY_SELECT | admin | 5 | 8 | admin_connectors | - |
-| src/lib/admin/data/admin-db-helpers.ts | READ_ONLY_SELECT | admin | 4 | 6 | clients | - |
-| src/lib/admin/ai-initiatives/detail-queries.ts | READ_ONLY_SELECT | admin | 3 | 8 | ai_initiative_decisions, ai_initiative_kpis, ai_initiative_scenarios, ai_initiative_stakeholder_notes, ai_initiative_vendors | - |
-| src/lib/admin/data/admin-overview-adapter.ts | READ_ONLY_SELECT | admin | 3 | 8 | admin_audit_log, admin_blockers, admin_connectors, admin_dataset_approvals, admin_setup_progress | - |
-| src/lib/admin/overview-data.ts | READ_ONLY_SELECT | admin | 3 | 5 | engagements, source_events | - |
-| src/lib/admin/data/admin-audit-log-adapter.ts | READ_ONLY_SELECT | admin | 3 | 4 | admin_audit_log | - |
-| src/lib/admin/data/admin-blockers-adapter.ts | READ_ONLY_SELECT | admin | 3 | 4 | admin_blockers | - |
-| src/lib/admin/data/admin-production-readiness-adapter.ts | READ_ONLY_SELECT | admin | 3 | 4 | admin_blockers | - |
-| src/lib/admin/data/admin-setup-progress-adapter.ts | READ_ONLY_SELECT | admin | 3 | 4 | admin_setup_progress | - |
 | src/app/api/v1/programs/[programId]/generate/route.ts | READ_ONLY_SELECT | api_routes | 6 | 11 | deliverables_v2, engagement_topics, engagements, pattern_match_logs, persons | - |
 | src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
 | src/app/api/knowledge/chunk/route.ts | READ_ONLY_SELECT | api_routes | 3 | 6 | knowledge_chunks, knowledge_sources | - |
@@ -265,7 +259,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/programs/phase-gate/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | engagements | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_artifact_states, source_events | - |
 | src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_gate_criterion_states, source_events | - |
-| src/app/api/admin/programs/approvals/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | program_approval_requests | - |
 | src/app/api/admin/quarantine/[id]/hard-delete/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
 | src/app/api/admin/quarantine/[id]/release/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
 | src/app/api/admin/seed-clerk-metadata/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | persons | - |
@@ -286,15 +279,12 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/cxo-report/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/deal-pack/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
-| src/app/(maestro)/admin/atlas/traces/page.tsx | READ_ONLY_SELECT | app_routes | 6 | 10 | atlas_reasoning_traces, clients | - |
 | src/app/(maestro)/engagements/[engagementId]/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 7 | contradictions, deliverables_v2, engagements | - |
 | src/app/(maestro)/engagements/[engagementId]/deliverables/[deliverableId]/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 6 | deliverable_types, deliverable_versions, deliverables_v2 | - |
 | src/app/(maestro)/engagements/[engagementId]/charter/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |
 | src/app/(maestro)/engagements/[engagementId]/deliverables/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |
-| src/app/(maestro)/admin/programs/approvals/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | program_approval_requests | - |
 | src/app/(maestro)/engagements/[engagementId]/turns/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | turns | - |
 | src/app/(maestro)/evidence-ledger/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | evidence_ledger | - |
-| src/app/(maestro)/platform/admin/pilot/[tenantKey]/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | clients | - |
 | src/app/sponsor/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | engagements | - |
 | src/app/programs/expert-kernel/expert-review/export/route.ts | READ_ONLY_SELECT | app_routes | 0 | 1 | - | no static table names detected |
 | src/lib/db/team.ts | READ_ONLY_SELECT | db | 5 | 11 | engagements, team_memberships | - |
@@ -362,7 +352,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/programs/exports/renderers/html.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/exports/renderers/pdf.tsx | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/exports/renderers/xlsx.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
-| src/lib/source/adapters/apex-retail-adapter.ts | READ_ONLY_SELECT | source | 7 | 11 | data_inventory_records, enterprise_context_chunks, source_events | - |
 | src/lib/source/exports/dispatch.ts | READ_ONLY_SELECT | source | 0 | 5 | - | no static table names detected |
 | src/lib/source/pricing-submissions/parser.ts | READ_ONLY_SELECT | source | 0 | 2 | - | no static table names detected |
 | src/lib/source/exports/cxo-report/source-cxo-narrative-pptx.ts | READ_ONLY_SELECT | source | 0 | 1 | - | no static table names detected |

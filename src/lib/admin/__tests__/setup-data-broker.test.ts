@@ -2,15 +2,19 @@
  * Setup data broker · unit tests · SETUP-1.2
  *
  * Verifies the segment-rollup + audit-log + ingestion-run reads
- * for tenant `apex-retail` against a chainable mock Supabase
- * client. Live integration coverage runs in SETUP-1.7.
+ * for tenant `apex-retail` against the Azure read-plane seam.
+ * Live integration coverage runs in SETUP-1.7.
  */
 
-const fromMock = jest.fn();
+const mockAzureSelect = jest.fn();
+const mockAzureMaybeSingle = jest.fn();
 
 jest.mock('server-only', () => ({}));
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({ from: fromMock }),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    select: (...args: unknown[]) => mockAzureSelect(...args),
+    maybeSingle: (...args: unknown[]) => mockAzureMaybeSingle(...args),
+  },
 }));
 
 import {
@@ -19,46 +23,20 @@ import {
   getSetupInventorySnapshot,
 } from '../setup-data-broker';
 
-interface BuilderResult {
-  data: unknown;
-  error: unknown;
-}
-
-function makeBuilder(result: BuilderResult) {
-  const builder: Record<string, unknown> = {};
-  const chain = () => builder;
-  builder.select = chain;
-  builder.eq = chain;
-  builder.order = chain;
-  builder.limit = chain;
-  builder.maybeSingle = () => Promise.resolve(result);
-  builder.then = (resolve: (r: BuilderResult) => unknown) =>
-    Promise.resolve(result).then(resolve);
-  return builder as {
-    select: () => unknown;
-    eq: () => unknown;
-    order: () => unknown;
-    limit: () => unknown;
-    maybeSingle: () => Promise<BuilderResult>;
-    then: (r: (x: BuilderResult) => unknown) => Promise<unknown>;
-  };
-}
-
 describe('getSetupInventorySnapshot', () => {
   beforeEach(() => {
-    fromMock.mockReset();
+    mockAzureSelect.mockReset();
+    mockAzureMaybeSingle.mockReset();
   });
 
   it('returns null when segments query errors', async () => {
-    fromMock.mockImplementation(() =>
-      makeBuilder({ data: null, error: { message: 'boom' } }),
-    );
+    mockAzureSelect.mockRejectedValue(new Error('boom'));
     const snapshot = await getSetupInventorySnapshot('apex-retail');
     expect(snapshot).toBeNull();
   });
 
   it('returns null when segments query returns empty', async () => {
-    fromMock.mockImplementation(() => makeBuilder({ data: [], error: null }));
+    mockAzureSelect.mockResolvedValue([]);
     const snapshot = await getSetupInventorySnapshot('apex-retail');
     expect(snapshot).toBeNull();
   });
@@ -113,14 +91,11 @@ describe('getSetupInventorySnapshot', () => {
       },
     ];
 
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments')
-        return makeBuilder({ data: segmentRows, error: null });
-      if (table === 'data_inventory_audit_log')
-        return makeBuilder({ data: auditRows, error: null });
-      if (table === 'data_ingestion_runs')
-        return makeBuilder({ data: ingestionRows, error: null });
-      return makeBuilder({ data: null, error: { message: 'unknown table' } });
+    mockAzureSelect.mockImplementation((request: { table: string }) => {
+      if (request.table === 'data_inventory_segments') return Promise.resolve(segmentRows);
+      if (request.table === 'data_inventory_audit_log') return Promise.resolve(auditRows);
+      if (request.table === 'data_ingestion_runs') return Promise.resolve(ingestionRows);
+      return Promise.reject(new Error('unknown table'));
     });
 
     const snapshot = await getSetupInventorySnapshot('apex-retail');
@@ -142,7 +117,7 @@ describe('getSetupInventorySnapshot', () => {
   });
 
   it('returns null when supabase env is missing (broker fallback)', async () => {
-    fromMock.mockImplementation(() => {
+    mockAzureSelect.mockImplementation(() => {
       throw new Error('NEVER CALLED');
     });
     // Test wraps in try; broker shouldn't throw, just return null.
@@ -166,10 +141,9 @@ describe('getSetupInventorySnapshot', () => {
         last_ingested_at: null,
       },
     ];
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments')
-        return makeBuilder({ data: segmentRows, error: null });
-      return makeBuilder({ data: [], error: null });
+    mockAzureSelect.mockImplementation((request: { table: string }) => {
+      if (request.table === 'data_inventory_segments') return Promise.resolve(segmentRows);
+      return Promise.resolve([]);
     });
     const snapshot = await getSetupInventorySnapshot('apex-retail');
     expect(snapshot?.segments[0]?.recordCount).toBe(50);
@@ -179,7 +153,8 @@ describe('getSetupInventorySnapshot', () => {
 
 describe('getSegmentRecordPage', () => {
   beforeEach(() => {
-    fromMock.mockReset();
+    mockAzureSelect.mockReset();
+    mockAzureMaybeSingle.mockReset();
   });
 
   it('returns rollup + records for a populated segment', async () => {
@@ -209,12 +184,10 @@ describe('getSegmentRecordPage', () => {
         uploaded_at: '2026-04-29T12:00:00Z',
       },
     ];
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments')
-        return makeBuilder({ data: rollupRow, error: null });
-      if (table === 'data_inventory_records')
-        return makeBuilder({ data: recordRows, error: null });
-      return makeBuilder({ data: null, error: { message: 'unknown' } });
+    mockAzureMaybeSingle.mockResolvedValue(rollupRow);
+    mockAzureSelect.mockImplementation((request: { table: string }) => {
+      if (request.table === 'data_inventory_records') return Promise.resolve(recordRows);
+      return Promise.reject(new Error('unknown'));
     });
 
     const page = await getSegmentRecordPage('apex-retail', 'kpi_dictionary');
@@ -238,47 +211,37 @@ describe('getSegmentRecordPage', () => {
       last_reviewed_at: null,
       last_ingested_at: null,
     };
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments')
-        return makeBuilder({ data: rollupRow, error: null });
-      if (table === 'data_inventory_records')
-        return makeBuilder({ data: [], error: null });
-      return makeBuilder({ data: null, error: null });
-    });
+    mockAzureMaybeSingle.mockResolvedValue(rollupRow);
+    mockAzureSelect.mockResolvedValue([]);
     const page = await getSegmentRecordPage('apex-retail', 'industry_context');
     expect(page?.rollup?.recordCount).toBe(0);
     expect(page?.records).toEqual([]);
   });
 
   it('returns rollup=null with empty records when segment is unknown to substrate', async () => {
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments')
-        return makeBuilder({ data: null, error: null });
-      if (table === 'data_inventory_records')
-        return makeBuilder({ data: [], error: null });
-      return makeBuilder({ data: null, error: null });
-    });
+    mockAzureMaybeSingle.mockResolvedValue(null);
+    mockAzureSelect.mockResolvedValue([]);
     const page = await getSegmentRecordPage('apex-retail', 'enterprise_profile');
     expect(page?.rollup).toBeNull();
     expect(page?.records).toEqual([]);
   });
 
   it('returns null when both queries fail', async () => {
-    fromMock.mockImplementation(() =>
-      makeBuilder({ data: null, error: { message: 'boom' } }),
-    );
+    mockAzureMaybeSingle.mockRejectedValue(new Error('boom'));
+    mockAzureSelect.mockRejectedValue(new Error('boom'));
     const page = await getSegmentRecordPage('apex-retail', 'org_structure');
     expect(page).toBeNull();
   });
 });
 
 describe('getCrossProgramSignals', () => {
-  beforeEach(() => fromMock.mockReset());
+  beforeEach(() => {
+    mockAzureSelect.mockReset();
+    mockAzureMaybeSingle.mockReset();
+  });
 
   it('returns an empty list when the substrate is unreachable', async () => {
-    fromMock.mockImplementation(() =>
-      makeBuilder({ data: null, error: { message: 'boom' } }),
-    );
+    mockAzureSelect.mockRejectedValue(new Error('boom'));
     const signals = await getCrossProgramSignals('apex-retail');
     expect(signals).toEqual([]);
   });
@@ -331,7 +294,7 @@ describe('getCrossProgramSignals', () => {
         },
       },
     ];
-    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    mockAzureSelect.mockResolvedValue(rows);
     const signals = await getCrossProgramSignals('apex-retail');
     expect(signals.map((s) => s.signalId)).toEqual([
       'xprog:apex:003', // high
@@ -362,7 +325,7 @@ describe('getCrossProgramSignals', () => {
         },
       },
     ];
-    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    mockAzureSelect.mockResolvedValue(rows);
     const signals = await getCrossProgramSignals('meridian-health');
     expect(signals[0]?.severityBucket).toBe('critical');
     expect(signals[0]?.description).toContain('Capital conflict Hawaii vs RCM vs ambient');
@@ -378,7 +341,7 @@ describe('getCrossProgramSignals', () => {
         record_payload: null,
       },
     ];
-    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    mockAzureSelect.mockResolvedValue(rows);
     const signals = await getCrossProgramSignals('apex-retail');
     expect(signals).toHaveLength(1);
     expect(signals[0]?.severityBucket).toBe('unknown');
@@ -387,13 +350,13 @@ describe('getCrossProgramSignals', () => {
 });
 
 describe('getSegmentRecordPage — record title derivation', () => {
-  beforeEach(() => fromMock.mockReset());
+  beforeEach(() => {
+    mockAzureSelect.mockReset();
+    mockAzureMaybeSingle.mockReset();
+  });
 
   it('uses KPI payload names when imported row titles are generic', async () => {
-    fromMock.mockImplementation((table: string) => {
-      if (table === 'data_inventory_segments') {
-        return makeBuilder({
-          data: {
+    mockAzureMaybeSingle.mockResolvedValue({
             segment_id: 'kpi_dictionary',
             segment_name: 'KPI dictionary',
             family_number: 5,
@@ -404,13 +367,8 @@ describe('getSegmentRecordPage — record title derivation', () => {
             health_state: 'complete',
             last_reviewed_at: null,
             last_ingested_at: null,
-          },
-          error: null,
-        });
-      }
-      if (table === 'data_inventory_records') {
-        return makeBuilder({
-          data: [
+    });
+    mockAzureSelect.mockResolvedValue([
             {
               record_id: 'kpi_dictionary:kpi:meridian:001',
               title: 'Kpi Dictionary 1',
@@ -427,12 +385,7 @@ describe('getSegmentRecordPage — record title derivation', () => {
               uploaded_by: 'Import pipeline',
               uploaded_at: '2026-04-30T10:00:00Z',
             },
-          ],
-          error: null,
-        });
-      }
-      return makeBuilder({ data: null, error: null });
-    });
+    ]);
 
     const page = await getSegmentRecordPage('meridian-health', 'kpi_dictionary');
 

@@ -26,6 +26,7 @@ import {
   loadEngagementAndHeadline,
   loadSubstrateSnapshot,
 } from '@/lib/pilot-dashboard/aggregates';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type {
   DashboardBanner,
   HeadlineKpis,
@@ -63,15 +64,12 @@ export default async function PilotDashboardPage({ params }: PageProps): Promise
   // joins through engagements.client_id (UUID), not the tenant key.
   let clientId: string | null = null;
   try {
-    const { getServerSupabase } = await import('@/lib/supabase-server');
-    const sb = getServerSupabase();
-    const { data } = await sb
-      .from('clients')
-      .select('id')
-      .eq('tenant_key', tenantKey)
-      .limit(1)
-      .maybeSingle();
-    clientId = (data as { id: string } | null)?.id ?? null;
+    const row = await azureRead.maybeSingle<{ id: string }>({
+      table: 'clients',
+      columns: ['id'],
+      where: { tenant_key: tenantKey },
+    });
+    clientId = row?.id ?? null;
   } catch {
     // fall through; the engagement query will surface a banner
   }

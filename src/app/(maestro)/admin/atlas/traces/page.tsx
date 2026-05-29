@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const metadata = { title: 'Atlas traces · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,9 @@ interface TraceDetailRow extends TraceListRow {
   package_version: string;
 }
 
+type TraceListDbRow = Omit<TraceListRow, 'clients'> & { client_name: string | null };
+type TraceDetailDbRow = Omit<TraceDetailRow, 'clients'> & { client_name?: string | null };
+
 interface TraceFilters {
   tenantId?: string;
   promptVersion?: string;
@@ -62,52 +65,81 @@ function readFilters(searchParams: Record<string, string | string[] | undefined>
 }
 
 async function listTraces(filters: TraceFilters): Promise<ReadonlyArray<TraceListRow>> {
-  const sb = getServerSupabase();
-  let query = sb
-    .from('atlas_reasoning_traces')
-    .select(
-      'trace_id, tenant_id, timestamp, trigger, prompt_version, interpretation_confidence, fallback_used, fallback_reason, latency_ms, input_summary, observations, citations, clients:tenant_id(name)',
-    )
-    .order('timestamp', { ascending: false })
-    .limit(100);
-
-  if (filters.tenantId) query = query.eq('tenant_id', filters.tenantId);
-  if (filters.promptVersion) query = query.eq('prompt_version', filters.promptVersion);
-  if (filters.fallbackUsed) query = query.eq('fallback_used', filters.fallbackUsed === 'true');
-
-  const { data, error } = await query;
-  if (error) throw new Error(`listTraces: ${error.message}`);
-  return ((data ?? []) as unknown as TraceListRow[]);
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filters.tenantId) {
+    params.push(filters.tenantId);
+    where.push(`t.tenant_id = $${params.length}`);
+  }
+  if (filters.promptVersion) {
+    params.push(filters.promptVersion);
+    where.push(`t.prompt_version = $${params.length}`);
+  }
+  if (filters.fallbackUsed) {
+    params.push(filters.fallbackUsed === 'true');
+    where.push(`t.fallback_used = $${params.length}`);
+  }
+  const rows = await azureRead.query<TraceListDbRow>(
+    `SELECT
+       t.trace_id,
+       t.tenant_id,
+       t.timestamp,
+       t.trigger,
+       t.prompt_version,
+       t.interpretation_confidence,
+       t.fallback_used,
+       t.fallback_reason,
+       t.latency_ms,
+       t.input_summary,
+       t.observations,
+       t.citations,
+       c.name AS client_name
+     FROM atlas_reasoning_traces t
+     LEFT JOIN clients c ON c.id = t.tenant_id
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+     ORDER BY t.timestamp DESC
+     LIMIT 100`,
+    params,
+  );
+  return rows.map((row) => ({ ...row, clients: { name: row.client_name } }));
 }
 
 async function getTraceDetail(traceId: string | undefined): Promise<TraceDetailRow | null> {
   if (!traceId) return null;
-  const { data, error } = await getServerSupabase()
-    .from('atlas_reasoning_traces')
-    .select('* , clients:tenant_id(name)')
-    .eq('trace_id', traceId)
-    .maybeSingle();
-  if (error) throw new Error(`getTraceDetail: ${error.message}`);
-  return (data ?? null) as unknown as TraceDetailRow | null;
+  const row = await azureRead.maybeSingle<TraceDetailDbRow>({
+    table: 'atlas_reasoning_traces',
+    columns: '*',
+    where: { trace_id: traceId },
+  });
+  if (!row) return null;
+  const [client] = await azureRead.select<{ name: string | null }>({
+    table: 'clients',
+    columns: ['name'],
+    where: { id: row.tenant_id },
+    limit: 1,
+  }).catch(() => []);
+  const trace = { ...row };
+  delete trace.client_name;
+  return { ...trace, clients: { name: client?.name ?? null } };
 }
 
 async function listPromptVersions(): Promise<ReadonlyArray<string>> {
-  const { data, error } = await getServerSupabase()
-    .from('atlas_reasoning_traces')
-    .select('prompt_version')
-    .order('prompt_version', { ascending: true })
-    .limit(500);
-  if (error) return [];
-  return [...new Set(((data ?? []) as Array<{ prompt_version: string }>).map((row) => row.prompt_version))];
+  const rows = await azureRead.select<{ prompt_version: string }>({
+    table: 'atlas_reasoning_traces',
+    columns: ['prompt_version'],
+    orderBy: { column: 'prompt_version', direction: 'asc' },
+    limit: 500,
+  }).catch(() => []);
+  return [...new Set(rows.map((row) => row.prompt_version))];
 }
 
 async function listTenants(): Promise<ReadonlyArray<{ id: string; name: string }>> {
-  const { data, error } = await getServerSupabase()
-    .from('clients')
-    .select('id, name')
-    .order('name', { ascending: true });
-  if (error) return [];
-  return ((data ?? []) as Array<{ id: string; name: string }>).map((row) => ({
+  const rows = await azureRead.select<{ id: string; name: string }>({
+    table: 'clients',
+    columns: ['id', 'name'],
+    orderBy: { column: 'name', direction: 'asc' },
+  }).catch(() => []);
+  return rows.map((row) => ({
     id: row.id,
     name: row.name,
   }));

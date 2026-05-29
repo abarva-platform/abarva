@@ -1,29 +1,29 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T10:14:46.214Z",
+    "generatedAt": "2026-05-29T16:21:38.244Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 325,
-    "filesWithImportMatches": 176,
-    "importMatches": 725,
-    "filesWithBroadMatches": 325,
-    "broadMatches": 1647,
+    "totalFiles": 314,
+    "filesWithImportMatches": 160,
+    "importMatches": 661,
+    "filesWithBroadMatches": 314,
+    "broadMatches": 1544,
     "classificationCounts": {
-      "DEFER_MANUAL": 119,
+      "DEFER_MANUAL": 124,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 119,
+      "READ_ONLY_SELECT": 103,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
-      "admin": 12,
-      "api_routes": 42,
-      "app_routes": 15,
-      "intelligence": 29,
+      "admin": 2,
+      "api_routes": 41,
+      "app_routes": 12,
+      "intelligence": 31,
       "knowledge": 5,
-      "other_lib": 142,
+      "other_lib": 143,
       "programs": 39,
       "source": 34,
       "db": 5,
@@ -71,6 +71,54 @@
       "storageWriteMethods": [],
       "supabaseFromCalls": 0,
       "arrayFromCalls": 2,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
+      "file": "src/lib/admin/setup-data-broker.ts",
+      "group": "admin",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "all",
+        "allSettled",
+        "from",
+        "get",
+        "has",
+        "includes",
+        "isArray",
+        "join",
+        "localeCompare",
+        "map",
+        "maybeSingle",
+        "reduce",
+        "replace",
+        "select",
+        "set",
+        "sort",
+        "startsWith",
+        "test",
+        "toLowerCase",
+        "trim",
+        "values"
+      ],
+      "readMethods": [
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": [
@@ -537,6 +585,48 @@
       ]
     },
     {
+      "file": "src/lib/intelligence/ask/retrievers/pattern.ts",
+      "group": "intelligence",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "add",
+        "catch",
+        "filter",
+        "from",
+        "has",
+        "join",
+        "map",
+        "max",
+        "min",
+        "push",
+        "query",
+        "reduce",
+        "replace",
+        "slice",
+        "test",
+        "toFixed",
+        "toUpperCase",
+        "trim"
+      ],
+      "readMethods": [],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
       "file": "src/lib/intelligence/ask/retrievers/vendor.ts",
       "group": "intelligence",
       "sourceKind": "runtime",
@@ -636,6 +726,45 @@
         "replace",
         "split",
         "toLowerCase",
+        "trim"
+      ],
+      "readMethods": [],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
+      "file": "src/lib/intelligence/canonical/scoped-corpus-pattern-index.ts",
+      "group": "intelligence",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "filter",
+        "find",
+        "from",
+        "has",
+        "isArray",
+        "join",
+        "map",
+        "max",
+        "min",
+        "push",
+        "replace",
+        "slice",
+        "stringify",
+        "toFixed",
         "trim"
       ],
       "readMethods": [],
@@ -2372,6 +2501,39 @@
       ]
     },
     {
+      "file": "src/lib/corpus/industry-scope.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "filter",
+        "from",
+        "has",
+        "join",
+        "map",
+        "replace",
+        "some",
+        "test",
+        "toLowerCase"
+      ],
+      "readMethods": [],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
       "file": "src/lib/depth/lint-service.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
@@ -3909,6 +4071,52 @@
       "storageWriteMethods": [],
       "supabaseFromCalls": 0,
       "arrayFromCalls": 2,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
+      "file": "src/lib/source/adapters/apex-retail-adapter.ts",
+      "group": "source",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "all",
+        "charAt",
+        "filter",
+        "from",
+        "has",
+        "includes",
+        "indexOf",
+        "isNaN",
+        "join",
+        "map",
+        "push",
+        "query",
+        "reduce",
+        "replace",
+        "round",
+        "slice",
+        "sort",
+        "split",
+        "test",
+        "toLowerCase",
+        "toUpperCase",
+        "trim"
+      ],
+      "readMethods": [],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 1,
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": [
@@ -8537,499 +8745,6 @@
       ]
     },
     {
-      "file": "src/lib/admin/setup-data-broker.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 6,
-      "broadMatches": 14,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "data_ingestion_runs",
-        "data_inventory_audit_log",
-        "data_inventory_records",
-        "data_inventory_segments",
-        "enterprise_context_chunks"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "from",
-        "get",
-        "has",
-        "includes",
-        "isArray",
-        "join",
-        "limit",
-        "localeCompare",
-        "map",
-        "maybeSingle",
-        "order",
-        "reduce",
-        "replace",
-        "select",
-        "set",
-        "sort",
-        "startsWith",
-        "test",
-        "toLowerCase",
-        "trim",
-        "values"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 7,
-      "arrayFromCalls": 1,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-datasets-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 6,
-      "broadMatches": 10,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_dataset_approvals",
-        "admin_dataset_quality",
-        "admin_datasets"
-      ],
-      "methodNames": [
-        "add",
-        "eq",
-        "filter",
-        "find",
-        "from",
-        "has",
-        "includes",
-        "limit",
-        "map",
-        "maybeSingle",
-        "order",
-        "push",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-connectors-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 5,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_connectors"
-      ],
-      "methodNames": [
-        "eq",
-        "find",
-        "from",
-        "map",
-        "maybeSingle",
-        "neq",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "neq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-db-helpers.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients"
-      ],
-      "methodNames": [
-        "charAt",
-        "eq",
-        "from",
-        "ilike",
-        "join",
-        "map",
-        "maybeSingle",
-        "select",
-        "slice",
-        "split",
-        "toUpperCase"
-      ],
-      "readMethods": [
-        "eq",
-        "ilike",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/ai-initiatives/detail-queries.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiative_decisions",
-        "ai_initiative_kpis",
-        "ai_initiative_scenarios",
-        "ai_initiative_stakeholder_notes",
-        "ai_initiative_vendors"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "find",
-        "from",
-        "isFinite",
-        "map",
-        "order",
-        "parseFloat",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 5,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-overview-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_audit_log",
-        "admin_blockers",
-        "admin_connectors",
-        "admin_dataset_approvals",
-        "admin_setup_progress"
-      ],
-      "methodNames": [
-        "all",
-        "charAt",
-        "eq",
-        "from",
-        "in",
-        "join",
-        "limit",
-        "map",
-        "order",
-        "select",
-        "slice",
-        "split",
-        "toISOString",
-        "toUpperCase"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 5,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/overview-data.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements",
-        "source_events"
-      ],
-      "methodNames": [
-        "all",
-        "catch",
-        "eq",
-        "filter",
-        "from",
-        "resolve",
-        "select",
-        "test"
-      ],
-      "readMethods": [
-        "eq",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-audit-log-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_audit_log"
-      ],
-      "methodNames": [
-        "eq",
-        "find",
-        "from",
-        "gte",
-        "limit",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "gte",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-blockers-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_blockers"
-      ],
-      "methodNames": [
-        "eq",
-        "filter",
-        "find",
-        "from",
-        "isArray",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-production-readiness-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_blockers"
-      ],
-      "methodNames": [
-        "eq",
-        "filter",
-        "from",
-        "isArray",
-        "map",
-        "order",
-        "select",
-        "some",
-        "toISOString"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/admin/data/admin-setup-progress-adapter.ts",
-      "group": "admin",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "admin_setup_progress"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/app/api/v1/programs/[programId]/generate/route.ts",
       "group": "api_routes",
       "sourceKind": "runtime",
@@ -9399,48 +9114,6 @@
       "storageReadMethods": [],
       "storageWriteMethods": [],
       "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/admin/programs/approvals/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "program_approval_requests"
-      ],
-      "methodNames": [
-        "eq",
-        "error",
-        "from",
-        "gte",
-        "in",
-        "json",
-        "now",
-        "select",
-        "toISOString"
-      ],
-      "readMethods": [
-        "eq",
-        "gte",
-        "in",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
@@ -10290,59 +9963,6 @@
       ]
     },
     {
-      "file": "src/app/(maestro)/admin/atlas/traces/page.tsx",
-      "group": "app_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 6,
-      "broadMatches": 10,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "atlas_reasoning_traces",
-        "clients"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "format",
-        "from",
-        "isArray",
-        "limit",
-        "map",
-        "maybeSingle",
-        "order",
-        "reduce",
-        "replace",
-        "select",
-        "set",
-        "slice",
-        "stringify",
-        "toFixed",
-        "toString"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/app/(maestro)/engagements/[engagementId]/page.tsx",
       "group": "app_routes",
       "sourceKind": "runtime",
@@ -10557,52 +10177,6 @@
       "notes": []
     },
     {
-      "file": "src/app/(maestro)/admin/programs/approvals/page.tsx",
-      "group": "app_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "program_approval_requests"
-      ],
-      "methodNames": [
-        "all",
-        "catch",
-        "eq",
-        "error",
-        "from",
-        "get",
-        "gte",
-        "in",
-        "now",
-        "push",
-        "select",
-        "toISOString",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "gte",
-        "in",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/app/(maestro)/engagements/[engagementId]/turns/page.tsx",
       "group": "app_routes",
       "sourceKind": "runtime",
@@ -10686,50 +10260,6 @@
         "limit",
         "lt",
         "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/(maestro)/platform/admin/pilot/[tenantKey]/page.tsx",
-      "group": "app_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "from",
-        "getUser",
-        "limit",
-        "map",
-        "maybeSingle",
-        "resolve",
-        "select",
-        "slice",
-        "toFixed",
-        "toISOString",
-        "toLocaleString"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
         "select"
       ],
       "writeMethods": [],
@@ -13849,72 +13379,6 @@
       "notes": [
         "no static table names detected"
       ]
-    },
-    {
-      "file": "src/lib/source/adapters/apex-retail-adapter.ts",
-      "group": "source",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 7,
-      "broadMatches": 11,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "data_inventory_records",
-        "enterprise_context_chunks",
-        "source_events"
-      ],
-      "methodNames": [
-        "all",
-        "charAt",
-        "eq",
-        "filter",
-        "from",
-        "has",
-        "in",
-        "includes",
-        "indexOf",
-        "isNaN",
-        "join",
-        "limit",
-        "map",
-        "maybeSingle",
-        "neq",
-        "order",
-        "push",
-        "reduce",
-        "replace",
-        "round",
-        "select",
-        "slice",
-        "sort",
-        "split",
-        "test",
-        "toLowerCase",
-        "toUpperCase",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "limit",
-        "maybeSingle",
-        "neq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 1,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
     },
     {
       "file": "src/lib/source/exports/dispatch.ts",

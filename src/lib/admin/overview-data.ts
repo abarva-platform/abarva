@@ -7,7 +7,7 @@
  * the production-readiness-tracker module-hygiene suite.
  */
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { listInitiativesForClient, type AIInitiative } from '@/lib/admin/ai-initiatives/queries';
 
 export interface OverviewSupplementalData {
@@ -27,30 +27,23 @@ export async function getOverviewSupplementalData(
   clientKey: string,
   clientId: string | null,
 ): Promise<OverviewSupplementalData> {
-  const sb = (() => {
-    try { return getServerSupabase(); } catch { return null; }
-  })();
-
-  const [programsRes, sourceEventsRes, initiativesList] = await Promise.all([
-    sb && clientId
-      ? sb.from('engagements').select('id, current_phase').eq('client_id', clientId)
-      : Promise.resolve({ data: null }),
-    sb
-      ? sb.from('source_events').select('id, lifecycle_state').eq('client_key', clientKey)
-      : Promise.resolve({ data: null }),
+  const [programsRows, sourceEventsRows, initiativesList] = await Promise.all([
+    clientId
+      ? azureRead.select<{ id: string; current_phase: number | null }>({
+          table: 'engagements',
+          columns: ['id', 'current_phase'],
+          where: { client_id: clientId },
+        }).catch(() => [])
+      : Promise.resolve([]),
+    azureRead.select<{ id: string; lifecycle_state: string | null }>({
+      table: 'source_events',
+      columns: ['id', 'lifecycle_state'],
+      where: { client_key: clientKey },
+    }).catch(() => []),
     clientId
       ? listInitiativesForClient(clientId).catch(() => [] as ReadonlyArray<AIInitiative>)
       : Promise.resolve([] as ReadonlyArray<AIInitiative>),
   ]);
-
-  const programsRows = (programsRes.data ?? []) as Array<{
-    id: string;
-    current_phase: number | null;
-  }>;
-  const sourceEventsRows = (sourceEventsRes.data ?? []) as Array<{
-    id: string;
-    lifecycle_state: string | null;
-  }>;
 
   return {
     programsCount: programsRows.length,
