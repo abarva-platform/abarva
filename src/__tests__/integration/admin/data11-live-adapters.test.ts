@@ -14,7 +14,8 @@ import { getAdminBlockers } from '@/lib/admin/data/admin-blockers-adapter';
 import { getAdminAuditEvents } from '@/lib/admin/data/admin-audit-log-adapter';
 import { getAdminDatasets } from '@/lib/admin/data/admin-datasets-adapter';
 import { getAdminSetupProgress } from '@/lib/admin/data/admin-setup-progress-adapter';
-import { buildAgentContextAsync, buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle-live';
 
 // ---------------------------------------------------------------------------
 // mapDbRung mapping

@@ -5,7 +5,7 @@ import type {
   SourceLiveTenantContextSnapshot,
 } from '../agent-context';
 import type { SourceSurface } from '../agent-context';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead, type AzureReadClient } from '@/lib/data-plane/azureRead';
 
 export const APEX_RETAIL_CLIENT_KEY = 'apexretail';
 export const APEX_RETAIL_BROKER_TENANT_KEY = 'apex-retail';
@@ -50,7 +50,7 @@ export interface ApexRetailAdapterOptions {
   surface?: SourceSurface;
   selectedAttachmentIds?: string[];
   priorConversationTurns?: SourceContextAssemblyInput['priorConversationTurns'];
-  supabase?: Pick<ReturnType<typeof getServerSupabase>, 'from'>;
+  readClient?: Pick<AzureReadClient, 'query'>;
 }
 
 export interface ApexRetailSourceEventRow {
@@ -121,11 +121,11 @@ export interface ApexRetailAdapterResult {
 export async function buildApexRetailSourceContextAssemblyInput(
   options: ApexRetailAdapterOptions,
 ): Promise<ApexRetailAdapterResult> {
-  const supabase = options.supabase ?? getServerSupabase();
+  const readClient = options.readClient ?? azureRead;
   const [sourceEvent, inventoryRecords, contextChunks] = await Promise.all([
-    loadApexRetailSourceEvent(supabase, options.eventId),
-    loadApexRetailInventoryRecords(supabase),
-    loadApexRetailContextChunks(supabase),
+    loadApexRetailSourceEvent(readClient, options.eventId),
+    loadApexRetailInventoryRecords(readClient),
+    loadApexRetailContextChunks(readClient),
   ]);
   const eventId = sourceEvent?.id ?? options.eventId;
 
@@ -227,64 +227,83 @@ export function toApexRetailLiveTenantContextSnapshot(
 }
 
 async function loadApexRetailSourceEvent(
-  supabase: Pick<ReturnType<typeof getServerSupabase>, 'from'>,
+  readClient: Pick<AzureReadClient, 'query'>,
   eventId: string | undefined,
 ): Promise<ApexRetailSourceEventRow | null> {
-  let query = supabase
-    .from('source_events')
-    .select('id,event_code,event_name,client_key,event_type,current_stage_key,lifecycle_state,linked_program_id,estimated_value_usd,trigger_description,scope_description,decision_owner,created_by_user_id,created_at,updated_at,value_at_stake_low_usd,value_at_stake_high_usd,lead_agent,current_stage_entered_at')
-    .eq('client_key', APEX_RETAIL_CLIENT_KEY)
-    .neq('lifecycle_state', 'archived')
-    .order('updated_at', { ascending: false });
-
+  const params: unknown[] = [APEX_RETAIL_CLIENT_KEY];
+  let eventFilter = '';
   if (eventId) {
-    query = UUID_REGEX.test(eventId)
-      ? query.eq('id', eventId)
-      : query.eq('event_code', eventId);
+    params.push(eventId);
+    eventFilter = UUID_REGEX.test(eventId)
+      ? ` AND id = $${params.length}`
+      : ` AND event_code = $${params.length}`;
   }
-
-  const { data, error } = await query.limit(1).maybeSingle();
-  if (error) {
-    throw new Error(`Apex Retail source_events query failed: ${error.message}`);
+  try {
+    const rows = await readClient.query<ApexRetailSourceEventRow>(
+      `SELECT id, event_code, event_name, client_key, event_type, current_stage_key,
+              lifecycle_state, linked_program_id, estimated_value_usd, trigger_description,
+              scope_description, decision_owner, created_by_user_id, created_at, updated_at,
+              value_at_stake_low_usd, value_at_stake_high_usd, lead_agent,
+              current_stage_entered_at
+         FROM source_events
+        WHERE client_key = $1
+          AND lifecycle_state <> 'archived'${eventFilter}
+        ORDER BY updated_at DESC
+        LIMIT 1`,
+      params,
+    );
+    return rows[0] ?? null;
+  } catch (error) {
+    throw new Error(
+      `Apex Retail source_events query failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
-
-  return (data as ApexRetailSourceEventRow | null) ?? null;
 }
 
 async function loadApexRetailInventoryRecords(
-  supabase: Pick<ReturnType<typeof getServerSupabase>, 'from'>,
+  readClient: Pick<AzureReadClient, 'query'>,
 ): Promise<ApexRetailInventoryRecordRow[]> {
-  const { data, error } = await supabase
-    .from('data_inventory_records')
-    .select('segment_id,record_id,title,source_doc,source_path,confidence,freshness_state,ingestion_status,last_reviewed,record_text')
-    .eq('tenant_key', APEX_RETAIL_BROKER_TENANT_KEY)
-    .in('segment_id', [...APEX_RETAIL_DATA_SEGMENTS])
-    .order('segment_id', { ascending: true })
-    .order('record_id', { ascending: true });
-
-  if (error) {
-    throw new Error(`Apex Retail data_inventory_records query failed: ${error.message}`);
+  try {
+    return await readClient.query<ApexRetailInventoryRecordRow>(
+      `SELECT segment_id, record_id, title, source_doc, source_path, confidence,
+              freshness_state, ingestion_status, last_reviewed, record_text
+         FROM data_inventory_records
+        WHERE tenant_key = $1
+          AND segment_id = ANY($2::text[])
+        ORDER BY segment_id ASC, record_id ASC`,
+      [APEX_RETAIL_BROKER_TENANT_KEY, [...APEX_RETAIL_DATA_SEGMENTS]],
+    );
+  } catch (error) {
+    throw new Error(
+      `Apex Retail data_inventory_records query failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
-
-  return (data as ApexRetailInventoryRecordRow[] | null) ?? [];
 }
 
 async function loadApexRetailContextChunks(
-  supabase: Pick<ReturnType<typeof getServerSupabase>, 'from'>,
+  readClient: Pick<AzureReadClient, 'query'>,
 ): Promise<ApexRetailContextChunkRow[]> {
-  const { data, error } = await supabase
-    .from('enterprise_context_chunks')
-    .select('chunk_id,source_segment_id,source_record_id,source_doc,source_path,chunk_text,embedding_status')
-    .eq('tenant_key', APEX_RETAIL_BROKER_TENANT_KEY)
-    .in('source_segment_id', [...APEX_RETAIL_DATA_SEGMENTS])
-    .order('source_segment_id', { ascending: true })
-    .order('chunk_id', { ascending: true });
-
-  if (error) {
-    throw new Error(`Apex Retail enterprise_context_chunks query failed: ${error.message}`);
+  try {
+    return await readClient.query<ApexRetailContextChunkRow>(
+      `SELECT chunk_id, source_segment_id, source_record_id, source_doc, source_path,
+              chunk_text, embedding_status
+         FROM enterprise_context_chunks
+        WHERE tenant_key = $1
+          AND source_segment_id = ANY($2::text[])
+        ORDER BY source_segment_id ASC, chunk_id ASC`,
+      [APEX_RETAIL_BROKER_TENANT_KEY, [...APEX_RETAIL_DATA_SEGMENTS]],
+    );
+  } catch (error) {
+    throw new Error(
+      `Apex Retail enterprise_context_chunks query failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
-
-  return (data as ApexRetailContextChunkRow[] | null) ?? [];
 }
 
 function normalizeStageKey(stageKey: string | null | undefined): SourceContextAssemblyInput['stageKey'] {

@@ -1,6 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin audit-log adapter.
- * DATA11 — Live path wired to Supabase.
+ * DATA11 — Live path wired to Azure read plane.
  */
 
 import type {
@@ -15,7 +15,7 @@ import {
   adminAuditEventFixture,
   adminAuditEventsFixture,
 } from './fixtures/admin-audit-log-fixture';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireClientId } from './admin-db-helpers';
 
 export async function getAdminAuditEvents(
@@ -25,18 +25,38 @@ export async function getAdminAuditEvents(
   if (isFixtureMode()) return adminAuditEventsFixture(tenantSlug, options);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  let query = supabase
-    .from('admin_audit_log')
-    .select('id, category, action, actor_person_id, target_kind, target_id, summary, created_at')
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false });
-  if (options?.limit) query = query.limit(options.limit);
-  if (options?.category) query = query.eq('category', options.category);
-  if (options?.since) query = query.gte('created_at', options.since);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const params: unknown[] = [clientId];
+  let where = 'WHERE client_id = $1';
+  if (options?.category) {
+    params.push(options.category);
+    where += ` AND category = $${params.length}`;
+  }
+  if (options?.since) {
+    params.push(options.since);
+    where += ` AND created_at >= $${params.length}`;
+  }
+  let limit = '';
+  if (options?.limit) {
+    params.push(options.limit);
+    limit = ` LIMIT $${params.length}`;
+  }
+  const rows = await azureRead.query<{
+    id: string;
+    category: string;
+    action: string;
+    actor_person_id: string | null;
+    target_kind: string | null;
+    target_id: string | null;
+    summary: string;
+    created_at: string;
+  }>(
+    `SELECT id, category, action, actor_person_id, target_kind, target_id, summary, created_at
+       FROM admin_audit_log
+      ${where}
+      ORDER BY created_at DESC${limit}`,
+    params,
+  );
+  return rows.map((row) => ({
     id: row.id,
     category: row.category as AdminAuditCategory,
     action: row.action,

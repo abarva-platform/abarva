@@ -1,6 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin datasets adapter.
- * DATA11 — Live path wired to Supabase.
+ * DATA11 — Live path wired to Azure read plane.
  */
 
 import type {
@@ -25,7 +25,7 @@ import {
   adminDatasetsFixture,
   adminLoadedFilesFixture,
 } from './fixtures/admin-datasets-fixture';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { mapDbRung, requireClientId } from './admin-db-helpers';
 
 export async function getAdminDatasets(
@@ -34,14 +34,22 @@ export async function getAdminDatasets(
   if (isFixtureMode()) return adminDatasetsFixture(tenantSlug);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_datasets')
-    .select('id, slug, label, domain, rung, row_count, owner_person_id, updated_at')
-    .eq('client_id', clientId)
-    .order('label');
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = await azureRead.select<{
+    id: string;
+    slug: string;
+    label: string;
+    domain: string;
+    rung: string;
+    row_count: number | null;
+    owner_person_id: string | null;
+    updated_at: string;
+  }>({
+    table: 'admin_datasets',
+    columns: ['id', 'slug', 'label', 'domain', 'rung', 'row_count', 'owner_person_id', 'updated_at'],
+    where: { client_id: clientId },
+    orderBy: { column: 'label' },
+  });
+  return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
     label: row.label,
@@ -109,16 +117,26 @@ export async function getAdminDatasetApprovals(
   if (isFixtureMode()) return adminDatasetApprovalsFixture(tenantSlug, status);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  let query = supabase
-    .from('admin_dataset_approvals')
-    .select('id, dataset_id, from_rung, to_rung, status, requested_by, requested_at, decided_by, decided_at, reason')
-    .eq('client_id', clientId)
-    .order('requested_at', { ascending: false });
-  if (status) query = query.eq('status', status);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = await azureRead.query<{
+    id: string;
+    dataset_id: string;
+    from_rung: string;
+    to_rung: string;
+    status: string;
+    requested_by: string | null;
+    requested_at: string;
+    decided_by: string | null;
+    decided_at: string | null;
+    reason: string | null;
+  }>(
+    `SELECT id, dataset_id, from_rung, to_rung, status, requested_by,
+            requested_at, decided_by, decided_at, reason
+       FROM admin_dataset_approvals
+      WHERE client_id = $1${status ? ' AND status = $2' : ''}
+      ORDER BY requested_at DESC`,
+    status ? [clientId, status] : [clientId],
+  );
+  return rows.map((row) => ({
     id: row.id,
     datasetId: row.dataset_id,
     fromRung: mapDbRung(row.from_rung),
@@ -139,16 +157,30 @@ export async function getAdminDatasetQuality(
   if (isFixtureMode()) return adminDatasetQualityFixture(tenantSlug, datasetId);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_dataset_quality')
-    .select('dataset_id, completeness, freshness, schema_conformance, lineage, sample_agreement, overall, measured_at')
-    .eq('client_id', clientId)
-    .eq('dataset_id', datasetId)
-    .order('measured_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
+  const data = await azureRead.maybeSingle<{
+    dataset_id: string;
+    completeness: number;
+    freshness: number;
+    schema_conformance: number;
+    lineage: number;
+    sample_agreement: number;
+    overall: number;
+    measured_at: string;
+  }>({
+    table: 'admin_dataset_quality',
+    columns: [
+      'dataset_id',
+      'completeness',
+      'freshness',
+      'schema_conformance',
+      'lineage',
+      'sample_agreement',
+      'overall',
+      'measured_at',
+    ],
+    where: { client_id: clientId, dataset_id: datasetId },
+    orderBy: { column: 'measured_at', direction: 'desc' },
+  });
   if (!data) return null;
   return {
     datasetId: data.dataset_id,
@@ -168,16 +200,33 @@ export async function getAdminDatasetQualityScores(
   if (isFixtureMode()) return adminDatasetQualityScoresFixture(tenantSlug);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_dataset_quality')
-    .select('dataset_id, completeness, freshness, schema_conformance, lineage, sample_agreement, overall, measured_at')
-    .eq('client_id', clientId)
-    .order('measured_at', { ascending: false });
-  if (error) throw error;
+  const data = await azureRead.select<{
+    dataset_id: string;
+    completeness: number;
+    freshness: number;
+    schema_conformance: number;
+    lineage: number;
+    sample_agreement: number;
+    overall: number;
+    measured_at: string;
+  }>({
+    table: 'admin_dataset_quality',
+    columns: [
+      'dataset_id',
+      'completeness',
+      'freshness',
+      'schema_conformance',
+      'lineage',
+      'sample_agreement',
+      'overall',
+      'measured_at',
+    ],
+    where: { client_id: clientId },
+    orderBy: { column: 'measured_at', direction: 'desc' },
+  });
   // Deduplicate: keep latest per dataset_id
   const seen = new Set<string>();
-  return (data ?? [])
+  return data
     .filter((row) => {
       if (seen.has(row.dataset_id)) return false;
       seen.add(row.dataset_id);
