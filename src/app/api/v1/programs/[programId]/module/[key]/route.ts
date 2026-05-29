@@ -2,13 +2,27 @@
 // Returns ModuleState (view-model).
 
 import { getModuleState, getProgramById } from '@/lib/programs/queries';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import type { ProgramModuleRow } from '@/lib/programs/types.db';
 import type { ModuleState } from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+type DeliverableWorkspaceRow = {
+  id: string;
+  status: string;
+  current_version: number;
+  title: string | null;
+  updated_at: string | null;
+};
+
+type DeliverableVersionWorkspaceRow = {
+  content: string | null;
+  quality_issues: Record<string, unknown> | null;
+  generated_at: string | null;
+};
 
 function mapStatus(
   dbStatus: ProgramModuleRow['status'],
@@ -32,38 +46,41 @@ function mapStatus(
 export async function GET(_req: Request, { params }: { params: Promise<{ programId: string; key: string }> }) {
   try {
     const { programId, key } = await params;
-    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId, { supabase });
+    const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
-    const modules = await getModuleState(ctx, programId, { supabase });
+    const modules = await getModuleState(ctx, programId);
     const moduleState = modules.find((m) => m.moduleKey === key);
     if (!moduleState) return Response.json({ error: 'module_not_found' }, { status: 404 });
 
     // Pull the active deliverable + latest version for provenance + draft content
-    const { data: delivRow } = await supabase
-      .from('deliverables_v2')
-      .select('id, status, current_version, title, updated_at')
-      .eq('engagement_id', programId)
-      .eq('deliverable_type_key', key)
-      .maybeSingle();
-    const deliverable = delivRow as { id: string; status: string; current_version: number; title: string; updated_at: string } | null;
+    const deliverable = await azureRead.maybeSingle<DeliverableWorkspaceRow>({
+      table: 'deliverables_v2',
+      columns: ['id', 'status', 'current_version', 'title', 'updated_at'],
+      where: {
+        engagement_id: programId,
+        deliverable_type_key: key,
+      },
+    });
 
     let lastEditedAt: string | undefined;
     let provenanceMap: Record<string, unknown> | null = null;
     let draftContent: string | null = null;
     if (deliverable) {
-      const { data: vRow } = await supabase
-        .from('deliverable_versions')
-        .select('content, quality_issues, generated_at')
-        .eq('deliverable_id', deliverable.id)
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const version = vRow as { content: string; quality_issues: Record<string, unknown> | null; generated_at: string } | null;
+      const version = await azureRead.maybeSingle<DeliverableVersionWorkspaceRow>({
+        table: 'deliverable_versions',
+        columns: ['content', 'quality_issues', 'generated_at'],
+        where: {
+          deliverable_id: deliverable.id,
+        },
+        orderBy: {
+          column: 'version',
+          direction: 'desc',
+        },
+      });
       if (version) {
-        lastEditedAt = version.generated_at;
+        lastEditedAt = version.generated_at ?? undefined;
         provenanceMap = (version.quality_issues?.provenance_map as Record<string, unknown> | null | undefined) ?? null;
         draftContent = version.content ?? null;
       }
