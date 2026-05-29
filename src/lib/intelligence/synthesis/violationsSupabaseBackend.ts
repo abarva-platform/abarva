@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { SynthesisViolationEvent, ViolationsBackend } from './violationsRecorder';
 import type { Violation, ViolationType } from './outputValidator';
 
@@ -51,7 +51,7 @@ export function canUseSupabaseViolationBackend(): boolean {
 
 export const supabaseViolationsBackend: ViolationsBackend = {
   async write(event: SynthesisViolationEvent): Promise<void> {
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const { error } = await sb.from('agent_quality_violation_events').insert(eventToDbRow(event));
     if (error) {
       throw new Error(`agent_quality_violation_insert_failed: ${error.message}`);
@@ -63,7 +63,7 @@ export async function listRecentAgentQualityViolationEvents(
   tenantKey: string,
   limit = 500,
 ): Promise<SynthesisViolationEvent[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from('agent_quality_violation_events')
     .select(

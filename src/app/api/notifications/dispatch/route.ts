@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import {
   buildNotificationEmailDispatchTasks,
@@ -34,7 +34,7 @@ function numberOrDefault(value: unknown, fallback: number): number {
 }
 
 async function deliveredTaskKeys(tenantKey: string): Promise<Set<string>> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('platform_notification_deliveries')
     .select('notification_event_id, recipient_email')
     .eq('tenant_key', canonicalTenantKey(tenantKey))
@@ -68,7 +68,7 @@ async function recordDeliveries(
     error_text: result.errorText,
     metadata_jsonb: { taskKey: result.taskKey },
   }));
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('platform_notification_deliveries')
     .insert(rows);
 }

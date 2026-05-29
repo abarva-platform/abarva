@@ -5,7 +5,7 @@
 
 import { NextRequest } from 'next/server';
 import { attachThreadToEngagement, getThread } from '@/lib/intelligence/db/threadRepository';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { requireTenancy, tenancyErrorResponse } from '../../../_intel-auth';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ thr
     if (!thread) return Response.json({ error: 'not_found' }, { status: 404 });
 
     // Verify engagement is in the same tenant
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const { data: eng } = await sb
       .from('engagements')
       .select('id, client_id')

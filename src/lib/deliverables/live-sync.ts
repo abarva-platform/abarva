@@ -6,7 +6,7 @@ import {
   stripOutcomeFeeBlock,
 } from '@/lib/agent/parse';
 import type { TurnRow } from '@/lib/db/turn';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 const PHASE1_DELIVERABLE_KEYS = ['charter', 'stakeholder_map', 'risk_register'] as const;
 
@@ -337,7 +337,7 @@ export async function syncPhaseOneArtifactsFromTurns(args: Phase1LiveSyncArgs): 
   if (args.currentPhase !== 1) return 0;
 
   const contextHash = `phase1-live-sync:${args.userTurn.id}:${args.agentTurn.id}`;
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: deliverables } = await sb
     .from('deliverables_v2')
     .select('id, deliverable_type_key, current_version, title')

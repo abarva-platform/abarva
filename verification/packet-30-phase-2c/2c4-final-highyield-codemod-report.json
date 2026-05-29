@@ -1,0 +1,218 @@
+{
+  "generatedAt": "2026-05-29T22:43:01.888Z",
+  "appliedCount": 37,
+  "skippedStorageCount": 9,
+  "results": [
+    {
+      "file": "src/lib/pilot-dashboard/aggregates.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/topics/db.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/onboarding/upload/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/billing/stripe.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/onboarding/[session]/status/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/onboarding/[session]/commit/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/notifications/store.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/notifications/dispatch/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/audit/log.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/programs/attachments/extract-text.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/lib/nexus/gateLifecycle.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/threads/[threadId]/attach/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/programs/[id]/attachments/upload/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/app/api/programs/[id]/attachments/[attachmentId]/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/app/api/tower/upload/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/upload/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/lib/deliverables/generate.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/body/route.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/app/api/programs/workspace/[moveId]/upload/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/lib/source/canvas-substrate/queries.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/deliverables/live-sync.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/deliverables/v2-generator.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/app/api/v1/agent/attachments/route.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/app/(maestro)/admin/onboarding/[session]/confirm/page.tsx",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/artifacts/repository.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/source/queries.ts",
+      "status": "skipped_storage"
+    },
+    {
+      "file": "src/lib/rls/rls-audit.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/supabase-server.ts",
+      "status": "skipped_compat_module"
+    },
+    {
+      "file": "src/lib/security/quarantine-audit-supabase.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/security/quarantine-audit-data-plane.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/tower/ingest-portfolio.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/intelligence/db/client.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/tower/outcome-context-writeback/persist.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/intelligence/ask/session-memory.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/intelligence/synthesis/violationsSupabaseBackend.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/integrations/ai-egress/supabase-audit.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/trace.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/decisions/auto-linker.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/evidence/ledger.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/program/completeProgram.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/maestro-extractor.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/program/commitProgram.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/source/commitSourceEvent.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/program/completeModule.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/program/registerPlaceholderPerson.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/tools/program/assignSponsor.ts",
+      "status": "applied"
+    }
+  ],
+  "manualFollowups": [
+    {
+      "file": "src/lib/pilot-dashboard/aggregates.ts",
+      "status": "applied_dynamic_import_cleanup"
+    },
+    {
+      "file": "src/lib/notifications/store.ts",
+      "status": "applied_default_factory_cleanup"
+    },
+    {
+      "file": "src/lib/source/queries.ts",
+      "status": "applied_db_write_split_from_storage"
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/generate/route.ts",
+      "status": "applied_db_read_split_from_storage"
+    }
+  ],
+  "finalCensus": {
+    "filesWithImportMatches": 10,
+    "importMatches": 29,
+    "acceptance": "lt_30_met"
+  }
+}

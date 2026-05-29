@@ -1,6 +1,6 @@
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { ContentBlock, TextBlock } from '@/lib/integrations/ai-egress';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getEngagementById } from '@/lib/db/engagement';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
 import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
@@ -108,7 +108,7 @@ function isTextBlock(block: ContentBlock): block is TextBlock {
 // ── Step 1 · Load spec ───────────────────────────────────────────────────
 
 export async function loadDeliverableType(typeKey: string): Promise<DeliverableTypeRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('deliverable_types')
     .select('*')
     .eq('type_key', typeKey)
@@ -167,7 +167,7 @@ export async function assembleGenerationContext(
   engagementId: string,
   preferredTopicKey?: string,
 ): Promise<GenerationContext> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const engagement = await getEngagementById(engagementId);
   if (!engagement) throw new Error(`engagement not found: ${engagementId}`);
 
@@ -260,7 +260,7 @@ export async function assembleGenerationContext(
 }
 
 async function loadDeliverableSummaries(engagementId: string): Promise<Record<string, string>> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: deliverables } = await sb
     .from('deliverables_v2')
     .select('id, deliverable_type_key, current_version')
@@ -288,7 +288,7 @@ async function loadDeliverableSummaries(engagementId: string): Promise<Record<st
 }
 
 async function loadPrimaryTopicKey(engagementId: string): Promise<string | null> {
-  const { data } = await getServerSupabase()
+  const { data } = await getAzureWriteFluentClient()
     .from('engagement_topics_map')
     .select('topic_key')
     .eq('engagement_id', engagementId)
@@ -557,7 +557,7 @@ export async function persistVersion(args: {
   structuredData?: Record<string, unknown> | null;
   title?: string;
 }): Promise<{ deliverable_id: string; version: number } | null> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   // Find or create the deliverable_v2 row
   const { data: existing } = await sb

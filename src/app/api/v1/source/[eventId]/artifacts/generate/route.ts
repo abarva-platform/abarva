@@ -11,6 +11,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
@@ -105,7 +106,7 @@ function seedEventMatchesClient(accountName: string, clientKey: string): boolean
 }
 
 async function getPersistedSourceEventRow(clientKey: string, eventId: string): Promise<SourceEventRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('source_events')
     .select('*')
     .eq('id', eventId)

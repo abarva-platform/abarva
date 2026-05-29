@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface AuditLogArgs {
   actorPersonId: string | null;
@@ -13,7 +13,7 @@ export interface AuditLogArgs {
 // Silent on failure — audit logging must never break a business write.
 export async function logAudit(args: AuditLogArgs): Promise<void> {
   try {
-    await getServerSupabase()
+    await getAzureWriteFluentClient()
       .from('audit_log')
       .insert({
         actor_person_id: args.actorPersonId,

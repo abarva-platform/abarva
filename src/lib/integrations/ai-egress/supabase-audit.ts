@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { AiEgressAuditRecord, AiEgressAuditSink } from './types';
 
 function toDbRow(record: Omit<AiEgressAuditRecord, 'id' | 'createdAt'>) {
@@ -50,7 +50,7 @@ function fromDbRow(row: Record<string, unknown>): AiEgressAuditRecord {
 export function createSupabaseAiEgressAuditSink(): AiEgressAuditSink {
   return {
     async write(record) {
-      const supabase = getServerSupabase();
+      const supabase = getAzureWriteFluentClient();
       const { data, error } = await supabase
         .from('ai_egress_audit')
         .insert(toDbRow(record))

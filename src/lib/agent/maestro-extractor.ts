@@ -1,5 +1,5 @@
 import { getAuditedAnthropicClient } from './stream';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface MaestroTurnContext {
   tenantId?: string | null;
@@ -49,7 +49,7 @@ Return ONLY the JSON object, no prose.`;
 }
 
 export async function updateMaestroProfile(ctx: MaestroTurnContext): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: person } = await sb
     .from('persons')
     .select('maestro_profile')

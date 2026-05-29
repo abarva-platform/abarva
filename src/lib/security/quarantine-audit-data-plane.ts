@@ -16,7 +16,7 @@
 // The produced row is byte-faithful to the pre-seam `.insert()` body: the same
 // snake_case columns, the same values. Default behavior is unchanged.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { selectWriteAdapter } from '@/lib/data-plane/write-adapters';
 import type { DataPlaneWriteAdapter } from '@/lib/data-plane/write-adapters';
 import { supabaseQuarantineAuditDataSource } from './quarantine-audit-supabase';
@@ -43,7 +43,7 @@ interface ParentRow {
 
 /** Look up the parent quarantine row (a read — stays on Supabase, transitive). */
 async function loadParent(id: string, failurePrefix: string): Promise<ParentRow> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from(AUDIT_TABLE)
     .select(

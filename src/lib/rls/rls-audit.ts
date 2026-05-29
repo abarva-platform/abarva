@@ -16,7 +16,7 @@
 // returns empty rows). The logRlsZeroResult helper is for cases where the
 // application knows a row should exist but got nothing back.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { auth } from '@clerk/nextjs/server';
 
 export interface RlsViolationContext {
@@ -50,7 +50,7 @@ export async function logRlsViolation(ctx: RlsViolationContext): Promise<void> {
 
     // Resolve a client_id for the audit log entry. Admin_audit_log requires
     // client_id UUID. Use the service-role client to look up by tenant key.
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const tenantKey = ctx.attemptedTenantKey ?? jwtTenantKey;
     let clientId: string | null = null;
     if (tenantKey) {

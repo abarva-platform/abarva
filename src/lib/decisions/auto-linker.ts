@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getEvidenceProofPointCount } from '@/lib/evidence/ledger';
 import type { GeneratedArtifactType } from '@/lib/artifacts/types';
 
@@ -111,7 +111,7 @@ function uuidOrNull(value: string | null | undefined): string | null {
 }
 
 async function touchThread(threadId: string): Promise<void> {
-  const { error } = await getServerSupabase()
+  const { error } = await getAzureWriteFluentClient()
     .from('decision_threads')
     .update({ last_activity_at: new Date().toISOString() })
     .eq('id', threadId);
@@ -132,7 +132,7 @@ export async function ensureDecisionThread(input: EnsureDecisionThreadInput): Pr
     last_activity_at: new Date().toISOString(),
   };
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('decision_threads')
     .upsert(row, { onConflict: 'client_id,thread_slug' })
     .select('*')
@@ -151,7 +151,7 @@ export async function linkDecisionArtifact(input: LinkDecisionArtifactInput): Pr
     link_reason: input.linkReason ?? null,
   };
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('decision_thread_links')
     .upsert(row, { onConflict: 'thread_id,surface,artifact_ref' })
     .select('*')
@@ -167,7 +167,7 @@ export async function getThreadForArtifact(
   artifactRef: string,
   clientId?: string,
 ): Promise<DecisionThreadRow | null> {
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data: link, error: linkError } = await supabase
     .from('decision_thread_links')
     .select('thread_id')
@@ -293,7 +293,7 @@ export async function linkGeneratedArtifactToDecisionThread(input: LinkGenerated
 }
 
 export async function getDecisionThreadDossier(threadId: string): Promise<DecisionThreadDossier | null> {
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { data: thread, error: threadError } = await supabase
     .from('decision_threads')
     .select('*')
@@ -329,7 +329,7 @@ export async function getDecisionThreadDossier(threadId: string): Promise<Decisi
 }
 
 export async function listDecisionThreads(clientId?: string): Promise<DecisionThreadDossier[]> {
-  let query = getServerSupabase()
+  let query = getAzureWriteFluentClient()
     .from('decision_threads')
     .select('*')
     .order('last_activity_at', { ascending: false })

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { asOnboardingSupabaseClient, commitOnboardingSession } from '@/lib/onboarding/apex-p18-pack-ingestion';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
   const { session: sessionId } = await params;
   try {
-    const session = await commitOnboardingSession(asOnboardingSupabaseClient(getServerSupabase()), sessionId);
+    const session = await commitOnboardingSession(asOnboardingSupabaseClient(getAzureWriteFluentClient()), sessionId);
     return Response.json({ ok: true, session });
   } catch (error) {
     return Response.json({
