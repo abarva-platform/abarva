@@ -14,6 +14,13 @@ const loadUserProgramAccessPolicy = jest.fn();
 const getExecuteRollupWithClient = jest.fn();
 const listThreads = jest.fn();
 const createThread = jest.fn();
+const mockAzureRead = {
+  query: jest.fn(),
+  select: jest.fn(),
+  maybeSingle: jest.fn(),
+  count: jest.fn(),
+  withSession: jest.fn(),
+};
 
 class MockTenancyError extends Error {
   constructor(public readonly code: 'unauthenticated' | 'no_client') {
@@ -87,6 +94,10 @@ jest.mock('@/lib/programs/nexus', () => ({
   createThread,
 }));
 
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: mockAzureRead,
+}));
+
 function makeGetReq(url = 'http://localhost'): NextRequest {
   return new Request(url, { method: 'GET' }) as unknown as NextRequest;
 }
@@ -121,6 +132,11 @@ describe('Programs read routes tenant guards', () => {
     getMilestones.mockResolvedValue([{ id: 'ms_1' }]);
     getRisks.mockResolvedValue([{ id: 'risk_1' }]);
     getWorkItems.mockResolvedValue([{ id: 'wi_1' }]);
+    mockAzureRead.query.mockResolvedValue([]);
+    mockAzureRead.select.mockResolvedValue([]);
+    mockAzureRead.maybeSingle.mockResolvedValue(null);
+    mockAzureRead.count.mockResolvedValue(0);
+    mockAzureRead.withSession.mockImplementation(async (fn) => fn(jest.fn()));
     getModuleState.mockResolvedValue([
       {
         id: 'mod_1',
@@ -254,8 +270,29 @@ describe('Programs read routes tenant guards', () => {
   it('module route: own-tenant pass, foreign 404, no-membership denied, write denied (no POST export)', async () => {
     const mod = await import('@/app/api/v1/programs/[programId]/module/[key]/route');
 
+    mockAzureRead.maybeSingle
+      .mockResolvedValueOnce({
+        id: 'deliverable_1',
+        status: 'draft',
+        current_version: 2,
+        title: 'Discovery Draft',
+        updated_at: '2026-05-29T12:00:00.000Z',
+      })
+      .mockResolvedValueOnce({
+        content: '# Draft',
+        quality_issues: { provenance_map: { source: 'unit-test' } },
+        generated_at: '2026-05-29T12:30:00.000Z',
+      });
     const ok = await mod.GET(makeGetReq(), { params: Promise.resolve({ programId: 'eng_1', key: 'discovery' }) });
     expect(ok.status).toBe(200);
+    const payload = await ok.json();
+    expect(payload.draftContent).toBe('# Draft');
+    expect(payload.provenanceMap).toEqual({ source: 'unit-test' });
+    expect(getProgramsRouteSupabase).not.toHaveBeenCalled();
+    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'deliverables_v2',
+      where: { engagement_id: 'eng_1', deliverable_type_key: 'discovery' },
+    }));
 
     getProgramById.mockResolvedValueOnce(null);
     const foreign = await mod.GET(makeGetReq(), {

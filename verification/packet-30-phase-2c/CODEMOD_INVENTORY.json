@@ -1,25 +1,25 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T17:12:49.187Z",
+    "generatedAt": "2026-05-29T17:26:52.079Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 307,
+    "totalFiles": 306,
     "filesWithImportMatches": 154,
     "importMatches": 628,
-    "filesWithBroadMatches": 307,
-    "broadMatches": 1461,
+    "filesWithBroadMatches": 306,
+    "broadMatches": 1459,
     "classificationCounts": {
       "DEFER_MANUAL": 126,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 94,
+      "READ_ONLY_SELECT": 93,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
       "admin": 2,
-      "api_routes": 37,
+      "api_routes": 36,
       "app_routes": 12,
       "intelligence": 31,
       "knowledge": 5,
@@ -9655,46 +9655,6 @@
       "notes": [
         "no static table names detected"
       ]
-    },
-    {
-      "file": "src/app/api/v1/programs/[programId]/module/[key]/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 0,
-      "broadMatches": 2,
-      "imports": [],
-      "helperRefs": [],
-      "tableNames": [
-        "deliverable_versions",
-        "deliverables_v2"
-      ],
-      "methodNames": [
-        "eq",
-        "error",
-        "find",
-        "from",
-        "json",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
     },
     {
       "file": "src/app/api/v1/intelligence/brief/render-pdf/route.ts",

@@ -21,6 +21,9 @@ type ClientRow = {
 const expectedByKey: ReadonlyMap<string, (typeof CANONICAL_TENANTS)[number]> =
   new Map(CANONICAL_TENANTS.map((tenant) => [tenant.key, tenant]));
 
+const LIVE_DRIFT_CHECK_ATTEMPTS = 6;
+const LIVE_DRIFT_CHECK_RETRY_MS = 15_000;
+
 function fail(message: string): never {
   console.error(`verify-canonical-tenants: ${message}`);
   process.exit(1);
@@ -48,17 +51,25 @@ function normalize(value: string | null | undefined) {
   return String(value ?? '').trim().toLowerCase();
 }
 
-async function main(): Promise<number> {
-  validateStaticAllowlist();
+function isSessionPoolPressure(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const message = typeof record?.message === 'string' ? record.message : '';
+  return (
+    record?.code === 'XX000' &&
+    (/EMAXCONNSESSION/i.test(message) || /max clients reached in session mode/i.test(message))
+  );
+}
 
-  if (!process.env.DATABASE_URL) {
-    console.log('verify-canonical-tenants: static allowlist clean; DATABASE_URL absent, skipping live drift check.');
-    return 0;
-  }
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
+async function runLiveDriftCheck(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  let connected = false;
   try {
+    await client.connect();
+    connected = true;
     const { rows } = await client.query<ClientRow>(`
       SELECT id::text, name, tenant_key, slug, industry_code, industry
       FROM public.clients
@@ -91,8 +102,34 @@ async function main(): Promise<number> {
       }
     }
   } finally {
-    await client.end();
+    if (connected) await client.end();
   }
+}
+
+async function runLiveDriftCheckWithRetry(): Promise<void> {
+  for (let attempt = 1; attempt <= LIVE_DRIFT_CHECK_ATTEMPTS; attempt += 1) {
+    try {
+      await runLiveDriftCheck();
+      return;
+    } catch (error) {
+      if (!isSessionPoolPressure(error) || attempt === LIVE_DRIFT_CHECK_ATTEMPTS) throw error;
+      console.warn(
+        `verify-canonical-tenants: session pool is saturated; retrying ${attempt}/${LIVE_DRIFT_CHECK_ATTEMPTS - 1} in ${LIVE_DRIFT_CHECK_RETRY_MS / 1000}s`,
+      );
+      await sleep(LIVE_DRIFT_CHECK_RETRY_MS);
+    }
+  }
+}
+
+async function main(): Promise<number> {
+  validateStaticAllowlist();
+
+  if (!process.env.DATABASE_URL) {
+    console.log('verify-canonical-tenants: static allowlist clean; DATABASE_URL absent, skipping live drift check.');
+    return 0;
+  }
+
+  await runLiveDriftCheckWithRetry();
 
   console.log(`verify-canonical-tenants: clean (${CANONICAL_TENANTS.length} canonical tenants verified).`);
   return 0;

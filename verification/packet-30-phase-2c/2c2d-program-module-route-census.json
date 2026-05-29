@@ -1,0 +1,50 @@
+{
+  "slice": "2c2d-program-module-route",
+  "generatedAt": "2026-05-29T17:26:52.079Z",
+  "runtimeSupabaseImportCensus": {
+    "before": {
+      "filesWithImportMatches": 154,
+      "importMatches": 628,
+      "filesWithBroadMatches": 307,
+      "broadMatches": 1461
+    },
+    "after": {
+      "filesWithImportMatches": 154,
+      "importMatches": 628,
+      "filesWithBroadMatches": 306,
+      "broadMatches": 1459
+    },
+    "delta": {
+      "filesWithImportMatches": 0,
+      "importMatches": 0,
+      "filesWithBroadMatches": -1,
+      "broadMatches": -2
+    }
+  },
+  "codemodInventory": {
+    "before": {
+      "totalFiles": 307,
+      "readOnlySelect": 94,
+      "apiRoutes": 37
+    },
+    "after": {
+      "totalFiles": 306,
+      "readOnlySelect": 93,
+      "apiRoutes": 36
+    },
+    "delta": {
+      "totalFiles": -1,
+      "readOnlySelect": -1,
+      "apiRoutes": -1
+    }
+  },
+  "targetFilesRemovedFromInventory": [
+    "src/app/api/v1/programs/[programId]/module/[key]/route.ts"
+  ],
+  "validation": {
+    "focusedJest": "pass: 2 suites / 36 tests",
+    "focusedEslint": "pass",
+    "runtimeSupabaseImportCensus": "pass/warn: expected warn mode, no import-helper delta, broad-match delta -1 file / -2 matches",
+    "phase2cInventory": "pass: READ_ONLY_SELECT 94 -> 93"
+  }
+}
