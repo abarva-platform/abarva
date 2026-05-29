@@ -2,7 +2,7 @@
 // Every query scoped by client_id (tenancy) and applies archived/deleted
 // exclusion. DB stays `engagements`.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { allowedProgramIdsForUser, canReadProgram } from '@/lib/auth/program-access-policy';
 import {
   createSupabaseProgramsReadAdapter,
@@ -195,6 +195,20 @@ async function assertProgramReadable(ctx: TenancyCtx, programId: string): Promis
   }
 }
 
+async function readRowsWithOptionalSupabase<R extends Record<string, unknown>>(
+  opts: { supabase?: SupabaseClient },
+  buildSupabase: (sb: SupabaseClient) => PromiseLike<{ data: unknown; error: unknown }>,
+  azureSql: string,
+  azureParams: readonly unknown[],
+): Promise<R[]> {
+  if (opts.supabase) {
+    const { data, error } = await buildSupabase(opts.supabase);
+    if (error) throw error;
+    return ((data as R[] | null) ?? []);
+  }
+  return azureRead.query<R>(azureSql, azureParams, { missingTable: 'throw' });
+}
+
 export async function getModuleState(
   ctx: TenancyCtx,
   programId: string,
@@ -202,15 +216,19 @@ export async function getModuleState(
 ): Promise<ProgramModuleRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('program_modules')
-    .select('*')
-    .eq('engagement_id', programId)
-    .order('phase_number', { ascending: true })
-    .order('module_order', { ascending: true, nullsFirst: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('program_modules')
+        .select('*')
+        .eq('engagement_id', programId)
+        .order('phase_number', { ascending: true })
+        .order('module_order', { ascending: true, nullsFirst: false }),
+    'SELECT * FROM program_modules WHERE engagement_id = $1 ORDER BY phase_number ASC, module_order ASC NULLS LAST',
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     moduleKey: r.module_key as string,
@@ -232,14 +250,18 @@ export async function getWorkItems(
 ): Promise<ProgramWorkItemRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('program_work_items')
-    .select('*')
-    .eq('engagement_id', programId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('program_work_items')
+        .select('*')
+        .eq('engagement_id', programId)
+        .order('created_at', { ascending: false }),
+    'SELECT * FROM program_work_items WHERE engagement_id = $1 ORDER BY created_at DESC',
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     parentId: (r.parent_id as string | null) ?? null,
@@ -264,14 +286,18 @@ export async function getMilestones(
 ): Promise<ProgramMilestoneRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('program_milestones')
-    .select('*')
-    .eq('engagement_id', programId)
-    .order('target_date', { ascending: true, nullsFirst: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('program_milestones')
+        .select('*')
+        .eq('engagement_id', programId)
+        .order('target_date', { ascending: true, nullsFirst: false }),
+    'SELECT * FROM program_milestones WHERE engagement_id = $1 ORDER BY target_date ASC NULLS LAST',
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     name: r.name as string,
@@ -292,14 +318,18 @@ export async function getRisks(
 ): Promise<ProgramRiskRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('program_risks')
-    .select('*')
-    .eq('engagement_id', programId)
-    .order('identified_at', { ascending: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('program_risks')
+        .select('*')
+        .eq('engagement_id', programId)
+        .order('identified_at', { ascending: false }),
+    'SELECT * FROM program_risks WHERE engagement_id = $1 ORDER BY identified_at DESC',
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     title: r.title as string,
@@ -323,15 +353,19 @@ export async function getOpenMaestroFlags(
 ): Promise<MaestroFlag[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('maestro_oversight_flags')
-    .select('*')
-    .eq('engagement_id', programId)
-    .is('resolved_at', null)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('maestro_oversight_flags')
+        .select('*')
+        .eq('engagement_id', programId)
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false }),
+    'SELECT * FROM maestro_oversight_flags WHERE engagement_id = $1 AND resolved_at IS NULL ORDER BY created_at DESC',
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     flagType: r.flag_type as MaestroFlag['flagType'],
@@ -354,15 +388,19 @@ export async function getPendingApprovals(
 ): Promise<FounderApprovalRequestRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('founder_approval_requests')
-    .select('*')
-    .eq('engagement_id', programId)
-    .eq('status', 'pending')
-    .order('deadline_at', { ascending: true, nullsFirst: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
+    opts,
+    (sb) =>
+      sb
+        .from('founder_approval_requests')
+        .select('*')
+        .eq('engagement_id', programId)
+        .eq('status', 'pending')
+        .order('deadline_at', { ascending: true, nullsFirst: false }),
+    "SELECT * FROM founder_approval_requests WHERE engagement_id = $1 AND status = 'pending' ORDER BY deadline_at ASC NULLS LAST",
+    [programId],
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     requestType: r.request_type as FounderApprovalRequestRow['requestType'],
@@ -382,12 +420,16 @@ export async function getPendingApprovals(
 export async function getPhaseSnapshots(ctx: TenancyCtx, programId: string, phaseNumber?: number): Promise<PhaseSnapshot[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
-  let q = sb.from('phase_snapshots').select('*').eq('engagement_id', programId);
-  if (phaseNumber !== undefined) q = q.eq('phase_number', phaseNumber);
-  const { data, error } = await q.order('created_at', { ascending: false });
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((r) => ({
+  const params: unknown[] = [programId];
+  const phaseFilter = phaseNumber !== undefined
+    ? ` AND phase_number = $${params.push(phaseNumber)}`
+    : '';
+  const rows = await azureRead.query<Record<string, unknown>>(
+    `SELECT * FROM phase_snapshots WHERE engagement_id = $1${phaseFilter} ORDER BY created_at DESC`,
+    params,
+    { missingTable: 'throw' },
+  );
+  return rows.map((r) => ({
     id: r.id as string,
     engagementId: r.engagement_id as string,
     phaseNumber: r.phase_number as number,
