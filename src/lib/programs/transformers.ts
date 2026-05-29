@@ -10,7 +10,7 @@
 // Where the DB doesn't yet carry a view-model field, we resolve it by
 // calling back into queries.ts or return a stable default.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type {
   ActivityEntry,
   ArchetypeKey,
@@ -51,6 +51,8 @@ import { evaluateGate, gateCriteriaForPhase } from './governance';
 import { PHASE_LABELS } from './types.db';
 import { getPhaseLabel } from './phase-labels';
 import { canonicalClientDisplayName } from '@/lib/client-config';
+
+type TransformerOptions = { supabase?: unknown };
 
 // ── Client name mapping ────────────────────────────────────────────────
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
@@ -109,9 +111,12 @@ function sanitizePersonRef<T extends PersonRef | ParticipantRef>(person: T, clie
 }
 
 async function resolveClientName(clientId: string): Promise<ProgramSummary['clientName']> {
-  const sb = getServerSupabase();
-  const { data } = await sb.from('clients').select('name').eq('id', clientId).maybeSingle();
-  const raw = (data as { name: string } | null)?.name ?? '';
+  const row = await azureRead.maybeSingle<{ name: string | null }>({
+    table: 'clients',
+    columns: ['name'],
+    where: { id: clientId },
+  });
+  const raw = row?.name ?? '';
   return canonicalProgramClientName({ clientId, name: raw });
 }
 
@@ -148,7 +153,6 @@ async function buildGateCriteria(
   ctx: TenancyCtx,
   moveId: string,
   currentPhase: number,
-  opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
 ): Promise<StrategicMove['gateCriteria']> {
   const criteria = gateCriteriaForPhase(currentPhase);
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
@@ -157,9 +161,7 @@ async function buildGateCriteria(
   // Evaluate the current → next transition against real program state.
   let failedKeys: Set<string> | null = null;
   try {
-    const check = await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1, {
-      supabase: opts.supabase,
-    });
+    const check = await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1);
     // A `phase_mismatch` / `program_not_found` failure is not a per-criterion
     // signal — in that case treat the criteria as not yet verified rather
     // than marking every concrete criterion failed.
@@ -205,13 +207,11 @@ function placeholderPerson(id = 'unknown'): PersonRef {
 
 async function resolvePerson(userId: string | null, fallbackClientName?: string): Promise<PersonRef> {
   if (!userId) return placeholderPerson();
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('persons')
-    .select('id, name, role')
-    .eq('id', userId)
-    .maybeSingle();
-  const p = data as { id: string; name: string | null; role: string | null } | null;
+  const p = await azureRead.maybeSingle<{ id: string; name: string | null; role: string | null }>({
+    table: 'persons',
+    columns: ['id', 'name', 'role'],
+    where: { id: userId },
+  });
   if (!p) return placeholderPerson(userId);
   return {
     id: p.id,
@@ -239,21 +239,20 @@ function authorityToViewerRole(auth: string | null, fallback: ViewerRole = 'team
 }
 
 async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('engagement_participants')
-    .select('user_id, approval_authority, last_touchpoint_at, role')
-    .eq('engagement_id', engagementId);
-
-  const rows = (data as ParticipantRow[] | null) ?? [];
+  const rows = await azureRead.select<ParticipantRow>({
+    table: 'engagement_participants',
+    columns: ['user_id', 'approval_authority', 'last_touchpoint_at', 'role'],
+    where: { engagement_id: engagementId },
+  });
   const personIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
   if (personIds.length === 0) return [];
-  const { data: persons } = await sb
-    .from('persons')
-    .select('id, name, role, email')
-    .in('id', personIds);
+  const persons = await azureRead.select<{ id: string; name: string | null; role: string | null; email: string | null }>({
+    table: 'persons',
+    columns: ['id', 'name', 'role', 'email'],
+    where: { id: { op: 'in', value: personIds } },
+  });
   const personById = new Map<string, { id: string; name: string | null; role: string | null }>();
-  for (const p of (persons as Array<{ id: string; name: string | null; role: string | null; email: string | null }> | null) ?? []) {
+  for (const p of persons) {
     personById.set(p.id, { id: p.id, name: p.name, role: p.role });
   }
 
@@ -273,13 +272,14 @@ async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
 }
 
 async function resolveSponsorAndLead(engagementId: string): Promise<{ sponsor: PersonRef; lead: PersonRef }> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('engagement_participants')
-    .select('user_id, approval_authority, role')
-    .eq('engagement_id', engagementId)
-    .in('approval_authority', ['sponsor', 'approver']);
-  const rows = (data as Array<{ user_id: string; approval_authority: string | null; role: string | null }> | null) ?? [];
+  const rows = await azureRead.select<{ user_id: string; approval_authority: string | null; role: string | null }>({
+    table: 'engagement_participants',
+    columns: ['user_id', 'approval_authority', 'role'],
+    where: {
+      engagement_id: engagementId,
+      approval_authority: { op: 'in', value: ['sponsor', 'approver'] },
+    },
+  });
   const sponsorRow = rows.find((r) => r.approval_authority === 'sponsor');
   const leadRow = rows.find((r) => r.approval_authority === 'approver');
   const [sponsor, lead] = await Promise.all([
@@ -403,40 +403,62 @@ export function classifierMatchToViewModel(
 
 // ── ProgramCore → ProgramSummary ───────────────────────────────────────
 export async function buildProgramSummary(program: ProgramCore): Promise<ProgramSummary> {
-  const sb = getServerSupabase();
   const [{ sponsor, lead }, clientName, patternMatchRow, charterRow, lastActivityRow, openFlagsCount, pendingApprovalsCount] = await Promise.all([
     resolveSponsorAndLead(program.id),
     resolveClientName(program.clientId),
-    sb.from('pattern_match_logs').select('pattern_key').eq('engagement_id', program.id).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1).maybeSingle(),
-    sb.from('deliverables_v2').select('title, status').eq('engagement_id', program.id).eq('deliverable_type_key', 'charter').maybeSingle(),
-    sb.from('module_state_log').select('created_at').eq('engagement_id', program.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    sb.from('maestro_oversight_flags').select('id', { count: 'exact', head: true }).eq('engagement_id', program.id).is('resolved_at', null).eq('severity', 'critical'),
-    sb.from('founder_approval_requests').select('id', { count: 'exact', head: true }).eq('engagement_id', program.id).eq('status', 'pending'),
+    azureRead.maybeSingle<{ pattern_key: string }>({
+      table: 'pattern_match_logs',
+      columns: ['pattern_key'],
+      where: { engagement_id: program.id, acted_upon: true },
+      orderBy: { column: 'acted_upon_at', direction: 'desc' },
+    }),
+    azureRead.maybeSingle<{ title: string; status: string }>({
+      table: 'deliverables_v2',
+      columns: ['title', 'status'],
+      where: { engagement_id: program.id, deliverable_type_key: 'charter' },
+    }),
+    azureRead.maybeSingle<{ created_at: string }>({
+      table: 'module_state_log',
+      columns: ['created_at'],
+      where: { engagement_id: program.id },
+      orderBy: { column: 'created_at', direction: 'desc' },
+    }),
+    azureRead.count({
+      table: 'maestro_oversight_flags',
+      where: { engagement_id: program.id, resolved_at: null, severity: 'critical' },
+    }),
+    azureRead.count({
+      table: 'founder_approval_requests',
+      where: { engagement_id: program.id, status: 'pending' },
+    }),
   ]);
 
-  const patternKey = (patternMatchRow.data as { pattern_key: string } | null)?.pattern_key ?? undefined;
+  const patternKey = patternMatchRow?.pattern_key ?? undefined;
   let patternName: string | undefined;
   if (patternKey) {
-    const { data: topic } = await sb.from('engagement_topics').select('title').eq('topic_key', patternKey).maybeSingle();
-    patternName = (topic as { title: string } | null)?.title;
+    const topic = await azureRead.maybeSingle<{ title: string }>({
+      table: 'engagement_topics',
+      columns: ['title'],
+      where: { topic_key: patternKey },
+    });
+    patternName = topic?.title;
   }
 
-  const charterData = charterRow.data as { title: string; status: string } | null;
   const charterSummary = sanitizeRetiredTenantText(
-    charterData?.title ?? `${program.name} charter in draft`,
+    charterRow?.title ?? `${program.name} charter in draft`,
     clientName,
   );
 
   const shape: ProgramSummary['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
 
-  const lastActivityAt = (lastActivityRow.data as { created_at: string } | null)?.created_at ?? program.createdAt;
+  const lastActivityAt = lastActivityRow?.created_at ?? program.createdAt;
 
   const modules = await getModuleState({ clientId: program.clientId, userId: '_sys_' } as TenancyCtx, program.id).catch(() => [] as ProgramModuleRow[]);
   const phases = phaseStatesFor(program, modules);
   const phaseStatus = programPhaseStatus(program, phases);
 
-  const critical = openFlagsCount.count ?? 0;
-  const pending = pendingApprovalsCount.count ?? 0;
+  const critical = openFlagsCount ?? 0;
+  const pending = pendingApprovalsCount ?? 0;
   const attentionBadge = critical > 0
     ? { label: `${critical} critical flag${critical === 1 ? '' : 's'}`, variant: 'danger' as AttentionVariant }
     : pending > 0
@@ -465,7 +487,6 @@ export async function buildProgramSummary(program: ProgramCore): Promise<Program
 
 // ── ProgramCore → ProgramFullState ─────────────────────────────────────
 export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCore): Promise<ProgramFullState> {
-  const sb = getServerSupabase();
   const [{ sponsor, lead }, clientName, team, moduleRows, workItems, milestones, risks, deliverables, threadRows, patternMatchRow] = await Promise.all([
     resolveSponsorAndLead(program.id),
     resolveClientName(program.clientId),
@@ -474,21 +495,46 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
     getWorkItems(ctx, program.id),
     getMilestones(ctx, program.id),
     getRisks(ctx, program.id),
-    sb.from('deliverables_v2').select('id, module_key:deliverable_type_key, status, current_version, title, updated_at, created_by').eq('engagement_id', program.id).order('updated_at', { ascending: false }),
-    sb.from('program_threads').select('id, title, metadata_jsonb, last_turn_at').eq('engagement_id', program.id).is('archived_at', null).order('last_turn_at', { ascending: false }),
-    sb.from('pattern_match_logs').select('pattern_key').eq('engagement_id', program.id).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1).maybeSingle(),
+    azureRead.query<{
+      id: string;
+      module_key: string | null;
+      status: string;
+      current_version: number;
+      title: string;
+      updated_at: string;
+      created_by: string | null;
+    }>(
+      'SELECT id, deliverable_type_key AS module_key, status, current_version, title, updated_at, created_by FROM deliverables_v2 WHERE engagement_id = $1 ORDER BY updated_at DESC',
+      [program.id],
+    ),
+    azureRead.select<{ id: string; title: string | null; metadata_jsonb: Record<string, unknown> | null; last_turn_at: string | null }>({
+      table: 'program_threads',
+      columns: ['id', 'title', 'metadata_jsonb', 'last_turn_at'],
+      where: { engagement_id: program.id, archived_at: null },
+      orderBy: { column: 'last_turn_at', direction: 'desc' },
+    }),
+    azureRead.maybeSingle<{ pattern_key: string }>({
+      table: 'pattern_match_logs',
+      columns: ['pattern_key'],
+      where: { engagement_id: program.id, acted_upon: true },
+      orderBy: { column: 'acted_upon_at', direction: 'desc' },
+    }),
   ]);
 
-  const delivRows = (deliverables.data as Array<{ id: string; module_key: string | null; status: string; current_version: number; title: string; updated_at: string; created_by: string | null }> | null) ?? [];
+  const delivRows = deliverables;
   const modules: ModuleState[] = moduleRows.map((r) => moduleRowToState(r, delivRows));
   const phases = phaseStatesFor(program, moduleRows);
   const phaseStatus = programPhaseStatus(program, phases);
 
-  const patternKey = (patternMatchRow.data as { pattern_key: string } | null)?.pattern_key ?? undefined;
+  const patternKey = patternMatchRow?.pattern_key ?? undefined;
   let patternName: string | undefined;
   if (patternKey) {
-    const { data: topic } = await sb.from('engagement_topics').select('title').eq('topic_key', patternKey).maybeSingle();
-    patternName = (topic as { title: string } | null)?.title;
+    const topic = await azureRead.maybeSingle<{ title: string }>({
+      table: 'engagement_topics',
+      columns: ['title'],
+      where: { topic_key: patternKey },
+    });
+    patternName = topic?.title;
   }
 
   const shape: ProgramFullState['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
@@ -518,7 +564,7 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
     }),
   );
 
-  const threads: ThreadRef[] = ((threadRows.data as Array<{ id: string; title: string | null; metadata_jsonb: Record<string, unknown> | null; last_turn_at: string | null }> | null) ?? [])
+  const threads: ThreadRef[] = threadRows
     .map((t) => ({
       id: t.id,
       title: sanitizeRetiredTenantText(t.title ?? '—', clientName),
@@ -576,15 +622,12 @@ function placeholderNexus(): PersonRef {
 }
 
 async function buildCharterSummary(engagementId: string, programName: string): Promise<CharterSummary> {
-  const sb = getServerSupabase();
-  const { data: charter } = await sb
-    .from('deliverables_v2')
-    .select('title, status')
-    .eq('engagement_id', engagementId)
-    .eq('deliverable_type_key', 'charter')
-    .maybeSingle();
-  const c = charter as { title: string; status: string } | null;
-  if (!c) {
+  const charter = await azureRead.maybeSingle<{ title: string; status: string }>({
+    table: 'deliverables_v2',
+    columns: ['title', 'status'],
+    where: { engagement_id: engagementId, deliverable_type_key: 'charter' },
+  });
+  if (!charter) {
     return {
       headline: `${programName} · charter pending`,
       bullets: ['Charter draft has not been produced yet'],
@@ -593,22 +636,21 @@ async function buildCharterSummary(engagementId: string, programName: string): P
     };
   }
   return {
-    headline: c.title,
-    bullets: [`Status: ${c.status}`],
-    sponsorDecision: c.status === 'signed_off' ? 'Signed off' : 'Awaiting sponsor decision',
+    headline: charter.title,
+    bullets: [`Status: ${charter.status}`],
+    sponsorDecision: charter.status === 'signed_off' ? 'Signed off' : 'Awaiting sponsor decision',
     baselineNeed: 'Baseline captured',
   };
 }
 
 async function buildActivity(engagementId: string): Promise<ActivityEntry[]> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('module_state_log')
-    .select('id, module_key, previous_state, new_state, changed_by_user_id, notes, created_at')
-    .eq('engagement_id', engagementId)
-    .order('created_at', { ascending: false })
-    .limit(15);
-  const rows = (data as Array<{ id: string; module_key: string; previous_state: string | null; new_state: string; changed_by_user_id: string | null; notes: string | null; created_at: string }> | null) ?? [];
+  const rows = await azureRead.select<{ id: string; module_key: string; previous_state: string | null; new_state: string; changed_by_user_id: string | null; notes: string | null; created_at: string }>({
+    table: 'module_state_log',
+    columns: ['id', 'module_key', 'previous_state', 'new_state', 'changed_by_user_id', 'notes', 'created_at'],
+    where: { engagement_id: engagementId },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit: 15,
+  });
   return Promise.all(
     rows.map(async (r) => ({
       id: r.id,
@@ -744,37 +786,36 @@ export async function getMoveStatus(
   ctx: TenancyCtx,
   move: Pick<ProgramCore, 'id' | 'status' | 'lifecycleState' | 'currentPhase'>,
 ): Promise<MoveStatus> {
-  const sb = getServerSupabase();
   const [latestSnapshot, openFlagsResult, pendingFounderResult, milestonesResult] = await Promise.all([
-    sb
-      .from('phase_snapshots')
-      .select('approval_status, created_at')
-      .eq('engagement_id', move.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    sb
-      .from('maestro_oversight_flags')
-      .select('severity')
-      .eq('engagement_id', move.id)
-      .is('resolved_at', null),
-    sb
-      .from('founder_approval_requests')
-      .select('id')
-      .eq('engagement_id', move.id)
-      .eq('status', 'pending')
-      .limit(1),
-    sb
-      .from('program_milestones')
-      .select('name, status, target_date')
-      .eq('engagement_id', move.id)
-      .order('target_date', { ascending: true, nullsFirst: false }),
+    azureRead.maybeSingle<{ approval_status?: string; created_at: string }>({
+      table: 'phase_snapshots',
+      columns: ['approval_status', 'created_at'],
+      where: { engagement_id: move.id },
+      orderBy: { column: 'created_at', direction: 'desc' },
+    }),
+    azureRead.select<{ severity: string | null }>({
+      table: 'maestro_oversight_flags',
+      columns: ['severity'],
+      where: { engagement_id: move.id, resolved_at: null },
+    }),
+    azureRead.select<{ id: string }>({
+      table: 'founder_approval_requests',
+      columns: ['id'],
+      where: { engagement_id: move.id, status: 'pending' },
+      limit: 1,
+    }),
+    azureRead.select<{ name: string; status: string | null; target_date: string | null }>({
+      table: 'program_milestones',
+      columns: ['name', 'status', 'target_date'],
+      where: { engagement_id: move.id },
+      orderBy: { column: 'target_date', direction: 'asc', nulls: 'last' },
+    }),
   ]);
 
   void ctx;
-  const openFlags = (openFlagsResult.data as Array<{ severity: string | null }> | null) ?? [];
-  const pendingFounder = (pendingFounderResult.data as Array<{ id: string }> | null) ?? [];
-  const milestones = (milestonesResult.data as Array<{ name: string; status: string | null }> | null) ?? [];
+  const openFlags = openFlagsResult;
+  const pendingFounder = pendingFounderResult;
+  const milestones = milestonesResult;
   const hasCriticalFlag = openFlags.some((flag) => flag.severity === 'critical');
   if (hasCriticalFlag) {
     return {
@@ -785,7 +826,7 @@ export async function getMoveStatus(
     };
   }
 
-  const approvalStatus = (latestSnapshot.data as { approval_status?: string } | null)?.approval_status ?? null;
+  const approvalStatus = latestSnapshot?.approval_status ?? null;
   if (move.lifecycleState === 'submitted_for_approval' || pendingFounder.length > 0 || approvalStatus === 'pending') {
     return {
       statusKey: 'awaiting_decision',
@@ -828,20 +869,17 @@ export async function getMoveStatus(
   };
 }
 
-async function fetchLinkedEvidence(
-  sb: ReturnType<typeof getServerSupabase>,
-  moveId: string,
-): Promise<StrategicMove['linkedEvidence']> {
+async function fetchLinkedEvidence(moveId: string): Promise<StrategicMove['linkedEvidence']> {
   // Evidence binding convention for move-level retrieval:
   // related_entity_type='engagement' AND related_entity_id=<moveId>
-  const { data } = await sb
-    .from('evidence')
-    .select('id, summary')
-    .eq('related_entity_type', 'engagement')
-    .eq('related_entity_id', moveId)
-    .order('created_at', { ascending: false })
-    .limit(10);
-  return ((data as Array<{ id: string; summary: string | null }> | null) ?? []).map((row) => ({
+  const rows = await azureRead.select<{ id: string; summary: string | null }>({
+    table: 'evidence',
+    columns: ['id', 'summary'],
+    where: { related_entity_type: 'engagement', related_entity_id: moveId },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit: 10,
+  });
+  return rows.map((row) => ({
     id: row.id,
     anchor: row.id,
     summary: row.summary ?? 'Evidence item',
@@ -858,43 +896,38 @@ function compactDeliverablePreview(content: string | null | undefined): string {
     .slice(0, 220);
 }
 
-async function fetchMoveDeliverables(
-  sb: ReturnType<typeof getServerSupabase>,
-  moveId: string,
-): Promise<StrategicMove['deliverables']> {
-  const { data: deliverableRows } = await sb
-    .from('deliverables_v2')
-    .select('id, deliverable_type_key, title, status, current_version, updated_at')
-    .eq('engagement_id', moveId)
-    .order('updated_at', { ascending: false })
-    .limit(24);
-
-  const rows = (deliverableRows as Array<{
+async function fetchMoveDeliverables(moveId: string): Promise<StrategicMove['deliverables']> {
+  const rows = await azureRead.select<{
     id: string;
     deliverable_type_key: string;
     title: string | null;
     status: string | null;
     current_version: number | null;
     updated_at: string | null;
-  }> | null) ?? [];
+  }>({
+    table: 'deliverables_v2',
+    columns: ['id', 'deliverable_type_key', 'title', 'status', 'current_version', 'updated_at'],
+    where: { engagement_id: moveId },
+    orderBy: { column: 'updated_at', direction: 'desc' },
+    limit: 24,
+  });
 
   if (rows.length === 0) {
-    return fetchArtifactIndexFallback(sb, moveId);
+    return fetchArtifactIndexFallback(moveId);
   }
 
   const deliverableIds = rows.map((row) => row.id);
-  const { data: versionRows } = await sb
-    .from('deliverable_versions')
-    .select('deliverable_id, version, content, generated_at')
-    .in('deliverable_id', deliverableIds)
-    .order('generated_at', { ascending: false });
-
-  const versions = (versionRows as Array<{
+  const versions = await azureRead.select<{
     deliverable_id: string;
     version: number;
     content: string | null;
     generated_at: string | null;
-  }> | null) ?? [];
+  }>({
+    table: 'deliverable_versions',
+    columns: ['deliverable_id', 'version', 'content', 'generated_at'],
+    where: { deliverable_id: { op: 'in', value: deliverableIds } },
+    orderBy: { column: 'generated_at', direction: 'desc' },
+  });
 
   const versionByDeliverable = new Map<string, { content: string | null }>();
   for (const row of versions) {
@@ -918,18 +951,8 @@ async function fetchMoveDeliverables(
   });
 }
 
-async function fetchArtifactIndexFallback(
-  sb: ReturnType<typeof getServerSupabase>,
-  moveId: string,
-): Promise<StrategicMove['deliverables']> {
-  const { data } = await sb
-    .from('move_artifact_index')
-    .select('artifact_id, artifact_type, title, summary, artifact_kind, status, created_at, updated_at')
-    .eq('engagement_id', moveId)
-    .order('created_at', { ascending: false })
-    .limit(24);
-
-  const artifactRows = (data as Array<{
+async function fetchArtifactIndexFallback(moveId: string): Promise<StrategicMove['deliverables']> {
+  const artifactRows = await azureRead.select<{
     artifact_id: string;
     artifact_type: string;
     title: string | null;
@@ -938,7 +961,13 @@ async function fetchArtifactIndexFallback(
     status: string | null;
     created_at: string | null;
     updated_at: string | null;
-  }> | null) ?? [];
+  }>({
+    table: 'move_artifact_index',
+    columns: ['artifact_id', 'artifact_type', 'title', 'summary', 'artifact_kind', 'status', 'created_at', 'updated_at'],
+    where: { engagement_id: moveId },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit: 24,
+  });
 
   return artifactRows.map((row) => ({
     id: row.artifact_id,
@@ -954,44 +983,47 @@ async function fetchArtifactIndexFallback(
 export async function buildStrategicMove(
   ctx: TenancyCtx,
   move: ProgramCore,
-  opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
+  opts: TransformerOptions = {},
 ): Promise<StrategicMove> {
-  const sb = opts.supabase ?? getServerSupabase();
+  void opts;
   const [clientRow, peopleRows, activityRows, moduleRows, phaseSnapshots, linkedEvidence, deliverables, moveStatus] = await Promise.all([
-    sb.from('clients').select('id, name, industry_code, slug').eq('id', move.clientId).maybeSingle(),
-    sb
-      .from('engagement_participants')
-      .select('person_id, user_id, role, approval_authority')
-      .eq('engagement_id', move.id),
-    sb
-      .from('program_audit_log')
-      .select('created_at, action, rationale, actor_id')
-      .eq('engagement_id', move.id)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    sb
-      .from('module_state_log')
-      .select('created_at, module_key, new_state, changed_by_user_id')
-      .eq('engagement_id', move.id)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    sb
-      .from('phase_snapshots')
-      .select('created_at, phase_number, approval_status')
-      .eq('engagement_id', move.id)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    fetchLinkedEvidence(sb, move.id),
-    fetchMoveDeliverables(sb, move.id),
+    azureRead.maybeSingle<{ id: string; name: string; industry_code: string | null; slug: string | null }>({
+      table: 'clients',
+      columns: ['id', 'name', 'industry_code', 'slug'],
+      where: { id: move.clientId },
+    }),
+    azureRead.select<{ person_id: string | null; user_id: string; role: string | null; approval_authority: string | null }>({
+      table: 'engagement_participants',
+      columns: ['person_id', 'user_id', 'role', 'approval_authority'],
+      where: { engagement_id: move.id },
+    }),
+    azureRead.select<{ created_at: string; action: string; rationale: string | null; actor_id: string | null }>({
+      table: 'program_audit_log',
+      columns: ['created_at', 'action', 'rationale', 'actor_id'],
+      where: { engagement_id: move.id },
+      orderBy: { column: 'created_at', direction: 'desc' },
+      limit: 8,
+    }),
+    azureRead.select<{ created_at: string; module_key: string; new_state: string; changed_by_user_id: string | null }>({
+      table: 'module_state_log',
+      columns: ['created_at', 'module_key', 'new_state', 'changed_by_user_id'],
+      where: { engagement_id: move.id },
+      orderBy: { column: 'created_at', direction: 'desc' },
+      limit: 8,
+    }),
+    azureRead.select<{ created_at: string; phase_number: number; approval_status: string }>({
+      table: 'phase_snapshots',
+      columns: ['created_at', 'phase_number', 'approval_status'],
+      where: { engagement_id: move.id },
+      orderBy: { column: 'created_at', direction: 'desc' },
+      limit: 8,
+    }),
+    fetchLinkedEvidence(move.id),
+    fetchMoveDeliverables(move.id),
     getMoveStatus(ctx, move),
   ]);
 
-  const participantRows = (peopleRows.data as Array<{
-    person_id: string | null;
-    user_id: string;
-    role: string | null;
-    approval_authority: string | null;
-  }> | null) ?? [];
+  const participantRows = peopleRows;
   const personIds = Array.from(
     new Set(
       participantRows
@@ -999,11 +1031,15 @@ export async function buildStrategicMove(
         .filter(Boolean),
     ),
   );
-  const { data: personData } = personIds.length
-    ? await sb.from('persons').select('id, name, role').in('id', personIds)
-    : { data: [] as Array<{ id: string; name: string | null; role: string | null }> };
+  const personData = personIds.length
+    ? await azureRead.select<{ id: string; name: string | null; role: string | null }>({
+        table: 'persons',
+        columns: ['id', 'name', 'role'],
+        where: { id: { op: 'in', value: personIds } },
+      })
+    : [];
   const personMap = new Map<string, { name: string; role: string }>(
-    ((personData as Array<{ id: string; name: string | null; role: string | null }> | null) ?? []).map((row) => [
+    personData.map((row) => [
       row.id,
       { name: row.name ?? 'Unknown', role: row.role ?? 'Team member' },
     ]),
@@ -1023,33 +1059,19 @@ export async function buildStrategicMove(
   const sponsorPersonId = move.sponsorPersonId || sponsorFromParticipants?.person_id || sponsorFromParticipants?.user_id || null;
   const sponsorPerson = sponsorPersonId ? personMap.get(sponsorPersonId) : null;
 
-  const auditActivity = ((activityRows.data as Array<{
-    created_at: string;
-    action: string;
-    rationale: string | null;
-    actor_id: string | null;
-  }> | null) ?? []).map((row) => ({
+  const auditActivity = activityRows.map((row) => ({
     at: row.created_at,
     actor: row.actor_id && personMap.get(row.actor_id) ? personMap.get(row.actor_id)!.name : 'System',
     action: row.action,
     summary: row.rationale ?? row.action,
   }));
-  const moduleActivity = ((moduleRows.data as Array<{
-    created_at: string;
-    module_key: string;
-    new_state: string;
-    changed_by_user_id: string | null;
-  }> | null) ?? []).map((row) => ({
+  const moduleActivity = moduleRows.map((row) => ({
     at: row.created_at,
     actor: row.changed_by_user_id && personMap.get(row.changed_by_user_id) ? personMap.get(row.changed_by_user_id)!.name : 'System',
     action: `${row.module_key}:${row.new_state}`,
     summary: `${row.module_key} moved to ${row.new_state}`,
   }));
-  const snapshotActivity = ((phaseSnapshots.data as Array<{
-    created_at: string;
-    phase_number: number;
-    approval_status: string;
-  }> | null) ?? []).map((row) => ({
+  const snapshotActivity = phaseSnapshots.map((row) => ({
     at: row.created_at,
     actor: 'System',
     action: `phase_snapshot:P${row.phase_number}`,
@@ -1064,10 +1086,9 @@ export async function buildStrategicMove(
     ctx,
     move.id,
     phase,
-    { supabase: sb },
   );
 
-  const client = (clientRow.data as { id: string; name: string; industry_code: string | null; slug: string | null } | null) ?? {
+  const client = clientRow ?? {
     id: move.clientId,
     name: 'Tenant',
     industry_code: null,
@@ -1155,7 +1176,7 @@ export async function buildStrategicMove(
 export async function buildStrategicMovePortfolio(
   ctx: TenancyCtx,
   programs: ProgramCore[],
-  opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
+  opts: TransformerOptions = {},
 ): Promise<StrategicMovePortfolio> {
   const moves = await Promise.all(programs.map((program) => buildStrategicMove(ctx, program, opts)));
   const counts = {
