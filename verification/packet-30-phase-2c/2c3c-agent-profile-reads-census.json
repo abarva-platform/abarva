@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-05-29T19:34:21.258Z",
+  "slice": "2c3c-agent-profile-reads",
+  "before": {
+    "filesWithImportMatches": 144,
+    "importMatches": 594,
+    "filesWithBroadMatches": 298,
+    "broadMatches": 1401
+  },
+  "after": {
+    "filesWithImportMatches": 140,
+    "importMatches": 582,
+    "filesWithBroadMatches": 294,
+    "broadMatches": 1383
+  },
+  "delta": {
+    "filesWithImportMatches": -4,
+    "importMatches": -12,
+    "filesWithBroadMatches": -4,
+    "broadMatches": -18
+  },
+  "changedRuntimeFiles": [
+    "src/lib/agent/prompts/_shared/maestro-context.ts",
+    "src/lib/agent/prompts/_shared/topic-intelligence.ts",
+    "src/lib/agent/tools/program/lookupPerson.ts",
+    "src/lib/integrations/ai-egress/tenant-policy.ts"
+  ]
+}

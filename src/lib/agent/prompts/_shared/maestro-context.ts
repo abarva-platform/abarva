@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 // Assembles a plain-text USER CONTEXT block pulling:
 // - persons.maestro_profile (JSONB) — structured evolving profile
@@ -11,13 +11,11 @@ export async function assembleMaestroContextBlock(args: {
   personId: string;
   personName: string;
 }): Promise<string> {
-  const sb = getServerSupabase();
-
-  const { data: person } = await sb
-    .from('persons')
-    .select('name, maestro_profile')
-    .eq('id', args.personId)
-    .maybeSingle();
+  const person = await azureRead.maybeSingle<{ name: string; maestro_profile: Profile | null }>({
+    table: 'persons',
+    columns: ['name', 'maestro_profile'],
+    where: { id: args.personId },
+  }).catch(() => null);
   if (!person) return '';
 
   type Profile = {
@@ -29,16 +27,20 @@ export async function assembleMaestroContextBlock(args: {
     engagements_run?: number;
     industries_touched?: string[];
   };
-  const profile = ((person as { maestro_profile?: Profile | null }).maestro_profile ?? {}) as Profile;
+  const profile = person.maestro_profile ?? {};
 
-  const { data: notesRows } = await sb
-    .from('relationship_notes')
-    .select('note_text, created_at')
-    .eq('person_id', args.personId)
-    .eq('subject_type', 'user')
-    .order('created_at', { ascending: false })
-    .limit(5);
-  const notes = ((notesRows as Array<{ note_text: string }> | null) ?? []).map((n) => n.note_text);
+  const notesRows = await azureRead.select<{ note_text: string }>({
+    table: 'relationship_notes',
+    columns: ['note_text', 'created_at'],
+    where: {
+      person_id: args.personId,
+      subject_type: 'user',
+    },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit: 5,
+    missingTable: 'empty',
+  }).catch(() => []);
+  const notes = notesRows.map((n) => n.note_text);
 
   const hasAnySignal =
     profile.background ||
@@ -51,7 +53,7 @@ export async function assembleMaestroContextBlock(args: {
   if (!hasAnySignal) return '';
 
   const lines: string[] = [];
-  lines.push(`USER CONTEXT (you're working with ${(person as { name: string }).name} today)`);
+  lines.push(`USER CONTEXT (you're working with ${person.name} today)`);
   if (profile.background) lines.push(`- Background: ${profile.background}`);
   if (profile.domain_depth?.length) lines.push(`- Domain depth: ${profile.domain_depth.join(', ')}`);
   if (profile.communication_style) lines.push(`- Style: ${profile.communication_style}`);

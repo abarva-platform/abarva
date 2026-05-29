@@ -19,7 +19,7 @@ import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 interface LookupPersonInput {
   /** Free-form query — name, role title (e.g. "CIO"), or both. */
@@ -102,7 +102,6 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
       };
     }
 
-    const sb = getServerSupabase();
     const queryRaw = input.query.trim();
     if (!queryRaw) {
       return {
@@ -138,32 +137,6 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
     // fall back to the raw query as a last-resort substring search.
     const effectiveTokens = tokens.length > 0 ? tokens : [queryRaw.toLowerCase()];
 
-    // Build OR clauses: for each token, OR across name/role/email.
-    // PostgREST `.or()` syntax: `field.ilike.value` joined by commas.
-    // Patterns must NOT contain unescaped commas; tokens are
-    // single-word or already-sanitized so we're safe.
-    const orFilters: string[] = [];
-    for (const token of effectiveTokens) {
-      const pat = `%${token}%`;
-      orFilters.push(`name.ilike.${pat}`);
-      orFilters.push(`role.ilike.${pat}`);
-      orFilters.push(`email.ilike.${pat}`);
-    }
-
-    const { data, error } = await sb
-      .from('persons')
-      .select('id, name, role, organization, email')
-      .or(orFilters.join(','))
-      .limit(50);
-
-    if (error) {
-      return {
-        success: false,
-        error: `lookup_failed: ${error.message}`,
-        recovery: "Couldn't query the persons table. Want me to try again, or capture this as a placeholder?",
-      };
-    }
-
     type Row = {
       id: string;
       name: string;
@@ -172,7 +145,25 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
       email: string | null;
     };
 
-    const allRows = (data ?? []) as Row[];
+    const patterns = effectiveTokens.map((token) => `%${token}%`);
+    let allRows: Row[];
+    try {
+      allRows = await azureRead.query<Row>(
+        `SELECT id, name, role, organization, email
+           FROM persons
+          WHERE name ILIKE ANY($1::text[])
+             OR role ILIKE ANY($1::text[])
+             OR email ILIKE ANY($1::text[])
+          LIMIT 50`,
+        [patterns],
+      );
+    } catch (error) {
+      return {
+        success: false,
+        error: `lookup_failed: ${error instanceof Error ? error.message : String(error)}`,
+        recovery: "Couldn't query the persons table. Want me to try again, or capture this as a placeholder?",
+      };
+    }
 
     // Scope by tenant: prefer rows whose organization matches the
     // active client's name (case-insensitive contains either way).

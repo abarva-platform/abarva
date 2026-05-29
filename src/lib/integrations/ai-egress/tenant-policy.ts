@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { CONSERVATIVE_TENANT_AI_POLICY } from './policy';
 import type { TenantAiPolicy } from './types';
 
@@ -22,20 +22,22 @@ export async function loadTenantAiPolicyRecord(tenantIdOrKey: string): Promise<{
   tenantId: string;
   policy: TenantAiPolicy;
 }> {
-  const supabase = getServerSupabase();
-  const base = supabase.from('clients').select('id, ai_policy').limit(1);
-  const { data, error } = UUID_RE.test(tenantIdOrKey)
-    ? await base.eq('id', tenantIdOrKey).maybeSingle()
-    : await base.or(`tenant_key.eq.${tenantIdOrKey},name.eq.${tenantIdOrKey}`).maybeSingle();
-
-  if (error) {
-    throw new Error(`AI policy lookup failed: ${error.message}`);
-  }
-
-  const row = data as { id?: string; ai_policy?: unknown } | null;
-  const policy = row?.ai_policy;
+  const resolvedRow = await (UUID_RE.test(tenantIdOrKey)
+    ? azureRead.maybeSingle<{ id: string; ai_policy: unknown }>({
+        table: 'clients',
+        columns: ['id', 'ai_policy'],
+        where: { id: tenantIdOrKey },
+      })
+    : azureRead.query<{ id: string; ai_policy: unknown }>(
+        'SELECT id, ai_policy FROM clients WHERE tenant_key = $1 OR name = $1 LIMIT 1',
+        [tenantIdOrKey],
+      ).then((rows) => rows[0] ?? null)
+  ).catch((error) => {
+    throw new Error(`AI policy lookup failed: ${error instanceof Error ? error.message : String(error)}`);
+  });
+  const policy = resolvedRow?.ai_policy;
   return {
-    tenantId: row?.id ?? tenantIdOrKey,
+    tenantId: resolvedRow?.id ?? tenantIdOrKey,
     policy: isTenantAiPolicy(policy) ? policy : CONSERVATIVE_TENANT_AI_POLICY,
   };
 }
