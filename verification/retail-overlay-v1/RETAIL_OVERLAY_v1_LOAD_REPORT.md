@@ -1,10 +1,10 @@
 # Retail Overlay v1 Load Report
 
-Generated: 2026-05-30T09:54:10.892Z
+Generated: 2026-05-30T09:59:11.546Z
 
 | Field | Value |
 | --- | --- |
-| Mode | dry-run |
+| Mode | apply |
 | Tenant | apex-retail |
 | Overlay namespace | retail-v1 |
 | Total chunks extracted | 5691 |
@@ -12,11 +12,11 @@ Generated: 2026-05-30T09:54:10.892Z
 | Pack synthesis chunks | 301 |
 | Distinct packs | 301 |
 | Distinct super-categories | 60 |
-| DB rows deleted before load | not applied |
-| DB rows inserted/upserted | not applied |
-| DB retail-v1 total after load | not applied |
-| DB retail-v1 pending embeddings after load | not applied |
-| DB retail-v1 embedded after load | not applied |
+| DB rows deleted before load | 0 |
+| DB rows inserted/upserted | 5691 |
+| DB retail-v1 total after load | 5691 |
+| DB retail-v1 pending embeddings after initial load | 5691 |
+| DB retail-v1 embedded after initial load | 0 |
 
 ## Validation
 
@@ -29,4 +29,4 @@ Generated: 2026-05-30T09:54:10.892Z
 
 ## Notes
 
-This load report covers extraction and Azure Postgres load state. Embedding completion is verified separately after `src/scripts/embed-pending-chunks.ts --tenant apex-retail --postgres-only` drains the pending queue.
+This load report covers extraction and Azure Postgres load state. Embedding completion is verified in `verification/retail-overlay-v1/RETAIL_OVERLAY_v1_EMBEDDING_REPORT.md`.
