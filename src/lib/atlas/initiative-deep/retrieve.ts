@@ -19,8 +19,10 @@
 //     for the kernel `null` path.
 //   - Confidence tiers downgrade honestly when input data is incomplete.
 
-import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient,
+} from '@/lib/data-plane/postgresCompat';
 import type {
   AtlasTenancyCtx,
   InitiativeDeepView,
@@ -61,7 +63,7 @@ export type { InitiativeDeepView, AtlasTenancyCtx };
 export async function getInitiativeDeepView(
   initiativeId: string,
   tenancy: AtlasTenancyCtx,
-  client: PostgresCompatClient = getServerSupabase(),
+  client: PostgresCompatClient = getAzureReadFluentClient(),
 ): Promise<InitiativeDeepView | null> {
   // 1. Core row — tenant-scoped. If the row does not belong to this tenant,
   //    we return null. This is the first line of the P0 invariant.
