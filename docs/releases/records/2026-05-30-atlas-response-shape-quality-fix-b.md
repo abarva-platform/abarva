@@ -18,9 +18,9 @@ Closes three findings from the Atlas CXO-quality audit (PR #2562) in the respons
 
 ## Layer Impact
 
-- **Application layer (Atlas response shaping)**: `src/lib/agent/response-shape.ts` — three behavioral changes (boilerplate strip, Evidence/Missing exclusion, `formatPercentile` helper).
-- **Application layer (Atlas surfaces)**: `src/components/atlas/CohortPeerVisualization.tsx`, `src/components/atlas/AtlasSignalDetailPanel.tsx`, `src/lib/atlas/scripted-engine.ts` — every user-rendered percentile site now routes through `formatPercentile`.
-- No data layer, broker, or substrate change.
+- `runtime-app-lane`: Atlas advisor prose is shaped differently. Comparison tables no longer paste templated boilerplate, the Evidence and Missing bullets cannot collide on the same sentence, and every visible percentile now carries metric + cohort + sample-size context. Affected files: `src/lib/agent/response-shape.ts`, `src/components/atlas/CohortPeerVisualization.tsx`, `src/components/atlas/AtlasSignalDetailPanel.tsx`, `src/lib/atlas/scripted-engine.ts`.
+- `qa-validation-lane`: 10 new invariant tests under the "Atlas CXO-quality audit invariants" describe block in `src/lib/agent/__tests__/response-shape.test.ts` lock the three fixes against regression — no boilerplate as a fallback, no duplicate Evidence/Missing string, no naked "Xth percentile" without context.
+- No data, broker, substrate, or migration change.
 
 ## Client Applicability
 
