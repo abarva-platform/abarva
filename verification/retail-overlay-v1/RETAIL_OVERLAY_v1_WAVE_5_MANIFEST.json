@@ -1,0 +1,557 @@
+{
+  "generatedAt": "2026-05-30",
+  "wave": 5,
+  "totalPatterns": 1350,
+  "packs": [
+    {
+      "code": "AJ",
+      "title": "CPG / Consumer Goods Strategy",
+      "packs": [
+        {
+          "code": "AJ.1",
+          "title": "CPG Portfolio & Brand Architecture",
+          "count": 19
+        },
+        {
+          "code": "AJ.2",
+          "title": "CPG Innovation Pipelines",
+          "count": 19
+        },
+        {
+          "code": "AJ.3",
+          "title": "CPG Margin Structure & Pricing Strategy",
+          "count": 19
+        },
+        {
+          "code": "AJ.4",
+          "title": "CPG Sustainability Strategy",
+          "count": 19
+        },
+        {
+          "code": "AJ.5",
+          "title": "CPG Direct-to-Consumer Strategy",
+          "count": 18
+        }
+      ],
+      "target": 94
+    },
+    {
+      "code": "AK",
+      "title": "Trade Promotion & Joint Business Planning",
+      "packs": [
+        {
+          "code": "AK.1",
+          "title": "Trade Promotion Investment Strategy",
+          "count": 18
+        },
+        {
+          "code": "AK.2",
+          "title": "JBP Cadence & Governance",
+          "count": 18
+        },
+        {
+          "code": "AK.3",
+          "title": "Slotting & Listing Fees",
+          "count": 17
+        }
+      ],
+      "target": 53
+    },
+    {
+      "code": "AL",
+      "title": "Wholesale, Distribution & Cash-and-Carry",
+      "packs": [
+        {
+          "code": "AL.1",
+          "title": "Wholesale Business Models",
+          "count": 18
+        },
+        {
+          "code": "AL.2",
+          "title": "Distribution Operating Models",
+          "count": 18
+        },
+        {
+          "code": "AL.3",
+          "title": "Cash-and-Carry & B2B Retail",
+          "count": 17
+        }
+      ],
+      "target": 53
+    },
+    {
+      "code": "AM",
+      "title": "3PL & Logistics Service Providers",
+      "packs": [
+        {
+          "code": "AM.1",
+          "title": "3PL Operating Models",
+          "count": 19
+        },
+        {
+          "code": "AM.2",
+          "title": "3PL Vendor Selection",
+          "count": 18
+        },
+        {
+          "code": "AM.3",
+          "title": "4PL & Lead Logistics Provider",
+          "count": 18
+        },
+        {
+          "code": "AM.4",
+          "title": "3PL Performance Management",
+          "count": 18
+        }
+      ],
+      "target": 73
+    },
+    {
+      "code": "AN",
+      "title": "Shipping Carriers & Carrier Strategy",
+      "packs": [
+        {
+          "code": "AN.1",
+          "title": "Carrier Mix Strategy",
+          "count": 18
+        },
+        {
+          "code": "AN.2",
+          "title": "Carrier Negotiation",
+          "count": 18
+        },
+        {
+          "code": "AN.3",
+          "title": "Regional & Specialty Carriers",
+          "count": 17
+        }
+      ],
+      "target": 53
+    },
+    {
+      "code": "AO",
+      "title": "Cross-Border & International Retail",
+      "packs": [
+        {
+          "code": "AO.1",
+          "title": "International Expansion Strategy",
+          "count": 18
+        },
+        {
+          "code": "AO.2",
+          "title": "Cross-Border E-Commerce Fulfillment",
+          "count": 18
+        },
+        {
+          "code": "AO.3",
+          "title": "International Tax & Duty Strategy",
+          "count": 17
+        }
+      ],
+      "target": 53
+    },
+    {
+      "code": "AP",
+      "title": "Marketplaces (Amazon, Walmart, TikTok Shop, etc.)",
+      "packs": [
+        {
+          "code": "AP.1",
+          "title": "Marketplace Seller Strategy",
+          "count": 19
+        },
+        {
+          "code": "AP.2",
+          "title": "Marketplace Operations (Listings, FBA, Ads)",
+          "count": 18
+        },
+        {
+          "code": "AP.3",
+          "title": "Marketplace Diversification",
+          "count": 18
+        },
+        {
+          "code": "AP.4",
+          "title": "Marketplace-Vendor Relationship Dynamics",
+          "count": 18
+        }
+      ],
+      "target": 73
+    },
+    {
+      "code": "AQ",
+      "title": "DTC Brands & Brand-Direct Models",
+      "packs": [
+        {
+          "code": "AQ.1",
+          "title": "DTC Business Model Evolution",
+          "count": 18
+        },
+        {
+          "code": "AQ.2",
+          "title": "DTC Channel Mix (Owned vs Wholesale vs Retail)",
+          "count": 17
+        },
+        {
+          "code": "AQ.3",
+          "title": "DTC Unit Economics",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "AR",
+      "title": "Subscription Commerce",
+      "packs": [
+        {
+          "code": "AR.1",
+          "title": "Subscription Business Models",
+          "count": 19
+        },
+        {
+          "code": "AR.2",
+          "title": "Subscription Churn Dynamics",
+          "count": 18
+        }
+      ],
+      "target": 37
+    },
+    {
+      "code": "AS",
+      "title": "Social Commerce",
+      "packs": [
+        {
+          "code": "AS.1",
+          "title": "Social Commerce Platforms (TikTok Shop, Instagram, Pinterest)",
+          "count": 18
+        },
+        {
+          "code": "AS.2",
+          "title": "Creator & Affiliate Strategy",
+          "count": 17
+        },
+        {
+          "code": "AS.3",
+          "title": "Social Commerce Conversion Funnels",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "AT",
+      "title": "Live Commerce & Conversational Commerce",
+      "packs": [
+        {
+          "code": "AT.1",
+          "title": "Live Commerce Platforms",
+          "count": 18
+        },
+        {
+          "code": "AT.2",
+          "title": "Live Commerce Production",
+          "count": 17
+        },
+        {
+          "code": "AT.3",
+          "title": "Conversational Commerce (Chat-Based Shopping)",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "AU",
+      "title": "MarTech & AdTech Ecosystem",
+      "packs": [
+        {
+          "code": "AU.1",
+          "title": "MarTech Stack Architecture",
+          "count": 19
+        },
+        {
+          "code": "AU.2",
+          "title": "AdTech Stack & Programmatic",
+          "count": 18
+        },
+        {
+          "code": "AU.3",
+          "title": "Customer Data Activation Platforms",
+          "count": 18
+        },
+        {
+          "code": "AU.4",
+          "title": "Identity & Attribution Post-Cookie",
+          "count": 18
+        }
+      ],
+      "target": 73
+    },
+    {
+      "code": "AV",
+      "title": "Travel Retail (Duty-Free, Airport, Cruise)",
+      "packs": [
+        {
+          "code": "AV.1",
+          "title": "Duty-Free Retail Operating Model",
+          "count": 18
+        },
+        {
+          "code": "AV.2",
+          "title": "Airport Concession Strategy",
+          "count": 17
+        },
+        {
+          "code": "AV.3",
+          "title": "Cruise & Hospitality Retail",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "AW",
+      "title": "Mall Operators & Retail Real Estate Investment",
+      "packs": [
+        {
+          "code": "AW.1",
+          "title": "Mall REIT Operating Models",
+          "count": 18
+        },
+        {
+          "code": "AW.2",
+          "title": "Mall Repositioning Strategies",
+          "count": 17
+        },
+        {
+          "code": "AW.3",
+          "title": "Outlet Center Strategy",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "AX",
+      "title": "Consumer Financial Services & BNPL",
+      "packs": [
+        {
+          "code": "AX.1",
+          "title": "BNPL Provider Landscape (Affirm, Klarna, Afterpay)",
+          "count": 19
+        },
+        {
+          "code": "AX.2",
+          "title": "Consumer Credit & Co-Brand Cards",
+          "count": 18
+        },
+        {
+          "code": "AX.3",
+          "title": "Consumer Banking-Retail Partnerships",
+          "count": 18
+        },
+        {
+          "code": "AX.4",
+          "title": "Embedded Finance for Retail",
+          "count": 18
+        }
+      ],
+      "target": 73
+    },
+    {
+      "code": "AY",
+      "title": "Retail Finance: Unit Economics & Profitability",
+      "packs": [
+        {
+          "code": "AY.1",
+          "title": "Retail P&L Structure",
+          "count": 20
+        },
+        {
+          "code": "AY.2",
+          "title": "Comparable Store Sales & Same-Store Metrics",
+          "count": 20
+        },
+        {
+          "code": "AY.3",
+          "title": "Gross Margin Dynamics & Drivers",
+          "count": 20
+        },
+        {
+          "code": "AY.4",
+          "title": "Working Capital & Cash Flow",
+          "count": 19
+        }
+      ],
+      "target": 79
+    },
+    {
+      "code": "AZ",
+      "title": "Retail M&A & Industry Consolidation",
+      "packs": [
+        {
+          "code": "AZ.1",
+          "title": "Retail M&A Strategy",
+          "count": 18
+        },
+        {
+          "code": "AZ.2",
+          "title": "Retail Roll-Up Strategies",
+          "count": 17
+        },
+        {
+          "code": "AZ.3",
+          "title": "Retail Bankruptcy & Restructuring Patterns",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "BA",
+      "title": "Cybersecurity for Retail (incl. PCI-DSS)",
+      "packs": [
+        {
+          "code": "BA.1",
+          "title": "Retail Cyber Threat Landscape",
+          "count": 18
+        },
+        {
+          "code": "BA.2",
+          "title": "PCI-DSS Compliance Operations",
+          "count": 17
+        },
+        {
+          "code": "BA.3",
+          "title": "Customer Data Breach Response",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "BB",
+      "title": "Privacy, GDPR/CCPA, Consumer Data",
+      "packs": [
+        {
+          "code": "BB.1",
+          "title": "Privacy Compliance for Retail",
+          "count": 18
+        },
+        {
+          "code": "BB.2",
+          "title": "Consent Management Platforms",
+          "count": 17
+        },
+        {
+          "code": "BB.3",
+          "title": "Privacy-Forward Personalization",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "BC",
+      "title": "Regulatory: Labor, Trade, Consumer Protection",
+      "packs": [
+        {
+          "code": "BC.1",
+          "title": "Labor Regulation (Scheduling, Wage, Classification)",
+          "count": 18
+        },
+        {
+          "code": "BC.2",
+          "title": "Trade Regulation (Tariffs, Customs)",
+          "count": 17
+        },
+        {
+          "code": "BC.3",
+          "title": "Consumer Protection (FTC, State AGs)",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "BD",
+      "title": "Sustainability & ESG",
+      "packs": [
+        {
+          "code": "BD.1",
+          "title": "Packaging Sustainability",
+          "count": 18
+        },
+        {
+          "code": "BD.2",
+          "title": "Circular Retail Models",
+          "count": 17
+        },
+        {
+          "code": "BD.3",
+          "title": "Supply Chain ESG",
+          "count": 17
+        }
+      ],
+      "target": 52
+    },
+    {
+      "code": "BE",
+      "title": "Board Governance & Strategic Planning Cycles",
+      "packs": [
+        {
+          "code": "BE.1",
+          "title": "Retail Board Composition & Cycles",
+          "count": 19
+        },
+        {
+          "code": "BE.2",
+          "title": "Strategic Planning Cycle in Retail",
+          "count": 18
+        }
+      ],
+      "target": 37
+    },
+    {
+      "code": "BF",
+      "title": "Investor Relations & Equity Story",
+      "packs": [
+        {
+          "code": "BF.1",
+          "title": "Retail Equity Story & Multiples",
+          "count": 19
+        },
+        {
+          "code": "BF.2",
+          "title": "Activist Investor Dynamics in Retail",
+          "count": 18
+        }
+      ],
+      "target": 37
+    },
+    {
+      "code": "BG",
+      "title": "Crisis Management (Recall, Cyber, Reputation)",
+      "packs": [
+        {
+          "code": "BG.1",
+          "title": "Retail Crisis Response Playbook",
+          "count": 21
+        }
+      ],
+      "target": 21
+    },
+    {
+      "code": "BH",
+      "title": "Innovation Labs, Venture Arms & Internal Ventures",
+      "packs": [
+        {
+          "code": "BH.1",
+          "title": "Retail Innovation & CVC Models",
+          "count": 21
+        }
+      ],
+      "target": 21
+    }
+  ]
+}
