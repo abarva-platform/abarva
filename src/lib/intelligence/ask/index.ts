@@ -4,6 +4,7 @@ import { isExplicitConciseAsk, synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
+import { retrieveRetailOverlaySources } from './retrievers/retail-overlay';
 import {
   retrieveTenantEnterpriseSources,
   retrieveTenantStructuredFacts,
@@ -108,6 +109,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       userId: opts.userId,
     });
     yield { type: 'classified', classification };
+    const questionCategory = classifyQuestionCategory(trimmed, classification.intent);
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
@@ -118,6 +120,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     });
     const tenantStructuredFacts = await retrieveTenantStructuredFacts(opts.tenant ?? opts.tenantInventoryKey, trimmed);
     const tenantTechnology = await retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed);
+    const retailOverlay = await retrieveRetailOverlaySources(opts.tenant, trimmed, questionCategory);
     const routed = await route(classification.intent, classification.entities, {
       query: trimmed,
       tenantInventoryKey: opts.tenantInventoryKey,
@@ -136,6 +139,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       ...tenantStructuredFacts,
       ...tenantEnterprise,
       ...tenantTechnology,
+      ...retailOverlay,
       ...routed.sources,
       ...worldview.sources,
     ].slice(0, sourceLimit);
@@ -143,7 +147,6 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
-    const questionCategory = classifyQuestionCategory(trimmed, classification.intent);
     const coverageReport = assertCoverage(questionCategory, sources);
     yield { type: 'sources', sources, coverageReport };
 
