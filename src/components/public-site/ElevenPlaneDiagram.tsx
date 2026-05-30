@@ -106,7 +106,7 @@ const OUTER_X = 10;
 const OUTER_Y = 10;
 const OUTER_W = 780;
 const OUTER_H = 580;
-const SHRINK = 33; // per side shrink per plane
+const SHRINK = 26; // per side shrink per plane; keeps all 11 nested planes positive height.
 
 export function ElevenPlaneDiagram() {
   const [selectedPlane, setSelectedPlane] = useState<PlaneDefinition | null>(null);
