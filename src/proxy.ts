@@ -191,6 +191,33 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     const url = new URL(exactAdminMatch + request.nextUrl.search, request.url)
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
   }
+
+  // PR-2 (2026-05-30) · Setup/Admin route consolidation — see
+  // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §5.5. Redundant
+  // `/admin/users` route deleted in favor of the richer
+  // `/admin/users-access`. Invite flow demoted from top-level
+  // route to modal launched from Users & Access. Atlas-named
+  // routes either deprecated or relocated.
+  const adminRouteConsolidationMap: Record<string, string> = {
+    '/admin/users': '/admin/users-access',
+    '/admin/invite': '/admin/users-access?invite=open',
+    '/admin/agents/atlas': '/admin/cross-program-signals',
+    '/admin/atlas/traces': '/engineering/traces',
+  }
+  const consolidationMatch = adminRouteConsolidationMap[request.nextUrl.pathname]
+  if (consolidationMatch) {
+    const url = new URL(consolidationMatch, request.url)
+    if (!consolidationMatch.includes('?')) {
+      url.search = request.nextUrl.search
+    } else if (request.nextUrl.search) {
+      // Preserve any incoming query params alongside the canned ones.
+      const incoming = new URLSearchParams(request.nextUrl.search)
+      incoming.forEach((value, key) => {
+        if (!url.searchParams.has(key)) url.searchParams.set(key, value)
+      })
+    }
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
+  }
   // /admin/ai-initiatives/<id> → /home/ai-initiatives/<id>
   if (request.nextUrl.pathname.startsWith('/admin/ai-initiatives/')) {
     const sub = request.nextUrl.pathname.slice('/admin/ai-initiatives/'.length)
