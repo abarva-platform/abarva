@@ -17,12 +17,12 @@ jest.mock('@/lib/admin/invite-collaborator-audit', () => ({
   writeInviteAudit: (...args: unknown[]) => writeInviteAuditMock(...args),
 }));
 
-const emitNotificationMock = jest.fn(async () => ({
+const emitNotificationMock = jest.fn(async (_input?: unknown) => ({
   eventId: 'evt_1',
   enqueuedDeliveries: 1,
 }));
 jest.mock('@/lib/admin/broker/notification-broker', () => ({
-  emitNotification: (...args: unknown[]) => emitNotificationMock(...args),
+  emitNotification: (input: unknown) => emitNotificationMock(input),
 }));
 
 // `svix` is imported lazily inside the route. Mock it so the verifier
@@ -96,7 +96,7 @@ describe('W4-PR-3 · Clerk webhook · auth.invite_accepted emit', () => {
 
     expect(writeInviteAuditMock).toHaveBeenCalledTimes(1);
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const [arg] = emitNotificationMock.mock.calls[0];
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'auth.invite_accepted',

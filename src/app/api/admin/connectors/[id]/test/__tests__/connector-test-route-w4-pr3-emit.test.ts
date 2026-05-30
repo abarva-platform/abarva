@@ -12,7 +12,7 @@ const mockClerkUsersGetUser = jest.fn();
 const mockGetActiveClientRow = jest.fn();
 const mockTestConnector = jest.fn();
 const mockWriteAudit = jest.fn();
-const mockEmitNotification = jest.fn(async () => ({
+const mockEmitNotification = jest.fn(async (_input?: unknown) => ({
   eventId: 'evt_1',
   enqueuedDeliveries: 1,
 }));
@@ -37,7 +37,7 @@ jest.mock('@/lib/admin/connector-test-audit', () => ({
 }));
 
 jest.mock('@/lib/admin/broker/notification-broker', () => ({
-  emitNotification: (...args: unknown[]) => mockEmitNotification(...args),
+  emitNotification: (input: unknown) => mockEmitNotification(input),
 }));
 
 import { NextRequest } from 'next/server';
@@ -87,7 +87,7 @@ describe('W4-PR-3 · POST /api/admin/connectors/[id]/test · connector.failed em
     await new Promise((r) => setImmediate(r));
 
     expect(mockEmitNotification).toHaveBeenCalledTimes(1);
-    const [arg] = mockEmitNotification.mock.calls[0];
+    const arg = mockEmitNotification.mock.calls[0]?.[0] as any;
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'connector.failed',

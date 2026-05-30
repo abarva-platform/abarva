@@ -16,13 +16,13 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
   getAzureWriteFluentClient: jest.fn(),
 }));
 
-const emitNotificationMock = jest.fn(async () => ({
+const emitNotificationMock = jest.fn(async (_input?: unknown) => ({
   eventId: 'evt_1',
   enqueuedDeliveries: 1,
 }));
 
 jest.mock('@/lib/admin/broker/notification-broker', () => ({
-  emitNotification: (...args: unknown[]) => emitNotificationMock(...args),
+  emitNotification: (input: unknown) => emitNotificationMock(input),
 }));
 
 import { writeEgressAudit } from '../egress-audit-writer';
@@ -101,7 +101,7 @@ describe('W4-PR-3 · writeEgressAudit · isolation.anomaly fan-out', () => {
     await new Promise((r) => setImmediate(r));
 
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const [arg] = emitNotificationMock.mock.calls[0];
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
     expect(arg).toMatchObject({
       tenantKey: 'meridian-health',
       eventType: 'isolation.anomaly',
