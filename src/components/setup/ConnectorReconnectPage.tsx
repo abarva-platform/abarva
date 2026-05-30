@@ -12,9 +12,16 @@ import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
 
 interface ConnectorReconnectPageProps {
   detail: ConnectorDetail;
+  /**
+   * Tenant display name for the "Authorizing as <tenant> admin" affordance.
+   * PR-G (2026-05-30 · Apex-leak F8): removed the hard-coded "Apex Retail
+   * Group" literal that previously rendered for every tenant. Page wrapper
+   * resolves this via resolveAdminTenant().
+   */
+  tenantName: string;
 }
 
-export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) {
+export function ConnectorReconnectPage({ detail, tenantName }: ConnectorReconnectPageProps) {
   const [authorized, setAuthorized] = useState(false);
   const reconnectProfile = detail.reconnectProfile;
   const modeLabel = detail.dataMode === 'seeded' ? 'Seeded fixture' : 'Live signal';
@@ -145,7 +152,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                 lineHeight: 1.4,
               }}
             >
-              Authorizing as Apex Retail Group admin
+              Authorizing as {tenantName} admin
             </div>
             <div
               style={{
