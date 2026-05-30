@@ -198,6 +198,8 @@ async function runMetricExplanationTurn(input: {
       signalId: null,
       observationId: null,
       toolsUsed: ['tower_metric_explanation'],
+      atlasMode: 'live',
+      fallbackReason: null,
       metricExplanation: explanation,
     },
   };
@@ -210,6 +212,8 @@ async function appendChatReasoningTrace(input: {
   toolResults: AtlasToolResultMap;
   latencyMs: number;
   modelName: string | null;
+  atlasMode: AtlasChatResponse['atlasMode'];
+  fallbackReason: string | null;
 }): Promise<void> {
   const towerState = input.toolResults.towerState;
   if (!towerState) return;
@@ -264,8 +268,8 @@ async function appendChatReasoningTrace(input: {
         : bandFloor === 'low' || bandFloor === 'none'
           ? 'med'
           : 'high',
-    fallbackUsed: false,
-    fallbackReason: null,
+    fallbackUsed: input.atlasMode === 'fallback',
+    fallbackReason: input.fallbackReason,
     latencyMs: input.latencyMs,
     model: input.modelName ?? ATLAS_REASONING_MODEL,
     promptVersion: ATLAS_PROMPT_VERSION,
@@ -290,6 +294,8 @@ export async function runAtlasTurn(input: {
     signalId: detailed.signalId ?? null,
     observationId: detailed.observationId ?? null,
     toolsUsed: detailed.toolsUsed,
+    atlasMode: detailed.atlasMode,
+    fallbackReason: detailed.fallbackReason ?? null,
     groundingDisclosure: detailed.groundingDisclosure,
   };
 }
@@ -355,13 +361,15 @@ export async function runAtlasTurnDetailed(input: {
     const llm = await runAtlasLlm(input.ctx, input.message, input.surfaceContext);
     modelName = llm.modelName;
     toolResults = llm.toolResults;
-    response = {
+      response = {
       threadId: thread.id,
       routeType: 'llm',
       intent: 'llm',
       response: llm.response,
       suggestions: llm.suggestions,
       toolsUsed: llm.toolsUsed,
+      atlasMode: llm.atlasMode,
+      fallbackReason: llm.fallbackReason,
       signalId: llm.toolResults.signalDetail?.id ?? llm.toolResults.signals?.[0]?.id ?? null,
       observationId: null,
     };
@@ -392,6 +400,8 @@ export async function runAtlasTurnDetailed(input: {
       suggestions: response.suggestions,
       surface_context: input.surfaceContext ?? null,
       metric_explanation: response.metricExplanation ?? null,
+      atlas_mode: response.atlasMode,
+      fallback_reason: response.fallbackReason ?? null,
     },
     severity: extractSeverity(response.response),
     observationKind: guessObservationKind(response.intent),
@@ -407,6 +417,8 @@ export async function runAtlasTurnDetailed(input: {
       suggestions: response.suggestions,
       signalId: response.signalId ?? null,
       metricExplanation: response.metricExplanation ?? null,
+      atlasMode: response.atlasMode,
+      fallbackReason: response.fallbackReason ?? null,
     },
     toolsUsed: response.toolsUsed,
     modelName,
@@ -422,6 +434,8 @@ export async function runAtlasTurnDetailed(input: {
     toolResults,
     latencyMs: Date.now() - startedAt,
     modelName,
+    atlasMode: response.atlasMode,
+    fallbackReason: response.fallbackReason ?? null,
   });
 
   await touchAtlasThread(thread.id);
