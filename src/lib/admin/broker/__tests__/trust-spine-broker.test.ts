@@ -802,6 +802,7 @@ describe('getTrustSpine', () => {
     getSnapshotMock.mockRejectedValue(new Error('substrate unreachable'));
     getApprovalsMock.mockResolvedValue([]);
 
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const spine = await getTrustSpine('apex-retail');
 
     // Substrate dimension still returns a coherent shape — zeroes,
@@ -814,6 +815,47 @@ describe('getTrustSpine', () => {
     expect(spine.audit.last24hEvents).toEqual([]);
     // Governance unaffected.
     expect(spine.governance.openApprovals).toBe(0);
+
+    // Browser walk 2026-05-30 P0 #1 regression guard. The snapshot
+    // rejection used to be silent — the dimension fell to zeroes
+    // without any logged event, which made the live "Trust strip
+    // reads 0 while masthead reads 14" divergence undebuggable.
+    const warnLines = warnSpy.mock.calls.map((c) => String(c[0]));
+    expect(
+      warnLines.some((l) => /setup_inventory_snapshot\.degraded/.test(l)),
+    ).toBe(true);
+    warnSpy.mockRestore();
+  });
+
+  it('honors options.snapshotOverride and skips the internal getSetupInventorySnapshot call', async () => {
+    // Browser walk 2026-05-30 P0 #1 fix. The admin landing already
+    // pre-fetches the snapshot for its masthead pills; threading it
+    // through here guarantees Trust strip + posture grid agree with
+    // the masthead instead of issuing a second DB call that can
+    // diverge on intermittent failures.
+    getSnapshotMock.mockRejectedValue(new Error('this should never be called'));
+    getApprovalsMock.mockResolvedValue([]);
+
+    const override = makeSnapshot();
+    const spine = await getTrustSpine('apex-retail', {
+      snapshotOverride: override,
+    });
+
+    expect(getSnapshotMock).not.toHaveBeenCalled();
+    expect(spine.substrate.segmentsTotal).toBe(override.segments.length);
+    expect(spine.substrate.evidence).toBe('live');
+  });
+
+  it('honors options.snapshotOverride = null (explicit empty tenant)', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([]);
+
+    const spine = await getTrustSpine('apex-retail', {
+      snapshotOverride: null,
+    });
+
+    expect(getSnapshotMock).not.toHaveBeenCalled();
+    expect(spine.substrate.segmentsTotal).toBe(0);
   });
 
   it('degrades gracefully when the approval broker throws', async () => {

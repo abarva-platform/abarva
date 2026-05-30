@@ -558,8 +558,22 @@ function composeAuditRibbon(
  *   `clientKeyToInventorySubstrateKey`. The governance dimension's
  *   approval queue uses the same key shape; map at the call site
  *   if the caller passes the app ClientKey instead.
+ * @param options.snapshotOverride — optional pre-fetched snapshot.
+ *   The admin landing already fetches the snapshot once for its
+ *   masthead pills; passing it through avoids a duplicate DB read
+ *   AND prevents the Trust strip / posture grid from disagreeing
+ *   with the masthead when the two reads diverge (browser walk
+ *   2026-05-30 P0 #1 — masthead pills showed 14 segments while
+ *   Trust strip + posture grid both read 0 because the second
+ *   `getSetupInventorySnapshot` call rejected silently inside the
+ *   Promise.allSettled below).
  */
-export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
+export async function getTrustSpine(
+  tenantKey: string,
+  options: { snapshotOverride?: SetupInventorySnapshot | null } = {},
+): Promise<TrustSpine> {
+  const hasSnapshotOverride =
+    Object.prototype.hasOwnProperty.call(options, 'snapshotOverride');
   const [
     snapshotResult,
     approvalResult,
@@ -568,7 +582,9 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
     inviteResult,
     policyResult,
   ] = await Promise.allSettled([
-    getSetupInventorySnapshot(tenantKey),
+    hasSnapshotOverride
+      ? Promise.resolve(options.snapshotOverride ?? null)
+      : getSetupInventorySnapshot(tenantKey),
     getApprovalQueueForTenant(tenantKey),
     getConnectorHealth(tenantKey),
     getIsolationPosture(tenantKey),
@@ -576,8 +592,28 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
     getRecentPolicyEvents(tenantKey),
   ]);
 
-  const snapshot =
-    snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
+  let snapshot: SetupInventorySnapshot | null = null;
+  if (snapshotResult.status === 'fulfilled') {
+    snapshot = snapshotResult.value;
+  } else {
+    // Browser walk 2026-05-30 P0 #1 fix-up. Previously this branch
+    // silently fell through to `null`, producing a 0-segment trust
+    // strip + empty posture grid for tenants that DO have substrate
+    // — the masthead pills read from a separate cached call that
+    // succeeded, so the two surfaces disagreed. Symmetric warn
+    // logging with the other five dimensions makes the silent
+    // rejection observable.
+    console.warn(
+      JSON.stringify({
+        event: 'trust_spine.setup_inventory_snapshot.degraded',
+        tenantKey,
+        reason:
+          snapshotResult.reason instanceof Error
+            ? snapshotResult.reason.message
+            : String(snapshotResult.reason),
+      }),
+    );
+  }
   const approvals =
     approvalResult.status === 'fulfilled' ? approvalResult.value : [];
   let health: ConnectorHealth | null = null;
