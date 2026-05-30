@@ -18,6 +18,16 @@ type ParsedPattern = {
   demo_relevant?: boolean;
   subTopic?: string;
   verticals?: string[];
+  aiCapabilityType?: string;
+  governanceHook?: string;
+  movesApplicability?: string[];
+  sourceApplicability?: string[];
+  startupEcosystemSignals?: string[];
+  qualityTier?: string;
+  qualityScore?: number;
+  qualityNotes?: string[];
+  curationStatus?: string;
+  rewritePriority?: string;
 };
 
 type SeedFileSummary = {
@@ -154,6 +164,16 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
     const keywords = Array.isArray(pattern.keywords) ? pattern.keywords.map(String) : [];
     const failureRatePct = Number(pattern.failureRatePct ?? pattern.failure_rate_pct ?? 50);
     const demoRelevant = Boolean(pattern.demoRelevant ?? pattern.demo_relevant ?? false);
+    const movesApplicability = Array.isArray(pattern.movesApplicability)
+      ? pattern.movesApplicability.map(String)
+      : null;
+    const sourceApplicability = Array.isArray(pattern.sourceApplicability)
+      ? pattern.sourceApplicability.map(String)
+      : null;
+    const startupEcosystemSignals = Array.isArray(pattern.startupEcosystemSignals)
+      ? pattern.startupEcosystemSignals.map(String)
+      : null;
+    const qualityNotes = Array.isArray(pattern.qualityNotes) ? pattern.qualityNotes.map(String) : null;
     return {
       id: deterministicUuid(`${meta.vertical}-genome-pattern:${code}`),
       pattern_type: 'failure_pattern',
@@ -171,6 +191,16 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
         seeded_by: meta.seededBy,
         sub_topic: pattern.subTopic ?? null,
         verticals: Array.isArray(pattern.verticals) ? pattern.verticals.map(String) : null,
+        ai_capability_type: pattern.aiCapabilityType ?? null,
+        governance_hook: pattern.governanceHook ?? null,
+        moves_applicability: movesApplicability,
+        source_applicability: sourceApplicability,
+        startup_ecosystem_signals: startupEcosystemSignals,
+        quality_tier: pattern.qualityTier ?? null,
+        quality_score: typeof pattern.qualityScore === 'number' ? pattern.qualityScore : null,
+        quality_notes: qualityNotes,
+        curation_status: pattern.curationStatus ?? null,
+        rewrite_priority: pattern.rewritePriority ?? null,
       },
       source_count: 6,
       confidence: 84,
