@@ -293,6 +293,86 @@ const AIRLINE_SAFETY_PATTERNS: AirlineSafetyPatternSeed[] = [
       'Automation checks are built directly against current FAA, DOT, or TSA rule text without a versioned policy model. When the rule changes, the code keeps enforcing the old interpretation until a compliance miss reveals the outdated logic.',
     keywords: ['compliance automation', 'FAA', 'DOT', 'policy versioning', 'control logic'],
   },
+  {
+    code: 'A2730',
+    name: 'Safety AI Alert Fatigue Disables True Positives',
+    officeCategory: 'middle_office',
+    failureRatePct: 66,
+    description:
+      'Safety AI is deployed with thresholds tuned in a lab rather than calibrated to station, fleet, and seasonal variance. Frontline teams mute the alert stream after false positives, so the first true high-severity event is missed by a model that technically worked.',
+    keywords: ['safety AI', 'alert fatigue', 'SMS', 'threshold calibration', 'model governance'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2731',
+    name: 'FOQA AI Model Drift Without Revalidation',
+    officeCategory: 'middle_office',
+    failureRatePct: 58,
+    description:
+      'FOQA AI trained on prior aircraft and route mixes keeps scoring flight events after fleet, procedure, or airport-profile changes. The model appears stable, but its risk ranking drifts because no revalidation gate is tied to operational change.',
+    keywords: ['FOQA AI', 'model drift', 'revalidation', 'FAA', 'operational change'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2732',
+    name: 'AI Safety Narrative Lacks Explainable Evidence',
+    officeCategory: 'middle_office',
+    failureRatePct: 54,
+    description:
+      'Generative AI summarizes safety reports and recommends risk themes, but the narrative does not cite the underlying reports, flights, stations, or hazards. Safety leaders cannot use the summary in governance forums because it is not audit-defensible.',
+    keywords: ['generative AI', 'safety report', 'explainability', 'audit evidence', 'SMS'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2733',
+    name: 'Ramp Vision AI Outside Union Agreement',
+    officeCategory: 'back_office',
+    failureRatePct: 52,
+    description:
+      'Computer-vision ramp monitoring is introduced as a safety tool but also measures individual worker behavior without labor-agreement guardrails. The safety program becomes a labor dispute, and adoption stalls before hazard reduction can be measured.',
+    keywords: ['computer vision', 'ramp safety', 'labor agreement', 'adoption risk', 'privacy'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2734',
+    name: 'AI CAPA Recommendation Accepted Without Owner',
+    officeCategory: 'middle_office',
+    failureRatePct: 60,
+    description:
+      'AI recommends corrective actions for recurring hazards, but the SMS workflow allows the recommendation to be accepted without assigning an accountable owner and verification evidence. The AI improves diagnosis but not closure.',
+    keywords: ['AI CAPA', 'SMS', 'owner assignment', 'verification evidence', 'corrective action'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2735',
+    name: 'Regulatory AI Watchlist Not Mapped To Controls',
+    officeCategory: 'back_office',
+    failureRatePct: 51,
+    description:
+      'A regulatory-monitoring AI flags new FAA, DOT, TSA, and EASA obligations but does not map them to controls, systems, owners, or deadlines. Compliance gets earlier alerts without a reliable path to execution.',
+    keywords: ['regulatory AI', 'FAA', 'DOT', 'control mapping', 'compliance workflow'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2736',
+    name: 'AI Risk Score Overrides Local Safety Judgment',
+    officeCategory: 'middle_office',
+    failureRatePct: 56,
+    description:
+      'A centralized AI risk score downgrades station concerns because the local condition is rare in the training data. Local safety managers lose escalation credibility even when their operational judgment reflects a valid hazard the model has not learned.',
+    keywords: ['AI risk score', 'local safety', 'model bias', 'SMS', 'human override'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2737',
+    name: 'Safety AI Vendor Contract Missing Incident Access Rights',
+    officeCategory: 'back_office',
+    failureRatePct: 57,
+    description:
+      'The safety AI vendor contract provides dashboards but not raw alert lineage, model-version history, or incident reconstruction rights. Source teams cannot support FAA, legal, or internal audit review when a model-influenced decision is challenged.',
+    keywords: ['safety AI', 'vendor contract', 'incident reconstruction', 'FAA audit', 'Source'],
+    demoRelevant: true,
+  },
 ];
 
 function graphEdgesFor(pattern: AirlineSafetyPatternSeed): Array<Record<string, unknown>> {

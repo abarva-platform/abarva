@@ -297,6 +297,86 @@ const AIRLINE_NDC_PATTERNS: AirlineNdcPatternSeed[] = [
       'When NDC shopping fails, the fallback redirects customers to legacy EDIFACT fares with a different product display and servicing model. Customers interpret the fallback as a price or benefit change rather than resilience, and agents must explain why the same trip behaves differently by channel.',
     keywords: ['NDC fallback', 'EDIFACT', 'fare rules', 'channel consistency', 'customer experience'],
   },
+  {
+    code: 'A1830',
+    name: 'NDC AI Offer Bypasses Inventory Reality Check',
+    officeCategory: 'front_office',
+    failureRatePct: 67,
+    description:
+      'NDC offer AI creates a personalized seat-and-bag bundle without a hard live-inventory gate at order creation. The customer buys a bundle containing a seat already sold through another channel, turning AI merchandising uplift into day-of-travel service recovery.',
+    keywords: ['NDC AI', 'inventory gate', 'IATA ONE Order', 'seat bundle', 'order creation'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1831',
+    name: 'Ancillary AI Pricing Breaches Floor Controls',
+    officeCategory: 'middle_office',
+    failureRatePct: 60,
+    description:
+      'Ancillary pricing AI tests seat and bag prices below finance-approved floors to maximize attach rate. Thousands of low-price transactions clear before revenue accounting detects the floor breach, erasing the margin benefit of the AI experiment.',
+    keywords: ['ancillary AI', 'price floor', 'revenue accounting', 'attach rate', 'controls'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1832',
+    name: 'Offer AI Uses Loyalty Data Without Consent Mapping',
+    officeCategory: 'middle_office',
+    failureRatePct: 58,
+    description:
+      'Offer personalization AI uses loyalty behavior and travel history before consent and purpose limits are mapped by market. The NDC channel becomes more relevant, but privacy teams cannot prove that GDPR and state privacy requirements were honored.',
+    keywords: ['offer AI', 'loyalty data', 'GDPR', 'consent mapping', 'NDC'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1833',
+    name: 'AI Bundle Optimizer Ignores Servicing Cost',
+    officeCategory: 'middle_office',
+    failureRatePct: 55,
+    description:
+      'Bundle AI optimizes conversion and ancillary revenue but does not include expected exchange, refund, call-center, and disruption-servicing cost. Source and Moves teams see attractive revenue uplift while the actual cost-to-serve rises in complex itineraries.',
+    keywords: ['bundle AI', 'cost-to-serve', 'NDC servicing', 'refund', 'adoption telemetry'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1834',
+    name: 'NDC GenAI Agent Quotes Unsupported Entitlements',
+    officeCategory: 'front_office',
+    failureRatePct: 62,
+    description:
+      'A generative AI shopping agent explains NDC offers in natural language but claims entitlements not present in the structured offer. Customers rely on the AI explanation, then agents must deny the benefit because the order record never contained it.',
+    keywords: ['GenAI agent', 'NDC', 'structured offer', 'entitlement', 'model grounding'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1835',
+    name: 'AI Offer Experiment Lacks Agency Holdout',
+    officeCategory: 'middle_office',
+    failureRatePct: 53,
+    description:
+      'NDC offer AI is tested only in direct digital channels and then rolled into agency channels without a TMC or OTA holdout. The airline cannot tell whether lower agency conversion is caused by the model, the agency desktop, or corporate policy controls.',
+    keywords: ['NDC AI', 'agency holdout', 'TMC', 'OTA', 'experiment design'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1836',
+    name: 'Order AI Fraud Signal Not Shared With Payment Controls',
+    officeCategory: 'back_office',
+    failureRatePct: 57,
+    description:
+      'Order-risk AI scores NDC transactions but the signal is not integrated with payment authorization, chargeback, or loyalty fraud controls. Suspicious orders receive personalized offers and clear ticketing before fraud teams see the risk.',
+    keywords: ['order AI', 'fraud signal', 'payment control', 'chargeback', 'NDC'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A1837',
+    name: 'NDC AI Vendor Contract Missing Explainability Clause',
+    officeCategory: 'back_office',
+    failureRatePct: 59,
+    description:
+      'The AI offer vendor contract measures conversion uplift but does not require explainability for price, bundle, or ranking decisions. Source teams have no contractual basis to demand evidence when corporate buyers challenge why different travelers saw different offers.',
+    keywords: ['NDC AI', 'vendor contract', 'explainability', 'corporate buyer', 'Source'],
+    demoRelevant: true,
+  },
 ];
 
 function graphEdgesFor(pattern: AirlineNdcPatternSeed): Array<Record<string, unknown>> {

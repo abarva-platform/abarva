@@ -295,6 +295,86 @@ const AIRLINE_AIRPORT_OPS_PATTERNS: AirlineAirportOpsPatternSeed[] = [
       'Airport readiness reviews focus on staffing, gates, and vendors but do not test network dependency for kiosks, bag drops, scanners, and common-use workstations. A local network incident turns into a station-level operational failure because offline procedures were never rehearsed.',
     keywords: ['station readiness', 'CUTE', 'airport network', 'offline procedure', 'cyber resilience'],
   },
+  {
+    code: 'A2130',
+    name: 'Airport Queue Vision AI Underreads Overflow Lines',
+    officeCategory: 'middle_office',
+    failureRatePct: 61,
+    description:
+      'Queue AI uses camera feeds that miss overflow lines around corners, elevators, and temporary construction barriers. The model reports acceptable wait times while passengers are already spilling into security and bag-drop choke points.',
+    keywords: ['queue AI', 'computer vision', 'ACI', 'camera blind spot', 'wait time'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2131',
+    name: 'Gate AI Recommends Unserviceable Remote Stand',
+    officeCategory: 'middle_office',
+    failureRatePct: 58,
+    description:
+      'Gate-assignment AI optimizes aircraft movement but omits PRM lifts, bus availability, and tow-crew constraints. The recommended stand is mathematically efficient and operationally impossible for the passenger mix on the flight.',
+    keywords: ['gate AI', 'PRM', 'A-CDM', 'remote stand', 'constraint model'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2132',
+    name: 'Turnaround AI Missing Ground Handler Adoption Telemetry',
+    officeCategory: 'middle_office',
+    failureRatePct: 56,
+    description:
+      'Turnaround AI recommends next-best actions to ground handlers, but the contract and workflow do not capture whether supervisors accept, reject, or ignore the recommendation. Moves teams cannot prove whether the AI failed or frontline adoption failed.',
+    keywords: ['turnaround AI', 'adoption telemetry', 'ground handler', 'SLA', 'Moves'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2133',
+    name: 'Bag Routing AI Optimizes Speed Over Mishandled-Bag Risk',
+    officeCategory: 'middle_office',
+    failureRatePct: 57,
+    description:
+      'Bag-routing AI prioritizes shortest physical path through the baggage system without enough penalty for tight connections, international transfer rules, or high-value loyalty customers. Bags move quickly through the airport but miss the operational promise that matters.',
+    keywords: ['baggage AI', 'mishandled bag', 'IATA 753', 'loyalty', 'connection risk'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2134',
+    name: 'Computer Vision Boarding Counts Lack DCS Reconciliation',
+    officeCategory: 'front_office',
+    failureRatePct: 54,
+    description:
+      'Computer vision counts boarded passengers but is not reconciled against DCS scan state and manifest exceptions. Gate teams see two credible headcounts during boarding close, delaying departure while supervisors resolve which system is authoritative.',
+    keywords: ['computer vision', 'DCS', 'boarding count', 'manifest', 'model reconciliation'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2135',
+    name: 'Airport AI Vendor Lacks Offline Mode SLA',
+    officeCategory: 'back_office',
+    failureRatePct: 52,
+    description:
+      'An airport optimization vendor demonstrates strong cloud AI performance but does not contract for degraded offline behavior at stations with unstable connectivity. Source teams buy the optimization story without securing the continuity clause that keeps operations moving during network events.',
+    keywords: ['airport AI', 'offline SLA', 'Source', 'station network', 'business continuity'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2136',
+    name: 'Ramp Safety AI Flags Hazards Without CAPA Linkage',
+    officeCategory: 'middle_office',
+    failureRatePct: 60,
+    description:
+      'Ramp computer-vision AI flags unsafe proximity or equipment movement but does not create a linked SMS/CAPA workflow. The alert stream grows while corrective actions remain informal, so safety risk is detected without being governed.',
+    keywords: ['ramp safety AI', 'SMS', 'CAPA', 'computer vision', 'ground equipment'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2137',
+    name: 'AI Staffing Forecast Ignores Union Work Rules',
+    officeCategory: 'back_office',
+    failureRatePct: 59,
+    description:
+      'Airport staffing AI forecasts demand correctly but does not encode union work rules, break rules, cross-utilization limits, or station-specific bid lines. The recommended staffing plan cannot be implemented without grievances or premium-pay leakage.',
+    keywords: ['staffing AI', 'union work rules', 'labor agreement', 'station staffing', 'forecast'],
+    demoRelevant: true,
+  },
 ];
 
 function graphEdgesFor(pattern: AirlineAirportOpsPatternSeed): Array<Record<string, unknown>> {

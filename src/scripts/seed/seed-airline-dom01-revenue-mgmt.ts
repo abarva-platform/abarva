@@ -298,6 +298,86 @@ const AIRLINE_REVENUE_PATTERNS: AirlineRevenuePatternSeed[] = [
       'Revenue scenarios model demand, fuel, and competitor fares but exclude sudden airport fee, passenger facility charge, or government tax changes. When fees change, the customer-visible all-in fare moves while base fare remains constant, and RM misreads conversion decline as demand weakness.',
     keywords: ['scenario planning', 'passenger facility charge', 'IATA', 'base fare', 'conversion'],
   },
+  {
+    code: 'A330',
+    name: 'RM AI Dynamic Pricing Regulatory Override Gap',
+    officeCategory: 'middle_office',
+    failureRatePct: 68,
+    description:
+      'Revenue-management AI raises fares during weather disruption without a human override threshold or DOT 399.88 unfair-practices review. The algorithm protects yield in the moment, but the airline cannot show why the price increase was commercially justified rather than disruption profiteering.',
+    keywords: ['RM AI', 'dynamic pricing', 'DOT 399.88', 'human override', 'IROPS'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A331',
+    name: 'Pricing AI Personalization Proxy Bias Risk',
+    officeCategory: 'middle_office',
+    failureRatePct: 63,
+    description:
+      'Personalization AI uses loyalty tier, device, route history, and purchase timing as price signals without testing for protected-class proxy effects. A pricing strategy meant to optimize conversion creates DOT consumer-protection exposure when similarly situated customers receive unexplained fare differences.',
+    keywords: ['pricing AI', 'personalization', 'DOT 399.88', 'proxy bias', 'loyalty tier'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A332',
+    name: 'RM AI Champion Challenge Never Leaves Pilot',
+    officeCategory: 'middle_office',
+    failureRatePct: 56,
+    description:
+      'A new RM AI model is tested against the incumbent optimizer, but the champion-challenger design lacks decision rights for when the challenger wins. Analysts keep the AI in advisory mode, so the program reports promising uplift without changing live fare authorization behavior.',
+    keywords: ['RM AI', 'champion challenger', 'model governance', 'fare authorization', 'adoption telemetry'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A333',
+    name: 'Generative RM Copilot Hallucinates Market Rationale',
+    officeCategory: 'middle_office',
+    failureRatePct: 52,
+    description:
+      'A generative AI copilot summarizes market moves for revenue analysts but blends real booking curves with plausible competitor explanations not present in the data. Analysts accept the narrative and make fare decisions based on invented causal drivers.',
+    keywords: ['generative AI', 'RM copilot', 'model grounding', 'ATPCO', 'analyst workflow'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A334',
+    name: 'Demand AI Drift Hidden By Aggregate RASM',
+    officeCategory: 'middle_office',
+    failureRatePct: 59,
+    description:
+      'Demand AI drifts in specific leisure and regional-jet markets, but aggregate RASM remains stable enough to hide the issue. The model keeps underpricing the affected markets until route-level drift telemetry is tied to fare-class decisions.',
+    keywords: ['demand AI', 'model drift', 'RASM', 'route-level telemetry', 'fare class'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A335',
+    name: 'AI Fare Recommendations Missing Analyst Reason Codes',
+    officeCategory: 'middle_office',
+    failureRatePct: 50,
+    description:
+      'The RM AI recommends open and close actions, but analysts can accept, reject, or override without reason codes. Post-event learning cannot distinguish model error from human judgment, weakening both adoption telemetry and model improvement.',
+    keywords: ['RM AI', 'reason code', 'adoption telemetry', 'model improvement', 'override governance'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A336',
+    name: 'AI Competitor Scrape Ingests Promotional Noise',
+    officeCategory: 'middle_office',
+    failureRatePct: 55,
+    description:
+      'Pricing AI ingests competitor fares without separating limited promo inventory from durable market price. The model matches temporary noise and leaves fare ladders compressed after the competitor promotion has expired.',
+    keywords: ['pricing AI', 'competitor scrape', 'ATPCO', 'promo fare', 'fare ladder'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A337',
+    name: 'AI Revenue Uplift Contract Lacks Holdout Discipline',
+    officeCategory: 'back_office',
+    failureRatePct: 61,
+    description:
+      'A vendor contract promises revenue uplift from RM AI but does not require statistically valid route holdouts, seasonality controls, or adoption telemetry. Source teams cannot separate real AI value from market recovery or analyst intervention during renewal negotiations.',
+    keywords: ['RM AI', 'vendor contract', 'holdout test', 'adoption telemetry', 'Source'],
+    demoRelevant: true,
+  },
 ];
 
 function graphEdgesFor(pattern: AirlineRevenuePatternSeed): Array<Record<string, unknown>> {

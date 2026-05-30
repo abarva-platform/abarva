@@ -298,6 +298,86 @@ const AIRLINE_IT_PATTERNS: AirlineItPatternSeed[] = [
       'Data contracts define field names and types but not passenger-rights semantics such as involuntary change, denied boarding, refund eligibility, or assistance requirement. Downstream teams consume technically valid events and make legally incorrect service decisions.',
     keywords: ['data contract', 'passenger rights', 'DOT', 'event schema', 'service decision'],
   },
+  {
+    code: 'A2430',
+    name: 'AI Code Assistant Modernizes Syntax Not Business Rules',
+    officeCategory: 'back_office',
+    failureRatePct: 69,
+    description:
+      'AI code assistants convert legacy scripts or host routines into modern code while preserving misunderstood airline business rules. The migrated service compiles and passes shallow tests, but fare, ticketing, or day-of-travel edge cases behave differently because rule intent was never captured.',
+    keywords: ['AI code assistant', 'business rules', 'PSS migration', 'test coverage', 'legacy modernization'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2431',
+    name: 'AI SDLC Contract Missing Defect Attribution',
+    officeCategory: 'back_office',
+    failureRatePct: 58,
+    description:
+      'A systems integrator promises productivity uplift from AI SDLC tooling but does not define how defects, rework, escaped incidents, or human review effort will be attributed. Source teams cannot tell whether AI accelerated delivery or shifted quality cost downstream.',
+    keywords: ['AI SDLC', 'vendor contract', 'defect attribution', 'Source', 'quality telemetry'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2432',
+    name: 'Generative Data Mapping Hallucinates PSS Field Semantics',
+    officeCategory: 'back_office',
+    failureRatePct: 63,
+    description:
+      'Generative AI proposes mappings between Sabre fields, Altéa fields, and warehouse tables without grounding every mapping in source documentation. The mappings look plausible to engineers but quietly invert ticketing, SSR, or fare-rule semantics.',
+    keywords: ['generative AI', 'data mapping', 'Sabre', 'Amadeus Altea', 'field lineage'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2433',
+    name: 'AIOps Suppresses Airport Incidents As Noise',
+    officeCategory: 'back_office',
+    failureRatePct: 55,
+    description:
+      'AIOps clusters repeated airport workstation and network alerts as low-severity noise because each individual event is brief. The station-level pattern is operationally severe, but alert suppression prevents escalation until check-in or boarding is already impaired.',
+    keywords: ['AIOps', 'airport network', 'alert suppression', 'SLO', 'station incident'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2434',
+    name: 'Enterprise RAG AI Exposes Sensitive PNR Remarks',
+    officeCategory: 'back_office',
+    failureRatePct: 64,
+    description:
+      'An enterprise RAG layer indexes operational knowledge and historical PNR remarks without field-level classification. The assistant can retrieve medical notes, passport fragments, or service exceptions that should never have entered a broad employee knowledge surface.',
+    keywords: ['enterprise RAG', 'PNR remarks', 'PII', 'GDPR', 'data classification'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2435',
+    name: 'AI Dependency Mining Stops At Static Code',
+    officeCategory: 'back_office',
+    failureRatePct: 57,
+    description:
+      'AI dependency mining scans repositories and host copybooks but misses scheduler jobs, message queues, vendor feeds, and station workarounds. The modernization map looks complete while the real operational dependencies remain outside the codebase.',
+    keywords: ['AI dependency mining', 'copybook', 'message queue', 'scheduler', 'modernization map'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2436',
+    name: 'MLOps Platform Not Cleared For Operational Decisioning',
+    officeCategory: 'back_office',
+    failureRatePct: 53,
+    description:
+      'The MLOps platform supports experimentation but lacks approval gates, rollback, monitoring, and audit evidence required for models affecting pricing, safety, or day-of-travel decisions. AI initiatives graduate from notebooks before the control plane is ready.',
+    keywords: ['MLOps', 'approval gate', 'model monitoring', 'audit evidence', 'operational AI'],
+    demoRelevant: true,
+  },
+  {
+    code: 'A2437',
+    name: 'AI Architecture Review Omits Human Override Path',
+    officeCategory: 'back_office',
+    failureRatePct: 59,
+    description:
+      'Architecture review approves an AI decision service based on accuracy, latency, and integration design but does not require a human override path. When the model is wrong during an operational exception, frontline teams cannot safely bypass it without breaking audit controls.',
+    keywords: ['AI architecture', 'human override', 'audit control', 'operational exception', 'governance'],
+    demoRelevant: true,
+  },
 ];
 
 function graphEdgesFor(pattern: AirlineItPatternSeed): Array<Record<string, unknown>> {
