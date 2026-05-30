@@ -24,6 +24,7 @@ import type {
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
 import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
 import { AuditRibbon } from '@/components/admin/AuditRibbon';
+import { PostureGrid, type PostureCard } from '@/components/admin/PostureGrid';
 import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
 import { PanelCardCta } from '@/components/home/PanelCardCta';
 import {
@@ -173,6 +174,14 @@ interface Props {
   currentCanonicalTenantKey?: string | null;
   /** The 5 canonical tenant options surfaced in the dropdown. */
   tenantSwitchOptions?: ReadonlyArray<TenantSwitcherOption>;
+  /**
+   * Wave 2 PR-4 · the 2×2 posture grid (Zone D, verdict §5.6).
+   * Composed by the page from `spineToPostureCards(trustSpine)` and
+   * passed through. When null/undefined the grid is omitted; an empty
+   * spine should be expressed via `emptyPostureCards()` upstream so
+   * the grid stays present with no-data state cards.
+   */
+  postureCards?: ReadonlyArray<PostureCard> | null;
 }
 
 export function HomeOverviewV2({
@@ -187,6 +196,7 @@ export function HomeOverviewV2({
   canSwitchTenant = false,
   currentCanonicalTenantKey = null,
   tenantSwitchOptions,
+  postureCards,
 }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
@@ -380,6 +390,26 @@ export function HomeOverviewV2({
                   );
                 })}
               </div>
+            </Section>
+            <Rule />
+          </>
+        )}
+
+        {/* Section 02b — Posture grid · Wave 2 PR-4 · Zone D per the
+            Trust Plane verdict §5.6. Inserted between the Action queue
+            (02) and the Steward orientation (03) so the operator first
+            sees what to do, then sees a 2×2 posture snapshot of the
+            four trust dimensions, then reads the Steward voice. Card
+            click jumps to the relevant group page. */}
+        {postureCards && postureCards.length > 0 && (
+          <>
+            <Section
+              eyebrowNum="02b"
+              eyebrowLabel="POSTURE AT A GLANCE"
+              title="Trust posture"
+              lead="Four cards — Substrate · Connector health · Auth & isolation · Approvals & policy. Each card pulls from the same TrustSpine that drives the strip above; click to jump into the group."
+            >
+              <PostureGrid cards={postureCards} />
             </Section>
             <Rule />
           </>

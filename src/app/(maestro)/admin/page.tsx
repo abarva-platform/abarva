@@ -33,6 +33,10 @@ import {
 } from '@/lib/admin/setup-data-broker';
 import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
 import { spineToChips } from '@/components/admin/TrustStrip';
+import {
+  emptyPostureCards,
+  spineToPostureCards,
+} from '@/components/admin/PostureGrid';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AdminOverviewTabs, resolveAdminOverviewTab } from '@/components/admin/AdminOverviewTabs';
 import { AdminTenantTab } from '@/components/admin/AdminTenantTab';
@@ -85,6 +89,13 @@ export default async function AdminOverviewPage({
       ])
     : [null, [], [], null];
   const trustChips = trustSpine ? spineToChips(trustSpine) : null;
+  // Wave 2 PR-4 · Posture grid (Zone D). When the spine resolves we
+  // compose the four cards from it; when it doesn't, we still render
+  // the grid in its no-data state so the page shape stays stable for
+  // empty / brand-new tenants (verdict §5.6 empty-state guidance).
+  const postureCards = trustSpine
+    ? spineToPostureCards(trustSpine)
+    : emptyPostureCards();
   const auditEvents = (trustSpine?.audit.last24hEvents ?? []).slice(0, 6);
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
@@ -163,6 +174,7 @@ export default async function AdminOverviewPage({
           trustChips={trustChips}
           liveSnapshotPresent={snapshot !== null}
           auditEvents={auditEvents}
+          postureCards={postureCards}
           canSwitchTenant={canSwitchTenant}
           currentCanonicalTenantKey={currentCanonicalTenantKey}
           tenantSwitchOptions={tenantSwitchOptions}

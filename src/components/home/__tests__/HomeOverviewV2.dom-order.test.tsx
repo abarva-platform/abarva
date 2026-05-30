@@ -16,6 +16,7 @@ import { HomeOverviewV2 } from '../HomeOverviewV2';
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
 import type { HomeOverviewV2Extras } from '@/lib/admin/home-overview-v2';
 import type { TrustStripChip } from '@/components/admin/TrustStrip';
+import type { PostureCard } from '@/components/admin/PostureGrid';
 
 function fixtureBlocks(): OverviewBlocks {
   return {
@@ -100,6 +101,47 @@ function fixtureChips(): TrustStripChip[] {
   ];
 }
 
+function fixturePostureCards(): PostureCard[] {
+  return [
+    {
+      id: 'substrate',
+      noun: 'Substrate readiness',
+      descriptor: 'Segment coverage and depth of ingest.',
+      stat: '11 mature / 3 sparse',
+      footer: 'Load KPI dictionary to unlock causal reasoning.',
+      status: 'attention',
+      href: '/admin/data-trust',
+    },
+    {
+      id: 'connector',
+      noun: 'Connector health',
+      descriptor: 'Live integrations and last successful pull.',
+      stat: '5 live / 1 degraded',
+      footer: 'Salesforce — re-auth.',
+      status: 'attention',
+      href: '/admin/connectors',
+    },
+    {
+      id: 'isolation',
+      noun: 'Auth & RLS posture',
+      descriptor: 'Tenant isolation, RLS coverage, anomaly count.',
+      stat: '0 anomalies 24h · RLS 96%',
+      footer: 'No anomalies in 24h.',
+      status: 'ready',
+      href: '/admin/audit?tab=isolation',
+    },
+    {
+      id: 'approvals',
+      noun: 'Approvals & policy',
+      descriptor: 'Pending decisions, invites, and SSO posture.',
+      stat: '2 pending · 3 invites',
+      footer: 'SSO configured.',
+      status: 'attention',
+      href: '/admin/programs/approvals',
+    },
+  ];
+}
+
 describe('/admin HomeOverviewV2 DOM order', () => {
   it('renders the Trust strip BEFORE the Action queue', () => {
     const html = renderToStaticMarkup(
@@ -177,6 +219,44 @@ describe('/admin HomeOverviewV2 DOM order', () => {
       />,
     );
     expect(html).not.toContain('data-testid="admin-trust-strip"');
+  });
+
+  it('renders the Posture grid BETWEEN the Action queue and the Steward orientation block (Wave 2 PR-4)', () => {
+    const html = renderToStaticMarkup(
+      <HomeOverviewV2
+        tenantName="Apex Retail Group"
+        clientKey="apexretail"
+        blocks={fixtureBlocks()}
+        extras={fixtureExtras()}
+        trustChips={fixtureChips()}
+        liveSnapshotPresent={true}
+        postureCards={fixturePostureCards()}
+      />,
+    );
+    const queueIdx = html.indexOf('WHAT NEEDS YOU TODAY');
+    const gridIdx = html.indexOf('data-testid="admin-posture-grid"');
+    const stewardIdx = html.indexOf('STEWARD VOICE');
+    expect(queueIdx).toBeGreaterThan(-1);
+    expect(gridIdx).toBeGreaterThan(-1);
+    expect(stewardIdx).toBeGreaterThan(-1);
+    expect(queueIdx).toBeLessThan(gridIdx);
+    expect(gridIdx).toBeLessThan(stewardIdx);
+  });
+
+  it('omits the Posture grid block when postureCards is null', () => {
+    const html = renderToStaticMarkup(
+      <HomeOverviewV2
+        tenantName="Apex Retail Group"
+        clientKey="apexretail"
+        blocks={fixtureBlocks()}
+        extras={fixtureExtras()}
+        trustChips={fixtureChips()}
+        liveSnapshotPresent={true}
+        postureCards={null}
+      />,
+    );
+    expect(html).not.toContain('data-testid="admin-posture-grid"');
+    expect(html).not.toContain('POSTURE AT A GLANCE');
   });
 
   it('no longer renders the 64×64 brand-initials avatar tile', () => {
