@@ -300,8 +300,19 @@ function compactStepText(text: string): string | null {
       : clean.split(/\.\s+/);
     const title = trimWords(name || `Step ${index + 1}`, 6);
     const rawDetail = splitOnLabel ? rest.join(' ') : rest[0];
-    const detailText = splitSentences(rawDetail ?? '')[0] ?? rawDetail ?? clean;
+    const detailText = splitSentences(rawDetail ?? '')[0] ?? rawDetail ?? '';
     const detail = trimWords(detailText, 18);
+    // ATLAS-HI-3-2026-05-30 — duplication fix. Previously the fallback was
+    // `?? clean`, which meant a step with no separator (e.g. "Predictive
+    // next-edit.") rendered as `title === detail`, producing the audit's
+    // signature "1. Predictive next-edit. Predictive next-edit." damage.
+    // If detail is empty OR collapses to the same normalized form as
+    // title, emit only the title.
+    const normalizedTitle = title.toLowerCase().replace(/[.!?]+$/, '').trim();
+    const normalizedDetail = detail.toLowerCase().replace(/[.!?]+$/, '').trim();
+    if (!detail || normalizedDetail === normalizedTitle) {
+      return `${index + 1}. ${sentenceWithPeriod(title)}`;
+    }
     return `${index + 1}. ${sentenceWithPeriod(title)} ${sentenceWithPeriod(detail)}`;
   });
   const outcome = sentences.find((sentence, index) => index > 0 && /\b(outcome|result|so that|ends with|leaves you)\b/i.test(sentence));
@@ -537,6 +548,75 @@ export function shapeStreamingAgentTextForSurface(_surface: string, text: string
   return repairAgentOutputContractText(cleaned).text;
 }
 
+// ATLAS-HI-3-2026-05-30 — Atlas response-shaper damage bypass.
+//
+// The 2026-05-30 Atlas IaC E2E audit (14+ damaged turns across all three
+// tenants) caught the Tower-surface compactConsultantChatText pipeline
+// actively destroying well-formed LLM output:
+//
+//   - "- Predictive next-edit. - Predictive next-edit." (duplication —
+//     compactStepText with no separator: title === detail)
+//   - "There is a second pressure behind | returns fraud model accuracy
+//     has slipped. | — | — |" (broken table — extractComparisonItems
+//     greedy `Word — Word` regex captures any sentence with an em dash
+//     and packs the rest into a table cell)
+//   - Mid-thought truncation (trimWords cutting at fixed bullet caps)
+//
+// The compactor is a pattern-matching template designed for *loose*
+// advisor prose. It was never designed for already-structured input:
+//   - the Atlas composition layer's 4-section "Your data / Industry
+//     context / The gap / Next move" template (compose.ts)
+//   - LLM output that already used markdown tables, well-formed bullet
+//     lists, or numbered steps
+//
+// When the input already has structure, the compactor's regex-based
+// extractors fight that structure and produce damaged output. The fix
+// is a fast-path: detect already-structured input and pass it through
+// unchanged. The compactor still runs for genuinely loose prose, which
+// is what the existing Tower compaction tests exercise.
+function looksAlreadyStructured(text: string): boolean {
+  if (!text) return false;
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+
+  // Markdown table — two or more pipe-delimited rows.
+  const tableLines = lines.filter((line) => /^\|.+\|$/.test(line));
+  if (tableLines.length >= 2) return true;
+
+  // Atlas composition 4-section template (compose.ts:103). Match any
+  // two of the canonical section headers on their own line. The
+  // composition layer always emits at least two when it answers; the
+  // hybrid render emits all four.
+  const compositionSections = [
+    /^Your data$/i,
+    /^Industry context$/i,
+    /^The gap$/i,
+    /^Next move$/i,
+  ];
+  const sectionHits = compositionSections.reduce(
+    (count, pattern) => count + (lines.some((line) => pattern.test(line)) ? 1 : 0),
+    0,
+  );
+  if (sectionHits >= 2) return true;
+
+  // Well-formed bullet list — 3+ lines starting with "- " or "* ".
+  // (Two or fewer can be loose prose with stray dashes.)
+  const bulletLines = lines.filter((line) => /^[-*]\s+\S/.test(line));
+  if (bulletLines.length >= 3) return true;
+
+  // Well-formed numbered list — 3+ lines starting with "1." "2." "3." etc.
+  // in monotonic order.
+  const numberedLines = lines
+    .map((line, idx) => ({ line, idx, match: line.match(/^(\d+)\.\s+\S/) }))
+    .filter((entry) => entry.match !== null);
+  if (numberedLines.length >= 3) {
+    const numbers = numberedLines.map((entry) => Number(entry.match![1]));
+    const isMonotonic = numbers.every((n, i) => i === 0 || n === numbers[i - 1] + 1);
+    if (isMonotonic && numbers[0] === 1) return true;
+  }
+
+  return false;
+}
+
 export function shapeAgentResponseForSurface(surface: string, text: string): string {
   // VOICE.STRAT-2026-05-10f — the legacy `/strategic-moves/new` special case
   // that routed to compactStrategicMoveOriginateText was removed alongside
@@ -546,7 +626,9 @@ export function shapeAgentResponseForSurface(surface: string, text: string): str
   // violation by construction). Surfaces correctly compacted now flow
   // through the single shouldCompactSurface gate.
   const cleaned = scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
-  const shaped = shouldCompactSurface(surface)
+  // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
+  // returned well-formed structure. See looksAlreadyStructured() above.
+  const shaped = shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
     ? compactConsultantChatText(cleaned, 120)
     : cleaned;
   return repairAgentOutputContractText(shaped).text;
