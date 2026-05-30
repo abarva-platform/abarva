@@ -99,7 +99,7 @@ export default async function UsersAccessPage({
           blocker={view.editorial.blocker}
           primaryAction={view.editorial.primaryAction}
         />
-        <InviteCollaboratorLauncher tenantName={tenant.tenantName} />
+        <InviteCollaboratorLauncher tenantName={tenant.tenantName} tenantKey={tenant.tenantSlug} />
         <RoleAccessMatrix
           roles={view.roles}
           pendingInvitesCount={view.pendingInvitesCount}
