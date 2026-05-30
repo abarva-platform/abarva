@@ -74,15 +74,15 @@
  * surface narrative this fulfills.
  */
 
-import 'server-only';
+import "server-only";
 
-import { azureRead } from '@/lib/data-plane/azureRead';
-import { resolveClientId } from '@/lib/admin/data/admin-db-helpers';
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { resolveClientId } from "@/lib/admin/data/admin-db-helpers";
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
-export type IsolationEvidence = 'live' | 'estimated';
-export type IsolationSeverity = 'low' | 'med' | 'high';
+export type IsolationEvidence = "live" | "estimated";
+export type IsolationSeverity = "low" | "med" | "high";
 
 export interface IsolationRecentEvent {
   id: string;
@@ -203,20 +203,25 @@ interface EgressAuditRow {
   decision_reason: string;
   request_metadata: unknown;
   error_message: string | null;
-  created_at: string;
+  created_at: string | Date;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function metadataRecord(value: unknown): Record<string, unknown> {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
   return {};
 }
 
 function stringOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function toIsoString(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 /**
@@ -226,19 +231,19 @@ function stringOrNull(value: unknown): string | null {
  */
 function severityFor(row: EgressAuditRow): IsolationSeverity {
   // Hard errors are the highest-signal class.
-  if (row.policy_decision === 'error' || row.error_message) {
-    return 'high';
+  if (row.policy_decision === "error" || row.error_message) {
+    return "high";
   }
-  if (row.policy_decision === 'deny') {
-    return 'med';
+  if (row.policy_decision === "deny") {
+    return "med";
   }
-  if (row.data_class === 'restricted') {
-    return 'med';
+  if (row.data_class === "restricted") {
+    return "med";
   }
-  if (row.policy_decision === 'redact_required') {
-    return 'low';
+  if (row.policy_decision === "redact_required") {
+    return "low";
   }
-  return 'low';
+  return "low";
 }
 
 /**
@@ -247,7 +252,7 @@ function severityFor(row: EgressAuditRow): IsolationSeverity {
  * positives erode trust in the chip.
  */
 function isAnomaly(row: EgressAuditRow): boolean {
-  if (row.policy_decision === 'deny' || row.policy_decision === 'error') {
+  if (row.policy_decision === "deny" || row.policy_decision === "error") {
     return true;
   }
   if (row.error_message && row.error_message.length > 0) {
@@ -276,7 +281,7 @@ function reasonFor(row: EgressAuditRow): string | null {
 }
 
 function severityRank(s: IsolationSeverity): number {
-  return s === 'high' ? 3 : s === 'med' ? 2 : 1;
+  return s === "high" ? 3 : s === "med" ? 2 : 1;
 }
 
 function pickTopAnomaly(
@@ -296,8 +301,7 @@ function pickTopAnomaly(
   const top = sorted[0];
   // Description is a plain-language line — reason if present, else a
   // generic anomaly label.
-  const description =
-    top.reason ?? `${top.policyDecision} · ${top.workflow}`;
+  const description = top.reason ?? `${top.policyDecision} · ${top.workflow}`;
   return {
     id: top.id,
     description,
@@ -310,7 +314,7 @@ function mapRow(row: EgressAuditRow, tenantKey: string): IsolationRecentEvent {
   const meta = metadataRecord(row.request_metadata);
   return {
     id: row.id,
-    ts: row.created_at,
+    ts: toIsoString(row.created_at) ?? new Date(0).toISOString(),
     tenantKey,
     userId: stringOrNull(row.user_id),
     intendedTenant: stringOrNull(meta.intendedTenantKey),
@@ -338,7 +342,7 @@ function fallbackEstimated(): IsolationPosture {
     anomaliesLast24h: 0,
     topAnomaly: null,
     recentEvents: [],
-    evidence: 'estimated',
+    evidence: "estimated",
   };
 }
 
@@ -368,7 +372,7 @@ export async function getIsolationPosture(
   } catch (error) {
     console.warn(
       JSON.stringify({
-        event: 'isolation_posture.client_resolve_failed',
+        event: "isolation_posture.client_resolve_failed",
         tenantKey,
         reason: error instanceof Error ? error.message : String(error),
       }),
@@ -385,39 +389,39 @@ export async function getIsolationPosture(
   let rows: EgressAuditRow[] = [];
   try {
     rows = await azureRead.select<EgressAuditRow>({
-      table: 'ai_egress_audit',
+      table: "ai_egress_audit",
       // EXPLICIT column allow-list. We never select prompt_hash,
       // response_hash, prompt_snapshot_ref, response_snapshot_ref —
       // those are payload-fingerprint columns that have no place in
       // an admin lane. PII / payload material stays in the row
       // store; the broker yields metadata only.
       columns: [
-        'id',
-        'tenant_id',
-        'user_id',
-        'workflow',
-        'provider',
-        'model',
-        'route',
-        'data_class',
-        'policy_decision',
-        'decision_reason',
-        'request_metadata',
-        'error_message',
-        'created_at',
+        "id",
+        "tenant_id",
+        "user_id",
+        "workflow",
+        "provider",
+        "model",
+        "route",
+        "data_class",
+        "policy_decision",
+        "decision_reason",
+        "request_metadata",
+        "error_message",
+        "created_at",
       ],
       where: {
         tenant_id: clientId,
-        created_at: { op: 'gte', value: isoWindowStart() },
+        created_at: { op: "gte", value: isoWindowStart() },
       },
-      orderBy: { column: 'created_at', direction: 'desc' },
+      orderBy: { column: "created_at", direction: "desc" },
       limit: RECENT_EVENTS_LIMIT,
-      missingTable: 'empty',
+      missingTable: "empty",
     });
   } catch (error) {
     console.warn(
       JSON.stringify({
-        event: 'isolation_posture.audit_query_failed',
+        event: "isolation_posture.audit_query_failed",
         tenantKey,
         reason: error instanceof Error ? error.message : String(error),
       }),
@@ -439,6 +443,6 @@ export async function getIsolationPosture(
     // RLS coverage % is hardcoded → mark estimated regardless of
     // query success. Honesty doctrine: we don't fake live until
     // EVERY input is real.
-    evidence: 'estimated',
+    evidence: "estimated",
   };
 }

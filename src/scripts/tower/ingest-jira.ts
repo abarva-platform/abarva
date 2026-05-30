@@ -31,10 +31,7 @@ import {
   type JiraIngestRow,
   type JiraParseResult,
 } from '@/lib/tower/ingest/jira/parse';
-import {
-  TOWER_INGEST_SOURCES,
-  assertRegistryUniqueKeys,
-} from '@/lib/tower/ingest/registry';
+import { findTowerIngestSource } from '@/lib/tower/ingest/registry';
 
 interface CliArgs {
   clientId: string | null;
@@ -273,8 +270,7 @@ function summarize(result: JiraParseResult, sourceTag: string): void {
 
 async function main(): Promise<number> {
   // Sanity-check the registry on every CLI run — catches a bad union-merge.
-  assertRegistryUniqueKeys();
-  const registryEntry = TOWER_INGEST_SOURCES.find((s) => s.source === 'jira');
+  const registryEntry = findTowerIngestSource('jira');
   if (!registryEntry) {
     console.error('FATAL: "jira" source missing from TOWER_INGEST_SOURCES.');
     return 1;

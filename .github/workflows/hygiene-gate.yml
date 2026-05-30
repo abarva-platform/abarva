@@ -14,9 +14,9 @@ on:
   workflow_dispatch:
     inputs:
       skip_build:
-        description: 'Skip TypeScript build check (faster)'
+        description: "Skip TypeScript build check (faster)"
         required: false
-        default: 'false'
+        default: "false"
         type: boolean
 
 jobs:
@@ -34,8 +34,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

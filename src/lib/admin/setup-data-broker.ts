@@ -22,14 +22,14 @@
  * route) where a user clicks into a segment.
  */
 
-import 'server-only';
+import "server-only";
 
-import { azureRead } from '@/lib/data-plane/azureRead';
+import { azureRead } from "@/lib/data-plane/azureRead";
 import type {
   InventoryActivityEvent,
   InventorySegmentRollup,
   SetupInventorySnapshot,
-} from '@/lib/admin/setup-acts-registry';
+} from "@/lib/admin/setup-acts-registry";
 
 export interface SegmentRecordSummary {
   recordId: string;
@@ -53,8 +53,8 @@ interface SegmentRollupRow {
   stale_count: number | string;
   missing_count: number | string;
   health_state: string;
-  last_reviewed_at: string | null;
-  last_ingested_at: string | null;
+  last_reviewed_at: string | Date | null;
+  last_ingested_at: string | Date | null;
 }
 
 interface AuditLogRow {
@@ -63,7 +63,7 @@ interface AuditLogRow {
   actor_role: string | null;
   segment_id: string | null;
   source_doc: string | null;
-  created_at: string;
+  created_at: string | Date;
 }
 
 interface IngestionRunRow {
@@ -73,44 +73,49 @@ interface IngestionRunRow {
   nodes_loaded: number | string;
   edges_loaded: number | string;
   status: string;
-  started_at: string;
-  completed_at: string | null;
+  started_at: string | Date;
+  completed_at: string | Date | null;
 }
 
 const ACTIVITY_LIMIT = 8;
 
 function toNumber(value: number | string): number {
-  return typeof value === 'number' ? value : Number(value) || 0;
+  return typeof value === "number" ? value : Number(value) || 0;
+}
+
+function toIsoString(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 function describeAuditEvent(row: AuditLogRow): string {
-  const segment = row.segment_id ? `segment ${row.segment_id}` : '';
-  const doc = row.source_doc ? ` from ${row.source_doc}` : '';
+  const segment = row.segment_id ? `segment ${row.segment_id}` : "";
+  const doc = row.source_doc ? ` from ${row.source_doc}` : "";
   switch (row.action) {
-    case 'segment_imported':
+    case "segment_imported":
       return `Imported ${segment}${doc}`.trim();
-    case 'records_persisted':
+    case "records_persisted":
       return `Persisted records into ${segment}${doc}`.trim();
-    case 'chunks_persisted':
+    case "chunks_persisted":
       return `Indexed context chunks for ${segment}${doc}`.trim();
-    case 'graph_persisted':
+    case "graph_persisted":
       return `Wrote graph nodes + edges for ${segment}`.trim();
     default:
-      return `${row.action}${segment ? ` · ${segment}` : ''}`.trim();
+      return `${row.action}${segment ? ` · ${segment}` : ""}`.trim();
   }
 }
 
 function describeActor(row: AuditLogRow): string {
   if (row.actor_id) return row.actor_id;
   switch (row.actor_role) {
-    case 'system_import':
-      return 'Import pipeline';
-    case 'sentinel':
-      return 'Sentinel';
-    case 'tenant_admin':
-      return 'Tenant admin';
+    case "system_import":
+      return "Import pipeline";
+    case "sentinel":
+      return "Sentinel";
+    case "tenant_admin":
+      return "Tenant admin";
     default:
-      return row.actor_role ?? 'System';
+      return row.actor_role ?? "System";
   }
 }
 
@@ -130,43 +135,50 @@ export async function getSetupInventorySnapshot(
   try {
     [segmentRows, auditRows, ingestRows] = await Promise.all([
       azureRead.select<SegmentRollupRow>({
-        table: 'data_inventory_segments',
+        table: "data_inventory_segments",
         columns: [
-          'segment_id',
-          'segment_name',
-          'family_number',
-          'record_count',
-          'coverage_score',
-          'stale_count',
-          'missing_count',
-          'health_state',
-          'last_reviewed_at',
-          'last_ingested_at',
+          "segment_id",
+          "segment_name",
+          "family_number",
+          "record_count",
+          "coverage_score",
+          "stale_count",
+          "missing_count",
+          "health_state",
+          "last_reviewed_at",
+          "last_ingested_at",
         ],
         where: { tenant_key: brokerTenantKey },
-        orderBy: { column: 'family_number', direction: 'asc' },
+        orderBy: { column: "family_number", direction: "asc" },
       }),
       azureRead.select<AuditLogRow>({
-        table: 'data_inventory_audit_log',
-        columns: ['action', 'actor_id', 'actor_role', 'segment_id', 'source_doc', 'created_at'],
+        table: "data_inventory_audit_log",
+        columns: [
+          "action",
+          "actor_id",
+          "actor_role",
+          "segment_id",
+          "source_doc",
+          "created_at",
+        ],
         where: { tenant_key: brokerTenantKey },
-        orderBy: { column: 'created_at', direction: 'desc' },
+        orderBy: { column: "created_at", direction: "desc" },
         limit: ACTIVITY_LIMIT,
       }),
       azureRead.select<IngestionRunRow>({
-        table: 'data_ingestion_runs',
+        table: "data_ingestion_runs",
         columns: [
-          'source_label',
-          'records_loaded',
-          'chunks_loaded',
-          'nodes_loaded',
-          'edges_loaded',
-          'status',
-          'started_at',
-          'completed_at',
+          "source_label",
+          "records_loaded",
+          "chunks_loaded",
+          "nodes_loaded",
+          "edges_loaded",
+          "status",
+          "started_at",
+          "completed_at",
         ],
         where: { tenant_key: brokerTenantKey },
-        orderBy: { column: 'started_at', direction: 'desc' },
+        orderBy: { column: "started_at", direction: "desc" },
         limit: 1,
       }),
     ]);
@@ -185,8 +197,8 @@ export async function getSetupInventorySnapshot(
     staleCount: toNumber(row.stale_count),
     missingCount: toNumber(row.missing_count),
     healthState: row.health_state,
-    lastReviewedAt: row.last_reviewed_at,
-    lastIngestedAt: row.last_ingested_at,
+    lastReviewedAt: toIsoString(row.last_reviewed_at),
+    lastIngestedAt: toIsoString(row.last_ingested_at),
   }));
 
   const totalRecords = segments.reduce((acc, s) => acc + s.recordCount, 0);
@@ -194,14 +206,16 @@ export async function getSetupInventorySnapshot(
   const recentActivity: InventoryActivityEvent[] = auditRows.map((row) => ({
     actor: describeActor(row),
     what: describeAuditEvent(row),
-    timestampIso: row.created_at,
+    timestampIso: toIsoString(row.created_at) ?? new Date(0).toISOString(),
   }));
 
   const lastIngestRow = ingestRows[0] ?? null;
   const totalChunks = lastIngestRow ? toNumber(lastIngestRow.chunks_loaded) : 0;
   const totalNodes = lastIngestRow ? toNumber(lastIngestRow.nodes_loaded) : 0;
   const totalEdges = lastIngestRow ? toNumber(lastIngestRow.edges_loaded) : 0;
-  const lastIngestedAt = lastIngestRow?.completed_at ?? lastIngestRow?.started_at ?? null;
+  const lastIngestedAt = toIsoString(
+    lastIngestRow?.completed_at ?? lastIngestRow?.started_at,
+  );
 
   return {
     tenantKey: brokerTenantKey,
@@ -224,20 +238,29 @@ interface RecordRow {
   data_classification: string;
   freshness_state: string;
   confidence: number | string | null;
-  last_reviewed: string | null;
+  last_reviewed: string | Date | null;
   uploaded_by: string;
-  uploaded_at: string;
+  uploaded_at: string | Date;
 }
 
-function stringField(payload: Record<string, unknown> | null | undefined, key: string): string | null {
+function stringField(
+  payload: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null {
   const value = payload?.[key];
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function isGenericRecordTitle(title: string, segmentKey: string): boolean {
   const normalized = title.trim().toLowerCase();
   if (!normalized) return true;
-  if (segmentKey === 'kpi_dictionary' && /^kpi dictionary \d+$/.test(normalized)) return true;
+  if (
+    segmentKey === "kpi_dictionary" &&
+    /^kpi dictionary \d+$/.test(normalized)
+  )
+    return true;
   return false;
 }
 
@@ -245,14 +268,14 @@ function deriveRecordTitle(row: RecordRow, segmentKey: string): string {
   if (!isGenericRecordTitle(row.title, segmentKey)) return row.title;
   const payload = row.record_payload;
   const candidate =
-    stringField(payload, 'title') ??
-    stringField(payload, 'kpi_name') ??
-    stringField(payload, 'metric_name') ??
-    stringField(payload, 'name') ??
-    stringField(payload, 'claim');
+    stringField(payload, "title") ??
+    stringField(payload, "kpi_name") ??
+    stringField(payload, "metric_name") ??
+    stringField(payload, "name") ??
+    stringField(payload, "claim");
   if (!candidate) return row.title;
 
-  const currentValue = stringField(payload, 'current_value');
+  const currentValue = stringField(payload, "current_value");
   return currentValue ? `${candidate} · ${currentValue}` : candidate;
 }
 
@@ -276,45 +299,47 @@ export async function getSegmentRecordPage(
 ): Promise<SegmentRecordPage | null> {
   const [rollupResult, recordsResult] = await Promise.allSettled([
     azureRead.maybeSingle<SegmentRollupRow>({
-      table: 'data_inventory_segments',
+      table: "data_inventory_segments",
       columns: [
-        'segment_id',
-        'segment_name',
-        'family_number',
-        'record_count',
-        'coverage_score',
-        'stale_count',
-        'missing_count',
-        'health_state',
-        'last_reviewed_at',
-        'last_ingested_at',
+        "segment_id",
+        "segment_name",
+        "family_number",
+        "record_count",
+        "coverage_score",
+        "stale_count",
+        "missing_count",
+        "health_state",
+        "last_reviewed_at",
+        "last_ingested_at",
       ],
       where: { tenant_key: brokerTenantKey, segment_id: segmentKey },
     }),
     azureRead.select<RecordRow>({
-      table: 'data_inventory_records',
+      table: "data_inventory_records",
       columns: [
-        'record_id',
-        'title',
-        'record_kind',
-        'record_payload',
-        'source_doc',
-        'data_classification',
-        'freshness_state',
-        'confidence',
-        'last_reviewed',
-        'uploaded_by',
-        'uploaded_at',
+        "record_id",
+        "title",
+        "record_kind",
+        "record_payload",
+        "source_doc",
+        "data_classification",
+        "freshness_state",
+        "confidence",
+        "last_reviewed",
+        "uploaded_by",
+        "uploaded_at",
       ],
       where: { tenant_key: brokerTenantKey, segment_id: segmentKey },
-      orderBy: { column: 'uploaded_at', direction: 'desc' },
+      orderBy: { column: "uploaded_at", direction: "desc" },
       limit: SEGMENT_RECORD_LIMIT,
     }),
   ]);
 
-  if (rollupResult.status === 'rejected' && recordsResult.status === 'rejected') return null;
+  if (rollupResult.status === "rejected" && recordsResult.status === "rejected")
+    return null;
 
-  const rollupRow = rollupResult.status === 'fulfilled' ? rollupResult.value : null;
+  const rollupRow =
+    rollupResult.status === "fulfilled" ? rollupResult.value : null;
   const rollup: InventorySegmentRollup | null = rollupRow
     ? {
         segmentId: rollupRow.segment_id,
@@ -325,12 +350,13 @@ export async function getSegmentRecordPage(
         staleCount: toNumber(rollupRow.stale_count),
         missingCount: toNumber(rollupRow.missing_count),
         healthState: rollupRow.health_state,
-        lastReviewedAt: rollupRow.last_reviewed_at,
-        lastIngestedAt: rollupRow.last_ingested_at,
+        lastReviewedAt: toIsoString(rollupRow.last_reviewed_at),
+        lastIngestedAt: toIsoString(rollupRow.last_ingested_at),
       }
     : null;
 
-  const recordRows = recordsResult.status === 'fulfilled' ? recordsResult.value : [];
+  const recordRows =
+    recordsResult.status === "fulfilled" ? recordsResult.value : [];
   const records: SegmentRecordSummary[] = recordRows.map((row) => ({
     recordId: row.record_id,
     title: deriveRecordTitle(row, segmentKey),
@@ -341,12 +367,12 @@ export async function getSegmentRecordPage(
     confidence:
       row.confidence === null
         ? null
-        : typeof row.confidence === 'number'
+        : typeof row.confidence === "number"
           ? row.confidence
           : Number(row.confidence) || null,
-    lastReviewed: row.last_reviewed,
+    lastReviewed: toIsoString(row.last_reviewed),
     uploadedBy: row.uploaded_by,
-    uploadedAt: row.uploaded_at,
+    uploadedAt: toIsoString(row.uploaded_at) ?? new Date(0).toISOString(),
   }));
 
   return {
@@ -363,7 +389,12 @@ export async function getSegmentRecordPage(
 // `data_inventory_records`; the substantive fields live in
 // `record_payload` (a JSONB column).
 
-export type SignalSeverityBucket = 'critical' | 'high' | 'medium' | 'low' | 'unknown';
+export type SignalSeverityBucket =
+  | "critical"
+  | "high"
+  | "medium"
+  | "low"
+  | "unknown";
 
 export interface CrossProgramSignal {
   recordId: string;
@@ -401,27 +432,27 @@ interface SignalRow {
 }
 
 function bucketSeverity(raw: string | undefined): SignalSeverityBucket {
-  if (!raw) return 'unknown';
+  if (!raw) return "unknown";
   const normalized = raw.trim().toLowerCase();
-  if (normalized.startsWith('critical')) return 'critical';
-  if (normalized.startsWith('high')) return 'high';
-  if (normalized.startsWith('medium')) return 'medium';
-  if (normalized.startsWith('low')) return 'low';
-  return 'unknown';
+  if (normalized.startsWith("critical")) return "critical";
+  if (normalized.startsWith("high")) return "high";
+  if (normalized.startsWith("medium")) return "medium";
+  if (normalized.startsWith("low")) return "low";
+  return "unknown";
 }
 
 function isBoilerplateSignalText(value: string | undefined): boolean {
-  const normalized = value?.trim().toLowerCase() ?? '';
+  const normalized = value?.trim().toLowerCase() ?? "";
   if (!normalized) return true;
   return (
-    normalized.includes('this signal is generated from shared people') ||
-    normalized.includes('intentionally graph-ready') ||
-    normalized.includes('should resolve back to named source records')
+    normalized.includes("this signal is generated from shared people") ||
+    normalized.includes("intentionally graph-ready") ||
+    normalized.includes("should resolve back to named source records")
   );
 }
 
 function humanizeSignalType(signalType: string): string {
-  return signalType.replace(/_/g, ' ').trim() || 'cross-program signal';
+  return signalType.replace(/_/g, " ").trim() || "cross-program signal";
 }
 
 function deriveSignalDescription(args: {
@@ -432,11 +463,11 @@ function deriveSignalDescription(args: {
 }): string {
   const programText =
     args.programs.length > 0
-      ? ` It touches ${args.programs.join(', ')}.`
-      : ' No linked program list was provided in the substrate payload.';
+      ? ` It touches ${args.programs.join(", ")}.`
+      : " No linked program list was provided in the substrate payload.";
   const severityText =
-    args.severityBucket === 'unknown'
-      ? 'unclassified severity'
+    args.severityBucket === "unknown"
+      ? "unclassified severity"
       : `${args.severityBucket} severity`;
   return `${args.title} is a ${severityText} ${humanizeSignalType(args.signalType)} surfaced by Atlas.${programText}`;
 }
@@ -447,15 +478,15 @@ function deriveSignalRecommendation(args: {
   programs: string[];
 }): string {
   const ownerAction =
-    args.severityBucket === 'critical'
-      ? 'Escalate to the sponsor group before the next gate.'
-      : args.severityBucket === 'high'
-        ? 'Put this on the next sponsor decision agenda.'
-        : 'Track this in the portfolio review and refresh evidence before the next phase change.';
+    args.severityBucket === "critical"
+      ? "Escalate to the sponsor group before the next gate."
+      : args.severityBucket === "high"
+        ? "Put this on the next sponsor decision agenda."
+        : "Track this in the portfolio review and refresh evidence before the next phase change.";
   const programText =
     args.programs.length > 0
-      ? ` Anchor the discussion on ${args.programs.join(', ')}.`
-      : ' Ask Atlas to resolve the linked programs before assigning an owner.';
+      ? ` Anchor the discussion on ${args.programs.join(", ")}.`
+      : " Ask Atlas to resolve the linked programs before assigning an owner.";
   return `${ownerAction}${programText} Treat it as ${humanizeSignalType(args.signalType)}, not a generic portfolio note.`;
 }
 
@@ -479,19 +510,22 @@ export async function getCrossProgramSignals(
   let rows: SignalRow[];
   try {
     rows = await azureRead.select<SignalRow>({
-      table: 'data_inventory_records',
-      columns: ['record_id', 'title', 'record_payload'],
-      where: { tenant_key: brokerTenantKey, segment_id: 'cross_program_signals' },
-      orderBy: { column: 'record_id', direction: 'asc' },
+      table: "data_inventory_records",
+      columns: ["record_id", "title", "record_payload"],
+      where: {
+        tenant_key: brokerTenantKey,
+        segment_id: "cross_program_signals",
+      },
+      orderBy: { column: "record_id", direction: "asc" },
     });
   } catch {
     return [];
   }
   const signals: CrossProgramSignal[] = rows.map((row) => {
     const payload = row.record_payload ?? {};
-    const severityRaw = payload.severity ?? '';
+    const severityRaw = payload.severity ?? "";
     const severityBucket = bucketSeverity(severityRaw);
-    const signalType = payload.type ?? 'unknown';
+    const signalType = payload.type ?? "unknown";
     const programs = Array.isArray(payload.programs) ? payload.programs : [];
     const fallbackArgs = {
       title: row.title,
@@ -508,19 +542,20 @@ export async function getCrossProgramSignals(
       severityBucket,
       description: isBoilerplateSignalText(payload.description)
         ? deriveSignalDescription(fallbackArgs)
-        : payload.description ?? '',
+        : (payload.description ?? ""),
       recommendation: isBoilerplateSignalText(payload.recommendation)
         ? deriveSignalRecommendation(fallbackArgs)
-        : payload.recommendation ?? '',
-      status: payload.status ?? '',
+        : (payload.recommendation ?? ""),
+      status: payload.status ?? "",
       programs,
-      raisedBy: payload.raised_by ?? '',
+      raisedBy: payload.raised_by ?? "",
       raisedDate: payload.raised_date ?? null,
     };
   });
 
   return signals.sort((a, b) => {
-    const rankDiff = SEVERITY_RANK[a.severityBucket] - SEVERITY_RANK[b.severityBucket];
+    const rankDiff =
+      SEVERITY_RANK[a.severityBucket] - SEVERITY_RANK[b.severityBucket];
     if (rankDiff !== 0) return rankDiff;
     if (a.raisedDate && b.raisedDate) {
       return b.raisedDate.localeCompare(a.raisedDate);
@@ -550,9 +585,12 @@ export async function getContextChunkStats(
 ): Promise<SegmentChunkStat[]> {
   let rows: { source_segment_id: string; embedding_status: string }[];
   try {
-    rows = await azureRead.select<{ source_segment_id: string; embedding_status: string }>({
-      table: 'enterprise_context_chunks',
-      columns: ['source_segment_id', 'embedding_status'],
+    rows = await azureRead.select<{
+      source_segment_id: string;
+      embedding_status: string;
+    }>({
+      table: "enterprise_context_chunks",
+      columns: ["source_segment_id", "embedding_status"],
       where: { tenant_key: tenantKey },
     });
   } catch {
@@ -561,14 +599,20 @@ export async function getContextChunkStats(
 
   const map = new Map<string, SegmentChunkStat>();
   for (const row of rows) {
-    const seg = row.source_segment_id ?? 'unknown';
+    const seg = row.source_segment_id ?? "unknown";
     if (!map.has(seg)) {
-      map.set(seg, { segmentId: seg, totalChunks: 0, embeddedChunks: 0, pendingChunks: 0, failedChunks: 0 });
+      map.set(seg, {
+        segmentId: seg,
+        totalChunks: 0,
+        embeddedChunks: 0,
+        pendingChunks: 0,
+        failedChunks: 0,
+      });
     }
     const stat = map.get(seg)!;
     stat.totalChunks++;
-    if (row.embedding_status === 'embedded') stat.embeddedChunks++;
-    else if (row.embedding_status === 'failed') stat.failedChunks++;
+    if (row.embedding_status === "embedded") stat.embeddedChunks++;
+    else if (row.embedding_status === "failed") stat.failedChunks++;
     else stat.pendingChunks++;
   }
 

@@ -78,12 +78,12 @@ export interface RouteLinkRecord {
 const SPEC_PHASES = [1, 2, 3, 4, 5] as SpecPhaseNumber[];
 const GLOBAL_TOWER_SURFACES = [
   '/tower',
-  '/tower/tech-stack',
-  '/tower/projects',
-  '/tower/staff-aug',
-  '/tower/volumetrics',
-  '/tower/preview',
+  '/tower/portfolio',
+  '/tower/portfolio-dag',
   '/tower/onboard',
+  // Per Tower audit §5.4 (PR #2525), the tech-stack / projects /
+  // staff-aug / volumetrics / preview redirect-shells have been
+  // removed. See docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md.
 ];
 
 export function isTowerSubsurfaceSlug(value: string): value is TowerSubsurfaceSlug {

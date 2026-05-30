@@ -1,100 +1,63 @@
 /**
- * Tower live-source ingest registry.
+ * Tower ingest source registry.
  *
- * Each Tower data source (Jira, GitHub, ServiceNow, Workday, cloud billing,
- * Copilot, etc.) registers ONE entry here so the `/tower/onboard` index, the
- * CLI runner, and the upload classifier all share a single source of truth.
+ * Each entry describes ONE live integration that feeds Tower. Sibling slices
+ * append their entry by importing their own descriptor and adding it to the
+ * `TOWER_INGEST_SOURCES` array below. This file is the union of all such
+ * descriptors — keep additions alphabetical to make merge conflicts trivial.
  *
- * **Union-merge contract:** every slice appends ONE entry to
- * `TOWER_INGEST_SOURCES` keyed by `source`. The key must be globally unique
- * across slices. If two slices land the same key the build fails (see
- * {@link assertRegistryUniqueKeys}). This file deliberately exports a single
- * flat list — no nested categories — so cross-slice diffs are obvious.
+ * Audit context: PR #2525 found ZERO live integrations. Tower has lots of
+ * synthesis but nothing watching a real source. Every entry in this array is
+ * a real watch: a real-world extract path, a template, a parser, a validator,
+ * a CLI, and a target table.
  */
 
-export type TowerIngestDimension =
-  | 'engineering' // DORA, velocity, cycle time, work-in-flight
-  | 'cmdb' // services, applications, owners
-  | 'itsm' // tickets, change, incident
-  | 'hcm' // roles, headcount, location
-  | 'erp' // contracts, vendors, spend
-  | 'cloud_cost' // billing, FinOps
-  | 'ai_tooling' // Copilot / Cursor / Claude usage
-  | 'portfolio_csv'; // legacy 5-dimension CSV bundle
+import { azureCostSource } from './azure-cost';
+import { copilotSource } from './copilot';
+import { jiraSource } from './jira';
+
+export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
 
 export interface TowerIngestSource {
-  /** Globally unique key. lowercase, kebab-case. e.g. "jira". */
-  source: string;
-
-  /** Human label shown in /tower/onboard. */
+  /** Stable key used as the source identifier on disk and in registries. */
+  key: string;
+  /** Human-friendly name shown in catalog / chooser UIs. */
   displayName: string;
-
-  /** Which Tower dimension(s) this source feeds. */
-  dimensions: TowerIngestDimension[];
-
-  /** Primary DB table populated by this source. */
+  /** Vendor or system of record. */
+  vendor: string;
+  /** Tower dimension this source primarily feeds. */
+  kind: TowerIngestKind;
+  /** Stable target DB table name (must match the migration this slice ships). */
   targetTable: string;
-
-  /** Static path to the workbook template, relative to /public. */
+  /** Public path of the blank template file (relative to /public). */
   templatePath: string;
-
-  /** Path to README runbook, relative to repo root. */
+  /** Public path of the sample-filled workbook (relative to /public). */
+  samplePath: string;
+  /** Project-relative path of the README for this source. */
   readmePath: string;
-
-  /**
-   * Real-world extract recipe (one-liner). Surfaced in the Onboard catalog.
-   * E.g. "JQL export of issues + history" or "GitHub REST API /repos/{owner}/{repo}/actions/runs".
-   */
-  extractRecipe: string;
-
-  /** npm script that runs the CLI. e.g. "tower:ingest:jira". */
+  /** Module path (relative to src) of the parser entrypoint. */
+  parserModule: string;
+  /** Module path (relative to src) of the validator entrypoint. */
+  validatorModule: string;
+  /** Script name (under src/scripts/tower) for the CLI ingest tool. */
   cliScript: string;
-
-  /** Migration file (basename) that creates the target table. */
-  migration: string;
+  /** Real-world extract path summary (one line for catalog cards). */
+  extractPath: string;
+  /** Sample-row count and tenant — for synthetic banner sizing. */
+  sampleSummary: { tenant: string; rowsApprox: number };
 }
 
-/**
- * Single flat list. Append ONE entry per slice. Keep alphabetical by `source`
- * so concurrent slices land different physical lines and union-merge cleanly.
- */
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
-  {
-    source: 'jira',
-    displayName: 'Jira — epics, stories, velocity, cycle time',
-    dimensions: ['engineering'],
-    targetTable: 'tower_jira_issues',
-    templatePath: '/templates/tower/jira/template.xlsx',
-    readmePath: 'docs/templates/tower/jira/README.md',
-    extractRecipe:
-      'Jira → Issues filter → Export Excel CSV (current fields), OR REST /rest/api/3/search?jql=… with history expansion',
-    cliScript: 'tower:ingest:jira',
-    migration: '20260530120000_tower_jira_issues.sql',
-  },
+  azureCostSource,
+  copilotSource,
+  jiraSource,
+  // Sibling slices append here, alphabetical by `key`.
 ];
 
-/**
- * Throw if two registry entries share a key. Called at module load by tests
- * and at CLI startup so a bad merge never reaches deploy.
- */
-export function assertRegistryUniqueKeys(
-  sources: readonly TowerIngestSource[] = TOWER_INGEST_SOURCES,
-): void {
-  const seen = new Set<string>();
-  const dupes: string[] = [];
-  for (const s of sources) {
-    if (seen.has(s.source)) dupes.push(s.source);
-    seen.add(s.source);
-  }
-  if (dupes.length > 0) {
-    throw new Error(
-      `TOWER_INGEST_SOURCES has duplicate keys: ${dupes.join(', ')}. Each slice owns ONE key.`,
-    );
-  }
+export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
+  return TOWER_INGEST_SOURCES.find((s) => s.key === key);
 }
 
-assertRegistryUniqueKeys();
-
-export function findIngestSource(source: string): TowerIngestSource | undefined {
-  return TOWER_INGEST_SOURCES.find((s) => s.source === source);
+export function towerIngestKindsCovered(): TowerIngestKind[] {
+  return Array.from(new Set(TOWER_INGEST_SOURCES.map((s) => s.kind))).sort();
 }

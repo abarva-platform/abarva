@@ -75,53 +75,78 @@ export function AdminSidebar() {
           padding: '12px 0',
         }}
       >
-        {ADMIN_SUB_SECTIONS.map((section) => {
+        {ADMIN_SUB_SECTIONS.map((section, index) => {
           const isActive =
             section.href === '/admin'
               ? pathname === '/admin'
               : pathname.startsWith(section.href);
 
+          // Group header: render when this entry declares a `group`
+          // distinct from any prior entry. The first entry's
+          // `Setup` group is intentionally suppressed because the
+          // shell already shows "Setup · Admin" in the header
+          // (avoids visual duplication). Subsequent groups always
+          // render so operators can scan by capability.
+          const showGroupHeader = section.group !== undefined && index !== 0;
+
           return (
-            <Link
-              key={section.id}
-              href={section.href}
-              aria-current={isActive ? 'page' : undefined}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1,
-                padding: '9px 20px 9px 17px',
-                borderLeft: isActive
-                  ? `3px solid ${COLORS.navy}`
-                  : '3px solid transparent',
-                background: isActive ? `${COLORS.navy}0a` : 'transparent',
-                textDecoration: 'none',
-                transition: 'background 0.1s',
-              }}
-            >
-              <span
+            <div key={section.id}>
+              {showGroupHeader && (
+                <div
+                  style={{
+                    fontFamily: TYPOGRAPHY.mono,
+                    fontSize: 9,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: `${COLORS.ink}66`,
+                    fontWeight: 600,
+                    padding: '14px 20px 6px 20px',
+                  }}
+                  data-testid={`admin-sidebar-group-${section.group?.toLowerCase()}`}
+                >
+                  {section.group}
+                </div>
+              )}
+              <Link
+                href={section.href}
+                aria-current={isActive ? 'page' : undefined}
                 style={{
-                  fontFamily: TYPOGRAPHY.sans,
-                  fontSize: 13,
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? COLORS.navy : COLORS.ink,
-                  lineHeight: 1.3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  padding: '9px 20px 9px 17px',
+                  borderLeft: isActive
+                    ? `3px solid ${COLORS.navy}`
+                    : '3px solid transparent',
+                  background: isActive ? `${COLORS.navy}0a` : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'background 0.1s',
                 }}
               >
-                {section.label}
-              </span>
-              <span
-                style={{
-                  fontFamily: TYPOGRAPHY.mono,
-                  fontSize: 10,
-                  letterSpacing: '0.06em',
-                  color: `${COLORS.ink}80`,
-                  lineHeight: 1.3,
-                }}
-              >
-                {section.subtitle}
-              </span>
-            </Link>
+                <span
+                  style={{
+                    fontFamily: TYPOGRAPHY.sans,
+                    fontSize: 13,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? COLORS.navy : COLORS.ink,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {section.label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: TYPOGRAPHY.mono,
+                    fontSize: 10,
+                    letterSpacing: '0.06em',
+                    color: `${COLORS.ink}80`,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {section.subtitle}
+                </span>
+              </Link>
+            </div>
           );
         })}
       </nav>
