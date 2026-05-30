@@ -13,9 +13,13 @@
 import type { InitiativeArchetype } from './types';
 import { claudeCodeArchetype } from './archetypes/claude-code';
 import { githubCopilotArchetype } from './archetypes/github-copilot';
+import { microsoft365CopilotArchetype } from './archetypes/microsoft-365-copilot';
+import { salesforceEinsteinAgentforceArchetype } from './archetypes/salesforce-einstein-agentforce';
 
 export const INITIATIVE_ARCHETYPES: InitiativeArchetype[] = [
   claudeCodeArchetype,
   githubCopilotArchetype,
+  microsoft365CopilotArchetype,
+  salesforceEinsteinAgentforceArchetype,
   // Sibling slices append here, alphabetical by `archetypeKey`.
 ];
