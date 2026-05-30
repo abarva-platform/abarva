@@ -594,6 +594,15 @@ const APEX_TENANT = {
   tier: 'rich' as TenantTier,
 };
 
+const TENANT_CONTEXT_BY_SLUG: Record<string, { name: string; tier: TenantTier }> = {
+  'apex-retail': { name: 'Apex Retail', tier: 'rich' },
+  'meridian': { name: 'Meridian Health System', tier: 'rich' },
+  'meridian-health': { name: 'Meridian Health System', tier: 'rich' },
+  'first-capital': { name: 'First Capital Financial', tier: 'rich' },
+  'northstar-clinical': { name: 'Northstar Clinical Technologies', tier: 'rich' },
+  'skyharbor-air': { name: 'SkyHarbor Air', tier: 'rich' },
+};
+
 const PLATFORM_TENANT = {
   slug: 'abarva-platform',
   name: 'AbarVa platform',
@@ -792,6 +801,14 @@ function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) 
   // Build progress is platform-scoped (no per-tenant content).
   if (surface === 'admin' && page === 'build-progress') return PLATFORM_TENANT;
   if (tenantSlug === 'apex-retail') return APEX_TENANT;
+  const canonicalTenant = TENANT_CONTEXT_BY_SLUG[tenantSlug];
+  if (canonicalTenant) {
+    return {
+      slug: tenantSlug,
+      name: canonicalTenant.name,
+      tier: canonicalTenant.tier,
+    };
+  }
   return {
     slug: tenantSlug,
     name: tenantSlug,

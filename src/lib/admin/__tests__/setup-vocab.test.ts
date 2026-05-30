@@ -176,6 +176,7 @@ describe('unlocksPreview (Wave 3 PR 2 schema)', () => {
       expect(preview).toBeDefined();
       expect(preview.question).toBeTruthy();
       expect(preview.citationExample).toBeTruthy();
+      expect(preview.citationExample).not.toMatch(/\bApex\b|Apex Retail/i);
     }
   });
 
