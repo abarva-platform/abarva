@@ -61,26 +61,30 @@ Every part of AbarVa belongs to exactly one of these layers. **Calls go down, no
 ```
 
 **CI enforcement:** `eslint-plugin-import` with custom restricted-paths rules that fail the build if:
+
 - `src/app/**/page.tsx` imports from `src/lib/data-plane/`
 - `src/lib/agents/` imports from `src/app/api/`
 - `src/lib/data-plane/` imports from `src/lib/agents/`
 - Any `src/app/api/**/route.ts` contains more than 50 lines of business logic (forces extraction to `src/lib/`)
 
-### 1.2 The Nine Architectural Invariants
+### 1.2 The Twelve Architectural Invariants
 
 These are non-negotiable. Violation = automatic CI failure. **Period.**
 
-| # | Invariant | CI guard |
-|---|---|---|
-| **I1** | Tenant resolution has exactly ONE entry point: `resolveTenant()` | `grep -r "TENANT_ALIASES\|TENANT_KEY_ALIASES" src/ --exclude=lib/tenant/aliases.ts` returns empty |
-| **I2** | All data plane reads go through ONE adapter per substrate type | `grep -r "@supabase/\|directly connect to azure" src/app src/lib --exclude=lib/data-plane` returns empty |
-| **I3** | All model API calls go through ONE client per provider (AnthropicClient, VoyageClient) | `grep -r "import.*@anthropic-ai/sdk\|import.*voyageai" src/ --exclude=lib/model-clients` returns empty |
-| **I4** | Every retrieval call returns a `CoverageReport` | Type-system enforced; `retrieve*()` function signatures must return `{ sources, coverage }` |
-| **I5** | Every tenant boundary is enforced at the DB query layer (RLS or explicit `WHERE client_id = ?`) | Migration tests verify RLS policies exist on all multi-tenant tables |
-| **I6** | Every AI egress call writes to `ai_egress_audit` with tenant context | Lint rule: ModelClient.call() must have audit context parameter |
-| **I7** | Every Tier-1 question category maps to required substrate segments (coverage contract) | `coverage.test.ts` asserts every category has ≥3 required segments |
-| **I8** | Every public-facing change has a release record with `## Audit Evidence` section | Release-control gate (already implemented) |
-| **I9** | Pattern retrieval is industry-isolated: tenants may retrieve only their allowed industry overlays plus `cross_industry` | `retrievePattern` tenant matrix test covers five query classes across Apex, Meridian, Northstar, First Capital, and SkyHarbor; ESLint blocks new Ask callsites that bypass the scoped retriever |
+| #       | Invariant                                                                                                               | CI guard                                                                                                                                                                                        |
+| ------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **I1**  | Tenant resolution has exactly ONE entry point: `resolveTenant()`                                                        | `grep -r "TENANT_ALIASES\|TENANT_KEY_ALIASES" src/ --exclude=lib/tenant/aliases.ts` returns empty                                                                                               |
+| **I2**  | All data plane reads go through ONE adapter per substrate type                                                          | `grep -r "@supabase/\|directly connect to azure" src/app src/lib --exclude=lib/data-plane` returns empty                                                                                        |
+| **I3**  | All model API calls go through ONE client per provider (AnthropicClient, VoyageClient)                                  | `grep -r "import.*@anthropic-ai/sdk\|import.*voyageai" src/ --exclude=lib/model-clients` returns empty                                                                                          |
+| **I4**  | Every retrieval call returns a `CoverageReport`                                                                         | Type-system enforced; `retrieve*()` function signatures must return `{ sources, coverage }`                                                                                                     |
+| **I5**  | Every tenant boundary is enforced at the DB query layer (RLS or explicit `WHERE client_id = ?`)                         | Migration tests verify RLS policies exist on all multi-tenant tables                                                                                                                            |
+| **I6**  | Every AI egress call writes to `ai_egress_audit` with tenant context                                                    | Lint rule: ModelClient.call() must have audit context parameter                                                                                                                                 |
+| **I7**  | Every Tier-1 question category maps to required substrate segments (coverage contract)                                  | `coverage.test.ts` asserts every category has ≥3 required segments                                                                                                                              |
+| **I8**  | Every public-facing change has a release record with `## Audit Evidence` section                                        | Release-control gate (already implemented)                                                                                                                                                      |
+| **I9**  | Pattern retrieval is industry-isolated: tenants may retrieve only their allowed industry overlays plus `cross_industry` | `retrievePattern` tenant matrix test covers five query classes across Apex, Meridian, Northstar, First Capital, and SkyHarbor; ESLint blocks new Ask callsites that bypass the scoped retriever |
+| **I10** | Production tenants are governed by the canonical tenant allowlist                                                       | CI drift detection compares production `clients.tenant_key` values with `CANONICAL_TENANTS`                                                                                                     |
+| **I11** | Retrieval and synthesis functions must take tenant scope as a typed parameter                                           | TypeScript build fails for new retrieval/synthesis functions that read tenant-scoped data without `CanonicalTenant` or equivalent tenant context                                                |
+| **I12** | Production Ask performance must stay inside the 50-concurrent budget for the certified tenant path                      | Packet 30 Phase 6 load gate: SkyHarbor 50-concurrent Ask p95 must remain under 12 seconds with zero tenant bleeds and zero 5xx                                                                  |
 
 ### 1.3 The Six Tenant-as-First-Class-Citizen Rules
 
@@ -97,14 +101,14 @@ Multi-tenancy is the hardest thing to retrofit and the easiest thing to break. R
 
 For each, there is exactly ONE module in the codebase that owns it:
 
-| Domain | Module | Owns |
-|---|---|---|
-| Tenant resolution | `src/lib/tenant/` | resolver, aliases, types, fallback policy |
-| Data plane reads | `src/lib/data-plane/azureRead.ts` | connection, retries, query construction |
-| Model clients | `src/lib/model-clients/` | Anthropic, Voyage, OpenAI (if added) |
-| Coverage contract | `src/lib/knowledge/coverage.ts` | question categories → required segments |
-| Audit logging | `src/lib/audit/` | egress audit, action audit, error audit |
-| Artifact quality | `src/lib/artifact-excellence/cxo-artifact-excellence-framework.ts` | CXO artifact excellence standard, scoring rubric, buyer/auditor readiness bar |
+| Domain            | Module                                                             | Owns                                                                          |
+| ----------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Tenant resolution | `src/lib/tenant/`                                                  | resolver, aliases, types, fallback policy                                     |
+| Data plane reads  | `src/lib/data-plane/azureRead.ts`                                  | connection, retries, query construction                                       |
+| Model clients     | `src/lib/model-clients/`                                           | Anthropic, Voyage, OpenAI (if added)                                          |
+| Coverage contract | `src/lib/knowledge/coverage.ts`                                    | question categories → required segments                                       |
+| Audit logging     | `src/lib/audit/`                                                   | egress audit, action audit, error audit                                       |
+| Artifact quality  | `src/lib/artifact-excellence/cxo-artifact-excellence-framework.ts` | CXO artifact excellence standard, scoring rubric, buyer/auditor readiness bar |
 
 If a second module of any of these appears, **the CI guard catches it and fails the build.** No exceptions, no `// eslint-disable`.
 
@@ -112,18 +116,18 @@ If a second module of any of these appears, **the CI guard catches it and fails 
 
 Things we've already burned hours on. Named so we don't repeat them.
 
-| Anti-pattern | Symptom | Detection |
-|---|---|---|
-| **Spaghetti tenant key** | 5 different fields holding the same tenant ID with subtle format differences | CI grep: only `canonicalKey` and `clientId` may appear in domain code |
-| **Try-catch loses fallback** | Fallback assignment inside try-block, lost on catch | ESLint custom rule: fallback values must be assigned outside try-blocks |
-| **Stale dual-store assumption** | Code reads from store A while data lives in store B | I2 invariant + CI guard |
-| **Silent retrieval refusal** | "Data unavailable" admitted when ≥1 source matched | Partial-evidence test suite + `unavailableAdmissionRate` metric |
-| **Browser-fetch verifier** | Quality gate dies on transient browser failures | Verifier is Node-fetch only (Phase 4 of Packet 30) |
-| **Single tabId across batch** | Session memory pollutes batch verification | Verifier per-question UUID tabId |
-| **Worktree drift** | Local main predates squash merges, dirty diffs leak in | Phase-per-worktree policy in §3.5 |
-| **GitHub auth token poisoning** | `GH_TOKEN` env var blocks otherwise-healthy keychain auth | Documented workaround: `env -u GH_TOKEN gh ...`; long-term fix in tooling brief |
-| **Pattern-only answer scored as grounded** | Sentinel cites overlay but no tenant facts | Verifier rubric caps pattern-only answers at 3/5 |
-| **Hot-classifier keyword drift** | Question routing breaks when new tenant uses domain-specific vocabulary | Coverage contract routes by category, not keyword |
+| Anti-pattern                               | Symptom                                                                      | Detection                                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Spaghetti tenant key**                   | 5 different fields holding the same tenant ID with subtle format differences | CI grep: only `canonicalKey` and `clientId` may appear in domain code           |
+| **Try-catch loses fallback**               | Fallback assignment inside try-block, lost on catch                          | ESLint custom rule: fallback values must be assigned outside try-blocks         |
+| **Stale dual-store assumption**            | Code reads from store A while data lives in store B                          | I2 invariant + CI guard                                                         |
+| **Silent retrieval refusal**               | "Data unavailable" admitted when ≥1 source matched                           | Partial-evidence test suite + `unavailableAdmissionRate` metric                 |
+| **Browser-fetch verifier**                 | Quality gate dies on transient browser failures                              | Verifier is Node-fetch only (Phase 4 of Packet 30)                              |
+| **Single tabId across batch**              | Session memory pollutes batch verification                                   | Verifier per-question UUID tabId                                                |
+| **Worktree drift**                         | Local main predates squash merges, dirty diffs leak in                       | Phase-per-worktree policy in §3.5                                               |
+| **GitHub auth token poisoning**            | `GH_TOKEN` env var blocks otherwise-healthy keychain auth                    | Documented workaround: `env -u GH_TOKEN gh ...`; long-term fix in tooling brief |
+| **Pattern-only answer scored as grounded** | Sentinel cites overlay but no tenant facts                                   | Verifier rubric caps pattern-only answers at 3/5                                |
+| **Hot-classifier keyword drift**           | Question routing breaks when new tenant uses domain-specific vocabulary      | Coverage contract routes by category, not keyword                               |
 
 When you find a new anti-pattern, **add it to this list and ship the detection.** The catalog is alive.
 
@@ -135,16 +139,16 @@ This is the question PHS will force you to answer commercially within 60 days.
 
 ### 2.1 The Four Deployment Tiers
 
-| Tier | Name | Data plane | Compute | Customer use case | Commercial pricing |
-|---|---|---|---|---|---|
-| **T1** | Shared MT (demo) | Shared Azure DB, RLS-isolated | Shared Vercel | Demos, pre-pilots, trials | Free / $5K trial |
-| **T2** | Shared MT (production) | Shared Azure DB, RLS-isolated | Shared Vercel | Small pilots, SMB customers | $50K–$200K/yr |
-| **T3** | Dedicated tenant | Dedicated Azure DB per customer | Shared Vercel runtime, dedicated DB | Mid-market, light compliance | $300K–$750K/yr |
-| **T4** | Customer-cloud BYOC | Customer's Azure / AWS / GCP | Customer-cloud compute | Regulated industries (PHS, banks, govt) | $750K+/yr |
+| Tier   | Name                   | Data plane                      | Compute                             | Customer use case                       | Commercial pricing |
+| ------ | ---------------------- | ------------------------------- | ----------------------------------- | --------------------------------------- | ------------------ |
+| **T1** | Shared MT (demo)       | Shared Azure DB, RLS-isolated   | Shared Vercel                       | Demos, pre-pilots, trials               | Free / $5K trial   |
+| **T2** | Shared MT (production) | Shared Azure DB, RLS-isolated   | Shared Vercel                       | Small pilots, SMB customers             | $50K–$200K/yr      |
+| **T3** | Dedicated tenant       | Dedicated Azure DB per customer | Shared Vercel runtime, dedicated DB | Mid-market, light compliance            | $300K–$750K/yr     |
+| **T4** | Customer-cloud BYOC    | Customer's Azure / AWS / GCP    | Customer-cloud compute              | Regulated industries (PHS, banks, govt) | $750K+/yr          |
 
 ### 2.2 Critical principle: ONE codebase, ALL tiers
 
-> *"The same `git main` branch deploys to every tier. The differences live in configuration, not code."*
+> _"The same `git main` branch deploys to every tier. The differences live in configuration, not code."_
 
 If T3 needs different code than T2, the abstraction is wrong and must be fixed at I1–I9 invariant level.
 
@@ -166,11 +170,11 @@ Domain           app.abarva.ai        <customer>.abarva.ai customer-provided
 
 A customer typically moves T1 → T2 → T3 → T4 over their lifecycle. **The path must be one-way and seamless.**
 
-| Promotion | What changes | What stays |
-|---|---|---|
-| T1 → T2 | Customer ID in shared DB, billing toggles | Everything else |
-| T2 → T3 | Dedicated DB provisioned, substrate migrated, dedicated Clerk org | Codebase, runtime |
-| T3 → T4 | Code-cloned to customer infra, secrets handed off, BAA executed | Codebase release tracking back to main |
+| Promotion | What changes                                                      | What stays                             |
+| --------- | ----------------------------------------------------------------- | -------------------------------------- |
+| T1 → T2   | Customer ID in shared DB, billing toggles                         | Everything else                        |
+| T2 → T3   | Dedicated DB provisioned, substrate migrated, dedicated Clerk org | Codebase, runtime                      |
+| T3 → T4   | Code-cloned to customer infra, secrets handed off, BAA executed   | Codebase release tracking back to main |
 
 The migration scripts for each promotion live in `scripts/promotion/` and are tested before any customer migration.
 
@@ -180,15 +184,15 @@ Every tenant has a config record. **No tenant config lives in environment variab
 
 ```ts
 // src/config/tenants/skyharbor-air.ts
-import { defineTenantConfig } from '../tenant-config';
+import { defineTenantConfig } from "../tenant-config";
 
 export default defineTenantConfig({
-  canonicalKey: 'skyharbor-air',
-  displayName: 'SkyHarbor Air',
-  tier: 'T1', // demo
+  canonicalKey: "skyharbor-air",
+  displayName: "SkyHarbor Air",
+  tier: "T1", // demo
   deployment: {
     sharedDatabase: true,
-    clerkOrg: 'org_skyharbor_shared',
+    clerkOrg: "org_skyharbor_shared",
   },
   modules: {
     intelligence: { enabled: true },
@@ -196,10 +200,10 @@ export default defineTenantConfig({
     source: { enabled: true },
     tower: { enabled: true },
   },
-  patternOverlays: ['airline-industry-v1'],
+  patternOverlays: ["airline-industry-v1"],
   branding: {
-    primaryColor: '#1B365D',
-    logoUrl: '/assets/skyharbor-logo.svg',
+    primaryColor: "#1B365D",
+    logoUrl: "/assets/skyharbor-logo.svg",
   },
   // ...
 });
@@ -222,6 +226,7 @@ npm run provision:dedicated-tenant -- \
 ```
 
 This runs Terraform/Bicep that:
+
 1. Provisions Azure Postgres Flexible Server (HA, pgvector enabled)
 2. Provisions Azure Key Vault with customer-managed key
 3. Provisions Azure Front Door + WAF with the customer subdomain
@@ -246,6 +251,7 @@ For regulated industries (PHS final-state, big banks, govt), the customer hosts 
 4. **A customer-side audit collector** that lets the customer's InfoSec see every AI egress call
 
 The customer's IT runs the runtime. AbarVa provides:
+
 - Automated update notifications (you have v2.1; v2.2 is available)
 - White-glove migration support for major versions
 - Continuous pattern overlay refreshes via the registry
@@ -334,12 +340,12 @@ Sometimes a fix made for one customer benefits everyone.
 
 ### 3.6 Per-customer release tracks
 
-| Track | Update cadence | Customer types |
-|---|---|---|
+| Track             | Update cadence                     | Customer types         |
+| ----------------- | ---------------------------------- | ---------------------- |
 | **Bleeding edge** | Continuous deploy on merge to main | Internal, demo tenants |
-| **Stable** | Weekly Tuesday deploy | T1, T2 customers |
-| **Enterprise** | Monthly with 7-day RC window | T3 customers |
-| **LTS** | Quarterly with 30-day RC window | T4 customers (BYOC) |
+| **Stable**        | Weekly Tuesday deploy              | T1, T2 customers       |
+| **Enterprise**    | Monthly with 7-day RC window       | T3 customers           |
+| **LTS**           | Quarterly with 30-day RC window    | T4 customers (BYOC)    |
 
 Track is set in tenant config. Promotion between tracks requires customer approval.
 
@@ -351,16 +357,16 @@ This is how Codex and Claude Code do most of the implementation while you and (e
 
 ### 4.1 The roles
 
-| Role | Human or AI | Responsibility |
-|---|---|---|
-| **Strategy** | Human (founder) | Product direction, customer commitments, architecture review, escalation calls |
-| **Architecture** | Human + Claude (advisory) | Constitutional decisions, ADRs, invariant changes |
-| **Implementation** | Codex / Claude Code (executor) | Code changes, tests, deploys within authority boundaries |
-| **Code review** | Codex (initial) + Human (final on high-risk) | PR review |
-| **QA** | Automated test suites + Codex (analysis) | Quality gates |
-| **Ops** | Codex + Human (on-call) | Production monitoring, incident response |
-| **Customer success** | Human + Claude (advisory) | Customer relationships, demos, account growth |
-| **Security review** | Human + automated guards | Security posture decisions |
+| Role                 | Human or AI                                  | Responsibility                                                                 |
+| -------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Strategy**         | Human (founder)                              | Product direction, customer commitments, architecture review, escalation calls |
+| **Architecture**     | Human + Claude (advisory)                    | Constitutional decisions, ADRs, invariant changes                              |
+| **Implementation**   | Codex / Claude Code (executor)               | Code changes, tests, deploys within authority boundaries                       |
+| **Code review**      | Codex (initial) + Human (final on high-risk) | PR review                                                                      |
+| **QA**               | Automated test suites + Codex (analysis)     | Quality gates                                                                  |
+| **Ops**              | Codex + Human (on-call)                      | Production monitoring, incident response                                       |
+| **Customer success** | Human + Claude (advisory)                    | Customer relationships, demos, account growth                                  |
+| **Security review**  | Human + automated guards                     | Security posture decisions                                                     |
 
 **Key principle:** AI executes within explicit authority. Humans make decisions that bind the company.
 
@@ -368,15 +374,15 @@ This is how Codex and Claude Code do most of the implementation while you and (e
 
 Every change has a risk classification. Authority depends on classification.
 
-| Class | Examples | AI Authority | Human review required |
-|---|---|---|---|
-| **A — Cosmetic** | Typos, comments, README updates | Auto-merge after CI green | No |
-| **B — Routine refactor** | Extract function, rename within scope, add test | Auto-merge after CI + lint + typecheck green | No |
-| **C — Bug fix (single file)** | Fix identified bug, contained change, has regression test | Auto-merge after CI green + release record | No |
-| **D — Feature (within architecture)** | New feature respecting invariants, behind flag | PR open, human reviews within 24h before merge | Yes |
-| **E — Architecture-affecting** | Touches I1–I9 invariants, new module in `src/lib/`, new connector | ADR required, human approval before code starts | Yes |
-| **F — Cross-tenant impacting** | Changes to RLS, tenant resolution, isolation guards | ADR + threat model + human approval + on-call notification | Yes |
-| **G — Production impact** | Database migration, schema change, public API change | Maintenance window + rollback rehearsal + human approval | Yes |
+| Class                                 | Examples                                                          | AI Authority                                               | Human review required |
+| ------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
+| **A — Cosmetic**                      | Typos, comments, README updates                                   | Auto-merge after CI green                                  | No                    |
+| **B — Routine refactor**              | Extract function, rename within scope, add test                   | Auto-merge after CI + lint + typecheck green               | No                    |
+| **C — Bug fix (single file)**         | Fix identified bug, contained change, has regression test         | Auto-merge after CI green + release record                 | No                    |
+| **D — Feature (within architecture)** | New feature respecting invariants, behind flag                    | PR open, human reviews within 24h before merge             | Yes                   |
+| **E — Architecture-affecting**        | Touches I1–I9 invariants, new module in `src/lib/`, new connector | ADR required, human approval before code starts            | Yes                   |
+| **F — Cross-tenant impacting**        | Changes to RLS, tenant resolution, isolation guards               | ADR + threat model + human approval + on-call notification | Yes                   |
+| **G — Production impact**             | Database migration, schema change, public API change              | Maintenance window + rollback rehearsal + human approval   | Yes                   |
 
 Codex/Claude Code classifies its own changes when opening the PR. The classifier is itself a class-D feature.
 
@@ -385,6 +391,7 @@ Codex/Claude Code classifies its own changes when opening the PR. The classifier
 What Codex can do without asking:
 
 ✅ **Always allowed:**
+
 - Open branches, commits, draft PRs
 - Run tests, linters, typechecker
 - Read any file in the repo
@@ -394,6 +401,7 @@ What Codex can do without asking:
 - Update its own status in tracking issues
 
 ✅ **Allowed with explicit packet authorization (per Packet 30 §2 model):**
+
 - Class D changes
 - Merge PRs to main
 - Deploy to production
@@ -402,6 +410,7 @@ What Codex can do without asking:
 - Add CI guards
 
 ⚠️ **Requires explicit human approval per change:**
+
 - Class E, F, G changes
 - Production data mutations from runtime app
 - New external service dependencies
@@ -410,6 +419,7 @@ What Codex can do without asking:
 - Customer data access from outside production
 
 ❌ **Never allowed:**
+
 - Force-push to main
 - `--no-verify` bypass of hooks
 - Force-merge with red CI
@@ -452,11 +462,12 @@ Industry-class or tenant-class bugs must be verified across all tenants in the a
 
 For every meaningful change, three artifacts must exist:
 
-1. **Code comments** — for *why*, not *what* (the code shows what)
-2. **Release record** — for *what shipped and why it matters*
-3. **ADR (if applicable)** — for *architectural decisions*
+1. **Code comments** — for _why_, not _what_ (the code shows what)
+2. **Release record** — for _what shipped and why it matters_
+3. **ADR (if applicable)** — for _architectural decisions_
 
 Plus auto-generated artifacts:
+
 - API reference from TypeScript types (TypeDoc)
 - DB schema docs from migrations
 - Tenant config schema from Zod
@@ -505,15 +516,15 @@ If anti-pattern: add to §1.5 catalog with detection
 
 For every meaningful operation, an audit record exists:
 
-| Operation | Audit table | Retention |
-|---|---|---|
-| AI model egress | `ai_egress_audit` | 7 years |
-| Cross-tenant query attempts | `tenant_boundary_audit` | 7 years |
-| Authentication events | `auth_audit` | 2 years |
-| Configuration changes | `config_audit` | 7 years |
-| Customer data access by AbarVa staff | `support_access_audit` | 7 years |
-| Substrate load / refresh | `substrate_audit` | indefinitely |
-| Production deploys | Git + Vercel logs | indefinitely |
+| Operation                            | Audit table             | Retention    |
+| ------------------------------------ | ----------------------- | ------------ |
+| AI model egress                      | `ai_egress_audit`       | 7 years      |
+| Cross-tenant query attempts          | `tenant_boundary_audit` | 7 years      |
+| Authentication events                | `auth_audit`            | 2 years      |
+| Configuration changes                | `config_audit`          | 7 years      |
+| Customer data access by AbarVa staff | `support_access_audit`  | 7 years      |
+| Substrate load / refresh             | `substrate_audit`       | indefinitely |
+| Production deploys                   | Git + Vercel logs       | indefinitely |
 
 **Auditability is a feature, not overhead.** It's also the foundation for InfoSec reviews at PHS, Delta, and any future regulated customer.
 
@@ -544,6 +555,8 @@ This operating model gets more autonomous as evidence accumulates:
 - **Q+2 (after 20 successful packets and zero incidents):** Class D auto-merge during business hours, full self-driving for narrow categories
 
 **2026-05-29 progression note:** Codex advanced to Class D auto-merge during business hours based on incident-free Phase 0D execution and production hotfix discipline. This authority remains limited to changes that satisfy the Class D scope definition and all release gates; any P0 caused by AI-introduced code resets the trust ladder one tier.
+
+**2026-05-30 progression note:** Codex advanced to narrow Class E auto-merge during business hours for founder-approved, well-scoped architecture-adjacent work with explicit validation gates. This does not remove ADR requirements, release records, or post-deploy verification. Any P0 caused by Class E auto-merged code resets the ladder one rung and suspends Class E auto-merge until a postmortem closes.
 
 You move the line based on **incident-free runtime**, not on calendar time. Every P0 caused by AI-introduced code resets the trust ladder one tier.
 
@@ -577,6 +590,7 @@ For change authority, refer to Section 4.3 trust tiers.
 ```
 
 Add to user memory:
+
 - New memory: "Architectural constitution lives in PACKET_31. Reference for all architecture decisions."
 
 ### 5.2 Packet 30 update
@@ -718,10 +732,11 @@ Now that you have Packet 30 (tactical) + Packet 31 (strategic), here's how to se
   - `AIRLINE_INDUSTRY_PATTERN_OVERLAY_v1.md` — pattern library
 
 **Successor packets** (to be authored as scope demands):
+
 - Packet 32 — Customer Onboarding Playbook (extracted from §5.5)
 - Packet 33 — BYOC Deployment Bundle for T4 customers (extracted from §2.6)
 - Packet 34 — AI Engineering Operating Model Maturity Path (extracted from §4.10)
 
 ---
 
-*End of Packet 31. Standing brief. Reference, don't replace.*
+_End of Packet 31. Standing brief. Reference, don't replace._

@@ -51,6 +51,7 @@ ESLint custom rule `require-industry-filter`:
 ### Verification gate
 
 Pull-request green requires:
+
 - ESLint guard passes
 - Regression test passes (25/25)
 - Manual smoke against production: 1 question per canonical tenant, source payload inspected, zero cross-industry sources
@@ -58,6 +59,7 @@ Pull-request green requires:
 ### Acceptance for I9
 
 Live when:
+
 - [ ] ESLint guard active in `eslint.config.mjs`
 - [ ] Regression test in CI green
 - [ ] Production smoke verifies zero cross-industry leakage across all 5 canonical tenants
@@ -82,44 +84,44 @@ Tenants accumulated in production without explicit governance. Eight tenants exi
 ```ts
 export const CANONICAL_TENANTS = [
   {
-    canonicalKey: 'apex-retail',
-    displayName: 'Apex Retail',
-    industry: 'retail',
-    tier: 'T1',
-    approvedAt: '2026-XX-XX',
-    approvedAtAdr: 'ADR-0001-A1',
+    canonicalKey: "apex-retail",
+    displayName: "Apex Retail",
+    industry: "retail",
+    tier: "T1",
+    approvedAt: "2026-XX-XX",
+    approvedAtAdr: "ADR-0001-A1",
   },
   {
-    canonicalKey: 'meridian-health',
-    displayName: 'Meridian Health',
-    industry: 'healthcare_provider',
-    tier: 'T1',
-    approvedAt: '2026-XX-XX',
-    approvedAtAdr: 'ADR-0001-A1',
+    canonicalKey: "meridian-health",
+    displayName: "Meridian Health",
+    industry: "healthcare_provider",
+    tier: "T1",
+    approvedAt: "2026-XX-XX",
+    approvedAtAdr: "ADR-0001-A1",
   },
   {
-    canonicalKey: 'northstar-clinical',
-    displayName: 'Northstar Clinical Technologies',
-    industry: 'healthcare_medtech',
-    tier: 'T1',
-    approvedAt: '2026-XX-XX',
-    approvedAtAdr: 'ADR-0001-A1',
+    canonicalKey: "northstar-clinical",
+    displayName: "Northstar Clinical Technologies",
+    industry: "healthcare_medtech",
+    tier: "T1",
+    approvedAt: "2026-XX-XX",
+    approvedAtAdr: "ADR-0001-A1",
   },
   {
-    canonicalKey: 'first-capital',
-    displayName: 'First Capital',
-    industry: 'financial_services_banking',
-    tier: 'T1',
-    approvedAt: '2026-XX-XX',
-    approvedAtAdr: 'ADR-0001-A1',
+    canonicalKey: "first-capital",
+    displayName: "First Capital",
+    industry: "financial_services_banking",
+    tier: "T1",
+    approvedAt: "2026-XX-XX",
+    approvedAtAdr: "ADR-0001-A1",
   },
   {
-    canonicalKey: 'skyharbor-air',
-    displayName: 'SkyHarbor Air',
-    industry: 'airline',
-    tier: 'T1',
-    approvedAt: '2026-XX-XX',
-    approvedAtAdr: 'ADR-0001-A1',
+    canonicalKey: "skyharbor-air",
+    displayName: "SkyHarbor Air",
+    industry: "airline",
+    tier: "T1",
+    approvedAt: "2026-XX-XX",
+    approvedAtAdr: "ADR-0001-A1",
   },
 ] as const satisfies readonly CanonicalTenant[];
 ```
@@ -153,6 +155,7 @@ Direct INSERT to the `clients` table without going through this flow fails the n
 ### Acceptance for I10
 
 Live when:
+
 - [ ] `CANONICAL_TENANTS.ts` exists with the 5 canonical entries
 - [ ] CI drift-detection job runs nightly and on every PR
 - [ ] Phase 0D tenant cleanup leaves exactly 5 canonical tenants
@@ -165,8 +168,8 @@ Live when:
 
 Adds to Packet 31 §1.5 anti-patterns table:
 
-| Anti-pattern | Symptom | Detection |
-|---|---|---|
+| Anti-pattern                     | Symptom                                                                                                                                             | Detection                                                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Drift via implicit allowlist** | Things that should be governed (tenants, retrieval callsites, storage tables, dependency imports) accumulate without explicit allowlist or CI guard | Periodic audit reveals N items when intent was M (N > M); structural risk surfaces when an unexpected member is interrogated; no engineer remembers approving the addition |
 
 ### Pattern description
@@ -193,6 +196,7 @@ For every governed concept, the fix is the same five steps:
 ### CI enforcement summary
 
 Each invariant in Packet 31 §1.2 should map to one or more of:
+
 - ESLint rule
 - TypeScript strict type
 - CI test (unit, integration, schema check)
@@ -206,8 +210,8 @@ Invariants without CI enforcement are aspirations, not invariants.
 
 Adds to Packet 31 §1.5 anti-patterns table:
 
-| Anti-pattern | Symptom | Detection |
-|---|---|---|
+| Anti-pattern                             | Symptom                                                                                                                                                                   | Detection                                                                                                                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Eager parallelism in retrieval paths** | Multiple read paths independently use `Promise.all` or equivalent fan-out for tenant-scoped retrieval, causing session-mode database pressure under crawls or user bursts | Production logs show session exhaustion or 503s across unrelated modules; static search finds concurrent retrieval blocks in route loaders, read models, or access-policy helpers without an explicit concurrency budget |
 
 ### Pattern description
@@ -272,7 +276,77 @@ Add to §4.4:
 
 > **Universal-verification rule:** Industry-class or tenant-class bugs must be verified across **all** members of the affected class before merge, not just the member that exposed the bug. The exposing member is the smoke test; the others are the verification. Codex defaults to "verify against all members of the class" when a finding is reported.
 
-This codifies the discipline that surfaced when founder asked *"I assume these fixes are universal across client tenants?"* — the right question deserves a structural answer in the operating model.
+This codifies the discipline that surfaced when founder asked _"I assume these fixes are universal across client tenants?"_ — the right question deserves a structural answer in the operating model.
+
+---
+
+## Invariant I11 — Typed Tenant-Scope Retrieval
+
+### Statement
+
+Every retrieval or synthesis function that reads tenant-scoped data must take
+tenant scope as a typed parameter. In practice this means a `CanonicalTenant`,
+`TenantContext`, `AskSurfaceContext`, or equivalent typed object must be part of
+the function signature. Functions that retrieve tenant-scoped data without
+tenant scope fail the TypeScript build or invariant lint guard.
+
+### Why this was added
+
+PR #2474 fixed a P0 isolation defect where `retrieveKnowledge()` could return
+off-tenant `RESEARCH` rows during SkyHarbor Ask runs. I9 and I10 did not catch
+it because the bug was not a pattern-industry lookup or tenant-allowlist drift;
+it was a retrieval function whose original contract did not require tenant
+scope.
+
+### CI guard
+
+- Static rule: functions matching `/retrieve|search|synthesize|assemble/i`
+  under Ask, corpus, context, or knowledge paths must accept typed tenant
+  context when they access tenant-scoped stores.
+- Type rule: tenant-scoped retriever options may not use optional untyped
+  strings alone when a canonical tenant object is available.
+- Regression: SkyHarbor Ask retrieval must not emit Apex, Keystone,
+  Brindlemark, First Capital, or retail overlay sources unless an explicit
+  cross-tenant comparison mode is active.
+
+### Acceptance
+
+- [ ] Packet 31 §1.2 includes I11.
+- [ ] PR #2474 postmortem is committed.
+- [ ] Retrieval lint/type guard exists or is tracked as a named follow-up with owner and gate.
+- [ ] Regression test covers `retrieveKnowledge()` with an active tenant context.
+
+---
+
+## Invariant I12 — Ask Performance Budget
+
+### Statement
+
+The certified production Ask path must remain inside the approved concurrency
+budget. For the current SkyHarbor certified path, 50 concurrent Ask requests
+must return with p95 latency below 12 seconds, zero tenant bleeds, and zero 5xx
+responses.
+
+### Why this was added
+
+Phase 6 proved the platform can hit p95 under budget after the concise Ask fast
+path and retrieval fanout fixes. That result becomes an operating constraint,
+not a one-time success metric.
+
+### CI and release guard
+
+- Release records for Ask, retrieval, model, or source-payload changes must
+  state whether the 50-concurrent gate is affected.
+- If affected, rerun the Packet 30 Phase 6 load probe before declaring the
+  release complete.
+- Any production regression above the p95 budget requires either rollback or an
+  explicit founder-approved exception.
+
+### Acceptance
+
+- [ ] Packet 31 §1.2 includes I12.
+- [ ] Packet 30 Phase 6 gate references p95 <12s as standing acceptance for the certified path.
+- [ ] Release-control checklist asks whether Ask performance budget is affected.
 
 ---
 
@@ -282,19 +356,23 @@ This amendment adds:
 
 - **I9 — Industry isolation invariant** (with ESLint guard + regression test + production smoke)
 - **I10 — Canonical tenant allowlist invariant** (with allowlist code + nightly drift detection)
+- **I11 — Typed tenant-scope retrieval invariant**
+- **I12 — Ask performance budget invariant**
 - **Anti-pattern: "Drift via implicit allowlist"** with three recurring instances and a universal fix shape
 - **§4.4 universal-verification rule** codifying the "all members of the class" verification discipline
 
-Combined with ADR-0001 (canonical pattern storage), this closes three of the four structural drift gaps discovered. The fourth (retrieval-callsite drift in I9) is closing during Phase 0B execution.
+Combined with ADR-0001 (canonical pattern storage), this closes the structural drift gaps discovered across pattern storage, industry filtering, tenant allowlists, retrieval callsites, and production performance budget enforcement.
 
 ---
 
 ## Acceptance for this amendment
 
-- [ ] I9 + I10 added to Packet 31 §1.2 invariants table
+- [ ] I9 + I10 + I11 + I12 added to Packet 31 §1.2 invariants table
 - [ ] "Drift via implicit allowlist" added to §1.5 anti-pattern catalog
 - [ ] §4.4 updated with universal-verification rule
 - [ ] CI guards live for both I9 and I10
+- [ ] CI or tracked guard live for I11
+- [ ] Ask performance gate tracked for I12
 - [ ] Phase 0D cleanup leaves exactly 5 canonical tenants
 - [ ] Regression test for I9 passes across all 5 tenants in production
 - [ ] Drift-detect job for I10 runs nightly green
@@ -302,4 +380,4 @@ Combined with ADR-0001 (canonical pattern storage), this closes three of the fou
 
 ---
 
-*End of Packet 31 amendment for 2026-05-29. Founder-approved structural invariants. Codex enforces.*
+_End of Packet 31 amendment for 2026-05-29. Founder-approved structural invariants. Codex enforces._
