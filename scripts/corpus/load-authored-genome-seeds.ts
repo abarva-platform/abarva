@@ -17,6 +17,7 @@ type ParsedPattern = {
   demoRelevant?: boolean;
   demo_relevant?: boolean;
   subTopic?: string;
+  verticals?: string[];
 };
 
 type SeedFileSummary = {
@@ -106,6 +107,30 @@ function seedMetadata(filePath: string) {
       seededBy: base,
     };
   }
+  if (base.startsWith('seed-medtech-')) {
+    return {
+      vertical: 'medtech',
+      sourceKey: 'northstar-clinical',
+      capabilityType: 'medtech_capability',
+      seededBy: base,
+    };
+  }
+  if (base.startsWith('seed-banking-')) {
+    return {
+      vertical: 'banking',
+      sourceKey: 'first-capital',
+      capabilityType: 'banking_capability',
+      seededBy: base,
+    };
+  }
+  if (base.startsWith('seed-cross-industry-')) {
+    return {
+      vertical: 'cross_industry',
+      sourceKey: 'cross-industry',
+      capabilityType: 'cross_industry_capability',
+      seededBy: base,
+    };
+  }
   throw new Error(`Unsupported seed file naming: ${filePath}`);
 }
 
@@ -145,6 +170,7 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
         source_key: meta.sourceKey,
         seeded_by: meta.seededBy,
         sub_topic: pattern.subTopic ?? null,
+        verticals: Array.isArray(pattern.verticals) ? pattern.verticals.map(String) : null,
       },
       source_count: 6,
       confidence: 84,
@@ -208,9 +234,24 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
 
 async function main() {
   loadSeedEnv();
-  const files = process.argv.slice(2);
+  const parseOnly = process.argv.includes('--parse-only');
+  const files = process.argv.slice(2).filter((arg) => arg !== '--parse-only');
   if (files.length === 0) {
-    throw new Error('Usage: npx tsx scripts/corpus/load-authored-genome-seeds.ts <seed-file...>');
+    throw new Error('Usage: npx tsx scripts/corpus/load-authored-genome-seeds.ts [--parse-only] <seed-file...>');
+  }
+  if (parseOnly) {
+    const summaries = files.map((file) => {
+      const meta = seedMetadata(file);
+      const patterns = extractPatterns(file);
+      return {
+        file,
+        vertical: meta.vertical,
+        sourceKey: meta.sourceKey,
+        parsed: patterns.length,
+      };
+    });
+    console.log(JSON.stringify({ mode: 'parse-only', files: summaries.length, summaries }, null, 2));
+    return;
   }
   const sb = createSeedClient();
   const summaries: SeedFileSummary[] = [];

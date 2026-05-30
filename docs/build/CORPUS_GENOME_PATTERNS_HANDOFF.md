@@ -297,28 +297,54 @@ Target: **150 patterns** across 5 dimensions. Reference: §7 of master prompt.
 
 ---
 
-## File format — minimal boilerplate
+## File format — minimal data artifact
 
-Copy the exact structure from `seed-airline-dom02-pss-booking.ts`. The upsertRows function,
-main function, and isDirect guard are identical in every file. The only substitutions:
+Do **not** copy the old seed-runner boilerplate from historical files such as
+`seed-airline-dom02-pss-booking.ts`. New seed files are content-only artifacts.
+They should define one top-level constant whose name ends in `PATTERNS`; the durable
+loader parses that array with the TypeScript AST and owns all persistence.
 
 ```typescript
-// ── In the pattern rows map: ──────────────────────────────────────────────
-vertical: 'airline',          // or 'healthcare_provider', 'medtech', 'banking', 'cross_industry'
-source_count: 6,
-confidence: 84,
+type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
-// ── In the graph edges: ───────────────────────────────────────────────────
-source_key: 'skyharbor-air',  // or 'meridian-health', 'northstar-clinical', 'first-capital', 'cross-industry'
+type PatternSeed = {
+  code: string;
+  name: string;
+  officeCategory: OfficeCategory;
+  failureRatePct: number;
+  description: string;
+  keywords: string[];
+  demoRelevant?: boolean;
+  subTopic?: string;
+  verticals?: string[]; // cross-industry only
+};
 
-// ── In the final count query: ─────────────────────────────────────────────
-.eq('vertical', 'airline')
-.gte('code', 'A300')
-.lte('code', 'A599')
+const AIRLINE_REVENUE_PATTERNS: PatternSeed[] = [
+  {
+    code: 'A300',
+    name: 'Revenue Management Model Stale On COVID Demand Mix',
+    officeCategory: 'middle_office',
+    failureRatePct: 73,
+    description: `Revenue management models under-price premium cabins when training data
+      is loaded without a COVID exclusion window or demand-regime weighting.`,
+    keywords: ['revenue management', 'COVID exclusion window', 'ATPCO', 'premium cabin'],
+    demoRelevant: true,
+  },
+];
 ```
 
-deterministicUuid namespace: `'[vertical]-genome-pattern:${p.code}'`  
-e.g. `'airline-genome-pattern:A301'`, `'healthcare-genome-pattern:H301'`
+Rules:
+
+- No imports.
+- No `createSeedClient`, `upsertRows`, `main`, `isDirect`, or data-plane code.
+- Use backtick template literals for descriptions containing apostrophes.
+- Keep each file to **30-60 patterns**.
+- Filename prefix determines vertical and client mapping:
+  - `seed-airline-*` -> `vertical='airline'`, `source_key='skyharbor-air'`
+  - `seed-healthcare-*` -> `vertical='healthcare_provider'`, `source_key='meridian-health'`
+  - `seed-medtech-*` -> `vertical='medtech'`, `source_key='northstar-clinical'`
+  - `seed-banking-*` -> `vertical='banking'`, `source_key='first-capital'`
+  - `seed-cross-industry-*` -> `vertical='cross_industry'`, `source_key='cross-industry'`
 
 ---
 
@@ -333,25 +359,30 @@ This is the main repo (not a worktree). The existing 14 files are untracked ther
 
 ---
 
-## Run command (per file, after writing)
+## Run command
 
 ```bash
-# Requires Azure/Postgres data-plane credentials, normally DATABASE_URL.
-npx tsx src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts
+# Parse-only validation after writing a file. No DB writes.
+npx tsx scripts/corpus/load-authored-genome-seeds.ts --parse-only src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts
 ```
 
-Run each file after writing it to confirm the upsert succeeds with no errors. For historical seed
-files that only export arrays or use stale columns, run the durable Azure/Postgres loader instead:
+When a batch is ready and reviewed, load through the durable Azure/Postgres loader:
 
 ```bash
-find src/scripts/seed -maxdepth 1 -type f \( -name 'seed-airline-dom*.ts' -o -name 'seed-healthcare-dom*.ts' \) \
+find src/scripts/seed -maxdepth 1 -type f \( \
+    -name 'seed-airline-dom*.ts' \
+    -o -name 'seed-healthcare-dom*.ts' \
+    -o -name 'seed-medtech-dom*.ts' \
+    -o -name 'seed-banking-dom*.ts' \
+    -o -name 'seed-cross-industry*.ts' \
+  \) \
   | sort \
   | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
 ```
 
-The loader parses authored pattern arrays, writes `genome_patterns`, writes `intelligence_graph_edges`,
-and emits a per-file persistence summary. If the persisted DB count does not match the authored count,
-debug before moving on.
+The loader parses authored pattern arrays, writes `genome_patterns`, writes
+`intelligence_graph_edges`, and emits a per-file persistence summary. If the
+persisted DB count does not match the authored count, debug before moving on.
 
 ---
 
