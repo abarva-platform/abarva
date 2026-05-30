@@ -121,6 +121,11 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   // belt-and-suspenders).
   '/home(.*)',
   '/dashboard(.*)',
+  // PR-2 (2026-05-30) · `/engineering/*` is the new home for raw
+  // diagnostic inspectors that used to live under /admin (Atlas
+  // traces, etc.). Per docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md
+  // §5.5 — Setup is the Trust Plane, not the Engineering surface.
+  '/engineering(.*)',
   '/engagements(.*)',
   '/programs(.*)',
   '/engage/(.*)',
