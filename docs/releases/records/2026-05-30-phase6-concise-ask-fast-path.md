@@ -14,7 +14,7 @@ Explicitly concise Sentinel Ask questions now use a compact advisor prompt, trim
 
 ## Layer Impact
 
-- `runtime-app-lane`: Ask/Sentinel responses that explicitly ask for a concise or short answer use a compact synthesis prompt, tighter synthesis budget, and the faster standard synthesis model.
+- `runtime-app-lane`: Ask/Sentinel responses that explicitly ask for a concise or short answer use a compact synthesis prompt, tighter synthesis budget, and the faster audited Haiku synthesis model.
 - `ai-egress-control-lane`: Concise requests avoid the extra follow-up model call by using deterministic follow-up prompts.
 - `tenant-isolation-lane`: Non-comparison answers that mention a different canonical tenant are blocked before streaming to the user.
 - `tenant-resolution-lane`: Ask now uses strict tenant resolution so an authenticated no-tenant user cannot fall back to a default client.
@@ -34,7 +34,7 @@ Explicitly concise Sentinel Ask questions now use a compact advisor prompt, trim
 
 - Adds `chooseSynthesisTokenBudget()` so concise Ask requests use `160` max tokens and normal requests keep `600`.
 - Uses a compact Sentinel system prompt, 8-source cap, and trimmed source details only for explicit concise requests.
-- Routes concise Ask synthesis to `claude-sonnet-4-6`; non-concise topic/vendor/general synthesis keeps the restored `claude-opus-4-7` path.
+- Routes concise Ask synthesis to `claude-haiku-4-5-20251001`; non-concise topic/vendor/general synthesis keeps the restored `claude-opus-4-7` path.
 - Adds deterministic follow-ups only for concise Ask requests.
 - Adds a SkyHarbor/global-airline off-tenant mention guard for non-comparison responses.
 - Passes tenant context into `retrieveKnowledge()` and filters off-tenant legacy composite seeds before source events are emitted.
@@ -54,6 +54,7 @@ Explicitly concise Sentinel Ask questions now use a compact advisor prompt, trim
 - FAIL: No-tenant regression exposed default-client fallback before this strict-resolution patch: HTTP 200 but Apex Retail tenant source appeared.
 - PASS: Post-strict no-tenant regression: HTTP 200, graceful, zero canonical tenant bleeds, no TENANT sources.
 - FAIL: Post-strict SkyHarbor load rerun stayed correctness-clean but missed strict latency acceptance: 50/50 HTTP 200, zero 4xx/5xx, p95 12.324s, zero tenant bleeds.
+- FAIL: Post-source-trim SkyHarbor load rerun stayed correctness-clean but missed strict latency acceptance: 50/50 HTTP 200, zero 4xx/5xx, p95 12.694s, zero tenant bleeds.
 - NOT-RUN: revised PR CI for the second optimization pass, pending after branch push.
 - NOT-RUN: revised production deployment, pending after merge.
 - NOT-RUN: revised Phase 6 SkyHarbor load rerun and SkyHarbor verifier sanity, pending after production deployment.
@@ -88,6 +89,8 @@ Revert this PR. The change is limited to concise Ask request generation and dete
   - `/tmp/phase6-e2e/no-tenant-regression-post-strict/no-tenant-regression.json`
 - Post-strict load rerun:
   - `/tmp/phase6-e2e/skyharbor-load-post-no-tenant-strict/skyharbor-load-results.json`
+- Post-source-trim load rerun:
+  - `/tmp/phase6-e2e/skyharbor-load-post-source-trim/skyharbor-load-results.json`
 - Single-request bleed diagnostic:
   - `/tmp/phase6-e2e/skyharbor-single-cio-current/skyharbor-load-results.json`
 - Failed prior broad optimization was reverted by PR #2471; this candidate keeps full verifier questions on the restored path.
