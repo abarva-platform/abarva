@@ -18,6 +18,8 @@ import { ApprovalDecisionPanel } from '@/components/admin/programs/ApprovalDecis
 import { formatRelativeTime } from '@/components/admin/programs/ApprovalQueueTable';
 import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 import { safeApprovalActorLabel } from '@/lib/programs/approval-display';
+import { notifySponsorAction } from '../_actions/notify-sponsor';
+import { escalateApprovalAction } from '../_actions/escalate-approval';
 
 export const metadata = { title: 'Review Approval · AbarVa Setup' };
 export const dynamic = 'force-dynamic';
@@ -111,6 +113,12 @@ export default async function AdminProgramApprovalDetailPage({ params }: PagePro
           <ApprovalDecisionPanel
             requestId={request.id}
             alreadyDecided={alreadyDecided}
+            requestedAt={request.requestedAt}
+            notifyCount={request.notifyCount}
+            escalationLevel={request.escalationLevel}
+            lastNotifiedAt={request.lastNotifiedAt}
+            notifySponsor={notifySponsorAction}
+            escalateApproval={escalateApprovalAction}
           />
         </div>
         <AuditTrailCard

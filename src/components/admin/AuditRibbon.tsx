@@ -161,6 +161,12 @@ export function AuditRibbon({ events, maxRows = 6 }: Props) {
       </p>
 
       {rows.length === 0 ? (
+        // PRE-W4-PR-5 bonus fix (persona report §9 fix #8):
+        //   The flat "No activity in the last 24 hours." line read as
+        //   dead air for a brand-new tenant whose ribbon was always
+        //   going to be empty on day 1. Replace with a stewarded line
+        //   that names the next obvious action so the empty register
+        //   still reads as guidance.
         <div
           data-testid="audit-ribbon-empty"
           style={{
@@ -170,11 +176,14 @@ export function AuditRibbon({ events, maxRows = 6 }: Props) {
             padding: '18px 20px',
             fontFamily: F_BODY,
             fontSize: 13,
-            color: C.faint,
-            lineHeight: 1.5,
+            color: C.muted,
+            lineHeight: 1.55,
+            maxWidth: '64ch',
           }}
         >
-          No activity in the last 24 hours.
+          No activity yet. Events will appear here as you configure connectors,
+          invite users, and load substrate — both substrate ingest and auth /
+          policy / approval actions flow into the same temporal axis.
         </div>
       ) : (
         <div

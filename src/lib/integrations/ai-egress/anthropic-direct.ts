@@ -73,6 +73,9 @@ export async function preflightAnthropicDirectClient(args: {
   metadata?: Record<string, unknown>;
 }): Promise<AiPreflightResult<AnthropicDirectClient>> {
   const { tenantId, policy } = await loadTenantAiPolicyRecord(args.tenantId);
+  // PRE-W4-PR-6: every ai_egress_audit row stamps intended + resolved
+  // tenant. `args.tenantId` is what the caller asked for; `tenantId`
+  // from `loadTenantAiPolicyRecord` is what we actually resolved to.
   return preflightModelEgress({
     tenantId,
     userId: args.userId,
@@ -86,7 +89,11 @@ export async function preflightAnthropicDirectClient(args: {
     artifactType: args.artifactType,
     metadata: args.metadata,
     policy,
-    auditSink: createSupabaseAiEgressAuditSink(),
+    auditSink: createSupabaseAiEgressAuditSink({
+      intendedTenantKey: args.tenantId,
+      resolvedTenantKey: tenantId,
+      tenantId,
+    }),
     clientFactory: getAnthropicDirectClient,
   });
 }

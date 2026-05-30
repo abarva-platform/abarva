@@ -665,7 +665,7 @@ function renderHtml(t: Tenant, d: SnapshotData): string {
   <div class="masthead-top">
     <div class="monogram">${escapeHtml(t.initials)}</div>
     <div class="masthead-id">
-      <div class="masthead-eyebrow">HOME · <span>WHERE YOU STAND AND WHAT TO DO NEXT</span></div>
+      <div class="masthead-eyebrow">SETUP · <span>WHERE YOU STAND AND WHAT TO DO NEXT</span></div>
       <h1 class="masthead-title">${escapeHtml(t.name)}</h1>
       <div class="masthead-tagline">${escapeHtml(tagline)}</div>
       <div class="masthead-tags">${tagPills}</div>

@@ -1,66 +1,74 @@
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import type { AiEgressAuditRecord, AiEgressAuditSink } from './types';
+/**
+ * Supabase-backed AI Egress audit sink.
+ *
+ * Since PRE-W4-PR-6, this file no longer talks to Supabase directly.
+ * The sole authority that writes to `public.ai_egress_audit` is
+ * `src/lib/admin/broker/egress-audit-writer.ts`. This module is a thin
+ * factory that returns an `AiEgressAuditSink` bound to a caller-supplied
+ * `EgressAuditTenantContext`. Every `.write()` invocation flows through
+ * the broker wrapper, which stamps `request_metadata.intendedTenantKey`
+ * and `request_metadata.resolvedTenantKey` automatically.
+ *
+ * The `egress-writer-monopoly.test.ts` hygiene gate enforces that no
+ * other file in `src/` issues a direct insert against `ai_egress_audit`.
+ */
 
-function toDbRow(record: Omit<AiEgressAuditRecord, 'id' | 'createdAt'>) {
-  return {
-    tenant_id: record.tenantId,
-    user_id: record.userId ?? null,
-    workflow: record.workflow,
-    artifact_id: record.artifactId ?? null,
-    artifact_type: record.artifactType ?? null,
-    provider: record.provider,
-    model: record.model ?? null,
-    route: record.route,
-    data_class: record.dataClass,
-    policy_decision: record.policyDecision,
-    decision_reason: record.decisionReason,
-    prompt_hash: record.promptHash ?? null,
-    response_hash: record.responseHash ?? null,
-    prompt_snapshot_ref: record.promptSnapshotRef ?? null,
-    response_snapshot_ref: record.responseSnapshotRef ?? null,
-    request_metadata: record.requestMetadata,
-    error_message: record.errorMessage ?? null,
-  };
-}
+import {
+  writeEgressAudit,
+  type EgressAuditTenantContext,
+  type EgressAuditWriteInput,
+} from '@/lib/admin/broker/egress-audit-writer';
+import type { AiEgressAuditSink } from './types';
 
-function fromDbRow(row: Record<string, unknown>): AiEgressAuditRecord {
-  return {
-    id: String(row.id),
-    tenantId: String(row.tenant_id),
-    userId: typeof row.user_id === 'string' ? row.user_id : undefined,
-    workflow: String(row.workflow),
-    artifactId: typeof row.artifact_id === 'string' ? row.artifact_id : undefined,
-    artifactType: typeof row.artifact_type === 'string' ? row.artifact_type : undefined,
-    provider: row.provider as AiEgressAuditRecord['provider'],
-    model: typeof row.model === 'string' ? row.model : undefined,
-    route: row.route as AiEgressAuditRecord['route'],
-    dataClass: row.data_class as AiEgressAuditRecord['dataClass'],
-    policyDecision: row.policy_decision as AiEgressAuditRecord['policyDecision'],
-    decisionReason: String(row.decision_reason),
-    promptHash: typeof row.prompt_hash === 'string' ? row.prompt_hash : undefined,
-    responseHash: typeof row.response_hash === 'string' ? row.response_hash : undefined,
-    promptSnapshotRef: typeof row.prompt_snapshot_ref === 'string' ? row.prompt_snapshot_ref : undefined,
-    responseSnapshotRef: typeof row.response_snapshot_ref === 'string' ? row.response_snapshot_ref : undefined,
-    requestMetadata: (row.request_metadata as Record<string, unknown> | null) ?? {},
-    errorMessage: typeof row.error_message === 'string' ? row.error_message : undefined,
-    createdAt: String(row.created_at),
-  };
-}
-
-export function createSupabaseAiEgressAuditSink(): AiEgressAuditSink {
+/**
+ * Build a Supabase-backed audit sink with tenant context baked in.
+ *
+ * The `ctx` argument is REQUIRED. Callers that cannot supply both an
+ * `intendedTenantKey` and a `resolvedTenantKey` MUST resolve them
+ * first — typically via `resolveTenant()` in `src/lib/tenant/`. The
+ * wrapper throws on missing context, so a caller that omits this
+ * argument will receive a runtime error on the first write rather
+ * than ship a silently-unstamped row.
+ *
+ * @param ctx - Tenant resolution context. `intendedTenantKey` is what
+ *   the caller asked for (session/cookie/explicit slug);
+ *   `resolvedTenantKey` is what the policy/loader actually decided to
+ *   act on. When the two differ, the broker writer fires a structured
+ *   warn and the isolation-posture broker badges the row anomalous.
+ */
+export function createSupabaseAiEgressAuditSink(
+  ctx: EgressAuditTenantContext,
+): AiEgressAuditSink {
   return {
     async write(record) {
-      const supabase = getAzureWriteFluentClient();
-      const { data, error } = await supabase
-        .from('ai_egress_audit')
-        .insert(toDbRow(record))
-        .select('*')
-        .single();
-
-      if (error) {
-        throw new Error(`AI egress audit write failed: ${error.message}`);
-      }
-      return fromDbRow(data as Record<string, unknown>);
+      // `record.tenantId` is the canonical tenant_id UUID the row
+      // gets stamped with on the DB row. The ctx.tenantId is the
+      // SAME value (the caller resolved it before constructing the
+      // sink). We trust ctx.tenantId because it's what the broker
+      // writer validates; record.tenantId is included in the input
+      // and is just a field-rename through.
+      const input: EgressAuditWriteInput = {
+        tenantId: record.tenantId,
+        userId: record.userId,
+        workflow: record.workflow,
+        artifactId: record.artifactId,
+        artifactType: record.artifactType,
+        provider: record.provider,
+        model: record.model,
+        route: record.route,
+        dataClass: record.dataClass,
+        policyDecision: record.policyDecision,
+        decisionReason: record.decisionReason,
+        promptHash: record.promptHash,
+        responseHash: record.responseHash,
+        promptSnapshotRef: record.promptSnapshotRef,
+        responseSnapshotRef: record.responseSnapshotRef,
+        requestMetadata: record.requestMetadata,
+        errorMessage: record.errorMessage,
+      };
+      return await writeEgressAudit(input, ctx);
     },
   };
 }
+
+export type { EgressAuditTenantContext } from '@/lib/admin/broker/egress-audit-writer';

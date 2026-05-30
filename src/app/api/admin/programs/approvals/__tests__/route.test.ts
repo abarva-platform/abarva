@@ -76,6 +76,10 @@ function approvalFixture(overrides: Partial<ApprovalRequest> = {}): ApprovalRequ
     briefSnapshot: { program_name: 'Apex CDP 2026' },
     createdAt: '2026-04-29T12:00:00Z',
     updatedAt: '2026-04-29T12:00:00Z',
+    escalationLevel: 0,
+    lastNotifiedAt: null,
+    notifyCount: 0,
+    escalatedToUserId: null,
     ...overrides,
   };
 }
