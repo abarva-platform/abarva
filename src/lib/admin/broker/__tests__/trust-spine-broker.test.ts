@@ -16,8 +16,10 @@ import { getTrustSpine } from '../trust-spine-broker';
 import * as setupDataBroker from '@/lib/admin/setup-data-broker';
 import * as programApproval from '@/lib/programs/approval';
 import * as connectorHealthBroker from '@/lib/admin/broker/connector-health-broker';
+import * as isolationBroker from '@/lib/admin/broker/isolation-posture-broker';
 import type { SetupInventorySnapshot } from '@/lib/admin/setup-acts-registry';
 import type { ConnectorHealth } from '@/lib/admin/broker/connector-health-broker';
+import type { IsolationPosture } from '@/lib/admin/broker/isolation-posture-broker';
 
 jest.mock('@/lib/admin/setup-data-broker', () => ({
   getSetupInventorySnapshot: jest.fn(),
@@ -31,6 +33,10 @@ jest.mock('@/lib/admin/broker/connector-health-broker', () => ({
   getConnectorHealth: jest.fn(),
 }));
 
+jest.mock('@/lib/admin/broker/isolation-posture-broker', () => ({
+  getIsolationPosture: jest.fn(),
+}));
+
 const getSnapshotMock = setupDataBroker.getSetupInventorySnapshot as jest.MockedFunction<
   typeof setupDataBroker.getSetupInventorySnapshot
 >;
@@ -40,6 +46,20 @@ const getApprovalsMock = programApproval.getApprovalQueueForTenant as jest.Mocke
 const getConnectorHealthMock = connectorHealthBroker.getConnectorHealth as jest.MockedFunction<
   typeof connectorHealthBroker.getConnectorHealth
 >;
+const getIsolationPostureMock = isolationBroker.getIsolationPosture as jest.MockedFunction<
+  typeof isolationBroker.getIsolationPosture
+>;
+
+function makeEmptyIsolation(): IsolationPosture {
+  return {
+    rlsCoveragePct: 100,
+    tenantResolutionEvents24h: 0,
+    anomaliesLast24h: 0,
+    topAnomaly: null,
+    recentEvents: [],
+    evidence: 'estimated',
+  };
+}
 
 // Default empty connector health for tests that don't care about it.
 function makeEmptyHealth(): ConnectorHealth {
@@ -126,6 +146,7 @@ describe('getTrustSpine', () => {
     jest.resetAllMocks();
     // Default to an empty connector health unless a test overrides.
     getConnectorHealthMock.mockResolvedValue(makeEmptyHealth());
+    getIsolationPostureMock.mockResolvedValue(makeEmptyIsolation());
   });
 
   it('returns the contract shape with composed substrate + governance', async () => {
@@ -171,7 +192,7 @@ describe('getTrustSpine', () => {
     });
   });
 
-  it('marks isolation as estimated (Wave 2 still pending)', async () => {
+  it('marks isolation as estimated (RLS coverage % hardcoded — Wave 3 will flip to live)', async () => {
     getSnapshotMock.mockResolvedValue(makeSnapshot());
     getApprovalsMock.mockResolvedValue([]);
 
@@ -179,6 +200,119 @@ describe('getTrustSpine', () => {
 
     expect(spine.isolation.evidence).toBe('estimated');
     expect(spine.isolation.anomaliesLast24h).toBe(0);
+  });
+
+  it('passes through live isolation rollups from the isolation-posture broker', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([]);
+    getIsolationPostureMock.mockResolvedValue({
+      rlsCoveragePct: 100,
+      tenantResolutionEvents24h: 12,
+      anomaliesLast24h: 3,
+      topAnomaly: {
+        id: 'anom-1',
+        description: 'kernel-only mode rejected external provider',
+        severity: 'high',
+        ts: '2026-05-30T11:00:00Z',
+      },
+      recentEvents: [
+        {
+          id: 'anom-1',
+          ts: '2026-05-30T11:00:00Z',
+          tenantKey: 'apex-retail',
+          userId: 'user_clerk_1',
+          intendedTenant: null,
+          resolvedTenant: null,
+          severity: 'high',
+          anomaly: true,
+          reason: 'kernel-only mode rejected external provider',
+          workflow: 'intelligence.ask',
+          provider: 'anthropic',
+          policyDecision: 'deny',
+          dataClass: 'confidential',
+        },
+      ],
+      evidence: 'estimated',
+    });
+
+    const spine = await getTrustSpine('apex-retail');
+
+    expect(spine.isolation.tenantResolutionEvents24h).toBe(12);
+    expect(spine.isolation.anomaliesLast24h).toBe(3);
+    expect(spine.isolation.topAnomaly?.id).toBe('anom-1');
+    expect(spine.isolation.topAnomaly?.severity).toBe('high');
+  });
+
+  it('falls back to estimated zeros when the isolation broker throws', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([]);
+    getIsolationPostureMock.mockRejectedValue(new Error('audit table missing'));
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const spine = await getTrustSpine('apex-retail');
+    expect(spine.isolation.evidence).toBe('estimated');
+    expect(spine.isolation.anomaliesLast24h).toBe(0);
+    expect(spine.isolation.topAnomaly).toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
+    const logged = warnSpy.mock.calls[0]?.[0];
+    expect(logged as string).toMatch(/trust_spine\.isolation_posture\.degraded/);
+    warnSpy.mockRestore();
+  });
+
+  it('emits source=auth audit events from top isolation anomalies (capped at 5)', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+
+    function anomalyRow(id: string, ts: string, severity: 'low' | 'med' | 'high') {
+      return {
+        id,
+        ts,
+        tenantKey: 'apex-retail',
+        userId: id === 'sys' ? null : `user_${id}`,
+        intendedTenant: null,
+        resolvedTenant: null,
+        severity,
+        anomaly: true,
+        reason: `${severity} reason ${id}`,
+        workflow: 'intelligence.ask',
+        provider: 'anthropic',
+        policyDecision: severity === 'high' ? 'error' : 'deny',
+        dataClass: 'internal',
+      } as const;
+    }
+
+    getIsolationPostureMock.mockResolvedValue({
+      rlsCoveragePct: 100,
+      tenantResolutionEvents24h: 7,
+      anomaliesLast24h: 7,
+      topAnomaly: null,
+      evidence: 'estimated',
+      recentEvents: [
+        anomalyRow('a', '2026-05-30T10:00:00Z', 'high'),
+        anomalyRow('b', '2026-05-30T09:00:00Z', 'high'),
+        anomalyRow('c', '2026-05-30T08:00:00Z', 'med'),
+        anomalyRow('d', '2026-05-30T07:00:00Z', 'med'),
+        anomalyRow('e', '2026-05-30T06:00:00Z', 'low'),
+        anomalyRow('f', '2026-05-30T05:00:00Z', 'low'),
+        anomalyRow('sys', '2026-05-30T04:00:00Z', 'low'),
+      ],
+    });
+
+    const spine = await getTrustSpine('apex-retail');
+    const authEvents = spine.audit.last24hEvents.filter((e) => e.source === 'auth');
+    // Capped at 5; severity desc then ts desc → a, b, c, d, e.
+    expect(authEvents).toHaveLength(5);
+    expect(authEvents.map((e) => e.target)).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(authEvents[0]).toEqual({
+      ts: '2026-05-30T10:00:00Z',
+      source: 'auth',
+      actor: 'user_a',
+      action: 'tenant-resolution anomaly: high reason a',
+      target: 'a',
+    });
   });
 
   it('marks integration as live when the connector health broker succeeds', async () => {

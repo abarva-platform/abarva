@@ -6,12 +6,30 @@
 // AuditRibbon click is forwarded as a server-side filter into the audit
 // page. Unknown / missing values render the full list — no 4xx, no
 // redirect.
+//
+// Wave 2 PR-2 (2026-05-30) · Snowflake-style sub-nav tabs: Activity
+// (default) · Isolation · Approvals. Isolation surfaces the new
+// IsolationLane (STRESS-P0-006 triage). Approvals tab maps to the
+// existing PR-6 source=approval filter so the two filter mechanisms
+// coexist without collision.
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
-import { SetupAuditPage, isAuditSourceFilter } from '@/components/setup/SetupAuditPage';
+import {
+  SetupAuditPage,
+  isAuditSourceFilter,
+} from '@/components/setup/SetupAuditPage';
+import {
+  SetupAuditTabs,
+  isSetupAuditTab,
+  type SetupAuditTabKey,
+} from '@/components/admin/SetupAuditTabs';
+import { IsolationLane } from '@/components/admin/IsolationLane';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
+import { getIsolationPosture } from '@/lib/admin/broker/isolation-posture-broker';
 
 export const metadata = { title: 'Setup · Audit log · AbarVa' };
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminAuditPage({
   searchParams,
@@ -19,10 +37,35 @@ export default async function AdminAuditPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  const rawTab = params.tab;
+  const tabCandidate = Array.isArray(rawTab) ? rawTab[0] : rawTab;
+  const activeTab: SetupAuditTabKey = isSetupAuditTab(tabCandidate)
+    ? tabCandidate
+    : 'activity';
+
   const rawSource = params.source;
-  const candidate = Array.isArray(rawSource) ? rawSource[0] : rawSource;
-  const filterSource = isAuditSourceFilter(candidate) ? candidate : null;
+  const sourceCandidate = Array.isArray(rawSource) ? rawSource[0] : rawSource;
+  // When the user lands on ?tab=approvals we apply the PR-6 source filter
+  // implicitly so the existing audit ribbon scopes itself to approval rows.
+  // ?source=… continues to work independently of ?tab=… for back-compat.
+  const explicitSource = isAuditSourceFilter(sourceCandidate)
+    ? sourceCandidate
+    : null;
+  const filterSource =
+    activeTab === 'approvals' && !explicitSource ? 'approval' : explicitSource;
+
   const tenant = await resolveAdminTenant();
+
+  // Isolation lane needs the broker. Load it only when the lane is
+  // active to avoid an extra ai_egress_audit query on the default
+  // tab. Graceful: the broker returns an estimated fallback on any
+  // failure rather than throwing.
+  const isolationPosture =
+    activeTab === 'isolation'
+      ? await getIsolationPosture(tenant.tenantSlug)
+      : null;
+  const refreshedAtIso = new Date().toISOString();
+
   return (
     <AdminCanonShellV2
       tenantName={tenant.tenantName}
@@ -34,7 +77,26 @@ export default async function AdminAuditPage({
         />
       }
     >
-      <SetupAuditPage filterSource={filterSource} />
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+        <div style={{ padding: '20px 32px 0 32px' }}>
+          <SetupAuditTabs activeTab={activeTab} />
+        </div>
+        {activeTab === 'isolation' && isolationPosture ? (
+          <IsolationLane
+            posture={isolationPosture}
+            refreshedAtIso={refreshedAtIso}
+          />
+        ) : (
+          <SetupAuditPage filterSource={filterSource} />
+        )}
+      </div>
     </AdminCanonShellV2>
   );
 }

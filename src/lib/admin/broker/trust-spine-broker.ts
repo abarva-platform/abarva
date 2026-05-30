@@ -50,6 +50,10 @@ import {
   getConnectorHealth,
   type ConnectorHealth,
 } from '@/lib/admin/broker/connector-health-broker';
+import {
+  getIsolationPosture,
+  type IsolationPosture,
+} from '@/lib/admin/broker/isolation-posture-broker';
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
@@ -73,6 +77,8 @@ export interface TrustSpineIsolation {
     id: string;
     description: string;
     severity: 'low' | 'med' | 'high';
+    /** Timestamp of the top anomaly. Added Wave 2 PR-2. */
+    ts?: string;
   } | null;
   evidence: TrustEvidence;
 }
@@ -226,19 +232,48 @@ function composeGovernance(
   };
 }
 
-// ── Isolation composition (Wave 2) ──────────────────────────────────────────
+// ── Isolation composition (Wave 2 PR-2) ─────────────────────────────────────
 
-function composeIsolation(): TrustSpineIsolation {
-  // PR-4 is the data spine, not the isolation lane. We surface an
-  // authored "no anomalies" posture marked as estimated so the
-  // landing strip can render honestly. Wave 2 PR-2 wires the
-  // `ai_egress_audit` reader behind this same contract.
+/**
+ * Live isolation composition. When the isolation-posture broker
+ * resolves, we surface its rollups. The broker itself always
+ * returns `evidence: 'estimated'` until the RLS coverage probe is
+ * real (see `isolation-posture-broker.ts` honesty doctrine), so the
+ * chip stays muted-estimated while the count, top-anomaly, and
+ * recent-events queue ARE live.
+ *
+ * If the broker throws (Promise.allSettled rejected), fall back to
+ * the zeroed estimated posture so the landing strip stays honest
+ * rather than crashing.
+ */
+function composeIsolation(
+  posture: IsolationPosture | null,
+): TrustSpineIsolation {
+  if (!posture) {
+    return {
+      rlsCoveragePct: 100,
+      tenantResolutionEvents24h: 0,
+      anomaliesLast24h: 0,
+      topAnomaly: null,
+      evidence: 'estimated',
+    };
+  }
   return {
-    rlsCoveragePct: 100,
-    tenantResolutionEvents24h: 0,
-    anomaliesLast24h: 0,
-    topAnomaly: null,
-    evidence: 'estimated',
+    rlsCoveragePct: posture.rlsCoveragePct,
+    tenantResolutionEvents24h: posture.tenantResolutionEvents24h,
+    anomaliesLast24h: posture.anomaliesLast24h,
+    topAnomaly: posture.topAnomaly
+      ? {
+          id: posture.topAnomaly.id,
+          description: posture.topAnomaly.description,
+          severity: posture.topAnomaly.severity,
+          ts: posture.topAnomaly.ts,
+        }
+      : null,
+    // Pass the broker's evidence through. Today it is always
+    // 'estimated' (the RLS probe is hardcoded); Wave 3 will flip to
+    // 'live' when the probe lands.
+    evidence: posture.evidence,
   };
 }
 
@@ -392,16 +427,63 @@ function inviteAuditEvents(): TrustAuditEvent[] {
   return [];
 }
 
+/**
+ * Max auth events the audit ribbon surfaces from the isolation
+ * posture. We cap at the top 5 anomalies (severity desc, then
+ * ts desc) so the unified ribbon stays scannable. The full event
+ * list lives on the `/admin/audit?tab=isolation` lane.
+ */
+const ISOLATION_AUTH_RIBBON_MAX = 5;
+
+/**
+ * Auth events — Wave 2 PR-2 wires this from the isolation posture
+ * broker. The top-5 anomalies (severity desc, then ts desc) are
+ * emitted as `source: 'auth'` events on the unified ribbon. Reason
+ * is plain-language from the egress writer's `decision_reason`;
+ * the actor is the Clerk subject or `'system'` for null user_id.
+ *
+ * Payload material (prompt/response hashes, snapshot refs) is NEVER
+ * surfaced — the upstream broker strips it before this composer
+ * sees the row.
+ */
+function isolationAuthAuditEvents(
+  posture: IsolationPosture | null,
+): TrustAuditEvent[] {
+  if (!posture) return [];
+  const anomalies = posture.recentEvents.filter((e) => e.anomaly);
+  // Severity desc, then ts desc — matches the topAnomaly picker so
+  // the ribbon and the chip's callout point at the same story.
+  const ranked = [...anomalies].sort((a, b) => {
+    const rankA = a.severity === 'high' ? 3 : a.severity === 'med' ? 2 : 1;
+    const rankB = b.severity === 'high' ? 3 : b.severity === 'med' ? 2 : 1;
+    if (rankB !== rankA) return rankB - rankA;
+    const ta = Date.parse(a.ts);
+    const tb = Date.parse(b.ts);
+    const va = Number.isFinite(ta) ? ta : -Infinity;
+    const vb = Number.isFinite(tb) ? tb : -Infinity;
+    return vb - va;
+  });
+  return ranked.slice(0, ISOLATION_AUTH_RIBBON_MAX).map((e) => ({
+    ts: e.ts,
+    source: 'auth' as const,
+    actor: e.userId ?? 'system',
+    action: `tenant-resolution anomaly: ${e.reason ?? 'unknown'}`,
+    target: e.id,
+  }));
+}
+
 function composeAuditRibbon(
   snapshot: SetupInventorySnapshot | null,
   approvals: ApprovalRequest[],
   health: ConnectorHealth | null,
+  isolation: IsolationPosture | null,
   refreshedAtIso: string,
 ): TrustSpineAudit {
   const merged: TrustAuditEvent[] = [
     ...substrateAuditEvents(snapshot),
     ...approvals.map(approvalToAuditEvent),
     ...connectorAuditEvents(health, refreshedAtIso),
+    ...isolationAuthAuditEvents(isolation),
     ...inviteAuditEvents(),
   ];
   // Strictly temporal: sort by ts desc. Events with unparseable
@@ -433,11 +515,13 @@ function composeAuditRibbon(
  *   if the caller passes the app ClientKey instead.
  */
 export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
-  const [snapshotResult, approvalResult, healthResult] = await Promise.allSettled([
-    getSetupInventorySnapshot(tenantKey),
-    getApprovalQueueForTenant(tenantKey),
-    getConnectorHealth(tenantKey),
-  ]);
+  const [snapshotResult, approvalResult, healthResult, isolationResult] =
+    await Promise.allSettled([
+      getSetupInventorySnapshot(tenantKey),
+      getApprovalQueueForTenant(tenantKey),
+      getConnectorHealth(tenantKey),
+      getIsolationPosture(tenantKey),
+    ]);
 
   const snapshot =
     snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
@@ -461,14 +545,36 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
     );
   }
 
+  let isolation: IsolationPosture | null = null;
+  if (isolationResult.status === 'fulfilled') {
+    isolation = isolationResult.value;
+  } else {
+    console.warn(
+      JSON.stringify({
+        event: 'trust_spine.isolation_posture.degraded',
+        tenantKey,
+        reason:
+          isolationResult.reason instanceof Error
+            ? isolationResult.reason.message
+            : String(isolationResult.reason),
+      }),
+    );
+  }
+
   const refreshedAtIso = new Date().toISOString();
 
   return {
     substrate: composeSubstrate(snapshot),
-    isolation: composeIsolation(),
+    isolation: composeIsolation(isolation),
     integration: composeIntegration(health),
     governance: composeGovernance(approvals.length),
-    audit: composeAuditRibbon(snapshot, approvals, health, refreshedAtIso),
+    audit: composeAuditRibbon(
+      snapshot,
+      approvals,
+      health,
+      isolation,
+      refreshedAtIso,
+    ),
     refreshedAtIso,
     tenantKey,
   };
