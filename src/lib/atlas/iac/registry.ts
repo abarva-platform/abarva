@@ -18,6 +18,8 @@ import { githubCopilotArchetype } from './archetypes/github-copilot';
 import { microsoft365CopilotArchetype } from './archetypes/microsoft-365-copilot';
 import { oracleAiAgentsArchetype } from './archetypes/oracle-ai-agents';
 import { salesforceEinsteinAgentforceArchetype } from './archetypes/salesforce-einstein-agentforce';
+import { sapJouleArchetype } from './archetypes/sap-joule';
+import { servicenowNowAssistArchetype } from './archetypes/servicenow-now-assist';
 import { workdayAiAgentsArchetype } from './archetypes/workday-ai-agents';
 
 export const INITIATIVE_ARCHETYPES: InitiativeArchetype[] = [
@@ -28,6 +30,8 @@ export const INITIATIVE_ARCHETYPES: InitiativeArchetype[] = [
   microsoft365CopilotArchetype,
   oracleAiAgentsArchetype,
   salesforceEinsteinAgentforceArchetype,
+  sapJouleArchetype,
+  servicenowNowAssistArchetype,
   workdayAiAgentsArchetype,
   // Sibling slices append here, alphabetical by `archetypeKey`.
 ];
