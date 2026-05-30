@@ -1,4 +1,5 @@
 import {
+  applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
@@ -51,5 +52,33 @@ describe('Ask Intelligence response policy', () => {
     expect(answer).toContain('CFO value lens');
     expect(answer).not.toContain('3 ranked bets');
     expect(answer).not.toContain('**');
+  });
+
+  it('turns tenant-backed missing sub-fields into partial-evidence wording', () => {
+    const text = [
+      "The loaded sources give you the structural picture but don't contain a specific EDP commitment tranche or true-up delta figure — that number would live in the AWS contract schedule itself, which hasn't been ingested. Here's what I can ground firmly.",
+      'AWS is at $180M/yr with a February 2027 renewal, and SHA-MOD-001 has $2.32M disputed.',
+    ].join(' ');
+
+    const answer = applyPartialEvidencePolicy(text, [
+      {
+        type: 'TENANT',
+        name: 'Structured vendor contracts (skyharbor-air)',
+        id: 'skyharbor-air:structured:vendor_contracts',
+        confidence: 0.97,
+        detail: 'SHA-VEND-002 AWS — annual_value $180.0M, renewal 2027-02-01.',
+      },
+    ]);
+
+    expect(answer).toContain('The loaded sources show the exposure shape and decision context; the remaining field to confirm is the specific EDP commitment tranche or true-up delta figure.');
+    expect(answer).toContain('AWS is at $180M/yr');
+    expect(answer).toContain('$2.32M disputed');
+    expect(answer).not.toMatch(/hasn'?t been ingested|don't contain/i);
+  });
+
+  it('does not rewrite missing-data honesty when no tenant evidence is loaded', () => {
+    const text = "I don't have the exact EDP floor in the loaded sources. Ask AWS for the schedule.";
+
+    expect(applyPartialEvidencePolicy(text, [])).toBe(text);
   });
 });
