@@ -21,10 +21,17 @@ export interface AdminCanonShellV2Props {
    */
   agentRail?: ReactNode;
   /**
-   * Tenant name for the top bar. Server-component callers should resolve
-   * via getActiveClientRow() and pass the name here.
+   * Tenant name for the top bar. REQUIRED. Server-component callers must
+   * resolve via `resolveAdminTenant()` (preferred) or `getActiveClientRow()`
+   * and pass the resulting display name here.
+   *
+   * No default is supplied: a previous default of 'Apex Retail Group' caused
+   * cross-tenant leak (LEAK-B, ADMIN_HOME_FULL_TEST_2026-05-30 §2/§6/§7) on
+   * pages that forgot to thread the prop. For non-tenant surfaces (the
+   * unauthorized admin shell, public docs/engineering pages) pass an
+   * explicit neutral string like 'AbarVa Admin' or 'AbarVa Docs'.
    */
-  tenantName?: string;
+  tenantName: string;
 }
 
 /**
@@ -40,7 +47,7 @@ function isStewardChatRail(node: ReactNode): node is ReactElement {
 export function AdminCanonShellV2({
   children,
   agentRail,
-  tenantName = 'Apex Retail Group',
+  tenantName,
 }: AdminCanonShellV2Props) {
   const useChatDock = isStewardChatRail(agentRail);
 

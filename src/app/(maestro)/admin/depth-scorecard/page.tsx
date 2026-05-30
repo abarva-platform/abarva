@@ -3,6 +3,7 @@ import { connection } from 'next/server';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { loadDepthExemplars } from '@/lib/depth/exemplars';
 import { scoreArtifact } from '@/lib/depth/lint-service';
 import { DEPTH_RUBRICS } from '@/lib/depth/rubrics';
@@ -18,6 +19,7 @@ export const revalidate = 0;
 
 export default async function DepthScorecardPage() {
   await connection();
+  const tenant = await resolveAdminTenant();
   const exemplars = await loadDepthExemplars();
   const scores = await Promise.all(
     exemplars.map((exemplar) =>
@@ -32,6 +34,7 @@ export default async function DepthScorecardPage() {
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

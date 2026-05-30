@@ -1,17 +1,17 @@
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { NotificationsInboxPage } from '@/components/admin/NotificationsInboxPage';
 import { AgentRail } from '@/components/admin/AgentRail';
-import { getActiveClientRow } from '@/lib/active-client';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function AdminInboxRoute() {
-  const client = await getActiveClientRow();
+  const tenant = await resolveAdminTenant();
 
   return (
     <AdminCanonShellV2
-      tenantName={client?.name ?? undefined}
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

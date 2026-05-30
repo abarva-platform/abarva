@@ -126,6 +126,7 @@ export default function ReasoningChangelogDocPage() {
 
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Docs"
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

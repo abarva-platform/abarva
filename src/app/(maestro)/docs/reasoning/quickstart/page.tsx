@@ -202,6 +202,7 @@ const SURFACE_RECIPE_BULLETS: ReadonlyArray<string> = [
 export default function ReasoningQuickstartDocPage() {
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Docs"
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

@@ -33,6 +33,7 @@ export const revalidate = 0;
 function AdminAccessDenied() {
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Admin"
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"
