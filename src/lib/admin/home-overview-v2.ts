@@ -82,6 +82,18 @@ export interface ComposeHomeV2Input {
    * tests don't break.
    */
   capabilityGrounding?: CapabilityGrounding | null;
+  /**
+   * PRE-W4-PR-5 fix #7 (persona report §9 fix #7).
+   *
+   * When true, the tenant has no substrate loaded yet. The four
+   * Module readiness percentages would all evaluate to ≤30% (red
+   * bucket) — punishing a brand-new tenant with an all-red
+   * "Readiness across modules" section. In this case we emit an
+   * empty `readiness` array so HomeOverviewV2 can render an
+   * editorial placeholder ("Readiness will compute when your first
+   * dataset lands.") instead of four red bars.
+   */
+  emptyTenant?: boolean;
 }
 
 function bucketFor(pct: number): ReadinessBucket {
@@ -126,47 +138,60 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
     ? Math.max(40, 75 - input.initiativesAtRiskCount * 6)
     : 30;
 
-  const readiness: ModuleReadinessV2[] = [
-    {
-      name: 'Tower',
-      modulePrefix: 'Module 01',
-      pct: towerPct,
-      bucket: bucketFor(towerPct),
-      note: `${input.programsCount} programs observed${input.programsP6Count > 0 ? ` · ${input.programsP6Count} in P6 handoff` : ''}. Atlas synthesis grounded.`,
-      href: '/tower',
-    },
-    {
-      name: 'Source',
-      modulePrefix: 'Module 02',
-      pct: sourcePct,
-      bucket: bucketFor(sourcePct),
-      note: `${input.sourceEventsCount} source events live${input.sourceEventsAtRiskCount > 0 ? ` · ${input.sourceEventsAtRiskCount} at risk` : ''}. Vendor and contract substrate available.`,
-      href: '/source',
-    },
-    {
-      name: 'Intelligence',
-      modulePrefix: 'Module 03',
-      pct: intelPct,
-      bucket: bucketFor(intelPct),
-      note: `${segMature} of ${segTotal} segments mature. Pattern-to-Move funnel ready for origination.`,
-      href: '/intelligence',
-    },
-    {
-      name: 'Strategic Moves',
-      modulePrefix: 'Module 04',
-      pct: movesPct,
-      bucket: bucketFor(movesPct),
-      note: `${input.initiativesCount} initiatives in registry${input.initiativesAtRiskCount > 0 ? ` · ${input.initiativesAtRiskCount} at risk` : ''}. Gate criteria coverage informed.`,
-      href: '/strategic-moves',
-    },
-  ];
+  // PRE-W4-PR-5 fix #7: empty tenants get an empty readiness array
+  // so HomeOverviewV2 renders an editorial placeholder instead of
+  // four red bars. Non-empty tenants get the live module rollups.
+  const readiness: ModuleReadinessV2[] = input.emptyTenant
+    ? []
+    : [
+        {
+          name: 'Tower',
+          modulePrefix: 'Module 01',
+          pct: towerPct,
+          bucket: bucketFor(towerPct),
+          note: `${input.programsCount} programs observed${input.programsP6Count > 0 ? ` · ${input.programsP6Count} in P6 handoff` : ''}. Atlas synthesis grounded.`,
+          href: '/tower',
+        },
+        {
+          name: 'Source',
+          modulePrefix: 'Module 02',
+          pct: sourcePct,
+          bucket: bucketFor(sourcePct),
+          note: `${input.sourceEventsCount} source events live${input.sourceEventsAtRiskCount > 0 ? ` · ${input.sourceEventsAtRiskCount} at risk` : ''}. Vendor and contract substrate available.`,
+          href: '/source',
+        },
+        {
+          name: 'Intelligence',
+          modulePrefix: 'Module 03',
+          pct: intelPct,
+          bucket: bucketFor(intelPct),
+          note: `${segMature} of ${segTotal} segments mature. Pattern-to-Move funnel ready for origination.`,
+          href: '/intelligence',
+        },
+        {
+          name: 'Strategic Moves',
+          modulePrefix: 'Module 04',
+          pct: movesPct,
+          bucket: bucketFor(movesPct),
+          note: `${input.initiativesCount} initiatives in registry${input.initiativesAtRiskCount > 0 ? ` · ${input.initiativesAtRiskCount} at risk` : ''}. Gate criteria coverage informed.`,
+          href: '/strategic-moves',
+        },
+      ];
 
   const sparseOrPartial = segments.filter((s) => s.healthState !== 'complete' && s.healthState !== 'mature').length;
   const totalRecords = segments.reduce((acc, s) => acc + (s.recordCount ?? 0), 0);
 
   const panels: PanelStatusCard[] = [
     { num: '01', name: 'Data Trust',           status: sparseOrPartial > 5 ? 'attn' : 'ready',                                 desc: 'Substrate inventory, segment health, provenance of every record.',   foot: `${segments.length} segments · ${totalRecords.toLocaleString()} records`, href: '/admin/data-trust' },
-    { num: '02', name: 'AI Initiatives',       status: input.initiativesAtRiskCount > 0 ? 'attn' : 'ready',                    desc: 'Registry of every AI bet — stage, owner, confidence, value posture.',  foot: `${input.initiativesCount} initiatives${input.initiativesAtRiskCount > 0 ? ` · ${input.initiativesAtRiskCount} at risk` : ''}`, href: '/home/ai-initiatives' },
+    // PRE-W4-PR-5 fix #2 (persona report §9 fix #2 + audit verdict
+    // §5.5): panel #02 ("AI Initiatives") used to link at
+    // /home/ai-initiatives which now hard-redirects to /home —
+    // ejecting the tenant admin from /admin every time they clicked
+    // the card. The Intelligence wave will redesign the initiatives
+    // surface; until then the panel is retired entirely. The two
+    // following panels keep their original numbers (03 Connectors,
+    // 04 Users & Access) so deep links and the design vocabulary
+    // ("Setup panel 03 Connectors") remain stable.
     {
       num: '03',
       name: 'Connectors',

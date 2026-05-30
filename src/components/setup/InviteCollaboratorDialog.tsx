@@ -2,6 +2,24 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import type { SendInviteResult } from '@/app/(maestro)/admin/users-access/_actions/send-invite';
+
+/**
+ * Default send implementation — dynamic-imported so the server-action
+ * module (which transitively imports `@clerk/nextjs/server`, a pure
+ * ESM package the Jest CJS VM can't parse) is only resolved at the
+ * moment the user clicks Send. Tests inject their own `sendInviteImpl`
+ * via props and never trip the dynamic import path.
+ */
+async function defaultSendInvite(input: {
+  tenantKey: string;
+  email: string;
+  role: string;
+  programs?: string[];
+}): Promise<SendInviteResult> {
+  const mod = await import('@/app/(maestro)/admin/users-access/_actions/send-invite');
+  return mod.sendInvite(input);
+}
 
 // ── Step definitions ─────────────────────────────────────────────────────────
 
@@ -496,6 +514,9 @@ function Step4Review({
   message,
   onSend,
   sent,
+  sending,
+  error,
+  invitationId,
   onDone,
 }: {
   email: string;
@@ -504,13 +525,16 @@ function Step4Review({
   message: string;
   onSend: () => void;
   sent: boolean;
+  sending: boolean;
+  error: string | null;
+  invitationId: string | null;
   onDone: () => void;
 }) {
   const pill = rolePillStyle(role);
 
   if (sent) {
     return (
-      <div>
+      <div data-testid="invite-collaborator-success">
         {/* Success card */}
         <div
           style={{
@@ -542,6 +566,20 @@ function Step4Review({
           >
             They&apos;ll receive an email with setup instructions. The invitation expires in 7 days.
           </p>
+          {invitationId && (
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                marginTop: 10,
+                letterSpacing: '0.04em',
+              }}
+              data-testid="invitation-id"
+            >
+              Audit ref · {invitationId}
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -671,9 +709,31 @@ function Step4Review({
         </div>
       )}
 
+      {/* Failure banner — inline, dialog stays open so the admin can fix and retry. */}
+      {error && (
+        <div
+          role="alert"
+          data-testid="invite-collaborator-error"
+          style={{
+            background: SHELL.PEACH_BG,
+            color: SHELL.PEACH_TEXT,
+            borderRadius: 8,
+            padding: '12px 16px',
+            marginBottom: 12,
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            lineHeight: 1.5,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       {/* Send CTA */}
       <button
         onClick={onSend}
+        disabled={sending}
+        data-testid="invite-collaborator-send"
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 12,
@@ -683,11 +743,12 @@ function Step4Review({
           borderRadius: 8,
           padding: '12px 0',
           width: '100%',
-          cursor: 'pointer',
+          cursor: sending ? 'wait' : 'pointer',
           letterSpacing: '0.06em',
+          opacity: sending ? 0.7 : 1,
         }}
       >
-        Send invitation
+        {sending ? 'Sending…' : 'Send invitation'}
       </button>
     </div>
   );
@@ -707,12 +768,33 @@ export interface InviteCollaboratorDialogProps {
   open: boolean;
   onClose: () => void;
   tenantName?: string;
+  /**
+   * Canonical tenant key (e.g. `apex-retail`). Passed to the server
+   * action so the audit row resolves to the correct `clients.id`.
+   * Defaults to empty — the action falls back to the caller's active
+   * tenancy when not supplied, but parents SHOULD pass the explicit
+   * key whenever they have it (avoids a cross-tenant race when the
+   * admin is mid-tenant-switch).
+   */
+  tenantKey?: string;
+  /**
+   * Injectable for tests. Production callers should leave this unset
+   * so the real `sendInvite` server action is used.
+   */
+  sendInviteImpl?: (input: {
+    tenantKey: string;
+    email: string;
+    role: string;
+    programs?: string[];
+  }) => Promise<SendInviteResult>;
 }
 
 export function InviteCollaboratorDialog({
   open,
   onClose,
   tenantName = 'this workspace',
+  tenantKey = '',
+  sendInviteImpl = defaultSendInvite,
 }: InviteCollaboratorDialogProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [step, setStep] = useState(0);
@@ -721,6 +803,9 @@ export function InviteCollaboratorDialog({
   const [surfaces, setSurfaces] = useState<string[]>(defaultSurfaces('collaborator'));
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invitationId, setInvitationId] = useState<string | null>(null);
 
   // Sync the <dialog> element with the `open` prop. Use the imperative
   // showModal/close API so native ESC handling and the backdrop both
@@ -755,8 +840,38 @@ export function InviteCollaboratorDialog({
     if (step > 0) setStep(step - 1);
   }
 
-  function handleSend() {
-    setSent(true);
+  async function handleSend() {
+    if (sending) return;
+    setError(null);
+    setSending(true);
+    try {
+      const result = await sendInviteImpl({
+        tenantKey,
+        email,
+        role,
+        // We do not yet pass `programs` from this dialog — the role +
+        // surface grid is the access posture. When per-program
+        // provisioning lands in a follow-up, the array flows through
+        // unchanged.
+      });
+      if (result.ok) {
+        setInvitationId(result.invitationId);
+        setSent(true);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      // Server-action transport-level failure (network, etc.). The
+      // action returns typed errors in the happy paths; only an
+      // unexpected runtime failure ends up here.
+      setError(
+        err instanceof Error
+          ? `Couldn't send the invitation — ${err.message}`
+          : "Couldn't send the invitation. Try again in a moment.",
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   const step1Valid = email.includes('@');
@@ -868,6 +983,9 @@ export function InviteCollaboratorDialog({
             message={message}
             onSend={handleSend}
             sent={sent}
+            sending={sending}
+            error={error}
+            invitationId={invitationId}
             onDone={onClose}
           />
         )}

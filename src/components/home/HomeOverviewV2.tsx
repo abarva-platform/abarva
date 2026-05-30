@@ -287,7 +287,15 @@ export function HomeOverviewV2({
               marginBottom: 6,
             }}
           >
-            HOME · <span style={{ color: C.ink }}>WHERE YOU STAND AND WHAT TO DO NEXT</span>
+            {/*
+             * PRE-W4-PR-5 fix #6 (persona report §9 fix #6):
+             *   Unify the three masthead labels — browser tab title is
+             *   already "Setup · AbarVa" and the sidebar header reads
+             *   "Setup · Admin", but this eyebrow used to read "HOME ·
+             *   …". The conflict made the surface feel un-anchored to a
+             *   single noun. Pick "SETUP" and use it consistently.
+             */}
+            SETUP · <span style={{ color: C.ink }}>WHERE YOU STAND AND WHAT TO DO NEXT</span>
           </div>
           {/* Verdict §5.6 Zone A: the masthead carries a single inline
               switcher chip ("acting as <Tenant> · switch") for founder
@@ -400,11 +408,60 @@ export function HomeOverviewV2({
 
       {/* ── CONTENT ─────────────────────────────────────────── */}
       <main style={{ padding: '40px 64px 96px', maxWidth: 1280 }}>
-        {/* Section 01 — Readiness across modules */}
+        {/* Section 01 — Readiness across modules
+            PRE-W4-PR-5 fix #7 (persona report §9 fix #7):
+              For an empty tenant every module evaluates to ≤30%
+              (red bucket). Rendering four red bars at the top of a
+              brand-new tenant's first page punishes them on arrival.
+              `composeHomeV2Extras` emits an empty `readiness` array in
+              that case; we render a single editorial placeholder block
+              naming what unblocks the readiness signal. */}
         <Section eyebrowNum="01" eyebrowLabel="OPERATIONAL POSTURE" title="Readiness across modules" lead="Each module shows live readiness derived from substrate, programs, source events, and initiative status — not aspiration.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
-            {extras.readiness.map((m) => <ReadyCard key={m.name} mod={m} />)}
-          </div>
+          {emptyTenant || extras.readiness.length === 0 ? (
+            <div
+              data-testid="home-overview-readiness-empty"
+              style={{
+                border: `1px solid ${C.borderLight}`,
+                background: C.surface,
+                borderRadius: 8,
+                padding: '22px 24px',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: C.navy,
+                  marginBottom: 8,
+                }}
+              >
+                No readiness signal yet
+              </div>
+              <p
+                style={{
+                  fontFamily: F_DISPLAY,
+                  fontSize: 20,
+                  fontWeight: 400,
+                  color: C.ink,
+                  lineHeight: 1.35,
+                  letterSpacing: '-0.005em',
+                  margin: 0,
+                  maxWidth: '56ch',
+                }}
+              >
+                Readiness will compute when your first dataset lands. Begin with
+                org structure or KPI dictionary — those two unlock the Module
+                01 (Tower) and Module 03 (Intelligence) signals first.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
+              {extras.readiness.map((m) => <ReadyCard key={m.name} mod={m} />)}
+            </div>
+          )}
         </Section>
 
         <Rule />

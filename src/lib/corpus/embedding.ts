@@ -61,6 +61,9 @@ export async function embedPatternText(args: {
   patternId?: string;
 }): Promise<EmbeddingPayload & { auditId: string }> {
   const policyRecord = await loadTenantAiPolicyRecord(args.clientId);
+  // PRE-W4-PR-6: stamp intended + resolved tenant on every audit row.
+  // `args.clientId` is the caller's intent; `policyRecord.tenantId` is
+  // what the policy loader actually resolved (e.g. UUID for the row).
   const result = await callModel({
     tenantId: policyRecord.tenantId,
     userId: args.userId,
@@ -74,7 +77,11 @@ export async function embedPatternText(args: {
     dataClass: 'internal',
     metadata: { dimensions: EMBEDDING_DIMENSIONS },
     policy: policyRecord.policy,
-    auditSink: createSupabaseAiEgressAuditSink(),
+    auditSink: createSupabaseAiEgressAuditSink({
+      intendedTenantKey: args.clientId,
+      resolvedTenantKey: policyRecord.tenantId,
+      tenantId: policyRecord.tenantId,
+    }),
     adapter: async ({ prompt }) => {
       const payload = await callAzureOpenAiEmbedding(prompt);
       return {

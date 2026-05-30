@@ -79,8 +79,11 @@ export const TOWER_DIMENSIONS: Array<{
 // Data classification tier for an integration source. Drives redaction
 // Layer 2 gating on Tower roll-ups — confidential sources require the
 // financial-data role for exact figures to appear in LLM-facing
-// surfaces. See docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md.
-export type CatalogDataClass = 'public' | 'internal' | 'confidential';
+// surfaces. Restricted sources carry PII / regulated data and require
+// Layer-2 redaction upstream of the upload (see the source's README in
+// `public/templates/tower/`). See
+// docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md.
+export type CatalogDataClass = 'public' | 'internal' | 'confidential' | 'restricted';
 
 export interface CatalogSystem {
   key: string;
@@ -95,8 +98,11 @@ export interface CatalogSystem {
   /**
    * Data classification tier. Defaults to 'internal' when omitted.
    * Sources that carry program budgets, vendor spend, payroll, PHI,
-   * or other restricted data must declare 'confidential' so the Tower
-   * synthesis and chat layers can apply Layer 2 redaction.
+   * or other restricted data must declare 'confidential' or
+   * 'restricted' so the Tower synthesis and chat layers can apply
+   * Layer 2 redaction. Restricted sources carry PII / regulated data
+   * and require Layer-2 redaction upstream of the upload (see the
+   * source's README in `public/templates/tower/`).
    */
   dataClass?: CatalogDataClass;
 }
@@ -308,6 +314,40 @@ export const ONBOARDING_CATALOG: CatalogSystem[] = [
     templateKey: 'value',
   },
 ];
+
+// Slice S8 — Workday HCM live ingest registration.
+// First fully-wired Tower source (template + parser + validator + migration +
+// CLI). Marked `restricted` because workforce rows are PII-bearing.
+ONBOARDING_CATALOG.push({
+  key: 'workday_hcm',
+  name: 'Workday HCM (workforce ingest)',
+  tagline: 'Headcount, function mix, contractor ratio, attrition signals.',
+  dimensions: ['adoption', 'risk'],
+  whatToExport:
+    'Workday Report Writer (RaaS) export of the Worker business object — active workers as of the run date plus terminations in the trailing 24 months. Real customer data must pass Layer-2 redaction (no names / emails / WIDs) before upload.',
+  steps: [
+    'Workday → Report Writer → new custom report on Worker',
+    'Columns: WID, Job Family Group, Job Family, Work Location, Career Level, Worker Type, Hire Date, Termination Date, Termination Reason',
+    'Filter: Active workers + terminations in last 24 months',
+    'Output: CSV or XLSX',
+    'Run the redaction step (hash WID, drop name / email / address)',
+    'Upload via /api/tower/upload OR `npx tsx src/scripts/tower/ingest-workday-hcm.ts` (idempotent on client_id+employee_id+as_of_date)',
+  ],
+  fields: [
+    { source: 'Worker ID (redacted)', target: 'tower_workforce.employee_id' },
+    { source: 'Job Family Group', target: 'tower_workforce.function' },
+    { source: 'Job Family', target: 'tower_workforce.sub_function' },
+    { source: 'Work Location', target: 'tower_workforce.location' },
+    { source: 'Career Level', target: 'tower_workforce.level' },
+    { source: 'Worker Type', target: 'tower_workforce.contractor_flag' },
+    { source: 'Hire Date', target: 'tower_workforce.start_date' },
+    { source: 'Termination Date', target: 'tower_workforce.attrition_date' },
+    { source: 'Termination Reason', target: 'tower_workforce.attrition_reason' },
+  ],
+  tip: 'See public/templates/tower/workday-hcm/README.md for the full runbook + PII handling note.',
+  templateKey: 'workday-hcm',
+  dataClass: 'restricted',
+});
 
 export function catalogByDimension(dimension: TowerDimension): CatalogSystem[] {
   return ONBOARDING_CATALOG.filter((s) => s.dimensions.includes(dimension));

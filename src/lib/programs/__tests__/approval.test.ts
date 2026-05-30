@@ -465,29 +465,31 @@ describe('withdrawApprovalRequest', () => {
 });
 
 describe('getApprovalQueueForTenant', () => {
-  it('returns only pending rows for the tenant, ordered by requested_at desc', async () => {
-    const newer = makeDbRow({
-      id: 'req_2',
-      requested_at: '2026-04-29T15:00:00.000Z',
-    });
+  it('returns only pending rows for the tenant, longest-pending first', async () => {
+    // PRE-W4-PR-4 · queue now sorts ASC so SLA-stuck requests bubble
+    // to the top. The previous descending order is gone.
     const older = makeDbRow({
       id: 'req_1',
       requested_at: '2026-04-29T10:00:00.000Z',
     });
+    const newer = makeDbRow({
+      id: 'req_2',
+      requested_at: '2026-04-29T15:00:00.000Z',
+    });
     pendingResults.push({
-      arrayResult: { data: [newer, older], error: null },
+      arrayResult: { data: [older, newer], error: null },
     });
 
     const out = await getApprovalQueueForTenant('apex-retail');
     expect(out).toHaveLength(2);
-    expect(out[0].id).toBe('req_2');
-    expect(out[1].id).toBe('req_1');
+    expect(out[0].id).toBe('req_1');
+    expect(out[1].id).toBe('req_2');
 
-    // Ordering call landed
+    // Ordering call landed (ascending = longest-pending first)
     expect(orderMock).toHaveBeenCalledWith(
       'program_approval_requests',
       'requested_at',
-      { ascending: false },
+      { ascending: true },
     );
 
     // Tenant + status filters were applied

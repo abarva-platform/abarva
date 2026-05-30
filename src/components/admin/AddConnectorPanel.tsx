@@ -20,10 +20,10 @@
  *   • No real OAuth. The auth-method picker captures operator
  *     intent only; the "Configure auth" CTA links to the existing
  *     connector-detail page. We never collect credentials.
- *   • Save draft is a placeholder: emits telemetry + transitions
- *     to a confirmation state. Real persistence is wired in a
- *     follow-up PR (a `pending` connector row write goes through
- *     the broker, not Supabase directly — broker-boundary intact).
+ *   • Save draft (PRE-W4-PR-2) persists a real `pending` connector
+ *     row via the connector-health broker. Telemetry is kept as a
+ *     breadcrumb. No credentials are written — only template id,
+ *     name, scope, and operator auth-method intent.
  *   • Test connection is a placeholder: emits telemetry + shows a
  *     transient banner. A real `test_connector(tenantKey, …)` RPC
  *     lands in Wave 2 PR-1 (the connector-health broker).
@@ -31,6 +31,11 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import posthog from 'posthog-js';
+
+import {
+  createPendingConnectorAction,
+  type CreatePendingConnectorActionResult,
+} from '@/app/(maestro)/admin/connectors/_actions/create-pending-connector';
 
 export interface ConnectorTemplate {
   id: string;
@@ -175,17 +180,29 @@ interface Props {
   closeHref: string;
   /** Override the catalog (used by tests / future tenant-scoped catalogs). */
   templates?: ReadonlyArray<ConnectorTemplate>;
+  /**
+   * Override the persistence call. Defaults to the real server action
+   * (`createPendingConnectorAction`). Tests inject a stub.
+   */
+  saveDraft?: (input: {
+    templateId: string;
+    name: string;
+    scope?: string | null;
+    authMethod?: ConnectorAuthMethod | null;
+  }) => Promise<CreatePendingConnectorActionResult>;
 }
 
 type FlowState =
   | { kind: 'editing' }
+  | { kind: 'saving' }
   | { kind: 'tested'; ts: number }
-  | { kind: 'saved'; draftName: string };
+  | { kind: 'saved'; draftName: string; connectorId: string };
 
 export function AddConnectorPanel({
   tenantKey,
   closeHref,
   templates = DEFAULT_TEMPLATES,
+  saveDraft = createPendingConnectorAction,
 }: Props) {
   const [activeCategory, setActiveCategory] =
     useState<ConnectorTemplateCategory | 'all'>('all');
@@ -244,7 +261,7 @@ export function AddConnectorPanel({
     setFlow({ kind: 'tested', ts: Date.now() });
   }, [selectedTemplate, authMethod, tenantKey]);
 
-  const handleSaveDraft = useCallback(() => {
+  const handleSaveDraft = useCallback(async () => {
     if (!selectedTemplate) {
       setValidationError('Pick a connector template first.');
       return;
@@ -256,6 +273,9 @@ export function AddConnectorPanel({
     }
     setValidationError(null);
     if (typeof window !== 'undefined') {
+      // Telemetry breadcrumb — kept after the real persistence wire-up
+      // in PRE-W4-PR-2 because it usefully marks the click event in
+      // the funnel regardless of the persistence outcome.
       try {
         posthog.capture('connector_onboarding_save_draft_clicked', {
           tenantKey,
@@ -266,11 +286,32 @@ export function AddConnectorPanel({
         // PostHog not initialized — swallow.
       }
     }
-    // TODO(Wave 2 PR-1): persist a `pending` connector row via the
-    // broker contract (`createPendingConnector(tenantKey, …)`).
-    // No credentials collected; only name + template_id + tenant_id.
-    setFlow({ kind: 'saved', draftName: trimmedName });
-  }, [selectedTemplate, name, authMethod, tenantKey]);
+    setFlow({ kind: 'saving' });
+    let result: CreatePendingConnectorActionResult;
+    try {
+      result = await saveDraft({
+        templateId: selectedTemplate.id,
+        name: trimmedName,
+        scope: scope.trim().length > 0 ? scope.trim() : null,
+        authMethod: authMethod === '' ? null : authMethod,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Save failed.';
+      setValidationError(message);
+      setFlow({ kind: 'editing' });
+      return;
+    }
+    if (!result.ok) {
+      setValidationError(result.error);
+      setFlow({ kind: 'editing' });
+      return;
+    }
+    setFlow({
+      kind: 'saved',
+      draftName: trimmedName,
+      connectorId: result.connectorId,
+    });
+  }, [selectedTemplate, name, scope, authMethod, tenantKey, saveDraft]);
 
   return (
     <div
@@ -698,9 +739,16 @@ export function AddConnectorPanel({
                       border: '1px solid rgba(27,94,32,0.25)',
                     }}
                   >
-                    Draft saved as &ldquo;{flow.draftName}&rdquo;. It will
-                    appear at the top of the pending list — finish the
-                    auth handshake to take it live.
+                    Saved as pending — &ldquo;{flow.draftName}&rdquo; is
+                    visible on{' '}
+                    <a
+                      data-testid="add-connector-saved-link"
+                      href={`/admin/connectors#connector-${flow.connectorId}`}
+                      style={{ color: '#1B5E20', textDecoration: 'underline' }}
+                    >
+                      the Connectors list
+                    </a>
+                    . Finish the auth handshake to take it live.
                   </div>
                 )}
               </>
@@ -762,10 +810,12 @@ export function AddConnectorPanel({
               type="button"
               data-testid="add-connector-save-button"
               onClick={handleSaveDraft}
-              disabled={!selectedTemplate}
-              style={primaryButtonStyle(!selectedTemplate)}
+              disabled={!selectedTemplate || flow.kind === 'saving'}
+              style={primaryButtonStyle(
+                !selectedTemplate || flow.kind === 'saving',
+              )}
             >
-              Save draft
+              {flow.kind === 'saving' ? 'Saving…' : 'Save draft'}
             </button>
           </div>
         </footer>

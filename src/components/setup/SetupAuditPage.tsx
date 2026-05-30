@@ -6,10 +6,12 @@
 //
 // Wave 1 PR-6 (2026-05-30) · accepts an optional `filterSource` prop driven
 // by the landing-page AuditRibbon click (`/admin/audit?source=<source>`).
-'use client';
 
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { AUDIT_LOG_FIXTURE, type AuditEntry } from '@/lib/setup/shell-setup-fixture';
+import { SHELL } from "@/lib/shell/shell-tokens";
+import {
+  AUDIT_LOG_FIXTURE,
+  type AuditEntry,
+} from "@/lib/setup/shell-setup-fixture";
 
 /**
  * Audit ribbon source filter · Wave 1 PR-6.
@@ -27,35 +29,35 @@ import { AUDIT_LOG_FIXTURE, type AuditEntry } from '@/lib/setup/shell-setup-fixt
  * If the param is unrecognized we fall back to the full list.
  */
 export type AuditSourceFilter =
-  | 'substrate'
-  | 'auth'
-  | 'policy'
-  | 'connector'
-  | 'invite'
-  | 'approval';
+  | "substrate"
+  | "auth"
+  | "policy"
+  | "connector"
+  | "invite"
+  | "approval";
 
 const VALID_FILTERS: ReadonlySet<string> = new Set([
-  'substrate',
-  'auth',
-  'policy',
-  'connector',
-  'invite',
-  'approval',
+  "substrate",
+  "auth",
+  "policy",
+  "connector",
+  "invite",
+  "approval",
 ]);
 
 export function isAuditSourceFilter(
   value: string | null | undefined,
 ): value is AuditSourceFilter {
-  return typeof value === 'string' && VALID_FILTERS.has(value);
+  return typeof value === "string" && VALID_FILTERS.has(value);
 }
 
 const SOURCE_TO_SURFACE: Record<AuditSourceFilter, ReadonlyArray<string>> = {
-  substrate: ['Setup'],
-  auth: ['Setup'],
-  policy: ['Setup'],
-  connector: ['Setup'],
-  invite: ['Setup'],
-  approval: ['Programs'],
+  substrate: ["Setup"],
+  auth: ["Setup"],
+  policy: ["Setup"],
+  connector: ["Setup"],
+  invite: ["Setup"],
+  approval: ["Programs"],
 };
 
 function filterEntries(
@@ -68,17 +70,17 @@ function filterEntries(
 }
 
 const SOURCE_LABEL: Record<AuditSourceFilter, string> = {
-  substrate: 'Substrate',
-  auth: 'Auth',
-  policy: 'Policy',
-  connector: 'Connector',
-  invite: 'Invite',
-  approval: 'Approval',
+  substrate: "Substrate",
+  auth: "Auth",
+  policy: "Policy",
+  connector: "Connector",
+  invite: "Invite",
+  approval: "Approval",
 };
 
-function severityDotColor(severity: AuditEntry['severity']): string {
-  if (severity === 'critical') return SHELL.RUST_TEXT;
-  if (severity === 'warn') return SHELL.AMBER_DOT;
+function severityDotColor(severity: AuditEntry["severity"]): string {
+  if (severity === "critical") return SHELL.RUST_TEXT;
+  if (severity === "warn") return SHELL.AMBER_DOT;
   return SHELL.MINT_TEXT;
 }
 
@@ -88,15 +90,15 @@ function AuditRow({ item }: { item: AuditEntry }) {
   return (
     <div
       style={{
-        padding: '10px 0',
-        borderBottom: '1px solid ' + SHELL.CARD_LINE_SOFT,
+        padding: "10px 0",
+        borderBottom: "1px solid " + SHELL.CARD_LINE_SOFT,
       }}
     >
       {/* Top row: timestamp + surface pill + severity dot */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 8,
           marginBottom: 6,
         }}
@@ -116,12 +118,12 @@ function AuditRow({ item }: { item: AuditEntry }) {
             fontFamily: SHELL.MONO,
             fontSize: 9,
             fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: SHELL.GRAY_TEXT,
             background: SHELL.GRAY_BG,
             borderRadius: 8,
-            padding: '2px 7px',
+            padding: "2px 7px",
             lineHeight: 1,
           }}
         >
@@ -131,7 +133,7 @@ function AuditRow({ item }: { item: AuditEntry }) {
           style={{
             width: 6,
             height: 6,
-            borderRadius: '50%',
+            borderRadius: "50%",
             background: dotColor,
             flexShrink: 0,
           }}
@@ -141,8 +143,8 @@ function AuditRow({ item }: { item: AuditEntry }) {
       {/* Actor glyph + action */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'flex-start',
+          display: "flex",
+          alignItems: "flex-start",
           gap: 10,
         }}
       >
@@ -150,11 +152,11 @@ function AuditRow({ item }: { item: AuditEntry }) {
           style={{
             width: 20,
             height: 20,
-            borderRadius: '50%',
+            borderRadius: "50%",
             background: SHELL.PAPER_DEEP,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             flexShrink: 0,
             marginTop: 1,
           }}
@@ -213,19 +215,21 @@ export interface SetupAuditPageProps {
 
 export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
   const visible = filterEntries(AUDIT_LOG_FIXTURE, filterSource ?? null);
-  const criticalCount = visible.filter((entry) => entry.severity === 'critical').length;
-  const warnCount = visible.filter((entry) => entry.severity === 'warn').length;
+  const criticalCount = visible.filter(
+    (entry) => entry.severity === "critical",
+  ).length;
+  const warnCount = visible.filter((entry) => entry.severity === "warn").length;
   const headerTitle = filterSource
-    ? `Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? '' : 's'}`
+    ? `Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? "" : "s"}`
     : `Audit log · ${visible.length} events`;
 
   return (
     <div
       style={{
         flex: 1,
-        overflowY: 'auto',
+        overflowY: "auto",
         background: SHELL.PAPER,
-        padding: '24px 32px',
+        padding: "24px 32px",
       }}
     >
       {/* Eyebrow + header */}
@@ -234,8 +238,8 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
             color: SHELL.INK_MUTED,
             marginBottom: 6,
             lineHeight: 1,
@@ -247,8 +251,8 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
             color: SHELL.PEACH_TEXT,
             marginBottom: 8,
             lineHeight: 1,
@@ -264,7 +268,7 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
             color: SHELL.INK,
             margin: 0,
             lineHeight: 1.2,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
           }}
         >
           {headerTitle}
@@ -277,11 +281,11 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
                 fontFamily: SHELL.MONO,
                 fontSize: 10,
                 fontWeight: 600,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
                 color: SHELL.INK,
-                textDecoration: 'none',
-                borderBottom: '1px solid ' + SHELL.CARD_LINE,
+                textDecoration: "none",
+                borderBottom: "1px solid " + SHELL.CARD_LINE,
                 paddingBottom: 1,
               }}
             >
@@ -291,19 +295,25 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+      <div
+        style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}
+      >
         <AuditChip label="Critical" value={criticalCount} tone="critical" />
         <AuditChip label="Warn" value={warnCount} tone="warn" />
-        <AuditChip label="Info" value={visible.length - criticalCount - warnCount} tone="info" />
+        <AuditChip
+          label="Info"
+          value={visible.length - criticalCount - warnCount}
+          tone="info"
+        />
       </div>
 
       {/* Audit rows */}
       <div
         style={{
           background: SHELL.CARD_WHITE,
-          border: '1px solid ' + SHELL.CARD_LINE,
+          border: "1px solid " + SHELL.CARD_LINE,
           borderRadius: 10,
-          padding: visible.length === 0 ? '16px' : '0 16px',
+          padding: visible.length === 0 ? "16px" : "0 16px",
         }}
       >
         {visible.length === 0 ? (
@@ -312,15 +322,13 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
               fontFamily: SHELL.SANS,
               fontSize: 12,
               color: SHELL.INK_MUTED,
-              padding: '4px 0',
+              padding: "4px 0",
             }}
           >
             No audit events match this filter.
           </div>
         ) : (
-          visible.map((entry) => (
-            <AuditRow key={entry.id} item={entry} />
-          ))
+          visible.map((entry) => <AuditRow key={entry.id} item={entry} />)
         )}
       </div>
     </div>
@@ -334,33 +342,36 @@ function AuditChip({
 }: {
   label: string;
   value: number;
-  tone: 'critical' | 'warn' | 'info';
+  tone: "critical" | "warn" | "info";
 }) {
-  const styles = tone === 'critical'
-    ? { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT }
-    : tone === 'warn'
-      ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
-      : { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT };
+  const styles =
+    tone === "critical"
+      ? { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT }
+      : tone === "warn"
+        ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
+        : { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT };
 
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 6,
         fontFamily: SHELL.MONO,
         fontSize: 10,
         fontWeight: 600,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
         color: styles.text,
         background: styles.bg,
         borderRadius: 999,
-        padding: '5px 11px',
+        padding: "5px 11px",
         lineHeight: 1,
       }}
     >
-      <span style={{ fontFamily: SHELL.SANS, fontSize: 14, fontWeight: 700 }}>{value}</span>
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 14, fontWeight: 700 }}>
+        {value}
+      </span>
       {label}
     </span>
   );
