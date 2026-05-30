@@ -270,6 +270,13 @@ export default async function AdminOverviewPage({
   const segments = snapshot
     ? snapshot.segments
     : buildAuthoredInventoryFallback(content).segments;
+  // PRE-W4-PR-5 fix #1 (persona report §9):
+  //   `emptyTenant` was never set, leaving the W3-PR-6 empty-state
+  //   code unreachable for brand-new tenants. Compute the flag here
+  //   and pass it to HomeOverviewV2 so EmptyTenantPrimaryCard +
+  //   EmptyTenantUploadAffordance unlock for tenants with no
+  //   substrate loaded yet.
+  const emptyTenant = !snapshot || snapshot.segments.length === 0;
   const clientId = activeClient?.id ?? null;
   // Wave 3 PR-1 · capability grounding still feeds the static
   // Section 05 (Setup panels) footer copy via composeHomeV2Extras.
@@ -297,6 +304,13 @@ export default async function AdminOverviewPage({
     initiativesAtRiskCount,
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
     capabilityGrounding,
+    // PRE-W4-PR-5 fix #7 (persona report §9):
+    //   Suppress the all-red Section 01 readiness for empty tenants.
+    //   When the substrate is empty, every module evaluates to ≤30%
+    //   and renders four red bars — punishing a brand-new tenant.
+    //   composeHomeV2Extras emits an empty `readiness` array in this
+    //   case; HomeOverviewV2 renders the placeholder block instead.
+    emptyTenant,
   });
 
   // For the section-01 (Readiness across modules) and section-05
@@ -335,14 +349,15 @@ export default async function AdminOverviewPage({
           clientKey={isClientKey(clientKey) ? clientKey : null}
           blocks={emptyBlocks}
           extras={extras}
+          emptyTenant={emptyTenant}
           liveSnapshotPresent={snapshot !== null}
           canSwitchTenant={canSwitchTenant}
           currentCanonicalTenantKey={currentCanonicalTenantKey}
           tenantSwitchOptions={tenantSwitchOptions}
           trustStripSlot={<TrustStripZone ctx={ctx} />}
-          actionQueueSlot={<ActionQueueZone ctx={ctx} />}
-          postureGridSlot={<PostureGridZone ctx={ctx} />}
-          stewardOrientationSlot={<StewardOrientationZone ctx={ctx} />}
+          actionQueueSlot={emptyTenant ? undefined : <ActionQueueZone ctx={ctx} />}
+          postureGridSlot={emptyTenant ? undefined : <PostureGridZone ctx={ctx} />}
+          stewardOrientationSlot={emptyTenant ? undefined : <StewardOrientationZone ctx={ctx} />}
           auditRibbonSlot={<AuditRibbonZone ctx={ctx} />}
         />
       ) : (

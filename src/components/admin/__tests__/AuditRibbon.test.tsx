@@ -125,7 +125,12 @@ describe('AuditRibbon', () => {
   it('shows the muted empty-state line when there are zero events', () => {
     const html = renderToStaticMarkup(<AuditRibbon events={[]} />);
     expect(html).toContain('audit-ribbon-empty');
-    expect(html).toContain('No activity in the last 24 hours');
+    // PRE-W4-PR-5: empty-state copy was upgraded from the flat
+    // "No activity in the last 24 hours." to a stewarded sentence
+    // naming what fills the ribbon ("Events will appear here as you
+    // configure connectors, invite users, and load substrate…").
+    expect(html).toContain('No activity yet');
+    expect(html).toContain('Events will appear here');
     // No rows rendered.
     expect(html).not.toContain('data-testid="audit-ribbon-row"');
     // Footer "See all" link still renders so the surface stays

@@ -217,10 +217,36 @@ describe('<HomeOverviewV2 /> · brand-new-tenant empty state', () => {
     expect(html).not.toContain('Next load · highest leverage');
   });
 
-  it('audit ribbon empty line preserved', () => {
+  it('audit ribbon empty line preserved (stewarded copy · PRE-W4-PR-5)', () => {
     const html = emptyHtml();
     expect(html).toContain('audit-ribbon-empty');
-    expect(html).toContain('No activity in the last 24 hours');
+    // The flat 24h line was replaced by a stewarded sentence naming
+    // what fills the ribbon (PRE-W4-PR-5 bonus fix, persona §9 #8).
+    expect(html).toContain('No activity yet');
+    expect(html).toContain('Events will appear here');
+  });
+
+  // ── PRE-W4-PR-5 additions ────────────────────────────────────────
+
+  it('renders SETUP eyebrow (unified masthead label, fix #6)', () => {
+    const html = emptyHtml();
+    // The eyebrow noun was conflicting with "Setup · AbarVa" browser
+    // tab + "Setup · Admin" sidebar header. Unified to SETUP.
+    expect(html).toContain('SETUP ');
+    expect(html).not.toContain('HOME · <span');
+  });
+
+  it('renders the Section 01 readiness empty-state placeholder, not four red bars (fix #7)', () => {
+    const html = emptyHtml();
+    expect(html).toContain('home-overview-readiness-empty');
+    expect(html).toContain('Readiness will compute when your first dataset lands');
+    // Per-module readiness CARDS must NOT appear when readiness is
+    // empty. We assert on the load-bearing artifacts of a rendered
+    // ReadyCard (the "% READY" suffix and the "Open <module> →" CTA),
+    // since the placeholder prose itself does mention the module names.
+    expect(html).not.toContain('% READY');
+    expect(html).not.toContain('Open Tower →');
+    expect(html).not.toContain('Open Source →');
   });
 });
 
