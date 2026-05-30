@@ -280,7 +280,9 @@ export default async function AdminOverviewPage({
   // Section 05 (Setup panels) footer copy via composeHomeV2Extras.
   // PR-7 left this synchronous so the panel matrix renders eagerly.
   const capabilityGrounding = brokerTenantKey
-    ? await getCapabilityGrounding(brokerTenantKey).catch(() => null)
+    ? await getCapabilityGrounding(brokerTenantKey, {
+        snapshotOverride: snapshot,
+      }).catch(() => null)
     : null;
   const {
     programsCount,
