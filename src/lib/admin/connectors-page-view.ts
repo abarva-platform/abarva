@@ -138,6 +138,20 @@ export interface ConnectorsPageView {
   tabs: ReadonlyArray<{ id: ConnectorTab; label: string }>;
   /** Hard-gated reason text reused across action affordances. */
   hardGateReason: string;
+
+  // Wave 2 PR-1 (Connector health broker) additions
+  /**
+   * Count of connectors whose posture is `degraded` (mapped from
+   * adapter status `blocked`). Drives the sticky banner at the top
+   * of the connectors page when > 0.
+   */
+  degradedCount: number;
+  /**
+   * Id of the first degraded connector in the sorted list. Used by
+   * the sticky banner anchor link so the admin can scroll directly
+   * to it. `null` when no connectors are degraded.
+   */
+  firstDegradedId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -704,6 +718,52 @@ export function findConnectorDetail(
 // Page-view builder
 // ---------------------------------------------------------------------------
 
+/**
+ * Posture-severity ordering for the Wave 2 PR-1 reorder. The
+ * connectors page lists degraded first so an admin lands on the
+ * row that actually needs attention. Within the same posture
+ * tier the existing label order is preserved for stability.
+ *
+ * Adapter ConnectorStatus → posture tier (lower number = more urgent):
+ *   blocked          → 0 (degraded)
+ *   not_configured   → 1 (disconnected)
+ *   configured_stub  → 2 (live)
+ *   deferred         → 3 (pending)
+ */
+function postureSortKey(status: ConnectorStatus): number {
+  switch (status) {
+    case 'blocked':
+      return 0;
+    case 'not_configured':
+      return 1;
+    case 'configured_stub':
+      return 2;
+    case 'deferred':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+/**
+ * Stable posture-first sort. Same posture preserves input order
+ * (which is the adapter row order — label-alpha in live mode,
+ * fixture order in fixture mode).
+ */
+function sortByPostureSeverity(
+  rows: ReadonlyArray<ConnectorReadiness>,
+): ConnectorReadiness[] {
+  return rows
+    .map((row, idx) => ({ row, idx }))
+    .sort((a, b) => {
+      const ka = postureSortKey(a.row.status);
+      const kb = postureSortKey(b.row.status);
+      if (ka !== kb) return ka - kb;
+      return a.idx - b.idx;
+    })
+    .map(({ row }) => row);
+}
+
 function buildCategories(
   connectors: ReadonlyArray<ConnectorReadiness>,
 ): ConnectorCategoryGroup[] {
@@ -717,17 +777,28 @@ function buildCategories(
   for (const kind of CATEGORY_ORDER) {
     const list = byKind.get(kind);
     if (!list || list.length === 0) continue;
+    // Wave 2 PR-1: rows inside each category sorted degraded-first.
+    const sortedList = sortByPostureSeverity(list);
     out.push({
       kind,
       label: CATEGORY_LABELS[kind],
-      connectors: list,
-      pilotBlockerCount: list.filter(
+      connectors: sortedList,
+      pilotBlockerCount: sortedList.filter(
         (c) => c.requiredForPilot && c.status !== 'configured_stub',
       ).length,
-      configuredCount: list.filter((c) => c.status === 'configured_stub').length,
-      totalCount: list.length,
+      configuredCount: sortedList.filter((c) => c.status === 'configured_stub').length,
+      totalCount: sortedList.length,
     });
   }
+  // Reorder categories so the group containing the most urgent
+  // posture appears first. Sort key is the minimum postureSortKey
+  // of the contained connectors; categories with no degraded /
+  // disconnected rows drop to the bottom in canonical order.
+  out.sort((a, b) => {
+    const minA = Math.min(...a.connectors.map((c) => postureSortKey(c.status)));
+    const minB = Math.min(...b.connectors.map((c) => postureSortKey(c.status)));
+    return minA - minB;
+  });
   return out;
 }
 
@@ -771,11 +842,15 @@ export async function buildConnectorsPageView(
   // ADMIN-DATA4: source connectors + per-connector detail from the adapter.
   const adapterRows = await getAdminConnectors(tenantSlug);
 
-  const connectors: ConnectorReadiness[] = [];
+  const connectorsRaw: ConnectorReadiness[] = [];
   for (const row of adapterRows) {
     const r = rowToReadiness(row);
-    if (r) connectors.push(r);
+    if (r) connectorsRaw.push(r);
   }
+  // Wave 2 PR-1: posture-first ordering. Degraded (mapped from
+  // adapter `blocked`) leads so the admin lands on what needs
+  // attention; then disconnected, live, pending.
+  const connectors = sortByPostureSeverity(connectorsRaw);
 
   const detailMap: Record<string, ConnectorDetail> = {};
   for (const conn of connectors) {
@@ -790,6 +865,12 @@ export async function buildConnectorsPageView(
     (c) => c.status === 'configured_stub',
   ).length;
   const totalCount = connectors.length;
+
+  // Degraded surface: posture-tier `degraded` ← adapter status
+  // `blocked` (see postureSortKey). Drives the sticky banner.
+  const degradedRows = connectors.filter((c) => c.status === 'blocked');
+  const degradedCount = degradedRows.length;
+  const firstDegradedId = degradedRows[0]?.id ?? null;
 
   const categories = buildCategories(connectors);
   const actions = buildActions(pilotBlockers.length);
@@ -847,5 +928,7 @@ export async function buildConnectorsPageView(
       { id: 'logs', label: 'Logs' },
     ],
     hardGateReason: HARD_GATE_REASON,
+    degradedCount,
+    firstDegradedId,
   };
 }

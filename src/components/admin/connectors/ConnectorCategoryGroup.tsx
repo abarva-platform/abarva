@@ -115,6 +115,7 @@ export function ConnectorCategoryGroup({
           return (
             <li
               key={c.id}
+              id={`connector-${c.id}`}
               data-connector-id={c.id}
               data-selected={isSelected ? 'true' : 'false'}
               style={{
