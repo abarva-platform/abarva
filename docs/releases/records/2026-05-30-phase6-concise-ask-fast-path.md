@@ -35,10 +35,11 @@ Explicitly concise Sentinel Ask questions now use a smaller model token budget a
 
 ## QA / Validation
 
-- Pending: focused Ask guardrail tests.
-- Pending: PR CI.
-- Pending: production deployment.
-- Pending: Phase 6 SkyHarbor load rerun and SkyHarbor verifier sanity.
+- PASS: focused Ask guardrail tests (`npx jest src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts --runInBand`).
+- PASS: focused ESLint (`npx eslint src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/followups.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`).
+- NOT-RUN: PR CI, pending after branch push.
+- NOT-RUN: production deployment, pending after merge.
+- NOT-RUN: Phase 6 SkyHarbor load rerun and SkyHarbor verifier sanity, pending after production deployment.
 
 ## Rollout Plan
 
