@@ -67,8 +67,13 @@ export async function getInitiativeDeepView(
 ): Promise<InitiativeDeepView | null> {
   // 1. Core row — tenant-scoped. If the row does not belong to this tenant,
   //    we return null. This is the first line of the P0 invariant.
+  //    Note: `initiativeId` may be the DB PK OR the user-facing display_id
+  //    (e.g. `AR-01`). `loadInitiativeRow` resolves either form. Subsequent
+  //    joins MUST use the resolved PK (`initiative.initiative_id`) since
+  //    they key off `ai_initiative_kpis.initiative_id` etc.
   const initiative = await loadInitiativeRow(client, initiativeId, tenancy);
   if (!initiative) return null;
+  const resolvedId = initiative.initiative_id;
 
   // 2. Fire the dependent reads in parallel — each is tenant-scoped.
   const [
@@ -80,13 +85,13 @@ export async function getInitiativeDeepView(
     signals,
     portfolioPosition,
   ] = await Promise.all([
-    loadInitiativeKpis(client, initiativeId),
+    loadInitiativeKpis(client, resolvedId),
     loadTenantIndustryCode(client, tenancy),
     loadTowerToolUsage(client, tenancy),
     loadTowerDoraMetrics(client, tenancy),
-    loadGatesForInitiative(client, initiativeId, tenancy),
-    loadSignalsForInitiative(client, initiativeId, tenancy),
-    computePortfolioPosition(client, initiativeId, tenancy),
+    loadGatesForInitiative(client, resolvedId, tenancy),
+    loadSignalsForInitiative(client, resolvedId, tenancy),
+    computePortfolioPosition(client, resolvedId, tenancy),
   ]);
 
   // 3. The kernel business-case skeleton is synchronous (pure module).

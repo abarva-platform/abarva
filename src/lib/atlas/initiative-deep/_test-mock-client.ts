@@ -13,6 +13,7 @@ interface MockState {
   filters: Array<{ col: string; val: unknown }>;
   notFilters: Array<{ col: string; val: unknown }>;
   inFilters: Array<{ col: string; vals: unknown[] }>;
+  orFilters: Array<Array<{ col: string; val: unknown }>>;
   limit: number | null;
   order: { col: string; ascending: boolean } | null;
 }
@@ -36,6 +37,9 @@ function applyFilters(rows: Row[], state: MockState): Row[] {
   }
   for (const f of state.inFilters) {
     out = out.filter((r) => f.vals.includes(get(r, f.col) as never));
+  }
+  for (const orGroup of state.orFilters) {
+    out = out.filter((r) => orGroup.some((cond) => get(r, cond.col) === cond.val));
   }
   if (state.order) {
     const { col, ascending } = state.order;
@@ -69,6 +73,7 @@ export function mockClient(fixtures: Record<string, Row[]>): PostgresCompatClien
       filters: [],
       notFilters: [],
       inFilters: [],
+      orFilters: [],
       limit: null,
       order: null,
     };
@@ -90,6 +95,20 @@ export function mockClient(fixtures: Record<string, Row[]>): PostgresCompatClien
     };
     builder.in = (col: string, vals: unknown[]) => {
       state.inFilters.push({ col, vals });
+      return builder;
+    };
+    builder.or = (expr: string) => {
+      // Parse a PostgREST-style OR expression like
+      // `initiative_id.eq.AR-01,display_id.eq.AR-01`. We only need to
+      // support `<col>.eq.<val>` clauses joined by commas — that's the
+      // shape `loadInitiativeRow` emits.
+      const clauses: Array<{ col: string; val: unknown }> = [];
+      for (const raw of String(expr).split(',')) {
+        const parts = raw.trim().split('.');
+        if (parts.length < 3 || parts[1] !== 'eq') continue;
+        clauses.push({ col: parts[0], val: parts.slice(2).join('.') });
+      }
+      if (clauses.length > 0) state.orFilters.push(clauses);
       return builder;
     };
     builder.is = () => builder;

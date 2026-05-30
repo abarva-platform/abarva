@@ -8,7 +8,13 @@ export interface AtlasIacIntent {
   archetypeKey: string | null;
 }
 
-const INITIATIVE_ID_RE = /\b(?:AR|MH|FC|APX|MER|FCFI)-\d{2,4}\b/i;
+// Display-id prefixes used across tenant seeds:
+//   AR  — Apex Retail            MH/MR  — Meridian Health
+//   FCF — First Capital Finance  FC     — legacy First Capital alias
+//   SHA — SkyHarbor Airlines     APX/MER/FCFI — legacy aliases
+// Order matters: longer prefixes (FCF) appear before shorter (FC) so
+// regex alternation matches the longer first at the same position.
+const INITIATIVE_ID_RE = /\b(?:AR|MH|MR|FCF|FC|SHA|APX|MER|FCFI)-\d{2,4}\b/i;
 const HYBRID_RE = /\b(compare|against|versus|vs\.?|industry|market|peers?|trend|adoption|benchmark)\b/i;
 const INITIATIVE_RE = /\b(initiative|pilot|program|status|our|we|tenant)\b/i;
 

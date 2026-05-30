@@ -51,19 +51,29 @@ function slugify(value: string): string {
 /**
  * Load the core initiative row. Tenant-scoped: returns null if the row
  * does not belong to the caller's tenant. NEVER returns cross-tenant data.
+ *
+ * Accepts either the database PK (`ai_initiatives.initiative_id`) OR the
+ * user-facing `display_id` (e.g. `AR-01`, `MH-01`, `FCF-01`). Intent
+ * extraction in the composition layer surfaces the display_id from CIO
+ * prompts; this lookup tolerates either form. Tenant scope is preserved —
+ * the `client_id` filter is the P0 invariant and is applied BEFORE the
+ * id-or-display-id match, so a Meridian display_id with an Apex tenancy
+ * still returns null.
  */
 export async function loadInitiativeRow(
   client: PostgresCompatClient,
   initiativeId: string,
   ctx: AtlasTenancyCtx,
 ): Promise<InitiativeRow | null> {
+  // Escape commas / parens to be safe inside the PostgREST `.or()` payload.
+  const safeId = String(initiativeId).replace(/[(),]/g, '');
   const { data } = await client
     .from('ai_initiatives')
     .select(
       'initiative_id, client_id, display_id, name, primary_category_id, stage, owner_name, owner_title, committed_annual_usd, committed_total_usd, measured_value_usd, confidence_level, status_summary',
     )
     .eq('client_id', ctx.clientId)
-    .eq('initiative_id', initiativeId)
+    .or(`initiative_id.eq.${safeId},display_id.eq.${safeId}`)
     .limit(1)
     .maybeSingle();
   return (data as InitiativeRow | null) ?? null;
