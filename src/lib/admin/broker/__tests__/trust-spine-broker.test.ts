@@ -15,7 +15,9 @@
 import { getTrustSpine } from '../trust-spine-broker';
 import * as setupDataBroker from '@/lib/admin/setup-data-broker';
 import * as programApproval from '@/lib/programs/approval';
+import * as connectorHealthBroker from '@/lib/admin/broker/connector-health-broker';
 import type { SetupInventorySnapshot } from '@/lib/admin/setup-acts-registry';
+import type { ConnectorHealth } from '@/lib/admin/broker/connector-health-broker';
 
 jest.mock('@/lib/admin/setup-data-broker', () => ({
   getSetupInventorySnapshot: jest.fn(),
@@ -25,12 +27,31 @@ jest.mock('@/lib/programs/approval', () => ({
   getApprovalQueueForTenant: jest.fn(),
 }));
 
+jest.mock('@/lib/admin/broker/connector-health-broker', () => ({
+  getConnectorHealth: jest.fn(),
+}));
+
 const getSnapshotMock = setupDataBroker.getSetupInventorySnapshot as jest.MockedFunction<
   typeof setupDataBroker.getSetupInventorySnapshot
 >;
 const getApprovalsMock = programApproval.getApprovalQueueForTenant as jest.MockedFunction<
   typeof programApproval.getApprovalQueueForTenant
 >;
+const getConnectorHealthMock = connectorHealthBroker.getConnectorHealth as jest.MockedFunction<
+  typeof connectorHealthBroker.getConnectorHealth
+>;
+
+// Default empty connector health for tests that don't care about it.
+function makeEmptyHealth(): ConnectorHealth {
+  return {
+    connectorsTotal: 0,
+    connectorsLive: 0,
+    connectorsDegraded: 0,
+    lastPullIso: null,
+    topDegraded: null,
+    perConnector: [],
+  };
+}
 
 function makeSnapshot(): SetupInventorySnapshot {
   return {
@@ -103,6 +124,8 @@ function makeSnapshot(): SetupInventorySnapshot {
 describe('getTrustSpine', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    // Default to an empty connector health unless a test overrides.
+    getConnectorHealthMock.mockResolvedValue(makeEmptyHealth());
   });
 
   it('returns the contract shape with composed substrate + governance', async () => {
@@ -148,16 +171,69 @@ describe('getTrustSpine', () => {
     });
   });
 
-  it('marks isolation and integration as estimated', async () => {
+  it('marks isolation as estimated (Wave 2 still pending)', async () => {
     getSnapshotMock.mockResolvedValue(makeSnapshot());
     getApprovalsMock.mockResolvedValue([]);
 
     const spine = await getTrustSpine('apex-retail');
 
     expect(spine.isolation.evidence).toBe('estimated');
-    expect(spine.integration.evidence).toBe('estimated');
     expect(spine.isolation.anomaliesLast24h).toBe(0);
-    expect(spine.integration.connectorsTotal).toBe(0);
+  });
+
+  it('marks integration as live when the connector health broker succeeds', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([]);
+    getConnectorHealthMock.mockResolvedValue({
+      connectorsTotal: 5,
+      connectorsLive: 3,
+      connectorsDegraded: 1,
+      lastPullIso: '2026-05-29T12:00:00Z',
+      topDegraded: { id: 'c1', name: 'C1', reason: 'auth expired' },
+      perConnector: [],
+    });
+
+    const spine = await getTrustSpine('apex-retail');
+
+    expect(spine.integration).toEqual({
+      connectorsTotal: 5,
+      connectorsLive: 3,
+      connectorsDegraded: 1,
+      lastPullIso: '2026-05-29T12:00:00Z',
+      topDegraded: { id: 'c1', name: 'C1', reason: 'auth expired' },
+      evidence: 'live',
+    });
+  });
+
+  it('falls back to estimated zeros when the connector health broker throws', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([]);
+    getConnectorHealthMock.mockRejectedValue(
+      new Error('admin_connectors migration pending'),
+    );
+
+    // Silence the structured warn — we assert that it fires but don't
+    // need it in the test output.
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const spine = await getTrustSpine('apex-retail');
+
+    expect(spine.integration).toEqual({
+      connectorsTotal: 0,
+      connectorsLive: 0,
+      connectorsDegraded: 0,
+      lastPullIso: null,
+      topDegraded: null,
+      evidence: 'estimated',
+    });
+    expect(warnSpy).toHaveBeenCalled();
+    const logged = warnSpy.mock.calls[0]?.[0];
+    expect(typeof logged).toBe('string');
+    expect(logged as string).toMatch(
+      /trust_spine\.connector_health\.degraded/,
+    );
+
+    warnSpy.mockRestore();
   });
 
   it('surfaces substrate audit events on the audit ribbon', async () => {
@@ -220,7 +296,7 @@ describe('getTrustSpine', () => {
     expect(spine.audit.last24hEvents[0]?.action).toBe('event 59');
   });
 
-  it('returns connector and invite events as empty arrays (Wave 2 stubs)', async () => {
+  it('returns invite events as empty arrays (Wave 2 invite ledger pending)', async () => {
     getSnapshotMock.mockResolvedValue({
       ...makeSnapshot(),
       recentActivity: [],
@@ -231,11 +307,132 @@ describe('getTrustSpine', () => {
 
     expect(spine.audit.last24hEvents).toEqual([]);
     expect(
-      spine.audit.last24hEvents.find((e) => e.source === 'connector'),
-    ).toBeUndefined();
-    expect(
       spine.audit.last24hEvents.find((e) => e.source === 'invite'),
     ).toBeUndefined();
+  });
+
+  it('emits connector audit events from the connector health broker', async () => {
+    // Snapshot empty so only connector events land on the ribbon.
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+    // Pin "now" to a known timestamp so the 24h-recent-pull window
+    // assertion is stable.
+    const now = new Date('2026-05-30T12:00:00Z');
+    jest.useFakeTimers().setSystemTime(now);
+
+    getConnectorHealthMock.mockResolvedValue({
+      connectorsTotal: 3,
+      connectorsLive: 1,
+      connectorsDegraded: 1,
+      lastPullIso: '2026-05-30T10:00:00Z',
+      topDegraded: {
+        id: 'fail-1',
+        name: 'Failing connector',
+        reason: 'auth expired',
+      },
+      perConnector: [
+        {
+          id: 'live-1',
+          name: 'Healthy connector',
+          status: 'live',
+          // 2h ago — inside the 24h success window.
+          lastPullIso: '2026-05-30T10:00:00Z',
+          failureReason: null,
+        },
+        {
+          id: 'fail-1',
+          name: 'Failing connector',
+          status: 'degraded',
+          lastPullIso: '2026-05-30T09:00:00Z',
+          failureReason: 'auth expired',
+        },
+        {
+          id: 'stale-live-1',
+          name: 'Stale healthy connector',
+          status: 'live',
+          // 3 days ago — outside the 24h success window; no event.
+          lastPullIso: '2026-05-27T12:00:00Z',
+          failureReason: null,
+        },
+      ],
+    });
+
+    const spine = await getTrustSpine('apex-retail');
+
+    const connectorEvents = spine.audit.last24hEvents.filter(
+      (e) => e.source === 'connector',
+    );
+    // 1 sync-succeeded (live-1, recent) + 1 sync-failed (fail-1).
+    // stale-live-1 is outside the 24h window so no event.
+    expect(connectorEvents).toHaveLength(2);
+
+    const failed = connectorEvents.find((e) =>
+      e.action.startsWith('sync failed'),
+    );
+    expect(failed).toEqual({
+      ts: '2026-05-30T09:00:00Z',
+      source: 'connector',
+      actor: 'Failing connector',
+      action: 'sync failed — auth expired',
+      target: 'fail-1',
+    });
+
+    const succeeded = connectorEvents.find(
+      (e) => e.action === 'sync succeeded',
+    );
+    expect(succeeded).toEqual({
+      ts: '2026-05-30T10:00:00Z',
+      source: 'connector',
+      actor: 'Healthy connector',
+      action: 'sync succeeded',
+      target: 'live-1',
+    });
+
+    jest.useRealTimers();
+  });
+
+  it('does NOT emit a sync-succeeded event for a degraded connector', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+    const now = new Date('2026-05-30T12:00:00Z');
+    jest.useFakeTimers().setSystemTime(now);
+
+    getConnectorHealthMock.mockResolvedValue({
+      connectorsTotal: 1,
+      connectorsLive: 0,
+      connectorsDegraded: 1,
+      lastPullIso: '2026-05-30T10:00:00Z',
+      topDegraded: {
+        id: 'fail-1',
+        name: 'Failing connector',
+        reason: 'auth expired',
+      },
+      perConnector: [
+        {
+          id: 'fail-1',
+          name: 'Failing connector',
+          status: 'degraded',
+          lastPullIso: '2026-05-30T10:00:00Z',
+          failureReason: 'auth expired',
+        },
+      ],
+    });
+
+    const spine = await getTrustSpine('apex-retail');
+    const connectorEvents = spine.audit.last24hEvents.filter(
+      (e) => e.source === 'connector',
+    );
+    // Only one event — the failure. No sync-succeeded for a degraded row.
+    expect(connectorEvents).toHaveLength(1);
+    expect(connectorEvents[0].action).toMatch(/^sync failed/);
+
+    jest.useRealTimers();
   });
 
   it('degrades gracefully when the substrate broker throws', async () => {

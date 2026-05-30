@@ -46,6 +46,10 @@ import type {
   InventorySegmentRollup,
   SetupInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
+import {
+  getConnectorHealth,
+  type ConnectorHealth,
+} from '@/lib/admin/broker/connector-health-broker';
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
@@ -238,21 +242,37 @@ function composeIsolation(): TrustSpineIsolation {
   };
 }
 
-// ── Integration composition (Wave 2) ────────────────────────────────────────
+// ── Integration composition (Wave 2 PR-1) ───────────────────────────────────
 
-function composeIntegration(): TrustSpineIntegration {
-  // PR-4 stub: connector health adapter is still fixture-backed
-  // (`admin-connectors-adapter.ts` throws AdminDataMigrationPendingError
-  // outside fixture mode). Surface zeroes marked estimated; Wave 2
-  // PR-1 (Connector health broker) replaces this with a real
-  // composition over `getAdminConnectors`.
+/**
+ * Live integration composition. When the connector-health broker
+ * resolves, we surface its rollups with `evidence: 'live'`. When
+ * the broker throws (Promise.allSettled rejected — e.g. the live
+ * DB read is still pending and the adapter raised
+ * AdminDataMigrationPendingError), we fall back to the zeroed
+ * `'estimated'` posture so the landing strip stays honest rather
+ * than crashing.
+ */
+function composeIntegration(
+  health: ConnectorHealth | null,
+): TrustSpineIntegration {
+  if (!health) {
+    return {
+      connectorsTotal: 0,
+      connectorsLive: 0,
+      connectorsDegraded: 0,
+      lastPullIso: null,
+      topDegraded: null,
+      evidence: 'estimated',
+    };
+  }
   return {
-    connectorsTotal: 0,
-    connectorsLive: 0,
-    connectorsDegraded: 0,
-    lastPullIso: null,
-    topDegraded: null,
-    evidence: 'estimated',
+    connectorsTotal: health.connectorsTotal,
+    connectorsLive: health.connectorsLive,
+    connectorsDegraded: health.connectorsDegraded,
+    lastPullIso: health.lastPullIso,
+    topDegraded: health.topDegraded,
+    evidence: 'live',
   };
 }
 
@@ -301,16 +321,63 @@ function substrateAuditEvents(
   }));
 }
 
+/** Ribbon emits "sync succeeded" events for pulls inside this window. */
+const CONNECTOR_RECENT_PULL_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
+
 /**
- * Connector events — Wave 2 wires this when the connector health
- * broker lands. Returning [] today keeps the ribbon honest rather
- * than synthetic.
+ * Connector events — Wave 2 PR-1 wires this from the connector
+ * health broker. Two kinds of events join the unified ribbon:
+ *
+ *   1. Successful pulls within the last 24h — every connector
+ *      whose `lastPullIso` is recent emits a "sync succeeded"
+ *      row. Used by the admin landing to show that the data
+ *      flywheel is turning.
+ *   2. Degraded connectors with a `failureReason` — emit a
+ *      "sync failed — <reason>" row anchored at the last-pull
+ *      timestamp (or the current refresh time if no timestamp
+ *      is known).
+ *
+ * The merge sort downstream re-orders these into the unified
+ * temporal ribbon alongside substrate + approval events.
  */
-function connectorAuditEvents(): TrustAuditEvent[] {
-  // TODO(Wave 2 PR-1): pull last-pull / reconnect events from
-  // `getAdminConnectors` once the live connector reader replaces the
-  // AdminDataMigrationPendingError fixture path.
-  return [];
+function connectorAuditEvents(
+  health: ConnectorHealth | null,
+  refreshedAtIso: string,
+): TrustAuditEvent[] {
+  if (!health) return [];
+  const now = Date.parse(refreshedAtIso);
+  const nowMs = Number.isFinite(now) ? now : Date.now();
+  const out: TrustAuditEvent[] = [];
+  for (const row of health.perConnector) {
+    // Recent successful pull → "sync succeeded"
+    if (row.lastPullIso) {
+      const ts = Date.parse(row.lastPullIso);
+      if (
+        Number.isFinite(ts) &&
+        nowMs - ts <= CONNECTOR_RECENT_PULL_WINDOW_MS &&
+        row.status !== 'degraded'
+      ) {
+        out.push({
+          ts: row.lastPullIso,
+          source: 'connector',
+          actor: row.name,
+          action: 'sync succeeded',
+          target: row.id,
+        });
+      }
+    }
+    // Degraded with a known reason → "sync failed — <reason>"
+    if (row.status === 'degraded' && row.failureReason) {
+      out.push({
+        ts: row.lastPullIso ?? refreshedAtIso,
+        source: 'connector',
+        actor: row.name,
+        action: `sync failed — ${row.failureReason}`,
+        target: row.id,
+      });
+    }
+  }
+  return out;
 }
 
 /**
@@ -328,11 +395,13 @@ function inviteAuditEvents(): TrustAuditEvent[] {
 function composeAuditRibbon(
   snapshot: SetupInventorySnapshot | null,
   approvals: ApprovalRequest[],
+  health: ConnectorHealth | null,
+  refreshedAtIso: string,
 ): TrustSpineAudit {
   const merged: TrustAuditEvent[] = [
     ...substrateAuditEvents(snapshot),
     ...approvals.map(approvalToAuditEvent),
-    ...connectorAuditEvents(),
+    ...connectorAuditEvents(health, refreshedAtIso),
     ...inviteAuditEvents(),
   ];
   // Strictly temporal: sort by ts desc. Events with unparseable
@@ -364,23 +433,43 @@ function composeAuditRibbon(
  *   if the caller passes the app ClientKey instead.
  */
 export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
-  const [snapshotResult, approvalResult] = await Promise.allSettled([
+  const [snapshotResult, approvalResult, healthResult] = await Promise.allSettled([
     getSetupInventorySnapshot(tenantKey),
     getApprovalQueueForTenant(tenantKey),
+    getConnectorHealth(tenantKey),
   ]);
 
   const snapshot =
     snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
   const approvals =
     approvalResult.status === 'fulfilled' ? approvalResult.value : [];
+  let health: ConnectorHealth | null = null;
+  if (healthResult.status === 'fulfilled') {
+    health = healthResult.value;
+  } else {
+    // Structured warning so the integration chip fallback is
+    // observable in logs without crashing the landing.
+    console.warn(
+      JSON.stringify({
+        event: 'trust_spine.connector_health.degraded',
+        tenantKey,
+        reason:
+          healthResult.reason instanceof Error
+            ? healthResult.reason.message
+            : String(healthResult.reason),
+      }),
+    );
+  }
+
+  const refreshedAtIso = new Date().toISOString();
 
   return {
     substrate: composeSubstrate(snapshot),
     isolation: composeIsolation(),
-    integration: composeIntegration(),
+    integration: composeIntegration(health),
     governance: composeGovernance(approvals.length),
-    audit: composeAuditRibbon(snapshot, approvals),
-    refreshedAtIso: new Date().toISOString(),
+    audit: composeAuditRibbon(snapshot, approvals, health, refreshedAtIso),
+    refreshedAtIso,
     tenantKey,
   };
 }

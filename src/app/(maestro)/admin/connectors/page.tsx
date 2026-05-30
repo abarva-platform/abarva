@@ -112,6 +112,71 @@ export default async function ConnectorsPage({
           primaryAction={view.editorial.primaryAction}
         />
 
+        {view.degradedCount > 0 && view.firstDegradedId ? (
+          <div
+            data-component="ConnectorsDegradedBanner"
+            data-degraded-count={view.degradedCount}
+            role="status"
+            aria-live="polite"
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: SPACING.md,
+              padding: `${SPACING.sm} ${SPACING.md}`,
+              marginBottom: SPACING.md,
+              background: COLORS.amberSoft,
+              border: `1px solid ${COLORS.amberInk}33`,
+              borderRadius: RADIUS.lg,
+              fontFamily: TYPOGRAPHY.sans,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: COLORS.amberInk,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                flex: 1,
+                fontSize: 13,
+                color: COLORS.ink,
+              }}
+            >
+              <strong style={{ fontWeight: 700 }}>
+                {view.degradedCount} connector{view.degradedCount === 1 ? '' : 's'}
+              </strong>{' '}
+              need{view.degradedCount === 1 ? 's' : ''} attention.
+            </span>
+            <a
+              href={`#connector-${view.firstDegradedId}`}
+              data-action="jump-to-first-degraded"
+              style={{
+                padding: `${SPACING.xs} ${SPACING.md}`,
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 11,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                color: COLORS.ink,
+                background: 'transparent',
+                border: `1px solid ${COLORS.ink}`,
+                borderRadius: RADIUS.md,
+                textDecoration: 'none',
+              }}
+            >
+              Review now
+            </a>
+          </div>
+        ) : null}
+
         <ConnectorsActionStrip actions={view.actions} />
 
         <PilotBlockerDrilldown
