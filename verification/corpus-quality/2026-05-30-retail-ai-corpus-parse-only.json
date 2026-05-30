@@ -1,0 +1,1374 @@
+{
+  "mode": "parse-only",
+  "files": 228,
+  "summaries": [
+    {
+      "file": "src/scripts/seed/seed-retail-dom101-merchandising-assortment-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom101-merchandising-assortment-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom101-merchandising-assortment-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom102-demand-forecasting-replenishment-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom102-demand-forecasting-replenishment-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom102-demand-forecasting-replenishment-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom103-dynamic-pricing-promo-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom103-dynamic-pricing-promo-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom103-dynamic-pricing-promo-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom104-commerce-cloud-personalization-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom104-commerce-cloud-personalization-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom104-commerce-cloud-personalization-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom105-order-management-fulfillment-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom105-order-management-fulfillment-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom105-order-management-fulfillment-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom106-store-operations-labor-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom106-store-operations-labor-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom106-store-operations-labor-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom107-loss-prevention-shrink-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom107-loss-prevention-shrink-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom107-loss-prevention-shrink-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom108-loyalty-cdp-customer-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom108-loyalty-cdp-customer-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom108-loyalty-cdp-customer-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom109-retail-media-clean-room-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom109-retail-media-clean-room-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom109-retail-media-clean-room-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom110-contact-center-service-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom110-contact-center-service-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom110-contact-center-service-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom111-supply-chain-network-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom111-supply-chain-network-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom111-supply-chain-network-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom112-warehouse-robotics-automation-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom112-warehouse-robotics-automation-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom112-warehouse-robotics-automation-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom113-last-mile-delivery-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom113-last-mile-delivery-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom113-last-mile-delivery-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom114-returns-reverse-logistics-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom114-returns-reverse-logistics-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom114-returns-reverse-logistics-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom115-private-label-product-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom115-private-label-product-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom115-private-label-product-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom116-vendor-terms-trade-funds-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom116-vendor-terms-trade-funds-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom116-vendor-terms-trade-funds-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom117-sap-erp-modernization-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom117-sap-erp-modernization-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom117-sap-erp-modernization-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom118-data-platform-governance-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom118-data-platform-governance-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom118-data-platform-governance-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom119-ai-powered-sdlc-retail-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom119-ai-powered-sdlc-retail-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom119-ai-powered-sdlc-retail-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom120-servicenow-it-ops-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom120-servicenow-it-ops-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom120-servicenow-it-ops-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom121-cloud-finops-platform-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom121-cloud-finops-platform-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom121-cloud-finops-platform-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom122-cybersecurity-zero-trust-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom122-cybersecurity-zero-trust-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom122-cybersecurity-zero-trust-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom123-privacy-consent-retail-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom123-privacy-consent-retail-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom123-privacy-consent-retail-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom124-payments-wallet-fraud-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom124-payments-wallet-fraud-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom124-payments-wallet-fraud-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom125-marketplace-seller-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom125-marketplace-seller-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom125-marketplace-seller-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom126-product-content-pim-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom126-product-content-pim-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom126-product-content-pim-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom127-search-seo-discovery-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom127-search-seo-discovery-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom127-search-seo-discovery-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom128-social-commerce-influencer-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom128-social-commerce-influencer-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom128-social-commerce-influencer-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom129-mobile-app-clienteling-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom129-mobile-app-clienteling-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom129-mobile-app-clienteling-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom130-store-sensor-computer-vision-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom130-store-sensor-computer-vision-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom130-store-sensor-computer-vision-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom131-workforce-hr-learning-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom131-workforce-hr-learning-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom131-workforce-hr-learning-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom132-procurement-source-to-pay-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom132-procurement-source-to-pay-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom132-procurement-source-to-pay-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom133-si-ams-outsourcing-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom133-si-ams-outsourcing-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom133-si-ams-outsourcing-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom134-ai-governance-model-risk-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom134-ai-governance-model-risk-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom134-ai-governance-model-risk-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom135-agentic-workflow-automation-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom135-agentic-workflow-automation-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom135-agentic-workflow-automation-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom136-startup-vendor-diligence-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom136-startup-vendor-diligence-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom136-startup-vendor-diligence-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom137-change-adoption-value-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom137-change-adoption-value-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom137-change-adoption-value-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom138-executive-control-tower-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom138-executive-control-tower-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom138-executive-control-tower-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom139-finance-planning-margin-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom139-finance-planning-margin-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom139-finance-planning-margin-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom140-tax-compliance-lease-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom140-tax-compliance-lease-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom140-tax-compliance-lease-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom141-store-format-real-estate-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom141-store-format-real-estate-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom141-store-format-real-estate-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom142-sustainability-esg-product-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom142-sustainability-esg-product-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom142-sustainability-esg-product-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom143-quality-safety-recall-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom143-quality-safety-recall-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom143-quality-safety-recall-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom144-grocery-fresh-perishables-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom144-grocery-fresh-perishables-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom144-grocery-fresh-perishables-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom145-apparel-size-fit-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom145-apparel-size-fit-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom145-apparel-size-fit-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom146-beauty-personal-care-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom146-beauty-personal-care-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom146-beauty-personal-care-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom147-home-improvement-project-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom147-home-improvement-project-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom147-home-improvement-project-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom148-electronics-warranty-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom148-electronics-warranty-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom148-electronics-warranty-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom149-pharmacy-retail-health-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom149-pharmacy-retail-health-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom149-pharmacy-retail-health-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom150-restaurant-qsr-retail-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom150-restaurant-qsr-retail-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom150-restaurant-qsr-retail-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom151-fuel-convenience-retail-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom151-fuel-convenience-retail-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom151-fuel-convenience-retail-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom152-luxury-clienteling-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom152-luxury-clienteling-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom152-luxury-clienteling-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom153-market-entry-international-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom153-market-entry-international-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom153-market-entry-international-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom154-franchise-dealer-network-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom154-franchise-dealer-network-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom154-franchise-dealer-network-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom155-customer-identity-fraud-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom155-customer-identity-fraud-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom155-customer-identity-fraud-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom156-subscription-membership-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom156-subscription-membership-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom156-subscription-membership-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom157-b2b-wholesale-commerce-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom157-b2b-wholesale-commerce-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom157-b2b-wholesale-commerce-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom158-customer-sentiment-brand-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom158-customer-sentiment-brand-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom158-customer-sentiment-brand-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom159-innovation-lab-pilot-factory-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom159-innovation-lab-pilot-factory-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom159-innovation-lab-pilot-factory-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom160-legal-regulatory-advertising-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom160-legal-regulatory-advertising-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom160-legal-regulatory-advertising-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom161-edi-integration-api-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom161-edi-integration-api-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom161-edi-integration-api-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom162-testing-release-quality-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom162-testing-release-quality-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom162-testing-release-quality-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom163-observability-sre-reliability-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom163-observability-sre-reliability-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom163-observability-sre-reliability-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom164-vendor-risk-third-party-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom164-vendor-risk-third-party-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom164-vendor-risk-third-party-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom165-knowledge-management-enterprise-search-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom165-knowledge-management-enterprise-search-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom165-knowledge-management-enterprise-search-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom166-store-opening-closure-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom166-store-opening-closure-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom166-store-opening-closure-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom167-promotion-planning-calendar-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom167-promotion-planning-calendar-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom167-promotion-planning-calendar-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom168-pricing-compliance-fairness-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom168-pricing-compliance-fairness-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom168-pricing-compliance-fairness-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom169-inventory-accuracy-rfid-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom169-inventory-accuracy-rfid-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom169-inventory-accuracy-rfid-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom170-demand-sensing-weather-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom170-demand-sensing-weather-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom170-demand-sensing-weather-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom171-supplier-risk-resilience-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom171-supplier-risk-resilience-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom171-supplier-risk-resilience-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom172-ai-contract-negotiation-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom172-ai-contract-negotiation-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom172-ai-contract-negotiation-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom173-cfo-value-ledger-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom173-cfo-value-ledger-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom173-cfo-value-ledger-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom174-cmo-growth-marketing-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom174-cmo-growth-marketing-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom174-cmo-growth-marketing-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom175-coo-operating-model-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom175-coo-operating-model-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom175-coo-operating-model-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom176-cio-decision-intelligence-ai-part1.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom176-cio-decision-intelligence-ai-part2.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-retail-dom176-cio-decision-intelligence-ai-part3.ts",
+      "vertical": "retail",
+      "sourceKey": "apex-retail",
+      "parsed": 50
+    }
+  ]
+}
