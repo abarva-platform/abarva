@@ -13,7 +13,7 @@ Status: storyboard complete; live recording is gated by authenticated Apex demo 
 | 1:15-2:05 | Sentinel six cards | `/intelligence/ask` | Callouts: citations, dissent, "what would change my view", audit trace. |
 | 2:05-2:40 | Shape Moves | `/intelligence/ask` | Click the CTA and annotate "reasoning -> execution". |
 | 2:40-3:20 | Portfolio DAG | `/tower/portfolio-dag` | Show parent Move, five sibling Moves, and AMS Source workflow edge. |
-| 3:20-4:30 | IT-Productivity Move | `/tower/programs/[moveId]/value` | Show 9 gates and 8 value layers: projected, tracked, verified. |
+| 3:20-4:30 | IT-Productivity Move | `/tower/programs/[programId]/value` | Show 9 gates and 8 value layers: projected, tracked, verified. |
 | 4:30-5:25 | AMS Optimization Source | `/source/events/apex-retail-ams-outsourcing-2026` | Show vendor portfolio diagnostic, concentration, leakage, and outcome clauses. |
 | 5:25-6:00 | Public comparison close | `/how-it-works/it-productivity-comparison` | Show generic LLM vs Sentinel and AI Egress Control Plane banner. |
 

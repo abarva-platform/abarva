@@ -157,9 +157,10 @@ function AttestationControl({
 export default async function TowerMoveValuePage({
   params,
 }: {
-  params: Promise<{ moveId: string }>;
+  params: Promise<{ programId: string }>;
 }) {
-  const { moveId } = await params;
+  const { programId } = await params;
+  const moveId = programId;
   const ctx = await requireTenancy();
   const detail = await getMoveValueDetail(ctx, moveId).catch((error) => {
     const mapped = errorCode(error);

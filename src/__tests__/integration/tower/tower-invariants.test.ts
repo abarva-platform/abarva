@@ -118,6 +118,12 @@ describe('Tower invariants — Apple-grade polish slice', () => {
       expect(source).toContain('TowerDecisionActionRow');
     });
 
+    it('keeps Tower program detail dynamic segments aligned for Next.js 16', () => {
+      expect(existsSync('src/app/(maestro)/tower/programs/[programId]/page.tsx')).toBe(true);
+      expect(existsSync('src/app/(maestro)/tower/programs/[programId]/value/page.tsx')).toBe(true);
+      expect(existsSync('src/app/(maestro)/tower/programs/[moveId]/value/page.tsx')).toBe(false);
+    });
+
     it('documents the per-route decision', () => {
       const path = 'docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md';
       expect(existsSync(path)).toBe(true);
