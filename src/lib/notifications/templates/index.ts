@@ -24,14 +24,16 @@ import * as connectorFailed from './connector-failed';
 import * as isolationAnomaly from './isolation-anomaly';
 import * as authInviteAccepted from './auth-invite-accepted';
 import * as programGateDecision from './program-gate-decision';
+import * as dailyDigest from './daily-digest';
 
-/** Payload union for the 5 templated events. */
+/** Payload union for the templated events. */
 export type TemplatedEventType =
   | 'approval.requested'
   | 'connector.failed'
   | 'isolation.anomaly'
   | 'auth.invite_accepted'
-  | 'program.gate_decision';
+  | 'program.gate_decision'
+  | 'system.daily_digest';
 
 /**
  * Generic template triple. Each template module exports exactly this
@@ -56,6 +58,7 @@ const templateRegistry: Record<TemplatedEventType, TemplateTriple> = {
   'isolation.anomaly': isolationAnomaly as unknown as TemplateTriple,
   'auth.invite_accepted': authInviteAccepted as unknown as TemplateTriple,
   'program.gate_decision': programGateDecision as unknown as TemplateTriple,
+  'system.daily_digest': dailyDigest as unknown as TemplateTriple,
 };
 
 /** Type-guard for known event types. */
@@ -96,6 +99,7 @@ export const TEMPLATED_EVENT_TYPES: readonly TemplatedEventType[] = [
   'isolation.anomaly',
   'auth.invite_accepted',
   'program.gate_decision',
+  'system.daily_digest',
 ] as const;
 
 export type { TenantBrand };
@@ -107,3 +111,4 @@ export type {
   ProgramGateDecisionPayload,
   ProgramGateDecisionVerdict,
 } from './program-gate-decision';
+export type { DailyDigestEmailPayload } from './daily-digest';
