@@ -12,12 +12,21 @@
  *     at the module boundary; never re-derived inside the route).
  */
 
+// Force module-scope (not script-scope) so the mock declarations don't
+// collide with other *.test.ts files in the global TypeScript scope.
+export {};
+
 const mockAuth = jest.fn();
 const mockCanSwitch = jest.fn();
 const mockWriteAudit = jest.fn();
 
 jest.mock('@clerk/nextjs/server', () => ({
   auth: () => mockAuth(),
+  // The diagnostic-log path calls currentUser() via safePrimaryEmail()
+  // for logging context. The route swallows failures here, so a no-op
+  // mock is safe — see diagnostic-logs.test.ts for the structured-log
+  // contract assertions.
+  currentUser: () => Promise.resolve(null),
 }));
 
 jest.mock('@/lib/admin/tenant-switch-authority', () => {
