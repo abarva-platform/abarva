@@ -71,3 +71,30 @@ Two real-world extract paths are documented and supported in the runbook: schedu
 - No runtime feature flag — the CLI is opt-in per tenant; no automatic scheduling.
 - First customer onboard runbook lives in `docs/templates/tower/azure-cost/README.md`. Required: confirm `Cost Management Reader` access for the billing scope, ask the customer to tag the top 80% of spend with `program` and `environment` resource tags, schedule the monthly export to a customer-owned blob with read-only SAS access for AbarVa.
 - Tower read path remains on fixtures until a follow-up slice wires `tower_cloud_cost` into the cost lens.
+
+## Rollback Plan
+
+- Code path: revert the merge commit. No app-tier surfaces depend on the new code yet, so a revert is non-breaking for production users.
+- Data path: `DROP TABLE tower_cloud_cost CASCADE;` rolls back the migration cleanly. The table has no inbound FKs from any other table (only outbound FK to `clients`), so no orphaning occurs. No customer ingest has happened in production yet at the time of this release record, so no data loss.
+- CLI / npm script: revert removes the `tower:ingest:azure-cost` npm script. No scheduled job or CI invocation depends on it.
+
+## Audit Evidence
+
+- Tests: 3 new suites, 25 tests, all passing locally and in CI (`Typecheck + reasoning-layer tests`, `ESLint`, and the slice-scoped jest runs).
+- Dry-run capture (committed to PR description and reproducible via `npm run tower:ingest:azure-cost -- --file=public/templates/tower/azure-cost/sample.xlsx --dry-run`):
+  - 1,692 rows parsed
+  - 0 parse issues
+  - 0 validator warnings
+  - totalUsd $2,902,918.46 across 6 programs, 5 subscriptions, 12 months
+  - untaggedShare 3.5% (under the 5% warn threshold by design)
+- Synthetic provenance: the sample workbook is marked with a yellow banner on row 2 of the Data sheet: `SYNTHETIC SAMPLE DATA · Northwind Retail · NOT FOR PRODUCTION DECISIONS`. The README sheet repeats this. No real-customer Azure data is shipped in this PR.
+- Migration replay: covered by the `Fresh Postgres migration replay` CI job.
+- Audit trail link: PR #2537. Audit context: PR #2525 (Tower audit, ZERO live integrations finding).
+
+## Known Gaps
+
+- Tower read path is not yet wired to `tower_cloud_cost`. The cost lens still renders from `use_case_cost_metrics` / fixtures. A follow-up slice needs to plumb the new table into the cost lens read model.
+- No `uploaded_files` join is enforced. The `source_file_id` column is nullable and the CLI accepts a `--source-file-id` argument for provenance, but there is no FK constraint to `uploaded_files(id)` because that table's RLS posture for tower assets is still under review.
+- No CMRA-style background scheduling. Customers run the CLI manually; an automated pull (via Cost Management REST + scheduled job) is out of scope for this slice.
+- Per-user RLS does not yet extend to `tower_cloud_cost`. It uses the same service-role-only posture as the rest of the Tower data model from migration 022 and will be brought into per-user RLS in the same wave that promotes the rest of Tower.
+- Tag value vocabulary is free-form. `tag_program` accepts any string from Azure — there's no mapping to the AbarVa `programs` table yet. A follow-up slice should reconcile tag values against the program catalog and surface mismatches.
