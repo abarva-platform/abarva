@@ -1,0 +1,183 @@
+# Retail Overlay Expert-Consultant Gauntlet
+
+Run timestamp: 2026-05-30T11:01:38.261Z
+Base URL: https://app.abarva.ai
+Persona: cio@apex-retail.example.com
+Tests: 5
+Passed: 4/5
+Gate: PASS (requires >=4/5)
+
+| ID | Test | Pass | HTTP | Latency | retail-v1 chunks | Pattern citations | Checks |
+|---|---|---|---:|---:|---:|---:|---|
+| EXPERT-T1 | Vocabulary fluency | PASS | 200 | 22844ms | 5 | 5 | 7/7 |
+| EXPERT-T2 | Vendor landscape depth | PASS | 200 | 23607ms | 5 | 5 | 9/9 |
+| EXPERT-T3 | Time-horizon awareness | PASS | 200 | 26965ms | 5 | 5 | 8/8 |
+| EXPERT-T4 | Peer benchmarking specificity | FAIL | 200 | 22832ms | 5 | 5 | 7/8 |
+| EXPERT-T5 | Counter-intuitive reasoning | PASS | 200 | 22258ms | 5 | 5 | 8/8 |
+
+## Details
+
+### EXPERT-T1 — Vocabulary fluency — PASS
+
+Question: Explain how Apex should reason about shrink, ORC, and self-checkout risk. Use retail language, not generic AI risk language.
+
+Checks:
+- PASS: has >=3 retail-v1 chunks
+- PASS: has >=2 pattern citations
+- PASS: http 200
+- PASS: no streamed errors
+- PASS: mentions shrink
+- PASS: mentions ORC / organized retail crime
+- PASS: mentions self-checkout
+
+Source IDs:
+- apex-retail
+- retail-v1:e.3.02
+- retail-v1:e.3.09
+- retail-v1:e.3.16
+- retail-v1:h.4.02
+- retail-v1:h.4.09
+- F210
+- F219
+- F225
+- worldview:W3:021
+- worldview:W3:022
+- worldview:W3:024
+
+Answer excerpt:
+
+```text
+Shrink at Apex needs to be reasoned about as a margin-and-mix problem first, not a security problem. E.3.02 frames it that way explicitly: the useful artifact is a decision table that separates chain-wide rules from cluster, category, and channel exceptions. That framing matters because shrink, ORC, and self-checkout loss behave very differently across those dimensions, and a chain-wide shrink rate number obscures more than it reveals. On shrink broadly (E.3.02): the question isn't "what's our shrink rate" — it's where shrink concentrates by cluster and category, and what the margin, cost-to-serve, and working-capital translation looks like at that granularity. The failure mode F.219 flags — measuring spoilage, substitutions, and shrink in separate loops — is exactly what kills fresh and perishable accuracy. If Apex runs grocery or fresh adjacencies across any banner, those measurement loops need to close before any model can do useful work. On ORC specifically (E.3.09, F.219): ORC is best understood as a seasonal-stress and recovery-path problem. It clusters geographically, moves between banners as enforcement shifts, and distorts the shrink baseline if you don't separate it from operational and associate shrink in the measurement. The resilience pattern E.3.09 calls for operational buffers and recovery procedures — meaning store teams need explicit escalation paths when an ORC hit lands, not just a dashboard showing it happened. On self-checkout (E.3.16): this is the execution trap.
+```
+
+### EXPERT-T2 — Vendor landscape depth — PASS
+
+Question: Compare Manhattan, Oracle, IBM Sterling, Salesforce, and Commerce Cloud for Apex omnichannel order management and commerce modernization.
+
+Checks:
+- PASS: has >=3 retail-v1 chunks
+- PASS: has >=2 pattern citations
+- PASS: http 200
+- PASS: no streamed errors
+- PASS: mentions Manhattan
+- PASS: mentions Oracle
+- PASS: mentions IBM Sterling
+- PASS: mentions Salesforce
+- PASS: mentions Commerce Cloud
+
+Source IDs:
+- apex-retail
+- apex-retail:structured-fact:top-vendors
+- apex-retail:structured:vendor_contracts
+- apex-retail:structured:ai_initiatives
+- apex-retail:program_inventory
+- retail-v1:s.2.11
+- retail-v1:s.2.pack
+- retail-v1:s.2.01
+- retail-v1:s.2.02
+- retail-v1:s.2.03
+- worldview:W3:021
+- worldview:W3:022
+- worldview:W3:031
+
+Answer excerpt:
+
+```text
+The honest framing: this overlaps heavily with what we walked through earlier this morning, so I'll sharpen rather than repeat. The S.2 pack (S.2.PACK, S.2.01, S.2.02, S.2.03, S.2.11) frames this as a vendor-dependency problem more than a feature bake-off, and for Apex that lens matters because IBM and Oracle concentration are already structural. Manhattan Active Omni is the strongest pure-play OMS — best store fulfillment, sourcing logic, inventory visibility. S.2.11 calls out the dependency risk: no AI clauses in the current contract and an early-2026 renewal window. Lead candidate, but negotiate AI/model-version rights before signing. Oracle OMS is competent, rarely best-in-class. The $8.1M Oracle Retail renewal in October 2026 has no AI clauses (S.2.03) and deepens a stack you're explicitly re-evaluating in APX-ERP-2027. Hard to recommend deepening Oracle before that decision lands. IBM Sterling is credible at enterprise scale, especially complex B2B fulfillment, but S.2.01 operating-model fit is weakest — heavy implementation, slow iteration. Layered on Kyndryl mainframe ($12.4M, 18% concentration, no AI clauses), Sterling compounds IBM-stack dependency you should be reducing, not adding to. I'd rule it out. Salesforce Commerce Cloud isn't an OMS — it's a commerce/storefront layer. Comparing it head-to-head misframes the decision. It's complementary to whichever OMS you pick, and your $6.9M Salesforce footprint already gives you the relationship. CommerceTools is the composable alternative to Commerce Cloud —
+```
+
+### EXPERT-T3 — Time-horizon awareness — PASS
+
+Question: How should Apex sequence Q3 vs Q1 decisions for seasonal inventory, labor planning, promotions, and FY budget windows?
+
+Checks:
+- PASS: has >=3 retail-v1 chunks
+- PASS: has >=2 pattern citations
+- PASS: http 200
+- PASS: no streamed errors
+- PASS: mentions Q1
+- PASS: mentions Q3
+- PASS: mentions seasonal cycle
+- PASS: mentions budget window
+
+Source IDs:
+- apex-retail
+- apex-retail:structured:client_profile:bb8ed961-a049-4d0c-a38f-f8912138fceb
+- retail-v1:c.1.14
+- retail-v1:c.7.14
+- retail-v1:d.3.14
+- retail-v1:ak.1.14
+- retail-v1:bc.1.14
+- worldview:W3:021
+- worldview:W3:022
+- worldview:W3:018
+
+Answer excerpt:
+
+```text
+The sequencing question is really about which decisions are irreversible by the time you execute — and that's where Apex needs to be precise. Q1 is your structural-commitment window. Assortment depth, vendor buys, and markdown ladder design (C.1.14, C.7.14) need to be locked in Q1 because the cost basis for Q3 peak is set then. If you're reacting to demand volatility in Q3 with a markdown ladder designed poorly in Q1, you're managing consequences, not the season. The decision table those patterns call for — separating chain-wide rules from cluster-level exceptions — is Q1 work, not Q2. Promotional strategy (D.3.14) is the bridge. The markdown curve design happens in Q1; the execution cadence decisions get confirmed in Q2 as you read early season signals. Don't conflate the two — locking execution timing in Q1 is premature, but locking the curve shape and budget envelope in Q1 is necessary. Labor planning (BC.1.14) is the one Apex most consistently underresources in Q1. Wage and classification decisions affecting Q3 peak — across 480 stores in 42 states with varied scheduling regulations — need to be stress-tested against demand scenarios before the hiring cycle commits. Missing that window costs you labor flexibility exactly when Q3 volume creates margin pressure. Trade promotion investment (AK.1.14) has its own timing trap: the execution cadence decisions feel like they belong to Q3, but the vendor co-op commitments and event calendar that fund them are Q1 negotiations.
+```
+
+### EXPERT-T4 — Peer benchmarking specificity — FAIL
+
+Question: Give anonymized peer benchmarking for Apex retail transformation, including dollar ranges, basis-point ranges, and timeframes where defensible.
+
+Checks:
+- PASS: has >=3 retail-v1 chunks
+- PASS: has >=2 pattern citations
+- PASS: http 200
+- PASS: no streamed errors
+- PASS: mentions peer/anonymized benchmark
+- FAIL: includes dollar range
+- PASS: includes basis-point range
+- PASS: includes timeframe
+
+Source IDs:
+- apex-retail
+- retail-v1:ay.2.17
+- retail-v1:bf.1.17
+- retail-v1:n.2.17
+- retail-v1:a.1.17
+- retail-v1:a.2.17
+- worldview:W3:021
+- worldview:W3:022
+- worldview:W3:025
+
+Answer excerpt:
+
+```text
+The enterprise_profile and evidence_ledger segments are still partial this session, so what follows is peer-range evidence from the retail-v1 pattern pack — not Apex actuals. Treat these as calibration ranges, not commitments. On comp store sales lift (AY.2.17): peer retailers running coordinated assortment, labor, and digital investment show 150-350 basis points of comp improvement over 18-24 months. The spread is almost entirely explained by whether the retailer separated chain-wide rules from cluster-level exceptions early — those that did land toward the top of the range. On value proposition and trade-area positioning (A.1.17, A.2.17): format innovation programs at comparable scale show 200-400 basis point gross margin improvement over 24-36 months when trade-area logic drives cluster differentiation. The failure mode is running format innovation and digital investment in parallel without a coordinating trade-area model — peers that did that saw margin erode in the first 12 months before recovering. On marketing mix and retail media (N.2.17): media efficiency improves 8-15% within 12-18 months, but only when the semantic layer and first-party data consent coverage are jointly in place — not either alone. On equity story impact (BF.1.17): peers that built a credible transformation narrative with measurable comp-sales and margin proof points saw EV/EBITDA multiple expansion of 0.5-1.2 turns over a 24-36 month window. The ones that stayed flat on multiples had the same operating results but couldn't separate transformation signal from macro noise in their investor narrative.
+```
+
+### EXPERT-T5 — Counter-intuitive reasoning — PASS
+
+Question: Give at least three substantive counter-arguments for why scaling retail media or personalization might be the wrong move for Apex right now.
+
+Checks:
+- PASS: has >=3 retail-v1 chunks
+- PASS: has >=2 pattern citations
+- PASS: http 200
+- PASS: no streamed errors
+- PASS: frames counter-arguments
+- PASS: has at least three distinct arguments
+- PASS: mentions retail media
+- PASS: mentions personalization
+
+Source IDs:
+- apex-retail
+- apex-retail:structured:ai_initiatives
+- apex-retail:program_inventory
+- retail-v1:n.4.10
+- retail-v1:n.4.16
+- retail-v1:f.10.07
+- retail-v1:f.10.14
+- retail-v1:m.7.07
+- worldview:W3:021
+- worldview:W5:008
+- worldview:W3:029
+
+Answer excerpt:
+
+```text
+The case against accelerating retail media or personalization at Apex right now is actually stronger than it looks from the program health numbers. Here are three substantive counter-arguments. First, the measurement substrate isn't ready for scaling. F.10.07 is explicit that site personalization measurement requires a stable personalization-slot attribution framework before you can separate what's working chain-wide from what's working in specific clusters or channels. AR-07 is healthy at +9% digital revenue per session, but that's a portfolio metric. Scaling on top of it without slot-level attribution means you're likely over-crediting personalization for gains that are really driven by assortment or demand recovery — and you won't know until you've already committed the capital. Second, the cluster differentiation work isn't done. C.3.12 frames localized cluster capital allocation as a prerequisite for scaling any demand-side initiative — if your capital and assortment decisions aren't yet cluster-differentiated, you're optimizing the average and destroying value at the tails. AR-07's +9% is a chain-wide number. The clusters where personalization signal diverges most from the average are exactly where the margin opportunity and the risk both concentrate. Scaling before that work is done means you're likely amplifying existing cluster biases rather than correcting them. Third, retail media scaling has a specific execution trap that Apex isn't yet positioned to avoid. N.4.
+```
