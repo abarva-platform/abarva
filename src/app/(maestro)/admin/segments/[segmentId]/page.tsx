@@ -15,7 +15,7 @@
 
 import { notFound } from 'next/navigation';
 
-import { getActiveClientRow } from '@/lib/active-client';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
@@ -23,7 +23,6 @@ import {
 } from '@/lib/admin/setup-acts-registry';
 import { getSegmentRecordPage } from '@/lib/admin/setup-data-broker';
 import { headers } from 'next/headers';
-import { canonicalClientDisplayName } from '@/lib/client-config';
 
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
@@ -49,11 +48,12 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   const reference = resolveSegmentRef(segmentId);
   if (!reference) notFound();
 
-  const activeClient = await getActiveClientRow().catch(() => null);
-  const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'Apex Retail Group';
-  const clientKey = activeClient?.key ?? 'apexretail';
+  // PR-G (2026-05-30 · Apex-leak F8): tenant identity flows through
+  // resolveAdminTenant — throws into /admin/error.tsx if no active tenant —
+  // replacing the prior `?? 'Apex Retail Group' / ?? 'apexretail'` fallbacks.
+  const tenant = await resolveAdminTenant();
+  const activeClientDisplayName = tenant.tenantName;
+  const clientKey = tenant.clientKey;
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const page = brokerTenantKey
     ? await getSegmentRecordPage(brokerTenantKey, reference.segmentKey).catch(() => null)

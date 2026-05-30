@@ -37,6 +37,7 @@
 import { cache } from 'react';
 
 import { getActiveClientRow } from '@/lib/active-client';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   buildAuthoredInventoryFallback,
@@ -66,7 +67,7 @@ import { StewardOrientationBlock } from '@/components/home/StewardOrientationBlo
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
-import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
+import { isClientKey } from '@/lib/client-config';
 import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
 import {
   canSwitchActiveTenant,
@@ -238,11 +239,17 @@ export default async function AdminOverviewPage({
   const activeTab = resolveAdminOverviewTab(params?.tab);
 
   // Synchronous, fast prelude — needed for the masthead and the shell.
+  // PR-G (2026-05-30 · Apex-leak F8):
+  //   Tenant identity flows through resolveAdminTenant — which throws into
+  //   /admin/error.tsx when the active tenant cannot be resolved — instead
+  //   of the prior `?? 'Apex Retail Group' / ?? 'apexretail'` fallbacks
+  //   that were the single largest source of cross-tenant chrome leakage.
+  //   getActiveClientRow() is still called to access industry_code / id /
+  //   raw row metadata that resolveAdminTenant does not surface.
+  const tenant = await resolveAdminTenant();
   const activeClient = await getActiveClientRow().catch(() => null);
-  const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'Apex Retail Group';
-  const clientKey = activeClient?.key ?? 'apexretail';
+  const activeClientDisplayName = tenant.tenantName;
+  const clientKey = tenant.clientKey;
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   // Wave 3 PR-7 · per-zone streaming. Trust strip, action queue,
   // posture grid, Steward orientation, and audit ribbon each fetch

@@ -31,7 +31,7 @@ export default async function Page({ params }: Props) {
         />
       }
     >
-      <ConnectorReconnectPage detail={detail} />
+      <ConnectorReconnectPage detail={detail} tenantName={tenant.tenantName} />
     </AdminCanonShellV2>
   );
 }
