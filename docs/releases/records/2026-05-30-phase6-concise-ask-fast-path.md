@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Explicitly concise Sentinel Ask questions now use a smaller model token budget and deterministic follow-up prompts. This targets the Phase 6 50-concurrent SkyHarbor load gate without changing the restored behavior for full verifier questions.
+Explicitly concise Sentinel Ask questions now use a compact advisor prompt, smaller source payload, smaller model token budget, and deterministic follow-up prompts. This targets the Phase 6 50-concurrent SkyHarbor load gate without changing the restored behavior for full verifier questions.
 
 ## Layer Impact
 
-- `runtime-app-lane`: Ask/Sentinel responses that explicitly ask for a concise or short answer use a tighter synthesis budget and the faster standard synthesis model.
+- `runtime-app-lane`: Ask/Sentinel responses that explicitly ask for a concise or short answer use a compact synthesis prompt, tighter synthesis budget, and the faster standard synthesis model.
 - `ai-egress-control-lane`: Concise requests avoid the extra follow-up model call by using deterministic follow-up prompts.
 - `tenant-isolation-lane`: Non-comparison answers that mention a different canonical tenant are blocked before streaming to the user.
 - `retrieval-lane`: Knowledge-source retrieval now filters legacy composite research rows against the active tenant.
@@ -31,7 +31,8 @@ Explicitly concise Sentinel Ask questions now use a smaller model token budget a
 
 ## Changes Included
 
-- Adds `chooseSynthesisTokenBudget()` so concise Ask requests use `260` max tokens and normal requests keep `600`.
+- Adds `chooseSynthesisTokenBudget()` so concise Ask requests use `180` max tokens and normal requests keep `600`.
+- Uses a compact Sentinel system prompt and a 10-source cap only for explicit concise requests.
 - Routes concise Ask synthesis to `claude-sonnet-4-6`; non-concise topic/vendor/general synthesis keeps the restored `claude-opus-4-7` path.
 - Adds deterministic follow-ups only for concise Ask requests.
 - Adds a SkyHarbor/global-airline off-tenant mention guard for non-comparison responses.
@@ -45,6 +46,7 @@ Explicitly concise Sentinel Ask questions now use a smaller model token budget a
 - PASS: PR #2472 CI and production deployment.
 - FAIL: First post-deploy Phase 6 load rerun improved but missed strict acceptance: 50/50 HTTP 200, zero 4xx/5xx, p95 13.895s, one off-tenant detector hit.
 - FAIL: Second post-deploy Phase 6 load rerun still missed strict acceptance: 50/50 HTTP 200, zero 4xx/5xx, p95 13.544s, one off-tenant detector hit traced to `RESEARCH` sources from off-tenant legacy composite seeds.
+- FAIL: Post-knowledge-scope production rerun cleared the tenant isolation defect but still missed strict latency acceptance: 50/50 HTTP 200, zero 4xx/5xx, p95 13.140s, zero tenant bleeds.
 - NOT-RUN: revised PR CI for the second optimization pass, pending after branch push.
 - NOT-RUN: revised production deployment, pending after merge.
 - NOT-RUN: revised Phase 6 SkyHarbor load rerun and SkyHarbor verifier sanity, pending after production deployment.
@@ -67,6 +69,8 @@ Revert this PR. The change is limited to concise Ask request generation and dete
   - `/tmp/phase6-e2e/skyharbor-load-concise-fast/skyharbor-load-results.json`
 - Second scoped fast-path rerun:
   - `/tmp/phase6-e2e/skyharbor-load-sonnet-guard/skyharbor-load-results.json`
+- Knowledge-scope production rerun:
+  - `/tmp/phase6-e2e/skyharbor-load-knowledge-scope/skyharbor-load-results.json`
 - Single-request bleed diagnostic:
   - `/tmp/phase6-e2e/skyharbor-single-cio-current/skyharbor-load-results.json`
 - Failed prior broad optimization was reverted by PR #2471; this candidate keeps full verifier questions on the restored path.

@@ -1,6 +1,6 @@
 import { classifyIntent } from './classifier';
 import { route } from './router';
-import { synthesizeStream } from './synthesizer';
+import { isExplicitConciseAsk, synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
@@ -119,6 +119,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantInventoryKey: opts.tenantInventoryKey,
     });
     const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
+    const sourceLimit = isExplicitConciseAsk(trimmed) ? 10 : 16;
     const sources: AskSource[] = [
       ...surfaceContext,
       ...tenantStructuredFacts,
@@ -126,7 +127,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       ...tenantTechnology,
       ...routed.sources,
       ...worldview.sources,
-    ].slice(0, 16);
+    ].slice(0, sourceLimit);
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
