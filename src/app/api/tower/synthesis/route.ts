@@ -32,6 +32,19 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('tower', synthesisCache, cacheCreatedAt);
 
+// Atlas Fix C (stuck state): hard upstream timeout for tower synthesis. When
+// the model stream stalls we cancel the request and emit an honest, user-facing
+// message instead of leaving the UI hung at "Atlas is thinking…". 30s matches
+// the working API timeout policy elsewhere in this codebase.
+export const TOWER_SYNTHESIS_TIMEOUT_MS = 30_000;
+export const TOWER_SYNTHESIS_TIMEOUT_MESSAGE =
+  "Atlas couldn't complete that response in time. Try again or pick a narrower question.";
+
+// Atlas Fix C (determinism): tower synthesis uses temperature=0 so the same
+// portfolio state produces the same read. The CXO-quality audit (PR #2562)
+// flagged the default temperature (~1.0) as the source of contradictory reads.
+export const TOWER_SYNTHESIS_TEMPERATURE = 0;
+
 const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
 Your synthesis task: given the current state of an entire portfolio (every active program plus every active source event), produce a portfolio-level read that names the single highest-leverage move.
@@ -271,12 +284,25 @@ export async function POST(request: Request) {
   }
   const client = preflight.client;
 
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 350,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
+  // Atlas Fix C: wrap the upstream stream in an AbortController with an
+  // explicit timeout. On timeout we abort the upstream, clear the spinner, and
+  // surface an honest message. Never leave the UI hanging.
+  const abortController = new AbortController();
+  const timeoutHandle = setTimeout(
+    () => abortController.abort(),
+    TOWER_SYNTHESIS_TIMEOUT_MS,
+  );
+
+  const stream = await client.messages.stream(
+    {
+      model: "claude-sonnet-4-6",
+      temperature: TOWER_SYNTHESIS_TEMPERATURE,
+      max_tokens: 350,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    },
+    { signal: abortController.signal },
+  );
 
   const encoder = new TextEncoder();
   let accumulated = '';
@@ -294,13 +320,39 @@ export async function POST(request: Request) {
   });
 
   if (!accessPolicy.outputPolicy.exactFinancialValues) {
-    for await (const chunk of stream) {
-      if (
-        chunk.type === "content_block_delta" &&
-        chunk.delta.type === "text_delta"
-      ) {
-        accumulated += chunk.delta.text;
+    let timedOut = false;
+    try {
+      for await (const chunk of stream) {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
+          accumulated += chunk.delta.text;
+        }
       }
+    } catch (err) {
+      // Atlas Fix C: on abort/timeout, surface an honest message rather than a
+      // raw 5xx or — worse — silence. The caller's "thinking…" indicator should
+      // clear when this body arrives.
+      if (abortController.signal.aborted) {
+        timedOut = true;
+      } else {
+        clearTimeout(timeoutHandle);
+        throw err;
+      }
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+    if (timedOut) {
+      return new Response(TOWER_SYNTHESIS_TIMEOUT_MESSAGE, {
+        status: 504,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Cache": "MISS",
+          "X-Synthesis-Event-Id": event.id,
+          "X-Synthesis-Timeout": "true",
+        },
+      });
     }
     const safeText = sanitizeRestrictedFinancialText(accumulated, accessPolicy);
     if (safeText) {
@@ -320,14 +372,33 @@ export async function POST(request: Request) {
 
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          accumulated += chunk.delta.text;
-          controller.enqueue(encoder.encode(chunk.delta.text));
+      try {
+        for await (const chunk of stream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            accumulated += chunk.delta.text;
+            controller.enqueue(encoder.encode(chunk.delta.text));
+          }
         }
+      } catch (err) {
+        // Atlas Fix C: if the upstream times out / aborts, append an honest
+        // user-facing message so the chat surface shows a real failure instead
+        // of a silent hang. Then close cleanly.
+        if (abortController.signal.aborted) {
+          const suffix = accumulated.length > 0 ? '\n\n' : '';
+          controller.enqueue(
+            encoder.encode(`${suffix}${TOWER_SYNTHESIS_TIMEOUT_MESSAGE}`),
+          );
+          controller.close();
+          return;
+        }
+        clearTimeout(timeoutHandle);
+        controller.error(err);
+        return;
+      } finally {
+        clearTimeout(timeoutHandle);
       }
       // Cache the full response after streaming completes
       if (accumulated) {
