@@ -93,7 +93,7 @@ Multi-tenancy is the hardest thing to retrofit and the easiest thing to break. R
 5. **Cross-tenant queries require explicit `crossTenant: true` opt-in.** Default behavior is single-tenant.
 6. **Every test that touches multi-tenant data must include at least one cross-tenant isolation assertion.** Caught by lint rule `require-cross-tenant-assertion`.
 
-### 1.4 The Five Single-Source-of-Truth Declarations
+### 1.4 The Six Single-Source-of-Truth Declarations
 
 For each, there is exactly ONE module in the codebase that owns it:
 
@@ -104,6 +104,7 @@ For each, there is exactly ONE module in the codebase that owns it:
 | Model clients | `src/lib/model-clients/` | Anthropic, Voyage, OpenAI (if added) |
 | Coverage contract | `src/lib/knowledge/coverage.ts` | question categories → required segments |
 | Audit logging | `src/lib/audit/` | egress audit, action audit, error audit |
+| Artifact quality | `src/lib/artifact-excellence/cxo-artifact-excellence-framework.ts` | CXO artifact excellence standard, scoring rubric, buyer/auditor readiness bar |
 
 If a second module of any of these appears, **the CI guard catches it and fails the build.** No exceptions, no `// eslint-disable`.
 
@@ -541,6 +542,8 @@ This operating model gets more autonomous as evidence accumulates:
 - **Today:** Class A/B auto, C with light review, D human-review-then-merge, E+ blocks
 - **Q+1 (after 10 successful packets):** Class C auto, D auto with post-merge review, E packets pre-authorized
 - **Q+2 (after 20 successful packets and zero incidents):** Class D auto-merge during business hours, full self-driving for narrow categories
+
+**2026-05-29 progression note:** Codex advanced to Class D auto-merge during business hours based on incident-free Phase 0D execution and production hotfix discipline. This authority remains limited to changes that satisfy the Class D scope definition and all release gates; any P0 caused by AI-introduced code resets the trust ladder one tier.
 
 You move the line based on **incident-free runtime**, not on calendar time. Every P0 caused by AI-introduced code resets the trust ladder one tier.
 
