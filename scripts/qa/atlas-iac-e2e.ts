@@ -820,7 +820,6 @@ function renderDeltaReport(run: RunResult): string {
   // produced an answer vs declined as not-IAC-intent.
   const iacAnsweredCount = run.turns.filter((t) => !t.compositionReturnedNull).length;
   const iacDeclinedIntentNone = run.turns.filter((t) => t.declineReason === 'intent-none').length;
-  const iacDeclinedOther = run.turns.filter((t) => t.declineReason === 'iac-decline').length;
   const trueFallback = 0; // No LLM in this harness — would be > 0 if true HI-1 regression occurred and we wired through orchestrator.
   const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 } as Record<Grade, number>;
   run.turns.forEach((t) => (gradeCounts[t.scorecard.grade] += 1));
