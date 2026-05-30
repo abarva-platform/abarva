@@ -167,6 +167,39 @@ describe('tenant context read model', () => {
     expect(summary.totalEmbeddingCalls).toBe(2);
   });
 
+  it('normalizes postgres Date timestamps before returning page-facing rows', async () => {
+    installMockData({
+      chunks: [
+        {
+          ...chunkRows[0],
+          embedded_at: new Date('2026-05-26T10:00:00Z'),
+          created_at: new Date('2026-05-26T09:00:00Z'),
+          updated_at: new Date('2026-05-26T10:00:00Z'),
+        },
+      ],
+      audits: [
+        {
+          ...auditRows[0],
+          created_at: new Date('2026-05-26T10:00:30Z'),
+        },
+      ],
+    });
+
+    await expect(getTenantContextSummary('client-1')).resolves.toMatchObject({
+      lastEmbeddedAt: '2026-05-26T10:00:00.000Z',
+    });
+    await expect(getTenantSourceFiles('client-1')).resolves.toEqual([
+      expect.objectContaining({
+        first_loaded_at: '2026-05-26T09:00:00.000Z',
+      }),
+    ]);
+    await expect(getTenantEmbeddingHistory('client-1')).resolves.toEqual([
+      expect.objectContaining({
+        created_at: '2026-05-26T10:00:30.000Z',
+      }),
+    ]);
+  });
+
   it('groups source files and preserves representative chunk ids', async () => {
     installMockData();
 

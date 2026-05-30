@@ -79,10 +79,10 @@ type ContextChunkRow = {
   chunk_text?: string | null;
   embedding_status?: string | null;
   embedding_model?: string | null;
-  embedded_at?: string | null;
+  embedded_at?: string | Date | null;
   embedding_error?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
+  created_at?: string | Date | null;
+  updated_at?: string | Date | null;
   provenance?: Record<string, unknown> | null;
   chunk_metadata?: Record<string, unknown> | null;
 };
@@ -93,7 +93,7 @@ type AuditRow = {
   provider?: string | null;
   model?: string | null;
   policy_decision?: string | null;
-  created_at?: string | null;
+  created_at?: string | Date | null;
   request_metadata?: Record<string, unknown> | null;
 };
 
@@ -139,6 +139,14 @@ function asString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function asIsoString(value: unknown): string | null {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isFinite(time) ? value.toISOString() : null;
+  }
+  return asString(value);
+}
+
 function asNumber(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
@@ -169,8 +177,8 @@ function readMetadataString(
 
 function loadedAt(row: ContextChunkRow): string {
   return (
-    asString(row.created_at)
-    ?? asString(row.embedded_at)
+    asIsoString(row.created_at)
+    ?? asIsoString(row.embedded_at)
     ?? readMetadataString(row, ['loaded_at', 'imported_at', 'created_at', 'source_loaded_at'])
     ?? ''
   );
@@ -180,8 +188,9 @@ function statusOf(row: ContextChunkRow): string {
   return asString(row.embedding_status) ?? 'pending';
 }
 
-function latestIso(values: Array<string | null | undefined>): string | null {
+function latestIso(values: Array<string | Date | null | undefined>): string | null {
   const sorted = values
+    .map(asIsoString)
     .filter((value): value is string => Boolean(value))
     .sort((a, b) => Date.parse(b) - Date.parse(a));
   return sorted[0] ?? null;
@@ -326,7 +335,7 @@ export async function getTenantEmbeddingHistory(
     provider: asString(row.provider) ?? 'unknown',
     model: asString(row.model) ?? 'unknown',
     policy_decision: asString(row.policy_decision) ?? 'unknown',
-    created_at: asString(row.created_at) ?? '',
+    created_at: asIsoString(row.created_at) ?? '',
   }));
 }
 
@@ -349,7 +358,7 @@ export async function getTenantEvidenceMapForFile(
     chunk_index: asNumber(row.chunk_index),
     chunk_text: asString(row.chunk_text) ?? '',
     embedding_status: statusOf(row),
-    embedded_at: asString(row.embedded_at),
+    embedded_at: asIsoString(row.embedded_at),
   }));
 }
 
@@ -373,7 +382,7 @@ export async function getTenantPendingChunks(
     source_doc: asString(row.source_doc) ?? 'unknown-source',
     chunk_index: asNumber(row.chunk_index),
     embedding_status: statusOf(row),
-    last_attempt_at: asString(row.updated_at) ?? asString(row.embedded_at),
+    last_attempt_at: asIsoString(row.updated_at) ?? asIsoString(row.embedded_at),
     error_message: asString(row.embedding_error),
   }));
 }
