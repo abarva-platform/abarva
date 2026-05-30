@@ -132,6 +132,43 @@ describe('Atlas IAC composition', () => {
     expect(response).not.toContain('Priya Nair');
   });
 
+  // HI-2 regression — the live failure mode was a real PK like
+  // `apex-llm-copilot-2025` with display_id `AR-01`. The user types
+  // `AR-01`, intent extraction surfaces `AR-01`, and `loadInitiativeRow`
+  // must resolve it via display_id (not the old PK-only lookup).
+  it('hybrid composition succeeds when prompt uses display_id and DB PK differs', async () => {
+    const fx = fixtures();
+    fx.ai_initiatives.push({
+      initiative_id: 'apex-llm-copilot-2025',
+      client_id: 'client-apex',
+      display_id: 'AR-77',
+      name: 'Store Associate Copilot',
+      primary_category_id: 'CAT-01',
+      stage: 'pilot',
+      owner_name: 'Carlos Rivera',
+      owner_title: 'CIO',
+      committed_annual_usd: 1_000_000,
+      measured_value_usd: 250_000,
+      confidence_level: 'HIGH',
+      status_summary: 'Pilot expanding.',
+    });
+    const result = await composeAtlasIacAnswer({
+      prompt: 'Compare AR-77 to industry benchmarks',
+      tenancy: APEX,
+      client: mockClient(fx),
+    });
+    expect(result).not.toBeNull();
+    // The four-section composition should fire, not the "no such initiative" fallback.
+    expect(result!.response).not.toContain('No such initiative');
+    expect(sections(result!.response)).toEqual([
+      'Your data',
+      'Industry context',
+      'The gap',
+      'Next move',
+    ]);
+    expect(result!.response).toContain('Store Associate Copilot');
+  });
+
   it.each([
     ['apex initiative', 'tell me about AR-02', APEX],
     ['meridian initiative', 'what is the status of MH-02', MERIDIAN],
