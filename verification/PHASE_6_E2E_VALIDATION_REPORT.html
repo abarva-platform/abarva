@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Phase 6 E2E Validation Report</title>
+  <style>
+    body{margin:0;background:#f8f7f4;color:#171717;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:1080px;margin:0 auto;padding:42px 32px 80px}
+    h1,h2{font-family:Georgia,serif;font-weight:400} h1{font-size:38px;margin:0 0 8px} h2{font-size:24px;margin-top:32px;border-top:1px solid #d8d2c4;padding-top:20px}
+    .banner{border:1px solid #d8d2c4;border-left:6px solid #047857;background:#fffdf8;border-radius:8px;padding:18px;margin:20px 0}
+    table{width:100%;border-collapse:collapse;background:#fffdf8;border:1px solid #d8d2c4}
+    th,td{text-align:left;vertical-align:top;border-bottom:1px solid #e7e2d6;padding:10px 12px}
+    th{font-size:12px;text-transform:uppercase;color:#6b665c;letter-spacing:.04em}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+    .pass{color:#047857;font-weight:700}.note{color:#514c43}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Phase 6 E2E Validation Report</h1>
+  <p class="note">Generated 2026-05-30 for the live production domain.</p>
+  <div class="banner">
+    <strong class="pass">PASS</strong><br />
+    Production <code>app.abarva.ai</code> is certified for the SkyHarbor demo spine at deploy <code>dpl_G5pQnvJJ66go2vdt7u2pcaHKSwQg</code>, commit <code>9e805698fee918f9bf04c34ccddb71b06a1983dd</code>.
+  </div>
+  <h2>Acceptance Evidence</h2>
+  <table>
+    <tr><th>Gate</th><th>Result</th><th>Evidence</th></tr>
+    <tr><td>Production health</td><td class="pass">PASS</td><td><code>/api/health</code> returned <code>ok=true</code></td></tr>
+    <tr><td>SkyHarbor capture</td><td class="pass">PASS</td><td>10/10 routes, zero console errors, zero network errors</td></tr>
+    <tr><td>Cross-tenant probe</td><td class="pass">PASS</td><td>5/5 prompts, zero forbidden tenant hits</td></tr>
+    <tr><td>50-concurrent load</td><td class="pass">PASS</td><td>50/50 HTTP 200, p95 8525ms, zero tenant bleeds</td></tr>
+    <tr><td>No-tenant Ask regression</td><td class="pass">PASS</td><td>HTTP 200 graceful, zero tenant bleed</td></tr>
+    <tr><td>Verifier sanity</td><td class="pass">PASS</td><td>25/25, average 4.92/5</td></tr>
+  </table>
+  <h2>Clean Demo Routes</h2>
+  <table>
+    <tr><th>Step</th><th>Route / action</th><th>Console</th><th>Network</th></tr>
+    <tr><td>01</td><td>/home</td><td>0</td><td>0</td></tr>
+    <tr><td>02</td><td>/admin/context-layer</td><td>0</td><td>0</td></tr>
+    <tr><td>03</td><td>/intelligence/ask</td><td>0</td><td>0</td></tr>
+    <tr><td>04</td><td>Sentinel progress narrative</td><td>0</td><td>0</td></tr>
+    <tr><td>05</td><td>Sentinel next-workloads question</td><td>0</td><td>0</td></tr>
+    <tr><td>06</td><td>/programs/new</td><td>0</td><td>0</td></tr>
+    <tr><td>07</td><td>/source</td><td>0</td><td>0</td></tr>
+    <tr><td>08</td><td>/source/value</td><td>0</td><td>0</td></tr>
+    <tr><td>09</td><td>/tower</td><td>0</td><td>0</td></tr>
+    <tr><td>10</td><td>/tower/portfolio</td><td>0</td><td>0</td></tr>
+  </table>
+  <h2>Follow-Up</h2>
+  <p>Issue #2481 tracks post-demo corpus migration and Apex/Meridian substrate refresh. It does not block the certified SkyHarbor demo path.</p>
+</main>
+</body>
+</html>
