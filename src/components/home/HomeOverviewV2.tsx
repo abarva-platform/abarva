@@ -25,6 +25,7 @@ import type { OverviewBlocks } from '@/lib/admin/overview-composer';
 import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
 import { AuditRibbon } from '@/components/admin/AuditRibbon';
 import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
+import { PanelCardCta } from '@/components/home/PanelCardCta';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -529,6 +530,7 @@ function PanelCard({ panel }: { panel: PanelStatusCard }) {
   return (
     <a
       href={panel.href}
+      data-panel-num={panel.num}
       style={{
         border: `1px solid ${C.borderLight}`,
         background: C.surface,
@@ -561,7 +563,25 @@ function PanelCard({ panel }: { panel: PanelStatusCard }) {
       </div>
       <div style={{ fontFamily: F_DISPLAY, fontSize: 18, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em' }}>{panel.name}</div>
       <div style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.5, flex: 1 }}>{panel.desc}</div>
-      <div style={{ fontFamily: F_MONO, fontSize: 10, letterSpacing: '0.08em', color: C.faint, paddingTop: 8, borderTop: `1px solid ${C.borderLight}` }}>{panel.foot}</div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          paddingTop: 8,
+          borderTop: `1px solid ${C.borderLight}`,
+        }}
+      >
+        <span style={{ fontFamily: F_MONO, fontSize: 10, letterSpacing: '0.08em', color: C.faint }}>{panel.foot}</span>
+        {panel.cta ? (
+          <PanelCardCta
+            label={panel.cta.label}
+            href={panel.cta.href}
+            telemetryEvent={panel.cta.telemetryEvent}
+          />
+        ) : null}
+      </div>
     </a>
   );
 }

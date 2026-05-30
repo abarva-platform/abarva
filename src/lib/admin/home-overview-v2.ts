@@ -21,6 +21,15 @@ export interface ModuleReadinessV2 {
   href: string;
 }
 
+export interface PanelStatusCardCta {
+  /** Short verb label rendered as a ghost button in the card foot. */
+  label: string;
+  /** Destination href (typically a `?param=value` deep-link). */
+  href: string;
+  /** PostHog event name fired by the panel-card client wrapper on click. */
+  telemetryEvent?: string;
+}
+
 export interface PanelStatusCard {
   num: string;                   // "01"
   name: string;
@@ -28,6 +37,14 @@ export interface PanelStatusCard {
   desc: string;
   foot: string;
   href: string;
+  /**
+   * Optional inline call-to-action rendered alongside the foot text.
+   * Introduced in Wave 2 PR-6 so the Connectors panel can offer
+   * "Add connector" directly from the Setup landing — verdict §4
+   * Persona A friction (no upload affordance from the landing).
+   * Kept optional so other panels stay pure status-cards.
+   */
+  cta?: PanelStatusCardCta;
 }
 
 export interface HomeOverviewV2Extras {
@@ -136,7 +153,23 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
   const panels: PanelStatusCard[] = [
     { num: '01', name: 'Data Trust',           status: sparseOrPartial > 5 ? 'attn' : 'ready',                                 desc: 'Substrate inventory, segment health, provenance of every record.',   foot: `${segments.length} segments · ${totalRecords.toLocaleString()} records`, href: '/admin/data-trust' },
     { num: '02', name: 'AI Initiatives',       status: input.initiativesAtRiskCount > 0 ? 'attn' : 'ready',                    desc: 'Registry of every AI bet — stage, owner, confidence, value posture.',  foot: `${input.initiativesCount} initiatives${input.initiativesAtRiskCount > 0 ? ` · ${input.initiativesAtRiskCount} at risk` : ''}`, href: '/home/ai-initiatives' },
-    { num: '03', name: 'Connectors',           status: 'attn',                                                                  desc: 'Live integrations: ServiceNow, Workday, Slack, vendor systems.',        foot: 'Live state in panel · audit shows recent ingest', href: '/admin/connectors' },
+    {
+      num: '03',
+      name: 'Connectors',
+      status: 'attn',
+      desc: 'Live integrations: ServiceNow, Workday, Slack, vendor systems.',
+      foot: 'Live state in panel · audit shows recent ingest',
+      href: '/admin/connectors',
+      // Wave 2 PR-6 · onboarding entry point. First-time tenant
+      // admin can add a connector without navigating away from the
+      // landing — opens the AddConnectorPanel drawer on the
+      // Connectors page via the `?add=open` query.
+      cta: {
+        label: 'Add connector',
+        href: '/admin/connectors?add=open',
+        telemetryEvent: 'connector_onboarding_landing_cta_clicked',
+      },
+    },
     { num: '04', name: 'Users & Access',       status: 'ready',                                                                 desc: 'RLS-enforced policy, role assignments, SME write permissions.',         foot: 'Roles wired · per-user RLS pilot ready', href: '/admin/users-access' },
     { num: '05', name: 'Agent Readiness',      status: segMature < 18 ? 'attn' : 'ready',                                       desc: 'Per-agent grounding scores: Sentinel, Atlas, Nexus, Steward.',          foot: `Sentinel ${segMature >= 18 ? 'L3' : 'L2'} · others L2`, href: '/admin/agent-readiness' },
     { num: '06', name: 'Production Readiness', status: 'attn',                                                                  desc: 'SSO, audit trail, change-control posture, pen-test status.',            foot: '4 / 6 gates clear', href: '/admin/production-readiness' },

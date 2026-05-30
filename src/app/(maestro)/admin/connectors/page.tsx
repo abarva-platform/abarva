@@ -4,6 +4,8 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { ContextBar } from '@/components/admin/ContextBar';
 import { StewardEditorial } from '@/components/admin/StewardEditorial';
 import { ConnectorsList } from '@/components/admin/ConnectorsList';
+import { AddConnectorPanel } from '@/components/admin/AddConnectorPanel';
+import { ConnectorOnboardingHeader } from '@/components/admin/ConnectorOnboardingHeader';
 import { ConnectorsActionStrip } from '@/components/admin/connectors/ConnectorsActionStrip';
 import { ConnectorCategoryGroup } from '@/components/admin/connectors/ConnectorCategoryGroup';
 import { ConnectorDetailDrawer } from '@/components/admin/connectors/ConnectorDetailDrawer';
@@ -25,6 +27,7 @@ interface ConnectorsSearchParams {
   tab?: string;
   blockers?: string;
   category?: string;
+  add?: string;
 }
 
 function parseTab(raw: string | undefined, fallback: ConnectorTab): ConnectorTab {
@@ -38,6 +41,7 @@ type HrefOverrides = {
   tab?: string | null;
   blockers?: string | null;
   category?: string | null;
+  add?: string | null;
 };
 
 function buildParamHref(
@@ -70,6 +74,7 @@ export default async function ConnectorsPage({
   const activeTab = parseTab(params.tab, view.defaultTab);
   const selectedId = params.connector;
   const blockersExpanded = params.blockers === 'open';
+  const addPanelOpen = params.add === 'open';
 
   const selected =
     selectedId && view.connectorDetailMap[selectedId]
@@ -176,6 +181,10 @@ export default async function ConnectorsPage({
             </a>
           </div>
         ) : null}
+
+        <ConnectorOnboardingHeader
+          addHref={buildParamHref(params, { add: 'open' })}
+        />
 
         <ConnectorsActionStrip actions={view.actions} />
 
@@ -411,6 +420,13 @@ export default async function ConnectorsPage({
               closeHref={buildParamHref(params, { connector: null })}
             />
           </div>
+        ) : null}
+
+        {addPanelOpen ? (
+          <AddConnectorPanel
+            tenantKey={tenant.tenantSlug}
+            closeHref={buildParamHref(params, { add: null })}
+          />
         ) : null}
       </EditorialCanvas>
     </AdminCanonShellV2>
