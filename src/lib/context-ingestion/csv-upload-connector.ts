@@ -1,0 +1,429 @@
+import 'server-only';
+
+import crypto from 'node:crypto';
+
+import Papa from 'papaparse';
+
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+
+import { classifyUploadedFile } from './file-classifier';
+import {
+  getTemplateById,
+  getTemplateForDimension,
+  type ContextTemplateDefinition,
+} from './template-registry';
+import type { ContextDimension } from './types';
+
+type CsvRow = Record<string, string>;
+
+export interface CsvSchemaMapping {
+  templateId?: string;
+  sourceRecordIdColumn?: string | null;
+  titleColumn?: string | null;
+  textColumns?: string[];
+  fieldMappings?: Record<string, string>;
+  dataClassification?: string | null;
+}
+
+export interface CsvUploadInput {
+  clientId: string;
+  tenantKey: string;
+  fileName: string;
+  csvText: string;
+  uploadedBy: string;
+  mapping?: CsvSchemaMapping;
+  uploadedAt?: string;
+  db?: PostgresCompatClient;
+}
+
+export interface CsvParseResult {
+  headers: string[];
+  rows: CsvRow[];
+}
+
+export interface CsvMappingSuggestion {
+  templateId: string;
+  dimension: ContextDimension;
+  sourceRecordIdColumn: string | null;
+  titleColumn: string | null;
+  textColumns: string[];
+  fieldMappings: Record<string, string>;
+}
+
+export interface PreparedCsvContextChunk {
+  client_id: string;
+  tenant_key: string;
+  chunk_id: string;
+  source_segment_id: string;
+  source_record_id: string;
+  source_doc: string;
+  source_path: string;
+  chunk_index: number;
+  chunk_text: string;
+  token_count: number;
+  embedding_status: 'pending';
+  embedding_model: null;
+  embedding_error: null;
+  provenance: Record<string, unknown>;
+  chunk_metadata: Record<string, unknown>;
+}
+
+export interface CsvUploadPreparedBatch {
+  uploadId: string;
+  template: ContextTemplateDefinition;
+  mapping: CsvMappingSuggestion;
+  headers: string[];
+  rowsParsed: number;
+  chunks: PreparedCsvContextChunk[];
+  embeddingHandoff: {
+    status: 'pending_embed_job';
+    command: string;
+    searchableWhen: string;
+  };
+}
+
+export interface CsvUploadLoadResult extends Omit<CsvUploadPreparedBatch, 'chunks'> {
+  chunksQueued: number;
+  persistence: {
+    status: 'inserted' | 'skipped_no_database_url';
+    chunkRowsInserted: number;
+    ingestionRunRecorded: boolean;
+    detail: string;
+  };
+}
+
+const MAX_ROWS = 2_000;
+const MAX_TEXT_COLUMNS = 12;
+
+const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
+  enterprise_profile: 'enterprise_profile',
+  financial_kpis: 'it_financials',
+  annual_quarterly_reports: 'enterprise_profile',
+  market_competitor_intel: 'program_inventory',
+  c_suite_strategy: 'enterprise_profile',
+  business_units_segment_pnl: 'it_financials',
+  product_portfolio: 'program_inventory',
+  manufacturing_sites: 'it_landscape',
+  erp_landscape: 'it_landscape',
+  application_portfolio: 'it_landscape',
+  integration_topology: 'it_landscape',
+  vendor_contracts: 'it_financials',
+  transformation_initiatives: 'program_inventory',
+  org_roles_teams: 'org_structure',
+  delivery_dora_devex: 'program_inventory',
+  regulatory_qms_risk: 'program_inventory',
+  ai_tooling_model_inventory: 'it_landscape',
+  incidents_ops_telemetry: 'it_landscape',
+};
+
+function normalizeHeader(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+function safeSlug(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 72) || 'csv';
+}
+
+function compactTimestamp(value: string): string {
+  return value.replace(/[^0-9a-z]/gi, '').slice(0, 15);
+}
+
+function estimateTokens(text: string): number {
+  return Math.max(1, Math.ceil(text.length / 4));
+}
+
+function findHeader(headers: string[], candidates: string[]): string | null {
+  const byNormalized = new Map(headers.map((header) => [normalizeHeader(header), header]));
+  for (const candidate of candidates) {
+    const found = byNormalized.get(normalizeHeader(candidate));
+    if (found) return found;
+  }
+  return null;
+}
+
+function resolveTemplate(fileName: string, templateId?: string | null): ContextTemplateDefinition {
+  const explicit = templateId ? getTemplateById(templateId) : null;
+  if (explicit) return explicit;
+  const classification = classifyUploadedFile({ fileName, text: '' });
+  return getTemplateForDimension(classification.dimension) ?? getTemplateById('application-portfolio')!;
+}
+
+function parseJsonObject(raw: unknown): Record<string, string> | undefined {
+  if (typeof raw !== 'string' || raw.trim() === '') return undefined;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return undefined;
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>)
+        .filter(([, value]) => typeof value === 'string' && value.trim() !== '')
+        .map(([key, value]) => [key, String(value).trim()]),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+export function parseCsvUpload(csvText: string): CsvParseResult {
+  const parsed = Papa.parse<CsvRow>(csvText, {
+    header: true,
+    skipEmptyLines: 'greedy',
+    transformHeader: (header) => header.trim(),
+    transform: (value) => value.trim(),
+  });
+  const errors = parsed.errors.filter((error) => error.code !== 'TooFewFields');
+  if (errors.length > 0) {
+    throw new Error(`csv_parse_failed: ${errors[0]?.message ?? 'invalid CSV'}`);
+  }
+  const headers = (parsed.meta.fields ?? []).filter((header) => header.trim() !== '');
+  if (headers.length === 0) throw new Error('csv_missing_headers');
+  const rows = (parsed.data ?? []).filter((row) =>
+    headers.some((header) => String(row[header] ?? '').trim() !== ''),
+  );
+  if (rows.length === 0) throw new Error('csv_missing_rows');
+  if (rows.length > MAX_ROWS) throw new Error(`csv_too_many_rows: max ${MAX_ROWS}`);
+  return { headers, rows };
+}
+
+export function inferCsvSchemaMapping(args: {
+  headers: string[];
+  fileName: string;
+  templateId?: string | null;
+  mapping?: CsvSchemaMapping;
+}): CsvMappingSuggestion {
+  const template = resolveTemplate(args.fileName, args.templateId ?? args.mapping?.templateId);
+  const fieldMappings: Record<string, string> = {};
+  const providedFieldMappings = args.mapping?.fieldMappings ?? {};
+
+  for (const field of [...template.requiredFields, ...template.optionalFields]) {
+    const provided = providedFieldMappings[field];
+    if (provided && args.headers.includes(provided)) {
+      fieldMappings[field] = provided;
+      continue;
+    }
+    const exact = findHeader(args.headers, [field]);
+    if (exact) fieldMappings[field] = exact;
+  }
+
+  const sourceRecordIdColumn =
+    args.mapping?.sourceRecordIdColumn && args.headers.includes(args.mapping.sourceRecordIdColumn)
+      ? args.mapping.sourceRecordIdColumn
+      : findHeader(args.headers, [
+          ...template.requiredFields.filter((field) => /(^|_)id$/.test(field)),
+          'id',
+          'record_id',
+          'source_record_id',
+          'app_id',
+          'vendor_id',
+          'initiative_id',
+          'tool_id',
+        ]);
+
+  const titleColumn =
+    args.mapping?.titleColumn && args.headers.includes(args.mapping.titleColumn)
+      ? args.mapping.titleColumn
+      : findHeader(args.headers, ['title', 'name', 'vendor_name', 'tool_name', 'metric', 'priority']);
+
+  const providedTextColumns = args.mapping?.textColumns?.filter((header) => args.headers.includes(header)) ?? [];
+  const mappedColumns = [...new Set(Object.values(fieldMappings))];
+  const textColumns = (providedTextColumns.length > 0
+    ? providedTextColumns
+    : [...mappedColumns, ...args.headers.filter((header) => !mappedColumns.includes(header))])
+    .slice(0, MAX_TEXT_COLUMNS);
+
+  return {
+    templateId: template.id,
+    dimension: template.dimension,
+    sourceRecordIdColumn,
+    titleColumn,
+    textColumns,
+    fieldMappings,
+  };
+}
+
+function buildChunkText(args: {
+  template: ContextTemplateDefinition;
+  mapping: CsvMappingSuggestion;
+  row: CsvRow;
+  rowNumber: number;
+}): string {
+  const lines = [
+    `Template: ${args.template.label}`,
+    `Row: ${args.rowNumber}`,
+  ];
+  if (args.mapping.titleColumn) {
+    const title = args.row[args.mapping.titleColumn];
+    if (title) lines.push(`Title: ${title}`);
+  }
+  for (const [field, column] of Object.entries(args.mapping.fieldMappings)) {
+    const value = args.row[column];
+    if (value) lines.push(`${field}: ${value}`);
+  }
+  for (const column of args.mapping.textColumns) {
+    if (Object.values(args.mapping.fieldMappings).includes(column)) continue;
+    const value = args.row[column];
+    if (value) lines.push(`${column}: ${value}`);
+  }
+  return lines.join('\n');
+}
+
+export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUploadPreparedBatch {
+  const parsed = parseCsvUpload(input.csvText);
+  const template = resolveTemplate(input.fileName, input.mapping?.templateId);
+  const mapping = inferCsvSchemaMapping({
+    headers: parsed.headers,
+    fileName: input.fileName,
+    templateId: template.id,
+    mapping: input.mapping,
+  });
+  const uploadedAt = input.uploadedAt ?? new Date().toISOString();
+  const fileHash = crypto.createHash('sha256').update(input.csvText).digest('hex').slice(0, 12);
+  const uploadId = [
+    'csv',
+    safeSlug(input.tenantKey),
+    safeSlug(input.fileName),
+    fileHash,
+    compactTimestamp(uploadedAt),
+  ].join(':');
+  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
+
+  const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
+    const rowNumber = index + 2;
+    const mappedRecordId = mapping.sourceRecordIdColumn ? row[mapping.sourceRecordIdColumn] : '';
+    const sourceRecordId = mappedRecordId?.trim() || `row-${rowNumber}`;
+    const chunkId = `${uploadId}:row-${rowNumber}`;
+    const chunkText = buildChunkText({ template, mapping, row, rowNumber });
+    return {
+      client_id: input.clientId,
+      tenant_key: input.tenantKey,
+      chunk_id: chunkId,
+      source_segment_id: sourceSegmentId,
+      source_record_id: sourceRecordId,
+      source_doc: input.fileName,
+      source_path: `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}#row=${rowNumber}`,
+      chunk_index: index,
+      chunk_text: chunkText,
+      token_count: estimateTokens(chunkText),
+      embedding_status: 'pending',
+      embedding_model: null,
+      embedding_error: null,
+      provenance: {
+        loader: 'c5-csv-upload-connector',
+        upload_id: uploadId,
+        tenant_key: input.tenantKey,
+        client_id: input.clientId,
+        source_doc: input.fileName,
+        source_row: rowNumber,
+        uploaded_by: input.uploadedBy,
+        uploaded_at: uploadedAt,
+        data_classification: input.mapping?.dataClassification ?? 'confidential',
+        schema_mapping: mapping,
+      },
+      chunk_metadata: {
+        record_kind: 'csv_upload_row',
+        template_id: template.id,
+        context_dimension: template.dimension,
+        source_record_id: sourceRecordId,
+        title: mapping.titleColumn ? row[mapping.titleColumn] : null,
+        csv_headers: parsed.headers,
+      },
+    };
+  });
+
+  return {
+    uploadId,
+    template,
+    mapping,
+    headers: parsed.headers,
+    rowsParsed: parsed.rows.length,
+    chunks,
+    embeddingHandoff: {
+      status: 'pending_embed_job',
+      command: `npm run embed:pending-chunks -- --tenant ${input.tenantKey}`,
+      searchableWhen: 'after the pending chunk embedding worker marks these rows embedded and upserts vectors',
+    },
+  };
+}
+
+function databaseConfigured(): boolean {
+  return Boolean(process.env.ABARVA_AZURE_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim());
+}
+
+export async function loadCsvUploadToTenantContext(input: CsvUploadInput): Promise<CsvUploadLoadResult> {
+  const prepared = prepareCsvUploadForTenantContext(input);
+  const { chunks, ...publicPrepared } = prepared;
+  if (!databaseConfigured() && !input.db) {
+    return {
+      ...publicPrepared,
+      chunksQueued: chunks.length,
+      persistence: {
+        status: 'skipped_no_database_url',
+        chunkRowsInserted: 0,
+        ingestionRunRecorded: false,
+        detail: 'No ABARVA_AZURE_DATABASE_URL or DATABASE_URL is configured; upload was parsed and mapped but not written.',
+      },
+    };
+  }
+
+  const db = input.db ?? getAzureWriteFluentClient();
+  const runInsert = await db
+    .from('data_ingestion_runs')
+    .insert({
+      client_id: input.clientId,
+      tenant_key: input.tenantKey,
+      source_label: `CSV upload: ${input.fileName}`,
+      source_root: 'admin/context-layer/csv-upload',
+      status: 'completed',
+      records_loaded: prepared.rowsParsed,
+      chunks_loaded: prepared.chunks.length,
+      nodes_loaded: 0,
+      edges_loaded: 0,
+      summary: {
+        loader: 'c5-csv-upload-connector',
+        upload_id: prepared.uploadId,
+        template_id: prepared.template.id,
+        context_dimension: prepared.template.dimension,
+        embedding_status: 'pending',
+      },
+    })
+    .select('id');
+  const ingestionRunRecorded = !runInsert.error;
+
+  let inserted = 0;
+  for (let index = 0; index < chunks.length; index += 100) {
+    const batch = chunks.slice(index, index + 100);
+    const { data, error, count } = await db
+      .from('enterprise_context_chunks')
+      .insert(batch)
+      .select('chunk_id');
+    if (error) throw new Error(`csv_chunk_insert_failed: ${error.message}`);
+    inserted += Array.isArray(data) ? data.length : count ?? batch.length;
+  }
+
+  return {
+    ...publicPrepared,
+    chunksQueued: chunks.length,
+    persistence: {
+      status: 'inserted',
+      chunkRowsInserted: inserted,
+      ingestionRunRecorded,
+      detail: ingestionRunRecorded
+        ? 'CSV rows were written as pending tenant context chunks.'
+        : 'CSV chunks were inserted; ingestion run audit row was skipped because the table write failed.',
+    },
+  };
+}
+
+export function parseFieldMappings(raw: unknown): Record<string, string> | undefined {
+  return parseJsonObject(raw);
+}
+
+export function parseTextColumns(raw: unknown): string[] | undefined {
+  if (typeof raw !== 'string' || raw.trim() === '') return undefined;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+  } catch {
+    return raw.split(',').map((value) => value.trim()).filter(Boolean);
+  }
+}
