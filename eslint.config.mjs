@@ -18,6 +18,34 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  // Packet 30 Phase 2D / ADR-0001 D.5:
+  // Runtime app code must not import Supabase packages or compatibility
+  // helpers. Migration/seed/audit utilities live under scripts/ and are
+  // intentionally outside this runtime rule.
+  {
+    files: ["src/app/**/*.{ts,tsx,js,jsx}", "src/lib/**/*.{ts,tsx,js,jsx}"],
+    ignores: [
+      "src/lib/supabase-server.ts",
+      "src/lib/supabase.ts",
+      "src/lib/**/*.test.{ts,tsx,js,jsx}",
+      "src/lib/**/__tests__/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportDeclaration[source.value=/^@supabase\\//]",
+          message:
+            "I2/Phase 2D: Runtime code in src/app and src/lib must not import @supabase/*; use the Azure/Postgres data-plane adapters instead. Supabase is allowed only in scripts/ migration and tooling utilities.",
+        },
+        {
+          selector: "ImportDeclaration[source.value=/^@\\/lib\\/supabase(-server)?$/]",
+          message:
+            "I2/Phase 2D: New runtime code must not import the Supabase compatibility helper; use direct Azure/Postgres read/write adapters instead.",
+        },
+      ],
+    },
+  },
   {
     files: [
       "src/components/OutputRenderer.tsx",

@@ -140,6 +140,13 @@ The retrieval layer queries both stores, fuses results, scores by relevance, and
 
 During the deprecation window, CI guard fails on any new INSERT/UPDATE to deprecated tables.
 
+**Phase 2D guard enforcement closure (2026-05-29):**
+
+- [x] Runtime ESLint fails new `@supabase/*` imports in `src/app/` and `src/lib/`.
+- [x] Runtime ESLint fails new imports of the Supabase compatibility helpers from `src/app/` and `src/lib/`.
+- [x] Supabase package usage is constrained to migration, seed, smoke, and audit tooling.
+- [x] CI fails new INSERT/UPDATE writes to `canonical_industry_ai_patterns` and `pattern_packs`.
+
 ### D.6 — Lineage and audit trail
 
 Every migrated row has `provenance` populated with:
