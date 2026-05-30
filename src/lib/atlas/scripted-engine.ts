@@ -20,6 +20,7 @@ import type {
 } from '@/lib/atlas/types';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import { formatPercentile } from '@/lib/agent/response-shape';
 
 function dollars(value: number | null | undefined): string {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'n/a';
@@ -111,10 +112,21 @@ function buildShadowAiDetail(signal: AtlasSignalDetail): string {
 function buildCohortPosition(portfolio: AtlasPortfolioSummary, adoptionBenchmark: Awaited<ReturnType<typeof query_cohort_benchmarks>>) {
   const median = adoptionBenchmark?.p50;
   const percentileRank = adoptionBenchmark?.apexPercentile;
+  // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B: render the percentile through
+  // the labeled helper so the reader sees metric + cohort + n=… instead of
+  // a naked "Xth percentile" that could belong to any scale.
+  const percentileLabel = percentileRank != null
+    ? formatPercentile({
+      value: percentileRank,
+      metric: adoptionBenchmark?.metricName,
+      cohort: adoptionBenchmark?.label,
+      sampleSize: adoptionBenchmark?.sampleSize ?? adoptionBenchmark?.peers.length,
+    })
+    : null;
   return [
     `${portfolio.clientName} is sitting at ${percent(portfolio.adoptionPenetrationPctAvg)} average adoption.`,
     median != null ? `Peer median is ${percent(median)}.` : null,
-    percentileRank != null ? `That puts the portfolio around the ${percentileRank}th percentile.` : null,
+    percentileLabel ? `That puts the portfolio at ${percentileLabel}.` : null,
     adoptionBenchmark?.note ?? null,
   ]
     .filter(Boolean)

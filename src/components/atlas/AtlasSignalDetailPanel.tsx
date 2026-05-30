@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CohortPeerVisualization } from '@/components/atlas/CohortPeerVisualization';
 import { EvidenceChainCard } from '@/components/atlas/EvidenceChainCard';
+import { formatPercentile } from '@/lib/agent/response-shape';
 import type { AtlasSignalDetail } from '@/lib/atlas/types';
 
 const INK = '#F8FAFC';
@@ -128,7 +129,19 @@ export function AtlasSignalDetailPanel({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 12, color: MUTE }}>
                   <span>{signal.signalTitle}</span>
                   {signal.cohortLabel && <span>{signal.cohortLabel}</span>}
-                  {typeof signal.percentile === 'number' && <span>{signal.percentile}th percentile</span>}
+                  {typeof signal.percentile === 'number' && (
+                    // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B: never
+                    // render a naked "Xth percentile" — bind to metric
+                    // (the signal's pillar) + cohort + n.
+                    <span>
+                      {formatPercentile({
+                        value: signal.percentile,
+                        metric: signal.pillar,
+                        cohort: signal.cohortLabel,
+                        sampleSize: signal.benchmark?.sampleSize,
+                      })}
+                    </span>
+                  )}
                 </div>
               </div>
 

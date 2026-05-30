@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPercentile } from '@/lib/agent/response-shape';
 import type { AtlasBenchmark } from '@/lib/atlas/types';
 
 const INK = '#F8FAFC';
@@ -78,7 +79,16 @@ export function CohortPeerVisualization({ benchmark }: { benchmark: AtlasBenchma
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: INK }}>{formatValue(benchmark.metricName, benchmark.apexValue)}</div>
             {benchmark.apexPercentile != null && (
-              <div style={{ fontSize: 11, color: SOFT }}>{benchmark.apexPercentile}th percentile</div>
+              // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B: never render a
+              // naked "Xth percentile" — bind to metric + cohort + n.
+              <div style={{ fontSize: 11, color: SOFT }}>
+                {formatPercentile({
+                  value: benchmark.apexPercentile,
+                  metric: benchmark.metricName,
+                  cohort: benchmark.label,
+                  sampleSize: benchmark.sampleSize ?? benchmark.peers.length,
+                })}
+              </div>
             )}
           </div>
         </div>
