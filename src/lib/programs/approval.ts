@@ -55,6 +55,12 @@ export interface ApprovalRequest {
   briefSnapshot: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  // PRE-W4-PR-4 · escalation bookkeeping (admin-initiated only).
+  // See supabase/migrations/20260530210000_approval_escalation.sql.
+  escalationLevel: 0 | 1 | 2;
+  lastNotifiedAt: string | null;
+  notifyCount: number;
+  escalatedToUserId: string | null;
 }
 
 export interface SubmitForApprovalInput {
@@ -87,12 +93,17 @@ interface ApprovalRequestRow {
   brief_snapshot: Record<string, unknown> | null;
   created_at: string | Date;
   updated_at: string | Date;
+  escalation_level?: number | null;
+  last_notified_at?: string | Date | null;
+  notify_count?: number | null;
+  escalated_to_user_id?: string | null;
 }
 
 const APPROVAL_COLUMNS =
   "id, tenant_key, program_id, requested_by_user_id, requested_at, " +
   "request_status, decided_by_user_id, decided_at, decision_rationale, " +
-  "brief_snapshot, created_at, updated_at";
+  "brief_snapshot, created_at, updated_at, " +
+  "escalation_level, last_notified_at, notify_count, escalated_to_user_id";
 
 function toIsoString(value: string | Date | null | undefined): string | null {
   if (!value) return null;
@@ -100,6 +111,9 @@ function toIsoString(value: string | Date | null | undefined): string | null {
 }
 
 function rowToApprovalRequest(row: ApprovalRequestRow): ApprovalRequest {
+  const rawLevel = row.escalation_level ?? 0;
+  const normalizedLevel: 0 | 1 | 2 =
+    rawLevel === 1 || rawLevel === 2 ? (rawLevel as 1 | 2) : 0;
   return {
     id: row.id,
     tenantKey: row.tenant_key,
@@ -113,6 +127,13 @@ function rowToApprovalRequest(row: ApprovalRequestRow): ApprovalRequest {
     briefSnapshot: (row.brief_snapshot ?? {}) as Record<string, unknown>,
     createdAt: toIsoString(row.created_at) ?? new Date(0).toISOString(),
     updatedAt: toIsoString(row.updated_at) ?? new Date(0).toISOString(),
+    escalationLevel: normalizedLevel,
+    lastNotifiedAt: toIsoString(row.last_notified_at ?? null),
+    notifyCount:
+      typeof row.notify_count === "number" && row.notify_count >= 0
+        ? row.notify_count
+        : 0,
+    escalatedToUserId: row.escalated_to_user_id ?? null,
   };
 }
 
@@ -445,8 +466,9 @@ export async function withdrawApprovalRequest(
 
 /**
  * Tenant admin queue. Returns pending requests for a tenant, ordered
- * by requested_at descending. Caller must enforce admin role at the
- * API/UI layer; RLS is the second line of defense.
+ * by requested_at ASCENDING (longest-pending first), so SLA-stuck
+ * requests bubble to the top of the queue. Caller must enforce admin
+ * role at the API/UI layer; RLS is the second line of defense.
  */
 export async function getApprovalQueueForTenant(
   tenantKey: string,
@@ -460,12 +482,15 @@ export async function getApprovalQueueForTenant(
 
   const sb = getAzureWriteFluentClient();
 
+  // PRE-W4-PR-4 · order longest-pending first so the SLA-stuck
+  // requests bubble to the top of the queue. The detail page sort key
+  // matches the SLA elapsed-time indicator the queue table renders.
   const { data, error } = await sb
     .from("program_approval_requests")
     .select(APPROVAL_COLUMNS)
     .eq("tenant_key", tenantKey)
     .eq("request_status", "pending")
-    .order("requested_at", { ascending: false });
+    .order("requested_at", { ascending: true });
 
   if (error) {
     throw wrapDbError("getApprovalQueueForTenant: query failed", error, {
@@ -475,6 +500,145 @@ export async function getApprovalQueueForTenant(
 
   const rows = (data ?? []) as unknown as ApprovalRequestRow[];
   return rows.map(rowToApprovalRequest);
+}
+
+// ── PRE-W4-PR-4 · escalation primitives ───────────────────────────────
+//
+// Two admin-initiated transitions are exposed here. Both are append-only
+// in spirit — the original `requested_at` and `request_status` stay
+// untouched, only the escalation columns flip. The audit row (written
+// by the server action) is the immutable record.
+//
+// These two helpers are the source of `approval.escalated` (Wave 4)
+// notification events. The Wave 4 spec routes them at severity = critical.
+
+export interface MarkSponsorNotifiedInput {
+  requestId: string;
+}
+
+export interface EscalateToPlatformAdminInput {
+  requestId: string;
+  escalatedToUserId: string;
+}
+
+/**
+ * Tier 1 escalation · "notify sponsor".
+ *
+ * Updates `last_notified_at = now()`, increments `notify_count`, and
+ * bumps `escalation_level` to 1 IF it was previously 0. If the request
+ * has already been escalated to platform-admin (level=2), the notify
+ * call is still accepted (admin may want to ping the sponsor in
+ * addition to the platform-admin) but escalation_level stays at 2.
+ *
+ * Throws if the request is not in `pending` status — once a decision
+ * lands there's nothing to remind/escalate.
+ */
+export async function markSponsorNotified(
+  input: MarkSponsorNotifiedInput,
+): Promise<ApprovalRequest> {
+  if (!input.requestId) {
+    throw new ApprovalError("markSponsorNotified: requestId is required", {
+      input,
+    });
+  }
+  const sb = getAzureWriteFluentClient();
+
+  // Read-then-write: we need the prior notify_count + escalation_level
+  // to decide the new values without a race-prone increment.
+  const { data: existing, error: readError } = await sb
+    .from("program_approval_requests")
+    .select(APPROVAL_COLUMNS)
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .maybeSingle();
+
+  if (readError) {
+    throw wrapDbError(
+      "markSponsorNotified: lookup failed",
+      readError,
+      { input },
+    );
+  }
+  if (!existing) {
+    throw new ApprovalError(
+      "markSponsorNotified: request not found or already decided",
+      { input },
+    );
+  }
+  const current = rowToApprovalRequest(
+    existing as unknown as ApprovalRequestRow,
+  );
+
+  const nextNotifyCount = (current.notifyCount ?? 0) + 1;
+  const nextLevel: 0 | 1 | 2 =
+    current.escalationLevel === 0 ? 1 : current.escalationLevel;
+
+  const { data, error } = await sb
+    .from("program_approval_requests")
+    .update({
+      last_notified_at: new Date().toISOString(),
+      notify_count: nextNotifyCount,
+      escalation_level: nextLevel,
+    })
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .select(APPROVAL_COLUMNS)
+    .single();
+
+  if (error || !data) {
+    throw wrapDbError(
+      "markSponsorNotified: update failed",
+      error,
+      { input },
+    );
+  }
+  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+}
+
+/**
+ * Tier 2 escalation · "escalate to platform admin".
+ *
+ * Sets `escalation_level = 2` and stores the platform-admin user id in
+ * `escalated_to_user_id`. Idempotent re-routes (level was already 2)
+ * are rejected so the audit trail stays clean — a re-escalation should
+ * route to a *different* admin or re-trigger via a fresh request flow.
+ */
+export async function escalateToPlatformAdmin(
+  input: EscalateToPlatformAdminInput,
+): Promise<ApprovalRequest> {
+  if (!input.requestId) {
+    throw new ApprovalError("escalateToPlatformAdmin: requestId is required", {
+      input,
+    });
+  }
+  if (!input.escalatedToUserId) {
+    throw new ApprovalError(
+      "escalateToPlatformAdmin: escalatedToUserId is required",
+      { input },
+    );
+  }
+  const sb = getAzureWriteFluentClient();
+
+  const { data, error } = await sb
+    .from("program_approval_requests")
+    .update({
+      escalation_level: 2,
+      escalated_to_user_id: input.escalatedToUserId,
+    })
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .lt("escalation_level", 2)
+    .select(APPROVAL_COLUMNS)
+    .single();
+
+  if (error || !data) {
+    throw wrapDbError(
+      "escalateToPlatformAdmin: update failed (already escalated or not pending?)",
+      error,
+      { input },
+    );
+  }
+  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 }
 
 export async function getApprovalRequestById(
