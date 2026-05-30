@@ -2,7 +2,8 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
-import { chunkAskText, sanitizeAskSynthesis } from '../synthesizer';
+import { chunkAskText, chooseSynthesisTokenBudget, sanitizeAskSynthesis } from '../synthesizer';
+import { buildDeterministicConciseFollowups } from '../followups';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -29,6 +30,28 @@ describe('Ask Intelligence guardrails', () => {
     const capped = sanitizeAskSynthesis(long, 120);
 
     expect(capped.split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(120);
+  });
+
+  it('uses a tighter model budget only for explicit concise Ask requests', () => {
+    expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(320);
+    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(320);
+    expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
+  });
+
+  it('uses deterministic followups only for explicit concise Ask requests', () => {
+    expect(buildDeterministicConciseFollowups({
+      query: 'Name one modernization risk SkyHarbor should watch. Keep it concise.',
+      entities: ['IBM dependency'],
+    })).toEqual([
+      'Show the evidence behind IBM dependency',
+      'What would change this recommendation?',
+      'What should we do next?',
+    ]);
+
+    expect(buildDeterministicConciseFollowups({
+      query: 'Build the full modernization case for the CTO, CFO, and COO.',
+      entities: ['modernization'],
+    })).toBeNull();
   });
 
   it('preserves whitespace across streamed synthesis chunks', () => {

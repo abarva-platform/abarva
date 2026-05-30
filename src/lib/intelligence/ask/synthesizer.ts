@@ -225,6 +225,13 @@ function chooseModel(intent: AskIntent): string {
   return 'claude-sonnet-4-6';
 }
 
+export function chooseSynthesisTokenBudget(query: string): number {
+  const normalized = query.toLowerCase();
+  const asksForConciseAnswer =
+    /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(normalized);
+  return asksForConciseAnswer ? 320 : 600;
+}
+
 function formatSourcesBlock(sources: AskSource[]): string {
   if (sources.length === 0) {
     // INT-VOICE.STRAT-2026-05-10 — Empty SOURCES PROVIDED is now an explicit
@@ -308,7 +315,7 @@ export async function* synthesizeStream(args: {
       // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
       // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
       // mid-list on the new MANDATORY ANSWER SHAPES.
-      max_tokens: 600,
+      max_tokens: chooseSynthesisTokenBudget(args.query),
       system: `${system}${continuityInstruction}`,
       messages: [{ role: 'user', content: prompt }],
       stream: true,
