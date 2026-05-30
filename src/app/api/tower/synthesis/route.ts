@@ -93,9 +93,9 @@ export interface AtlasSynthesisSnapshot {
  * exercise without mocking the entire AI stack.
  *
  * Atlas Fix A invariant: the tenant display name is always derived from
- * the signed-in tenant's `getActiveClientRow()` — never a literal
- * "Apex Retail Group". When the portfolio is empty the model is told
- * honestly, never silently fed Apex's data.
+ * the signed-in tenant's `getActiveClientRow()` — never a hardcoded Apex
+ * display name. When the portfolio is empty the model is told honestly,
+ * never silently fed another tenant's data.
  */
 export function composeAtlasSynthesisUserMessage(
   tenantDisplayName: string,

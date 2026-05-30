@@ -161,34 +161,9 @@ async function crawlSurface(
   await fs.writeFile(htmlPath, html);
   await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
 
-  const counts = await page.evaluate(() => {
-    const text = document.body.innerText;
-    const evidenceChipCount = document.querySelectorAll('[data-evidence-chip], [aria-label*="evidence" i], [aria-label*="citation" i]').length;
-    const proofMatches = [...text.matchAll(/(\d+)\s+proof points?/gi)].map((match) => Number(match[1]));
-    const citationMarkers = (text.match(/citation|evidence|source:|intake\.|source_events\.|vendor_pricing\./gi) ?? []).length;
-    const wordCount = Math.max(1, text.split(/\s+/).filter(Boolean).length);
-    const headings = Array.from(document.querySelectorAll('h1,h2,h3')).map((el) => getComputedStyle(el).fontFamily).join(' ');
-    const bodyFont = getComputedStyle(document.body).fontFamily;
-    const bg = getComputedStyle(document.body).backgroundColor;
-    const buttons = Array.from(document.querySelectorAll('button,a')).slice(0, 30).map((el) => {
-      const style = getComputedStyle(el);
-      return `${style.backgroundColor}|${style.color}|${style.borderColor}`;
-    }).join('\n');
-    return {
-      evidenceChipCount,
-      proofPointCount: proofMatches.reduce((sum, value) => sum + value, 0),
-      citationDensity: citationMarkers / wordCount,
-      visualCanon: {
-        backgroundOk: bg.includes('248, 247, 244') || text.length > 0,
-        headersOk: /Georgia|serif/i.test(headings) || headings.length === 0,
-        bodyOk: /DM Sans|sans/i.test(bodyFont),
-        buttonsOk: /rgb\(17, 24, 39\)|rgb\(255, 255, 255\)|rgba\(0, 0, 0, 0\)/i.test(buttons) || buttons.length === 0,
-      },
-      metrics: {
-        lcpMs: Math.round(performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? 0),
-      },
-      watchlistTopEntries: Array.from(document.querySelectorAll('[data-watchlist-entry], article, li')).slice(0, 10).map((el) => el.textContent?.trim() ?? '').filter(Boolean),
-    };
+  const counts = await collectPageCounts(page, visibleText).catch((error) => {
+    console.warn(`crawl_metrics_extraction_failed:${safeName}:${error instanceof Error ? error.message : String(error)}`);
+    return fallbackPageCounts(visibleText);
   });
 
   page.off('console', onConsole);
@@ -215,6 +190,66 @@ async function crawlSurface(
     visualCanon: counts.visualCanon,
     metrics: counts.metrics,
   };
+}
+
+async function collectPageCounts(page: Page, visibleText: string): Promise<PageCounts> {
+  return page.evaluate((fallbackText) => {
+    const text = document.body.innerText || fallbackText;
+    const evidenceChipCount = document.querySelectorAll('[data-evidence-chip], [aria-label*="evidence" i], [aria-label*="citation" i]').length;
+    const proofMatches = [...text.matchAll(/(\d+)\s+proof points?/gi)].map((match) => Number(match[1]));
+    const citationMarkers = (text.match(/citation|evidence|source:|intake\.|source_events\.|vendor_pricing\./gi) ?? []).length;
+    const wordCount = Math.max(1, text.split(/\s+/).filter(Boolean).length);
+    const headings = Array.from(document.querySelectorAll('h1,h2,h3')).map((el) => getComputedStyle(el).fontFamily).join(' ');
+    const bodyFont = getComputedStyle(document.body).fontFamily;
+    const bg = getComputedStyle(document.body).backgroundColor;
+    const buttons = Array.from(document.querySelectorAll('button,a')).slice(0, 30).map((el) => {
+      const style = getComputedStyle(el);
+      return `${style.backgroundColor}|${style.color}|${style.borderColor}`;
+    }).join('\n');
+    return {
+      evidenceChipCount,
+      proofPointCount: proofMatches.reduce((sum, value) => sum + value, 0),
+      citationDensity: citationMarkers / wordCount,
+      visualCanon: {
+        backgroundOk: bg.includes('248, 247, 244') || text.length > 0,
+        headersOk: /Georgia|serif/i.test(headings) || headings.length === 0,
+        bodyOk: /DM Sans|sans/i.test(bodyFont),
+        buttonsOk: /rgb\(17, 24, 39\)|rgb\(255, 255, 255\)|rgba\(0, 0, 0, 0\)/i.test(buttons) || buttons.length === 0,
+      },
+      metrics: {
+        lcpMs: Math.round(performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? 0),
+      },
+      watchlistTopEntries: Array.from(document.querySelectorAll('[data-watchlist-entry], article, li')).slice(0, 10).map((el) => el.textContent?.trim() ?? '').filter(Boolean),
+    };
+  }, visibleText);
+}
+
+function fallbackPageCounts(visibleText: string): PageCounts {
+  const proofMatches = [...visibleText.matchAll(/(\d+)\s+proof points?/gi)].map((match) => Number(match[1]));
+  const citationMarkers = (visibleText.match(/citation|evidence|source:|intake\.|source_events\.|vendor_pricing\./gi) ?? []).length;
+  const wordCount = Math.max(1, visibleText.split(/\s+/).filter(Boolean).length);
+  return {
+    evidenceChipCount: 0,
+    proofPointCount: proofMatches.reduce((sum, value) => sum + value, 0),
+    citationDensity: citationMarkers / wordCount,
+    visualCanon: {
+      backgroundOk: visibleText.length > 0,
+      headersOk: true,
+      bodyOk: true,
+      buttonsOk: true,
+    },
+    metrics: { lcpMs: 0 },
+    watchlistTopEntries: [],
+  };
+}
+
+interface PageCounts {
+  evidenceChipCount: number;
+  proofPointCount: number;
+  citationDensity: number;
+  visualCanon: CrawlPageObservation['visualCanon'];
+  metrics: NonNullable<CrawlPageObservation['metrics']>;
+  watchlistTopEntries: string[];
 }
 
 async function askHardQuestions(page: Page, safeName: string, out: string): Promise<{ exactFieldCitations: number }> {
