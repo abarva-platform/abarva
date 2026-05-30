@@ -32,6 +32,7 @@ import {
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
+import { getCapabilityGrounding } from '@/lib/admin/broker/capability-grounding-broker';
 import { spineToChips } from '@/components/admin/TrustStrip';
 import {
   emptyPostureCards,
@@ -80,14 +81,16 @@ export default async function AdminOverviewPage({
   // Wave 1 PR-5 introduced trustSpine for the Trust strip; Wave 1
   // PR-6 reuses the same fetch and slices the top-6 audit events
   // for the AuditRibbon on the landing.
-  const [snapshot, signals, programApprovalQueue, trustSpine] = brokerTenantKey
-    ? await Promise.all([
-        getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
-        getCrossProgramSignals(brokerTenantKey).catch(() => []),
-        getApprovalQueueForTenant(clientKey).catch(() => []),
-        getTrustSpine(brokerTenantKey).catch(() => null),
-      ])
-    : [null, [], [], null];
+  const [snapshot, signals, programApprovalQueue, trustSpine, capabilityGrounding] =
+    brokerTenantKey
+      ? await Promise.all([
+          getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
+          getCrossProgramSignals(brokerTenantKey).catch(() => []),
+          getApprovalQueueForTenant(clientKey).catch(() => []),
+          getTrustSpine(brokerTenantKey).catch(() => null),
+          getCapabilityGrounding(brokerTenantKey).catch(() => null),
+        ])
+      : [null, [], [], null, null];
   const trustChips = trustSpine ? spineToChips(trustSpine) : null;
   // Wave 2 PR-4 · Posture grid (Zone D). When the spine resolves we
   // compose the four cards from it; when it doesn't, we still render
@@ -150,6 +153,7 @@ export default async function AdminOverviewPage({
     initiativesCount: initiativesList.length,
     initiativesAtRiskCount,
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
+    capabilityGrounding,
   });
 
   // Wave 2 PR-5 · TenantSwitcher inputs. The authority gate mirrors
