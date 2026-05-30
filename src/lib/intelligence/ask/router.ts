@@ -52,12 +52,12 @@ export async function route(intent: AskIntent, entities: string[], opts: RouteOp
     return withCoverage({ sources: [], averageConfidence: 0 });
   }
 
-  // general_synthesis — union of vendor + pattern + knowledge
-  const [v, p, k] = await Promise.all([
-    retrieveVendor(entities),
-    retrievePattern(entities, opts),
-    retrieveKnowledge(entities, null, 'GENERAL'),
-  ]);
+  // general_synthesis — union of vendor + pattern + knowledge.
+  // Keep the retrieval steps sequential so one Ask turn cannot fan out
+  // across multiple session-mode Postgres clients at the same time.
+  const v = await retrieveVendor(entities);
+  const p = await retrievePattern(entities, opts);
+  const k = await retrieveKnowledge(entities, null, 'GENERAL');
   const merged = [...v.sources, ...p.sources, ...k.sources].slice(0, 8);
   const avg = merged.length > 0 ? merged.reduce((s, x) => s + (x.confidence ?? 0), 0) / merged.length : 0;
   return withCoverage({ sources: merged, averageConfidence: avg });

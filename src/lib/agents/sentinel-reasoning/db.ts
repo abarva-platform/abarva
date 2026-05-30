@@ -1,6 +1,7 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
 import { createMemoryAiEgressAuditSink, createSupabaseAiEgressAuditSink, type AiEgressAuditSink, type TenantAiPolicy } from '@/lib/integrations/ai-egress';
 import { CONSERVATIVE_TENANT_AI_POLICY } from '@/lib/integrations/ai-egress/policy';
+import { resolvePostgresPoolMax } from '@/lib/data-plane/postgresCompat';
 import type { SentinelReasoningStage } from './types';
 
 let pool: Pool | null = null;
@@ -23,6 +24,10 @@ function getPool(): Pool {
   pool = new Pool({
     connectionString,
     application_name: 'nexus-sentinel-reasoning',
+    max: resolvePostgresPoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
     ssl: shouldDisableSsl(connectionString) ? false : { rejectUnauthorized: false },
   });
   return pool;
