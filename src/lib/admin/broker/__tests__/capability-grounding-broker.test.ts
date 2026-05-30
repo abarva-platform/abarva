@@ -206,6 +206,69 @@ describe('getCapabilityGrounding', () => {
   });
 });
 
+describe('getCapabilityGrounding · snapshotOverride contract', () => {
+  // P0 follow-up to the browser walk 2026-05-30 banner: /admin
+  // pre-fetches `getSetupInventorySnapshot` once for the masthead
+  // pills + TrustSpine, and now threads that snapshot through here
+  // so capability-grounding stops issuing a duplicate 3-query burst
+  // against `data_inventory_segments` / `data_inventory_audit_log`
+  // / `data_ingestion_runs` that competed with TrustSpine for the
+  // single Postgres connection-pool slot. Same pattern as the
+  // PR-2606 `getTrustSpine({ snapshotOverride })` dedup.
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('uses snapshot from override when provided, skipping fresh fetch', async () => {
+    // The mock must blow up if invoked — proves we never touched
+    // the Postgres pool on the override path.
+    getSetupInventorySnapshotMock.mockRejectedValue(
+      new Error('this should never be called'),
+    );
+    const override = snapshot([
+      seg(3, 'mature'),
+      seg(4, 'complete'),
+      seg(5, 'mature'),
+    ]);
+    const result = await getCapabilityGrounding('apex-retail', {
+      snapshotOverride: override,
+    });
+    expect(getSetupInventorySnapshotMock).not.toHaveBeenCalled();
+    // And the override's substrate flowed through to the rollup —
+    // Atlas families [3,4,5] are all covered → L3.
+    const atlas = result.perAgent.find((a) => a.agent === 'atlas')!;
+    for (const family of atlas.families) {
+      expect(family.level).toBe('L3');
+    }
+  });
+
+  it('falls back to fresh fetch when no override property is passed', async () => {
+    getSetupInventorySnapshotMock.mockResolvedValue(
+      snapshot([seg(3, 'mature')]),
+    );
+    await getCapabilityGrounding('apex-retail');
+    expect(getSetupInventorySnapshotMock).toHaveBeenCalledTimes(1);
+    expect(getSetupInventorySnapshotMock).toHaveBeenCalledWith('apex-retail');
+  });
+
+  it('honors explicit null override (does NOT refetch)', async () => {
+    // Explicit `null` means "caller knows there is no live
+    // substrate" — we honor it without refetching, mirroring the
+    // `getTrustSpine` contract. The result falls through to the
+    // authored inventory fallback.
+    getSetupInventorySnapshotMock.mockRejectedValue(
+      new Error('this should never be called'),
+    );
+    const result = await getCapabilityGrounding('apex-retail', {
+      snapshotOverride: null,
+    });
+    expect(getSetupInventorySnapshotMock).not.toHaveBeenCalled();
+    // Authored fallback still emits the 4-agent canonical shape.
+    expect(result.perAgent).toHaveLength(4);
+    expect(result.evidence).toBe('estimated');
+  });
+});
+
 describe('panelFootFromGrounding', () => {
   function rollup(
     overrides: Partial<CapabilityGrounding> = {},

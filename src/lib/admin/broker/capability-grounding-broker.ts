@@ -75,6 +75,7 @@ import {
   buildAuthoredInventoryFallback,
   getSetupActsContent,
   type InventorySegmentRollup,
+  type SetupInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
 import { getSetupInventorySnapshot } from '@/lib/admin/setup-data-broker';
 
@@ -346,18 +347,38 @@ function composeAgentGrounding(
  *   `apex-retail`).  Callers holding the app `ClientKey`
  *   (e.g. `apexretail`) must map via
  *   `clientKeyToInventorySubstrateKey` before invoking.
+ * @param options.snapshotOverride — optional pre-fetched snapshot.
+ *   The admin landing already fetches the inventory snapshot once
+ *   for its masthead pills + Trust strip; threading it through here
+ *   avoids a duplicate 3-query burst against `data_inventory_segments`
+ *   / `data_inventory_audit_log` / `data_ingestion_runs` that would
+ *   otherwise compete with TrustSpine for the single Postgres
+ *   connection-pool slot (default `ABARVA_PG_POOL_MAX=1`) and surface
+ *   as the amber "Live data temporarily unavailable" banner on
+ *   non-Apex tenants. Matches the PR-2606 `getTrustSpine` dedup
+ *   pattern: an explicit `null` override is honored as "no live
+ *   substrate" without refetching.
  */
 export async function getCapabilityGrounding(
   tenantKey: string,
+  options: { snapshotOverride?: SetupInventorySnapshot | null } = {},
 ): Promise<CapabilityGrounding> {
-  // 1. Resolve substrate — prefer the live snapshot; fall back to
-  //    authored inventory if it's missing.  The authored fallback
+  // 1. Resolve substrate — prefer the caller-supplied snapshot
+  //    override (admin landing dedup path); otherwise fall back to a
+  //    fresh `getSetupInventorySnapshot` read; finally fall back to
+  //    authored inventory if both are missing. The authored fallback
   //    is keyed off `setup-acts-registry`, which understands every
   //    canonical tenant and emits a deterministic 14-segment shape.
   let segments: InventorySegmentRollup[];
   let substrateLive = false;
+  const hasSnapshotOverride = Object.prototype.hasOwnProperty.call(
+    options,
+    'snapshotOverride',
+  );
   try {
-    const snapshot = await getSetupInventorySnapshot(tenantKey);
+    const snapshot = hasSnapshotOverride
+      ? options.snapshotOverride ?? null
+      : await getSetupInventorySnapshot(tenantKey);
     if (snapshot && snapshot.segments.length > 0) {
       segments = snapshot.segments;
       substrateLive = true;
