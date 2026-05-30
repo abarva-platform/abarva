@@ -9,8 +9,11 @@
 # Behaviour:
 #   - VERCEL_ENV=production  → run db:migrate --ci only when the deploy
 #                              commit changed supabase/migrations, then
-#                              next build. A migration failure aborts the
-#                              deploy (set -e ensures non-zero propagates).
+#                              next build. The migration runner connects via
+#                              ABARVA_AZURE_DATABASE_URL / AZURE_DATABASE_URL /
+#                              DATABASE_URL and must use the Azure/Postgres
+#                              direct migration path, not Supabase session mode.
+#                              A migration failure aborts the deploy.
 #   - any other value        → log a skip line, then next build.
 #
 # This file lives at scripts/vercel-build.sh (not in src/) so it stays

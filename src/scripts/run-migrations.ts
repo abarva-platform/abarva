@@ -11,8 +11,9 @@ loadEnv();
 // tracks applied migrations in schema_migrations table, runs pending ones
 // in numerical order inside transactions.
 //
-// Requires · DATABASE_URL in .env.local (Supabase → Project Settings →
-// Database → Connection string → URI).
+// Requires · ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL, or DATABASE_URL.
+// Production deploys should use an Azure/Postgres direct connection string,
+// never a Supabase session-mode pooler.
 //
 // Usage:
 //   npx tsx src/scripts/run-migrations.ts          # apply pending
@@ -146,6 +147,12 @@ export function parseArgs(argv: string[]): CliFlags {
   return { isDry, isCi, markAllApplied, allowDestructive, forceName };
 }
 
+export function resolveMigrationDatabaseUrl(
+  env: Partial<Record<string, string | undefined>> = process.env,
+): string | null {
+  return env.ABARVA_AZURE_DATABASE_URL ?? env.AZURE_DATABASE_URL ?? env.DATABASE_URL ?? null;
+}
+
 async function ensureTrackingTable(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -164,11 +171,10 @@ async function getAppliedMigrations(client: Client): Promise<Set<string>> {
 async function main() {
   const { isDry, isCi, markAllApplied, allowDestructive, forceName } = parseArgs(process.argv.slice(2));
 
-  const url = process.env.DATABASE_URL;
+  const url = resolveMigrationDatabaseUrl();
   if (!url) {
-    console.error('✗  DATABASE_URL required in .env.local');
-    console.error('   Get it from · Supabase Dashboard → Project Settings → Database → Connection string → URI');
-    console.error('   Make sure to use the "Session" mode pooler URL for migrations.');
+    console.error('✗  ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL, or DATABASE_URL required in environment');
+    console.error('   Use the Azure/Postgres direct migration connection string for production deploys.');
     process.exit(1);
   }
 

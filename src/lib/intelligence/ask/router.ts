@@ -2,6 +2,7 @@ import type { AskIntent, AskSurfaceContext, RetrievalResult } from './types';
 import { retrieveVendor } from './retrievers/vendor';
 import { retrievePattern } from './retrievers/pattern';
 import { retrieveKnowledge } from './retrievers/knowledge';
+import { assertCoverage, classifyQuestionCategory } from '@/lib/knowledge/coverage';
 
 export interface RouteOptions {
   query?: string;
@@ -10,39 +11,45 @@ export interface RouteOptions {
 }
 
 export async function route(intent: AskIntent, entities: string[], opts: RouteOptions = {}): Promise<RetrievalResult> {
+  const category = classifyQuestionCategory(opts.query ?? entities.join(' '), intent);
+  const withCoverage = (result: RetrievalResult): RetrievalResult => ({
+    ...result,
+    coverageReport: assertCoverage(category, result.sources),
+  });
+
   if (intent === 'vendor_lookup' || intent === 'vendor_comparison') {
     const primary = await retrieveVendor(entities);
     if (primary.sources.length === 0) {
       // fall back to knowledge layer in case we've indexed vendor docs
-      return retrieveKnowledge(entities, ['vendor_doc', 'vendor_posture'], 'VENDOR');
+      return withCoverage(await retrieveKnowledge(entities, ['vendor_doc', 'vendor_posture'], 'VENDOR'));
     }
-    return primary;
+    return withCoverage(primary);
   }
 
   if (intent === 'pattern_inquiry') {
-    return retrievePattern(entities, opts);
+    return withCoverage(await retrievePattern(entities, opts));
   }
 
   if (intent === 'regulation_query') {
-    return retrieveKnowledge(entities, ['regulation', 'framework'], 'REGULATION');
+    return withCoverage(await retrieveKnowledge(entities, ['regulation', 'framework'], 'REGULATION'));
   }
 
   if (intent === 'research_query') {
-    return retrieveKnowledge(entities, ['research_report'], 'RESEARCH');
+    return withCoverage(await retrieveKnowledge(entities, ['research_report'], 'RESEARCH'));
   }
 
   if (intent === 'benchmark_query') {
-    return retrieveKnowledge(entities, ['benchmark'], 'BENCHMARK');
+    return withCoverage(await retrieveKnowledge(entities, ['benchmark'], 'BENCHMARK'));
   }
 
   if (intent === 'topic_synthesis') {
     // Topics table from Pack L not yet populated; fall through to broad knowledge.
-    return retrieveKnowledge(entities, null, 'TOPIC');
+    return withCoverage(await retrieveKnowledge(entities, null, 'TOPIC'));
   }
 
   if (intent === 'insight_query') {
     // engagement_insights table from Pack E not yet populated.
-    return { sources: [], averageConfidence: 0 };
+    return withCoverage({ sources: [], averageConfidence: 0 });
   }
 
   // general_synthesis — union of vendor + pattern + knowledge
@@ -53,5 +60,5 @@ export async function route(intent: AskIntent, entities: string[], opts: RouteOp
   ]);
   const merged = [...v.sources, ...p.sources, ...k.sources].slice(0, 8);
   const avg = merged.length > 0 ? merged.reduce((s, x) => s + (x.confidence ?? 0), 0) / merged.length : 0;
-  return { sources: merged, averageConfidence: avg };
+  return withCoverage({ sources: merged, averageConfidence: avg });
 }

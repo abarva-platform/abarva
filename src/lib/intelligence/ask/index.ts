@@ -16,6 +16,12 @@ import {
 import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
 import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
 import {
+  assertCoverage,
+  classifyQuestionCategory,
+  type CoverageReport,
+} from '@/lib/knowledge/coverage';
+import { formatCoverageReportForPrompt } from '@/lib/knowledge/coverageReport';
+import {
   buildCurrentStateAdvisory,
   chunkAskText,
   isBroadCurrentStateQuestion,
@@ -28,6 +34,7 @@ export interface AskEvent {
   type: 'classified' | 'sources' | 'delta' | 'followups' | 'done' | 'error';
   classification?: IntentClassification;
   sources?: AskSource[];
+  coverageReport?: CoverageReport;
   text?: string;
   followups?: string[];
   error?: string;
@@ -131,7 +138,9 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
-    yield { type: 'sources', sources };
+    const questionCategory = classifyQuestionCategory(trimmed, classification.intent);
+    const coverageReport = assertCoverage(questionCategory, sources);
+    yield { type: 'sources', sources, coverageReport };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     if (handoff) {
@@ -182,6 +191,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       userContextBlock: opts.userContextBlock,
       conversationContextBlock: opts.conversationContextBlock,
       factAvailabilityBlock,
+      coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
       averageConfidence,
     })) {
       answer += delta;
