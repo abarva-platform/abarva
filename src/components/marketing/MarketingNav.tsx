@@ -79,6 +79,7 @@ function NavLinkItem({
   return (
     <Link
       href={link.href}
+      prefetch={false}
       className={className}
       role={role}
       onClick={onClick}
