@@ -46,21 +46,29 @@ A new monopoly hygiene test (`egress-writer-monopoly.test.ts`) scans `src/` for 
 - `src/lib/admin/broker/__tests__/egress-writer-monopoly.test.ts` (new) — 3 hygiene-gate tests: sanity (files found), writer holds the insert path, no insert outside writer.
 - `docs/releases/records/2026-05-30-pre-w4-pr6-tenant-stamping-default.md` (new) — this record.
 
-## QA / Verification
+## QA / Validation
 
-- `npx eslint src/lib/admin/broker src/lib/integrations/ai-egress src/lib/corpus/embedding.ts src/lib/agents/sentinel-reasoning` → green (2 unused-arg warnings in fake-client test helper; no errors).
-- `npx tsc --noEmit` → green for the touched paths (pre-existing missing-module errors for Azure SDKs / pptx unaffected; per `feedback_typecheck_workflow_artifact.md` these are workflow artifacts).
-- `npx jest src/lib/admin/broker/__tests__` → 98 passed, 9 suites (includes 9 new writer tests + 3 monopoly tests).
-- `npx jest src/lib/integrations/ai-egress` → 11 passed, 2 suites (existing sink contract tests still pass via memory-sink path).
-- `npx jest src/lib/admin/__tests__/broker-boundary.test.ts` → green; the writer lives inside the broker dir so the exemption applies.
+Status: **pass** (local; CI gates running).
 
-## Rollout
+- `npx eslint src/lib/admin/broker src/lib/integrations/ai-egress src/lib/corpus/embedding.ts src/lib/agents/sentinel-reasoning` → **pass** (2 unused-arg warnings in fake-client test helper; no errors).
+- `npx tsc --noEmit` → **pass** for the touched paths (pre-existing missing-module errors for Azure SDKs / pptx unaffected; per `feedback_typecheck_workflow_artifact.md` these are workflow artifacts, not blockers).
+- `npx jest src/lib/admin/broker/__tests__` → **pass** (98 tests, 9 suites; includes 9 new writer tests + 3 monopoly tests).
+- `npx jest src/lib/integrations/ai-egress` → **pass** (11 tests, 2 suites; existing sink contract tests still pass via memory-sink path).
+- `npx jest src/lib/admin/__tests__/broker-boundary.test.ts` → **pass**; the writer lives inside the broker dir so the existing boundary exemption applies.
 
-Always-on. The contract change is type-level: callers that previously called `createSupabaseAiEgressAuditSink()` with no argument no longer compile. The four known callers have been updated in this PR. Any caller landed in a feature branch that has not yet merged will receive a compile error when rebased, with a clear message pointing at the new required `EgressAuditTenantContext`.
+## Rollout Plan
 
-## Rollback
+Always-on. The contract change is type-level: callers that previously called `createSupabaseAiEgressAuditSink()` with no argument no longer compile. The four known callers (`anthropic-direct.ts`, `openai-direct.ts`, `corpus/embedding.ts`, `agents/sentinel-reasoning/model.ts` via the updated factory) have been updated in this PR. Any caller landed in a feature branch that has not yet merged will receive a compile error when rebased, with a clear message pointing at the new required `EgressAuditTenantContext`. No staged rollout, no feature flag — the wrapper is a strict superset of the old behaviour, with the additional guarantee that every row carries both tenant stamps.
 
-`git revert` is safe. The old direct-insert path in `supabase-audit.ts` is preserved in history; reverting restores it and removes the `ctx` requirement. Existing rows are unaffected — only the write contract changed, not the schema.
+## Rollback Plan
+
+`git revert` is safe. The old direct-insert path in `supabase-audit.ts` is preserved in history; reverting restores it and removes the `ctx` requirement. Existing rows are unaffected — only the write contract changed, not the schema. If a partial rollback is needed (e.g. the monopoly test starts flagging an unexpected caller mid-flight), the smallest safe revert is to delete only `egress-writer-monopoly.test.ts` and re-run; the wrapper itself stays in place and continues stamping.
+
+## Known Gaps
+
+- The two tenant identifiers (`intendedTenantKey`, `resolvedTenantKey`) are opaque strings — callers in this PR pass UUIDs in some paths and slugs in others. The isolation broker compares by string equality, which is correct for mismatch detection but means a single trace may show mixed key shapes in `request_metadata`. A future cleanup pass should normalise to the kebab slug (`apex-retail`, `meridian-health`) at the call-site boundary. Tracked for Wave 4 polish.
+- The Sentinel sink keeps an in-memory fallback on Supabase write failure (`createSentinelAiAuditSink`). That fallback bypasses the durable audit trail but preserves uptime — a deliberate trade-off documented in the original Sentinel reasoning slice. Not changed in this PR.
+- Pre-PRE-W4-PR-6 historical rows do not carry stamps. The isolation broker continues to report "no observed mismatch" for unstamped rows rather than a false negative. New rows from the moment this PR ships will all be stamped.
 
 ## Audit Evidence
 
