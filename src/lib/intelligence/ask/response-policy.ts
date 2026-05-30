@@ -36,6 +36,30 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   return `${capped.replace(/[,\s;:]+$/, '')}...`;
 }
 
+export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): string {
+  if (!hasTenantEvidence(sources)) return text;
+
+  let rewritten = text.replace(
+    /\bThe loaded sources\s+(?:give|show|provide)\s+(?:you\s+)?([^.!?]{1,140}?)\s+but\s+(?:do not|don't|does not|doesn't)\s+(?:contain|include|show|provide|name)\s+([^.!?;—]+)(?:\s*—\s*[^.!?]*(?:not|n't)\s+(?:been\s+)?(?:ingested|loaded|available)[^.!?]*)?\.?\s*(?:Here's what I can ground firmly\.?\s*)?/gi,
+    (_match, evidenceScope: string, missingField: string) =>
+      `The loaded sources show ${normalizeEvidenceScope(evidenceScope)}; the remaining field to confirm is ${normalizeMissingField(missingField)}. `,
+  );
+
+  rewritten = rewritten.replace(
+    /\b(?:I|we)\s+(?:do not|don't)\s+have\s+([^.!?]{1,140}?)\s+(?:in|from)\s+(?:the\s+)?(?:connected|loaded|tenant)\s+(?:data|sources|context)[^.!?]*[.!?]\s*/gi,
+    (_match, missingField: string) =>
+      `The loaded tenant sources leave ${normalizeMissingField(missingField)} as the remaining field to confirm. `,
+  );
+
+  rewritten = rewritten.replace(
+    /\b(?:that|the)\s+([^.!?]{1,120}?)\s+(?:has not|hasn't|is not|isn't)\s+(?:been\s+)?(?:ingested|loaded|available)[^.!?]*[.!?]\s*/gi,
+    (_match, missingField: string) =>
+      `The remaining field to confirm is ${normalizeMissingField(missingField)}. `,
+  );
+
+  return rewritten.replace(/\s{2,}/g, ' ').trim();
+}
+
 export function chunkAskText(text: string): string[] {
   return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
 }
@@ -78,4 +102,36 @@ function readAfter(facts: string[], prefix: string): string | null {
 
 function stripTerminalPeriod(value: string | null): string | null {
   return value ? value.replace(/\.$/, '') : null;
+}
+
+function hasTenantEvidence(sources: AskSource[]): boolean {
+  return sources.some((source) => (
+    source.type === 'TENANT' ||
+    source.type === 'SURFACE' ||
+    source.type === 'GRAPH'
+  ));
+}
+
+function normalizeEvidenceScope(value: string): string {
+  const cleaned = cleanClause(value);
+  if (!cleaned || /\b(?:the|some)\s+(?:structural\s+)?(?:picture|context)\b/i.test(cleaned)) {
+    return 'the exposure shape and decision context';
+  }
+  return cleaned;
+}
+
+function normalizeMissingField(value: string): string {
+  return cleanClause(value)
+    .replace(/^(?:a|an|the)\s+/i, 'the ')
+    .replace(/\b(?:itself|directly|specifically)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function cleanClause(value: string): string {
+  return value
+    .replace(/^[\s:;,\-—]+/, '')
+    .replace(/[\s:;,\-—]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
