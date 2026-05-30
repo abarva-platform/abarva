@@ -6,12 +6,19 @@
 //
 // Wave 1 PR-6 (2026-05-30) · accepts an optional `filterSource` prop driven
 // by the landing-page AuditRibbon click (`/admin/audit?source=<source>`).
+//
+// Wave 2 PR-E (2026-05-30) · P0 Apex-leak fix. This component no longer
+// imports `AUDIT_LOG_FIXTURE` directly — the fixture contains Apex-only
+// content (APX-CDP-2026 events, AMS BAFO Stage 7, etc.) and rendering it
+// for every tenant leaked Apex data to all 5 demo tenants. The page is
+// now an async server component that reads via `getAdminAuditEvents`
+// (tenant-scoped broker). Non-Apex tenants render the clean empty
+// state (locked palette) until their tenant-scoped audit log is seeded.
 
 import { SHELL } from "@/lib/shell/shell-tokens";
-import {
-  AUDIT_LOG_FIXTURE,
-  type AuditEntry,
-} from "@/lib/setup/shell-setup-fixture";
+import { getAdminAuditEvents } from "@/lib/admin/data/admin-audit-log-adapter";
+import type { AuditEntry } from "@/lib/setup/shell-setup-fixture";
+import { mapAdminAuditToLegacyEntry } from "./audit-entry-mapper";
 
 /**
  * Audit ribbon source filter · Wave 1 PR-6.
@@ -205,6 +212,12 @@ function AuditRow({ item }: { item: AuditEntry }) {
 
 export interface SetupAuditPageProps {
   /**
+   * Tenant slug for the active admin context. Required so the page
+   * reads through the tenant-scoped broker instead of the legacy
+   * Apex-only fixture. Wave 2 PR-E (2026-05-30) P0 Apex-leak fix.
+   */
+  tenantSlug: string;
+  /**
    * Optional source filter from the landing-page audit ribbon click.
    * When set, only audit entries whose surface maps to that source
    * are rendered. Wave 1 PR-6 wiring; future PRs will replace the
@@ -213,8 +226,13 @@ export interface SetupAuditPageProps {
   filterSource?: AuditSourceFilter | null;
 }
 
-export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
-  const visible = filterEntries(AUDIT_LOG_FIXTURE, filterSource ?? null);
+export async function SetupAuditPage({
+  tenantSlug,
+  filterSource,
+}: SetupAuditPageProps) {
+  const events = await getAdminAuditEvents(tenantSlug);
+  const mapped = events.map((event) => mapAdminAuditToLegacyEntry(event));
+  const visible = filterEntries(mapped, filterSource ?? null);
   const criticalCount = visible.filter(
     (entry) => entry.severity === "critical",
   ).length;
@@ -222,6 +240,17 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
   const headerTitle = filterSource
     ? `Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? "" : "s"}`
     : `Audit log · ${visible.length} events`;
+  // When the broker returns nothing (non-Apex fixture tenants today, or any
+  // tenant whose admin_audit_log is empty), distinguish "tenant has no data
+  // yet" from "filter excluded all rows". This keeps the empty state
+  // honest for tenant admins instead of suggesting their filter is at
+  // fault.
+  const emptyReason: "no-events" | "filter-empty" | null =
+    visible.length === 0
+      ? mapped.length === 0
+        ? "no-events"
+        : "filter-empty"
+      : null;
 
   return (
     <div
@@ -316,7 +345,7 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
           padding: visible.length === 0 ? "16px" : "0 16px",
         }}
       >
-        {visible.length === 0 ? (
+        {emptyReason !== null ? (
           <div
             style={{
               fontFamily: SHELL.SANS,
@@ -325,7 +354,9 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
               padding: "4px 0",
             }}
           >
-            No audit events match this filter.
+            {emptyReason === "filter-empty"
+              ? "No audit events match this filter."
+              : "No activity in this tenant yet."}
           </div>
         ) : (
           visible.map((entry) => <AuditRow key={entry.id} item={entry} />)
