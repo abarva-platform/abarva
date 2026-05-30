@@ -62,7 +62,7 @@ export async function getAdminRoleSummary(
 }
 
 export function getAdminUsersFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminUserRow> {
   return adminUsersFixture(tenantSlug);
 }

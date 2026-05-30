@@ -103,7 +103,7 @@ export async function getAdminProductionReadinessSnapshot(
 }
 
 export function getAdminProductionReadinessFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): AdminProductionReadinessSnapshot {
   return adminProductionReadinessFixture(tenantSlug);
 }

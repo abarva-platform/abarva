@@ -836,7 +836,7 @@ function buildActions(pilotBlockerCount: number): ConnectorAction[] {
 }
 
 export async function buildConnectorsPageView(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): Promise<ConnectorsPageView> {
   const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'connectors');
   const editorial = generateStewardEditorial(ctx);

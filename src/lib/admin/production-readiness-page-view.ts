@@ -348,8 +348,8 @@ function mapHistoryEntry(
  * "Apex Retail Group" only when the caller doesn't pass a name.
  */
 export async function buildProductionReadinessPageView(
-  tenantSlug: string = 'apex-retail',
-  tenantName: string = 'Apex Retail Group',
+  tenantSlug: string,
+  tenantName: string,
 ): Promise<ProductionReadinessPageView> {
   const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'production-readiness');
   const editorial = generateStewardEditorial(ctx);

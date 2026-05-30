@@ -40,7 +40,12 @@ import type {
  * `buildArchitecturePageView()`.
  */
 
-const DEFAULT_TENANT_SLUG = 'apex-retail';
+// PR-D (P0 Apex-leak): removed shared APEX_FIXTURE_SLUG. Module-level
+// fixture exports below inline the 'apex-retail' literal because those
+// exports are deliberately Apex fixture projections used by legacy import
+// sites (ADMIN17/ADMIN4 tests). The async `buildArchitecturePageView()` no
+// longer defaults — callers must thread the active tenant.
+const APEX_FIXTURE_SLUG = 'apex-retail';
 
 export interface ArchitecturePlane {
   id: string;
@@ -112,21 +117,21 @@ function toAzureTarget(snapshot: AzureTargetArchitectureSnapshot): {
  * (ADMIN17 tests, ADMIN4 tests, sibling components).
  */
 export const ARCHITECTURE_PLANES: ReadonlyArray<ArchitecturePlane> = toPlanes(
-  adminArchitecturePlanesFixture(DEFAULT_TENANT_SLUG),
+  adminArchitecturePlanesFixture(APEX_FIXTURE_SLUG),
 );
 
 export const PLANE_COMPONENTS: ReadonlyArray<PlaneComponent> = toComponents(
-  adminArchitectureComponentsFixture(DEFAULT_TENANT_SLUG),
+  adminArchitectureComponentsFixture(APEX_FIXTURE_SLUG),
 );
 
 export const AZURE_SERVICES: ReadonlyArray<AzureService> = toAzureServices(
-  adminAzureTargetArchitectureFixture(DEFAULT_TENANT_SLUG).services,
+  adminAzureTargetArchitectureFixture(APEX_FIXTURE_SLUG).services,
 );
 
 export const AZURE_TARGET_ARCHITECTURE: {
   services: ReadonlyArray<AzureService>;
   edges: ReadonlyArray<AzureFlowEdge>;
-} = toAzureTarget(adminAzureTargetArchitectureFixture(DEFAULT_TENANT_SLUG));
+} = toAzureTarget(adminAzureTargetArchitectureFixture(APEX_FIXTURE_SLUG));
 
 export type ArchitectureView = 'core' | 'azure';
 
@@ -185,7 +190,7 @@ function buildComponentDetailMap(
 }
 
 export async function buildArchitecturePageView(
-  tenantSlug: string = DEFAULT_TENANT_SLUG,
+  tenantSlug: string,
 ): Promise<ArchitecturePageView> {
   const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'architecture');
   const editorial = generateStewardEditorial(ctx);

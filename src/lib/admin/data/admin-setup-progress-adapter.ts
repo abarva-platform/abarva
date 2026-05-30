@@ -42,7 +42,7 @@ export async function getAdminSetupProgress(
 }
 
 export function getAdminSetupProgressFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminSetupStep> {
   return adminSetupProgressFixture(tenantSlug);
 }

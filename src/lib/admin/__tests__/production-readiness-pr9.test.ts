@@ -77,7 +77,7 @@ describe('Production Readiness · PR 9 §2.2 — tenant-substituted copy', () =>
   });
 
   it('falls back to Apex when no tenant name passed (backward compat)', async () => {
-    const view = await buildProductionReadinessPageView();
+    const view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     const demo = view.tiles.find((t) => t.id === 'demo');
     expect(demo?.body).toContain('Apex Retail Group');
   });

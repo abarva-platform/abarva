@@ -87,7 +87,7 @@ export async function getAdminAuditEvent(
 }
 
 export function getAdminAuditEventsFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminAuditEvent> {
   return adminAuditEventsFixture(tenantSlug);
 }

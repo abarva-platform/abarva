@@ -122,7 +122,7 @@ export async function getAdminOverviewSnapshot(
 }
 
 export function getAdminOverviewFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): AdminOverviewSnapshot {
   return adminOverviewSnapshotFixture(tenantSlug);
 }

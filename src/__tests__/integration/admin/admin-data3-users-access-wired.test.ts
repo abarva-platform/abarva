@@ -35,19 +35,20 @@ const PAGE_ROUTE_PATH = resolve(
 
 describe('ADMIN-DATA3 — buildUsersAccessPageView is async', () => {
   it('returns a Promise (function is async)', () => {
-    const result = buildUsersAccessPageView();
+    const result = buildUsersAccessPageView('apex-retail');
     expect(result).toBeInstanceOf(Promise);
   });
 
   it('resolves to a UsersAccessPageView object', async () => {
-    const view = await buildUsersAccessPageView();
+    const view = await buildUsersAccessPageView('apex-retail');
     expect(view).toBeDefined();
     expect(typeof view).toBe('object');
   });
 
-  it('accepts an optional tenantSlug argument', async () => {
-    // Default and explicit invocations both succeed (signature is stable).
-    const a = await buildUsersAccessPageView();
+  it('requires an explicit tenantSlug argument (PR-D)', async () => {
+    // PR-D Apex-leak elimination: tenantSlug is now required, never defaulted.
+    // Two explicit invocations are deterministic.
+    const a = await buildUsersAccessPageView('apex-retail');
     const b = await buildUsersAccessPageView('apex-retail');
     expect(a.title).toBe(b.title);
   });
@@ -109,7 +110,7 @@ describe('ADMIN-DATA3 — output shape unchanged (regression guard)', () => {
   let view: UsersAccessPageView;
 
   beforeAll(async () => {
-    view = await buildUsersAccessPageView();
+    view = await buildUsersAccessPageView('apex-retail');
   });
 
   it('preserves top-level surface fields (eyebrow/title/subtitle)', () => {
