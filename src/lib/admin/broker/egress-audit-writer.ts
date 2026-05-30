@@ -51,6 +51,7 @@
 import 'server-only';
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { emitNotification } from '@/lib/admin/broker/notification-broker';
 import type {
   AiDataClass,
   AiEgressAuditRecord,
@@ -164,6 +165,44 @@ function emitMismatchWarn(input: EgressAuditWriteInput, ctx: EgressAuditTenantCo
   );
 }
 
+/**
+ * W4-PR-3 · Emit `isolation.anomaly` through the notification broker
+ * when a tenant-key mismatch is detected at write time. The payload
+ * adheres to the isolation-anomaly template contract and the existing
+ * PII allowlist — tenant slugs only, no user identifiers, no payload
+ * fingerprints. Fire-and-forget: a broker outage must not block the
+ * audit row insert (the row itself is the canonical record).
+ */
+function emitIsolationAnomalyBestEffort(
+  input: EgressAuditWriteInput,
+  ctx: EgressAuditTenantContext,
+): void {
+  if (ctx.intendedTenantKey === ctx.resolvedTenantKey) return;
+  void emitNotification({
+    tenantKey: ctx.resolvedTenantKey,
+    eventType: 'isolation.anomaly',
+    payload: {
+      intendedTenantKey: ctx.intendedTenantKey,
+      resolvedTenantKey: ctx.resolvedTenantKey,
+      intendedTenantSlug: ctx.intendedTenantKey,
+      resolvedTenantSlug: ctx.resolvedTenantKey,
+      detector: `ai_egress_audit.tenant_mismatch:${input.workflow}`,
+      severity: 'critical',
+      producedAtIso: new Date().toISOString(),
+    },
+    targetResourceId: ctx.tenantId,
+  }).catch((err: unknown) => {
+    console.warn(
+      JSON.stringify({
+        event: 'isolation_anomaly.notification_emit_failed',
+        intended_tenant: ctx.intendedTenantKey,
+        resolved_tenant: ctx.resolvedTenantKey,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  });
+}
+
 function toDbRow(
   input: EgressAuditWriteInput,
   ctx: EgressAuditTenantContext,
@@ -244,5 +283,13 @@ export async function writeEgressAudit(
   if (error) {
     throw new Error(`AI egress audit write failed: ${error.message}`);
   }
+
+  // W4-PR-3 · After the canonical row lands, fan out the
+  // `isolation.anomaly` notification when the tenant context did not
+  // match. Done AFTER the insert so a successful audit row still
+  // exists if the notification path errors. The emitter is
+  // fire-and-forget; failures never surface to the caller.
+  emitIsolationAnomalyBestEffort(input, ctx);
+
   return fromDbRow(data as Record<string, unknown>);
 }

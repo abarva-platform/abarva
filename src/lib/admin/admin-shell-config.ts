@@ -4,6 +4,7 @@ export type AdminSubSectionId =
   | "overview"
   | "data-trust"
   | "connectors"
+  | "inbox"
   | "users-access"
   | "customer-admin"
   | "agent-readiness"
@@ -69,6 +70,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     subtitle: "Roles and risk",
     href: "/admin/users-access",
     group: "Governance",
+  },
+  {
+    id: "inbox",
+    label: "Inbox",
+    subtitle: "Signals and digests",
+    href: "/admin/inbox",
   },
   {
     id: "customer-admin",

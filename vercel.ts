@@ -59,4 +59,10 @@ import { type VercelConfig } from '@vercel/config/v1';
 export const config: VercelConfig = {
   framework: 'nextjs',
   buildCommand: 'bash scripts/vercel-build.sh',
+  crons: [
+    {
+      path: '/api/cron/notifications-tick',
+      schedule: '* * * * *',
+    },
+  ],
 };

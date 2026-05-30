@@ -29,6 +29,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { writeInviteAudit } from '@/lib/admin/invite-collaborator-audit';
+import { emitNotification } from '@/lib/admin/broker/notification-broker';
+import { maskEmail } from '@/lib/notifications/templates/_shared/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -138,6 +140,40 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     role,
     programs: meta.programs,
     action: 'invite_accepted',
+  });
+
+  // W4-PR-3 · Emit `auth.invite_accepted` through the broker. The
+  // invitee email is passed in masked form for log redaction; the
+  // template's `maskEmail` will leave it unchanged. The webhook
+  // response is unaffected by notification failures — Clerk only
+  // cares about the 200 / 5xx code.
+  const acceptedAtIso = new Date().toISOString();
+  void emitNotification({
+    tenantKey,
+    eventType: 'auth.invite_accepted',
+    payload: {
+      inviteeEmailMasked: maskEmail(inviteeEmail),
+      // Template reads `inviteeEmail` for rendering; we mask before
+      // handing it to the registry so the broker's PII redactor sees
+      // a pre-redacted value either way.
+      inviteeEmail: maskEmail(inviteeEmail),
+      inviteeUserId: userEvent.data.id,
+      role,
+      tenantKey,
+      acceptedAtIso,
+      producedAtIso: acceptedAtIso,
+    },
+    actorUserId: meta.invited_by_user_id ?? undefined,
+    targetResourceId: invitationId,
+  }).catch((err: unknown) => {
+    console.warn(
+      JSON.stringify({
+        event: 'auth_invite_accepted.notification_emit_failed',
+        tenant_key: tenantKey,
+        invitation_id: invitationId,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
   });
 
   return NextResponse.json({ ok: true }, { status: 200 });

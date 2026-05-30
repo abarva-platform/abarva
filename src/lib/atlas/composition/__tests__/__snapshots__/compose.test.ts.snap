@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Atlas IAC composition golden: apex archetype 1`] = `
+"Industry context
+Microsoft 365 Copilot trend: mainstream-scaling; driver: Microsoft 365 Copilot Wave 2 (September 2024) — Pages, Python in Excel, redesigned Business Chat — followed by Ignite 2024 autonomous agents announcements and Build 2024 Team Copilot disclosures. (Microsoft — "Microsoft 365 Copilot Wave 2: Pages, Python in Excel, and agents" (Jared Spataro), 2024-09). Metrics: global_knowledge_workers_using_genai_at_work: 75% of global knowledge workers reporting they use generative AI at work (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — "AI at Work Is Here. Now Comes the Hard Part.", 2024-05); genai_use_growth_year_over_year: 46-75% point growth: 46% in 2023 to 75% in 2024 of knowledge workers using AI at work (Microsoft and LinkedIn Work Trend Index Annual Report 2024, 2024-05). Patterns: in-app-copilot-side-pane: Users invoke Copilot inside Word, Excel, PowerPoint, Outlook, and OneNote via the side pane or ribbon. This is the default deployment surface — drafting, summarising, rewriting, and editing inside the document the user is already in. (Microsoft and LinkedIn Work Trend Index Annual Report 2024, 2024-05) business-chat-graph-grounded: Business Chat ("Copilot Chat" in the Microsoft 365 app and Teams) reasons over the tenant's Microsoft Graph — emails, files, chats, calendars — to answer questions and produce content grounded in the user's own data. Microsoft renamed and expanded this surface in the Wave 2 update. (Microsoft — "Microsoft 365 Copilot Wave 2: Pages, Python in Excel, and agents" (Jared Spataro), 2024-09) Industry context refreshed 2026-05-30."
+`;
+
+exports[`Atlas IAC composition golden: apex hybrid 1`] = `
+"Your data
+From your Tower / Source ledger as of 2026-Q1: AR-02 (Copilot for Retail Associates) is pilot, owned by Carlos Rivera · CIO. Baseline: Containment rate: 22 percent (target 30 percent, as of 2026-Q1). Value: value attainment is 25%; no upcoming gate is recorded. Signals: no linked signals are recorded.
+
+Industry context
+Microsoft 365 Copilot trend: mainstream-scaling; driver: Microsoft 365 Copilot Wave 2 (September 2024) — Pages, Python in Excel, redesigned Business Chat — followed by Ignite 2024 autonomous agents announcements and Build 2024 Team Copilot disclosures. (Microsoft — "Microsoft 365 Copilot Wave 2: Pages, Python in Excel, and agents" (Jared Spataro), 2024-09). Metrics: global_knowledge_workers_using_genai_at_work: 75% of global knowledge workers reporting they use generative AI at work (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — "AI at Work Is Here. Now Comes the Hard Part.", 2024-05); genai_use_growth_year_over_year: 46-75% point growth: 46% in 2023 to 75% in 2024 of knowledge workers using AI at work (Microsoft and LinkedIn Work Trend Index Annual Report 2024, 2024-05). Patterns: in-app-copilot-side-pane: Users invoke Copilot inside Word, Excel, PowerPoint, Outlook, and OneNote via the side pane or ribbon. This is the default deployment surface — drafting, summarising, rewriting, and editing inside the document the user is already in. (Microsoft and LinkedIn Work Trend Index Annual Report 2024, 2024-05) business-chat-graph-grounded: Business Chat ("Copilot Chat" in the Microsoft 365 app and Teams) reasons over the tenant's Microsoft Graph — emails, files, chats, calendars — to answer questions and produce content grounded in the user's own data. Microsoft renamed and expanded this surface in the Wave 2 update. (Microsoft — "Microsoft 365 Copilot Wave 2: Pages, Python in Excel, and agents" (Jared Spataro), 2024-09) Industry context refreshed 2026-05-30.
+
+The gap
+AR-02 is ahead of most named tenant peers on value attainment (75th percentile). The gap is to prove the same operating controls the Microsoft 365 Copilot archetype requires: usage telemetry, gates, and owner accountability.
+
+Next move
+Use the next governance gate to require owner sign-off on KPI movement and seat/tool telemetry for AR-02; expand only if the next ledger refresh improves measured attainment."
+`;
+
+exports[`Atlas IAC composition golden: apex initiative 1`] = `
+"Your data
+From your Tower / Source ledger as of 2026-Q1: AR-02 (Copilot for Retail Associates) is pilot, owned by Carlos Rivera · CIO. Baseline: Containment rate: 22 percent (target 30 percent, as of 2026-Q1). Value: value attainment is 25%; no upcoming gate is recorded. Signals: no linked signals are recorded.
+
+Next move
+Use the next governance gate to require owner sign-off on KPI movement and seat/tool telemetry for AR-02; expand only if the next ledger refresh improves measured attainment."
+`;
+
+exports[`Atlas IAC composition golden: meridian archetype 1`] = `
+"Industry context
+Claude Code trend: emerging; driver: October 2024 Anthropic launch of upgraded Claude 3.5 Sonnet, Claude 3.5 Haiku, computer use, and the Claude Code research preview. (Anthropic — "Introducing computer use, a new Claude 3.5 Sonnet, and Claude 3.5 Haiku", 2024-10). Metrics: developer_use_in_year: 30% who have used Claude in their development process this year (any Claude product) (Stack Overflow Developer Survey 2024, 2024-07); ai_tool_use_in_dev_workflow: 62% currently using AI tools in their development process (Stack Overflow Developer Survey 2024, 2024-07). Patterns: cli-agent-in-terminal: Developers run Claude Code as a terminal companion to their existing IDE. It reads the repo, runs commands, edits files, and explains its work. This is the primary surface Anthropic ships and documents. (Anthropic — "Introducing computer use, a new Claude 3.5 Sonnet, and Claude 3.5 Haiku" (Claude Code research preview), 2024-10) agentic-coding-on-real-tasks: Claude Code is positioned for multi-step engineering tasks — reading codebases, editing across files, running tests, and iterating. Anthropic cites internal use during development of Claude 3.5 Sonnet (new) for refactors and bug fixes. (Anthropic — "Introducing computer use, a new Claude 3.5 Sonnet, and Claude 3.5 Haiku", 2024-10) Industry context refreshed 2026-05-30."
+`;
+
+exports[`Atlas IAC composition golden: meridian hybrid 1`] = `
+"Your data
+From your Tower / Source ledger as of 2026-Q1: MH-02 (Workday Agent Intake) is pilot, owned by Priya Nair · VP Enterprise Apps. Baseline: Cycle time reduction: 8 percent (target 20 percent, as of 2026-Q1). Value: value attainment is not yet measurable; no upcoming gate is recorded. Signals: no linked signals are recorded.
+
+Industry context
+Workday AI Agents trend: early; driver: Workday Rising 2024 keynote announcing the Agent System of Record and the first wave of role-specific agents (Recruiter, Expenses, Succession Planning, Optimize, Talent Mobility, Contracts). (Workday Rising 2024 keynote — Carl Eschenbach and Sayan Chakraborty, 2024-09). Metrics: workday_total_customers: 11000 customers on the Workday platform (denominator for any agent rollout) (Workday Q4 FY25 earnings call (February 2025), 2025-02); workday_full_time_employees_supported: 70000000 workers under management on Workday (denominator for HCM-side agents) (Workday corporate fact sheet (Workday newsroom, 2025), 2025-02). Patterns: workday-built-role-specific-agents: Workday ships first-party agents tied to specific Workday roles: Recruiter Agent (sources and screens candidates inside Workday Recruiting), Expenses Agent (drafts and validates expense reports), Succession Planning Agent (proposes succession slates for HRBPs), Optimize Agent (recommends business-process improvements for admins), Talent Mobility Agent (matches internal talent to open roles), and Contracts Agent (reviews supplier contracts). All are announced as Workday-built and gated on the Agent System of Record. (Workday Rising 2024 — "Introducing a new generation of Workday AI agents" (Workday newsroom), 2024-09) agent-system-of-record: Workday positions the Agent System of Record as the central registry, lifecycle, and governance plane for all AI agents — Workday-built and partner-built — operating against Workday data. The pitch is that customers manage agents the way they manage workers today: hire, role-assign, monitor, retire. The Agent System of Record was the headline announcement at Workday Rising 2024. (Workday newsroom — "Workday Introduces the Agent System of Record" (Workday Rising 2024), 2024-09) Industry context refreshed 2026-05-30.
+
+The gap
+No portfolio percentile is available for MH-02; the tenant sample is too small or measured value is missing, so Atlas cannot claim ahead/behind versus peers. Compared with Workday AI Agents, the gap to inspect is whether the tenant has measured adoption and gate evidence before scaling.
+
+Next move
+Add measured value for MH-02 and at least two comparable tenant initiatives so Atlas can compute a portfolio percentile."
+`;
+
+exports[`Atlas IAC composition golden: meridian initiative 1`] = `
+"Your data
+From your Tower / Source ledger as of 2026-Q1: MH-02 (Workday Agent Intake) is pilot, owned by Priya Nair · VP Enterprise Apps. Baseline: Cycle time reduction: 8 percent (target 20 percent, as of 2026-Q1). Value: value attainment is not yet measurable; no upcoming gate is recorded. Signals: no linked signals are recorded.
+
+Next move
+Add measured value for MH-02 and at least two comparable tenant initiatives so Atlas can compute a portfolio percentile."
+`;

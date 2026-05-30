@@ -1,4 +1,7 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
+import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+import { composeAtlasIacAnswer, type AtlasIacComposition } from '@/lib/atlas/composition/compose';
+import type { AtlasTenancyCtx } from '@/lib/atlas/initiative-deep/types';
 
 type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
 
@@ -23,6 +26,7 @@ export interface RetrievalContext {
   clientChunks: RetrievedChunk[];
   industryChunks: RetrievedChunk[];
   topicChunks: RetrievedChunk[];
+  atlasIacComposition?: AtlasIacComposition | null;
 }
 
 export interface AssembleRetrievalArgs {
@@ -35,6 +39,8 @@ export interface AssembleRetrievalArgs {
   topKClient?: number;
   topKIndustry?: number;
   topKTopic?: number;
+  atlasTenancy?: AtlasTenancyCtx | null;
+  initiativeDeepClient?: PostgresCompatClient;
 }
 
 const DAY_MS = 86_400_000;
@@ -240,6 +246,13 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     topKIndustry: args.topKIndustry ?? 3,
     topKTopic: args.topKTopic ?? 2,
   });
+  const atlasIacComposition = args.atlasTenancy
+    ? await composeAtlasIacAnswer({
+        prompt: args.userQuery,
+        tenancy: args.atlasTenancy,
+        client: args.initiativeDeepClient,
+      })
+    : null;
 
   return {
     industry,
@@ -248,5 +261,6 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     clientChunks: scrubChunks(fallback.clientChunks),
     industryChunks: scrubChunks(fallback.industryChunks),
     topicChunks: scrubChunks(fallback.topicChunks),
+    atlasIacComposition,
   };
 }

@@ -58,6 +58,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { testConnector } from '@/lib/admin/broker/connector-health-broker';
 import { acquireConnectorTestSlot } from '@/lib/admin/broker/connector-test-rate-limit';
 import { writeConnectorTestAudit } from '@/lib/admin/connector-test-audit';
+import { emitNotification } from '@/lib/admin/broker/notification-broker';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -154,6 +155,38 @@ export async function POST(
     connectorLabel: connectorId,
     result,
   });
+
+  // W4-PR-3 · Wire `connector.failed` to a live → degraded transition.
+  // Fire-and-forget so a broker outage does not surface in the probe
+  // verdict. The payload matches the W4-PR-6 ConnectorFailedPayload
+  // contract (connector identity, last-success timestamp, reason).
+  if (result.transition.kind === 'degraded') {
+    const failureReason = result.transition.reason;
+    void emitNotification({
+      tenantKey,
+      eventType: 'connector.failed',
+      payload: {
+        connectorId,
+        connectorName: connectorId,
+        lastSuccessIso: null,
+        lastPullIso: null,
+        failureReason,
+        suggestedAction: 'Open Connectors and re-authenticate or fix the configuration.',
+        producedAtIso: result.probedAtIso,
+      },
+      actorUserId: adminCheck.userId,
+      targetResourceId: connectorId,
+    }).catch((err: unknown) => {
+      console.warn(
+        JSON.stringify({
+          event: 'connector_test.notification_emit_failed',
+          tenant_key: tenantKey,
+          connector_id: connectorId,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+    });
+  }
 
   return NextResponse.json({
     ok: result.ok,

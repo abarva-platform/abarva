@@ -1,7 +1,7 @@
 /**
  * W4-PR-6 · Email template shape tests.
  *
- * Asserts contract uniformity across the 5 templates:
+ * Asserts contract uniformity across notification templates:
  *   - `subject`, `html`, `text` all return strings.
  *   - HTML contains CAN-SPAM required elements (physical address,
  *     unsubscribe link, sender brand).
@@ -22,6 +22,7 @@ import {
   type IsolationAnomalyPayload,
   type AuthInviteAcceptedPayload,
   type ProgramGateDecisionPayload,
+  type DailyDigestEmailPayload,
 } from '../index';
 import { SENDER_ADDRESS, PREFERENCES_PATH } from '../_shared/EmailShell';
 
@@ -83,16 +84,46 @@ const FIXTURES: Record<TemplatedEventType, unknown> = {
     deciderName: 'Priya Patel',
     producedAtIso: '2026-05-30T14:02:00.000Z',
   } satisfies ProgramGateDecisionPayload,
+  'system.daily_digest': {
+    eventId: 'evt_daily_digest_demo_1',
+    tenantId: 'tenant_demo_1',
+    tenantTimezone: 'America/Chicago',
+    periodStartIso: '2026-05-29T13:00:00.000Z',
+    periodEndIso: '2026-05-30T13:00:00.000Z',
+    producedAtIso: '2026-05-30T13:00:00.000Z',
+    totalEvents: 3,
+    criticalCount: 1,
+    warningCount: 1,
+    moduleCounts: { setup: 2, moves: 1 },
+    topEvents: [
+      {
+        eventType: 'connector.failed',
+        sourceModule: 'setup',
+        severity: 'critical',
+        title: 'Snowflake sales mart',
+        createdAt: '2026-05-30T12:10:00.000Z',
+      },
+      {
+        eventType: 'program.gate_decision',
+        sourceModule: 'moves',
+        severity: 'info',
+        title: 'Demand Forecasting Refresh',
+        createdAt: '2026-05-30T11:10:00.000Z',
+      },
+    ],
+    ctaHref: '/admin/inbox',
+  } satisfies DailyDigestEmailPayload,
 };
 
 describe('notification email template registry', () => {
-  test('registry exports exactly the 5 W4-PR-6 event types', () => {
+  test('registry exports the templated event types', () => {
     expect(TEMPLATED_EVENT_TYPES).toEqual([
       'approval.requested',
       'connector.failed',
       'isolation.anomaly',
       'auth.invite_accepted',
       'program.gate_decision',
+      'system.daily_digest',
     ]);
   });
 
