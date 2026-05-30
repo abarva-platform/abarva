@@ -51,10 +51,8 @@ jest.mock('@/lib/admin/data/admin-data-mode', () => ({
 }));
 
 import { TenancyError } from '@/lib/auth/tenancy';
-import {
-  savePreferences,
-  __resetSavePreferencesRateLimitForTests,
-} from '../save-preferences';
+import { savePreferences } from '../save-preferences';
+import { __resetSavePreferencesRateLimitForTests } from '@/lib/admin/save-preferences-rate-limit';
 
 const VALID_INPUT = {
   rows: [

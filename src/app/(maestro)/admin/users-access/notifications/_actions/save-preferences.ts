@@ -27,6 +27,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { passRateLimit } from '@/lib/admin/save-preferences-rate-limit';
 import {
   resolveTenantId,
   upsertPreference,
@@ -72,25 +73,6 @@ export type SavePreferencesActionResult =
         | 'rate_limited';
       message: string;
     };
-
-// ── Rate limit (in-process) ────────────────────────────────────────────────
-
-const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 30;
-const rateWindow = new Map<string, number[]>();
-
-function passRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const arr = rateWindow.get(userId) ?? [];
-  const fresh = arr.filter((t) => now - t < RATE_WINDOW_MS);
-  fresh.push(now);
-  rateWindow.set(userId, fresh);
-  return fresh.length <= RATE_MAX;
-}
-
-export function __resetSavePreferencesRateLimitForTests(): void {
-  rateWindow.clear();
-}
 
 // ── Action ─────────────────────────────────────────────────────────────────
 
