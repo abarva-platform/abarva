@@ -6,6 +6,7 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
+import { ConnectorTestConnectionButton } from '@/components/setup/ConnectorTestConnectionButton';
 
 const SUB_NAV_ITEMS = [
   { key: 'connectors', label: 'Connectors', active: true, href: '/admin/connectors' },
@@ -389,6 +390,17 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
             )}
           </div>
         )}
+
+        {/* Wave 2 PR-6 · Test connection affordance.
+            Per audit verdict §4 Persona A, every connector detail
+            needs a "test connection" button. The actual probe is
+            stubbed until the connector-health RPC lands in Wave 2
+            PR-1; for now this fires telemetry and shows a transient
+            banner. Placed before the Data flows block so an admin
+            in a degraded-state triage can reach it without scrolling. */}
+        <div style={{ marginBottom: 18 }} data-section="connector-test-connection">
+          <ConnectorTestConnectionButton connectorId={detail.id} />
+        </div>
 
         <div style={{ marginBottom: 24 }}>
           <div
