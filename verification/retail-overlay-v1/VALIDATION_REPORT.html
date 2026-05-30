@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Retail Overlay v1 Validation Report</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18202a;
+        --muted: #5b6775;
+        --line: #d7dee8;
+        --surface: #f7f8fb;
+        --panel: #ffffff;
+        --ok: #0b7a53;
+        --warn: #a35a00;
+        --blue: #235789;
+        --violet: #5c4a8b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        color: var(--ink);
+        background: var(--surface);
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1160px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      header {
+        padding: 28px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        font-size: 34px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        letter-spacing: 0;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 5px;
+        background: #edf1f6;
+        font-size: 0.92em;
+      }
+
+      .eyebrow {
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .lede {
+        max-width: 860px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .metric,
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .metric {
+        min-height: 118px;
+        padding: 16px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .ok {
+        color: var(--ok);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      section {
+        margin-top: 18px;
+        padding: 22px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfe;
+      }
+
+      .card p,
+      li {
+        color: var(--muted);
+      }
+
+      .progress {
+        overflow: hidden;
+        height: 10px;
+        margin: 12px 0 4px;
+        border-radius: 999px;
+        background: #e5eaf1;
+      }
+
+      .progress > div {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--ok), var(--blue));
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        background: #f0f3f7;
+        font-size: 13px;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .pill.ok {
+        color: var(--ok);
+        background: #edf8f3;
+      }
+
+      .pill.warn {
+        color: var(--warn);
+        background: #fff7ea;
+      }
+
+      .evidence-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .evidence-list li {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfe;
+        overflow-wrap: anywhere;
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 820px) {
+        main {
+          width: min(100vw - 20px, 760px);
+          padding-top: 16px;
+        }
+
+        header,
+        section {
+          padding: 18px;
+        }
+
+        h1 {
+          font-size: 28px;
+        }
+
+        .status-row,
+        .grid,
+        .evidence-list {
+          grid-template-columns: 1fr;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Packet 35 Phase 3 · Section 6.6</div>
+        <h1>Retail Overlay v1 Validation Report</h1>
+        <p class="lede">
+          Apex Retail now has a live, tenant-scoped retail industry corpus in
+          the Ask path. The validation gates show that the corpus is loaded,
+          embedded, mapped to coverage requirements, retrieved in production,
+          tested against expert-retail prompts, and isolated from SkyHarbor's
+          airline overlay.
+        </p>
+        <div class="status-row" aria-label="Validation summary">
+          <div class="metric">
+            <strong class="ok">100%</strong>
+            <span>Section 6 completion · 6 of 6 gates closed</span>
+            <div class="progress" aria-hidden="true"><div></div></div>
+          </div>
+          <div class="metric">
+            <strong>5,691</strong>
+            <span>Retail overlay chunks loaded and embedded</span>
+          </div>
+          <div class="metric">
+            <strong>25/25</strong>
+            <span>Production retail retrieval smoke questions passed</span>
+          </div>
+          <div class="metric">
+            <strong>0</strong>
+            <span>Forbidden cross-tenant overlay sources observed</span>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2>Plain-English Verdict</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>What feature was added?</h3>
+            <p>
+              Sentinel can now answer Apex Retail questions using a dedicated
+              retail industry knowledge layer: store operations, omnichannel,
+              merchandising, pricing, vendors, workforce, AI, risk, and retail
+              format economics.
+            </p>
+          </div>
+          <div class="card">
+            <h3>What changed operationally?</h3>
+            <p>
+              The system no longer depends only on generic patterns for Apex
+              Retail. It retrieves <code>retail-v1</code> chunks from the live
+              tenant context store, cites them in Ask responses, and blocks
+              other tenants from seeing that overlay.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Who receives it?</h3>
+            <p>
+              Apex Retail receives the retail overlay. Non-retail tenants remain
+              on their own context and overlays. The isolation rule is universal
+              across tenants.
+            </p>
+          </div>
+          <div class="card">
+            <h3>What remains open?</h3>
+            <p>
+              The expert gauntlet passed the required 4 of 5 tests. The one
+              known depth gap is peer benchmarking specificity: the answer used
+              peer framing, basis-point ranges, and timeframes, but did not
+              include a dollar range.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Validation Gates</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Gate</th>
+              <th>Result</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>6.1</td>
+              <td>Load, embed, and integrity-verify the retail overlay.</td>
+              <td>
+                <span class="pill ok">Passed</span><br />
+                5,691 chunks loaded for <code>apex-retail</code>; 5,691
+                embedded; 0 pending; 0 failed; 301 packs; 60 categories.
+              </td>
+              <td>
+                PR #2489, PR #2490,
+                <code>RETAIL_OVERLAY_v1_LOAD_REPORT.md</code>,
+                <code>RETAIL_OVERLAY_v1_EMBEDDING_REPORT.md</code>
+              </td>
+            </tr>
+            <tr>
+              <td>6.2</td>
+              <td>Bind retail questions to required overlay packs.</td>
+              <td>
+                <span class="pill ok">Passed</span><br />
+                All 25 Tier-1 question categories declare at least three
+                required retail packs.
+              </td>
+              <td>
+                PR #2492, <code>src/lib/knowledge/coverage.ts</code>, coverage
+                acceptance tests.
+              </td>
+            </tr>
+            <tr>
+              <td>6.3</td>
+              <td>Run 25 Apex Retail CXO questions through production Ask.</td>
+              <td>
+                <span class="pill ok">Passed</span><br />
+                25/25 passed. Minimum per answer: 5 retail overlay chunks and 5
+                pattern citations. Average latency: 23,163 ms.
+              </td>
+              <td>
+                PR #2493, PR #2494,
+                <code>RETAIL_OVERLAY_RETRIEVAL_SMOKE_2026-05-30.md</code>
+              </td>
+            </tr>
+            <tr>
+              <td>6.4</td>
+              <td>Run the five-test expert-consultant gauntlet.</td>
+              <td>
+                <span class="pill ok">Passed</span><br />
+                4/5 tests passed against production. Every test returned 5
+                retail overlay chunks and 5 pattern citations.
+              </td>
+              <td>
+                PR #2495,
+                <code>RETAIL_OVERLAY_EXPERT_GAUNTLET_2026-05-30.md</code>
+              </td>
+            </tr>
+            <tr>
+              <td>6.5</td>
+              <td>Verify cross-tenant overlay isolation.</td>
+              <td>
+                <span class="pill ok">Passed</span><br />
+                2/2 isolation probes passed. SkyHarbor saw 0 retail sources;
+                Apex saw 0 airline sources.
+              </td>
+              <td>
+                PR #2496,
+                <code>RETAIL_OVERLAY_ISOLATION_SMOKE_2026-05-30.md</code>
+              </td>
+            </tr>
+            <tr>
+              <td>6.6</td>
+              <td>Publish the consolidated validation report.</td>
+              <td>
+                <span class="pill ok">Ready for founder review</span><br />
+                This HTML report consolidates the Section 6.1-6.5 proof chain.
+              </td>
+              <td><code>VALIDATION_REPORT.html</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Corpus Footprint</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Total authored patterns</td>
+              <td>5,390</td>
+              <td>
+                Retail-specific pattern entries consolidated from five waves.
+              </td>
+            </tr>
+            <tr>
+              <td>Total source packs</td>
+              <td>301</td>
+              <td>
+                Pack-level synthesis units used for provenance and retrieval.
+              </td>
+            </tr>
+            <tr>
+              <td>Total super-categories</td>
+              <td>60</td>
+              <td>
+                Retail categories spanning strategy, channels, stores, supply
+                chain, AI, risk, and format verticals.
+              </td>
+            </tr>
+            <tr>
+              <td>Loaded chunks</td>
+              <td>5,691</td>
+              <td>
+                5,390 pattern chunks plus 301 pack-synthesis chunks in
+                <code>enterprise_context_chunks</code>.
+              </td>
+            </tr>
+            <tr>
+              <td>Embedding coverage</td>
+              <td>100%</td>
+              <td>All 5,691 chunks have 1,536-dimension embeddings.</td>
+            </tr>
+            <tr>
+              <td>Tenant scope</td>
+              <td><code>apex-retail</code></td>
+              <td>
+                Rows are tagged with <code>tenant_key</code> and
+                <code>overlay_namespace = retail-v1</code>.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Production Test Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>Endpoint / persona</th>
+              <th>Pass threshold</th>
+              <th>Observed result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Retrieval smoke</td>
+              <td>
+                <code>https://app.abarva.ai</code> as
+                <code>cio@apex-retail.example.com</code>
+              </td>
+              <td>
+                At least 22 of 25 questions grounded by retail overlay evidence.
+              </td>
+              <td>
+                <span class="pill ok">25/25 passed</span>; min 5 overlay chunks;
+                min 5 pattern citations.
+              </td>
+            </tr>
+            <tr>
+              <td>Expert gauntlet</td>
+              <td>
+                <code>https://app.abarva.ai</code> as
+                <code>cio@apex-retail.example.com</code>
+              </td>
+              <td>At least 4 of 5 expert-consultant probes pass.</td>
+              <td>
+                <span class="pill ok">4/5 passed</span>; peer benchmarking
+                dollar-range check remains open.
+              </td>
+            </tr>
+            <tr>
+              <td>Isolation smoke</td>
+              <td>Apex Retail and SkyHarbor Air personas</td>
+              <td>Zero forbidden overlay sources in both directions.</td>
+              <td>
+                <span class="pill ok">2/2 passed</span>; total forbidden
+                sources: 0.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Evidence Index</h2>
+        <ul class="evidence-list">
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_v1_CONSOLIDATED_MANIFEST.json</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_v1_LOAD_REPORT.md</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_v1_EMBEDDING_REPORT.md</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_RETRIEVAL_SMOKE_2026-05-30.md</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/retail-overlay-retrieval-smoke-2026-05-30.json</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_EXPERT_GAUNTLET_2026-05-30.md</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/retail-overlay-expert-gauntlet-2026-05-30.json</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/RETAIL_OVERLAY_ISOLATION_SMOKE_2026-05-30.md</code
+            >
+          </li>
+          <li>
+            <code
+              >verification/retail-overlay-v1/retail-overlay-isolation-smoke-2026-05-30.json</code
+            >
+          </li>
+          <li>
+            <code
+              >docs/releases/records/2026-05-30-retail-overlay-retrieval.md</code
+            >
+          </li>
+          <li>
+            <code
+              >docs/releases/records/2026-05-30-retail-overlay-expert-gauntlet.md</code
+            >
+          </li>
+          <li>
+            <code
+              >docs/releases/records/2026-05-30-retail-overlay-isolation.md</code
+            >
+          </li>
+        </ul>
+        <p class="footer-note">
+          Production deployment under test for Sections 6.3-6.5:
+          <code>dpl_DK5mp2Yf2DFu4AVYCv2ynUfg7CBB</code>, aliased to
+          <code>https://app.abarva.ai</code>.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
