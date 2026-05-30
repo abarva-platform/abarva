@@ -6,6 +6,16 @@ interface ResolveClientInput {
   clientId?: string | null;
   defaultClientId?: string | null;
   email?: string | null;
+  /**
+   * Tower-as-landing signal (Tower audit §5.1 + §7). When `true`, a
+   * portfolio-bearing tenant is routed straight to `/tower` instead of
+   * `/home` so a CIO with an actual portfolio lands on their Control
+   * Tower on sign-in. When `false` or undefined, the path falls back
+   * to `/home` (the historical default). The caller — typically the
+   * post-signin redirect resolver — pre-computes this signal against
+   * the tenant's portfolio substrate.
+   */
+  hasTowerPortfolio?: boolean;
 }
 
 function normalizeEmail(email: string | null | undefined): string {
@@ -115,6 +125,21 @@ export function resolvePostSignInPath(
 
   if (resolvedRole === 'investor') {
     return `/investor?client=${resolvedClientId}`;
+  }
+
+  // Tower-as-landing for portfolio-bearing tenants (Tower audit §5.1).
+  // When the caller has resolved that the tenant has a non-empty portfolio
+  // substrate, Tower becomes the landing page so a CIO sees their Control
+  // Tower the moment they sign in. Empty-portfolio users continue to
+  // `/home` as before. Investors and externals are intentionally excluded.
+  if (input.hasTowerPortfolio === true) {
+    if (resolvedRole === 'client' || resolvedRole === 'maestro') {
+      return pinnedClientId ? `/tower?client=${pinnedClientId}` : '/tower';
+    }
+    if (resolvedRole === 'admin') {
+      return `/tower?client=${resolvedClientId}`;
+    }
+    return `/tower?client=${resolvedClientId}`;
   }
 
   if (resolvedRole === 'admin') {

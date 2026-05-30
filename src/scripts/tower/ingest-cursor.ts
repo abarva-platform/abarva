@@ -30,7 +30,7 @@ import {
   type CursorValidatedRow,
 } from '@/lib/tower/ingest/cursor/validate';
 import { postgresClientOptions } from '@/scripts/postgres-client-options';
-import '@/lib/tower/ingest/cursor/registry-entry';
+import '@/lib/tower/ingest/cursor';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv({ path: '/Users/anand/Projects/nexus/.env.local' });

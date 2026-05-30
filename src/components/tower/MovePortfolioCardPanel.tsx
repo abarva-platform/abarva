@@ -6,8 +6,10 @@
 // realization read, and navigation into the Move and its cross-module
 // trace.
 //
-// Pure server component. AbarVa locked palette only — cream `#F8F7F4`,
-// established serif/body fonts, black/ghost buttons. No new colours.
+// AbarVa locked palette only — cream `#F8F7F4`, established serif/body
+// fonts, black/ghost buttons. No new colours. The decide-and-route
+// action row is the only client-interactive surface; everything else
+// stays server-rendered.
 
 import type { CSSProperties } from 'react';
 import type {
@@ -15,6 +17,7 @@ import type {
   MovePortfolioCard,
 } from '@/lib/tower/move-portfolio-card';
 import type { SourceRiskLevel } from '@/lib/tower/source-risk';
+import { TowerDecisionActionRow } from '@/components/tower/TowerDecisionActionRow';
 
 const CARD_BG = '#F8F7F4';
 const INK = '#1A1A18';
@@ -146,6 +149,10 @@ function PortfolioCard({ card }: { card: MovePortfolioCard }) {
           </a>
         ))}
       </div>
+
+      {/* Decide-and-route: Fund / Pause / Kill. Each decision is
+          audit-logged through the existing program_audit_log table. */}
+      <TowerDecisionActionRow programId={card.moveId} subjectLabel={card.moveName} />
     </article>
   );
 }
