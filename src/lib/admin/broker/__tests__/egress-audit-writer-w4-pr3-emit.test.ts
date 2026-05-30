@@ -101,7 +101,7 @@ describe('W4-PR-3 · writeEgressAudit · isolation.anomaly fan-out', () => {
     await new Promise((r) => setImmediate(r));
 
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg).toMatchObject({
       tenantKey: 'meridian-health',
       eventType: 'isolation.anomaly',

@@ -30,6 +30,9 @@ const ALLOWED_PATH_PATTERNS = [
   // normalization code + its tests.
   /^src\/lib\/agent\/retrieval\.ts$/,
   /^src\/lib\/agent\/__tests__\/retrieval-tenant-leak\.test\.ts$/,
+  // Fix B — Atlas invariant test ASSERTS retired aliases must not appear in
+  // retrieval; it references the literal names to defend against re-introduction.
+  /^src\/__tests__\/integration\/atlas\/atlas-invariants\.test\.ts$/,
 ];
 
 function isAllowedPath(relativePath) {

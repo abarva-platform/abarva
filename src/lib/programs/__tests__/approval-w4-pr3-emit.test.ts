@@ -160,7 +160,7 @@ describe('W4-PR-3 · submitForApproval → emitNotification("approval.requested"
     await new Promise((r) => setImmediate(r));
 
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'approval.requested',
@@ -239,7 +239,7 @@ describe('W4-PR-3 · decideApprovalRequest → emitNotification("program.gate_de
     await new Promise((r) => setImmediate(r));
 
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'program.gate_decision',
@@ -277,7 +277,7 @@ describe('W4-PR-3 · decideApprovalRequest → emitNotification("program.gate_de
     await new Promise((r) => setImmediate(r));
 
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg.payload).toMatchObject({
       decision: 'blocked',
       rationale: 'Scope too broad',

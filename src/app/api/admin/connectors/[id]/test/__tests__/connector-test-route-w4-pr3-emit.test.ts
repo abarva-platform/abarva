@@ -87,7 +87,7 @@ describe('W4-PR-3 · POST /api/admin/connectors/[id]/test · connector.failed em
     await new Promise((r) => setImmediate(r));
 
     expect(mockEmitNotification).toHaveBeenCalledTimes(1);
-    const arg = mockEmitNotification.mock.calls[0]?.[0] as any;
+    const arg = mockEmitNotification.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'connector.failed',

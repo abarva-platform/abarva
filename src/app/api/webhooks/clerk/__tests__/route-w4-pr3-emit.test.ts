@@ -96,7 +96,7 @@ describe('W4-PR-3 · Clerk webhook · auth.invite_accepted emit', () => {
 
     expect(writeInviteAuditMock).toHaveBeenCalledTimes(1);
     expect(emitNotificationMock).toHaveBeenCalledTimes(1);
-    const arg = emitNotificationMock.mock.calls[0]?.[0] as any;
+    const arg = emitNotificationMock.mock.calls[0]?.[0] as { tenantKey?: string; eventType?: string; payload: Record<string, unknown>; actorUserId?: string; targetResourceId?: string };
     expect(arg).toMatchObject({
       tenantKey: 'apex-retail',
       eventType: 'auth.invite_accepted',
