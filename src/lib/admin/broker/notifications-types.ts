@@ -192,13 +192,15 @@ export interface NotificationDeliveryRow {
   sent_at: string | null;
   delivered_at: string | null;
   bounce_reason: string | null;
+  read_at: string | null;
+  archived_at: string | null;
   retry_count: number;
   created_at: string;
 }
 
 export type NotificationDeliveryInsert = Omit<
   NotificationDeliveryRow,
-  'id' | 'created_at' | 'sent_at' | 'delivered_at' | 'retry_count'
+  'id' | 'created_at' | 'sent_at' | 'delivered_at' | 'read_at' | 'archived_at' | 'retry_count'
 > & {
   id?: string;
   created_at?: string;
@@ -220,6 +222,8 @@ export type NotificationDeliveryUpdate = Partial<
     | 'sent_at'
     | 'delivered_at'
     | 'bounce_reason'
+    | 'read_at'
+    | 'archived_at'
     | 'retry_count'
   >
 >;
