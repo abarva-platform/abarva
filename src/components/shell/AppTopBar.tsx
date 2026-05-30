@@ -31,6 +31,7 @@ import { useSignOut } from "@/lib/auth/use-sign-out";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 import { useClientContext } from "@/lib/use-client-context";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -243,6 +244,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
             Product
           </Link>
         )}
+        {signedIn && <AdminInboxTopNavBadge />}
         {signedIn ? (
           <>
             <div
