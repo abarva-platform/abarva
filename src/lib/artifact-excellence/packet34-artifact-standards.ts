@@ -1,0 +1,320 @@
+import {
+  createCxoArtifactStandard,
+  type CxoArtifactExcellenceStandard,
+} from "./cxo-artifact-excellence-framework";
+
+export const PACKET34_REQUIRED_ARTIFACT_KINDS = [
+  "executive_briefing_memo",
+  "strategic_decision_paper",
+  "quarterly_executive_memo",
+  "business_case_pack",
+  "solution_architecture_pack",
+  "estimate_financial_model",
+  "mobilization_plan",
+  "source_rfp_package",
+  "source_bafo_recommendation",
+  "tower_quarterly_review",
+] as const;
+
+export type Packet34ArtifactKind =
+  (typeof PACKET34_REQUIRED_ARTIFACT_KINDS)[number];
+
+export const PACKET34_ARTIFACT_STANDARDS = {
+  executive_briefing_memo: createCxoArtifactStandard({
+    module: "intelligence",
+    artifactKind: "executive_briefing_memo",
+    title: "Executive Briefing Memo",
+    audience: "CEO, CIO, CFO, operating sponsor",
+    decisionJob:
+      "Convert a Sentinel Q&A sequence into a board-circulatable executive answer and action posture.",
+    requiredSections: [
+      "executive_answer",
+      "decision_job",
+      "evidence_grounded_findings",
+      "options",
+      "recommendation",
+      "sensitivity",
+      "risks_and_controls",
+      "next_30_days",
+    ],
+    requiredExhibits: [
+      "decision_card",
+      "evidence_gap_matrix",
+      "options_comparison",
+      "sensitivity_stack",
+    ],
+    requiredEvidence: [
+      "conversation_trace",
+      "corpus_citations",
+      "tenant_context",
+    ],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  strategic_decision_paper: createCxoArtifactStandard({
+    module: "intelligence",
+    artifactKind: "strategic_decision_paper",
+    title: "Strategic Decision Paper",
+    audience: "Executive committee",
+    decisionJob:
+      "Frame one consequential decision, compare credible options, and recommend a course of action.",
+    requiredSections: [
+      "decision_to_make",
+      "why_now",
+      "context_and_constraints",
+      "options_considered",
+      "recommendation",
+      "economic_case",
+      "risks_and_reversibility",
+      "approval_path",
+    ],
+    requiredExhibits: [
+      "decision_card",
+      "options_comparison",
+      "value_investment_bridge",
+      "risk_control_heatmap",
+    ],
+    requiredEvidence: [
+      "tenant_baseline",
+      "corpus_citations",
+      "assumption_ledger",
+    ],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  quarterly_executive_memo: createCxoArtifactStandard({
+    module: "tower",
+    artifactKind: "quarterly_executive_memo",
+    title: "Quarterly Executive Memo",
+    audience: "Steering committee and CXO sponsors",
+    decisionJob:
+      "Show what changed this quarter, what to continue, what to stop, and what to escalate.",
+    requiredSections: [
+      "quarterly_answer",
+      "portfolio_movement",
+      "value_realization",
+      "risks_and_decisions",
+      "exceptions",
+      "next_quarter_commitments",
+      "owner_actions",
+    ],
+    requiredExhibits: [
+      "measurement_handoff",
+      "risk_control_heatmap",
+      "roadmap_swimlane",
+      "evidence_gap_matrix",
+    ],
+    requiredEvidence: ["tower_metrics", "decision_log", "owner_attestations"],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  business_case_pack: createCxoArtifactStandard({
+    module: "moves",
+    artifactKind: "business_case_pack",
+    title: "Business Case Pack",
+    audience: "CXO, CFO, board/ELT",
+    decisionJob: "Decide whether to fund, reshape, delay, or kill a Move.",
+    requiredSections: [
+      "answer",
+      "why_now",
+      "evidence",
+      "economics",
+      "sensitivity",
+      "risk",
+      "asks",
+    ],
+    requiredExhibits: [
+      "decision_card",
+      "value_investment_bridge",
+      "sensitivity_stack",
+      "scenario_range",
+      "evidence_gap_matrix",
+    ],
+    requiredEvidence: ["tenant_baseline", "rate_card", "assumption_ledger"],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  solution_architecture_pack: createCxoArtifactStandard({
+    module: "moves",
+    artifactKind: "solution_architecture_pack",
+    title: "Solution Architecture Pack",
+    audience: "CIO, enterprise architect, delivery lead",
+    decisionJob: "Select the target architecture option and delivery boundary.",
+    requiredSections: [
+      "answer",
+      "target_state",
+      "options",
+      "integration_path",
+      "controls",
+      "risks",
+      "asks",
+    ],
+    requiredExhibits: [
+      "decision_card",
+      "options_comparison",
+      "risk_control_heatmap",
+    ],
+    requiredEvidence: [
+      "tenant_architecture",
+      "systems_inventory",
+      "control_requirements",
+    ],
+    financialArtifact: false,
+    architectureArtifact: true,
+    riskArtifact: true,
+  }),
+  estimate_financial_model: createCxoArtifactStandard({
+    module: "moves",
+    artifactKind: "estimate_financial_model",
+    title: "Estimate & Financial Model",
+    audience: "CFO, finance partner, sponsor",
+    decisionJob:
+      "Evaluate the investment range, value range, sensitivity, and funding ask.",
+    requiredSections: [
+      "answer",
+      "cost_build",
+      "value_range",
+      "sensitivity",
+      "assumptions",
+      "cash_flow",
+      "risks",
+    ],
+    requiredExhibits: [
+      "value_investment_bridge",
+      "sensitivity_stack",
+      "scenario_range",
+      "measurement_handoff",
+    ],
+    requiredEvidence: ["rate_card", "baseline_kpis", "assumption_ledger"],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  mobilization_plan: createCxoArtifactStandard({
+    module: "moves",
+    artifactKind: "mobilization_plan",
+    title: "Mobilization Plan",
+    audience: "Sponsor, PMO, delivery leads, Tower owner",
+    decisionJob:
+      "Authorize the first 30/60/90 days and assign owners for delivery, controls, and measurement.",
+    requiredSections: [
+      "answer",
+      "first_30_days",
+      "workstreams",
+      "owners",
+      "decision_gates",
+      "risks",
+      "tower_handoff",
+    ],
+    requiredExhibits: [
+      "roadmap_swimlane",
+      "risk_control_heatmap",
+      "measurement_handoff",
+    ],
+    requiredEvidence: ["charter", "delivery_plan", "owner_attestations"],
+    financialArtifact: false,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  source_rfp_package: createCxoArtifactStandard({
+    module: "source",
+    artifactKind: "source_rfp_package",
+    title: "Source RFP Package",
+    audience: "Procurement lead, sponsor, vendors",
+    decisionJob:
+      "Issue a vendor-facing package that produces comparable, auditable responses.",
+    requiredSections: [
+      "executive_summary",
+      "scope",
+      "service_expectations",
+      "capabilities",
+      "response_format",
+      "pricing",
+      "evaluation",
+      "timeline",
+      "submission",
+    ],
+    requiredExhibits: [
+      "options_comparison",
+      "commercial_normalization",
+      "risk_control_heatmap",
+    ],
+    requiredEvidence: ["strategy_memo", "scope_memo", "evaluation_criteria"],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  source_bafo_recommendation: createCxoArtifactStandard({
+    module: "source",
+    artifactKind: "source_bafo_recommendation",
+    title: "BAFO Recommendation Memo",
+    audience: "Sponsor, procurement, finance, legal",
+    decisionJob:
+      "Recommend whether to award, negotiate, split, or stop after finalist offers.",
+    requiredSections: [
+      "answer",
+      "finalist_comparison",
+      "commercials",
+      "risks",
+      "negotiation_position",
+      "recommendation",
+      "approval_asks",
+    ],
+    requiredExhibits: [
+      "options_comparison",
+      "commercial_normalization",
+      "risk_control_heatmap",
+      "decision_card",
+    ],
+    requiredEvidence: [
+      "vendor_responses",
+      "pricing_normalization",
+      "risk_review",
+    ],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+  tower_quarterly_review: createCxoArtifactStandard({
+    module: "tower",
+    artifactKind: "tower_quarterly_review",
+    title: "AI Portfolio Quarterly Review",
+    audience: "CIO, CFO, transformation sponsor, Tower owner",
+    decisionJob:
+      "Decide what to continue, accelerate, intervene on, or stop across the AI portfolio.",
+    requiredSections: [
+      "portfolio_answer",
+      "value_vs_plan",
+      "delivery_health",
+      "risk_and_controls",
+      "kill_or_accelerate",
+      "next_decisions",
+    ],
+    requiredExhibits: [
+      "measurement_handoff",
+      "risk_control_heatmap",
+      "roadmap_swimlane",
+      "decision_card",
+    ],
+    requiredEvidence: ["tower_metrics", "move_artifacts", "decision_log"],
+    financialArtifact: true,
+    architectureArtifact: false,
+    riskArtifact: true,
+  }),
+} satisfies Record<Packet34ArtifactKind, CxoArtifactExcellenceStandard>;
+
+export function getPacket34ArtifactStandard(
+  kind: Packet34ArtifactKind,
+): CxoArtifactExcellenceStandard {
+  return PACKET34_ARTIFACT_STANDARDS[kind];
+}
+
+export function listPacket34ArtifactStandards(): CxoArtifactExcellenceStandard[] {
+  return PACKET34_REQUIRED_ARTIFACT_KINDS.map(
+    (kind) => PACKET34_ARTIFACT_STANDARDS[kind],
+  );
+}
