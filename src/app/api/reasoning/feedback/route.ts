@@ -6,6 +6,7 @@
 // SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { recordFeedback } from "@/lib/reasoning/synthesis-telemetry";
 import { guardReasoning } from "@/app/api/reasoning/_auth";
+import "@/lib/reasoning/telemetry-init";
 
 export async function POST(request: Request) {
   const guard = await guardReasoning();

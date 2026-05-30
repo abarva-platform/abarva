@@ -12,6 +12,8 @@ import {
 } from '@/lib/intelligence/ask/session-memory';
 import { resolveTenant } from '@/lib/tenant/resolveTenant';
 import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
+import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
+import '@/lib/reasoning/telemetry-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,8 +116,12 @@ async function handleAsk(payload: AskPayload) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      const startedAt = Date.now();
       let assistantText = '';
       let classificationForMemory: unknown = null;
+      let citationCount = 0;
+      let patternId: string | null = null;
+      let sawStreamError = false;
       try {
         if (memory?.sessionId) {
           controller.enqueue(encoder.encode(JSON.stringify({
@@ -137,6 +143,7 @@ async function handleAsk(payload: AskPayload) {
           confidence: sentinelIntent.confidence,
           matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
         };
+        patternId = sentinelIntent.matchedPatternSlugs[0] ?? null;
         if (sentinelIntent.intent === 'it_productivity') {
           controller.enqueue(encoder.encode(JSON.stringify({
             type: 'classified',
@@ -157,9 +164,20 @@ async function handleAsk(payload: AskPayload) {
             intelligenceSessionId: memory?.sessionId ?? null,
           })) {
             assistantText += `${stage.name}: ${stage.content}\n`;
+            citationCount += stage.citations.length;
             controller.enqueue(encoder.encode(JSON.stringify({ type: 'sentinel-stage', stage }) + '\n'));
           }
-          controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
+          const event = recordSentinelTelemetry({
+            startedAt,
+            tenantId,
+            instanceId: memory?.sessionId ?? memory?.tabId ?? requestedOrSurfaceClient ?? 'sentinel-ask',
+            patternId,
+            citationCount,
+          });
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'done',
+            telemetryEventId: event.id,
+          }) + '\n'));
           return;
         }
         for await (const event of askIntelligence(query, {
@@ -175,8 +193,27 @@ async function handleAsk(payload: AskPayload) {
           activePersonDisplayName,
         })) {
           if (event.type === 'classified') classificationForMemory = event.classification ?? classificationForMemory;
+          if (event.type === 'sources') {
+            citationCount = event.sources?.length ?? 0;
+            patternId = event.sources?.find((source) => source.type === 'PATTERN')?.id ?? patternId;
+          }
           if (event.type === 'delta' && event.text) assistantText += event.text;
+          if (event.type === 'error') sawStreamError = true;
+          if (event.type === 'done') continue;
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
+        }
+        if (!sawStreamError && assistantText.trim()) {
+          const event = recordSentinelTelemetry({
+            startedAt,
+            tenantId,
+            instanceId: memory?.sessionId ?? memory?.tabId ?? requestedOrSurfaceClient ?? 'sentinel-ask',
+            patternId,
+            citationCount,
+          });
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'done',
+            telemetryEventId: event.id,
+          }) + '\n'));
         }
       } catch (err) {
         controller.enqueue(
@@ -204,6 +241,27 @@ async function handleAsk(payload: AskPayload) {
       'Content-Type': 'application/x-ndjson',
       'Cache-Control': 'no-cache',
     },
+  });
+}
+
+function recordSentinelTelemetry(input: {
+  startedAt: number;
+  tenantId: string | null;
+  instanceId: string | null;
+  patternId: string | null;
+  citationCount: number;
+}) {
+  return recordSynthesisEvent({
+    surface: 'sentinel',
+    tenantId: input.tenantId ?? undefined,
+    instanceId: input.instanceId ?? 'sentinel-ask',
+    patternId: input.patternId,
+    cacheHit: false,
+    latencyMs: Math.max(0, Date.now() - input.startedAt),
+    citationCount: input.citationCount,
+    contradictionCount: 0,
+    failureModeCount: 0,
+    gateCount: 0,
   });
 }
 
