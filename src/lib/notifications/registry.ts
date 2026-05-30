@@ -6,10 +6,12 @@
  * this registry — emitting an unregistered event_type throws.
  *
  * Source: docs/build/ENTERPRISE_COMMS_SPINE_2026-05-30.md §2 (event
- * taxonomy). 42 events across six source modules:
+ * taxonomy). 44 events across six source modules (W4-PR-3 added the two
+ * template-anchored events `auth.invite_accepted` and
+ * `program.gate_decision`):
  *
- *   - Setup        (8) · admin / governance plane events
- *   - Moves        (8) · program lifecycle events
+ *   - Setup        (9) · admin / governance plane events
+ *   - Moves        (9) · program lifecycle events
  *   - Source       (7) · sourcing-decision-room events
  *   - Intelligence (6) · ask / grounding / consistency events
  *   - Tower        (4) · executive portfolio events
@@ -88,8 +90,8 @@ export interface EventDefinition {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The 42 events (Spine §2). Add new events in lock-step with subscribers
-// in `persona-defaults.ts` and any matching seed helpers.
+// The 44 events (Spine §2 + W4-PR-3). Add new events in lock-step with
+// subscribers in `persona-defaults.ts` and any matching seed helpers.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const NOTIFICATION_REGISTRY = {
@@ -122,6 +124,25 @@ export const NOTIFICATION_REGISTRY = {
     defaultFrequency: 'immediate',
     auditClass: 'transactional',
     retentionDays: 90,
+    piiClass: 'personal_redacted',
+  },
+  /**
+   * Template-anchored mirror of `invite.accepted` used by the W4-PR-6
+   * `auth-invite-accepted` template. Same semantics as `invite.accepted`
+   * but emitted from the Clerk webhook handler with the masked-email
+   * payload the email body expects. See W4-PR-3.
+   * Payload: { inviteeEmail (masked), role, tenantKey, eventId,
+   *            acceptedAtIso, producedAtIso }
+   */
+  'auth.invite_accepted': {
+    eventType: 'auth.invite_accepted',
+    sourceModule: 'setup',
+    severity: 'warn',
+    category: 'governance',
+    defaultChannels: ['email', 'in_app'],
+    defaultFrequency: 'immediate',
+    auditClass: 'security',
+    retentionDays: 2555,
     piiClass: 'personal_redacted',
   },
   /**
@@ -299,6 +320,27 @@ export const NOTIFICATION_REGISTRY = {
     eventType: 'approval.granted',
     sourceModule: 'moves',
     severity: 'info',
+    category: 'governance',
+    defaultChannels: ['email', 'in_app'],
+    defaultFrequency: 'immediate',
+    auditClass: 'compliance',
+    retentionDays: 2555,
+    piiClass: 'none',
+  },
+  /**
+   * Template-anchored gate decision (approved or blocked). Emitted from
+   * the program approval decision handler so the W4-PR-6
+   * `program-gate-decision` template renders. Sits alongside the
+   * granted/rejected pair; the decision verdict lives in the payload.
+   * See W4-PR-3.
+   * Payload: { programId, programName, decision: 'approved'|'blocked',
+   *            newPhase, decidedBy, deciderName, rationale, eventId,
+   *            producedAtIso }
+   */
+  'program.gate_decision': {
+    eventType: 'program.gate_decision',
+    sourceModule: 'moves',
+    severity: 'warn',
     category: 'governance',
     defaultChannels: ['email', 'in_app'],
     defaultFrequency: 'immediate',

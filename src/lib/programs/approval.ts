@@ -18,6 +18,7 @@ import "server-only";
 // defense for any direct authenticated client.
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { emitNotification } from "@/lib/admin/broker/notification-broker";
 import {
   notifyApprovalApproved,
   notifyApprovalRejected,
@@ -147,6 +148,53 @@ function readBriefUuid(
     : null;
 }
 
+/**
+ * Read a free-form string from the brief snapshot (name, phase, etc).
+ * Falls back to the supplied default when missing or blank. Used to
+ * populate W4 notification payloads where the template needs a
+ * display string the DB row does not directly expose.
+ */
+function readBriefString(
+  briefSnapshot: Record<string, unknown>,
+  key: string,
+  fallback: string,
+): string {
+  const value = briefSnapshot[key];
+  if (typeof value === "string" && value.trim().length > 0) return value.trim();
+  return fallback;
+}
+
+/**
+ * W4-PR-3 · Fire-and-forget wrapper around `emitNotification`. The
+ * notification broker must NEVER block or surface errors into the
+ * approval workflow — failures (broker outage, registry mismatch,
+ * subscriber-resolver error) are logged and swallowed so the primary
+ * action's HTTP response remains the source of truth.
+ */
+function emitNotificationBestEffort(
+  eventType: string,
+  tenantKey: string,
+  payload: Record<string, unknown>,
+  options: { actorUserId?: string; targetResourceId?: string } = {},
+): void {
+  void emitNotification({
+    tenantKey,
+    eventType,
+    payload,
+    actorUserId: options.actorUserId,
+    targetResourceId: options.targetResourceId,
+  }).catch((err: unknown) => {
+    console.warn(
+      JSON.stringify({
+        event: "approval.notification_emit_failed",
+        event_type: eventType,
+        tenant_key: tenantKey,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  });
+}
+
 class ApprovalError extends Error {
   constructor(
     message: string,
@@ -259,6 +307,35 @@ export async function submitForApproval(
       err: err instanceof Error ? err.message : String(err),
     });
   });
+
+  // W4-PR-3 · Emit `approval.requested` through the broker. Payload
+  // mirrors the W4-PR-6 ApprovalRequestedPayload contract so the email
+  // template renders correctly.
+  emitNotificationBestEffort(
+    "approval.requested",
+    request.tenantKey,
+    {
+      requestId: request.id,
+      programId: request.programId,
+      programName: readBriefString(
+        request.briefSnapshot,
+        "name",
+        "Untitled program",
+      ),
+      phase: readBriefString(request.briefSnapshot, "phase", "1"),
+      requestedBy: request.requestedByUserId,
+      requesterName: readBriefString(
+        request.briefSnapshot,
+        "requester_name",
+        request.requestedByUserId,
+      ),
+      producedAtIso: new Date().toISOString(),
+    },
+    {
+      actorUserId: request.requestedByUserId,
+      targetResourceId: request.id,
+    },
+  );
 
   return request;
 }
@@ -395,6 +472,33 @@ export async function decideApprovalRequest(
       err: err instanceof Error ? err.message : String(err),
     });
   });
+
+  // W4-PR-3 · Emit `program.gate_decision` through the broker. The
+  // template renders `decision: 'approved' | 'blocked'`; we map a
+  // rejected request to 'blocked'. Payload matches the W4-PR-6
+  // ProgramGateDecisionPayload contract.
+  emitNotificationBestEffort(
+    "program.gate_decision",
+    request.tenantKey,
+    {
+      programId: request.programId,
+      programName: readBriefString(
+        request.briefSnapshot,
+        "name",
+        "Untitled program",
+      ),
+      decision: request.requestStatus === "approved" ? "approved" : "blocked",
+      newPhase: readBriefString(request.briefSnapshot, "phase", "1"),
+      decidedBy: input.decidedByUserId,
+      deciderName: input.decidedByUserId,
+      rationale: input.rationale?.trim() ?? "",
+      producedAtIso: new Date().toISOString(),
+    },
+    {
+      actorUserId: input.decidedByUserId,
+      targetResourceId: request.programId,
+    },
+  );
 
   return request;
 }
