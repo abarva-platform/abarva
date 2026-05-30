@@ -11,7 +11,9 @@
  */
 
 import type { InitiativeArchetype } from './types';
+import { aiLedProductDevelopmentArchetype } from './archetypes/ai-led-product-development';
 import { claudeCodeArchetype } from './archetypes/claude-code';
+import { cursorArchetype } from './archetypes/cursor';
 import { githubCopilotArchetype } from './archetypes/github-copilot';
 import { microsoft365CopilotArchetype } from './archetypes/microsoft-365-copilot';
 import { oracleAiAgentsArchetype } from './archetypes/oracle-ai-agents';
@@ -19,7 +21,9 @@ import { salesforceEinsteinAgentforceArchetype } from './archetypes/salesforce-e
 import { workdayAiAgentsArchetype } from './archetypes/workday-ai-agents';
 
 export const INITIATIVE_ARCHETYPES: InitiativeArchetype[] = [
+  aiLedProductDevelopmentArchetype,
   claudeCodeArchetype,
+  cursorArchetype,
   githubCopilotArchetype,
   microsoft365CopilotArchetype,
   oracleAiAgentsArchetype,
