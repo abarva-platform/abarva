@@ -17,6 +17,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
+  detectOffTenantMention,
 } from '../tenant-identity-pin';
 
 describe('buildTenantIdentityPin', () => {
@@ -42,6 +43,13 @@ describe('buildTenantIdentityPin', () => {
         expectedVertical: 'Financial Services',
         offLimitsExamples: ['retail', 'healthcare', 'Apex', 'Meridian', 'HIPAA'],
         notInOffLimits: ['FedNow', 'BSA', 'core banking'],
+      },
+      {
+        key: 'skyharbor',
+        expectedNameSubstring: 'SkyHarbor Air',
+        expectedVertical: 'Global Airline',
+        offLimitsExamples: ['retail', 'healthcare', 'Apex', 'Meridian', 'First Capital'],
+        notInOffLimits: ['airline'],
       },
     ];
 
@@ -113,6 +121,38 @@ describe('buildTenantIdentityPin', () => {
       expect(pin).not.toMatch(/active\s+tenant.*is\s+["']?Meridian/i);
       expect(pin).toMatch(/active\s+tenant.*is\s+["']?Apex Retail Group["']?/i);
     });
+  });
+});
+
+describe('detectOffTenantMention', () => {
+  it('detects any off-tenant name in a non-comparison SkyHarbor response', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response: 'SkyHarbor should avoid importing Apex Retail assumptions into the modernization readout.',
+      query: 'What is one sensible next action for the SkyHarbor CTO?',
+    });
+
+    expect(result).toEqual({ detected: true, term: 'Apex Retail' });
+  });
+
+  it('allows explicit cross-industry comparison requests', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response: 'Compared with Apex Retail, SkyHarbor has a different modernization risk profile.',
+      query: 'Give me a cross-industry comparison with retail peers.',
+    });
+
+    expect(result.detected).toBe(false);
+  });
+
+  it('does not flag the active tenant name', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response: 'SkyHarbor should use the IBM dependency evidence to sequence the next modernization move.',
+      query: 'What is one sensible next action for the SkyHarbor CTO?',
+    });
+
+    expect(result.detected).toBe(false);
   });
 });
 

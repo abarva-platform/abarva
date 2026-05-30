@@ -1,7 +1,11 @@
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { AskSource, AskIntent } from './types';
 import { applyPartialEvidencePolicy, chunkAskText, sanitizeAskSynthesis } from './response-policy';
-import { buildTenantIdentityPin, detectCrossTenantIdentityLeak } from './tenant-identity-pin';
+import {
+  buildTenantIdentityPin,
+  detectCrossTenantIdentityLeak,
+  detectOffTenantMention,
+} from './tenant-identity-pin';
 
 export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
@@ -218,7 +222,14 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   Never start with hollow acknowledgements ("Good question", "Great question", "Excellent question", "Happy to", "Let me"). Start the answer directly with your view.`;
 
-function chooseModel(intent: AskIntent): string {
+function isExplicitConciseAsk(query: string): boolean {
+  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(query.toLowerCase());
+}
+
+function chooseModel(intent: AskIntent, query: string): string {
+  if (isExplicitConciseAsk(query)) {
+    return 'claude-sonnet-4-6';
+  }
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
     return 'claude-opus-4-7';
   }
@@ -226,10 +237,7 @@ function chooseModel(intent: AskIntent): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  const normalized = query.toLowerCase();
-  const asksForConciseAnswer =
-    /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(normalized);
-  return asksForConciseAnswer ? 320 : 600;
+  return isExplicitConciseAsk(query) ? 260 : 600;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -300,7 +308,7 @@ export async function* synthesizeStream(args: {
     : '';
 
   try {
-    const model = chooseModel(args.intent);
+    const model = chooseModel(args.intent, args.query);
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
@@ -347,6 +355,20 @@ export async function* synthesizeStream(args: {
         '[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]',
       ].join('\n');
       yield safeRefusal;
+      return;
+    }
+
+    const offTenantMention = detectOffTenantMention({
+      clientKey: args.tenantClientKey ?? args.tenantId ?? null,
+      response: text,
+      query: args.query,
+    });
+    if (offTenantMention.detected) {
+      yield [
+        'I detected mixed-tenant language in the draft answer, so I am not going to surface it.',
+        'Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.',
+        '[tenant-isolation guard fired: off-tenant mention blocked]',
+      ].join('\n');
       return;
     }
 

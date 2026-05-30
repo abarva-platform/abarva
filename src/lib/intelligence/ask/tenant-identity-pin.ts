@@ -87,6 +87,29 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
     ],
     offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'Heliara', 'Heliara Health'],
   },
+  'Clinical Technology': {
+    verticalLabel: 'Clinical Technology',
+    offLimitsTerms: [
+      'retail', 'multi-banner', 'store ops', 'NCR POS', 'POS', 'merchandising',
+      'assortment', 'Commerce Cloud', 'Salesforce Commerce Cloud',
+      'hospital system', 'integrated delivery network', 'IDN', 'Epic EHR',
+      'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
+      'commercial deposit', 'real-time payments rail',
+    ],
+    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus'],
+  },
+  'Global Airline': {
+    verticalLabel: 'Global Airline',
+    offLimitsTerms: [
+      'retail', 'multi-banner', 'store ops', 'NCR POS', 'POS', 'merchandising',
+      'assortment', 'Commerce Cloud', 'Salesforce Commerce Cloud',
+      'healthcare', 'Epic', 'IDN', 'integrated delivery network', 'clinical',
+      'clinician', 'CMIO', 'HIPAA', 'BAA',
+      'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
+      'commercial deposit', 'real-time payments rail',
+    ],
+    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus', 'Northstar', 'Northstar Clinical Technologies'],
+  },
 };
 
 /**
@@ -203,6 +226,35 @@ export function detectCrossTenantIdentityLeak(args: {
   }
 
   return { leaked: false };
+}
+
+export function detectOffTenantMention(args: {
+  clientKey: string | null | undefined;
+  response: string;
+  query?: string | null;
+}): { detected: true; term: string } | { detected: false } {
+  if (!args.clientKey || !args.response) return { detected: false };
+
+  const normalizedClientKey = normalizeTenantPinClientKey(args.clientKey);
+  if (!normalizedClientKey) return { detected: false };
+
+  if (/\bcross[-\s]?industry|peer comparison|compare (?:us|this|skyharbor|apex|meridian|first capital|northstar)\b/i.test(args.query ?? '')) {
+    return { detected: false };
+  }
+
+  const client = getClientOption(normalizedClientKey);
+  const profile = VERTICAL_PROFILES[client.vertical];
+  if (!profile) return { detected: false };
+
+  const offLimits = [...profile.offLimitsTenantNames].sort((a, b) => b.length - a.length);
+  const response = args.response.toLowerCase();
+  for (const term of offLimits) {
+    if (response.includes(term.toLowerCase())) {
+      return { detected: true, term };
+    }
+  }
+
+  return { detected: false };
 }
 
 function normalizeTenantPinClientKey(value: string | null | undefined): ClientKey | null {
