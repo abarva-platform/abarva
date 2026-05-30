@@ -13,6 +13,7 @@
  */
 
 import { azureCostSource } from './azure-cost';
+import { claudeCodeSource } from './claude-code';
 import { copilotSource } from './copilot';
 import { cursorSource } from './cursor';
 import { servicenowCmdbSource } from './servicenow-cmdb';
@@ -52,6 +53,7 @@ export interface TowerIngestSource {
 
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   azureCostSource,
+  claudeCodeSource,
   copilotSource,
   cursorSource,
   servicenowCmdbSource,
