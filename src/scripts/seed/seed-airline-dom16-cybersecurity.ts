@@ -3,11 +3,6 @@
 // Code range: A4800–A5099 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-airline-dom16-cybersecurity.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface AirlineCyberPatternSeed {
@@ -19,7 +14,7 @@ interface AirlineCyberPatternSeed {
   keywords: string[];
 }
 
-const AIRLINE_CYBER_PATTERNS: AirlineCyberPatternSeed[] = [
+export const AIRLINE_CYBER_PATTERNS: AirlineCyberPatternSeed[] = [
 
   // ── PSS/GDS API Credential Exposure (A4800–A4814) ────────────────────────
   {

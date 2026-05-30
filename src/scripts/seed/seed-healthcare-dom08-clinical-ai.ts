@@ -3,11 +3,6 @@
 // Code range: H2400–H2699 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom08-clinical-ai.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcarePatternSeed {
@@ -20,7 +15,7 @@ interface HealthcarePatternSeed {
   demoRelevant?: boolean;
 }
 
-const HEALTHCARE_CLINICAL_AI_PATTERNS: HealthcarePatternSeed[] = [
+export const HEALTHCARE_CLINICAL_AI_PATTERNS: HealthcarePatternSeed[] = [
   // ── 1. Sepsis Early Warning Alert Fatigue (H2400–H2414) ──────────────────
   {
     code: 'H2400',

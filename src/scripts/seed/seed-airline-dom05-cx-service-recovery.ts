@@ -1,8 +1,4 @@
 // Airline genome patterns — Customer Experience, Contact Centre & Service Recovery
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
 
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
@@ -15,7 +11,7 @@ interface AirlinePatternSeed {
   keywords: string[];
 }
 
-const AIRLINE_CX_PATTERNS: AirlinePatternSeed[] = [
+export const AIRLINE_CX_PATTERNS: AirlinePatternSeed[] = [
   // ── Sub-topic 1: IROPS proactive communication failures (A1500–A1514) ──
   {
     code: 'A1500',
@@ -870,113 +866,3 @@ const AIRLINE_CX_PATTERNS: AirlinePatternSeed[] = [
     keywords: ['VOC', 'Qualtrics', 'employee satisfaction', 'survey'],
   },
 ];
-
-function graphEdgesFor(pattern: AirlinePatternSeed): Array<Record<string, unknown>> {
-  const officeNode = `airline:${pattern.officeCategory}`;
-  const capabilityNode = `airline:${slugify(pattern.keywords[0] ?? pattern.name)}`;
-  return [
-    {
-      id: deterministicUuid(`edge:${pattern.code}:belongs_to:${officeNode}`),
-      from_node_type: 'genome_pattern',
-      from_node_id: pattern.code,
-      edge_type: 'belongs_to',
-      to_node_type: 'office_category',
-      to_node_id: officeNode,
-      vertical: 'airline',
-      weight: 1,
-      evidence: { seeded_by: 'seed-airline-dom05-cx-service-recovery', office_category: pattern.officeCategory },
-      source_key: 'airline_genome_patterns',
-    },
-    {
-      id: deterministicUuid(`edge:${pattern.code}:applies_to:${capabilityNode}`),
-      from_node_type: 'genome_pattern',
-      from_node_id: pattern.code,
-      edge_type: 'applies_to',
-      to_node_type: 'airline_capability',
-      to_node_id: capabilityNode,
-      vertical: 'airline',
-      weight: 0.82,
-      evidence: { seeded_by: 'seed-airline-dom05-cx-service-recovery', keywords: pattern.keywords },
-      source_key: 'airline_genome_patterns',
-    },
-  ];
-}
-
-async function upsertRows(
-  sb: SeedClient,
-  table: string,
-  rows: Array<Record<string, unknown>>,
-  onConflict: string,
-): Promise<void> {
-  const batchSize = 50;
-  for (let index = 0; index < rows.length; index += batchSize) {
-    const { error } = await sb.from(table).upsert(rows.slice(index, index + batchSize), { onConflict });
-    if (error) throw error;
-  }
-}
-
-async function main() {
-  loadSeedEnv();
-  const sb = createSeedClient();
-
-  const patternRows = AIRLINE_CX_PATTERNS.map((pattern) => ({
-    id: deterministicUuid(`airline-genome-pattern:${pattern.code}`),
-    pattern_type: 'failure_pattern',
-    vertical: 'airline',
-    sub_category: pattern.officeCategory,
-    data: {
-      code: pattern.code,
-      name: pattern.name,
-      description: pattern.description,
-      office_category: pattern.officeCategory,
-      keywords: pattern.keywords,
-      demo_seed: true,
-    },
-    source_count: 6,
-    confidence: 84,
-    is_active: true,
-    code: pattern.code,
-    name: pattern.name,
-    description: pattern.description,
-    summary: pattern.description,
-    failure_rate_pct: pattern.failureRatePct,
-    office_category: pattern.officeCategory,
-    keywords: pattern.keywords,
-  }));
-
-  const graphEdges = AIRLINE_CX_PATTERNS.flatMap(graphEdgesFor);
-
-  await upsertRows(sb, 'genome_patterns', patternRows, 'code');
-  await upsertRows(
-    sb,
-    'intelligence_graph_edges',
-    graphEdges,
-    'from_node_type,from_node_id,edge_type,to_node_type,to_node_id',
-  );
-
-  const { count: patternCount, error: patternCountError } = await sb
-    .from('genome_patterns')
-    .select('id', { count: 'exact', head: true })
-    .eq('vertical', 'airline')
-    .gte('code', 'A1500')
-    .lte('code', 'A1799');
-  if (patternCountError) throw patternCountError;
-
-  const { count: edgeCount, error: edgeCountError } = await sb
-    .from('intelligence_graph_edges')
-    .select('id', { count: 'exact', head: true })
-    .eq('vertical', 'airline')
-    .in('from_node_id', AIRLINE_CX_PATTERNS.map((pattern) => pattern.code));
-  if (edgeCountError) throw edgeCountError;
-
-  console.log(`Seeded airline CX Genome patterns: ${patternCount ?? 0}`);
-  console.log(`Seeded airline CX Genome graph edges: ${edgeCount ?? 0}`);
-}
-
-const isDirect = process.argv[1] ? import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href : false;
-if (isDirect) {
-  main().catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
-}

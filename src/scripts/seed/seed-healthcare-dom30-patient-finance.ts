@@ -5,11 +5,6 @@
 // Demo tenant: Meridian Health (6 hospitals, financial counseling program, MyChart patient portal)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom30-patient-finance.ts
 
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcarePatternSeed {
@@ -21,7 +16,7 @@ interface HealthcarePatternSeed {
   keywords: string[];
 }
 
-const HEALTHCARE_PATIENT_FINANCE_PATTERNS: HealthcarePatternSeed[] = [
+export const HEALTHCARE_PATIENT_FINANCE_PATTERNS: HealthcarePatternSeed[] = [
 
   // ── Good Faith Estimates — No Surprises Act Compliance (H9000–H9019) ─────
   {
@@ -934,65 +929,3 @@ const HEALTHCARE_PATIENT_FINANCE_PATTERNS: HealthcarePatternSeed[] = [
   },
 
 ];
-
-// ── Seed runner ────────────────────────────────────────────────────────────────
-
-async function seedHealthcarePatientFinancePatterns(client: SeedClient): Promise<void> {
-  const vertical = 'healthcare_provider';
-  const demoTenant = 'meridian-health';
-
-  console.log(`\nSeeding ${HEALTHCARE_PATIENT_FINANCE_PATTERNS.length} healthcare patient finance patterns…`);
-
-  let inserted = 0;
-  let skipped = 0;
-
-  for (const pattern of HEALTHCARE_PATIENT_FINANCE_PATTERNS) {
-    const id = deterministicUuid(`pattern:${vertical}:${pattern.code}`);
-
-    const { error } = await client.from('genome_patterns').upsert(
-      {
-        id,
-        code: pattern.code,
-        name: pattern.name,
-        vertical,
-        office_category: pattern.officeCategory,
-        failure_rate_pct: pattern.failureRatePct,
-        description: pattern.description,
-        keywords: pattern.keywords,
-        demo_tenant: demoTenant,
-        demo_relevant: true,
-        slug: slugify(`${pattern.code}-${pattern.name}`),
-      },
-      { onConflict: 'id' },
-    );
-
-    if (error) {
-      console.error(`  ✗ ${pattern.code}: ${error.message}`);
-      skipped++;
-    } else {
-      inserted++;
-    }
-  }
-
-  console.log(`  Done — inserted/updated: ${inserted}, errors: ${skipped}`);
-}
-
-// ── CLI entrypoint ─────────────────────────────────────────────────────────────
-
-const isMain =
-  process.argv[1] === fileURLToPath(import.meta.url) ||
-  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
-
-if (isMain) {
-  loadSeedEnv();
-  const client = createSeedClient();
-  seedHealthcarePatientFinancePatterns(client)
-    .then(() => process.exit(0))
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
-}
-
-export { HEALTHCARE_PATIENT_FINANCE_PATTERNS, seedHealthcarePatientFinancePatterns };
-export type { HealthcarePatternSeed };

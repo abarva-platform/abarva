@@ -2,11 +2,6 @@
 // Code range: A4500–A4799
 // Run: npx tsx src/scripts/seed/seed-airline-dom15-sustainability.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface AirlinePatternSeed {
@@ -19,7 +14,7 @@ interface AirlinePatternSeed {
   demoRelevant?: boolean;
 }
 
-const AIRLINE_SUSTAINABILITY_PATTERNS: AirlinePatternSeed[] = [
+export const AIRLINE_SUSTAINABILITY_PATTERNS: AirlinePatternSeed[] = [
 
   // ── Sub-topic 1: CORSIA MRV data quality failures ─────────────────────────
   {

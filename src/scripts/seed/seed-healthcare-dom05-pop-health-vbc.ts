@@ -3,11 +3,6 @@
 // Code range: H1500–H1799 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom05-pop-health-vbc.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcarePopHealthPatternSeed {
@@ -20,7 +15,7 @@ interface HealthcarePopHealthPatternSeed {
   demoRelevant?: boolean;
 }
 
-const HEALTHCARE_POP_HEALTH_PATTERNS: HealthcarePopHealthPatternSeed[] = [
+export const HEALTHCARE_POP_HEALTH_PATTERNS: HealthcarePopHealthPatternSeed[] = [
   // ── Sub-topic 1: Risk stratification model accuracy (H1500–H1514) ─────────
   {
     code: 'H1500',

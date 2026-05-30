@@ -3,11 +3,6 @@
 // Code range: A3000–A3299 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-airline-dom10-loyalty-distribution.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface AirlinePatternSeed {
@@ -19,30 +14,7 @@ interface AirlinePatternSeed {
   keywords: string[];
 }
 
-// ── Sub-topic index ───────────────────────────────────────────────────────────
-// ST01 (A3000–A3014): Dynamic award pricing without floor governor
-// ST02 (A3015–A3029): Tier status downgrade communication and retention failures
-// ST03 (A3030–A3044): Mileage accrual errors from codeshare and interline feeds
-// ST04 (A3045–A3059): Partner mileage posting failures (hotel/car/retail)
-// ST05 (A3060–A3074): Co-brand credit card mileage posting delay
-// ST06 (A3075–A3089): FFP liability valuation and breakage rate recalibration
-// ST07 (A3090–A3104): Points marketplace governance (Points.com compliance)
-// ST08 (A3105–A3119): GDS preferred agreement incentive fee miscalculation
-// ST09 (A3120–A3134): OBT corporate policy enforcement failures
-// ST10 (A3135–A3149): TMC relationship SLA management and governance
-// ST11 (A3150–A3164): Tier matching and status challenge programme design
-// ST12 (A3165–A3179): FFP customer service escalation — points dispute workflow
-// ST13 (A3180–A3194): FFP data privacy: GDPR/CCPA for member data sharing
-// ST14 (A3195–A3209): Loyalty redemption fraud — points theft, account takeover
-// ST15 (A3210–A3219): Award seat availability governance
-// ST16 (A3220–A3229): Digital loyalty app push notification failures
-// ST17 (A3230–A3239): Alliance status reciprocity failures
-// ST18 (A3240–A3249): Corporate contract rate loading and policy enforcement
-// ST19 (A3250–A3259): Segment incentive fee payment reconciliation with GDS
-// ST20 (A3260–A3299): NDC impact on loyalty earning/redemption
-// ─────────────────────────────────────────────────────────────────────────────
-
-const AIRLINE_LOYALTY_PATTERNS: AirlinePatternSeed[] = [
+export const AIRLINE_LOYALTY_PATTERNS: AirlinePatternSeed[] = [
 
   // ── ST01: Dynamic award pricing without floor governor (A3000–A3014) ────────
   {

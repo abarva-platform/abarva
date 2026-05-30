@@ -2,11 +2,6 @@
 // Code range: A600–A899 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-airline-dom02-pss-booking.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface AirlinePssPatternSeed {
@@ -18,7 +13,7 @@ interface AirlinePssPatternSeed {
   keywords: string[];
 }
 
-const AIRLINE_PSS_PATTERNS: AirlinePssPatternSeed[] = [
+export const AIRLINE_PSS_PATTERNS: AirlinePssPatternSeed[] = [
 
   // ── 1. Sabre-to-Amadeus Migration: Dual-PSS Transition Period ─────────────
 
