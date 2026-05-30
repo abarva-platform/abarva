@@ -2,11 +2,6 @@
 // Domain 03 · Code range: A900–A1199 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-airline-dom03-crew-mgmt.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface AirlineCrewPatternSeed {
@@ -18,10 +13,7 @@ interface AirlineCrewPatternSeed {
   keywords: string[];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AIRLINE_CREW_PATTERNS  (300 entries · A900–A1199)
-// ─────────────────────────────────────────────────────────────────────────────
-const AIRLINE_CREW_PATTERNS: AirlineCrewPatternSeed[] = [
+export const AIRLINE_CREW_PATTERNS: AirlineCrewPatternSeed[] = [
 
   // ── 1. Pairing optimisation ignoring CBA supplement rest interpretations ──
   {

@@ -2,11 +2,6 @@
 // Code range: H3600–H3899 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom12-ed-throughput.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcareEDPatternSeed {
@@ -19,7 +14,7 @@ interface HealthcareEDPatternSeed {
   demoRelevant?: boolean;
 }
 
-const HEALTHCARE_ED_PATTERNS: HealthcareEDPatternSeed[] = [
+export const HEALTHCARE_ED_PATTERNS: HealthcareEDPatternSeed[] = [
 
   // ── ED Boarding: Admitted Patients in ED Hallways ─────────────────────────
   {

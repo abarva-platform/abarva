@@ -131,7 +131,7 @@ function seedMetadata(filePath: string) {
       seededBy: base,
     };
   }
-  throw new Error(`Unsupported seed file naming: ${filePath}`);
+  throw new Error(`Unsupported seed file naming: ${filePath}. Supported prefixes: seed-airline-, seed-healthcare-, seed-medtech-, seed-banking-, seed-cross-industry-`);
 }
 
 async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict: string) {

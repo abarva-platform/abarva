@@ -3,11 +3,6 @@
 // Code range: H5100–H5399 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom17-finance-contracting.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcareFinancePatternSeed {

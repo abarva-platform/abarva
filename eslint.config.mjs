@@ -16,6 +16,21 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-require-imports": "off",
+      // ADR-0001 D.5 (scripts): genome seed data files must be data-only — no
+      // infrastructure imports. Use createSeedClient() from seed-wave-lib when
+      // infrastructure access is genuinely needed (e.g., verify scripts), or
+      // write data-only *PATTERNS arrays and let the durable loader
+      // (scripts/corpus/load-authored-genome-seeds.ts) handle all DB writes.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportDeclaration[source.value='@supabase/supabase-js']",
+          message:
+            "ADR-0001 D.5: scripts must not import @supabase/supabase-js directly. " +
+            "Use createSeedClient() from seed-wave-lib (returns PostgresCompatClient). " +
+            "Genome seed files should be data-only *PATTERNS arrays with no imports at all.",
+        },
+      ],
     },
   },
   // Packet 30 Phase 2D / ADR-0001 D.5:

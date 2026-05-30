@@ -3,11 +3,6 @@
 // Code range: H600–H899 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom02-rcm-denials.ts
 
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
-
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
 interface HealthcareRcmDenialPatternSeed {
