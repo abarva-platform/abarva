@@ -27,6 +27,7 @@ type ParsedPattern = {
   governanceHook?: string;
   movesApplicability?: string[];
   sourceApplicability?: string[];
+  towerApplicability?: string[];
   startupEcosystemSignals?: string[];
   qualityTier?: string;
   qualityScore?: number;
@@ -147,6 +148,14 @@ function seedMetadata(filePath: string) {
       seededBy: base,
     };
   }
+  if (base.startsWith('seed-retail-')) {
+    return {
+      vertical: 'retail',
+      sourceKey: 'apex-retail',
+      capabilityType: 'retail_capability',
+      seededBy: base,
+    };
+  }
   if (base.startsWith('seed-medtech-')) {
     return {
       vertical: 'medtech',
@@ -171,7 +180,7 @@ function seedMetadata(filePath: string) {
       seededBy: base,
     };
   }
-  throw new Error(`Unsupported seed file naming: ${filePath}. Supported prefixes: seed-airline-, seed-healthcare-, seed-medtech-, seed-banking-, seed-cross-industry-`);
+  throw new Error(`Unsupported seed file naming: ${filePath}. Supported prefixes: seed-airline-, seed-healthcare-, seed-retail-, seed-medtech-, seed-banking-, seed-cross-industry-`);
 }
 
 async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict: string) {
@@ -200,6 +209,9 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
     const sourceApplicability = Array.isArray(pattern.sourceApplicability)
       ? pattern.sourceApplicability.map(String)
       : null;
+    const towerApplicability = Array.isArray(pattern.towerApplicability)
+      ? pattern.towerApplicability.map(String)
+      : null;
     const startupEcosystemSignals = Array.isArray(pattern.startupEcosystemSignals)
       ? pattern.startupEcosystemSignals.map(String)
       : null;
@@ -225,6 +237,7 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
         governance_hook: pattern.governanceHook ?? null,
         moves_applicability: movesApplicability,
         source_applicability: sourceApplicability,
+        tower_applicability: towerApplicability,
         startup_ecosystem_signals: startupEcosystemSignals,
         quality_tier: pattern.qualityTier ?? null,
         quality_score: typeof pattern.qualityScore === 'number' ? pattern.qualityScore : null,
