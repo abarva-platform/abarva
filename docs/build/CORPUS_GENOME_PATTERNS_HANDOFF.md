@@ -312,19 +312,20 @@ interface PatternSeed {
   description: string;
   keywords: string[];
   demoRelevant?: boolean;
+  subTopic?: string;       // optional grouping label within a domain
+  verticals?: string[];    // cross-industry only — which verticals apply
 }
 
-const AIRLINE_REVENUE_PART1_PATTERNS: PatternSeed[] = [
+export const AIRLINE_REVENUE_PART1_PATTERNS: PatternSeed[] = [
   {
     code: 'A300',
     name: 'Revenue Management Model Stale on COVID Demand Mix',
     officeCategory: 'middle_office',
     failureRatePct: 73,
-    description:
-      'Revenue management models under-price premium cabins when 2019-2023 training data is loaded '
-      + 'without a COVID exclusion window or demand-regime weighting. The optimizer treats leisure '
-      + 'and VFR recovery demand as structurally permanent, so business-travel shoulder markets keep '
-      + 'too many low fare buckets open while premium seats depart empty.',
+    description: `Revenue management models under-price premium cabins when 2019-2023 training
+      data is loaded without a COVID exclusion window or demand-regime weighting. The optimizer
+      treats leisure and VFR recovery demand as structurally permanent, so business-travel shoulder
+      markets keep too many low fare buckets open while premium seats depart empty.`,
     keywords: ['revenue management', 'O&D forecasting', 'demand model', 'COVID exclusion', 'fare class'],
     demoRelevant: true,
   },
@@ -335,17 +336,25 @@ const AIRLINE_REVENUE_PART1_PATTERNS: PatternSeed[] = [
 Rules:
 - **Variable name**: must end in `PATTERNS` — the loader finds it by `/PATTERNS$/` regex.
   Use a descriptive name: `AIRLINE_PSS_PART1_PATTERNS`, `HEALTHCARE_RCM_PART2_PATTERNS`, etc.
-- **No imports**: the file is parsed as an AST, not executed. Imports will be ignored.
+- **Export the constant**: `export const FOO_PATTERNS = [...]` — makes the file an ES module,
+  which prevents duplicate-identifier TypeScript errors across seed files.
+- **No imports**: the file is parsed as an AST, not executed. Imports cause TypeScript errors.
 - **No `main()`**: the loader provides the persistence runtime.
-- **Apostrophes in strings**: use template literals (backticks) for descriptions that contain
+- **Apostrophes in strings**: use backtick template literals for descriptions that contain
   apostrophes (`don't`, `provider's`, `model's`). Single-quoted strings with unescaped `'` break
   the TypeScript parser.
-- **Multi-line descriptions**: use string concatenation (`'...' + '...'`) or backticks.
-  Avoid long single lines — they are harder to review and hit editor line-length limits.
+- **Multi-line descriptions**: use backticks. Avoid long single lines.
+- **Keep files to 30–60 patterns**: easier to review, easier to debug parse errors.
 - **`demoRelevant: true`** — tag patterns directly relevant to the demo tenant's live situation.
   For airline: PSS migration to Altéa, union agreements, FFP loyalty. For healthcare: Epic, VBC
   with Aetna/UnitedHealth/BCBS, prior auth, clinical AI governance. For banking: MRM consent order,
   commercial banking digital transformation. For medtech: FDA clearance, EU MDR, SAP ERP.
+- **Filename prefix → vertical mapping**:
+  - `seed-airline-*` → `vertical='airline'`, `source_key='skyharbor-air'`
+  - `seed-healthcare-*` → `vertical='healthcare_provider'`, `source_key='meridian-health'`
+  - `seed-medtech-*` → `vertical='medtech'`, `source_key='northstar-clinical'`
+  - `seed-banking-*` → `vertical='banking'`, `source_key='first-capital'`
+  - `seed-cross-industry-*` → `vertical='cross_industry'`, `source_key='cross-industry'`
 
 ---
 
@@ -366,7 +375,10 @@ The durable loader is the **only** supported way to persist seed files. Never ru
 directly — new files are data-only and have no `main()` to run.
 
 ```bash
-# Load a single file (run after writing each file to verify it parses and upserts cleanly):
+# Validate a single file without any DB writes (parse-only dry run):
+npx tsx scripts/corpus/load-authored-genome-seeds.ts --parse-only src/scripts/seed/seed-airline-dom19-ancillary-part1.ts
+
+# Load a single file (after validating above):
 npx tsx scripts/corpus/load-authored-genome-seeds.ts src/scripts/seed/seed-airline-dom19-ancillary-part1.ts
 
 # Load all airline seed files (after generating a full wave):
@@ -380,7 +392,11 @@ find src/scripts/seed -maxdepth 1 -type f -name 'seed-healthcare-dom*.ts' \
   | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
 
 # Load medtech, banking, or cross-industry (once generated):
-find src/scripts/seed -maxdepth 1 -type f \( -name 'seed-medtech-dom*.ts' -o -name 'seed-banking-dom*.ts' -o -name 'seed-cross-industry-*.ts' \) \
+find src/scripts/seed -maxdepth 1 -type f \( \
+    -name 'seed-medtech-dom*.ts' \
+    -o -name 'seed-banking-dom*.ts' \
+    -o -name 'seed-cross-industry*.ts' \
+  \) \
   | sort \
   | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
 ```
