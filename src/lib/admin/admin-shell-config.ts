@@ -9,14 +9,38 @@ export type AdminSubSectionId =
   | "agent-readiness"
   | "production-readiness"
   | "compliance"
+  | "engineering-traces"
   | "releases"
   | "training";
+
+/**
+ * Sidebar group label. Used by `AdminSidebar` to render a small
+ * uppercase divider above the section. When `undefined` the entry
+ * inherits the previous group; an explicit `group` on the first
+ * entry of a run starts a new group. Wave 1 CL-3 introduced the
+ * "DIAGNOSTICS" group so `/engineering/traces` has a real anchor
+ * in the Steward shell after W1-PR-2 relocated it from
+ * `/admin/atlas/traces`. See
+ * `docs/releases/records/2026-05-30-cleanup-engineering-shell.md`.
+ */
+export type AdminSidebarGroup =
+  | "Setup"
+  | "Governance"
+  | "Diagnostics"
+  | "Releases"
+  | "Learn";
 
 export interface AdminSubSection {
   id: AdminSubSectionId;
   label: string;
   subtitle: string;
   href: string;
+  /**
+   * When set, the sidebar renders a group header above this entry.
+   * Subsequent entries with no `group` inherit it. Keep the value
+   * workflow-anchored (function-named), never agent-anchored.
+   */
+  group?: AdminSidebarGroup;
 }
 
 export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
@@ -25,6 +49,7 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Overview",
     subtitle: "What needs setup?",
     href: "/admin",
+    group: "Setup",
   },
   {
     id: "data-trust",
@@ -43,6 +68,7 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Users & Access",
     subtitle: "Roles and risk",
     href: "/admin/users-access",
+    group: "Governance",
   },
   {
     id: "customer-admin",
@@ -71,16 +97,33 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     href: "/admin/compliance",
   },
   {
+    // Wave 1 CL-3 (2026-05-30) · Diagnostics group anchor — gives
+    // `/engineering/traces` (relocated by W1-PR-2 from the
+    // agent-named `/admin/atlas/traces`) a real sidebar entry so
+    // operators can find the raw reasoning trace inspector. The
+    // page is workflow-anchored (function-named) per the
+    // workflow-first-agents-hidden doctrine; the label here MUST
+    // NOT mention Atlas. Future Diagnostics entries (pipeline
+    // health, eval runs, etc.) inherit this group.
+    id: "engineering-traces",
+    label: "Engineering Traces",
+    subtitle: "Reasoning audit log",
+    href: "/engineering/traces",
+    group: "Diagnostics",
+  },
+  {
     id: "releases",
     label: "Releases",
     subtitle: "Change ledger",
     href: "/admin/releases",
+    group: "Releases",
   },
   {
     id: "training",
     label: "Training",
     subtitle: "AbarVa guide & reference",
     href: "/home/learn",
+    group: "Learn",
   },
 ];
 

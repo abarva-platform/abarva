@@ -1,64 +1,61 @@
-// Tower ingest registry · append-only.
-//
-// Each Tower source-system ingest registers ONE entry here. Sister slices
-// (Claude Code, Cursor, etc.) append additional entries to this array —
-// never edit or reorder existing entries. Conflicts must be union-merged.
-//
-// Consumers (UI catalog, CLI router, classifier) read this array to know
-// which ingests exist and where their templates / parsers / runbooks live.
+/**
+ * Tower ingest source registry.
+ *
+ * Each entry describes ONE live integration that feeds Tower. Sibling slices
+ * append their entry by importing their own descriptor and adding it to the
+ * `TOWER_INGEST_SOURCES` array below. This file is the union of all such
+ * descriptors — keep additions alphabetical to make merge conflicts trivial.
+ *
+ * Audit context: PR #2525 found ZERO live integrations. Tower has lots of
+ * synthesis but nothing watching a real source. Every entry in this array is
+ * a real watch: a real-world extract path, a template, a parser, a validator,
+ * a CLI, and a target table.
+ */
 
-export interface TowerIngestEntry {
-  /** Stable kebab-case identifier — matches the slug in the directory path. */
-  slug: string;
-  /** Human-readable source name. */
+import { azureCostSource } from './azure-cost';
+import { copilotSource } from './copilot';
+
+export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
+
+export interface TowerIngestSource {
+  /** Stable key used as the source identifier on disk and in registries. */
+  key: string;
+  /** Human-friendly name shown in catalog / chooser UIs. */
   displayName: string;
-  /** Source category — drives grouping in the in-app catalog. */
-  category:
-    | 'ai_coding_tool'
-    | 'ticketing'
-    | 'observability'
-    | 'identity'
-    | 'finops'
-    | 'cmdb'
-    | 'devops'
-    | 'other';
-  /** Discriminator value written to the shared `tower_ai_tool_usage.tool` column, when applicable. */
-  toolKind?: 'github_copilot' | 'claude_code' | 'cursor';
-  /** Path under public/templates/tower/ for the empty + sample workbooks. */
-  templateDir: string;
-  /** Path to the runbook README for IT admins. */
-  runbookPath: string;
-  /** Path to the ingest CLI entrypoint. */
-  cliScript: string;
-  /** Path to the parser module. */
-  parserModule: string;
-  /** Path to the validator module. */
-  validatorModule: string;
-  /** Target Postgres table this slice writes into. */
+  /** Vendor or system of record. */
+  vendor: string;
+  /** Tower dimension this source primarily feeds. */
+  kind: TowerIngestKind;
+  /** Stable target DB table name (must match the migration this slice ships). */
   targetTable: string;
-  /** Suggested refresh cadence for the source data. */
-  refreshCadence: 'daily' | 'weekly' | 'monthly' | 'quarterly';
-  /** Owning persona/team responsible for keeping the runbook current. */
-  ownerRole: string;
+  /** Public path of the blank template file (relative to /public). */
+  templatePath: string;
+  /** Public path of the sample-filled workbook (relative to /public). */
+  samplePath: string;
+  /** Project-relative path of the README for this source. */
+  readmePath: string;
+  /** Module path (relative to src) of the parser entrypoint. */
+  parserModule: string;
+  /** Module path (relative to src) of the validator entrypoint. */
+  validatorModule: string;
+  /** Script name (under src/scripts/tower) for the CLI ingest tool. */
+  cliScript: string;
+  /** Real-world extract path summary (one line for catalog cards). */
+  extractPath: string;
+  /** Sample-row count and tenant — for synthetic banner sizing. */
+  sampleSummary: { tenant: string; rowsApprox: number };
 }
 
-export const TOWER_INGEST_REGISTRY: TowerIngestEntry[] = [
-  {
-    slug: 'copilot',
-    displayName: 'GitHub Copilot — Usage + Cost',
-    category: 'ai_coding_tool',
-    toolKind: 'github_copilot',
-    templateDir: 'public/templates/tower/copilot/',
-    runbookPath: 'docs/templates/tower/copilot/README.md',
-    cliScript: 'src/scripts/tower/ingest-copilot.ts',
-    parserModule: 'src/lib/tower/ingest/copilot/parse.ts',
-    validatorModule: 'src/lib/tower/ingest/copilot/validate.ts',
-    targetTable: 'tower_ai_tool_usage',
-    refreshCadence: 'monthly',
-    ownerRole: 'IT FinOps + DevEx',
-  },
+export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
+  azureCostSource,
+  copilotSource,
+  // Sibling slices append here, alphabetical by `key`.
 ];
 
-export function findIngest(slug: string): TowerIngestEntry | undefined {
-  return TOWER_INGEST_REGISTRY.find((e) => e.slug === slug);
+export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
+  return TOWER_INGEST_SOURCES.find((s) => s.key === key);
+}
+
+export function towerIngestKindsCovered(): TowerIngestKind[] {
+  return Array.from(new Set(TOWER_INGEST_SOURCES.map((s) => s.kind))).sort();
 }
