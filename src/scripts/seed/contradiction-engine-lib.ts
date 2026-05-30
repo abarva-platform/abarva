@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ContradictionSensitivity } from '@/lib/contradictions/types';
-import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey, type SeedClient } from './seed-wave-lib';
 
 export interface ClientRef {
   id: string;
@@ -60,7 +59,7 @@ export function deterministicUuid(input: string): string {
   ].join('-');
 }
 
-export async function resolveClientMap(sb: SupabaseClient): Promise<Map<TenantKey, ClientRef>> {
+export async function resolveClientMap(sb: SeedClient): Promise<Map<TenantKey, ClientRef>> {
   const map = new Map<TenantKey, ClientRef>();
   for (const tenant of Object.values(TENANTS)) {
     for (const field of [
@@ -87,7 +86,7 @@ export async function resolveClientMap(sb: SupabaseClient): Promise<Map<TenantKe
   return map;
 }
 
-export async function loadPeopleMap(sb: SupabaseClient): Promise<Map<string, PersonRef>> {
+export async function loadPeopleMap(sb: SeedClient): Promise<Map<string, PersonRef>> {
   const orgNames = Object.values(TENANTS).map((tenant) => tenant.canonicalName);
   const { data, error } = await sb
     .from('persons')
@@ -98,7 +97,7 @@ export async function loadPeopleMap(sb: SupabaseClient): Promise<Map<string, Per
 }
 
 export async function upsertRows(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
   onConflict = 'id',

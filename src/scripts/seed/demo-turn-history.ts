@@ -332,7 +332,6 @@ const PROFILES: EngagementProfile[] = [
 function resolveDbUrl(): string {
   return (
     process.env.DATABASE_URL ??
-    process.env.SUPABASE_DB_URL ??
     process.env.POSTGRES_URL ??
     LOCAL_DB_URL
   );

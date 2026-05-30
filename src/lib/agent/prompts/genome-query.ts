@@ -16,66 +16,41 @@ BROKER CONTEXT
 The request has already been resolved through AgentContextBroker for tenant "${context.tenantKey}".
 Broker context items: ${context.itemCount}.
 Broker warnings: ${context.warningCount}.
-Broker graph readiness: ${context.graphNodeCount} nodes, ${context.graphEdgeCount} edges.
-
-Use this broker context as grounding only. The executable Cypher still MUST scope tenant-owned graph nodes with $callerClientId, because the database client_id is supplied separately at execution time.
+Azure graph readiness: ${context.graphNodeCount} nodes, ${context.graphEdgeCount} edges.
 `
     : '';
 
-  return `You translate natural-language questions about AbarVa's Transformation Genome into Cypher queries against Neo4j.
+  return `You translate natural-language questions about AbarVa's Transformation Genome into read-only Azure Postgres graph lookup plans.
 
 SCHEMA
-Nodes:
-- GenomePattern {code, name, failure_rate, category, description}
-- Engagement {id, name, client_id, industry_code, function_code, objective_code, current_phase, status}
-- Industry {code, name}
-- Function {code, name}
-- Objective {code, name}
-- Person {id, name, role, organization, client_id}
-- Decision {id, phase, choice, client_id}
-- Outcome {id, savings_usd, verified, notes, client_id}
-
-Edges:
-- (Engagement)-[:TRIGGERED]->(GenomePattern)
-- (GenomePattern)-[:CHAINS_TO {weight}]->(GenomePattern)
-- (Engagement)-[:IN_INDUSTRY]->(Industry)
-- (Engagement)-[:IN_FUNCTION]->(Function)
-- (Engagement)-[:PURSUES_OBJECTIVE]->(Objective)
-- (Person)-[:SPONSORED]->(Engagement)
-- (Person)-[:LED]->(Engagement)
-- (Engagement)-[:MADE]->(Decision)
-- (Decision)-[:RESULTED_IN]->(Outcome)
+Tables:
+- enterprise_graph_nodes {client_id, tenant_key, node_id, node_type, label, source_segment_id, source_record_id, properties}
+- enterprise_graph_edges {client_id, tenant_key, edge_id, from_node_id, to_node_id, edge_type, source_segment_id, source_record_id, properties}
+- genome_patterns {code, name, summary, description, vertical, office_category, failure_rate_pct, keywords}
 
 USER QUESTION
 "${userQuery}"
 ${brokerContext}
 
 TASK
-Write a read-only Cypher query that answers the question. Return ONLY nodes or specific fields — never DELETE, CREATE, MERGE, SET, or any write operation.
+Return a compact JSON plan for a read-only Azure Postgres graph lookup. Do not write SQL that mutates data.
 
-TENANT ISOLATION (required)
-The caller's tenant is bound to the parameter $callerClientId. Every query MUST scope tenant-owned nodes (Engagement, Person, Decision, Outcome) by $callerClientId. Cross-tenant aggregates over global nodes (GenomePattern, Industry, Function, Objective) are allowed, but joins through tenant-owned nodes must filter \`WHERE node.client_id = $callerClientId\`. Queries without a real tenant-owned property predicate will be rejected by the server.
-Do not satisfy tenant isolation with a vacuous predicate such as \`WHERE $callerClientId IS NOT NULL\`. The server only accepts $callerClientId when it is compared to a tenant-owned property such as \`Engagement.client_id\`, \`Person.client_id\`, \`Decision.client_id\`, or \`Outcome.client_id\`.
-Do not add a scoped preamble and then open a disconnected catalog scan such as \`WITH p MATCH (p2:GenomePattern) RETURN p2\`. Any returned catalog node must be reached through the tenant-scoped path.
-
-Example pattern:
-MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern)
-RETURN p.code, p.name, count(e) AS hits LIMIT 50
+TENANT ISOLATION
+Every executable lookup MUST filter enterprise_graph_nodes or enterprise_graph_edges with the caller's client_id or tenant_key. Global genome_patterns may be joined only through tenant-scoped graph edges.
 
 OUTPUT
 Return ONLY JSON:
 
 {
-  "cypher": "MATCH (e:Engagement {client_id: $callerClientId})... RETURN ...",
-  "result_shape": "patterns" | "engagements" | "chains" | "persons" | "mixed",
-  "explanation": "1-sentence plain-English description of what this query does"
+  "intent": "patterns" | "relationships" | "entities" | "mixed",
+  "search_terms": ["term"],
+  "explanation": "1-sentence plain-English description of what this lookup should retrieve"
 }
 
 RULES
-- Read-only only. Never emit CREATE, MERGE, SET, DELETE, REMOVE, DROP, DETACH.
-- Always use \`$callerClientId\` as a tenant-owned property predicate; never include it only as a non-null or presence check.
-- Never return disconnected global catalog nodes after a tenant-scoped preamble.
-- Always LIMIT 50.
-- If the question can't be answered with the schema, return cypher: null and explanation: "Can't answer: [why]".
+- Read-only only. Never emit INSERT, UPDATE, DELETE, ALTER, DROP, TRUNCATE, GRANT, REVOKE, CREATE, or write operations.
+- Never request an unscoped global catalog scan.
+- Always LIMIT 50 in any downstream lookup plan.
+- If the question cannot be answered with tenant-scoped graph tables, return intent: "mixed" and explain the missing source.
 - No commentary outside the JSON.`;
 }

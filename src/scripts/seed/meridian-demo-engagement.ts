@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 
@@ -22,11 +23,8 @@ loadEnv();
 //   DELETE FROM turns WHERE retrieved_refs->>'source' = 'demo_seed';
 //   UPDATE engagements SET deliverables='[]'::jsonb WHERE name LIKE 'Meridian%AI Governance%' AND deliverables::text LIKE '%demo_seed%';
 
-function getSb(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required');
-  return createClient(url, key, { auth: { persistSession: false } });
+function getSb(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
 const ENGAGEMENT_NAME = 'Meridian · AI Governance + Analytics Modernization';
@@ -170,7 +168,7 @@ const DEMO_DELIVERABLES = [
   },
 ];
 
-async function findMeridianClient(sb: SupabaseClient): Promise<{ id: string; name: string } | null> {
+async function findMeridianClient(sb: SeedClient): Promise<{ id: string; name: string } | null> {
   for (const name of CLIENT_NAME_CANDIDATES) {
     const { data } = await sb.from('clients').select('id, name').ilike('name', name).maybeSingle();
     if (data) return data as { id: string; name: string };
@@ -178,7 +176,7 @@ async function findMeridianClient(sb: SupabaseClient): Promise<{ id: string; nam
   return null;
 }
 
-async function findOrCreateSponsor(sb: SupabaseClient): Promise<string> {
+async function findOrCreateSponsor(sb: SeedClient): Promise<string> {
   const { data: existing } = await sb
     .from('persons')
     .select('id')
@@ -205,7 +203,7 @@ async function findOrCreateSponsor(sb: SupabaseClient): Promise<string> {
 }
 
 async function findOrCreateEngagement(
-  sb: SupabaseClient,
+  sb: SeedClient,
   clientId: string,
   sponsorId: string,
 ): Promise<{ id: string; graph_node_id: string }> {
@@ -265,8 +263,8 @@ async function findOrCreateEngagement(
   return inserted as { id: string; graph_node_id: string };
 }
 
-async function clearPriorDemoTurns(sb: SupabaseClient, engagementId: string): Promise<number> {
-  // Supabase doesn't support ->> in delete filters on all versions, but we can
+async function clearPriorDemoTurns(sb: SeedClient, engagementId: string): Promise<number> {
+  // Azure Postgres doesn't support ->> in delete filters on all versions, but we can
   // match on mode_label which we'll distinguish via 'demo_seed' prefix. To
   // keep the surface simple, delete all turns for this engagement where
   // retrieved_refs contains our tag (via JSONB containment).
@@ -280,7 +278,7 @@ async function clearPriorDemoTurns(sb: SupabaseClient, engagementId: string): Pr
   return (data ?? []).length;
 }
 
-async function seedTurns(sb: SupabaseClient, engagementId: string): Promise<void> {
+async function seedTurns(sb: SeedClient, engagementId: string): Promise<void> {
   const rows = TURN_SCRIPT.map((t) => ({
     engagement_id: engagementId,
     phase: t.phase,

@@ -5,19 +5,8 @@ const mockAzureRead = {
   count: jest.fn(),
   withSession: jest.fn(),
 };
-const isNeo4jEnabled = jest.fn();
-const getGraphDriverIfEnabled = jest.fn();
-
 jest.mock('@/lib/data-plane/azureRead', () => ({
   azureRead: mockAzureRead,
-}));
-
-jest.mock('@/lib/graph/neo4j-gate', () => ({
-  isNeo4jEnabled,
-}));
-
-jest.mock('@/lib/graph/driver', () => ({
-  getGraphDriverIfEnabled,
 }));
 
 jest.mock('pg', () => ({
@@ -31,7 +20,6 @@ describe('GET /api/health read plane', () => {
     jest.clearAllMocks();
     delete process.env.DATABASE_URL;
     mockAzureRead.query.mockResolvedValue([{ id: 'engagement_1' }]);
-    isNeo4jEnabled.mockReturnValue(false);
   });
 
   it('checks Postgres liveness through azureRead', async () => {
@@ -44,11 +32,10 @@ describe('GET /api/health read plane', () => {
       checks: {
         postgres: true,
         direct_postgres: false,
-        neo4j: 'skipped',
+        azure_graph: 'postgres',
       },
     });
     expect(mockAzureRead.query).toHaveBeenCalledWith('SELECT id FROM engagements LIMIT 1');
-    expect(getGraphDriverIfEnabled).not.toHaveBeenCalled();
   });
 
   it('keeps health green when direct Postgres succeeds and the read adapter is degraded', async () => {
@@ -64,7 +51,7 @@ describe('GET /api/health read plane', () => {
       checks: {
         postgres: false,
         direct_postgres: true,
-        neo4j: 'skipped',
+        azure_graph: 'postgres',
       },
     });
   });

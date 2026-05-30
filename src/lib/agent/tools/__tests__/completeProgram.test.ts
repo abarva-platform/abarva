@@ -24,9 +24,9 @@ const fromMock = jest.fn((table: string) => {
   return { insert: jest.fn() };
 });
 
-jest.mock('@/lib/supabase-server', () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
   __esModule: true,
-  getServerSupabase: () => ({ from: fromMock }),
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 const writeAuditMock = jest.fn();

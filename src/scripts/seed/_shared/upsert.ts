@@ -1,16 +1,14 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { isVendorAllowed } from '@/lib/config/vendor-whitelist';
 import { assertClientNameAllowed } from '@/lib/config/naming';
 import type { ClientSeed, UseCaseSeed } from './types';
 
-export function getSeedClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Supabase env missing');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+export function getSeedClient(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
-async function wipeClientSeedRows(sb: SupabaseClient, clientId: string) {
+async function wipeClientSeedRows(sb: SeedClient, clientId: string) {
   const { data: ucs } = await sb.from('use_cases').select('id').eq('client_id', clientId).eq('source', 'seed');
   const ids = ((ucs as Array<{ id: string }> | null) ?? []).map((r) => r.id);
   if (ids.length === 0) return;
@@ -21,7 +19,7 @@ async function wipeClientSeedRows(sb: SupabaseClient, clientId: string) {
   await sb.from('use_cases').delete().in('id', ids);
 }
 
-export async function seedClient(sb: SupabaseClient, seed: ClientSeed): Promise<{ clientId: string | null; inserted: number; skippedVendors: string[] }> {
+export async function seedClient(sb: SeedClient, seed: ClientSeed): Promise<{ clientId: string | null; inserted: number; skippedVendors: string[] }> {
   assertClientNameAllowed(seed.name);
 
   const { data: row } = await sb.from('clients').select('id').eq('name', seed.name).maybeSingle();

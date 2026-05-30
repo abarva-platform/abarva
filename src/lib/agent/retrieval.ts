@@ -1,13 +1,7 @@
-import { Pinecone } from '@pinecone-database/pinecone';
 import { azureRead } from '@/lib/data-plane/azureRead';
 import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
 import { composeAtlasIacAnswer, type AtlasIacComposition } from '@/lib/atlas/composition/compose';
 import type { AtlasTenancyCtx } from '@/lib/atlas/initiative-deep/types';
-import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
-import {
-  clientVectorMetadataFilter,
-  clientVectorNamespace,
-} from '@/lib/knowledge/client-vector-namespace';
 
 type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
 
@@ -50,41 +44,7 @@ export interface AssembleRetrievalArgs {
 }
 
 const DAY_MS = 86_400_000;
-const EMBED_MODEL = 'text-embedding-3-large';
-const EMBED_DIMS = 3072;
-const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 
-let _pinecone: Pinecone | null = null;
-
-function getPinecone(): Pinecone | null {
-  if (_pinecone) return _pinecone;
-  const key = process.env.PINECONE_API_KEY;
-  if (!key) return null;
-  _pinecone = new Pinecone({ apiKey: key });
-  return _pinecone;
-}
-
-function industryNamespace(industry: IndustryCode | null | undefined): string {
-  if (industry === 'HEALTHCARE_IDN') return 'global:healthcare_idn';
-  if (industry === 'FINSERV') return 'global:finserv';
-  if (industry === 'RETAIL') return 'global:retail';
-  return 'global:general_macro';
-}
-
-/**
- * Tenant-scoped topic namespace for AI-governance frameworks.
- *
- * Atlas Fix A (2026-05-30) — closes the second leg of the P0 retrieval
- * leak. Previously this pulled from the un-tenant-scoped global
- * `global:ai_governance` namespace, which could return Meridian (Abridge
- * / HIPAA / BAA) content into a retail tenant's response.
- *
- * The new namespace is keyed on industry so a retail tenant cannot
- * receive healthcare-specific governance chunks. When a tenant is not
- * resolved, we fall back to the generic-macro namespace (which carries
- * only industry-agnostic governance text) — never the unscoped global
- * pool.
- */
 export function __testOnly_topicNamespace(
   industry: IndustryCode | null | undefined,
 ): string {
@@ -98,17 +58,6 @@ function topicNamespace(industry: IndustryCode | null | undefined): string {
   return 'industry:general_macro:ai_governance';
 }
 
-/**
- * Legacy-alias scrubber.
- *
- * Atlas Fix A (2026-05-30) — same pattern used by
- *   - src/lib/azure-search/tenant-context-retriever.ts
- *   - src/lib/knowledge/tenant-enterprise-context.ts (×2)
- *
- * Any chunk pulled into the Atlas prompt must be normalized BEFORE it
- * enters retrieval output. Otherwise retired legacy alias names leak
- * straight into the model context.
- */
 export function __testOnly_normalizeLegacyClientAliases(text: string): string {
   return normalizeLegacyClientAliases(text);
 }
@@ -145,61 +94,12 @@ function applyFreshnessDecay(score: number, publishedAt?: string, halfLifeDays?:
   return score * Math.exp(-Math.LN2 * (ageDays / hl));
 }
 
-function composeEmbeddingQuery(userQuery: string, history?: Array<{ role: string; content: string }>): string {
+function composeRetrievalQuery(
+  userQuery: string,
+  history?: Array<{ role: string; content: string }>,
+): string {
   const recent = (history ?? []).slice(-4).map((m) => m.content).join('\n');
   return recent ? `${recent}\n${userQuery}`.slice(-4000) : userQuery.slice(-4000);
-}
-
-async function embed(text: string, clientId?: string | null): Promise<number[] | null> {
-  if (!clientId || !process.env.OPENAI_API_KEY) return null;
-  const preflight = await preflightOpenAIDirectClient({
-    tenantId: clientId,
-    workflow: 'agent-retrieval-embedding',
-    model: EMBED_MODEL,
-    prompt: text,
-    dataClass: 'confidential',
-    metadata: { dimensions: EMBED_DIMS },
-  });
-  if (!preflight.ok) return null;
-  const res = await preflight.client.embeddings.create({
-    model: EMBED_MODEL,
-    input: text,
-    dimensions: EMBED_DIMS,
-  });
-  return res.data[0]?.embedding ?? null;
-}
-
-async function queryNamespace(
-  vector: number[],
-  namespace: string,
-  topK: number,
-  filter?: Record<string, unknown>,
-): Promise<RetrievedChunk[]> {
-  const pc = getPinecone();
-  if (!pc) return [];
-  const index = pc.index(INDEX_NAME).namespace(namespace);
-  const res = await index.query({ vector, topK, includeMetadata: true, filter });
-  const out: RetrievedChunk[] = [];
-  for (const m of res.matches ?? []) {
-    const md = (m.metadata ?? {}) as Record<string, unknown>;
-    const score = m.score ?? 0;
-    const publishedAt = typeof md.published_at === 'string' ? md.published_at : undefined;
-    const halfLifeDays = typeof md.half_life_days === 'number' ? md.half_life_days : undefined;
-    out.push({
-      text: String(md.text ?? md.chunk_text ?? ''),
-      sourceKey: String(md.source_key ?? ''),
-      publisher: typeof md.publisher === 'string' ? md.publisher : undefined,
-      attribution: typeof md.attribution === 'string' ? md.attribution : undefined,
-      section: typeof md.section === 'string' && md.section.length > 0 ? md.section : undefined,
-      pageNumber: typeof md.page_number === 'number' && md.page_number > 0 ? md.page_number : undefined,
-      licenseClass: typeof md.license_class === 'string' ? md.license_class : undefined,
-      score,
-      decayedScore: applyFreshnessDecay(score, publishedAt, halfLifeDays),
-      publishedAt,
-      halfLifeDays,
-    });
-  }
-  return out;
 }
 
 function queryTerms(text: string): string[] {
@@ -225,11 +125,12 @@ async function resolveTenantKey(clientId: string | null): Promise<string | null>
     table: 'clients',
     columns: ['tenant_key', 'slug'],
     where: { id: clientId },
+    missingTable: 'empty',
   }).catch(() => null);
   return row?.tenant_key ?? row?.slug ?? null;
 }
 
-async function queryPostgresContextChunks(args: {
+async function queryAzureContextChunks(args: {
   clientId: string | null;
   userQuery: string;
   topKClient: number;
@@ -239,29 +140,21 @@ async function queryPostgresContextChunks(args: {
   const tenantKey = await resolveTenantKey(args.clientId);
   if (!tenantKey) return { clientChunks: [], industryChunks: [], topicChunks: [] };
 
-  // Segments the agent can pull tenant context from. Includes:
-  //  - industry_context, program_inventory, evidence_ledger, operating_telemetry,
-  //    vendor_contracts, compliance, cross_program_signals (long-standing).
-  //  - org_structure, it_landscape, it_financials, kpi_dictionary (added
-  //    2026-05-10 founder directive: "ensure the agents are intelligent to
-  //    tap into the current state and datasets"). Without these, function
-  //    capacity, FY2026 capital plan, funding authority matrix, system
-  //    inventory, and IT spend breakdown are loaded into Supabase but the
-  //    agent never sees them at retrieval time.
   const segmentIds = [
-      'enterprise_profile',
-      'org_structure',
-      'it_landscape',
-      'it_financials',
-      'kpi_dictionary',
-      'industry_context',
-      'program_inventory',
-      'evidence_ledger',
-      'operating_telemetry',
-      'vendor_contracts',
-      'compliance',
-      'cross_program_signals',
-    ];
+    'enterprise_profile',
+    'org_structure',
+    'it_landscape',
+    'it_financials',
+    'kpi_dictionary',
+    'industry_context',
+    'program_inventory',
+    'evidence_ledger',
+    'operating_telemetry',
+    'vendor_contracts',
+    'compliance',
+    'cross_program_signals',
+  ];
+
   const data = await azureRead.select<Record<string, unknown>>({
     table: 'enterprise_context_chunks',
     columns: [
@@ -278,6 +171,7 @@ async function queryPostgresContextChunks(args: {
       source_segment_id: { op: 'in', value: segmentIds },
     },
     limit: 160,
+    missingTable: 'empty',
   }).catch(() => []);
 
   const terms = queryTerms(args.userQuery);
@@ -297,7 +191,11 @@ async function queryPostgresContextChunks(args: {
         pageNumber: typeof row.chunk_index === 'number' ? row.chunk_index + 1 : undefined,
         licenseClass: typeof metadata.license_class === 'string' ? metadata.license_class : undefined,
         score,
-        decayedScore: applyFreshnessDecay(score, typeof row.embedded_at === 'string' ? row.embedded_at : undefined, 365),
+        decayedScore: applyFreshnessDecay(
+          score,
+          typeof row.embedded_at === 'string' ? row.embedded_at : undefined,
+          365,
+        ),
         publishedAt: typeof row.embedded_at === 'string' ? row.embedded_at : undefined,
         segment,
       };
@@ -317,6 +215,7 @@ async function queryPostgresContextChunks(args: {
     decayedScore: row.decayedScore,
     publishedAt: row.publishedAt,
   });
+
   const industryChunks = rows
     .filter((row) => row.segment === 'industry_context')
     .slice(0, args.topKIndustry)
@@ -326,7 +225,11 @@ async function queryPostgresContextChunks(args: {
     .slice(0, args.topKTopic)
     .map(withoutSegment);
   const clientChunks = rows
-    .filter((row) => row.segment !== 'industry_context' && row.segment !== 'compliance' && row.segment !== 'cross_program_signals')
+    .filter((row) => (
+      row.segment !== 'industry_context' &&
+      row.segment !== 'compliance' &&
+      row.segment !== 'cross_program_signals'
+    ))
     .slice(0, args.topKClient)
     .map(withoutSegment);
 
@@ -336,17 +239,13 @@ async function queryPostgresContextChunks(args: {
 export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Promise<RetrievalContext> {
   const industry = args.industry ?? null;
   const clientId = args.clientId ?? null;
-
-  const emptyCtx: RetrievalContext = {
-    industry,
+  const fallback = await queryAzureContextChunks({
     clientId,
-    userQuery: args.userQuery,
-    clientChunks: [],
-    industryChunks: [],
-    topicChunks: [],
-    atlasIacComposition: null,
-  };
-
+    userQuery: composeRetrievalQuery(args.userQuery, args.turnHistory),
+    topKClient: args.topKClient ?? 5,
+    topKIndustry: args.topKIndustry ?? 3,
+    topKTopic: args.topKTopic ?? 2,
+  });
   const atlasIacComposition = args.atlasTenancy
     ? await composeAtlasIacAnswer({
         prompt: args.userQuery,
@@ -355,73 +254,13 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       })
     : null;
 
-  const vector = await embed(composeEmbeddingQuery(args.userQuery, args.turnHistory), clientId);
-  if (!vector) {
-    const fallback = await queryPostgresContextChunks({
-      clientId,
-      userQuery: args.userQuery,
-      topKClient: args.topKClient ?? 5,
-      topKIndustry: args.topKIndustry ?? 3,
-      topKTopic: args.topKTopic ?? 2,
-    });
-    return {
-      ...emptyCtx,
-      clientChunks: scrubChunks(fallback.clientChunks),
-      industryChunks: scrubChunks(fallback.industryChunks),
-      topicChunks: scrubChunks(fallback.topicChunks),
-      atlasIacComposition,
-    };
-  }
-
-  const clientPromise = clientId
-    ? queryNamespace(
-        vector,
-        clientVectorNamespace(clientId),
-        args.topKClient ?? 5,
-        clientVectorMetadataFilter(clientId),
-      )
-    : Promise.resolve<RetrievedChunk[]>([]);
-  const industryPromise = queryNamespace(vector, industryNamespace(industry), args.topKIndustry ?? 3);
-  // Atlas Fix A — was 'global:ai_governance' (unscoped). Now keyed on
-  // the tenant's industry so retail tenants cannot receive healthcare
-  // (Abridge / HIPAA / BAA) governance chunks, etc.
-  const topicPromise = queryNamespace(vector, topicNamespace(industry), args.topKTopic ?? 2);
-
-  const [clientChunks, industryChunks, topicChunks] = await Promise.all([
-    clientPromise,
-    industryPromise,
-    topicPromise,
-  ]);
-
-  const hasVectorResults =
-    clientChunks.length > 0 || industryChunks.length > 0 || topicChunks.length > 0;
-  if (!hasVectorResults) {
-    const fallback = await queryPostgresContextChunks({
-      clientId,
-      userQuery: args.userQuery,
-      topKClient: args.topKClient ?? 5,
-      topKIndustry: args.topKIndustry ?? 3,
-      topKTopic: args.topKTopic ?? 2,
-    });
-    return {
-      ...emptyCtx,
-      clientChunks: scrubChunks(fallback.clientChunks),
-      industryChunks: scrubChunks(fallback.industryChunks),
-      topicChunks: scrubChunks(fallback.topicChunks),
-      atlasIacComposition,
-    };
-  }
-
-  industryChunks.sort((a, b) => b.decayedScore - a.decayedScore);
-  topicChunks.sort((a, b) => b.decayedScore - a.decayedScore);
-
   return {
     industry,
     clientId,
     userQuery: args.userQuery,
-    clientChunks: scrubChunks(clientChunks),
-    industryChunks: scrubChunks(industryChunks),
-    topicChunks: scrubChunks(topicChunks),
+    clientChunks: scrubChunks(fallback.clientChunks),
+    industryChunks: scrubChunks(fallback.industryChunks),
+    topicChunks: scrubChunks(fallback.topicChunks),
     atlasIacComposition,
   };
 }

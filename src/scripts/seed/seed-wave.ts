@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   TENANTS,
   type TenantConfig,
   type TenantKey,
   type ParsedTenantSeed,
+  type SeedClient,
   loadSeedEnv,
   createSeedClient,
   parseTenantSeed,
@@ -64,7 +64,7 @@ function parseTenantArgs(argv: string[]): TenantConfig[] {
   });
 }
 
-async function ensureClient(sb: SupabaseClient, tenant: TenantConfig): Promise<ClientRow> {
+async function ensureClient(sb: SeedClient, tenant: TenantConfig): Promise<ClientRow> {
   const existing = await findClient(sb, tenant);
   if (existing) {
     const { error: updateError } = await sb
@@ -91,7 +91,7 @@ async function ensureClient(sb: SupabaseClient, tenant: TenantConfig): Promise<C
   return created as ClientRow;
 }
 
-async function findClient(sb: SupabaseClient, tenant: TenantConfig): Promise<ClientRow | undefined> {
+async function findClient(sb: SeedClient, tenant: TenantConfig): Promise<ClientRow | undefined> {
   for (const field of [
     { column: 'name', value: tenant.shortName },
     { column: 'name', value: tenant.canonicalName },
@@ -110,7 +110,7 @@ async function findClient(sb: SupabaseClient, tenant: TenantConfig): Promise<Cli
 }
 
 async function replaceOrgCategory(
-  sb: SupabaseClient,
+  sb: SeedClient,
   orgId: string,
   category: string,
   content: Record<string, unknown>,
@@ -131,7 +131,7 @@ async function replaceOrgCategory(
 }
 
 async function upsertPerson(
-  sb: SupabaseClient,
+  sb: SeedClient,
   tenant: TenantConfig,
   clientId: string,
   person: ParsedTenantSeed['people'][number],
@@ -179,7 +179,7 @@ async function upsertPerson(
   return created as PersonRow;
 }
 
-async function ensureMembership(sb: SupabaseClient, personId: string, clientId: string): Promise<void> {
+async function ensureMembership(sb: SeedClient, personId: string, clientId: string): Promise<void> {
   const { error } = await sb
     .from('person_client_memberships')
     .upsert(
@@ -194,7 +194,7 @@ async function ensureMembership(sb: SupabaseClient, personId: string, clientId: 
 }
 
 async function upsertVipProfile(
-  sb: SupabaseClient,
+  sb: SeedClient,
   tenant: TenantConfig,
   personId: string | null,
   vip: ParsedTenantSeed['vips'][number],
@@ -261,7 +261,7 @@ async function upsertVipProfile(
 }
 
 async function replaceBenchmarkHistory(
-  sb: SupabaseClient,
+  sb: SeedClient,
   clientId: string,
   benchmarks: ParsedTenantSeed['benchmarks'],
 ): Promise<number> {
@@ -292,7 +292,7 @@ async function replaceBenchmarkHistory(
 }
 
 async function replaceKnowledgeSources(
-  sb: SupabaseClient,
+  sb: SeedClient,
   parsed: ParsedTenantSeed,
   client: ClientRow,
 ): Promise<number> {
@@ -365,7 +365,7 @@ async function replaceKnowledgeSources(
 }
 
 async function upsertPriorPrograms(
-  sb: SupabaseClient,
+  sb: SeedClient,
   parsed: ParsedTenantSeed,
   clientId: string,
   personIdsByName: Map<string, string>,
@@ -470,7 +470,7 @@ function isMissingTableError(error: { code?: string; message?: string }): boolea
   return error.code === 'PGRST205' || /Could not find the table/i.test(error.message ?? '');
 }
 
-async function seedTenant(sb: SupabaseClient, tenant: TenantConfig): Promise<void> {
+async function seedTenant(sb: SeedClient, tenant: TenantConfig): Promise<void> {
   const parsed = parseTenantSeed(tenant);
   const client = await ensureClient(sb, tenant);
 

@@ -14,7 +14,7 @@
 //
 // Usage:  npx tsx src/scripts/seed/programs-demo-apex.ts
 
-import { createClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import fs from 'node:fs';
 import path from 'node:path';
 import { charterDeliverableType } from '@/lib/deliverables/templates/charter';
@@ -37,16 +37,7 @@ try {
   /* env file not present — rely on shell env */
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
-}
-
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const sb = getAzureWriteFluentClient();
 
 const APEX_NAMES = ['Apex Retail', 'Apex Retail Group'];
 

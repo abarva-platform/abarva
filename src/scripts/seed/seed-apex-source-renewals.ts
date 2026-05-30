@@ -12,7 +12,8 @@
 // Term-end dates are expressed RELATIVE to the run date so the queue always
 // has a "today" / "this_week" card regardless of when the seed is run.
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 
@@ -168,20 +169,11 @@ const FINANCIALS: FinancialSeed[] = [
   },
 ];
 
-function getClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error(
-      'NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.',
-    );
-  }
-  return createClient(url.trim(), key.trim(), {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+function getClient(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
-async function resolveClientId(client: SupabaseClient): Promise<string | null> {
+async function resolveClientId(client: SeedClient): Promise<string | null> {
   const { data } = await client
     .from('clients')
     .select('id')
@@ -221,7 +213,7 @@ function recordRow(
 }
 
 async function upsertSegmentRollup(
-  client: SupabaseClient,
+  client: SeedClient,
   clientId: string | null,
   segmentId: string,
   segmentName: string,

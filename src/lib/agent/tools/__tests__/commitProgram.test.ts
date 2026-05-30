@@ -22,7 +22,7 @@
  *  the `from(...)` query builder is hand-rolled so each call can be
  *  staged with a specific result. submitForApproval is also mocked at
  *  the module boundary so we can observe its arguments without
- *  re-mocking the supabase client a second time.
+ *  re-mocking the Azure Postgres fluent client a second time.
  */
 
 import type { ApprovalRequest } from '@/lib/programs/approval';
@@ -68,7 +68,7 @@ jest.mock('@/lib/programs/origination-drafts', () => ({
   markDraftCommitted: (...args: unknown[]) => markDraftCommittedMock(...args),
 }));
 
-// ── Hand-rolled supabase query-builder mock ─────────────────────────
+// ── Hand-rolled Azure Postgres fluent query-builder mock ────────────
 
 interface QueryState {
   table: string;
@@ -161,9 +161,9 @@ function makeQueryBuilder(table: string): unknown {
 
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
 
-jest.mock('@/lib/supabase-server', () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
   __esModule: true,
-  getServerSupabase: () => ({ from: fromMock }),
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 // Module under test — imported AFTER mocks so the registry import does

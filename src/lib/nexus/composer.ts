@@ -9,6 +9,7 @@ import { COUNTER_ARGUMENT_INSTRUCTIONS, PERSONA_LENS_INSTRUCTIONS } from './prom
 import { filterPayload } from './voiceFilter';
 import type { CompositionBundle } from './assembler';
 import type { NexusFormat } from '@/lib/intelligence/types';
+import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
 
 export interface ComposerInput {
   bundle: CompositionBundle;
@@ -35,6 +36,11 @@ export interface ComposerOutput {
 
 function buildSystemPrompt(input: ComposerInput): string {
   const parts: string[] = [NEXUS_IDENTITY, MODE_INSTRUCTIONS[input.bundle.mode], FORMAT_INSTRUCTIONS[input.format]];
+  parts.push(buildAgentContextContractBlock({
+    agent: 'nexus',
+    module: 'moves',
+    sources: input.bundle.sources,
+  }));
   if (input.sessionContextBlock) parts.push(input.sessionContextBlock);
   if (input.capability === 'counter') parts.push(COUNTER_ARGUMENT_INSTRUCTIONS);
   else if (input.capability && typeof input.capability === 'object') {

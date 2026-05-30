@@ -1,63 +1,133 @@
-import { Pinecone } from '@pinecone-database/pinecone'
+import { azureRead } from '@/lib/data-plane/azureRead';
+import { searchCorpus } from '@/lib/corpus/retrieval';
 
-const EMBED_MODEL = 'multilingual-e5-large'
-const MIN_SCORE = 0.68
+type Vertical = 'healthcare' | 'finserv' | 'retail' | 'universal';
 
-let _pc: Pinecone | null = null
-let _idx: ReturnType<Pinecone['index']> | null = null
+const MIN_SCORE = 0.12;
+const STOPWORDS = new Set([
+  'about',
+  'after',
+  'against',
+  'between',
+  'could',
+  'from',
+  'have',
+  'into',
+  'next',
+  'should',
+  'that',
+  'their',
+  'there',
+  'through',
+  'what',
+  'where',
+  'which',
+  'with',
+  'would',
+]);
 
-function getClient() {
-  if (!process.env.PINECONE_API_KEY) return null
-  if (!_pc) {
-    _pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
-    _idx = _pc.index(process.env.PINECONE_INDEX ?? 'nexus-knowledge')
+type RetrievalRow = {
+  source: string | null;
+  text: string | null;
+  score: string | number | null;
+};
+
+const VERTICAL_OVERLAYS: Record<Vertical, string[]> = {
+  healthcare: ['healthcare_provider', 'healthcare_idn', 'healthcare', 'cross_industry'],
+  finserv: ['financial_services_banking', 'finserv', 'financial_services', 'cross_industry'],
+  retail: ['retail', 'consumer', 'commerce', 'cross_industry'],
+  universal: ['cross_industry', 'universal', 'general'],
+};
+
+function normalizeTerms(query: string): string[] {
+  return [...new Set(
+    query
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, ' ')
+      .split(/\s+/)
+      .map((term) => term.trim())
+      .filter((term) => term.length >= 3 && !STOPWORDS.has(term))
+      .slice(0, 12),
+  )];
+}
+
+function websearchQuery(query: string): string {
+  const terms = normalizeTerms(query);
+  return terms.length ? terms.join(' OR ') : query.trim();
+}
+
+function numeric(value: string | number | null | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
   }
-  return { pc: _pc, idx: _idx! }
+  return 0;
 }
 
 export async function retrieveContext(
   query: string,
-  vertical: 'healthcare' | 'finserv' | 'retail' | 'universal',
+  vertical: Vertical,
   topK = 4,
 ): Promise<string> {
+  const searchQuery = websearchQuery(query);
+  const limit = Math.min(Math.max(topK, 1), 10);
+
   try {
-    const client = getClient()
-    if (!client) return ''
+    const corpusHits = await searchCorpus(query, {
+      clientId: 'system',
+      verticalOverlays: VERTICAL_OVERLAYS[vertical],
+      minConfidence: 0.5,
+      minDepthScore: 4,
+      limit,
+    }).catch(() => []);
 
-    const embedResponse = await client.pc.inference.embed({
-      model: EMBED_MODEL,
-      inputs: [query],
-      parameters: { inputType: 'query', truncate: 'END' },
-    })
-    const queryVector = (embedResponse.data[0] as any).values as number[]
+    const rows = await azureRead.query<RetrievalRow>(
+      `
+        SELECT
+          coalesce(source_doc, chunk_id, id::text) AS source,
+          chunk_text AS text,
+          ts_rank_cd(
+            to_tsvector('english', coalesce(chunk_text, '')),
+            websearch_to_tsquery('english', $1)
+          ) AS score
+        FROM enterprise_context_chunks
+        WHERE source_segment_id IN ('industry_context', 'cross_program_signals', 'compliance')
+          AND (
+            to_tsvector('english', coalesce(chunk_text, '')) @@ websearch_to_tsquery('english', $1)
+            OR chunk_text ILIKE '%' || $1 || '%'
+          )
+          AND coalesce(chunk_text, '') <> ''
+        ORDER BY score DESC, source ASC
+        LIMIT $2
+      `,
+      [searchQuery, limit],
+      { missingTable: 'empty' },
+    );
 
-    const results = await client.idx.query({
-      vector: queryVector,
-      topK,
-      includeMetadata: true,
-      filter: {
-        vertical: { '$in': [vertical, 'universal'] },
-      },
-    })
-
-    const hits = (results.matches ?? [])
-      .filter(m => (m.score ?? 0) >= MIN_SCORE)
-
-    if (!hits.length) return ''
+    const corpusRows: RetrievalRow[] = corpusHits.map((hit) => ({
+      source: hit.slug,
+      text: [hit.title, hit.markdownBody].filter(Boolean).join('\n'),
+      score: hit.score,
+    }));
+    const hits = [...corpusRows, ...rows]
+      .filter((row) => numeric(row.score) >= MIN_SCORE || rows.length <= limit)
+      .sort((a, b) => numeric(b.score) - numeric(a.score));
+    if (!hits.length) return '';
 
     return hits
-      .map(m => `[Source: ${m.metadata?.source}]\n${m.metadata?.text}`)
-      .join('\n\n---\n\n')
-
+      .slice(0, limit)
+      .map((row) => `[Source: ${row.source ?? 'azure-corpus'}]\n${String(row.text ?? '').trim()}`)
+      .join('\n\n---\n\n');
   } catch {
-    return ''
+    return '';
   }
 }
 
-export function verticalFromClientContext(clientVertical: string | undefined): 'healthcare' | 'finserv' | 'retail' | 'universal' {
-  const v = (clientVertical ?? '').toLowerCase()
-  if (v.includes('health') || v.includes('hospital') || v.includes('idn') || v.includes('clinical')) return 'healthcare'
-  if (v.includes('finance') || v.includes('bank') || v.includes('asset') || v.includes('insurance') || v.includes('finserv')) return 'finserv'
-  if (v.includes('retail') || v.includes('commerce') || v.includes('cpg') || v.includes('consumer')) return 'retail'
-  return 'universal'
+export function verticalFromClientContext(clientVertical: string | undefined): Vertical {
+  const v = (clientVertical ?? '').toLowerCase();
+  if (v.includes('health') || v.includes('hospital') || v.includes('idn') || v.includes('clinical')) return 'healthcare';
+  if (v.includes('finance') || v.includes('bank') || v.includes('asset') || v.includes('insurance') || v.includes('finserv')) return 'finserv';
+  if (v.includes('retail') || v.includes('commerce') || v.includes('cpg') || v.includes('consumer')) return 'retail';
+  return 'universal';
 }

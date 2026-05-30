@@ -8,7 +8,6 @@
 
 jest.mock('server-only', () => ({}));
 
-import type { RecordMetadata } from '@pinecone-database/pinecone';
 import {
   __resetPineconeClientForTests,
   createPineconeClientForTests,
@@ -24,6 +23,8 @@ import {
   type PineconeUpsertItem,
   type PineconeWorldviewMetadata,
 } from '../pinecone-client';
+
+type RecordMetadata = Record<string, unknown>;
 
 const EMBED_DIM = 1536;
 

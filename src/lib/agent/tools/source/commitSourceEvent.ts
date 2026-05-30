@@ -3,7 +3,7 @@
 // Sentinel uses this to persist a new sourcing event when the user
 // completes the five-field intake floor (trigger, decision_owner,
 // scope_boundary, baseline_evidence, stop_condition). The tool
-// inserts a source_events row via the service-role Supabase client
+// inserts a source_events row via the Azure Postgres write adapter
 // and emits two artifacts:
 //   1. source-event-created — consumed by the reactive panel to
 //      refresh the events list and show a confirmation card.

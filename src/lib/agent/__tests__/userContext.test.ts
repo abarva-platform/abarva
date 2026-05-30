@@ -2,7 +2,7 @@
  * userContext — F0.2 verification (Programs Strict Completion v1.2)
  *
  * Tests the pure formatter `formatUserContextBlock`. The async resolver
- * `getUserContext` depends on Clerk + Supabase + the active client cookie
+ * `getUserContext` depends on Clerk + the Azure Postgres-backed active client cookie
  * and is out of scope for unit tests; its acceptance is verified by
  * the kickoff §4 F0.2 founder walkthrough across the 8 routes.
  */

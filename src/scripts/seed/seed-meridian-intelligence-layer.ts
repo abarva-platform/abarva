@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createSeedClient, loadSeedEnv, TENANTS } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type SeedClient } from './seed-wave-lib';
 import { getScopeId, loadMeridianOverlay } from './meridian-intelligence-layer-lib';
 
 interface ClientRow {
@@ -16,7 +15,7 @@ interface PersonRow {
   role: string | null;
 }
 
-async function resolveMeridianClient(sb: SupabaseClient): Promise<ClientRow> {
+async function resolveMeridianClient(sb: SeedClient): Promise<ClientRow> {
   for (const field of [
     { column: 'name', value: TENANTS.meridian.shortName },
     { column: 'name', value: TENANTS.meridian.canonicalName },
@@ -34,7 +33,7 @@ async function resolveMeridianClient(sb: SupabaseClient): Promise<ClientRow> {
   throw new Error('Meridian client missing. Run `npm run db:seed:wave -- --tenant meridian` first.');
 }
 
-async function assertBaseSeedPresent(sb: SupabaseClient, clientId: string): Promise<void> {
+async function assertBaseSeedPresent(sb: SeedClient, clientId: string): Promise<void> {
   const { data, error } = await sb
     .from('org_master_data')
     .select('category')
@@ -50,7 +49,7 @@ async function assertBaseSeedPresent(sb: SupabaseClient, clientId: string): Prom
   }
 }
 
-async function loadPeopleByName(sb: SupabaseClient): Promise<Map<string, PersonRow>> {
+async function loadPeopleByName(sb: SeedClient): Promise<Map<string, PersonRow>> {
   const { data, error } = await sb
     .from('persons')
     .select('id, name, role')
@@ -77,7 +76,7 @@ function resolveOwnerPerson(peopleByName: Map<string, PersonRow>, ownerName: str
 }
 
 async function upsertRows(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
 ): Promise<void> {
@@ -90,7 +89,7 @@ async function upsertRows(
   }
 }
 
-async function clearExistingOverlayState(sb: SupabaseClient, clientId: string): Promise<void> {
+async function clearExistingOverlayState(sb: SeedClient, clientId: string): Promise<void> {
   for (const table of [
     'evidence',
     'kpis',

@@ -101,8 +101,8 @@ export type ArtifactType =
   | 'failure-mode-flagged' // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
   // CB-6 · server-side artifact emitted by /api/chat/agent at the START
   // of the response stream. Carries the full ContextBundle that grounded
-  // the agent's answer (Postgres facts + graph paths + Pinecone chunks
-  // + corpus pattern hits + provenance + warnings). Surfaces consume
+  // the agent's answer (Azure Postgres facts + graph paths + corpus pattern
+  // hits + provenance + warnings). Surfaces consume
   // this to render the "Context Assembled" panel beside the answer.
   | 'context-bundle' // {bundle: ContextBundle}
   // EXPORT-4 · format-aware deliverable export. Emitted at the END of

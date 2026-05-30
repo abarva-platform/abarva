@@ -194,7 +194,7 @@ function briefProgressArtifact(input: {
 /**
  * Best-effort cleanup: delete the just-inserted engagement so we never
  * leave a row in 'submitted_for_approval' without a matching approval
- * request. This is the manual transactional unit; Supabase doesn't give
+ * request. This is the manual transactional unit; the fluent Postgres adapter doesn't give
  * us a single-statement BEGIN/ROLLBACK over the JS client, so we do the
  * compensating delete explicitly. CASCADE on
  * `program_approval_requests.program_id` ensures any partial child row

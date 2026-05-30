@@ -1,7 +1,7 @@
 import { config as loadEnv } from 'dotenv'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat'
 import { parseClients } from './run-enterprise'
 import {
   PACK_J_ACTIVE_PROJECTS,
@@ -21,11 +21,8 @@ const CLIENT_KEY_TO_NAME: Record<SupportedPackJClient, string> = {
   apex: 'Apex Retail',
 }
 
-function getSb(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Supabase env missing')
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+function getSb(): SeedClient {
+  return getAzureWriteFluentClient()
 }
 
 function monthStart(base: Date, offsetMonths: number): string {
@@ -46,13 +43,13 @@ function criticalityFromRisk(riskLevel: string): 'tier1' | 'tier2' | 'tier3' {
   return 'tier3'
 }
 
-async function lookupClientId(sb: SupabaseClient, clientName: string) {
+async function lookupClientId(sb: SeedClient, clientName: string) {
   const { data, error } = await sb.from('clients').select('id').eq('name', clientName).maybeSingle()
   if (error) throw new Error(`Client lookup failed for ${clientName}: ${error.message}`)
   return (data as { id: string } | null)?.id ?? null
 }
 
-async function seedShadowInventory(sb: SupabaseClient, clientId: string, clientKey: SupportedPackJClient) {
+async function seedShadowInventory(sb: SeedClient, clientId: string, clientKey: SupportedPackJClient) {
   await sb
     .from('applications')
     .delete()
@@ -80,7 +77,7 @@ async function seedShadowInventory(sb: SupabaseClient, clientId: string, clientK
   return rows.length
 }
 
-async function seedContradictions(sb: SupabaseClient, clientId: string, clientKey: SupportedPackJClient) {
+async function seedContradictions(sb: SeedClient, clientId: string, clientKey: SupportedPackJClient) {
   await sb.from('contradictions').delete().eq('client_id', clientId)
 
   const rows = PACK_J_CONTRADICTIONS[clientKey].map((item) => ({
@@ -102,7 +99,7 @@ async function seedContradictions(sb: SupabaseClient, clientId: string, clientKe
   return rows.length
 }
 
-async function seedCostBreakdown(sb: SupabaseClient, clientId: string, clientKey: SupportedPackJClient) {
+async function seedCostBreakdown(sb: SeedClient, clientId: string, clientKey: SupportedPackJClient) {
   await sb.from('spend_breakdown').delete().eq('client_id', clientId).eq('is_demo_data', true)
   await sb.from('cost_centers').delete().eq('client_id', clientId).eq('is_demo_data', true)
 
@@ -151,7 +148,7 @@ async function seedCostBreakdown(sb: SupabaseClient, clientId: string, clientKey
   return { centers: centerRows.length, spendRows: spendRows.length }
 }
 
-async function enrichAiProjects(sb: SupabaseClient, clientId: string, clientKey: SupportedPackJClient) {
+async function enrichAiProjects(sb: SeedClient, clientId: string, clientKey: SupportedPackJClient) {
   const projects = PACK_J_ACTIVE_PROJECTS[clientKey]
   let updated = 0
 
@@ -225,3 +222,4 @@ if (isMain) {
     process.exit(1)
   })
 }
+type SeedClient = PostgresCompatClient

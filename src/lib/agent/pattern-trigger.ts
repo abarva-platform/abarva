@@ -1,6 +1,6 @@
 import { getAuditedAnthropicClient } from './stream';
 import { assembleTriggerDetectionPrompt, type TriggerContext } from './prompts/pattern-trigger';
-import { withGraphSession } from '@/lib/graph/driver';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface DetectedTrigger {
   code: string;
@@ -46,21 +46,35 @@ export async function writeTriggerEdge(
   patternCode: string,
   evidence: string,
 ): Promise<void> {
-  // Gated by `graph_neo4j_enabled` — when off, the trigger edge is not
-  // written (Postgres `enterprise_graph_edges` is the system of record;
-  // Neo4j was a denormalized projection). See
-  // `src/lib/graph/neo4j-gate.ts`.
-  await withGraphSession<void>(
-    'writeTriggerEdge',
-    async (session) => {
-      await session.run(
-        `MATCH (e:Engagement {id: $eid}), (p:GenomePattern {code: $code})
-         MERGE (e)-[r:TRIGGERED]->(p)
-         ON CREATE SET r.first_seen_at = datetime(), r.evidence = $evidence, r.evidence_turn_count = 1, r.observed_at = datetime()
-         ON MATCH SET r.last_seen_at = datetime(), r.evidence_turn_count = coalesce(r.evidence_turn_count, 1) + 1`,
-        { eid: engagementGraphNodeId, code: patternCode, evidence },
-      );
-    },
-    undefined,
-  );
+  const client = getAzureWriteFluentClient();
+  const node = await client
+    .from('enterprise_graph_nodes')
+    .select('client_id,tenant_key,node_id')
+    .eq('node_id', engagementGraphNodeId)
+    .maybeSingle();
+  if (node.error || !node.data) return;
+
+  const result = await client
+    .from('enterprise_graph_edges')
+    .upsert({
+      client_id: node.data.client_id as string,
+      tenant_key: node.data.tenant_key as string,
+      edge_id: `trigger:${engagementGraphNodeId}:${patternCode}`,
+      from_node_id: engagementGraphNodeId,
+      to_node_id: patternCode,
+      edge_type: 'TRIGGERED',
+      source_segment_id: 'agent_pattern_trigger',
+      source_record_id: patternCode,
+      source_doc: 'agent-pattern-trigger-detection',
+      source_basis: 'agent_observation',
+      confidence: 0.72,
+      properties: {
+        evidence,
+        observed_at: new Date().toISOString(),
+        evidence_turn_count: 1,
+      },
+    }, { onConflict: 'tenant_key,edge_id' });
+  if (result.error) {
+    throw new Error(`writeTriggerEdge failed: ${result.error.message}`);
+  }
 }

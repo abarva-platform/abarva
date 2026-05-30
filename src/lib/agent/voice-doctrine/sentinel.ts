@@ -704,7 +704,7 @@ const NON_PERSON_LEADING_WORDS: ReadonlySet<string> = new Set([
   'Before', 'Since', 'Because', 'Per', 'According', 'Both', 'Either',
   'Salesforce', 'Adobe', 'Microsoft', 'Google', 'Amazon', 'Oracle', 'SAP',
   'Snowflake', 'Databricks', 'Palantir', 'ServiceNow', 'Workday', 'AWS',
-  'Azure', 'Epic', 'Cerner', 'Anthropic', 'OpenAI', 'Pinecone', 'Neo4j',
+  'Azure', 'Epic', 'Cerner', 'Anthropic', 'OpenAI',
   'Apex', 'Meridian', 'First', 'Sentinel', 'Atlas', 'Steward', 'Nexus',
   'Maestro', 'AbarVa',
   'Chief', 'Vice', 'Senior', 'Director', 'Manager', 'President',

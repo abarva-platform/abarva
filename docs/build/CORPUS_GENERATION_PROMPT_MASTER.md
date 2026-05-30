@@ -71,6 +71,33 @@ or framework name (e.g., "FHIR R4", "SR 11-7", "PSS migration", "SAP S/4HANA").
 - `back_office`: IT infrastructure, ERP, finance systems, HR/workforce, supply chain, procurement,
   vendor management, security
 
+### 1.6 AI insertion density and module usefulness
+
+Every remaining domain file must include at least **8 explicit AI-insertion failure patterns**.
+These are not generic "AI governance" patterns and not legacy IT failures with the word AI added.
+They describe how a specific 2025–2026 AI tool category changes a real workflow, control, contract,
+or regulatory risk.
+
+Each AI-insertion pattern must name:
+- the specific AI capability type, such as ambient AI, CAC AI, prior auth AI, radiology worklist
+  AI, sepsis prediction AI, revenue-management personalization AI, predictive maintenance AI,
+  AML graph AI, or AI code assistant; and
+- the exact governance, procurement, integration, or regulatory hook that makes the pattern
+  actionable in AbarVa Moves or Source, such as HIPAA BAA, FDA SaMD, SR 11-7, DOT 399.88,
+  payer API SLA, model drift telemetry, vendor adoption telemetry, deployment-site validation,
+  physician attestation, or FDA clearance scope.
+
+Module mapping:
+- **Intelligence** uses patterns for high-confidence domain reasoning and evidence-gap surfacing.
+- **Moves** uses patterns to shape the AI initiative: unsafe-to-fund conditions, approval gates,
+  adoption plan, value model, risk register, dependency map, and pre-mortem.
+- **Source** uses patterns for vendor diligence: RFI/RFP questions, contract clauses, BAA/subprocessor
+  review, model-risk clauses, regulatory scope, adoption telemetry, exit rights, and BAFO counters.
+
+For demo tenants, mark 2025–2026 AI decision patterns `demoRelevant: true`. Ambient scribing,
+prior auth AI, CAC AI, radiology AI, RM personalization AI, predictive maintenance AI, AI SDLC,
+AML graph AI, and SaMD AI governance are live buying decisions, not abstract future-state themes.
+
 ---
 
 ## 2. Schema Definitions
@@ -427,9 +454,8 @@ substituting `[VERTICAL]`, `[PREFIX]`, `[LOW_CODE]`, `[HIGH_CODE]`, and `[PATTER
 
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
 
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
@@ -485,7 +511,7 @@ function graphEdgesFor(pattern: [Vertical]PatternSeed): Array<Record<string, unk
 }
 
 async function upsertRows(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
   onConflict: string,
@@ -564,10 +590,12 @@ Run this checklist before declaring any seed file complete.
 ### Per-file checks
 - [ ] At least the target pattern count is reached (see §2.3)
 - [ ] All required dimensions are covered with the stated minimum per-dimension count
+- [ ] At least 8 patterns are explicit AI-insertion failure modes for the domain.
 - [ ] All mandatory failure archetypes from §3.2 / §4.2 / §5.2 / §6.2 appear as named patterns
 - [ ] `failureRatePct` values are integers, not ranges (no `65–72`, use `68`)
 - [ ] No description is shorter than 2 sentences or longer than 4 sentences
 - [ ] Every `keywords` array has 4–6 entries; at least one is a named standard/tool/regulation
+- [ ] AI pattern keywords include both the AI capability type and the governance/procurement/regulatory hook.
 - [ ] `officeCategory` matches the actual function (not all `back_office` as a default)
 - [ ] Demo-tenant-relevant patterns are tagged `demoRelevant: true`
 - [ ] TypeScript compiles cleanly (`npx tsc --noEmit`)

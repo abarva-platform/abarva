@@ -1,14 +1,13 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey, type SeedClient } from './seed-wave-lib';
 
 interface ClientRow {
   id: string;
   name: string;
 }
 
-async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<ClientRow> {
+async function resolveClient(sb: SeedClient, tenantKey: TenantKey): Promise<ClientRow> {
   const tenant = TENANTS[tenantKey];
   for (const field of [
     { column: 'name', value: tenant.shortName },
@@ -27,7 +26,7 @@ async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<
   throw new Error(`Client missing for ${tenant.canonicalName}. Run base + overlay seeds first.`);
 }
 
-async function upsertRows(sb: SupabaseClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
+async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
   if (rows.length === 0) return;
   const { error } = await sb.from(table).upsert(rows, { onConflict });
   if (error) throw error;

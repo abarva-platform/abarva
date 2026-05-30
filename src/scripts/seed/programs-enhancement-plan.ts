@@ -35,7 +35,7 @@ function printText(): void {
   }
 
   console.log('\nNext');
-  console.log('- Use this dry-run output to drive the Supabase upsert writer.');
+  console.log('- Use this dry-run output to drive the Azure Postgres upsert writer.');
   console.log('- No database writes are performed by this command.');
 }
 

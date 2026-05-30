@@ -1,5 +1,6 @@
 import { config as loadEnv } from 'dotenv';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -164,14 +165,11 @@ const TENANTS: TenantSeed[] = [
   },
 ];
 
-function getSb(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+function getSb(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
-async function resolveClient(sb: SupabaseClient, tenant: TenantSeed): Promise<ClientRow> {
+async function resolveClient(sb: SeedClient, tenant: TenantSeed): Promise<ClientRow> {
   for (const candidate of tenant.clientNameCandidates) {
     const { data, error } = await sb.from('clients').select('id, name').ilike('name', candidate).maybeSingle();
     if (error) throw error;
@@ -182,7 +180,7 @@ async function resolveClient(sb: SupabaseClient, tenant: TenantSeed): Promise<Cl
 }
 
 async function ensurePerson(
-  sb: SupabaseClient,
+  sb: SeedClient,
   client: ClientRow,
   person: TenantSeed['people'][number],
 ): Promise<PersonRow> {
@@ -239,7 +237,7 @@ async function ensurePerson(
   return inserted as PersonRow;
 }
 
-async function ensureMembership(sb: SupabaseClient, personId: string, clientId: string): Promise<void> {
+async function ensureMembership(sb: SeedClient, personId: string, clientId: string): Promise<void> {
   const { error } = await sb
     .from('person_client_memberships')
     .upsert(
@@ -253,7 +251,7 @@ async function ensureMembership(sb: SupabaseClient, personId: string, clientId: 
   if (error) throw error;
 }
 
-async function verifyTenant(sb: SupabaseClient, client: ClientRow, expectedNames: string[]): Promise<Array<{ name: string; role: string; title: string; unit: string }>> {
+async function verifyTenant(sb: SeedClient, client: ClientRow, expectedNames: string[]): Promise<Array<{ name: string; role: string; title: string; unit: string }>> {
   const { data, error } = await sb
     .from('persons')
     .select('name, role, communication_style')
@@ -271,7 +269,7 @@ async function verifyTenant(sb: SupabaseClient, client: ClientRow, expectedNames
     }));
 }
 
-async function runTenant(sb: SupabaseClient, tenant: TenantSeed): Promise<void> {
+async function runTenant(sb: SeedClient, tenant: TenantSeed): Promise<void> {
   const client = await resolveClient(sb, tenant);
   for (const person of tenant.people) {
     const row = await ensurePerson(sb, client, person);

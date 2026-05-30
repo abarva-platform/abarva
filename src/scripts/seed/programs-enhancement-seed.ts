@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 import { buildAllProgramsSeedPlan, type ProgramSeedPlan, type TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
@@ -57,13 +58,8 @@ function readCsvArg(flag: string): string[] | undefined {
   return value.split(',').map((part) => part.trim()).filter(Boolean);
 }
 
-function getSeedClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required for --write');
-  }
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+function getSeedClient(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
 function portfolioForTenant(tenantKey: string): TenantPortfolioSeed {
@@ -72,7 +68,7 @@ function portfolioForTenant(tenantKey: string): TenantPortfolioSeed {
   return portfolio;
 }
 
-async function ensureClient(sb: SupabaseClient, sourcePortfolio: TenantPortfolioSeed): Promise<ClientResolution> {
+async function ensureClient(sb: SeedClient, sourcePortfolio: TenantPortfolioSeed): Promise<ClientResolution> {
   const aliases = clientAliasesForPortfolio(sourcePortfolio);
   const payload = buildSeedClientPayload(sourcePortfolio);
   const { data: existingRows, error: lookupError } = await sb.from('clients').select('id, name').in('name', aliases);
@@ -104,7 +100,7 @@ async function ensureClient(sb: SupabaseClient, sourcePortfolio: TenantPortfolio
   return { id: row.id, name: row.name, inserted: true };
 }
 
-async function upsertDeliverableTypes(sb: SupabaseClient, plan: FilteredProgramsSeedPlan, counts: WriteCounts): Promise<void> {
+async function upsertDeliverableTypes(sb: SeedClient, plan: FilteredProgramsSeedPlan, counts: WriteCounts): Promise<void> {
   for (const seedType of plan.deliverableTypes) {
     const payload = buildDeliverableTypePayload(seedType);
     const { data: existing, error: lookupError } = await sb
@@ -126,7 +122,7 @@ async function upsertDeliverableTypes(sb: SupabaseClient, plan: FilteredPrograms
   }
 }
 
-async function upsertProgram(sb: SupabaseClient, tenant: TenantSeedPlan, program: ProgramSeedPlan, clientId: string, nowIso: string, counts: WriteCounts): Promise<string> {
+async function upsertProgram(sb: SeedClient, tenant: TenantSeedPlan, program: ProgramSeedPlan, clientId: string, nowIso: string, counts: WriteCounts): Promise<string> {
   const payload = buildProgramPayload(tenant, program, clientId, nowIso);
   const { data: existing, error: lookupError } = await sb
     .from('engagements')
@@ -154,7 +150,7 @@ async function upsertProgram(sb: SupabaseClient, tenant: TenantSeedPlan, program
 }
 
 async function upsertDeliverables(
-  sb: SupabaseClient,
+  sb: SeedClient,
   tenant: TenantSeedPlan,
   program: ProgramSeedPlan,
   engagementId: string,
@@ -193,7 +189,7 @@ async function upsertDeliverables(
   }
 }
 
-async function insertDeliverable(sb: SupabaseClient, payload: ReturnType<typeof buildDeliverablePayload>, label: string, counts: WriteCounts): Promise<string> {
+async function insertDeliverable(sb: SeedClient, payload: ReturnType<typeof buildDeliverablePayload>, label: string, counts: WriteCounts): Promise<string> {
   const { data: inserted, error } = await sb
     .from('deliverables_v2')
     .insert(payload)
@@ -236,7 +232,7 @@ async function writePlan(plan: FilteredProgramsSeedPlan): Promise<WriteCounts> {
   return counts;
 }
 
-async function removeLegacyCollapsedSeedDeliverables(sb: SupabaseClient, program: ProgramSeedPlan, engagementId: string): Promise<void> {
+async function removeLegacyCollapsedSeedDeliverables(sb: SeedClient, program: ProgramSeedPlan, engagementId: string): Promise<void> {
   const legacyTitles = Array.from(
     new Set(program.deliverables.map((deliverable) => `${deliverable.deliverableCode} · ${deliverable.title}`)),
   );

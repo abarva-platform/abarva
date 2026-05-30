@@ -1,5 +1,3 @@
-import { clientVectorNamespaceForDomain } from '@/lib/knowledge/client-vector-namespace';
-
 export type ClientDomain =
   | 'infra'
   | 'apps'
@@ -104,8 +102,4 @@ export function detectRelevantDomains(
     }
   }
   return matches;
-}
-
-export function pineconeNamespaceForDomain(clientId: string, domain: ClientDomain): string {
-  return clientVectorNamespaceForDomain(clientId, domain);
 }

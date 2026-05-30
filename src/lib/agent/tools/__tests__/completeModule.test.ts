@@ -16,9 +16,9 @@ jest.mock('@/app/api/v1/programs/_auth', () => {
 
 const upsertMock = jest.fn();
 const fromMock = jest.fn(() => ({ upsert: upsertMock }));
-jest.mock('@/lib/supabase-server', () => ({
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
   __esModule: true,
-  getServerSupabase: () => ({ from: fromMock }),
+  getAzureWriteFluentClient: () => ({ from: fromMock }),
 }));
 
 import { completeModuleTool } from '../program/completeModule';
