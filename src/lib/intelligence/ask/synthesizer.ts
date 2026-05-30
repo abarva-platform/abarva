@@ -305,10 +305,10 @@ export async function* synthesizeStream(args: {
     });
     const stream = await client.messages.create({
       model,
-      // The response policy caps visible output around the 200-word surface
-      // budget. Keep enough headroom for multi-item answers without paying
-      // for long continuations that will be trimmed before rendering.
-      max_tokens: 450,
+      // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
+      // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
+      // mid-list on the new MANDATORY ANSWER SHAPES.
+      max_tokens: 600,
       system: `${system}${continuityInstruction}`,
       messages: [{ role: 'user', content: prompt }],
       stream: true,
