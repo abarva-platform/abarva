@@ -35,11 +35,11 @@ describe('ADMIN-DATA8 — page-view consumes admin-data adapters', () => {
   let view: ProductionReadinessPageView;
 
   beforeAll(async () => {
-    view = await buildProductionReadinessPageView(TENANT);
+    view = await buildProductionReadinessPageView(TENANT, 'Apex Retail Group');
   });
 
   it('builder returns a Promise (async API)', () => {
-    const result = buildProductionReadinessPageView(TENANT);
+    const result = buildProductionReadinessPageView(TENANT, 'Apex Retail Group');
     expect(result).toBeInstanceOf(Promise);
   });
 
@@ -140,7 +140,7 @@ describe('ADMIN-DATA8 — page-view consumes admin-data adapters', () => {
   });
 
   it('empty tenant returns empty blocker / tile state', async () => {
-    const empty = await buildProductionReadinessPageView('does-not-exist');
+    const empty = await buildProductionReadinessPageView('does-not-exist', 'Unknown Tenant');
     expect(empty.topBlockers).toHaveLength(0);
     expect(Object.keys(empty.blockerDetailMap)).toHaveLength(0);
     expect(empty.tileDetailMap.pilot.blockers).toHaveLength(0);
@@ -148,7 +148,7 @@ describe('ADMIN-DATA8 — page-view consumes admin-data adapters', () => {
   });
 
   it('empty tenant historyStrip is empty', async () => {
-    const empty = await buildProductionReadinessPageView('does-not-exist');
+    const empty = await buildProductionReadinessPageView('does-not-exist', 'Unknown Tenant');
     expect(empty.historyStrip).toHaveLength(0);
   });
 

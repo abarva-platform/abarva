@@ -46,12 +46,12 @@ function read(rel: string): string {
 
 describe('ADMIN-DATA4 — buildConnectorsPageView is adapter-wired', () => {
   it('returns a Promise (async builder)', () => {
-    const result = buildConnectorsPageView();
+    const result = buildConnectorsPageView('apex-retail');
     expect(typeof (result as Promise<unknown>).then).toBe('function');
   });
 
   it('resolves with deterministicSeed: true', async () => {
-    const view = await buildConnectorsPageView();
+    const view = await buildConnectorsPageView('apex-retail');
     expect(view.deterministicSeed).toBe(true);
   });
 
@@ -148,7 +148,7 @@ describe('ADMIN-DATA4 — buildConnectorsPageView is adapter-wired', () => {
   });
 
   it('output shape preserved: required keys still present', async () => {
-    const view = await buildConnectorsPageView();
+    const view = await buildConnectorsPageView('apex-retail');
     const required = [
       'eyebrow',
       'title',
@@ -179,7 +179,7 @@ describe('ADMIN-DATA4 — buildConnectorsPageView is adapter-wired', () => {
   });
 
   it('output shape preserved: every connector has a detail entry', async () => {
-    const view = await buildConnectorsPageView();
+    const view = await buildConnectorsPageView('apex-retail');
     for (const c of view.connectors) {
       expect(view.connectorDetailMap[c.id]).toBeDefined();
     }

@@ -17,7 +17,7 @@ export async function getAdminAgentReadiness(
 }
 
 export function getAdminAgentReadinessFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): AdminAgentReadinessSnapshot {
   return adminAgentReadinessFixture(tenantSlug);
 }

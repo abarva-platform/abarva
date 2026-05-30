@@ -254,7 +254,7 @@ export async function getAdminLoadedFiles(
 }
 
 export function getAdminDatasetsFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminDatasetRow> {
   return adminDatasetsFixture(tenantSlug);
 }

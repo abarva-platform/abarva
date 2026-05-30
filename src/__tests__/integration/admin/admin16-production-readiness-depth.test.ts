@@ -30,7 +30,7 @@ describe('ADMIN16 — Production Readiness page-view depth', () => {
   let view: ProductionReadinessPageView;
 
   beforeEach(async () => {
-    view = await buildProductionReadinessPageView();
+    view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
   });
 
   it('still returns deterministicSeed: true', () => {
@@ -265,7 +265,7 @@ describe('ADMIN16 — findBlockerDetail', () => {
   let view: ProductionReadinessPageView;
 
   beforeAll(async () => {
-    view = await buildProductionReadinessPageView();
+    view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
   });
 
   it('returns null for undefined id', () => {
@@ -419,7 +419,7 @@ describe('ADMIN16 — page-view module hygiene', () => {
   });
 
   it('view-model never returns production_ready: true at runtime', async () => {
-    const v = await buildProductionReadinessPageView();
+    const v = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     const s = JSON.stringify(v).toLowerCase();
     expect(s).not.toContain('"production_ready":true');
   });

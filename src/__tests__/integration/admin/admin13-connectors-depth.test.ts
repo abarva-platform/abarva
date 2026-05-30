@@ -51,7 +51,7 @@ describe('ADMIN13 — buildConnectorsPageView contract', () => {
   let view: ConnectorsPageView;
 
   beforeAll(async () => {
-    view = await buildConnectorsPageView();
+    view = await buildConnectorsPageView('apex-retail');
   });
 
   it('keeps deterministicSeed: true', () => {
@@ -125,7 +125,7 @@ describe('ADMIN13 — per-connector detail map', () => {
   let view: ConnectorsPageView;
 
   beforeAll(async () => {
-    view = await buildConnectorsPageView();
+    view = await buildConnectorsPageView('apex-retail');
   });
 
   it('every detail has a non-empty vendor', () => {
@@ -187,8 +187,8 @@ describe('ADMIN13 — per-connector detail map', () => {
   });
 
   it('healthTrend is deterministic across calls', async () => {
-    const a = await buildConnectorsPageView();
-    const b = await buildConnectorsPageView();
+    const a = await buildConnectorsPageView('apex-retail');
+    const b = await buildConnectorsPageView('apex-retail');
     for (const conn of a.connectors) {
       expect(b.connectorDetailMap[conn.id].healthTrend).toEqual(
         a.connectorDetailMap[conn.id].healthTrend,
@@ -243,7 +243,7 @@ describe('ADMIN13 — per-connector detail map', () => {
 describe('ADMIN13 — action strip', () => {
   let view: ConnectorsPageView;
   beforeAll(async () => {
-    view = await buildConnectorsPageView();
+    view = await buildConnectorsPageView('apex-retail');
   });
 
   it('Add connector action is blocked with hard-gate reason', () => {
@@ -280,7 +280,7 @@ describe('ADMIN13 — action strip', () => {
 
 describe('ADMIN13 — pilot blockers stay consistent with W32D readiness', () => {
   it('pilotBlockers list matches readiness view', async () => {
-    const pageView = await buildConnectorsPageView();
+    const pageView = await buildConnectorsPageView('apex-retail');
     const readiness = buildConnectorsReadinessView('apex-retail');
     expect(pageView.pilotBlockers.map((c: ConnectorReadiness) => c.id)).toEqual(
       readiness.pilotBlockers.map((c: ConnectorReadiness) => c.id),
@@ -288,7 +288,7 @@ describe('ADMIN13 — pilot blockers stay consistent with W32D readiness', () =>
   });
 
   it('every pilot blocker has detail in the detail map', async () => {
-    const pageView = await buildConnectorsPageView();
+    const pageView = await buildConnectorsPageView('apex-retail');
     for (const b of pageView.pilotBlockers) {
       expect(pageView.connectorDetailMap[b.id]).toBeDefined();
     }

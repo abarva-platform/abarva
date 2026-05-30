@@ -13,7 +13,7 @@ describe('ADMIN5 — Production Readiness page view', () => {
     let view: ProductionReadinessPageView;
 
     beforeAll(async () => {
-      view = await buildProductionReadinessPageView();
+      view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     });
 
     it('returns deterministicSeed: true', () => expect(view.deterministicSeed).toBe(true));
@@ -74,7 +74,7 @@ describe('ADMIN5 — Production Readiness page view', () => {
       expect(tile?.blockerCount).toBeGreaterThanOrEqual(0);
     });
     it('empty tenant returns empty topBlockers list', async () => {
-      const empty = await buildProductionReadinessPageView('does-not-exist');
+      const empty = await buildProductionReadinessPageView('does-not-exist', 'Unknown Tenant');
       expect(empty.topBlockers.length).toBe(0);
     });
     it('primaryAgentLabel is Steward', () => expect(view.primaryAgentLabel).toBe('Steward'));

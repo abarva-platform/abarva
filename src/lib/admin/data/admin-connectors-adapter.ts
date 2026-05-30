@@ -125,7 +125,7 @@ export async function getAdminConnectorPilotBlockers(
 }
 
 export function getAdminConnectorsFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminConnectorRow> {
   return adminConnectorsFixture(tenantSlug);
 }

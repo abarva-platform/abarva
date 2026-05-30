@@ -28,7 +28,7 @@ describe('ADMIN11 — Users & Access page-view depth', () => {
   let view: UsersAccessPageView;
 
   beforeEach(async () => {
-    view = await buildUsersAccessPageView();
+    view = await buildUsersAccessPageView('apex-retail');
   });
 
   it('still returns deterministicSeed: true', () => {
@@ -213,7 +213,7 @@ describe('ADMIN11 — findUsersAccessUser', () => {
   let view: UsersAccessPageView;
 
   beforeAll(async () => {
-    view = await buildUsersAccessPageView();
+    view = await buildUsersAccessPageView('apex-retail');
   });
 
   it('returns null for undefined id', () => {

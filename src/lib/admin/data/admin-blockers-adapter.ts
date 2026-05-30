@@ -96,7 +96,7 @@ export async function getAdminCriticalBlockers(
 }
 
 export function getAdminBlockersFixture(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): ReadonlyArray<AdminBlockerRow> {
   return adminBlockersFixture(tenantSlug);
 }

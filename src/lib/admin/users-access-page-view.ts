@@ -396,7 +396,7 @@ export function findUsersAccessUser(
 }
 
 export async function buildUsersAccessPageView(
-  tenantSlug: string = 'apex-retail',
+  tenantSlug: string,
 ): Promise<UsersAccessPageView> {
   const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'users-access');
   const editorial = generateStewardEditorial(ctx);

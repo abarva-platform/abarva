@@ -32,18 +32,18 @@ const TABS_COMPONENT = resolve(
 
 describe('Wave 3 PR-5 · 2-tab consolidation', () => {
   it('view-model exposes exactly 2 tabs', async () => {
-    const view = await buildProductionReadinessPageView();
+    const view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     expect(view.tabs.length).toBe(2);
   });
 
   it('view-model tab keys are decision · history', async () => {
-    const view = await buildProductionReadinessPageView();
+    const view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     const keys = view.tabs.map((t) => t.key);
     expect(keys).toEqual(['decision', 'history']);
   });
 
   it('default tab is decision', async () => {
-    const view = await buildProductionReadinessPageView();
+    const view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     expect(view.defaultTab).toBe('decision');
     expect(resolveProductionReadinessTab(undefined)).toBe('decision');
     expect(resolveProductionReadinessTab('')).toBe('decision');
@@ -59,7 +59,7 @@ describe('Wave 3 PR-5 · 2-tab consolidation', () => {
   });
 
   it('tab labels are "Decision" and "History"', async () => {
-    const view = await buildProductionReadinessPageView();
+    const view = await buildProductionReadinessPageView('apex-retail', 'Apex Retail Group');
     const labels = view.tabs.map((t) => t.label);
     expect(labels).toEqual(['Decision', 'History']);
   });
