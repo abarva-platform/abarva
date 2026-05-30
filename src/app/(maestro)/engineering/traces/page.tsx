@@ -5,7 +5,7 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { azureRead } from '@/lib/data-plane/azureRead';
 
-export const metadata = { title: 'Atlas traces · AbarVa' };
+export const metadata = { title: 'Engineering traces · AbarVa' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -247,9 +247,9 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
       }
     >
       <EditorialCanvas
-        eyebrow="Engineering · Atlas observability"
-        title="Atlas reasoning traces"
-        subtitle="Operator audit log for Tower right-rail renders and metric explanations. Sample here after each CXO pilot session. Relocated from /admin/atlas/traces per Setup Audit 2026-05-30 §5.5 (wrong altitude — agent-named raw trace inspector belongs in the Engineering surface, not Setup)."
+        eyebrow="Diagnostics · Reasoning observability"
+        title="Engineering reasoning traces"
+        subtitle="Operator audit log for Tower right-rail renders and metric explanations. Sample here after each CXO pilot session. Relocated from /admin/atlas/traces per Setup Audit 2026-05-30 §5.5 (wrong altitude — raw trace inspector belongs in the Engineering surface, not Setup)."
       >
         <div style={S.page} data-testid="atlas-traces-page">
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
