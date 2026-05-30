@@ -30,30 +30,20 @@ any file. Every file must pass the §9 checklist.
 
 ---
 
-## Reference files (study these first)
+## ⚠️ IMPORTANT: Seed file format changed — read before writing any file
 
-Two strong exemplars already exist as untracked files in the main repo:
+As of 2026-05-30, a **durable loader** (`scripts/corpus/load-authored-genome-seeds.ts`) handles
+all persistence. Seed files are now **pure data files** — a TypeScript array literal only.
+Do **NOT** copy the old boilerplate from existing files in `src/scripts/seed/` — those files
+predate the loader and contain stale Supabase client code that no longer applies.
 
-| File | Patterns | Code range | Lines |
-|------|----------|------------|-------|
-| `src/scripts/seed/seed-airline-dom02-pss-booking.ts` | 50 | A600–A899 | 434 |
-| `src/scripts/seed/seed-healthcare-dom17-finance-contracting.ts` | 100 | H5100–H5399 | 967 |
-
-Copy the boilerplate (imports, interface, upsertRows, main function) verbatim from either file.
-The only things that change per file are: the pattern array name, the `vertical` string, the
-`source_key` string, the code range comment, and of course the patterns themselves.
-
-Key values:
-- Airline `vertical`: `'airline'`  
-- Airline `source_key`: `'skyharbor-air'`  
-- Healthcare `vertical`: `'healthcare_provider'`  
-- Healthcare `source_key`: `'meridian-health'`  
-- Medtech `vertical`: `'medtech'`  
-- Medtech `source_key`: `'northstar-clinical'`  
-- Banking `vertical`: `'banking'`  
-- Banking `source_key`: `'first-capital'`  
-- Cross-industry `vertical`: `'cross_industry'`  
-- Cross-industry `source_key`: `'cross-industry'`  
+**Vertical and source_key are inferred from the filename — you do not declare them in the file.**
+The loader maps:
+- `seed-airline-*` → `vertical: 'airline'`, `source_key: 'skyharbor-air'`
+- `seed-healthcare-*` → `vertical: 'healthcare_provider'`, `source_key: 'meridian-health'`
+- `seed-medtech-*` → `vertical: 'medtech'`, `source_key: 'northstar-clinical'`
+- `seed-banking-*` → `vertical: 'banking'`, `source_key: 'first-capital'`
+- `seed-cross-industry-*` → `vertical: 'cross_industry'`, `source_key: 'cross-industry'`  
 
 ---
 
@@ -297,28 +287,65 @@ Target: **150 patterns** across 5 dimensions. Reference: §7 of master prompt.
 
 ---
 
-## File format — minimal boilerplate
+## File format — data-only, no infrastructure
 
-Copy the exact structure from `seed-airline-dom02-pss-booking.ts`. The upsertRows function,
-main function, and isDirect guard are identical in every file. The only substitutions:
+Every seed file must be a **standalone TypeScript data file** with one named constant ending in
+`PATTERNS`. No imports, no main function, no `createSeedClient`, no `upsertRows`.
+The durable loader extracts the array via TypeScript AST, so anything other than the array is
+irrelevant noise that causes TypeScript errors.
+
+**Canonical template (copy exactly, substitute only the array name and pattern data):**
 
 ```typescript
-// ── In the pattern rows map: ──────────────────────────────────────────────
-vertical: 'airline',          // or 'healthcare_provider', 'medtech', 'banking', 'cross_industry'
-source_count: 6,
-confidence: 84,
+// seed-airline-domNN-slug-partN.ts
+// Airline genome patterns — Domain Name
+// Code range: AXXX–AXXX  (60 codes per file)
+// Loaded by: scripts/corpus/load-authored-genome-seeds.ts
 
-// ── In the graph edges: ───────────────────────────────────────────────────
-source_key: 'skyharbor-air',  // or 'meridian-health', 'northstar-clinical', 'first-capital', 'cross-industry'
+type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
-// ── In the final count query: ─────────────────────────────────────────────
-.eq('vertical', 'airline')
-.gte('code', 'A300')
-.lte('code', 'A599')
+interface PatternSeed {
+  code: string;
+  name: string;
+  officeCategory: OfficeCategory;
+  failureRatePct: number;
+  description: string;
+  keywords: string[];
+  demoRelevant?: boolean;
+}
+
+const AIRLINE_REVENUE_PART1_PATTERNS: PatternSeed[] = [
+  {
+    code: 'A300',
+    name: 'Revenue Management Model Stale on COVID Demand Mix',
+    officeCategory: 'middle_office',
+    failureRatePct: 73,
+    description:
+      'Revenue management models under-price premium cabins when 2019-2023 training data is loaded '
+      + 'without a COVID exclusion window or demand-regime weighting. The optimizer treats leisure '
+      + 'and VFR recovery demand as structurally permanent, so business-travel shoulder markets keep '
+      + 'too many low fare buckets open while premium seats depart empty.',
+    keywords: ['revenue management', 'O&D forecasting', 'demand model', 'COVID exclusion', 'fare class'],
+    demoRelevant: true,
+  },
+  // ... up to 60 patterns
+];
 ```
 
-deterministicUuid namespace: `'[vertical]-genome-pattern:${p.code}'`  
-e.g. `'airline-genome-pattern:A301'`, `'healthcare-genome-pattern:H301'`
+Rules:
+- **Variable name**: must end in `PATTERNS` — the loader finds it by `/PATTERNS$/` regex.
+  Use a descriptive name: `AIRLINE_PSS_PART1_PATTERNS`, `HEALTHCARE_RCM_PART2_PATTERNS`, etc.
+- **No imports**: the file is parsed as an AST, not executed. Imports will be ignored.
+- **No `main()`**: the loader provides the persistence runtime.
+- **Apostrophes in strings**: use template literals (backticks) for descriptions that contain
+  apostrophes (`don't`, `provider's`, `model's`). Single-quoted strings with unescaped `'` break
+  the TypeScript parser.
+- **Multi-line descriptions**: use string concatenation (`'...' + '...'`) or backticks.
+  Avoid long single lines — they are harder to review and hit editor line-length limits.
+- **`demoRelevant: true`** — tag patterns directly relevant to the demo tenant's live situation.
+  For airline: PSS migration to Altéa, union agreements, FFP loyalty. For healthcare: Epic, VBC
+  with Aetna/UnitedHealth/BCBS, prior auth, clinical AI governance. For banking: MRM consent order,
+  commercial banking digital transformation. For medtech: FDA clearance, EU MDR, SAP ERP.
 
 ---
 
@@ -333,25 +360,41 @@ This is the main repo (not a worktree). The existing 14 files are untracked ther
 
 ---
 
-## Run command (per file, after writing)
+## Run command — always use the durable loader
+
+The durable loader is the **only** supported way to persist seed files. Never run seed files
+directly — new files are data-only and have no `main()` to run.
 
 ```bash
-# Requires Azure/Postgres data-plane credentials, normally DATABASE_URL.
-npx tsx src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts
-```
+# Load a single file (run after writing each file to verify it parses and upserts cleanly):
+npx tsx scripts/corpus/load-authored-genome-seeds.ts src/scripts/seed/seed-airline-dom19-ancillary-part1.ts
 
-Run each file after writing it to confirm the upsert succeeds with no errors. For historical seed
-files that only export arrays or use stale columns, run the durable Azure/Postgres loader instead:
+# Load all airline seed files (after generating a full wave):
+find src/scripts/seed -maxdepth 1 -type f -name 'seed-airline-dom*.ts' \
+  | sort \
+  | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
 
-```bash
-find src/scripts/seed -maxdepth 1 -type f \( -name 'seed-airline-dom*.ts' -o -name 'seed-healthcare-dom*.ts' \) \
+# Load all healthcare seed files:
+find src/scripts/seed -maxdepth 1 -type f -name 'seed-healthcare-dom*.ts' \
+  | sort \
+  | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
+
+# Load medtech, banking, or cross-industry (once generated):
+find src/scripts/seed -maxdepth 1 -type f \( -name 'seed-medtech-dom*.ts' -o -name 'seed-banking-dom*.ts' -o -name 'seed-cross-industry-*.ts' \) \
   | sort \
   | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
 ```
 
-The loader parses authored pattern arrays, writes `genome_patterns`, writes `intelligence_graph_edges`,
-and emits a per-file persistence summary. If the persisted DB count does not match the authored count,
-debug before moving on.
+The loader:
+- Parses the TypeScript AST to extract the `*PATTERNS` array (no execution needed)
+- Infers `vertical` and `source_key` from the filename prefix
+- Writes `genome_patterns` and `intelligence_graph_edges` via the Azure/Postgres data-plane client
+- Emits a per-file summary: parsed count, upserted pattern count, upserted edge count
+- Requires `DATABASE_URL` in the environment (`.env.local`)
+
+**Verify after each load:** the summary line must show `patternsUpserted` equal to the number of
+objects in the `*PATTERNS` array. If they differ, a pattern object is malformed — fix before
+committing.
 
 ---
 

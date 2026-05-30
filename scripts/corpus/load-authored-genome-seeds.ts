@@ -106,7 +106,31 @@ function seedMetadata(filePath: string) {
       seededBy: base,
     };
   }
-  throw new Error(`Unsupported seed file naming: ${filePath}`);
+  if (base.startsWith('seed-medtech-')) {
+    return {
+      vertical: 'medtech',
+      sourceKey: 'northstar-clinical',
+      capabilityType: 'medtech_capability',
+      seededBy: base,
+    };
+  }
+  if (base.startsWith('seed-banking-')) {
+    return {
+      vertical: 'banking',
+      sourceKey: 'first-capital',
+      capabilityType: 'banking_capability',
+      seededBy: base,
+    };
+  }
+  if (base.startsWith('seed-cross-industry-')) {
+    return {
+      vertical: 'cross_industry',
+      sourceKey: 'cross-industry',
+      capabilityType: 'cross_industry_capability',
+      seededBy: base,
+    };
+  }
+  throw new Error(`Unsupported seed file naming: ${filePath}. Supported prefixes: seed-airline-, seed-healthcare-, seed-medtech-, seed-banking-, seed-cross-industry-`);
 }
 
 async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict: string) {
