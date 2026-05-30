@@ -9,6 +9,7 @@ import { UsersAccessTabs } from '@/components/admin/UsersAccessTabs';
 import { UsersAccessActionStrip } from '@/components/admin/UsersAccessActionStrip';
 import { UserListTable } from '@/components/admin/UserListTable';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
+import { InviteCollaboratorLauncher } from '@/components/admin/InviteCollaboratorLauncher';
 import { InviteList } from '@/components/admin/InviteList';
 import { ProgramUserProvisionForm, type ProgramProvisionOption } from '@/components/admin/ProgramUserProvisionForm';
 import {
@@ -98,6 +99,7 @@ export default async function UsersAccessPage({
           blocker={view.editorial.blocker}
           primaryAction={view.editorial.primaryAction}
         />
+        <InviteCollaboratorLauncher tenantName={tenant.tenantName} />
         <RoleAccessMatrix
           roles={view.roles}
           pendingInvitesCount={view.pendingInvitesCount}
