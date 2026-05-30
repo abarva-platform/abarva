@@ -1,5 +1,14 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
-import type { RetrievalResult, AskSource, SourceType } from '../types';
+import {
+  allowedCorpusIndustryScopes,
+  normalizeCorpusIndustryScope,
+} from '@/lib/corpus/industry-scope';
+import type { AskSurfaceContext, RetrievalResult, AskSource, SourceType } from '../types';
+
+export interface KnowledgeRetrievalOptions {
+  tenantInventoryKey?: string | null;
+  surfaceContext?: AskSurfaceContext | null;
+}
 
 /**
  * Shared retriever for regulation_query / research_query / benchmark_query /
@@ -11,6 +20,7 @@ export async function retrieveKnowledge(
   entities: string[],
   contentTypes: Array<'regulation' | 'framework' | 'benchmark' | 'research_report' | 'vendor_doc' | 'vendor_posture' | 'news_article' | 'case_study' | 'enforcement_action'> | null = null,
   sourceTypeLabel: SourceType = 'GENERAL',
+  opts: KnowledgeRetrievalOptions = {},
 ): Promise<RetrievalResult> {
   const params: unknown[] = [];
   const predicates = ['status = $1'];
@@ -55,7 +65,7 @@ export async function retrieveKnowledge(
     return { sources: [], averageConfidence: 0 };
   }
 
-  const sources: AskSource[] = rows.map((r) => ({
+  const sources: AskSource[] = rows.filter((row) => knowledgeRowMatchesTenant(row, opts)).map((r) => ({
     type: typeMap(r.content_type) ?? sourceTypeLabel,
     name: r.title,
     id: r.id,
@@ -76,6 +86,65 @@ export async function retrieveKnowledge(
 
   const avg = sources.length > 0 ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length : 0;
   return { sources, averageConfidence: avg };
+}
+
+function knowledgeRowMatchesTenant(
+  row: { source_key: string; title: string; publisher: string; industry_tags: string[] | null; topic_tags: string[] | null; summary: string | null },
+  opts: KnowledgeRetrievalOptions,
+): boolean {
+  const allowedScopes = allowedCorpusIndustryScopes({
+    tenantKey: opts.tenantInventoryKey,
+    clientKey: opts.surfaceContext?.clientKey,
+    activeClient: opts.surfaceContext?.activeClient,
+    facts: [...(opts.surfaceContext?.facts ?? []), ...(opts.surfaceContext?.tenantFacts ?? [])],
+  });
+
+  const industryTags = (row.industry_tags ?? []).map(normalizeCorpusIndustryScope);
+  if (allowedScopes && industryTags.length > 0) {
+    const allowed = new Set(allowedScopes.map(normalizeCorpusIndustryScope));
+    if (!industryTags.some((tag) => allowed.has(tag))) return false;
+  }
+
+  const activeTenant = normalizeTenantMarker(
+    opts.tenantInventoryKey ??
+    opts.surfaceContext?.clientKey ??
+    opts.surfaceContext?.activeClient ??
+    null,
+  );
+  if (!activeTenant) return true;
+
+  const haystack = [
+    row.source_key,
+    row.title,
+    row.publisher,
+    row.summary ?? '',
+    ...(row.topic_tags ?? []),
+  ].join(' ').toLowerCase();
+
+  return !tenantMarkers()
+    .filter((marker) => marker.tenant !== activeTenant)
+    .some((marker) => marker.pattern.test(haystack));
+}
+
+function normalizeTenantMarker(value: string | null): string | null {
+  const normalized = value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
+  if (!normalized) return null;
+  if (/\b(apex|apexretail|retail)\b/.test(normalized)) return 'apex';
+  if (/\b(meridian|health)\b/.test(normalized)) return 'meridian';
+  if (/\b(first capital|firstcapital|arcturus|financial)\b/.test(normalized)) return 'firstcapital';
+  if (/\b(northstar|medtech|clinical technologies)\b/.test(normalized)) return 'northstar';
+  if (/\b(skyharbor|airline|aviation)\b/.test(normalized)) return 'skyharbor';
+  return null;
+}
+
+function tenantMarkers(): Array<{ tenant: string; pattern: RegExp }> {
+  return [
+    { tenant: 'apex', pattern: /\b(apex|apex retail|apexretail)\b/ },
+    { tenant: 'meridian', pattern: /\b(meridian|meridian health|heliara)\b/ },
+    { tenant: 'firstcapital', pattern: /\b(first capital|firstcapital|arcturus|financial)\b/ },
+    { tenant: 'northstar', pattern: /\b(northstar|northstar clinical)\b/ },
+    { tenant: 'skyharbor', pattern: /\b(skyharbor|skyharbor air)\b/ },
+  ];
 }
 
 function typeMap(ct: string): SourceType | null {

@@ -21,7 +21,7 @@ export async function route(intent: AskIntent, entities: string[], opts: RouteOp
     const primary = await retrieveVendor(entities);
     if (primary.sources.length === 0) {
       // fall back to knowledge layer in case we've indexed vendor docs
-      return withCoverage(await retrieveKnowledge(entities, ['vendor_doc', 'vendor_posture'], 'VENDOR'));
+      return withCoverage(await retrieveKnowledge(entities, ['vendor_doc', 'vendor_posture'], 'VENDOR', opts));
     }
     return withCoverage(primary);
   }
@@ -31,20 +31,20 @@ export async function route(intent: AskIntent, entities: string[], opts: RouteOp
   }
 
   if (intent === 'regulation_query') {
-    return withCoverage(await retrieveKnowledge(entities, ['regulation', 'framework'], 'REGULATION'));
+    return withCoverage(await retrieveKnowledge(entities, ['regulation', 'framework'], 'REGULATION', opts));
   }
 
   if (intent === 'research_query') {
-    return withCoverage(await retrieveKnowledge(entities, ['research_report'], 'RESEARCH'));
+    return withCoverage(await retrieveKnowledge(entities, ['research_report'], 'RESEARCH', opts));
   }
 
   if (intent === 'benchmark_query') {
-    return withCoverage(await retrieveKnowledge(entities, ['benchmark'], 'BENCHMARK'));
+    return withCoverage(await retrieveKnowledge(entities, ['benchmark'], 'BENCHMARK', opts));
   }
 
   if (intent === 'topic_synthesis') {
     // Topics table from Pack L not yet populated; fall through to broad knowledge.
-    return withCoverage(await retrieveKnowledge(entities, null, 'TOPIC'));
+    return withCoverage(await retrieveKnowledge(entities, null, 'TOPIC', opts));
   }
 
   if (intent === 'insight_query') {
@@ -57,7 +57,7 @@ export async function route(intent: AskIntent, entities: string[], opts: RouteOp
   // across multiple session-mode Postgres clients at the same time.
   const v = await retrieveVendor(entities);
   const p = await retrievePattern(entities, opts);
-  const k = await retrieveKnowledge(entities, null, 'GENERAL');
+  const k = await retrieveKnowledge(entities, null, 'GENERAL', opts);
   const merged = [...v.sources, ...p.sources, ...k.sources].slice(0, 8);
   const avg = merged.length > 0 ? merged.reduce((s, x) => s + (x.confidence ?? 0), 0) / merged.length : 0;
   return withCoverage({ sources: merged, averageConfidence: avg });

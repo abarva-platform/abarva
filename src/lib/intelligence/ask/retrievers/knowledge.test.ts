@@ -54,4 +54,55 @@ describe('retrieveKnowledge', () => {
 
     expect(result).toEqual({ sources: [], averageConfidence: 0 });
   });
+
+  it('filters off-tenant legacy composite seeds for a SkyHarbor request', async () => {
+    mockAzureRead.query.mockResolvedValue([
+      {
+        id: 'ks-skyharbor',
+        source_key: 'seed_wave_skyharbor_modernization',
+        title: 'SkyHarbor Air initiative · IBM modernization',
+        publisher: 'AbarVa Composite Seed',
+        content_type: 'research_report',
+        industry_tags: ['airline'],
+        topic_tags: ['skyharbor', 'modernization'],
+        published_at: '2026-04-21',
+        summary: 'SkyHarbor modernization evidence.',
+      },
+      {
+        id: 'ks-apex',
+        source_key: 'seed_wave_apex_initiative_6_9_workforce_modernization',
+        title: 'Apex Retail Group initiative · Workforce Modernization',
+        publisher: 'AbarVa Composite Seed',
+        content_type: 'research_report',
+        industry_tags: ['retail'],
+        topic_tags: ['apex', 'modernization'],
+        published_at: '2026-04-21',
+        summary: 'Apex retail modernization evidence.',
+      },
+      {
+        id: 'ks-energy',
+        source_key: 'seed_wave_energy_grid_modernization',
+        title: 'Retired Energy Holdings initiative · Grid Modernization',
+        publisher: 'AbarVa Composite Seed',
+        content_type: 'research_report',
+        industry_tags: ['energy'],
+        topic_tags: ['energy', 'modernization'],
+        published_at: '2026-04-21',
+        summary: 'Retired tenant modernization evidence.',
+      },
+    ]);
+
+    const result = await retrieveKnowledge(['modernization'], null, 'GENERAL', {
+      tenantInventoryKey: 'skyharbor',
+      surfaceContext: {
+        activeClient: 'SkyHarbor Air',
+        clientKey: 'skyharbor',
+        tenantFacts: ['Active tenant is SkyHarbor Air.'],
+      },
+    });
+
+    expect(result.sources.map((source) => source.name)).toEqual([
+      'SkyHarbor Air initiative · IBM modernization',
+    ]);
+  });
 });
