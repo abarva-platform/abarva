@@ -15,6 +15,7 @@
 import { azureCostSource } from './azure-cost';
 import { copilotSource } from './copilot';
 import { cursorSource } from './cursor';
+import { githubDoraSource } from './github-dora';
 import { servicenowItsmSource } from './servicenow-itsm';
 
 export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
@@ -52,6 +53,7 @@ export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   azureCostSource,
   copilotSource,
   cursorSource,
+  githubDoraSource,
   servicenowItsmSource,
   // Sibling slices append here, alphabetical by `key`.
 ];
