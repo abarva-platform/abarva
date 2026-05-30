@@ -12,6 +12,11 @@
 // IsolationLane (STRESS-P0-006 triage). Approvals tab maps to the
 // existing PR-6 source=approval filter so the two filter mechanisms
 // coexist without collision.
+//
+// Wave 2 PR-E (2026-05-30) · P0 Apex-leak fix. SetupAuditPage now
+// accepts `tenantSlug` and reads via `getAdminAuditEvents` (broker)
+// instead of `AUDIT_LOG_FIXTURE`. Non-Apex tenants see an empty
+// activity tab — they no longer leak Apex audit events.
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import {
@@ -94,7 +99,10 @@ export default async function AdminAuditPage({
             refreshedAtIso={refreshedAtIso}
           />
         ) : (
-          <SetupAuditPage filterSource={filterSource} />
+          <SetupAuditPage
+            tenantSlug={tenant.tenantSlug}
+            filterSource={filterSource}
+          />
         )}
       </div>
     </AdminCanonShellV2>
