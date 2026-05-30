@@ -26,6 +26,8 @@ import {
   getCrossProgramSignals,
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
+import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
+import { spineToChips } from '@/components/admin/TrustStrip';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
@@ -48,13 +50,15 @@ export default async function AdminOverviewPage() {
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
-  const [snapshot, signals, programApprovalQueue] = brokerTenantKey
+  const [snapshot, signals, programApprovalQueue, trustSpine] = brokerTenantKey
     ? await Promise.all([
         getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
         getCrossProgramSignals(brokerTenantKey).catch(() => []),
         getApprovalQueueForTenant(clientKey).catch(() => []),
+        getTrustSpine(brokerTenantKey).catch(() => null),
       ])
-    : [null, [], []];
+    : [null, [], [], null];
+  const trustChips = trustSpine ? spineToChips(trustSpine) : null;
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
 
@@ -117,6 +121,8 @@ export default async function AdminOverviewPage() {
         clientKey={isClientKey(clientKey) ? clientKey : null}
         blocks={blocks}
         extras={extras}
+        trustChips={trustChips}
+        liveSnapshotPresent={snapshot !== null}
       />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
