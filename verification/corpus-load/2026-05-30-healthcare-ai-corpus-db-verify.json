@@ -1,0 +1,360 @@
+{
+  "generatedAt": "2026-05-30T21:06:10.922Z",
+  "verticals": [
+    {
+      "vertical": "airline",
+      "patterns": 1289,
+      "demo_relevant": 206
+    },
+    {
+      "vertical": "banking",
+      "patterns": 180,
+      "demo_relevant": 118
+    },
+    {
+      "vertical": "cross_industry",
+      "patterns": 150,
+      "demo_relevant": 125
+    },
+    {
+      "vertical": "healthcare_provider",
+      "patterns": 10785,
+      "demo_relevant": 6872
+    },
+    {
+      "vertical": "medtech",
+      "patterns": 100,
+      "demo_relevant": 81
+    },
+    {
+      "vertical": "retail",
+      "patterns": 40,
+      "demo_relevant": 0
+    }
+  ],
+  "healthcareWave": [
+    {
+      "patterns": 10000,
+      "min_code_num": 10000,
+      "max_code_num": 19999,
+      "min_code_text": "H10000",
+      "max_code_text": "H19999"
+    }
+  ],
+  "healthcareEdges": [
+    {
+      "edges": 20000
+    }
+  ],
+  "healthcareByDomain": [
+    {
+      "domain_number": 31,
+      "patterns": 200,
+      "min_code_num": 10000,
+      "max_code_num": 10199
+    },
+    {
+      "domain_number": 32,
+      "patterns": 200,
+      "min_code_num": 10200,
+      "max_code_num": 10399
+    },
+    {
+      "domain_number": 33,
+      "patterns": 200,
+      "min_code_num": 10400,
+      "max_code_num": 10599
+    },
+    {
+      "domain_number": 34,
+      "patterns": 200,
+      "min_code_num": 10600,
+      "max_code_num": 10799
+    },
+    {
+      "domain_number": 35,
+      "patterns": 200,
+      "min_code_num": 10800,
+      "max_code_num": 10999
+    },
+    {
+      "domain_number": 36,
+      "patterns": 200,
+      "min_code_num": 11000,
+      "max_code_num": 11199
+    },
+    {
+      "domain_number": 37,
+      "patterns": 200,
+      "min_code_num": 11200,
+      "max_code_num": 11399
+    },
+    {
+      "domain_number": 38,
+      "patterns": 200,
+      "min_code_num": 11400,
+      "max_code_num": 11599
+    },
+    {
+      "domain_number": 39,
+      "patterns": 200,
+      "min_code_num": 11600,
+      "max_code_num": 11799
+    },
+    {
+      "domain_number": 40,
+      "patterns": 200,
+      "min_code_num": 11800,
+      "max_code_num": 11999
+    },
+    {
+      "domain_number": 41,
+      "patterns": 200,
+      "min_code_num": 12000,
+      "max_code_num": 12199
+    },
+    {
+      "domain_number": 42,
+      "patterns": 200,
+      "min_code_num": 12200,
+      "max_code_num": 12399
+    },
+    {
+      "domain_number": 43,
+      "patterns": 200,
+      "min_code_num": 12400,
+      "max_code_num": 12599
+    },
+    {
+      "domain_number": 44,
+      "patterns": 200,
+      "min_code_num": 12600,
+      "max_code_num": 12799
+    },
+    {
+      "domain_number": 45,
+      "patterns": 200,
+      "min_code_num": 12800,
+      "max_code_num": 12999
+    },
+    {
+      "domain_number": 46,
+      "patterns": 200,
+      "min_code_num": 13000,
+      "max_code_num": 13199
+    },
+    {
+      "domain_number": 47,
+      "patterns": 200,
+      "min_code_num": 13200,
+      "max_code_num": 13399
+    },
+    {
+      "domain_number": 48,
+      "patterns": 200,
+      "min_code_num": 13400,
+      "max_code_num": 13599
+    },
+    {
+      "domain_number": 49,
+      "patterns": 200,
+      "min_code_num": 13600,
+      "max_code_num": 13799
+    },
+    {
+      "domain_number": 50,
+      "patterns": 200,
+      "min_code_num": 13800,
+      "max_code_num": 13999
+    },
+    {
+      "domain_number": 51,
+      "patterns": 200,
+      "min_code_num": 14000,
+      "max_code_num": 14199
+    },
+    {
+      "domain_number": 52,
+      "patterns": 200,
+      "min_code_num": 14200,
+      "max_code_num": 14399
+    },
+    {
+      "domain_number": 53,
+      "patterns": 200,
+      "min_code_num": 14400,
+      "max_code_num": 14599
+    },
+    {
+      "domain_number": 54,
+      "patterns": 200,
+      "min_code_num": 14600,
+      "max_code_num": 14799
+    },
+    {
+      "domain_number": 55,
+      "patterns": 200,
+      "min_code_num": 14800,
+      "max_code_num": 14999
+    },
+    {
+      "domain_number": 56,
+      "patterns": 200,
+      "min_code_num": 15000,
+      "max_code_num": 15199
+    },
+    {
+      "domain_number": 57,
+      "patterns": 200,
+      "min_code_num": 15200,
+      "max_code_num": 15399
+    },
+    {
+      "domain_number": 58,
+      "patterns": 200,
+      "min_code_num": 15400,
+      "max_code_num": 15599
+    },
+    {
+      "domain_number": 59,
+      "patterns": 200,
+      "min_code_num": 15600,
+      "max_code_num": 15799
+    },
+    {
+      "domain_number": 60,
+      "patterns": 200,
+      "min_code_num": 15800,
+      "max_code_num": 15999
+    },
+    {
+      "domain_number": 61,
+      "patterns": 200,
+      "min_code_num": 16000,
+      "max_code_num": 16199
+    },
+    {
+      "domain_number": 62,
+      "patterns": 200,
+      "min_code_num": 16200,
+      "max_code_num": 16399
+    },
+    {
+      "domain_number": 63,
+      "patterns": 200,
+      "min_code_num": 16400,
+      "max_code_num": 16599
+    },
+    {
+      "domain_number": 64,
+      "patterns": 200,
+      "min_code_num": 16600,
+      "max_code_num": 16799
+    },
+    {
+      "domain_number": 65,
+      "patterns": 200,
+      "min_code_num": 16800,
+      "max_code_num": 16999
+    },
+    {
+      "domain_number": 66,
+      "patterns": 200,
+      "min_code_num": 17000,
+      "max_code_num": 17199
+    },
+    {
+      "domain_number": 67,
+      "patterns": 200,
+      "min_code_num": 17200,
+      "max_code_num": 17399
+    },
+    {
+      "domain_number": 68,
+      "patterns": 200,
+      "min_code_num": 17400,
+      "max_code_num": 17599
+    },
+    {
+      "domain_number": 69,
+      "patterns": 200,
+      "min_code_num": 17600,
+      "max_code_num": 17799
+    },
+    {
+      "domain_number": 70,
+      "patterns": 200,
+      "min_code_num": 17800,
+      "max_code_num": 17999
+    },
+    {
+      "domain_number": 71,
+      "patterns": 200,
+      "min_code_num": 18000,
+      "max_code_num": 18199
+    },
+    {
+      "domain_number": 72,
+      "patterns": 200,
+      "min_code_num": 18200,
+      "max_code_num": 18399
+    },
+    {
+      "domain_number": 73,
+      "patterns": 200,
+      "min_code_num": 18400,
+      "max_code_num": 18599
+    },
+    {
+      "domain_number": 74,
+      "patterns": 200,
+      "min_code_num": 18600,
+      "max_code_num": 18799
+    },
+    {
+      "domain_number": 75,
+      "patterns": 200,
+      "min_code_num": 18800,
+      "max_code_num": 18999
+    },
+    {
+      "domain_number": 76,
+      "patterns": 200,
+      "min_code_num": 19000,
+      "max_code_num": 19199
+    },
+    {
+      "domain_number": 77,
+      "patterns": 200,
+      "min_code_num": 19200,
+      "max_code_num": 19399
+    },
+    {
+      "domain_number": 78,
+      "patterns": 200,
+      "min_code_num": 19400,
+      "max_code_num": 19599
+    },
+    {
+      "domain_number": 79,
+      "patterns": 200,
+      "min_code_num": 19600,
+      "max_code_num": 19799
+    },
+    {
+      "domain_number": 80,
+      "patterns": 200,
+      "min_code_num": 19800,
+      "max_code_num": 19999
+    }
+  ],
+  "quality": [
+    {
+      "patterns": 10000,
+      "moves_anchored": 10000,
+      "source_anchored": 10000,
+      "startup_anchored": 10000,
+      "agentic_anchored": 2549
+    }
+  ]
+}

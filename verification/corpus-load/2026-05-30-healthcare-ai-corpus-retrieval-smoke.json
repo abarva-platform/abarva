@@ -1,0 +1,98 @@
+{
+  "topicHits": [
+    {
+      "topic": "ambient AI",
+      "count": 280
+    },
+    {
+      "topic": "prior auth AI",
+      "count": 80
+    },
+    {
+      "topic": "agentic workflow",
+      "count": 200
+    },
+    {
+      "topic": "BAA",
+      "count": 2444
+    },
+    {
+      "topic": "Abridge",
+      "count": 80
+    },
+    {
+      "topic": "Cohere Health",
+      "count": 80
+    },
+    {
+      "topic": "model registry",
+      "count": 821
+    },
+    {
+      "topic": "value realization",
+      "count": 1289
+    }
+  ],
+  "sample": [
+    {
+      "code": "H10000",
+      "name": "Ambient AI Summarization Workflow Authority Gap",
+      "keywords": [
+        "ambient AI",
+        "CDI specificity",
+        "CMS CoP",
+        "HITRUST roadmap",
+        "value realization ledger",
+        "BAFO counter"
+      ]
+    },
+    {
+      "code": "H10001",
+      "name": "Clinical Note Automation Risk Scoring Subprocessor Blind Spot",
+      "keywords": [
+        "clinical note automation",
+        "HIPAA BAA",
+        "NCQA HEDIS audit",
+        "Series B burn rate",
+        "pilot success metric",
+        "RFI question"
+      ]
+    },
+    {
+      "code": "H10002",
+      "name": "CDI Specificity Worklist Prioritization Validation Cohort Mismatch",
+      "keywords": [
+        "CDI specificity",
+        "Epic Notes",
+        "FDA SaMD guidance",
+        "implementation partner capacity",
+        "clinical governance checklist",
+        "RFP scoring criterion"
+      ]
+    },
+    {
+      "code": "H10003",
+      "name": "HIPAA BAA Appeal Generation Adoption Telemetry Missing",
+      "keywords": [
+        "HIPAA BAA",
+        "ambient AI",
+        "NIST AI RMF",
+        "referenceable health-system customer",
+        "adoption plan",
+        "BAA clause"
+      ]
+    },
+    {
+      "code": "H10004",
+      "name": "Epic Notes Order Recommendation Human Override Ambiguity",
+      "keywords": [
+        "Epic Notes",
+        "clinical note automation",
+        "ONC HTI-1",
+        "clinical advisory board",
+        "pre-mortem risk",
+        "subprocessor schedule"
+      ]
+    }
+  ]
+}
