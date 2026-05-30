@@ -252,7 +252,7 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  return isExplicitConciseAsk(query) ? 180 : 600;
+  return isExplicitConciseAsk(query) ? 160 : 600;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {

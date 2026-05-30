@@ -53,6 +53,16 @@ export interface AskOptions {
   activePersonDisplayName?: string | null;
 }
 
+function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
+  return sources.map((source) => {
+    if (source.detail.length <= 900) return source;
+    return {
+      ...source,
+      detail: `${source.detail.slice(0, 900).trimEnd()}\n[truncated for concise Ask response]`,
+    };
+  });
+}
+
 export function atlasStakeholderConflictHandoff(query: string): string | null {
   const normalized = query.toLowerCase();
   const asksForAdvice = /\b(what should i do|what do i do|how should i handle|give me.*playbook|resolution path)\b/.test(normalized);
@@ -119,8 +129,9 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantInventoryKey: opts.tenantInventoryKey,
     });
     const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
-    const sourceLimit = isExplicitConciseAsk(trimmed) ? 10 : 16;
-    const sources: AskSource[] = [
+    const conciseAsk = isExplicitConciseAsk(trimmed);
+    const sourceLimit = conciseAsk ? 8 : 16;
+    const rawSources: AskSource[] = [
       ...surfaceContext,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
@@ -128,6 +139,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       ...routed.sources,
       ...worldview.sources,
     ].slice(0, sourceLimit);
+    const sources = conciseAsk ? compactSourceDetailsForConciseAsk(rawSources) : rawSources;
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
