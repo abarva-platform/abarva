@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-05-30T23:35:05.309Z",
+  "tenantKey": "skyharbor-air",
+  "tenantName": "SkyHarbor Air",
+  "vertical": "airline",
+  "caseCount": 5040,
+  "domainCount": 84,
+  "personaCount": 10,
+  "moduleCount": 5,
+  "casesPerDomain": 60,
+  "files": {
+    "cases": "expert-eval-cases.jsonl",
+    "domainTaxonomy": "domain-taxonomy.json"
+  },
+  "byModule": {
+    "intelligence": 1008,
+    "moves": 1008,
+    "source": 1008,
+    "tower": 1008,
+    "setup": 1008
+  },
+  "byDifficulty": {
+    "L1_RECALL": 420,
+    "L2_EXPLANATION": 420,
+    "L3_DIAGNOSIS": 420,
+    "L4_RECOMMENDATION": 840,
+    "L5_DELIVERABLE": 1260,
+    "L6_ADVERSARIAL": 840,
+    "L7_CROSS_MODULE": 420,
+    "L8_BOARD_CXO": 420
+  },
+  "acceptanceBar": {
+    "smoke": "500 random cases, zero schema errors, zero tenant mismatch",
+    "releaseGate": "2,000 cases per vertical, >=90% pass, zero hallucinated named entities",
+    "expertGrade": "full set, >=92% pass, >=80% answers cite tenant plus corpus plus AI ecosystem"
+  }
+}
