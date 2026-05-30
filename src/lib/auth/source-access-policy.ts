@@ -222,10 +222,11 @@ export async function loadUserSourceAccessPolicy(
     });
   }
 
-  const [membership, participants] = await Promise.all([
-    loadClientMembership(ctx),
-    loadSourceParticipants(ctx, opts.activeClientKey),
-  ]);
+  const membership = await loadClientMembership(ctx);
+  const membershipAccessLevel = inferAccessLevel(membership, []);
+  const participants = isClientAdminPolicy(membershipAccessLevel)
+    ? []
+    : await loadSourceParticipants(ctx, opts.activeClientKey);
 
   const accessLevel = inferAccessLevel(membership, participants);
   const admin = isClientAdminPolicy(accessLevel);
