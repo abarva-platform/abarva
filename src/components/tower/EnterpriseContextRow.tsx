@@ -86,7 +86,7 @@ export function EnterpriseContextRow({ summary }: { summary: EnterpriseSummary }
       <Card
         label="Tech Stack"
         accent={BLUE}
-        href="/tower/tech-stack"
+        href="/tower"
         heroLine={
           <>
             {summary.techStack.total} <span style={{ fontSize: 13, color: MUTE, fontWeight: 400 }}>items</span>
@@ -120,7 +120,7 @@ export function EnterpriseContextRow({ summary }: { summary: EnterpriseSummary }
       <Card
         label="Projects"
         accent={AMBER}
-        href="/tower/projects"
+        href="/tower"
         heroLine={
           <>
             {summary.projects.total} <span style={{ fontSize: 13, color: MUTE, fontWeight: 400 }}>active</span>
@@ -149,7 +149,7 @@ export function EnterpriseContextRow({ summary }: { summary: EnterpriseSummary }
       <Card
         label="Staff Aug"
         accent={GREEN}
-        href="/tower/staff-aug"
+        href="/tower"
         heroLine={
           <>
             {summary.staffAug.totalFte} <span style={{ fontSize: 13, color: MUTE, fontWeight: 400 }}>FTE</span>
@@ -166,7 +166,7 @@ export function EnterpriseContextRow({ summary }: { summary: EnterpriseSummary }
       <Card
         label="Volumetrics"
         accent={TEAL}
-        href="/tower/volumetrics"
+        href="/tower"
         heroLine={
           <>
             {summary.volumetrics.latestApiCallsMillions.toFixed(1)}M{' '}

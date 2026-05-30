@@ -23,9 +23,13 @@ export interface TopNavItem {
 
 export const TOP_NAV_ITEMS: ReadonlyArray<TopNavItem> = [
   {
+    // CL-1 (2026-05-30) · Top-nav "Home" lands on the /admin Trust
+    // Plane; matches the canonical entry in
+    // src/components/shell/topbar-nav-items.ts. See
+    // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §2.
     id: 'home',
     label: 'Home',
-    href: '/home',
+    href: '/admin',
     moduleKey: null,
     visibleToRoles: ['admin', 'cxo', 'analyst', 'end_user'],
   },

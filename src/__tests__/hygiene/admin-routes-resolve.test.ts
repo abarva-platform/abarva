@@ -21,7 +21,7 @@
  * at a path that has an actual route file under src/app/(maestro)/.
  */
 
-import { existsSync, readFileSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { ADMIN_SUB_SECTIONS } from '@/lib/admin/admin-shell-config';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
@@ -109,6 +109,73 @@ describe('home-overview-v2 panel hrefs do not reintroduce deleted admin routes',
       expect(DEAD_ADMIN_ROUTES.has(card.href)).toBe(false);
     });
   }
+});
+
+describe('engineering surface is adopted (Wave 1 CL-3)', () => {
+  test('/engineering/traces resolves to a route file', () => {
+    expect(routeFileExists('/engineering/traces')).toBe(true);
+  });
+
+  test('/engineering/traces has a sidebar entry under Diagnostics', () => {
+    const entry = ADMIN_SUB_SECTIONS.find(
+      (section) => section.href === '/engineering/traces',
+    );
+    expect(entry).toBeDefined();
+    expect(entry?.group).toBe('Diagnostics');
+  });
+
+  test('sidebar entry for /engineering/traces is workflow-anchored (no "Atlas" branding)', () => {
+    const entry = ADMIN_SUB_SECTIONS.find(
+      (section) => section.href === '/engineering/traces',
+    );
+    expect(entry).toBeDefined();
+    expect(entry?.label.toLowerCase()).not.toContain('atlas');
+    expect(entry?.subtitle.toLowerCase()).not.toContain('atlas');
+  });
+});
+
+describe('no agent-named routes exist under /admin (Wave 1 CL-3)', () => {
+  // The "workflow-first, agents-hidden" doctrine forbids agent-named
+  // sub-routes under /admin. The legacy `/admin/atlas/*` directory
+  // was removed by W1-PR-2 (the trace inspector relocated to
+  // `/engineering/traces`); the `/admin/agents/*` directory was
+  // removed by CL-3 (the redirect stub was redundant with the proxy
+  // consolidation map). This guard catches regressions where an
+  // agent-named admin sub-route gets reintroduced.
+  const FORBIDDEN_ADMIN_SUB_DIRS = [
+    'atlas',
+    'sentinel',
+    'steward',
+    'nexus',
+    'agents',
+  ];
+  const adminRoot = join(APP_ROOT, 'admin');
+
+  for (const forbidden of FORBIDDEN_ADMIN_SUB_DIRS) {
+    test(`/admin/${forbidden}/ does not exist on disk`, () => {
+      const dir = join(adminRoot, forbidden);
+      expect(existsSync(dir)).toBe(false);
+    });
+  }
+
+  test('no agent-named directories live under src/app/(maestro)/admin/', () => {
+    if (!existsSync(adminRoot)) return;
+    const entries = readdirSync(adminRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+    const offenders = entries.filter((name) =>
+      FORBIDDEN_ADMIN_SUB_DIRS.includes(name),
+    );
+    if (offenders.length > 0) {
+      throw new Error(
+        `Found agent-named admin sub-directories: ${offenders.join(', ')}. ` +
+          `Per the workflow-first-agents-hidden doctrine, primary admin ` +
+          `routes are function-named. Rename to a workflow noun (e.g. ` +
+          `/admin/cross-program-signals replaces /admin/atlas; ` +
+          `/engineering/traces replaces /admin/atlas/traces).`,
+      );
+    }
+  });
 });
 
 describe('proxy adminRouteConsolidationMap covers every deleted admin route', () => {

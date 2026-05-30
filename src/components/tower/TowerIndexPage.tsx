@@ -41,12 +41,14 @@ export interface TowerSubstrateCounts {
   scenarios: number;
 }
 
-// ─── Tower-specific tokens (v3 design: white bg, navy accent) ─────────────────
+// ─── Tower design tokens — aligned with the LOCKED AbarVa design system ───────
+// Background: #F8F7F4 cream (matches /tower/onboard, /tower/portfolio, marketing).
+// Headings: Fraunces serif. Body: Inter. Buttons: black / ghost. NO new colours.
 const T = {
-  PAGE_BG: '#ffffff',
-  CREAM: '#f4f4f4',
-  CREAM_2: '#fafafa',
-  CREAM_DEEP: '#eaeaea',
+  PAGE_BG: '#F8F7F4',
+  CREAM: '#F8F7F4',
+  CREAM_2: '#ffffff',
+  CREAM_DEEP: '#eeece6',
   RULE: 'rgba(10,10,11,0.10)',
   RULE_STRONG: 'rgba(10,10,11,0.22)',
   BORDER: 'rgba(10,10,11,0.08)',
