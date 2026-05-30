@@ -14,6 +14,7 @@
 
 import { azureCostSource } from './azure-cost';
 import { copilotSource } from './copilot';
+import { cursorSource } from './cursor';
 import { servicenowCmdbSource } from './servicenow-cmdb';
 import { servicenowItsmSource } from './servicenow-itsm';
 
@@ -51,6 +52,7 @@ export interface TowerIngestSource {
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   azureCostSource,
   copilotSource,
+  cursorSource,
   servicenowCmdbSource,
   servicenowItsmSource,
   // Sibling slices append here, alphabetical by `key`.
