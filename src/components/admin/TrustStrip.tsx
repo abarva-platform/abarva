@@ -105,7 +105,10 @@ export function spineToChips(spine: TrustSpine): TrustStripChip[] {
     href: '/admin/data-trust',
   };
 
-  // Isolation — anomalies in last 24h.
+  // Isolation — anomalies in last 24h. Wave 2 PR-2 routes the chip
+  // to the new Isolation lane on /admin/audit so an incident-response
+  // admin can answer STRESS-P0-006-class questions ("did anything
+  // cross tenants?") without leaving Setup.
   const isolation: TrustStripChip = {
     id: 'isolation',
     noun: 'Isolation',
@@ -120,7 +123,7 @@ export function spineToChips(spine: TrustSpine): TrustStripChip[] {
           ? 'breach'
           : 'attention',
     evidence: spine.isolation.evidence,
-    href: '/admin/audit',
+    href: '/admin/audit?tab=isolation',
   };
 
   // Integrations — degraded connector count.
@@ -193,7 +196,7 @@ const EMPTY_CHIPS: TrustStripChip[] = [
     metric: { value: '0', label: 'no data yet' },
     status: 'attention',
     evidence: 'estimated',
-    href: '/admin/audit',
+    href: '/admin/audit?tab=isolation',
   },
   {
     id: 'integrations',

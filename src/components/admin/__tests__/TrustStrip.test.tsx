@@ -166,6 +166,30 @@ describe('spineToChips', () => {
     expect(isolation.metric.label).toBe('anomalies 24h');
   });
 
+  it('routes the isolation chip to the dedicated lane (Wave 2 PR-2)', () => {
+    // Verdict §4 / §5.6: isolation chip click destination is the
+    // dedicated lane, not the activity tab. STRESS-P0-006 triage.
+    const chips = spineToChips(spine());
+    expect(chips[1]!.href).toBe('/admin/audit?tab=isolation');
+  });
+
+  it('routes the empty-state isolation chip to the lane as well', () => {
+    const empty = spineToChips(
+      spine({
+        substrate: {
+          segmentsTotal: 0,
+          mature: 0,
+          sparse: 0,
+          missing: 0,
+          lastIngestIso: null,
+          topSparseSegment: null,
+          evidence: 'live',
+        },
+      }),
+    );
+    expect(empty[1]!.href).toBe('/admin/audit?tab=isolation');
+  });
+
   it('routes governance to /home/queue when open approvals > 0, else users-access', () => {
     const open = spineToChips(spine({ governance: { ...spine().governance, openApprovals: 2 } }))[3]!;
     expect(open.href).toBe('/home/queue');
