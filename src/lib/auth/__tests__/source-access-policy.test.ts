@@ -6,6 +6,10 @@ jest.mock('@/lib/supabase-server', () => ({
   getServerSupabase: () => ({ from: fromMock }),
 }));
 
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: () => ({ from: fromMock }),
+}));
+
 interface QueryState {
   table: string;
 }
@@ -72,6 +76,7 @@ describe('source access policy', () => {
     expect(policy.canApproveSourceStages).toBe(true);
     expect(policy.canViewFinancialData).toBe(false);
     expect(policy.deniedDataClasses).toContain('restricted_financial');
+    expect(fromMock).not.toHaveBeenCalledWith('source_event_participants');
   });
 
   it('normalizes legacy abarva_super_admin to client_admin and never emits super-admin copy', async () => {
@@ -96,7 +101,7 @@ describe('source access policy', () => {
       clientId: 'client-apex',
       userId: 'clerk:user_canonical',
       role: 'client_viewer',
-      email: 'maya.desai@apex-retail.example.com',
+      email: 'cio@apex-retail.example.com',
     }, { activeClientKey: 'apexretail' });
 
     expect(policy.accessLevel).toBe('client_admin');
@@ -186,5 +191,31 @@ describe('source access policy', () => {
 
     expect(formatUserSourceAccessPolicyForPrompt(policy)).toContain('exact vendor spend');
     expect(formatUserSourceAccessPolicyForPrompt(policy)).toContain('must not appear');
+  });
+
+  it('loads membership before participant rows for non-admin users', async () => {
+    const queryOrder: string[] = [];
+    setupRows({
+      person_client_memberships: { access_level: 'source_member', financial_visibility: false },
+      source_event_participants: [{ source_event_id: 'src-1', source_access_level: 'source_member' }],
+    });
+    fromMock.mockImplementation((table: string) => {
+      queryOrder.push(table);
+      return makeBuilder({ table }, {
+        person_client_memberships: { access_level: 'source_member', financial_visibility: false },
+        source_event_participants: [{ source_event_id: 'src-1', source_access_level: 'source_member' }],
+      });
+    });
+
+    const { loadUserSourceAccessPolicy } = await import('../source-access-policy');
+    await loadUserSourceAccessPolicy({
+      clientId: 'client-apex',
+      userId: '00000000-0000-4000-8000-000000000001',
+    }, { activeClientKey: 'apexretail' });
+
+    expect(queryOrder).toEqual([
+      'person_client_memberships',
+      'source_event_participants',
+    ]);
   });
 });
