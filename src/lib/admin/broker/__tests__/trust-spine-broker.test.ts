@@ -17,6 +17,8 @@ import * as setupDataBroker from '@/lib/admin/setup-data-broker';
 import * as programApproval from '@/lib/programs/approval';
 import * as connectorHealthBroker from '@/lib/admin/broker/connector-health-broker';
 import * as isolationBroker from '@/lib/admin/broker/isolation-posture-broker';
+import * as inviteBroker from '@/lib/admin/broker/invite-events-broker';
+import * as policyBroker from '@/lib/admin/broker/policy-events-broker';
 import type { SetupInventorySnapshot } from '@/lib/admin/setup-acts-registry';
 import type { ConnectorHealth } from '@/lib/admin/broker/connector-health-broker';
 import type { IsolationPosture } from '@/lib/admin/broker/isolation-posture-broker';
@@ -37,6 +39,14 @@ jest.mock('@/lib/admin/broker/isolation-posture-broker', () => ({
   getIsolationPosture: jest.fn(),
 }));
 
+jest.mock('@/lib/admin/broker/invite-events-broker', () => ({
+  getRecentInviteEvents: jest.fn(),
+}));
+
+jest.mock('@/lib/admin/broker/policy-events-broker', () => ({
+  getRecentPolicyEvents: jest.fn(),
+}));
+
 const getSnapshotMock = setupDataBroker.getSetupInventorySnapshot as jest.MockedFunction<
   typeof setupDataBroker.getSetupInventorySnapshot
 >;
@@ -48,6 +58,12 @@ const getConnectorHealthMock = connectorHealthBroker.getConnectorHealth as jest.
 >;
 const getIsolationPostureMock = isolationBroker.getIsolationPosture as jest.MockedFunction<
   typeof isolationBroker.getIsolationPosture
+>;
+const getInvitesMock = inviteBroker.getRecentInviteEvents as jest.MockedFunction<
+  typeof inviteBroker.getRecentInviteEvents
+>;
+const getPoliciesMock = policyBroker.getRecentPolicyEvents as jest.MockedFunction<
+  typeof policyBroker.getRecentPolicyEvents
 >;
 
 function makeEmptyIsolation(): IsolationPosture {
@@ -147,6 +163,9 @@ describe('getTrustSpine', () => {
     // Default to an empty connector health unless a test overrides.
     getConnectorHealthMock.mockResolvedValue(makeEmptyHealth());
     getIsolationPostureMock.mockResolvedValue(makeEmptyIsolation());
+    // Default to no invites / no policy events unless a test overrides.
+    getInvitesMock.mockResolvedValue([]);
+    getPoliciesMock.mockResolvedValue([]);
   });
 
   it('returns the contract shape with composed substrate + governance', async () => {
@@ -430,12 +449,14 @@ describe('getTrustSpine', () => {
     expect(spine.audit.last24hEvents[0]?.action).toBe('event 59');
   });
 
-  it('returns invite events as empty arrays (Wave 2 invite ledger pending)', async () => {
+  it('returns audit-empty when every source broker resolves to empty', async () => {
     getSnapshotMock.mockResolvedValue({
       ...makeSnapshot(),
       recentActivity: [],
     });
     getApprovalsMock.mockResolvedValue([]);
+    getInvitesMock.mockResolvedValue([]);
+    getPoliciesMock.mockResolvedValue([]);
 
     const spine = await getTrustSpine('apex-retail');
 
@@ -443,6 +464,214 @@ describe('getTrustSpine', () => {
     expect(
       spine.audit.last24hEvents.find((e) => e.source === 'invite'),
     ).toBeUndefined();
+    expect(
+      spine.audit.last24hEvents.find((e) => e.source === 'policy'),
+    ).toBeUndefined();
+  });
+
+  it('emits source=invite ribbon rows from the invite-events broker', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+    getInvitesMock.mockResolvedValue([
+      {
+        id: 'inv-1',
+        ts: '2026-05-30T09:00:00Z',
+        actor: 'user_clerk_owner',
+        action: 'invite sent',
+        target: 'm***@example.com',
+      },
+      {
+        id: 'inv-2',
+        ts: '2026-05-30T08:00:00Z',
+        actor: 'system',
+        action: 'invite accepted',
+        target: 'a***@apexretail.com',
+      },
+    ]);
+
+    const spine = await getTrustSpine('apex-retail');
+    const inviteEvents = spine.audit.last24hEvents.filter((e) => e.source === 'invite');
+    expect(inviteEvents).toHaveLength(2);
+    expect(inviteEvents[0]).toEqual({
+      ts: '2026-05-30T09:00:00Z',
+      source: 'invite',
+      actor: 'user_clerk_owner',
+      action: 'invite sent',
+      target: 'm***@example.com',
+    });
+    // Targets are masked — no raw emails leak through the composer.
+    for (const event of inviteEvents) {
+      expect(event.target).not.toMatch(/^[a-z]{2,}@/i);
+    }
+  });
+
+  it('emits source=policy ribbon rows from the policy-events broker', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+    getPoliciesMock.mockResolvedValue([
+      {
+        id: 'pol-1',
+        ts: '2026-05-30T07:00:00Z',
+        actor: 'Admin · CIO',
+        action: 'policy updated',
+        target: 'apex-retail',
+        reason: 'Tightened external AI egress to confidential max class.',
+      },
+    ]);
+
+    const spine = await getTrustSpine('apex-retail');
+    const policyEvents = spine.audit.last24hEvents.filter((e) => e.source === 'policy');
+    expect(policyEvents).toHaveLength(1);
+    expect(policyEvents[0]).toEqual({
+      ts: '2026-05-30T07:00:00Z',
+      source: 'policy',
+      actor: 'Admin · CIO',
+      action: 'policy updated',
+      target: 'apex-retail',
+    });
+    // No `reason` field on the ribbon row — that lives on the policy
+    // drilldown, not the unified ribbon (payload-safety doctrine).
+    expect(policyEvents[0]).not.toHaveProperty('reason');
+  });
+
+  it('mixes all six sources on the ribbon, sorted strictly by ts desc', async () => {
+    // One event per source, deliberately interleaved timestamps so
+    // alphabetical-by-source sort order cannot pass this test by accident.
+    const snapshot = {
+      ...makeSnapshot(),
+      recentActivity: [
+        {
+          actor: 'Import pipeline',
+          what: 'Imported segment org_profile',
+          // 6th newest
+          timestampIso: '2026-05-30T04:00:00Z',
+        },
+      ],
+    };
+    getSnapshotMock.mockResolvedValue(snapshot);
+
+    getApprovalsMock.mockResolvedValue([
+      // 3rd newest
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { id: 'a1', requestedAt: '2026-05-30T10:00:00Z', requestedByUserId: 'u1', programId: 'p-approval' } as any,
+    ]);
+
+    // Pin "now" so connector window math is stable.
+    const now = new Date('2026-05-30T12:00:00Z');
+    jest.useFakeTimers().setSystemTime(now);
+
+    getConnectorHealthMock.mockResolvedValue({
+      connectorsTotal: 1,
+      connectorsLive: 1,
+      connectorsDegraded: 0,
+      lastPullIso: '2026-05-30T11:00:00Z',
+      topDegraded: null,
+      perConnector: [
+        {
+          id: 'c-live',
+          name: 'Live connector',
+          status: 'live',
+          // freshest — 1st newest
+          lastPullIso: '2026-05-30T11:00:00Z',
+          failureReason: null,
+        },
+      ],
+    });
+
+    getIsolationPostureMock.mockResolvedValue({
+      rlsCoveragePct: 100,
+      tenantResolutionEvents24h: 1,
+      anomaliesLast24h: 1,
+      topAnomaly: null,
+      evidence: 'estimated',
+      recentEvents: [
+        {
+          id: 'iso-1',
+          // 2nd newest
+          ts: '2026-05-30T10:30:00Z',
+          tenantKey: 'apex-retail',
+          userId: 'user_x',
+          intendedTenant: null,
+          resolvedTenant: null,
+          severity: 'high',
+          anomaly: true,
+          reason: 'deny: kernel-only mode',
+          workflow: 'intelligence.ask',
+          provider: 'anthropic',
+          policyDecision: 'deny',
+          dataClass: 'restricted',
+        },
+      ],
+    });
+
+    getInvitesMock.mockResolvedValue([
+      {
+        id: 'inv-1',
+        // 4th newest
+        ts: '2026-05-30T08:30:00Z',
+        actor: 'system',
+        action: 'invite sent',
+        target: 'p***@apex-retail.com',
+      },
+    ]);
+
+    getPoliciesMock.mockResolvedValue([
+      {
+        id: 'pol-1',
+        // 5th newest
+        ts: '2026-05-30T06:00:00Z',
+        actor: 'Admin',
+        action: 'policy updated',
+        target: 'apex-retail',
+        reason: 'Adjusted retention window',
+      },
+    ]);
+
+    const spine = await getTrustSpine('apex-retail');
+    const sources = spine.audit.last24hEvents.map((e) => e.source);
+    // Expected temporal order:
+    //   connector (11:00) · auth (10:30) · approval (10:00) ·
+    //   invite (08:30) · policy (06:00) · substrate (04:00)
+    expect(sources).toEqual([
+      'connector',
+      'auth',
+      'approval',
+      'invite',
+      'policy',
+      'substrate',
+    ]);
+
+    jest.useRealTimers();
+  });
+
+  it('falls back to empty invite / policy arrays when those brokers reject', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+    getInvitesMock.mockRejectedValue(new Error('clerk unreachable'));
+    getPoliciesMock.mockRejectedValue(new Error('policy table missing'));
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const spine = await getTrustSpine('apex-retail');
+
+    // Ribbon still composes with zero invite/policy rows.
+    expect(spine.audit.last24hEvents).toEqual([]);
+    expect(spine.audit.last24hEvents.find((e) => e.source === 'invite')).toBeUndefined();
+    expect(spine.audit.last24hEvents.find((e) => e.source === 'policy')).toBeUndefined();
+
+    const warnLines = warnSpy.mock.calls.map((c) => String(c[0]));
+    expect(warnLines.some((l) => /invite_events\.degraded/.test(l))).toBe(true);
+    expect(warnLines.some((l) => /policy_events\.degraded/.test(l))).toBe(true);
+
+    warnSpy.mockRestore();
   });
 
   it('emits connector audit events from the connector health broker', async () => {

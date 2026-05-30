@@ -8,8 +8,11 @@
  * read from.
  *
  * PR-6 (Wave 1) extends the audit composer to union substrate-import
- * events with approval-queue events; connector and invite sources
- * are stubbed empty until Wave 2 wires their ledgers.
+ * events with approval-queue events; PR-1 / PR-2 (Wave 2) wire the
+ * connector and isolation/auth sources; PR-3 (Wave 2) wires the
+ * remaining two — invite (Clerk-backed) and policy
+ * (`tenant_policy_audit`-backed) — bringing the unified ribbon to
+ * its full six-source join.
  *
  * See `docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md` § 5.4 for the
  * Data Trust backbone narrative and §7 (Wave 1 PR-4) for the
@@ -54,6 +57,14 @@ import {
   getIsolationPosture,
   type IsolationPosture,
 } from '@/lib/admin/broker/isolation-posture-broker';
+import {
+  getRecentInviteEvents,
+  type InviteEvent,
+} from '@/lib/admin/broker/invite-events-broker';
+import {
+  getRecentPolicyEvents,
+  type PolicyEvent,
+} from '@/lib/admin/broker/policy-events-broker';
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
@@ -416,15 +427,46 @@ function connectorAuditEvents(
 }
 
 /**
- * Invite events — there is no `tenant_invites` / `user_invitations`
- * table today (the admin users-access page declares "live writes
- * deferred to Wave 27"). Returning [] keeps this dimension honest.
+ * Invite events — Wave 2 PR-3 wires this from the invite-events
+ * broker. The broker sources Clerk's invitations API when
+ * `CLERK_SECRET_KEY` is set and returns [] otherwise. Emails are
+ * already masked at the broker boundary (first-char + domain), so
+ * the ribbon row's `target` field carries the masked address.
+ *
+ * Per the Wave 2 PR-3 spec: "Whatever schema you find — exclude
+ * payload-fingerprint columns from the broker result." We do NOT
+ * synthesize fake events when no SDK / no ledger is available;
+ * the broker's [] return keeps the ribbon honest.
  */
-function inviteAuditEvents(): TrustAuditEvent[] {
-  // TODO(Wave 2 PR-2): pull invite-sent / invite-accepted events
-  // when the invite ledger lands. Today there is no schema to read
-  // from.
-  return [];
+function inviteAuditEvents(invites: InviteEvent[]): TrustAuditEvent[] {
+  return invites.map((e) => ({
+    ts: e.ts,
+    source: 'invite' as const,
+    actor: e.actor,
+    action: e.action,
+    target: e.target,
+  }));
+}
+
+/**
+ * Policy events — Wave 2 PR-3 wires this from the policy-events
+ * broker. The broker reads `tenant_policy_audit` (the canonical
+ * AI-egress policy-change ledger added by the W22 migration). The
+ * broker's row mapper already excludes `prior_policy` / `new_policy`
+ * JSONB columns and the internal `actor_id` UUID — only
+ * `actor_label`, `reason`, and `created_at` are surfaced.
+ *
+ * Returns [] when the table is missing (migration not applied) or
+ * the query fails; the broker emits a structured warn upstream.
+ */
+function policyAuditEvents(policies: PolicyEvent[]): TrustAuditEvent[] {
+  return policies.map((e) => ({
+    ts: e.ts,
+    source: 'policy' as const,
+    actor: e.actor,
+    action: e.action,
+    target: e.target,
+  }));
 }
 
 /**
@@ -477,6 +519,8 @@ function composeAuditRibbon(
   approvals: ApprovalRequest[],
   health: ConnectorHealth | null,
   isolation: IsolationPosture | null,
+  invites: InviteEvent[],
+  policies: PolicyEvent[],
   refreshedAtIso: string,
 ): TrustSpineAudit {
   const merged: TrustAuditEvent[] = [
@@ -484,7 +528,8 @@ function composeAuditRibbon(
     ...approvals.map(approvalToAuditEvent),
     ...connectorAuditEvents(health, refreshedAtIso),
     ...isolationAuthAuditEvents(isolation),
-    ...inviteAuditEvents(),
+    ...inviteAuditEvents(invites),
+    ...policyAuditEvents(policies),
   ];
   // Strictly temporal: sort by ts desc. Events with unparseable
   // timestamps sink to the bottom so the live feed stays trustworthy.
@@ -515,13 +560,21 @@ function composeAuditRibbon(
  *   if the caller passes the app ClientKey instead.
  */
 export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
-  const [snapshotResult, approvalResult, healthResult, isolationResult] =
-    await Promise.allSettled([
-      getSetupInventorySnapshot(tenantKey),
-      getApprovalQueueForTenant(tenantKey),
-      getConnectorHealth(tenantKey),
-      getIsolationPosture(tenantKey),
-    ]);
+  const [
+    snapshotResult,
+    approvalResult,
+    healthResult,
+    isolationResult,
+    inviteResult,
+    policyResult,
+  ] = await Promise.allSettled([
+    getSetupInventorySnapshot(tenantKey),
+    getApprovalQueueForTenant(tenantKey),
+    getConnectorHealth(tenantKey),
+    getIsolationPosture(tenantKey),
+    getRecentInviteEvents(tenantKey),
+    getRecentPolicyEvents(tenantKey),
+  ]);
 
   const snapshot =
     snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
@@ -561,6 +614,40 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
     );
   }
 
+  let invites: InviteEvent[] = [];
+  if (inviteResult.status === 'fulfilled') {
+    invites = inviteResult.value;
+  } else {
+    // Structured warn — invite source falls back to empty so the
+    // ribbon mixes the other 5 sources unaffected.
+    console.warn(
+      JSON.stringify({
+        event: 'trust_spine.invite_events.degraded',
+        tenantKey,
+        reason:
+          inviteResult.reason instanceof Error
+            ? inviteResult.reason.message
+            : String(inviteResult.reason),
+      }),
+    );
+  }
+
+  let policies: PolicyEvent[] = [];
+  if (policyResult.status === 'fulfilled') {
+    policies = policyResult.value;
+  } else {
+    console.warn(
+      JSON.stringify({
+        event: 'trust_spine.policy_events.degraded',
+        tenantKey,
+        reason:
+          policyResult.reason instanceof Error
+            ? policyResult.reason.message
+            : String(policyResult.reason),
+      }),
+    );
+  }
+
   const refreshedAtIso = new Date().toISOString();
 
   return {
@@ -573,6 +660,8 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
       approvals,
       health,
       isolation,
+      invites,
+      policies,
       refreshedAtIso,
     ),
     refreshedAtIso,
