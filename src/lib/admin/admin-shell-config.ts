@@ -5,6 +5,7 @@ export type AdminSubSectionId =
   | "data-trust"
   | "connectors"
   | "users-access"
+  | "notifications"
   | "customer-admin"
   | "agent-readiness"
   | "production-readiness"
@@ -69,6 +70,15 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     subtitle: "Roles and risk",
     href: "/admin/users-access",
     group: "Governance",
+  },
+  {
+    // W4-PR-4 (2026-05-30) · Governance > Notifications entry. Per-user
+    // matrix where each event type maps to a channel + cadence. Mandatory
+    // subscriptions render locked. Source: Enterprise Comms Spine §7.
+    id: "notifications",
+    label: "Notifications",
+    subtitle: "Email · in-app · digest preferences",
+    href: "/admin/users-access/notifications",
   },
   {
     id: "customer-admin",
