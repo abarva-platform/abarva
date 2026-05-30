@@ -375,6 +375,7 @@ function Step({ step }: { step: DemoStep }) {
 export default function ReasoningDemoDocPage() {
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Docs"
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

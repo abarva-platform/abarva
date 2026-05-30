@@ -83,6 +83,7 @@ export default async function AdminProgramApprovalDetailPage({ params }: PagePro
 
   return (
     <AdminCanonShellV2
+      tenantName={client.name}
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

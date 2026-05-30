@@ -1119,6 +1119,7 @@ export default function ReasoningApiReferencePage() {
 
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Docs"
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"

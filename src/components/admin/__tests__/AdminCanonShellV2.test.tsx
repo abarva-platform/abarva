@@ -16,7 +16,7 @@ jest.mock('@/lib/reasoning/portfolio-alerts', () => ({
 describe('AdminCanonShellV2', () => {
   it('ships responsive shell CSS so admin approval actions are not clipped on narrow screens', () => {
     const html = renderToStaticMarkup(
-      <AdminCanonShellV2 agentRail={<aside>Rail</aside>}>
+      <AdminCanonShellV2 tenantName="Test Tenant" agentRail={<aside>Rail</aside>}>
         <main>Approval queue</main>
       </AdminCanonShellV2>,
     );

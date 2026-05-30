@@ -238,6 +238,7 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
 
   return (
     <AdminCanonShellV2
+      tenantName="AbarVa Engineering"
       agentRail={
         <AgentRail
           primaryAgentLabel="Atlas"

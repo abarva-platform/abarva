@@ -40,6 +40,7 @@ export default async function CrossProgramSignalsPage() {
 
   return (
     <AdminCanonShellV2
+      tenantName={tenantDisplayName}
       agentRail={
         <AgentRail
           primaryAgentLabel="Atlas"
