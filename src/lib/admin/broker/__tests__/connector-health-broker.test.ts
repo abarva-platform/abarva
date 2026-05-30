@@ -16,15 +16,26 @@
  */
 
 import {
+  createPendingConnector,
   getConnectorHealth,
   testConnector,
 } from '../connector-health-broker';
 import * as adapter from '@/lib/admin/data/admin-connectors-adapter';
+import * as dbHelpers from '@/lib/admin/data/admin-db-helpers';
+import * as pgCompat from '@/lib/data-plane/postgresCompat';
 import type { AdminConnectorRow } from '@/lib/admin/data/admin-connectors-adapter-types';
 
 jest.mock('@/lib/admin/data/admin-connectors-adapter', () => ({
   getAdminConnectors: jest.fn(),
   getAdminConnectorById: jest.fn(),
+}));
+
+jest.mock('@/lib/admin/data/admin-db-helpers', () => ({
+  requireClientId: jest.fn(),
+}));
+
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: jest.fn(),
 }));
 
 const getAdminConnectorsMock = adapter.getAdminConnectors as jest.MockedFunction<
@@ -205,6 +216,194 @@ describe('getConnectorHealth', () => {
     await expect(getConnectorHealth('apex-retail')).rejects.toThrow(
       /migration pending/,
     );
+  });
+
+  it('treats adapter `pending` lifecycle as posture `pending`', async () => {
+    getAdminConnectorsMock.mockResolvedValue([
+      row({ id: 'p', label: 'P', status: 'pending' }),
+    ]);
+    const health = await getConnectorHealth('apex-retail');
+    expect(health.perConnector[0]?.status).toBe('pending');
+    expect(health.connectorsLive).toBe(0);
+    expect(health.connectorsDegraded).toBe(0);
+  });
+});
+
+// ── createPendingConnector ──────────────────────────────────────────────────
+
+const requireClientIdMock = dbHelpers.requireClientId as jest.MockedFunction<
+  typeof dbHelpers.requireClientId
+>;
+const getWriteClientMock =
+  pgCompat.getAzureWriteFluentClient as jest.MockedFunction<
+    typeof pgCompat.getAzureWriteFluentClient
+  >;
+
+/**
+ * Lightweight fluent client mock that mirrors the chain
+ * `client.from(table).insert(...).select(...).single()` used by the
+ * broker. Records every insert payload by table so assertions can
+ * read them back.
+ */
+function buildWriteClientMock(opts: {
+  connectorRow?: { data: { id: string } | null; error: { message: string } | null };
+  auditRow?: { error: { message: string } | null };
+} = {}) {
+  const inserts: Record<string, unknown[]> = {};
+  const connectorResult =
+    opts.connectorRow ?? { data: { id: 'conn-new-1' }, error: null };
+  const auditResult = opts.auditRow ?? { error: null };
+
+  const client = {
+    from(table: string) {
+      return {
+        insert(payload: unknown) {
+          inserts[table] = inserts[table] ?? [];
+          inserts[table].push(payload);
+          if (table === 'admin_connectors') {
+            return {
+              select() {
+                return {
+                  single: () => Promise.resolve(connectorResult),
+                };
+              },
+            };
+          }
+          // admin_audit_log — no chain, just resolved value.
+          return Promise.resolve(auditResult);
+        },
+      };
+    },
+  };
+  return { client, inserts };
+}
+
+describe('createPendingConnector', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('inserts a pending row + audit log on the happy path', async () => {
+    requireClientIdMock.mockResolvedValue('client-uuid-1');
+    const { client, inserts } = buildWriteClientMock();
+    getWriteClientMock.mockReturnValue(client as unknown as ReturnType<typeof pgCompat.getAzureWriteFluentClient>);
+
+    const result = await createPendingConnector('apex-retail', {
+      templateId: 'salesforce',
+      name: 'SFDC · prod',
+      scope: 'accounts, opportunities',
+      authMethod: 'oauth',
+      actorPersonId: 'person-1',
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      id: 'conn-new-1',
+      status: 'pending',
+    });
+
+    const connectorInsert = inserts['admin_connectors']?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(connectorInsert).toMatchObject({
+      client_id: 'client-uuid-1',
+      label: 'SFDC · prod',
+      status: 'pending',
+      template_id: 'salesforce',
+      scope: 'accounts, opportunities',
+      auth_method: 'oauth',
+      kind: 'crm',
+    });
+    // CRITICAL — no credentials should ever land on the row.
+    expect(connectorInsert).not.toHaveProperty('password');
+    expect(connectorInsert).not.toHaveProperty('client_secret');
+    expect(connectorInsert).not.toHaveProperty('api_key');
+
+    const auditInsert = inserts['admin_audit_log']?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(auditInsert).toMatchObject({
+      client_id: 'client-uuid-1',
+      actor_person_id: 'person-1',
+      category: 'connector',
+      action: 'connector_added',
+      target_kind: 'admin_connector',
+      target_id: 'conn-new-1',
+    });
+  });
+
+  it('rejects when templateId is missing', async () => {
+    const result = await createPendingConnector('apex-retail', {
+      templateId: '   ',
+      name: 'Anything',
+    });
+    expect(result).toEqual({ ok: false, error: 'Template id is required.' });
+    expect(requireClientIdMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects when name is empty', async () => {
+    const result = await createPendingConnector('apex-retail', {
+      templateId: 'postgres',
+      name: '',
+    });
+    expect(result).toEqual({ ok: false, error: 'Connector name is required.' });
+  });
+
+  it('rejects an unsupported auth method', async () => {
+    const result = await createPendingConnector('apex-retail', {
+      templateId: 'postgres',
+      name: 'Postgres',
+      // @ts-expect-error - intentionally invalid
+      authMethod: 'kerberos',
+    });
+    expect(result).toEqual({ ok: false, error: 'Unsupported auth method.' });
+  });
+
+  it('returns the error when tenant resolution fails', async () => {
+    requireClientIdMock.mockRejectedValue(new Error('No client found for slug'));
+    const result = await createPendingConnector('does-not-exist', {
+      templateId: 'postgres',
+      name: 'P',
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/Tenant not found/);
+    }
+  });
+
+  it('returns the DB error message when the insert fails', async () => {
+    requireClientIdMock.mockResolvedValue('client-uuid-1');
+    const { client } = buildWriteClientMock({
+      connectorRow: { data: null, error: { message: 'unique violation' } },
+    });
+    getWriteClientMock.mockReturnValue(
+      client as unknown as ReturnType<typeof pgCompat.getAzureWriteFluentClient>,
+    );
+
+    const result = await createPendingConnector('apex-retail', {
+      templateId: 'postgres',
+      name: 'P',
+    });
+    expect(result).toEqual({ ok: false, error: 'unique violation' });
+  });
+
+  it('still returns ok=true when audit-log insert fails silently', async () => {
+    requireClientIdMock.mockResolvedValue('client-uuid-1');
+    const { client } = buildWriteClientMock({
+      auditRow: { error: { message: 'audit insert failed' } },
+    });
+    getWriteClientMock.mockReturnValue(
+      client as unknown as ReturnType<typeof pgCompat.getAzureWriteFluentClient>,
+    );
+
+    const result = await createPendingConnector('apex-retail', {
+      templateId: 'postgres',
+      name: 'P',
+    });
+    // Audit failure must never break the business write.
+    expect(result.ok).toBe(true);
   });
 });
 

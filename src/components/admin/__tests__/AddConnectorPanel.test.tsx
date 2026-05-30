@@ -13,7 +13,7 @@
  */
 
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 
 import {
   AddConnectorPanel,
@@ -29,8 +29,23 @@ jest.mock('posthog-js', () => ({
   },
 }));
 
+// The panel pulls in the server action by default. In jsdom we
+// stub the action with a per-test override via the `saveDraft` prop.
+jest.mock('@/app/(maestro)/admin/connectors/_actions/create-pending-connector', () => ({
+  createPendingConnectorAction: jest.fn(async () => ({
+    ok: true,
+    connectorId: 'conn-fixture-1',
+  })),
+}));
+
+const defaultSaveDraft = jest.fn(async () => ({
+  ok: true as const,
+  connectorId: 'conn-fixture-1',
+}));
+
 beforeEach(() => {
   jest.clearAllMocks();
+  defaultSaveDraft.mockClear();
 });
 
 describe('AddConnectorPanel', () => {
@@ -53,19 +68,34 @@ describe('AddConnectorPanel', () => {
   });
 
   it('blocks save draft when name is empty and shows validation', () => {
-    render(<AddConnectorPanel tenantKey="apex-retail" closeHref="/admin/connectors" />);
+    render(
+      <AddConnectorPanel
+        tenantKey="apex-retail"
+        closeHref="/admin/connectors"
+        saveDraft={defaultSaveDraft}
+      />,
+    );
     // First template is selected by default (postgres).
     fireEvent.click(screen.getByTestId('add-connector-save-button'));
     expect(screen.getByTestId('add-connector-validation-error')).toHaveTextContent(/name/i);
     expect(captureMock).not.toHaveBeenCalled();
+    expect(defaultSaveDraft).not.toHaveBeenCalled();
   });
 
-  it('saves draft once name is supplied and fires telemetry', () => {
-    render(<AddConnectorPanel tenantKey="apex-retail" closeHref="/admin/connectors" />);
+  it('saves draft once name is supplied, fires telemetry, and invokes the action', async () => {
+    render(
+      <AddConnectorPanel
+        tenantKey="apex-retail"
+        closeHref="/admin/connectors"
+        saveDraft={defaultSaveDraft}
+      />,
+    );
     fireEvent.change(screen.getByTestId('add-connector-name-input'), {
       target: { value: 'Postgres · prod warehouse' },
     });
-    fireEvent.click(screen.getByTestId('add-connector-save-button'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('add-connector-save-button'));
+    });
 
     expect(captureMock).toHaveBeenCalledWith(
       'connector_onboarding_save_draft_clicked',
@@ -74,7 +104,48 @@ describe('AddConnectorPanel', () => {
         template_id: 'postgres',
       }),
     );
-    expect(screen.getByTestId('add-connector-saved-banner')).toHaveTextContent(/Postgres · prod warehouse/);
+    expect(defaultSaveDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateId: 'postgres',
+        name: 'Postgres · prod warehouse',
+      }),
+    );
+    expect(screen.getByTestId('add-connector-saved-banner')).toHaveTextContent(
+      /Postgres · prod warehouse/,
+    );
+    const link = screen.getByTestId('add-connector-saved-link');
+    expect(link).toHaveAttribute(
+      'href',
+      '/admin/connectors#connector-conn-fixture-1',
+    );
+  });
+
+  it('surfaces server-action errors inline and preserves form state', async () => {
+    const failingAction = jest.fn(async () => ({
+      ok: false as const,
+      error: 'Permission denied.',
+    }));
+    render(
+      <AddConnectorPanel
+        tenantKey="apex-retail"
+        closeHref="/admin/connectors"
+        saveDraft={failingAction}
+      />,
+    );
+    fireEvent.change(screen.getByTestId('add-connector-name-input'), {
+      target: { value: 'Postgres · prod' },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('add-connector-save-button'));
+    });
+    expect(failingAction).toHaveBeenCalled();
+    expect(screen.getByTestId('add-connector-validation-error')).toHaveTextContent(
+      /Permission denied/,
+    );
+    // Name preserved so the operator can fix the issue and retry.
+    expect(screen.getByTestId('add-connector-name-input')).toHaveValue(
+      'Postgres · prod',
+    );
   });
 
   it('fires telemetry for Test connection and renders the placeholder banner', () => {

@@ -56,6 +56,8 @@ import {
   probeForKind,
   type ProbeResult,
 } from './connector-probes';
+import { requireClientId } from '@/lib/admin/data/admin-db-helpers';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
@@ -111,6 +113,10 @@ function postureStatusFor(status: AdminConnectorStatus): ConnectorPostureStatus 
     case 'not_configured':
       return 'disconnected';
     case 'deferred':
+    case 'pending':
+      // `pending` lifecycle status (PRE-W4-PR-2) — a row written by
+      // the AddConnectorPanel onboarding drawer awaiting Configure
+      // auth. Surfaces as `pending` posture, identical to `deferred`.
       return 'pending';
     default:
       // Defensive: an unrecognized status maps to `pending` so the
@@ -434,4 +440,192 @@ export async function testConnector(
     nextStatus: next,
     transition,
   };
+}
+
+// ── Pending-connector creation (PRE-W4-PR-2) ────────────────────────────────
+//
+// AddConnectorPanel ("Save draft") writes a `pending` admin_connectors row
+// plus an `admin_audit_log` row through this broker. The flow:
+//
+//   1. Validate inputs server-side (template_id/name/auth_method shape).
+//   2. Resolve tenant slug → clients.id.
+//   3. INSERT admin_connectors with status='pending' (no credentials).
+//   4. INSERT admin_audit_log row (category='connector', action='connector_added').
+//      That row is the canonical source for the `connector.added`
+//      notification event in Wave 4 comms.
+//
+// Credentials are NEVER persisted from this path. The drawer captures
+// operator INTENT (template_id, scope, auth_method as a label).
+// Real credentials get collected on the connector detail page via the
+// Configure auth flow — out of scope for this PR.
+//
+// Broker-boundary doctrine: this file is inside `src/lib/admin/broker/**`
+// and is therefore the canonical zone where direct Supabase writes are
+// permitted (broker-boundary.test.ts exempts this directory).
+
+/** Allowed auth-method intents the AddConnectorPanel surfaces. */
+export type PendingConnectorAuthMethod = 'oauth' | 'api_key' | 'sso';
+
+export interface CreatePendingConnectorInput {
+  /** Catalog template id ('postgres' | 'salesforce' | ...). */
+  templateId: string;
+  /** Display label the operator typed in the drawer. */
+  name: string;
+  /** Optional free-text scope ('orders, inventory'). */
+  scope?: string | null;
+  /** Operator intent — NOT a credential. */
+  authMethod?: PendingConnectorAuthMethod | null;
+  /** Optional actor person_id for audit-log attribution. */
+  actorPersonId?: string | null;
+}
+
+export type CreatePendingConnectorResult =
+  | { ok: true; id: string; status: 'pending' }
+  | { ok: false; error: string };
+
+/** Map a free-form template id to the admin_connectors.kind taxonomy. */
+function templateToKind(templateId: string): string {
+  const key = templateId.trim().toLowerCase();
+  switch (key) {
+    case 'postgres':
+    case 'snowflake':
+      return 'data_warehouse';
+    case 'salesforce':
+      return 'crm';
+    case 'servicenow':
+      return 'ticketing';
+    case 'workday':
+      return 'other';
+    case 'okta':
+      return 'identity';
+    case 'ga4':
+    case 'adobe_analytics':
+      return 'observability';
+    case 'stripe':
+      return 'other';
+    default:
+      return 'other';
+  }
+}
+
+const VALID_AUTH_METHODS: ReadonlySet<string> = new Set([
+  'oauth',
+  'api_key',
+  'sso',
+]);
+
+/**
+ * Persist a `pending` admin_connectors row + audit-log entry for a
+ * connector created via the AddConnectorPanel onboarding drawer.
+ *
+ * @returns `{ ok, id, status }` on success; `{ ok: false, error }` on
+ *   validation or DB failure. Caller (server action) is responsible
+ *   for translating the error into a UI-friendly message.
+ */
+export async function createPendingConnector(
+  tenantKey: string,
+  input: CreatePendingConnectorInput,
+): Promise<CreatePendingConnectorResult> {
+  // ── Validation ────────────────────────────────────────────────
+  const templateId = (input.templateId ?? '').trim();
+  if (templateId.length === 0) {
+    return { ok: false, error: 'Template id is required.' };
+  }
+  if (templateId.length > 64) {
+    return { ok: false, error: 'Template id is too long.' };
+  }
+  const name = (input.name ?? '').trim();
+  if (name.length === 0) {
+    return { ok: false, error: 'Connector name is required.' };
+  }
+  if (name.length > 120) {
+    return { ok: false, error: 'Connector name is too long.' };
+  }
+  const scope =
+    input.scope == null
+      ? null
+      : input.scope.trim().length === 0
+        ? null
+        : input.scope.trim().slice(0, 500);
+  const authMethod = input.authMethod ?? null;
+  if (authMethod !== null && !VALID_AUTH_METHODS.has(authMethod)) {
+    return { ok: false, error: 'Unsupported auth method.' };
+  }
+
+  // ── Tenant resolution ─────────────────────────────────────────
+  let clientId: string;
+  try {
+    clientId = await requireClientId(tenantKey);
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? `Tenant not found: ${err.message}`
+          : 'Tenant not found.',
+    };
+  }
+
+  // ── Insert connector row ──────────────────────────────────────
+  const supabase = getAzureWriteFluentClient();
+  const kind = templateToKind(templateId);
+  const { data, error } = await supabase
+    .from('admin_connectors')
+    .insert({
+      client_id: clientId,
+      kind,
+      vendor: null,
+      label: name,
+      status: 'pending',
+      template_id: templateId,
+      scope,
+      auth_method: authMethod,
+      required_for_pilot: false,
+      required_for_production: true,
+      blocker_reason: null,
+      steward_guidance: 'Pending Configure auth on connector detail.',
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    return {
+      ok: false,
+      error: error?.message ?? 'No connector row returned.',
+    };
+  }
+  const connectorId = (data as { id: string }).id;
+
+  // ── Write audit-log row ───────────────────────────────────────
+  // Wave 4 `connector.added` notification reads from this row.
+  try {
+    await supabase.from('admin_audit_log').insert({
+      client_id: clientId,
+      actor_person_id: input.actorPersonId ?? null,
+      category: 'connector',
+      action: 'connector_added',
+      target_kind: 'admin_connector',
+      target_id: connectorId,
+      summary: `Connector added · ${name} (${templateId}) · status=pending`,
+      metadata: {
+        template_id: templateId,
+        auth_method: authMethod,
+        scope,
+        status: 'pending',
+      },
+    });
+  } catch (auditErr) {
+    // Audit write must NEVER fail the business write. Log + continue.
+    console.warn(
+      JSON.stringify({
+        event: 'create_pending_connector.audit_failed',
+        tenantKey,
+        connectorId,
+        reason:
+          auditErr instanceof Error ? auditErr.message : String(auditErr),
+      }),
+    );
+  }
+
+  return { ok: true, id: connectorId, status: 'pending' };
 }
