@@ -24,6 +24,12 @@ const ALLOWED_PATH_PATTERNS = [
   /^docs\//,
   /^datasets\//,
   /^scripts\/verify-retired-tenant-references\.mjs$/,
+  // Fix A — Atlas retrieval alias normalization MUST reference the retired
+  // names in order to NORMALIZE them; these two paths are the only place in
+  // src/ where the retired names legitimately appear, and they appear inside
+  // normalization code + its tests.
+  /^src\/lib\/agent\/retrieval\.ts$/,
+  /^src\/lib\/agent\/__tests__\/retrieval-tenant-leak\.test\.ts$/,
 ];
 
 function isAllowedPath(relativePath) {
