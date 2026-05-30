@@ -1,0 +1,425 @@
+{
+  "generatedAt": "2026-05-30",
+  "overlayNamespace": "retail-v1",
+  "industry": "retail",
+  "totalPatterns": 5390,
+  "totalPacks": 301,
+  "totalCategories": 60,
+  "waves": [
+    {
+      "number": 1,
+      "title": "Strategy to E-Commerce",
+      "overlay": "RETAIL_OVERLAY_v1_WAVE_1_STRATEGY_TO_ECOMM.md",
+      "manifest": "RETAIL_OVERLAY_v1_WAVE_1_MANIFEST.json",
+      "categories": [
+        {
+          "code": "A",
+          "title": "Retail Strategy & Positioning",
+          "patterns": 130,
+          "packs": 8
+        },
+        {
+          "code": "B",
+          "title": "Consumer / Customer Dynamics",
+          "patterns": 165,
+          "packs": 10
+        },
+        {
+          "code": "C",
+          "title": "Merchandising & Assortment",
+          "patterns": 130,
+          "packs": 8
+        },
+        {
+          "code": "D",
+          "title": "Pricing & Promotion",
+          "patterns": 145,
+          "packs": 9
+        },
+        {
+          "code": "E",
+          "title": "Store Operations",
+          "patterns": 160,
+          "packs": 10
+        },
+        {
+          "code": "F",
+          "title": "E-Commerce & Digital Channels",
+          "patterns": 165,
+          "packs": 10
+        }
+      ],
+      "patternCount": 895,
+      "packCount": 55,
+      "categoryCount": 6
+    },
+    {
+      "number": 2,
+      "title": "Omnichannel to Marketing",
+      "overlay": "RETAIL_OVERLAY_v1_WAVE_2_OMNI_TO_MARKETING.md",
+      "manifest": "RETAIL_OVERLAY_v1_WAVE_2_MANIFEST.json",
+      "categories": [
+        {
+          "code": "G",
+          "title": "Omnichannel Integration",
+          "patterns": 157,
+          "packs": 8
+        },
+        {
+          "code": "H",
+          "title": "Supply Chain Strategy",
+          "patterns": 193,
+          "packs": 10
+        },
+        {
+          "code": "I",
+          "title": "Inventory Management",
+          "patterns": 156,
+          "packs": 8
+        },
+        {
+          "code": "J",
+          "title": "Logistics, Fulfillment & Last-Mile",
+          "patterns": 175,
+          "packs": 9
+        },
+        {
+          "code": "K",
+          "title": "Returns & Reverse Logistics",
+          "patterns": 72,
+          "packs": 4
+        },
+        {
+          "code": "L",
+          "title": "Customer Data, CDP & Identity",
+          "patterns": 175,
+          "packs": 9
+        },
+        {
+          "code": "M",
+          "title": "Loyalty Programs & Co-Brand",
+          "patterns": 138,
+          "packs": 7
+        },
+        {
+          "code": "N",
+          "title": "Marketing, Brand & Retail Media",
+          "patterns": 199,
+          "packs": 10
+        }
+      ],
+      "patternCount": 1265,
+      "packCount": 65,
+      "categoryCount": 8
+    },
+    {
+      "number": 3,
+      "title": "CX to AI",
+      "overlay": "RETAIL_OVERLAY_v1_WAVE_3_CX_TO_AI.md",
+      "manifest": "RETAIL_OVERLAY_v1_WAVE_3_MANIFEST.json",
+      "categories": [
+        {
+          "code": "O",
+          "title": "Customer Experience & Service",
+          "patterns": 128,
+          "packs": 7
+        },
+        {
+          "code": "P",
+          "title": "Workforce (Store, E-Comm, Corporate)",
+          "patterns": 145,
+          "packs": 8
+        },
+        {
+          "code": "Q",
+          "title": "Retail Real Estate & Network",
+          "patterns": 89,
+          "packs": 5
+        },
+        {
+          "code": "R",
+          "title": "Payments & Consumer Financial Services",
+          "patterns": 128,
+          "packs": 7
+        },
+        {
+          "code": "S",
+          "title": "Retail Technology Stack",
+          "patterns": 178,
+          "packs": 10
+        },
+        {
+          "code": "T",
+          "title": "AI in Retail",
+          "patterns": 162,
+          "packs": 9
+        }
+      ],
+      "patternCount": 830,
+      "packCount": 46,
+      "categoryCount": 6
+    },
+    {
+      "number": 4,
+      "title": "Format Verticals",
+      "overlay": "RETAIL_OVERLAY_v1_WAVE_4_FORMAT_VERTICALS.md",
+      "manifest": "RETAIL_OVERLAY_v1_WAVE_4_MANIFEST.json",
+      "categories": [
+        {
+          "code": "U",
+          "title": "Grocery & Food Retail",
+          "patterns": 106,
+          "packs": 6
+        },
+        {
+          "code": "V",
+          "title": "Apparel & Fashion",
+          "patterns": 91,
+          "packs": 5
+        },
+        {
+          "code": "W",
+          "title": "Beauty & Personal Care",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "X",
+          "title": "Consumer Electronics",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "Y",
+          "title": "Home Goods & Furniture",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "Z",
+          "title": "DIY & Home Improvement",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "AA",
+          "title": "Convenience Stores",
+          "patterns": 71,
+          "packs": 4
+        },
+        {
+          "code": "AB",
+          "title": "Automotive Retail & Dealerships",
+          "patterns": 71,
+          "packs": 4
+        },
+        {
+          "code": "AC",
+          "title": "Luxury & Premium Retail",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "AD",
+          "title": "Off-Price, Outlet & Treasure Hunt",
+          "patterns": 50,
+          "packs": 3
+        },
+        {
+          "code": "AE",
+          "title": "Department Stores & Anchor Tenants",
+          "patterns": 50,
+          "packs": 3
+        },
+        {
+          "code": "AF",
+          "title": "Specialty Retail",
+          "patterns": 50,
+          "packs": 3
+        },
+        {
+          "code": "AG",
+          "title": "Membership Clubs (Costco-style)",
+          "patterns": 50,
+          "packs": 3
+        },
+        {
+          "code": "AH",
+          "title": "Pharmacy & Health Retail",
+          "patterns": 70,
+          "packs": 4
+        },
+        {
+          "code": "AI",
+          "title": "Restaurants, QSR & Foodservice Tech",
+          "patterns": 91,
+          "packs": 5
+        }
+      ],
+      "patternCount": 1050,
+      "packCount": 60,
+      "categoryCount": 15
+    },
+    {
+      "number": 5,
+      "title": "Adjacent and Cross-Cutting",
+      "overlay": "RETAIL_OVERLAY_v1_WAVE_5_ADJACENT_CROSS_CUTTING.md",
+      "manifest": "RETAIL_OVERLAY_v1_WAVE_5_MANIFEST.json",
+      "categories": [
+        {
+          "code": "AJ",
+          "title": "CPG / Consumer Goods Strategy",
+          "patterns": 94,
+          "packs": 5
+        },
+        {
+          "code": "AK",
+          "title": "Trade Promotion & Joint Business Planning",
+          "patterns": 53,
+          "packs": 3
+        },
+        {
+          "code": "AL",
+          "title": "Wholesale, Distribution & Cash-and-Carry",
+          "patterns": 53,
+          "packs": 3
+        },
+        {
+          "code": "AM",
+          "title": "3PL & Logistics Service Providers",
+          "patterns": 73,
+          "packs": 4
+        },
+        {
+          "code": "AN",
+          "title": "Shipping Carriers & Carrier Strategy",
+          "patterns": 53,
+          "packs": 3
+        },
+        {
+          "code": "AO",
+          "title": "Cross-Border & International Retail",
+          "patterns": 53,
+          "packs": 3
+        },
+        {
+          "code": "AP",
+          "title": "Marketplaces (Amazon, Walmart, TikTok Shop, etc.)",
+          "patterns": 73,
+          "packs": 4
+        },
+        {
+          "code": "AQ",
+          "title": "DTC Brands & Brand-Direct Models",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "AR",
+          "title": "Subscription Commerce",
+          "patterns": 37,
+          "packs": 2
+        },
+        {
+          "code": "AS",
+          "title": "Social Commerce",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "AT",
+          "title": "Live Commerce & Conversational Commerce",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "AU",
+          "title": "MarTech & AdTech Ecosystem",
+          "patterns": 73,
+          "packs": 4
+        },
+        {
+          "code": "AV",
+          "title": "Travel Retail (Duty-Free, Airport, Cruise)",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "AW",
+          "title": "Mall Operators & Retail Real Estate Investment",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "AX",
+          "title": "Consumer Financial Services & BNPL",
+          "patterns": 73,
+          "packs": 4
+        },
+        {
+          "code": "AY",
+          "title": "Retail Finance: Unit Economics & Profitability",
+          "patterns": 79,
+          "packs": 4
+        },
+        {
+          "code": "AZ",
+          "title": "Retail M&A & Industry Consolidation",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "BA",
+          "title": "Cybersecurity for Retail (incl. PCI-DSS)",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "BB",
+          "title": "Privacy, GDPR/CCPA, Consumer Data",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "BC",
+          "title": "Regulatory: Labor, Trade, Consumer Protection",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "BD",
+          "title": "Sustainability & ESG",
+          "patterns": 52,
+          "packs": 3
+        },
+        {
+          "code": "BE",
+          "title": "Board Governance & Strategic Planning Cycles",
+          "patterns": 37,
+          "packs": 2
+        },
+        {
+          "code": "BF",
+          "title": "Investor Relations & Equity Story",
+          "patterns": 37,
+          "packs": 2
+        },
+        {
+          "code": "BG",
+          "title": "Crisis Management (Recall, Cyber, Reputation)",
+          "patterns": 21,
+          "packs": 1
+        },
+        {
+          "code": "BH",
+          "title": "Innovation Labs, Venture Arms & Internal Ventures",
+          "patterns": 21,
+          "packs": 1
+        }
+      ],
+      "patternCount": 1350,
+      "packCount": 75,
+      "categoryCount": 25
+    }
+  ]
+}
