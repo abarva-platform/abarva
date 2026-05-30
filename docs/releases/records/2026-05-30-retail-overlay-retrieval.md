@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -40,10 +40,11 @@ Apex Retail Ask answers now pull from the newly loaded retail industry corpus in
 - PASS: `npx eslint src/lib/intelligence/ask/retrievers/retail-overlay.ts src/lib/intelligence/ask/retrievers/retail-overlay.test.ts src/lib/intelligence/ask/index.ts scripts/smoke/retail-overlay-retrieval-smoke.mjs`.
 - PASS: `git diff --check`.
 - PASS: Live DB probe for an Apex shrink/self-checkout query returned `retail-v1:e.3.*` overlay chunks through the new retriever.
+- PASS: Production Section 6.3 smoke returned 25/25 passing Apex Retail CXO questions; every question had five `retail-v1` chunks and five pattern citations.
 
 ## Rollout Plan
 
-Merge PR #2493 to main, allow Vercel production deploy, then run `node scripts/smoke/retail-overlay-retrieval-smoke.mjs --base-url https://app.abarva.ai`. Section 6.3 closes only if the production smoke passes at least 22 of 25 questions with three or more `retail-v1` chunks and two or more pattern citations.
+Merged PR #2493 to main and deployed production through Vercel deployment `dpl_DK5mp2Yf2DFu4AVYCv2ynUfg7CBB`, aliased to `https://app.abarva.ai`. Section 6.3 closed after `node scripts/smoke/retail-overlay-retrieval-smoke.mjs --base-url https://app.abarva.ai` passed 25 of 25 questions.
 
 ## Rollback Plan
 
@@ -52,8 +53,10 @@ Revert PR #2493. The rollback is code-only and does not modify or delete the loa
 ## Audit Evidence
 
 - PR: https://github.com/anandsundaram-hash/abarva/pull/2493
-- Post-merge production smoke artifact will be stored under `audit-artifacts/retail-overlay-retrieval-smoke/`.
+- Production deployment: `dpl_DK5mp2Yf2DFu4AVYCv2ynUfg7CBB`.
+- Production smoke report: `verification/retail-overlay-v1/RETAIL_OVERLAY_RETRIEVAL_SMOKE_2026-05-30.md`.
+- Production smoke JSON: `verification/retail-overlay-v1/retail-overlay-retrieval-smoke-2026-05-30.json`.
 
 ## Known Gaps
 
-Production smoke is intentionally post-merge because the current production deployment does not contain the new retriever until PR #2493 lands.
+None known. Production smoke passed after PR #2493 landed.
