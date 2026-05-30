@@ -24,6 +24,7 @@ import type {
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
 import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
 import { AuditRibbon } from '@/components/admin/AuditRibbon';
+import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -129,16 +130,38 @@ interface Props {
   /** Optional override tagline (defaults to brand-map tagline). */
   tagline?: string;
   /**
-   * Unified audit ribbon events from the TrustSpine broker. Wave 1
-   * PR-6 surfaces this as Zone E on the landing per the verdict
-   * (`SETUP_AUDIT_2026-05-30_VERDICT.md` §5.6). Pass [] to hide the
-   * ribbon entirely; omit to fall back to the (empty) default which
-   * still renders the section with the empty-state line.
+   * Wave 1 PR-5 · the four-chip Trust strip. Composed by the page
+   * from `getTrustSpine` → `spineToChips`. When null, no spine is
+   * available (e.g. broker resolution failed) and the strip is
+   * omitted; the editorial header still renders so the page never
+   * shows a full-page error.
+   */
+  trustChips?: ReadonlyArray<TrustStripChip> | null;
+  /**
+   * True iff `getSetupInventorySnapshot` returned a non-null snapshot
+   * for the active tenant. Controls whether the "Substrate live" pill
+   * renders — per verdict §5.6, that pill must NOT be unconditional.
+   */
+  liveSnapshotPresent?: boolean;
+  /**
+   * Wave 1 PR-6 · the unified audit ribbon events from the
+   * TrustSpine broker. Surfaces as Zone E on the landing per the
+   * verdict (`SETUP_AUDIT_2026-05-30_VERDICT.md` §5.6). Pass [] to
+   * render the empty-state line; omit to fall back to [].
    */
   auditEvents?: TrustAuditEvent[];
 }
 
-export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline, auditEvents }: Props) {
+export function HomeOverviewV2({
+  tenantName,
+  clientKey,
+  blocks,
+  extras,
+  tagline,
+  trustChips,
+  liveSnapshotPresent = false,
+  auditEvents,
+}: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
     ...FALLBACK_BRAND,
@@ -151,84 +174,85 @@ export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline,
       data-testid="home-overview-v2"
       style={{ background: C.surface2, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}
     >
-      {/* ── MASTHEAD ────────────────────────────────────────── */}
+      {/* ── MASTHEAD ────────────────────────────────────────────────
+          Verdict §5.6 Zone A: Tenant name, industry, refresh stamp.
+          No logo tile, no brand color band — editorial black-on-cream.
+          The 64×64 brand-initials tile that lived here through PR-H12
+          was deleted in Wave 1 PR-5 per §5.4 "Brand-tile masthead
+          avatar → DELETE. Replace with the Trust strip." */}
       <header
         style={{
           background: C.surface,
           borderBottom: `1px solid ${C.borderLight}`,
-          padding: '36px 64px 28px',
+          padding: '28px 64px 22px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 22 }}>
-          <span
-            aria-hidden="true"
+        <div style={{ minWidth: 0 }}>
+          <div
             style={{
-              flexShrink: 0,
-              width: 64,
-              height: 64,
-              borderRadius: 12,
-              background: brand.bgColor,
-              color: '#FFF',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: F_BODY,
+              fontFamily: F_MONO,
+              fontSize: 10,
               fontWeight: 700,
-              fontSize: 24,
-              letterSpacing: '0.02em',
-              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12)',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: C.faint,
+              marginBottom: 6,
             }}
           >
-            {brand.initials}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontFamily: F_MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: C.faint,
-                marginBottom: 6,
-              }}
-            >
-              HOME · <span style={{ color: C.ink }}>WHERE YOU STAND AND WHAT TO DO NEXT</span>
-            </div>
-            <h1
-              style={{
-                fontFamily: F_DISPLAY,
-                fontSize: 38,
-                fontWeight: 400,
-                color: C.ink,
-                letterSpacing: '-0.015em',
-                lineHeight: 1.05,
-                margin: 0,
-                marginBottom: 4,
-              }}
-            >
-              {tenantName}
-            </h1>
-            {taglineText && (
-              <div style={{ fontSize: 14, color: C.muted, marginBottom: 14 }}>{taglineText}</div>
-            )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              <Pill bg={brand.brandSoft} fg={brand.bgColor} border={brand.brandLine}>{brand.industryLabel}</Pill>
-              <Pill>{extras.masthead.segmentsLoaded} segments loaded</Pill>
-              <Pill>{extras.masthead.totalRecords.toLocaleString()} records</Pill>
+            HOME · <span style={{ color: C.ink }}>WHERE YOU STAND AND WHAT TO DO NEXT</span>
+          </div>
+          <h1
+            style={{
+              fontFamily: F_DISPLAY,
+              fontSize: 30,
+              fontWeight: 400,
+              color: C.ink,
+              letterSpacing: '-0.015em',
+              lineHeight: 1.1,
+              margin: 0,
+              marginBottom: 4,
+            }}
+          >
+            {tenantName}
+          </h1>
+          {taglineText && (
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{taglineText}</div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <Pill bg={brand.brandSoft} fg={brand.bgColor} border={brand.brandLine}>{brand.industryLabel}</Pill>
+            <Pill>{extras.masthead.segmentsLoaded} segments loaded</Pill>
+            <Pill>{extras.masthead.totalRecords.toLocaleString()} records</Pill>
+            {liveSnapshotPresent && (
               <Pill bg={C.tealSoft} fg={C.teal} border={C.tealLine}>Substrate live</Pill>
-              {extras.masthead.panelsAttention > 0 && (
-                <Pill bg={C.amberSoft} fg={C.amber} border={C.amberLine}>
-                  {extras.masthead.panelsAttention} panel{extras.masthead.panelsAttention === 1 ? '' : 's'} need{extras.masthead.panelsAttention === 1 ? 's' : ''} attention
-                </Pill>
-              )}
-              {extras.masthead.refreshedLabel && (
-                <Pill muted>Refreshed {extras.masthead.refreshedLabel}</Pill>
-              )}
-            </div>
+            )}
+            {extras.masthead.panelsAttention > 0 && (
+              <Pill bg={C.amberSoft} fg={C.amber} border={C.amberLine}>
+                {extras.masthead.panelsAttention} panel{extras.masthead.panelsAttention === 1 ? '' : 's'} need{extras.masthead.panelsAttention === 1 ? 's' : ''} attention
+              </Pill>
+            )}
+            {extras.masthead.refreshedLabel && (
+              <Pill muted>Refreshed {extras.masthead.refreshedLabel}</Pill>
+            )}
           </div>
         </div>
       </header>
+
+      {/* ── TRUST STRIP (Zone B · 56px) ──────────────────────────────
+          Verdict §5.6: four equal-width chips conveying the entire
+          trust posture at a glance. Rendered between masthead and
+          content; clicking jumps to the relevant group page. */}
+      {trustChips && trustChips.length > 0 && (
+        <div
+          data-testid="home-overview-v2-trust-strip"
+          style={{
+            background: C.surface,
+            borderBottom: `1px solid ${C.borderLight}`,
+            padding: '16px 64px 18px',
+          }}
+        >
+          <TrustStrip chips={trustChips} />
+        </div>
+      )}
 
       {/* ── CONTENT ─────────────────────────────────────────── */}
       <main style={{ padding: '40px 64px 96px', maxWidth: 1280 }}>
@@ -241,8 +265,68 @@ export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline,
 
         <Rule />
 
-        {/* Section 02 — Steward orientation */}
-        <Section eyebrowNum="02" eyebrowLabel="STEWARD VOICE" title="What's loaded, what's missing" lead="Steward watches what's been ingested, what depth it's reached, and what's still authored placeholder versus grounded fact. Read this before any module — it's the constraint on what the agents can say with confidence.">
+        {/* Section 02 — Action queue
+            Verdict §5.6 promotes the operator-first read: numbers
+            and actions above prose. The Steward orientation block
+            (previously Section 02) now lives below this queue. */}
+        {blocks.actionQueue.items.length > 0 && (
+          <>
+            <Section eyebrowNum="02" eyebrowLabel="WHAT NEEDS YOU TODAY" title="Action queue" lead={`${blocks.actionQueue.items.length} item${blocks.actionQueue.items.length === 1 ? '' : 's'} pending. Listed in priority order — gate-blocking first, substrate-blocking next, advisory last.`}>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {blocks.actionQueue.items.map((item, i) => {
+                  const severityColor = item.severity === 'high' ? C.red : item.severity === 'medium' ? C.amber : C.faint;
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '32px 1fr auto',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '14px 18px',
+                        border: `1px solid ${C.borderLight}`,
+                        background: C.surface,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <span style={{ fontFamily: F_MONO, fontSize: 11, fontWeight: 700, color: severityColor, letterSpacing: '0.06em' }}>{String(i + 1).padStart(2, '0')}</span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 14.5, fontWeight: 500, color: C.ink, marginBottom: 2, letterSpacing: '-0.005em' }}>{item.label}</div>
+                        <div style={{ fontFamily: F_MONO, fontSize: 10.5, color: C.faint, letterSpacing: '0.04em' }}>{item.panelLabel.toUpperCase()} · {item.consequence}</div>
+                      </div>
+                      <a
+                        href={item.href}
+                        style={{
+                          fontFamily: F_MONO,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          padding: '6px 12px',
+                          border: `1px solid ${C.ink}`,
+                          color: i === 0 ? C.surface : C.ink,
+                          background: i === 0 ? C.ink : C.surface,
+                          borderRadius: 4,
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Open
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+            <Rule />
+          </>
+        )}
+
+        {/* Section 03 — Steward orientation (moved below action queue
+            in Wave 1 PR-5; verdict §5.6 Zone F — "Steward's read":
+            retained as the editorial anchor below the operator
+            actions, not as the opening block). */}
+        <Section eyebrowNum="03" eyebrowLabel="STEWARD VOICE" title="What's loaded, what's missing" lead="Steward watches what's been ingested, what depth it's reached, and what's still authored placeholder versus grounded fact. Read this before any module — it's the constraint on what the agents can say with confidence.">
           <div
             style={{
               border: `1px solid ${C.borderLight}`,
@@ -308,60 +392,6 @@ export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline,
         </Section>
 
         <Rule />
-
-        {/* Section 03 — Action queue */}
-        {blocks.actionQueue.items.length > 0 && (
-          <>
-            <Section eyebrowNum="03" eyebrowLabel="WHAT NEEDS YOU TODAY" title="Action queue" lead={`${blocks.actionQueue.items.length} item${blocks.actionQueue.items.length === 1 ? '' : 's'} pending. Listed in priority order — gate-blocking first, substrate-blocking next, advisory last.`}>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {blocks.actionQueue.items.map((item, i) => {
-                  const severityColor = item.severity === 'high' ? C.red : item.severity === 'medium' ? C.amber : C.faint;
-                  return (
-                    <div
-                      key={item.id}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '32px 1fr auto',
-                        alignItems: 'center',
-                        gap: 16,
-                        padding: '14px 18px',
-                        border: `1px solid ${C.borderLight}`,
-                        background: C.surface,
-                        borderRadius: 8,
-                      }}
-                    >
-                      <span style={{ fontFamily: F_MONO, fontSize: 11, fontWeight: 700, color: severityColor, letterSpacing: '0.06em' }}>{String(i + 1).padStart(2, '0')}</span>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 14.5, fontWeight: 500, color: C.ink, marginBottom: 2, letterSpacing: '-0.005em' }}>{item.label}</div>
-                        <div style={{ fontFamily: F_MONO, fontSize: 10.5, color: C.faint, letterSpacing: '0.04em' }}>{item.panelLabel.toUpperCase()} · {item.consequence}</div>
-                      </div>
-                      <a
-                        href={item.href}
-                        style={{
-                          fontFamily: F_MONO,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          padding: '6px 12px',
-                          border: `1px solid ${C.ink}`,
-                          color: i === 0 ? C.surface : C.ink,
-                          background: i === 0 ? C.ink : C.surface,
-                          borderRadius: 4,
-                          textDecoration: 'none',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        Open
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
-            </Section>
-            <Rule />
-          </>
-        )}
 
         {/* Section 04 — Recent activity */}
         {blocks.recentActivity.items.length > 0 && (
