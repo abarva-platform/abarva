@@ -16,6 +16,7 @@ import { azureCostSource } from './azure-cost';
 import { claudeCodeSource } from './claude-code';
 import { copilotSource } from './copilot';
 import { cursorSource } from './cursor';
+import { jiraSource } from './jira';
 import { servicenowCmdbSource } from './servicenow-cmdb';
 import { githubDoraSource } from './github-dora';
 import { servicenowItsmSource } from './servicenow-itsm';
@@ -56,6 +57,7 @@ export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   claudeCodeSource,
   copilotSource,
   cursorSource,
+  jiraSource,
   servicenowCmdbSource,
   githubDoraSource,
   servicenowItsmSource,
