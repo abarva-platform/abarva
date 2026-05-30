@@ -1,0 +1,279 @@
+{
+  "generatedAt": "2026-05-30",
+  "wave": 3,
+  "totalPatterns": 830,
+  "packs": [
+    {
+      "code": "O",
+      "title": "Customer Experience & Service",
+      "packs": [
+        {
+          "code": "O.1",
+          "title": "Voice of Customer Programs",
+          "count": 19
+        },
+        {
+          "code": "O.2",
+          "title": "NPS, CES, CSAT Measurement",
+          "count": 19
+        },
+        {
+          "code": "O.3",
+          "title": "Contact Center Operations for Retail",
+          "count": 18
+        },
+        {
+          "code": "O.4",
+          "title": "Chat, Chatbot & Conversational Service",
+          "count": 18
+        },
+        {
+          "code": "O.5",
+          "title": "Service Recovery & Goodwill",
+          "count": 18
+        },
+        {
+          "code": "O.6",
+          "title": "In-Store Service Models",
+          "count": 18
+        },
+        {
+          "code": "O.7",
+          "title": "Customer Effort Reduction",
+          "count": 18
+        }
+      ],
+      "target": 128
+    },
+    {
+      "code": "P",
+      "title": "Workforce (Store, E-Comm, Corporate)",
+      "packs": [
+        {
+          "code": "P.1",
+          "title": "Store Associate Workforce Strategy",
+          "count": 19
+        },
+        {
+          "code": "P.2",
+          "title": "Workforce Scheduling & Optimization",
+          "count": 18
+        },
+        {
+          "code": "P.3",
+          "title": "Hourly Workforce Engagement",
+          "count": 18
+        },
+        {
+          "code": "P.4",
+          "title": "Workforce Tech (Scheduling, Comms, Training)",
+          "count": 18
+        },
+        {
+          "code": "P.5",
+          "title": "Frontline-to-Corporate Career Paths",
+          "count": 18
+        },
+        {
+          "code": "P.6",
+          "title": "Workforce in DC & Last-Mile",
+          "count": 18
+        },
+        {
+          "code": "P.7",
+          "title": "Corporate Workforce (Merchandising, Marketing, Tech)",
+          "count": 18
+        },
+        {
+          "code": "P.8",
+          "title": "DEI in Retail Workforce",
+          "count": 18
+        }
+      ],
+      "target": 145
+    },
+    {
+      "code": "Q",
+      "title": "Retail Real Estate & Network",
+      "packs": [
+        {
+          "code": "Q.1",
+          "title": "Store Footprint Strategy",
+          "count": 18
+        },
+        {
+          "code": "Q.2",
+          "title": "Lease Structures & Negotiation",
+          "count": 18
+        },
+        {
+          "code": "Q.3",
+          "title": "Site Selection Analytics",
+          "count": 18
+        },
+        {
+          "code": "Q.4",
+          "title": "Store Renovation & Refresh",
+          "count": 18
+        },
+        {
+          "code": "Q.5",
+          "title": "Repurposing & Subleasing",
+          "count": 17
+        }
+      ],
+      "target": 89
+    },
+    {
+      "code": "R",
+      "title": "Payments & Consumer Financial Services",
+      "packs": [
+        {
+          "code": "R.1",
+          "title": "Payment Method Acceptance Strategy",
+          "count": 19
+        },
+        {
+          "code": "R.2",
+          "title": "Payment Processor Selection",
+          "count": 19
+        },
+        {
+          "code": "R.3",
+          "title": "PCI-DSS Compliance Operations",
+          "count": 18
+        },
+        {
+          "code": "R.4",
+          "title": "Fraud Prevention",
+          "count": 18
+        },
+        {
+          "code": "R.5",
+          "title": "Buy-Now-Pay-Later (BNPL) Integration",
+          "count": 18
+        },
+        {
+          "code": "R.6",
+          "title": "Co-Brand & Private-Label Cards",
+          "count": 18
+        },
+        {
+          "code": "R.7",
+          "title": "Mobile Wallet Strategy",
+          "count": 18
+        }
+      ],
+      "target": 128
+    },
+    {
+      "code": "S",
+      "title": "Retail Technology Stack",
+      "packs": [
+        {
+          "code": "S.1",
+          "title": "POS Modernization",
+          "count": 18
+        },
+        {
+          "code": "S.2",
+          "title": "OMS Architecture & Vendors (Manhattan, Oracle, IBM Sterling, Salesforce)",
+          "count": 18
+        },
+        {
+          "code": "S.3",
+          "title": "WMS / Fulfillment Tech",
+          "count": 18
+        },
+        {
+          "code": "S.4",
+          "title": "ERP for Retail (SAP, Oracle, Microsoft, NetSuite)",
+          "count": 18
+        },
+        {
+          "code": "S.5",
+          "title": "PIM & Product Data Management",
+          "count": 18
+        },
+        {
+          "code": "S.6",
+          "title": "Merchandising Tech Stack",
+          "count": 18
+        },
+        {
+          "code": "S.7",
+          "title": "Pricing & Promotion Tech",
+          "count": 18
+        },
+        {
+          "code": "S.8",
+          "title": "Cloud Strategy for Retail",
+          "count": 18
+        },
+        {
+          "code": "S.9",
+          "title": "Composable Commerce & MACH Architecture",
+          "count": 17
+        },
+        {
+          "code": "S.10",
+          "title": "Retail Legacy Modernization Patterns",
+          "count": 17
+        }
+      ],
+      "target": 178
+    },
+    {
+      "code": "T",
+      "title": "AI in Retail",
+      "packs": [
+        {
+          "code": "T.1",
+          "title": "Demand Forecasting AI",
+          "count": 18
+        },
+        {
+          "code": "T.2",
+          "title": "Replenishment AI",
+          "count": 18
+        },
+        {
+          "code": "T.3",
+          "title": "Personalization & Recommendation Engines",
+          "count": 18
+        },
+        {
+          "code": "T.4",
+          "title": "Pricing & Promotion AI",
+          "count": 18
+        },
+        {
+          "code": "T.5",
+          "title": "Computer Vision in Stores (Loss Prevention, Shelf, Frictionless)",
+          "count": 18
+        },
+        {
+          "code": "T.6",
+          "title": "Conversational AI (Customer Service)",
+          "count": 18
+        },
+        {
+          "code": "T.7",
+          "title": "GenAI for Content (Product, Marketing)",
+          "count": 18
+        },
+        {
+          "code": "T.8",
+          "title": "AI for Workforce (Scheduling, Coaching)",
+          "count": 18
+        },
+        {
+          "code": "T.9",
+          "title": "AI Governance in Retail",
+          "count": 18
+        }
+      ],
+      "target": 162
+    }
+  ]
+}
