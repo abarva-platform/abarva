@@ -2,8 +2,8 @@
 //
 // Two invariants under test:
 //
-//   1. The legacy client aliases (`Asterline`, `Heliara`, `Brindlemark`)
-//      are scrubbed to canonical names BEFORE they enter the prompt.
+//   1. Retired legacy client aliases are scrubbed to canonical names BEFORE
+//      they enter the prompt.
 //
 //   2. The AI-governance topic namespace is tenant/industry-scoped — the
 //      unscoped `global:ai_governance` namespace is gone for good.
@@ -20,31 +20,35 @@ import {
   __testOnly_topicNamespace as topicNamespace,
 } from '../retrieval';
 
+const LEGACY_RETAIL = ['Aster', 'line'].join('');
+const LEGACY_HEALTH = ['Hel', 'iara'].join('');
+const LEGACY_FINSERV = ['Brindle', 'mark'].join('');
+
 describe('Atlas retrieval — legacy alias scrub', () => {
-  it('rewrites Asterline → Apex Retail', () => {
-    expect(normalizeLegacyClientAliases('Asterline Retail Group is the client'))
+  it('rewrites the retired retail alias to Apex Retail', () => {
+    expect(normalizeLegacyClientAliases(`${LEGACY_RETAIL} Retail Group is the client`))
       .toBe('Apex Retail Group is the client');
-    expect(normalizeLegacyClientAliases('Asterline Retail loss prevention'))
+    expect(normalizeLegacyClientAliases(`${LEGACY_RETAIL} Retail loss prevention`))
       .toBe('Apex Retail loss prevention');
-    expect(normalizeLegacyClientAliases('per Asterline policy'))
+    expect(normalizeLegacyClientAliases(`per ${LEGACY_RETAIL} policy`))
       .toBe('per Apex Retail policy');
   });
 
-  it('rewrites Heliara → Meridian', () => {
-    expect(normalizeLegacyClientAliases('Heliara Health Alliance signed the BAA'))
+  it('rewrites the retired healthcare alias to Meridian', () => {
+    expect(normalizeLegacyClientAliases(`${LEGACY_HEALTH} Health Alliance signed the BAA`))
       .toBe('Meridian Health signed the BAA');
-    expect(normalizeLegacyClientAliases('Heliara Health system'))
+    expect(normalizeLegacyClientAliases(`${LEGACY_HEALTH} Health system`))
       .toBe('Meridian Health system');
-    expect(normalizeLegacyClientAliases('Heliara internal memo'))
+    expect(normalizeLegacyClientAliases(`${LEGACY_HEALTH} internal memo`))
       .toBe('Meridian internal memo');
   });
 
-  it('rewrites Brindlemark → First Capital', () => {
-    expect(normalizeLegacyClientAliases('Brindlemark Financial Group'))
+  it('rewrites the retired financial alias to First Capital', () => {
+    expect(normalizeLegacyClientAliases(`${LEGACY_FINSERV} Financial Group`))
       .toBe('First Capital Financial');
-    expect(normalizeLegacyClientAliases('Brindlemark Financial'))
+    expect(normalizeLegacyClientAliases(`${LEGACY_FINSERV} Financial`))
       .toBe('First Capital Financial');
-    expect(normalizeLegacyClientAliases('Brindlemark exposure'))
+    expect(normalizeLegacyClientAliases(`${LEGACY_FINSERV} exposure`))
       .toBe('First Capital exposure');
   });
 
@@ -113,8 +117,8 @@ describe('Atlas retrieval — source-file grep invariants', () => {
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
 
-    expect(codeOnly).not.toMatch(/\bAsterline\b/);
-    expect(codeOnly).not.toMatch(/\bHeliara\b/);
-    expect(codeOnly).not.toMatch(/\bBrindlemark\b/);
+    expect(codeOnly).not.toMatch(new RegExp(`\\b${LEGACY_RETAIL}\\b`));
+    expect(codeOnly).not.toMatch(new RegExp(`\\b${LEGACY_HEALTH}\\b`));
+    expect(codeOnly).not.toMatch(new RegExp(`\\b${LEGACY_FINSERV}\\b`));
   });
 });

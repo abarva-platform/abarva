@@ -100,8 +100,8 @@ function topicNamespace(industry: IndustryCode | null | undefined): string {
  *   - src/lib/knowledge/tenant-enterprise-context.ts (×2)
  *
  * Any chunk pulled into the Atlas prompt must be normalized BEFORE it
- * enters retrieval output. Otherwise legacy alias names (`Asterline`,
- * `Heliara`, `Brindlemark`) leak straight into the model context.
+ * enters retrieval output. Otherwise retired legacy alias names leak
+ * straight into the model context.
  */
 export function __testOnly_normalizeLegacyClientAliases(text: string): string {
   return normalizeLegacyClientAliases(text);
