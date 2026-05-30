@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { chromium, type Page } from '@playwright/test';
+import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import {
   POST_DEPLOY_HARD_QUESTIONS,
   createIsolatedPersonaContext,
@@ -35,31 +35,28 @@ async function main() {
   await fs.mkdir(path.join(out, 'html'), { recursive: true });
   await fs.mkdir(path.join(out, 'transcripts'), { recursive: true });
 
-  const browserChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL?.trim();
-  const browser = await chromium.launch({
-    headless: true,
-    ...(browserChannel ? { channel: browserChannel } : {}),
-  });
   const observations: CrawlPageObservation[] = [];
   let fatalError: unknown = null;
   try {
     for (const persona of resolveCrawlPersonas(args.persona)) {
+      const browser = await launchCrawlBrowser();
       const surfaces = resolveCrawlSurfaces(args.surface);
-      const personaContext = args.noAuth
-        ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
-        : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
+      let personaContext: { context: BrowserContext; page: Page } | null = null;
       try {
+        const activeContext = args.noAuth
+          ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
+          : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
+        personaContext = activeContext;
         for (const surface of surfaces) {
-          observations.push(await crawlSurface(personaContext.page, persona, surface, args.baseUrl, out));
+          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out));
         }
       } finally {
-        await personaContext.context.close().catch(() => undefined);
+        await personaContext?.context.close().catch(() => undefined);
+        await browser.close().catch(() => undefined);
       }
     }
   } catch (error) {
     fatalError = error;
-  } finally {
-    await browser.close();
   }
 
   const run: CrawlRun = {
@@ -114,6 +111,14 @@ async function writeCrawlArtifacts(
   await fs.writeFile(path.join(runDir, 'crawl-run.json'), JSON.stringify(run, null, 2));
   await fs.writeFile(path.join(runDir, 'comparison.json'), JSON.stringify(comparison, null, 2));
   await fs.writeFile(path.resolve(outputDir, 'latest.json'), JSON.stringify({ run, comparison }, null, 2));
+}
+
+async function launchCrawlBrowser() {
+  const browserChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL?.trim();
+  return chromium.launch({
+    headless: true,
+    ...(browserChannel ? { channel: browserChannel } : {}),
+  });
 }
 
 async function createNoAuthPersonaContext(
