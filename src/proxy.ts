@@ -189,15 +189,30 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // /home, /home/queue, /home/learn, /home/ai-initiatives*,
   // /home/configuration, /home/training stay as real /home pages and
   // are NOT remapped here.
+  //
+  // Wave 1 PR-3 (2026-05-30) · `/home/tenant-profile` now lands on the
+  // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
+  // was demoted to a tab inside /admin Overview — see AdminTenantTab).
   const homeToAdminMap: Record<string, string> = {
     '/home/data-trust': '/admin/data-trust',
     '/home/agent-readiness': '/admin/agent-readiness',
     '/home/connectors': '/admin/connectors',
-    '/home/tenant-profile': '/admin/tenant',
+    '/home/tenant-profile': '/admin?tab=tenant',
   }
   const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname]
   if (exactHomeMatch) {
-    const url = new URL(exactHomeMatch + request.nextUrl.search, request.url)
+    // Wave 1 PR-3 (2026-05-30) · Targets may carry their own canonical
+    // query params (e.g. `/admin?tab=tenant`). Merge any incoming search
+    // string instead of naively concatenating with `+ request.nextUrl.search`.
+    const url = new URL(exactHomeMatch, request.url)
+    if (!exactHomeMatch.includes('?')) {
+      url.search = request.nextUrl.search
+    } else if (request.nextUrl.search) {
+      const incoming = new URLSearchParams(request.nextUrl.search)
+      incoming.forEach((value, key) => {
+        if (!url.searchParams.has(key)) url.searchParams.set(key, value)
+      })
+    }
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
   }
   // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
@@ -218,6 +233,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     '/admin/invite': '/admin/users-access?invite=open',
     '/admin/agents/atlas': '/admin/cross-program-signals',
     '/admin/atlas/traces': '/engineering/traces',
+    // Wave 1 PR-3 (2026-05-30) · Tenant configuration is demoted from a
+    // standalone route to a tab inside /admin Overview. See
+    // SETUP_AUDIT_2026-05-30_VERDICT §5.5 and AdminOverviewTabs.
+    '/admin/tenant': '/admin?tab=tenant',
   }
   const consolidationMatch = adminRouteConsolidationMap[request.nextUrl.pathname]
   if (consolidationMatch) {

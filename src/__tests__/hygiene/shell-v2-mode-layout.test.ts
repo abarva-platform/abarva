@@ -38,9 +38,12 @@ describe("SHELL-V2 Rule 1 — no dual-chat surface", () => {
   const surfaceFiles = [
     "components/tower/TowerIndexPage.tsx",
     "components/intelligence/IntelligenceIndexPage.tsx",
-    "components/setup/SetupConnectorsPage.tsx",
+    // Wave 1 PR-3 (2026-05-30) — Setup surface refactor:
+    //   - SetupConnectorsPage.tsx removed; canonical /admin/connectors is the
+    //     server-component page directly.
+    //   - SetupTenantPage.tsx removed; tenant content demoted to a tab inside
+    //     /admin Overview (see AdminTenantTab).
     "components/setup/SetupPoliciesPage.tsx",
-    "components/setup/SetupTenantPage.tsx",
     "components/setup/SetupAuditPage.tsx",
     "components/programs/ProgramsIndexPage.tsx",
     "components/source/SourceIndexPage.tsx",
@@ -72,7 +75,8 @@ describe("SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar", () => {
   const modeASurfaces = [
     "components/tower/TowerIndexPage.tsx",
     "components/intelligence/IntelligenceIndexPage.tsx",
-    "components/setup/SetupConnectorsPage.tsx",
+    // SetupConnectorsPage.tsx removed in Wave 1 PR-3 (2026-05-30); the
+    // canonical /admin/connectors is a server-component page directly.
     "components/setup/SetupPoliciesPage.tsx",
     "components/programs/ProgramsIndexPage.tsx",
     "components/source/SourceIndexPage.tsx",

@@ -1,18 +1,13 @@
+// Wave 1 PR-3 (2026-05-30) · This component used to render its own AppShell +
+// SubNavStrip. Per SETUP_AUDIT_2026-05-30_VERDICT §5.3, the canonical Setup
+// surface uses AdminCanonShellV2 + AdminSidebar — the legacy 5-tab
+// SUB_NAV_ITEMS pattern is dead. This file now exports the *content only*;
+// /admin/connectors/[connectorId]/page.tsx wraps it in AdminCanonShellV2.
 'use client';
 
 import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
-
-const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', active: true, href: '/admin/connectors' },
-  { key: 'users', label: 'Users', href: '/admin/users' },
-  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
-  { key: 'policies', label: 'Policies', href: '/admin/policies' },
-];
 
 interface ConnectorDetailPageProps {
   detail: ConnectorDetail;
@@ -37,24 +32,7 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
       : 'Live connector checkpoint. Steward still validates scope separately before any production-ready claim.';
 
   return (
-    <AppShell
-      surface="setup"
-      topBarProps={{
-        tenantName: 'Apex Retail Group',
-        showLocked: true,
-        context: `Setup · ${detail.name} · ${ss.label}`,
-      }}
-      middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
-    >
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
-        quote={detail.agentQuote}
-        agentContext="Steward · Setup · connector health and credential routing"
-        actions={detail.actions}
-        surface="setup"
-      />
-
-      <div
+    <div
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -494,7 +472,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           <MetricCard label="Scope active" value={health.scopeActive} />
         </div>
       </div>
-    </AppShell>
   );
 }
 
