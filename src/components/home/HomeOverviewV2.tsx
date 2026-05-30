@@ -208,6 +208,18 @@ interface Props {
    */
   emptyTenant?: boolean;
   /**
+   * PR-2613 (P0 follow-up to PR-2606): true iff the live snapshot
+   * broker (`getSetupInventorySnapshot`) threw, but the page still
+   * has authored fallback content to render. Surfaces a "Live data
+   * temporarily unavailable" banner above the Trust strip so users
+   * see the divergence between the masthead pills (which read
+   * authored counts) and the empty Trust strip / posture grid
+   * (which depend on the broker spine). Pairs with a structured
+   * `console.warn` in the page so Vercel logs carry the correlation
+   * id (`admin_page.snapshot_load_failed_authored_fallback_active`).
+   */
+  snapshotLoadFailed?: boolean;
+  /**
    * Wave 3 PR-7 · Per-zone streaming slots.
    *
    * When a slot is provided, the page wraps it in its own
@@ -244,6 +256,7 @@ export function HomeOverviewV2({
   tenantSwitchOptions,
   postureCards,
   emptyTenant = false,
+  snapshotLoadFailed = false,
   trustStripSlot,
   actionQueueSlot,
   postureGridSlot,
@@ -369,6 +382,63 @@ export function HomeOverviewV2({
           </div>
         </div>
       </header>
+
+      {/* ── BROKER-FAILURE BANNER ────────────────────────────────────
+          PR-2613 (P0 follow-up to PR-2606). When the live snapshot
+          broker throws but the page has authored fallback content,
+          this banner explains the divergence the user is seeing
+          (masthead pills show 14 segments; trust strip shows 0).
+          Locked palette amber. Hidden when snapshot loads cleanly
+          or when there is no authored fallback to lean on. */}
+      {snapshotLoadFailed && (
+        <div
+          data-testid="home-overview-v2-snapshot-load-failed"
+          role="status"
+          style={{
+            background: C.amberSoft,
+            borderBottom: `1px solid ${C.amberLine}`,
+            padding: '12px 64px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: F_BODY,
+              fontSize: 13,
+              color: C.amber,
+              letterSpacing: '-0.005em',
+            }}
+          >
+            <strong style={{ fontWeight: 600 }}>
+              Live data temporarily unavailable.
+            </strong>{' '}
+            Showing authored baseline. Trust posture, action queue,
+            and posture grid will refresh once the data plane responds.
+          </div>
+          <a
+            href="/admin"
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: C.amber,
+              textDecoration: 'none',
+              padding: '6px 12px',
+              border: `1px solid ${C.amberLine}`,
+              borderRadius: 4,
+              background: C.surface,
+            }}
+          >
+            Retry
+          </a>
+        </div>
+      )}
 
       {/* ── TRUST STRIP (Zone B · 56px) ──────────────────────────────
           Verdict §5.6: four equal-width chips conveying the entire
