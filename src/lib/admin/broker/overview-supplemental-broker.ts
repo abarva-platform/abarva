@@ -17,8 +17,11 @@
  * `src/lib/admin/broker/**`; everywhere else in admin it is
  * still allowed (it is the canonical read seam — see
  * `setup-data-broker.ts`). What is NOT allowed is bypassing the
- * broker layer by reaching for `getServerSupabase` /
- * `createServerClient` from page components or sibling lib files.
+ * broker layer by reaching for the Supabase server client or a
+ * direct supabase-js client from page components or sibling
+ * lib files. The hygiene test at
+ * `src/lib/admin/__tests__/broker-boundary.test.ts` enforces the
+ * exact names.
  */
 
 import 'server-only';
