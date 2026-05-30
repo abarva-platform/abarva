@@ -1,0 +1,392 @@
+{
+  "generatedAt": "2026-05-30",
+  "wave": 1,
+  "totalPatterns": 895,
+  "packs": [
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.1",
+      "packTitle": "Retail Value Proposition Frameworks",
+      "count": 17
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.2",
+      "packTitle": "Format Choice & Format Innovation",
+      "count": 17
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.3",
+      "packTitle": "Positioning vs Marketplace, DTC & Disruption",
+      "count": 16
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.4",
+      "packTitle": "Retail Strategy Lifecycles (Growth, Maturity, Decline)",
+      "count": 16
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.5",
+      "packTitle": "Multi-Format & Banner Strategies",
+      "count": 16
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.6",
+      "packTitle": "Private Label & Owned Brands",
+      "count": 16
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.7",
+      "packTitle": "Strategic Bets: Tech vs Format vs Footprint",
+      "count": 16
+    },
+    {
+      "superCategory": "A",
+      "superCategoryTitle": "Retail Strategy & Positioning",
+      "packCode": "A.8",
+      "packTitle": "Strategic Reviews & Refresh Cycles",
+      "count": 16
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.1",
+      "packTitle": "Consumer Segmentation Frameworks",
+      "count": 17
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.2",
+      "packTitle": "Demographic Shifts Impacting Retail",
+      "count": 17
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.3",
+      "packTitle": "Consumer Behavior Macro Trends (Post-COVID, Post-Inflation)",
+      "count": 17
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.4",
+      "packTitle": "Gen Z, Millennial, Gen X Consumer Patterns",
+      "count": 17
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.5",
+      "packTitle": "Premiumization vs Value Trade-Down Dynamics",
+      "count": 17
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.6",
+      "packTitle": "Trip Mission & Basket Composition",
+      "count": 16
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.7",
+      "packTitle": "Consumer Mobility & Cross-Format Shopping",
+      "count": 16
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.8",
+      "packTitle": "Brand Loyalty Dynamics",
+      "count": 16
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.9",
+      "packTitle": "Consumer Price Sensitivity & Elasticity",
+      "count": 16
+    },
+    {
+      "superCategory": "B",
+      "superCategoryTitle": "Consumer / Customer Dynamics",
+      "packCode": "B.10",
+      "packTitle": "Customer Journey Mapping (Pre/During/Post Purchase)",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.1",
+      "packTitle": "Assortment Planning Frameworks",
+      "count": 17
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.2",
+      "packTitle": "SKU Rationalization & Tail Management",
+      "count": 17
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.3",
+      "packTitle": "Localization & Cluster Strategies",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.4",
+      "packTitle": "New Product Introduction & Vendor Onboarding",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.5",
+      "packTitle": "Private Label Merchandising Strategy",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.6",
+      "packTitle": "Category Management & JBP with Suppliers",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.7",
+      "packTitle": "Seasonal Merchandising & Flow",
+      "count": 16
+    },
+    {
+      "superCategory": "C",
+      "superCategoryTitle": "Merchandising & Assortment",
+      "packCode": "C.8",
+      "packTitle": "Markdown & Clearance Strategy",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.1",
+      "packTitle": "Pricing Architecture (EDLP vs Hi-Lo)",
+      "count": 17
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.2",
+      "packTitle": "Price Elasticity Modeling",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.3",
+      "packTitle": "Promotional Strategy & Calendar",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.4",
+      "packTitle": "Markdown Optimization",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.5",
+      "packTitle": "Competitive Price Monitoring",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.6",
+      "packTitle": "Dynamic & Personalized Pricing",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.7",
+      "packTitle": "Cross-Channel Price Parity",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.8",
+      "packTitle": "Coupon & Offer Strategy",
+      "count": 16
+    },
+    {
+      "superCategory": "D",
+      "superCategoryTitle": "Pricing & Promotion",
+      "packCode": "D.9",
+      "packTitle": "Pricing Technology Vendors",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.1",
+      "packTitle": "Store Operating Model",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.2",
+      "packTitle": "Store Format & Layout Design",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.3",
+      "packTitle": "Shrink & Loss Prevention",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.4",
+      "packTitle": "Checkout Technology (Traditional, Self-Checkout, Frictionless)",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.5",
+      "packTitle": "In-Store Operational Excellence (Stocking, Replenishment, Recovery)",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.6",
+      "packTitle": "Store Manager & Associate Productivity",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.7",
+      "packTitle": "Store-Level KPIs & Performance Management",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.8",
+      "packTitle": "Store Maintenance & Capital Refresh",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.9",
+      "packTitle": "Special Events & In-Store Activation",
+      "count": 16
+    },
+    {
+      "superCategory": "E",
+      "superCategoryTitle": "Store Operations",
+      "packCode": "E.10",
+      "packTitle": "Store Closures & Footprint Rationalization",
+      "count": 16
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.1",
+      "packTitle": "E-Commerce Platform Architecture",
+      "count": 17
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.2",
+      "packTitle": "Search & Merchandising on Site",
+      "count": 17
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.3",
+      "packTitle": "Product Detail Page Optimization",
+      "count": 17
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.4",
+      "packTitle": "Checkout Flow & Conversion",
+      "count": 17
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.5",
+      "packTitle": "Mobile App Strategy",
+      "count": 17
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.6",
+      "packTitle": "Headless Commerce Patterns",
+      "count": 16
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.7",
+      "packTitle": "PWAs & Web Performance",
+      "count": 16
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.8",
+      "packTitle": "SEO & Organic Traffic",
+      "count": 16
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.9",
+      "packTitle": "Paid Acquisition & SEM",
+      "count": 16
+    },
+    {
+      "superCategory": "F",
+      "superCategoryTitle": "E-Commerce & Digital Channels",
+      "packCode": "F.10",
+      "packTitle": "Site Personalization",
+      "count": 16
+    }
+  ]
+}
