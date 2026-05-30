@@ -26,6 +26,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 
 export interface TenantSwitcherOption {
@@ -150,6 +151,7 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
     | null
   >(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!open) return;
@@ -225,10 +227,24 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
       if (onNavigate) {
         onNavigate('/admin');
       } else if (typeof window !== 'undefined') {
-        window.location.assign('/admin');
+        // Task #103 fix: cookie set successfully but server still rendered
+        // the previous active tenant.
+        //
+        // Root cause hypothesis: window.location.assign('/admin') from inside
+        // /admin used to leave Next.js' RSC cache untouched, so the layout
+        // (which reads the cookie during its synchronous prelude) was racing
+        // with stale RSC payloads. We now:
+        //   1. router.refresh() — invalidates the Next.js client-side RSC
+        //      cache so the next render re-fetches the layout + page tree
+        //      with the new cookie value.
+        //   2. window.location.assign(cache-busted path) — hard navigation
+        //      with a unique query param defeats any HTTP-layer cache the
+        //      browser or an intermediate proxy may have stored.
+        router.refresh();
+        window.location.assign(`/admin?_t=${Date.now()}`);
       }
     },
-    [currentCanonicalKey, endpoint, onNavigate, options],
+    [currentCanonicalKey, endpoint, onNavigate, options, router],
   );
 
   if (!canSwitch) {

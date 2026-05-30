@@ -151,6 +151,38 @@ export async function resolveTenant(input: ResolveTenantInput = {}): Promise<Can
   const source = resolved?.source ?? 'fallback';
   const profile = tenantProfileForClientKey(appClientKey);
   const clientRow = await resolveClientRow(appClientKey);
+  // Diagnostic for task #103 — TenantSwitcher cookie not honored.
+  // Surfaces the picked source + the inputs at every position in the
+  // candidate list so a Vercel log line reveals whether the cookie was
+  // present and whether a higher-priority source overrode it. Gated on
+  // env so we can leave it on in prod while the bug is open and turn
+  // it off once stable. ABARVA_TENANT_RESOLVE_TRACE=1 enables.
+  if (process.env.ABARVA_TENANT_RESOLVE_TRACE === '1') {
+    try {
+      console.log(
+        JSON.stringify({
+          event: 'tenant_resolve_trace',
+          ts: new Date().toISOString(),
+          pickedKey: appClientKey,
+          pickedSource: source,
+          isLockedRole,
+          inputs: {
+            requested: input.requestedClient ?? null,
+            surfaceClientKey: input.surfaceClientKey ?? null,
+            surfaceActiveClient: input.surfaceActiveClient ?? null,
+            cookie: cookieClientKey,
+            sessionClientId: session.clientId ?? null,
+            sessionDefaultClientId: session.defaultClientId ?? null,
+            inferredFromEmail,
+            explicitTenantEmail,
+            role,
+          },
+        }),
+      );
+    } catch {
+      // Swallow — diagnostic logging must never break the resolver.
+    }
+  }
   return {
     appClientKey,
     canonicalKey: profile.canonicalKey,
