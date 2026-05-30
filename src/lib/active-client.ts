@@ -12,6 +12,20 @@ import {
 // Isolation: locked account users ignore requested client ids and resolve
 // from server-trusted session/cookie fallbacks. Admin + investor can switch
 // via the top-nav dropdown.
+//
+// Preference precedence (Wave 2 PR-5 · TenantSwitcher integration):
+//   1. Explicit email-domain tenant alias (e.g. cio@apex-retail.example.com)
+//      — always wins for tenant-locked sessions; ignored for unlocked roles.
+//   2. `requestedClient` argument (URL ?client= / body / surface override)
+//      — honored only for non-locked roles.
+//   3. `abarva_active_client` cookie — written by `POST /api/admin/switch-tenant`
+//      so the Wave 2 PR-5 TenantSwitcher chip flips the entire /admin
+//      surface for the next request. The cookie value is the legacy
+//      app-client key; the resolver normalizes through
+//      `appClientKeyForTenant` so canonical and legacy aliases both work.
+//   4. Clerk session `publicMetadata.clientId` / `defaultClientId`.
+//   5. Email-domain inference (best-effort).
+//   6. DEFAULT_CLIENT_KEY fallback when `allowFallback !== false`.
 
 export { ACTIVE_CLIENT_COOKIE };
 

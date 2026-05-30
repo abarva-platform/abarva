@@ -44,6 +44,11 @@ import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
 import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
+import {
+  canSwitchActiveTenant,
+  getCanonicalTenantSwitchOptions,
+} from '@/lib/admin/tenant-switch-authority';
+import { tenantProfileForClientKey } from '@/lib/tenant/aliases';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -136,6 +141,16 @@ export default async function AdminOverviewPage({
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
   });
 
+  // Wave 2 PR-5 · TenantSwitcher inputs. The authority gate mirrors
+  // /admin layout's; the canonical tenant list is the locked 5-tenant
+  // set from `src/lib/tenant/aliases.ts`. Resolution happens server-side
+  // so the chip never renders for callers without authority.
+  const canSwitchTenant = await canSwitchActiveTenant();
+  const tenantSwitchOptions = getCanonicalTenantSwitchOptions();
+  const currentCanonicalTenantKey = isClientKey(clientKey)
+    ? tenantProfileForClientKey(clientKey).canonicalKey
+    : null;
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <AdminOverviewTabs activeTab={activeTab} />
@@ -148,6 +163,9 @@ export default async function AdminOverviewPage({
           trustChips={trustChips}
           liveSnapshotPresent={snapshot !== null}
           auditEvents={auditEvents}
+          canSwitchTenant={canSwitchTenant}
+          currentCanonicalTenantKey={currentCanonicalTenantKey}
+          tenantSwitchOptions={tenantSwitchOptions}
         />
       ) : (
         <AdminTenantTab />
