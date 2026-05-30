@@ -1,48 +1,61 @@
-// Tower · ingest source registry.
-//
-// One entry per AI-coding-assistant feed. Entries are append-only — sister
-// slices (S2 Copilot, S4 Cursor) add their entries; merges should union by
-// `tool` discriminator. Do not edit or remove another slice's entry without
-// coordination.
-//
-// Consumed by: setup catalog UI (route at /tower/onboard), CLI lister,
-// onboarding wizard. Map back to the shared `tower_ai_tool_usage` table.
+/**
+ * Tower ingest source registry.
+ *
+ * Each entry describes ONE live integration that feeds Tower. Sibling slices
+ * append their entry by importing their own descriptor and adding it to the
+ * `TOWER_INGEST_SOURCES` array below. This file is the union of all such
+ * descriptors — keep additions alphabetical to make merge conflicts trivial.
+ *
+ * Audit context: PR #2525 found ZERO live integrations. Tower has lots of
+ * synthesis but nothing watching a real source. Every entry in this array is
+ * a real watch: a real-world extract path, a template, a parser, a validator,
+ * a CLI, and a target table.
+ */
 
-export type TowerIngestTool = 'claude_code' | 'copilot' | 'cursor';
+import { azureCostSource } from './azure-cost';
+import { claudeCodeSource } from './claude-code';
 
-export interface TowerIngestEntry {
-  tool: TowerIngestTool;
+export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
+
+export interface TowerIngestSource {
+  /** Stable key used as the source identifier on disk and in registries. */
+  key: string;
+  /** Human-friendly name shown in catalog / chooser UIs. */
   displayName: string;
+  /** Vendor or system of record. */
   vendor: string;
-  description: string;
-  table: 'tower_ai_tool_usage';
+  /** Tower dimension this source primarily feeds. */
+  kind: TowerIngestKind;
+  /** Stable target DB table name (must match the migration this slice ships). */
+  targetTable: string;
+  /** Public path of the blank template file (relative to /public). */
   templatePath: string;
-  sampleFilledPath: string;
+  /** Public path of the sample-filled workbook (relative to /public). */
+  samplePath: string;
+  /** Project-relative path of the README for this source. */
   readmePath: string;
+  /** Module path (relative to src) of the parser entrypoint. */
+  parserModule: string;
+  /** Module path (relative to src) of the validator entrypoint. */
+  validatorModule: string;
+  /** Script name (under src/scripts/tower) for the CLI ingest tool. */
   cliScript: string;
-  ownerSlice: 'S2' | 'S3' | 'S4';
+  /** Real-world extract path summary (one line for catalog cards). */
+  extractPath: string;
+  /** Sample-row count and tenant — for synthetic banner sizing. */
+  sampleSummary: { tenant: string; rowsApprox: number };
 }
 
-export const CLAUDE_CODE_INGEST: TowerIngestEntry = {
-  tool: 'claude_code',
-  displayName: 'Claude Code (Anthropic)',
-  vendor: 'Anthropic',
-  description:
-    'Per-developer Claude Code usage and cost from the Anthropic Console (org admin).',
-  table: 'tower_ai_tool_usage',
-  templatePath: '/templates/tower/claude-code/template.xlsx',
-  sampleFilledPath: '/templates/tower/claude-code/sample-filled.xlsx',
-  readmePath: 'docs/templates/tower/claude-code/README.md',
-  cliScript: 'src/scripts/tower/ingest-claude-code.ts',
-  ownerSlice: 'S3',
-};
-
-export const TOWER_INGEST_REGISTRY: TowerIngestEntry[] = [
-  CLAUDE_CODE_INGEST,
-  // S2 Copilot — append CopilotIngestEntry here.
-  // S4 Cursor  — append CursorIngestEntry here.
+export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
+  azureCostSource,
+  claudeCodeSource,
+  // Sibling slices append here, alphabetical by `key`.
 ];
 
-export function getTowerIngestEntry(tool: TowerIngestTool): TowerIngestEntry | undefined {
-  return TOWER_INGEST_REGISTRY.find((entry) => entry.tool === tool);
+export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
+  return TOWER_INGEST_SOURCES.find((s) => s.key === key);
+}
+
+export function towerIngestKindsCovered(): TowerIngestKind[] {
+  return Array.from(new Set(TOWER_INGEST_SOURCES.map((s) => s.kind))).sort();
 }

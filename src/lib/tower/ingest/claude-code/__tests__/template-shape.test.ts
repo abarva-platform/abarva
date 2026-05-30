@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import ExcelJS from 'exceljs';
 import { parseClaudeCodeXlsx } from '../parse';
 import { validateClaudeCodeRows } from '../validate';
-import { getTowerIngestEntry } from '../../registry';
+import { findTowerIngestSource } from '../../registry';
 
 const TEMPLATE_DIR = join(process.cwd(), 'public', 'templates', 'tower', 'claude-code');
 const TEMPLATE_PATH = join(TEMPLATE_DIR, 'template.xlsx');
@@ -57,11 +57,11 @@ describe('Claude Code template files', () => {
     expect(periods.size).toBe(12);
   });
 
-  it('registry exposes a claude_code entry pointing at the shared table and CLI', () => {
-    const entry = getTowerIngestEntry('claude_code');
+  it('registry exposes a claude-code entry pointing at the shared table and CLI', () => {
+    const entry = findTowerIngestSource('claude-code');
     expect(entry).toBeDefined();
-    expect(entry?.table).toBe('tower_ai_tool_usage');
-    expect(entry?.cliScript).toBe('src/scripts/tower/ingest-claude-code.ts');
+    expect(entry?.targetTable).toBe('tower_ai_tool_usage');
+    expect(entry?.cliScript).toBe('ingest-claude-code');
     expect(entry?.templatePath).toBe('/templates/tower/claude-code/template.xlsx');
   });
 });
