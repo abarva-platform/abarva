@@ -1,4 +1,5 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
+import { resolvePostgresPoolMax } from '@/lib/data-plane/postgresCompat';
 
 let pool: Pool | null = null;
 
@@ -21,6 +22,10 @@ export function getCorpusPool(): Pool {
   pool = new Pool({
     connectionString,
     application_name: 'nexus-corpus-data-layer',
+    max: resolvePostgresPoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
     ssl: shouldDisableSsl(connectionString) ? false : { rejectUnauthorized: false },
   });
   return pool;

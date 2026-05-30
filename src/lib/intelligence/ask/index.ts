@@ -100,32 +100,24 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     yield { type: 'classified', classification };
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
-    const [
-      tenantEnterprise,
-      tenantStructuredFacts,
-      tenantTechnology,
-      routed,
-      worldview,
-      factFingerprint,
-    ] = await Promise.all([
-      retrieveTenantEnterpriseSources(opts.tenant ?? opts.tenantInventoryKey, trimmed, {
-        activePersonGraphNodeId: opts.activePersonGraphNodeId,
-        activePersonDisplayName: opts.activePersonDisplayName,
-        userContextBlock: opts.userContextBlock,
-      }),
-      retrieveTenantStructuredFacts(opts.tenant ?? opts.tenantInventoryKey, trimmed),
-      retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
-      route(classification.intent, classification.entities, {
-        query: trimmed,
-        tenantInventoryKey: opts.tenantInventoryKey,
-        surfaceContext: opts.surfaceContext,
-      }),
-      retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId }),
-      getTenantFactFingerprint({
-        tenantId: opts.tenantId,
-        tenantInventoryKey: opts.tenantInventoryKey,
-      }),
-    ]);
+    // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
+    const tenantEnterprise = await retrieveTenantEnterpriseSources(opts.tenant ?? opts.tenantInventoryKey, trimmed, {
+      activePersonGraphNodeId: opts.activePersonGraphNodeId,
+      activePersonDisplayName: opts.activePersonDisplayName,
+      userContextBlock: opts.userContextBlock,
+    });
+    const tenantStructuredFacts = await retrieveTenantStructuredFacts(opts.tenant ?? opts.tenantInventoryKey, trimmed);
+    const tenantTechnology = await retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed);
+    const routed = await route(classification.intent, classification.entities, {
+      query: trimmed,
+      tenantInventoryKey: opts.tenantInventoryKey,
+      surfaceContext: opts.surfaceContext,
+    });
+    const worldview = await retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId });
+    const factFingerprint = await getTenantFactFingerprint({
+      tenantId: opts.tenantId,
+      tenantInventoryKey: opts.tenantInventoryKey,
+    });
     const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
     const sources: AskSource[] = [
       ...surfaceContext,
