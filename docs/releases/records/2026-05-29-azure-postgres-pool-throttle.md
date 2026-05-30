@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`rolled-back`
 
 ## Plain-English Summary
 
@@ -69,3 +69,7 @@ rollback is required.
 
 - This release reduces runtime connection pressure. It does not change the
   underlying Azure Postgres pool size.
+- Production promotion to `dpl_7LNQZjLGhjEDSK9ZntAPVc8GuyYC` was rolled back
+  after authenticated post-deploy crawl pressure drove `/api/health` to HTTP
+  503. Follow-up release `2026-05-29-strategic-moves-crawl-fanout` reduces the
+  Strategic Moves route-level DB fan-out that remained after this pool guard.
