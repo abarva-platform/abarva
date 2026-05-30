@@ -131,7 +131,7 @@ function normalizeTenantMarker(value: string | null): string | null {
   if (!normalized) return null;
   if (/\b(apex|apexretail|retail)\b/.test(normalized)) return 'apex';
   if (/\b(meridian|health)\b/.test(normalized)) return 'meridian';
-  if (/\b(first capital|firstcapital|arcturus|brindlemark|financial)\b/.test(normalized)) return 'firstcapital';
+  if (/\b(first capital|firstcapital|arcturus|financial)\b/.test(normalized)) return 'firstcapital';
   if (/\b(northstar|medtech|clinical technologies)\b/.test(normalized)) return 'northstar';
   if (/\b(skyharbor|airline|aviation)\b/.test(normalized)) return 'skyharbor';
   return null;
@@ -141,10 +141,9 @@ function tenantMarkers(): Array<{ tenant: string; pattern: RegExp }> {
   return [
     { tenant: 'apex', pattern: /\b(apex|apex retail|apexretail)\b/ },
     { tenant: 'meridian', pattern: /\b(meridian|meridian health|heliara)\b/ },
-    { tenant: 'firstcapital', pattern: /\b(first capital|firstcapital|arcturus|brindlemark)\b/ },
+    { tenant: 'firstcapital', pattern: /\b(first capital|firstcapital|arcturus|financial)\b/ },
     { tenant: 'northstar', pattern: /\b(northstar|northstar clinical)\b/ },
     { tenant: 'skyharbor', pattern: /\b(skyharbor|skyharbor air)\b/ },
-    { tenant: 'retired', pattern: /\b(keystone|helix therapeutics|helix)\b/ },
   ];
 }
 
