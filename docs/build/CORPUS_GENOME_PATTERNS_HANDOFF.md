@@ -336,12 +336,22 @@ This is the main repo (not a worktree). The existing 14 files are untracked ther
 ## Run command (per file, after writing)
 
 ```bash
-# Requires .env.local with NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+# Requires Azure/Postgres data-plane credentials, normally DATABASE_URL.
 npx tsx src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts
 ```
 
-Run each file after writing it to confirm the upsert succeeds with no errors. The script prints
-the count of seeded patterns. If the count is 0 or the script errors, debug before moving on.
+Run each file after writing it to confirm the upsert succeeds with no errors. For historical seed
+files that only export arrays or use stale columns, run the durable Azure/Postgres loader instead:
+
+```bash
+find src/scripts/seed -maxdepth 1 -type f \( -name 'seed-airline-dom*.ts' -o -name 'seed-healthcare-dom*.ts' \) \
+  | sort \
+  | xargs npx tsx scripts/corpus/load-authored-genome-seeds.ts
+```
+
+The loader parses authored pattern arrays, writes `genome_patterns`, writes `intelligence_graph_edges`,
+and emits a per-file persistence summary. If the persisted DB count does not match the authored count,
+debug before moving on.
 
 ---
 

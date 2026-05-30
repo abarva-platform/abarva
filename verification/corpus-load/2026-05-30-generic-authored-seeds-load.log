@@ -1,0 +1,212 @@
+src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts: upserted 38 patterns and 76 graph edges
+src/scripts/seed/seed-airline-dom02-pss-booking.ts: upserted 50 patterns and 100 graph edges
+src/scripts/seed/seed-airline-dom03-crew-mgmt.ts: upserted 173 patterns and 346 graph edges
+src/scripts/seed/seed-airline-dom04-mro-engineering.ts: upserted 85 patterns and 170 graph edges
+src/scripts/seed/seed-airline-dom05-cx-service-recovery.ts: upserted 105 patterns and 210 graph edges
+src/scripts/seed/seed-airline-dom06-ndc-oms.ts: upserted 38 patterns and 76 graph edges
+src/scripts/seed/seed-airline-dom07-airport-ops.ts: upserted 38 patterns and 76 graph edges
+src/scripts/seed/seed-airline-dom08-it-modernization.ts: upserted 38 patterns and 76 graph edges
+src/scripts/seed/seed-airline-dom09-safety-compliance.ts: upserted 38 patterns and 76 graph edges
+src/scripts/seed/seed-airline-dom10-loyalty-distribution.ts: upserted 260 patterns and 520 graph edges
+src/scripts/seed/seed-airline-dom13-cargo.ts: upserted 30 patterns and 60 graph edges
+src/scripts/seed/seed-airline-dom14-workforce.ts: upserted 30 patterns and 60 graph edges
+src/scripts/seed/seed-airline-dom15-sustainability.ts: upserted 71 patterns and 142 graph edges
+src/scripts/seed/seed-airline-dom16-cybersecurity.ts: upserted 145 patterns and 290 graph edges
+src/scripts/seed/seed-airline-dom17-digital-ai.ts: upserted 30 patterns and 60 graph edges
+src/scripts/seed/seed-airline-dom18-codeshare-part1.ts: upserted 60 patterns and 120 graph edges
+src/scripts/seed/seed-healthcare-dom02-rcm-denials.ts: upserted 100 patterns and 200 graph edges
+src/scripts/seed/seed-healthcare-dom05-pop-health-vbc.ts: upserted 150 patterns and 300 graph edges
+src/scripts/seed/seed-healthcare-dom08-clinical-ai.ts: upserted 75 patterns and 150 graph edges
+src/scripts/seed/seed-healthcare-dom12-ed-throughput.ts: upserted 100 patterns and 200 graph edges
+src/scripts/seed/seed-healthcare-dom13-supply-chain.ts: upserted 100 patterns and 200 graph edges
+src/scripts/seed/seed-healthcare-dom17-finance-contracting.ts: upserted 100 patterns and 200 graph edges
+src/scripts/seed/seed-healthcare-dom30-patient-finance.ts: upserted 100 patterns and 200 graph edges
+{
+  "files": 23,
+  "summaries": [
+    {
+      "file": "src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 38,
+      "patternsUpserted": 38,
+      "edgesUpserted": 76
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom02-pss-booking.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 50,
+      "patternsUpserted": 50,
+      "edgesUpserted": 100
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom03-crew-mgmt.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 173,
+      "patternsUpserted": 173,
+      "edgesUpserted": 346
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom04-mro-engineering.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 85,
+      "patternsUpserted": 85,
+      "edgesUpserted": 170
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom05-cx-service-recovery.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 105,
+      "patternsUpserted": 105,
+      "edgesUpserted": 210
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom06-ndc-oms.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 38,
+      "patternsUpserted": 38,
+      "edgesUpserted": 76
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom07-airport-ops.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 38,
+      "patternsUpserted": 38,
+      "edgesUpserted": 76
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom08-it-modernization.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 38,
+      "patternsUpserted": 38,
+      "edgesUpserted": 76
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom09-safety-compliance.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 38,
+      "patternsUpserted": 38,
+      "edgesUpserted": 76
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom10-loyalty-distribution.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 260,
+      "patternsUpserted": 260,
+      "edgesUpserted": 520
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom13-cargo.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 30,
+      "patternsUpserted": 30,
+      "edgesUpserted": 60
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom14-workforce.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 30,
+      "patternsUpserted": 30,
+      "edgesUpserted": 60
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom15-sustainability.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 71,
+      "patternsUpserted": 71,
+      "edgesUpserted": 142
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom16-cybersecurity.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 145,
+      "patternsUpserted": 145,
+      "edgesUpserted": 290
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom17-digital-ai.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 30,
+      "patternsUpserted": 30,
+      "edgesUpserted": 60
+    },
+    {
+      "file": "src/scripts/seed/seed-airline-dom18-codeshare-part1.ts",
+      "vertical": "airline",
+      "sourceKey": "skyharbor-air",
+      "parsed": 60,
+      "patternsUpserted": 60,
+      "edgesUpserted": 120
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom02-rcm-denials.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 100,
+      "patternsUpserted": 100,
+      "edgesUpserted": 200
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom05-pop-health-vbc.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 150,
+      "patternsUpserted": 150,
+      "edgesUpserted": 300
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom08-clinical-ai.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 75,
+      "patternsUpserted": 75,
+      "edgesUpserted": 150
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom12-ed-throughput.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 100,
+      "patternsUpserted": 100,
+      "edgesUpserted": 200
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom13-supply-chain.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 100,
+      "patternsUpserted": 100,
+      "edgesUpserted": 200
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom17-finance-contracting.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 100,
+      "patternsUpserted": 100,
+      "edgesUpserted": 200
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom30-patient-finance.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 100,
+      "patternsUpserted": 100,
+      "edgesUpserted": 200
+    }
+  ]
+}
