@@ -48,14 +48,29 @@ describe('Programs enhancement seed planner', () => {
     const plan = buildAllProgramsSeedPlan();
 
     expect(plan.summary).toEqual({
-      tenantCount: 4,
-      programCount: 19,
+      tenantCount: 5,
+      programCount: 15,
       deliverableTypeCount: 28,
-      deliverableCount: 457,
-      nonStubDeliverableCount: 283,
+      deliverableCount: 363,
+      nonStubDeliverableCount: 217,
       richDeliverableCount: 44,
-      outlineDeliverableCount: 239,
-      stubDeliverableCount: 174,
+      outlineDeliverableCount: 173,
+      stubDeliverableCount: 146,
+    });
+  });
+
+  it('keeps Northstar and SkyHarbor route stubs in the tenant plan without fabricating programs', () => {
+    const plan = buildAllProgramsSeedPlan();
+
+    expect(plan.tenants.find((tenant) => tenant.routeSlug === 'northstar-clinical')).toMatchObject({
+      tenantKey: 'northstar',
+      displayName: 'Northstar Clinical Technologies',
+      programs: [],
+    });
+    expect(plan.tenants.find((tenant) => tenant.routeSlug === 'skyharbor-air')).toMatchObject({
+      tenantKey: 'skyharbor',
+      displayName: 'SkyHarbor Air',
+      programs: [],
     });
   });
 

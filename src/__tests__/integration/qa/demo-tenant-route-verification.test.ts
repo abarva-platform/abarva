@@ -5,6 +5,7 @@
 
 import {
   buildDemoTenantRouteManifest,
+  type TenantRouteClass,
   type TenantRouteValidationStatus,
   type TenantRouteRecord,
   type DemoTenantRouteManifest,
@@ -16,6 +17,21 @@ const VALID_STATUSES: TenantRouteValidationStatus[] = [
   'deferred',
   'not_run',
 ];
+
+const VALID_ROUTE_CLASSES: TenantRouteClass[] = [
+  'working',
+  'stub',
+  '404',
+  'inconsistent',
+];
+
+const CANONICAL_DEMO_TENANTS = [
+  'apex-retail',
+  'meridian-health',
+  'first-capital-financial',
+  'northstar-clinical',
+  'skyharbor-air',
+] as const;
 
 describe('buildDemoTenantRouteManifest()', () => {
   let manifest: DemoTenantRouteManifest;
@@ -45,8 +61,8 @@ describe('buildDemoTenantRouteManifest()', () => {
     expect(manifest.tenants).toContain('apex-retail');
   });
 
-  it('tenants array includes "meridian"', () => {
-    expect(manifest.tenants).toContain('meridian');
+  it('tenants array includes all five canonical demo tenants', () => {
+    expect(manifest.tenants).toEqual([...CANONICAL_DEMO_TENANTS]);
   });
 
   // -------------------------------------------------------------------------
@@ -101,6 +117,12 @@ describe('buildDemoTenantRouteManifest()', () => {
     });
   });
 
+  it('every route has a valid C8 route class', () => {
+    manifest.routes.forEach((r: TenantRouteRecord) => {
+      expect(VALID_ROUTE_CLASSES).toContain(r.routeClass);
+    });
+  });
+
   it('every route has a non-empty fallbackRoute', () => {
     manifest.routes.forEach((r: TenantRouteRecord) => {
       expect(r.fallbackRoute).toBeTruthy();
@@ -128,9 +150,25 @@ describe('buildDemoTenantRouteManifest()', () => {
     expect(apexRoutes.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('meridian has at least 2 routes', () => {
-    const meridianRoutes = manifest.routes.filter((r) => r.tenantSlug === 'meridian');
-    expect(meridianRoutes.length).toBeGreaterThanOrEqual(2);
+  it('each canonical tenant has a non-404 tenant dashboard route', () => {
+    for (const tenantSlug of CANONICAL_DEMO_TENANTS) {
+      const route = manifest.routes.find(
+        (r) => r.tenantSlug === tenantSlug && r.route === `/tenant/${tenantSlug}`,
+      );
+      expect(route).toBeDefined();
+      expect(route?.routeClass).not.toBe('404');
+      expect(route?.validationStatus).toBe('verified');
+    }
+  });
+
+  it('classifies Northstar and SkyHarbor as honest stubs instead of working seeded portfolios', () => {
+    for (const tenantSlug of ['northstar-clinical', 'skyharbor-air']) {
+      const route = manifest.routes.find(
+        (r) => r.tenantSlug === tenantSlug && r.route === `/tenant/${tenantSlug}`,
+      );
+      expect(route?.routeClass).toBe('stub');
+      expect(route?.knownCaveat).toMatch(/zero-program stub/);
+    }
   });
 
   // -------------------------------------------------------------------------

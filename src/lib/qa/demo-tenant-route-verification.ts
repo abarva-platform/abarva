@@ -25,6 +25,8 @@ export type TenantRouteValidationStatus =
   | 'deferred'
   | 'not_run';
 
+export type TenantRouteClass = 'working' | 'stub' | '404' | 'inconsistent';
+
 export interface TenantRouteRecord {
   tenantSlug: string;
   route: string;
@@ -33,6 +35,7 @@ export interface TenantRouteRecord {
   expectedReadModel: string;
   expectedPrimaryAgent: string;
   validationStatus: TenantRouteValidationStatus;
+  routeClass: TenantRouteClass;
   knownCaveat: string;
   fallbackRoute: string;
 }
@@ -52,7 +55,71 @@ export interface DemoTenantRouteManifest {
 // ---------------------------------------------------------------------------
 
 export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
+  const canonicalTenantRoutes: TenantRouteRecord[] = [
+    {
+      tenantSlug: 'apex-retail',
+      route: '/tenant/apex-retail',
+      surface: 'home',
+      expectedComponent: 'SeedTenantDashboard',
+      expectedReadModel: 'TenantSeedPlan',
+      expectedPrimaryAgent: 'Nexus',
+      validationStatus: 'verified',
+      routeClass: 'working',
+      knownCaveat: 'Program portfolio is seeded for the Apex Retail demo',
+      fallbackRoute: '/home',
+    },
+    {
+      tenantSlug: 'meridian-health',
+      route: '/tenant/meridian-health',
+      surface: 'home',
+      expectedComponent: 'SeedTenantDashboard',
+      expectedReadModel: 'TenantSeedPlan',
+      expectedPrimaryAgent: 'Nexus',
+      validationStatus: 'verified',
+      routeClass: 'working',
+      knownCaveat: 'Program portfolio is seeded for the Meridian Health demo',
+      fallbackRoute: '/home',
+    },
+    {
+      tenantSlug: 'first-capital-financial',
+      route: '/tenant/first-capital-financial',
+      surface: 'home',
+      expectedComponent: 'SeedTenantDashboard',
+      expectedReadModel: 'TenantSeedPlan',
+      expectedPrimaryAgent: 'Nexus',
+      validationStatus: 'verified',
+      routeClass: 'working',
+      knownCaveat: 'Program portfolio is seeded under the arcturus client key',
+      fallbackRoute: '/home',
+    },
+    {
+      tenantSlug: 'northstar-clinical',
+      route: '/tenant/northstar-clinical',
+      surface: 'home',
+      expectedComponent: 'SeedTenantDashboard',
+      expectedReadModel: 'TenantSeedPlan',
+      expectedPrimaryAgent: 'Nexus',
+      validationStatus: 'verified',
+      routeClass: 'stub',
+      knownCaveat: 'Route is intentionally honest zero-program stub until Northstar programs are seeded',
+      fallbackRoute: '/home',
+    },
+    {
+      tenantSlug: 'skyharbor-air',
+      route: '/tenant/skyharbor-air',
+      surface: 'home',
+      expectedComponent: 'SeedTenantDashboard',
+      expectedReadModel: 'TenantSeedPlan',
+      expectedPrimaryAgent: 'Nexus',
+      validationStatus: 'verified',
+      routeClass: 'stub',
+      knownCaveat: 'Route is intentionally honest zero-program stub until SkyHarbor programs are seeded',
+      fallbackRoute: '/home',
+    },
+  ];
+
   const routes: TenantRouteRecord[] = [
+    ...canonicalTenantRoutes,
     // -----------------------------------------------------------------------
     // apex-retail routes
     // -----------------------------------------------------------------------
@@ -64,6 +131,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'ProgramViewRecord',
       expectedPrimaryAgent: 'Nexus',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Apex seed data only; live DB required for real program state',
       fallbackRoute: '/programs',
     },
@@ -75,6 +143,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'ProgramDetailViewRecord',
       expectedPrimaryAgent: 'Nexus',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Slug may differ from seeded programId; verify slug mapping',
       fallbackRoute: '/programs/[programId]',
     },
@@ -86,6 +155,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'ProgramDetailViewRecord',
       expectedPrimaryAgent: 'Nexus',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'CDP program seeded for Apex Retail demo',
       fallbackRoute: '/programs/[programId]',
     },
@@ -97,6 +167,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'TowerSurfaceRecord',
       expectedPrimaryAgent: 'Atlas',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Tower seed data; real cost/adoption requires integrations',
       fallbackRoute: '/tower',
     },
@@ -108,6 +179,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'TowerSignalRecord',
       expectedPrimaryAgent: 'Atlas',
       validationStatus: 'needs_review',
+      routeClass: 'working',
       knownCaveat: 'Surface param routing may depend on PROD3/tower surface implementation',
       fallbackRoute: '/tower',
     },
@@ -119,6 +191,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'IntelligenceLibraryRecord',
       expectedPrimaryAgent: 'Sentinel',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Pattern library is deterministic seed',
       fallbackRoute: '/intelligence',
     },
@@ -130,6 +203,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'PatternDetailRecord',
       expectedPrimaryAgent: 'Sentinel',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Pattern key must match seeded slug',
       fallbackRoute: '/intelligence/patterns',
     },
@@ -145,6 +219,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'ProgramViewRecord',
       expectedPrimaryAgent: 'Nexus',
       validationStatus: 'needs_review',
+      routeClass: 'working',
       knownCaveat: 'Meridian stays on Intelligence demo; program list may be minimal',
       fallbackRoute: '/programs',
     },
@@ -156,6 +231,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'IntelligenceLibraryRecord',
       expectedPrimaryAgent: 'Sentinel',
       validationStatus: 'verified',
+      routeClass: 'working',
       knownCaveat: 'Meridian intelligence seed active',
       fallbackRoute: '/intelligence',
     },
@@ -167,6 +243,7 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
       expectedReadModel: 'TowerSurfaceRecord',
       expectedPrimaryAgent: 'Atlas',
       validationStatus: 'needs_review',
+      routeClass: 'working',
       knownCaveat: 'Tower may not be seeded for Meridian',
       fallbackRoute: '/tower',
     },
@@ -179,7 +256,13 @@ export function buildDemoTenantRouteManifest(): DemoTenantRouteManifest {
   return {
     schemaVersion: 1,
     generatedAt: '2026-04-26',
-    tenants: ['apex-retail', 'meridian'],
+    tenants: [
+      'apex-retail',
+      'meridian-health',
+      'first-capital-financial',
+      'northstar-clinical',
+      'skyharbor-air',
+    ],
     routes,
     totalRoutes,
     verifiedRoutes,
