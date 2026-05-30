@@ -14,19 +14,37 @@ export const dynamic = 'force-dynamic';
 async function requireInboxContext() {
   const session = await auth();
   if (!session.userId) {
-    return { ok: false as const, response: NextResponse.json({ error: 'unauthorized' }, { status: 401 }) };
+    return {
+      ok: false as const,
+      reason: 'unauthorized' as const,
+      response: NextResponse.json({ error: 'unauthorized' }, { status: 401 }),
+    };
   }
   const tenantKey = await getActiveClientKey();
   const tenantId = await resolveClientId(tenantKey);
   if (!tenantId) {
-    return { ok: false as const, response: NextResponse.json({ error: 'tenant_not_found' }, { status: 404 }) };
+    return {
+      ok: false as const,
+      reason: 'tenant_not_found' as const,
+      response: NextResponse.json({ error: 'tenant_not_found' }, { status: 404 }),
+    };
   }
   return { ok: true as const, userId: session.userId, tenantId };
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const ctx = await requireInboxContext();
-  if (!ctx.ok) return ctx.response;
+  if (!ctx.ok) {
+    if (ctx.reason === 'tenant_not_found') {
+      return NextResponse.json({
+        ok: false,
+        reason: ctx.reason,
+        items: [],
+        unreadCount: 0,
+      });
+    }
+    return ctx.response;
+  }
 
   const limitRaw = request.nextUrl.searchParams.get('limit');
   const limit = limitRaw ? Number(limitRaw) : undefined;
