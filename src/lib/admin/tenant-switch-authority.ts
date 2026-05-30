@@ -36,6 +36,15 @@ import {
 // are *tenant-pinned by design* and must never flip view context.
 // The platform-admin (founder + Clerk `role === 'admin'`) gate is the
 // only path that should surface the switcher chip.
+//
+// IMPORTANT (P1 silent-fail post-mortem · 2026-05-30): the comparison
+// MUST be case-insensitive. Clerk does not normalize email case on the
+// session object, but the allowlist is canonical-lowercase. We lowercase
+// both the primary email AND every verified secondary email before
+// comparing — a founder who set up Clerk with `Anand.Sundaram@...` or
+// who only has the address as a verified secondary would otherwise see
+// the chip on the layout (which uses the same gate) but fail the API
+// call silently.
 const TENANT_SWITCH_FOUNDER_ALLOWLIST: ReadonlySet<string> = new Set([
   'anand.sundaram@thesundaram.com',
 ]);
@@ -85,11 +94,33 @@ export async function canSwitchActiveTenant(): Promise<boolean> {
     const fallbackRole =
       (user.unsafeMetadata?.role as string | undefined) ??
       (user.publicMetadata?.legacyRole as string | undefined);
-    const primaryEmail = user.primaryEmailAddress?.emailAddress?.toLowerCase();
+    // Collect every email we can prove belongs to the session — primary
+    // plus any verified secondary — and lowercase before comparing. See
+    // the post-mortem comment on TENANT_SWITCH_FOUNDER_ALLOWLIST above.
+    const candidateEmails = new Set<string>();
+    const primary = user.primaryEmailAddress?.emailAddress;
+    if (primary) candidateEmails.add(primary.toLowerCase());
+    type EmailAddrLite = {
+      emailAddress?: string | null;
+      verification?: { status?: string | null } | null;
+    };
+    const secondary = (user.emailAddresses as ReadonlyArray<EmailAddrLite> | undefined) ?? [];
+    for (const entry of secondary) {
+      const addr = entry.emailAddress?.toLowerCase();
+      if (!addr) continue;
+      // Only honor verified addresses. An unverified address is
+      // attacker-controlled and must not gate authority.
+      if (entry.verification?.status === 'verified') {
+        candidateEmails.add(addr);
+      }
+    }
+    const allowlistedByEmail = Array.from(candidateEmails).some((addr) =>
+      TENANT_SWITCH_FOUNDER_ALLOWLIST.has(addr),
+    );
     return (
       role === 'admin' ||
       fallbackRole === 'admin' ||
-      (!!primaryEmail && TENANT_SWITCH_FOUNDER_ALLOWLIST.has(primaryEmail))
+      allowlistedByEmail
     );
   } catch {
     return false;

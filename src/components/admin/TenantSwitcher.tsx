@@ -76,7 +76,58 @@ const C = {
   borderLight: '#E5E7EB',
   surface: '#FFFFFF',
   navySoft: 'rgba(27,43,92,0.06)',
+  // Locked palette — error/retry surface. Red dot + amber surround for
+  // 5xx (transient), red dot + plain surround for 4xx (authority/validation).
+  errorInk: '#991B1B',
+  errorSurface: '#FEF2F2',
+  errorBorder: '#FCA5A5',
+  warnSurface: '#FFFBEB',
+  warnBorder: '#FCD34D',
+  retryLink: '#1B2B5C',
 };
+
+/**
+ * Translate a raw server-error code (or HTTP status) into a plain-English
+ * message a non-engineer admin can act on. Keeps schema details out of
+ * the UI — never expose internal table/column names.
+ */
+function friendlyError(
+  code: string,
+  status?: number,
+): { tone: 'authority' | 'transient' | 'unknown'; message: string } {
+  if (status === 401 || code === 'unauthenticated') {
+    return {
+      tone: 'authority',
+      message:
+        'Your session has expired — sign in again to switch tenant context.',
+    };
+  }
+  if (status === 403 || code === 'forbidden') {
+    return {
+      tone: 'authority',
+      message:
+        "Your role doesn't have tenant-switch permission — contact your admin.",
+    };
+  }
+  if (status === 400 || code === 'invalid_tenant') {
+    return {
+      tone: 'authority',
+      message:
+        'The selected tenant key is not in the canonical 5-tenant list. Refresh and try again.',
+    };
+  }
+  if (typeof status === 'number' && status >= 500) {
+    return {
+      tone: 'transient',
+      message:
+        'Tenant-switch service is temporarily unavailable. Retry, or try again in a moment.',
+    };
+  }
+  return {
+    tone: 'unknown',
+    message: 'Switch failed — retry, or check the server logs.',
+  };
+}
 
 export function TenantSwitcher(props: TenantSwitcherProps) {
   const {
@@ -90,7 +141,14 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
 
   const [open, setOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState<
+    | {
+        targetKey: string;
+        code: string;
+        status?: number;
+      }
+    | null
+  >(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -122,37 +180,52 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
         return;
       }
       setPendingKey(targetKey);
-      setErrorMessage(null);
+      setErrorState(null);
+      let res: Response | null = null;
       try {
-        const res = await fetch(endpoint, {
+        res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tenantKey: targetKey }),
         });
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => ({}))) as {
-            error?: string;
-          };
-          throw new Error(payload.error || `switch_failed_${res.status}`);
-        }
-        try {
-          posthog.capture('admin.tenant_switched', {
-            from: currentCanonicalKey,
-            to: targetKey,
-          });
-        } catch {
-          // PostHog not initialised — swallow.
-        }
-        if (onNavigate) {
-          onNavigate('/admin');
-        } else if (typeof window !== 'undefined') {
-          window.location.assign('/admin');
-        }
-      } catch (err) {
+      } catch (networkErr) {
+        // Network/CORS/offline — fetch itself rejected. Surface as
+        // transient so the user can retry.
         setPendingKey(null);
-        setErrorMessage(
-          err instanceof Error ? err.message : 'switch_failed_unknown',
-        );
+        setErrorState({
+          targetKey,
+          code:
+            networkErr instanceof Error ? networkErr.message : 'network_error',
+          status: undefined,
+        });
+        return;
+      }
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        setPendingKey(null);
+        setErrorState({
+          targetKey,
+          code: payload.error || `switch_failed_${res.status}`,
+          status: res.status,
+        });
+        // IMPORTANT: do NOT close the popover on error. The error banner
+        // must remain visible until the user dismisses it or retries.
+        return;
+      }
+      try {
+        posthog.capture('admin.tenant_switched', {
+          from: currentCanonicalKey,
+          to: targetKey,
+        });
+      } catch {
+        // PostHog not initialised — swallow.
+      }
+      if (onNavigate) {
+        onNavigate('/admin');
+      } else if (typeof window !== 'undefined') {
+        window.location.assign('/admin');
       }
     },
     [currentCanonicalKey, endpoint, onNavigate, options],
@@ -310,23 +383,97 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
               </button>
             );
           })}
-          {errorMessage && (
-            <div
-              data-testid="tenant-switcher-error"
-              role="alert"
-              style={{
-                padding: '8px 14px',
-                fontFamily: F_MONO,
-                fontSize: 10,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-                color: '#991B1B',
-                borderTop: `1px solid ${C.borderLight}`,
-              }}
-            >
-              Switch failed · {errorMessage}
-            </div>
-          )}
+          {errorState && (() => {
+            const friendly = friendlyError(errorState.code, errorState.status);
+            const surface =
+              friendly.tone === 'transient' ? C.warnSurface : C.errorSurface;
+            const border =
+              friendly.tone === 'transient' ? C.warnBorder : C.errorBorder;
+            return (
+              <div
+                data-testid="tenant-switcher-error"
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  background: surface,
+                  borderTop: `1px solid ${border}`,
+                  fontFamily: F_BODY,
+                  fontSize: 12,
+                  color: C.errorInk,
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  data-testid="tenant-switcher-error-dot"
+                  style={{
+                    flex: '0 0 auto',
+                    marginTop: 4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: C.errorInk,
+                  }}
+                />
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <span
+                    data-testid="tenant-switcher-error-eyebrow"
+                    style={{
+                      display: 'block',
+                      fontFamily: F_MONO,
+                      fontSize: 9,
+                      letterSpacing: '0.18em',
+                      textTransform: 'uppercase',
+                      color: C.errorInk,
+                      fontWeight: 700,
+                      marginBottom: 2,
+                    }}
+                  >
+                    Switch failed
+                    {typeof errorState.status === 'number'
+                      ? ` · ${errorState.status}`
+                      : ''}
+                  </span>
+                  <span
+                    data-testid="tenant-switcher-error-message"
+                    style={{
+                      display: 'block',
+                      color: C.body,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {friendly.message}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="tenant-switcher-error-retry"
+                    onClick={() => {
+                      const retryKey = errorState.targetKey;
+                      setErrorState(null);
+                      void onSelect(retryKey);
+                    }}
+                    style={{
+                      marginTop: 6,
+                      padding: 0,
+                      background: 'transparent',
+                      border: 'none',
+                      color: C.retryLink,
+                      fontFamily: F_MONO,
+                      fontSize: 10,
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Retry
+                  </button>
+                </span>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

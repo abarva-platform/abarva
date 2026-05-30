@@ -199,12 +199,15 @@ describe('TenantSwitcher', () => {
       fireEvent.click(screen.getByTestId('tenant-switcher-option-meridian-health'));
     });
     await waitFor(() => {
+      // Friendly message — never expose raw 'forbidden' to the user.
       expect(screen.getByTestId('tenant-switcher-error')).toHaveTextContent(
-        /forbidden/i,
+        /tenant-switch permission/i,
       );
     });
     // Should NOT have navigated.
     expect(navigateMock).not.toHaveBeenCalled();
+    // Popover must remain open so the user sees the error.
+    expect(screen.getByTestId('tenant-switcher-popover')).toBeInTheDocument();
   });
 
   it('honors the 5 canonical tenants — no free-form keys appear in the dropdown', () => {

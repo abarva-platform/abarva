@@ -30,7 +30,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { ACTIVE_CLIENT_COOKIE } from '@/lib/tenant/resolveTenant';
 import { resolveTenantAlias } from '@/lib/tenant/aliases';
 import {
@@ -46,10 +46,45 @@ interface SwitchTenantRequest {
   tenantKey?: unknown;
 }
 
+/**
+ * Structured-log emitter for every reject path. Keyed fields let us
+ * correlate Vercel logs with browser behavior when a tenant switch
+ * silent-fails (the diagnostic gap that motivated this hardening pass
+ * — see docs/build/MANUAL_BROWSER_WALKTHROUGH_2026-05-30.md §P1 #3).
+ *
+ * Note: we ONLY log fields the server already knows. We never echo
+ * raw request bodies, schema names, or stack traces — those could
+ * leak internal structure to a Vercel log consumer.
+ */
+function logRejection(reason: string, fields: Record<string, unknown>): void {
+  console.warn(
+    JSON.stringify({
+      event: 'tenant_switch_rejected',
+      reject_reason: reason,
+      ts: new Date().toISOString(),
+      ...fields,
+    }),
+  );
+}
+
+async function safePrimaryEmail(): Promise<string | null> {
+  try {
+    const user = await currentUser();
+    return user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   // Auth — must have a Clerk session.
   const session = await auth();
   if (!session.userId) {
+    logRejection('unauthenticated', {
+      actor_user_id: null,
+      actor_email: null,
+      requested_tenant: null,
+    });
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
   }
 
@@ -57,6 +92,11 @@ export async function POST(request: Request): Promise<Response> {
   // and the canonical client-admin emails are explicitly NOT permitted.
   const canSwitch = await canSwitchActiveTenant();
   if (!canSwitch) {
+    logRejection('forbidden_not_switch_admin', {
+      actor_user_id: session.userId,
+      actor_email: await safePrimaryEmail(),
+      requested_tenant: null,
+    });
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
@@ -67,10 +107,21 @@ export async function POST(request: Request): Promise<Response> {
   try {
     body = (await request.json()) as SwitchTenantRequest;
   } catch {
+    logRejection('invalid_json_body', {
+      actor_user_id: session.userId,
+      actor_email: await safePrimaryEmail(),
+      requested_tenant: null,
+    });
     return NextResponse.json({ error: 'invalid_tenant' }, { status: 400 });
   }
   const requestedKey = body.tenantKey;
   if (!isCanonicalTenantKey(requestedKey)) {
+    logRejection('non_canonical_tenant_key', {
+      actor_user_id: session.userId,
+      actor_email: await safePrimaryEmail(),
+      requested_tenant:
+        typeof requestedKey === 'string' ? requestedKey : null,
+    });
     return NextResponse.json({ error: 'invalid_tenant' }, { status: 400 });
   }
 
@@ -104,12 +155,24 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // Audit the switch BEFORE we write the cookie so the audit row is
-  // always present, even if the cookie write somehow throws.
-  await writeTenantSwitchAudit({
-    actorUserId: session.userId,
-    fromCanonicalKey: previousCanonicalKey,
-    toCanonicalKey: profile.canonicalKey,
-  });
+  // always present, even if the cookie write somehow throws. A failed
+  // audit write MUST NOT block the switch — the structured log line
+  // below is the always-on second audit channel.
+  try {
+    await writeTenantSwitchAudit({
+      actorUserId: session.userId,
+      fromCanonicalKey: previousCanonicalKey,
+      toCanonicalKey: profile.canonicalKey,
+    });
+  } catch (auditErr) {
+    logRejection('audit_write_failed_nonfatal', {
+      actor_user_id: session.userId,
+      actor_email: await safePrimaryEmail(),
+      requested_tenant: profile.canonicalKey,
+      audit_error:
+        auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+  }
 
   // Emit a structured log line as a second audit channel — this is the
   // signal the Isolation lane (W2-PR-2) consumes if the DB audit table
