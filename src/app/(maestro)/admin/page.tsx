@@ -92,10 +92,19 @@ export default async function AdminOverviewPage({
         ])
       : [null, [], [], null, null];
   const trustChips = trustSpine ? spineToChips(trustSpine) : null;
+  // Wave 3 PR-6 · brand-new-tenant detection per verdict §5.6.
+  // When the spine resolves AND reports zero segments, the page
+  // switches into the empty-state register (single primary card +
+  // 4-column upload affordance + editorial Steward line). When the
+  // spine itself fails to resolve we keep the legacy behavior so a
+  // broker-level outage doesn't masquerade as a brand-new tenant.
+  const emptyTenant = trustSpine !== null && trustSpine.substrate.segmentsTotal === 0;
   // Wave 2 PR-4 · Posture grid (Zone D). When the spine resolves we
   // compose the four cards from it; when it doesn't, we still render
   // the grid in its no-data state so the page shape stays stable for
   // empty / brand-new tenants (verdict §5.6 empty-state guidance).
+  // Note: when `emptyTenant` is true, HomeOverviewV2 swaps the grid
+  // for `EmptyTenantUploadAffordance` regardless of these cards.
   const postureCards = trustSpine
     ? spineToPostureCards(trustSpine)
     : emptyPostureCards();
@@ -179,6 +188,7 @@ export default async function AdminOverviewPage({
           liveSnapshotPresent={snapshot !== null}
           auditEvents={auditEvents}
           postureCards={postureCards}
+          emptyTenant={emptyTenant}
           canSwitchTenant={canSwitchTenant}
           currentCanonicalTenantKey={currentCanonicalTenantKey}
           tenantSwitchOptions={tenantSwitchOptions}

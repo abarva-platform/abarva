@@ -33,6 +33,7 @@ function fixtureBlocks(): OverviewBlocks {
       missingSummary: 'two are still authored only',
       nextLoadName: 'KPI Dictionary',
       nextLoadConsequence: 'Sentinel can attribute margin moves to specific KPIs.',
+      isEmptyTenant: false,
     },
     actionQueue: {
       items: [

@@ -281,6 +281,151 @@ function statusBackground(status: PostureCardStatus): string {
   }
 }
 
+// ── EmptyTenantUploadAffordance · Wave 3 PR-6 ───────────────────────
+//
+// Per verdict §5.6 empty-state: when a brand-new tenant has no
+// substrate, the 2×2 PostureGrid is replaced with a 4-column upload
+// affordance that names the first-4 datasets — Organization · KPIs ·
+// Vendors · Customer — and lets the operator click straight into
+// /admin/data-trust with the segment pre-selected. This is the
+// founder's first-15-seconds demo surface; it must be more elegant
+// than any peer admin tool's empty state.
+//
+// Locked palette · same component contract as PostureGrid (a sibling
+// export so the page composer can pick one based on emptyTenant). The
+// estimated/muted styling lives alongside `emptyPostureCards()` so the
+// "no data yet" register stays unified across Zone D.
+
+export interface EmptyTenantUploadTile {
+  id: string;
+  /** Eyebrow noun (mono uppercase). */
+  noun: string;
+  /** One-line descriptive register (DM Sans). */
+  descriptor: string;
+  /** Anchor target — pre-seeds the segment selector on data-trust. */
+  href: string;
+}
+
+/**
+ * The four "first 4 datasets" tiles from verdict §5.6. Slugs map to
+ * canonical segment keys from `setup-acts-registry.ts`:
+ *   - Organization → org_structure   (#02)
+ *   - KPIs         → kpi_dictionary  (#05)
+ *   - Vendors      → vendor_contracts (#11)
+ *   - Customer     → customer_signals (industry-flavored slug; data-trust resolves)
+ */
+export function firstFourDatasetTiles(): EmptyTenantUploadTile[] {
+  return [
+    {
+      id: 'organization',
+      noun: 'Organization',
+      descriptor: 'Org structure, owners, reporting lines.',
+      href: '/admin/data-trust?segment=org_structure',
+    },
+    {
+      id: 'kpis',
+      noun: 'KPIs',
+      descriptor: 'Metric dictionary, formulas, owners.',
+      href: '/admin/data-trust?segment=kpi_dictionary',
+    },
+    {
+      id: 'vendors',
+      noun: 'Vendors',
+      descriptor: 'Vendor list, contracts, renewals.',
+      href: '/admin/data-trust?segment=vendor_contracts',
+    },
+    {
+      id: 'customer',
+      noun: 'Customer',
+      descriptor: 'Customer signals, segments, identity.',
+      href: '/admin/data-trust?segment=customer_signals',
+    },
+  ];
+}
+
+export function EmptyTenantUploadAffordance({
+  tiles = firstFourDatasetTiles(),
+}: {
+  tiles?: ReadonlyArray<EmptyTenantUploadTile>;
+}) {
+  return (
+    <div
+      data-testid="admin-empty-tenant-upload-affordance"
+      role="list"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gap: 12,
+        fontFamily: F_BODY,
+        color: C.body,
+      }}
+    >
+      {tiles.map((tile) => (
+        <article
+          key={tile.id}
+          role="listitem"
+          data-testid={`admin-empty-tenant-tile-${tile.id}`}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            minHeight: 150,
+            padding: '14px 16px 14px',
+            background: C.surface,
+            border: `1px solid ${C.borderLight}`,
+            borderLeft: `3px solid ${C.faint}`,
+            borderRadius: 6,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: C.navy,
+            }}
+          >
+            {tile.noun}
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: C.muted,
+              lineHeight: 1.45,
+              flex: 1,
+            }}
+          >
+            {tile.descriptor}
+          </div>
+          <a
+            href={tile.href}
+            data-testid={`admin-empty-tenant-upload-${tile.id}`}
+            style={{
+              alignSelf: 'flex-start',
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              padding: '6px 12px',
+              border: `1px solid ${C.ink}`,
+              color: C.ink,
+              background: C.surface,
+              borderRadius: 4,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Upload
+          </a>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function PostureGridCard({ card }: { card: PostureCard }) {
   const borderColor = statusBorderColor(card.status);
   const accent = statusBackground(card.status);

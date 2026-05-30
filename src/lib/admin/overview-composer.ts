@@ -41,6 +41,13 @@ export interface OverviewBlocks {
     missingSummary: string;
     nextLoadName: string | null;
     nextLoadConsequence: string | null;
+    /**
+     * Wave 3 PR-6 · §5.6 empty-state contract. True when the tenant
+     * has zero substrate segments. Consumers render the editorial
+     * Steward line instead of the loaded/missing two-column when this
+     * flag is true.
+     */
+    isEmptyTenant: boolean;
   };
   actionQueue: {
     items: ActionQueueItem[];
@@ -86,17 +93,27 @@ export function composeOverviewBlocks(input: ComposeOverviewInput): OverviewBloc
   const greenAndAmber = buckets.filter((b) => b.health === 'green' || b.health === 'amber');
   const red = buckets.filter((b) => b.health === 'red');
 
-  const loadedSummary = greenAndAmber.length === 0
-    ? 'No categories are loaded yet'
-    : greenAndAmber.length <= 2
-      ? `${greenAndAmber.map((b) => b.label).join(' and ')} ${greenAndAmber.length === 1 ? 'is' : 'are'} loaded`
-      : `${greenAndAmber.length} categories — including ${greenAndAmber[0].label} — are loaded`;
+  // Wave 3 PR-6 · empty-tenant editorial copy per verdict §5.6.
+  // When no substrate is loaded the Steward orientation reads as a
+  // single editorial line, not "0 categories loaded". The block stays
+  // present (so the page shape doesn't collapse) but the columns
+  // (`loadedSummary` / `missingSummary`) carry the matching prose.
+  const isEmptyTenant = !segmentsLoaded;
+  const loadedSummary = isEmptyTenant
+    ? 'AbarVa has no substrate for this tenant. Once you load enterprise profile, Sentinel can begin answering with provenance.'
+    : greenAndAmber.length === 0
+      ? 'No categories are loaded yet'
+      : greenAndAmber.length <= 2
+        ? `${greenAndAmber.map((b) => b.label).join(' and ')} ${greenAndAmber.length === 1 ? 'is' : 'are'} loaded`
+        : `${greenAndAmber.length} categories — including ${greenAndAmber[0].label} — are loaded`;
 
-  const missingSummary = red.length === 0
-    ? 'every category has at least partial data'
-    : red.length <= 2
-      ? `${red.map((b) => b.label).join(' and ')} ${red.length === 1 ? 'is' : 'are'} empty`
-      : `${red.length} categories — including ${red[0].label} — are empty`;
+  const missingSummary = isEmptyTenant
+    ? 'No segments are loaded yet. Start with org structure or KPI dictionary — the two highest-leverage first loads.'
+    : red.length === 0
+      ? 'every category has at least partial data'
+      : red.length <= 2
+        ? `${red.map((b) => b.label).join(' and ')} ${red.length === 1 ? 'is' : 'are'} empty`
+        : `${red.length} categories — including ${red[0].label} — are empty`;
 
   // Highest-impact next load.
   const emptyOrThin = segments.filter(
@@ -121,6 +138,7 @@ export function composeOverviewBlocks(input: ComposeOverviewInput): OverviewBloc
     missingSummary,
     nextLoadName,
     nextLoadConsequence,
+    isEmptyTenant,
   };
 
   // Action queue: top 5 by impact + SSO if not configured + program approvals if pending.
