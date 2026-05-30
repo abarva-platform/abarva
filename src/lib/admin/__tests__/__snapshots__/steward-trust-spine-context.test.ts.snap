@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`composeStewardTrustSpineContext matches the canonical snapshot for the seeded Apex spine 1`] = `
+"STEWARD TRUST-SPINE CONTEXT (current tenant posture):
+Tenant: Apex Retail (retail)
+Substrate: 14/23 segments mature. Sparsest: Vendor Contracts — unlocks Source vendor diligence and renewal-pressure surfacing.
+Connectors: 5/8 live. 2 degraded — Salesforce (scope mismatch on opportunity_history).
+Isolation: 2 anomalies in last 24h. RLS coverage 95%. Highest severity: high.
+Governance: 3 approvals pending. SSO not configured. 2 open invites. 1 policy-drift events.
+Action queue (priority order):
+  1. Repair degraded connector "Salesforce" — scope mismatch on opportunity_history.
+  2. Review 2 isolation anomaly/anomalies in last 24h (highest severity: high).
+  3. Load substrate segment "Vendor Contracts" — unlocks Source vendor diligence and renewal-pressure surfacing.
+  4. Resolve 3 pending approvals in the approval queue.
+  5. Configure SSO before pilot — currently not configured.
+Ground your "what should I do next" answers in this posture.
+Name specific segments, connectors, and approver roles from the posture above before generic guidance.
+If the user asks "what should I do next?", "what is stuck?", or "what is the next priority?", lead with the highest-leverage action from the action queue."
+`;
