@@ -173,7 +173,11 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
     { num: '04', name: 'Users & Access',       status: 'ready',                                                                 desc: 'RLS-enforced policy, role assignments, SME write permissions.',         foot: 'Roles wired · per-user RLS pilot ready', href: '/admin/users-access' },
     { num: '05', name: 'Agent Readiness',      status: segMature < 18 ? 'attn' : 'ready',                                       desc: 'Per-agent grounding scores: Sentinel, Atlas, Nexus, Steward.',          foot: `Sentinel ${segMature >= 18 ? 'L3' : 'L2'} · others L2`, href: '/admin/agent-readiness' },
     { num: '06', name: 'Production Readiness', status: 'attn',                                                                  desc: 'SSO, audit trail, change-control posture, pen-test status.',            foot: '4 / 6 gates clear', href: '/admin/production-readiness' },
-    { num: '07', name: 'Compliance',           status: 'locked',                                                                desc: 'SOC 2, GDPR, industry frameworks. Locked behind Production gate 5.',    foot: 'Prereq: Pen-test signed', href: '#' },
+    // Wave 3 PR-4 (2026-05-30) · panel-07 wired to /admin/compliance
+    // (posture digest: SOC 2 · GDPR · DPA · Breach SLA). Status is
+    // 'attn' — most cards are in_progress / committed; nothing is
+    // certified yet. Honest, not 'ready'. Per verdict §3 + §7 W3-PR-4.
+    { num: '07', name: 'Compliance',           status: 'attn',                                                                  desc: 'SOC 2, GDPR, DPA, breach-notification SLA — pilot-stage posture.',     foot: 'In progress · readiness underway', href: '/admin/compliance' },
     { num: '08', name: 'Activity Log',         status: 'ready',                                                                 desc: 'Full audit trail: who did what, when, on which substrate.',             foot: '30-day rolling · /admin/audit', href: '/admin/audit' },
   ];
 
