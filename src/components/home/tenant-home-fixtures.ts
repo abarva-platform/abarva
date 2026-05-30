@@ -124,7 +124,7 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
       { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/admin/agent-readiness' },
       { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/admin/production-readiness' },
       { label: 'Compliance', badge: 'locked', status: 'locked', href: '#' },
-      { label: 'Activity Log', badge: '400', status: 'default', href: '/tower/activity' },
+      { label: 'Activity Log', badge: '400', status: 'default', href: '/tower' },
     ],
   },
 ];
@@ -192,7 +192,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Activity Log',
     desc: 'Tenant audit log · last 400 events with full provenance.',
     foot: '400 most recent · live tail',
-    href: '/tower/activity',
+    href: '/tower',
   },
 ];
 
