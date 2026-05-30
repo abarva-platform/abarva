@@ -43,13 +43,17 @@
  *
  * The `intended_tenant` / `resolved_tenant` columns described in
  * the early STRESS-P0-006 design notes do NOT exist on the
- * production `ai_egress_audit` schema today. We derive a
- * tenant-resolution mismatch indicator from `request_metadata`
- * when callers stamp `intendedTenantKey` / `resolvedTenantKey`
- * fields into the metadata JSON; if neither is present, we
- * conservatively report "no observed mismatch" rather than a
- * false negative. This keeps the chip honest until the schema
- * grows first-class columns.
+ * production `ai_egress_audit` schema today. We derive the
+ * tenant-resolution mismatch indicator from `request_metadata`'s
+ * `intendedTenantKey` / `resolvedTenantKey` fields.
+ *
+ * Since PRE-W4-PR-6 (`egress-audit-writer.ts`), tenant stamping is
+ * DEFAULT-ON: every `ai_egress_audit` insert flows through the broker
+ * writer, which mandates both fields and refuses to write the row if
+ * either is missing. Detection is no longer opt-in. Rows that pre-date
+ * the wrapper may still lack stamps; in that historical case the
+ * broker conservatively reports "no observed mismatch" rather than a
+ * false negative.
  *
  * RLS coverage % — there is no programmatic helper yet to compute
  * RLS-policy coverage across tenant-scoped tables. We hardcode

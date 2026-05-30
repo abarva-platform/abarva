@@ -1,5 +1,6 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
 import { createMemoryAiEgressAuditSink, createSupabaseAiEgressAuditSink, type AiEgressAuditSink, type TenantAiPolicy } from '@/lib/integrations/ai-egress';
+import type { EgressAuditTenantContext } from '@/lib/admin/broker/egress-audit-writer';
 import { CONSERVATIVE_TENANT_AI_POLICY } from '@/lib/integrations/ai-egress/policy';
 import { resolvePostgresPoolMax } from '@/lib/data-plane/postgresCompat';
 import type { SentinelReasoningStage } from './types';
@@ -87,8 +88,14 @@ export async function loadSentinelClientPolicy(clientIdOrKey: string): Promise<{
   };
 }
 
-export function createSentinelAiAuditSink(): AiEgressAuditSink {
-  const primary = createSupabaseAiEgressAuditSink();
+// PRE-W4-PR-6: every ai_egress_audit row must stamp intended +
+// resolved tenant. The sink factory now requires the caller to
+// supply the tenant context. The Supabase-backed primary writes
+// through the broker wrapper; on failure we fall back to the
+// in-memory sink (kept for resilience — the sentinel reasoning
+// pipeline must not crash because audit write fails).
+export function createSentinelAiAuditSink(ctx: EgressAuditTenantContext): AiEgressAuditSink {
+  const primary = createSupabaseAiEgressAuditSink(ctx);
   return {
     async write(record) {
       try {
