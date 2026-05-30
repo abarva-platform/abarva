@@ -243,7 +243,7 @@ export function isExplicitConciseAsk(query: string): boolean {
 
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
-    return 'claude-sonnet-4-6';
+    return 'claude-haiku-4-5-20251001';
   }
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
     return 'claude-opus-4-7';
