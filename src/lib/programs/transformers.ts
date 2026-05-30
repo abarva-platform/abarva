@@ -52,7 +52,10 @@ import { PHASE_LABELS } from './types.db';
 import { getPhaseLabel } from './phase-labels';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 
-type TransformerOptions = { supabase?: unknown };
+type TransformerOptions = {
+  supabase?: unknown;
+  evaluateGateCriteria?: boolean;
+};
 
 // ── Client name mapping ────────────────────────────────────────────────
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
@@ -191,6 +194,18 @@ async function buildGateCriteria(
     // NOT list it among the failed checks. With no verified evaluation we
     // never claim completion.
     completed: failedKeys !== null && !failedKeys.has(c.key),
+  }));
+}
+
+function buildUnverifiedGateCriteria(currentPhase: number): StrategicMove['gateCriteria'] {
+  const criteria = gateCriteriaForPhase(currentPhase);
+  if (!criteria) return [];
+  return criteria.map((c) => ({
+    id: c.key,
+    label: c.describe,
+    severity: c.severity,
+    verified: false,
+    completed: false,
   }));
 }
 
@@ -985,7 +1000,6 @@ export async function buildStrategicMove(
   move: ProgramCore,
   opts: TransformerOptions = {},
 ): Promise<StrategicMove> {
-  void opts;
   const [clientRow, peopleRows, activityRows, moduleRows, phaseSnapshots, linkedEvidence, deliverables, moveStatus] = await Promise.all([
     azureRead.maybeSingle<{ id: string; name: string; industry_code: string | null; slug: string | null }>({
       table: 'clients',
@@ -1082,11 +1096,10 @@ export async function buildStrategicMove(
     .slice(0, 12);
 
   const phase = move.currentPhase ?? 0;
-  const gateCriteria: StrategicMove['gateCriteria'] = await buildGateCriteria(
-    ctx,
-    move.id,
-    phase,
-  );
+  const gateCriteria: StrategicMove['gateCriteria'] =
+    opts.evaluateGateCriteria === false
+      ? buildUnverifiedGateCriteria(phase)
+      : await buildGateCriteria(ctx, move.id, phase);
 
   const client = clientRow ?? {
     id: move.clientId,
@@ -1178,7 +1191,13 @@ export async function buildStrategicMovePortfolio(
   programs: ProgramCore[],
   opts: TransformerOptions = {},
 ): Promise<StrategicMovePortfolio> {
-  const moves = await Promise.all(programs.map((program) => buildStrategicMove(ctx, program, opts)));
+  const moves: StrategicMove[] = [];
+  for (const program of programs) {
+    moves.push(await buildStrategicMove(ctx, program, {
+      ...opts,
+      evaluateGateCriteria: opts.evaluateGateCriteria ?? false,
+    }));
+  }
   const counts = {
     total: moves.length,
     needAttention: moves.filter((move) => move.status.key === 'gate_blocked' || move.status.key === 'awaiting_decision').length,
