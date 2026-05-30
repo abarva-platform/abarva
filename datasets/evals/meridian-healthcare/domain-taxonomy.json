@@ -1,0 +1,590 @@
+[
+  {
+    "id": "HEALTHCARE-DOMAIN-001",
+    "domain": "ambient clinical documentation",
+    "domainSlug": "ambient-clinical-documentation",
+    "evidenceTheme": "note accuracy, CDI capture, physician correction fatigue",
+    "ecosystem": "Abridge, Nuance DAX, Suki, Nabla"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-002",
+    "domain": "clinical coding AI",
+    "domainSlug": "clinical-coding-ai",
+    "evidenceTheme": "ICD-10, CPT, HCC v28, query burden",
+    "ecosystem": "3M, Optum, Nuance CAC, ClaimLogiq"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-003",
+    "domain": "prior authorization AI",
+    "domainSlug": "prior-authorization-ai",
+    "evidenceTheme": "payer criteria drift, APIs, attestation, appeals",
+    "ecosystem": "Cohere, Waystar, Availity, Infinitus"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-004",
+    "domain": "RCM denial prevention",
+    "domainSlug": "rcm-denial-prevention",
+    "evidenceTheme": "front-end edits, payer policy, work queues, appeal value",
+    "ecosystem": "Waystar, Optum, Change Healthcare"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-005",
+    "domain": "CDI workflow modernization",
+    "domainSlug": "cdi-workflow-modernization",
+    "evidenceTheme": "CC/MCC capture, physician queries, audit defense",
+    "ecosystem": "Iodine, 3M, Nuance"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-006",
+    "domain": "radiology AI diagnostics",
+    "domainSlug": "radiology-ai-diagnostics",
+    "evidenceTheme": "FDA scope, worklist priority, incidental findings",
+    "ecosystem": "Aidoc, Viz.ai, Sectra, Visage"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-007",
+    "domain": "sepsis and deterioration AI",
+    "domainSlug": "sepsis-and-deterioration-ai",
+    "evidenceTheme": "alert fatigue, PPV, site validation, governance",
+    "ecosystem": "Epic Sepsis Model, Rothman Index, BioSignals"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-008",
+    "domain": "patient access and scheduling",
+    "domainSlug": "patient-access-and-scheduling",
+    "evidenceTheme": "digital front door, leakage, no-show prediction",
+    "ecosystem": "Luma, Kyruus, DexCare"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-009",
+    "domain": "contact center automation",
+    "domainSlug": "contact-center-automation",
+    "evidenceTheme": "call deflection, empathy, escalation, HIPAA controls",
+    "ecosystem": "Genesys, Hyro, Kore.ai"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-010",
+    "domain": "Epic optimization",
+    "domainSlug": "epic-optimization",
+    "evidenceTheme": "module utilization, smart tools, upgrade debt",
+    "ecosystem": "Epic, Nordic, Health Catalyst"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-011",
+    "domain": "EHR data quality",
+    "domainSlug": "ehr-data-quality",
+    "evidenceTheme": "problem list trust, documentation variance, data lineage",
+    "ecosystem": "Epic Cogito, Clarity, Caboodle"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-012",
+    "domain": "interoperability and FHIR",
+    "domainSlug": "interoperability-and-fhir",
+    "evidenceTheme": "TEFCA, payer APIs, prior auth attachments",
+    "ecosystem": "Redox, Particle, Health Gorilla"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-013",
+    "domain": "population health analytics",
+    "domainSlug": "population-health-analytics",
+    "evidenceTheme": "risk stratification, gaps in care, VBC attribution",
+    "ecosystem": "Innovaccer, Arcadia, Health Catalyst"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-014",
+    "domain": "value-based care performance",
+    "domainSlug": "value-based-care-performance",
+    "evidenceTheme": "quality measures, attribution, shared savings",
+    "ecosystem": "Aledade, Innovaccer, payer portals"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-015",
+    "domain": "clinical trial matching AI",
+    "domainSlug": "clinical-trial-matching-ai",
+    "evidenceTheme": "eligibility extraction, consent, research ops",
+    "ecosystem": "Tempus, Deep 6, TriNetX"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-016",
+    "domain": "nursing workforce optimization",
+    "domainSlug": "nursing-workforce-optimization",
+    "evidenceTheme": "acuity, staffing, burnout, float pools",
+    "ecosystem": "QGenda, symplr, ShiftMed"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-017",
+    "domain": "OR block optimization",
+    "domainSlug": "or-block-optimization",
+    "evidenceTheme": "case duration prediction, block release, surgeon behavior",
+    "ecosystem": "LeanTaaS, Qventus"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-018",
+    "domain": "capacity and patient flow",
+    "domainSlug": "capacity-and-patient-flow",
+    "evidenceTheme": "bed management, discharge prediction, transfer center",
+    "ecosystem": "Qventus, TeleTracking, Epic Grand Central"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-019",
+    "domain": "supply chain and preference cards",
+    "domainSlug": "supply-chain-and-preference-cards",
+    "evidenceTheme": "implant cost, substitutions, recall traceability",
+    "ecosystem": "GHX, Workday, Oracle"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-020",
+    "domain": "pharmacy automation and AI",
+    "domainSlug": "pharmacy-automation-and-ai",
+    "evidenceTheme": "formulary, shortages, med safety, prior auth",
+    "ecosystem": "Omnicell, BD, Wolters Kluwer"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-021",
+    "domain": "clinical command center",
+    "domainSlug": "clinical-command-center",
+    "evidenceTheme": "operations cockpit, throughput, alert governance",
+    "ecosystem": "GE Command Center, TeleTracking"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-022",
+    "domain": "AI governance and model risk",
+    "domainSlug": "ai-governance-and-model-risk",
+    "evidenceTheme": "NIST AI RMF, FDA SaMD, clinical oversight",
+    "ecosystem": "model cards, governance boards"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-023",
+    "domain": "HIPAA and BAA controls",
+    "domainSlug": "hipaa-and-baa-controls",
+    "evidenceTheme": "subprocessors, audio, PHI retention, audit logs",
+    "ecosystem": "OneTrust, BigID, vendor BAAs"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-024",
+    "domain": "cyber resilience healthcare",
+    "domainSlug": "cyber-resilience-healthcare",
+    "evidenceTheme": "ransomware, medical devices, identity, recovery",
+    "ecosystem": "CrowdStrike, Zscaler, Mandiant"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-025",
+    "domain": "medical device security",
+    "domainSlug": "medical-device-security",
+    "evidenceTheme": "asset inventory, segmentation, patch windows",
+    "ecosystem": "Medigate, Armis, Ordr"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-026",
+    "domain": "cloud data platform",
+    "domainSlug": "cloud-data-platform",
+    "evidenceTheme": "lakehouse, clinical data model, governed AI",
+    "ecosystem": "Azure, Databricks, Snowflake, Microsoft Fabric"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-027",
+    "domain": "AI data platform operations",
+    "domainSlug": "ai-data-platform-operations",
+    "evidenceTheme": "feature store, model monitoring, retraining",
+    "ecosystem": "Databricks, MLflow, Azure ML"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-028",
+    "domain": "payer-provider data exchange",
+    "domainSlug": "payer-provider-data-exchange",
+    "evidenceTheme": "UM, quality, risk adjustment, claims",
+    "ecosystem": "Availity, Edifecs, MCG"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-029",
+    "domain": "consumer CRM and personalization",
+    "domainSlug": "consumer-crm-and-personalization",
+    "evidenceTheme": "segmentation, outreach, consent, leakage",
+    "ecosystem": "Salesforce Health Cloud, Adobe, Braze"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-030",
+    "domain": "digital therapeutics and remote care",
+    "domainSlug": "digital-therapeutics-and-remote-care",
+    "evidenceTheme": "RPM, device data, reimbursement, adherence",
+    "ecosystem": "Cadence, Biofourmis, Validic"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-031",
+    "domain": "virtual nursing",
+    "domainSlug": "virtual-nursing",
+    "evidenceTheme": "workflow design, patient safety, RN productivity",
+    "ecosystem": "Care.ai, AvaSure, Artisight"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-032",
+    "domain": "clinical documentation integrity audits",
+    "domainSlug": "clinical-documentation-integrity-audits",
+    "evidenceTheme": "audit defense, payer challenge, query evidence",
+    "ecosystem": "3M, Iodine, Chartis"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-033",
+    "domain": "quality and safety reporting",
+    "domainSlug": "quality-and-safety-reporting",
+    "evidenceTheme": "incident data, RCA, regulatory reporting",
+    "ecosystem": "RLDatix, Vizient, Press Ganey"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-034",
+    "domain": "patient experience analytics",
+    "domainSlug": "patient-experience-analytics",
+    "evidenceTheme": "HCAHPS, sentiment, service recovery",
+    "ecosystem": "Press Ganey, NRC Health, Qualtrics"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-035",
+    "domain": "healthcare ERP modernization",
+    "domainSlug": "healthcare-erp-modernization",
+    "evidenceTheme": "Workday/Oracle, supply chain, HR, finance",
+    "ecosystem": "Workday, Oracle, Deloitte, Accenture"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-036",
+    "domain": "ServiceNow healthcare ops",
+    "domainSlug": "servicenow-healthcare-ops",
+    "evidenceTheme": "ITSM, HRSD, clinical engineering workflows",
+    "ecosystem": "ServiceNow, KPMG, Cognizant"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-037",
+    "domain": "vendor contract optimization",
+    "domainSlug": "vendor-contract-optimization",
+    "evidenceTheme": "renewals, scope leakage, outcome pricing",
+    "ecosystem": "Epic, Microsoft, Optum, SI contracts"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-038",
+    "domain": "managed services and SI strategy",
+    "domainSlug": "managed-services-and-si-strategy",
+    "evidenceTheme": "AMS, Epic support, cloud ops, productivity guarantees",
+    "ecosystem": "Accenture, Deloitte, Cognizant, Nordic"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-039",
+    "domain": "AI startup ecosystem diligence",
+    "domainSlug": "ai-startup-ecosystem-diligence",
+    "evidenceTheme": "funding runway, clinical evidence, integration, compliance",
+    "ecosystem": "healthcare AI startups"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-040",
+    "domain": "agentic care navigation",
+    "domainSlug": "agentic-care-navigation",
+    "evidenceTheme": "bounded agents, handoffs, patient safety, escalation",
+    "ecosystem": "Hyro, Fabric, Memora"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-041",
+    "domain": "agentic revenue cycle",
+    "domainSlug": "agentic-revenue-cycle",
+    "evidenceTheme": "claim worklists, appeal drafting, human review",
+    "ecosystem": "AKASA, CodaMetrix, Waystar"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-042",
+    "domain": "clinical knowledge assistants",
+    "domainSlug": "clinical-knowledge-assistants",
+    "evidenceTheme": "RAG over policies, order sets, guidelines",
+    "ecosystem": "Microsoft, Google, OpenAI healthcare partners"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-043",
+    "domain": "research data and AI",
+    "domainSlug": "research-data-and-ai",
+    "evidenceTheme": "de-identification, IRB, local models, cloud evaluation",
+    "ecosystem": "Palantir, TriNetX, Azure AI"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-044",
+    "domain": "imaging archive modernization",
+    "domainSlug": "imaging-archive-modernization",
+    "evidenceTheme": "PACS/VNA, cloud imaging, AI routing",
+    "ecosystem": "Sectra, Visage, GE, Philips"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-045",
+    "domain": "cardiology AI workflows",
+    "domainSlug": "cardiology-ai-workflows",
+    "evidenceTheme": "ECG AI, echo quantification, cath lab throughput",
+    "ecosystem": "HeartFlow, Caption Health, Ultromics"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-046",
+    "domain": "oncology navigation AI",
+    "domainSlug": "oncology-navigation-ai",
+    "evidenceTheme": "pathway adherence, trial matching, prior auth",
+    "ecosystem": "Flatiron, Thyme Care, Tempus"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-047",
+    "domain": "behavioral health access",
+    "domainSlug": "behavioral-health-access",
+    "evidenceTheme": "triage, network adequacy, digital therapy",
+    "ecosystem": "Quartet, Lyra, Talkspace"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-048",
+    "domain": "home health and post-acute",
+    "domainSlug": "home-health-and-post-acute",
+    "evidenceTheme": "referral leakage, readmissions, staffing",
+    "ecosystem": "WellSky, Netsmart, CarePort"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-049",
+    "domain": "risk adjustment and MA stars",
+    "domainSlug": "risk-adjustment-and-ma-stars",
+    "evidenceTheme": "RAF, HCC, chart retrieval, closure",
+    "ecosystem": "Reveleer, Cotiviti, Optum"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-050",
+    "domain": "payer contracting analytics",
+    "domainSlug": "payer-contracting-analytics",
+    "evidenceTheme": "rate modeling, denials, contract terms",
+    "ecosystem": "Strata, Kodiak, Syntellis"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-051",
+    "domain": "financial planning and margin",
+    "domainSlug": "financial-planning-and-margin",
+    "evidenceTheme": "service-line margin, cost accounting, value realization",
+    "ecosystem": "Strata, Kaufman Hall, Oracle"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-052",
+    "domain": "clinical AI procurement clauses",
+    "domainSlug": "clinical-ai-procurement-clauses",
+    "evidenceTheme": "model updates, validation SLA, indemnity, FDA scope",
+    "ecosystem": "Source clause library"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-053",
+    "domain": "data governance and stewardship",
+    "domainSlug": "data-governance-and-stewardship",
+    "evidenceTheme": "ownership, lineage, quality, access",
+    "ecosystem": "Collibra, Alation, Informatica"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-054",
+    "domain": "identity and access healthcare",
+    "domainSlug": "identity-and-access-healthcare",
+    "evidenceTheme": "privileged access, clinician UX, break-glass",
+    "ecosystem": "Okta, SailPoint, CyberArk"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-055",
+    "domain": "observability and integration",
+    "domainSlug": "observability-and-integration",
+    "evidenceTheme": "interface engine, HL7/FHIR monitoring, uptime",
+    "ecosystem": "Mirth, Rhapsody, Datadog"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-056",
+    "domain": "patient financial experience",
+    "domainSlug": "patient-financial-experience",
+    "evidenceTheme": "estimates, payment plans, collections, charity care",
+    "ecosystem": "Cedar, Flywire, RevSpring"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-057",
+    "domain": "Meridian prior auth sourcing case",
+    "domainSlug": "meridian-prior-auth-sourcing-case",
+    "evidenceTheme": "Waystar vs Cohere, Epic module conflict, CMS deadlines",
+    "ecosystem": "Cohere, Waystar, Epic"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-058",
+    "domain": "Meridian research AI posture",
+    "domainSlug": "meridian-research-ai-posture",
+    "evidenceTheme": "local-first AI, Palantir/Hadoop/private GPU, cloud push",
+    "ecosystem": "Palantir, Azure, AWS, NVIDIA"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-059",
+    "domain": "Meridian Epic owned-module activation",
+    "domainSlug": "meridian-epic-owned-module-activation",
+    "evidenceTheme": "already purchased modules, adoption gap, spend avoidance",
+    "ecosystem": "Epic, internal PMO"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-060",
+    "domain": "Meridian cloud AI evaluation",
+    "domainSlug": "meridian-cloud-ai-evaluation",
+    "evidenceTheme": "Azure vs AWS, data residency, model governance",
+    "ecosystem": "Azure AI Foundry, Bedrock, OpenAI"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-061",
+    "domain": "Meridian executive tension map",
+    "domainSlug": "meridian-executive-tension-map",
+    "evidenceTheme": "CIO pressure, CMIO safety, CFO value proof, CDAO data trust",
+    "ecosystem": "Meridian personas"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-062",
+    "domain": "Meridian Source value case",
+    "domainSlug": "meridian-source-value-case",
+    "evidenceTheme": "vendor evaluation, contract negotiation, savings proof",
+    "ecosystem": "Source sourcing workflow"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-063",
+    "domain": "Meridian Tower AI portfolio",
+    "domainSlug": "meridian-tower-ai-portfolio",
+    "evidenceTheme": "initiative inventory, realized vs projected value, pressure map",
+    "ecosystem": "Tower control view"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-064",
+    "domain": "Meridian patient safety AI board memo",
+    "domainSlug": "meridian-patient-safety-ai-board-memo",
+    "evidenceTheme": "clinical risk, governance, validation, escalation",
+    "ecosystem": "board evidence packet"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-065",
+    "domain": "Meridian innovation funnel",
+    "domainSlug": "meridian-innovation-funnel",
+    "evidenceTheme": "startup intake, pilot gates, evidence thresholds",
+    "ecosystem": "innovation office"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-066",
+    "domain": "Meridian compliance and audit evidence",
+    "domainSlug": "meridian-compliance-and-audit-evidence",
+    "evidenceTheme": "SOC2, HIPAA, DPA, breach SLA, AI governance",
+    "ecosystem": "compliance office"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-067",
+    "domain": "Meridian IT productivity AI",
+    "domainSlug": "meridian-it-productivity-ai",
+    "evidenceTheme": "developer tools, DORA, Epic-adjacent engineering, governance",
+    "ecosystem": "Copilot, Cursor, Azure DevOps"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-068",
+    "domain": "Meridian operating model",
+    "domainSlug": "meridian-operating-model",
+    "evidenceTheme": "internal IT, SI, clinicians, data teams, procurement",
+    "ecosystem": "RACI, capability model"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-069",
+    "domain": "Meridian context-layer setup",
+    "domainSlug": "meridian-context-layer-setup",
+    "evidenceTheme": "CMDB, app portfolio, contracts, KPIs, policies",
+    "ecosystem": "Setup module"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-070",
+    "domain": "Meridian AI value realization",
+    "domainSlug": "meridian-ai-value-realization",
+    "evidenceTheme": "benefit tracking, adoption, baseline, finance signoff",
+    "ecosystem": "Tower value ledger"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-071",
+    "domain": "Meridian evidence gap refusal",
+    "domainSlug": "meridian-evidence-gap-refusal",
+    "evidenceTheme": "missing facts, no hallucination, next ingest",
+    "ecosystem": "Sentinel refusal policy"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-072",
+    "domain": "Meridian cross-module journey",
+    "domainSlug": "meridian-cross-module-journey",
+    "evidenceTheme": "Intelligence to Move to Source to Tower",
+    "ecosystem": "AbarVa module chain"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-073",
+    "domain": "Meridian ambient AI vendor diligence",
+    "domainSlug": "meridian-ambient-ai-vendor-diligence",
+    "evidenceTheme": "specialty fit, BAA subprocessors, note audit, Epic workflow",
+    "ecosystem": "Abridge, DAX, Suki, Nabla"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-074",
+    "domain": "Meridian prior auth appeals automation",
+    "domainSlug": "meridian-prior-auth-appeals-automation",
+    "evidenceTheme": "appeal drafting, payer evidence, physician attestation, audit trail",
+    "ecosystem": "Cohere, Waystar, Availity"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-075",
+    "domain": "Meridian clinical AI safety board",
+    "domainSlug": "meridian-clinical-ai-safety-board",
+    "evidenceTheme": "model inventory, validation, override, incident review",
+    "ecosystem": "NIST AI RMF, FDA SaMD, clinical governance"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-076",
+    "domain": "Meridian pharmacy prior auth and specialty meds",
+    "domainSlug": "meridian-pharmacy-prior-auth-and-specialty-meds",
+    "evidenceTheme": "drug criteria, payer portals, patient affordability",
+    "ecosystem": "CoverMyMeds, Epic Willow, specialty pharmacy tools"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-077",
+    "domain": "Meridian digital front door economics",
+    "domainSlug": "meridian-digital-front-door-economics",
+    "evidenceTheme": "conversion, leakage, scheduling, call deflection",
+    "ecosystem": "Luma, DexCare, Kyruus, Salesforce"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-078",
+    "domain": "Meridian claims clearinghouse resilience",
+    "domainSlug": "meridian-claims-clearinghouse-resilience",
+    "evidenceTheme": "Change Healthcare lessons, redundancy, downtime playbook",
+    "ecosystem": "Waystar, Availity, Change Healthcare"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-079",
+    "domain": "Meridian data de-identification for AI",
+    "domainSlug": "meridian-data-de-identification-for-ai",
+    "evidenceTheme": "PHI minimization, research reuse, synthetic data, auditability",
+    "ecosystem": "MDClone, Gretel, Datavant"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-080",
+    "domain": "Meridian AI adoption management",
+    "domainSlug": "meridian-ai-adoption-management",
+    "evidenceTheme": "clinician trust, workflow redesign, training, usage telemetry",
+    "ecosystem": "WalkMe, Pendo, Epic Signal"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-081",
+    "domain": "Meridian medical imaging cloud economics",
+    "domainSlug": "meridian-medical-imaging-cloud-economics",
+    "evidenceTheme": "storage, egress, AI inference, radiologist workflow",
+    "ecosystem": "Sectra, Visage, AWS HealthImaging"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-082",
+    "domain": "Meridian payer contract leakage analytics",
+    "domainSlug": "meridian-payer-contract-leakage-analytics",
+    "evidenceTheme": "underpayment, carve-outs, denials, rate modeling",
+    "ecosystem": "Kodiak, Strata, Syntellis"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-083",
+    "domain": "Meridian agentic patient communications",
+    "domainSlug": "meridian-agentic-patient-communications",
+    "evidenceTheme": "bounded outreach, consent, escalation, language access",
+    "ecosystem": "Twilio, Hyro, Memora, Fabric"
+  },
+  {
+    "id": "HEALTHCARE-DOMAIN-084",
+    "domain": "Meridian innovation procurement governance",
+    "domainSlug": "meridian-innovation-procurement-governance",
+    "evidenceTheme": "startup risk, pilot exit, data rights, evidence threshold",
+    "ecosystem": "Source governance templates"
+  }
+]

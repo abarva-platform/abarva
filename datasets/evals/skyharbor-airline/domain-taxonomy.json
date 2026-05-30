@@ -1,0 +1,590 @@
+[
+  {
+    "id": "AIRLINE-DOMAIN-001",
+    "domain": "PSS booking modernization",
+    "domainSlug": "pss-booking-modernization",
+    "evidenceTheme": "offer/order APIs, PNR compatibility, servicing authority",
+    "ecosystem": "Amadeus, Sabre, Accelya, AWS migration studios"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-002",
+    "domain": "departure control and airport cutover",
+    "domainSlug": "departure-control-and-airport-cutover",
+    "evidenceTheme": "DCS authority, load control, irregular operations fallbacks",
+    "ecosystem": "SITA, Amadeus Altéa DCS, airport common-use vendors"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-003",
+    "domain": "revenue management AI",
+    "domainSlug": "revenue-management-ai",
+    "evidenceTheme": "dynamic pricing, demand forecasting, fare floor governance",
+    "ecosystem": "PROS, Amadeus RM, IDeaS, Fetcherr"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-004",
+    "domain": "NDC offer personalization",
+    "domainSlug": "ndc-offer-personalization",
+    "evidenceTheme": "bundles, ancillaries, channel economics, inventory hard gates",
+    "ecosystem": "ATPCO, Accelya, Amadeus, Duffel"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-005",
+    "domain": "loyalty personalization",
+    "domainSlug": "loyalty-personalization",
+    "evidenceTheme": "tier economics, breakage, redemption optimization, consent",
+    "ecosystem": "Salesforce, Adobe, Braze, Snowflake clean rooms"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-006",
+    "domain": "customer digital servicing",
+    "domainSlug": "customer-digital-servicing",
+    "evidenceTheme": "chat, disruption rebooking, refund status, PNR write authority",
+    "ecosystem": "Genesys, Ada, Kore.ai, AWS Connect"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-007",
+    "domain": "IROPs recovery optimization",
+    "domainSlug": "irops-recovery-optimization",
+    "evidenceTheme": "crew, aircraft, gate, hotel, reaccommodation constraints",
+    "ecosystem": "GE FlightPulse, CAE, INFORM, custom optimization"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-008",
+    "domain": "crew scheduling modernization",
+    "domainSlug": "crew-scheduling-modernization",
+    "evidenceTheme": "legality rules, bid lines, fatigue, reserve utilization",
+    "ecosystem": "Jeppesen, CAE, Sabre Crew Manager"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-009",
+    "domain": "fleet assignment optimization",
+    "domainSlug": "fleet-assignment-optimization",
+    "evidenceTheme": "tail assignment, maintenance constraints, payload, route profit",
+    "ecosystem": "Optym, Boeing AnalytX, custom OR tools"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-010",
+    "domain": "predictive maintenance AI",
+    "domainSlug": "predictive-maintenance-ai",
+    "evidenceTheme": "sensor drift, MEL deferral, airworthiness records, Part 145 audit",
+    "ecosystem": "Airbus Skywise, Boeing AnalytX, AMOS, GE Digital"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-011",
+    "domain": "MRO integration",
+    "domainSlug": "mro-integration",
+    "evidenceTheme": "AMOS, parts inventory, work packages, engineering orders",
+    "ecosystem": "Swiss-AS AMOS, Ramco, Trax, Lufthansa Technik"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-012",
+    "domain": "cargo yield and capacity",
+    "domainSlug": "cargo-yield-and-capacity",
+    "evidenceTheme": "belly cargo, dynamic capacity, interline, customs data",
+    "ecosystem": "CHAMP, IBS, CargoAi"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-013",
+    "domain": "fuel optimization",
+    "domainSlug": "fuel-optimization",
+    "evidenceTheme": "tankering, route burn, sustainability, dispatch authority",
+    "ecosystem": "OpenAirlines SkyBreathe, GE, Boeing"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-014",
+    "domain": "airport turn optimization",
+    "domainSlug": "airport-turn-optimization",
+    "evidenceTheme": "gate, ramp, catering, cleaning, baggage dependencies",
+    "ecosystem": "Assaia, AeroCloud, INFORM"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-015",
+    "domain": "baggage operations AI",
+    "domainSlug": "baggage-operations-ai",
+    "evidenceTheme": "mishandled bag prediction, RFID, claims, station accountability",
+    "ecosystem": "SITA BagJourney, BagsID, Zebra"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-016",
+    "domain": "contact center transformation",
+    "domainSlug": "contact-center-transformation",
+    "evidenceTheme": "call deflection, complex servicing, empathy, escalation",
+    "ecosystem": "Genesys, Five9, NICE, Cognigy"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-017",
+    "domain": "mobile app conversion",
+    "domainSlug": "mobile-app-conversion",
+    "evidenceTheme": "booking funnel, wallet, disruption UX, seat maps",
+    "ecosystem": "Adobe, Contentful, LaunchDarkly, Firebase"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-018",
+    "domain": "retail payment modernization",
+    "domainSlug": "retail-payment-modernization",
+    "evidenceTheme": "fraud, tokenization, chargebacks, split tenders",
+    "ecosystem": "Adyen, Stripe, Worldpay, CyberSource"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-019",
+    "domain": "mainframe workload extraction",
+    "domainSlug": "mainframe-workload-extraction",
+    "evidenceTheme": "transaction volume, coupling, batch windows, rollback",
+    "ecosystem": "IBM Z, AWS Mainframe Modernization, Kyndryl"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-020",
+    "domain": "COBOL analysis and SDLC AI",
+    "domainSlug": "cobol-analysis-and-sdlc-ai",
+    "evidenceTheme": "dependency mining, test generation, code assistants, review gates",
+    "ecosystem": "IBM watsonx Code Assistant, Amazon Q, GitHub Copilot"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-021",
+    "domain": "event streaming topology",
+    "domainSlug": "event-streaming-topology",
+    "evidenceTheme": "CDC, dual-write, event contracts, latency classes",
+    "ecosystem": "Confluent, MSK, Kinesis, Debezium"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-022",
+    "domain": "AWS landing zone governance",
+    "domainSlug": "aws-landing-zone-governance",
+    "evidenceTheme": "account sprawl, EDP exposure, security baselines, FinOps",
+    "ecosystem": "AWS Control Tower, Wiz, Datadog, CloudHealth"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-023",
+    "domain": "data lakehouse and CDP",
+    "domainSlug": "data-lakehouse-and-cdp",
+    "evidenceTheme": "customer 360, operational lake, consent, lineage",
+    "ecosystem": "Snowflake, Databricks, AWS Redshift, Collibra"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-024",
+    "domain": "AI governance for airline ops",
+    "domainSlug": "ai-governance-for-airline-ops",
+    "evidenceTheme": "safety-critical boundaries, human override, DOT disclosure",
+    "ecosystem": "Model cards, NIST AI RMF, FAA/EASA constraints"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-025",
+    "domain": "vendor concentration and IBM dependency",
+    "domainSlug": "vendor-concentration-and-ibm-dependency",
+    "evidenceTheme": "transition rights, productivity guarantees, knowledge transfer",
+    "ecosystem": "IBM, Kyndryl, TCS, Accenture"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-026",
+    "domain": "GCC scale-up",
+    "domainSlug": "gcc-scale-up",
+    "evidenceTheme": "role mix, offshore operating model, quality gates, attrition",
+    "ecosystem": "Bangalore, Hyderabad, peer carrier benchmarks"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-027",
+    "domain": "cyber control plane",
+    "domainSlug": "cyber-control-plane",
+    "evidenceTheme": "identity, endpoint, cloud posture, OT/airport systems",
+    "ecosystem": "CrowdStrike, Wiz, Zscaler, Okta"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-028",
+    "domain": "privacy and loyalty data",
+    "domainSlug": "privacy-and-loyalty-data",
+    "evidenceTheme": "consent, segmentation, location data, privacy requests",
+    "ecosystem": "OneTrust, Transcend, BigID"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-029",
+    "domain": "ERP and finance modernization",
+    "domainSlug": "erp-and-finance-modernization",
+    "evidenceTheme": "revenue accounting, settlement, close, tax",
+    "ecosystem": "SAP, Oracle, BlackLine"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-030",
+    "domain": "source-to-pay and procurement",
+    "domainSlug": "source-to-pay-and-procurement",
+    "evidenceTheme": "supplier leverage, renewal windows, savings proof",
+    "ecosystem": "Coupa, Ariba, Ivalua"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-031",
+    "domain": "airline retail media",
+    "domainSlug": "airline-retail-media",
+    "evidenceTheme": "audience monetization, clean rooms, partner governance",
+    "ecosystem": "LiveRamp, Snowflake, InfoSum"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-032",
+    "domain": "sustainability and SAF accounting",
+    "domainSlug": "sustainability-and-saf-accounting",
+    "evidenceTheme": "emissions, SAF credits, ESG evidence",
+    "ecosystem": "Salesforce Net Zero Cloud, Watershed"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-033",
+    "domain": "network planning AI",
+    "domainSlug": "network-planning-ai",
+    "evidenceTheme": "route profitability, competitive capacity, slot constraints",
+    "ecosystem": "OAG, Cirium, Sabre AirVision"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-034",
+    "domain": "schedule planning and recovery",
+    "domainSlug": "schedule-planning-and-recovery",
+    "evidenceTheme": "rotations, bank structure, minimum connect times",
+    "ecosystem": "Sabre, Amadeus, Optym"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-035",
+    "domain": "revenue accounting",
+    "domainSlug": "revenue-accounting",
+    "evidenceTheme": "interline settlement, proration, tax, audit controls",
+    "ecosystem": "Accelya, SAP, custom mainframe"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-036",
+    "domain": "fraud and account takeover",
+    "domainSlug": "fraud-and-account-takeover",
+    "evidenceTheme": "loyalty fraud, payment fraud, bot defense",
+    "ecosystem": "Sift, Forter, Arkose, BioCatch"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-037",
+    "domain": "airport common-use integration",
+    "domainSlug": "airport-common-use-integration",
+    "evidenceTheme": "CUTE/CUPPS, kiosk, bag drop, station resilience",
+    "ecosystem": "SITA, Collins, Materna"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-038",
+    "domain": "customer profile dual-run",
+    "domainSlug": "customer-profile-dual-run",
+    "evidenceTheme": "mainframe/Aurora dual writes, identity merge, latency",
+    "ecosystem": "AWS Aurora, DynamoDB, MDM tools"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-039",
+    "domain": "board modernization narrative",
+    "domainSlug": "board-modernization-narrative",
+    "evidenceTheme": "defensible progress, value ledger, CIO pressure",
+    "ecosystem": "AbarVa Tower, value-ledger evidence"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-040",
+    "domain": "AI-powered PMO",
+    "domainSlug": "ai-powered-pmo",
+    "evidenceTheme": "portfolio prioritization, dependency tracking, value assurance",
+    "ecosystem": "Atlassian Intelligence, Jira Align, AbarVa"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-041",
+    "domain": "agentic operations assistant",
+    "domainSlug": "agentic-operations-assistant",
+    "evidenceTheme": "bounded actions, runbook authority, incident handoff",
+    "ecosystem": "ServiceNow, Moveworks, custom agents"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-042",
+    "domain": "regulatory disclosure and DOT risk",
+    "domainSlug": "regulatory-disclosure-and-dot-risk",
+    "evidenceTheme": "pricing fairness, cancellations, refunds, accessibility",
+    "ecosystem": "DOT, FAA, FTC, state privacy"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-043",
+    "domain": "safety management system data",
+    "domainSlug": "safety-management-system-data",
+    "evidenceTheme": "SMS reporting, hazard taxonomy, human factors",
+    "ecosystem": "SafetyNet, Ideagen, Q-Pulse"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-044",
+    "domain": "pilot training and simulation tech",
+    "domainSlug": "pilot-training-and-simulation-tech",
+    "evidenceTheme": "training records, simulator capacity, adaptive learning",
+    "ecosystem": "CAE, FlightSafety, Skyborne"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-045",
+    "domain": "maintenance supply chain",
+    "domainSlug": "maintenance-supply-chain",
+    "evidenceTheme": "rotables, AOG events, vendor SLAs, parts pooling",
+    "ecosystem": "Aeroxchange, IFS, AMOS"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-046",
+    "domain": "loyalty finance and liability",
+    "domainSlug": "loyalty-finance-and-liability",
+    "evidenceTheme": "points liability, partner economics, redemption controls",
+    "ecosystem": "SAP, Oracle, loyalty finance tools"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-047",
+    "domain": "retail ancillary merchandising",
+    "domainSlug": "retail-ancillary-merchandising",
+    "evidenceTheme": "seats, bags, upgrades, subscription products",
+    "ecosystem": "ATPCO, Plusgrade, CarTrawler"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-048",
+    "domain": "hotel and disruption vendor sourcing",
+    "domainSlug": "hotel-and-disruption-vendor-sourcing",
+    "evidenceTheme": "crew/customer lodging, rates, automation",
+    "ecosystem": "HotelHub, Travelliance, Accommodations Plus"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-049",
+    "domain": "call center workforce AI",
+    "domainSlug": "call-center-workforce-ai",
+    "evidenceTheme": "forecasting, QA, knowledge assist, coaching",
+    "ecosystem": "NICE, Verint, Observe.AI"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-050",
+    "domain": "engineering productivity baseline",
+    "domainSlug": "engineering-productivity-baseline",
+    "evidenceTheme": "DORA, environment provisioning, test automation",
+    "ecosystem": "GitHub, Harness, LaunchDarkly"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-051",
+    "domain": "API monetization and partner gateway",
+    "domainSlug": "api-monetization-and-partner-gateway",
+    "evidenceTheme": "travel partners, GDS bypass, rate limiting",
+    "ecosystem": "Apigee, Kong, AWS API Gateway"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-052",
+    "domain": "data quality and lineage",
+    "domainSlug": "data-quality-and-lineage",
+    "evidenceTheme": "flight, customer, finance lineage and trust",
+    "ecosystem": "Collibra, Monte Carlo, Great Expectations"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-053",
+    "domain": "AI procurement clauses",
+    "domainSlug": "ai-procurement-clauses",
+    "evidenceTheme": "model updates, indemnity, audit rights, data retention",
+    "ecosystem": "Contract language, model governance schedules"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-054",
+    "domain": "cloud cost and EDP true-up",
+    "domainSlug": "cloud-cost-and-edp-true-up",
+    "evidenceTheme": "commit utilization, reserved capacity, migration timing",
+    "ecosystem": "AWS EDP, Apptio, CloudHealth"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-055",
+    "domain": "integration fragility heatmap",
+    "domainSlug": "integration-fragility-heatmap",
+    "evidenceTheme": "batch files, CDC, dual writes, API dependencies",
+    "ecosystem": "Mulesoft, Confluent, Boomi"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-056",
+    "domain": "customer accessibility tech",
+    "domainSlug": "customer-accessibility-tech",
+    "evidenceTheme": "DOT accessibility, assistive UX, service animal workflows",
+    "ecosystem": "Deque, Level Access"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-057",
+    "domain": "crew mobile and field UX",
+    "domainSlug": "crew-mobile-and-field-ux",
+    "evidenceTheme": "offline mode, real-time updates, duty day data",
+    "ecosystem": "Custom mobile, VMware Workspace ONE"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-058",
+    "domain": "station manager cockpit",
+    "domainSlug": "station-manager-cockpit",
+    "evidenceTheme": "turn KPIs, staffing, disruption alerts, local decisions",
+    "ecosystem": "AeroCloud, ServiceNow, custom dashboards"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-059",
+    "domain": "airline data science platform",
+    "domainSlug": "airline-data-science-platform",
+    "evidenceTheme": "feature stores, experiment tracking, MLOps",
+    "ecosystem": "SageMaker, Databricks, MLflow"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-060",
+    "domain": "model risk and drift telemetry",
+    "domainSlug": "model-risk-and-drift-telemetry",
+    "evidenceTheme": "monitoring, rollback, validation, auditability",
+    "ecosystem": "WhyLabs, Arize, Fiddler"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-061",
+    "domain": "knowledge transfer from SI",
+    "domainSlug": "knowledge-transfer-from-si",
+    "evidenceTheme": "documentation, shadowing, exit tests, source ownership",
+    "ecosystem": "IBM, Accenture, Kyndryl transition obligations"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-062",
+    "domain": "contract productivity guarantees",
+    "domainSlug": "contract-productivity-guarantees",
+    "evidenceTheme": "baseline, measurement, credits, disputes",
+    "ecosystem": "MSA schedules, gainshare terms"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-063",
+    "domain": "technology debt value ledger",
+    "domainSlug": "technology-debt-value-ledger",
+    "evidenceTheme": "run cost, risk reduction, cycle time, resilience",
+    "ecosystem": "AbarVa value ledger"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-064",
+    "domain": "customer trust during disruption",
+    "domainSlug": "customer-trust-during-disruption",
+    "evidenceTheme": "communications, refunds, proactive support",
+    "ecosystem": "Braze, Salesforce, Twilio"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-065",
+    "domain": "airport IoT and edge",
+    "domainSlug": "airport-iot-and-edge",
+    "evidenceTheme": "sensors, cameras, local processing, privacy",
+    "ecosystem": "Cisco, AWS IoT, Axis, Assaia"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-066",
+    "domain": "airline cyber incident response",
+    "domainSlug": "airline-cyber-incident-response",
+    "evidenceTheme": "ransomware, identity, booking outage, crisis comms",
+    "ecosystem": "Mandiant, CrowdStrike, Okta"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-067",
+    "domain": "zero-trust airport workforce",
+    "domainSlug": "zero-trust-airport-workforce",
+    "evidenceTheme": "contractor access, station devices, privileged access",
+    "ecosystem": "Zscaler, Okta, CyberArk"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-068",
+    "domain": "enterprise architecture governance",
+    "domainSlug": "enterprise-architecture-governance",
+    "evidenceTheme": "extraction sequencing, standards, waivers",
+    "ecosystem": "LeanIX, Ardoq, ServiceNow APM"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-069",
+    "domain": "service management modernization",
+    "domainSlug": "service-management-modernization",
+    "evidenceTheme": "ITSM, CMDB trust, incident automation",
+    "ecosystem": "ServiceNow, Jira Service Management"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-070",
+    "domain": "quality engineering modernization",
+    "domainSlug": "quality-engineering-modernization",
+    "evidenceTheme": "synthetic testing, contract tests, chaos drills",
+    "ecosystem": "Tricentis, Pact, Gremlin"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-071",
+    "domain": "real-time ops decision intelligence",
+    "domainSlug": "real-time-ops-decision-intelligence",
+    "evidenceTheme": "fusion of flight, crew, airport, customer data",
+    "ecosystem": "AbarVa Intelligence, event mesh"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-072",
+    "domain": "change adoption for frontline ops",
+    "domainSlug": "change-adoption-for-frontline-ops",
+    "evidenceTheme": "training, station variance, union considerations",
+    "ecosystem": "WalkMe, Pendo, learning platforms"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-073",
+    "domain": "commercial experimentation platform",
+    "domainSlug": "commercial-experimentation-platform",
+    "evidenceTheme": "A/B tests, attribution, guardrails",
+    "ecosystem": "Optimizely, Statsig, Adobe Target"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-074",
+    "domain": "board and audit evidence package",
+    "domainSlug": "board-and-audit-evidence-package",
+    "evidenceTheme": "source trace, citations, value proof, risk dissent",
+    "ecosystem": "AbarVa proof chain"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-075",
+    "domain": "AI agent authorization model",
+    "domainSlug": "ai-agent-authorization-model",
+    "evidenceTheme": "read/write permissions, approvals, bounded autonomy",
+    "ecosystem": "Clerk, policy engine, audit log"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-076",
+    "domain": "vendor renewal pipeline",
+    "domainSlug": "vendor-renewal-pipeline",
+    "evidenceTheme": "renewals, restructure windows, RFP timing",
+    "ecosystem": "Source pipeline, procurement calendar"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-077",
+    "domain": "cross-tenant demo isolation",
+    "domainSlug": "cross-tenant-demo-isolation",
+    "evidenceTheme": "synthetic tenant, no Delta marks, no leakage",
+    "ecosystem": "AbarVa tenant isolation tests"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-078",
+    "domain": "technology operating model",
+    "domainSlug": "technology-operating-model",
+    "evidenceTheme": "internal, SI, GCC, cloud vendor roles",
+    "ecosystem": "RACI, capability model, Tower"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-079",
+    "domain": "AI SDLC adoption economics",
+    "domainSlug": "ai-sdlc-adoption-economics",
+    "evidenceTheme": "developer throughput, review quality, run savings",
+    "ecosystem": "Copilot, Cursor, Amazon Q"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-080",
+    "domain": "airport ops digital twin",
+    "domainSlug": "airport-ops-digital-twin",
+    "evidenceTheme": "simulation, constraints, data fidelity",
+    "ecosystem": "TwinThread, AnyLogic, Siemens"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-081",
+    "domain": "aircraft reliability analytics",
+    "domainSlug": "aircraft-reliability-analytics",
+    "evidenceTheme": "delay codes, repeat defects, root cause",
+    "ecosystem": "Boeing AnalytX, GE, AMOS"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-082",
+    "domain": "loyalty partner ecosystem",
+    "domainSlug": "loyalty-partner-ecosystem",
+    "evidenceTheme": "co-brand, hotels, rideshare, data exchange",
+    "ecosystem": "Visa, Amex, partner clean rooms"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-083",
+    "domain": "executive modernization tension",
+    "domainSlug": "executive-modernization-tension",
+    "evidenceTheme": "CTO progress narrative vs CIO acceleration ask",
+    "ecosystem": "SkyHarbor executive decision map"
+  },
+  {
+    "id": "AIRLINE-DOMAIN-084",
+    "domain": "airline AI innovation lab",
+    "domainSlug": "airline-ai-innovation-lab",
+    "evidenceTheme": "use-case intake, startup pilots, governance, value proof",
+    "ecosystem": "AbarVa, aviation startup ecosystem, venture signals"
+  }
+]
