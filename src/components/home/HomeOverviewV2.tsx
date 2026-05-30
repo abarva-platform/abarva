@@ -22,6 +22,8 @@ import type {
   HomeOverviewV2Extras,
 } from '@/lib/admin/home-overview-v2';
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
+import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
+import { AuditRibbon } from '@/components/admin/AuditRibbon';
 import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
@@ -141,6 +143,13 @@ interface Props {
    * renders — per verdict §5.6, that pill must NOT be unconditional.
    */
   liveSnapshotPresent?: boolean;
+  /**
+   * Wave 1 PR-6 · the unified audit ribbon events from the
+   * TrustSpine broker. Surfaces as Zone E on the landing per the
+   * verdict (`SETUP_AUDIT_2026-05-30_VERDICT.md` §5.6). Pass [] to
+   * render the empty-state line; omit to fall back to [].
+   */
+  auditEvents?: TrustAuditEvent[];
 }
 
 export function HomeOverviewV2({
@@ -151,6 +160,7 @@ export function HomeOverviewV2({
   tagline,
   trustChips,
   liveSnapshotPresent = false,
+  auditEvents,
 }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
@@ -436,6 +446,13 @@ export function HomeOverviewV2({
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
           </div>
         </Section>
+
+        <Rule />
+
+        {/* Section 06 — Audit ribbon · Wave 1 PR-6 · Zone E per the
+            Trust Plane verdict. Renders even when empty so the page
+            shape stays predictable for incident-response triage. */}
+        <AuditRibbon events={auditEvents ?? []} />
       </main>
     </div>
   );

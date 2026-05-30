@@ -6,6 +6,71 @@ import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AUDIT_LOG_FIXTURE, AUDIT_AGENT_VOICE, type AuditEntry } from '@/lib/setup/shell-setup-fixture';
 
+/**
+ * Audit ribbon source filter · Wave 1 PR-6.
+ *
+ * The `/admin/audit?source=<source>` query param (set by the
+ * landing-page ribbon click) maps each TrustSpine audit source to
+ * the legacy fixture's `surface` string so we can scope the
+ * rendered list without redesigning the audit page in this PR.
+ *
+ * - substrate / connector  → "Setup"  (the setup pipeline)
+ * - approval               → "Programs" (approvals live here today)
+ * - auth / invite          → "Setup"  (auth/invite events surface in Setup)
+ * - policy                 → "Setup"  (policy edits live in Setup admin)
+ *
+ * If the param is unrecognized we fall back to the full list.
+ */
+export type AuditSourceFilter =
+  | 'substrate'
+  | 'auth'
+  | 'policy'
+  | 'connector'
+  | 'invite'
+  | 'approval';
+
+const VALID_FILTERS: ReadonlySet<string> = new Set([
+  'substrate',
+  'auth',
+  'policy',
+  'connector',
+  'invite',
+  'approval',
+]);
+
+export function isAuditSourceFilter(
+  value: string | null | undefined,
+): value is AuditSourceFilter {
+  return typeof value === 'string' && VALID_FILTERS.has(value);
+}
+
+const SOURCE_TO_SURFACE: Record<AuditSourceFilter, ReadonlyArray<string>> = {
+  substrate: ['Setup'],
+  auth: ['Setup'],
+  policy: ['Setup'],
+  connector: ['Setup'],
+  invite: ['Setup'],
+  approval: ['Programs'],
+};
+
+function filterEntries(
+  entries: ReadonlyArray<AuditEntry>,
+  filter: AuditSourceFilter | null,
+): AuditEntry[] {
+  if (!filter) return [...entries];
+  const allowed = SOURCE_TO_SURFACE[filter];
+  return entries.filter((e) => allowed.includes(e.surface));
+}
+
+const SOURCE_LABEL: Record<AuditSourceFilter, string> = {
+  substrate: 'Substrate',
+  auth: 'Auth',
+  policy: 'Policy',
+  connector: 'Connector',
+  invite: 'Invite',
+  approval: 'Approval',
+};
+
 const SUB_NAV_ITEMS = [
   { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
@@ -139,9 +204,26 @@ function AuditRow({ item }: { item: AuditEntry }) {
   );
 }
 
-export function SetupAuditPage() {
-  const criticalCount = AUDIT_LOG_FIXTURE.filter((entry) => entry.severity === 'critical').length;
-  const warnCount = AUDIT_LOG_FIXTURE.filter((entry) => entry.severity === 'warn').length;
+export interface SetupAuditPageProps {
+  /**
+   * Optional source filter from the landing-page audit ribbon click.
+   * When set, only audit entries whose surface maps to that source
+   * are rendered. Wave 1 PR-6 wiring; future PRs will replace the
+   * surface heuristic with first-class source metadata on each row.
+   */
+  filterSource?: AuditSourceFilter | null;
+}
+
+export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
+  const visible = filterEntries(AUDIT_LOG_FIXTURE, filterSource ?? null);
+  const criticalCount = visible.filter((entry) => entry.severity === 'critical').length;
+  const warnCount = visible.filter((entry) => entry.severity === 'warn').length;
+  const headerContext = filterSource
+    ? `Setup · Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? '' : 's'}`
+    : `Setup · Audit log · ${visible.length} events`;
+  const headerTitle = filterSource
+    ? `Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? '' : 's'}`
+    : `Audit log · ${visible.length} events`;
 
   return (
     <AppShell
@@ -149,7 +231,7 @@ export function SetupAuditPage() {
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Setup · Audit log · 7 events',
+        context: headerContext,
       }}
       middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
     >
@@ -208,14 +290,34 @@ export function SetupAuditPage() {
               letterSpacing: '-0.01em',
             }}
           >
-            Audit log · 7 events
+            {headerTitle}
           </h1>
+          {filterSource && (
+            <div style={{ marginTop: 10 }}>
+              <a
+                href="/admin/audit"
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: SHELL.INK,
+                  textDecoration: 'none',
+                  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+                  paddingBottom: 1,
+                }}
+              >
+                Clear filter · show all sources →
+              </a>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
           <AuditChip label="Critical" value={criticalCount} tone="critical" />
           <AuditChip label="Warn" value={warnCount} tone="warn" />
-          <AuditChip label="Info" value={AUDIT_LOG_FIXTURE.length - criticalCount - warnCount} tone="info" />
+          <AuditChip label="Info" value={visible.length - criticalCount - warnCount} tone="info" />
         </div>
 
         {/* Audit rows */}
@@ -224,12 +326,25 @@ export function SetupAuditPage() {
             background: SHELL.CARD_WHITE,
             border: '1px solid ' + SHELL.CARD_LINE,
             borderRadius: 10,
-            padding: '0 16px',
+            padding: visible.length === 0 ? '16px' : '0 16px',
           }}
         >
-          {AUDIT_LOG_FIXTURE.map((entry) => (
-            <AuditRow key={entry.id} item={entry} />
-          ))}
+          {visible.length === 0 ? (
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_MUTED,
+                padding: '4px 0',
+              }}
+            >
+              No audit events match this filter.
+            </div>
+          ) : (
+            visible.map((entry) => (
+              <AuditRow key={entry.id} item={entry} />
+            ))
+          )}
         </div>
       </div>
     </AppShell>

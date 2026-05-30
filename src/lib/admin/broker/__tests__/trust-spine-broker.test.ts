@@ -108,11 +108,12 @@ describe('getTrustSpine', () => {
   it('returns the contract shape with composed substrate + governance', async () => {
     getSnapshotMock.mockResolvedValue(makeSnapshot());
     getApprovalsMock.mockResolvedValue([
-      // shape doesn't matter — only .length is read
+      // shape matters for the audit ribbon (PR-6); .length still
+      // drives the governance count.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { id: 'req-1' } as any,
+      { id: 'req-1', requestedAt: '2026-05-02T09:00:00Z', requestedByUserId: 'u1', programId: 'p1' } as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { id: 'req-2' } as any,
+      { id: 'req-2', requestedAt: '2026-05-02T10:00:00Z', requestedByUserId: 'u2', programId: 'p2' } as any,
     ]);
 
     const spine = await getTrustSpine('apex-retail');
@@ -172,6 +173,69 @@ describe('getTrustSpine', () => {
       actor: 'Import pipeline',
       action: 'Imported segment org_profile from apex-retail-v1.zip',
     });
+  });
+
+  it('unions substrate + approval events on the audit ribbon, sorted by ts desc', async () => {
+    getSnapshotMock.mockResolvedValue(makeSnapshot());
+    getApprovalsMock.mockResolvedValue([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { id: 'a1', requestedAt: '2026-05-02T09:00:00Z', requestedByUserId: 'u1', programId: 'p1' } as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { id: 'a2', requestedAt: '2026-05-04T07:30:00Z', requestedByUserId: 'u2', programId: 'p2' } as any,
+    ]);
+
+    const spine = await getTrustSpine('apex-retail');
+
+    expect(spine.audit.last24hEvents).toHaveLength(3);
+    // Sorted by ts desc: 2026-05-04 > 2026-05-02 (approval) > 2026-05-01 (substrate).
+    expect(spine.audit.last24hEvents.map((e) => e.source)).toEqual([
+      'approval',
+      'approval',
+      'substrate',
+    ]);
+    expect(spine.audit.last24hEvents[0]).toEqual({
+      ts: '2026-05-04T07:30:00Z',
+      source: 'approval',
+      actor: 'Program owner',
+      action: 'Opened program approval request',
+      target: 'p2',
+    });
+  });
+
+  it('caps the audit ribbon at 50 events', async () => {
+    const big = makeSnapshot();
+    // 60 substrate events; broker should keep only top 50 by ts desc.
+    big.recentActivity = Array.from({ length: 60 }, (_, i) => ({
+      actor: 'Import pipeline',
+      what: `event ${i}`,
+      // i=0 oldest, i=59 newest
+      timestampIso: new Date(2026, 0, 1, 0, i).toISOString(),
+    }));
+    getSnapshotMock.mockResolvedValue(big);
+    getApprovalsMock.mockResolvedValue([]);
+
+    const spine = await getTrustSpine('apex-retail');
+    expect(spine.audit.last24hEvents).toHaveLength(50);
+    // Newest first (i=59).
+    expect(spine.audit.last24hEvents[0]?.action).toBe('event 59');
+  });
+
+  it('returns connector and invite events as empty arrays (Wave 2 stubs)', async () => {
+    getSnapshotMock.mockResolvedValue({
+      ...makeSnapshot(),
+      recentActivity: [],
+    });
+    getApprovalsMock.mockResolvedValue([]);
+
+    const spine = await getTrustSpine('apex-retail');
+
+    expect(spine.audit.last24hEvents).toEqual([]);
+    expect(
+      spine.audit.last24hEvents.find((e) => e.source === 'connector'),
+    ).toBeUndefined();
+    expect(
+      spine.audit.last24hEvents.find((e) => e.source === 'invite'),
+    ).toBeUndefined();
   });
 
   it('degrades gracefully when the substrate broker throws', async () => {

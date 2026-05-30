@@ -50,6 +50,9 @@ export default async function AdminOverviewPage() {
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
+  // Wave 1 PR-5 introduced trustSpine for the Trust strip; Wave 1
+  // PR-6 reuses the same fetch and slices the top-6 audit events
+  // for the AuditRibbon on the landing.
   const [snapshot, signals, programApprovalQueue, trustSpine] = brokerTenantKey
     ? await Promise.all([
         getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
@@ -59,6 +62,7 @@ export default async function AdminOverviewPage() {
       ])
     : [null, [], [], null];
   const trustChips = trustSpine ? spineToChips(trustSpine) : null;
+  const auditEvents = (trustSpine?.audit.last24hEvents ?? []).slice(0, 6);
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
 
@@ -123,6 +127,7 @@ export default async function AdminOverviewPage() {
         extras={extras}
         trustChips={trustChips}
         liveSnapshotPresent={snapshot !== null}
+        auditEvents={auditEvents}
       />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
