@@ -239,6 +239,127 @@ export function unlocksCopy(familyNumber: number, segmentName: string): string {
   return SEGMENT_UNLOCKS[familyNumber] ?? `Loading ${segmentName} would deepen agent capability for this segment.`;
 }
 
+/**
+ * Per-segment unlock preview — concrete question + citation example.
+ *
+ * Used on Data Trust to show, for every sparse / unloaded segment,
+ * what a user-visible answer would look like once the substrate is
+ * loaded. Tied to the 14 canonical segments (`familyNumber` 1–14)
+ * authored in `data-trust-composer.ts:SEGMENT_NAME_BY_FAMILY`.
+ *
+ * Per audit `SETUP_AUDIT_2026-05-30_VERDICT.md` §7 Wave 3 PR 2:
+ *  "every sparse segment shows a concrete preview: Load this and
+ *   Sentinel can answer X with citation Y."
+ *
+ * Schema invariant: every segment in 1..14 must define a preview.
+ * `setup-vocab.test.ts` enforces this.
+ */
+export interface UnlocksPreview {
+  /** The plain-language question an operator could ask the agent. */
+  question: string;
+  /** A representative citation the agent would surface once loaded. */
+  citationExample: string;
+  /** The primary agent that would answer with this substrate. */
+  agent?: 'sentinel' | 'atlas' | 'nexus' | 'steward';
+}
+
+const SEGMENT_UNLOCKS_PREVIEW: Record<number, UnlocksPreview> = {
+  1: {
+    question: 'Which legal entities sit under our holding company, and which regulator owns each?',
+    citationExample: 'Enterprise Profile §Entities: Apex Retail Inc. (DE) — SEC, FTC',
+    agent: 'sentinel',
+  },
+  2: {
+    question: 'Who owns the loyalty P&L, and who approves CX programs?',
+    citationExample: 'Apex Org Chart: CMO → VP Customer Engagement (loyalty P&L owner)',
+    agent: 'nexus',
+  },
+  3: {
+    question: 'Which system of record holds authoritative customer identity?',
+    citationExample: 'Apex IT Landscape §Customer: Salesforce CDP (system of record)',
+    agent: 'atlas',
+  },
+  4: {
+    question: 'Where are we vs plan on IT opex this quarter, and which initiative drove the variance?',
+    citationExample: 'Apex IT Financials Q3: opex $48.2M vs $46.1M plan; +$2.1M from CDP migration',
+    agent: 'sentinel',
+  },
+  5: {
+    question: 'Why did same-store comp slow in Q3?',
+    citationExample: 'Apex KPI Dictionary §SSC: comp-store basis — 13-month tenure, ex-fuel',
+    agent: 'sentinel',
+  },
+  6: {
+    question: 'Which programs are in flight this quarter, and which are gate-blocked?',
+    citationExample: 'Apex Program Inventory: 4 active programs; CDP at Gate 3 (blocked on data trust)',
+    agent: 'nexus',
+  },
+  7: {
+    question: 'How did vendors score against the CDP RFP evaluation criteria?',
+    citationExample: 'Apex Sourcing §CDP-RFP-2026: Segment 91, mParticle 87, Tealium 82',
+    agent: 'sentinel',
+  },
+  8: {
+    question: 'What does the Contact Center AI program charter commit us to?',
+    citationExample: 'Contact Center AI Charter §3.2: 18% AHT reduction by EOY 2026',
+    agent: 'nexus',
+  },
+  9: {
+    question: 'What is the evidence behind the claim that CDP improves conversion 4%?',
+    citationExample: 'Evidence Ledger §EVD-2026-0312: Apex pilot Aug–Sep 2026, n=42K sessions',
+    agent: 'sentinel',
+  },
+  10: {
+    question: 'Which workflows have crossed their gate-readiness SLA this month?',
+    citationExample: 'Operating Telemetry §Workflow: 2 of 11 programs over SLA (CDP, Demand Forecast)',
+    agent: 'atlas',
+  },
+  11: {
+    question: 'Is our CDP contract renewable in 90 days?',
+    citationExample: 'Apex Vendor Register: Segment CDP renewal 2026-08-12 (76 days)',
+    agent: 'sentinel',
+  },
+  12: {
+    question: 'Which PCI controls apply to the new payment gateway, and who attests?',
+    citationExample: 'Compliance §PCI-DSS 4.0: req 3.5.1 attested by Apex CISO 2026-04-30',
+    agent: 'steward',
+  },
+  13: {
+    question: 'How do peer retailers handle store-associate AI rollout?',
+    citationExample: 'Industry Context §Retail: 7 of 12 peers using clienteling AI in pilot phase',
+    agent: 'sentinel',
+  },
+  14: {
+    question: 'Which programs depend on the same SME, and where is the conflict?',
+    citationExample: 'Cross-Program Signals §SME-conflict: VP Data shared across 3 programs in Q3',
+    agent: 'nexus',
+  },
+};
+
+/**
+ * Returns the unlock preview for a canonical segment (familyNumber 1–14).
+ * Falls back to a generic preview for unknown families so the surface
+ * never renders bare; the schema test guarantees the 14 canonical
+ * segments are always populated.
+ */
+export function unlocksPreview(
+  familyNumber: number,
+  segmentName: string,
+): UnlocksPreview {
+  return (
+    SEGMENT_UNLOCKS_PREVIEW[familyNumber] ?? {
+      question: `What does ${segmentName} let an agent answer?`,
+      citationExample: `${segmentName}: loading this substrate enables grounded answers`,
+    }
+  );
+}
+
+/**
+ * Test-only: full canonical preview map. Exposed so the schema test
+ * can verify every segment in 1..14 is populated.
+ */
+export const CANONICAL_SEGMENT_UNLOCKS_PREVIEW = SEGMENT_UNLOCKS_PREVIEW;
+
 const FAMILY_IMPACT_SCORE: Record<number, number> = {
   1: 100, 2: 100, 3: 100, 12: 100,
   4: 80, 5: 80, 10: 80,
