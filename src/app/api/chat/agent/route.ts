@@ -24,6 +24,7 @@ import {
   detectCrossTenantWriteIntent,
   formatCrossTenantWriteRefusal,
 } from "@/lib/agent/tenant-guardrails";
+import { recordTenantBleedAlert } from "@/lib/observability/tenant-bleed-alerts";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
 import {
@@ -726,6 +727,11 @@ export async function POST(request: Request) {
         })
       : null;
   if (crossTenantWriteIntent) {
+    recordTenantBleedAlert({
+      intent: crossTenantWriteIntent,
+      route: '/api/chat/agent',
+      surface,
+    });
     return new Response(formatCrossTenantWriteRefusal(crossTenantWriteIntent), {
       status: 200,
       headers: {
