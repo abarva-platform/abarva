@@ -14,6 +14,7 @@
 
 import { azureCostSource } from './azure-cost';
 import { claudeCodeSource } from './claude-code';
+import { copilotSource } from './copilot';
 
 export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
 
@@ -49,6 +50,7 @@ export interface TowerIngestSource {
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
   azureCostSource,
   claudeCodeSource,
+  copilotSource,
   // Sibling slices append here, alphabetical by `key`.
 ];
 
