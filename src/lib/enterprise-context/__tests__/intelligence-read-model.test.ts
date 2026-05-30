@@ -1,9 +1,17 @@
-import { summarizeEnterpriseContextRows } from '../intelligence-read-model';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+
+import { getEnterpriseContextOverviewForTenant, summarizeEnterpriseContextRows } from '../intelligence-read-model';
 import type {
   EnterpriseContextQualityRow,
   EnterpriseContextRecordRow,
   EnterpriseContextSourceRow,
 } from '../intelligence-read-model';
+
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: jest.fn(),
+}));
+
+const mockGetAzureReadFluentClient = jest.mocked(getAzureReadFluentClient);
 
 function record(overrides: Partial<EnterpriseContextRecordRow>): EnterpriseContextRecordRow {
   return {
@@ -19,6 +27,10 @@ function record(overrides: Partial<EnterpriseContextRecordRow>): EnterpriseConte
 }
 
 describe('enterprise context Intelligence read model', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('summarizes internal context into CXO-readable cards and Sentinel facts', () => {
     const records: EnterpriseContextRecordRow[] = [
       record({ payload: { criticality: 'Tier 1' } }),
@@ -64,12 +76,80 @@ describe('enterprise context Intelligence read model', () => {
     expect(overview.recordTypeCounts.incidents).toBe(1);
     expect(overview.evidenceUsableCount).toBe(1);
     expect(overview.cards.map((card) => card.title)).toEqual(expect.arrayContaining([
-      'Clinical platform reliability',
+      'Platform and service reliability',
       'Contract renewal exposure',
       'Spend baseline confidence',
     ]));
     expect(overview.sentinelFacts.join('\n')).toContain('Enterprise Context: 12 records');
     expect(overview.sentinelFacts.join('\n')).toContain('Operational posture');
     expect(overview.sentinelFacts.join('\n')).toContain('$55.2M estimated renewal exposure');
+  });
+
+  it('loads overview tables sequentially to avoid session-mode pool bursts', async () => {
+    let activeQueries = 0;
+    let maxActiveQueries = 0;
+    const queryOrder: string[] = [];
+    const countByTable: Record<string, number> = {
+      enterprise_context_sources: 1,
+      enterprise_context_records: 1,
+      enterprise_context_facts: 2,
+      enterprise_context_relationships: 3,
+      enterprise_context_evidence: 1,
+      enterprise_context_quality_issues: 1,
+      enterprise_context_stewardship_tasks: 1,
+      enterprise_context_chunk_queue: 1,
+    };
+    const rowsByTable: Record<string, unknown[]> = {
+      enterprise_context_records: [record({ payload: { criticality: 'Tier 1' } })],
+      enterprise_context_sources: [
+        { source_system: 'ServiceNow', display_name: 'ServiceNow', system_of_record: true, source_owner: 'ITSM', last_synced_at: '2026-05-11T00:00:00Z' },
+      ],
+      enterprise_context_quality_issues: [
+        { issue_type: 'low_confidence', severity: 'medium', status: 'open', source_file: 'spend.csv', owner: 'Finance Operations' },
+      ],
+      enterprise_context_evidence: [{ evidence_usable: true }],
+    };
+
+    mockGetAzureReadFluentClient.mockReturnValue({
+      from: (table: string) => ({
+        select: (_columns: string, options?: { count?: 'exact'; head?: boolean }) => ({
+          eq: () => ({
+            range: () => runQuery(table, options),
+            then: (onfulfilled: (value: unknown) => unknown, onrejected?: (error: unknown) => unknown) =>
+              runQuery(table, options).then(onfulfilled, onrejected),
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof getAzureReadFluentClient>);
+
+    const overview = await getEnterpriseContextOverviewForTenant('meridian-health', 'Meridian Health');
+
+    expect(overview?.counts.records).toBe(1);
+    expect(maxActiveQueries).toBe(1);
+    expect(queryOrder).toEqual([
+      'enterprise_context_sources:count',
+      'enterprise_context_records:count',
+      'enterprise_context_facts:count',
+      'enterprise_context_relationships:count',
+      'enterprise_context_evidence:count',
+      'enterprise_context_quality_issues:count',
+      'enterprise_context_stewardship_tasks:count',
+      'enterprise_context_chunk_queue:count',
+      'enterprise_context_records:rows',
+      'enterprise_context_sources:rows',
+      'enterprise_context_quality_issues:rows',
+      'enterprise_context_evidence:rows',
+    ]);
+
+    async function runQuery(table: string, options?: { count?: 'exact'; head?: boolean }) {
+      activeQueries += 1;
+      maxActiveQueries = Math.max(maxActiveQueries, activeQueries);
+      const isCount = options?.head === true;
+      queryOrder.push(`${table}:${isCount ? 'count' : 'rows'}`);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      activeQueries -= 1;
+      if (isCount) return { data: null, error: null, count: countByTable[table] ?? 0 };
+      return { data: rowsByTable[table] ?? [], error: null, count: null };
+    }
   });
 });

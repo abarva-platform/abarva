@@ -82,35 +82,27 @@ export async function getEnterpriseContextOverviewForTenant(
   if (!normalizedTenantKey) return null;
 
   try {
-    const [
-      counts,
-      records,
-      sources,
-      qualityRows,
-      evidenceRows,
-    ] = await Promise.all([
-      countEnterpriseContextRows(normalizedTenantKey),
-      fetchTenantRows<EnterpriseContextRecordRow>(
-        TABLES.records,
-        normalizedTenantKey,
-        'record_type,title,source_system,owner,freshness_status,confidence,payload',
-      ),
-      fetchTenantRows<EnterpriseContextSourceRow>(
-        TABLES.sources,
-        normalizedTenantKey,
-        'source_system,display_name,system_of_record,source_owner,last_synced_at',
-      ),
-      fetchTenantRows<EnterpriseContextQualityRow>(
-        TABLES.qualityIssues,
-        normalizedTenantKey,
-        'issue_type,severity,status,source_file,owner',
-      ),
-      fetchTenantRows<{ evidence_usable: boolean }>(
-        TABLES.evidence,
-        normalizedTenantKey,
-        'evidence_usable',
-      ),
-    ]);
+    const counts = await countEnterpriseContextRows(normalizedTenantKey);
+    const records = await fetchTenantRows<EnterpriseContextRecordRow>(
+      TABLES.records,
+      normalizedTenantKey,
+      'record_type,title,source_system,owner,freshness_status,confidence,payload',
+    );
+    const sources = await fetchTenantRows<EnterpriseContextSourceRow>(
+      TABLES.sources,
+      normalizedTenantKey,
+      'source_system,display_name,system_of_record,source_owner,last_synced_at',
+    );
+    const qualityRows = await fetchTenantRows<EnterpriseContextQualityRow>(
+      TABLES.qualityIssues,
+      normalizedTenantKey,
+      'issue_type,severity,status,source_file,owner',
+    );
+    const evidenceRows = await fetchTenantRows<{ evidence_usable: boolean }>(
+      TABLES.evidence,
+      normalizedTenantKey,
+      'evidence_usable',
+    );
 
     if (counts.records === 0) return null;
 
@@ -273,10 +265,11 @@ export function summarizeEnterpriseContextRows(input: {
 }
 
 async function countEnterpriseContextRows(tenantKey: string): Promise<EnterpriseContextOverview['counts']> {
-  const entries = await Promise.all(
-    Object.entries(TABLES).map(async ([key, table]) => [key, await countRows(table, tenantKey)] as const),
-  );
-  return Object.fromEntries(entries) as EnterpriseContextOverview['counts'];
+  const counts: Partial<EnterpriseContextOverview['counts']> = {};
+  for (const [key, table] of Object.entries(TABLES)) {
+    counts[key as keyof EnterpriseContextOverview['counts']] = await countRows(table, tenantKey);
+  }
+  return counts as EnterpriseContextOverview['counts'];
 }
 
 async function countRows(table: string, tenantKey: string): Promise<number> {
