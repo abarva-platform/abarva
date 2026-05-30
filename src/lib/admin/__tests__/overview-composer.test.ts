@@ -69,6 +69,48 @@ describe('composeOverviewBlocks · Steward orientation', () => {
     expect(blocks.orientation.industryPhrase).toContain('financial-services');
   });
 
+  // Wave 3 PR-6 · §5.6 empty-state contract.
+  it('marks orientation.isEmptyTenant=true when segments are empty and emits editorial copy', () => {
+    const blocks = composeOverviewBlocks({
+      tenantName: 'Cold Tenant',
+      industryCode: null,
+      clientKey: 'unknown',
+      segments: [],
+      content: getSetupActsContent('skyharbor'),
+      programApprovalPendingCount: 0,
+      atlasSignalCount: 0,
+      atlasHighSeverityCount: 0,
+      ssoConfigured: false,
+      recentSnapshotActivity: [],
+    });
+    expect(blocks.orientation.isEmptyTenant).toBe(true);
+    expect(blocks.orientation.loadedSummary).toMatch(
+      /AbarVa has no substrate for this tenant/,
+    );
+    expect(blocks.orientation.loadedSummary).toMatch(
+      /Sentinel can begin answering with provenance/,
+    );
+  });
+
+  it('marks orientation.isEmptyTenant=false when segments are present', () => {
+    const blocks = composeOverviewBlocks({
+      tenantName: 'First Capital Financial',
+      industryCode: 'FINSERV',
+      clientKey: 'arcturus',
+      segments: FCF_FIXTURE.segments,
+      content: FCF_FIXTURE.content,
+      programApprovalPendingCount: 0,
+      atlasSignalCount: 0,
+      atlasHighSeverityCount: 0,
+      ssoConfigured: false,
+      recentSnapshotActivity: [],
+    });
+    expect(blocks.orientation.isEmptyTenant).toBe(false);
+    expect(blocks.orientation.loadedSummary).not.toMatch(
+      /AbarVa has no substrate/,
+    );
+  });
+
   it('produces a non-null next load when there are empty/thin segments', () => {
     const blocks = composeOverviewBlocks({
       tenantName: 'First Capital Financial',

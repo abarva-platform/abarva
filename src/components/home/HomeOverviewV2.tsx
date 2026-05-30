@@ -24,7 +24,11 @@ import type {
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
 import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
 import { AuditRibbon } from '@/components/admin/AuditRibbon';
-import { PostureGrid, type PostureCard } from '@/components/admin/PostureGrid';
+import {
+  EmptyTenantUploadAffordance,
+  PostureGrid,
+  type PostureCard,
+} from '@/components/admin/PostureGrid';
 import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
 import { PanelCardCta } from '@/components/home/PanelCardCta';
 import {
@@ -182,6 +186,18 @@ interface Props {
    * the grid stays present with no-data state cards.
    */
   postureCards?: ReadonlyArray<PostureCard> | null;
+  /**
+   * Wave 3 PR-6 · brand-new-tenant empty-state contract.
+   * True iff `trustSpine.substrate.segmentsTotal === 0` — meaning the
+   * tenant has no substrate loaded yet. Switches three zones into
+   * their editorial empty register per verdict §5.6:
+   *   - Action queue   → single primary upload card.
+   *   - Posture grid   → 4-column upload affordance (Organization /
+   *                      KPIs / Vendors / Customer).
+   *   - Steward orient → one editorial sentence (no two-column).
+   * Existing non-empty paths are untouched.
+   */
+  emptyTenant?: boolean;
 }
 
 export function HomeOverviewV2({
@@ -197,6 +213,7 @@ export function HomeOverviewV2({
   currentCanonicalTenantKey = null,
   tenantSwitchOptions,
   postureCards,
+  emptyTenant = false,
 }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
@@ -341,8 +358,25 @@ export function HomeOverviewV2({
         {/* Section 02 — Action queue
             Verdict §5.6 promotes the operator-first read: numbers
             and actions above prose. The Steward orientation block
-            (previously Section 02) now lives below this queue. */}
-        {blocks.actionQueue.items.length > 0 && (
+            (previously Section 02) now lives below this queue.
+
+            Wave 3 PR-6 · empty-tenant variant. When `emptyTenant` is
+            true the queue is replaced with a single editorial primary
+            card ("Upload your first dataset to begin grounding.") plus
+            two ghost suggestions per verdict §5.6. */}
+        {emptyTenant ? (
+          <>
+            <Section
+              eyebrowNum="02"
+              eyebrowLabel="START HERE"
+              title="No substrate yet"
+              lead="A brand-new tenant has no segments loaded. Begin with one of the two highest-leverage uploads — Sentinel will start answering with provenance as soon as enterprise profile lands."
+            >
+              <EmptyTenantPrimaryCard />
+            </Section>
+            <Rule />
+          </>
+        ) : blocks.actionQueue.items.length > 0 ? (
           <>
             <Section eyebrowNum="02" eyebrowLabel="WHAT NEEDS YOU TODAY" title="Action queue" lead={`${blocks.actionQueue.items.length} item${blocks.actionQueue.items.length === 1 ? '' : 's'} pending. Listed in priority order — gate-blocking first, substrate-blocking next, advisory last.`}>
               <div style={{ display: 'grid', gap: 10 }}>
@@ -393,15 +427,32 @@ export function HomeOverviewV2({
             </Section>
             <Rule />
           </>
-        )}
+        ) : null}
 
         {/* Section 02b — Posture grid · Wave 2 PR-4 · Zone D per the
             Trust Plane verdict §5.6. Inserted between the Action queue
             (02) and the Steward orientation (03) so the operator first
             sees what to do, then sees a 2×2 posture snapshot of the
             four trust dimensions, then reads the Steward voice. Card
-            click jumps to the relevant group page. */}
-        {postureCards && postureCards.length > 0 && (
+            click jumps to the relevant group page.
+
+            Wave 3 PR-6 · empty-tenant variant. When `emptyTenant` is
+            true the 2×2 grid is replaced with a 4-column upload
+            affordance naming the first-4 datasets per verdict §5.6
+            (Organization · KPIs · Vendors · Customer). */}
+        {emptyTenant ? (
+          <>
+            <Section
+              eyebrowNum="02b"
+              eyebrowLabel="FIRST 4 DATASETS"
+              title="Choose where to begin"
+              lead="The first 4 datasets that unlock Sentinel's reasoning. Each upload pre-seeds the segment selector on Data Trust."
+            >
+              <EmptyTenantUploadAffordance />
+            </Section>
+            <Rule />
+          </>
+        ) : postureCards && postureCards.length > 0 ? (
           <>
             <Section
               eyebrowNum="02b"
@@ -413,7 +464,7 @@ export function HomeOverviewV2({
             </Section>
             <Rule />
           </>
-        )}
+        ) : null}
 
         {/* Section 03 — Steward orientation (moved below action queue
             in Wave 1 PR-5; verdict §5.6 Zone F — "Steward's read":
@@ -432,37 +483,58 @@ export function HomeOverviewV2({
               <span style={{ fontSize: 9 }}>◆</span>
               Steward · Tenant orientation
             </div>
-            <p
-              style={{
-                fontFamily: F_DISPLAY,
-                fontSize: 22,
-                fontWeight: 400,
-                color: C.ink,
-                lineHeight: 1.3,
-                letterSpacing: '-0.01em',
-                marginBottom: 18,
-                maxWidth: '60ch',
-                margin: '0 0 18px 0',
-              }}
-            >
-              {blocks.orientation.industryPhrase ? `${blocks.orientation.industryPhrase}. ` : ''}
-              {blocks.orientation.loadedSummary.charAt(0).toUpperCase() + blocks.orientation.loadedSummary.slice(1)}
-              {'. '}
-              {blocks.orientation.missingSummary && `${blocks.orientation.missingSummary.charAt(0).toUpperCase() + blocks.orientation.missingSummary.slice(1)}.`}
-            </p>
+            {emptyTenant || blocks.orientation.isEmptyTenant ? (
+              <p
+                data-testid="home-overview-steward-empty"
+                style={{
+                  fontFamily: F_DISPLAY,
+                  fontSize: 22,
+                  fontWeight: 400,
+                  color: C.ink,
+                  lineHeight: 1.3,
+                  letterSpacing: '-0.01em',
+                  margin: '0',
+                  maxWidth: '60ch',
+                }}
+              >
+                AbarVa has no substrate for this tenant. Once you load enterprise
+                profile, Sentinel can begin answering with provenance.
+              </p>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontFamily: F_DISPLAY,
+                    fontSize: 22,
+                    fontWeight: 400,
+                    color: C.ink,
+                    lineHeight: 1.3,
+                    letterSpacing: '-0.01em',
+                    marginBottom: 18,
+                    maxWidth: '60ch',
+                    margin: '0 0 18px 0',
+                  }}
+                >
+                  {blocks.orientation.industryPhrase ? `${blocks.orientation.industryPhrase}. ` : ''}
+                  {blocks.orientation.loadedSummary.charAt(0).toUpperCase() + blocks.orientation.loadedSummary.slice(1)}
+                  {'. '}
+                  {blocks.orientation.missingSummary && `${blocks.orientation.missingSummary.charAt(0).toUpperCase() + blocks.orientation.missingSummary.slice(1)}.`}
+                </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, paddingTop: 18, borderTop: `1px dashed ${C.borderLight}` }}>
-              <div>
-                <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.teal, marginBottom: 10 }}>Loaded · grounded</div>
-                <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{blocks.orientation.loadedSummary}</div>
-              </div>
-              <div>
-                <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.amber, marginBottom: 10 }}>Missing · authored only</div>
-                <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{blocks.orientation.missingSummary}</div>
-              </div>
-            </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, paddingTop: 18, borderTop: `1px dashed ${C.borderLight}` }}>
+                  <div>
+                    <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.teal, marginBottom: 10 }}>Loaded · grounded</div>
+                    <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{blocks.orientation.loadedSummary}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.amber, marginBottom: 10 }}>Missing · authored only</div>
+                    <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{blocks.orientation.missingSummary}</div>
+                  </div>
+                </div>
+              </>
+            )}
 
-            {blocks.orientation.nextLoadName && (
+            {!emptyTenant && !blocks.orientation.isEmptyTenant && blocks.orientation.nextLoadName && (
               <div
                 style={{
                   marginTop: 18,
@@ -552,6 +624,154 @@ export function HomeOverviewV2({
 }
 
 // ── Sub-components ──────────────────────────────────────────────
+
+/**
+ * EmptyTenantPrimaryCard · Wave 3 PR-6 · §5.6 empty-state.
+ *
+ * Replaces the action queue for brand-new tenants. One primary
+ * editorial card naming the first upload, plus two ghost suggestions
+ * for the two highest-leverage starts (org structure · KPI dictionary)
+ * per verdict §5.6.
+ */
+function EmptyTenantPrimaryCard() {
+  return (
+    <div data-testid="home-overview-empty-action-card" style={{ display: 'grid', gap: 12 }}>
+      <article
+        style={{
+          padding: '24px 26px 22px',
+          background: C.surface,
+          border: `1px solid ${C.borderLight}`,
+          borderLeft: `3px solid ${C.ink}`,
+          borderRadius: 8,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: F_MONO,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: C.navy,
+            marginBottom: 10,
+          }}
+        >
+          Begin grounding
+        </div>
+        <h3
+          style={{
+            fontFamily: F_DISPLAY,
+            fontSize: 22,
+            fontWeight: 400,
+            color: C.ink,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.3,
+            margin: '0 0 14px 0',
+            maxWidth: '52ch',
+          }}
+        >
+          Upload your first dataset to begin grounding.
+        </h3>
+        <a
+          href="/admin/data-trust"
+          data-testid="home-overview-empty-primary-cta"
+          style={{
+            display: 'inline-block',
+            fontFamily: F_MONO,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            padding: '8px 14px',
+            border: `1px solid ${C.ink}`,
+            color: C.surface,
+            background: C.ink,
+            borderRadius: 4,
+            textDecoration: 'none',
+          }}
+        >
+          Open Data Trust
+        </a>
+      </article>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gap: 10,
+        }}
+      >
+        <a
+          href="/admin/data-trust?segment=org_structure"
+          data-testid="home-overview-empty-ghost-org"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            padding: '14px 16px',
+            background: C.surface,
+            border: `1px solid ${C.borderLight}`,
+            borderRadius: 6,
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: C.faint,
+            }}
+          >
+            Suggestion · highest leverage
+          </span>
+          <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>
+            Start with org structure
+          </span>
+          <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.45 }}>
+            Names the people Sentinel will cite — owners, approvers, reporting lines.
+          </span>
+        </a>
+        <a
+          href="/admin/data-trust?segment=kpi_dictionary"
+          data-testid="home-overview-empty-ghost-kpi"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            padding: '14px 16px',
+            background: C.surface,
+            border: `1px solid ${C.borderLight}`,
+            borderRadius: 6,
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: C.faint,
+            }}
+          >
+            Suggestion · highest leverage
+          </span>
+          <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>
+            Start with KPI dictionary
+          </span>
+          <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.45 }}>
+            Defines the metrics Sentinel can reason about — formulas, owners, sources.
+          </span>
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function Section({ eyebrowNum, eyebrowLabel, title, lead, children }: { eyebrowNum: string; eyebrowLabel: string; title: string; lead: string; children: React.ReactNode }) {
   return (
