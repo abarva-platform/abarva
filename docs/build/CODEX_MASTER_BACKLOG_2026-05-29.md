@@ -487,6 +487,7 @@ Acts: Setup (1), Intelligence 3 topics × 10 Qs (2), Intelligence-tier deliverab
 
 **Authority class:** D
 **Acceptance:** Full `tsc` runs clean OR documented suppression with rationale
+**Closeout:** Closed 2026-05-30 by dependency decision. These packages are legitimate runtime/export dependencies and are present in `package.json` plus `package-lock.json`; PR #2554 recorded a green `Typecheck + reasoning-layer tests` gate. Clean local worktrees must install dependencies before running local `tsc`.
 **Parallel-OK:** Yes
 
 ---
@@ -612,15 +613,17 @@ RISKS: [anything surfaced]
 ## Definition of "this backlog is closed"
 
 When all of these are true:
-- [ ] Sections 1-3 closed (residuals + Phase 0 + Phase 2)
-- [ ] Section 4 closed (Packet 30 Phases 3-7 + Demo Readiness Certificate)
-- [ ] Section 5 closed (retail corpus authored, ~5,500 patterns)
-- [ ] Section 6 closed (validation + expert-consultant gauntlet ≥4/5)
-- [ ] Section 7 closed (Apex foundation trained, verifier ≥22/25)
-- [ ] Section 8 P0 items closed
-- [ ] Section 9 closed (Apex + SkyHarbor Packet 34 walkthroughs + final report)
-- [ ] Section 10 operating model updates committed
-- [ ] Section 11 surfaced for founder strategic review
+- [x] Sections 1-3 closed (residuals + Phase 0 + Phase 2)
+- [x] Section 4 closed (Packet 30 Phases 3-7 + Demo Readiness Certificate)
+- [x] Section 5 closed (retail corpus authored, ~5,500 patterns)
+- [x] Section 6 closed (validation + expert-consultant gauntlet ≥4/5)
+- [x] Section 7 closed (Apex foundation trained, verifier ≥22/25)
+- [x] Section 8 P0 items closed
+- [x] Section 9 closed (Apex + SkyHarbor Packet 34 walkthroughs + final report)
+- [x] Section 10 operating model updates committed
+- [x] Section 11 surfaced for founder strategic review
+
+**Closeout evidence:** `docs/build/SECTION_10_OPERATING_MODEL_CLOSEOUT_2026-05-30.md`.
 
 **Then:**
 - AbarVa is demo-ready for Delta CTO
