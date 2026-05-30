@@ -76,6 +76,12 @@ export const TOWER_DIMENSIONS: Array<{
   },
 ];
 
+// Data classification tier for an integration source. Drives redaction
+// Layer 2 gating on Tower roll-ups — confidential sources require the
+// financial-data role for exact figures to appear in LLM-facing
+// surfaces. See docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md.
+export type CatalogDataClass = 'public' | 'internal' | 'confidential';
+
 export interface CatalogSystem {
   key: string;
   name: string;
@@ -86,6 +92,13 @@ export interface CatalogSystem {
   fields: Array<{ source: string; target: string }>;
   tip?: string;
   templateKey?: string;
+  /**
+   * Data classification tier. Defaults to 'internal' when omitted.
+   * Sources that carry program budgets, vendor spend, payroll, PHI,
+   * or other restricted data must declare 'confidential' so the Tower
+   * synthesis and chat layers can apply Layer 2 redaction.
+   */
+  dataClass?: CatalogDataClass;
 }
 
 export const ONBOARDING_CATALOG: CatalogSystem[] = [
@@ -238,6 +251,40 @@ export const ONBOARDING_CATALOG: CatalogSystem[] = [
     ],
     tip: 'Cross-reference with Workday headcount to get realistic penetration %.',
     templateKey: 'adoption',
+  },
+  {
+    key: 'oracle_sap_erp',
+    name: 'Oracle / SAP ERP (program financials)',
+    tagline: 'Program budget, actuals, capex/opex split, vendor spend (Cost + Value).',
+    dimensions: ['cost', 'value'],
+    whatToExport:
+      'Program-level financials at monthly grain (budget, actual, capex/opex split, vendor + cost center + GL) plus the vendor master with TTM spend. Two paths: Oracle GL/AP via OTBI Project Costing report, or SAP CO-PA via a Manage Custom Analytical Queries query on ACDOCA + ACDOCP.',
+    steps: [
+      'Oracle Fusion: OTBI → Project Costing - Real Time → columns Project Number, Posting Date From/To, Plan Amount, Actual Cost, Capital Cost, Operating Cost, Supplier ID, Cost Center, Natural Account → export Excel.',
+      'Oracle Fusion: Suppliers work area → Supplier Spend Analysis → TTM grain → export.',
+      'SAP S/4HANA: Manage Custom Analytical Queries → custom query on ACDOCA (actuals) + ACDOCP (plan) grouped by WBS, Posting Date, Cost Center, Vendor, G/L Account → export.',
+      'SAP S/4HANA: Manage Suppliers → vendor master + TTM spend → export.',
+      'Paste rows into Program Financials + Vendor Spend sheets of public/templates/tower/erp/template.xlsx (sample at sample-northwind.xlsx).',
+      'Run: npx tsx src/scripts/tower/ingest-erp.ts --client-id <tenant-uuid> --file <path> [--dry-run].',
+    ],
+    fields: [
+      { source: 'Project Number / WBS Element', target: 'tower_program_financials.program_id' },
+      { source: 'Posting Date From / Period Start', target: 'tower_program_financials.period_start' },
+      { source: 'Posting Date To / Period End', target: 'tower_program_financials.period_end' },
+      { source: 'Plan Amount / Budget', target: 'tower_program_financials.budget_usd' },
+      { source: 'Actual Cost', target: 'tower_program_financials.actual_usd' },
+      { source: 'Capital Cost / Capex', target: 'tower_program_financials.capex_usd' },
+      { source: 'Operating Cost / Opex', target: 'tower_program_financials.opex_usd' },
+      { source: 'Supplier ID / Vendor Number', target: 'tower_program_financials.vendor_id' },
+      { source: 'Cost Center / Profit Center', target: 'tower_program_financials.cost_center' },
+      { source: 'Natural Account / G/L Account', target: 'tower_program_financials.gl_account' },
+      { source: 'Supplier Name', target: 'tower_vendor_spend.vendor_name' },
+      { source: 'TTM Spend', target: 'tower_vendor_spend.ttm_spend_usd' },
+    ],
+    tip:
+      'Run capex+opex ≤ actual reconciliation in the source before export — the ingest validator rejects rows that fail it. For SAP, the analytical query produces the right grain directly; for Oracle, OTBI Project Costing is usually closer than GL Balances because it preserves the project rollup.',
+    templateKey: 'cost',
+    dataClass: 'confidential',
   },
   {
     key: 'snowflake',

@@ -1,102 +1,65 @@
 /**
  * Tower ingest source registry.
  *
- * Tower watches real enterprise systems (CMDB, observability, FinOps, ITSM,
- * identity, etc.). Each "source" is a slice owned by one of the parallel
- * tower-ingest branches. This file is APPEND-ONLY: each slice adds exactly
- * one entry via {@link registerTowerIngestSource}. Order is not significant —
- * lookups are by key. Duplicate keys throw at module-load time so two slices
- * cannot silently overwrite each other.
+ * Each entry describes ONE live integration that feeds Tower. Sibling slices
+ * append their entry by importing their own descriptor and adding it to the
+ * `TOWER_INGEST_SOURCES` array below. This file is the union of all such
+ * descriptors — keep additions alphabetical to make merge conflicts trivial.
  *
- * The audit (`docs/build/TOWER_AUDIT_2026-05-06.md`) found ZERO live
- * integrations in Tower. This registry is the spine that pulls each
- * source-specific ingest (parser, validator, CLI, template, README,
- * migration) into one discoverable map so Atlas — and the future
- * connector-onboarding UI — can enumerate what Tower can ingest today.
+ * Audit context: PR #2525 found ZERO live integrations. Tower has lots of
+ * synthesis but nothing watching a real source. Every entry in this array is
+ * a real watch: a real-world extract path, a template, a parser, a validator,
+ * a CLI, and a target table.
  */
 
-export type TowerIngestSourceKey =
-  | 'servicenow-cmdb'
-  // Sibling slices append their keys here (one per PR). Use the same
-  // hyphenated slug as the `public/templates/tower/<slug>/` directory.
-  ;
+import { azureCostSource } from './azure-cost';
+import { copilotSource } from './copilot';
+import { servicenowCmdbSource } from './servicenow-cmdb';
+import { servicenowItsmSource } from './servicenow-itsm';
 
-export interface TowerIngestSourceManifest {
-  /** Stable kebab-case key. Matches the template + docs directory name. */
-  key: TowerIngestSourceKey;
-  /** Human-readable label shown in Atlas surfaces. */
-  label: string;
-  /** One-line description of the source system. */
-  summary: string;
-  /** The external system Tower watches. */
+export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
+
+export interface TowerIngestSource {
+  /** Stable key used as the source identifier on disk and in registries. */
+  key: string;
+  /** Human-friendly name shown in catalog / chooser UIs. */
+  displayName: string;
+  /** Vendor or system of record. */
   vendor: string;
-  /** ITIL / IT Ops capability the source covers. */
-  capability:
-    | 'cmdb_inventory'
-    | 'observability'
-    | 'finops'
-    | 'itsm'
-    | 'identity'
-    | 'security'
-    | 'release'
-    | 'asset_management';
-  /** Relative path to the blank workbook (synthetic banner present). */
+  /** Tower dimension this source primarily feeds. */
+  kind: TowerIngestKind;
+  /** Stable target DB table name (must match the migration this slice ships). */
+  targetTable: string;
+  /** Public path of the blank template file (relative to /public). */
   templatePath: string;
-  /** Relative path to the sample-filled workbook (banner: synthetic data). */
+  /** Public path of the sample-filled workbook (relative to /public). */
   samplePath: string;
-  /** Relative path to the enterprise runbook README. */
+  /** Project-relative path of the README for this source. */
   readmePath: string;
-  /** Relative path to the SQL migration that defines the target tables. */
-  migrationPath: string;
-  /** Target Postgres tables this source writes into. */
-  targetTables: ReadonlyArray<string>;
-  /**
-   * Short description of the canonical "real-world extract path" — how a
-   * customer actually gets the data out of the source system. Surfaced to
-   * the user in the connector picker so they know what to do before
-   * downloading the template.
-   */
-  realWorldExtractPath: string;
-  /** Owner team that maintains the source-specific parser + tests. */
-  ownerTeam: string;
+  /** Module path (relative to src) of the parser entrypoint. */
+  parserModule: string;
+  /** Module path (relative to src) of the validator entrypoint. */
+  validatorModule: string;
+  /** Script name (under src/scripts/tower) for the CLI ingest tool. */
+  cliScript: string;
+  /** Real-world extract path summary (one line for catalog cards). */
+  extractPath: string;
+  /** Sample-row count and tenant — for synthetic banner sizing. */
+  sampleSummary: { tenant: string; rowsApprox: number };
 }
 
-const REGISTRY = new Map<TowerIngestSourceKey, TowerIngestSourceManifest>();
+export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
+  azureCostSource,
+  copilotSource,
+  servicenowCmdbSource,
+  servicenowItsmSource,
+  // Sibling slices append here, alphabetical by `key`.
+];
 
-/**
- * Register a tower ingest source. Idempotent: re-registering the same
- * manifest object (by reference) is a no-op. Registering a *different*
- * manifest under an existing key throws — that's the union-merge guard
- * that catches two slices stomping on the same slot.
- */
-export function registerTowerIngestSource(
-  manifest: TowerIngestSourceManifest,
-): void {
-  const existing = REGISTRY.get(manifest.key);
-  if (existing && existing !== manifest) {
-    throw new Error(
-      `tower_ingest_registry_conflict: key "${manifest.key}" already registered by a different manifest`,
-    );
-  }
-  REGISTRY.set(manifest.key, manifest);
+export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
+  return TOWER_INGEST_SOURCES.find((s) => s.key === key);
 }
 
-export function getTowerIngestSource(
-  key: TowerIngestSourceKey,
-): TowerIngestSourceManifest | null {
-  return REGISTRY.get(key) ?? null;
+export function towerIngestKindsCovered(): TowerIngestKind[] {
+  return Array.from(new Set(TOWER_INGEST_SOURCES.map((s) => s.kind))).sort();
 }
-
-export function listTowerIngestSources(): ReadonlyArray<TowerIngestSourceManifest> {
-  return Array.from(REGISTRY.values());
-}
-
-// --- registrations ----------------------------------------------------------
-//
-// Each slice appends ONE registration below. Keep the list alphabetical by
-// key. The import-for-side-effect pattern keeps every registration in one
-// auditable file without cross-slice coupling.
-
-import { SERVICENOW_CMDB_MANIFEST } from './servicenow-cmdb/manifest';
-
-registerTowerIngestSource(SERVICENOW_CMDB_MANIFEST);

@@ -521,12 +521,19 @@ export default async function TowerPage({
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   // GAP-4 — render loop-completed Moves as first-class Tower portfolio
-  // cards. Currently the Apex `Contact Center AI Routing` Move. Tenants
-  // without a loop-completed Move pass an empty array; the panel renders
-  // its honest empty state ("no loop-completed Moves yet") rather than a
-  // blank region.
+  // cards. The Apex contact-centre Move card is a hardcoded fixture
+  // (see `apex-contact-center-portfolio-fixture.ts`) and is therefore
+  // gated behind `TOWER_APEX_FIXTURE_ENABLED=1`. With the flag off
+  // (the pilot default), Tower renders the honest empty state from
+  // `MovePortfolioCardPanel` until a real loop-completed Move lands
+  // through the broker. The flag is a temporary affordance for demo
+  // walkthroughs while broker-backed portfolio reads are wired up;
+  // see `docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md`.
+  const apexFixtureEnabled = process.env.TOWER_APEX_FIXTURE_ENABLED === '1';
   const movePortfolioCards: readonly MovePortfolioCard[] =
-    activeClient?.key === APEX_TENANT_KEY ? buildApexPortfolioCards() : [];
+    apexFixtureEnabled && activeClient?.key === APEX_TENANT_KEY
+      ? buildApexPortfolioCards()
+      : [];
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
