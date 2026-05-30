@@ -57,6 +57,13 @@ export interface CoverageReport {
   minSources: number;
 }
 
+export type IndustryOverlayKey = 'retail';
+
+export interface IndustryOverlayCoverageContract {
+  overlayNamespace: string;
+  requiredPacks: readonly string[];
+}
+
 export const QUESTION_CATEGORIES: Record<QuestionCategory, QuestionCategorySpec> = {
   MODERNIZATION_PROGRESS: {
     label: 'Modernization progress and defensible narrative',
@@ -244,6 +251,47 @@ export const QUESTION_CATEGORIES: Record<QuestionCategory, QuestionCategorySpec>
 export const categoryToRequiredSegments = Object.fromEntries(
   Object.entries(QUESTION_CATEGORIES).map(([category, spec]) => [category, spec.requiredSegments]),
 ) as Record<QuestionCategory, readonly SegmentId[]>;
+
+export const RETAIL_OVERLAY_NAMESPACE = 'retail-v1';
+
+export const retailCategoryToRequiredOverlayPacks: Record<QuestionCategory, readonly string[]> = {
+  MODERNIZATION_PROGRESS: ['A.4', 'S.10', 'T.9', 'BH.1'],
+  IBM_DEPENDENCY: ['S.4', 'S.8', 'S.10', 'H.10'],
+  VALUE_LEDGER: ['AY.1', 'AY.2', 'AY.3', 'I.8'],
+  OPERATING_MODEL: ['E.1', 'G.8', 'H.10', 'P.2'],
+  EXECUTIVE_ALIGNMENT: ['BE.1', 'BE.2', 'A.8', 'BF.2'],
+  ORG_LEADERSHIP: ['P.1', 'P.4', 'P.7', 'BE.1'],
+  BUDGET_AUTHORITY: ['AY.1', 'AY.4', 'BE.2', 'BF.1'],
+  APPLICATION_PORTFOLIO: ['S.1', 'S.2', 'S.4', 'S.9'],
+  TECH_DEBT: ['S.8', 'S.10', 'F.6', 'F.7'],
+  DATA_PLATFORM: ['L.1', 'L.2', 'L.3', 'AU.3'],
+  CYBER_SECURITY: ['BA.1', 'BA.2', 'BA.3', 'R.3'],
+  AI_TOOLING: ['T.1', 'T.3', 'T.5', 'T.9'],
+  VENDOR_CONTRACTS: ['H.2', 'AM.2', 'AN.2', 'AP.4'],
+  SOURCING_PIPELINE: ['H.3', 'H.4', 'C.4', 'AK.2'],
+  PROGRAM_PORTFOLIO: ['A.7', 'A.8', 'BE.2', 'BH.1'],
+  INITIATIVE_FINANCIALS: ['AY.1', 'AY.3', 'AY.4', 'AQ.3'],
+  KPI_PERFORMANCE: ['E.7', 'O.2', 'AY.2', 'I.8'],
+  EVIDENCE_PROVENANCE: ['L.5', 'L.6', 'BB.2', 'BE.2'],
+  CROSS_PROGRAM_RISK: ['BG.1', 'H.10', 'BA.3', 'BC.1'],
+  REGULATORY_CONTEXT: ['BA.2', 'BB.1', 'BC.1', 'BC.2'],
+  INDUSTRY_BENCHMARK: ['AY.2', 'BF.1', 'N.2', 'E.7'],
+  PATTERN_FAILURE_MODE: ['BG.1', 'K.4', 'E.3', 'AD.3'],
+  VENDOR_LANDSCAPE: ['S.2', 'L.3', 'AX.1', 'AM.2'],
+  CURRENT_STATE_SYNTHESIS: ['A.1', 'E.1', 'S.1', 'AY.1'],
+  GENERAL_STRATEGY: ['A.4', 'A.7', 'BE.2', 'BH.1'],
+} as const;
+
+export function getRequiredOverlayPacksForCategory(
+  category: QuestionCategory,
+  industry: IndustryOverlayKey,
+): IndustryOverlayCoverageContract | null {
+  if (industry !== 'retail') return null;
+  return {
+    overlayNamespace: RETAIL_OVERLAY_NAMESPACE,
+    requiredPacks: [...retailCategoryToRequiredOverlayPacks[category]],
+  };
+}
 
 const SEGMENT_ALIASES: Record<SegmentId, readonly string[]> = {
   enterprise_profile: ['enterprise profile', 'company profile', 'tenant profile'],
