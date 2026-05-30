@@ -34,8 +34,6 @@
  * though four zones consume it.
  */
 
-import { cache } from 'react';
-
 import { getActiveClientRow } from '@/lib/active-client';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
@@ -44,12 +42,13 @@ import {
   getSetupActsContent,
   mergeInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
-import {
-  getCrossProgramSignals,
-  getSetupInventorySnapshot,
-} from '@/lib/admin/setup-data-broker';
-import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
 import { getCapabilityGrounding } from '@/lib/admin/broker/capability-grounding-broker';
+import {
+  cachedApprovalQueue,
+  cachedCrossProgramSignals,
+  cachedInventorySnapshot,
+  cachedTrustSpine,
+} from '@/app/(maestro)/admin/_cached-helpers';
 import { spineToChips, TrustStrip } from '@/components/admin/TrustStrip';
 import {
   emptyPostureCards,
@@ -66,7 +65,6 @@ import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
 import { StewardOrientationBlock } from '@/components/home/StewardOrientationBlock';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
-import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { isClientKey } from '@/lib/client-config';
 import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
 import {
@@ -87,53 +85,11 @@ interface AdminOverviewSearchParams {
 //
 // The five zone components below each call the brokers they need.
 // `React.cache` dedupes the call within a single request so the trust
-// spine isn't refetched four times. The cached identity is the
-// broker function reference + arg tuple per React's `cache` contract.
-
-const cachedInventorySnapshot = cache(async (tenantKey: string | null) => {
-  if (!tenantKey) return null;
-  try {
-    return await getSetupInventorySnapshot(tenantKey);
-  } catch {
-    return null;
-  }
-});
-
-// Browser walk 2026-05-30 P0 #1 — TrustSpine and the page's own
-// inventory snapshot used to issue two independent calls to
-// `getSetupInventorySnapshot`. When the trust-spine call rejected
-// silently (intermittent DB blip, connection limit, etc.), the
-// substrate dimension fell back to 0 segments — making the Trust
-// strip and posture grid render an empty tenant even though the
-// masthead pills (which read the page-cached snapshot) showed the
-// real count. Threading the cached snapshot through eliminates the
-// divergence at source.
-const cachedTrustSpine = cache(async (tenantKey: string | null) => {
-  if (!tenantKey) return null;
-  try {
-    const snapshot = await cachedInventorySnapshot(tenantKey);
-    return await getTrustSpine(tenantKey, { snapshotOverride: snapshot });
-  } catch {
-    return null;
-  }
-});
-
-const cachedCrossProgramSignals = cache(async (tenantKey: string | null) => {
-  if (!tenantKey) return [];
-  try {
-    return await getCrossProgramSignals(tenantKey);
-  } catch {
-    return [];
-  }
-});
-
-const cachedApprovalQueue = cache(async (clientKey: string) => {
-  try {
-    return await getApprovalQueueForTenant(clientKey);
-  } catch {
-    return [];
-  }
-});
+// spine isn't refetched four times. Cached helpers were extracted to
+// `./admin/_cached-helpers.ts` in PR-2613 (P0 follow-up to PR-2606)
+// so the bare `catch { return null }` swallows that hid real broker
+// failures behind "0 / no data yet" UI states could be replaced with
+// structured JSON `console.warn` calls and exercised by Jest tests.
 
 interface ZoneContext {
   brokerTenantKey: string | null;
@@ -284,16 +240,41 @@ export default async function AdminOverviewPage({
   const snapshot = await cachedInventorySnapshot(brokerTenantKey);
   const baseContent = getSetupActsContent(clientKey);
   const content = mergeInventorySnapshot(baseContent, snapshot);
-  const segments = snapshot
-    ? snapshot.segments
-    : buildAuthoredInventoryFallback(content).segments;
+  const authoredFallbackSegments =
+    buildAuthoredInventoryFallback(content).segments;
+  const segments = snapshot ? snapshot.segments : authoredFallbackSegments;
   // PRE-W4-PR-5 fix #1 (persona report §9):
   //   `emptyTenant` was never set, leaving the W3-PR-6 empty-state
   //   code unreachable for brand-new tenants. Compute the flag here
   //   and pass it to HomeOverviewV2 so EmptyTenantPrimaryCard +
   //   EmptyTenantUploadAffordance unlock for tenants with no
   //   substrate loaded yet.
-  const emptyTenant = !snapshot || snapshot.segments.length === 0;
+  //
+  // PR-2613 (P0 follow-up to PR-2606): split "truly empty tenant" from
+  // "snapshot load failed but we have authored content to show". When
+  // the broker throws (logged via `logBrokerFailure` above), `snapshot`
+  // is null but the authored fallback may still expose 14 segments —
+  // historically that left the masthead pills truthfully reading "14
+  // SEGMENTS LOADED" while the Trust strip lied with "0 / no data
+  // yet". Now we surface a "Live data temporarily unavailable" banner
+  // and a structured warn so we can correlate UI + Vercel logs.
+  const snapshotLoadFailed =
+    brokerTenantKey !== null &&
+    snapshot === null &&
+    authoredFallbackSegments.length > 0;
+  if (snapshotLoadFailed) {
+    console.warn(
+      JSON.stringify({
+        event: 'admin_page.snapshot_load_failed_authored_fallback_active',
+        clientKey,
+        brokerTenantKey,
+        authoredSegmentsCount: authoredFallbackSegments.length,
+      }),
+    );
+  }
+  const emptyTenant =
+    (!snapshot || snapshot.segments.length === 0) &&
+    authoredFallbackSegments.length === 0;
   const clientId = activeClient?.id ?? null;
   // Wave 3 PR-1 · capability grounding still feeds the static
   // Section 05 (Setup panels) footer copy via composeHomeV2Extras.
@@ -368,6 +349,7 @@ export default async function AdminOverviewPage({
           extras={extras}
           emptyTenant={emptyTenant}
           liveSnapshotPresent={snapshot !== null}
+          snapshotLoadFailed={snapshotLoadFailed}
           canSwitchTenant={canSwitchTenant}
           currentCanonicalTenantKey={currentCanonicalTenantKey}
           tenantSwitchOptions={tenantSwitchOptions}
