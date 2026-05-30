@@ -18,9 +18,16 @@ import { InviteCollaboratorDialog } from '@/components/setup/InviteCollaboratorD
 
 interface InviteCollaboratorLauncherProps {
   tenantName?: string;
+  /**
+   * Canonical tenant key (e.g. `apex-retail`). Threaded into the
+   * dialog so the server action's audit row resolves to the correct
+   * `clients.id` even if the admin is in the middle of switching
+   * tenants.
+   */
+  tenantKey?: string;
 }
 
-export function InviteCollaboratorLauncher({ tenantName }: InviteCollaboratorLauncherProps) {
+export function InviteCollaboratorLauncher({ tenantName, tenantKey }: InviteCollaboratorLauncherProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -86,6 +93,7 @@ export function InviteCollaboratorLauncher({ tenantName }: InviteCollaboratorLau
         open={open}
         onClose={handleClose}
         tenantName={tenantName}
+        tenantKey={tenantKey}
       />
     </>
   );
