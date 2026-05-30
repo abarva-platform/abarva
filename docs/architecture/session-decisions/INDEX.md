@@ -4,9 +4,9 @@ This directory records founder and agent operating decisions that affect archite
 
 ## Logs
 
-| Period | File | Coverage |
-|---|---|---|
-| 2026 Q2 | `2026-Q2.md` | Packets 30-35, ADR-0001/A1, I9/I10, Phase 0D close, Vercel migration gate |
+| Period  | File         | Coverage                                                                                         |
+| ------- | ------------ | ------------------------------------------------------------------------------------------------ |
+| 2026 Q2 | `2026-Q2.md` | Packets 30-35, ADR-0001/A1, I9/I10, Phase 0D close, Vercel migration gate, Section 9/10 closeout |
 
 ## Recording Standard
 
