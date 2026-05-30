@@ -52,9 +52,9 @@ const VALID_RETENTION = new Set([90, 2555]);
 describe('NOTIFICATION_REGISTRY hygiene', () => {
   const entries = Object.values(NOTIFICATION_REGISTRY);
 
-  it('ships exactly 43 events per Spine §2 (+1 for W4-PR-7 system.delivery_failed)', () => {
-    expect(entries).toHaveLength(43);
-    expect(REGISTERED_EVENT_TYPES.size).toBe(43);
+  it('ships exactly 45 events per Spine §2 + W4-PR-3 + W4-PR-7', () => {
+    expect(entries).toHaveLength(45);
+    expect(REGISTERED_EVENT_TYPES.size).toBe(45);
   });
 
   it('has no duplicate event_types', () => {
@@ -139,8 +139,8 @@ describe('NOTIFICATION_REGISTRY hygiene', () => {
     };
     for (const def of entries) counts[def.sourceModule] += 1;
     expect(counts).toEqual({
-      setup: 8,
-      moves: 8,
+      setup: 9,
+      moves: 9,
       source: 7,
       intelligence: 6,
       tower: 4,
