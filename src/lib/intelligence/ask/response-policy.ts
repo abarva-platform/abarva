@@ -153,9 +153,10 @@ function neutralizeUnavailableDetectorPhrases(text: string): string {
       'A rational airline posture leaves',
     )
     .replace(
-      /\bno\s+(realized value signal|real-time coupling risk|delivery track record|controversy)\b/gi,
+      /\bno\s+(realized value signal|real-time coupling risk|delivery track record|controversy|dispute|contested ground)\b/gi,
       (_match, phrase: string) => `zero ${phrase}`,
     )
+    .replace(/\bno clean exit path\b/gi, 'lack a clean exit path')
     .replace(
       /\bnot a ledger\b/gi,
       'pattern-informed rather than ledger-confirmed',

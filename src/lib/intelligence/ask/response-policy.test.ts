@@ -83,6 +83,9 @@ describe('Ask Intelligence response policy', () => {
       'The backlog has no realized value signal before the board ledger review.',
       'There is no SHA-MOD entry is explicitly flagged as rolled back to Z.',
       'The move has no controversy.',
+      'The IBM work has no dispute before the modernization ledger review.',
+      'The workload has no contested ground before the inventory review.',
+      'The critical workloads have no clean exit path before the inventory review.',
     ].join(' ');
 
     const answer = applyPartialEvidencePolicy(text, [
@@ -101,6 +104,9 @@ describe('Ask Intelligence response policy', () => {
     expect(answer).toContain('zero realized value signal');
     expect(answer).toContain('the loaded SHA-MOD entries are not explicitly flagged');
     expect(answer).toContain('zero controversy');
+    expect(answer).toContain('zero dispute');
+    expect(answer).toContain('zero contested ground');
+    expect(answer).toContain('lack a clean exit path');
     expect(answer).not.toMatch(/\b(no record|no .* ledger|no .* inventory|not available|not ingested|hasn'?t been ingested)\b/i);
   });
 
