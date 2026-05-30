@@ -99,6 +99,21 @@ export interface AllProgramsSeedPlan {
   };
 }
 
+const DEMO_ROUTE_STUB_TENANTS: readonly TenantSeedPlan[] = Object.freeze([
+  {
+    tenantKey: 'northstar',
+    routeSlug: 'northstar-clinical',
+    displayName: 'Northstar Clinical Technologies',
+    programs: [],
+  },
+  {
+    tenantKey: 'skyharbor',
+    routeSlug: 'skyharbor-air',
+    displayName: 'SkyHarbor Air',
+    programs: [],
+  },
+]);
+
 const ARCHETYPE_TO_APP_ARCHETYPE: Record<SpecArchetypeCode, ArchetypeKey> = {
   ST: 'strategic_transformation',
   WA: 'workflow_automation',
@@ -220,7 +235,13 @@ export function buildTenantSeedPlan(portfolio: TenantPortfolioSeed): TenantSeedP
 
 export function buildAllProgramsSeedPlan(): AllProgramsSeedPlan {
   const deliverableTypes = buildDeliverableTypeSeedSpecs();
-  const tenants = TENANT_PORTFOLIOS.map(buildTenantSeedPlan);
+  const tenants = [
+    ...TENANT_PORTFOLIOS.map(buildTenantSeedPlan),
+    ...DEMO_ROUTE_STUB_TENANTS.map((tenant) => ({
+      ...tenant,
+      programs: [...tenant.programs],
+    })),
+  ];
   const programs = tenants.flatMap((tenant) => tenant.programs);
   const deliverables = programs.flatMap((program) => program.deliverables);
 

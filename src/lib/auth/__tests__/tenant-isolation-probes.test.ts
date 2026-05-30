@@ -75,6 +75,18 @@ const CANONICAL_TENANTS: ReadonlyArray<{
     programCodePrefix: 'FCF',
     exampleProgramCode: 'FCF-01',
   },
+  {
+    tenantKey: 'northstar',
+    routeSlug: 'northstar-clinical',
+    programCodePrefix: 'NST',
+    exampleProgramCode: '',
+  },
+  {
+    tenantKey: 'skyharbor',
+    routeSlug: 'skyharbor-air',
+    programCodePrefix: 'SKY',
+    exampleProgramCode: '',
+  },
 ];
 
 // =====================================================================
@@ -100,8 +112,8 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
     expect(canAccessTenantClient(apexUser, 'meridian')).toBe(false);
   });
 
-  it('blocks every cross-tenant pair across the active seeded tenants', () => {
-    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus'];
+  it('blocks every cross-tenant pair across the active canonical tenants', () => {
+    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus', 'northstar', 'skyharbor'];
     for (const userTenant of tenants) {
       const user = snapshot({
         sessionRole: 'client',
