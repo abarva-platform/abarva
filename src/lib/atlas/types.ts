@@ -228,6 +228,8 @@ export interface AtlasValueGrounding {
   missingEvidence: string[];
 }
 
+export type AtlasExecutionMode = 'live' | 'fallback';
+
 export interface AtlasTurnResult extends AtlasChatResponse {
   toolResults: AtlasToolResultMap;
   modelName: string | null;
@@ -243,6 +245,8 @@ export interface AtlasChatResponse {
   signalId?: string | null;
   observationId?: string | null;
   toolsUsed: string[];
+  atlasMode: AtlasExecutionMode;
+  fallbackReason?: string | null;
   metricExplanation?: MetricExplanation;
   groundingDisclosure?: AgentGroundingDisclosure;
 }

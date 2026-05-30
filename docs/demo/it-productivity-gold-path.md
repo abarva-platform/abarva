@@ -24,7 +24,7 @@ Question: "How do I improve productivity of IT resources by leveraging AI-powere
 | 1:10-2:05 | `/intelligence/ask` | Walk the six Sentinel cards. | "The answer is structured: clarify outcome, alignment check, TIME x AI-fit segmentation, TOM recommendation, tooling and governance, sibling Move portfolio. Watch the citations and dissent block: this is not a neutral list of tools." |
 | 2:05-2:45 | `/intelligence/ask` | Click "Shape Moves". | "This is the turn from answer to execution. Sentinel is not done when the paragraph is done. It shapes the IT-Productivity Move, sibling Moves, and the Source workflows needed to make the answer governable." |
 | 2:45-3:25 | `/tower/portfolio-dag` | Show portfolio DAG. | "The DAG separates dependency from narrative. Data Foundation, AI Governance, Portfolio Rationalization, Talent Strategy, and Mainframe Modernization are sibling Moves. AMS Optimization is Source, not a Move gate, and it informs the productivity program." |
-| 3:25-4:35 | `/tower/programs/[moveId]/value` | Open IT-Productivity Move value page. | "The Move has 9 gates and 8 value layers: adoption, DORA delta, hours saved, hours reallocated, license spend, realized value, process changes shipped, kill criteria. Every value line is projected, tracked, or verified. CFOs care about that tri-state." |
+| 3:25-4:35 | `/tower/programs/[programId]/value` | Open IT-Productivity Move value page. | "The Move has 9 gates and 8 value layers: adoption, DORA delta, hours saved, hours reallocated, license spend, realized value, process changes shipped, kill criteria. Every value line is projected, tracked, or verified. CFOs care about that tri-state." |
 | 4:35-5:35 | `/source/events/apex-retail-ams-outsourcing-2026` | Open AMS Optimization Source workflow. | "Managed services optimization is a separate workflow with different sponsors: Procurement, GC, CFO, CIO. Source runs the vendor portfolio diagnostic: concentration, leakage, renegotiation posture, outcome clauses, AI fluency, and IP scan cleanliness." |
 | 5:35-6:00 | `/how-it-works/it-productivity-comparison` | Optional public fallback close. | "The contrast is visible: same question, generic answer versus AbarVa answer. Citation density, dissent, Move workflow, version-pinned audit, and AI Egress Control Plane are the reason this is enterprise software, not a chatbot." |
 
@@ -62,5 +62,5 @@ Authenticated smoke is documented but environment-gated when Clerk credentials a
 
 - `/intelligence/ask` answer stream.
 - Shape Moves creation.
-- `/tower/portfolio-dag` and `/tower/programs/[moveId]/value` for the created Move.
+- `/tower/portfolio-dag` and `/tower/programs/[programId]/value` for the created Move.
 - `/source/events/...` AMS workflow.

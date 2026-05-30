@@ -36,12 +36,18 @@ export async function POST(req: NextRequest) {
       observationId: result.observationId ?? null,
       routeType: result.routeType,
       intent: result.intent,
+      atlasMode: result.atlasMode,
+      fallbackReason: result.fallbackReason ?? null,
       groundingDisclosure: result.groundingDisclosure,
       renderedResponse: buildAtlasRenderedResponse({
         clientName: result.toolResults.portfolio?.clientName ?? 'Active client',
         message,
         result,
       }),
+    }, {
+      headers: {
+        'x-atlas-mode': result.atlasMode,
+      },
     });
   } catch (err) {
     try {

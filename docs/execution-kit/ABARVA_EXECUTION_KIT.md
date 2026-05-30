@@ -380,7 +380,7 @@ Data-layer · Azure-native · AI Egress Control Plane is the only path to any LL
 | P9 Workshop authoring | DB records; audit log at `docs/workshop-author-log/**` |
 | P10 Dependency DAG | `supabase/migrations/*_move_dependencies_*.sql`, `src/lib/dependencies/**`, `src/app/(maestro)/tower/portfolio-dag/**`, `src/app/api/dependencies/**` |
 | P11 Sentinel reasoning | `src/lib/agents/sentinel-reasoning/**`, `src/app/api/intelligence/ask/route.ts`, `src/app/(maestro)/intelligence/ask/**`, `scripts/eval/sentinel-golden/**` |
-| P12 Tower value view | `src/lib/tower/value-states/**`, `src/app/(maestro)/tower/programs/[moveId]/value/**`, `src/app/api/tower/**` |
+| P12 Tower value view | `src/lib/tower/value-states/**`, `src/app/(maestro)/tower/programs/[programId]/value/**`, `src/app/api/tower/**` |
 | P13 Demo + assets | `docs/demo/**`, `src/app/(public)/how-it-works/it-productivity-comparison/**`, `src/app/(public)/how-it-works/frameworks/**` |
 
 Shared (read-only for all): `src/app/layout.tsx`, `src/lib/db/**`, `src/lib/integrations/ai-egress/**` (modified only via coordinated cross-cutting PR), `package.json`, `next.config.ts`, `vercel.ts`, `infra/azure/**` (modified only via coordinated PR).
@@ -1128,7 +1128,7 @@ DELIVERABLES
 
 2. /src/app/api/tower/* — REST
 
-3. /src/app/(maestro)/tower/programs/[moveId]/value/page.tsx — per-Move detail
+3. /src/app/(maestro)/tower/programs/[programId]/value/page.tsx — per-Move detail
    - 8 rows × 3 cols with variance + drill-down to evidence
    - Verified attestation button: CFO-role only + audit log
 

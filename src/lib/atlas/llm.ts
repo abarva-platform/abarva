@@ -13,7 +13,7 @@ import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
-import type { AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
+import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
 /**
  * Atlas Fix C (truncation): canonical CXO response shapes range from short
@@ -90,6 +90,36 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
   return lines.filter(Boolean).join(' ');
 }
 
+function normalizeFallbackReason(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.slice(0, 240);
+  }
+  const value = String(error ?? '').trim();
+  return value ? value.slice(0, 240) : 'unknown_model_error';
+}
+
+function logAtlasMode(args: {
+  tenantId: string;
+  mode: AtlasExecutionMode;
+  reason: string | null;
+  model: string;
+  workflow: string;
+}): void {
+  const payload = {
+    event: 'atlas_model_mode',
+    tenantId: args.tenantId,
+    mode: args.mode,
+    reason: args.reason,
+    model: args.model,
+    workflow: args.workflow,
+  };
+  if (args.mode === 'fallback') {
+    console.warn('[atlas.mode]', JSON.stringify(payload));
+    return;
+  }
+  console.info('[atlas.mode]', JSON.stringify(payload));
+}
+
 export async function runAtlasLlm(
   ctx: AtlasTenancyCtx,
   message: string,
@@ -100,6 +130,8 @@ export async function runAtlasLlm(
   suggestions: AtlasSuggestion[];
   toolResults: AtlasToolResultMap;
   modelName: string | null;
+  atlasMode: AtlasExecutionMode;
+  fallbackReason: string | null;
   promptVersion: string;
 }> {
   const towerState = await query_tower_current_state(ctx, surfaceContext);
@@ -156,6 +188,13 @@ export async function runAtlasLlm(
 
   const apiKeyPresent = !!process.env.ANTHROPIC_API_KEY;
   if (!apiKeyPresent) {
+    logAtlasMode({
+      tenantId: ctx.clientId,
+      mode: 'fallback',
+      reason: 'missing_anthropic_api_key',
+      model: 'claude-opus-4-7',
+      workflow: 'atlas-llm',
+    });
     return {
       response: buildFallback(toolResults),
       toolsUsed,
@@ -165,6 +204,8 @@ export async function runAtlasLlm(
       ],
       toolResults,
       modelName: null,
+      atlasMode: 'fallback',
+      fallbackReason: 'missing_anthropic_api_key',
       promptVersion: ATLAS_PROMPT_VERSION,
     };
   }
@@ -202,6 +243,7 @@ export async function runAtlasLlm(
 
   let response: string;
   let modelName: string | null = 'claude-opus-4-7';
+  let fallbackReason: string | null = null;
   try {
     const result = await client.messages.create({
       model: 'claude-opus-4-7',
@@ -234,13 +276,41 @@ export async function runAtlasLlm(
         responseParts.push(item.text);
       }
     }
-    response = responseParts.join('\n').trim() || buildFallback(toolResults);
+    response = responseParts.join('\n').trim();
+    if (!response) {
+      logAtlasMode({
+        tenantId: ctx.clientId,
+        mode: 'fallback',
+        reason: 'empty_model_response',
+        model: 'claude-opus-4-7',
+        workflow: 'atlas-llm',
+      });
+      response = `Model unavailable — deterministic read. ${buildFallback(toolResults)}`;
+      modelName = null;
+      fallbackReason = 'empty_model_response';
+    } else {
+      logAtlasMode({
+        tenantId: ctx.clientId,
+        mode: 'live',
+        reason: null,
+        model: modelName,
+        workflow: 'atlas-llm',
+      });
+    }
   } catch (err) {
     // Degraded model service (timeout / 429 / 5xx) must not surface as a
     // raw 500 on the Atlas chat surface. Fall back to the deterministic
     // tool-grounded read and disclose that the model was unavailable, so
     // the caller still gets a substrate-grounded answer.
+    fallbackReason = normalizeFallbackReason(err);
     console.error('[atlas.llm] model call failed — serving deterministic fallback:', err);
+    logAtlasMode({
+      tenantId: ctx.clientId,
+      mode: 'fallback',
+      reason: fallbackReason,
+      model: 'claude-opus-4-7',
+      workflow: 'atlas-llm',
+    });
     response = `Model unavailable — deterministic read. ${buildFallback(toolResults)}`;
     modelName = null;
   }
@@ -255,6 +325,8 @@ export async function runAtlasLlm(
     ],
     toolResults,
     modelName,
+    atlasMode: modelName ? 'live' : 'fallback',
+    fallbackReason: modelName ? null : fallbackReason ?? 'deterministic_fallback',
     promptVersion: ATLAS_PROMPT_VERSION,
   };
 }
