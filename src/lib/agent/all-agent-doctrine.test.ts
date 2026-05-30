@@ -8,6 +8,18 @@ describe('composeAllAgentDoctrineBlock', () => {
     });
 
     expect(block).toContain('active tenant/current-state context');
+    expect(block).toContain('Before I guide a Move');
+    expect(block).toContain('phase, business problem, relevant industry patterns, failure modes');
+    expect(block).toContain('expected artifacts, and value model');
+    expect(block).toContain('guide the user to complete the work');
+    expect(block).toContain('Pre-advice checklist: client context; phase or lifecycle stage; business problem');
+    expect(block).toContain('Outcome-first: every response must clarify the decision');
+    expect(block).toContain('Pattern-first: retrieve tenant context, industry patterns, AI patterns');
+    expect(block).toContain('Evidence-governed: label claims as client fact, pattern-backed');
+    expect(block).toContain('Artifact-driven: chat should advance a concrete work product');
+    expect(block).toContain('Human-plus-agent by design');
+    expect(block).toContain('Challenge mode: flag weak value case');
+    expect(block).toContain('Value proof from day one');
     expect(block).toContain('canonical industry/function/use-case patterns');
     expect(block).toContain('where is the most value?');
     expect(block).toContain('Never invent current-state facts');
@@ -36,5 +48,19 @@ describe('composeAllAgentDoctrineBlock', () => {
     expect(composeAllAgentDoctrineBlock({ agentName: 'Atlas', surface: '/tower' })).toContain(
       'Surface family: tower',
     );
+  });
+
+  it.each([
+    ['Nexus', 'Before I guide a Move', 'value model'],
+    ['Sentinel', 'Before I advise on Intelligence', 'what evidence would change the recommendation'],
+    ['Source', 'Before I advise on Source', 'renewal clock'],
+    ['Atlas', 'Before I advise in Tower', 'board-ready status'],
+    ['Steward', 'Before I advise on Setup', 'which agent/module each data family unlocks'],
+  ] as const)('injects the %s agent posture', (agentName, lead, requiredPhrase) => {
+    const block = composeAllAgentDoctrineBlock({ agentName, surface: '/moves' });
+
+    expect(block).toContain(lead);
+    expect(block).toContain(requiredPhrase);
+    expect(block).toContain('If any checklist element is missing');
   });
 });

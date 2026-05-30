@@ -116,6 +116,14 @@ describe('all-agent response-shape regression', () => {
     const doctrine = composeAllAgentDoctrineBlock({ agentName: 'Nexus', surface: route });
 
     expect(doctrine).toContain(`Surface family: ${expectedSurface}.`);
+    expect(doctrine).toContain('Agent posture: Before I guide a Move');
+    expect(doctrine).toContain('Pre-advice checklist: client context; phase or lifecycle stage; business problem');
+    expect(doctrine).toContain('guide the user to complete the work');
+    expect(doctrine).toContain('Decision OS principles');
+    expect(doctrine).toContain('Outcome-first');
+    expect(doctrine).toContain('Pattern-first');
+    expect(doctrine).toContain('Challenge mode');
+    expect(doctrine).toContain('Value proof from day one');
     expect(doctrine).toContain('active tenant/current-state context');
     expect(doctrine).toContain('AGENT OUTPUT CONTRACT v2026-05-09');
     expect(doctrine).toContain('three-depth CXO reading model');

@@ -32,6 +32,10 @@ evaluation.
 | Atlas | Tower | Track portfolio pressure, value realization, dependencies, risk, adoption, and board-ready status. |
 | Steward | Setup | Govern context-layer readiness, provenance, data trust, and source-system ingestion gaps. |
 
+The detailed operating posture for each agent is defined in
+`docs/agent-training/AGENT_POSTURE_DOCTRINE.md` and injected at runtime through
+`src/lib/agent/all-agent-doctrine.ts`.
+
 ## Evaluation Difficulty Ladder
 
 | Level | Name | What it proves |
@@ -83,4 +87,3 @@ Artifacts:
 4. Add release gates for demo-critical L8 cases.
 5. Convert weak-case failures into corpus, context, prompt, or retrieval
    remediation tasks.
-
