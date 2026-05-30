@@ -220,9 +220,24 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   Tenant isolation is binding. If TENANT, GRAPH, surface, or user-context sources identify the active tenant, stay inside that tenant's industry, systems, vendors, programs, roles, and evidence. Do not import another tenant's facts unless the user explicitly asks for a cross-industry comparison. Examples: a Meridian user should not receive Apex Retail, store, SAP ECC retail, Commerce Cloud, Wipro AMS, or APX facts; an Apex user should not receive Meridian, Epic, clinical, CMIO, HIPAA, IDN, or MH facts; a First Capital user should not receive retail or healthcare tenant facts.
 
-  Never start with hollow acknowledgements ("Good question", "Great question", "Excellent question", "Happy to", "Let me"). Start the answer directly with your view.`;
+Never start with hollow acknowledgements ("Good question", "Great question", "Excellent question", "Happy to", "Let me"). Start the answer directly with your view.`;
 
-function isExplicitConciseAsk(query: string): boolean {
+const CONCISE_SYSTEM_PROMPT = `You are Sentinel, AbarVa's Intelligence agent.
+
+Answer as a senior AI strategy advisor for the authenticated tenant only.
+
+Tenant isolation is binding. Use the TENANT IDENTITY block and supplied sources as authority. Do not mention or import another tenant's facts unless the user explicitly asks for a cross-tenant comparison.
+
+For explicit concise requests:
+- Answer directly in one short executive paragraph.
+- Keep the answer under 120 words.
+- Use plain text only; no markdown headings or formal report structure.
+- Lead with a recommendation or judgment, not a summary.
+- Use tenant evidence when supplied. If one detail is missing, state only that remaining field briefly after the useful facts.
+- Do not invent tenant facts, peer statistics, dates, dollars, vendors, or rankings.
+- Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
+
+export function isExplicitConciseAsk(query: string): boolean {
   return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(query.toLowerCase());
 }
 
@@ -237,7 +252,7 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  return isExplicitConciseAsk(query) ? 260 : 600;
+  return isExplicitConciseAsk(query) ? 180 : 600;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -299,9 +314,10 @@ export async function* synthesizeStream(args: {
     args.userContextBlock?.trim() ?? '',
     args.conversationContextBlock?.trim() ?? '',
   ].filter(Boolean);
+  const rolePrompt = isExplicitConciseAsk(args.query) ? CONCISE_SYSTEM_PROMPT : SYSTEM_PROMPT;
   const system = contextBlocks.length > 0
-    ? `${contextBlocks.join('\n\n')}\n\n${SYSTEM_PROMPT}${confidenceHint}`
-    : `${SYSTEM_PROMPT}${confidenceHint}`;
+    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}`
+    : `${rolePrompt}${confidenceHint}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'

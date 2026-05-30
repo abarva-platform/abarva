@@ -33,8 +33,8 @@ describe('Ask Intelligence guardrails', () => {
   });
 
   it('uses a tighter model budget only for explicit concise Ask requests', () => {
-    expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(260);
-    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(260);
+    expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(180);
+    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(180);
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
   });
 
