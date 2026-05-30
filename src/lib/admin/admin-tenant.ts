@@ -10,9 +10,17 @@
  * The mapping mirrors the one previously inlined in
  * `src/app/(maestro)/admin/users-access/page.tsx` so consumers get
  * the same slug ('first-capital' for Arcturus, etc.).
+ *
+ * 2026-05-30 (PR-A · P0 Apex-leak elimination):
+ *   The historic Apex fallback was removed. This function now THROWS
+ *   `AdminTenantUnresolvedError` whenever the active tenant cannot be
+ *   resolved — replacing the silent `apexretail` master-switch that
+ *   was routing every failed resolution into Apex-branded content.
+ *   Callers must either pre-resolve via direct mock (tests) or rely
+ *   on the `/admin/error.tsx` boundary to render the unresolved state.
  */
 
-import { canonicalClientDisplayName, type ClientKey } from '@/lib/client-config';
+import { canonicalClientDisplayName, isClientKey, type ClientKey } from '@/lib/client-config';
 import { getActiveClientRow } from '@/lib/active-client';
 
 const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Record<ClientKey, string> = {
@@ -23,9 +31,6 @@ const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Record<ClientKey, string> = {
   skyharbor: 'skyharbor-air',
 };
 
-const FALLBACK_CLIENT_KEY: ClientKey = 'apexretail';
-const FALLBACK_TENANT_NAME = 'Apex Retail Group';
-
 export interface AdminTenantContext {
   /** App-side ClientKey (e.g. 'arcturus'). */
   clientKey: ClientKey;
@@ -35,18 +40,43 @@ export interface AdminTenantContext {
   tenantName: string;
 }
 
-export async function resolveAdminTenant(): Promise<AdminTenantContext> {
-  const row = await getActiveClientRow().catch(() => null);
-  if (!row) {
-    return {
-      clientKey: FALLBACK_CLIENT_KEY,
-      tenantSlug: ADMIN_TENANT_SLUG_BY_CLIENT_KEY[FALLBACK_CLIENT_KEY],
-      tenantName: FALLBACK_TENANT_NAME,
-    };
+/**
+ * Thrown when the admin surface cannot resolve an active tenant.
+ *
+ * Caught by `src/app/(maestro)/admin/error.tsx` to render an explicit
+ * "no active tenant" recovery panel instead of silently routing the
+ * user into Apex-branded content (the prior fallback behavior).
+ */
+export class AdminTenantUnresolvedError extends Error {
+  constructor(reason: string) {
+    super(`No active tenant resolved for admin surface: ${reason}`);
+    this.name = 'AdminTenantUnresolvedError';
   }
-  const clientKey = (row.key as ClientKey | undefined) ?? FALLBACK_CLIENT_KEY;
-  const tenantSlug = ADMIN_TENANT_SLUG_BY_CLIENT_KEY[clientKey] ?? ADMIN_TENANT_SLUG_BY_CLIENT_KEY[FALLBACK_CLIENT_KEY];
-  const tenantName =
-    canonicalClientDisplayName({ key: row.key, name: row.name }) ?? FALLBACK_TENANT_NAME;
+}
+
+export async function resolveAdminTenant(): Promise<AdminTenantContext> {
+  let row: Awaited<ReturnType<typeof getActiveClientRow>>;
+  try {
+    row = await getActiveClientRow();
+  } catch (e) {
+    throw new AdminTenantUnresolvedError(
+      `getActiveClientRow failed: ${(e as Error).message}`,
+    );
+  }
+  if (!row) {
+    throw new AdminTenantUnresolvedError('no active client row');
+  }
+  if (!isClientKey(row.key)) {
+    throw new AdminTenantUnresolvedError(`unknown client key: ${row.key ?? '<undefined>'}`);
+  }
+  const clientKey: ClientKey = row.key;
+  const tenantSlug = ADMIN_TENANT_SLUG_BY_CLIENT_KEY[clientKey];
+  if (!tenantSlug) {
+    throw new AdminTenantUnresolvedError(`no slug mapping for ${clientKey}`);
+  }
+  const tenantName = canonicalClientDisplayName({ key: row.key, name: row.name });
+  if (!tenantName) {
+    throw new AdminTenantUnresolvedError(`no canonical name for ${clientKey}`);
+  }
   return { clientKey, tenantSlug, tenantName };
 }
