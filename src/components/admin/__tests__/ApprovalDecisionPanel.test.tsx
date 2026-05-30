@@ -132,4 +132,111 @@ describe('ApprovalDecisionPanel', () => {
       screen.queryByTestId('approval-decision-panel'),
     ).toBeNull();
   });
+
+  // ── PRE-W4-PR-4 · escalation actions + SLA badge ────────────────────
+  describe('escalation actions', () => {
+    it('renders notify-sponsor and escalate buttons', () => {
+      render(<ApprovalDecisionPanel requestId="req-1" />);
+      expect(
+        screen.getByTestId('approval-notify-sponsor-button'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('approval-escalate-button'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders SLA badge with correct bucket', () => {
+      const past = new Date(Date.now() - 60 * 60 * 60 * 1000).toISOString();
+      render(
+        <ApprovalDecisionPanel requestId="req-1" requestedAt={past} />,
+      );
+      const badge = screen.getByTestId('approval-sla-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge.getAttribute('data-sla-bucket')).toBe('breach');
+    });
+
+    it('amber palette on notify when notifyCount > 0', () => {
+      render(
+        <ApprovalDecisionPanel requestId="req-1" notifyCount={2} />,
+      );
+      const btn = screen.getByTestId('approval-notify-sponsor-button');
+      expect(btn).toHaveTextContent('(2)');
+    });
+
+    it('escalate disabled when escalationLevel=2', () => {
+      render(
+        <ApprovalDecisionPanel
+          requestId="req-1"
+          escalationLevel={2}
+        />,
+      );
+      const btn = screen.getByTestId('approval-escalate-button');
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveTextContent(/Escalated/);
+    });
+
+    it('clicking notify-sponsor calls the action and shows a banner', async () => {
+      const notify = jest.fn().mockResolvedValue({
+        ok: true,
+        notifiedAt: '2026-05-30T12:00:00Z',
+        notifyCount: 1,
+        escalationLevel: 1,
+      });
+      render(
+        <ApprovalDecisionPanel
+          requestId="req-1"
+          notifySponsor={notify}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('approval-notify-sponsor-button'));
+      await waitFor(() => expect(notify).toHaveBeenCalledWith('req-1'));
+      expect(
+        await screen.findByTestId('approval-decision-notice'),
+      ).toHaveTextContent(/Reminder logged/);
+    });
+
+    it('escalate opens confirmation, calls action, navigates to queue', async () => {
+      const escalate = jest.fn().mockResolvedValue({
+        ok: true,
+        escalationLevel: 2,
+        escalatedToUserId: 'admin-9',
+      });
+      render(
+        <ApprovalDecisionPanel
+          requestId="req-1"
+          escalateApproval={escalate}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('approval-escalate-button'));
+      expect(
+        screen.getByTestId('approval-escalate-confirm'),
+      ).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByTestId('approval-escalate-confirm-button'),
+      );
+      await waitFor(() => expect(escalate).toHaveBeenCalledWith('req-1'));
+      await waitFor(() => expect(pushMock).toHaveBeenCalled());
+      expect(pushMock).toHaveBeenCalledWith(
+        '/admin/programs/approvals?banner=escalated',
+      );
+    });
+
+    it('escalate cancel closes the dialog without calling the action', () => {
+      const escalate = jest.fn();
+      render(
+        <ApprovalDecisionPanel
+          requestId="req-1"
+          escalateApproval={escalate}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('approval-escalate-button'));
+      fireEvent.click(
+        screen.getByTestId('approval-escalate-cancel-button'),
+      );
+      expect(
+        screen.queryByTestId('approval-escalate-confirm'),
+      ).toBeNull();
+      expect(escalate).not.toHaveBeenCalled();
+    });
+  });
 });

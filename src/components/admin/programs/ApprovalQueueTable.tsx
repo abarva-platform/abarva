@@ -3,6 +3,12 @@
 // Renders the pending approvals as a stacked card list (one row per
 // request). Server-fetched; this component is a pure presentational
 // surface. Empty state when there are no pending requests.
+//
+// PRE-W4-PR-4 · adds a "Pending {N}h" SLA badge per row and a
+// presentational pre-sort that surfaces the longest-pending request
+// first. The DB query (`getApprovalQueueForTenant`) already returns
+// rows in ascending `requested_at` order; the sort here is a
+// defensive belt for ad-hoc callers that pass an unsorted array.
 
 import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
@@ -31,6 +37,32 @@ function pickString(
     if (typeof v === 'string' && v.trim().length > 0) return v.trim();
   }
   return null;
+}
+
+export interface QueuePendingMeta {
+  hours: number;
+  bucket: 'fresh' | 'warning' | 'breach';
+  label: string;
+}
+
+/**
+ * Convert an ISO submission timestamp into the SLA bookkeeping the
+ * queue and the detail-page badge both use.
+ *
+ *   fresh   < 24h   gray
+ *   warning 24–48h  amber
+ *   breach  >= 48h  coral
+ */
+export function describePending(
+  requestedAt: string,
+  now: Date = new Date(),
+): QueuePendingMeta {
+  const t = new Date(requestedAt).getTime();
+  if (Number.isNaN(t)) return { hours: 0, bucket: 'fresh', label: '—' };
+  const hours = Math.max(0, Math.round((now.getTime() - t) / 3_600_000));
+  const bucket: 'fresh' | 'warning' | 'breach' =
+    hours >= 48 ? 'breach' : hours >= 24 ? 'warning' : 'fresh';
+  return { hours, bucket, label: `Pending ${hours}h` };
 }
 
 export function formatRelativeTime(iso: string, now: Date = new Date()): string {
@@ -78,6 +110,16 @@ export function ApprovalQueueTable({
     );
   }
 
+  // Defensive sort — server already returns ascending, but if a caller
+  // passes an unsorted array we still bubble the longest-pending row
+  // to the top so the SLA-breach signal is visible at the top of the
+  // page.
+  const sorted = [...requests].sort((a, b) => {
+    const aT = new Date(a.requestedAt).getTime();
+    const bT = new Date(b.requestedAt).getTime();
+    return aT - bT;
+  });
+
   return (
     <ul
       data-testid="approval-queue-list"
@@ -90,7 +132,7 @@ export function ApprovalQueueTable({
         gap: SPACING.sm,
       }}
     >
-      {requests.map((req) => {
+      {sorted.map((req) => {
         const programName =
           pickString(req.briefSnapshot, 'program_name', 'programName') ??
           'Untitled program';
@@ -111,6 +153,13 @@ export function ApprovalQueueTable({
         const requesterDisplay =
           (resolveUserName ? resolveUserName(req.requestedByUserId) : null) ??
           safeApprovalActorLabel(req.requestedByUserId);
+        const pending = describePending(req.requestedAt, now);
+        const palette =
+          pending.bucket === 'breach'
+            ? { bg: COLORS.coralSoft, fg: COLORS.coralInk }
+            : pending.bucket === 'warning'
+              ? { bg: COLORS.amberSoft, fg: COLORS.amberInk }
+              : { bg: `${COLORS.ink}10`, fg: `${COLORS.ink}99` };
 
         return (
           <li
@@ -197,22 +246,49 @@ export function ApprovalQueueTable({
                 ) : null}
               </div>
             </div>
-            <Link
-              href={`/admin/programs/approvals/${req.id}`}
+            <div
               style={{
-                padding: `${SPACING.sm} ${SPACING.lg}`,
-                background: COLORS.navy,
-                color: COLORS.cream,
-                borderRadius: RADIUS.md,
-                fontFamily: TYPOGRAPHY.sans,
-                fontWeight: 600,
-                fontSize: 13,
-                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: SPACING.sm,
                 whiteSpace: 'nowrap',
               }}
             >
-              Review →
-            </Link>
+              <span
+                data-testid="approval-queue-pending-badge"
+                data-sla-bucket={pending.bucket}
+                title={`Submitted ${req.requestedAt}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 10px',
+                  borderRadius: RADIUS.pill,
+                  background: palette.bg,
+                  color: palette.fg,
+                  fontFamily: TYPOGRAPHY.mono,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {pending.label}
+              </span>
+              <Link
+                href={`/admin/programs/approvals/${req.id}`}
+                style={{
+                  padding: `${SPACING.sm} ${SPACING.lg}`,
+                  background: COLORS.navy,
+                  color: COLORS.cream,
+                  borderRadius: RADIUS.md,
+                  fontFamily: TYPOGRAPHY.sans,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textDecoration: 'none',
+                }}
+              >
+                Review →
+              </Link>
+            </div>
           </li>
         );
       })}

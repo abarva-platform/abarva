@@ -198,6 +198,10 @@ function makeApprovalRequest(
     briefSnapshot: {},
     createdAt: '2026-04-29T10:00:00.000Z',
     updatedAt: '2026-04-29T10:00:00.000Z',
+    escalationLevel: 0,
+    lastNotifiedAt: null,
+    notifyCount: 0,
+    escalatedToUserId: null,
     ...overrides,
   };
 }
