@@ -21,16 +21,21 @@ ingest CLI are included.
 
 ## Layer Impact
 
-- **Data layer.** Adds one Postgres table `tower_ai_tool_usage` with RLS keyed
-  to `can_read_tenant_by_key` / `can_write_tenant_by_key` and a natural-key
-  unique index on `(tool, tenant_client_key, developer_id, period_start)`.
-- **Tooling layer.** Adds `src/scripts/tower/ingest-claude-code.ts` (CLI with
-  `--dry-run`) and `src/scripts/tower/build-claude-code-templates.ts`
-  (template generator).
-- **Library layer.** Adds `src/lib/tower/ingest/claude-code/` (parser,
-  validator, planner, types) and `src/lib/tower/ingest/registry.ts` (append-
-  only ingest source registry).
-- **Docs / assets.** Adds the runbook and two XLSX artefacts under
+- **Data layer / tenant data lane.** Adds one Postgres table
+  `tower_ai_tool_usage` with RLS keyed to `can_read_tenant_by_key` /
+  `can_write_tenant_by_key` and a natural-key unique index on
+  `(tool, tenant_client_key, developer_id, period_start)`.
+- **Tooling lane (admin/back-office).** Adds
+  `src/scripts/tower/ingest-claude-code.ts` (CLI with `--dry-run`) and
+  `src/scripts/tower/build-claude-code-templates.ts` (template generator).
+  Operator-run only; not invoked from the runtime app lane.
+- **Runtime application lane (library).** Adds
+  `src/lib/tower/ingest/claude-code/` (parser, validator, planner, types)
+  and `src/lib/tower/ingest/registry.ts` (append-only ingest source
+  registry). No UI route changes; no broker-boundary changes; no Supabase
+  client imports — DB access is via the existing `getAzureWriteFluentClient`
+  on the data-plane lane only.
+- **Docs / assets lane.** Adds the runbook and two XLSX artefacts under
   `public/templates/tower/claude-code/`.
 
 ## Client Applicability
