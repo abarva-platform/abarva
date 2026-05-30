@@ -14,20 +14,24 @@ This release commits the SkyHarbor Air Section 9 walkthrough evidence and the
 combined Apex Retail + SkyHarbor comprehensive crawl summary. Both walkthroughs
 now have founder-readable HTML reports, raw crawl JSON, and full agent
 transcripts. The summary records what features are ready in layman terms and
-which content-label cleanup items remain.
+which content-label cleanup items remain. It also removes a stale placeholder
+from the shared notification email footer after the CI DOM integrity gate caught
+it during this evidence PR.
 
 ## Layer Impact
 
 - `qa-validation-lane`: Adds final Section 9.6 evidence artifacts.
 - `audit-control-lane`: Preserves the Apex + SkyHarbor production validation
   trail for pilot-readiness review.
-- `runtime-app-lane`: No runtime code change.
+- `runtime-app-lane`: Updates the shared notification email footer copy to
+  remove placeholder text.
 - `data-plane-lane`: No database mutation.
 
 ## Client Applicability
 
 - All clients: No. This is Section 9 evidence for Apex Retail and SkyHarbor Air.
-- Specific clients: Apex Retail, SkyHarbor Air.
+- Specific clients: Apex Retail, SkyHarbor Air for crawl evidence; all tenants
+  for the shared notification footer copy.
 - Feature flag: None.
 
 ## Changes Included
@@ -37,6 +41,8 @@ which content-label cleanup items remain.
 - `audit-artifacts/comprehensive-crawl-2026-05-30/skyharbor-air/post-2551-production-rerun/FULL_MODULE_STRESS_TEST_REPORT.html`
 - `audit-artifacts/comprehensive-crawl-2026-05-30/skyharbor-air/post-2551-production-rerun/crawl-results.json`
 - `audit-artifacts/comprehensive-crawl-2026-05-30/skyharbor-air/post-2551-production-rerun/transcripts/full-transcript.json`
+- `src/lib/notifications/templates/_shared/EmailShell.tsx`
+- `src/lib/notifications/templates/__tests__/__snapshots__/template-shape.test.ts.snap`
 
 ## QA / Validation
 
@@ -50,15 +56,20 @@ which content-label cleanup items remain.
   8.5/10.
 - PASS: Non-Clerk console errors and real HTTP status failures were absent from
   the post-#2551 SkyHarbor rerun evidence.
+- PASS: `npx jest src/lib/notifications/templates/__tests__/template-shape.test.ts --updateSnapshot`
+  recorded 40 passing tests and updated the expected footer snapshots.
+- PASS: `npm run integrity:dom` recorded 2,837 scanned files and 0 violations.
 
 ## Rollout Plan
 
-Merge after CI is green. No production deployment is required for the evidence
-artifact itself.
+Merge after CI is green. Evidence files have no runtime effect. The email footer
+copy update rides the normal Vercel deployment for the app.
 
 ## Rollback Plan
 
-Revert this PR if the evidence artifact needs to be regenerated or replaced.
+Revert this PR if the evidence artifact needs to be regenerated or replaced. If
+only the email footer copy needs adjustment, revert the `EmailShell.tsx` and
+snapshot changes independently.
 
 ## Audit Evidence
 

@@ -20,22 +20,23 @@
  * without a React renderer in the loop.
  */
 
-import { tenantHeader, formatTs, escapeHtml, type TenantBrand } from './utils';
+import { tenantHeader, formatTs, escapeHtml, type TenantBrand } from "./utils";
 
 /**
  * Phase 1 sender address — shared `notifications@abarva.com`. The
- * physical address is a Phase 1 placeholder; legal will swap in the
- * official entity address before pilot launch.
+ * official mailing address is governed by the signed customer agreement
+ * until notification settings carry the entity address directly.
  *
  * CAN-SPAM §5 requires a valid postal address on every commercial
  * message. We surface it on transactional + governance messages too
  * because it's lighter-weight to be uniformly compliant than to gate
  * by audit_class.
  */
-export const SENDER_ADDRESS = 'AbarVa, Inc. · [address TBD] · Phase 1 placeholder';
+export const SENDER_ADDRESS =
+  "AbarVa, Inc. · official mailing address on file in customer agreement";
 
 /** Default preferences page used by every unsubscribe footer. */
-export const PREFERENCES_PATH = '/admin/users-access/notifications';
+export const PREFERENCES_PATH = "/admin/users-access/notifications";
 
 export interface EmailShellInput {
   /** Brand applied to the masthead. */
@@ -71,40 +72,40 @@ export function renderEmailShell(input: EmailShellInput): string {
   const tsRaw = escapeHtml(input.producedAtIso);
 
   return [
-    '<!doctype html>',
+    "<!doctype html>",
     '<html lang="en">',
-    '<head>',
+    "<head>",
     '<meta charset="utf-8" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
-    '<title>AbarVa notification</title>',
-    '</head>',
-    '<body style="margin:0;padding:0;background:#F1EFE8;font-family:\'DM Sans\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Arial,sans-serif;color:#1A1A1A;">',
+    "<title>AbarVa notification</title>",
+    "</head>",
+    "<body style=\"margin:0;padding:0;background:#F1EFE8;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1A1A1A;\">",
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#F1EFE8;">',
-    '<tr>',
+    "<tr>",
     '<td align="center" style="padding:32px 16px;">',
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="border-collapse:collapse;max-width:620px;width:100%;background:#F8F7F4;border:1px solid #E5E1D8;">',
     // ── Masthead ────────────────────────────────────────────────
-    '<tr><td>',
+    "<tr><td>",
     tenantHeader(input.tenant),
-    '</td></tr>',
+    "</td></tr>",
     // ── Body ────────────────────────────────────────────────────
     '<tr><td style="padding:28px 28px 8px 28px;">',
     input.bodyHtml,
-    '</td></tr>',
+    "</td></tr>",
     // ── Footer ──────────────────────────────────────────────────
-    '<tr><td style="padding:28px 28px 24px 28px;border-top:1px solid #E5E1D8;font-family:\'DM Sans\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Arial,sans-serif;font-size:12px;line-height:1.6;color:#5B6C8A;">',
+    "<tr><td style=\"padding:28px 28px 24px 28px;border-top:1px solid #E5E1D8;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;line-height:1.6;color:#5B6C8A;\">",
     `<p style="margin:0 0 6px 0;">${escapeHtml(SENDER_ADDRESS)}</p>`,
     `<p style="margin:0 0 6px 0;">You're receiving this because ${reason}.</p>`,
     `<p style="margin:0 0 12px 0;"><a href="${escapeHtml(preferencesHref)}" style="color:#1A1A1A;text-decoration:underline;">Manage notification preferences</a> &nbsp;·&nbsp; <a href="${escapeHtml(preferencesHref)}" style="color:#1A1A1A;text-decoration:underline;">Unsubscribe</a></p>`,
     `<p style="margin:0;font-family:'JetBrains Mono','SF Mono',Menlo,Monaco,Consolas,monospace;font-size:11px;color:#5B6C8A;">Sent at ${escapeHtml(tsHuman)} · event ${eventIdSafe} · ts ${tsRaw}</p>`,
-    '</td></tr>',
-    '</table>',
-    '</td>',
-    '</tr>',
-    '</table>',
-    '</body>',
-    '</html>',
-  ].join('');
+    "</td></tr>",
+    "</table>",
+    "</td>",
+    "</tr>",
+    "</table>",
+    "</body>",
+    "</html>",
+  ].join("");
 }
 
 /**
@@ -120,13 +121,13 @@ export function renderTextFooter(input: {
 }): string {
   const href = input.preferencesUrl ?? PREFERENCES_PATH;
   return [
-    '',
-    '---',
+    "",
+    "---",
     SENDER_ADDRESS,
     `You're receiving this because ${input.reason}.`,
     `Manage preferences or unsubscribe: ${href}`,
     `Sent at ${formatTs(input.producedAtIso)} · event ${input.eventId} · ts ${input.producedAtIso}`,
-  ].join('\n');
+  ].join("\n");
 }
 
 /**
@@ -135,13 +136,13 @@ export function renderTextFooter(input: {
 export function renderCtaButton(label: string, href: string): string {
   return [
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:18px 0 6px 0;">',
-    '<tr>',
+    "<tr>",
     `<td style="background:#1A1A1A;border-radius:2px;">`,
     `<a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 22px;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;font-weight:500;color:#F8F7F4;text-decoration:none;letter-spacing:0.02em;">${escapeHtml(label)}</a>`,
-    '</td>',
-    '</tr>',
-    '</table>',
-  ].join('');
+    "</td>",
+    "</tr>",
+    "</table>",
+  ].join("");
 }
 
 /** Headline used at the top of every body — Georgia 22px, locked. */
@@ -159,21 +160,23 @@ export function renderParagraph(html: string): string {
  * every template to surface payload context (program, requester, etc.)
  * without bloating the body copy.
  */
-export function renderMetaBlock(pairs: ReadonlyArray<{ label: string; value: string }>): string {
-  if (pairs.length === 0) return '';
+export function renderMetaBlock(
+  pairs: ReadonlyArray<{ label: string; value: string }>,
+): string {
+  if (pairs.length === 0) return "";
   const rows = pairs
     .map(
       ({ label, value }) =>
         `<tr><td style="padding:6px 0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:12px;color:#5B6C8A;text-transform:uppercase;letter-spacing:0.06em;width:40%;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;color:#1A1A1A;vertical-align:top;">${escapeHtml(value)}</td></tr>`,
     )
-    .join('');
+    .join("");
   return [
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#F1EFE8;border:1px solid #E5E1D8;margin:12px 0 18px 0;">',
     '<tr><td style="padding:14px 18px;">',
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">',
     rows,
-    '</table>',
-    '</td></tr>',
-    '</table>',
-  ].join('');
+    "</table>",
+    "</td></tr>",
+    "</table>",
+  ].join("");
 }
