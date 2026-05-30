@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
       surfaceContext: body.surfaceContext,
     });
 
-    return Response.json(result);
+    return Response.json(result, {
+      headers: {
+        'x-atlas-mode': result.atlasMode,
+      },
+    });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);

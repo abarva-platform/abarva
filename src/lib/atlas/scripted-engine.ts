@@ -907,7 +907,7 @@ export async function runScriptedAtlasIntent(
 }
 
 export function makeScriptedChatResponse(
-  base: Omit<AtlasChatResponse, 'routeType' | 'intent' | 'response' | 'suggestions' | 'toolsUsed'>,
+  base: Omit<AtlasChatResponse, 'routeType' | 'intent' | 'response' | 'suggestions' | 'toolsUsed' | 'atlasMode' | 'fallbackReason'>,
   intent: AtlasIntent,
   payload: Awaited<ReturnType<typeof runScriptedAtlasIntent>>,
 ): AtlasChatResponse {
@@ -919,5 +919,7 @@ export function makeScriptedChatResponse(
     suggestions: payload.suggestions,
     signalId: payload.signalId ?? null,
     toolsUsed: payload.toolsUsed,
+    atlasMode: 'live',
+    fallbackReason: null,
   };
 }
