@@ -15,12 +15,13 @@ import {
   formatGroundingFlagText,
   normalizeCanonicalIndustry,
 } from '@/lib/sentinel/canonical-grounding';
+import type { SentinelPromptDefinition } from '@/lib/prompts/sentinel';
+import { getActiveSentinelPrompt } from '@/lib/prompts/sentinel';
 import type {
   SentinelCitation,
   SentinelConfidenceBand,
   SentinelQueryResponse,
 } from '@/lib/sentinel/types';
-import { AGENT_DEMO_SYSTEM_BLOCK } from '@/lib/agent/demo-context';
 
 export interface SentinelTenancyCtx {
   clientKey: string;
@@ -214,6 +215,7 @@ async function synthesizeWithClaude(args: {
   message: string;
   ctx: SentinelTenancyCtx;
   rankedPatterns: RankedPattern[];
+  activePrompt: SentinelPromptDefinition;
 }): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY || args.rankedPatterns.length === 0) return null;
 
@@ -246,15 +248,7 @@ async function synthesizeWithClaude(args: {
     null,
     2,
   );
-  const system = [
-    'You are Sentinel, the AbarVa intelligence librarian.',
-    'Your role: validate, curate, and advise on AI patterns in the Intelligence library.',
-    'Use only the provided context. Do not invent evidence.',
-    'Name the most relevant pattern or patterns explicitly — use the T-code IDs (T3-H01, T3-H03, etc.) from the demo context when relevant.',
-    'Say when evidence is thin or authored from industry knowledge rather than measured customer outcomes.',
-    'Write in plain English. No bullet lists. Two short paragraphs max.',
-    AGENT_DEMO_SYSTEM_BLOCK,
-  ].join('\n');
+  const system = args.activePrompt.buildSystemPrompt();
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.ctx.clientKey,
     userId: args.ctx.userId ?? undefined,
@@ -262,7 +256,10 @@ async function synthesizeWithClaude(args: {
     model: 'claude-sonnet-4-6',
     prompt: [system, userPayload].join('\n\n'),
     dataClass: 'confidential',
-    metadata: { clientKey: args.ctx.clientKey },
+    metadata: {
+      clientKey: args.ctx.clientKey,
+      promptVersion: args.activePrompt.version,
+    },
   });
 
   const result = await client.messages.create({
@@ -300,6 +297,7 @@ export async function runSentinelTurn(args: {
   const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
   const anchorSlug = args.activePatternSlug ?? null;
+  const activePrompt = getActiveSentinelPrompt();
 
   const rankedPatterns = patterns
     .map((pattern) => ({
@@ -344,6 +342,7 @@ export async function runSentinelTurn(args: {
     message: args.message,
     ctx: args.ctx,
     rankedPatterns,
+    activePrompt,
   }).catch(() => null);
   const responseText = [llmText ?? fallback.text, groundingFlagText]
     .filter(Boolean)

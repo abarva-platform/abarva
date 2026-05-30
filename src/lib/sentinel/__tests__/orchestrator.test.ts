@@ -1,5 +1,6 @@
 jest.mock('server-only', () => ({}));
 
+import { getActiveSentinelPrompt } from '@/lib/prompts/sentinel';
 import { runSentinelTurn } from '@/lib/sentinel/orchestrator';
 import type { CanonicalPatternIndexResult } from '@/lib/intelligence/canonical/runtime-pattern-index';
 
@@ -16,6 +17,28 @@ function noMatchCanonicalResult(): CanonicalPatternIndexResult {
 }
 
 describe('runSentinelTurn canonical grounding', () => {
+  const originalAnthropicApiKey = process.env.ANTHROPIC_API_KEY;
+  const originalSentinelPromptVersion = process.env.SENTINEL_PROMPT_VERSION;
+
+  beforeEach(() => {
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.SENTINEL_PROMPT_VERSION;
+  });
+
+  afterAll(() => {
+    if (originalAnthropicApiKey) {
+      process.env.ANTHROPIC_API_KEY = originalAnthropicApiKey;
+    } else {
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+
+    if (originalSentinelPromptVersion) {
+      process.env.SENTINEL_PROMPT_VERSION = originalSentinelPromptVersion;
+    } else {
+      delete process.env.SENTINEL_PROMPT_VERSION;
+    }
+  });
+
   it('queries the canonical runtime index and includes grounding flags without writing data', async () => {
     const canonicalPatternSearch = jest.fn().mockResolvedValue(noMatchCanonicalResult());
 
@@ -30,7 +53,7 @@ describe('runSentinelTurn canonical grounding', () => {
       canonicalPatternSearch,
     });
 
-    expect(canonicalPatternSearch).toHaveBeenCalledWith(expect.objectContaining({
+    expect(canonicalPatternSearch.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
       tenant_key: 'apex-retail',
       industry: 'retail',
       limit: 3,
@@ -46,5 +69,33 @@ describe('runSentinelTurn canonical grounding', () => {
       expect.objectContaining({ type: 'canonical_pattern_no_match' }),
     ]));
     expect(result.response).toContain('Grounding check:');
+  });
+
+  it('pairs Sentinel prompt v1.0.0 to citation and grounding expectations', async () => {
+    const activePrompt = getActiveSentinelPrompt({ SENTINEL_PROMPT_VERSION: '1.0.0' });
+    const canonicalPatternSearch = jest.fn().mockResolvedValue(noMatchCanonicalResult());
+
+    process.env.SENTINEL_PROMPT_VERSION = activePrompt.version;
+    const result = await runSentinelTurn({
+      ctx: {
+        clientKey: 'apex-retail',
+        clientName: 'Apex Retail',
+        industryCode: 'retail-omni',
+        userId: 'user_123',
+      },
+      message: 'Which demand forecasting pattern applies?',
+      canonicalPatternSearch,
+    });
+
+    expect(activePrompt.version).toBe('1.0.0');
+    expect(activePrompt.citationBehavior.expectedGroundingFlagPrefix).toBe('Grounding check:');
+    expect(result.citations.length).toBeGreaterThan(0);
+    expect(result.citations[0]).toMatchObject({
+      slug: expect.any(String),
+      label: expect.any(String),
+      evidenceCount: expect.any(Number),
+    });
+    expect(result.grounding.status).toBe('no_match');
+    expect(result.response).toContain(activePrompt.citationBehavior.expectedGroundingFlagPrefix);
   });
 });
