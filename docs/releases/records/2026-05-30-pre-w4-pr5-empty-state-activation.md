@@ -1,96 +1,70 @@
-# 2026-05-30 · PRE-W4-PR-5 · Empty-state activation + UI polish bundle
+# 2026-05-30-pre-w4-pr5-empty-state-activation — Empty-state activation + UI polish bundle
 
-## Plain-English
+## Release ID
 
-Four small fixes to the `/admin` Setup landing, drawn from
-`PERSONA_A_TENANT_ADMIN_DAY1_2026-05-30.md` §9 (fixes #1, #2, #6, #7
-plus the bonus #8 audit-ribbon copy):
+`2026-05-30-pre-w4-pr5-empty-state-activation`
 
-1. **Activate the W3-PR-6 empty-state code.** The `emptyTenant` flag
-   was never computed on the server page, so `EmptyTenantPrimaryCard`
-   + `EmptyTenantUploadAffordance` (shipped in W3-PR-6) were
-   unreachable for brand-new tenants. Now derived from
-   `snapshot.segments.length === 0` and threaded into `HomeOverviewV2`.
+## Status
 
-2. **Retire the AI Initiatives Setup panel.** Panel #02 used to
-   point at `/home/ai-initiatives`, which hard-redirects to `/home`
-   — ejecting tenant admins from `/admin` every time they clicked the
-   card. The Intelligence wave will redesign the initiatives surface;
-   until then the panel is removed entirely. Setup panel numbering
-   stays stable (03 Connectors, 04 Users & Access, …) so deep links
-   and the design vocabulary don't drift.
+`candidate`
 
-3. **Unify the masthead label.** Browser tab said `Setup · AbarVa`,
-   sidebar said `Setup · Admin`, masthead eyebrow said `HOME · WHERE
-   YOU STAND…`. Pick one noun and use it — the eyebrow now reads
-   `SETUP · WHERE YOU STAND…`.
+## Plain-English Summary
 
-4. **Suppress all-red Section 01 readiness for empty tenants.** Four
-   modules would all evaluate to ≤30% (red bucket) with no substrate
-   loaded — punishing a brand-new tenant on arrival. When `emptyTenant`
-   is true, `composeHomeV2Extras` emits an empty `readiness` array and
-   `HomeOverviewV2` renders a single editorial placeholder ("Readiness
-   will compute when your first dataset lands.") instead of four red
-   bars.
+Four small fixes to the `/admin` Setup landing, drawn from `PERSONA_A_TENANT_ADMIN_DAY1_2026-05-30.md` §9 (fixes #1, #2, #6, #7 plus bonus #8 audit-ribbon copy):
 
-**Bonus fix #8 (persona §9 #8):** the audit ribbon empty line was a
-flat "No activity in the last 24 hours." for an empty tenant. Replaced
-with a stewarded sentence that names what fills the ribbon (substrate
-ingest, auth/policy/approval events).
+1. **Activate the W3-PR-6 empty-state code.** The `emptyTenant` flag was never computed on the server page, so `EmptyTenantPrimaryCard` + `EmptyTenantUploadAffordance` (shipped in W3-PR-6) were unreachable for brand-new tenants. Now derived from `snapshot.segments.length === 0` and threaded into `HomeOverviewV2`.
+
+2. **Retire the AI Initiatives Setup panel.** Panel #02 used to point at `/home/ai-initiatives`, which hard-redirects to `/home` — ejecting tenant admins from `/admin` every time they clicked the card. The Intelligence wave will redesign the initiatives surface; until then the panel is removed entirely. Setup panel numbering stays stable (03 Connectors, 04 Users & Access, …) so deep links and the design vocabulary don't drift.
+
+3. **Unify the masthead label.** Browser tab said `Setup · AbarVa`, sidebar said `Setup · Admin`, masthead eyebrow said `HOME · WHERE YOU STAND…`. Pick one noun and use it — the eyebrow now reads `SETUP · WHERE YOU STAND…`.
+
+4. **Suppress all-red Section 01 readiness for empty tenants.** Four modules would all evaluate to ≤30% (red bucket) with no substrate loaded — punishing a brand-new tenant on arrival. When `emptyTenant` is true, `composeHomeV2Extras` emits an empty `readiness` array and `HomeOverviewV2` renders a single editorial placeholder ("Readiness will compute when your first dataset lands.") instead of four red bars.
+
+**Bonus fix #8:** the audit ribbon empty line was a flat "No activity in the last 24 hours." for an empty tenant. Replaced with a stewarded sentence naming what fills the ribbon (substrate ingest, auth/policy/approval events).
 
 ## Layer Impact
 
-- **runtime-app-lane.** No DB migrations. No broker contract changes.
-  All edits live in `src/app/(maestro)/admin/page.tsx`,
-  `src/lib/admin/home-overview-v2.ts`,
-  `src/components/home/HomeOverviewV2.tsx`,
-  `src/components/admin/AuditRibbon.tsx`,
-  and `src/scripts/audit/render-setup-home-snapshot.ts` (audit snapshot
-  HTML to keep it in sync with the production eyebrow).
+- `runtime-app-lane`: `/admin` landing now reacts to `emptyTenant` flag — empty-state primary card + 4-tile upload affordance + editorial Steward orientation activate for brand-new tenants.
+- `qa-validation-lane`: New snapshot tests for empty vs non-empty paths.
 
 ## Client Applicability
 
-**All clients.** The empty-state path applies to any brand-new tenant.
-The other three fixes (panel retirement, label unification, readiness
-empty placeholder) apply to every tenant — non-empty tenants are
-unaffected because the empty-state branches gate on `emptyTenant`.
+- All clients (user-visible change on the `/admin` landing).
+- Specific clients: None singled out.
+- Internal only: No.
+- Public/demo only: No.
+- Feature flag: None.
 
-## QA
+## Changes Included
 
-- `npm run test:nav` — admin route shell tests.
-- `npx jest src/components/home src/lib/admin src/components/admin`
-  — new tests cover the four fixes:
-  - `HomeOverviewV2.empty-state.test.tsx` — adds two assertions for
-    the SETUP eyebrow and the Section 01 readiness placeholder.
-  - `home-overview-v2-pre-w4-pr5.test.ts` (new) — panel #02 absent on
-    all paths; readiness array empty when `emptyTenant: true`.
-  - `AuditRibbon.test.tsx` — updated empty-state copy assertion.
-- Manual: log in as an admin for a tenant with no substrate (e.g. a
-  freshly-provisioned canonical tenant) and confirm:
-  - eyebrow reads `SETUP · WHERE YOU STAND…`,
-  - Section 01 shows the placeholder, not four red bars,
-  - action queue replaced by the primary upload card,
-  - posture grid replaced by the 4-tile upload affordance,
-  - no `AI Initiatives` card in Section 05,
-  - audit ribbon empty line reads the stewarded copy.
+- `src/app/(maestro)/admin/page.tsx` — derives `emptyTenant` from snapshot; threads through to `HomeOverviewV2`.
+- `src/lib/admin/home-overview-v2.ts` — `composeHomeV2Extras` returns empty readiness when tenant is empty; AI Initiatives panel removed from panels array.
+- `src/components/home/HomeOverviewV2.tsx` — eyebrow now `SETUP · WHERE YOU STAND…`; Section 01 renders placeholder when `readiness` is empty.
+- `src/components/admin/AuditRibbon.tsx` — empty-state copy refined to name what fills the ribbon.
+- Updated existing tests where layout intentionally changed; new snapshot tests cover both paths.
 
-## Rollout
+## QA / Validation
 
-Behind no flag — straight code change to a runtime surface. The
-empty-state code was already shipped (W3-PR-6); this just activates
-it.
+- PASS: `npx eslint src/` (0 errors).
+- PASS: `npx tsc --noEmit` (clean).
+- PASS: `npx jest src/components/home src/lib/admin` (snapshots updated).
+- PENDING: PR CI gates at submission time.
 
-## Rollback
+## Rollout Plan
 
-Single revert of the merge commit restores the prior behavior
-(unreachable empty state, ejecting AI Initiatives panel, HOME
-eyebrow, all-red readiness). No data migration to unwind.
+Merge to main → Vercel production deploy redeploys `/admin` with empty-state activation. No migration, no feature flag, no runbook step.
+
+## Rollback Plan
+
+Revert this PR. Dead code returns; empty-tenant landing reverts to authored-fallback queue. No data migration to reverse.
 
 ## Audit Evidence
 
-- Persona report `docs/build/PERSONA_A_TENANT_ADMIN_DAY1_2026-05-30.md`
-  §9 fixes #1, #2, #6, #7, and bonus #8.
-- Audit verdict `docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md` §5.5
-  (AI Initiatives panel listed for deletion).
-- W3-PR-6 release record (introduced the empty-state code that this
-  PR activates).
+- Persona walkthrough: `docs/build/PERSONA_A_TENANT_ADMIN_DAY1_2026-05-30.md` §9 fixes 1, 2, 6, 7, 8.
+- Audit verdict: `docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md` §5.6 (empty state) + §2 (label unification).
+
+## Known Gaps
+
+- Section 01 placeholder is a single editorial line; future polish could turn it into a "what readiness measures" preview.
+- Audit-ribbon empty copy is static; could compute time-since-provision from `activeClient.created_at` for tighter Day-1 framing (PERSONA_A §9 fix #8 second half).
+- AI Initiatives panel is removed entirely. If the Intelligence wave reintroduces an initiatives surface, the panel slot must be re-numbered intentionally.
