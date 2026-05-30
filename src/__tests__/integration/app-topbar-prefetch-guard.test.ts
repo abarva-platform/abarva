@@ -6,12 +6,14 @@ const appTopBarSource = readFileSync(
   "utf8",
 );
 
-describe("AppTopBar product navigation prefetch guard", () => {
-  it("disables Next.js prefetch for product module links", () => {
+describe("AppTopBar product navigation document navigation guard", () => {
+  it("uses document anchors for product module links", () => {
     expect(appTopBarSource).toContain('aria-label="Product modules"');
-    expect(appTopBarSource).toContain("prefetch={false}");
-    expect(appTopBarSource.indexOf("prefetch={false}")).toBeGreaterThan(
-      appTopBarSource.indexOf("key={item.key}"),
+    expect(appTopBarSource).toContain("<a");
+    expect(appTopBarSource).toContain("href={item.href}");
+    expect(appTopBarSource.indexOf("<a")).toBeGreaterThan(
+      appTopBarSource.indexOf("navItems.map"),
     );
+    expect(appTopBarSource).not.toContain("prefetch={false}");
   });
 });

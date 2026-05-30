@@ -1,4 +1,4 @@
-# 2026-05-29-moves-nav-prefetch-hotfix — Moves Nav Prefetch Hotfix
+# 2026-05-29-moves-nav-prefetch-hotfix — Moves Nav Document Navigation Hotfix
 
 ## Release ID
 
@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the Home to Moves click path. Direct `/strategic-moves` loads worked, but the top-bar Moves link could reuse a stale prefetched navigation result and leave some client personas on Home. The product nav now disables Next.js prefetch for module links so each click performs a fresh authenticated navigation after the session and active-client cookie are ready.
+This release fixes the Home to Moves click path. Direct `/strategic-moves` loads worked, but the top-bar Moves link could use a stale client-router navigation result and leave some client personas on Home. Product-module nav links now use normal document anchors so each click performs a fresh authenticated document navigation after the session and active-client cookie are ready.
 
 ## Layer Impact
 
@@ -51,7 +51,7 @@ Merge after CI green. Deploy through the normal Git integration. Run the live cl
 
 ## Rollback Plan
 
-Revert this PR to restore default Next.js prefetch behavior on AppTopBar product-module links. No database rollback is required.
+Revert this PR to restore Next.js client-side navigation on AppTopBar product-module links. No database rollback is required.
 
 ## Audit Evidence
 

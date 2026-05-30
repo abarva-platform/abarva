@@ -162,10 +162,9 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           {navItems.map((item) => {
             const active = item.match(pathname);
             return (
-              <Link
+              <a
                 key={item.key}
                 href={item.href}
-                prefetch={false}
                 className="app-top-bar__nav-link"
                 aria-current={active ? "page" : undefined}
                 style={{
@@ -178,9 +177,9 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                   letterSpacing: "-0.005em",
                   position: "relative",
                 }}
-              >
-                {item.label}
-                {active && (
+                >
+                  {item.label}
+                  {active && (
                   <span
                     aria-hidden="true"
                     style={{
@@ -192,9 +191,9 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                       background: BRAND.signalBlue,
                       borderRadius: 2,
                     }}
-                  />
-                )}
-              </Link>
+                    />
+                  )}
+              </a>
             );
           })}
         </nav>
