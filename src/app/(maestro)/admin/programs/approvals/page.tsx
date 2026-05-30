@@ -126,7 +126,7 @@ export default async function AdminProgramApprovalsPage() {
 
   return (
     <AdminCanonShellV2
-      tenantName={client.name ?? 'AbarVa Admin'}
+      tenantName={client.name}
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"
