@@ -1,0 +1,388 @@
+{
+  "generatedAt": "2026-05-30",
+  "wave": 2,
+  "totalPatterns": 1265,
+  "packs": [
+    {
+      "code": "G",
+      "title": "Omnichannel Integration",
+      "packs": [
+        {
+          "code": "G.1",
+          "title": "BOPIS (Buy Online Pickup In Store)",
+          "count": 20
+        },
+        {
+          "code": "G.2",
+          "title": "Ship-From-Store & Distributed Order Management",
+          "count": 20
+        },
+        {
+          "code": "G.3",
+          "title": "Endless Aisle & Save-the-Sale",
+          "count": 20
+        },
+        {
+          "code": "G.4",
+          "title": "Returns Across Channels",
+          "count": 20
+        },
+        {
+          "code": "G.5",
+          "title": "Unified Inventory Visibility",
+          "count": 20
+        },
+        {
+          "code": "G.6",
+          "title": "Cross-Channel Customer Identity",
+          "count": 19
+        },
+        {
+          "code": "G.7",
+          "title": "In-Store Digital Experiences",
+          "count": 19
+        },
+        {
+          "code": "G.8",
+          "title": "Omnichannel Operations Maturity Model",
+          "count": 19
+        }
+      ],
+      "target": 157
+    },
+    {
+      "code": "H",
+      "title": "Supply Chain Strategy",
+      "packs": [
+        {
+          "code": "H.1",
+          "title": "Supply Chain Network Design",
+          "count": 20
+        },
+        {
+          "code": "H.2",
+          "title": "Vendor Compliance & Performance",
+          "count": 20
+        },
+        {
+          "code": "H.3",
+          "title": "Sourcing Strategy (Domestic, Nearshore, Offshore)",
+          "count": 20
+        },
+        {
+          "code": "H.4",
+          "title": "Supplier Diversification & De-Risking",
+          "count": 19
+        },
+        {
+          "code": "H.5",
+          "title": "Container & Freight Strategy",
+          "count": 19
+        },
+        {
+          "code": "H.6",
+          "title": "Demand Planning & Forecasting",
+          "count": 19
+        },
+        {
+          "code": "H.7",
+          "title": "Inventory Pre-Positioning",
+          "count": 19
+        },
+        {
+          "code": "H.8",
+          "title": "Reverse Supply Chain",
+          "count": 19
+        },
+        {
+          "code": "H.9",
+          "title": "Sustainable Supply Chain",
+          "count": 19
+        },
+        {
+          "code": "H.10",
+          "title": "Supply Chain Visibility & Control Towers",
+          "count": 19
+        }
+      ],
+      "target": 193
+    },
+    {
+      "code": "I",
+      "title": "Inventory Management",
+      "packs": [
+        {
+          "code": "I.1",
+          "title": "Inventory Optimization Methods",
+          "count": 20
+        },
+        {
+          "code": "I.2",
+          "title": "Safety Stock & Service Level Decisions",
+          "count": 20
+        },
+        {
+          "code": "I.3",
+          "title": "Replenishment Algorithms",
+          "count": 20
+        },
+        {
+          "code": "I.4",
+          "title": "Allocation Strategies",
+          "count": 20
+        },
+        {
+          "code": "I.5",
+          "title": "Markdown Optimization",
+          "count": 19
+        },
+        {
+          "code": "I.6",
+          "title": "Slow-Movers & Tail SKU Management",
+          "count": 19
+        },
+        {
+          "code": "I.7",
+          "title": "Inventory Accuracy (RFID, Counts)",
+          "count": 19
+        },
+        {
+          "code": "I.8",
+          "title": "Working Capital & Inventory Turn",
+          "count": 19
+        }
+      ],
+      "target": 156
+    },
+    {
+      "code": "J",
+      "title": "Logistics, Fulfillment & Last-Mile",
+      "packs": [
+        {
+          "code": "J.1",
+          "title": "DC & MFC (Micro-Fulfillment Center) Strategy",
+          "count": 20
+        },
+        {
+          "code": "J.2",
+          "title": "Pick-Pack-Ship Automation",
+          "count": 20
+        },
+        {
+          "code": "J.3",
+          "title": "Robotics in Fulfillment",
+          "count": 20
+        },
+        {
+          "code": "J.4",
+          "title": "Last-Mile Delivery Models",
+          "count": 20
+        },
+        {
+          "code": "J.5",
+          "title": "Same-Day & Instant Delivery",
+          "count": 19
+        },
+        {
+          "code": "J.6",
+          "title": "Carrier Strategy (UPS, FedEx, USPS, Regional)",
+          "count": 19
+        },
+        {
+          "code": "J.7",
+          "title": "In-House Last-Mile vs Outsourced",
+          "count": 19
+        },
+        {
+          "code": "J.8",
+          "title": "Delivery Cost-to-Serve Modeling",
+          "count": 19
+        },
+        {
+          "code": "J.9",
+          "title": "Fulfillment Center Workforce",
+          "count": 19
+        }
+      ],
+      "target": 175
+    },
+    {
+      "code": "K",
+      "title": "Returns & Reverse Logistics",
+      "packs": [
+        {
+          "code": "K.1",
+          "title": "Returns Policy Design",
+          "count": 18
+        },
+        {
+          "code": "K.2",
+          "title": "Returns Processing & Refurb",
+          "count": 18
+        },
+        {
+          "code": "K.3",
+          "title": "Returns Cost-to-Serve",
+          "count": 18
+        },
+        {
+          "code": "K.4",
+          "title": "Returns Fraud Prevention",
+          "count": 18
+        }
+      ],
+      "target": 72
+    },
+    {
+      "code": "L",
+      "title": "Customer Data, CDP & Identity",
+      "packs": [
+        {
+          "code": "L.1",
+          "title": "Customer Data Platform Architecture",
+          "count": 20
+        },
+        {
+          "code": "L.2",
+          "title": "Identity Resolution Across Channels",
+          "count": 20
+        },
+        {
+          "code": "L.3",
+          "title": "CDP Vendor Landscape (Segment, Adobe, Salesforce, Treasure Data, mParticle)",
+          "count": 20
+        },
+        {
+          "code": "L.4",
+          "title": "First-Party Data Strategy (Post-Cookie)",
+          "count": 20
+        },
+        {
+          "code": "L.5",
+          "title": "Customer 360 View Operations",
+          "count": 19
+        },
+        {
+          "code": "L.6",
+          "title": "Privacy & Consent in CDP",
+          "count": 19
+        },
+        {
+          "code": "L.7",
+          "title": "CDP-MarTech Integration Patterns",
+          "count": 19
+        },
+        {
+          "code": "L.8",
+          "title": "ML Features from CDP Data",
+          "count": 19
+        },
+        {
+          "code": "L.9",
+          "title": "CDP Maturity Models",
+          "count": 19
+        }
+      ],
+      "target": 175
+    },
+    {
+      "code": "M",
+      "title": "Loyalty Programs & Co-Brand",
+      "packs": [
+        {
+          "code": "M.1",
+          "title": "Loyalty Program Architecture",
+          "count": 20
+        },
+        {
+          "code": "M.2",
+          "title": "Tiered Loyalty Programs",
+          "count": 20
+        },
+        {
+          "code": "M.3",
+          "title": "Spend-Based vs Visit-Based Earning",
+          "count": 20
+        },
+        {
+          "code": "M.4",
+          "title": "Co-Brand Credit Card Partnerships",
+          "count": 20
+        },
+        {
+          "code": "M.5",
+          "title": "Loyalty Currency Valuation & Breakage",
+          "count": 20
+        },
+        {
+          "code": "M.6",
+          "title": "Loyalty Coalition Programs",
+          "count": 19
+        },
+        {
+          "code": "M.7",
+          "title": "Loyalty Personalization",
+          "count": 19
+        }
+      ],
+      "target": 138
+    },
+    {
+      "code": "N",
+      "title": "Marketing, Brand & Retail Media",
+      "packs": [
+        {
+          "code": "N.1",
+          "title": "Brand Strategy & Equity",
+          "count": 20
+        },
+        {
+          "code": "N.2",
+          "title": "Marketing Mix Modeling",
+          "count": 20
+        },
+        {
+          "code": "N.3",
+          "title": "Performance Marketing & Attribution",
+          "count": 20
+        },
+        {
+          "code": "N.4",
+          "title": "Retail Media Networks (RMNs) — Build vs Sell",
+          "count": 20
+        },
+        {
+          "code": "N.5",
+          "title": "RMN Operations & Monetization",
+          "count": 20
+        },
+        {
+          "code": "N.6",
+          "title": "Influencer & Creator Marketing",
+          "count": 20
+        },
+        {
+          "code": "N.7",
+          "title": "Email & SMS Marketing",
+          "count": 20
+        },
+        {
+          "code": "N.8",
+          "title": "In-Store Marketing & Activation",
+          "count": 20
+        },
+        {
+          "code": "N.9",
+          "title": "Brand Crisis Management",
+          "count": 20
+        },
+        {
+          "code": "N.10",
+          "title": "Customer Acquisition Cost (CAC) Optimization",
+          "count": 19
+        }
+      ],
+      "target": 199
+    }
+  ]
+}
