@@ -8,7 +8,8 @@ import { createClerkClient } from '@clerk/backend';
 const REPO_ROOT = '/Users/anand/Projects/nexus';
 dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
 
-// Per-tenant profile. Selected by STRESS_TENANT env var (meridian | arcturus | apexretail).
+// Per-tenant profile. Selected by STRESS_TENANT env var
+// (meridian | arcturus | firstcapital | northstar | apexretail).
 // Default keeps backward-compat with the original Meridian-only invocation.
 const TENANT_PROFILES = {
   meridian: {
@@ -63,11 +64,12 @@ const TENANT_PROFILES = {
       ['Q10 tenant pin regression', 'When I ask what you know about First Capital, do not answer with Apex or Meridian facts. What do you know about us?'],
     ],
   },
+  firstcapital: null,
   apexretail: {
     clientKey: 'apexretail',
     displayShort: 'Apex Retail',
     displayFull: 'Apex Retail Group',
-    personaEmail: 'demo-apexretail+clerk_test@abarva.com',
+    personaEmail: 'cio@apex-retail.example.com',
     identityMarkers: ['Apex Retail', 'Apex'],
     wrongTenantTerms: ['Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Epic Hyperspace', 'MyChart', 'Sectra', 'BSA/AML Consent Order'],
     leakageRegex: /meridian|epic hyperspace|mychart|hipaa|sectra|innovaccer|first capital|arcturus|consent order/i,
@@ -123,6 +125,8 @@ const TENANT_PROFILES = {
   },
 };
 
+TENANT_PROFILES.firstcapital = TENANT_PROFILES.arcturus;
+
 const TENANT_KEY = process.env.STRESS_TENANT || 'meridian';
 const TENANT = TENANT_PROFILES[TENANT_KEY];
 if (!TENANT) {
@@ -135,8 +139,8 @@ const AUDIT_DIR = process.env.AUDIT_DIR || path.join(REPO_ROOT, 'audit-artifacts
 const BASE_URL = process.env.BASE_URL || 'https://nexus-vert-kappa.vercel.app';
 const BASE_HOST = new URL(BASE_URL).hostname;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const PERSONA_EMAIL = TENANT.personaEmail;
-const ACTIVE_CLIENT = TENANT.clientKey;
+const PERSONA_EMAIL = process.env.STRESS_PERSONA_EMAIL || TENANT.personaEmail;
+const ACTIVE_CLIENT = process.env.STRESS_CLIENT_KEY || TENANT.clientKey;
 const RUN_STARTED_AT = new Date().toISOString();
 
 const dirs = {
