@@ -162,6 +162,15 @@ describe('Ask Intelligence guardrails', () => {
     });
   });
 
+  it('keeps Ask tenant resolution strict so no-tenant sessions cannot fall back to a default client', () => {
+    const routeCode = readFileSync(
+      join(__dirname, '..', '..', '..', '..', 'app', 'api', 'intelligence', 'ask', 'route.ts'),
+      'utf8',
+    );
+
+    expect(routeCode).toMatch(/resolveTenant\s*\(\s*\{[\s\S]*?allowFallback:\s*false/);
+  });
+
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {
     const sources = retrieveSurfaceContextSources(
       {

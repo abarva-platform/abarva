@@ -67,6 +67,7 @@ async function handleAsk(payload: AskPayload) {
         requestedClient,
         surfaceClientKey: surfaceContext?.clientKey,
         surfaceActiveClient: surfaceContext?.activeClient,
+        allowFallback: false,
       }).catch(() => null),
     ]);
     tenant = client;
