@@ -165,6 +165,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
               <Link
                 key={item.key}
                 href={item.href}
+                prefetch={false}
                 className="app-top-bar__nav-link"
                 aria-current={active ? "page" : undefined}
                 style={{
