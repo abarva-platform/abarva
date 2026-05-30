@@ -1,0 +1,1206 @@
+{
+  "mode": "parse-only",
+  "files": 200,
+  "summaries": [
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom31-ambient-clinical-documentation-scribing-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom31-ambient-clinical-documentation-scribing-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom31-ambient-clinical-documentation-scribing-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom31-ambient-clinical-documentation-scribing-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom32-ai-cdi-coding-automation-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom32-ai-cdi-coding-automation-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom32-ai-cdi-coding-automation-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom32-ai-cdi-coding-automation-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom33-prior-auth-ai-utilization-management-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom33-prior-auth-ai-utilization-management-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom33-prior-auth-ai-utilization-management-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom33-prior-auth-ai-utilization-management-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom34-rcm-denial-ai-automation-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom34-rcm-denial-ai-automation-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom34-rcm-denial-ai-automation-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom34-rcm-denial-ai-automation-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom35-patient-access-digital-front-door-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom35-patient-access-digital-front-door-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom35-patient-access-digital-front-door-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom35-patient-access-digital-front-door-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom36-contact-center-voice-ai-patient-concierge-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom36-contact-center-voice-ai-patient-concierge-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom36-contact-center-voice-ai-patient-concierge-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom36-contact-center-voice-ai-patient-concierge-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom37-agentic-care-navigation-transitions-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom37-agentic-care-navigation-transitions-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom37-agentic-care-navigation-transitions-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom37-agentic-care-navigation-transitions-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom38-population-health-vbc-risk-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom38-population-health-vbc-risk-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom38-population-health-vbc-risk-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom38-population-health-vbc-risk-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom39-clinical-decision-support-samd-governance-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom39-clinical-decision-support-samd-governance-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom39-clinical-decision-support-samd-governance-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom39-clinical-decision-support-samd-governance-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom40-radiology-imaging-ai-diagnostics-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom40-radiology-imaging-ai-diagnostics-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom40-radiology-imaging-ai-diagnostics-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom40-radiology-imaging-ai-diagnostics-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom41-pathology-lab-genomics-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom41-pathology-lab-genomics-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom41-pathology-lab-genomics-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom41-pathology-lab-genomics-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom42-pharmacy-ai-medication-safety-340b-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom42-pharmacy-ai-medication-safety-340b-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom42-pharmacy-ai-medication-safety-340b-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom42-pharmacy-ai-medication-safety-340b-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom43-nursing-workforce-ai-staffing-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom43-nursing-workforce-ai-staffing-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom43-nursing-workforce-ai-staffing-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom43-nursing-workforce-ai-staffing-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom44-ed-flow-command-center-virtual-nursing-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom44-ed-flow-command-center-virtual-nursing-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom44-ed-flow-command-center-virtual-nursing-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom44-ed-flow-command-center-virtual-nursing-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom45-perioperative-or-robotics-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom45-perioperative-or-robotics-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom45-perioperative-or-robotics-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom45-perioperative-or-robotics-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom46-remote-patient-monitoring-hospital-at-home-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom46-remote-patient-monitoring-hospital-at-home-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom46-remote-patient-monitoring-hospital-at-home-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom46-remote-patient-monitoring-hospital-at-home-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom47-behavioral-health-ai-digital-therapeutics-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom47-behavioral-health-ai-digital-therapeutics-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom47-behavioral-health-ai-digital-therapeutics-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom47-behavioral-health-ai-digital-therapeutics-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom48-sdoh-equity-community-referral-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom48-sdoh-equity-community-referral-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom48-sdoh-equity-community-referral-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom48-sdoh-equity-community-referral-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom49-interoperability-fhir-tefca-ai-agents-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom49-interoperability-fhir-tefca-ai-agents-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom49-interoperability-fhir-tefca-ai-agents-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom49-interoperability-fhir-tefca-ai-agents-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom50-data-platform-lakehouse-ai-governance-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom50-data-platform-lakehouse-ai-governance-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom50-data-platform-lakehouse-ai-governance-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom50-data-platform-lakehouse-ai-governance-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom51-cybersecurity-identity-zero-trust-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom51-cybersecurity-identity-zero-trust-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom51-cybersecurity-identity-zero-trust-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom51-cybersecurity-identity-zero-trust-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom52-cloud-finops-platform-ops-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom52-cloud-finops-platform-ops-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom52-cloud-finops-platform-ops-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom52-cloud-finops-platform-ops-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom53-ehr-optimization-ai-build-agents-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom53-ehr-optimization-ai-build-agents-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom53-ehr-optimization-ai-build-agents-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom53-ehr-optimization-ai-build-agents-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom54-quality-measures-star-hedis-automation-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom54-quality-measures-star-hedis-automation-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom54-quality-measures-star-hedis-automation-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom54-quality-measures-star-hedis-automation-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom55-patient-safety-sepsis-deterioration-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom55-patient-safety-sepsis-deterioration-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom55-patient-safety-sepsis-deterioration-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom55-patient-safety-sepsis-deterioration-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom56-compliance-privacy-hipaa-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom56-compliance-privacy-hipaa-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom56-compliance-privacy-hipaa-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom56-compliance-privacy-hipaa-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom57-payer-provider-api-collaboration-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom57-payer-provider-api-collaboration-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom57-payer-provider-api-collaboration-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom57-payer-provider-api-collaboration-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom58-value-based-contracting-actuarial-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom58-value-based-contracting-actuarial-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom58-value-based-contracting-actuarial-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom58-value-based-contracting-actuarial-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom59-home-health-post-acute-agentic-workflows-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom59-home-health-post-acute-agentic-workflows-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom59-home-health-post-acute-agentic-workflows-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom59-home-health-post-acute-agentic-workflows-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom60-supply-chain-procurement-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom60-supply-chain-procurement-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom60-supply-chain-procurement-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom60-supply-chain-procurement-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom61-startup-ambient-ai-vendor-diligence-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom61-startup-ambient-ai-vendor-diligence-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom61-startup-ambient-ai-vendor-diligence-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom61-startup-ambient-ai-vendor-diligence-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom62-startup-rcm-coding-vendor-diligence-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom62-startup-rcm-coding-vendor-diligence-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom62-startup-rcm-coding-vendor-diligence-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom62-startup-rcm-coding-vendor-diligence-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom63-startup-virtual-care-rpm-vendor-diligence-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom63-startup-virtual-care-rpm-vendor-diligence-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom63-startup-virtual-care-rpm-vendor-diligence-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom63-startup-virtual-care-rpm-vendor-diligence-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom64-startup-clinical-ai-fda-diligence-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom64-startup-clinical-ai-fda-diligence-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom64-startup-clinical-ai-fda-diligence-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom64-startup-clinical-ai-fda-diligence-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom65-startup-cyber-identity-vendor-diligence-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom65-startup-cyber-identity-vendor-diligence-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom65-startup-cyber-identity-vendor-diligence-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom65-startup-cyber-identity-vendor-diligence-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom66-agentic-clinical-operations-orchestrators-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom66-agentic-clinical-operations-orchestrators-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom66-agentic-clinical-operations-orchestrators-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom66-agentic-clinical-operations-orchestrators-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom67-agentic-administrative-copilots-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom67-agentic-administrative-copilots-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom67-agentic-administrative-copilots-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom67-agentic-administrative-copilots-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom68-agentic-finance-procurement-agents-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom68-agentic-finance-procurement-agents-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom68-agentic-finance-procurement-agents-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom68-agentic-finance-procurement-agents-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom69-agentic-it-service-desk-ehr-build-agents-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom69-agentic-it-service-desk-ehr-build-agents-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom69-agentic-it-service-desk-ehr-build-agents-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom69-agentic-it-service-desk-ehr-build-agents-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom70-ai-governance-model-registry-operating-model-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom70-ai-governance-model-registry-operating-model-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom70-ai-governance-model-registry-operating-model-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom70-ai-governance-model-registry-operating-model-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom71-model-monitoring-drift-validation-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom71-model-monitoring-drift-validation-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom71-model-monitoring-drift-validation-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom71-model-monitoring-drift-validation-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom72-ai-adoption-change-management-clinician-trust-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom72-ai-adoption-change-management-clinician-trust-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom72-ai-adoption-change-management-clinician-trust-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom72-ai-adoption-change-management-clinician-trust-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom73-ai-roi-value-realization-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom73-ai-roi-value-realization-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom73-ai-roi-value-realization-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom73-ai-roi-value-realization-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom74-synthetic-data-deidentification-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom74-synthetic-data-deidentification-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom74-synthetic-data-deidentification-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom74-synthetic-data-deidentification-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom75-hie-public-health-reporting-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom75-hie-public-health-reporting-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom75-hie-public-health-reporting-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom75-hie-public-health-reporting-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom76-academic-medical-center-research-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom76-academic-medical-center-research-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom76-academic-medical-center-research-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom76-academic-medical-center-research-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom77-precision-medicine-trial-matching-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom77-precision-medicine-trial-matching-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom77-precision-medicine-trial-matching-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom77-precision-medicine-trial-matching-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom78-medicaid-mco-social-care-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom78-medicaid-mco-social-care-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom78-medicaid-mco-social-care-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom78-medicaid-mco-social-care-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom79-rural-health-access-innovation-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom79-rural-health-access-innovation-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom79-rural-health-access-innovation-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom79-rural-health-access-innovation-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom80-board-strategy-innovation-portfolio-ai-part1.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom80-board-strategy-innovation-portfolio-ai-part2.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom80-board-strategy-innovation-portfolio-ai-part3.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    },
+    {
+      "file": "src/scripts/seed/seed-healthcare-dom80-board-strategy-innovation-portfolio-ai-part4.ts",
+      "vertical": "healthcare_provider",
+      "sourceKey": "meridian-health",
+      "parsed": 50
+    }
+  ]
+}

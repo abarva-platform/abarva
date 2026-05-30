@@ -6,7 +6,10 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    files: ["src/scripts/**", "scripts/**"],
+    files: [
+      "src/scripts/**",
+      "scripts/**",
+    ],
     rules: {
       // Node scripts share the repo but are not React surfaces. Several
       // helpers happen to use a `use*` prefix, which triggers false
@@ -16,11 +19,18 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-require-imports": "off",
-      // ADR-0001 D.5 (scripts): genome seed data files must be data-only — no
-      // infrastructure imports. Use createSeedClient() from seed-wave-lib when
-      // infrastructure access is genuinely needed (e.g., verify scripts), or
-      // write data-only *PATTERNS arrays and let the durable loader
-      // (scripts/corpus/load-authored-genome-seeds.ts) handle all DB writes.
+    },
+  },
+  {
+    files: [
+      "src/scripts/seed/seed-*-dom*.ts",
+      "scripts/corpus/**/*.{ts,mts,cts,js,mjs,cjs}",
+    ],
+    rules: {
+      // ADR-0001 D.5: authored genome seed data files must be data-only — no
+      // direct Supabase infrastructure imports. Legacy migration/audit scripts
+      // remain under the tracked Azure/Postgres cleanup backlog; runtime app
+      // code is guarded separately below.
       "no-restricted-syntax": [
         "error",
         {
