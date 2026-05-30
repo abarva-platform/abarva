@@ -67,3 +67,32 @@ This slice also establishes `src/lib/tower/ingest/registry.ts` as the spine that
 - Migration is applied via the standard Supabase migration pipeline. No data backfill is required — both tables start empty.
 - No runtime feature flag. The CLI is opt-in by invocation; the schema migration is the only platform-wide change and it is additive.
 - Follow-up slice will expose a Tower → Connectors → ServiceNow CMDB upload UI that drives the same parser + validator + upsert pipeline via an authenticated API route instead of the CLI.
+
+## Rollback Plan
+
+- Schema rollback: drop the two new tables. They have no foreign keys into existing Tower tables, so the drop is local. SQL:
+  ```sql
+  BEGIN;
+  DROP TABLE IF EXISTS public.tower_cmdb_dependencies;
+  DROP TABLE IF EXISTS public.tower_cmdb_cis;
+  DROP FUNCTION IF EXISTS public.tower_cmdb_set_updated_at();
+  COMMIT;
+  ```
+- Per-tenant rollback (a botched ingest run for one tenant): see `docs/templates/tower/servicenow-cmdb/README.md#rollback`. Delete by `(client_id, ingest_run_id)` to undo a single run, or by `client_id` alone to wipe the tenant's CMDB before a re-import. Both rollback paths keep the audit ledger entry independent of the CMDB rows.
+- Code rollback: revert the merge commit on `main`. No call sites outside the new subtree depend on `src/lib/tower/ingest/`; the existing Tower lenses still read from their fixtures and are not affected by the revert.
+
+## Audit Evidence
+
+- Closes the "zero live integrations" finding in `docs/build/TOWER_AUDIT_2026-05-06.md` for the CMDB substrate. The audit explicitly called out that every Tower lens reads from fixtures, not from a customer source system; this slice gives Tower the first real source it watches.
+- Registry contract test (`src/lib/tower/ingest/__tests__/registry.test.ts`) pins the audit-traceable invariants: the source is discoverable by key, the union-merge guard rejects conflicting registrations, and the template / sample / README / migration paths in the manifest all resolve to files that exist in the repo.
+- Validation rule set is documented in `docs/templates/tower/servicenow-cmdb/README.md#validation-rules` so an auditor can confirm what the ingest will accept and reject without reading TypeScript.
+- The migration carries CHECK constraints on `lifecycle_state`, `criticality`, and `dependency_type` matching the parser's accepted enums, so the database refuses any row whose enum value the parser would also have refused — defense in depth between the application and storage layers.
+- Synthetic-data banner is present on every data sheet of `sample.xlsx`, and the README states explicitly that the sample is not real customer telemetry. Test `template-shape` pins the banner text format so a future change cannot silently drop it.
+
+## Known Gaps
+
+- No UI yet. The customer-facing flow is the CLI; the Tower → Connectors → ServiceNow CMDB upload picker is a follow-up slice.
+- Tower lenses (Portfolio, Pressure, Dependencies, Atlas synthesis) still read from their existing fixtures. Pointing them at `tower_cmdb_cis` / `tower_cmdb_dependencies` is a follow-up slice — this PR delivers the substrate, not the read-side rewire.
+- No live MID Server / Now Platform Integration Hub pipe yet. The customer-facing extract path documented in the README is the manual workbook upload, with the scheduled-export / live-pipe migration captured as a roadmap step.
+- Idempotency check on the upsert layer is exercised via a hand-rolled pg.Pool double, not against a real Postgres instance. The migration-replay CI step covers the live schema; a future integration test should exercise the upsert against an ephemeral Postgres to close the gap.
+- Retired-CI warning is informational only — the validator does not reject edges that touch a retired CI. That decision can be revisited when Tower's "dangling dependency on retired CI" lens is wired.
