@@ -17,7 +17,9 @@ import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { PageHead } from '@/components/admin/overview/PageHead';
 import { AgentReadinessStateHeader } from '@/components/admin/agent-readiness-redesign/AgentReadinessStateHeader';
 import { CapabilityConstellation } from '@/components/admin/agent-readiness-redesign/CapabilityConstellation';
+import { CapabilityGroundingSummary } from '@/components/admin/agent-readiness-redesign/CapabilityGroundingSummary';
 import { PerAgentActions } from '@/components/admin/agent-readiness-redesign/PerAgentActions';
+import { getCapabilityGrounding } from '@/lib/admin/broker/capability-grounding-broker';
 import { SETUP } from '@/lib/admin/setup-tokens';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
@@ -61,6 +63,15 @@ export default async function AgentReadinessPage({
 
   const blocks = composeAgentReadinessBlocks(segments);
 
+  // Wave 3 PR-1 · Live capability grounding rollup.  When the broker
+  // can't resolve (no broker tenant key), we omit the strip rather
+  // than fabricate L-levels — the matrix below still tells the story
+  // from substrate, and lying with synthetic L3 here would be the
+  // exact failure mode the verdict §3 flagged.
+  const capabilityGrounding = brokerTenantKey
+    ? await getCapabilityGrounding(brokerTenantKey).catch(() => null)
+    : null;
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={tenant.tenantName}>
       <div
@@ -79,6 +90,9 @@ export default async function AgentReadinessPage({
           lede="Per-agent state, segment-by-capability map, and what closes each gap."
         />
         <AgentReadinessStateHeader agents={blocks.state} />
+        {capabilityGrounding ? (
+          <CapabilityGroundingSummary grounding={capabilityGrounding} />
+        ) : null}
         <CapabilityConstellation matrix={blocks.matrix} />
         <PerAgentActions
           adminActionable={blocks.adminActionable}

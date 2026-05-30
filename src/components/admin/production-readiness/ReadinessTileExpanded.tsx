@@ -237,7 +237,7 @@ export function ReadinessTileExpanded({
                   {b.severity}
                 </span>
                 <Link
-                  href={`${baseUrl}?tab=blockers&blocker=${b.id}`}
+                  href={`${baseUrl}?tab=decision&blocker=${b.id}#blockers`}
                   data-blocker-link={b.id}
                   style={{
                     color: COLORS.navy,

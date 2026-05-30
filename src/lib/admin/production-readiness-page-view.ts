@@ -66,11 +66,15 @@ export interface ReadinessTile {
 // ADMIN16 — Depth additions
 // ---------------------------------------------------------------------------
 
-export type ProductionReadinessTabKey =
-  | 'decision'
-  | 'blockers'
-  | 'gates'
-  | 'history';
+/**
+ * Wave 3 PR-5 (SETUP_AUDIT_2026-05-30 §7) — consolidated 2-tab IA.
+ *
+ * The 4-tab pattern (Decision · Blockers · Gates · History) collapsed to
+ * 2 tabs (Decision · History). Decision is a single scrollable view that
+ * sequences gate criteria first, blockers next, and the readiness tiles
+ * (recent decisions banner) last. History remains a dedicated tab.
+ */
+export type ProductionReadinessTabKey = 'decision' | 'history';
 
 export interface ProductionReadinessTabMeta {
   key: ProductionReadinessTabKey;
@@ -170,17 +174,8 @@ const TABS: ReadonlyArray<ProductionReadinessTabMeta> = [
   {
     key: 'decision',
     label: 'Decision',
-    description: 'Steward editorial + Demo / Pilot / Production tiles.',
-  },
-  {
-    key: 'blockers',
-    label: 'Blockers',
-    description: 'Top blockers ranked by severity and downstream impact.',
-  },
-  {
-    key: 'gates',
-    label: 'Gates',
-    description: 'Per-gate criteria matrix with deterministic evidence basis.',
+    description:
+      'Gate criteria, current blockers, and Demo / Pilot / Production tiles in one scrollable view.',
   },
   {
     key: 'history',
@@ -290,7 +285,7 @@ function buildActionStrip(): ReadonlyArray<ProductionReadinessActionRow> {
       id: 'open_blocker_drawer',
       label: 'Open blocker drawer',
       status: 'safe',
-      href: '/admin/production-readiness?tab=blockers',
+      href: '/admin/production-readiness?tab=decision#blockers',
     },
     {
       id: 'run_readiness_check',
@@ -504,7 +499,7 @@ export async function buildProductionReadinessPageView(
     topBlockers,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open blocker drawer',
-    primaryActionHref: '/admin/production-readiness?tab=blockers',
+    primaryActionHref: '/admin/production-readiness?tab=decision#blockers',
     deterministicSeed: true,
     agentChoices: choices,
     agentPostures: postures,
@@ -524,8 +519,6 @@ export async function buildProductionReadinessPageView(
 
 const TAB_KEYS: ReadonlySet<ProductionReadinessTabKey> = new Set([
   'decision',
-  'blockers',
-  'gates',
   'history',
 ]);
 

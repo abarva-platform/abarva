@@ -39,6 +39,7 @@ function fixtureBlocks(): OverviewBlocks {
       missingSummary: 'two are still authored only',
       nextLoadName: 'KPI Dictionary',
       nextLoadConsequence: 'Sentinel can attribute margin moves to specific KPIs.',
+      isEmptyTenant: false,
     },
     actionQueue: { items: [], totalPending: 0 },
     recentActivity: { items: [] },
@@ -63,7 +64,7 @@ function fixtureExtras(): HomeOverviewV2Extras {
  * `use(promise)` as a suspend signal, so renderToStaticMarkup will
  * fall through to the Suspense fallback in this call.
  */
-function NeverResolves() {
+function NeverResolves(): React.ReactNode {
   // Throwing a never-resolving promise is the classic Suspense trigger
   // that works with renderToStaticMarkup synchronously.
   throw new Promise(() => {

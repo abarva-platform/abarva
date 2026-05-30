@@ -9,6 +9,11 @@
 // Per founder approval 2026-05-08 · ships in PR-H12.
 
 import type { InventorySegmentRollup } from '@/lib/admin/setup-acts-registry';
+import {
+  panelFootFromGrounding,
+  panelStatusFromGrounding,
+  type CapabilityGrounding,
+} from '@/lib/admin/broker/capability-grounding-broker';
 
 export type ReadinessBucket = 'teal' | 'amber' | 'red';
 
@@ -68,6 +73,15 @@ export interface ComposeHomeV2Input {
   initiativesCount: number;
   initiativesAtRiskCount: number;
   lastIngestedAt?: string | null;
+  /**
+   * Wave 3 PR-1 · Optional live capability grounding rollup.  When
+   * present, the Section 05 Agent Readiness panel renders honest
+   * per-agent levels derived from substrate (and, eventually,
+   * evaluator scores).  When omitted, the panel falls back to a
+   * conservative substrate-only heuristic so older call sites and
+   * tests don't break.
+   */
+  capabilityGrounding?: CapabilityGrounding | null;
 }
 
 function bucketFor(pct: number): ReadinessBucket {
@@ -171,9 +185,30 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
       },
     },
     { num: '04', name: 'Users & Access',       status: 'ready',                                                                 desc: 'RLS-enforced policy, role assignments, SME write permissions.',         foot: 'Roles wired · per-user RLS pilot ready', href: '/admin/users-access' },
-    { num: '05', name: 'Agent Readiness',      status: segMature < 18 ? 'attn' : 'ready',                                       desc: 'Per-agent grounding scores: Sentinel, Atlas, Nexus, Steward.',          foot: `Sentinel ${segMature >= 18 ? 'L3' : 'L2'} · others L2`, href: '/admin/agent-readiness' },
+    // Section 05 · Agent Readiness — verdict §3 Wave 3 PR-1.
+    // When the capability-grounding broker is wired in, the foot
+    // and status come from live per-(agent, family) grounding.
+    // When it isn't, fall back to the conservative segment-maturity
+    // heuristic and label the fallback `· estimated` so the surface
+    // stays honest (memory · feedback_no_demo_thinking.md).
+    {
+      num: '05',
+      name: 'Agent Readiness',
+      status: input.capabilityGrounding
+        ? panelStatusFromGrounding(input.capabilityGrounding)
+        : segMature < 18 ? 'attn' : 'ready',
+      desc: 'Per-agent grounding scores: Sentinel, Atlas, Nexus, Steward.',
+      foot: input.capabilityGrounding
+        ? panelFootFromGrounding(input.capabilityGrounding)
+        : `Sentinel ${segMature >= 18 ? 'L3' : 'L2'} · 3 others avg L2 · estimated`,
+      href: '/admin/agent-readiness',
+    },
     { num: '06', name: 'Production Readiness', status: 'attn',                                                                  desc: 'SSO, audit trail, change-control posture, pen-test status.',            foot: '4 / 6 gates clear', href: '/admin/production-readiness' },
-    { num: '07', name: 'Compliance',           status: 'locked',                                                                desc: 'SOC 2, GDPR, industry frameworks. Locked behind Production gate 5.',    foot: 'Prereq: Pen-test signed', href: '#' },
+    // Wave 3 PR-4 (2026-05-30) · panel-07 wired to /admin/compliance
+    // (posture digest: SOC 2 · GDPR · DPA · Breach SLA). Status is
+    // 'attn' — most cards are in_progress / committed; nothing is
+    // certified yet. Honest, not 'ready'. Per verdict §3 + §7 W3-PR-4.
+    { num: '07', name: 'Compliance',           status: 'attn',                                                                  desc: 'SOC 2, GDPR, DPA, breach-notification SLA — pilot-stage posture.',     foot: 'In progress · readiness underway', href: '/admin/compliance' },
     { num: '08', name: 'Activity Log',         status: 'ready',                                                                 desc: 'Full audit trail: who did what, when, on which substrate.',             foot: '30-day rolling · /admin/audit', href: '/admin/audit' },
   ];
 

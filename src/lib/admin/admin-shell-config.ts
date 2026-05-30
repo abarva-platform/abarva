@@ -8,6 +8,7 @@ export type AdminSubSectionId =
   | "customer-admin"
   | "agent-readiness"
   | "production-readiness"
+  | "compliance"
   | "releases"
   | "training";
 
@@ -60,6 +61,14 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Production Readiness",
     subtitle: "Demo / pilot / production",
     href: "/admin/production-readiness",
+  },
+  {
+    // Wave 3 PR-4 (2026-05-30) · Governance > Compliance entry.
+    // Replaces panel-07 dead link (`href: '#'`) per verdict §3.
+    id: "compliance",
+    label: "Compliance",
+    subtitle: "SOC 2 · GDPR · DPA · Breach SLA",
+    href: "/admin/compliance",
   },
   {
     id: "releases",

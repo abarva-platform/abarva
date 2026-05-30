@@ -1,6 +1,9 @@
 // ADMIN8 — /admin/production-readiness is the canonical Production Readiness page.
 // ADMIN16 — Depth additions: sub-nav tabs, per-tile expand, blocker drawer,
 //           gate criteria matrix, history strip, action strip.
+// Wave 3 PR-5 (SETUP_AUDIT_2026-05-30 §7) — 4 tabs → 2 tabs (Decision · History).
+//   Decision is one scrollable view sequenced as: gate criteria first,
+//   current blockers next, readiness tiles (recent decisions banner) last.
 // Auth is enforced by /admin/layout.tsx (Clerk admin allowlist) — no inline guard.
 // /platform/admin/production-readiness redirects here for backward compatibility.
 import { connection } from 'next/server';
@@ -89,31 +92,34 @@ export default async function AdminProductionReadinessPage({
 
         {activeTab === 'decision' && (
           <>
-            <DemoPilotProductionTiles tiles={view.tiles} />
-            {expandedDetail && (
-              <ReadinessTileExpanded
-                detail={expandedDetail}
-                baseUrl={BASE_URL}
-                closeHref={`${BASE_URL}?tab=decision`}
-              />
-            )}
+            {/* Wave 3 PR-5 sequence: gate criteria first, blockers next,
+                readiness tiles (recent decisions banner) last. Anchor ids
+                let the action strip jump within the page. */}
+            <div id="gates">
+              <GateCriteriaMatrix groups={view.gateCriteria} />
+            </div>
+            <div id="blockers" style={{ marginTop: 20 }}>
+              <TopBlockersTable blockers={view.topBlockers} />
+              {activeBlocker && (
+                <BlockerDetailDrawer
+                  blocker={activeBlocker}
+                  baseUrl={BASE_URL}
+                  returnTab="decision"
+                />
+              )}
+            </div>
+            <div id="tiles" style={{ marginTop: 20 }}>
+              <DemoPilotProductionTiles tiles={view.tiles} />
+              {expandedDetail && (
+                <ReadinessTileExpanded
+                  detail={expandedDetail}
+                  baseUrl={BASE_URL}
+                  closeHref={`${BASE_URL}?tab=decision`}
+                />
+              )}
+            </div>
           </>
         )}
-
-        {activeTab === 'blockers' && (
-          <>
-            <TopBlockersTable blockers={view.topBlockers} />
-            {activeBlocker && (
-              <BlockerDetailDrawer
-                blocker={activeBlocker}
-                baseUrl={BASE_URL}
-                returnTab="blockers"
-              />
-            )}
-          </>
-        )}
-
-        {activeTab === 'gates' && <GateCriteriaMatrix groups={view.gateCriteria} />}
 
         {activeTab === 'history' && <ReadinessHistoryStrip history={view.historyStrip} />}
       </EditorialCanvas>

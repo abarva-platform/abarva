@@ -1,0 +1,814 @@
+{
+  "thesis_id": "W2",
+  "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+  "generated_at": "2026-04-30T12:00:00Z",
+  "validation_status": "draft",
+  "total_chunks": 16,
+  "chunks": [
+    {
+      "chunk_id": "worldview:W2:001",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 1,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "The Assemblage Becomes the Unit of Work",
+      "chunk_type": "claim",
+      "chunk_text": "The durable unit of knowledge work is becoming the human + agent + corpus assemblage. The human sets intent, taste, exception judgment, and accountability. The agent performs bounded cognitive labor: search, draft, reconcile, test, summarize, route, and monitor. The corpus supplies memory, source provenance, permissions, canonical language, and institutional constraint. This matters because the model alone is not the firm. Microsoft frames the frontier firm around intelligence on tap and human-agent teams. OpenAI enterprise telemetry shows workers using AI across repeatable multi-step work. Anthropic usage data shows experience effects: high-tenure users attempt higher-value tasks and elicit more successful responses. The strategic change is not that every worker has a chatbot. It is that work can be decomposed into human-owned intent, agent-executed tasks, and corpus-grounded evidence loops. The firm that understands this will not ask, \"How do we make the analyst faster?\" It will ask, \"Which assemblage owns this decision, what sources can it use, what actions can it take, and where must a human intervene?\" Claim summary: Knowledge-work productivity shifts from individual output to a governed assemblage of human judgment, bounded agents, and a source-grounded corpus. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: Knowledge-work productivity shifts from individual output to a governed assemblage of human judgment, bounded agents, and a source-grounded corpus.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 584,
+      "claim_summary": "Knowledge-work productivity shifts from individual output to a governed assemblage of human judgment, bounded agents, and a source-grounded corpus.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "knowledge-work",
+        "assemblage",
+        "human-agent-team",
+        "corpus",
+        "operating-model"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-02",
+        "W2-03",
+        "W2-16"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:002",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 2,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Productivity Is Real, but Frontier-Bounded",
+      "chunk_type": "evidence",
+      "chunk_text": "The productivity evidence is strong enough to act on and narrow enough to respect. NBER reports a near 14 percent productivity increase in customer support with a generative assistant, with especially strong gains for less experienced workers. Noy and Zhang find writing-task speed and quality improvements. Dell Acqua and coauthors show that consultants using GPT-4 completed more tasks, completed them faster, and improved quality inside the model frontier. But the same study introduces the jagged frontier: tasks that look similar to humans can fall on opposite sides of AI capability. Outside the frontier, AI can degrade performance. Stanford AI Index 2026 adds the macro caution: task gains are measurable, but broad productivity evidence is still early and mixed. This is the correct management posture. Do not deny the productivity effect. Do not universalize it. Map workflows into task classes, test which tasks are inside the frontier, and redesign around the boundary. Claim summary: The empirical record supports real productivity gains in bounded tasks, not a blanket claim that AI transforms every knowledge workflow. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The empirical record supports real productivity gains in bounded tasks, not a blanket claim that AI transforms every knowledge workflow.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 572,
+      "claim_summary": "The empirical record supports real productivity gains in bounded tasks, not a blanket claim that AI transforms every knowledge workflow.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "productivity",
+        "jagged-frontier",
+        "task-design",
+        "evidence",
+        "knowledge-work"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-01",
+        "W2-14",
+        "W2-15"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:003",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 3,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "The Corpus Is the New Factory Floor",
+      "chunk_type": "definition",
+      "chunk_text": "In industrial work, the factory floor determined what could be produced repeatedly. In knowledge work, the corpus now plays that role. A useful corpus is not a document dump. It is the structured, permissioned, versioned substrate of the firm's memory: policies, decisions, customer context, product truth, source evidence, playbooks, metrics, exceptions, and prior outcomes. Retrieval-augmented generation showed why external knowledge matters for knowledge-intensive generation. But long-context research shows that more context alone is not enough; models can fail to use information robustly when relevant material sits in the middle of long inputs. The strategic implication is simple: corpus work is operations work. Teams need source hygiene, chunking discipline, metadata, recency rules, evidence ledgers, conflict resolution, and permission boundaries. The firm with the best corpus does not merely answer questions faster. It makes better delegation possible because agents can work against trusted institutional memory rather than guessing from parametric priors. Claim summary: The corpus becomes production infrastructure: not a folder of documents, but a governed evidence layer that agents can retrieve, cite, and act against. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The corpus becomes production infrastructure: not a folder of documents, but a governed evidence layer that agents can retrieve, cite, and act against.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 576,
+      "claim_summary": "The corpus becomes production infrastructure: not a folder of documents, but a governed evidence layer that agents can retrieve, cite, and act against.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "corpus",
+        "rag",
+        "knowledge-graph",
+        "retrieval",
+        "provenance"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-01",
+        "W2-07",
+        "W2-11",
+        "W2-16"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:004",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 4,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Agents Are Bounded Workers, Not Employees",
+      "chunk_type": "definition",
+      "chunk_text": "The word agent invites overreach. A useful enterprise agent should be treated less like a synthetic employee and more like a bounded worker in a process design. It has a job, permitted tools, accessible sources, success criteria, stop conditions, logging, and escalation rules. Anthropic's engineering guidance is a useful corrective: workflows are better where tasks are predictable and consistency matters; agents are appropriate where flexible model-driven decisions are required. Gartner's survey caution reinforces the point: fully autonomous agents remain early in enterprise applications. Microsoft describes maturity moving from assistants to human-agent teams and then human-led, agent-operated processes. The sequence matters. Agents earn autonomy only after the work is decomposed, observed, measured, and governed. The winning deployment is not the most anthropomorphic. It is the one with the clearest boundary between what the agent may do, what the human must decide, and what the corpus proves. Claim summary: The practical enterprise agent is not an autonomous colleague; it is a bounded executor with tools, scope, memory, checks, and escalation paths. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The practical enterprise agent is not an autonomous colleague; it is a bounded executor with tools, scope, memory, checks, and escalation paths.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 570,
+      "claim_summary": "The practical enterprise agent is not an autonomous colleague; it is a bounded executor with tools, scope, memory, checks, and escalation paths.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "agents",
+        "workflow",
+        "automation",
+        "enterprise-ai",
+        "bounded-delegation"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-06",
+        "W2-11",
+        "W2-13"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:005",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 5,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Human Work Moves Up the Stack",
+      "chunk_type": "evidence",
+      "chunk_text": "The human role does not disappear when agents enter knowledge work. It moves up the stack. The human becomes the owner of problem selection, stakes, taste, ambiguity, tradeoffs, exception judgment, and accountability. Microsoft calls attention to agent management as an emerging work pattern. OpenAI reports users completing tasks they previously could not perform and saving time in active work. WEF and PwC both emphasize that AI exposure changes skills, not just headcount. The implication is not that everyone becomes a prompt engineer. The durable skill is judgment under leverage: knowing what to delegate, how to specify quality, where the source boundary is, when the answer is too smooth, and which decision cannot be outsourced. In the old model, knowledge work often rewarded production volume: more slides, more drafts, more analysis packets. In the new model, production volume becomes cheap. The premium shifts to choosing the right work and accepting responsibility for the output. Claim summary: As agents absorb drafts and routine synthesis, human value concentrates in intent, judgment, taste, context, ethics, and accountability. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: As agents absorb drafts and routine synthesis, human value concentrates in intent, judgment, taste, context, ethics, and accountability.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 570,
+      "claim_summary": "As agents absorb drafts and routine synthesis, human value concentrates in intent, judgment, taste, context, ethics, and accountability.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "human-role",
+        "judgment",
+        "skills",
+        "agent-boss",
+        "future-of-work"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-01",
+        "W2-10",
+        "W2-12"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:006",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 6,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Management Becomes Orchestration Design",
+      "chunk_type": "claim",
+      "chunk_text": "The managerial job changes before the org chart does. A manager of knowledge work used to allocate human effort, review deliverables, and move decisions through meetings. In the assemblage model, the manager designs orchestration: which tasks are delegated to agents, what corpus they use, which checks are deterministic, which reviews require humans, which metrics prove value, and which exceptions trigger escalation. Microsoft Inside Track describes agent registries, observability, and human-led agent-operated work. Gartner's guardian-agent forecast points to automated oversight as agent power increases. McKinsey's high-performer data suggests value comes from transformative workflow redesign, not generic usage. This is a Grove moment: when the basis of productivity changes, middle management cannot remain a scheduling layer. It must become the architect of work systems. The best managers will reduce ambiguity before the agent sees the task and preserve accountability after the agent returns output. Claim summary: Managers shift from supervising task completion to designing the operating system of humans, agents, evidence, permissions, and review. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: Managers shift from supervising task completion to designing the operating system of humans, agents, evidence, permissions, and review.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 559,
+      "claim_summary": "Managers shift from supervising task completion to designing the operating system of humans, agents, evidence, permissions, and review.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "management",
+        "orchestration",
+        "agent-registry",
+        "observability",
+        "workflow-design"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-04",
+        "W2-07",
+        "W2-11",
+        "W2-14"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:007",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 7,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "The Control Point Moves to Work Graph and Corpus Graph",
+      "chunk_type": "claim",
+      "chunk_text": "The strategic control point is unlikely to be the base model alone. Models will improve, prices will move, and vendors will compete. The firm-specific advantage sits in the work graph and corpus graph: who does what, which agent can act, which source is authoritative, which decision was made, which exception occurred, and what outcome followed. This is the Thompson aggregation logic applied inside the enterprise. The interface that sees demand, owns context, and routes work can shape the market for intelligence. Microsoft now emphasizes context, Agent 365 observability, governance, and security. OpenAI's enterprise report emphasizes configurable GPTs and projects with knowledge and custom actions. RAG gives the technical basis for external knowledge retrieval. Together, these point to a shift from model selection to context orchestration. A company without a work graph will buy intelligence at retail. A company with a work and corpus graph can compound institutional learning. Claim summary: As models commoditize, advantage shifts to the proprietary graph of work, permissions, evidence, decisions, and feedback. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: As models commoditize, advantage shifts to the proprietary graph of work, permissions, evidence, decisions, and feedback.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 561,
+      "claim_summary": "As models commoditize, advantage shifts to the proprietary graph of work, permissions, evidence, decisions, and feedback.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "strategy",
+        "work-graph",
+        "corpus-graph",
+        "aggregation",
+        "enterprise-ai"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-03",
+        "W2-06",
+        "W2-16"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:008",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 8,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Shadow AI Is a Signal, Not a Policy",
+      "chunk_type": "evidence",
+      "chunk_text": "Shadow AI should be read as a demand signal. Workers use personal or unofficial tools because the official workflow is too slow, too rigid, or too far from the task. OpenAI reports broad growth in workplace usage and multi-step work. Anthropic's economic index shows diversified Claude use and changing augmentation patterns. Microsoft WTI shows workers and leaders already treating AI as a thought partner and career accelerator. The MIT NANDA report, treated cautiously, argues that informal personal tools often generate perceived value while official implementations stall. The right response is not blanket prohibition or naive celebration. Shadow AI identifies where the organization has failed to provide fast, safe, contextual leverage. The task is to convert the signal into governed systems: approved tools, source boundaries, data-loss controls, audit trails, and reusable playbooks. Shadow AI is market research from inside the company. It is not a policy architecture. Claim summary: Employee-led AI use reveals unmet workflow demand, but unmanaged shadow AI cannot become the enterprise operating model. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: Employee-led AI use reveals unmet workflow demand, but unmanaged shadow AI cannot become the enterprise operating model.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 561,
+      "claim_summary": "Employee-led AI use reveals unmet workflow demand, but unmanaged shadow AI cannot become the enterprise operating model.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "shadow-ai",
+        "adoption",
+        "governance",
+        "workflow-demand",
+        "enterprise-risk"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-09",
+        "W2-11",
+        "W2-15"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:009",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 9,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Workslop Is the Negative Externality",
+      "chunk_type": "counterargument",
+      "chunk_text": "The failure mode of cheap production is workslop: output that looks finished but lacks the substance to advance the work. BetterUp Labs and Stanford Social Media Lab report that 40 percent of surveyed U.S. desk workers received workslop in the prior month, with about two hours to resolve each incident and measurable per-employee cost. This matters because the assemblage can fail socially even when the model functions technically. A polished memo without source fidelity transfers the thinking burden to the recipient. A slick deck without a decision forces the meeting to redo the work. A code patch without context taxes the reviewer. Workslop is not an argument against AI; it is an argument against output without ownership. The cure is explicit acceptance criteria: sources cited, assumptions named, decision requested, uncertainty surfaced, reviewer effort minimized, and a human owner accountable for the final artifact. Claim summary: Ungoverned AI output can shift cognitive labor downstream, creating rework, mistrust, and false progress. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: Ungoverned AI output can shift cognitive labor downstream, creating rework, mistrust, and false progress.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 552,
+      "claim_summary": "Ungoverned AI output can shift cognitive labor downstream, creating rework, mistrust, and false progress.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "workslop",
+        "quality",
+        "accountability",
+        "review-cost",
+        "failure-mode"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-08",
+        "W2-11",
+        "W2-14"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:010",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 10,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Apprenticeship Must Be Redesigned",
+      "chunk_type": "counterargument",
+      "chunk_text": "The most dangerous labor-market mistake is to treat junior work as waste. Summaries, first drafts, spreadsheet cleanup, routine code, issue triage, and research memos are not only outputs. They are repetitions through which novices acquire judgment. Stanford's Canaries paper reports a 16 percent relative employment decline for early-career workers in the most AI-exposed occupations, while experienced workers and less-exposed fields were more stable or growing. NBER's support-agent study shows AI can help less experienced workers move faster, which suggests a better path: use agents as apprenticeship accelerators, not apprenticeship replacements. The firm should redesign junior roles around supervised agent use, critique, source checking, exception analysis, and decision rehearsal. If it removes the first rung, it will later ask why nobody has second-rung judgment. The assemblage must make expertise more teachable, not merely labor cheaper. Claim summary: If agents absorb junior tasks without replacing learning loops, firms may improve short-term output while damaging the future expertise pipeline. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: If agents absorb junior tasks without replacing learning loops, firms may improve short-term output while damaging the future expertise pipeline.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 555,
+      "claim_summary": "If agents absorb junior tasks without replacing learning loops, firms may improve short-term output while damaging the future expertise pipeline.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "apprenticeship",
+        "entry-level",
+        "skills",
+        "labor-market",
+        "training"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-05",
+        "W2-12",
+        "W2-16"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:011",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 11,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Governance Becomes Throughput",
+      "chunk_type": "evidence",
+      "chunk_text": "In high-stakes knowledge work, governance is throughput. Without it, agents cannot safely access sources, call tools, preserve provenance, or act with authority. NIST's AI RMF organizes risk work around govern, map, measure, and manage. The EU AI Act uses a risk-based approach with strict requirements for high-risk systems, including data quality and human oversight. ISO/IEC 42001 defines an AI management system for responsible development and use. OWASP's GenAI risks show why the concern is practical: prompt injection, excessive agency, vector and embedding weaknesses, and misinformation sit directly in the human-agent-corpus stack. Gartner's guardian-agent framing points to automated oversight because humans cannot manually inspect every agent action at enterprise scale. The conclusion is not \"slow down.\" It is \"instrument the work.\" Good governance turns AI from unofficial help into auditable production capacity. Claim summary: AI governance is not a brake outside the workflow; it becomes the production layer that permits safe speed. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: AI governance is not a brake outside the workflow; it becomes the production layer that permits safe speed.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 548,
+      "claim_summary": "AI governance is not a brake outside the workflow; it becomes the production layer that permits safe speed.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "governance",
+        "risk-management",
+        "ai-act",
+        "nist",
+        "owasp",
+        "guardian-agents"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-03",
+        "W2-04",
+        "W2-06",
+        "W2-09"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:012",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 12,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Labor Impact Will Be Uneven",
+      "chunk_type": "evidence",
+      "chunk_text": "The labor story should be neither panic nor denial. It will be uneven. OpenAI's GPTs exposure paper argues that LLMs touch a large share of U.S. work tasks, including higher-income occupations. ILO's 2025 update refines exposure at the task and occupation level across global labor markets. PwC's job-ad analysis shows AI skill premiums and rapid skill change in AI-exposed jobs. Stanford's Canaries paper suggests early-career workers in highly exposed occupations are already under pressure, especially where AI automates rather than augments. Stanford AI Index 2026 frames the macro picture carefully: adoption is fast, demand for AI skills is rising, but distribution is uneven and macro productivity evidence is mixed. That is the strategic point. The assemblage does not arrive as a uniform wave. It arrives as a task-by-task reallocation of advantage, risk, learning, and bargaining power. Claim summary: AI will not affect all knowledge workers equally; impact varies by task, age, occupation, country, wage level, and whether AI augments or automates the work. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: AI will not affect all knowledge workers equally; impact varies by task, age, occupation, country, wage level, and whether AI augments or automates the work.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 567,
+      "claim_summary": "AI will not affect all knowledge workers equally; impact varies by task, age, occupation, country, wage level, and whether AI augments or automates the work.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "labor-market",
+        "ai-exposure",
+        "skills",
+        "automation",
+        "augmentation"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-05",
+        "W2-10",
+        "W2-14"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:013",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 13,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "The First Killer Apps Are Boring",
+      "chunk_type": "case-study",
+      "chunk_text": "The first durable killer apps in knowledge work will look boring. They will not be general digital employees. They will be scoped workflows: contract comparison, support triage, RFP response assembly, close-plan hygiene, incident summaries, policy lookup, code review prep, meeting-to-action conversion, compliance evidence packs, and research synthesis with citations. Anthropic's guidance favors simple workflows before complex agents. Gartner's autonomous-agent survey shows full autonomy remains limited. McKinsey reports that broad enterprise-wide EBIT impact is still limited, while many benefits appear in specific use cases. OpenAI's enterprise report shows value in repeatable multi-step tasks and configurable interfaces with knowledge and actions. The boringness is the point. A task with stable inputs, visible sources, measurable output, and a clear human checkpoint can scale. A grand agent with no boundary becomes demo theater. Claim summary: The highest-confidence enterprise wins come from narrow, repeatable workflows with clear inputs, sources, tools, and review paths. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The highest-confidence enterprise wins come from narrow, repeatable workflows with clear inputs, sources, tools, and review paths.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 544,
+      "claim_summary": "The highest-confidence enterprise wins come from narrow, repeatable workflows with clear inputs, sources, tools, and review paths.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "killer-apps",
+        "workflow",
+        "deployment",
+        "enterprise-ai",
+        "use-cases"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-04",
+        "W2-15",
+        "W2-16"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:014",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 14,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Measure Realized Value, Not AI Activity",
+      "chunk_type": "implication",
+      "chunk_text": "Activity is not impact. Seats, prompts, tokens, pilots, hackathons, and agent counts are instrumentation, not results. McKinsey's state-of-AI survey distinguishes broad use from the small group of high performers reporting meaningful EBIT impact. OpenAI reports time saved and operational improvements, but those measures still need connection to business outcomes. BetterUp's workslop research shows why speed alone can be false productivity if it creates downstream cleanup. Stanford AI Index 2026 says macro productivity evidence remains early and mixed. The right metrics sit at the workflow level: cycle time reduced, first-pass quality improved, rework avoided, decision latency shortened, compliance evidence completed, customer issue resolved, software defect prevented, cash collected, risk retired, and new learning captured into the corpus. The question is not \"How much AI did we use?\" The question is \"Which constraint moved, and did the assemblage learn?\" Claim summary: AI strategy should be judged by cycle time, quality, decision velocity, revenue, cost, risk reduction, and learning, not by usage volume or pilot count. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: AI strategy should be judged by cycle time, quality, decision velocity, revenue, cost, risk reduction, and learning, not by usage volume or pilot count.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 566,
+      "claim_summary": "AI strategy should be judged by cycle time, quality, decision velocity, revenue, cost, risk reduction, and learning, not by usage volume or pilot count.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "metrics",
+        "roi",
+        "measurement",
+        "business-value",
+        "workflow"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-02",
+        "W2-09",
+        "W2-15"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:015",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 15,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "Adoption Without Redesign Creates Pilot Theater",
+      "chunk_type": "counterargument",
+      "chunk_text": "Pilot theater is the predictable result of adoption without redesign. A firm buys licenses, runs demos, counts prompts, announces an AI roadmap, and leaves the actual workflow intact. The result is personal productivity at the edge and little structural change at the core. McKinsey finds high performers are rare and more likely to redesign workflows and pursue transformation. Gartner's data suggests fully autonomous agents are still in early consideration or deployment. The MIT NANDA report, treated as directional because the accessible copy is a mirror, argues that many enterprise pilots fail to reach workflow-integrated value because tools do not learn or fit the process. The cure is not another pilot. It is a work-order discipline: choose a constrained workflow, define the source corpus, assign a human owner, instrument quality and cycle time, specify agent permissions, and feed outcomes back into the corpus. Without that, AI becomes a theater of modernity. Claim summary: The common failure pattern is enthusiastic AI adoption without changing workflow, incentives, corpus quality, review paths, or accountability. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The common failure pattern is enthusiastic AI adoption without changing workflow, incentives, corpus quality, review paths, or accountability.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 567,
+      "claim_summary": "The common failure pattern is enthusiastic AI adoption without changing workflow, incentives, corpus quality, review paths, or accountability.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "pilot-theater",
+        "operating-model",
+        "workflow-redesign",
+        "enterprise-ai",
+        "change-management"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-08",
+        "W2-13",
+        "W2-14"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": false,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    },
+    {
+      "chunk_id": "worldview:W2:016",
+      "thesis_id": "W2",
+      "thesis_title": "The Future of Knowledge Work and the Human + Agent + Corpus Assemblage",
+      "chunk_position": 16,
+      "chunk_total_in_thesis": 16,
+      "chunk_title": "The Winning Firm Compounds Learning Loops",
+      "chunk_type": "synthesis",
+      "chunk_text": "The winning firm will not be the one with the most prompts. It will be the one whose assemblages learn. Every completed workflow should leave residue: better source chunks, sharper task templates, clearer exceptions, improved evaluation sets, updated permissions, known failure cases, stronger acceptance criteria, and reusable decisions. Anthropic's learning-curve evidence suggests experienced users become better at harnessing models. Microsoft points toward context, observability, and governed agent operations. NIST and ISO show that management systems must improve over time, not merely approve initial use. RAG shows why external memory matters; corpus discipline makes that memory reusable. This is the compounding loop: humans set intent, agents execute bounded work, the corpus grounds and records it, governance audits it, outcomes measure it, and the next task starts from a better base. That is the future of knowledge work: not humans versus agents, but accountable people commanding systems that remember. Claim summary: The strategic end state is a learning system where every human-agent interaction improves the corpus, the workflow, the guardrails, and the next decision. AbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure. Evidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency. So what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis. Falsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nClaim summary: The strategic end state is a learning system where every human-agent interaction improves the corpus, the workflow, the guardrails, and the next decision.\n\nAbarVa framing: AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.\n\nEvidence basis: verified public research and company source material. The point is not that any single source proves the thesis. The pattern matters because independent evidence now points in the same direction: models are getting better at task execution, enterprise buyers are reorganizing around AI, and the missing layer is governed context rather than generic fluency.\n\nSo what: CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.\n\nFalsification test: this chunk weakens if enterprises show sustained production value from generic model access without corpus governance, tenant binding, provenance, or workflow redesign. It strengthens if AI value continues to concentrate where firms redesign the work and maintain a disciplined context layer.\n\nIndustry transfer: The same logic should show up in a health system deciding whether ambient documentation is workflow redesign or note-taking theater; in a regional bank separating KYC automation from governed financial-crime evidence; in a specialty retailer joining demand planning to supplier contracts; and in a manufacturer tying maintenance signals to work orders. If the pattern only works in software companies, it is not an enterprise worldview.",
+      "chunk_word_count": 574,
+      "claim_summary": "The strategic end state is a learning system where every human-agent interaction improves the corpus, the workflow, the guardrails, and the next decision.",
+      "abarva_framing_summary": "AbarVa treats this as a context-layer problem: corpus quality, tenant binding, graph relationships, and agent doctrine determine whether AI becomes useful enterprise infrastructure.",
+      "implication_summary": "CIOs should fund the context layer before broad automation. Investors should value binding-layer control points. Consulting partners should move toward validation, implementation, and sponsor work rather than repeatable analysis.",
+      "citations": [],
+      "entities_referenced": [],
+      "keywords": [
+        "learning-loop",
+        "compounding-advantage",
+        "corpus",
+        "governance",
+        "strategy"
+      ],
+      "related_patterns": [],
+      "related_chunks": [
+        "W2-01",
+        "W2-03",
+        "W2-07",
+        "W2-10"
+      ],
+      "audience_tags": [
+        "cio",
+        "investor",
+        "consulting-partner"
+      ],
+      "primary_audience": "cio",
+      "industry_examples_used": [
+        "healthcare-IDN",
+        "financial-services-regional-bank",
+        "retail-specialty",
+        "manufacturing-industrial"
+      ],
+      "confidence": 0.82,
+      "confidence_rationale": "Supported by verified source material and strategic synthesis; forward-looking implications remain draft until human review.",
+      "is_forecast": true,
+      "forecast_horizon": null,
+      "last_validated": "2026-04-30",
+      "validation_status": "draft",
+      "pinecone_namespace": "worldview",
+      "embedding_model_target": "text-embedding-3-large",
+      "embedding_dimension_target": 3072
+    }
+  ]
+}

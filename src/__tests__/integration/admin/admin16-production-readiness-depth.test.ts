@@ -48,14 +48,14 @@ describe('ADMIN16 — Production Readiness page-view depth', () => {
     expect(view.topBlockers.length).toBeGreaterThan(0);
   });
 
-  it('exposes a tabs array with 4 entries', () => {
+  it('exposes a tabs array with 2 entries (Wave 3 PR-5 consolidation)', () => {
     expect(Array.isArray(view.tabs)).toBe(true);
-    expect(view.tabs.length).toBe(4);
+    expect(view.tabs.length).toBe(2);
   });
 
-  it('tab keys match the canonical 4 (decision/blockers/gates/history)', () => {
+  it('tab keys match the canonical 2 (decision/history)', () => {
     const keys = view.tabs.map((t) => t.key).sort();
-    expect(keys).toEqual(['blockers', 'decision', 'gates', 'history']);
+    expect(keys).toEqual(['decision', 'history']);
   });
 
   it('default tab is "decision"', () => {
@@ -229,15 +229,18 @@ describe('ADMIN16 — resolveProductionReadinessTab', () => {
   });
 
   it('returns the canonical tab when given a valid key', () => {
-    const keys: ProductionReadinessTabKey[] = ['decision', 'blockers', 'gates', 'history'];
+    const keys: ProductionReadinessTabKey[] = ['decision', 'history'];
     for (const k of keys) {
       expect(resolveProductionReadinessTab(k)).toBe(k);
     }
   });
 
-  it('falls back to "decision" for unknown keys', () => {
+  it('falls back to "decision" for unknown keys (incl. legacy "blockers"/"gates")', () => {
     expect(resolveProductionReadinessTab('audit')).toBe('decision');
     expect(resolveProductionReadinessTab('garbage')).toBe('decision');
+    // Pre-Wave-3 query params should soft-fall-back, not break.
+    expect(resolveProductionReadinessTab('blockers')).toBe('decision');
+    expect(resolveProductionReadinessTab('gates')).toBe('decision');
   });
 });
 

@@ -48,6 +48,7 @@ import {
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
+import { getCapabilityGrounding } from '@/lib/admin/broker/capability-grounding-broker';
 import { spineToChips, TrustStrip } from '@/components/admin/TrustStrip';
 import {
   emptyPostureCards,
@@ -243,6 +244,12 @@ export default async function AdminOverviewPage({
     'Apex Retail Group';
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
+  // Wave 3 PR-7 · per-zone streaming. Trust strip, action queue,
+  // posture grid, Steward orientation, and audit ribbon each fetch
+  // their own data inside their Suspense boundary. The big
+  // Promise.all from earlier waves is gone — zones share broker
+  // calls via React.cache helpers so getTrustSpine() etc. still run
+  // once per request.
 
   // Wave 2 PR-5 · TenantSwitcher inputs. Resolved up-front because the
   // masthead chip is part of the synchronous editorial header.
@@ -264,6 +271,12 @@ export default async function AdminOverviewPage({
     ? snapshot.segments
     : buildAuthoredInventoryFallback(content).segments;
   const clientId = activeClient?.id ?? null;
+  // Wave 3 PR-1 · capability grounding still feeds the static
+  // Section 05 (Setup panels) footer copy via composeHomeV2Extras.
+  // PR-7 left this synchronous so the panel matrix renders eagerly.
+  const capabilityGrounding = brokerTenantKey
+    ? await getCapabilityGrounding(brokerTenantKey).catch(() => null)
+    : null;
   const {
     programsCount,
     programsP6Count,
@@ -283,6 +296,7 @@ export default async function AdminOverviewPage({
     initiativesCount: initiativesList.length,
     initiativesAtRiskCount,
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
+    capabilityGrounding,
   });
 
   // For the section-01 (Readiness across modules) and section-05

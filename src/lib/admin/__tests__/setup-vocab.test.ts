@@ -6,6 +6,7 @@
  */
 
 import {
+  CANONICAL_SEGMENT_UNLOCKS_PREVIEW,
   agentLevelFromReadiness,
   blockedCapabilityTrackCount,
   bucketHealthFromStates,
@@ -15,6 +16,7 @@ import {
   industryPhraseForClient,
   readinessPercent,
   trustRungFromHealth,
+  unlocksPreview,
   type HealthState,
 } from '../setup-vocab';
 
@@ -164,5 +166,56 @@ describe('impactFromScore', () => {
     [60, 'low'],
   ] as const)('%i → %s', (score, label) => {
     expect(impactFromScore(score)).toBe(label);
+  });
+});
+
+describe('unlocksPreview (Wave 3 PR 2 schema)', () => {
+  it('every canonical segment (1..14) has an unlock preview', () => {
+    for (let f = 1; f <= 14; f += 1) {
+      const preview = CANONICAL_SEGMENT_UNLOCKS_PREVIEW[f];
+      expect(preview).toBeDefined();
+      expect(preview.question).toBeTruthy();
+      expect(preview.citationExample).toBeTruthy();
+    }
+  });
+
+  it('question reads as a question (operator-facing)', () => {
+    for (let f = 1; f <= 14; f += 1) {
+      const { question } = CANONICAL_SEGMENT_UNLOCKS_PREVIEW[f];
+      // A question must end with a "?" so the italic block reads
+      // naturally on the page.
+      expect(question.endsWith('?')).toBe(true);
+      expect(question.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('citation example is concrete (not boilerplate)', () => {
+    for (let f = 1; f <= 14; f += 1) {
+      const { citationExample } = CANONICAL_SEGMENT_UNLOCKS_PREVIEW[f];
+      // Concrete citation must contain a colon — the "Doc §X: detail"
+      // shape used in the data-trust spec.
+      expect(citationExample).toContain(':');
+      expect(citationExample.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('every preview names an agent so the UI label is grounded', () => {
+    for (let f = 1; f <= 14; f += 1) {
+      const { agent } = CANONICAL_SEGMENT_UNLOCKS_PREVIEW[f];
+      expect(agent).toBeDefined();
+      expect(['sentinel', 'atlas', 'nexus', 'steward']).toContain(agent);
+    }
+  });
+
+  it('unlocksPreview() resolves a known family to its canonical entry', () => {
+    const preview = unlocksPreview(5, 'KPI dictionary');
+    expect(preview.question).toMatch(/comp/i);
+    expect(preview.citationExample).toMatch(/KPI/i);
+  });
+
+  it('unlocksPreview() falls back gracefully for unknown families', () => {
+    const preview = unlocksPreview(99, 'Custom segment');
+    expect(preview.question).toContain('Custom segment');
+    expect(preview.citationExample).toContain('Custom segment');
   });
 });

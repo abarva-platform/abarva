@@ -14,8 +14,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import {
+  EmptyTenantUploadAffordance,
   PostureGrid,
   emptyPostureCards,
+  firstFourDatasetTiles,
   spineToPostureCards,
   type PostureCard,
 } from '../PostureGrid';
@@ -338,5 +340,70 @@ describe('<PostureGrid />', () => {
     const html = renderToStaticMarkup(<PostureGrid cards={[]} />);
     expect(html).toContain('admin-posture-grid');
     expect(html).not.toContain('admin-posture-card-');
+  });
+});
+
+// Wave 3 PR-6 · empty-tenant 4-column upload affordance per §5.6.
+describe('firstFourDatasetTiles', () => {
+  it('returns four tiles in fixed order: organization, kpis, vendors, customer', () => {
+    const tiles = firstFourDatasetTiles();
+    expect(tiles.map((t) => t.id)).toEqual([
+      'organization',
+      'kpis',
+      'vendors',
+      'customer',
+    ]);
+  });
+
+  it('each tile href pre-seeds the data-trust segment selector with a canonical segment slug', () => {
+    const tiles = firstFourDatasetTiles();
+    expect(tiles[0].href).toBe('/admin/data-trust?segment=org_structure');
+    expect(tiles[1].href).toBe('/admin/data-trust?segment=kpi_dictionary');
+    expect(tiles[2].href).toBe('/admin/data-trust?segment=vendor_contracts');
+    expect(tiles[3].href).toBe('/admin/data-trust?segment=customer_signals');
+  });
+});
+
+describe('<EmptyTenantUploadAffordance />', () => {
+  it('renders 4 tiles in fixed order with the expected testids', () => {
+    const html = renderToStaticMarkup(<EmptyTenantUploadAffordance />);
+    expect(html).toContain('admin-empty-tenant-upload-affordance');
+    const ids = ['organization', 'kpis', 'vendors', 'customer'];
+    let lastIdx = -1;
+    for (const id of ids) {
+      const idx = html.indexOf(`admin-empty-tenant-tile-${id}`);
+      expect(idx).toBeGreaterThan(-1);
+      expect(idx).toBeGreaterThan(lastIdx);
+      lastIdx = idx;
+    }
+  });
+
+  it('renders an Upload anchor per tile pointing at the canonical data-trust route', () => {
+    const html = renderToStaticMarkup(<EmptyTenantUploadAffordance />);
+    expect(html).toContain('admin-empty-tenant-upload-organization');
+    expect(html).toContain('admin-empty-tenant-upload-kpis');
+    expect(html).toContain('admin-empty-tenant-upload-vendors');
+    expect(html).toContain('admin-empty-tenant-upload-customer');
+    expect(html).toContain('href="/admin/data-trust?segment=org_structure"');
+    expect(html).toContain('href="/admin/data-trust?segment=kpi_dictionary"');
+    expect(html).toContain('href="/admin/data-trust?segment=vendor_contracts"');
+    expect(html).toContain('href="/admin/data-trust?segment=customer_signals"');
+  });
+
+  it('honors a custom tiles override for branch reuse', () => {
+    const html = renderToStaticMarkup(
+      <EmptyTenantUploadAffordance
+        tiles={[
+          {
+            id: 'foo',
+            noun: 'Foo',
+            descriptor: 'Custom tile.',
+            href: '/admin/data-trust?segment=foo',
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain('admin-empty-tenant-tile-foo');
+    expect(html).not.toContain('admin-empty-tenant-tile-organization');
   });
 });
