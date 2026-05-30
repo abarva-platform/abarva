@@ -1,4 +1,5 @@
 import {
+  formatPercentile,
   shapeAgentResponseForSurface,
   shapeStreamingAgentTextForSurface,
   stripChatMarkdownFormatting,
@@ -417,6 +418,166 @@ describe('agent response shape', () => {
       'strategic-moves-workspace',
       '/strategic-moves',
     ];
+
+    // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B — three invariants from the
+    // Atlas CXO-quality audit. Anchor doc: docs/audits/ATLAS-CXO-QUALITY-AUDIT-2026-05-30.md.
+    describe('Atlas CXO-quality audit invariants', () => {
+      it('does not inject the templated "Needs validation." or "Medium pending evidence." boilerplate when extractors fail', () => {
+        // P0: the original code hardcoded those two strings as fallbacks
+        // in extractComparisonItems lines 209-210. Every row of every
+        // comparison table got the same boilerplate, reading as filler.
+        // Post-fix: a row whose body has no extractable weakness/fit
+        // renders as the empty-cell placeholder, not as a fake assertion.
+        const raw = [
+          'Comparing the two vendor candidates for the merchandising AI bet.',
+          'Algonomy — directly attacks MAPE and stockouts.',
+          'Daisy Intelligence — targets sell-through and margin leakage.',
+        ].join(' ');
+
+        const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+        expect(shaped).toContain('| Option | Strength | Weakness | Fit |');
+        expect(shaped).not.toContain('Needs validation.');
+        expect(shaped).not.toContain('Medium pending evidence.');
+      });
+
+      it('emits a real strength + weakness + fit when the body actually carries them (no false-positive boilerplate detection)', () => {
+        // The existing comparison-table test (above) already exercises the
+        // happy path; the negative invariant is what the audit asked for.
+        const raw = [
+          'Markdown optimization is the better second Move, but compare the two paths carefully.',
+          'Demand Forecasting — Strength: directly attacks MAPE and stockouts. Weakness: already active in P0. Fit: deepen current program.',
+          'Markdown Optimization — Strength: targets sell-through and margin leakage. Weakness: needs SKU margin data. Fit: originate next.',
+        ].join(' ');
+
+        const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+        expect(shaped).toContain('directly attacks MAPE');
+        expect(shaped).toContain('targets sell-through');
+        expect(shaped).not.toContain('Needs validation.');
+        expect(shaped).not.toContain('Medium pending evidence.');
+      });
+
+      it('never duplicates the same sentence in both Evidence: and Missing: slots (collision fix)', () => {
+        // P1: the audit caught a signal-read where the same sentence was
+        // rendered under Evidence: AND under Missing: because the two
+        // extractors shared a source string. Post-fix: Evidence wins,
+        // Missing is empty, the duplicate is gone.
+        const raw = [
+          'Apex Retail Tower read: APX-04 is the highest risk.',
+          'KPI confidence is missing baseline ownership across three programs and the source attribution is unclear.',
+          'I recommend pausing new scope until the next gate review validates owner and baseline evidence.',
+        ].join(' ');
+
+        const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+        const evidenceLine = shaped.split('\n').find((line) => line.startsWith('- Evidence:'));
+        const missingLine = shaped.split('\n').find((line) => line.startsWith('- Missing:'));
+
+        // If both slots rendered, their content must not be identical or
+        // substring-overlap (the collision class from the audit).
+        if (evidenceLine && missingLine) {
+          const evidenceBody = evidenceLine.replace(/^- Evidence:\s*/, '').trim();
+          const missingBody = missingLine.replace(/^- Missing:\s*/, '').trim();
+          expect(evidenceBody).not.toBe(missingBody);
+          expect(evidenceBody.includes(missingBody)).toBe(false);
+          expect(missingBody.includes(evidenceBody)).toBe(false);
+        }
+      });
+
+      it('never produces a naked "Xth percentile" — formatPercentile requires metric + cohort + sample size', () => {
+        // P2: the audit flagged six independent percentile fields being
+        // rendered as bare "Xth percentile" with no scale, cohort, or n.
+        // Post-fix: formatPercentile produces a labeled string, and when
+        // any required context is missing it returns the explicit
+        // "metric-context unavailable" sentinel.
+        const labeled = formatPercentile({
+          value: 18,
+          metric: 'adoption',
+          cohort: 'Retail $10B–$50B',
+          sampleSize: 7,
+        });
+        expect(labeled).toBe('18th percentile · adoption · Retail $10B–$50B cohort · n=7');
+
+        // Missing cohort → no naked percentile, no fake labels.
+        const noCohort = formatPercentile({
+          value: 18,
+          metric: 'adoption',
+          cohort: null,
+          sampleSize: 7,
+        });
+        expect(noCohort).toBe('metric-context unavailable');
+        expect(noCohort).not.toMatch(/\d+(st|nd|rd|th)\s+percentile/);
+
+        // Missing metric → same.
+        const noMetric = formatPercentile({
+          value: 42,
+          metric: null,
+          cohort: 'Retail $10B–$50B',
+          sampleSize: 12,
+        });
+        expect(noMetric).toBe('metric-context unavailable');
+
+        // Missing sample size → same.
+        const noSample = formatPercentile({
+          value: 42,
+          metric: 'adoption',
+          cohort: 'Retail $10B–$50B',
+          sampleSize: null,
+        });
+        expect(noSample).toBe('metric-context unavailable');
+
+        // Non-finite value → same.
+        const noValue = formatPercentile({
+          value: null,
+          metric: 'adoption',
+          cohort: 'Retail $10B–$50B',
+          sampleSize: 7,
+        });
+        expect(noValue).toBe('metric-context unavailable');
+      });
+
+      it('formatPercentile produces correct ordinal suffixes (1st/2nd/3rd/4th/11th/21st)', () => {
+        const ctx = { metric: 'adoption', cohort: 'Retail $10B–$50B', sampleSize: 7 };
+        expect(formatPercentile({ ...ctx, value: 1 })).toContain('1st percentile');
+        expect(formatPercentile({ ...ctx, value: 2 })).toContain('2nd percentile');
+        expect(formatPercentile({ ...ctx, value: 3 })).toContain('3rd percentile');
+        expect(formatPercentile({ ...ctx, value: 4 })).toContain('4th percentile');
+        expect(formatPercentile({ ...ctx, value: 11 })).toContain('11th percentile');
+        expect(formatPercentile({ ...ctx, value: 12 })).toContain('12th percentile');
+        expect(formatPercentile({ ...ctx, value: 13 })).toContain('13th percentile');
+        expect(formatPercentile({ ...ctx, value: 21 })).toContain('21st percentile');
+        expect(formatPercentile({ ...ctx, value: 42 })).toContain('42nd percentile');
+      });
+
+      it('rendered Atlas output bundles never contain the boilerplate strings as fallback', () => {
+        // Invariant grep test (from the brief): no rendered comparison-
+        // table response contains the literal boilerplate strings as a
+        // fallback when actual evidence exists. We assemble a small
+        // corpus of representative comparison-table payloads, run them
+        // through shapeAgentResponseForSurface, and grep the bundle.
+        const payloads = [
+          // Real-evidence body — exists; comparison table should still
+          // not paste the boilerplate.
+          'Markdown optimization is the better second Move. Demand Forecasting — Strength: attacks MAPE. Weakness: already active. Fit: deepen. Markdown Optimization — Strength: margin lift. Weakness: needs SKU data. Fit: originate.',
+          // Partial-evidence body — strengths only, no weakness/fit. The
+          // fix says these cells render as "—", not as boilerplate.
+          'Comparing the two paths. Algonomy — proven at scale. Daisy Intelligence — sharp retail focus.',
+          // Mixed: one row has all three fields, the other has only
+          // strength. Boilerplate must not appear anywhere in the
+          // rendered bundle.
+          'Choosing between vendors. Algonomy — Strength: deep retail playbook. Weakness: bigger ship. Fit: large multi-banner. Daisy Intelligence — credible second.',
+        ];
+
+        const bundle = payloads
+          .map((payload) => shapeAgentResponseForSurface('/tower', payload))
+          .join('\n\n---\n\n');
+
+        expect(bundle).not.toContain('Needs validation.');
+        expect(bundle).not.toContain('Medium pending evidence.');
+        expect(bundle).not.toMatch(/\b\d+(st|nd|rd|th)\s+percentile(?!\s+·)/);
+      });
+    });
 
     for (const surface of EXPERT_POSTURE_SURFACES) {
       it(`does not auto-template surface=${JSON.stringify(surface)} (Brief A/B/C contract)`, () => {

@@ -15,6 +15,21 @@ import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 import type { AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
+/**
+ * Atlas Fix C (truncation): canonical CXO response shapes range from short
+ * lead-bullet briefs (3–7 lines) to industry-context reads (12–20 lines) and
+ * lead-tables. The original 500-token cap chopped industry-context responses
+ * mid-sentence. 2000 covers the canon with headroom and stays well under
+ * Anthropic per-request limits.
+ */
+export const ATLAS_MAX_TOKENS = 2000;
+
+/**
+ * Atlas Fix C (determinism): all Atlas Anthropic calls use temperature=0 so
+ * identical input → identical output. Exported for assertion in tests.
+ */
+export const ATLAS_TEMPERATURE = 0;
+
 function sanitizeForTenantPrompt(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeForTenantPrompt(item));
@@ -188,7 +203,15 @@ export async function runAtlasLlm(
   try {
     const result = await client.messages.create({
       model: 'claude-opus-4-7',
-      max_tokens: 500,
+      // Atlas Fix C (determinism): set temperature=0 so identical inputs produce
+      // identical reads. The CXO-quality audit (PR #2562) found the same
+      // signal:<id> rendering as "critical-severity" one read and "93rd-percentile
+      // outlier" the next — that was the default temperature (~1.0) drifting.
+      temperature: ATLAS_TEMPERATURE,
+      // Atlas Fix C (truncation): 500 tokens cut industry-context responses
+      // mid-sentence (audit example: "...vs peer median."). ATLAS_MAX_TOKENS
+      // covers the canonical CXO response shapes with headroom.
+      max_tokens: ATLAS_MAX_TOKENS,
       system,
       messages: [
         {

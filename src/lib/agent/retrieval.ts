@@ -65,6 +65,71 @@ function industryNamespace(industry: IndustryCode | null | undefined): string {
   return 'global:general_macro';
 }
 
+/**
+ * Tenant-scoped topic namespace for AI-governance frameworks.
+ *
+ * Atlas Fix A (2026-05-30) — closes the second leg of the P0 retrieval
+ * leak. Previously this pulled from the un-tenant-scoped global
+ * `global:ai_governance` namespace, which could return Meridian (Abridge
+ * / HIPAA / BAA) content into a retail tenant's response.
+ *
+ * The new namespace is keyed on industry so a retail tenant cannot
+ * receive healthcare-specific governance chunks. When a tenant is not
+ * resolved, we fall back to the generic-macro namespace (which carries
+ * only industry-agnostic governance text) — never the unscoped global
+ * pool.
+ */
+export function __testOnly_topicNamespace(
+  industry: IndustryCode | null | undefined,
+): string {
+  return topicNamespace(industry);
+}
+
+function topicNamespace(industry: IndustryCode | null | undefined): string {
+  if (industry === 'HEALTHCARE_IDN') return 'industry:healthcare_idn:ai_governance';
+  if (industry === 'FINSERV') return 'industry:finserv:ai_governance';
+  if (industry === 'RETAIL') return 'industry:retail:ai_governance';
+  return 'industry:general_macro:ai_governance';
+}
+
+/**
+ * Legacy-alias scrubber.
+ *
+ * Atlas Fix A (2026-05-30) — same pattern used by
+ *   - src/lib/azure-search/tenant-context-retriever.ts
+ *   - src/lib/knowledge/tenant-enterprise-context.ts (×2)
+ *
+ * Any chunk pulled into the Atlas prompt must be normalized BEFORE it
+ * enters retrieval output. Otherwise retired legacy alias names leak
+ * straight into the model context.
+ */
+export function __testOnly_normalizeLegacyClientAliases(text: string): string {
+  return normalizeLegacyClientAliases(text);
+}
+
+function normalizeLegacyClientAliases(text: string): string {
+  return text
+    .replace(/\bAsterline Retail Group\b/g, 'Apex Retail Group')
+    .replace(/\bAsterline Retail\b/g, 'Apex Retail')
+    .replace(/\bAsterline\b/g, 'Apex Retail')
+    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health')
+    .replace(/\bHeliara Health\b/g, 'Meridian Health')
+    .replace(/\bHeliara\b/g, 'Meridian')
+    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
+    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
+    .replace(/\bBrindlemark\b/g, 'First Capital');
+}
+
+function scrubChunks(chunks: RetrievedChunk[]): RetrievedChunk[] {
+  for (const c of chunks) {
+    c.text = normalizeLegacyClientAliases(c.text);
+    if (c.section) c.section = normalizeLegacyClientAliases(c.section);
+    if (c.attribution) c.attribution = normalizeLegacyClientAliases(c.attribution);
+    if (c.publisher) c.publisher = normalizeLegacyClientAliases(c.publisher);
+  }
+  return chunks;
+}
+
 function applyFreshnessDecay(score: number, publishedAt?: string, halfLifeDays?: number): number {
   if (!publishedAt) return score;
   const ts = Date.parse(publishedAt);
@@ -284,7 +349,12 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       topKIndustry: args.topKIndustry ?? 3,
       topKTopic: args.topKTopic ?? 2,
     });
-    return { ...emptyCtx, ...fallback };
+    return {
+      ...emptyCtx,
+      clientChunks: scrubChunks(fallback.clientChunks),
+      industryChunks: scrubChunks(fallback.industryChunks),
+      topicChunks: scrubChunks(fallback.topicChunks),
+    };
   }
 
   const clientPromise = clientId
@@ -296,7 +366,10 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       )
     : Promise.resolve<RetrievedChunk[]>([]);
   const industryPromise = queryNamespace(vector, industryNamespace(industry), args.topKIndustry ?? 3);
-  const topicPromise = queryNamespace(vector, 'global:ai_governance', args.topKTopic ?? 2);
+  // Atlas Fix A — was 'global:ai_governance' (unscoped). Now keyed on
+  // the tenant's industry so retail tenants cannot receive healthcare
+  // (Abridge / HIPAA / BAA) governance chunks, etc.
+  const topicPromise = queryNamespace(vector, topicNamespace(industry), args.topKTopic ?? 2);
 
   const [clientChunks, industryChunks, topicChunks] = await Promise.all([
     clientPromise,
@@ -314,7 +387,12 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       topKIndustry: args.topKIndustry ?? 3,
       topKTopic: args.topKTopic ?? 2,
     });
-    return { ...emptyCtx, ...fallback };
+    return {
+      ...emptyCtx,
+      clientChunks: scrubChunks(fallback.clientChunks),
+      industryChunks: scrubChunks(fallback.industryChunks),
+      topicChunks: scrubChunks(fallback.topicChunks),
+    };
   }
 
   industryChunks.sort((a, b) => b.decayedScore - a.decayedScore);
@@ -324,8 +402,8 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     industry,
     clientId,
     userQuery: args.userQuery,
-    clientChunks,
-    industryChunks,
-    topicChunks,
+    clientChunks: scrubChunks(clientChunks),
+    industryChunks: scrubChunks(industryChunks),
+    topicChunks: scrubChunks(topicChunks),
   };
 }

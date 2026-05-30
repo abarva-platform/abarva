@@ -7,6 +7,7 @@ import type { AgentGroundingDisclosure } from '@/lib/intelligence/canonical/agen
 export type AtlasRouteType = 'scripted' | 'llm' | 'hybrid' | 'tool_augmented';
 
 export type AtlasIntent =
+  // ---- Original 8 (pre-expansion)
   | 'morning_summary'
   | 'shadow_ai_detail'
   | 'cohort_position'
@@ -16,7 +17,35 @@ export type AtlasIntent =
   | 'idle_seats'
   | 'signal_detail'
   | 'strategy_refusal'
-  | 'llm';
+  | 'llm'
+  // ---- Portfolio diagnostics (audit §3.1)
+  | 'lagging_programs_by_value'
+  | 'value_attainment_vs_commitment'
+  | 'at_risk_gates'
+  | 'portfolio_confidence'
+  // ---- Peer / industry (audit §3.2)
+  | 'peer_adoption_compare'
+  | 'industry_leaders'
+  | 'cohort_lagging'
+  // ---- Spend / cost (audit §3.3)
+  | 'ai_spend_vs_budget'
+  | 'vendor_concentration_risk'
+  | 'cost_overruns'
+  // ---- Risk / governance (audit §3.4)
+  | 'shadow_ai_exposure'
+  | 'governance_coverage_gaps'
+  | 'regulatory_open_items'
+  // ---- Decisions (audit §3.5)
+  | 'fund_next_why'
+  | 'kill_next_why'
+  | 'reshape_next_why'
+  // ---- Drilldown (audit §3.6)
+  | 'program_drilldown'
+  | 'signal_drilldown'
+  | 'vendor_drilldown'
+  // ---- Compare / hypothetical (audit §3.7)
+  | 'cut_program_impact'
+  | 'fund_x_vs_y';
 
 export interface AtlasMetricExplanationRequest {
   source: 'tower_metric_provenance';

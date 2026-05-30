@@ -1,3 +1,4 @@
+-- migration:destructive-allowed
 -- PRE-W4-PR-2 · connector status 'pending'
 --
 -- Extend admin_connectors.status to include 'pending', the lifecycle

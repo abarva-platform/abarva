@@ -149,13 +149,31 @@ function extractEvidenceLine(item: string): string {
   return trimWords(evidence, 38);
 }
 
-function extractMissingLine(text: string): string | null {
+function extractMissingLine(text: string, excludeSources: string[] = []): string | null {
+  const isExcluded = (candidate: string): boolean => {
+    const normalizedCandidate = normalizeCompactLine(candidate).toLowerCase();
+    if (!normalizedCandidate) return false;
+    return excludeSources.some((excluded) => {
+      const normalizedExcluded = normalizeCompactLine(excluded).toLowerCase();
+      if (!normalizedExcluded) return false;
+      // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (Evidence/Missing collision):
+      // if the same sentence is already assigned to Evidence, never let it
+      // also surface as Missing. Treat overlap as a collision (Evidence wins).
+      return (
+        normalizedExcluded === normalizedCandidate ||
+        normalizedExcluded.includes(normalizedCandidate) ||
+        normalizedCandidate.includes(normalizedExcluded)
+      );
+    });
+  };
+
   const explicit = text.match(/(?:Explicitly\s+missing\s+data(?:\s+that\s+would\s+change\s+ranking)?|Data\s+missing|Missing):\s*([^?]+?)(?=(?:\s+[A-Z][a-z]+:)|(?:\s+What\s+do\s+you)|$)/i);
-  if (explicit?.[1]) return trimWords(explicit[1].trim(), 28);
+  if (explicit?.[1] && !isExcluded(explicit[1])) return trimWords(explicit[1].trim(), 28);
 
   const missingSentence = splitSentences(text).find((sentence) =>
     /\b(missing|do not have|don't have|absent|not in the retrieved context)\b/i.test(sentence) &&
-    !isRecommendationSentence(sentence),
+    !isRecommendationSentence(sentence) &&
+    !isExcluded(sentence),
   );
   return missingSentence ? trimWords(missingSentence, 28) : null;
 }
@@ -194,6 +212,13 @@ interface ComparisonItem {
   fit: string;
 }
 
+// ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (templated boilerplate):
+// Sentinel for cells the extractors could not honestly fill. Rendered as
+// an em-dash placeholder, never as a fake "Needs validation." or
+// "Medium pending evidence." assertion. Reads as honest absence, not
+// machine-generated filler.
+const COMPARISON_CELL_PLACEHOLDER = '—';
+
 function extractComparisonItems(text: string): ComparisonItem[] {
   const optionBlocks = Array.from(
     text.matchAll(
@@ -205,14 +230,26 @@ function extractComparisonItems(text: string): ComparisonItem[] {
     .map((match) => {
       const option = trimWords(normalizeCompactLine(match[1] ?? ''), 6);
       const body = normalizeCompactLine(match[2] ?? '');
-      const strength = body.match(/Strength:\s*([^.;]+[.;]?)/i)?.[1] ?? splitSentences(body)[0] ?? body;
-      const weakness = body.match(/Weakness:\s*([^.;]+[.;]?)/i)?.[1] ?? body.match(/(?:but|however)\s+([^.;]+[.;]?)/i)?.[1] ?? 'Needs validation.';
-      const fit = body.match(/Fit:\s*([^.;]+[.;]?)/i)?.[1] ?? body.match(/best\s+for\s+([^.;]+[.;]?)/i)?.[1] ?? 'Medium pending evidence.';
+      // Strength: prefer explicit "Strength:" label; otherwise the first
+      // sentence (which is what an advisor naturally leads with).
+      const strengthRaw = body.match(/Strength:\s*([^.;]+[.;]?)/i)?.[1] ?? splitSentences(body)[0] ?? body;
+      // Weakness: explicit "Weakness:" label, or a "but/however" clause.
+      // No fallback prose — if neither pattern exists, the cell is honestly
+      // empty rather than a templated "Needs validation." assertion.
+      const weaknessRaw = body.match(/Weakness:\s*([^.;]+[.;]?)/i)?.[1]
+        ?? body.match(/(?:but|however)\s+([^.;]+[.;]?)/i)?.[1]
+        ?? null;
+      // Fit: explicit "Fit:" label, or a "best for ..." phrase. Same rule
+      // as weakness — no templated "Medium pending evidence." filler.
+      const fitRaw = body.match(/Fit:\s*([^.;]+[.;]?)/i)?.[1]
+        ?? body.match(/best\s+for\s+([^.;]+[.;]?)/i)?.[1]
+        ?? null;
+
       return {
         option,
-        strength: trimWords(strength, 12),
-        weakness: trimWords(weakness, 12),
-        fit: trimWords(fit, 10),
+        strength: strengthRaw ? trimWords(strengthRaw, 12) : COMPARISON_CELL_PLACEHOLDER,
+        weakness: weaknessRaw ? trimWords(weaknessRaw, 12) : COMPARISON_CELL_PLACEHOLDER,
+        fit: fitRaw ? trimWords(fitRaw, 10) : COMPARISON_CELL_PLACEHOLDER,
       };
     })
     .filter((item) => item.option && item.option.length <= 55)
@@ -229,10 +266,15 @@ function compactComparisonText(text: string): string | null {
   if (items.length < 2) return null;
 
   const lead = trimWords(sentences[0] ?? 'The comparison comes down to fit and evidence.', 22);
+  // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B: never wrap the empty-cell
+  // placeholder ("—") with a trailing period. Treat the placeholder as
+  // already-final text.
+  const renderCell = (value: string): string =>
+    value === COMPARISON_CELL_PLACEHOLDER ? value : sentenceWithPeriod(value);
   const rows = [
     '| Option | Strength | Weakness | Fit |',
     '|---|---|---|---|',
-    ...items.map((item) => `| ${item.option} | ${sentenceWithPeriod(item.strength)} | ${sentenceWithPeriod(item.weakness)} | ${sentenceWithPeriod(item.fit)} |`),
+    ...items.map((item) => `| ${item.option} | ${renderCell(item.strength)} | ${renderCell(item.weakness)} | ${renderCell(item.fit)} |`),
   ];
   const synthesis = sentences.find((sentence) => /\b(recommend|best|choose|therefore|so)\b/i.test(sentence) && sentence !== sentences[0]);
   return normalizeVisibleWhitespace([lead, rows.join('\n'), synthesis ? trimWords(synthesis, 26) : null].filter(Boolean).join('\n\n'));
@@ -315,13 +357,15 @@ function compactStrategicMoveOriginateText(text: string): string {
   if (shouldPreserve) return normalized;
 
   const headline = trimWords(sentences[0] ?? normalized, 18);
-  const missing = extractMissingLine(normalized);
   const question = extractQuestionLine(normalized);
 
   if (numberedItems.length > 0) {
     const recommended = extractItemTitle(numberedItems[0] ?? '');
     const alternate = numberedItems[1] ? extractItemTitle(numberedItems[1]) : null;
     const evidence = extractEvidenceLine(numberedItems[0] ?? '');
+    // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (Evidence/Missing collision):
+    // exclude the evidence span so the same text never lands in both slots.
+    const missing = extractMissingLine(normalized, evidence ? [evidence] : []);
     const lines = [
       headline,
       evidence ? `- Why: ${sentenceWithPeriod(evidence)}` : null,
@@ -337,6 +381,8 @@ function compactStrategicMoveOriginateText(text: string): string {
   const support = sentences.find((sentence, index) =>
     index > 0 && /\d|KPI|financial|system|strategy|evidence|baseline|confidence/i.test(sentence),
   );
+  // Same Evidence/Missing collision exclusion for the fallback branch.
+  const missing = extractMissingLine(normalized, support ? [support] : []);
   const lines = [
     headline,
     support ? `- Evidence: ${sentenceWithPeriod(trimWords(support, 28))}` : null,
@@ -365,13 +411,17 @@ function compactConsultantChatText(text: string, maxWords: number): string {
   if (shouldPreserve) return text;
 
   const headline = trimWords(sentences[0] ?? text, 18);
-  const missing = extractMissingLine(text);
   const question = extractQuestionLine(text);
+  // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (Evidence/Missing collision):
+  // compute evidence FIRST, then pass it to extractMissingLine as the
+  // exclude-source. If the same sentence carries both signals, Evidence
+  // wins and Missing is rendered empty rather than duplicating the text.
   const evidence = sentences.find((sentence, index) =>
     index > 0 && !isRecommendationSentence(sentence) && /\d|KPI|financial|system|strategy|baseline|risk|confidence|source/i.test(sentence),
   ) ?? sentences.find((sentence, index) =>
     index > 0 && !isRecommendationSentence(sentence) && /\b(require|proof|integration|adoption|workflow|data|guardrail|ownership|readiness|connector)\b/i.test(sentence),
   );
+  const missing = extractMissingLine(text, evidence ? [evidence] : []);
   const recommendation = sentences.find((sentence, index) =>
     index > 0 &&
     sentence !== evidence &&
@@ -435,6 +485,51 @@ function shouldCompactSurface(surface: string): boolean {
     '/setup',
     '/platform/admin',
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);
+}
+
+// ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (percentile labeling):
+// Every percentile rendered to a user MUST include the metric, the cohort
+// definition, and the sample size. If any of those is missing, do NOT
+// render a naked "Xth percentile" number — render an honest absence string
+// instead. This applies uniformly to all six percentile fields surfaced by
+// Atlas: portfolio.adoptionPercentile, portfolio.spendIntensityPercentile,
+// portfolio.valueAttainmentPercentile, portfolio.vendorCountPercentile,
+// signal.percentile, and benchmark.apexPercentile.
+export interface PercentileContext {
+  value: number | null | undefined;
+  metric: string | null | undefined;
+  cohort: string | null | undefined;
+  sampleSize: number | null | undefined;
+}
+
+const PERCENTILE_CONTEXT_UNAVAILABLE = 'metric-context unavailable';
+
+function ordinalSuffix(n: number): string {
+  const abs = Math.abs(Math.round(n));
+  const lastTwo = abs % 100;
+  if (lastTwo >= 11 && lastTwo <= 13) return 'th';
+  const last = abs % 10;
+  if (last === 1) return 'st';
+  if (last === 2) return 'nd';
+  if (last === 3) return 'rd';
+  return 'th';
+}
+
+export function formatPercentile(ctx: PercentileContext): string {
+  const { value, metric, cohort, sampleSize } = ctx;
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return PERCENTILE_CONTEXT_UNAVAILABLE;
+  }
+  const cleanMetric = typeof metric === 'string' ? metric.trim() : '';
+  const cleanCohort = typeof cohort === 'string' ? cohort.trim() : '';
+  const cleanSample = typeof sampleSize === 'number' && Number.isFinite(sampleSize) && sampleSize > 0
+    ? Math.round(sampleSize)
+    : null;
+  if (!cleanMetric || !cleanCohort || cleanSample == null) {
+    return PERCENTILE_CONTEXT_UNAVAILABLE;
+  }
+  const rounded = Math.round(value);
+  return `${rounded}${ordinalSuffix(rounded)} percentile · ${cleanMetric} · ${cleanCohort} cohort · n=${cleanSample}`;
 }
 
 export function shapeStreamingAgentTextForSurface(_surface: string, text: string): string {

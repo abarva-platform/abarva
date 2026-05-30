@@ -3,8 +3,8 @@
 // Response: streaming plain text — Atlas's portfolio-level synthesis quote
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
-import { APEX_RETAIL_PROGRAM_INSTANCES } from "@/lib/programs/program-instances";
-import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
+import { getActiveClientRow } from "@/lib/active-client";
+import { loadTenantTowerPortfolio } from "@/lib/reasoning/tenant-tower-portfolio";
 import {
   buildTowerSynthesisContext,
   towerStateHash,
@@ -31,6 +31,19 @@ import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('tower', synthesisCache, cacheCreatedAt);
+
+// Atlas Fix C (stuck state): hard upstream timeout for tower synthesis. When
+// the model stream stalls we cancel the request and emit an honest, user-facing
+// message instead of leaving the UI hung at "Atlas is thinking…". 30s matches
+// the working API timeout policy elsewhere in this codebase.
+export const TOWER_SYNTHESIS_TIMEOUT_MS = 30_000;
+export const TOWER_SYNTHESIS_TIMEOUT_MESSAGE =
+  "Atlas couldn't complete that response in time. Try again or pick a narrower question.";
+
+// Atlas Fix C (determinism): tower synthesis uses temperature=0 so the same
+// portfolio state produces the same read. The CXO-quality audit (PR #2562)
+// flagged the default temperature (~1.0) as the source of contradictory reads.
+export const TOWER_SYNTHESIS_TEMPERATURE = 0;
 
 const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
@@ -63,6 +76,79 @@ export function buildAtlasSynthesisPrompt(
   ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
+}
+
+export interface AtlasSynthesisSnapshot {
+  programCount: number;
+  sourceEventCount: number;
+  pendingGateCount: number;
+  activeBlockerCount: number;
+  programs: ProgramSummary[];
+  sourceEvents: SourceSummary[];
+}
+
+/**
+ * Compose the synthesis user message from a tenant-scoped portfolio
+ * snapshot. Exported for tests — the route file is otherwise hard to
+ * exercise without mocking the entire AI stack.
+ *
+ * Atlas Fix A invariant: the tenant display name is always derived from
+ * the signed-in tenant's `getActiveClientRow()` — never a literal
+ * "Apex Retail Group". When the portfolio is empty the model is told
+ * honestly, never silently fed Apex's data.
+ */
+export function composeAtlasSynthesisUserMessage(
+  tenantDisplayName: string,
+  snap: AtlasSynthesisSnapshot,
+): string {
+  const programLines = snap.programs
+    .map(
+      p =>
+        `  - ${p.id} "${p.name}" · phase P${p.phase} ${p.phaseLabel} · gate ${p.gateStatus}` +
+        (p.openBlockerCount > 0 ? ` · ${p.openBlockerCount} open blocker(s)` : '') +
+        (p.linkedSourceEventIds.length > 0
+          ? ` · linked source: ${p.linkedSourceEventIds.join(', ')}`
+          : ''),
+    )
+    .join('\n');
+
+  const sourceLines = snap.sourceEvents
+    .map(
+      s =>
+        `  - ${s.id} "${s.name}" · stage ${s.stage} · ${s.vendorCount} vendor(s)` +
+        (s.activeVendors.length > 0 ? ` · active: ${s.activeVendors.join(', ')}` : '') +
+        (s.openBlockerCount > 0 ? ` · ${s.openBlockerCount} open blocker(s)` : '') +
+        (s.linkedProgramIds.length > 0
+          ? ` · linked programs: ${s.linkedProgramIds.join(', ')}`
+          : ''),
+    )
+    .join('\n');
+
+  const portfolioIsEmpty =
+    snap.programCount === 0 && snap.sourceEventCount === 0;
+
+  if (portfolioIsEmpty) {
+    return [
+      `Portfolio snapshot for ${tenantDisplayName}:`,
+      `No active programs or source events are wired into the Tower data plane for this tenant yet.`,
+      '',
+      `Do NOT fabricate program or source-event IDs. Reply with a single direct line stating that the portfolio has no active programs or source events to synthesize, and that Atlas will produce a portfolio read once Tower is wired to this tenant's data.`,
+    ].join('\n');
+  }
+
+  return [
+    `Portfolio snapshot for ${tenantDisplayName}:`,
+    `${snap.programCount} active program(s), ${snap.sourceEventCount} active source event(s).`,
+    `${snap.pendingGateCount} pending gate(s) and ${snap.activeBlockerCount} active blocker(s) across the portfolio.`,
+    '',
+    `Active programs:`,
+    programLines,
+    '',
+    `Active source events:`,
+    sourceLines,
+    '',
+    `Synthesize Atlas's 90–140 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
+  ].join('\n');
 }
 
 interface ProgramSummary {
@@ -98,17 +184,26 @@ export async function POST(request: Request) {
     return tenancyErrorResponse(err);
   }
 
-  const programInstances = APEX_RETAIL_PROGRAM_INSTANCES;
-  const sourceEventInstances = SOURCE_EVENT_INSTANCES;
+  // Atlas Fix A (2026-05-30) — load portfolio inputs scoped to the
+  // signed-in tenant. Apex Retail fixture is ONLY returned for
+  // `apexretail` under the `tower_synthesis_apex_demo_fixture` flag.
+  // Other tenants get empty arrays — no silent Apex fallback. The
+  // tenant's canonical display name is pulled from the active client
+  // row for the user message header.
+  const portfolio = loadTenantTowerPortfolio(tenancy);
+  const { programInstances, sourceEventInstances } = portfolio;
+  const activeClient = await getActiveClientRow();
+  const tenantDisplayName = activeClient?.name ?? tenancy.clientKey ?? 'the active tenant';
 
   // Build context up-front so we can attach telemetry counts to both
   // cache-hit and cache-miss responses.
   const ctx = buildTowerSynthesisContext(programInstances, sourceEventInstances);
 
-  // Cache check
+  // Cache check — keyed on tenant so cached Apex synthesis can never
+  // be returned to a different tenant.
   const stateHash = towerStateHash(programInstances, sourceEventInstances);
   const policyCacheKey = accessPolicy.outputPolicy.exactFinancialValues ? 'finance' : 'restricted';
-  const cacheKey = `tower:${stateHash}:atlas:v2:${policyCacheKey}`;
+  const cacheKey = `tower:${tenancy.clientKey ?? tenancy.clientId}:${stateHash}:atlas:v2:${policyCacheKey}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get('if-none-match');
   const cached = synthesisCache.get(cacheKey);
@@ -158,52 +253,8 @@ export async function POST(request: Request) {
     });
   }
 
-  const snap = ctx.instanceSnapshot as {
-    programCount: number;
-    sourceEventCount: number;
-    pendingGateCount: number;
-    activeBlockerCount: number;
-    programs: ProgramSummary[];
-    sourceEvents: SourceSummary[];
-  };
-
-  // Build the structured user message from the portfolio context.
-  const programLines = snap.programs
-    .map(
-      p =>
-        `  - ${p.id} "${p.name}" · phase P${p.phase} ${p.phaseLabel} · gate ${p.gateStatus}` +
-        (p.openBlockerCount > 0 ? ` · ${p.openBlockerCount} open blocker(s)` : '') +
-        (p.linkedSourceEventIds.length > 0
-          ? ` · linked source: ${p.linkedSourceEventIds.join(', ')}`
-          : ''),
-    )
-    .join('\n');
-
-  const sourceLines = snap.sourceEvents
-    .map(
-      s =>
-        `  - ${s.id} "${s.name}" · stage ${s.stage} · ${s.vendorCount} vendor(s)` +
-        (s.activeVendors.length > 0 ? ` · active: ${s.activeVendors.join(', ')}` : '') +
-        (s.openBlockerCount > 0 ? ` · ${s.openBlockerCount} open blocker(s)` : '') +
-        (s.linkedProgramIds.length > 0
-          ? ` · linked programs: ${s.linkedProgramIds.join(', ')}`
-          : ''),
-    )
-    .join('\n');
-
-  const userMessage = [
-    `Portfolio snapshot for Apex Retail Group:`,
-    `${snap.programCount} active program(s), ${snap.sourceEventCount} active source event(s).`,
-    `${snap.pendingGateCount} pending gate(s) and ${snap.activeBlockerCount} active blocker(s) across the portfolio.`,
-    '',
-    `Active programs:`,
-    programLines,
-    '',
-    `Active source events:`,
-    sourceLines,
-    '',
-    `Synthesize Atlas's 90–140 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
-  ].join('\n');
+  const snap = ctx.instanceSnapshot as unknown as AtlasSynthesisSnapshot;
+  const userMessage = composeAtlasSynthesisUserMessage(tenantDisplayName, snap);
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
@@ -233,12 +284,25 @@ export async function POST(request: Request) {
   }
   const client = preflight.client;
 
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 350,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
+  // Atlas Fix C: wrap the upstream stream in an AbortController with an
+  // explicit timeout. On timeout we abort the upstream, clear the spinner, and
+  // surface an honest message. Never leave the UI hanging.
+  const abortController = new AbortController();
+  const timeoutHandle = setTimeout(
+    () => abortController.abort(),
+    TOWER_SYNTHESIS_TIMEOUT_MS,
+  );
+
+  const stream = await client.messages.stream(
+    {
+      model: "claude-sonnet-4-6",
+      temperature: TOWER_SYNTHESIS_TEMPERATURE,
+      max_tokens: 350,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    },
+    { signal: abortController.signal },
+  );
 
   const encoder = new TextEncoder();
   let accumulated = '';
@@ -256,13 +320,39 @@ export async function POST(request: Request) {
   });
 
   if (!accessPolicy.outputPolicy.exactFinancialValues) {
-    for await (const chunk of stream) {
-      if (
-        chunk.type === "content_block_delta" &&
-        chunk.delta.type === "text_delta"
-      ) {
-        accumulated += chunk.delta.text;
+    let timedOut = false;
+    try {
+      for await (const chunk of stream) {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
+          accumulated += chunk.delta.text;
+        }
       }
+    } catch (err) {
+      // Atlas Fix C: on abort/timeout, surface an honest message rather than a
+      // raw 5xx or — worse — silence. The caller's "thinking…" indicator should
+      // clear when this body arrives.
+      if (abortController.signal.aborted) {
+        timedOut = true;
+      } else {
+        clearTimeout(timeoutHandle);
+        throw err;
+      }
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+    if (timedOut) {
+      return new Response(TOWER_SYNTHESIS_TIMEOUT_MESSAGE, {
+        status: 504,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Cache": "MISS",
+          "X-Synthesis-Event-Id": event.id,
+          "X-Synthesis-Timeout": "true",
+        },
+      });
     }
     const safeText = sanitizeRestrictedFinancialText(accumulated, accessPolicy);
     if (safeText) {
@@ -282,14 +372,33 @@ export async function POST(request: Request) {
 
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          accumulated += chunk.delta.text;
-          controller.enqueue(encoder.encode(chunk.delta.text));
+      try {
+        for await (const chunk of stream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            accumulated += chunk.delta.text;
+            controller.enqueue(encoder.encode(chunk.delta.text));
+          }
         }
+      } catch (err) {
+        // Atlas Fix C: if the upstream times out / aborts, append an honest
+        // user-facing message so the chat surface shows a real failure instead
+        // of a silent hang. Then close cleanly.
+        if (abortController.signal.aborted) {
+          const suffix = accumulated.length > 0 ? '\n\n' : '';
+          controller.enqueue(
+            encoder.encode(`${suffix}${TOWER_SYNTHESIS_TIMEOUT_MESSAGE}`),
+          );
+          controller.close();
+          return;
+        }
+        clearTimeout(timeoutHandle);
+        controller.error(err);
+        return;
+      } finally {
+        clearTimeout(timeoutHandle);
       }
       // Cache the full response after streaming completes
       if (accumulated) {

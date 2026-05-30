@@ -63,7 +63,8 @@ export type FeatureFlagKey =
   | 'intelligence_brief_v4'
   | 'first_capital_substrate_overlay'
   | 'retrieval_azure_search'
-  | 'graph_neo4j_enabled';
+  | 'graph_neo4j_enabled'
+  | 'tower_synthesis_apex_demo_fixture';
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -88,6 +89,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // cutover. When parity is proven across the roster, swap to
     // `platform` policy with the inverse `excludeTenants` for rollback.
     includeTenants: [],
+  },
+  {
+    key: 'tower_synthesis_apex_demo_fixture',
+    summary:
+      'Tower synthesis route may use the Apex Retail demo fixture as portfolio input. Tenant-gated to apexretail only — closes the Atlas P0 cross-tenant leak where the Apex fixture was the silent default for every tenant. Default ON for apexretail.',
+    policy: 'tenant',
+    includeTenants: ['apexretail'],
   },
   {
     key: 'graph_neo4j_enabled',
