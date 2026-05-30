@@ -1,0 +1,231 @@
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import ts from 'typescript';
+import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from '../../src/scripts/seed/seed-wave-lib';
+
+type ParsedPattern = {
+  code: string;
+  name: string;
+  officeCategory?: string;
+  office_category?: string;
+  failureRatePct?: number;
+  failure_rate_pct?: number;
+  description: string;
+  keywords?: string[];
+  demoRelevant?: boolean;
+  demo_relevant?: boolean;
+  subTopic?: string;
+};
+
+type SeedFileSummary = {
+  file: string;
+  vertical: string;
+  sourceKey: string;
+  parsed: number;
+  patternsUpserted: number;
+  edgesUpserted: number;
+};
+
+function deterministicUuid(input: string): string {
+  const hex = createHash('sha1').update(input).digest('hex').slice(0, 32);
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    `4${hex.slice(13, 16)}`,
+    `a${hex.slice(17, 20)}`,
+    hex.slice(20, 32),
+  ].join('-');
+}
+
+function assertString(value: unknown, label: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`Expected ${label} to be a non-empty string`);
+  }
+  return value;
+}
+
+function literalValue(node: ts.Expression): unknown {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isNumericLiteral(node)) return Number(node.text);
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (ts.isArrayLiteralExpression(node)) return node.elements.map((element) => literalValue(element as ts.Expression));
+  if (ts.isObjectLiteralExpression(node)) return objectValue(node);
+  if (ts.isPrefixUnaryExpression(node) && ts.isNumericLiteral(node.operand)) {
+    return node.operator === ts.SyntaxKind.MinusToken ? -Number(node.operand.text) : Number(node.operand.text);
+  }
+  throw new Error(`Unsupported seed expression: ${node.getText().slice(0, 80)}`);
+}
+
+function propertyName(name: ts.PropertyName): string {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) return name.text;
+  throw new Error(`Unsupported property name: ${name.getText()}`);
+}
+
+function objectValue(node: ts.ObjectLiteralExpression): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const property of node.properties) {
+    if (!ts.isPropertyAssignment(property)) continue;
+    out[propertyName(property.name)] = literalValue(property.initializer);
+  }
+  return out;
+}
+
+function extractPatterns(filePath: string): ParsedPattern[] {
+  const sourceText = fs.readFileSync(filePath, 'utf8');
+  const source = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+  const arrays: ParsedPattern[][] = [];
+
+  function visit(node: ts.Node): void {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && /PATTERNS$/.test(node.name.text)) {
+      if (!node.initializer || !ts.isArrayLiteralExpression(node.initializer)) {
+        throw new Error(`${filePath}: ${node.name.text} is not an array literal`);
+      }
+      arrays.push(node.initializer.elements.map((element) => objectValue(element as ts.ObjectLiteralExpression) as ParsedPattern));
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(source);
+  if (arrays.length === 0) throw new Error(`${filePath}: no *PATTERNS array found`);
+  return arrays.flat();
+}
+
+function seedMetadata(filePath: string) {
+  const base = path.basename(filePath, '.ts');
+  if (base.startsWith('seed-airline-')) {
+    return { vertical: 'airline', sourceKey: 'skyharbor-air', capabilityType: 'airline_capability', seededBy: base };
+  }
+  if (base.startsWith('seed-healthcare-')) {
+    return {
+      vertical: 'healthcare_provider',
+      sourceKey: 'meridian-health',
+      capabilityType: 'healthcare_capability',
+      seededBy: base,
+    };
+  }
+  throw new Error(`Unsupported seed file naming: ${filePath}`);
+}
+
+async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict: string) {
+  const batchSize = 100;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const { error } = await sb.from(table).upsert(rows.slice(i, i + batchSize), { onConflict });
+    if (error) throw new Error(`${table} upsert failed: ${error.message}`);
+  }
+}
+
+async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileSummary> {
+  const meta = seedMetadata(filePath);
+  const patterns = extractPatterns(filePath);
+
+  const patternRows = patterns.map((pattern) => {
+    const code = assertString(pattern.code, `${filePath} code`);
+    const name = assertString(pattern.name, `${filePath} ${code} name`);
+    const description = assertString(pattern.description, `${filePath} ${code} description`);
+    const officeCategory = String(pattern.officeCategory ?? pattern.office_category ?? 'middle_office');
+    const keywords = Array.isArray(pattern.keywords) ? pattern.keywords.map(String) : [];
+    const failureRatePct = Number(pattern.failureRatePct ?? pattern.failure_rate_pct ?? 50);
+    const demoRelevant = Boolean(pattern.demoRelevant ?? pattern.demo_relevant ?? false);
+    return {
+      id: deterministicUuid(`${meta.vertical}-genome-pattern:${code}`),
+      pattern_type: 'failure_pattern',
+      vertical: meta.vertical,
+      sub_category: officeCategory,
+      data: {
+        code,
+        name,
+        description,
+        office_category: officeCategory,
+        keywords,
+        demo_seed: true,
+        demo_relevant: demoRelevant,
+        source_key: meta.sourceKey,
+        seeded_by: meta.seededBy,
+        sub_topic: pattern.subTopic ?? null,
+      },
+      source_count: 6,
+      confidence: 84,
+      is_active: true,
+      code,
+      name,
+      description,
+      summary: description,
+      failure_rate_pct: failureRatePct,
+      office_category: officeCategory,
+      keywords,
+    };
+  });
+
+  const edgeRows = patterns.flatMap((pattern) => {
+    const code = assertString(pattern.code, `${filePath} code`);
+    const officeCategory = String(pattern.officeCategory ?? pattern.office_category ?? 'middle_office');
+    const keywords = Array.isArray(pattern.keywords) ? pattern.keywords.map(String) : [];
+    const officeNode = `${meta.vertical}:${officeCategory}`;
+    const capabilityNode = `${meta.vertical}:${slugify(keywords[0] ?? pattern.name)}`;
+    return [
+      {
+        id: deterministicUuid(`edge:${code}:belongs_to:${officeNode}`),
+        from_node_type: 'genome_pattern',
+        from_node_id: code,
+        edge_type: 'belongs_to',
+        to_node_type: 'office_category',
+        to_node_id: officeNode,
+        vertical: meta.vertical,
+        weight: 1,
+        evidence: { seeded_by: meta.seededBy, office_category: officeCategory },
+        source_key: meta.sourceKey,
+      },
+      {
+        id: deterministicUuid(`edge:${code}:applies_to:${capabilityNode}`),
+        from_node_type: 'genome_pattern',
+        from_node_id: code,
+        edge_type: 'applies_to',
+        to_node_type: meta.capabilityType,
+        to_node_id: capabilityNode,
+        vertical: meta.vertical,
+        weight: 0.82,
+        evidence: { seeded_by: meta.seededBy, keywords },
+        source_key: meta.sourceKey,
+      },
+    ];
+  });
+
+  await upsertRows(sb, 'genome_patterns', patternRows, 'code');
+  await upsertRows(sb, 'intelligence_graph_edges', edgeRows, 'from_node_type,from_node_id,edge_type,to_node_type,to_node_id');
+
+  return {
+    file: filePath,
+    vertical: meta.vertical,
+    sourceKey: meta.sourceKey,
+    parsed: patterns.length,
+    patternsUpserted: patternRows.length,
+    edgesUpserted: edgeRows.length,
+  };
+}
+
+async function main() {
+  loadSeedEnv();
+  const files = process.argv.slice(2);
+  if (files.length === 0) {
+    throw new Error('Usage: npx tsx scripts/corpus/load-authored-genome-seeds.ts <seed-file...>');
+  }
+  const sb = createSeedClient();
+  const summaries: SeedFileSummary[] = [];
+  for (const file of files) {
+    const summary = await loadSeedFile(sb, file);
+    summaries.push(summary);
+    console.log(`${summary.file}: upserted ${summary.patternsUpserted} patterns and ${summary.edgesUpserted} graph edges`);
+  }
+  console.log(JSON.stringify({ files: summaries.length, summaries }, null, 2));
+}
+
+const isDirect = process.argv[1] ? import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href : false;
+if (isDirect) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

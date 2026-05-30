@@ -7,7 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Cursor Cloud specific instructions
 
 ### Stack overview
-Next.js 16.2.2 (App Router + Turbopack), React 19, Tailwind CSS 4, TypeScript 5. Auth via Clerk, data via Supabase (Postgres), optional services: Anthropic Claude, OpenAI, Pinecone, Neo4j, Stripe, Resend, PostHog.
+Next.js 16.2.2 (App Router + Turbopack), React 19, Tailwind CSS 4, TypeScript 5. Auth via Clerk, data via Azure/Postgres through the data-plane adapters. Optional services degrade gracefully: Anthropic Claude, OpenAI, Stripe, Resend, PostHog. Legacy Supabase/Neo4j/Pinecone names may still exist in compatibility shims, tests, migrations, or deprecation docs; do not introduce new runtime dependencies on them.
 
 ### Running the dev server
 ```
@@ -24,8 +24,8 @@ npx eslint src/      # ESLint 9 flat config in eslint.config.mjs
 
 ### Testing
 - **Unit / behavior tests:** `npm run test:nav`, `npm run test:behaviors` — fast, no external deps.
-- **Integration tests:** `npm run test:integration` — most pass without a DB; ~34 suites that hit Supabase will fail with placeholder credentials.
-- **E2E tests:** `npm run test:e2e` — requires Playwright browsers (`npx playwright install chromium`) and a running dev server with real Clerk + Supabase credentials.
+- **Integration tests:** `npm run test:integration` — most pass without a DB; suites that hit the Azure/Postgres data plane will fail with placeholder credentials.
+- **E2E tests:** `npm run test:e2e` — requires Playwright browsers (`npx playwright install chromium`) and a running dev server with real Clerk + Azure/Postgres credentials.
 - Jest picks up Playwright `*.spec.ts` files from `tests/e2e/` by default; the dedicated scripts (`test:nav`, `test:behaviors`, `test:integration`) correctly scope to their directories.
 
 ### Env vars
@@ -34,10 +34,10 @@ Required for the app to serve any page:
 - `CLERK_SECRET_KEY`
 
 Required for data-backed pages:
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `DATABASE_URL`
+- Any legacy `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, or `SUPABASE_SERVICE_ROLE_KEY` references are compatibility-era residue. New runtime code must use the Azure/Postgres data-plane adapters, not direct Supabase clients.
 
-Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `PINECONE_API_KEY`, `NEO4J_URI`/`NEO4J_USERNAME`/`NEO4J_PASSWORD`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`.
+Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`.
 
 ### Node.js version
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.

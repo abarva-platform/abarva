@@ -1,0 +1,164 @@
+{
+  "byVertical": [
+    {
+      "vertical": "airline",
+      "count": 1229
+    },
+    {
+      "vertical": "healthcare_provider",
+      "count": 725
+    },
+    {
+      "vertical": "retail",
+      "count": 40
+    }
+  ],
+  "edges": [
+    {
+      "vertical": "airline",
+      "edge_type": "applies_to",
+      "count": 1229
+    },
+    {
+      "vertical": "airline",
+      "edge_type": "belongs_to",
+      "count": 1229
+    },
+    {
+      "vertical": "healthcare_provider",
+      "edge_type": "applies_to",
+      "count": 725
+    },
+    {
+      "vertical": "healthcare_provider",
+      "edge_type": "belongs_to",
+      "count": 725
+    },
+    {
+      "vertical": "retail",
+      "edge_type": "applies_pattern",
+      "count": 36
+    },
+    {
+      "vertical": "retail",
+      "edge_type": "applies_to",
+      "count": 40
+    },
+    {
+      "vertical": "retail",
+      "edge_type": "belongs_to",
+      "count": 40
+    },
+    {
+      "vertical": "retail",
+      "edge_type": "sourced_from",
+      "count": 60
+    },
+    {
+      "vertical": "retail",
+      "edge_type": "supports_topic",
+      "count": 66
+    }
+  ],
+  "demoRelevant": [
+    {
+      "vertical": "airline",
+      "count": 169
+    },
+    {
+      "vertical": "healthcare_provider",
+      "count": 179
+    }
+  ],
+  "aiCoverage": [
+    {
+      "vertical": "airline",
+      "count": 1036
+    },
+    {
+      "vertical": "healthcare_provider",
+      "count": 554
+    },
+    {
+      "vertical": "retail",
+      "count": 37
+    }
+  ],
+  "samples": [
+    {
+      "vertical": "airline",
+      "code": "A1200",
+      "name": "Triple-System Component Identity Conflict"
+    },
+    {
+      "vertical": "airline",
+      "code": "A300",
+      "name": "Revenue Management Model Stale On COVID Demand Mix"
+    },
+    {
+      "vertical": "airline",
+      "code": "A3000",
+      "name": "Dynamic Award Pricing Without Points Liability Floor"
+    },
+    {
+      "vertical": "airline",
+      "code": "A4500",
+      "name": "CORSIA MRV Baseline Data Submission Error"
+    },
+    {
+      "vertical": "airline",
+      "code": "A4800",
+      "name": "PSS API Credential Leak Enabling Phantom Booking Attacks"
+    },
+    {
+      "vertical": "airline",
+      "code": "A600",
+      "name": "Dual-PSS Booking Conflict During Live Cutover Window"
+    },
+    {
+      "vertical": "airline",
+      "code": "A900",
+      "name": "Pairing Optimiser Blind To CBA Supplement Rest Floors"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H1500",
+      "name": "Risk Stratification Model Not Validated Against Actual Utilisation"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H2400",
+      "name": "Sepsis Alert False Positive Rate Overwhelming Clinical Workflow"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H3600",
+      "name": "ED Boarding Crisis From Inpatient Bed Unavailability"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H3900",
+      "name": "Off-Contract Medical-Surgical Spend Accumulation"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H5100",
+      "name": "Excel-Based Payer Contract Modelling Rate Error"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H600",
+      "name": "Medical Necessity Denial From Absent Clinical Indicators"
+    },
+    {
+      "vertical": "healthcare_provider",
+      "code": "H9000",
+      "name": "GFE Not Issued Within NSA 3-Business-Day Window For Scheduled Services"
+    }
+  ],
+  "corpus": [
+    {
+      "count": 0
+    }
+  ]
+}
