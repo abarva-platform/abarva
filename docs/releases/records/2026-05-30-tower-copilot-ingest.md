@@ -14,11 +14,14 @@ Adds a real source-system ingest to the Control Tower. IT admins can now drop a 
 
 ## Layer Impact
 
-- **Data layer:** Adds `tower_ai_tool_usage` table with a `tool` ENUM discriminator covering Copilot, Claude Code, and Cursor. Unique index `(client, tool, team, period_start, period_end)` powers upsert idempotency. `ADD COLUMN IF NOT EXISTS` keeps the migration forward-compatible for sister slices.
-- **Ingest layer:** New module `src/lib/tower/ingest/copilot/` (schema · parser · validator · template builder · synthetic generator) and the append-only `src/lib/tower/ingest/registry.ts`.
-- **Templates layer:** New `public/templates/tower/copilot/template.xlsx` (empty + validated) and `sample-filled.xlsx` (synthetic Northwind Retail). New runbook at `docs/templates/tower/copilot/README.md`.
-- **CLI layer:** New scripts `src/scripts/tower/build-copilot-templates.ts` (regenerate xlsx) and `src/scripts/tower/ingest-copilot.ts` (dry-run + live upsert).
-- **UI layer:** No UI surface changed in this slice — Tower lens wiring lands in a follow-up.
+Lanes affected: Code lane (new ingest module + CLI) and Data lane (new migration). Docs lane carries the runbook and this release record. No Design lane changes.
+
+- **Code lane — data layer:** Adds `tower_ai_tool_usage` table with a `tool` ENUM discriminator covering Copilot, Claude Code, and Cursor. Unique index `(client, tool, team, period_start, period_end)` powers upsert idempotency. `ADD COLUMN IF NOT EXISTS` keeps the migration forward-compatible for sister slices.
+- **Code lane — ingest layer:** New module `src/lib/tower/ingest/copilot/` (schema · parser · validator · template builder · synthetic generator) and the append-only `src/lib/tower/ingest/registry.ts`.
+- **Code lane — templates layer:** New `public/templates/tower/copilot/template.xlsx` (empty + validated) and `sample-filled.xlsx` (synthetic Northwind Retail). Bundled into `public/` so the Vercel deploy serves them directly.
+- **Code lane — CLI layer:** New scripts `src/scripts/tower/build-copilot-templates.ts` (regenerate xlsx) and `src/scripts/tower/ingest-copilot.ts` (dry-run + live upsert).
+- **Docs lane — runbook:** New `docs/templates/tower/copilot/README.md` documents the real extract path and SLAs.
+- **UI lane:** No UI surface changed in this slice — Tower lens wiring lands in a follow-up.
 
 ## Client Applicability
 
