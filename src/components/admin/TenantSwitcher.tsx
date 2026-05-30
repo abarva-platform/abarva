@@ -244,7 +244,7 @@ export function TenantSwitcher(props: TenantSwitcherProps) {
         window.location.assign(`/admin?_t=${Date.now()}`);
       }
     },
-    [currentCanonicalKey, endpoint, onNavigate, options],
+    [currentCanonicalKey, endpoint, onNavigate, options, router],
   );
 
   if (!canSwitch) {
