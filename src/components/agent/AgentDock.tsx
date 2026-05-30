@@ -42,6 +42,7 @@ import {
 } from 'react';
 import { CANVAS } from '@/components/source/canvas/canvas-tokens';
 import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
+import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
@@ -170,6 +171,8 @@ export interface ChatMessage {
   body: string;
   /** Optional createdAt for byline rendering. */
   at?: string;
+  /** Optional telemetry event id that can receive thumbs feedback. */
+  feedbackEventId?: string;
 }
 
 export interface AttachmentRef {
@@ -579,6 +582,14 @@ export function AgentDock(props: AgentDockProps) {
                 <div style={BUBBLE_STYLE}>
                   {turn.role === 'agent' ? shapeAgentResponseForSurface(surface, turn.body) : turn.body}
                 </div>
+                {turn.role === 'agent' && turn.feedbackEventId ? (
+                  <div style={FEEDBACK_ROW_STYLE}>
+                    <SynthesisFeedbackWidget
+                      synthesisId={turn.feedbackEventId}
+                      surface={surface === 'intelligence' ? 'sentinel' : 'program'}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))
           )}
@@ -1244,6 +1255,12 @@ const BUBBLE_STYLE: CSSProperties = {
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
   maxWidth: '100%',
+};
+
+const FEEDBACK_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  paddingTop: 6,
 };
 
 const SUGGESTIONS_STYLE: CSSProperties = {

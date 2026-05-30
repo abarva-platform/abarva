@@ -70,6 +70,7 @@ describe('summarizeTelemetry', () => {
     expect(summary.bySurface.source.events).toBe(0);
     expect(summary.bySurface.programs.events).toBe(0);
     expect(summary.bySurface.tower.events).toBe(0);
+    expect(summary.bySurface.sentinel.events).toBe(0);
   });
 
   it('counts events by surface', () => {
@@ -78,12 +79,14 @@ describe('summarizeTelemetry', () => {
       ev({ surface: 'source' }),
       ev({ surface: 'programs' }),
       ev({ surface: 'tower' }),
+      ev({ surface: 'sentinel' }),
     ];
     const summary = summarizeTelemetry(events);
-    expect(summary.totalEvents).toBe(4);
+    expect(summary.totalEvents).toBe(5);
     expect(summary.bySurface.source.events).toBe(2);
     expect(summary.bySurface.programs.events).toBe(1);
     expect(summary.bySurface.tower.events).toBe(1);
+    expect(summary.bySurface.sentinel.events).toBe(1);
   });
 
   it('computes cache hit rate overall and per surface', () => {
@@ -159,6 +162,7 @@ describe('summarizeTelemetry', () => {
       ev({ surface: 'source', feedback: 'down' }),
       ev({ surface: 'programs', feedback: 'up' }),
       ev({ surface: 'tower' }),
+      ev({ surface: 'sentinel', feedback: 'down' }),
     ];
     const summary = summarizeTelemetry(events);
     expect(summary.bySurface.source.thumbsUp).toBe(1);
@@ -166,6 +170,7 @@ describe('summarizeTelemetry', () => {
     expect(summary.bySurface.programs.thumbsUp).toBe(1);
     expect(summary.bySurface.programs.thumbsDown).toBe(0);
     expect(summary.bySurface.tower.thumbsUp).toBe(0);
+    expect(summary.bySurface.sentinel.thumbsDown).toBe(1);
   });
 
   it('returns the top 3 patternIds by count, ignoring null', () => {
@@ -200,12 +205,14 @@ describe('summarizeTelemetry', () => {
       ev({ surface: 'source' }),
       ev({ surface: 'programs' }),
       ev({ surface: 'tower' }),
+      ev({ surface: 'sentinel' }),
     ];
     const summary = summarizeTelemetry(events);
     const sum =
       summary.bySurface.source.events +
       summary.bySurface.programs.events +
-      summary.bySurface.tower.events;
+      summary.bySurface.tower.events +
+      summary.bySurface.sentinel.events;
     expect(sum).toBe(summary.totalEvents);
   });
 });

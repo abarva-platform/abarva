@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
-export type SynthesisFeedbackSurface = 'source' | 'program' | 'tower';
+export type SynthesisFeedbackSurface = 'source' | 'program' | 'tower' | 'sentinel';
 
 interface SynthesisFeedbackWidgetProps {
   /**

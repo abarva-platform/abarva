@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import type { SentinelReasoningStage } from '@/lib/agents/sentinel-reasoning';
 import { ensureIntelligenceAskTabId } from '@/app/intelligence/ask/IntelligenceAskTabCookie';
 
@@ -10,7 +11,7 @@ type StreamEvent =
   | { type: 'classified'; classification?: { intent?: string; confidence?: number; reason?: string } }
   | { type: 'sentinel-stage'; stage?: SentinelReasoningStage }
   | { type: 'delta'; text?: string }
-  | { type: 'done' }
+  | { type: 'done'; telemetryEventId?: string }
   | { type: 'error'; error?: string };
 
 // STRESS-P0-002 fix: tenant-agnostic placeholder question that doesn't
@@ -58,6 +59,7 @@ export function SentinelReasoningCards({
   const [error, setError] = useState<string | null>(null);
   const [actionState, setActionState] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [feedbackEventId, setFeedbackEventId] = useState<string | null>(null);
 
   const finalAction = useMemo(
     () => cards.find((card) => card.oneClickAction)?.oneClickAction ?? null,
@@ -71,6 +73,7 @@ export function SentinelReasoningCards({
     setFallbackText('');
     setError(null);
     setActionState(null);
+    setFeedbackEventId(null);
     setStatus('streaming');
 
     try {
@@ -119,6 +122,8 @@ export function SentinelReasoningCards({
             setFallbackText((prev) => prev + event.text);
           } else if (event.type === 'error') {
             throw new Error(event.error ?? 'Sentinel stream error');
+          } else if (event.type === 'done' && event.telemetryEventId) {
+            setFeedbackEventId(event.telemetryEventId);
           }
         }
       }
@@ -347,6 +352,21 @@ export function SentinelReasoningCards({
             </div>
           </details>
         ))}
+        {feedbackEventId ? (
+          <div
+            aria-label="Sentinel answer feedback"
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 8,
+              background: SHELL.PAPER,
+              padding: '8px 10px',
+            }}
+          >
+            <SynthesisFeedbackWidget synthesisId={feedbackEventId} surface="sentinel" />
+          </div>
+        ) : null}
       </div>
     </section>
   );

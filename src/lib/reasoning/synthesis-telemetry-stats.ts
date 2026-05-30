@@ -19,6 +19,7 @@ export const SYNTHESIS_SURFACES: ReadonlyArray<SynthesisSurface> = [
   'source',
   'programs',
   'tower',
+  'sentinel',
 ];
 
 export interface SurfaceStats {
@@ -101,12 +102,14 @@ export function summarizeTelemetry(
     source: emptySurfaceStats('source'),
     programs: emptySurfaceStats('programs'),
     tower: emptySurfaceStats('tower'),
+    sentinel: emptySurfaceStats('sentinel'),
   };
 
   const latenciesBySurface: Record<SynthesisSurface, number[]> = {
     source: [],
     programs: [],
     tower: [],
+    sentinel: [],
   };
   const allLatencies: number[] = [];
 

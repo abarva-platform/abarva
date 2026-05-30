@@ -15,7 +15,10 @@
  * can render "5m ago" without dragging in date-fns.
  */
 
-import { getRecentSynthesisEvents } from '@/lib/reasoning/synthesis-telemetry';
+import {
+  getRecentSynthesisEvents,
+  type SynthesisSurface,
+} from '@/lib/reasoning/synthesis-telemetry';
 import {
   getEvidenceFor,
   getEvidenceTimestampsFor,
@@ -154,12 +157,18 @@ export function formatRelativeTime(timestamp: string, nowMs?: number): string {
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
 function formatSynthesisLabel(
-  surface: 'source' | 'programs' | 'tower',
+  surface: SynthesisSurface,
   cacheHit: boolean,
   latencyMs: number,
 ): string {
   const surfaceLabel =
-    surface === 'source' ? 'Sentinel' : surface === 'programs' ? 'Nexus' : 'Atlas';
+    surface === 'source'
+      ? 'Sentinel'
+      : surface === 'programs'
+        ? 'Nexus'
+        : surface === 'sentinel'
+          ? 'Sentinel'
+          : 'Atlas';
   const cacheLabel = cacheHit ? 'cache hit' : 'cache miss';
   return `${surfaceLabel} synthesis · ${cacheLabel} · ${Math.round(latencyMs)}ms`;
 }

@@ -175,4 +175,59 @@ describe('SentinelChat · legacy mode-key migration', () => {
       surfaceContext: { clientKey: 'apex-retail' },
     });
   });
+
+  it('renders thumbs feedback after a completed Sentinel answer and posts the selected rating', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: makeMockBody(
+          [
+            JSON.stringify({ type: 'delta', text: 'Sentinel answer with evidence.' }),
+            JSON.stringify({ type: 'done', telemetryEventId: 'tlm_sentinel_1' }),
+            '',
+          ].join('\n'),
+        ),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      });
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    render(
+      <SentinelChat
+        scopeLabel="Apex Retail Group · this page"
+        opener="Apex Retail Intelligence is live."
+        conversation={[]}
+        surfaceContext={{ clientKey: 'apex-retail' }}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('agent-dock-input'), {
+        target: { value: 'What should we sequence?' },
+      });
+    });
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('agent-dock-form'));
+    });
+
+    const usefulButton = await screen.findByLabelText('Mark sentinel synthesis as useful');
+    await act(async () => {
+      fireEvent.click(usefulButton);
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/reasoning/feedback',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ eventId: 'tlm_sentinel_1', feedback: 'up' }),
+      }),
+    );
+  });
 });

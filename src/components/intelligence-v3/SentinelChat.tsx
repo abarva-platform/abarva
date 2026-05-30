@@ -185,7 +185,13 @@ export function SentinelChat({
         buffer = lines.pop() ?? '';
         for (const line of lines) {
           if (!line.trim()) continue;
-          const event = JSON.parse(line) as { type?: string; delta?: string; text?: string; error?: string };
+          const event = JSON.parse(line) as {
+            type?: string;
+            delta?: string;
+            text?: string;
+            error?: string;
+            telemetryEventId?: string;
+          };
           const delta = event.delta ?? event.text;
           if (event.type === 'delta' && delta) {
             sawDelta = true;
@@ -197,6 +203,15 @@ export function SentinelChat({
             );
           }
           if (event.type === 'error') throw new Error(event.error ?? 'Sentinel stream error');
+          if (event.type === 'done' && event.telemetryEventId) {
+            setLocalTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === agentTurnId
+                  ? { ...turn, feedbackEventId: event.telemetryEventId }
+                  : turn,
+              ),
+            );
+          }
         }
       }
 
