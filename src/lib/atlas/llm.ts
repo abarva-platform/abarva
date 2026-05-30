@@ -247,11 +247,11 @@ export async function runAtlasLlm(
   try {
     const result = await client.messages.create({
       model: 'claude-opus-4-7',
-      // Atlas Fix C (determinism): set temperature=0 so identical inputs produce
-      // identical reads. The CXO-quality audit (PR #2562) found the same
-      // signal:<id> rendering as "critical-severity" one read and "93rd-percentile
-      // outlier" the next — that was the default temperature (~1.0) drifting.
-      temperature: ATLAS_TEMPERATURE,
+      // Atlas Fix C (determinism): claude-opus-4-7 has deprecated the
+      // `temperature` parameter (Anthropic returns 400 invalid_request_error
+      // when it is set). Determinism on opus-4-7 is now intrinsic to the model
+      // family rather than tunable. The `ATLAS_TEMPERATURE` constant is kept
+      // exported (set to 0) for unit-test assertion of intent.
       // Atlas Fix C (truncation): 500 tokens cut industry-context responses
       // mid-sentence (audit example: "...vs peer median."). ATLAS_MAX_TOKENS
       // covers the canonical CXO response shapes with headroom.
