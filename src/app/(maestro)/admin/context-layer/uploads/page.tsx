@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CsvUploadConnector } from '@/components/admin/context-layer/CsvUploadConnector';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-read-model';
 
@@ -36,38 +37,44 @@ export default async function ContextUploadsPage() {
           <p style={{ fontFamily: 'DM Sans, sans-serif', lineHeight: 1.6 }}>
             No active client row is available for this session.
           </p>
-        ) : sourceFiles.length === 0 ? (
-          <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
-            No source files are loaded for this tenant yet.
-          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fffdf8', fontFamily: 'DM Sans, sans-serif' }}>
-            <thead>
-              <tr>
-                {['Source document', 'Chunks', 'First loaded', 'Sample chunk', 'Evidence'].map((head) => (
-                  <th key={head} style={{ padding: 10, borderBottom: '1px solid #d8d2c4', textAlign: 'left' }}>{head}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sourceFiles.map((file) => (
-                <tr key={file.source_doc}>
-                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.source_doc}</td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.chunk_count.toLocaleString()}</td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{formatDate(file.first_loaded_at)}</td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.sample_chunk_id}</td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>
-                    <Link
-                      href={`/admin/context-layer/evidence-map?source_doc=${encodeURIComponent(file.source_doc)}`}
-                      style={{ color: '#171717' }}
-                    >
-                      View chunks
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <CsvUploadConnector clientId={activeClient.id} tenantName={activeClient.name} />
+
+            {sourceFiles.length === 0 ? (
+              <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
+                No source files are loaded for this tenant yet.
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fffdf8', fontFamily: 'DM Sans, sans-serif' }}>
+                <thead>
+                  <tr>
+                    {['Source document', 'Chunks', 'First loaded', 'Sample chunk', 'Evidence'].map((head) => (
+                      <th key={head} style={{ padding: 10, borderBottom: '1px solid #d8d2c4', textAlign: 'left' }}>{head}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sourceFiles.map((file) => (
+                    <tr key={file.source_doc}>
+                      <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.source_doc}</td>
+                      <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.chunk_count.toLocaleString()}</td>
+                      <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{formatDate(file.first_loaded_at)}</td>
+                      <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.sample_chunk_id}</td>
+                      <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>
+                        <Link
+                          href={`/admin/context-layer/evidence-map?source_doc=${encodeURIComponent(file.source_doc)}`}
+                          style={{ color: '#171717' }}
+                        >
+                          View chunks
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
         )}
       </section>
     </main>
