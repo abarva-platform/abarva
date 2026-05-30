@@ -90,19 +90,29 @@ interface AdminOverviewSearchParams {
 // spine isn't refetched four times. The cached identity is the
 // broker function reference + arg tuple per React's `cache` contract.
 
-const cachedTrustSpine = cache(async (tenantKey: string | null) => {
+const cachedInventorySnapshot = cache(async (tenantKey: string | null) => {
   if (!tenantKey) return null;
   try {
-    return await getTrustSpine(tenantKey);
+    return await getSetupInventorySnapshot(tenantKey);
   } catch {
     return null;
   }
 });
 
-const cachedInventorySnapshot = cache(async (tenantKey: string | null) => {
+// Browser walk 2026-05-30 P0 #1 — TrustSpine and the page's own
+// inventory snapshot used to issue two independent calls to
+// `getSetupInventorySnapshot`. When the trust-spine call rejected
+// silently (intermittent DB blip, connection limit, etc.), the
+// substrate dimension fell back to 0 segments — making the Trust
+// strip and posture grid render an empty tenant even though the
+// masthead pills (which read the page-cached snapshot) showed the
+// real count. Threading the cached snapshot through eliminates the
+// divergence at source.
+const cachedTrustSpine = cache(async (tenantKey: string | null) => {
   if (!tenantKey) return null;
   try {
-    return await getSetupInventorySnapshot(tenantKey);
+    const snapshot = await cachedInventorySnapshot(tenantKey);
+    return await getTrustSpine(tenantKey, { snapshotOverride: snapshot });
   } catch {
     return null;
   }
