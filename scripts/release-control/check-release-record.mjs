@@ -21,6 +21,7 @@ const REQUIRED_SECTIONS = [
 const RELEASE_RELEVANT_PATTERNS = [
   /^AGENTS\.md$/,
   /^package(-lock)?\.json$/,
+  /^vercel\.(json|ts)$/,
   /^next\.config\./,
   /^src\//,
   /^scripts\//,
