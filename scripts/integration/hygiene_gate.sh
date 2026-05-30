@@ -117,11 +117,22 @@ section "5. Build"
 if [ "$SKIP_BUILD" -eq 1 ]; then
   pass "Build skipped (--skip-build)"
 else
-  if npm run build 2>&1 | grep -q "Compiled successfully"; then
+  BUILD_LOG="$(mktemp)"
+  BUILD_NODE_OPTIONS="${NODE_OPTIONS:-}"
+  case " $BUILD_NODE_OPTIONS " in
+    *" --max-old-space-size="* | *" --max_old_space_size="*) ;;
+    *) BUILD_NODE_OPTIONS="${BUILD_NODE_OPTIONS:+$BUILD_NODE_OPTIONS }--max-old-space-size=4096" ;;
+  esac
+  if NODE_OPTIONS="$BUILD_NODE_OPTIONS" npm run build >"$BUILD_LOG" 2>&1; then
     pass "npm run build succeeded"
   else
     fail "npm run build failed"
+    echo "--- npm run build output (first 120 lines) ---"
+    sed -n '1,120p' "$BUILD_LOG"
+    echo "--- npm run build output (last 80 lines) ---"
+    tail -80 "$BUILD_LOG"
   fi
+  rm -f "$BUILD_LOG"
 fi
 
 # Section 6: Stash hygiene

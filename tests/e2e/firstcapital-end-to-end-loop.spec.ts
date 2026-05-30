@@ -220,7 +220,10 @@ test.describe('First Capital end-to-end loop: FedNow model-risk (Slice 5.3)', ()
     // in-product surface. Probe it for model-risk language.
     // Soft — see GAP-6 (no Source-event → Tower-card dependency link for
     // the MRM gate) and GAP-7 (Tower risk lens is not regulatory-scoped).
-    await page.goto('/tower/lens/risk');
+    // Per Tower audit §5.4 / brief item 6, the /tower/lens/* redirect-shells
+    // have been removed. The risk-lens content lives on the index under the
+    // `?lens=risk` query param.
+    await page.goto('/tower?lens=risk');
 
     await expect(
       page.getByRole('heading', { name: /Risk|Tower/i }).first(),
@@ -244,7 +247,9 @@ test.describe('First Capital end-to-end loop: FedNow model-risk (Slice 5.3)', ()
     // layer. The Tower outcomes ledger is the in-product surface.
     // Soft — see GAP-8 (no outcome-ledger → context-segment write-back
     // wiring; the loop is not closed in-product).
-    await page.goto('/tower/outcomes');
+    // Per Tower audit §5.4 / brief item 6, the /tower/outcomes redirect-shell
+    // has been removed. The outcome ledger lives on /tower/portfolio.
+    await page.goto('/tower/portfolio');
 
     await expect(
       page.getByRole('heading', { name: /Outcome|Tower/i }).first(),

@@ -16,24 +16,19 @@ test.describe('Tower navigation smoke', () => {
 
     await withClerkAuth(page, 'apexretail');
 
+    // Tower index — locked AbarVa palette + locked-system tokens.
     await page.goto('/tower');
     await expect(page.getByText('Control Tower')).toBeVisible();
-    await expect(page.getByText('Tech Stack')).toBeVisible();
-    await expect(page.getByText('Projects')).toBeVisible();
-    await expect(page.getByText('Staff Aug')).toBeVisible();
-    await expect(page.getByText('Volumetrics')).toBeVisible();
 
-    await page.goto('/tower/projects');
-    await expect(page.getByRole('heading', { name: 'Technology Projects' })).toBeVisible();
+    // Real drilldown routes (no longer redirect-shells).
+    await page.goto('/tower/portfolio');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-    await page.goto('/tower/staff-aug');
-    await expect(page.getByRole('heading', { name: 'Staff Augmentation' })).toBeVisible();
+    await page.goto('/tower/portfolio-dag');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-    await page.goto('/tower/tech-stack');
-    await expect(page.getByRole('heading', { name: 'Tech Stack' })).toBeVisible();
-
-    await page.goto('/tower/volumetrics');
-    await expect(page.getByRole('heading', { name: 'Volumetrics' })).toBeVisible();
+    await page.goto('/tower/onboard');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
     expect(runtimeErrors).toEqual([]);
   });

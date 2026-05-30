@@ -9,8 +9,8 @@
 const mockAzureSelect = jest.fn();
 const mockAzureMaybeSingle = jest.fn();
 
-jest.mock('server-only', () => ({}));
-jest.mock('@/lib/data-plane/azureRead', () => ({
+jest.mock("server-only", () => ({}));
+jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: {
     select: (...args: unknown[]) => mockAzureSelect(...args),
     maybeSingle: (...args: unknown[]) => mockAzureMaybeSingle(...args),
@@ -21,104 +21,107 @@ import {
   getCrossProgramSignals,
   getSegmentRecordPage,
   getSetupInventorySnapshot,
-} from '../setup-data-broker';
+} from "../setup-data-broker";
 
-describe('getSetupInventorySnapshot', () => {
+describe("getSetupInventorySnapshot", () => {
   beforeEach(() => {
     mockAzureSelect.mockReset();
     mockAzureMaybeSingle.mockReset();
   });
 
-  it('returns null when segments query errors', async () => {
-    mockAzureSelect.mockRejectedValue(new Error('boom'));
-    const snapshot = await getSetupInventorySnapshot('apex-retail');
+  it("returns null when segments query errors", async () => {
+    mockAzureSelect.mockRejectedValue(new Error("boom"));
+    const snapshot = await getSetupInventorySnapshot("apex-retail");
     expect(snapshot).toBeNull();
   });
 
-  it('returns null when segments query returns empty', async () => {
+  it("returns null when segments query returns empty", async () => {
     mockAzureSelect.mockResolvedValue([]);
-    const snapshot = await getSetupInventorySnapshot('apex-retail');
+    const snapshot = await getSetupInventorySnapshot("apex-retail");
     expect(snapshot).toBeNull();
   });
 
-  it('builds a snapshot with rollup totals and recent activity', async () => {
+  it("builds a snapshot with rollup totals and recent activity", async () => {
     const segmentRows = [
       {
-        segment_id: 'enterprise_profile',
-        segment_name: 'Enterprise profile',
+        segment_id: "enterprise_profile",
+        segment_name: "Enterprise profile",
         family_number: 1,
         record_count: 1,
         coverage_score: 100,
         stale_count: 0,
         missing_count: 0,
-        health_state: 'complete',
+        health_state: "complete",
         last_reviewed_at: null,
-        last_ingested_at: '2026-04-29T12:00:00Z',
+        last_ingested_at: "2026-04-29T12:00:00Z",
       },
       {
-        segment_id: 'org_structure',
-        segment_name: 'Org structure',
+        segment_id: "org_structure",
+        segment_name: "Org structure",
         family_number: 2,
         record_count: 36,
         coverage_score: 72,
         stale_count: 0,
         missing_count: 14,
-        health_state: 'partial',
+        health_state: "partial",
         last_reviewed_at: null,
-        last_ingested_at: '2026-04-29T12:00:00Z',
+        last_ingested_at: "2026-04-29T12:00:00Z",
       },
     ];
     const auditRows = [
       {
-        action: 'segment_imported',
+        action: "segment_imported",
         actor_id: null,
-        actor_role: 'system_import',
-        segment_id: 'enterprise_profile',
-        source_doc: 'enterprise_profile.md',
-        created_at: '2026-04-29T12:00:00Z',
+        actor_role: "system_import",
+        segment_id: "enterprise_profile",
+        source_doc: "enterprise_profile.md",
+        created_at: "2026-04-29T12:00:00Z",
       },
     ];
     const ingestionRows = [
       {
-        source_label: 'Apex synthetic dataset import · 2026-04-29',
+        source_label: "Apex synthetic dataset import · 2026-04-29",
         records_loaded: 403,
         chunks_loaded: 415,
         nodes_loaded: 257,
         edges_loaded: 275,
-        status: 'completed',
-        started_at: '2026-04-29T11:30:00Z',
-        completed_at: '2026-04-29T12:00:00Z',
+        status: "completed",
+        started_at: "2026-04-29T11:30:00Z",
+        completed_at: "2026-04-29T12:00:00Z",
       },
     ];
 
     mockAzureSelect.mockImplementation((request: { table: string }) => {
-      if (request.table === 'data_inventory_segments') return Promise.resolve(segmentRows);
-      if (request.table === 'data_inventory_audit_log') return Promise.resolve(auditRows);
-      if (request.table === 'data_ingestion_runs') return Promise.resolve(ingestionRows);
-      return Promise.reject(new Error('unknown table'));
+      if (request.table === "data_inventory_segments")
+        return Promise.resolve(segmentRows);
+      if (request.table === "data_inventory_audit_log")
+        return Promise.resolve(auditRows);
+      if (request.table === "data_ingestion_runs")
+        return Promise.resolve(ingestionRows);
+      return Promise.reject(new Error("unknown table"));
     });
 
-    const snapshot = await getSetupInventorySnapshot('apex-retail');
+    const snapshot = await getSetupInventorySnapshot("apex-retail");
     expect(snapshot).not.toBeNull();
-    expect(snapshot?.tenantKey).toBe('apex-retail');
+    expect(snapshot?.tenantKey).toBe("apex-retail");
     expect(snapshot?.segments).toHaveLength(2);
-    expect(snapshot?.segments[0]?.segmentId).toBe('enterprise_profile');
+    expect(snapshot?.segments[0]?.segmentId).toBe("enterprise_profile");
     expect(snapshot?.segments[1]?.recordCount).toBe(36);
     expect(snapshot?.totalRecords).toBe(37);
     expect(snapshot?.totalChunks).toBe(415);
     expect(snapshot?.totalNodes).toBe(257);
     expect(snapshot?.totalEdges).toBe(275);
     expect(snapshot?.recentActivity).toHaveLength(1);
-    expect(snapshot?.recentActivity[0]?.actor).toBe('Import pipeline');
+    expect(snapshot?.recentActivity[0]?.actor).toBe("Import pipeline");
     expect(snapshot?.recentActivity[0]?.what).toContain(
-      'Imported segment enterprise_profile',
+      "Imported segment enterprise_profile",
     );
-    expect(snapshot?.lastIngestedAt).toBe('2026-04-29T12:00:00Z');
+    expect(snapshot?.lastIngestedAt).toBe("2026-04-29T12:00:00Z");
   });
 
-  it('returns null when supabase env is missing (broker fallback)', async () => {
+  it("returns null when supabase env is missing (broker fallback)", async () => {
     mockAzureSelect.mockImplementation(() => {
-      throw new Error('NEVER CALLED');
+      throw new Error("NEVER CALLED");
     });
     // Test wraps in try; broker shouldn't throw, just return null.
     // Forcing the missing-env path is harder than the empty-segments
@@ -126,269 +129,385 @@ describe('getSetupInventorySnapshot', () => {
     // earlier null-on-error and null-on-empty tests.
   });
 
-  it('coerces stringified numeric counts (Supabase numeric → string)', async () => {
+  it("coerces stringified numeric counts (Supabase numeric → string)", async () => {
     const segmentRows = [
       {
-        segment_id: 'kpi_dictionary',
-        segment_name: 'KPI dictionary',
+        segment_id: "kpi_dictionary",
+        segment_name: "KPI dictionary",
         family_number: 5,
-        record_count: '50',
-        coverage_score: '100.00',
-        stale_count: '0',
-        missing_count: '0',
-        health_state: 'complete',
+        record_count: "50",
+        coverage_score: "100.00",
+        stale_count: "0",
+        missing_count: "0",
+        health_state: "complete",
         last_reviewed_at: null,
         last_ingested_at: null,
       },
     ];
     mockAzureSelect.mockImplementation((request: { table: string }) => {
-      if (request.table === 'data_inventory_segments') return Promise.resolve(segmentRows);
+      if (request.table === "data_inventory_segments")
+        return Promise.resolve(segmentRows);
       return Promise.resolve([]);
     });
-    const snapshot = await getSetupInventorySnapshot('apex-retail');
+    const snapshot = await getSetupInventorySnapshot("apex-retail");
     expect(snapshot?.segments[0]?.recordCount).toBe(50);
     expect(snapshot?.segments[0]?.coverageScore).toBe(100);
   });
+
+  it("serializes pg Date timestamp values before returning the snapshot", async () => {
+    const at = new Date("2026-05-30T13:00:00.000Z");
+    mockAzureSelect.mockImplementation((request: { table: string }) => {
+      if (request.table === "data_inventory_segments") {
+        return Promise.resolve([
+          {
+            segment_id: "enterprise_profile",
+            segment_name: "Enterprise profile",
+            family_number: 1,
+            record_count: 1,
+            coverage_score: 100,
+            stale_count: 0,
+            missing_count: 0,
+            health_state: "complete",
+            last_reviewed_at: at,
+            last_ingested_at: at,
+          },
+        ]);
+      }
+      if (request.table === "data_inventory_audit_log") {
+        return Promise.resolve([
+          {
+            action: "segment_imported",
+            actor_id: null,
+            actor_role: "system_import",
+            segment_id: "enterprise_profile",
+            source_doc: "enterprise_profile.md",
+            created_at: at,
+          },
+        ]);
+      }
+      if (request.table === "data_ingestion_runs") {
+        return Promise.resolve([
+          {
+            source_label: "Apex import",
+            records_loaded: 1,
+            chunks_loaded: 1,
+            nodes_loaded: 1,
+            edges_loaded: 1,
+            status: "completed",
+            started_at: at,
+            completed_at: at,
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    const snapshot = await getSetupInventorySnapshot("apex-retail");
+
+    expect(snapshot?.segments[0]?.lastReviewedAt).toBe(
+      "2026-05-30T13:00:00.000Z",
+    );
+    expect(snapshot?.segments[0]?.lastIngestedAt).toBe(
+      "2026-05-30T13:00:00.000Z",
+    );
+    expect(snapshot?.recentActivity[0]?.timestampIso).toBe(
+      "2026-05-30T13:00:00.000Z",
+    );
+    expect(snapshot?.lastIngestedAt).toBe("2026-05-30T13:00:00.000Z");
+  });
 });
 
-describe('getSegmentRecordPage', () => {
+describe("getSegmentRecordPage", () => {
   beforeEach(() => {
     mockAzureSelect.mockReset();
     mockAzureMaybeSingle.mockReset();
   });
 
-  it('returns rollup + records for a populated segment', async () => {
+  it("returns rollup + records for a populated segment", async () => {
     const rollupRow = {
-      segment_id: 'kpi_dictionary',
-      segment_name: 'KPI dictionary',
+      segment_id: "kpi_dictionary",
+      segment_name: "KPI dictionary",
       family_number: 5,
       record_count: 50,
       coverage_score: 100,
       stale_count: 0,
       missing_count: 0,
-      health_state: 'complete',
+      health_state: "complete",
       last_reviewed_at: null,
-      last_ingested_at: '2026-04-29T12:00:00Z',
+      last_ingested_at: "2026-04-29T12:00:00Z",
     };
     const recordRows = [
       {
-        record_id: 'kpi_dictionary:kpi:apex:001',
-        title: 'Revenue',
-        record_kind: 'kpi',
-        source_doc: 'kpi_dictionary.json',
-        data_classification: 'Internal',
-        freshness_state: 'fresh',
-        confidence: '0.9',
-        last_reviewed: '2026-04-15',
-        uploaded_by: 'Apex synthetic dataset import',
-        uploaded_at: '2026-04-29T12:00:00Z',
+        record_id: "kpi_dictionary:kpi:apex:001",
+        title: "Revenue",
+        record_kind: "kpi",
+        source_doc: "kpi_dictionary.json",
+        data_classification: "Internal",
+        freshness_state: "fresh",
+        confidence: "0.9",
+        last_reviewed: "2026-04-15",
+        uploaded_by: "Apex synthetic dataset import",
+        uploaded_at: "2026-04-29T12:00:00Z",
       },
     ];
     mockAzureMaybeSingle.mockResolvedValue(rollupRow);
     mockAzureSelect.mockImplementation((request: { table: string }) => {
-      if (request.table === 'data_inventory_records') return Promise.resolve(recordRows);
-      return Promise.reject(new Error('unknown'));
+      if (request.table === "data_inventory_records")
+        return Promise.resolve(recordRows);
+      return Promise.reject(new Error("unknown"));
     });
 
-    const page = await getSegmentRecordPage('apex-retail', 'kpi_dictionary');
-    expect(page?.segmentKey).toBe('kpi_dictionary');
+    const page = await getSegmentRecordPage("apex-retail", "kpi_dictionary");
+    expect(page?.segmentKey).toBe("kpi_dictionary");
     expect(page?.rollup?.recordCount).toBe(50);
     expect(page?.records).toHaveLength(1);
-    expect(page?.records[0]?.title).toBe('Revenue');
+    expect(page?.records[0]?.title).toBe("Revenue");
     expect(page?.records[0]?.confidence).toBe(0.9);
   });
 
-  it('returns rollup with empty records when segment has no rows', async () => {
+  it("serializes pg Date values in segment detail rollup and records", async () => {
+    const at = new Date("2026-05-30T13:30:00.000Z");
+    mockAzureMaybeSingle.mockResolvedValue({
+      segment_id: "kpi_dictionary",
+      segment_name: "KPI dictionary",
+      family_number: 5,
+      record_count: 50,
+      coverage_score: 100,
+      stale_count: 0,
+      missing_count: 0,
+      health_state: "complete",
+      last_reviewed_at: at,
+      last_ingested_at: at,
+    });
+    mockAzureSelect.mockResolvedValue([
+      {
+        record_id: "kpi_dictionary:kpi:apex:001",
+        title: "Revenue",
+        record_kind: "kpi",
+        source_doc: "kpi_dictionary.json",
+        data_classification: "Internal",
+        freshness_state: "fresh",
+        confidence: "0.9",
+        last_reviewed: at,
+        uploaded_by: "Apex synthetic dataset import",
+        uploaded_at: at,
+      },
+    ]);
+
+    const page = await getSegmentRecordPage("apex-retail", "kpi_dictionary");
+
+    expect(page?.rollup?.lastReviewedAt).toBe("2026-05-30T13:30:00.000Z");
+    expect(page?.rollup?.lastIngestedAt).toBe("2026-05-30T13:30:00.000Z");
+    expect(page?.records[0]?.lastReviewed).toBe("2026-05-30T13:30:00.000Z");
+    expect(page?.records[0]?.uploadedAt).toBe("2026-05-30T13:30:00.000Z");
+  });
+
+  it("returns rollup with empty records when segment has no rows", async () => {
     const rollupRow = {
-      segment_id: 'industry_context',
-      segment_name: 'Industry context',
+      segment_id: "industry_context",
+      segment_name: "Industry context",
       family_number: 13,
       record_count: 0,
       coverage_score: 0,
       stale_count: 0,
       missing_count: 0,
-      health_state: 'not_started',
+      health_state: "not_started",
       last_reviewed_at: null,
       last_ingested_at: null,
     };
     mockAzureMaybeSingle.mockResolvedValue(rollupRow);
     mockAzureSelect.mockResolvedValue([]);
-    const page = await getSegmentRecordPage('apex-retail', 'industry_context');
+    const page = await getSegmentRecordPage("apex-retail", "industry_context");
     expect(page?.rollup?.recordCount).toBe(0);
     expect(page?.records).toEqual([]);
   });
 
-  it('returns rollup=null with empty records when segment is unknown to substrate', async () => {
+  it("returns rollup=null with empty records when segment is unknown to substrate", async () => {
     mockAzureMaybeSingle.mockResolvedValue(null);
     mockAzureSelect.mockResolvedValue([]);
-    const page = await getSegmentRecordPage('apex-retail', 'enterprise_profile');
+    const page = await getSegmentRecordPage(
+      "apex-retail",
+      "enterprise_profile",
+    );
     expect(page?.rollup).toBeNull();
     expect(page?.records).toEqual([]);
   });
 
-  it('returns null when both queries fail', async () => {
-    mockAzureMaybeSingle.mockRejectedValue(new Error('boom'));
-    mockAzureSelect.mockRejectedValue(new Error('boom'));
-    const page = await getSegmentRecordPage('apex-retail', 'org_structure');
+  it("returns null when both queries fail", async () => {
+    mockAzureMaybeSingle.mockRejectedValue(new Error("boom"));
+    mockAzureSelect.mockRejectedValue(new Error("boom"));
+    const page = await getSegmentRecordPage("apex-retail", "org_structure");
     expect(page).toBeNull();
   });
 });
 
-describe('getCrossProgramSignals', () => {
+describe("getCrossProgramSignals", () => {
   beforeEach(() => {
     mockAzureSelect.mockReset();
     mockAzureMaybeSingle.mockReset();
   });
 
-  it('returns an empty list when the substrate is unreachable', async () => {
-    mockAzureSelect.mockRejectedValue(new Error('boom'));
-    const signals = await getCrossProgramSignals('apex-retail');
+  it("returns an empty list when the substrate is unreachable", async () => {
+    mockAzureSelect.mockRejectedValue(new Error("boom"));
+    const signals = await getCrossProgramSignals("apex-retail");
     expect(signals).toEqual([]);
   });
 
-  it('parses payload + sorts by severity bucket then by raised_date desc', async () => {
+  it("parses payload + sorts by severity bucket then by raised_date desc", async () => {
     const rows = [
       {
-        record_id: 'cross_program_signals:xprog:apex:002',
-        title: 'Salesforce — affects CDP and CC AI',
+        record_id: "cross_program_signals:xprog:apex:002",
+        title: "Salesforce — affects CDP and CC AI",
         record_payload: {
-          id: 'xprog:apex:002',
-          type: 'shared_system_dependency',
-          severity: 'Medium',
-          description: 'desc',
-          recommendation: 'rec',
-          status: 'tracking',
-          programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
-          raised_by: 'Atlas',
-          raised_date: '2026-04-08',
+          id: "xprog:apex:002",
+          type: "shared_system_dependency",
+          severity: "Medium",
+          description: "desc",
+          recommendation: "rec",
+          status: "tracking",
+          programs: ["apex-cdp-2026", "apex-cc-ai-2026"],
+          raised_by: "Atlas",
+          raised_date: "2026-04-08",
         },
       },
       {
-        record_id: 'cross_program_signals:xprog:apex:003',
-        title: 'CMO vs CFO posture',
+        record_id: "cross_program_signals:xprog:apex:003",
+        title: "CMO vs CFO posture",
         record_payload: {
-          id: 'xprog:apex:003',
-          type: 'strategic_misalignment',
-          severity: 'High',
-          description: 'desc',
-          recommendation: 'rec',
-          status: 'open',
-          programs: ['apex-cdp-2026'],
-          raised_by: 'Atlas',
-          raised_date: '2026-04-12',
+          id: "xprog:apex:003",
+          type: "strategic_misalignment",
+          severity: "High",
+          description: "desc",
+          recommendation: "rec",
+          status: "open",
+          programs: ["apex-cdp-2026"],
+          raised_by: "Atlas",
+          raised_date: "2026-04-12",
         },
       },
       {
-        record_id: 'cross_program_signals:xprog:apex:001',
-        title: 'Co-renewal opportunity',
+        record_id: "cross_program_signals:xprog:apex:001",
+        title: "Co-renewal opportunity",
         record_payload: {
-          id: 'xprog:apex:001',
-          type: 'shared_vendor_renewal',
-          severity: 'Low (opportunity)',
-          description: 'desc',
-          recommendation: 'rec',
-          status: 'tracking',
-          programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
-          raised_by: 'Atlas',
-          raised_date: '2026-04-01',
+          id: "xprog:apex:001",
+          type: "shared_vendor_renewal",
+          severity: "Low (opportunity)",
+          description: "desc",
+          recommendation: "rec",
+          status: "tracking",
+          programs: ["apex-cdp-2026", "apex-cc-ai-2026"],
+          raised_by: "Atlas",
+          raised_date: "2026-04-01",
         },
       },
     ];
     mockAzureSelect.mockResolvedValue(rows);
-    const signals = await getCrossProgramSignals('apex-retail');
+    const signals = await getCrossProgramSignals("apex-retail");
     expect(signals.map((s) => s.signalId)).toEqual([
-      'xprog:apex:003', // high
-      'xprog:apex:002', // medium
-      'xprog:apex:001', // low
+      "xprog:apex:003", // high
+      "xprog:apex:002", // medium
+      "xprog:apex:001", // low
     ]);
-    expect(signals[0]?.severityBucket).toBe('high');
-    expect(signals[2]?.severityBucket).toBe('low');
+    expect(signals[0]?.severityBucket).toBe("high");
+    expect(signals[2]?.severityBucket).toBe("low");
   });
 
-  it('trims critical severity and replaces boilerplate signal copy', async () => {
+  it("trims critical severity and replaces boilerplate signal copy", async () => {
     const rows = [
       {
-        record_id: 'cross_program_signals:xprog:meridian:010',
-        title: 'Capital conflict Hawaii vs RCM vs ambient',
+        record_id: "cross_program_signals:xprog:meridian:010",
+        title: "Capital conflict Hawaii vs RCM vs ambient",
         record_payload: {
-          id: 'xprog:meridian:010',
-          type: 'resource_allocation_conflict',
-          severity: ' Critical ',
+          id: "xprog:meridian:010",
+          type: "resource_allocation_conflict",
+          severity: " Critical ",
           description:
-            'This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.',
+            "This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
           recommendation:
-            'This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.',
-          status: 'open',
-          programs: ['meridian-ambient-2026', 'meridian-rcm-modernization-2026'],
-          raised_by: 'Atlas',
-          raised_date: '2026-04-20',
+            "This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+          status: "open",
+          programs: [
+            "meridian-ambient-2026",
+            "meridian-rcm-modernization-2026",
+          ],
+          raised_by: "Atlas",
+          raised_date: "2026-04-20",
         },
       },
     ];
     mockAzureSelect.mockResolvedValue(rows);
-    const signals = await getCrossProgramSignals('meridian-health');
-    expect(signals[0]?.severityBucket).toBe('critical');
-    expect(signals[0]?.description).toContain('Capital conflict Hawaii vs RCM vs ambient');
-    expect(signals[0]?.description).not.toContain('intentionally graph-ready');
-    expect(signals[0]?.recommendation).toContain('Escalate to the sponsor group');
+    const signals = await getCrossProgramSignals("meridian-health");
+    expect(signals[0]?.severityBucket).toBe("critical");
+    expect(signals[0]?.description).toContain(
+      "Capital conflict Hawaii vs RCM vs ambient",
+    );
+    expect(signals[0]?.description).not.toContain("intentionally graph-ready");
+    expect(signals[0]?.recommendation).toContain(
+      "Escalate to the sponsor group",
+    );
   });
 
-  it('handles missing payload fields gracefully', async () => {
+  it("handles missing payload fields gracefully", async () => {
     const rows = [
       {
-        record_id: 'cross_program_signals:xprog:apex:001',
-        title: 'A signal with no payload',
+        record_id: "cross_program_signals:xprog:apex:001",
+        title: "A signal with no payload",
         record_payload: null,
       },
     ];
     mockAzureSelect.mockResolvedValue(rows);
-    const signals = await getCrossProgramSignals('apex-retail');
+    const signals = await getCrossProgramSignals("apex-retail");
     expect(signals).toHaveLength(1);
-    expect(signals[0]?.severityBucket).toBe('unknown');
+    expect(signals[0]?.severityBucket).toBe("unknown");
     expect(signals[0]?.programs).toEqual([]);
   });
 });
 
-describe('getSegmentRecordPage — record title derivation', () => {
+describe("getSegmentRecordPage — record title derivation", () => {
   beforeEach(() => {
     mockAzureSelect.mockReset();
     mockAzureMaybeSingle.mockReset();
   });
 
-  it('uses KPI payload names when imported row titles are generic', async () => {
+  it("uses KPI payload names when imported row titles are generic", async () => {
     mockAzureMaybeSingle.mockResolvedValue({
-            segment_id: 'kpi_dictionary',
-            segment_name: 'KPI dictionary',
-            family_number: 5,
-            record_count: 1,
-            coverage_score: 100,
-            stale_count: 0,
-            missing_count: 0,
-            health_state: 'complete',
-            last_reviewed_at: null,
-            last_ingested_at: null,
+      segment_id: "kpi_dictionary",
+      segment_name: "KPI dictionary",
+      family_number: 5,
+      record_count: 1,
+      coverage_score: 100,
+      stale_count: 0,
+      missing_count: 0,
+      health_state: "complete",
+      last_reviewed_at: null,
+      last_ingested_at: null,
     });
     mockAzureSelect.mockResolvedValue([
-            {
-              record_id: 'kpi_dictionary:kpi:meridian:001',
-              title: 'Kpi Dictionary 1',
-              record_kind: 'kpi',
-              record_payload: {
-                kpi_name: 'Medical Loss Ratio',
-                current_value: '87.4% FY2026 Q2',
-              },
-              source_doc: 'kpi_dictionary.csv',
-              data_classification: 'Internal',
-              freshness_state: 'fresh',
-              confidence: 0.86,
-              last_reviewed: '2026-04-15',
-              uploaded_by: 'Import pipeline',
-              uploaded_at: '2026-04-30T10:00:00Z',
-            },
+      {
+        record_id: "kpi_dictionary:kpi:meridian:001",
+        title: "Kpi Dictionary 1",
+        record_kind: "kpi",
+        record_payload: {
+          kpi_name: "Medical Loss Ratio",
+          current_value: "87.4% FY2026 Q2",
+        },
+        source_doc: "kpi_dictionary.csv",
+        data_classification: "Internal",
+        freshness_state: "fresh",
+        confidence: 0.86,
+        last_reviewed: "2026-04-15",
+        uploaded_by: "Import pipeline",
+        uploaded_at: "2026-04-30T10:00:00Z",
+      },
     ]);
 
-    const page = await getSegmentRecordPage('meridian-health', 'kpi_dictionary');
+    const page = await getSegmentRecordPage(
+      "meridian-health",
+      "kpi_dictionary",
+    );
 
-    expect(page?.records[0]?.title).toBe('Medical Loss Ratio · 87.4% FY2026 Q2');
+    expect(page?.records[0]?.title).toBe(
+      "Medical Loss Ratio · 87.4% FY2026 Q2",
+    );
   });
 });

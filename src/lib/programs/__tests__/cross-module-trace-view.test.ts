@@ -164,7 +164,7 @@ describe('buildCrossModuleTrace', () => {
     const towerStep = trace.steps.find((s) => s.module === 'tower')!;
     expect(towerStep.linkState).toBe('linked');
     expect(towerStep.joinId).toBe('led-1');
-    expect(towerStep.href).toBe('/tower/outcomes');
+    expect(towerStep.href).toBe('/tower/portfolio');
   });
 
   it('ignores ledger entries for other subjects', () => {
