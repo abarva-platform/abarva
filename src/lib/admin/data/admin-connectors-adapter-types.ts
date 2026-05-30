@@ -7,7 +7,10 @@ export type AdminConnectorStatus =
   | 'configured_stub'
   | 'blocked'
   | 'deferred'
-  | 'active';
+  | 'active'
+  // PRE-W4-PR-2 · lifecycle status for connectors created via the
+  // AddConnectorPanel onboarding drawer. Credentials not yet collected.
+  | 'pending';
 
 export type AdminConnectorKind =
   | 'erp'

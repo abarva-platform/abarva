@@ -248,6 +248,10 @@ function adapterStatusToPageView(
   status: AdminConnectorRow['status'],
 ): ConnectorStatus {
   if (status === 'active') return 'configured_stub'; // narrow safety; not used today
+  // PRE-W4-PR-2 · adapter `pending` lifecycle (a row newly written by
+  // the AddConnectorPanel onboarding drawer) collapses into the
+  // page-view `deferred` bucket — same posture tier, same sort key.
+  if (status === 'pending') return 'deferred';
   return status;
 }
 
