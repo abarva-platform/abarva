@@ -41,6 +41,7 @@ export interface AskSource {
 export interface RetrievalResult {
   sources: AskSource[];
   averageConfidence: number;
+  coverageReport?: import('@/lib/knowledge/coverage').CoverageReport;
 }
 
 export interface AskSurfaceContext {
