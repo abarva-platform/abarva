@@ -6,14 +6,15 @@
  * this registry — emitting an unregistered event_type throws.
  *
  * Source: docs/build/ENTERPRISE_COMMS_SPINE_2026-05-30.md §2 (event
- * taxonomy). 42 events across six source modules:
+ * taxonomy). 43 events across six source modules (W4-PR-7 added
+ * `system.delivery_failed` for the Resend bounce / complaint surface):
  *
  *   - Setup        (8) · admin / governance plane events
  *   - Moves        (8) · program lifecycle events
  *   - Source       (7) · sourcing-decision-room events
  *   - Intelligence (6) · ask / grounding / consistency events
  *   - Tower        (4) · executive portfolio events
- *   - System       (9) · platform / security / billing / digest events
+ *   - System       (10) · platform / security / billing / digest events
  *
  * Each entry encodes the defaults the broker uses when there is no
  * explicit user preference: which channels to fan out to, what cadence,
@@ -88,7 +89,7 @@ export interface EventDefinition {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The 42 events (Spine §2). Add new events in lock-step with subscribers
+// The 43 events (Spine §2 + W4-PR-7). Add new events in lock-step with subscribers
 // in `persona-defaults.ts` and any matching seed helpers.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -598,7 +599,7 @@ export const NOTIFICATION_REGISTRY = {
     piiClass: 'none',
   },
 
-  // ── System (9) ───────────────────────────────────────────────────────────
+  // ── System (10) ──────────────────────────────────────────────────────────
   /**
    * A billing threshold (usage / spend) was crossed.
    * Payload: { thresholdKind, currentValue, limit }
@@ -733,6 +734,33 @@ export const NOTIFICATION_REGISTRY = {
     auditClass: 'security',
     retentionDays: 2555,
     piiClass: 'none',
+  },
+  /**
+   * A user's email channel was auto-disabled (persistent bounce or spam
+   * complaint via the Resend webhook). Tenant admins receive this so
+   * they know a user's email channel is now silent and may need to
+   * re-verify the address.
+   * Payload: {
+   *   user_id_masked,           // user id truncated to first 6 chars
+   *   reason,                   // 'persistent_bounce' | 'permanent_bounce' | 'complaint'
+   *   bounce_count_7d?,         // for persistent_bounce
+   *   bounce_type?,             // 'Permanent' | 'Transient' | 'Undetermined'
+   *   affected_event_types,     // string[] of event_types downgraded
+   *   provider_message_id?,
+   * }
+   *
+   * Spine §9 failure modes C (persistent bounce) + D (complaint).
+   */
+  'system.delivery_failed': {
+    eventType: 'system.delivery_failed',
+    sourceModule: 'system',
+    severity: 'warn',
+    category: 'operational',
+    defaultChannels: ['email', 'in_app'],
+    defaultFrequency: 'immediate',
+    auditClass: 'security',
+    retentionDays: 2555,
+    piiClass: 'personal_redacted',
   },
 } as const satisfies Record<string, EventDefinition>;
 

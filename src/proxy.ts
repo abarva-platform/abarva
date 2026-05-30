@@ -54,6 +54,14 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Clerk HTML rewrites. Feed routes self-gate with Clerk/tenancy, and
   // dispatch self-guards with NOTIFICATION_DISPATCH_TOKEN/CRON_SECRET.
   '/api/notifications(.*)',
+  // W4-PR-7 (2026-05-30) · Resend webhook receives bounce / complaint
+  // / delivery events. The route MUST be reachable without a Clerk
+  // session — Resend is an external sender. The route self-guards
+  // with a Standard-Webhooks (svix-style) HMAC signature verified
+  // against RESEND_WEBHOOK_SECRET. Without the secret env var the
+  // route returns 503 (misconfigured) rather than accepting unsigned
+  // payloads.
+  '/api/webhooks/resend(.*)',
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is
