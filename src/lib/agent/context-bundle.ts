@@ -1,3 +1,5 @@
+import { canonicalClientDisplayName } from '@/lib/client-config';
+
 // Platform-wide Context Bundle contract.
 //
 // Source of truth for per-turn context across every AbarVa agent (Nexus,
@@ -809,11 +811,38 @@ function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) 
       tier: canonicalTenant.tier,
     };
   }
+  // Unknown slug: fall back to a shell-only tenant block. We try to resolve
+  // the display name through canonicalClientDisplayName so ContextBar /
+  // editorial / chat surfaces show a real label (e.g. "First Capital
+  // Financial" for the 'firstcapital' alias) instead of the raw lowercase
+  // slug. Important: canonicalClientDisplayName has a silent-Apex default
+  // (via getClientOption), so we only accept its result when it matches an
+  // explicit canonical alias for one of the 5 canonical tenants. Otherwise
+  // we keep the raw slug — callers can detect shell_only tier and refuse
+  // rich claims.
+  const displayName = resolveNonCanonicalDisplayName(tenantSlug);
   return {
     slug: tenantSlug,
-    name: tenantSlug,
+    name: displayName,
     tier: 'shell_only' as TenantTier,
   };
+}
+
+const ALLOWED_CANONICAL_DISPLAY_NAMES: ReadonlySet<string> = new Set([
+  'Meridian Health',
+  'First Capital Financial',
+  'Northstar Clinical Technologies',
+  'SkyHarbor Air',
+]);
+
+function resolveNonCanonicalDisplayName(tenantSlug: string): string {
+  const canonical = canonicalClientDisplayName({ key: tenantSlug });
+  if (canonical && ALLOWED_CANONICAL_DISPLAY_NAMES.has(canonical)) {
+    return canonical;
+  }
+  // No safe canonical mapping. Return slug verbatim rather than fall
+  // through to the silent-Apex default inside canonicalClientDisplayName.
+  return tenantSlug;
 }
 
 /**
