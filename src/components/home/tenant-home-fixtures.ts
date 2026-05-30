@@ -109,8 +109,8 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
   {
     label: 'Data & Content',
     items: [
-      { label: 'Data Trust', badge: '23', status: 'attn', href: '/home/data-trust' },
-      { label: 'Connectors', badge: 'live', status: 'attn', href: '/home/connectors' },
+      { label: 'Data Trust', badge: '23', status: 'attn', href: '/admin/data-trust' },
+      { label: 'Connectors', badge: 'live', status: 'attn', href: '/admin/connectors' },
       { label: 'AI Initiatives', badge: '7', status: 'attn', href: '/home/ai-initiatives' },
     ],
   },
@@ -121,7 +121,7 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
   {
     label: 'Operations',
     items: [
-      { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/home/agent-readiness' },
+      { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/admin/agent-readiness' },
       { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/admin/production-readiness' },
       { label: 'Compliance', badge: 'locked', status: 'locked', href: '#' },
       { label: 'Activity Log', badge: '400', status: 'default', href: '/tower/activity' },
@@ -136,7 +136,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Data Trust',
     desc: 'Substrate inventory, segment health, provenance of every record.',
     foot: '23 segments · 1.2k records',
-    href: '/home/data-trust',
+    href: '/admin/data-trust',
   },
   {
     num: '02',
@@ -152,7 +152,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Connectors',
     desc: 'Live integrations: ServiceNow, Workday, Slack, vendor systems.',
     foot: 'live state surfaces in panel · audit shows recent ingest',
-    href: '/home/connectors',
+    href: '/admin/connectors',
   },
   {
     num: '04',
@@ -168,7 +168,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Agent Readiness',
     desc: 'Per-agent confidence — substrate depth · prompt grounding · trace coverage.',
     foot: 'Sentinel L2 · Atlas L3 · Steward L1',
-    href: '/home/agent-readiness',
+    href: '/admin/agent-readiness',
   },
   {
     num: '06',
@@ -286,14 +286,14 @@ export const MERIDIAN_HOME: TenantHomeData = {
       title: 'Load substrate for "Scenario library" (currently sparse)',
       meta: 'SUBSTRATE · F20 · 2 records · unblocks Sentinel reasoning',
       time: '2 DAYS',
-      href: '/home/data-trust',
+      href: '/admin/data-trust',
     },
     {
       num: '03',
       title: 'Load substrate for "Vendor intelligence" (currently sparse)',
       meta: 'SUBSTRATE · F21 · 2 records · unblocks Sentinel reasoning',
       time: '2 DAYS',
-      href: '/home/data-trust',
+      href: '/admin/data-trust',
     },
     {
       num: '04',
@@ -453,7 +453,7 @@ export const APEX_HOME: TenantHomeData = {
       title: 'Load substrate for "Customer LTV cohorts"',
       meta: 'SUBSTRATE · F19 · sparse · gates CDP ROI math',
       time: '2 DAYS',
-      href: '/home/data-trust',
+      href: '/admin/data-trust',
     },
     {
       num: '04',
@@ -618,7 +618,7 @@ export const FIRSTCAP_HOME: TenantHomeData = {
       title: 'Load substrate for "Customer LTV cohorts"',
       meta: 'SUBSTRATE · F19 · sparse · unblocks decisioning ROI',
       time: '2 DAYS',
-      href: '/home/data-trust',
+      href: '/admin/data-trust',
     },
   ],
   activity: [
