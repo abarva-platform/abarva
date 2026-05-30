@@ -1,5 +1,3 @@
-import { getAuditedAnthropicClient } from '@/lib/agent/stream';
-
 export async function generateFollowups(args: {
   query: string;
   answer: string;
@@ -7,41 +5,45 @@ export async function generateFollowups(args: {
   tenantId?: string | null;
   userId?: string | null;
 }): Promise<string[]> {
-  if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) return [];
+  const query = args.query.toLowerCase();
+  const answer = args.answer.toLowerCase();
+  const entity = args.entities.find(Boolean);
 
-  const prompt = `Given the question and the answer, propose 3 follow-up questions the user is
-likely to ask next. Each should drill deeper OR pivot to an adjacent concern.
-Return JSON only: { "followups": ["...", "...", "..."] }
-
-Question: ${args.query}
-Answer: ${args.answer.slice(0, 2000)}
-Available next-step contexts: ${args.entities.join(', ')}`;
-
-  try {
-    const { client } = await getAuditedAnthropicClient({
-      tenantId: args.tenantId,
-      userId: args.userId ?? undefined,
-      workflow: 'intelligence-ask-followups',
-      model: 'claude-haiku-4-5-20251001',
-      prompt,
-      dataClass: 'confidential',
-    });
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const text = res.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('');
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return [];
-    const parsed = JSON.parse(match[0]) as { followups?: unknown };
-    if (!Array.isArray(parsed.followups)) return [];
-    return parsed.followups
-      .filter((f): f is string => typeof f === 'string')
-      .slice(0, 3)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
+  if (/\b(vendor|contract|renewal|sourcing|ibm|aws|fis|dxc)\b/.test(`${query} ${answer}`)) {
+    return [
+      'Show the renewal leverage',
+      'Name the risks to watch',
+      'Hand this to Source',
+    ];
   }
+
+  if (/\b(value|savings|cost|spend|npv|roi|business case|fund)\b/.test(`${query} ${answer}`)) {
+    return [
+      'Show the value evidence',
+      'Pressure-test the assumptions',
+      'Shape this as a Move',
+    ];
+  }
+
+  if (/\b(risk|security|cyber|regulatory|compliance|hipaa|model risk)\b/.test(`${query} ${answer}`)) {
+    return [
+      'Show the control gaps',
+      'Name the decision owner',
+      'What evidence changes this view?',
+    ];
+  }
+
+  if (entity) {
+    return [
+      `Go deeper on ${entity}`,
+      'Show the evidence',
+      'What would you do next?',
+    ];
+  }
+
+  return [
+    'Show the evidence',
+    'What is the next move?',
+    'What would change your view?',
+  ];
 }
