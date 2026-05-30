@@ -1,0 +1,412 @@
+{
+  "generatedAt": "2026-05-30",
+  "wave": 4,
+  "totalPatterns": 1050,
+  "packs": [
+    {
+      "code": "U",
+      "title": "Grocery & Food Retail",
+      "packs": [
+        {
+          "code": "U.1",
+          "title": "Grocery Format Strategy (Conventional, Discount, Premium, Hybrid)",
+          "count": 18
+        },
+        {
+          "code": "U.2",
+          "title": "Fresh & Perishables Operations",
+          "count": 18
+        },
+        {
+          "code": "U.3",
+          "title": "Grocery E-Commerce & Online Grocery",
+          "count": 18
+        },
+        {
+          "code": "U.4",
+          "title": "Private Label in Grocery",
+          "count": 18
+        },
+        {
+          "code": "U.5",
+          "title": "Grocery Loyalty & Personalization",
+          "count": 17
+        },
+        {
+          "code": "U.6",
+          "title": "Grocery Supply Chain (Cold Chain, Frequent Replenishment)",
+          "count": 17
+        }
+      ],
+      "target": 106
+    },
+    {
+      "code": "V",
+      "title": "Apparel & Fashion",
+      "packs": [
+        {
+          "code": "V.1",
+          "title": "Fashion Calendar & Drop Cadence",
+          "count": 19
+        },
+        {
+          "code": "V.2",
+          "title": "Fast Fashion vs Premium Fashion Strategies",
+          "count": 18
+        },
+        {
+          "code": "V.3",
+          "title": "Fashion Supply Chain (Nearshore, Quick-Response)",
+          "count": 18
+        },
+        {
+          "code": "V.4",
+          "title": "Fashion Inventory & Markdown Risk",
+          "count": 18
+        },
+        {
+          "code": "V.5",
+          "title": "Fashion Tech (Virtual Try-On, AI Design)",
+          "count": 18
+        }
+      ],
+      "target": 91
+    },
+    {
+      "code": "W",
+      "title": "Beauty & Personal Care",
+      "packs": [
+        {
+          "code": "W.1",
+          "title": "Beauty Retail Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "W.2",
+          "title": "Beauty Brand Partnerships",
+          "count": 18
+        },
+        {
+          "code": "W.3",
+          "title": "Beauty Personalization & Try-On",
+          "count": 17
+        },
+        {
+          "code": "W.4",
+          "title": "Beauty Loyalty Programs",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "X",
+      "title": "Consumer Electronics",
+      "packs": [
+        {
+          "code": "X.1",
+          "title": "CE Retail Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "X.2",
+          "title": "CE Vendor Relationships (Apple, Samsung, etc.)",
+          "count": 18
+        },
+        {
+          "code": "X.3",
+          "title": "CE Trade-In & Buyback Programs",
+          "count": 17
+        },
+        {
+          "code": "X.4",
+          "title": "CE Service & Protection Plans",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "Y",
+      "title": "Home Goods & Furniture",
+      "packs": [
+        {
+          "code": "Y.1",
+          "title": "Furniture Retail Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "Y.2",
+          "title": "Showroom + E-Commerce Models",
+          "count": 18
+        },
+        {
+          "code": "Y.3",
+          "title": "Furniture Delivery & White-Glove Logistics",
+          "count": 17
+        },
+        {
+          "code": "Y.4",
+          "title": "Home Goods Visual Merchandising",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "Z",
+      "title": "DIY & Home Improvement",
+      "packs": [
+        {
+          "code": "Z.1",
+          "title": "DIY Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "Z.2",
+          "title": "Pro vs DIY Customer Segments",
+          "count": 18
+        },
+        {
+          "code": "Z.3",
+          "title": "Special Order & Custom Workflows",
+          "count": 17
+        },
+        {
+          "code": "Z.4",
+          "title": "DIY Service & Installation",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "AA",
+      "title": "Convenience Stores",
+      "packs": [
+        {
+          "code": "AA.1",
+          "title": "C-Store Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "AA.2",
+          "title": "Foodservice in C-Stores",
+          "count": 18
+        },
+        {
+          "code": "AA.3",
+          "title": "Loyalty & App for C-Store",
+          "count": 18
+        },
+        {
+          "code": "AA.4",
+          "title": "C-Store Supply Chain Frequency",
+          "count": 17
+        }
+      ],
+      "target": 71
+    },
+    {
+      "code": "AB",
+      "title": "Automotive Retail & Dealerships",
+      "packs": [
+        {
+          "code": "AB.1",
+          "title": "Auto Dealership Format Strategy",
+          "count": 18
+        },
+        {
+          "code": "AB.2",
+          "title": "OEM-Dealer Relationship Models",
+          "count": 18
+        },
+        {
+          "code": "AB.3",
+          "title": "Service & Parts Operations",
+          "count": 18
+        },
+        {
+          "code": "AB.4",
+          "title": "Online Auto Sales (Carvana-style)",
+          "count": 17
+        }
+      ],
+      "target": 71
+    },
+    {
+      "code": "AC",
+      "title": "Luxury & Premium Retail",
+      "packs": [
+        {
+          "code": "AC.1",
+          "title": "Luxury Brand & Retail Strategy",
+          "count": 18
+        },
+        {
+          "code": "AC.2",
+          "title": "Luxury Clienteling",
+          "count": 18
+        },
+        {
+          "code": "AC.3",
+          "title": "Authentication & Anti-Counterfeit",
+          "count": 17
+        },
+        {
+          "code": "AC.4",
+          "title": "Luxury E-Commerce (Farfetch, Net-a-Porter)",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "AD",
+      "title": "Off-Price, Outlet & Treasure Hunt",
+      "packs": [
+        {
+          "code": "AD.1",
+          "title": "Off-Price Buying Strategy",
+          "count": 17
+        },
+        {
+          "code": "AD.2",
+          "title": "Treasure-Hunt Experience Design",
+          "count": 17
+        },
+        {
+          "code": "AD.3",
+          "title": "Off-Price Supply Chain (Opportunistic Buying)",
+          "count": 16
+        }
+      ],
+      "target": 50
+    },
+    {
+      "code": "AE",
+      "title": "Department Stores & Anchor Tenants",
+      "packs": [
+        {
+          "code": "AE.1",
+          "title": "Department Store Repositioning",
+          "count": 17
+        },
+        {
+          "code": "AE.2",
+          "title": "Anchor Tenant Real Estate Dynamics",
+          "count": 17
+        },
+        {
+          "code": "AE.3",
+          "title": "Department Store Private Label Strategy",
+          "count": 16
+        }
+      ],
+      "target": 50
+    },
+    {
+      "code": "AF",
+      "title": "Specialty Retail",
+      "packs": [
+        {
+          "code": "AF.1",
+          "title": "Specialty Retail Niche Strategies",
+          "count": 17
+        },
+        {
+          "code": "AF.2",
+          "title": "Specialty Retail Buyer Roles",
+          "count": 17
+        },
+        {
+          "code": "AF.3",
+          "title": "Specialty Retail Customer Communities",
+          "count": 16
+        }
+      ],
+      "target": 50
+    },
+    {
+      "code": "AG",
+      "title": "Membership Clubs (Costco-style)",
+      "packs": [
+        {
+          "code": "AG.1",
+          "title": "Membership Economics",
+          "count": 17
+        },
+        {
+          "code": "AG.2",
+          "title": "Bulk & Treasure-Hunt Assortment",
+          "count": 17
+        },
+        {
+          "code": "AG.3",
+          "title": "Member-Only Pricing & Service",
+          "count": 16
+        }
+      ],
+      "target": 50
+    },
+    {
+      "code": "AH",
+      "title": "Pharmacy & Health Retail",
+      "packs": [
+        {
+          "code": "AH.1",
+          "title": "Pharmacy Operating Model",
+          "count": 18
+        },
+        {
+          "code": "AH.2",
+          "title": "Front-of-Store Strategy for Pharmacies",
+          "count": 18
+        },
+        {
+          "code": "AH.3",
+          "title": "Pharmacy Tech (Rx Workflow, PBM Integration)",
+          "count": 17
+        },
+        {
+          "code": "AH.4",
+          "title": "Health & Wellness Adjacencies",
+          "count": 17
+        }
+      ],
+      "target": 70
+    },
+    {
+      "code": "AI",
+      "title": "Restaurants, QSR & Foodservice Tech",
+      "packs": [
+        {
+          "code": "AI.1",
+          "title": "QSR Operating Model",
+          "count": 19
+        },
+        {
+          "code": "AI.2",
+          "title": "Casual Dining & Full-Service Patterns",
+          "count": 18
+        },
+        {
+          "code": "AI.3",
+          "title": "Digital Ordering & Mobile Order Ahead",
+          "count": 18
+        },
+        {
+          "code": "AI.4",
+          "title": "Ghost Kitchens & Virtual Brands",
+          "count": 18
+        },
+        {
+          "code": "AI.5",
+          "title": "Restaurant Tech Stack (POS, Kitchen Display, Loyalty)",
+          "count": 18
+        }
+      ],
+      "target": 91
+    }
+  ]
+}
