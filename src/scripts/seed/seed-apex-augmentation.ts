@@ -7,7 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { config as loadEnv } from 'dotenv';
 import { loadOneTenant } from './load-ai-initiatives';
 
@@ -236,13 +237,8 @@ function loadEnvFiles(): void {
   loadEnv();
 }
 
-function createSeedClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required in .env.local');
-  }
-  return createClient(url, key, { auth: { persistSession: false } });
+function createSeedClient(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
 async function main(): Promise<void> {
@@ -268,7 +264,7 @@ async function main(): Promise<void> {
   );
 
   if (!args.apply) {
-    process.stdout.write('Dry-run only. Pass --apply to upsert into Supabase.\n');
+    process.stdout.write('Dry-run only. Pass --apply to upsert into Azure Postgres.\n');
     return;
   }
 

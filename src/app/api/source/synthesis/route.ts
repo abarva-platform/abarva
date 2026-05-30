@@ -13,6 +13,7 @@ import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -34,9 +35,22 @@ Sentinel voice register (from brand voice spec §9):
 Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
 
 function buildSentinelSynthesisPrompt(userContextBlock: string): string {
+  const sourceContractBlock = buildAgentContextContractBlock({
+    agent: 'sentinel',
+    module: 'source',
+    sources: [
+      {
+        type: 'vendor',
+        id: 'source-synthesis-event',
+        name: 'Source sourcing event state',
+        detail: 'Vendor diligence, RFI/RFP, BAFO, contract terms, gates, missing artifacts, savings proof, adoption telemetry, and sourcing risk controls.',
+      },
+    ],
+  });
   // F0.2 + F0.3 composition.
   return [
     SENTINEL_SYNTHESIS_VOICE_AND_TASK,
+    sourceContractBlock,
     userContextBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
     AGENT_DEMO_SYSTEM_BLOCK,

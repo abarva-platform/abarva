@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 import { timelineResourceEstimateDeliverableType } from '@/lib/deliverables/templates/timeline_resource_estimate';
@@ -763,10 +763,7 @@ TYPES.push(
 );
 
 function getSb() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required');
-  return createClient(url, key, { auth: { persistSession: false } });
+  return getAzureWriteFluentClient();
 }
 
 async function main() {

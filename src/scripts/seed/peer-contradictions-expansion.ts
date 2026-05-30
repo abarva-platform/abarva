@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
-import { getGraphDriverIfEnabled, closeGraphDriver } from '@/lib/graph/driver';
-import { setNeo4jEnabledOverride } from '@/lib/graph/neo4j-gate';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { deterministicUuid, resolveClientMap } from './contradiction-engine-lib';
 
 type TenantKey = 'meridian' | 'first_capital' | 'apex';
@@ -70,16 +68,9 @@ function loadEnv() {
   }
 }
 
-function getSupabaseClient() {
+function getAzureSeedClient() {
   loadEnv();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
-  }
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return getAzureWriteFluentClient();
 }
 
 const PEER_DECISION_SEEDS: PeerDecisionSeed[] = [
@@ -891,7 +882,7 @@ const TENANT_ENGAGEMENT_LOOKUPS: Record<TenantKey, Array<{ graph?: string; name?
 };
 
 async function resolveEngagementRefs(
-  sb: ReturnType<typeof getSupabaseClient>,
+  sb: ReturnType<typeof getAzureSeedClient>,
   clientIds: Map<TenantKey, string>,
 ): Promise<Map<TenantKey, EngagementRef[]>> {
   const out = new Map<TenantKey, EngagementRef[]>();
@@ -925,68 +916,10 @@ async function resolveEngagementRefs(
 }
 
 async function seedPeerDecisions() {
-  // Operator-run seed script — force the gate on for this process so the
-  // Cypher migrations land regardless of the platform default.
-  setNeo4jEnabledOverride(true);
-  const driver = await getGraphDriverIfEnabled();
-  if (!driver) {
-    console.error('graph_neo4j_enabled override did not take effect; aborting.');
-    process.exit(2);
-  }
-  const session = driver.session();
-  try {
-    for (const seed of PEER_DECISION_SEEDS) {
-      const engagementId = `eng_peer_${seed.key.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}`;
-      const decisionId = `dec_peer_${seed.key.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}`;
-      const outcomeId = `out_peer_${seed.key.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}`;
-      await session.run(
-        `
-          MERGE (i:Industry {code: $industryCode})
-          MERGE (e:Engagement {id: $engagementId})
-          ON CREATE SET e.created_at = datetime($madeAt)
-          SET
-            e.name = $engagementName,
-            e.industry_code = $industryCode,
-            e.current_phase = $phase,
-            e.status = 'completed'
-          MERGE (d:Decision {id: $decisionId})
-          ON CREATE SET d.made_at = datetime($madeAt)
-          SET
-            d.name = $decisionName,
-            d.phase = $phase,
-            d.choice = $choice
-          MERGE (o:Outcome {id: $outcomeId})
-          ON CREATE SET o.measured_at = datetime($measuredAt)
-          SET
-            o.name = $outcomeName,
-            o.verified = true,
-            o.savings_usd = $outcomeSavingsUsd,
-            o.notes = $notes
-          MERGE (e)-[:MADE]->(d)
-          MERGE (d)-[:RESULTED_IN]->(o)
-          MERGE (e)-[:IN_INDUSTRY]->(i)
-        `,
-        {
-          industryCode: seed.industryCode,
-          engagementId,
-          engagementName: seed.engagementName,
-          phase: seed.phase,
-          decisionId,
-          decisionName: `${seed.choice.replace(/_/g, ' ')} decision`,
-          choice: seed.choice,
-          outcomeId,
-          outcomeName: `${seed.engagementName} outcome`,
-          outcomeSavingsUsd: seed.outcomeSavingsUsd,
-          notes: seed.notes ?? '',
-          madeAt: seed.madeAt,
-          measuredAt: seed.measuredAt,
-        },
-      );
-    }
-  } finally {
-    await session.close();
-    await closeGraphDriver();
-  }
+  await Promise.resolve();
+  console.info(
+    `[peer-contradictions] skipped ${PEER_DECISION_SEEDS.length} peer decision graph projections; Azure Postgres enterprise graph rows are the only supported graph store.`,
+  );
 }
 
 function targetEngagementId(index: number, engagements: EngagementRef[]): string {
@@ -994,7 +927,7 @@ function targetEngagementId(index: number, engagements: EngagementRef[]): string
 }
 
 async function seedContradictions() {
-  const sb = getSupabaseClient();
+  const sb = getAzureSeedClient();
   const clientMap = await resolveClientMap(sb);
 
   const clientIds = new Map<TenantKey, string>();

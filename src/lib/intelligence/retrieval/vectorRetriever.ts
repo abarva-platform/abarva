@@ -1,53 +1,13 @@
-// Vector retrieval via Pinecone. Per spec §7.3 metadata filters enforce
-// tenancy on every query. Spec calls for Voyage-3 embeddings; repo
-// currently uses OpenAI text-embedding-3-large at 1024 dims (matches
-// nexus-knowledge Pinecone index). Voyage-3 migration remains a follow-up.
+// Azure tenant-context retrieval for the Nexus "vector" lane.
+//
+// The pipeline dimension is still named `vector` for API compatibility, but
+// this implementation reads the Azure Postgres `enterprise_context_chunks`
+// substrate and ranks matches with Postgres full-text search plus lightweight
+// keyword fallback. Azure AI Search can sit in front of the same chunks;
+// Azure Postgres remains the private data-plane source of truth.
 
-import { Pinecone } from '@pinecone-database/pinecone';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { RetrievalResult, Source, TenancyCtx } from '../types';
-import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
-import {
-  clientVectorMetadataFilter,
-  isClientVectorNamespace,
-} from '@/lib/knowledge/client-vector-namespace';
-
-const EMBED_MODEL = 'text-embedding-3-large';
-const EMBED_DIMS = 1024;
-const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
-
-let _pinecone: Pinecone | null = null;
-
-function getPinecone(): Pinecone | null {
-  if (_pinecone) return _pinecone;
-  const key = process.env.PINECONE_API_KEY;
-  if (!key) return null;
-  _pinecone = new Pinecone({ apiKey: key });
-  return _pinecone;
-}
-
-async function embed(query: string, tenancy: TenancyCtx): Promise<number[] | null> {
-  if (!process.env.OPENAI_API_KEY) return null;
-  try {
-    const preflight = await preflightOpenAIDirectClient({
-      tenantId: tenancy.clientId,
-      userId: tenancy.userId,
-      workflow: 'intelligence-vector-retrieval-embedding',
-      model: EMBED_MODEL,
-      prompt: query,
-      dataClass: 'confidential',
-      metadata: { dimensions: EMBED_DIMS },
-    });
-    if (!preflight.ok) return null;
-    const res = await preflight.client.embeddings.create({
-      model: EMBED_MODEL,
-      input: query,
-      dimensions: EMBED_DIMS,
-    });
-    return res.data[0]?.embedding ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export interface VectorSearchArgs {
   query: string;
@@ -56,64 +16,124 @@ export interface VectorSearchArgs {
   topK?: number;
 }
 
-/**
- * Per spec §7.3 Pinecone namespaces:
- *   public-*       — shared (patterns, benchmarks, vendors, regs)
- *   client-{id}-*  — tenant-isolated
- * Current repo uses `global:<industry>` naming. We pass clientId as a
- * metadata filter so cross-tenant hits are architecturally impossible.
- */
+type ContextChunkRow = {
+  chunk_id: string | null;
+  chunk_text: string | null;
+  source_doc: string | null;
+  source_segment_id: string | null;
+  tenant_key: string | null;
+  rank_score: string | number | null;
+};
+
+const SEARCH_STOPWORDS = new Set([
+  'about',
+  'after',
+  'against',
+  'between',
+  'could',
+  'from',
+  'have',
+  'into',
+  'next',
+  'should',
+  'that',
+  'their',
+  'there',
+  'through',
+  'what',
+  'where',
+  'which',
+  'with',
+  'would',
+]);
+
+function numeric(value: string | number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function buildSearchQuery(query: string): string {
+  const terms = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 3 && !SEARCH_STOPWORDS.has(term))
+    .slice(0, 12);
+  return terms.length ? terms.join(' OR ') : query.trim();
+}
+
+function confidenceFor(score: number): Source['confidence'] {
+  if (score >= 0.15) return 'high';
+  if (score >= 0.04) return 'medium';
+  return 'low';
+}
+
 export async function vectorSearch(args: VectorSearchArgs): Promise<RetrievalResult> {
   const started = Date.now();
-  const pc = getPinecone();
-  if (!pc) {
-    return { dimension: 'vector', claims: [], latencyMs: Date.now() - started, partial: true, error: 'Pinecone not configured' };
+  const searchQuery = buildSearchQuery(args.query);
+  const topK = Math.min(Math.max(args.topK ?? 8, 1), 12);
+
+  try {
+    const rows = await azureRead.query<ContextChunkRow>(
+      `
+        WITH ranked AS (
+          SELECT
+            chunk_id,
+            chunk_text,
+            source_doc,
+            source_segment_id,
+            tenant_key,
+            ts_rank_cd(
+              to_tsvector('english', coalesce(chunk_text, '')),
+              websearch_to_tsquery('english', $2)
+            ) AS rank_score
+          FROM enterprise_context_chunks
+          WHERE (client_id::text = $1 OR tenant_key = $1)
+            AND coalesce(chunk_text, '') <> ''
+            AND (
+              $2 = ''
+              OR to_tsvector('english', coalesce(chunk_text, '')) @@ websearch_to_tsquery('english', $2)
+              OR chunk_text ILIKE '%' || $2 || '%'
+            )
+        )
+        SELECT *
+          FROM ranked
+         ORDER BY rank_score DESC, chunk_id ASC
+         LIMIT $3
+      `,
+      [args.tenancy.clientId, searchQuery, topK],
+      { missingTable: 'empty' },
+    );
+
+    const claims = rows.map((row) => {
+      const score = numeric(row.rank_score);
+      const source: Source = {
+        id: `context:${row.chunk_id ?? row.source_doc ?? 'chunk'}`,
+        type: 'client_fact',
+        name: row.source_doc ?? row.source_segment_id ?? row.chunk_id ?? 'Tenant context chunk',
+        detail: row.chunk_text?.replace(/\s+/g, ' ').slice(0, 240),
+        confidence: confidenceFor(score),
+      };
+      return {
+        text: row.chunk_text?.replace(/\s+/g, ' ').slice(0, 480) ?? '',
+        source,
+        confidence: source.confidence ?? 'medium',
+      };
+    });
+
+    return { dimension: 'vector', claims, latencyMs: Date.now() - started, partial: false };
+  } catch (err) {
+    return {
+      dimension: 'vector',
+      claims: [],
+      latencyMs: Date.now() - started,
+      partial: true,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
-
-  const vector = await embed(args.query, args.tenancy);
-  if (!vector) {
-    return { dimension: 'vector', claims: [], latencyMs: Date.now() - started, partial: true, error: 'Embedding failed' };
-  }
-
-  const index = pc.index(INDEX_NAME);
-  const topK = args.topK ?? 8;
-  const namespaces = args.namespaces ?? ['global:general_macro'];
-
-  const claims: RetrievalResult['claims'] = [];
-  let partial = false;
-
-  await Promise.all(
-    namespaces.map(async (ns) => {
-      try {
-        const result = await index.namespace(ns).query({
-          vector,
-          topK,
-          includeMetadata: true,
-          filter: isClientVectorNamespace(ns)
-            ? clientVectorMetadataFilter(args.tenancy.clientId)
-            : undefined,
-        });
-        for (const match of result.matches ?? []) {
-          const meta = (match.metadata ?? {}) as Record<string, unknown>;
-          const text = typeof meta.text === 'string' ? meta.text : '';
-          const sourceKey = typeof meta.source_key === 'string' ? meta.source_key : match.id;
-          const publisher = typeof meta.publisher === 'string' ? meta.publisher : undefined;
-          const confidence = (match.score ?? 0) > 0.75 ? 'high' : (match.score ?? 0) > 0.55 ? 'medium' : 'low';
-          const source: Source = {
-            id: sourceKey,
-            type: (meta.content_type as Source['type']) ?? 'research',
-            name: publisher ?? sourceKey,
-            detail: text.slice(0, 240),
-            confidence,
-          };
-          claims.push({ text: text.slice(0, 480), source, confidence });
-        }
-      } catch (err) {
-        partial = true;
-        console.warn(`[vectorRetriever] namespace ${ns} failed:`, (err as Error).message);
-      }
-    }),
-  );
-
-  return { dimension: 'vector', claims, latencyMs: Date.now() - started, partial };
 }

@@ -5,8 +5,6 @@ import {
   patternIdToSlug,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
-import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
-import { isNeo4jEnabled, logNeo4jSkipped } from '@/lib/graph/neo4j-gate';
 import {
   buildAllProgramsSeedPlan,
   deliverableRouteSegmentFor,
@@ -320,93 +318,18 @@ async function queryGraphDeliverablesForPattern(
   patternKey: string,
   index: SeedCitationIndex,
 ): Promise<DeliverableCitationSummary[] | null> {
-  if (!hasGraphConfig()) return null;
-  const driver = await getGraphDriverIfEnabled();
-  if (!driver) {
-    logNeo4jSkipped('queryGraphDeliverablesForPattern');
-    return null;
-  }
-
-  const session = driver.session();
-  try {
-    const result = await session.run(
-      `
-        MATCH (p)
-        WHERE any(key IN $patternKeys WHERE toLower(coalesce(p.slug, p.pattern_slug, p.code, p.id, '')) = key)
-        MATCH (p)-[:CITES|CITED_BY]-(d)
-        RETURN DISTINCT coalesce(
-          d.id,
-          d.instance_key,
-          d.instanceKey,
-          d.route_path,
-          d.routePath,
-          d.deliverable_id,
-          d.slug,
-          d.code
-        ) AS deliverableKey
-      `,
-      { patternKeys: graphPatternKeys(patternKey) },
-    );
-
-    const mapped = dedupeDeliverables(
-      result.records
-        .map((record) => record.get('deliverableKey'))
-        .map((value) => resolveGraphDeliverable(index, value))
-        .filter((deliverable): deliverable is DeliverableCitationSummary => deliverable !== null),
-    );
-
-    return mapped.length > 0 ? mapped : null;
-  } catch {
-    return null;
-  } finally {
-    await session.close().catch(() => undefined);
-  }
+  void patternKey;
+  void index;
+  return null;
 }
 
 async function queryGraphPatternsForDeliverable(
   deliverable: DeliverableCitationSummary,
   index: SeedCitationIndex,
 ): Promise<PatternCitationSummary[] | null> {
-  if (!hasGraphConfig()) return null;
-  const driver = await getGraphDriverIfEnabled();
-  if (!driver) {
-    logNeo4jSkipped('queryGraphPatternsForDeliverable');
-    return null;
-  }
-
-  const session = driver.session();
-  try {
-    const result = await session.run(
-      `
-        MATCH (d)
-        WHERE any(key IN $deliverableKeys WHERE
-          toLower(coalesce(d.id, '')) = key OR
-          toLower(coalesce(d.instance_key, '')) = key OR
-          toLower(coalesce(d.instanceKey, '')) = key OR
-          toLower(coalesce(d.route_path, '')) = key OR
-          toLower(coalesce(d.routePath, '')) = key OR
-          toLower(coalesce(d.slug, '')) = key OR
-          toLower(coalesce(d.code, '')) = key
-        )
-        MATCH (d)-[:CITES|CITED_BY]-(p)
-        RETURN DISTINCT coalesce(p.slug, p.pattern_slug, p.code, p.id) AS patternKey
-      `,
-      { deliverableKeys: graphDeliverableKeys(deliverable) },
-    );
-
-    const mapped = dedupePatterns(
-      result.records
-        .map((record) => record.get('patternKey'))
-        .map((value) => resolveGraphPattern(index, value))
-        .filter((pattern): pattern is PatternCitationSummary => pattern !== null),
-    );
-
-    return mapped.length > 0 ? mapped : null;
-  } catch {
-    return null;
-  } finally {
-    await session.close().catch(() => undefined);
-  }
+  void deliverable;
+  void index;
+  return null;
 }
 
 function resolveGraphDeliverable(index: SeedCitationIndex, value: unknown): DeliverableCitationSummary | null {
@@ -477,12 +400,7 @@ function seedCitationSource(detail: string): CitationQuerySource {
 }
 
 function hasGraphConfig(): boolean {
-  // Treat the `graph_neo4j_enabled` flag as part of "is graph available".
-  // When the flag is OFF (the default) we report the seed manifest as the
-  // sole source of citation edges, matching the existing pre-Neo4j
-  // fallback behaviour.
-  if (!isNeo4jEnabled()) return false;
-  return Boolean(process.env.NEO4J_URI && process.env.NEO4J_USERNAME && process.env.NEO4J_PASSWORD);
+  return false;
 }
 
 function compareDeliverables(a: DeliverableCitationSummary, b: DeliverableCitationSummary): number {

@@ -17,7 +17,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import { config as loadEnv } from 'dotenv';
 
 // ---------------------------------------------------------------------
@@ -132,16 +133,11 @@ function loadEnvFiles(): void {
   loadEnv();
 }
 
-function createSeedClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required in .env.local');
-  }
-  return createClient(url, key, { auth: { persistSession: false } });
+function createSeedClient(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
-async function resolveClientId(sb: SupabaseClient, tenantKey: string): Promise<string> {
+async function resolveClientId(sb: SeedClient, tenantKey: string): Promise<string> {
   const { data, error } = await sb
     .from('clients')
     .select('id, name, tenant_key')
@@ -159,7 +155,7 @@ async function resolveClientId(sb: SupabaseClient, tenantKey: string): Promise<s
 }
 
 async function upsert(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
   conflictTarget: string,
@@ -188,7 +184,7 @@ function provenanceTag(slug: string, version: string): string {
 // ---------------------------------------------------------------------
 
 async function loadOneTenant(
-  sb: SupabaseClient,
+  sb: SeedClient,
   templatePath: string,
 ): Promise<{ tenant: string; counts: Record<string, number> }> {
   const tpl = loadTemplate(templatePath);

@@ -4,7 +4,6 @@ import {
   clientVectorNamespaceForDomain,
   isClientVectorNamespace,
 } from '../client-vector-namespace';
-import { pineconeNamespaceForDomain } from '@/lib/agent/domain-router';
 
 describe('client vector namespace helpers', () => {
   it('uses the ingest-compatible tenant namespace format', () => {
@@ -30,10 +29,6 @@ describe('client vector namespace helpers', () => {
     expect(clientVectorMetadataFilter('apex-client-id')).toEqual({
       client_id: { $eq: 'apex-client-id' },
     });
-  });
-
-  it('keeps domain-router namespaces aligned with ingestion', () => {
-    expect(pineconeNamespaceForDomain('apex-client-id', 'rcm')).toBe('client_apex-client-id_rcm');
   });
 
   it('fails closed on blank tenant or domain values', () => {

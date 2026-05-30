@@ -6,6 +6,7 @@ import {
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
 } from './tenant-identity-pin';
+import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
 
 export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
@@ -306,9 +307,15 @@ export async function* synthesizeStream(args: {
   // "you're Apex Retail." The pin block is prepended FIRST (above any other
   // context block) so the model treats it as highest-priority.
   const tenantIdentityPin = buildTenantIdentityPin(args.tenantClientKey ?? args.tenantId ?? null);
+  const contextContractBlock = buildAgentContextContractBlock({
+    agent: 'sentinel',
+    module: 'intelligence',
+    sources: args.sources,
+  });
 
   const contextBlocks = [
     tenantIdentityPin,
+    contextContractBlock,
     args.factAvailabilityBlock?.trim() ?? '',
     args.coverageReportBlock?.trim() ?? '',
     args.userContextBlock?.trim() ?? '',

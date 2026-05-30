@@ -1,38 +1,5 @@
-// Neo4j-backed reasoning queries. Each entry point runs through the
-// `graph_neo4j_enabled` gate via `withGraphSession()` so that when the
-// flag is OFF (the default) the call returns `null`/`[]` and the
-// `neo4j-driver` module is never loaded. The dynamic import below is
-// only reached inside the gated path.
+import { azureRead } from '@/lib/data-plane/azureRead';
 
-import { withGraphSession } from './driver';
-
-async function lazyIsInt(): Promise<(v: unknown) => boolean> {
-  const mod = await import('neo4j-driver');
-  return mod.isInt as (v: unknown) => boolean;
-}
-
-function makeUnwrap(isInt: (v: unknown) => boolean) {
-  return function unwrap(val: unknown): unknown {
-    if (val == null) return val;
-    if (isInt(val)) return (val as unknown as { toNumber: () => number }).toNumber();
-    if (Array.isArray(val)) return val.map(unwrap);
-    if (typeof val === 'object') {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(val as Record<string, unknown>)) out[k] = unwrap(v);
-      return out;
-    }
-    return val;
-  };
-}
-
-function makeProps(unwrap: (v: unknown) => unknown) {
-  return function props(node: unknown): Record<string, unknown> {
-    const n = node as { properties?: Record<string, unknown> } | null | undefined;
-    return (unwrap(n?.properties ?? {}) as Record<string, unknown>) ?? {};
-  };
-}
-
-// ─── 1 · Use-case reasoning chain ───────────────────────────────────────────
 export interface UseCaseReasoningResult {
   useCase: Record<string, unknown>;
   vendorStack: Array<{ vendor: Record<string, unknown>; product: Record<string, unknown>; posture: Record<string, unknown> }>;
@@ -42,61 +9,6 @@ export interface UseCaseReasoningResult {
   peerEngagementsSamePattern: number;
 }
 
-export async function getUseCaseReasoning(useCaseId: string): Promise<UseCaseReasoningResult | null> {
-  const cypher = `
-    MATCH (uc:UseCase {id: $useCaseId})
-    OPTIONAL MATCH (uc)-[:USES_PRODUCT]->(p:Product)<-[:OFFERS]-(v:Vendor)
-    OPTIONAL MATCH (v)-[:HAS_POSTURE]->(posture:VendorPosture)
-    OPTIONAL MATCH (uc)-[:SUBJECT_TO]->(r:Regulation)
-    OPTIONAL MATCH (r)-[:HAS_SECTION]->(rs:RegulationSection)
-    OPTIONAL MATCH (uc)-[:TRIGGERS]->(gp:GenomePattern)
-    OPTIONAL MATCH (gp)-[:VIOLATES]->(fc:FrameworkControl)
-    OPTIONAL MATCH (uc)-[:BENCHMARKED_AGAINST]->(b:Benchmark)
-    OPTIONAL MATCH (uc)<-[:ADDRESSES]-(eng:Engagement)
-    OPTIONAL MATCH (gp)<-[:SURFACED]-(peer:Engagement)
-      WHERE peer.id <> eng.id
-        AND peer.industry_code = uc.industry_code
-    RETURN
-      uc,
-      collect(DISTINCT {vendor: v, product: p, posture: posture}) AS vendor_stack,
-      collect(DISTINCT {regulation: r, section: rs}) AS regulations,
-      collect(DISTINCT {pattern: gp, violates: fc}) AS patterns,
-      collect(DISTINCT b) AS benchmarks,
-      count(DISTINCT peer) AS peer_engagements_same_pattern
-  `;
-  return withGraphSession<UseCaseReasoningResult | null>(
-    'getUseCaseReasoning',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const props = makeProps(unwrap);
-      const res = await session.run(cypher, { useCaseId });
-      if (res.records.length === 0) return null;
-      const rec = res.records[0];
-      const stackRaw = rec.get('vendor_stack') as Array<{ vendor: unknown; product: unknown; posture: unknown }>;
-      const regsRaw = rec.get('regulations') as Array<{ regulation: unknown; section: unknown }>;
-      const patsRaw = rec.get('patterns') as Array<{ pattern: unknown; violates: unknown }>;
-      const benchRaw = rec.get('benchmarks') as unknown[];
-      return {
-        useCase: props(rec.get('uc')),
-        vendorStack: stackRaw
-          .filter((x) => x.vendor != null)
-          .map((x) => ({ vendor: props(x.vendor), product: props(x.product), posture: props(x.posture) })),
-        regulations: regsRaw
-          .filter((x) => x.regulation != null)
-          .map((x) => ({ regulation: props(x.regulation), section: props(x.section) })),
-        patterns: patsRaw
-          .filter((x) => x.pattern != null)
-          .map((x) => ({ pattern: props(x.pattern), violates: props(x.violates) })),
-        benchmarks: benchRaw.filter((b) => b != null).map((b) => props(b)),
-        peerEngagementsSamePattern: Number(unwrap(rec.get('peer_engagements_same_pattern')) ?? 0),
-      };
-    },
-    null,
-  );
-}
-
-// ─── 2 · Vendor risk profile ────────────────────────────────────────────────
 export interface VendorRiskProfile {
   vendor: Record<string, unknown>;
   posture: Record<string, unknown>;
@@ -104,50 +16,42 @@ export interface VendorRiskProfile {
   applicableRegulations: string[];
 }
 
-export async function getVendorRiskProfile(
-  vendorName: string,
-  clientIndustry: string,
-  dataClasses: string[],
-): Promise<VendorRiskProfile | null> {
-  const cypher = `
-    MATCH (v:Vendor {name: $vendorName})
-    OPTIONAL MATCH (v)-[:HAS_POSTURE]->(posture:VendorPosture)
-    OPTIONAL MATCH (v)-[:COMPLIES_WITH]->(f:Framework)
-    OPTIONAL MATCH (i:Industry {code: $clientIndustry})<-[:APPLIES_TO]-(r:Regulation)
-      WHERE ANY(topic IN $dataClasses WHERE EXISTS {
-        MATCH (r)-[:GOVERNS]->(t:Topic) WHERE t.key = topic
-      })
-    RETURN v, posture,
-      collect(DISTINCT f.code) AS complies,
-      collect(DISTINCT r.code) AS regulations
-  `;
-  return withGraphSession<VendorRiskProfile | null>(
-    'getVendorRiskProfile',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const props = makeProps(unwrap);
-      const res = await session.run(cypher, { vendorName, clientIndustry, dataClasses });
-      if (res.records.length === 0) return null;
-      const rec = res.records[0];
-      return {
-        vendor: props(rec.get('v')),
-        posture: props(rec.get('posture')),
-        compliesWith: ((unwrap(rec.get('complies')) as unknown[]) ?? []).filter((x) => typeof x === 'string') as string[],
-        applicableRegulations: ((unwrap(rec.get('regulations')) as unknown[]) ?? []).filter(
-          (x) => typeof x === 'string',
-        ) as string[],
-      };
-    },
-    null,
-  );
-}
-
-// ─── 3 · Peer benchmark ─────────────────────────────────────────────────────
 export interface PeerBenchmarkResult {
   benchmark: Record<string, unknown>;
   clientValue: number;
   percentile: number | null;
+}
+
+export interface PatternHistoryResult {
+  failureRate: number | null;
+  totalEngagements: number;
+  succeeded: number;
+  failed: number;
+  recent: Array<{ engagement: string; client: string | null; outcome: string | null }>;
+}
+
+export interface ApplicableRegulation {
+  code: string;
+  name: string;
+  jurisdiction: string | null;
+  relevantSections: Array<{ code: string; title: string }>;
+}
+
+export interface CrossClientLearning {
+  engagementId: string;
+  outcome: string | null;
+  lesson: string | null;
+  coTriggeredPatterns: string[];
+  useCases: string[];
+}
+
+function numeric(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
 }
 
 function computePercentile(clientValue: number, b: Record<string, unknown>): number | null {
@@ -162,178 +66,166 @@ function computePercentile(clientValue: number, b: Record<string, unknown>): num
   return 50;
 }
 
+export async function getUseCaseReasoning(useCaseId: string): Promise<UseCaseReasoningResult | null> {
+  const row = await azureRead.maybeSingle<Record<string, unknown>>({
+    table: 'use_cases',
+    columns: '*',
+    where: { id: useCaseId },
+    missingTable: 'empty',
+  }).catch(() => null);
+  if (!row) return null;
+
+  return {
+    useCase: row,
+    vendorStack: [],
+    regulations: [],
+    patterns: [],
+    benchmarks: [],
+    peerEngagementsSamePattern: 0,
+  };
+}
+
+export async function getVendorRiskProfile(
+  vendorName: string,
+  clientIndustry: string,
+  dataClasses: string[],
+): Promise<VendorRiskProfile | null> {
+  const row = await azureRead.maybeSingle<Record<string, unknown>>({
+    table: 'vendor_contracts',
+    columns: '*',
+    where: { vendor: vendorName },
+    missingTable: 'empty',
+  }).catch(() => null);
+  if (!row) return null;
+  return {
+    vendor: row,
+    posture: {
+      clientIndustry,
+      dataClasses,
+      source: 'azure_postgres_vendor_contracts',
+    },
+    compliesWith: [],
+    applicableRegulations: [],
+  };
+}
+
 export async function getPeerBenchmark(
   metricName: string,
   industry: string,
   clientValue: number,
 ): Promise<PeerBenchmarkResult | null> {
-  const cypher = `
-    MATCH (b:Benchmark)-[:MEASURES_IN]->(:Industry {code: $industry})
-    WHERE b.metric_name CONTAINS $metricName
-    RETURN b
-    ORDER BY b.as_of_date DESC
-    LIMIT 1
-  `;
-  return withGraphSession<PeerBenchmarkResult | null>(
-    'getPeerBenchmark',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const props = makeProps(unwrap);
-      const res = await session.run(cypher, { metricName, industry });
-      if (res.records.length === 0) return null;
-      const benchmark = props(res.records[0].get('b'));
-      return { benchmark, clientValue, percentile: computePercentile(clientValue, benchmark) };
-    },
-    null,
-  );
-}
-
-// ─── 4 · Pattern history ────────────────────────────────────────────────────
-export interface PatternHistoryResult {
-  failureRate: number | null;
-  totalEngagements: number;
-  succeeded: number;
-  failed: number;
-  recent: Array<{ engagement: string; client: string | null; outcome: string | null }>;
+  const row = await azureRead.maybeSingle<Record<string, unknown>>({
+    table: 'benchmarks',
+    columns: '*',
+    where: { metric_name: { op: 'ilike', value: `%${metricName}%` }, industry_code: industry },
+    orderBy: { column: 'as_of_date', direction: 'desc', nulls: 'last' },
+    missingTable: 'empty',
+  }).catch(() => null);
+  if (!row) return null;
+  return { benchmark: row, clientValue, percentile: computePercentile(clientValue, row) };
 }
 
 export async function getPatternHistory(
   patternCode: string,
   industry?: string,
 ): Promise<PatternHistoryResult | null> {
-  const clause = industry ? 'WHERE eng.industry_code = $industry' : '';
-  const cypher = `
-    MATCH (gp:GenomePattern {code: $patternCode})<-[:SURFACED]-(eng:Engagement)
-    ${clause}
-    OPTIONAL MATCH (eng)-[:FOR]->(c:Client)
-    RETURN
-      gp.failure_rate_pct AS failure_rate,
-      count(DISTINCT eng) AS total,
-      count(DISTINCT CASE WHEN eng.outcome = 'succeeded' THEN eng END) AS succeeded,
-      count(DISTINCT CASE WHEN eng.outcome = 'failed' THEN eng END) AS failed,
-      collect(DISTINCT {engagement: eng.id, client: c.name, outcome: eng.outcome})[0..5] AS recent
-  `;
-  return withGraphSession<PatternHistoryResult | null>(
-    'getPatternHistory',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const res = await session.run(cypher, { patternCode, industry: industry ?? null });
-      if (res.records.length === 0) return null;
-      const rec = res.records[0];
-      const fr = unwrap(rec.get('failure_rate'));
-      return {
-        failureRate: typeof fr === 'number' ? fr : null,
-        totalEngagements: Number(unwrap(rec.get('total')) ?? 0),
-        succeeded: Number(unwrap(rec.get('succeeded')) ?? 0),
-        failed: Number(unwrap(rec.get('failed')) ?? 0),
-        recent: (unwrap(rec.get('recent')) as Array<{ engagement: string; client: string | null; outcome: string | null }>) ?? [],
-      };
-    },
-    null,
-  );
-}
-
-// ─── 5 · Applicable regulations ────────────────────────────────────────────
-export interface ApplicableRegulation {
-  code: string;
-  name: string;
-  jurisdiction: string | null;
-  relevantSections: Array<{ code: string; title: string }>;
+  const pattern = await azureRead.maybeSingle<Record<string, unknown>>({
+    table: 'genome_patterns',
+    columns: ['code', 'failure_rate_pct'],
+    where: { code: patternCode },
+    missingTable: 'empty',
+  }).catch(() => null);
+  if (!pattern) return null;
+  const rows = await azureRead.query<{ engagement_id: string | null; outcome: string | null; lesson: string | null }>(
+    `
+      SELECT
+        from_node_id AS engagement_id,
+        properties->>'outcome' AS outcome,
+        properties->>'lesson' AS lesson
+      FROM enterprise_graph_edges
+      WHERE to_node_id = $1
+        AND edge_type IN ('SURFACED', 'TRIGGERED', 'cites_pattern', 'pattern_signal')
+        AND ($2::text IS NULL OR tenant_key = $2 OR properties->>'industry' = $2)
+      LIMIT 5
+    `,
+    [patternCode, industry ?? null],
+    { missingTable: 'empty' },
+  ).catch(() => []);
+  return {
+    failureRate: pattern.failure_rate_pct == null ? null : numeric(pattern.failure_rate_pct),
+    totalEngagements: rows.length,
+    succeeded: rows.filter((row) => row.outcome === 'succeeded').length,
+    failed: rows.filter((row) => row.outcome === 'failed').length,
+    recent: rows.map((row) => ({
+      engagement: row.engagement_id ?? '',
+      client: null,
+      outcome: row.outcome,
+    })),
+  };
 }
 
 export async function getApplicableRegulations(
   industryCode: string,
   topicKeys?: string[],
 ): Promise<ApplicableRegulation[]> {
-  const topicFilter = topicKeys && topicKeys.length > 0
-    ? `WHERE EXISTS {
-        MATCH (r)-[:HAS_SECTION]->(:RegulationSection)-[:GOVERNS]->(t:Topic)
-        WHERE t.key IN $topicKeys
-      }`
-    : '';
-  const cypher = `
-    MATCH (i:Industry {code: $industryCode})<-[:APPLIES_TO]-(r:Regulation)
-    ${topicFilter}
-    OPTIONAL MATCH (r)-[:HAS_SECTION]->(rs:RegulationSection)
-    RETURN
-      r.code AS code,
-      r.name AS name,
-      r.jurisdiction AS jurisdiction,
-      collect(DISTINCT {code: rs.code, title: rs.title}) AS sections
-  `;
-  return withGraphSession<ApplicableRegulation[]>(
-    'getApplicableRegulations',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const res = await session.run(cypher, { industryCode, topicKeys: topicKeys ?? [] });
-      return res.records.map((rec) => {
-        const sectionsRaw = (unwrap(rec.get('sections')) as Array<{ code: string | null; title: string | null }>) ?? [];
-        return {
-          code: String(unwrap(rec.get('code')) ?? ''),
-          name: String(unwrap(rec.get('name')) ?? ''),
-          jurisdiction: (unwrap(rec.get('jurisdiction')) as string | null) ?? null,
-          relevantSections: sectionsRaw
-            .filter((s) => s.code)
-            .map((s) => ({ code: s.code ?? '', title: s.title ?? '' })),
-        };
-      });
-    },
-    [],
-  );
-}
+  const rows = await azureRead.query<Record<string, unknown>>(
+    `
+      SELECT code, name, jurisdiction, sections
+      FROM regulations
+      WHERE industry_code = $1
+        AND ($2::text[] IS NULL OR topic_keys && $2::text[])
+      ORDER BY code ASC
+      LIMIT 50
+    `,
+    [industryCode, topicKeys && topicKeys.length ? topicKeys : null],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-// ─── 6 · Cross-client learning ─────────────────────────────────────────────
-export interface CrossClientLearning {
-  engagementId: string;
-  outcome: string | null;
-  lesson: string | null;
-  coTriggeredPatterns: string[];
-  useCases: string[];
+  return rows.map((row) => ({
+    code: String(row.code ?? ''),
+    name: String(row.name ?? ''),
+    jurisdiction: typeof row.jurisdiction === 'string' ? row.jurisdiction : null,
+    relevantSections: Array.isArray(row.sections)
+      ? row.sections
+          .filter((section): section is { code?: unknown; title?: unknown } => typeof section === 'object' && section !== null)
+          .map((section) => ({ code: String(section.code ?? ''), title: String(section.title ?? '') }))
+      : [],
+  })).filter((row) => row.code.length > 0);
 }
 
 export async function getCrossClientLearning(
   currentEngagementId: string,
   patternCode: string,
 ): Promise<CrossClientLearning[]> {
-  const cypher = `
-    MATCH (currentEng:Engagement {id: $currentEngagementId})-[:FOR]->(currentClient:Client)
-    MATCH (currentClient)-[:IN_INDUSTRY]->(i:Industry)
-    MATCH (gp:GenomePattern {code: $patternCode})<-[:SURFACED]-(peerEng:Engagement)
-      WHERE peerEng.id <> currentEng.id
-    MATCH (peerEng)-[:FOR]->(peerClient:Client)-[:IN_INDUSTRY]->(i)
-    OPTIONAL MATCH (peerEng)-[:ADDRESSES]->(peerUc:UseCase)
-    OPTIONAL MATCH (peerEng)-[:SURFACED]->(otherGp:GenomePattern)
-      WHERE otherGp <> gp
-    RETURN
-      peerEng.id AS engagement_id,
-      peerEng.outcome AS outcome,
-      peerEng.lesson_learned AS lesson,
-      collect(DISTINCT otherGp.code) AS co_triggered,
-      collect(DISTINCT peerUc.name) AS use_cases
-    ORDER BY peerEng.completed_at DESC
-    LIMIT 5
-  `;
-  return withGraphSession<CrossClientLearning[]>(
-    'getCrossClientLearning',
-    async (session) => {
-      const isInt = await lazyIsInt();
-      const unwrap = makeUnwrap(isInt);
-      const res = await session.run(cypher, { currentEngagementId, patternCode });
-      return res.records.map((rec) => ({
-        engagementId: String(unwrap(rec.get('engagement_id')) ?? ''),
-        outcome: (unwrap(rec.get('outcome')) as string | null) ?? null,
-        lesson: (unwrap(rec.get('lesson')) as string | null) ?? null,
-        coTriggeredPatterns: ((unwrap(rec.get('co_triggered')) as unknown[]) ?? []).filter(
-          (s): s is string => typeof s === 'string' && s.length > 0,
-        ),
-        useCases: ((unwrap(rec.get('use_cases')) as unknown[]) ?? []).filter(
-          (s): s is string => typeof s === 'string' && s.length > 0,
-        ),
-      }));
-    },
-    [],
-  );
+  const rows = await azureRead.query<{
+    engagement_id: string | null;
+    outcome: string | null;
+    lesson: string | null;
+    co_triggered: string[] | null;
+    use_cases: string[] | null;
+  }>(
+    `
+      SELECT
+        from_node_id AS engagement_id,
+        properties->>'outcome' AS outcome,
+        properties->>'lesson' AS lesson,
+        ARRAY[]::text[] AS co_triggered,
+        ARRAY[]::text[] AS use_cases
+      FROM enterprise_graph_edges
+      WHERE to_node_id = $2
+        AND from_node_id <> $1
+        AND edge_type IN ('SURFACED', 'TRIGGERED', 'cites_pattern', 'pattern_signal')
+      LIMIT 5
+    `,
+    [currentEngagementId, patternCode],
+    { missingTable: 'empty' },
+  ).catch(() => []);
+
+  return rows.map((row) => ({
+    engagementId: row.engagement_id ?? '',
+    outcome: row.outcome,
+    lesson: row.lesson,
+    coTriggeredPatterns: row.co_triggered ?? [],
+    useCases: row.use_cases ?? [],
+  })).filter((row) => row.engagementId.length > 0);
 }

@@ -1,13 +1,4 @@
-// Neo4j-backed graph retrieval. Every entry point runs through
-// `withGraphSession()` so that when `graph_neo4j_enabled` is OFF the
-// function returns its empty fallback shape and the `neo4j-driver`
-// module is never loaded — see `src/lib/graph/driver.ts`.
-//
-// `neo4j-driver` is dynamically imported inside the gated path so
-// nothing about Neo4j is touched at module load.
-
-import type { Integer } from 'neo4j-driver';
-import { withGraphSession } from './driver';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type {
   ActivePattern,
   ChainedPattern,
@@ -18,13 +9,53 @@ import type {
   SimilarEngagement,
 } from './types';
 
-async function lazyNeo4jRuntime(): Promise<{
-  isInt: (v: unknown) => boolean;
-  Integer: { fromNumber: (n: number) => Integer };
-}> {
-  const mod = await import('neo4j-driver');
-  return { isInt: mod.isInt as (v: unknown) => boolean, Integer: mod.Integer };
-}
+type ActivePatternRow = {
+  code: string | null;
+  name: string | null;
+  failure_rate: string | number | null;
+  failure_rate_pct: string | number | null;
+  category: string | null;
+  office_category: string | null;
+  observed_at: string | null;
+};
+
+type GenomePatternRow = {
+  code: string | null;
+  name: string | null;
+  category: string | null;
+  office_category: string | null;
+  description: string | null;
+  summary: string | null;
+  failure_rate: string | number | null;
+  failure_rate_pct: string | number | null;
+  trigger_count: string | number | null;
+};
+
+type ChainRow = {
+  from_code: string | null;
+  to_code: string | null;
+  to_name: string | null;
+  to_failure_rate: string | number | null;
+  weight: string | number | null;
+};
+
+type SimilarEngagementRow = {
+  id: string | null;
+  name: string | null;
+  industry_code: string | null;
+  status: string | null;
+  outcome_savings_usd: string | number | null;
+};
+
+type SponsorRow = {
+  id: string | null;
+  name: string | null;
+  role: string | null;
+  organization: string | null;
+  familiarity: PersonContext['familiarity'] | null;
+  past_engagement_count: string | number | null;
+  last_seen_at: string | null;
+};
 
 const FAMILIARITY_VALUES = new Set<PersonContext['familiarity']>([
   'first_meeting',
@@ -33,269 +64,268 @@ const FAMILIARITY_VALUES = new Set<PersonContext['familiarity']>([
   'frequent_collaborator',
 ]);
 
+function numeric(value: string | number | null | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
 function narrowFamiliarity(v: unknown): PersonContext['familiarity'] {
   return typeof v === 'string' && FAMILIARITY_VALUES.has(v as PersonContext['familiarity'])
     ? (v as PersonContext['familiarity'])
     : 'first_meeting';
 }
 
-function makeToNum(isInt: (v: unknown) => boolean) {
-  return function toNum(v: unknown): number {
-    if (v == null) return 0;
-    if (typeof v === 'number') return v;
-    if (isInt(v)) return (v as Integer).toNumber();
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-}
-
-const PEER_DECISIONS_CYPHER = `
-MATCH (e:Engagement {id: $engagementId})-[:IN_INDUSTRY]->(:Industry)<-[:IN_INDUSTRY]-(peer:Engagement)
-WHERE peer.id <> e.id
-MATCH (peer)-[:MADE]->(d:Decision {phase: $phase})-[:RESULTED_IN]->(o:Outcome)
-RETURN d.choice AS choice,
-       count(peer) AS engagement_count,
-       avg(o.savings_usd) AS avg_outcome_usd,
-       sum(o.savings_usd) AS total_savings_usd,
-       collect(coalesce(o.notes, '')) AS notes
-ORDER BY engagement_count DESC
-`;
-
 export async function getPeerDecisionsForPhase(
   engagementId: string,
   phase: number,
 ): Promise<PeerDecisionSummary[]> {
-  return withGraphSession<PeerDecisionSummary[]>(
-    'getPeerDecisionsForPhase',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(PEER_DECISIONS_CYPHER, { engagementId, phase });
-      return res.records.map((r) => ({
-        choice: r.get('choice') as string,
-        engagement_count: toNum(r.get('engagement_count')),
-        avg_outcome_usd: toNum(r.get('avg_outcome_usd')),
-        total_savings_usd: toNum(r.get('total_savings_usd')),
-        notes: ((r.get('notes') as unknown[]) ?? [])
-          .map((n) => (typeof n === 'string' ? n : ''))
-          .filter((n) => n.length > 0),
-      }));
-    },
-    [],
-  );
-}
+  const rows = await azureRead.query<{
+    choice: string | null;
+    engagement_count: string | number | null;
+    avg_outcome_usd: string | number | null;
+    total_savings_usd: string | number | null;
+    notes: string[] | null;
+  }>(
+    `
+      SELECT
+        coalesce(properties->>'choice', edge_type) AS choice,
+        count(*)::int AS engagement_count,
+        avg(nullif(properties->>'savings_usd', '')::numeric) AS avg_outcome_usd,
+        sum(nullif(properties->>'savings_usd', '')::numeric) AS total_savings_usd,
+        array_remove(array_agg(properties->>'notes'), NULL) AS notes
+      FROM enterprise_graph_edges
+      WHERE (client_id::text = $1 OR tenant_key = $1)
+        AND (properties->>'phase' = $2 OR source_segment_id = 'decision_history')
+      GROUP BY coalesce(properties->>'choice', edge_type)
+      ORDER BY engagement_count DESC
+      LIMIT 10
+    `,
+    [engagementId, String(phase)],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-const ACTIVE_PATTERNS_CYPHER = `
-MATCH (e:Engagement {id: $engagementId})-[r:TRIGGERED]->(p:GenomePattern)
-RETURN p.code AS code, p.name AS name, p.failure_rate AS failure_rate,
-       p.category AS category, toString(r.observed_at) AS observed_at
-ORDER BY p.failure_rate DESC
-`;
+  return rows.map((row) => ({
+    choice: row.choice ?? 'decision',
+    engagement_count: numeric(row.engagement_count),
+    avg_outcome_usd: numeric(row.avg_outcome_usd),
+    total_savings_usd: numeric(row.total_savings_usd),
+    notes: row.notes ?? [],
+  }));
+}
 
 export async function getActivePatterns(
   engagementId: string,
 ): Promise<ActivePattern[]> {
-  return withGraphSession<ActivePattern[]>(
-    'getActivePatterns',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(ACTIVE_PATTERNS_CYPHER, { engagementId });
-      return res.records.map((r) => ({
-        code: r.get('code') as string,
-        name: r.get('name') as string,
-        failure_rate: toNum(r.get('failure_rate')),
-        category: r.get('category') as string,
-        observed_at: (r.get('observed_at') as string | null) ?? null,
-      }));
-    },
-    [],
-  );
-}
+  const rows = await azureRead.query<ActivePatternRow>(
+    `
+      SELECT
+        gp.code,
+        gp.name,
+        gp.failure_rate_pct AS failure_rate_pct,
+        gp.category,
+        gp.office_category,
+        e.created_at::text AS observed_at
+      FROM enterprise_graph_edges e
+      JOIN genome_patterns gp
+        ON gp.code = e.to_node_id OR gp.code = e.from_node_id
+      WHERE (e.client_id::text = $1 OR e.tenant_key = $1 OR e.from_node_id = $1 OR e.to_node_id = $1)
+        AND e.edge_type IN ('TRIGGERED', 'triggered', 'cites_pattern', 'pattern_signal')
+      ORDER BY gp.failure_rate_pct DESC NULLS LAST, gp.code ASC
+      LIMIT 20
+    `,
+    [engagementId],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-const CHAINED_PATTERNS_CYPHER = `
-MATCH (e:Engagement {id: $engagementId})-[:TRIGGERED]->(from:GenomePattern)-[c:CHAINS_TO]->(to:GenomePattern)
-WHERE c.weight >= $minWeight
-RETURN from.code AS from_code, to.code AS to_code, to.name AS to_name,
-       to.failure_rate AS to_failure_rate, c.weight AS weight
-ORDER BY c.weight DESC
-`;
+  return rows.map((row) => ({
+    code: row.code ?? '',
+    name: row.name ?? '',
+    failure_rate: numeric(row.failure_rate ?? row.failure_rate_pct),
+    category: row.category ?? row.office_category ?? '',
+    observed_at: row.observed_at,
+  })).filter((row) => row.code.length > 0);
+}
 
 export async function getChainedPatterns(
   engagementId: string,
   minWeight: number = 0,
 ): Promise<ChainedPattern[]> {
-  return withGraphSession<ChainedPattern[]>(
-    'getChainedPatterns',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(CHAINED_PATTERNS_CYPHER, { engagementId, minWeight });
-      return res.records.map((r) => ({
-        from_code: r.get('from_code') as string,
-        to_code: r.get('to_code') as string,
-        to_name: r.get('to_name') as string,
-        to_failure_rate: toNum(r.get('to_failure_rate')),
-        weight: toNum(r.get('weight')),
-      }));
-    },
-    [],
-  );
-}
+  const rows = await azureRead.query<ChainRow>(
+    `
+      SELECT
+        e.from_node_id AS from_code,
+        e.to_node_id AS to_code,
+        gp.name AS to_name,
+        gp.failure_rate_pct AS to_failure_rate,
+        coalesce(nullif(e.properties->>'weight', '')::numeric, e.confidence, 0) AS weight
+      FROM enterprise_graph_edges e
+      LEFT JOIN genome_patterns gp ON gp.code = e.to_node_id
+      WHERE (e.client_id::text = $1 OR e.tenant_key = $1 OR e.from_node_id = $1 OR e.to_node_id = $1)
+        AND e.edge_type IN ('CHAINS_TO', 'chains_to', 'depends_on', 'amplifies')
+        AND coalesce(nullif(e.properties->>'weight', '')::numeric, e.confidence, 0) >= $2
+      ORDER BY weight DESC
+      LIMIT 20
+    `,
+    [engagementId, minWeight],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-const SIMILAR_ENGAGEMENTS_CYPHER = `
-MATCH (e:Engagement {id: $engagementId})-[:IN_INDUSTRY]->(:Industry)<-[:IN_INDUSTRY]-(peer:Engagement)
-WHERE peer.id <> e.id
-OPTIONAL MATCH (peer)-[:MADE]->(:Decision)-[:RESULTED_IN]->(o:Outcome)
-RETURN peer.id AS id, peer.name AS name, peer.industry_code AS industry_code,
-       peer.status AS status, o.savings_usd AS outcome_savings_usd
-ORDER BY peer.name LIMIT $limit
-`;
+  return rows.map((row) => ({
+    from_code: row.from_code ?? '',
+    to_code: row.to_code ?? '',
+    to_name: row.to_name ?? '',
+    to_failure_rate: numeric(row.to_failure_rate),
+    weight: numeric(row.weight),
+  })).filter((row) => row.from_code.length > 0 && row.to_code.length > 0);
+}
 
 export async function getSimilarEngagements(
   engagementId: string,
   limit: number = 10,
 ): Promise<SimilarEngagement[]> {
-  return withGraphSession<SimilarEngagement[]>(
-    'getSimilarEngagements',
-    async (session) => {
-      const { isInt, Integer } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(SIMILAR_ENGAGEMENTS_CYPHER, {
-        engagementId,
-        limit: Integer.fromNumber(limit),
-      });
-      return res.records.map((r) => ({
-        id: r.get('id') as string,
-        name: r.get('name') as string,
-        industry_code: r.get('industry_code') as string,
-        status: r.get('status') as string,
-        outcome_savings_usd:
-          r.get('outcome_savings_usd') == null ? null : toNum(r.get('outcome_savings_usd')),
-      }));
-    },
-    [],
-  );
+  const rows = await azureRead.query<SimilarEngagementRow>(
+    `
+      WITH target AS (
+        SELECT industry_code
+        FROM engagements
+        WHERE id::text = $1 OR graph_node_id = $1
+        LIMIT 1
+      )
+      SELECT
+        e.id::text AS id,
+        e.name,
+        e.industry_code,
+        e.status,
+        null::numeric AS outcome_savings_usd
+      FROM engagements e, target t
+      WHERE e.industry_code = t.industry_code
+        AND e.id::text <> $1
+      ORDER BY e.name ASC
+      LIMIT $2
+    `,
+    [engagementId, Math.min(Math.max(limit, 1), 25)],
+    { missingTable: 'empty' },
+  ).catch(() => []);
+
+  return rows.map((row) => ({
+    id: row.id ?? '',
+    name: row.name ?? '',
+    industry_code: row.industry_code ?? '',
+    status: row.status ?? '',
+    outcome_savings_usd: row.outcome_savings_usd == null ? null : numeric(row.outcome_savings_usd),
+  })).filter((row) => row.id.length > 0);
 }
 
-const SPONSOR_CYPHER = `
-MATCH (sponsor:Person)-[:SPONSORED]->(e:Engagement {id: $engagementId})
-OPTIONAL MATCH (sponsor)-[:SPONSORED|LED]->(prior:Engagement)
-WHERE prior.id <> e.id
-RETURN sponsor.id AS id, sponsor.name AS name, sponsor.role AS role,
-       sponsor.organization AS organization,
-       coalesce(sponsor.familiarity, 'first_meeting') AS familiarity,
-       count(prior) AS past_engagement_count,
-       toString(sponsor.last_seen_at) AS last_seen_at
-`;
-
-const ALL_PATTERNS_CYPHER = `
-MATCH (p:GenomePattern)
-OPTIONAL MATCH (p)<-[t:TRIGGERED]-(:Engagement)
-RETURN p.code AS code, p.name AS name, p.failure_rate AS failure_rate,
-       p.category AS category, count(t) AS trigger_count
-ORDER BY p.failure_rate DESC
-`;
-
 export async function getAllGenomePatterns(): Promise<GenomePatternSummary[]> {
-  return withGraphSession<GenomePatternSummary[]>(
-    'getAllGenomePatterns',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(ALL_PATTERNS_CYPHER);
-      return res.records.map((r) => ({
-        code: r.get('code') as string,
-        name: r.get('name') as string,
-        failure_rate: toNum(r.get('failure_rate')),
-        category: r.get('category') as string,
-        trigger_count: toNum(r.get('trigger_count')),
-      }));
-    },
+  const rows = await azureRead.query<GenomePatternRow>(
+    `
+      SELECT
+        gp.code,
+        gp.name,
+        gp.failure_rate_pct,
+        gp.category,
+        gp.office_category,
+        count(e.edge_id)::int AS trigger_count
+      FROM genome_patterns gp
+      LEFT JOIN enterprise_graph_edges e
+        ON gp.code = e.to_node_id
+       AND e.edge_type IN ('TRIGGERED', 'triggered', 'cites_pattern', 'pattern_signal')
+      GROUP BY gp.code, gp.name, gp.failure_rate_pct, gp.category, gp.office_category
+      ORDER BY gp.failure_rate_pct DESC NULLS LAST, gp.code ASC
+      LIMIT 500
+    `,
     [],
-  );
+    { missingTable: 'empty' },
+  ).catch(() => []);
+
+  return rows.map((row) => ({
+    code: row.code ?? '',
+    name: row.name ?? '',
+    failure_rate: numeric(row.failure_rate ?? row.failure_rate_pct),
+    category: row.category ?? row.office_category ?? '',
+    trigger_count: numeric(row.trigger_count),
+  })).filter((row) => row.code.length > 0);
 }
 
 export async function getGenomePatternDetail(code: string): Promise<GenomePatternDetail | null> {
-  return withGraphSession<GenomePatternDetail | null>(
-    'getGenomePatternDetail',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const patternRes = await session.run(
-        `MATCH (p:GenomePattern {code: $code}) RETURN p`,
-        { code },
-      );
-      if (patternRes.records.length === 0) return null;
-      const p = (patternRes.records[0].get('p') as { properties: Record<string, unknown> }).properties;
+  const pattern = await azureRead.maybeSingle<GenomePatternRow>({
+    table: 'genome_patterns',
+    columns: ['code', 'name', 'category', 'office_category', 'description', 'summary', 'failure_rate_pct'],
+    where: { code },
+    missingTable: 'empty',
+  }).catch(() => null);
+  if (!pattern?.code) return null;
 
-      const engRes = await session.run(
-        `MATCH (p:GenomePattern {code: $code})<-[:TRIGGERED]-(e:Engagement)
-         OPTIONAL MATCH (e)-[:IN_INDUSTRY]->(i:Industry)
-         RETURN e.id AS id, e.name AS name, e.current_phase AS phase, i.code AS industry`,
-        { code },
-      );
+  const chainsTo = await azureRead.query<ChainRow>(
+    `
+      SELECT e.to_node_id AS to_code, gp.name AS to_name,
+             coalesce(nullif(e.properties->>'weight', '')::numeric, e.confidence, 0) AS weight
+      FROM enterprise_graph_edges e
+      LEFT JOIN genome_patterns gp ON gp.code = e.to_node_id
+      WHERE e.from_node_id = $1
+        AND e.edge_type IN ('CHAINS_TO', 'chains_to', 'depends_on', 'amplifies')
+      ORDER BY weight DESC
+      LIMIT 20
+    `,
+    [code],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-      const toRes = await session.run(
-        `MATCH (p:GenomePattern {code: $code})-[c:CHAINS_TO]->(t:GenomePattern)
-         RETURN t.code AS code, t.name AS name, c.weight AS weight`,
-        { code },
-      );
+  const chainsFrom = await azureRead.query<{ from_code: string | null; from_name: string | null; weight: string | number | null }>(
+    `
+      SELECT e.from_node_id AS from_code, gp.name AS from_name,
+             coalesce(nullif(e.properties->>'weight', '')::numeric, e.confidence, 0) AS weight
+      FROM enterprise_graph_edges e
+      LEFT JOIN genome_patterns gp ON gp.code = e.from_node_id
+      WHERE e.to_node_id = $1
+        AND e.edge_type IN ('CHAINS_TO', 'chains_to', 'depends_on', 'amplifies')
+      ORDER BY weight DESC
+      LIMIT 20
+    `,
+    [code],
+    { missingTable: 'empty' },
+  ).catch(() => []);
 
-      const fromRes = await session.run(
-        `MATCH (f:GenomePattern)-[c:CHAINS_TO]->(p:GenomePattern {code: $code})
-         RETURN f.code AS code, f.name AS name, c.weight AS weight`,
-        { code },
-      );
-
-      return {
-        code: (p.code as string) ?? code,
-        name: (p.name as string) ?? '',
-        category: (p.category as string) ?? '',
-        description: (p.description as string | null) ?? null,
-        failure_rate: toNum(p.failure_rate),
-        engagements_triggering: engRes.records.map((r) => ({
-          graph_node_id: r.get('id') as string,
-          name: r.get('name') as string,
-          industry: (r.get('industry') as string) ?? 'unknown',
-          current_phase: toNum(r.get('phase')),
-        })),
-        chains_to: toRes.records.map((r) => ({
-          to_code: r.get('code') as string,
-          to_name: r.get('name') as string,
-          weight: toNum(r.get('weight')),
-        })),
-        chains_from: fromRes.records.map((r) => ({
-          from_code: r.get('code') as string,
-          from_name: r.get('name') as string,
-          weight: toNum(r.get('weight')),
-        })),
-      };
-    },
-    null,
-  );
+  return {
+    code: pattern.code,
+    name: pattern.name ?? '',
+    category: pattern.category ?? pattern.office_category ?? '',
+    description: pattern.description ?? pattern.summary ?? null,
+    failure_rate: numeric(pattern.failure_rate ?? pattern.failure_rate_pct),
+    engagements_triggering: [],
+    chains_to: chainsTo.map((row) => ({
+      to_code: row.to_code ?? '',
+      to_name: row.to_name ?? '',
+      weight: numeric(row.weight),
+    })).filter((row) => row.to_code.length > 0),
+    chains_from: chainsFrom.map((row) => ({
+      from_code: row.from_code ?? '',
+      from_name: row.from_name ?? '',
+      weight: numeric(row.weight),
+    })).filter((row) => row.from_code.length > 0),
+  };
 }
 
 export async function getSponsorContext(engagementId: string): Promise<PersonContext | null> {
-  return withGraphSession<PersonContext | null>(
-    'getSponsorContext',
-    async (session) => {
-      const { isInt } = await lazyNeo4jRuntime();
-      const toNum = makeToNum(isInt);
-      const res = await session.run(SPONSOR_CYPHER, { engagementId });
-      if (res.records.length === 0) return null;
-      const r = res.records[0];
-      if (r.get('id') == null) return null;
-      return {
-        id: r.get('id') as string,
-        name: r.get('name') as string,
-        role: r.get('role') as string,
-        organization: r.get('organization') as string,
-        familiarity: narrowFamiliarity(r.get('familiarity')),
-        past_engagement_count: toNum(r.get('past_engagement_count')),
-        last_seen_at: (r.get('last_seen_at') as string | null) ?? null,
-      };
-    },
-    null,
-  );
+  const row = await azureRead.maybeSingle<SponsorRow>({
+    table: 'engagements',
+    columns: ['sponsor_id', 'sponsor_name', 'sponsor_role', 'client_name', 'updated_at'],
+    where: { id: engagementId },
+    missingTable: 'empty',
+  }).catch(() => null);
+
+  if (!row?.id && !row?.name) return null;
+  return {
+    id: row.id ?? engagementId,
+    name: row.name ?? 'Sponsor',
+    role: row.role ?? 'Sponsor',
+    organization: row.organization ?? 'Client organization',
+    familiarity: narrowFamiliarity(row.familiarity),
+    past_engagement_count: numeric(row.past_engagement_count),
+    last_seen_at: row.last_seen_at,
+  };
 }

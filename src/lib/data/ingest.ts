@@ -1,21 +1,10 @@
-import { Pinecone } from '@pinecone-database/pinecone';
-import { clientVectorNamespace } from '@/lib/knowledge/client-vector-namespace';
+import { createHash } from 'node:crypto';
+import { azureRead } from '@/lib/data-plane/azureRead';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
-// Matches scripts/ingest-knowledge.ts conventions
-const EMBED_MODEL = 'multilingual-e5-large';
 const CHUNK_SIZE = 800; // words
 const CHUNK_OVERLAP = 100; // words
-const EMBED_BATCH = 48;
 const UPSERT_BATCH = 100;
-
-let pc: Pinecone | null = null;
-function getPinecone(): Pinecone {
-  if (pc) return pc;
-  const apiKey = process.env.PINECONE_API_KEY;
-  if (!apiKey) throw new Error('Missing PINECONE_API_KEY');
-  pc = new Pinecone({ apiKey });
-  return pc;
-}
 
 function chunkText(text: string): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -27,15 +16,6 @@ function chunkText(text: string): string[] {
     i += CHUNK_SIZE - CHUNK_OVERLAP;
   }
   return chunks;
-}
-
-async function embedBatch(texts: string[]): Promise<number[][]> {
-  const res = await getPinecone().inference.embed({
-    model: EMBED_MODEL,
-    inputs: texts,
-    parameters: { inputType: 'passage', truncate: 'END' },
-  });
-  return (res.data as Array<{ values: number[] }>).map((r) => r.values);
 }
 
 async function parseFileToText(
@@ -69,14 +49,38 @@ export interface IngestResult {
   namespace: string;
 }
 
+async function resolveTenantKey(clientId: string): Promise<string> {
+  const row = await azureRead.maybeSingle<{ tenant_key: string | null; slug: string | null }>({
+    table: 'clients',
+    columns: ['tenant_key', 'slug'],
+    where: { id: clientId },
+    missingTable: 'empty',
+  }).catch(() => null);
+  return row?.tenant_key ?? row?.slug ?? clientId;
+}
+
+function stableChunkId(clientId: string, filename: string, index: number, text: string): string {
+  const digest = createHash('sha256')
+    .update(clientId)
+    .update('\n')
+    .update(filename)
+    .update('\n')
+    .update(String(index))
+    .update('\n')
+    .update(text)
+    .digest('hex')
+    .slice(0, 24);
+  return `upload-${digest}`;
+}
+
 export async function ingestClientFile(args: {
   clientId: string;
   filename: string;
   bytes: Uint8Array;
 }): Promise<IngestResult> {
   const { clientId, filename, bytes } = args;
-  const namespace = clientVectorNamespace(clientId);
-  const indexName = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
+  const tenantKey = await resolveTenantKey(clientId);
+  const namespace = `enterprise_context_chunks:${tenantKey}`;
 
   const text = await parseFileToText(filename, bytes);
   const chunks = chunkText(text);
@@ -84,33 +88,43 @@ export async function ingestClientFile(args: {
     return { filename, chunks: 0, namespace };
   }
 
-  const embeddings: number[][] = [];
-  for (let b = 0; b < chunks.length; b += EMBED_BATCH) {
-    const slice = chunks.slice(b, b + EMBED_BATCH);
-    const out = await embedBatch(slice);
-    embeddings.push(...out);
-    if (b + EMBED_BATCH < chunks.length) {
-      await new Promise((r) => setTimeout(r, 80));
-    }
-  }
-
   const uploadedAt = new Date().toISOString();
-  const idx = getPinecone().index(indexName).namespace(namespace);
-  const vectors = chunks.map((chunk, i) => ({
-    id: `client_${clientId}__${filename}__${i}`,
-    values: embeddings[i],
-    metadata: {
-      layer: 'client',
-      client_id: clientId,
+  const rows = chunks.map((chunk, i) => ({
+    client_id: clientId,
+    tenant_key: tenantKey,
+    chunk_id: stableChunkId(clientId, filename, i, chunk),
+    source_segment_id: 'uploaded_document',
+    source_doc: filename,
+    source_path: `upload://${tenantKey}/${filename}`,
+    chunk_index: i,
+    chunk_text: chunk,
+    token_count: chunk.split(/\s+/).filter(Boolean).length,
+    embedding_status: 'pending',
+    embedding_model: null,
+    embedded_at: null,
+    embedding: null,
+    embedding_dim: null,
+    embedding_error: null,
+    provenance: {
+      source: 'user_upload',
       filename,
-      chunk_index: i,
+      uploaded_at: uploadedAt,
+    },
+    chunk_metadata: {
+      layer: 'client',
+      filename,
       total_chunks: chunks.length,
       uploaded_at: uploadedAt,
-      text: chunk.substring(0, 1200),
+      storage: 'azure_postgres_enterprise_context_chunks',
     },
   }));
-  for (let u = 0; u < vectors.length; u += UPSERT_BATCH) {
-    await idx.upsert({ records: vectors.slice(u, u + UPSERT_BATCH) });
+
+  const db = getAzureWriteFluentClient();
+  for (let u = 0; u < rows.length; u += UPSERT_BATCH) {
+    const { error } = await db
+      .from('enterprise_context_chunks')
+      .upsert(rows.slice(u, u + UPSERT_BATCH), { onConflict: 'tenant_key,chunk_id' });
+    if (error) throw new Error(`enterprise_context_chunks upload failed: ${error.message}`);
   }
 
   return { filename, chunks: chunks.length, namespace };

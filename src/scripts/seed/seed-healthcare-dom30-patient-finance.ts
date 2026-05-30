@@ -6,10 +6,9 @@
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom30-patient-finance.ts
 
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
 
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
@@ -938,7 +937,7 @@ const HEALTHCARE_PATIENT_FINANCE_PATTERNS: HealthcarePatternSeed[] = [
 
 // ── Seed runner ────────────────────────────────────────────────────────────────
 
-async function seedHealthcarePatientFinancePatterns(client: SupabaseClient): Promise<void> {
+async function seedHealthcarePatientFinancePatterns(client: SeedClient): Promise<void> {
   const vertical = 'healthcare_provider';
   const demoTenant = 'meridian-health';
 

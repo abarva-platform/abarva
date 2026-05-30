@@ -1,6 +1,4 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
-import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
-import { isNeo4jEnabled } from '@/lib/graph/neo4j-gate';
 import { Pool } from 'pg';
 
 export const runtime = 'nodejs';
@@ -58,38 +56,10 @@ export async function GET() {
     checks.direct_postgres_error = statusFromError(err);
   }
 
-  // When `graph_neo4j_enabled` is OFF (the default after the gate PR)
-  // the Neo4j probe is intentionally skipped — Postgres
-  // `enterprise_graph_*` tables are the system of record and the
-  // unhealthy Azure Neo4j resource is on the deprecation path. The
-  // probe returns `'skipped'` rather than `false` so dashboards do not
-  // light up red for an expected condition.
-  if (!isNeo4jEnabled()) {
-    checks.neo4j = 'skipped';
-  } else {
-    try {
-      const driver = await getGraphDriverIfEnabled();
-      if (!driver) {
-        checks.neo4j = 'skipped';
-      } else {
-        const session = driver.session();
-        await session.run('RETURN 1 AS ok');
-        await session.close();
-        checks.neo4j = true;
-      }
-    } catch (err) {
-      checks.neo4j = false;
-      checks.neo4j_error = statusFromError(err);
-    }
-  }
+  checks.azure_graph = 'postgres';
 
-  // `allOk` no longer requires `neo4j === true`. Postgres remains
-  // load-bearing; direct Postgres is an acceptable fallback when the
-  // read-adapter probe is degraded, because both probes exercise the same
-  // DATABASE_URL substrate in Vercel production.
-  const neo4jOk = checks.neo4j === true || checks.neo4j === 'skipped';
   const postgresOk = checks.postgres === true || checks.direct_postgres === true;
-  const allOk = postgresOk && neo4jOk;
+  const allOk = postgresOk;
 
   return new Response(JSON.stringify({ ok: allOk, checks }, null, 2), {
     status: allOk ? 200 : 503,

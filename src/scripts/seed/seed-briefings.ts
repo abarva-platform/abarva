@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey, type SeedClient } from './seed-wave-lib';
 
 interface ClientRow {
   id: string;
@@ -55,7 +54,7 @@ interface BriefingSeed {
   }>;
 }
 
-async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<ClientRow> {
+async function resolveClient(sb: SeedClient, tenantKey: TenantKey): Promise<ClientRow> {
   const tenant = TENANTS[tenantKey];
   for (const field of [
     { column: 'name', value: tenant.shortName },
@@ -74,7 +73,7 @@ async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<
   throw new Error(`Client missing for ${tenant.canonicalName}. Run base seeds first.`);
 }
 
-async function resolvePerson(sb: SupabaseClient, organization: string, name: string): Promise<PersonRow> {
+async function resolvePerson(sb: SeedClient, organization: string, name: string): Promise<PersonRow> {
   const { data, error } = await sb
     .from('persons')
     .select('id, name')
@@ -87,7 +86,7 @@ async function resolvePerson(sb: SupabaseClient, organization: string, name: str
   return data as PersonRow;
 }
 
-async function upsertRows(sb: SupabaseClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
+async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
   if (rows.length === 0) return;
   const batchSize = 50;
   for (let idx = 0; idx < rows.length; idx += batchSize) {

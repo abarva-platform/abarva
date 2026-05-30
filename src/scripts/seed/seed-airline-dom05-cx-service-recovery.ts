@@ -1,9 +1,8 @@
 // Airline genome patterns — Customer Experience, Contact Centre & Service Recovery
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, slugify } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from './seed-wave-lib';
 
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';
 
@@ -904,7 +903,7 @@ function graphEdgesFor(pattern: AirlinePatternSeed): Array<Record<string, unknow
 }
 
 async function upsertRows(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
   onConflict: string,

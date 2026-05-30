@@ -1,8 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { deterministicUuid } from './contradiction-engine-lib';
-import { createSeedClient, loadSeedEnv, TENANTS } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type SeedClient } from './seed-wave-lib';
 
 interface ClientRow {
   id: string;
@@ -265,7 +264,7 @@ const CONTRADICTIONS: ContradictionSeed[] = [
   },
 ];
 
-async function resolveApexClient(sb: SupabaseClient): Promise<ClientRow> {
+async function resolveApexClient(sb: SeedClient): Promise<ClientRow> {
   for (const field of [
     { column: 'name', value: TENANTS.apex.shortName },
     { column: 'name', value: TENANTS.apex.canonicalName },
@@ -284,7 +283,7 @@ async function resolveApexClient(sb: SupabaseClient): Promise<ClientRow> {
 }
 
 async function upsertRows(
-  sb: SupabaseClient,
+  sb: SeedClient,
   table: string,
   rows: Array<Record<string, unknown>>,
   onConflict: string,

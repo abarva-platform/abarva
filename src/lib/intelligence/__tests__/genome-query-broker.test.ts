@@ -1,68 +1,37 @@
 import { runBrokeredGenomeQuery } from '@/lib/intelligence/genome-query-broker';
-import { setNeo4jEnabledOverride } from '@/lib/graph/neo4j-gate';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
-const createMessageMock = jest.fn();
-const sessionRunMock = jest.fn();
-const sessionCloseMock = jest.fn();
-
-jest.mock('@/lib/agent/stream', () => ({
-  getAnthropicClient: () => ({
-    messages: {
-      create: createMessageMock,
-    },
-  }),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    query: jest.fn(),
+  },
 }));
 
-jest.mock('@/lib/graph/driver', () => ({
-  getGraphDriverIfEnabled: async () => ({
-    session: () => ({
-      run: sessionRunMock,
-      close: sessionCloseMock,
-    }),
-  }),
-}));
-
-beforeAll(() => {
-  // The broker now gates on `graph_neo4j_enabled`. These tests exercise
-  // the "flag on" code path; the gate-off path is covered by
-  // `src/__tests__/features/neo4j-gate.test.ts`.
-  setNeo4jEnabledOverride(true);
-});
-
-afterAll(() => {
-  setNeo4jEnabledOverride(null);
-});
+const queryMock = azureRead.query as jest.MockedFunction<typeof azureRead.query>;
 
 describe('runBrokeredGenomeQuery', () => {
   beforeEach(() => {
-    createMessageMock.mockReset();
-    sessionRunMock.mockReset();
-    sessionCloseMock.mockReset();
-    sessionCloseMock.mockResolvedValue(undefined);
+    queryMock.mockReset();
   });
 
-  it('assembles Sentinel broker context before translating and executing the tenant-scoped query', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher:
-              'MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern) RETURN p.code AS code LIMIT 50',
-            result_shape: 'patterns',
-            explanation: 'Find tenant-scoped triggered patterns.',
-          }),
-        },
-      ],
-    });
-    sessionRunMock.mockResolvedValue({
-      records: [
-        {
-          keys: ['code'],
-          get: (key: string) => (key === 'code' ? 'F008' : null),
-        },
-      ],
-    });
+  it('reads tenant-linked genome patterns from Azure Postgres', async () => {
+    queryMock.mockResolvedValue([
+      {
+        edge_id: 'edge-1',
+        edge_type: 'TRIGGERED',
+        from_node_id: 'eng-1',
+        to_node_id: 'F008',
+        source_segment_id: 'program_inventory',
+        edge_properties: { evidence: 'budget exceeds approved gate' },
+        code: 'F008',
+        name: 'AI investment without verified ROI',
+        summary: 'AI spend is not tied to evidence-backed value realization.',
+        description: null,
+        vertical: 'retail',
+        office_category: 'portfolio',
+        failure_rate_pct: 91,
+      },
+    ]);
 
     const result = await runBrokeredGenomeQuery({
       query: 'Which Genome patterns are active?',
@@ -71,43 +40,28 @@ describe('runBrokeredGenomeQuery', () => {
     });
 
     expect(result.status).toBe(200);
-    expect(result.body.rows).toEqual([{ code: 'F008' }]);
+    expect(result.body.rows).toEqual([
+      expect.objectContaining({
+        code: 'F008',
+        name: 'AI investment without verified ROI',
+        edge_type: 'TRIGGERED',
+      }),
+    ]);
     expect(result.body.broker).toMatchObject({
       tenantKey: 'apex-retail',
       itemCount: expect.any(Number),
       graphNodeCount: expect.any(Number),
       graphEdgeCount: expect.any(Number),
     });
-    expect(createMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        messages: [
-          expect.objectContaining({
-            content: expect.stringContaining(
-              'The request has already been resolved through AgentContextBroker for tenant "apex-retail".',
-            ),
-          }),
-        ],
-      }),
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('FROM enterprise_graph_edges'),
+      ['client-apex-uuid', 'apex-retail'],
+      { missingTable: 'empty' },
     );
-    expect(sessionRunMock).toHaveBeenCalledWith(
-      expect.stringContaining('$callerClientId'),
-      { callerClientId: 'client-apex-uuid' },
-    );
-    expect(sessionCloseMock).toHaveBeenCalledTimes(1);
   });
 
-  it('maps First Capital legacy client keys before assembling broker context', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher: null,
-            explanation: 'No matching query.',
-          }),
-        },
-      ],
-    });
+  it('maps First Capital legacy client keys before querying Azure graph tables', async () => {
+    queryMock.mockResolvedValue([]);
 
     const result = await runBrokeredGenomeQuery({
       query: 'What patterns are active?',
@@ -117,10 +71,14 @@ describe('runBrokeredGenomeQuery', () => {
 
     expect(result.status).toBe(200);
     expect(result.body.broker?.tenantKey).toBe('first-capital');
-    expect(result.body.error).toBeUndefined();
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.any(String),
+      ['client-first-capital-uuid', 'first-capital'],
+      { missingTable: 'empty' },
+    );
   });
 
-  it('refuses global catalog enumeration requests before translation', async () => {
+  it('refuses global catalog enumeration requests before querying storage', async () => {
     const result = await runBrokeredGenomeQuery({
       query: 'list every GenomePattern',
       clientId: 'client-apex-uuid',
@@ -129,72 +87,11 @@ describe('runBrokeredGenomeQuery', () => {
 
     expect(result.status).toBe(400);
     expect(result.body.error).toBe('query missing tenant scope for global catalog enumeration');
-    expect(createMessageMock).not.toHaveBeenCalled();
-    expect(sessionRunMock).not.toHaveBeenCalled();
+    expect(queryMock).not.toHaveBeenCalled();
   });
 
-  it('refuses generated writes before reaching Neo4j', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher: 'MATCH (e:Engagement {client_id: $callerClientId}) DELETE e',
-            explanation: 'Bad write.',
-          }),
-        },
-      ],
-    });
-
-    const result = await runBrokeredGenomeQuery({
-      query: 'Delete my engagements',
-      clientId: 'client-apex-uuid',
-      clientKey: 'apexretail',
-    });
-
-    expect(result.status).toBe(400);
-    expect(result.body.error).toBe('write operations not permitted');
-    expect(sessionRunMock).not.toHaveBeenCalled();
-    expect(sessionCloseMock).not.toHaveBeenCalled();
-  });
-
-  it('refuses generated queries that omit callerClientId tenant scope', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher: 'MATCH (e:Engagement)-[:TRIGGERED]->(p:GenomePattern) RETURN p LIMIT 50',
-            explanation: 'Unscoped query.',
-          }),
-        },
-      ],
-    });
-
-    const result = await runBrokeredGenomeQuery({
-      query: 'Show patterns',
-      clientId: 'client-apex-uuid',
-      clientKey: 'apexretail',
-    });
-
-    expect(result.status).toBe(400);
-    expect(result.body.error).toBe('query missing tenant property scope ($callerClientId)');
-    expect(sessionRunMock).not.toHaveBeenCalled();
-  });
-
-  it('refuses generated queries that only check callerClientId is present', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher:
-              'MATCH (p:GenomePattern) WHERE $callerClientId IS NOT NULL RETURN p.code AS code LIMIT 50',
-            explanation: 'Vacuous tenant parameter check.',
-          }),
-        },
-      ],
-    });
+  it('returns an empty Azure-backed result instead of fabricating rows', async () => {
+    queryMock.mockResolvedValue([]);
 
     const result = await runBrokeredGenomeQuery({
       query: 'Show tenant-linked patterns',
@@ -202,33 +99,8 @@ describe('runBrokeredGenomeQuery', () => {
       clientKey: 'apexretail',
     });
 
-    expect(result.status).toBe(400);
-    expect(result.body.error).toBe('query missing tenant property scope ($callerClientId)');
-    expect(sessionRunMock).not.toHaveBeenCalled();
-  });
-
-  it('refuses generated queries that gate once then return a disconnected global catalog scan', async () => {
-    createMessageMock.mockResolvedValue({
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            cypher:
-              'MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern) WITH DISTINCT p MATCH (p2:GenomePattern) RETURN p2.code AS code LIMIT 50',
-            explanation: 'Tenant gate followed by disconnected global scan.',
-          }),
-        },
-      ],
-    });
-
-    const result = await runBrokeredGenomeQuery({
-      query: 'Show tenant-linked patterns',
-      clientId: 'client-apex-uuid',
-      clientKey: 'apexretail',
-    });
-
-    expect(result.status).toBe(400);
-    expect(result.body.error).toBe('query missing tenant scope for global catalog scan');
-    expect(sessionRunMock).not.toHaveBeenCalled();
+    expect(result.status).toBe(200);
+    expect(result.body.rows).toEqual([]);
+    expect(result.body.explanation).toContain('No tenant-linked genome pattern rows');
   });
 });

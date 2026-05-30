@@ -12,7 +12,7 @@
 The `genome_patterns` table is the foundation of AbarVa's Intelligence surface. Every pattern is a
 named, scored failure mode that the AI retrieval layer surfaces when a CXO asks "what should I
 worry about?" in their domain. This task is pure content generation: write TypeScript seed scripts
-that upsert patterns into Supabase, following the exact format of the reference files below.
+that upsert patterns into the Azure Postgres private data plane, following the exact format of the reference files below.
 
 ---
 

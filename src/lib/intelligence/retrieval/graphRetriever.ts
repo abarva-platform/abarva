@@ -1,10 +1,10 @@
-// Graph retrieval via Postgres recursive CTEs over existing tables.
-// No Neo4j per spec §9.0 locked-decision (Postgres-only).
+// Graph retrieval via Azure Postgres reads over existing tables.
+// Graph context stays inside the Azure private data plane.
 //
-// Walks: client → engagements → use_cases → applications → integrations
+// Walks: client -> engagements -> use_cases -> applications -> integrations
 // and the contradictions edges. Every query scoped by client_id tenancy.
 
-import { getIntelSupabase } from '../db/client';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { RetrievalResult, Source, TenancyCtx } from '../types';
 
 export interface GraphWalkArgs {
@@ -36,25 +36,21 @@ interface ContradictionRow {
   impact: Record<string, unknown> | null;
 }
 
-/**
- * Graph walk returns structured "claims" — each is a source-linked fact
- * about the client's program network. Max 20 claims per walk.
- */
 export async function graphWalk(args: GraphWalkArgs): Promise<RetrievalResult> {
   const started = Date.now();
-  const sb = getIntelSupabase();
   const claims: RetrievalResult['claims'] = [];
   let partial = false;
 
   try {
-    // 1 · Use cases at this client
-    const ucQ = sb
-      .from('use_cases')
-      .select('id, title, description, engagement_id, business_function, value_hypothesis')
-      .eq('client_id', args.tenancy.clientId)
-      .limit(10);
-    const { data: ucs } = await ucQ;
-    for (const uc of ((ucs as UseCaseRow[] | null) ?? [])) {
+    const ucs = await azureRead.query<UseCaseRow>(
+      `SELECT id, title, description, engagement_id, business_function, value_hypothesis
+         FROM use_cases
+        WHERE client_id::text = $1
+        LIMIT 10`,
+      [args.tenancy.clientId],
+      { missingTable: 'empty' },
+    );
+    for (const uc of ucs) {
       const source: Source = {
         id: `usecase:${uc.id}`,
         type: 'engagement',
@@ -69,15 +65,16 @@ export async function graphWalk(args: GraphWalkArgs): Promise<RetrievalResult> {
       });
     }
 
-    // 2 · Applications (vendor deployments)
-    const vendorQ = sb
-      .from('applications')
-      .select('id, vendor_name, product_name, business_function')
-      .eq('client_id', args.tenancy.clientId)
-      .not('vendor_name', 'is', null)
-      .limit(10);
-    const { data: vendors } = await vendorQ;
-    for (const v of ((vendors as VendorRow[] | null) ?? [])) {
+    const vendors = await azureRead.query<VendorRow>(
+      `SELECT id, vendor_name, product_name, business_function
+         FROM applications
+        WHERE client_id::text = $1
+          AND vendor_name IS NOT NULL
+        LIMIT 10`,
+      [args.tenancy.clientId],
+      { missingTable: 'empty' },
+    );
+    for (const v of vendors) {
       claims.push({
         text: `${v.vendor_name}${v.product_name ? ` / ${v.product_name}` : ''}${v.business_function ? ` · ${v.business_function}` : ''}`,
         source: { id: `app:${v.id}`, type: 'vendor', name: v.vendor_name, detail: v.product_name ?? undefined, confidence: 'high' },
@@ -85,15 +82,16 @@ export async function graphWalk(args: GraphWalkArgs): Promise<RetrievalResult> {
       });
     }
 
-    // 3 · Open contradictions
-    const contraQ = sb
-      .from('contradictions')
-      .select('id, contradiction_type, summary, severity, impact')
-      .eq('client_id', args.tenancy.clientId)
-      .is('resolved_at', null)
-      .limit(5);
-    const { data: contras } = await contraQ;
-    for (const c of ((contras as ContradictionRow[] | null) ?? [])) {
+    const contras = await azureRead.query<ContradictionRow>(
+      `SELECT id, contradiction_type, summary, severity, impact
+         FROM contradictions
+        WHERE client_id::text = $1
+          AND resolved_at IS NULL
+        LIMIT 5`,
+      [args.tenancy.clientId],
+      { missingTable: 'empty' },
+    );
+    for (const c of contras) {
       const sev = c.severity ?? 'medium';
       const conf = sev === 'high' ? 'high' : sev === 'low' ? 'low' : 'medium';
       claims.push({

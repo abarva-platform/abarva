@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey } from './seed-wave-lib';
+import { createSeedClient, loadSeedEnv, TENANTS, type TenantKey, type SeedClient } from './seed-wave-lib';
 import {
   COMPOSITE_EXECUTIVE_PROFILES,
   EXECUTIVE_PROFILE_ACCESS_SCOPES,
@@ -25,7 +24,7 @@ function wantsRealWorldProfiles(): boolean {
   return process.argv.includes('--include-real-world') || process.env.ALLOW_REAL_WORLD_EXEC_PROFILES === '1';
 }
 
-async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<ClientRow> {
+async function resolveClient(sb: SeedClient, tenantKey: TenantKey): Promise<ClientRow> {
   const tenant = TENANTS[tenantKey];
   for (const field of [
     { column: 'name', value: tenant.shortName },
@@ -44,13 +43,13 @@ async function resolveClient(sb: SupabaseClient, tenantKey: TenantKey): Promise<
   throw new Error(`Client missing for ${tenant.canonicalName}. Seed the tenant base data first.`);
 }
 
-async function loadPeopleIndex(sb: SupabaseClient): Promise<Map<string, PersonRow>> {
+async function loadPeopleIndex(sb: SeedClient): Promise<Map<string, PersonRow>> {
   const { data, error } = await sb.from('persons').select('id, name');
   if (error) throw error;
   return new Map(((data ?? []) as PersonRow[]).map((row) => [row.name.toLowerCase(), row]));
 }
 
-async function upsertRows(sb: SupabaseClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
+async function upsertRows(sb: SeedClient, table: string, rows: Array<Record<string, unknown>>, onConflict = 'id'): Promise<void> {
   if (rows.length === 0) return;
   const batchSize = 50;
   for (let idx = 0; idx < rows.length; idx += batchSize) {
@@ -60,7 +59,7 @@ async function upsertRows(sb: SupabaseClient, table: string, rows: Array<Record<
   }
 }
 
-async function seedAccessScopes(sb: SupabaseClient, clientsByTenant: Map<TenantKey, ClientRow>): Promise<number> {
+async function seedAccessScopes(sb: SeedClient, clientsByTenant: Map<TenantKey, ClientRow>): Promise<number> {
   const rows = EXECUTIVE_PROFILE_ACCESS_SCOPES.map((scope) => ({
     id: scope.id,
     client_id: scope.tenantKey ? clientsByTenant.get(scope.tenantKey)?.id ?? null : null,

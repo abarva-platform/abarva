@@ -1,5 +1,6 @@
 import { config as loadEnv } from 'dotenv';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+type SeedClient = PostgresCompatClient;
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CLIENT_PROFILES } from './_shared/enterprise-profiles';
@@ -22,11 +23,8 @@ export function parseClients(argv: string[]): string[] {
   return value.split(',').map((item) => item.trim().toLowerCase())
 }
 
-function getSb(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Supabase env missing');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+function getSb(): SeedClient {
+  return getAzureWriteFluentClient();
 }
 
 function addDays(base: Date, days: number): Date {
@@ -39,7 +37,7 @@ function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-async function wipe(sb: SupabaseClient, clientId: string) {
+async function wipe(sb: SeedClient, clientId: string) {
   await sb.from('volumetrics_snapshots').delete().eq('client_id', clientId).eq('is_demo_data', true);
   await sb.from('staff_augmentation').delete().eq('client_id', clientId).eq('is_demo_data', true);
   await sb.from('tech_projects').delete().eq('client_id', clientId).eq('is_demo_data', true);

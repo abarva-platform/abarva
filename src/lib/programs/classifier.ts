@@ -1,7 +1,7 @@
 // Pattern classifier · 3-stage pipeline per Packet 2 §2.3.
 //
 // Stage 1 · Intent extraction (≤1000ms) — entity + archetype extraction
-// Stage 2 · Vector match (≤2000ms) — Pinecone top-k on public-patterns
+// Stage 2 · Corpus match (≤2000ms) — Azure Postgres lexical match on published patterns
 // Stage 3 · Scoring + ranking (≤1500ms) — weighted composite
 //
 // Output: up to 3 matches with confidence bands. Threshold 0.4 min.
@@ -9,8 +9,7 @@
 // text-embedding-3-large. Flagged as follow-up.
 
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
-import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
-import { Pinecone } from '@pinecone-database/pinecone';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type {
   ClassifierInput,
@@ -19,10 +18,6 @@ import type {
 } from './types.db';
 import type { ArchetypeKey } from './types.ui';
 
-const EMBED_MODEL = 'text-embedding-3-large';
-const EMBED_DIMS = 1024; // matches nexus-knowledge Pinecone index dim
-const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
-const PATTERN_NAMESPACE = 'public-patterns';
 const CLASSIFIER_MODEL = process.env.CLASSIFIER_MODEL ?? 'claude-haiku-4-5-20251001';
 
 // Scoring weights per §2.3
@@ -36,15 +31,6 @@ const THRESHOLD = 0.4;
 const BAND_HIGH = 0.75;
 const BAND_MEDIUM = 0.5;
 
-let _pinecone: Pinecone | null = null;
-
-function getPinecone(): Pinecone | null {
-  if (_pinecone) return _pinecone;
-  const key = process.env.PINECONE_API_KEY;
-  if (!key) return null;
-  _pinecone = new Pinecone({ apiKey: key });
-  return _pinecone;
-}
 function bandOf(confidence: number): PatternClassifierMatch['band'] {
   if (confidence >= BAND_HIGH) return 'high';
   if (confidence >= BAND_MEDIUM) return 'medium';
@@ -125,12 +111,23 @@ async function extractIntent(input: ClassifierInput): Promise<Stage1Result> {
   }
 }
 
-// ─── Stage 2 · Vector match ────────────────────────────────────────────
+// ─── Stage 2 · Corpus match ────────────────────────────────────────────
 interface VectorMatchRaw {
   patternKey: string;
   score: number;
   metadata: Record<string, unknown>;
 }
+
+type CorpusMatchRow = {
+  pattern_key: string;
+  title: string | null;
+  industries: string[] | null;
+  key_patterns: string[] | null;
+  canonical_shape_json: Record<string, unknown> | null;
+  deployment_count: number | null;
+  successful_deployment_count: number | null;
+  score: string | number | null;
+};
 
 function metadataString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -140,58 +137,69 @@ function metadataStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
 
-async function embed(text: string, input: ClassifierInput): Promise<number[] | null> {
-  if (!process.env.OPENAI_API_KEY) return null;
-  try {
-    const preflight = await preflightOpenAIDirectClient({
-      tenantId: input.tenancy.clientId,
-      userId: input.tenancy.userId,
-      workflow: 'programs-classifier-vector-embedding',
-      model: EMBED_MODEL,
-      prompt: text,
-      dataClass: 'confidential',
-      metadata: { clientKey: input.tenancy.clientKey, dimensions: EMBED_DIMS },
-    });
-    if (!preflight.ok) return null;
-    const res = await preflight.client.embeddings.create({ model: EMBED_MODEL, input: text, dimensions: EMBED_DIMS });
-    return res.data[0]?.embedding ?? null;
-  } catch {
-    return null;
+function searchText(input: ClassifierInput, stage1: Stage1Result): string {
+  return `${input.useCase} ${stage1.entities.join(' ')} ${stage1.objectives.join(' ')}`.trim();
+}
+
+function numeric(value: string | number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
   }
+  return fallback;
 }
 
 async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 10): Promise<VectorMatchRaw[]> {
-  const pc = getPinecone();
-  if (!pc) return [];
-  const queryEmbed = await embed(`${input.useCase} ${stage1.entities.join(' ')} ${stage1.objectives.join(' ')}`.trim(), input);
-  if (!queryEmbed) return [];
   try {
-    const index = pc.index(INDEX_NAME);
-    const filters: Array<Record<string, unknown> | undefined> = [];
-    if (stage1.archetype || stage1.industry) {
-      const strict: Record<string, unknown> = {};
-      if (stage1.archetype) strict.archetype = { $eq: stage1.archetype };
-      if (stage1.industry) strict.industries = { $in: [stage1.industry] };
-      filters.push(strict);
-    }
-    if (stage1.industry) filters.push({ industries: { $in: [stage1.industry] } });
-    filters.push(undefined);
+    const text = searchText(input, stage1);
+    const rows = await azureRead.query<CorpusMatchRow>(
+      `
+        SELECT
+          topic_key AS pattern_key,
+          title,
+          industries,
+          key_patterns,
+          canonical_shape_json,
+          deployment_count,
+          successful_deployment_count,
+          ts_rank_cd(
+            to_tsvector('english', concat_ws(' ', title, array_to_string(key_patterns, ' '), canonical_shape_json::text)),
+            plainto_tsquery('english', $1)
+          ) AS score
+        FROM engagement_topics
+        WHERE promotion_state IN ('published', 'validated', 'active')
+          AND (
+            $2::text IS NULL
+            OR industries @> ARRAY[$2::text]
+            OR industries @> ARRAY['GENERAL']
+          )
+          AND (
+            $1 = ''
+            OR to_tsvector('english', concat_ws(' ', title, array_to_string(key_patterns, ' '), canonical_shape_json::text))
+               @@ plainto_tsquery('english', $1)
+            OR title ILIKE '%' || $1 || '%'
+            OR array_to_string(key_patterns, ' ') ILIKE '%' || $1 || '%'
+          )
+        ORDER BY score DESC, deployment_count DESC NULLS LAST, title ASC
+        LIMIT $3
+      `,
+      [text, stage1.industry, Math.min(Math.max(topK, 1), 20)],
+      { missingTable: 'empty' },
+    );
 
-    for (const filter of filters) {
-      const result = await index.namespace(PATTERN_NAMESPACE).query({
-        vector: queryEmbed,
-        topK,
-        includeMetadata: true,
-        filter,
-      });
-      const matches = (result.matches ?? []).map((m) => ({
-        patternKey: (m.metadata?.pattern_key as string) ?? m.id,
-        score: m.score ?? 0,
-        metadata: (m.metadata ?? {}) as Record<string, unknown>,
-      }));
-      if (matches.length > 0) return matches;
-    }
-    return [];
+    return rows.map((row) => ({
+      patternKey: row.pattern_key,
+      score: numeric(row.score, 0.45),
+      metadata: {
+        title: row.title,
+        industries: row.industries ?? [],
+        key_patterns: row.key_patterns ?? [],
+        canonical_shape_json: row.canonical_shape_json ?? null,
+        deployment_count: row.deployment_count ?? 0,
+        successful_deployment_count: row.successful_deployment_count ?? 0,
+      },
+    }));
   } catch {
     return [];
   }

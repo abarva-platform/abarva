@@ -1,4 +1,7 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient,
+} from '@/lib/data-plane/postgresCompat';
 import { useCaseLibrary, sizeProfile, type Industry, type OrgSize, type AiMaturity } from './patterns';
 
 export interface DemoDataOptions {
@@ -17,15 +20,12 @@ export interface DemoSeedSummary {
   costRows: number;
 }
 
-function getSb(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Supabase env missing');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+function getDb(): PostgresCompatClient {
+  return getAzureWriteFluentClient();
 }
 
 export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSummary> {
-  const sb = getSb();
+  const db = getDb();
   const size = sizeProfile(options.orgSize);
   const presets = useCaseLibrary(options.industry, options.aiMaturity).slice(0, size.useCaseCount);
 
@@ -38,7 +38,7 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
   let inserted = 0, usageCount = 0, valueCount = 0, riskCount = 0, costCount = 0;
 
   for (const preset of presets) {
-    const { data: ucRow, error: ucErr } = await sb
+    const { data: ucRow, error: ucErr } = await db
       .from('use_cases')
       .insert({
         client_id: options.clientId,
@@ -63,7 +63,7 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
       const eligible = size.seatMultiplier;
       const dau = Math.round(eligible * preset.usageTemplate.dau_per_eligible);
       const wau = Math.round(dau * 1.35);
-      await sb.from('use_case_usage_metrics').insert({
+      await db.from('use_case_usage_metrics').insert({
         use_case_id: ucId,
         period_start: periodStart,
         period_end: periodEnd,
@@ -77,7 +77,7 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
 
     if (preset.valueTemplate) {
       const observed = preset.valueTemplate.baseline + (preset.valueTemplate.target - preset.valueTemplate.baseline) * (preset.valueTemplate.achieved_pct / 100);
-      await sb.from('use_case_value_metrics').insert({
+      await db.from('use_case_value_metrics').insert({
         use_case_id: ucId,
         period_start: periodStart,
         period_end: periodEnd,
@@ -93,7 +93,7 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
       valueCount += 1;
     }
 
-    await sb.from('use_case_risk').insert({
+    await db.from('use_case_risk').insert({
       use_case_id: ucId,
       data_classification: preset.dataClasses,
       model_risk_level: preset.riskLevel,
@@ -107,7 +107,7 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
 
     const totalCost = size.costBaseUsd * (preset.stage === 'realize' ? 1.5 : preset.stage === 'stalled' ? 0.2 : 0.8);
     const t = preset.costTemplate;
-    await sb.from('use_case_cost_metrics').insert({
+    await db.from('use_case_cost_metrics').insert({
       use_case_id: ucId,
       period_start: periodStart,
       period_end: periodEnd,
@@ -135,8 +135,8 @@ export async function seedDemoData(options: DemoDataOptions): Promise<DemoSeedSu
 }
 
 export async function removeDemoData(clientId: string): Promise<{ deletedUseCases: number }> {
-  const sb = getSb();
-  const { data: ucs } = await sb
+  const db = getDb();
+  const { data: ucs } = await db
     .from('use_cases')
     .select('id')
     .eq('client_id', clientId)
@@ -144,11 +144,11 @@ export async function removeDemoData(clientId: string): Promise<{ deletedUseCase
   const ids = ((ucs as Array<{ id: string }> | null) ?? []).map((r) => r.id);
   if (ids.length === 0) return { deletedUseCases: 0 };
 
-  await sb.from('use_case_risk').delete().in('use_case_id', ids);
-  await sb.from('use_case_usage_metrics').delete().in('use_case_id', ids);
-  await sb.from('use_case_value_metrics').delete().in('use_case_id', ids);
-  await sb.from('use_case_cost_metrics').delete().in('use_case_id', ids);
-  await sb.from('use_cases').delete().in('id', ids);
+  await db.from('use_case_risk').delete().in('use_case_id', ids);
+  await db.from('use_case_usage_metrics').delete().in('use_case_id', ids);
+  await db.from('use_case_value_metrics').delete().in('use_case_id', ids);
+  await db.from('use_case_cost_metrics').delete().in('use_case_id', ids);
+  await db.from('use_cases').delete().in('id', ids);
 
   return { deletedUseCases: ids.length };
 }
