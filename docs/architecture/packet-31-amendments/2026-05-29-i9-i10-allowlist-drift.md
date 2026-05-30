@@ -202,6 +202,70 @@ Invariants without CI enforcement are aspirations, not invariants.
 
 ---
 
+## Anti-Pattern Catalog Entry — "Eager Parallelism in Retrieval Paths"
+
+Adds to Packet 31 §1.5 anti-patterns table:
+
+| Anti-pattern | Symptom | Detection |
+|---|---|---|
+| **Eager parallelism in retrieval paths** | Multiple read paths independently use `Promise.all` or equivalent fan-out for tenant-scoped retrieval, causing session-mode database pressure under crawls or user bursts | Production logs show session exhaustion or 503s across unrelated modules; static search finds concurrent retrieval blocks in route loaders, read models, or access-policy helpers without an explicit concurrency budget |
+
+### Pattern description
+
+A route, read model, or access helper starts several database reads at once
+because the code is locally convenient. Each module looks reasonable in
+isolation. Under production crawl or multi-user load, those independent bursts
+compound against session-mode Postgres limits and create systemic instability.
+
+The risk is structural, not route-specific. If the same eager pattern appears
+in Strategic Moves, Intelligence Context, and Source/Tower access checks, then
+the problem is a platform retrieval default, not three unrelated bugs.
+
+### Recurring instances at AbarVa
+
+1. **Strategic Moves portfolio** — portfolio list hydration evaluated gates for
+   each visible Move in parallel. Fixed by sequential list hydration and by
+   skipping expensive gate evaluation on list views unless explicitly requested.
+2. **Intelligence Enterprise Context** — overview counts and row fetches fanned
+   out across Enterprise Context tables. Fixed by sequential table counts and
+   row fetches in PR #2444.
+3. **Source/Tower access policy** — membership and participant reads ran in
+   parallel, and admins loaded participant rows they did not need. Fixed by
+   membership-first loading and admin participant-query skip in PR #2445.
+
+### Universal fix shape
+
+For retrieval paths, the default is **sequential** unless the code has an
+explicit reason and budget to run in parallel.
+
+1. **Default to sequential retrieval** in tenant-scoped route loaders, read
+   models, and access-policy helpers.
+2. **Parallel retrieval requires an allowlist**: the function or route must be
+   named in a small concurrency allowlist with rationale.
+3. **Parallel retrieval requires a concurrency budget**: the code must state the
+   expected maximum concurrent DB calls and the production session-mode budget
+   it is safe under.
+4. **Add regression coverage** for the fixed shape where practical, such as a
+   mocked max-active-query assertion or a route-level crawl smoke.
+5. **Log-sweep after deploy** for the prior pressure signature
+   (`EMAXCONNSESSION`, 503 health, or route-specific database warnings) before
+   marking the release complete.
+
+### CI enforcement summary
+
+Codex should prefer the following checks for this anti-pattern:
+
+- Static scan for `Promise.all` in route loaders and read-model modules that
+  import data-plane or Supabase/Postgres helpers
+- Unit tests that assert max active mocked retrieval calls for known hot paths
+- Post-deploy crawl plus Vercel log sweep for session exhaustion signatures
+- Release record section naming the concurrency budget when parallelism remains
+
+Parallelism without an explicit allowlist and budget is a performance guess, not
+an engineering invariant.
+
+---
+
 ## Packet 31 §4.4 amendment — Quality Gates Update
 
 Add to §4.4:
