@@ -3,6 +3,7 @@
 **Created:** 2026-05-30  
 **Status:** ACTIVE — hand-off from autonomous Claude loop to Codex  
 **Purpose:** Complete the Airline + Healthcare genome pattern seed scripts; then generate Medtech, Banking, and Cross-industry corpora from scratch  
+**Scale target:** ~24,000 patterns total (5,000–10,000 per major vertical)
 
 ---
 
@@ -56,74 +57,105 @@ Key values:
 
 ---
 
-## ⚠️ CRITICAL: Output size constraint
+## Scale — the full target
 
-**Generate a maximum of 60 patterns per file.** Previous runs hit the 32 000 token output cap
-when trying to write 100–300 patterns at once. 60 patterns ≈ 550 lines ≈ well inside the limit.
+Every domain covers **300 code slots** (e.g. A300–A599). Fill **all 300** with patterns.
+Because a single 300-pattern file exceeds the 32 000 output-token cap, split each domain into
+**5 files of 60 patterns each** (parts 1–5), each file covering 60 consecutive codes:
 
-If a domain warrants more than 60 patterns, split it into two files with a `-part2` suffix and
-the next 300 code slots.
+```
+seed-airline-dom01-revenue-mgmt-part1.ts   A300–A359   (60 patterns)
+seed-airline-dom01-revenue-mgmt-part2.ts   A360–A419   (60 patterns)
+seed-airline-dom01-revenue-mgmt-part3.ts   A420–A479   (60 patterns)
+seed-airline-dom01-revenue-mgmt-part4.ts   A480–A539   (60 patterns)
+seed-airline-dom01-revenue-mgmt-part5.ts   A540–A599   (60 patterns)
+```
+
+Apply this 5-part split to **every domain** in every vertical. Do not stop at 60 per domain.
+
+**Target pattern counts by vertical:**
+
+| Vertical | Domains | Patterns |
+|---|---|---|
+| Airline | 28 total (7 partial + 21 missing) | ~8,400 |
+| Healthcare | 24 total (7 partial + 17 missing) | ~7,200 |
+| Medtech | 17 domains | ~2,550 (150/domain) |
+| Banking | 20 domains | ~6,000 |
+| Cross-industry | 1 batch | ~150 |
+| **Total** | | **~24,300** |
+
+The 14 existing files average ~75 patterns — they are **not** yet at 300. Once the missing files
+are generated, backfill the existing domains with part2–part5 files to reach 300 each.
+
+## ⚠️ CRITICAL: Per-file output size constraint
+
+**Maximum 60 patterns per file.** Previous runs hit the 32 000 output-token cap when generating
+100–300 patterns in a single pass. 60 patterns ≈ 550 lines ≈ safely inside the limit.
+One domain = 5 files (part1–part5). Write them sequentially, running each before starting
+the next.
 
 ---
 
-## Status: what exists
+## Status: what exists (partial — backfill required)
 
-These 14 files are already written (untracked in main repo). **Do not regenerate them.**
+These 14 files are written (untracked in main repo). They contain ~50–100 patterns each — well
+short of the 300-per-domain target. **After generating all missing domains, backfill these with
+-part2 through -part5 files to bring each to 300.**
 
-### Airline — completed
-| File | Code range |
-|------|-----------|
-| `seed-airline-dom02-pss-booking.ts` | A600–A899 |
-| `seed-airline-dom03-crew-mgmt.ts` | A900–A1199 |
-| `seed-airline-dom04-mro-engineering.ts` | A1200–A1499 |
-| `seed-airline-dom05-cx-service-recovery.ts` | A1500–A1799 |
-| `seed-airline-dom10-loyalty-distribution.ts` | A3000–A3299 |
-| `seed-airline-dom15-sustainability.ts` | A4500–A4799 |
-| `seed-airline-dom16-cybersecurity.ts` | A4800–A5099 |
+### Airline — first file exists, parts 2–5 needed
+| Domain | Existing file | Approx patterns | Parts still needed |
+|--------|--------------|-----------------|-------------------|
+| dom02 PSS & Booking | `seed-airline-dom02-pss-booking.ts` | ~50 | part2–part5 (A660–A899) |
+| dom03 Crew Mgmt | `seed-airline-dom03-crew-mgmt.ts` | ~50 | part2–part5 (A960–A1199) |
+| dom04 MRO | `seed-airline-dom04-mro-engineering.ts` | ~50 | part2–part5 (A1260–A1499) |
+| dom05 CX Recovery | `seed-airline-dom05-cx-service-recovery.ts` | ~50 | part2–part5 (A1560–A1799) |
+| dom10 Loyalty | `seed-airline-dom10-loyalty-distribution.ts` | ~50 | part2–part5 (A3060–A3299) |
+| dom15 Sustainability | `seed-airline-dom15-sustainability.ts` | ~50 | part2–part5 (A4560–A4799) |
+| dom16 Cybersecurity | `seed-airline-dom16-cybersecurity.ts` | ~50 | part2–part5 (A4860–A5099) |
 
-### Healthcare — completed
-| File | Code range |
-|------|-----------|
-| `seed-healthcare-dom02-rcm-denials.ts` | H600–H899 |
-| `seed-healthcare-dom05-pop-health-vbc.ts` | H1500–H1799 |
-| `seed-healthcare-dom08-clinical-ai.ts` | H2400–H2699 |
-| `seed-healthcare-dom12-ed-throughput.ts` | H3600–H3899 |
-| `seed-healthcare-dom13-supply-chain.ts` | H3900–H4199 |
-| `seed-healthcare-dom17-finance-contracting.ts` | H5100–H5399 |
-| `seed-healthcare-dom30-patient-finance.ts` | H9000–H9299 |
+### Healthcare — first file exists, parts 2–5 needed
+| Domain | Existing file | Approx patterns | Parts still needed |
+|--------|--------------|-----------------|-------------------|
+| dom02 RCM Denials | `seed-healthcare-dom02-rcm-denials.ts` | ~100 | part2–part5 (H700–H899) |
+| dom05 Pop Health | `seed-healthcare-dom05-pop-health-vbc.ts` | ~50 | part2–part5 (H1560–H1799) |
+| dom08 Clinical AI | `seed-healthcare-dom08-clinical-ai.ts` | ~50 | part2–part5 (H2460–H2699) |
+| dom12 ED Throughput | `seed-healthcare-dom12-ed-throughput.ts` | ~50 | part2–part5 (H3660–H3899) |
+| dom13 Supply Chain | `seed-healthcare-dom13-supply-chain.ts` | ~50 | part2–part5 (H3960–H4199) |
+| dom17 Finance Contracting | `seed-healthcare-dom17-finance-contracting.ts` | ~50 | part2–part5 (H5160–H5399) |
+| dom30 Patient Finance | `seed-healthcare-dom30-patient-finance.ts` | ~50 | part2–part5 (H9060–H9299) |
 
 ---
 
 ## Status: what is missing
 
-### Priority 1 — Airline gaps (21 files)
+### Priority 1 — Airline gaps (21 domains × 5 parts = 105 files, ~6,300 patterns)
 
-Generate these in order. Each file covers exactly the stated code range; the code numbering is
-`(domN × 300)` through `(domN × 300 + 299)`.
+Each domain = 5 files (part1–part5), 60 patterns each, covering all 300 code slots.
+Naming: `seed-airline-domNN-<slug>-part1.ts` through `-part5.ts`.
 
-| File to create | Code range | Domain name | Layer |
-|----------------|-----------|-------------|-------|
-| `seed-airline-dom01-revenue-mgmt.ts` | A300–A599 | Revenue Management & Pricing | middle |
-| `seed-airline-dom06-ndc-oms.ts` | A1800–A2099 | NDC, Offer/Order Management & Modern Retailing | front/middle |
-| `seed-airline-dom07-airport-ops.ts` | A2100–A2399 | Airport Operations & Ground Handling | front/back |
-| `seed-airline-dom08-it-modernization.ts` | A2400–A2699 | IT Modernisation & Data Platform | back |
-| `seed-airline-dom09-safety-compliance.ts` | A2700–A2999 | Safety Management System & Regulatory Compliance | middle |
-| `seed-airline-dom13-cargo.ts` | A3900–A4199 | Cargo & Charter Operations | front/middle |
-| `seed-airline-dom14-workforce.ts` | A4200–A4499 | Workforce & Labour Relations | back |
-| `seed-airline-dom17-digital-ai.ts` | A5100–A5399 | Digital Transformation & AI/ML Governance | middle/back |
-| `seed-airline-dom18-codeshare.ts` | A5400–A5699 | Codeshare, Alliance & Interlining | middle |
-| `seed-airline-dom19-ancillary.ts` | A5700–A5999 | Ancillary Revenue & Merchandising | front/middle |
-| `seed-airline-dom20-revenue-integrity.ts` | A6000–A6299 | Revenue Integrity & Fraud Prevention | middle |
-| `seed-airline-dom21-corporate-travel.ts` | A6300–A6599 | Corporate Travel & B2B Sales | front/middle |
-| `seed-airline-dom22-biometrics.ts` | A6600–A6899 | Biometrics & Digital Identity | front/back |
-| `seed-airline-dom23-baggage.ts` | A6900–A7199 | Baggage Operations & Tracking | front/back |
-| `seed-airline-dom25-cabin-crew.ts` | A7500–A7799 | Cabin Crew & Inflight Service Management | middle |
-| `seed-airline-dom26-lounge.ts` | A7800–A8099 | Lounge & Premium Passenger Experience | front |
-| `seed-airline-dom28-revenue-accounting.ts` | A8400–A8699 | Revenue Accounting & IATA Settlement | back |
-| `seed-airline-dom29-schedule.ts` | A8700–A8999 | Schedule Publication & Slot Management | middle |
-| `seed-airline-dom31-procurement.ts` | A9300–A9599 | Procurement & Vendor Management | back |
-| `seed-airline-dom32-treasury.ts` | A9600–A9899 | Treasury, FX & Financial Risk | back |
-| `seed-airline-dom50-next-gen-airport.ts` | A15000–A15299 | Next-Gen Airport & Seamless Travel Technology | front/back |
+| Domain | Code range | Domain name | Layer |
+|--------|-----------|-------------|-------|
+| dom01 | A300–A599 | Revenue Management & Pricing | middle |
+| dom06 | A1800–A2099 | NDC, Offer/Order Management & Modern Retailing | front/middle |
+| dom07 | A2100–A2399 | Airport Operations & Ground Handling | front/back |
+| dom08 | A2400–A2699 | IT Modernisation & Data Platform | back |
+| dom09 | A2700–A2999 | Safety Management System & Regulatory Compliance | middle |
+| dom13 | A3900–A4199 | Cargo & Charter Operations | front/middle |
+| dom14 | A4200–A4499 | Workforce & Labour Relations | back |
+| dom17 | A5100–A5399 | Digital Transformation & AI/ML Governance | middle/back |
+| dom18 | A5400–A5699 | Codeshare, Alliance & Interlining | middle |
+| dom19 | A5700–A5999 | Ancillary Revenue & Merchandising | front/middle |
+| dom20 | A6000–A6299 | Revenue Integrity & Fraud Prevention | middle |
+| dom21 | A6300–A6599 | Corporate Travel & B2B Sales | front/middle |
+| dom22 | A6600–A6899 | Biometrics & Digital Identity | front/back |
+| dom23 | A6900–A7199 | Baggage Operations & Tracking | front/back |
+| dom25 | A7500–A7799 | Cabin Crew & Inflight Service Management | middle |
+| dom26 | A7800–A8099 | Lounge & Premium Passenger Experience | front |
+| dom28 | A8400–A8699 | Revenue Accounting & IATA Settlement | back |
+| dom29 | A8700–A8999 | Schedule Publication & Slot Management | middle |
+| dom31 | A9300–A9599 | Procurement & Vendor Management | back |
+| dom32 | A9600–A9899 | Treasury, FX & Financial Risk | back |
+| dom50 | A15000–A15299 | Next-Gen Airport & Seamless Travel Technology | front/back |
 
 **SkyHarbor context:** mid-size US carrier (100–200 aircraft), legacy Sabre PSS migrating to
 Amadeus Altéa, regional jet fleet, union labour agreements, FFP loyalty programme. Tag patterns
@@ -141,27 +173,30 @@ Mandatory Airline failure archetypes (from §4.2 of master prompt) — distribut
 
 ---
 
-### Priority 2 — Healthcare gaps (17 files)
+### Priority 2 — Healthcare gaps (17 domains × 5 parts = 85 files, ~5,100 patterns)
 
-| File to create | Code range | Domain name | Layer |
-|----------------|-----------|-------------|-------|
-| `seed-healthcare-dom01-rcm-coding.ts` | H300–H599 | RCM Coding, Charge Capture & Documentation | middle |
-| `seed-healthcare-dom03-epic-ehr.ts` | H900–H1199 | Epic EHR Optimization & Clinical Governance | middle/back |
-| `seed-healthcare-dom11-patient-access.ts` | H3300–H3599 | Patient Access & Digital Front Door | front |
-| `seed-healthcare-dom15-periop.ts` | H4500–H4799 | Perioperative Services & OR Management | middle |
-| `seed-healthcare-dom16-cloud.ts` | H4800–H5099 | Cloud Migration & IT Governance | back |
-| `seed-healthcare-dom18-telehealth.ts` | H5400–H5699 | Telehealth & Virtual Care | front/middle |
-| `seed-healthcare-dom19-behavioral-health.ts` | H5700–H5999 | Behavioral Health & Mental Health Integration | front/middle |
-| `seed-healthcare-dom20-cdi.ts` | H6000–H6299 | Clinical Documentation Improvement (CDI) | middle |
-| `seed-healthcare-dom21-quality.ts` | H6300–H6599 | Quality Measures, Patient Safety & Accreditation | middle |
-| `seed-healthcare-dom22-care-mgmt.ts` | H6600–H6899 | Care Management & Transitions of Care | front/middle |
-| `seed-healthcare-dom23-oncology.ts` | H6900–H7199 | Oncology Service Line & Precision Medicine | middle |
-| `seed-healthcare-dom24-cardiac.ts` | H7200–H7499 | Cardiac Services & Cath Lab Operations | middle |
-| `seed-healthcare-dom25-radiology.ts` | H7500–H7799 | Radiology, Imaging & AI Diagnostics | middle/back |
-| `seed-healthcare-dom26-lab.ts` | H7800–H8099 | Laboratory, Pathology & Genomics | middle/back |
-| `seed-healthcare-dom27-compliance.ts` | H8100–H8399 | Compliance, Regulatory Affairs & Internal Audit | back/middle |
-| `seed-healthcare-dom28-sdoh.ts` | H8400–H8699 | Social Determinants of Health & Health Equity | front/middle |
-| `seed-healthcare-dom29-nursing.ts` | H8700–H8999 | Nursing Workforce, Staffing & Float Management | middle/back |
+Each domain = 5 files (part1–part5), 60 patterns each.
+Naming: `seed-healthcare-domNN-<slug>-part1.ts` through `-part5.ts`.
+
+| Domain | Code range | Domain name | Layer |
+|--------|-----------|-------------|-------|
+| dom01 | H300–H599 | RCM Coding, Charge Capture & Documentation | middle |
+| dom03 | H900–H1199 | Epic EHR Optimization & Clinical Governance | middle/back |
+| dom11 | H3300–H3599 | Patient Access & Digital Front Door | front |
+| dom15 | H4500–H4799 | Perioperative Services & OR Management | middle |
+| dom16 | H4800–H5099 | Cloud Migration & IT Governance | back |
+| dom18 | H5400–H5699 | Telehealth & Virtual Care | front/middle |
+| dom19 | H5700–H5999 | Behavioral Health & Mental Health Integration | front/middle |
+| dom20 | H6000–H6299 | Clinical Documentation Improvement (CDI) | middle |
+| dom21 | H6300–H6599 | Quality Measures, Patient Safety & Accreditation | middle |
+| dom22 | H6600–H6899 | Care Management & Transitions of Care | front/middle |
+| dom23 | H6900–H7199 | Oncology Service Line & Precision Medicine | middle |
+| dom24 | H7200–H7499 | Cardiac Services & Cath Lab Operations | middle |
+| dom25 | H7500–H7799 | Radiology, Imaging & AI Diagnostics | middle/back |
+| dom26 | H7800–H8099 | Laboratory, Pathology & Genomics | middle/back |
+| dom27 | H8100–H8399 | Compliance, Regulatory Affairs & Internal Audit | back/middle |
+| dom28 | H8400–H8699 | Social Determinants of Health & Health Equity | front/middle |
+| dom29 | H8700–H8999 | Nursing Workforce, Staffing & Float Management | middle/back |
 
 **Meridian Health context:** regional health system (5 hospitals, 120 employed physicians, Epic
 EHR, value-based contracts with 3 MCOs: Aetna, UnitedHealth, BCBS). Tag Meridian-relevant
@@ -181,12 +216,28 @@ Mandatory Healthcare failure archetypes (from §3.2 of master prompt) — distri
 
 ### Priority 3 — Medtech (new vertical, not started)
 
-Target: 150 patterns. Reference: §5 of master prompt.
+Target: **2,550 patterns across 17 domains × 150 codes each**. Reference: §5 of master prompt.
+Each Medtech domain covers 150 code slots (3 files × 50 patterns).
 
-| File to create | Code range | Domain name |
-|----------------|-----------|-------------|
-| `seed-medtech-part1.ts` | M100–M224 | Dimensions 01–09 (see §5.1) — FDA regulatory, EU MDR, QMS, SaMD, cybersecurity, PMS, clinical evidence, supply chain, manufacturing |
-| `seed-medtech-part2.ts` | M225–M249 | Dimensions 10–17 (see §5.1) — reimbursement, sales effectiveness, field service, ERP, AI/ML, international regulatory, M&A, digital health |
+| Domain | Code range | Domain name |
+|--------|-----------|-------------|
+| dom01 | M100–M249 | FDA Regulatory Submission & Clearance |
+| dom02 | M250–M399 | EU MDR / IVDR Compliance |
+| dom03 | M400–M549 | Quality Management System (QMS) |
+| dom04 | M550–M699 | Software as Medical Device (SaMD / IEC 62304) |
+| dom05 | M700–M849 | Medical Device Cybersecurity & SBOM |
+| dom06 | M850–M999 | Post-Market Surveillance (PMS) |
+| dom07 | M1000–M1149 | Clinical Evidence Generation |
+| dom08 | M1150–M1299 | Supply Chain, SBOM & Tariff Risk |
+| dom09 | M1300–M1449 | Manufacturing & GxP |
+| dom10 | M1450–M1599 | Reimbursement & ICD/CPT Coding |
+| dom11 | M1600–M1749 | Sales Force Effectiveness & HCP Engagement |
+| dom12 | M1750–M1899 | Field Service & Connected Device Operations |
+| dom13 | M1900–M2049 | ERP & SAP Transformation |
+| dom14 | M2050–M2199 | AI/ML in Medical Devices (FDA AI Action Plan) |
+| dom15 | M2200–M2349 | International Regulatory (PMDA, ANVISA, CDSCO) |
+| dom16 | M2350–M2499 | M&A Integration & TSA Exit |
+| dom17 | M2500–M2649 | Digital Health & Companion App Governance |
 
 **Northstar context:** mid-size imaging/diagnostics company, FDA-cleared and PMA products, EU MDR
 registrations, legacy SAP ERP modernisation in flight, recent divestiture history.  
@@ -197,12 +248,31 @@ registrations, legacy SAP ERP modernisation in flight, recent divestiture histor
 
 ### Priority 4 — Banking (new vertical, not started)
 
-Target: 200 patterns. Reference: §6 of master prompt.
+Target: **6,000 patterns across 20 domains × 300 codes each**. Reference: §6 of master prompt.
+5 files per domain (60 patterns each), same pattern as Airline/Healthcare.
 
-| File to create | Code range | Domain name |
-|----------------|-----------|-------------|
-| `seed-banking-part1.ts` | B100–B199 | Dimensions 01–11 (see §6.1) — MRM/SR 11-7, regulatory/consent orders, BSA/AML, credit risk, consumer lending, digital banking, core banking, payments, fraud, KYC, TPRM |
-| `seed-banking-part2.ts` | B200–B299 | Dimensions 12–20 (see §6.1) — data governance/BCBS 239, cloud, AI/ML governance, commercial banking, capital markets, operational resilience, ESG, talent, M&A |
+| Domain | Code range | Domain name |
+|--------|-----------|-------------|
+| dom01 | B100–B399 | Model Risk Management (SR 11-7 / SR 11-8) |
+| dom02 | B400–B699 | Regulatory Compliance & Consent Orders |
+| dom03 | B700–B999 | BSA/AML & Financial Crime Compliance |
+| dom04 | B1000–B1299 | Credit Risk & Underwriting |
+| dom05 | B1300–B1599 | Consumer Lending & Digital Origination |
+| dom06 | B1600–B1899 | Digital Banking & Mobile Experience |
+| dom07 | B1900–B2199 | Core Banking Modernisation |
+| dom08 | B2200–B2499 | Payments Modernisation (FedNow / RTP / SWIFT) |
+| dom09 | B2500–B2799 | Fraud Detection & Prevention |
+| dom10 | B2800–B3099 | Customer Onboarding & KYC |
+| dom11 | B3100–B3399 | Third-Party & Vendor Risk Management (TPRM) |
+| dom12 | B3400–B3699 | Data Governance & BCBS 239 |
+| dom13 | B3700–B3999 | Cloud & Infrastructure Modernisation |
+| dom14 | B4000–B4299 | AI/ML Governance (SR 11-7 extension) |
+| dom15 | B4300–B4599 | Commercial Banking & Treasury Management |
+| dom16 | B4600–B4899 | Capital Markets & Trading Systems |
+| dom17 | B4900–B5199 | Operational Resilience & Business Continuity |
+| dom18 | B5200–B5499 | ESG, Climate Risk & Regulatory Reporting |
+| dom19 | B5500–B5799 | Talent, Culture & Change Management |
+| dom20 | B5800–B6099 | M&A Integration & Core Conversion |
 
 **First Capital context:** regional US bank ($15–25B assets), OCC-chartered, operating under an
 MRM consent order, active digital transformation programme anchored on commercial banking.  
@@ -213,11 +283,14 @@ MRM consent order, active digital transformation programme anchored on commercia
 
 ### Priority 5 — Cross-industry (new, not started)
 
-Target: 50 patterns. Reference: §7 of master prompt.
+Target: **150 patterns** across 5 dimensions. Reference: §7 of master prompt.
+3 files × 50 patterns. Each pattern carries a `verticals` array covering all 5 verticals.
 
-| File to create | Code range | Notes |
-|----------------|-----------|-------|
-| `seed-cross-industry-patterns.ts` | X100–X149 | 5 dimensions × 10 patterns; add `verticals` array to each pattern |
+| File | Code range | Dimensions |
+|------|-----------|------------|
+| `seed-cross-industry-part1.ts` | X100–X149 | AI/ML Governance at Scale + Vendor Consolidation Risk |
+| `seed-cross-industry-part2.ts` | X150–X199 | IT Modernisation + Workforce & Change Resistance |
+| `seed-cross-industry-part3.ts` | X200–X249 | Data Governance & Lineage |
 
 `source_key`: `'cross-industry'`  
 `vertical`: `'cross_industry'`
@@ -277,11 +350,11 @@ the count of seeded patterns. If the count is 0 or the script errors, debug befo
 Each file (or small batch of 2–3 related files) gets its own commit:
 
 ```
-feat(corpus): airline genome patterns dom01 revenue management (A300–A599)
-feat(corpus): healthcare genome patterns dom01 RCM coding (H300–H599)
-feat(corpus): medtech genome patterns part1 (M100–M224)
-feat(corpus): banking genome patterns part1 (B100–B199)
-feat(corpus): cross-industry genome patterns (X100–X149)
+feat(corpus): airline genome patterns dom01 revenue management part1
+feat(corpus): healthcare genome patterns dom01 RCM coding part1
+feat(corpus): medtech genome patterns dom01 regulatory part1
+feat(corpus): banking genome patterns dom01 MRM part1
+feat(corpus): cross-industry genome patterns part1
 ```
 
 Do NOT add `Co-Authored-By` lines in seed-data commits — these are content commits, not code.
@@ -384,8 +457,22 @@ marked demo-relevant. These patterns are the live conversation for Moves and Sou
 ## Execution order
 
 Work through the priorities in order. Do not start Medtech until all Airline and Healthcare gaps
-are filled. Do not start Banking until Medtech is done. Do not start Cross-industry until Banking
-is done. After each file: write → compile-check → run → commit. Do not batch uncommitted work.
+are filled (missing domains at 300 patterns each). Do not start Banking until Medtech is done.
+Do not start Cross-industry until Banking is done. After each file: write → compile-check →
+run → commit. Do not batch uncommitted work.
 
-Estimated scope: ~38 files × 40 patterns avg = ~1,500 new patterns total across all four remaining
-corpora.
+After all missing domains are generated at 300 patterns each, backfill the 14 existing partial
+files (currently ~50–100 patterns each) by generating part2–part5 files to bring each to 300.
+
+**Full scope:**
+
+| Phase | Work | Files | Patterns |
+|---|---|---|---|
+| 1a | 21 missing Airline domains × 5 parts | 105 files | ~6,300 |
+| 1b | 7 existing Airline domains backfill (parts 2–5) | 28 files | ~1,750 |
+| 2a | 17 missing Healthcare domains × 5 parts | 85 files | ~5,100 |
+| 2b | 7 existing Healthcare domains backfill (parts 2–5) | 28 files | ~1,750 |
+| 3 | 17 Medtech domains × 3 parts | 51 files | ~2,550 |
+| 4 | 20 Banking domains × 5 parts | 100 files | ~6,000 |
+| 5 | 3 Cross-industry files | 3 files | ~150 |
+| **Total** | | **~400 files** | **~23,600 patterns** |
