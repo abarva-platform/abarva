@@ -18,7 +18,23 @@
  * (Overview · Tenant) below the page header. `/admin/tenant` is
  * demoted to `?tab=tenant` here and the standalone route is removed
  * (301 redirect lives in src/proxy.ts).
+ *
+ * Wave 3 PR-7 (2026-05-30): the single `Promise.all` that previously
+ * blocked the entire page on the slowest broker call has been broken
+ * apart into per-zone async server components, each wrapped in its
+ * own `<Suspense>` boundary inside `HomeOverviewV2`. The masthead
+ * (Zone A) and the AdminOverviewTabs strip render immediately; the
+ * trust strip, action queue, posture grid, steward orientation, and
+ * audit ribbon each stream as their broker resolves. Skeletons live
+ * in `src/components/admin/skeletons.tsx`. No spinners — per founder
+ * principle in verdict §5.6 Loading state.
+ *
+ * The five zone components share broker calls via `React.cache`
+ * helpers below so e.g. `getTrustSpine` runs once per request even
+ * though four zones consume it.
  */
+
+import { cache } from 'react';
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
@@ -32,17 +48,20 @@ import {
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
-import { spineToChips } from '@/components/admin/TrustStrip';
+import { spineToChips, TrustStrip } from '@/components/admin/TrustStrip';
 import {
   emptyPostureCards,
+  PostureGrid,
   spineToPostureCards,
 } from '@/components/admin/PostureGrid';
+import { AuditRibbon } from '@/components/admin/AuditRibbon';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AdminOverviewTabs, resolveAdminOverviewTab } from '@/components/admin/AdminOverviewTabs';
 import { AdminTenantTab } from '@/components/admin/AdminTenantTab';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
+import { StewardOrientationBlock } from '@/components/home/StewardOrientationBlock';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
@@ -62,6 +81,153 @@ interface AdminOverviewSearchParams {
   tab?: string;
 }
 
+// ── Per-request broker caches (Wave 3 PR-7) ─────────────────────────
+//
+// The five zone components below each call the brokers they need.
+// `React.cache` dedupes the call within a single request so the trust
+// spine isn't refetched four times. The cached identity is the
+// broker function reference + arg tuple per React's `cache` contract.
+
+const cachedTrustSpine = cache(async (tenantKey: string | null) => {
+  if (!tenantKey) return null;
+  try {
+    return await getTrustSpine(tenantKey);
+  } catch {
+    return null;
+  }
+});
+
+const cachedInventorySnapshot = cache(async (tenantKey: string | null) => {
+  if (!tenantKey) return null;
+  try {
+    return await getSetupInventorySnapshot(tenantKey);
+  } catch {
+    return null;
+  }
+});
+
+const cachedCrossProgramSignals = cache(async (tenantKey: string | null) => {
+  if (!tenantKey) return [];
+  try {
+    return await getCrossProgramSignals(tenantKey);
+  } catch {
+    return [];
+  }
+});
+
+const cachedApprovalQueue = cache(async (clientKey: string) => {
+  try {
+    return await getApprovalQueueForTenant(clientKey);
+  } catch {
+    return [];
+  }
+});
+
+interface ZoneContext {
+  brokerTenantKey: string | null;
+  clientKey: string;
+  clientId: string | null;
+  activeClientDisplayName: string;
+  industryCode: string | null;
+  baseContentClientKey: string;
+}
+
+// ── Zone B · Trust strip (async server component) ───────────────────
+
+async function TrustStripZone({ ctx }: { ctx: ZoneContext }) {
+  const spine = await cachedTrustSpine(ctx.brokerTenantKey);
+  const chips = spine ? spineToChips(spine) : null;
+  if (!chips || chips.length === 0) return null;
+  return <TrustStrip chips={chips} />;
+}
+
+// ── Zone C · Action queue (async server component) ──────────────────
+
+async function ActionQueueZone({ ctx }: { ctx: ZoneContext }) {
+  const [snapshot, signals, approvalQueue] = await Promise.all([
+    cachedInventorySnapshot(ctx.brokerTenantKey),
+    cachedCrossProgramSignals(ctx.brokerTenantKey),
+    cachedApprovalQueue(ctx.clientKey),
+  ]);
+  const baseContent = getSetupActsContent(ctx.baseContentClientKey);
+  const content = mergeInventorySnapshot(baseContent, snapshot);
+  const segments = snapshot
+    ? snapshot.segments
+    : buildAuthoredInventoryFallback(content).segments;
+  const recentSnapshotActivity =
+    snapshot?.recentActivity?.map((e) => ({
+      actor: e.actor,
+      what: e.what,
+      timestamp: e.timestampIso,
+    })) ?? [];
+  const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
+  const blocks = composeOverviewBlocks({
+    tenantName: ctx.activeClientDisplayName,
+    industryCode: ctx.industryCode,
+    clientKey: ctx.clientKey,
+    segments,
+    content,
+    programApprovalPendingCount: approvalQueue.length,
+    atlasSignalCount: signals.length,
+    atlasHighSeverityCount,
+    ssoConfigured: false,
+    recentSnapshotActivity,
+  });
+  if (blocks.actionQueue.items.length === 0) return null;
+  return <ActionQueueRows items={blocks.actionQueue.items} />;
+}
+
+// ── Zone D · Posture grid (async server component) ──────────────────
+
+async function PostureGridZone({ ctx }: { ctx: ZoneContext }) {
+  const spine = await cachedTrustSpine(ctx.brokerTenantKey);
+  const cards = spine ? spineToPostureCards(spine) : emptyPostureCards();
+  return <PostureGrid cards={cards} />;
+}
+
+// ── Zone E · Audit ribbon (async server component) ──────────────────
+
+async function AuditRibbonZone({ ctx }: { ctx: ZoneContext }) {
+  const spine = await cachedTrustSpine(ctx.brokerTenantKey);
+  const events = (spine?.audit.last24hEvents ?? []).slice(0, 6);
+  return <AuditRibbon events={events} />;
+}
+
+// ── Zone F · Steward orientation (async server component) ───────────
+
+async function StewardOrientationZone({ ctx }: { ctx: ZoneContext }) {
+  const [snapshot, signals, approvalQueue] = await Promise.all([
+    cachedInventorySnapshot(ctx.brokerTenantKey),
+    cachedCrossProgramSignals(ctx.brokerTenantKey),
+    cachedApprovalQueue(ctx.clientKey),
+  ]);
+  const baseContent = getSetupActsContent(ctx.baseContentClientKey);
+  const content = mergeInventorySnapshot(baseContent, snapshot);
+  const segments = snapshot
+    ? snapshot.segments
+    : buildAuthoredInventoryFallback(content).segments;
+  const recentSnapshotActivity =
+    snapshot?.recentActivity?.map((e) => ({
+      actor: e.actor,
+      what: e.what,
+      timestamp: e.timestampIso,
+    })) ?? [];
+  const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
+  const blocks = composeOverviewBlocks({
+    tenantName: ctx.activeClientDisplayName,
+    industryCode: ctx.industryCode,
+    clientKey: ctx.clientKey,
+    segments,
+    content,
+    programApprovalPendingCount: approvalQueue.length,
+    atlasSignalCount: signals.length,
+    atlasHighSeverityCount,
+    ssoConfigured: false,
+    recentSnapshotActivity,
+  });
+  return <StewardOrientationBlock orientation={blocks.orientation} />;
+}
+
 export default async function AdminOverviewPage({
   searchParams,
 }: {
@@ -70,65 +236,33 @@ export default async function AdminOverviewPage({
   const params = searchParams ? await searchParams : undefined;
   const activeTab = resolveAdminOverviewTab(params?.tab);
 
+  // Synchronous, fast prelude — needed for the masthead and the shell.
   const activeClient = await getActiveClientRow().catch(() => null);
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'Apex Retail Group';
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
-  const baseContent = getSetupActsContent(clientKey);
-  // Wave 1 PR-5 introduced trustSpine for the Trust strip; Wave 1
-  // PR-6 reuses the same fetch and slices the top-6 audit events
-  // for the AuditRibbon on the landing.
-  const [snapshot, signals, programApprovalQueue, trustSpine] = brokerTenantKey
-    ? await Promise.all([
-        getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
-        getCrossProgramSignals(brokerTenantKey).catch(() => []),
-        getApprovalQueueForTenant(clientKey).catch(() => []),
-        getTrustSpine(brokerTenantKey).catch(() => null),
-      ])
-    : [null, [], [], null];
-  const trustChips = trustSpine ? spineToChips(trustSpine) : null;
-  // Wave 2 PR-4 · Posture grid (Zone D). When the spine resolves we
-  // compose the four cards from it; when it doesn't, we still render
-  // the grid in its no-data state so the page shape stays stable for
-  // empty / brand-new tenants (verdict §5.6 empty-state guidance).
-  const postureCards = trustSpine
-    ? spineToPostureCards(trustSpine)
-    : emptyPostureCards();
-  const auditEvents = (trustSpine?.audit.last24hEvents ?? []).slice(0, 6);
-  const content = mergeInventorySnapshot(baseContent, snapshot);
-  const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
 
-  // Substrate or authored fallback (Setup Fix Package PR 3 logic
-  // preserved — segments still drive the Overview composer).
+  // Wave 2 PR-5 · TenantSwitcher inputs. Resolved up-front because the
+  // masthead chip is part of the synchronous editorial header.
+  const canSwitchTenant = await canSwitchActiveTenant();
+  const tenantSwitchOptions = getCanonicalTenantSwitchOptions();
+  const currentCanonicalTenantKey = isClientKey(clientKey)
+    ? tenantProfileForClientKey(clientKey).canonicalKey
+    : null;
+
+  // The page-level masthead pills require segment + record counts. We
+  // resolve a single snapshot up-front for them; the per-zone async
+  // components below re-use it via `cachedInventorySnapshot`. The
+  // overview-supplemental load (programs/source/initiatives counts)
+  // also flows into the masthead pills.
+  const snapshot = await cachedInventorySnapshot(brokerTenantKey);
+  const baseContent = getSetupActsContent(clientKey);
+  const content = mergeInventorySnapshot(baseContent, snapshot);
   const segments = snapshot
     ? snapshot.segments
     : buildAuthoredInventoryFallback(content).segments;
-
-  const recentSnapshotActivity =
-    snapshot?.recentActivity?.map((e) => ({
-      actor: e.actor,
-      what: e.what,
-      timestamp: e.timestampIso,
-    })) ?? [];
-
-  const blocks = composeOverviewBlocks({
-    tenantName: activeClientDisplayName,
-    industryCode: activeClient?.industry_code,
-    clientKey,
-    segments,
-    content,
-    programApprovalPendingCount: programApprovalQueue.length,
-    atlasSignalCount: signals.length,
-    atlasHighSeverityCount,
-    ssoConfigured: false,
-    recentSnapshotActivity,
-  });
-
-  // Section 01 + 05 inputs: programs + source events + initiatives
-  // counts. Fetched via the broker-boundary abstraction so the page
-  // component does not directly reference the Supabase client.
   const clientId = activeClient?.id ?? null;
   const {
     programsCount,
@@ -140,7 +274,6 @@ export default async function AdminOverviewPage({
   const initiativesAtRiskCount = initiativesList.filter((i) =>
     /risk|blocked|attention/i.test(i.statusFlag ?? ''),
   ).length;
-
   const extras = composeHomeV2Extras({
     segments,
     programsCount,
@@ -152,15 +285,32 @@ export default async function AdminOverviewPage({
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
   });
 
-  // Wave 2 PR-5 · TenantSwitcher inputs. The authority gate mirrors
-  // /admin layout's; the canonical tenant list is the locked 5-tenant
-  // set from `src/lib/tenant/aliases.ts`. Resolution happens server-side
-  // so the chip never renders for callers without authority.
-  const canSwitchTenant = await canSwitchActiveTenant();
-  const tenantSwitchOptions = getCanonicalTenantSwitchOptions();
-  const currentCanonicalTenantKey = isClientKey(clientKey)
-    ? tenantProfileForClientKey(clientKey).canonicalKey
-    : null;
+  // For the section-01 (Readiness across modules) and section-05
+  // (Setup panels) blocks the eager static composer still owns the
+  // data path. They are part of the same `extras` payload. The
+  // `blocks` static prop is left empty-shaped so the Suspense-driven
+  // zones own the live content path.
+  const emptyBlocks = composeOverviewBlocks({
+    tenantName: activeClientDisplayName,
+    industryCode: activeClient?.industry_code,
+    clientKey,
+    segments,
+    content,
+    programApprovalPendingCount: 0,
+    atlasSignalCount: 0,
+    atlasHighSeverityCount: 0,
+    ssoConfigured: false,
+    recentSnapshotActivity: [],
+  });
+
+  const ctx: ZoneContext = {
+    brokerTenantKey,
+    clientKey,
+    clientId,
+    activeClientDisplayName,
+    industryCode: activeClient?.industry_code ?? null,
+    baseContentClientKey: clientKey,
+  };
 
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
@@ -169,15 +319,17 @@ export default async function AdminOverviewPage({
         <HomeOverviewV2
           tenantName={activeClientDisplayName}
           clientKey={isClientKey(clientKey) ? clientKey : null}
-          blocks={blocks}
+          blocks={emptyBlocks}
           extras={extras}
-          trustChips={trustChips}
           liveSnapshotPresent={snapshot !== null}
-          auditEvents={auditEvents}
-          postureCards={postureCards}
           canSwitchTenant={canSwitchTenant}
           currentCanonicalTenantKey={currentCanonicalTenantKey}
           tenantSwitchOptions={tenantSwitchOptions}
+          trustStripSlot={<TrustStripZone ctx={ctx} />}
+          actionQueueSlot={<ActionQueueZone ctx={ctx} />}
+          postureGridSlot={<PostureGridZone ctx={ctx} />}
+          stewardOrientationSlot={<StewardOrientationZone ctx={ctx} />}
+          auditRibbonSlot={<AuditRibbonZone ctx={ctx} />}
         />
       ) : (
         <AdminTenantTab />
@@ -193,5 +345,110 @@ export default async function AdminOverviewPage({
         liveSnapshotPresent={snapshot !== null}
       />
     </AdminCanonShellV2>
+  );
+}
+
+// ── Inline presenter primitives ─────────────────────────────────────
+//
+// Two tiny presenter components extracted from `HomeOverviewV2` so the
+// async server components above can hand back JSX without re-importing
+// the locked design tokens. They mirror the styles in HomeOverviewV2
+// for ActionQueue row + the (extracted) Steward block.
+
+import type { ActionQueueItem } from '@/components/admin/overview/ActionQueue';
+
+const F_MONO =
+  'var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace';
+
+const Z_COLORS = {
+  ink: '#0A0C12',
+  faint: '#6B7280',
+  amber: '#92400E',
+  red: '#991B1B',
+  surface: '#FFFFFF',
+  borderLight: '#E5E7EB',
+} as const;
+
+function ActionQueueRows({ items }: { items: ActionQueueItem[] }) {
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {items.map((item, i) => {
+        const severityColor =
+          item.severity === 'high'
+            ? Z_COLORS.red
+            : item.severity === 'medium'
+              ? Z_COLORS.amber
+              : Z_COLORS.faint;
+        return (
+          <div
+            key={item.id}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '32px 1fr auto',
+              alignItems: 'center',
+              gap: 16,
+              padding: '14px 18px',
+              border: `1px solid ${Z_COLORS.borderLight}`,
+              background: Z_COLORS.surface,
+              borderRadius: 8,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                color: severityColor,
+                letterSpacing: '0.06em',
+              }}
+            >
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 14.5,
+                  fontWeight: 500,
+                  color: Z_COLORS.ink,
+                  marginBottom: 2,
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                {item.label}
+              </div>
+              <div
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10.5,
+                  color: Z_COLORS.faint,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {item.panelLabel.toUpperCase()} · {item.consequence}
+              </div>
+            </div>
+            <a
+              href={item.href}
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '6px 12px',
+                border: `1px solid ${Z_COLORS.ink}`,
+                color: i === 0 ? Z_COLORS.surface : Z_COLORS.ink,
+                background: i === 0 ? Z_COLORS.ink : Z_COLORS.surface,
+                borderRadius: 4,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Open
+            </a>
+          </div>
+        );
+      })}
+    </div>
   );
 }
