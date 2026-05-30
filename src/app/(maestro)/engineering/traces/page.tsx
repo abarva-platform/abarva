@@ -162,7 +162,7 @@ function filterHref(filters: TraceFilters, patch: Partial<TraceFilters>): string
   if (next.fallbackUsed) params.set('fallbackUsed', next.fallbackUsed);
   if (next.traceId) params.set('traceId', next.traceId);
   const qs = params.toString();
-  return qs ? `/admin/atlas/traces?${qs}` : '/admin/atlas/traces';
+  return qs ? `/engineering/traces?${qs}` : '/engineering/traces';
 }
 
 const S = {
@@ -247,9 +247,9 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
       }
     >
       <EditorialCanvas
-        eyebrow="Setup · Atlas observability"
+        eyebrow="Engineering · Atlas observability"
         title="Atlas reasoning traces"
-        subtitle="Operator audit log for Tower right-rail renders and metric explanations. Sample here after each CXO pilot session."
+        subtitle="Operator audit log for Tower right-rail renders and metric explanations. Sample here after each CXO pilot session. Relocated from /admin/atlas/traces per Setup Audit 2026-05-30 §5.5 (wrong altitude — agent-named raw trace inspector belongs in the Engineering surface, not Setup)."
       >
         <div style={S.page} data-testid="atlas-traces-page">
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
@@ -259,7 +259,7 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
             <Kpi label="Avg citations" value={avgCitations.toFixed(1)} />
           </section>
 
-          <form action="/admin/atlas/traces" style={S.toolbar}>
+          <form action="/engineering/traces" style={S.toolbar}>
             <select name="tenantId" defaultValue={filters.tenantId ?? ''} style={S.control} aria-label="Tenant filter">
               <option value="">All tenants</option>
               {tenants.map((tenant) => (
@@ -278,7 +278,7 @@ export default async function AtlasTracesPage({ searchParams }: AtlasTracesPageP
               <option value="false">No fallback</option>
             </select>
             <button type="submit" style={S.control}>Apply</button>
-            <Link href="/admin/atlas/traces" style={{ ...S.control, textDecoration: 'none', color: '#0f172a' }}>Reset</Link>
+            <Link href="/engineering/traces" style={{ ...S.control, textDecoration: 'none', color: '#0f172a' }}>Reset</Link>
           </form>
 
           <section style={{ display: 'grid', gridTemplateColumns: detail ? 'minmax(0, 1fr) minmax(360px, 0.9fr)' : '1fr', gap: 16 }}>

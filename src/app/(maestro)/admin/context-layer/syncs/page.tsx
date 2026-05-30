@@ -58,7 +58,7 @@ export default async function ContextSyncsPage() {
                   <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{row.model}</td>
                   <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{row.policy_decision}</td>
                   <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>
-                    <Link href={`/admin/atlas/traces?traceId=${encodeURIComponent(row.id)}`} style={{ color: '#171717' }}>
+                    <Link href={`/engineering/traces?traceId=${encodeURIComponent(row.id)}`} style={{ color: '#171717' }}>
                       View row
                     </Link>
                   </td>
