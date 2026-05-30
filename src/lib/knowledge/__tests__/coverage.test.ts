@@ -3,7 +3,9 @@ import {
   assertCoverage,
   categoryToRequiredSegments,
   classifyQuestionCategory,
+  getRequiredOverlayPacksForCategory,
   inferSegmentsFromSource,
+  retailCategoryToRequiredOverlayPacks,
 } from '@/lib/knowledge/coverage';
 
 describe('Packet 30 Phase 3 coverage contract', () => {
@@ -18,6 +20,15 @@ describe('Packet 30 Phase 3 coverage contract', () => {
         segments: expect.arrayContaining([]),
       });
       expect(segments.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('maps every Tier-1 category to at least three retail overlay packs', () => {
+    expect(Object.keys(retailCategoryToRequiredOverlayPacks)).toEqual(Object.keys(QUESTION_CATEGORIES));
+    for (const category of Object.keys(QUESTION_CATEGORIES) as Array<keyof typeof QUESTION_CATEGORIES>) {
+      const contract = getRequiredOverlayPacksForCategory(category, 'retail');
+      expect(contract).toMatchObject({ overlayNamespace: 'retail-v1' });
+      expect(contract?.requiredPacks.length).toBeGreaterThanOrEqual(3);
     }
   });
 
