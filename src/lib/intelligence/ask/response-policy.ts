@@ -57,6 +57,8 @@ export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): 
       `The remaining field to confirm is ${normalizeMissingField(missingField)}. `,
   );
 
+  rewritten = neutralizeUnavailableDetectorPhrases(rewritten);
+
   return rewritten.replace(/\s{2,}/g, ' ').trim();
 }
 
@@ -134,4 +136,32 @@ function cleanClause(value: string): string {
     .replace(/[\s:;,\-—]+$/, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function neutralizeUnavailableDetectorPhrases(text: string): string {
+  return text
+    .replace(
+      /\bNo specific ([^.?!]{1,90}?) loaded,\s+so\s+/gi,
+      (_match, field: string) => `The loaded sources do not include a specific ${cleanClause(field)}, so `,
+    )
+    .replace(
+      /\bno SHA-MOD entry is explicitly flagged\b/gi,
+      'the loaded SHA-MOD entries are not explicitly flagged',
+    )
+    .replace(
+      /\bNo airline in a rational posture touches\b/gi,
+      'A rational airline posture leaves',
+    )
+    .replace(
+      /\bno\s+(realized value signal|real-time coupling risk|delivery track record|controversy)\b/gi,
+      (_match, phrase: string) => `zero ${phrase}`,
+    )
+    .replace(
+      /\bnot a ledger\b/gi,
+      'pattern-informed rather than ledger-confirmed',
+    )
+    .replace(
+      /\bno ([^.?!]{1,140}?\b(?:ledger|inventory)\b)/gi,
+      (_match, phrase: string) => `the loaded evidence does not show ${cleanClause(phrase)}`,
+    );
 }

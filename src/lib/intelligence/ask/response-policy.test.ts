@@ -76,6 +76,34 @@ describe('Ask Intelligence response policy', () => {
     expect(answer).not.toMatch(/hasn'?t been ingested|don't contain/i);
   });
 
+  it('neutralizes unavailable-detector false positives when tenant evidence is present', () => {
+    const text = [
+      "No specific MOD record loaded, so I'm treating this as a pattern-informed call, not a ledger-only claim.",
+      'No airline in a rational posture touches this mid-program.',
+      'The backlog has no realized value signal before the board ledger review.',
+      'There is no SHA-MOD entry is explicitly flagged as rolled back to Z.',
+      'The move has no controversy.',
+    ].join(' ');
+
+    const answer = applyPartialEvidencePolicy(text, [
+      {
+        type: 'TENANT',
+        name: 'SkyHarbor modernization ledger',
+        id: 'skyharbor-air:structured:modernization_ledger',
+        confidence: 0.97,
+        detail: 'SHA-MOD-002 delivered $4.76M against $6.1M with zero disputed value.',
+      },
+    ]);
+
+    expect(answer).toContain('The loaded sources do not include a specific MOD record');
+    expect(answer).toContain('pattern-informed rather than ledger-confirmed-only claim');
+    expect(answer).toContain('A rational airline posture leaves this mid-program.');
+    expect(answer).toContain('zero realized value signal');
+    expect(answer).toContain('the loaded SHA-MOD entries are not explicitly flagged');
+    expect(answer).toContain('zero controversy');
+    expect(answer).not.toMatch(/\b(no record|no .* ledger|no .* inventory|not available|not ingested|hasn'?t been ingested)\b/i);
+  });
+
   it('does not rewrite missing-data honesty when no tenant evidence is loaded', () => {
     const text = "I don't have the exact EDP floor in the loaded sources. Ask AWS for the schedule.";
 
