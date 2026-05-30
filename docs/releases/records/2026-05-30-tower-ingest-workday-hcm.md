@@ -69,3 +69,28 @@ No customer is connected yet — this PR is the pipe, not the connection. The sy
 ## Authoring
 
 PR #2533 (`feat/tower-ingest-workday-hcm`).
+
+## Rollout Plan
+
+- Merge to `main`.
+- Apply migration `20260530134151_tower_workforce.sql` via `npm run db:migrate` in standard preview → prod rollout order.
+- No tenant configured to ingest yet — schema and CLI are available but no scheduled extractor is wired up. First real customer onboarding will use this CLI manually.
+
+## Rollback Plan
+
+- App-tier: revert the merged commit. The runtime never reads from `tower_workforce` yet (no synthesis route or panel queries it), so rollback is purely a code revert with no data drain.
+- DB-tier: the migration is additive (one new table only). To roll back, manually `DROP TABLE tower_workforce CASCADE;` — but only after confirming no customer extracts have been ingested into it. If rows exist, export to JSON first (RESTRICTED-class — encrypt at rest).
+
+## Audit Evidence
+
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2533
+- Migration: `supabase/migrations/20260530134151_tower_workforce.sql`
+- Tests: `src/__tests__/behaviors/tower-ingest-workday-hcm.test.ts` (16 tests passing).
+- Synthetic-data fixture: `public/templates/tower/workday-hcm/sample-filled.xlsx` (1080 rows, EMP-NW-* IDs only, SYNTHETIC banner).
+- README extract recipe: `public/templates/tower/workday-hcm/README.md`.
+
+## Known Gaps
+
+- No live extractor — this PR ships the contract and the schema. The next step is a scheduled Workday RaaS connector that calls the parser directly, which is out of scope for S8.
+- The `tower_workforce` table does not FK to `engagements` because workforce snapshots predate any AbarVa engagement row; a downstream join view will reconcile when a synthesis route consumes this data.
+- Layer-2 PII redaction is enforced by README convention and by the CLI's `--allow-real-pii` flag — not by an automated middleware. First-customer onboarding must confirm upstream redaction has been applied before commit-mode is used.
