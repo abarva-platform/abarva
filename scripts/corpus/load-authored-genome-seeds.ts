@@ -3,7 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
-import { createSeedClient, loadSeedEnv, slugify, type SeedClient } from '../../src/scripts/seed/seed-wave-lib';
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient,
+} from '../../src/lib/data-plane/postgresCompat';
+
+type SeedClient = PostgresCompatClient;
 
 type ParsedPattern = {
   code: string;
@@ -55,6 +60,31 @@ function assertString(value: unknown, label: string): string {
     throw new Error(`Expected ${label} to be a non-empty string`);
   }
   return value;
+}
+
+function loadCorpusSeedEnv(cwd = process.cwd()): void {
+  const candidates = [path.resolve(cwd, '.env.local'), path.resolve(cwd, '.env')];
+  for (const file of candidates) {
+    if (!fs.existsSync(file)) continue;
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match || process.env[match[1]] !== undefined) continue;
+      process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
+    }
+  }
+}
+
+function createCorpusSeedClient(): SeedClient {
+  return getAzureWriteFluentClient();
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
 }
 
 function literalValue(node: ts.Expression): unknown {
@@ -263,7 +293,7 @@ async function loadSeedFile(sb: SeedClient, filePath: string): Promise<SeedFileS
 }
 
 async function main() {
-  loadSeedEnv();
+  loadCorpusSeedEnv();
   const parseOnly = process.argv.includes('--parse-only');
   const files = process.argv.slice(2).filter((arg) => arg !== '--parse-only');
   if (files.length === 0) {
@@ -283,7 +313,7 @@ async function main() {
     console.log(JSON.stringify({ mode: 'parse-only', files: summaries.length, summaries }, null, 2));
     return;
   }
-  const sb = createSeedClient();
+  const sb = createCorpusSeedClient();
   const summaries: SeedFileSummary[] = [];
   for (const file of files) {
     const summary = await loadSeedFile(sb, file);

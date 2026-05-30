@@ -12,6 +12,8 @@
 
 This release adds a large SkyHarbor airline AI genome corpus expansion and persists it into the Azure/Postgres data plane. The wave adds 11,400 machine-scored airline patterns across 76 domains, with explicit metadata for Intelligence, Moves, Source, AI capability type, governance hook, startup/vendor ecosystem signals, and quality tier.
 
+The corpus loader now talks directly to the Azure/Postgres writer instead of importing the older `seed-wave-lib` helper. That removes a misleading dependency from this corpus path and keeps the authoring story clean: data-only seed files plus a durable Azure/Postgres loader.
+
 ## Layer Impact
 
 Data plane lane: 11,400 `genome_patterns` rows and 22,800 `intelligence_graph_edges` rows are loaded into Azure/Postgres for the `airline` vertical and `skyharbor-air` source key.
@@ -37,6 +39,7 @@ Schema lane: no migration or schema change.
 - `scripts/corpus/generate-airline-ai-corpus.mjs`
 - `scripts/corpus/report-airline-ai-corpus.mjs`
 - `scripts/corpus/load-authored-genome-seeds.ts`
+- `eslint.config.mjs`
 - `src/scripts/seed/seed-airline-dom101-*` through `src/scripts/seed/seed-airline-dom176-*`
 - `verification/corpus-quality/2026-05-30-airline-ai-corpus-generation-report.json`
 - `verification/corpus-quality/2026-05-30-airline-ai-corpus-parse-only.json`
@@ -53,6 +56,9 @@ Schema lane: no migration or schema change.
 - PASS: quality tier distribution is persisted as 4,560 gold candidates and 6,840 silver candidates.
 - PASS: `git diff --check`.
 - PASS: `npx eslint scripts/corpus/load-authored-genome-seeds.ts scripts/corpus/generate-airline-ai-corpus.mjs scripts/corpus/report-airline-ai-corpus.mjs`.
+- PASS: generated seed files lint clean.
+- PASS: script-wide lint guard corrected so data-only genome/corpus seed files remain blocked from direct Supabase imports without failing unrelated legacy script debt.
+- PASS: corpus loader no longer imports the legacy-named `seed-wave-lib`; it uses `getAzureWriteFluentClient()` directly.
 - PENDING: full typecheck result for this large generated-file PR.
 - PENDING: CI checks on PR.
 
