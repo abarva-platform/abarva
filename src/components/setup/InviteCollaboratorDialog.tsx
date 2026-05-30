@@ -1,19 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
+import { useEffect, useRef, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
-
-// ── Sub-nav (same as SetupUsersPage) ─────────────────────────────────────────
-
-const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
-  { key: 'users', label: 'Users', active: true, href: '/admin/users' },
-  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
-  { key: 'policies', label: 'Policies', href: '/admin/policies' },
-];
 
 // ── Step definitions ─────────────────────────────────────────────────────────
 
@@ -149,18 +137,21 @@ function NavButtons({
         {continueLabel}
       </button>
       <div style={{ flex: 1 }} />
-      <a
-        href="/admin/users"
+      <button
+        type="button"
         onClick={onCancel}
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 10,
           color: SHELL.INK_MUTED,
-          textDecoration: 'none',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
         }}
       >
         Cancel
-      </a>
+      </button>
     </div>
   );
 }
@@ -505,6 +496,7 @@ function Step4Review({
   message,
   onSend,
   sent,
+  onDone,
 }: {
   email: string;
   role: Role;
@@ -512,6 +504,7 @@ function Step4Review({
   message: string;
   onSend: () => void;
   sent: boolean;
+  onDone: () => void;
 }) {
   const pill = rolePillStyle(role);
 
@@ -550,17 +543,21 @@ function Step4Review({
             They&apos;ll receive an email with setup instructions. The invitation expires in 7 days.
           </p>
         </div>
-        <a
-          href="/admin/users"
+        <button
+          type="button"
+          onClick={onDone}
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 11,
             color: SHELL.INK_SOFT,
-            textDecoration: 'none',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
           }}
         >
           → Return to Users
-        </a>
+        </button>
       </div>
     );
   }
@@ -696,15 +693,54 @@ function Step4Review({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Main dialog ───────────────────────────────────────────────────────────────
+//
+// Demoted from `/admin/invite` route to a modal launched from
+// `/admin/users-access` per
+// docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §5.5. The component
+// renders a centered modal over the parent page; the parent owns the
+// open/close state. The proxy still 301-redirects `/admin/invite` to
+// `/admin/users-access?invite=open` so legacy links continue to land
+// on the dialog.
 
-export function InviteCollaboratorPage() {
+export interface InviteCollaboratorDialogProps {
+  open: boolean;
+  onClose: () => void;
+  tenantName?: string;
+}
+
+export function InviteCollaboratorDialog({
+  open,
+  onClose,
+  tenantName = 'this workspace',
+}: InviteCollaboratorDialogProps) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('collaborator');
   const [surfaces, setSurfaces] = useState<string[]>(defaultSurfaces('collaborator'));
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
+
+  // Sync the <dialog> element with the `open` prop. Use the imperative
+  // showModal/close API so native ESC handling and the backdrop both
+  // function correctly. We don't reset internal state when the dialog
+  // closes — re-opening returns the user to their last position. The
+  // host can `key`-bump the dialog to force a reset between sessions.
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) return;
+    if (open && !node.open) {
+      node.showModal();
+    } else if (!open && node.open) {
+      node.close();
+    }
+  }, [open]);
+
+  // NOTE: The host should `key`-bump this dialog between sessions if
+  // it wants to reset the form. We deliberately don't setState inside
+  // an effect to keep the page lint-clean
+  // (react-hooks/set-state-in-effect).
 
   function handleRoleChange(r: Role) {
     setRole(r);
@@ -726,51 +762,36 @@ export function InviteCollaboratorPage() {
   const step1Valid = email.includes('@');
 
   return (
-    <AppShell
-      surface="setup"
-      topBarProps={{
-        tenantName: 'Apex Retail Group',
-        showLocked: true,
-        context: 'Setup · Users · Invite',
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      onCancel={(event) => {
+        // Allow the native ESC-cancel but route through our onClose
+        // so the parent state stays in sync.
+        event.preventDefault();
+        onClose();
       }}
-      middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
+      aria-labelledby="invite-collaborator-heading"
+      data-testid="invite-collaborator-dialog"
+      style={{
+        padding: 0,
+        border: 'none',
+        borderRadius: 12,
+        background: SHELL.PAPER,
+        maxWidth: 640,
+        width: 'calc(100vw - 48px)',
+        maxHeight: 'calc(100vh - 64px)',
+        boxShadow: '0 30px 80px rgba(15,23,42,0.30)',
+      }}
     >
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Access Governor' }}
-        quote="Invite flow is deterministic and role-scoped. Admin grants all surfaces, collaborators stay bounded, and pending invites should be cleared quickly so audit posture stays current."
-        agentContext="Steward · Setup · invite collaborator"
-        actions={[
-          { letter: 'A', text: 'Invite collaborator', detail: 'Add a new operator to Programs and Source' },
-          { letter: 'B', text: 'Review pending invites', detail: 'Clear dormant invitations before role sprawl grows' },
-          { letter: 'C', text: 'Return to users', detail: 'Verify the membership ledger after sending' },
-        ]}
-        surface="setup"
-      />
-
       <div
         style={{
-          flex: 1,
+          maxHeight: 'calc(100vh - 64px)',
           overflowY: 'auto',
-          background: SHELL.PAPER,
-          padding: '40px 60px',
+          padding: '32px 40px 36px',
         }}
       >
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          {/* Back link */}
-          <a
-            href="/admin/users"
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 12,
-              color: SHELL.INK_SOFT,
-              textDecoration: 'none',
-              display: 'inline-block',
-              marginBottom: 16,
-            }}
-          >
-            ← Users
-          </a>
-
+        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 12 }}>
           <div
             style={{
               fontFamily: SHELL.MONO,
@@ -778,114 +799,134 @@ export function InviteCollaboratorPage() {
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
               color: SHELL.PEACH_TEXT,
-              marginBottom: 12,
               lineHeight: 1,
             }}
           >
-            Canonical route · /admin/invite
+            Setup · Users & Access · Invite
           </div>
-
-          {/* Heading */}
-          <h1
+          <div style={{ flex: 1 }} />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close invite dialog"
             style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 22,
-              fontWeight: 400,
-              color: SHELL.INK,
-              margin: '0 0 4px 0',
-              lineHeight: 1.2,
+              fontFamily: SHELL.MONO,
+              fontSize: 14,
+              color: SHELL.INK_MUTED,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              lineHeight: 1,
             }}
           >
-            Invite collaborator
-          </h1>
-          <p
+            ✕
+          </button>
+        </div>
+
+        <h1
+          id="invite-collaborator-heading"
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 22,
+            fontWeight: 400,
+            color: SHELL.INK,
+            margin: '0 0 4px 0',
+            lineHeight: 1.2,
+          }}
+        >
+          Invite collaborator
+        </h1>
+        <p
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK_SOFT,
+            margin: '0 0 28px 0',
+          }}
+        >
+          Add a team member to {tenantName} on AbarVa
+        </p>
+
+        <StepIndicator currentStep={step} />
+
+        {step === 0 && <Step1Email email={email} onChange={setEmail} />}
+        {step === 1 && (
+          <Step2RoleAccess
+            role={role}
+            onRoleChange={handleRoleChange}
+            surfaces={surfaces}
+            onSurfacesChange={setSurfaces}
+          />
+        )}
+        {step === 2 && <Step3Message message={message} onChange={setMessage} />}
+        {step === 3 && (
+          <Step4Review
+            email={email}
+            role={role}
+            surfaces={surfaces}
+            message={message}
+            onSend={handleSend}
+            sent={sent}
+            onDone={onClose}
+          />
+        )}
+
+        {!sent && step < 3 && (
+          <NavButtons
+            step={step}
+            onBack={handleBack}
+            onContinue={handleContinue}
+            onCancel={onClose}
+            continueDisabled={step === 0 && !step1Valid}
+          />
+        )}
+        {!sent && step === 3 && (
+          <div
             style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK_SOFT,
-              margin: '0 0 28px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginTop: 16,
+              paddingTop: 16,
+              borderTop: '1px solid ' + SHELL.CARD_LINE,
             }}
-            >
-              Add a team member to Apex Retail Group on AbarVa
-            </p>
-
-          {/* Step indicator */}
-          <StepIndicator currentStep={step} />
-
-          {/* Step content */}
-          {step === 0 && <Step1Email email={email} onChange={setEmail} />}
-          {step === 1 && (
-            <Step2RoleAccess
-              role={role}
-              onRoleChange={handleRoleChange}
-              surfaces={surfaces}
-              onSurfacesChange={setSurfaces}
-            />
-          )}
-          {step === 2 && <Step3Message message={message} onChange={setMessage} />}
-          {step === 3 && (
-            <Step4Review
-              email={email}
-              role={role}
-              surfaces={surfaces}
-              message={message}
-              onSend={handleSend}
-              sent={sent}
-            />
-          )}
-
-          {/* Navigation buttons (hidden after send) */}
-          {!sent && step < 3 && (
-            <NavButtons
-              step={step}
-              onBack={handleBack}
-              onContinue={handleContinue}
-              onCancel={() => {}}
-              continueDisabled={step === 0 && !step1Valid}
-            />
-          )}
-          {!sent && step === 3 && (
-            <div
+          >
+            <button
+              type="button"
+              onClick={handleBack}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                marginTop: 16,
-                paddingTop: 16,
-                borderTop: '1px solid ' + SHELL.CARD_LINE,
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                color: SHELL.INK_SOFT,
+                background: 'transparent',
+                border: '1px solid ' + SHELL.CARD_LINE,
+                borderRadius: 6,
+                padding: '8px 16px',
+                cursor: 'pointer',
               }}
             >
-              <button
-                onClick={handleBack}
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 11,
-                  color: SHELL.INK_SOFT,
-                  background: 'transparent',
-                  border: '1px solid ' + SHELL.CARD_LINE,
-                  borderRadius: 6,
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                }}
-              >
-                ← Back
-              </button>
-              <div style={{ flex: 1 }} />
-              <a
-                href="/admin/users"
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  color: SHELL.INK_MUTED,
-                  textDecoration: 'none',
-                }}
-              >
-                Cancel
-              </a>
-            </div>
-          )}
-        </div>
+              ← Back
+            </button>
+            <div style={{ flex: 1 }} />
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
-    </AppShell>
+    </dialog>
   );
 }

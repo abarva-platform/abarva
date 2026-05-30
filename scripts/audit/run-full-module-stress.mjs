@@ -218,15 +218,25 @@ const modules = [
     // Routes trimmed 2026-05-25: removed /admin/watchlist/weights — no
     // corresponding page in src/app/(maestro)/admin/. Add back when the
     // watchlist-weights configuration surface ships.
+    // Routes trimmed 2026-05-30 (PR-2 Setup/Admin consolidation): removed
+    // /admin/users (canonical is /admin/users-access), /admin/invite
+    // (demoted to a modal off users-access), /admin/agents and
+    // /admin/atlas (deprecated agent-named surfaces; the raw trace
+    // inspector relocated to /engineering/traces).
     routes: [
-      '/admin', '/admin/data-trust', '/admin/connectors', '/admin/agents',
-      '/admin/programs', '/admin/agent-readiness', '/admin/atlas', '/admin/audit',
-      '/admin/cross-program-signals', '/admin/invite', '/admin/policies',
+      '/admin', '/admin/data-trust', '/admin/connectors',
+      '/admin/programs', '/admin/agent-readiness', '/admin/audit',
+      '/admin/cross-program-signals', '/admin/policies',
       '/admin/production-readiness', '/admin/segments', '/admin/tenant',
-      '/admin/users', '/admin/users-access', '/admin/depth-scorecard',
+      '/admin/users-access', '/admin/depth-scorecard',
       '/admin/corpus', '/admin/templates', '/admin/instruments', '/admin/workshops',
       '/admin/dossiers', '/admin/pilot-package', '/admin/deploy-crawl',
     ],
+  },
+  {
+    id: 'engineering',
+    name: 'Engineering',
+    routes: ['/engineering/traces'],
   },
   {
     id: 'learn',

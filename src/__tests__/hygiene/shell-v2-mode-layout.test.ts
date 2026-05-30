@@ -41,7 +41,6 @@ describe("SHELL-V2 Rule 1 — no dual-chat surface", () => {
     "components/setup/SetupConnectorsPage.tsx",
     "components/setup/SetupPoliciesPage.tsx",
     "components/setup/SetupTenantPage.tsx",
-    "components/setup/SetupUsersPage.tsx",
     "components/setup/SetupAuditPage.tsx",
     "components/programs/ProgramsIndexPage.tsx",
     "components/source/SourceIndexPage.tsx",
