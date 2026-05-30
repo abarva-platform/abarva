@@ -1,5 +1,22 @@
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 
+export function buildDeterministicConciseFollowups(args: {
+  query: string;
+  entities: string[];
+}): string[] | null {
+  const normalized = args.query.toLowerCase();
+  const asksForConciseAnswer =
+    /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(normalized);
+  if (!asksForConciseAnswer) return null;
+
+  const entity = args.entities.find((item) => item.trim().length > 0)?.trim();
+  return [
+    entity ? `Show the evidence behind ${entity}` : 'Show the evidence behind this view',
+    'What would change this recommendation?',
+    'What should we do next?',
+  ];
+}
+
 export async function generateFollowups(args: {
   query: string;
   answer: string;
@@ -7,6 +24,9 @@ export async function generateFollowups(args: {
   tenantId?: string | null;
   userId?: string | null;
 }): Promise<string[]> {
+  const deterministic = buildDeterministicConciseFollowups(args);
+  if (deterministic) return deterministic;
+
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) return [];
 
   const prompt = `Given the question and the answer, propose 3 follow-up questions the user is
