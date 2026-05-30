@@ -1,11 +1,15 @@
 /**
- * Trust Plane · TrustSpine broker · Wave 1 PR-4
+ * Trust Plane · TrustSpine broker · Wave 1 PR-4 / extended PR-6
  *
  * Canonical read model for the Setup / Admin surface. Composes the
  * five trust dimensions — substrate, isolation, integrations,
  * governance, audit — into one contract that the landing page,
  * Data Trust, Connectors, Users & Access, and Audit pages all
  * read from.
+ *
+ * PR-6 (Wave 1) extends the audit composer to union substrate-import
+ * events with approval-queue events; connector and invite sources
+ * are stubbed empty until Wave 2 wires their ledgers.
  *
  * See `docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md` § 5.4 for the
  * Data Trust backbone narrative and §7 (Wave 1 PR-4) for the
@@ -33,7 +37,10 @@
 import 'server-only';
 
 import { getSetupInventorySnapshot } from '@/lib/admin/setup-data-broker';
-import { getApprovalQueueForTenant } from '@/lib/programs/approval';
+import {
+  getApprovalQueueForTenant,
+  type ApprovalRequest,
+} from '@/lib/programs/approval';
 import { unlocksCopy } from '@/lib/admin/setup-vocab';
 import type {
   InventorySegmentRollup,
@@ -249,21 +256,95 @@ function composeIntegration(): TrustSpineIntegration {
   };
 }
 
-// ── Audit ribbon composition (partial in PR-4) ──────────────────────────────
+// ── Audit ribbon composition ────────────────────────────────────────────────
 
-function composeAuditRibbon(
+/** Max events the broker returns on the ribbon. UI shows the top 6. */
+const AUDIT_RIBBON_MAX = 50;
+
+/**
+ * Format an approval row from the queue into an audit event. The
+ * approval queue surfaces only `pending` rows today (see
+ * `getApprovalQueueForTenant`), so the synthesized action is
+ * "opened a program approval request." Once a richer ledger view
+ * lands (Wave 2), we will also surface `approved` / `rejected` /
+ * `withdrawn` transitions with their `decidedAt` timestamps.
+ *
+ * `actor` falls back to "Program owner" because the approval row
+ * carries a user id, not a display name. Resolving the name belongs
+ * to a future identity broker; the placeholder reads honestly today.
+ */
+function approvalToAuditEvent(req: ApprovalRequest): TrustAuditEvent {
+  return {
+    ts: req.requestedAt,
+    source: 'approval',
+    actor: req.requestedByUserId ? 'Program owner' : 'Unknown',
+    action: 'Opened program approval request',
+    target: req.programId,
+  };
+}
+
+/**
+ * Substrate audit events come from the live inventory snapshot's
+ * `recentActivity` tail. The snapshot composer already sorts these
+ * by timestamp desc; we re-sort below after merging with other
+ * sources to keep the union strictly temporal.
+ */
+function substrateAuditEvents(
   snapshot: SetupInventorySnapshot | null,
-): TrustSpineAudit {
-  if (!snapshot) return { last24hEvents: [] };
-  // Substrate-import events are the only source live today. PR-6
-  // (Wave 1) extends this with approval + connector + invite events.
-  const events: TrustAuditEvent[] = snapshot.recentActivity.map((e) => ({
+): TrustAuditEvent[] {
+  if (!snapshot) return [];
+  return snapshot.recentActivity.map((e) => ({
     ts: e.timestampIso,
     source: 'substrate',
     actor: e.actor,
     action: e.what,
   }));
-  return { last24hEvents: events };
+}
+
+/**
+ * Connector events — Wave 2 wires this when the connector health
+ * broker lands. Returning [] today keeps the ribbon honest rather
+ * than synthetic.
+ */
+function connectorAuditEvents(): TrustAuditEvent[] {
+  // TODO(Wave 2 PR-1): pull last-pull / reconnect events from
+  // `getAdminConnectors` once the live connector reader replaces the
+  // AdminDataMigrationPendingError fixture path.
+  return [];
+}
+
+/**
+ * Invite events — there is no `tenant_invites` / `user_invitations`
+ * table today (the admin users-access page declares "live writes
+ * deferred to Wave 27"). Returning [] keeps this dimension honest.
+ */
+function inviteAuditEvents(): TrustAuditEvent[] {
+  // TODO(Wave 2 PR-2): pull invite-sent / invite-accepted events
+  // when the invite ledger lands. Today there is no schema to read
+  // from.
+  return [];
+}
+
+function composeAuditRibbon(
+  snapshot: SetupInventorySnapshot | null,
+  approvals: ApprovalRequest[],
+): TrustSpineAudit {
+  const merged: TrustAuditEvent[] = [
+    ...substrateAuditEvents(snapshot),
+    ...approvals.map(approvalToAuditEvent),
+    ...connectorAuditEvents(),
+    ...inviteAuditEvents(),
+  ];
+  // Strictly temporal: sort by ts desc. Events with unparseable
+  // timestamps sink to the bottom so the live feed stays trustworthy.
+  merged.sort((a, b) => {
+    const ta = Date.parse(a.ts);
+    const tb = Date.parse(b.ts);
+    const va = Number.isFinite(ta) ? ta : -Infinity;
+    const vb = Number.isFinite(tb) ? tb : -Infinity;
+    return vb - va;
+  });
+  return { last24hEvents: merged.slice(0, AUDIT_RIBBON_MAX) };
 }
 
 // ── Entry point ─────────────────────────────────────────────────────────────
@@ -290,15 +371,15 @@ export async function getTrustSpine(tenantKey: string): Promise<TrustSpine> {
 
   const snapshot =
     snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
-  const openApprovals =
-    approvalResult.status === 'fulfilled' ? approvalResult.value.length : 0;
+  const approvals =
+    approvalResult.status === 'fulfilled' ? approvalResult.value : [];
 
   return {
     substrate: composeSubstrate(snapshot),
     isolation: composeIsolation(),
     integration: composeIntegration(),
-    governance: composeGovernance(openApprovals),
-    audit: composeAuditRibbon(snapshot),
+    governance: composeGovernance(approvals.length),
+    audit: composeAuditRibbon(snapshot, approvals),
     refreshedAtIso: new Date().toISOString(),
     tenantKey,
   };

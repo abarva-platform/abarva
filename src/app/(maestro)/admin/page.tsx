@@ -35,6 +35,7 @@ import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
 import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
+import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -110,6 +111,15 @@ export default async function AdminOverviewPage() {
     lastIngestedAt: snapshot?.lastIngestedAt ?? null,
   });
 
+  // Wave 1 PR-6: surface the unified audit ribbon on the landing.
+  // The broker composes substrate + approval events (connector and
+  // invite sources stubbed empty pending Wave 2). Degrades to []
+  // if the broker throws so the landing never blocks on the ribbon.
+  const trustSpine = brokerTenantKey
+    ? await getTrustSpine(brokerTenantKey).catch(() => null)
+    : null;
+  const auditEvents = (trustSpine?.audit.last24hEvents ?? []).slice(0, 6);
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <HomeOverviewV2
@@ -117,6 +127,7 @@ export default async function AdminOverviewPage() {
         clientKey={isClientKey(clientKey) ? clientKey : null}
         blocks={blocks}
         extras={extras}
+        auditEvents={auditEvents}
       />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}

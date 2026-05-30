@@ -22,6 +22,8 @@ import type {
   HomeOverviewV2Extras,
 } from '@/lib/admin/home-overview-v2';
 import type { OverviewBlocks } from '@/lib/admin/overview-composer';
+import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
+import { AuditRibbon } from '@/components/admin/AuditRibbon';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -126,9 +128,17 @@ interface Props {
   extras: HomeOverviewV2Extras;
   /** Optional override tagline (defaults to brand-map tagline). */
   tagline?: string;
+  /**
+   * Unified audit ribbon events from the TrustSpine broker. Wave 1
+   * PR-6 surfaces this as Zone E on the landing per the verdict
+   * (`SETUP_AUDIT_2026-05-30_VERDICT.md` §5.6). Pass [] to hide the
+   * ribbon entirely; omit to fall back to the (empty) default which
+   * still renders the section with the empty-state line.
+   */
+  auditEvents?: TrustAuditEvent[];
 }
 
-export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline }: Props) {
+export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline, auditEvents }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
     ...FALLBACK_BRAND,
@@ -406,6 +416,13 @@ export function HomeOverviewV2({ tenantName, clientKey, blocks, extras, tagline 
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
           </div>
         </Section>
+
+        <Rule />
+
+        {/* Section 06 — Audit ribbon · Wave 1 PR-6 · Zone E per the
+            Trust Plane verdict. Renders even when empty so the page
+            shape stays predictable for incident-response triage. */}
+        <AuditRibbon events={auditEvents ?? []} />
       </main>
     </div>
   );
