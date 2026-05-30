@@ -34,7 +34,7 @@ export const HOME_PANELS: ReadonlyArray<HomePanelMetadata> = [
   {
     id: 'data-trust',
     label: 'Data Trust',
-    route: '/home/data-trust',
+    route: '/admin/data-trust',
     group: 'explore',
     visibleToRoles: ['admin', 'analyst'],
     description: 'Data provenance and substrate completeness',
@@ -50,7 +50,7 @@ export const HOME_PANELS: ReadonlyArray<HomePanelMetadata> = [
   {
     id: 'agent-readiness',
     label: 'Agent Readiness',
-    route: '/home/agent-readiness',
+    route: '/admin/agent-readiness',
     group: 'explore',
     visibleToRoles: ['admin', 'analyst'],
     description: 'Agent state and substrate access verification',
@@ -58,7 +58,7 @@ export const HOME_PANELS: ReadonlyArray<HomePanelMetadata> = [
   {
     id: 'connectors',
     label: 'Connectors',
-    route: '/home/connectors',
+    route: '/admin/connectors',
     group: 'configure',
     visibleToRoles: ['admin'],
     description: 'Manage integrations and data sources',
@@ -66,7 +66,7 @@ export const HOME_PANELS: ReadonlyArray<HomePanelMetadata> = [
   {
     id: 'tenant-profile',
     label: 'Tenant Profile',
-    route: '/home/tenant-profile',
+    route: '/admin/tenant',
     group: 'configure',
     visibleToRoles: ['admin'],
     description: 'Tenant context and named CXOs',

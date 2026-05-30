@@ -179,21 +179,31 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const role = resolveSessionRole(metadataRole, email)
   const requestedClientId = request.nextUrl.searchParams.get('client')
 
-  // H2 (2026-05-07) · Route consolidation per Home Refinement Package
-  // ROUTE_MIGRATION.md. Old /setup and /admin URLs 301-redirect to
-  // /home equivalents. Specific panel mappings handled before the
-  // catch-alls.
-  const adminToHomeMap: Record<string, string> = {
-    '/admin': '/home',
-    '/admin/data-trust': '/home/data-trust',
-    '/admin/ai-initiatives': '/home/ai-initiatives',
-    '/admin/agent-readiness': '/home/agent-readiness',
-    '/admin/connectors': '/home/connectors',
-    '/admin/tenant': '/home/tenant-profile',
+  // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
+  // /admin/* is the single canonical route tree for the Setup/Admin
+  // surface. The parallel /home/* re-export tree is retired. The
+  // panel pages that previously re-exported /admin/* counterparts now
+  // 301-redirect /home/<panel> → /admin/<panel> so any persisted links
+  // continue to resolve.
+  //
+  // /home, /home/queue, /home/learn, /home/ai-initiatives*,
+  // /home/configuration, /home/training stay as real /home pages and
+  // are NOT remapped here.
+  const homeToAdminMap: Record<string, string> = {
+    '/home/data-trust': '/admin/data-trust',
+    '/home/agent-readiness': '/admin/agent-readiness',
+    '/home/connectors': '/admin/connectors',
+    '/home/tenant-profile': '/admin/tenant',
   }
-  const exactAdminMatch = adminToHomeMap[request.nextUrl.pathname]
-  if (exactAdminMatch) {
-    const url = new URL(exactAdminMatch + request.nextUrl.search, request.url)
+  const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname]
+  if (exactHomeMatch) {
+    const url = new URL(exactHomeMatch + request.nextUrl.search, request.url)
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
+  }
+  // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
+  if (request.nextUrl.pathname.startsWith('/home/connectors/')) {
+    const sub = request.nextUrl.pathname.slice('/home/connectors/'.length)
+    const url = new URL('/admin/connectors/' + sub + request.nextUrl.search, request.url)
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
   }
 
@@ -229,19 +239,16 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     const url = new URL('/home/ai-initiatives/' + sub + request.nextUrl.search, request.url)
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
   }
-  // /setup catch-all → /home (preserves the previous /setup compatibility
-  // bridge but skipping the /admin hop). Sub-paths follow the panel map
-  // implicitly because they're handled by the /admin → /home redirects
-  // when /setup → /admin redirects below.
+
+  // /setup compatibility bridge — /setup/* maps to /home/* (which then
+  // hits the home→admin redirects above when applicable).
   if (request.nextUrl.pathname === '/setup') {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/home', request.url), 301))
   }
   if (request.nextUrl.pathname.startsWith('/setup/')) {
     const sub = request.nextUrl.pathname.slice('/setup/'.length)
-    // Map setup panels through the same admin-to-home name table when
-    // possible; fall back to /home/<sub> directly.
-    const candidate = '/admin/' + sub
-    const target = adminToHomeMap[candidate] ?? '/home/' + sub
+    const homeCandidate = '/home/' + sub
+    const target = homeToAdminMap[homeCandidate] ?? homeCandidate
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL(target + request.nextUrl.search, request.url), 301))
   }
 
