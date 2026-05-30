@@ -23,7 +23,7 @@ describe('Setup canonical route registry parity', () => {
   it('registers canonical W6 Setup governance routes under /admin/*', () => {
     const expected = [
       ['admin-policies', '/admin/policies', 'Setup Policies'],
-      ['admin-tenant', '/admin/tenant', 'Setup Tenant'],
+      ['admin-tenant', '/admin?tab=tenant', 'Setup Tenant'],
       ['admin-architecture', '/admin/architecture', 'Admin Architecture'],
     ] as const;
 
@@ -86,6 +86,10 @@ describe('Setup canonical route registry parity', () => {
       path.join(process.cwd(), 'src/app/setup/page.tsx'),
       'utf8',
     );
+    const adminSetupPageSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/(maestro)/admin/setup/page.tsx'),
+      'utf8',
+    );
     const proxySource = fs.readFileSync(
       path.join(process.cwd(), 'src/proxy.ts'),
       'utf8',
@@ -93,8 +97,10 @@ describe('Setup canonical route registry parity', () => {
 
     expect(setupPageSource).toContain("redirect('/admin')");
     expect(setupPageSource).not.toContain('AdminCanonShellV2');
+    expect(adminSetupPageSource).toContain("redirect('/admin')");
+    expect(adminSetupPageSource).not.toContain('AdminCanonShellV2');
     expect(proxySource).toContain("request.nextUrl.pathname === '/setup'");
     expect(proxySource).toContain("request.nextUrl.pathname.startsWith('/setup/')");
-    expect(proxySource).toContain("NextResponse.redirect(new URL('/admin', request.url))");
+    expect(proxySource).toContain("NextResponse.redirect(new URL('/admin', request.url), 301)");
   });
 });

@@ -266,37 +266,37 @@ export interface UnlocksPreview {
 const SEGMENT_UNLOCKS_PREVIEW: Record<number, UnlocksPreview> = {
   1: {
     question: 'Which legal entities sit under our holding company, and which regulator owns each?',
-    citationExample: 'Enterprise Profile §Entities: Apex Retail Inc. (DE) — SEC, FTC',
+    citationExample: 'Enterprise Profile §Entities: Primary operating entity — SEC, FTC',
     agent: 'sentinel',
   },
   2: {
     question: 'Who owns the loyalty P&L, and who approves CX programs?',
-    citationExample: 'Apex Org Chart: CMO → VP Customer Engagement (loyalty P&L owner)',
+    citationExample: 'Org Chart §Commercial: CMO → VP Customer Engagement (loyalty P&L owner)',
     agent: 'nexus',
   },
   3: {
     question: 'Which system of record holds authoritative customer identity?',
-    citationExample: 'Apex IT Landscape §Customer: Salesforce CDP (system of record)',
+    citationExample: 'IT Landscape §Customer: Salesforce CDP (system of record)',
     agent: 'atlas',
   },
   4: {
     question: 'Where are we vs plan on IT opex this quarter, and which initiative drove the variance?',
-    citationExample: 'Apex IT Financials Q3: opex $48.2M vs $46.1M plan; +$2.1M from CDP migration',
+    citationExample: 'IT Financials Q3: opex $48.2M vs $46.1M plan; +$2.1M from CDP migration',
     agent: 'sentinel',
   },
   5: {
     question: 'Why did same-store comp slow in Q3?',
-    citationExample: 'Apex KPI Dictionary §SSC: comp-store basis — 13-month tenure, ex-fuel',
+    citationExample: 'KPI Dictionary §SSC: comp-store basis — 13-month tenure, ex-fuel',
     agent: 'sentinel',
   },
   6: {
     question: 'Which programs are in flight this quarter, and which are gate-blocked?',
-    citationExample: 'Apex Program Inventory: 4 active programs; CDP at Gate 3 (blocked on data trust)',
+    citationExample: 'Program Inventory: 4 active programs; CDP at Gate 3 (blocked on data trust)',
     agent: 'nexus',
   },
   7: {
     question: 'How did vendors score against the CDP RFP evaluation criteria?',
-    citationExample: 'Apex Sourcing §CDP-RFP-2026: Segment 91, mParticle 87, Tealium 82',
+    citationExample: 'Sourcing Artifacts §CDP-RFP-2026: Segment 91, mParticle 87, Tealium 82',
     agent: 'sentinel',
   },
   8: {
@@ -306,7 +306,7 @@ const SEGMENT_UNLOCKS_PREVIEW: Record<number, UnlocksPreview> = {
   },
   9: {
     question: 'What is the evidence behind the claim that CDP improves conversion 4%?',
-    citationExample: 'Evidence Ledger §EVD-2026-0312: Apex pilot Aug–Sep 2026, n=42K sessions',
+    citationExample: 'Evidence Ledger §EVD-2026-0312: pilot Aug-Sep 2026, n=42K sessions',
     agent: 'sentinel',
   },
   10: {
@@ -316,12 +316,12 @@ const SEGMENT_UNLOCKS_PREVIEW: Record<number, UnlocksPreview> = {
   },
   11: {
     question: 'Is our CDP contract renewable in 90 days?',
-    citationExample: 'Apex Vendor Register: Segment CDP renewal 2026-08-12 (76 days)',
+    citationExample: 'Vendor Register: Segment CDP renewal 2026-08-12 (76 days)',
     agent: 'sentinel',
   },
   12: {
     question: 'Which PCI controls apply to the new payment gateway, and who attests?',
-    citationExample: 'Compliance §PCI-DSS 4.0: req 3.5.1 attested by Apex CISO 2026-04-30',
+    citationExample: 'Compliance §PCI-DSS 4.0: req 3.5.1 attested by CISO 2026-04-30',
     agent: 'steward',
   },
   13: {

@@ -37,8 +37,8 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   'production-readiness': {
     agentLabel: 'Steward',
     title: 'Steward editorial · Readiness decision',
-    body: () =>
-      'Demo readiness is strong for Apex Retail. Pilot is partial. Production is blocked by live audit, model gateway execution, tenant security review, and Azure private data-plane proof.',
+    body: (ctx) =>
+      `Demo readiness is strong for ${ctx.tenant.name}. Pilot is partial. Production is blocked by live audit, model gateway execution, tenant security review, and Azure private data-plane proof.`,
     primaryAction: {
       label: 'Open blockers',
       href: '/admin/production-readiness#blockers',

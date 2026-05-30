@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "client": "Apex Retail",
+      "email": "cio@apex-retail.example.com",
+      "routes": [
+        {
+          "route": "/admin/setup",
+          "finalUrl": "http://localhost:3000/admin",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/data-trust",
+          "finalUrl": "http://localhost:3000/admin/data-trust",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/production-readiness",
+          "finalUrl": "http://localhost:3000/admin/production-readiness",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        }
+      ],
+      "logout": {
+        "finalUrl": "http://localhost:3000/sign-in?redirect=%2Fadmin",
+        "ok": true
+      }
+    },
+    {
+      "client": "SkyHarbor Air",
+      "email": "cto@skyharbor-air.example.com",
+      "routes": [
+        {
+          "route": "/admin/setup",
+          "finalUrl": "http://localhost:3000/admin",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/data-trust",
+          "finalUrl": "http://localhost:3000/admin/data-trust",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/production-readiness",
+          "finalUrl": "http://localhost:3000/admin/production-readiness",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        }
+      ],
+      "logout": {
+        "finalUrl": "http://localhost:3000/sign-in?redirect=%2Fadmin",
+        "ok": true
+      }
+    },
+    {
+      "client": "Meridian Health System",
+      "email": "cdio@meridian-health.example.com",
+      "routes": [
+        {
+          "route": "/admin/setup",
+          "finalUrl": "http://localhost:3000/admin",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/data-trust",
+          "finalUrl": "http://localhost:3000/admin/data-trust",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        },
+        {
+          "route": "/admin/production-readiness",
+          "finalUrl": "http://localhost:3000/admin/production-readiness",
+          "status": 200,
+          "ok": true,
+          "leaks": []
+        }
+      ],
+      "logout": {
+        "finalUrl": "http://localhost:3000/sign-in?redirect=%2Fadmin",
+        "ok": true
+      }
+    }
+  ]
+}
