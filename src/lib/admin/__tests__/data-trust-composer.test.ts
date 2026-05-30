@@ -102,4 +102,33 @@ describe('composeDataTrustBlocks · Trust ladder', () => {
     );
     partialOrSparse.forEach((r) => expect(r.nextAction).toBe('Promote'));
   });
+
+  it('every row carries an unlocks preview shaped { question, citationExample, agent }', () => {
+    const blocks = composeDataTrustBlocks(FCF.segments);
+    blocks.ladder.forEach((r) => {
+      expect(r.unlocksPreview).toBeDefined();
+      expect(r.unlocksPreview.question).toBeTruthy();
+      expect(r.unlocksPreview.citationExample).toBeTruthy();
+      expect(r.unlocksPreview.question.endsWith('?')).toBe(true);
+      expect(r.unlocksPreview.citationExample).toContain(':');
+    });
+  });
+
+  it('isSparse flag is true for Empty / Loaded / Available rungs only', () => {
+    // Empty tenant — every row is Empty / Load.
+    const emptyBlocks = composeDataTrustBlocks([]);
+    emptyBlocks.ladder.forEach((r) => {
+      expect(r.isSparse).toBe(true);
+    });
+
+    // Mature tenant — Decision-grade rows are not sparse.
+    const apexBlocks = composeDataTrustBlocks(APEX.segments);
+    apexBlocks.ladder.forEach((r) => {
+      if (r.trustRung === 'Decision-grade' || r.trustRung === 'Usable evidence' || r.trustRung === 'Agent-usable') {
+        expect(r.isSparse).toBe(false);
+      } else {
+        expect(r.isSparse).toBe(true);
+      }
+    });
+  });
 });

@@ -20,10 +20,12 @@ import {
   impactScoreForSegment,
   trustRungFromHealth,
   unlocksCopy,
+  unlocksPreview,
   type ActionImpact,
   type BucketRow,
   type HealthState,
   type TrustRung,
+  type UnlocksPreview,
 } from '@/lib/admin/setup-vocab';
 
 export interface DataTrustStateMetrics {
@@ -52,6 +54,22 @@ export interface TrustLadderRow {
   records: number;
   trustRung: TrustRung;
   unlocks: string;
+  /**
+   * Concrete unlock preview — question + citation example — surfaced
+   * on the Data Trust ladder under each sparse segment. Per Wave 3
+   * PR 2 (`SETUP_AUDIT_2026-05-30_VERDICT.md` §7).
+   *
+   * Always populated from `unlocksPreview` so callers don't need to
+   * branch; renderers can choose to hide it for mature rungs.
+   */
+  unlocksPreview: UnlocksPreview;
+  /**
+   * True for segments that haven't reached `Usable evidence` —
+   * Loaded / Available / Empty rungs. These rows should render the
+   * unlock-preview block in the UI. Decision-grade / Usable-evidence
+   * / Agent-usable rungs hide it.
+   */
+  isSparse: boolean;
   nextAction: 'Load' | 'Promote' | '—';
 }
 
@@ -63,6 +81,19 @@ export interface DataTrustBlocks {
 }
 
 const TOTAL_SEGMENTS = 14;
+
+/**
+ * Rungs that count as "sparse" for unlock-preview display.
+ * Mature rungs (Decision-grade / Agent-usable / Usable evidence)
+ * hide the preview; everything below shows it.
+ */
+function isSparseRung(rung: TrustRung): boolean {
+  return (
+    rung === 'Empty' ||
+    rung === 'Loaded' ||
+    rung === 'Available'
+  );
+}
 
 const CRITICAL_PATH_FAMILIES = new Set([1, 2, 3, 4, 5, 6, 9, 12]);
 
@@ -163,6 +194,8 @@ export function composeDataTrustBlocks(
         records: seg.recordCount,
         trustRung: rung,
         unlocks: unlocksCopy(seg.familyNumber, seg.segmentName),
+        unlocksPreview: unlocksPreview(seg.familyNumber, seg.segmentName),
+        isSparse: isSparseRung(rung),
         nextAction,
       });
     } else {
@@ -175,6 +208,8 @@ export function composeDataTrustBlocks(
         records: 0,
         trustRung: 'Empty',
         unlocks: unlocksCopy(f, segmentName),
+        unlocksPreview: unlocksPreview(f, segmentName),
+        isSparse: true,
         nextAction: 'Load',
       });
     }
