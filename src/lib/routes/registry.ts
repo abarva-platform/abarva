@@ -256,8 +256,12 @@ const ROUTE_REGISTRY: ReadonlyArray<RouteRegistryEntry> = [
     active: true,
   },
   {
+    // Wave 1 PR-3 (2026-05-30) · Tenant configuration is demoted to a tab
+    // inside /admin Overview (see AdminOverviewTabs + AdminTenantTab).
+    // The legacy /admin/tenant URL 301-redirects to /admin?tab=tenant via
+    // src/proxy.ts adminRouteConsolidationMap.
     routeId: 'admin-tenant',
-    pattern: '/admin/tenant',
+    pattern: '/admin?tab=tenant',
     label: 'Setup Tenant',
     shellKind: 'admin',
     surface: 'admin',

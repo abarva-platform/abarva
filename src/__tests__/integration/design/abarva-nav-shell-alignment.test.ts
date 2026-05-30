@@ -312,7 +312,6 @@ describe('NAV1F · canonical pages import a canonical shell', () => {
     'AbarVaShellNav',
     'AbarvaTopNav',
     // Admin route shells admin/page.tsx via component wrappers
-    'SetupConnectorsPage',
     'AdminCanonShell',
   ];
 

@@ -1,10 +1,15 @@
+// Wave 1 PR-3 (2026-05-30) · This component used to render its own AppShell +
+// SubNavStrip. Per SETUP_AUDIT_2026-05-30_VERDICT §5.3, the canonical Setup
+// surface uses AdminCanonShellV2 + AdminSidebar — the legacy 5-tab
+// SUB_NAV_ITEMS pattern is dead. This file now exports the *content only*;
+// /admin/audit/page.tsx wraps it in AdminCanonShellV2.
+//
+// Wave 1 PR-6 (2026-05-30) · accepts an optional `filterSource` prop driven
+// by the landing-page AuditRibbon click (`/admin/audit?source=<source>`).
 'use client';
 
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { AUDIT_LOG_FIXTURE, AUDIT_AGENT_VOICE, type AuditEntry } from '@/lib/setup/shell-setup-fixture';
+import { AUDIT_LOG_FIXTURE, type AuditEntry } from '@/lib/setup/shell-setup-fixture';
 
 /**
  * Audit ribbon source filter · Wave 1 PR-6.
@@ -70,14 +75,6 @@ const SOURCE_LABEL: Record<AuditSourceFilter, string> = {
   invite: 'Invite',
   approval: 'Approval',
 };
-
-const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
-  { key: 'users', label: 'Users', href: '/admin/users' },
-  { key: 'audit', label: 'Audit log', active: true, href: '/admin/audit' },
-  { key: 'policies', label: 'Policies', href: '/admin/policies' },
-  { key: 'tenant', label: 'Tenant', href: '/admin/tenant' },
-];
 
 function severityDotColor(severity: AuditEntry['severity']): string {
   if (severity === 'critical') return SHELL.RUST_TEXT;
@@ -218,136 +215,115 @@ export function SetupAuditPage({ filterSource }: SetupAuditPageProps = {}) {
   const visible = filterEntries(AUDIT_LOG_FIXTURE, filterSource ?? null);
   const criticalCount = visible.filter((entry) => entry.severity === 'critical').length;
   const warnCount = visible.filter((entry) => entry.severity === 'warn').length;
-  const headerContext = filterSource
-    ? `Setup · Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? '' : 's'}`
-    : `Setup · Audit log · ${visible.length} events`;
   const headerTitle = filterSource
     ? `Audit log · ${SOURCE_LABEL[filterSource]} · ${visible.length} event${visible.length === 1 ? '' : 's'}`
     : `Audit log · ${visible.length} events`;
 
   return (
-    <AppShell
-      surface="setup"
-      topBarProps={{
-        tenantName: 'Apex Retail Group',
-        showLocked: true,
-        context: headerContext,
+    <div
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        background: SHELL.PAPER,
+        padding: '24px 32px',
       }}
-      middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
     >
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
-        quote={AUDIT_AGENT_VOICE.quote}
-        actions={AUDIT_AGENT_VOICE.actions}
-        surface="setup"
-      />
-
-      {/* Work pane */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          background: SHELL.PAPER,
-          padding: '24px 32px',
-        }}
-      >
-        {/* Eyebrow + header */}
-        <div style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
-              marginBottom: 6,
-              lineHeight: 1,
-            }}
-          >
-            Setup
-          </div>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: SHELL.PEACH_TEXT,
-              marginBottom: 8,
-              lineHeight: 1,
-            }}
-          >
-            Canonical route · /admin/audit
-          </div>
-          <h1
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 24,
-              fontWeight: 700,
-              color: SHELL.INK,
-              margin: 0,
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {headerTitle}
-          </h1>
-          {filterSource && (
-            <div style={{ marginTop: 10 }}>
-              <a
-                href="/admin/audit"
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: SHELL.INK,
-                  textDecoration: 'none',
-                  borderBottom: '1px solid ' + SHELL.CARD_LINE,
-                  paddingBottom: 1,
-                }}
-              >
-                Clear filter · show all sources →
-              </a>
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-          <AuditChip label="Critical" value={criticalCount} tone="critical" />
-          <AuditChip label="Warn" value={warnCount} tone="warn" />
-          <AuditChip label="Info" value={visible.length - criticalCount - warnCount} tone="info" />
-        </div>
-
-        {/* Audit rows */}
+      {/* Eyebrow + header */}
+      <div style={{ marginBottom: 20 }}>
         <div
           style={{
-            background: SHELL.CARD_WHITE,
-            border: '1px solid ' + SHELL.CARD_LINE,
-            borderRadius: 10,
-            padding: visible.length === 0 ? '16px' : '0 16px',
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            marginBottom: 6,
+            lineHeight: 1,
           }}
         >
-          {visible.length === 0 ? (
-            <div
+          Setup
+        </div>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: SHELL.PEACH_TEXT,
+            marginBottom: 8,
+            lineHeight: 1,
+          }}
+        >
+          Canonical route · /admin/audit
+        </div>
+        <h1
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 24,
+            fontWeight: 700,
+            color: SHELL.INK,
+            margin: 0,
+            lineHeight: 1.2,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {headerTitle}
+        </h1>
+        {filterSource && (
+          <div style={{ marginTop: 10 }}>
+            <a
+              href="/admin/audit"
               style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.INK_MUTED,
-                padding: '4px 0',
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: SHELL.INK,
+                textDecoration: 'none',
+                borderBottom: '1px solid ' + SHELL.CARD_LINE,
+                paddingBottom: 1,
               }}
             >
-              No audit events match this filter.
-            </div>
-          ) : (
-            visible.map((entry) => (
-              <AuditRow key={entry.id} item={entry} />
-            ))
-          )}
-        </div>
+              Clear filter · show all sources →
+            </a>
+          </div>
+        )}
       </div>
-    </AppShell>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+        <AuditChip label="Critical" value={criticalCount} tone="critical" />
+        <AuditChip label="Warn" value={warnCount} tone="warn" />
+        <AuditChip label="Info" value={visible.length - criticalCount - warnCount} tone="info" />
+      </div>
+
+      {/* Audit rows */}
+      <div
+        style={{
+          background: SHELL.CARD_WHITE,
+          border: '1px solid ' + SHELL.CARD_LINE,
+          borderRadius: 10,
+          padding: visible.length === 0 ? '16px' : '0 16px',
+        }}
+      >
+        {visible.length === 0 ? (
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: SHELL.INK_MUTED,
+              padding: '4px 0',
+            }}
+          >
+            No audit events match this filter.
+          </div>
+        ) : (
+          visible.map((entry) => (
+            <AuditRow key={entry.id} item={entry} />
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 

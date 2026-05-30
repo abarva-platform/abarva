@@ -1,15 +1,16 @@
 /**
- * Admin route hygiene — PR-2 Setup/Admin consolidation guard.
+ * Admin route hygiene — Setup/Admin consolidation guard.
  *
  * Asserts that route references coming out of the admin shell and the
- * home overview composition don't point at routes that PR-2 deleted
- * or relocated. The current deleted/relocated set:
+ * home overview composition don't point at routes that the Setup audit
+ * cleanup waves deleted or relocated. The current deleted/relocated set:
  *
- *   /admin/users         → DELETED (canonical is /admin/users-access)
- *   /admin/invite        → DEMOTED (modal off /admin/users-access)
- *   /admin/agents/atlas  → DELETED (workflow-named successor:
- *                          /admin/cross-program-signals)
- *   /admin/atlas/traces  → RELOCATED to /engineering/traces
+ *   /admin/users         → DELETED  (canonical is /admin/users-access)         · PR-2
+ *   /admin/invite        → DEMOTED  (modal off /admin/users-access)            · PR-2
+ *   /admin/agents/atlas  → DELETED  (workflow-named successor:
+ *                                    /admin/cross-program-signals)             · PR-2
+ *   /admin/atlas/traces  → RELOCATED to /engineering/traces                    · PR-2
+ *   /admin/tenant        → DEMOTED  (tab inside /admin?tab=tenant)             · PR-3
  *
  * Per docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §5.5. If a panel
  * card, sidebar entry, or any composed reference reintroduces one of
@@ -33,6 +34,7 @@ const DEAD_ADMIN_ROUTES = new Set([
   '/admin/invite',
   '/admin/agents/atlas',
   '/admin/atlas/traces',
+  '/admin/tenant',
 ]);
 
 function routeFileExists(pathname: string): boolean {

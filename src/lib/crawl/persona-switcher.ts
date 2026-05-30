@@ -48,7 +48,7 @@ export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
   { id: 'tower-outcomes', path: '/tower/outcomes' },
   { id: 'home-queue', path: '/home/queue' },
   { id: 'admin-data-trust', path: '/admin/data-trust' },
-  { id: 'admin-setup', path: '/admin/tenant' },
+  { id: 'admin-setup', path: '/admin?tab=tenant' },
   { id: 'admin-production-readiness', path: '/admin/production-readiness' },
   { id: 'admin-releases', path: '/admin/releases' },
 ];

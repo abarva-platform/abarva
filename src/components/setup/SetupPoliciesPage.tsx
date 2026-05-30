@@ -1,19 +1,13 @@
+// Wave 1 PR-3 (2026-05-30) · This component used to render its own AppShell +
+// SubNavStrip. Per SETUP_AUDIT_2026-05-30_VERDICT §5.3, the canonical Setup
+// surface uses AdminCanonShellV2 + AdminSidebar — the legacy 5-tab
+// SUB_NAV_ITEMS pattern is dead. This file now exports the *content only*;
+// /admin/policies/page.tsx wraps it in AdminCanonShellV2.
 'use client';
 
 import { useState } from 'react';
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { POLICIES_FIXTURE, POLICIES_AGENT_VOICE, type PolicyItem } from '@/lib/setup/shell-setup-fixture';
-
-const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
-  { key: 'users', label: 'Users', href: '/admin/users' },
-  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
-  { key: 'policies', label: 'Policies', active: true, href: '/admin/policies' },
-  { key: 'tenant', label: 'Tenant', href: '/admin/tenant' },
-];
+import { POLICIES_FIXTURE, type PolicyItem } from '@/lib/setup/shell-setup-fixture';
 
 function statusPillStyle(status: PolicyItem['status']): { bg: string; text: string; label: string } {
   if (status === 'active') return { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT, label: 'Active' };
@@ -512,23 +506,7 @@ export function SetupPoliciesPage() {
   const draftCount = POLICIES_FIXTURE.filter((policy) => policy.status === 'draft').length;
 
   return (
-    <AppShell
-      surface="setup"
-      topBarProps={{
-        tenantName: 'Apex Retail Group',
-        showLocked: true,
-        context: 'Setup · Policies · 5 items',
-      }}
-      middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
-    >
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
-        quote={POLICIES_AGENT_VOICE.quote}
-        actions={POLICIES_AGENT_VOICE.actions}
-        surface="setup"
-      />
-
-      {/* Work pane */}
+    <>
       <div
         style={{
           flex: 1,
@@ -598,7 +576,7 @@ export function SetupPoliciesPage() {
       {reviewPolicy && (
         <PolicyReviewModal policy={reviewPolicy} onClose={() => setReviewPolicy(null)} />
       )}
-    </AppShell>
+    </>
   );
 }
 

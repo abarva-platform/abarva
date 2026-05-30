@@ -13,6 +13,11 @@
  * templates) migrated out — absorbed by Data Trust (PR B) and Agent
  * Readiness (PR C). Components remain in the codebase pending those
  * PRs.
+ *
+ * Wave 1 PR-3 (2026-05-30): introduces the AdminOverviewTabs strip
+ * (Overview · Tenant) below the page header. `/admin/tenant` is
+ * demoted to `?tab=tenant` here and the standalone route is removed
+ * (301 redirect lives in src/proxy.ts).
  */
 
 import { getActiveClientRow } from '@/lib/active-client';
@@ -29,6 +34,8 @@ import {
 import { getTrustSpine } from '@/lib/admin/broker/trust-spine-broker';
 import { spineToChips } from '@/components/admin/TrustStrip';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
+import { AdminOverviewTabs, resolveAdminOverviewTab } from '@/components/admin/AdminOverviewTabs';
+import { AdminTenantTab } from '@/components/admin/AdminTenantTab';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
@@ -42,7 +49,18 @@ export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function AdminOverviewPage() {
+interface AdminOverviewSearchParams {
+  tab?: string;
+}
+
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<AdminOverviewSearchParams>;
+}) {
+  const params = searchParams ? await searchParams : undefined;
+  const activeTab = resolveAdminOverviewTab(params?.tab);
+
   const activeClient = await getActiveClientRow().catch(() => null);
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
@@ -120,15 +138,20 @@ export default async function AdminOverviewPage() {
 
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
-      <HomeOverviewV2
-        tenantName={activeClientDisplayName}
-        clientKey={isClientKey(clientKey) ? clientKey : null}
-        blocks={blocks}
-        extras={extras}
-        trustChips={trustChips}
-        liveSnapshotPresent={snapshot !== null}
-        auditEvents={auditEvents}
-      />
+      <AdminOverviewTabs activeTab={activeTab} />
+      {activeTab === 'overview' ? (
+        <HomeOverviewV2
+          tenantName={activeClientDisplayName}
+          clientKey={isClientKey(clientKey) ? clientKey : null}
+          blocks={blocks}
+          extras={extras}
+          trustChips={trustChips}
+          liveSnapshotPresent={snapshot !== null}
+          auditEvents={auditEvents}
+        />
+      ) : (
+        <AdminTenantTab />
+      )}
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
         tenantDataRichness={content.tenantDataRichness}

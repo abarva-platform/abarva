@@ -1,17 +1,36 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { POLICIES_FIXTURE } from '@/lib/setup/shell-setup-fixture';
 import { TENANT_FIXTURE } from '@/lib/setup/shell-setup-tenant-fixture';
 
 describe('Setup W6 policies and tenant governance lock', () => {
-  it('keeps canonical policies and tenant routes wired to Setup pages', () => {
+  // Wave 1 PR-3 (2026-05-30) updated this assertion per
+  // SETUP_AUDIT_2026-05-30_VERDICT §5.5: /admin/policies is rewrapped in
+  // AdminCanonShellV2 (no SubNavStrip); /admin/tenant is demoted to a
+  // tab inside /admin Overview (the standalone route is deleted, and
+  // src/proxy.ts 301-redirects the old URL).
+  it('wraps the canonical policies route in AdminCanonShellV2', () => {
     const policiesRoute = readWorkspaceFile('src/app/(maestro)/admin/policies/page.tsx');
-    const tenantRoute = readWorkspaceFile('src/app/(maestro)/admin/tenant/page.tsx');
 
     expect(policiesRoute).toContain("import { SetupPoliciesPage }");
-    expect(policiesRoute).toContain('return <SetupPoliciesPage />');
-    expect(tenantRoute).toContain("import { SetupTenantPage }");
-    expect(tenantRoute).toContain('return <SetupTenantPage />');
+    expect(policiesRoute).toContain('AdminCanonShellV2');
+    expect(policiesRoute).toContain('<SetupPoliciesPage />');
+  });
+
+  it('demotes /admin/tenant to a tab inside /admin Overview', () => {
+    const tenantRouteAbsent = !existsSync(
+      join(process.cwd(), 'src/app/(maestro)/admin/tenant/page.tsx'),
+    );
+    expect(tenantRouteAbsent).toBe(true);
+
+    const adminRoute = readWorkspaceFile('src/app/(maestro)/admin/page.tsx');
+    expect(adminRoute).toContain("import { AdminOverviewTabs");
+    expect(adminRoute).toContain("import { AdminTenantTab }");
+    expect(adminRoute).toContain('<AdminTenantTab');
+
+    const proxy = readWorkspaceFile('src/proxy.ts');
+    expect(proxy).toContain("'/admin/tenant'");
+    expect(proxy).toContain("'/admin?tab=tenant'");
   });
 
   it('keeps architecture platform route as a redirect-only legacy bridge', () => {

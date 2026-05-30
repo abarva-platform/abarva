@@ -1,19 +1,14 @@
+// Wave 1 PR-3 (2026-05-30) · This component used to render its own AppShell +
+// SubNavStrip. Per SETUP_AUDIT_2026-05-30_VERDICT §5.3, the canonical Setup
+// surface uses AdminCanonShellV2 + AdminSidebar — the legacy 5-tab
+// SUB_NAV_ITEMS pattern is dead. This file now exports the *content only*;
+// /admin/connectors/[connectorId]/reconnect/page.tsx wraps it.
 'use client';
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
-
-const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', active: true, href: '/admin/connectors' },
-  { key: 'users', label: 'Users', href: '/admin/users' },
-  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
-  { key: 'policies', label: 'Policies', href: '/admin/policies' },
-];
 
 interface ConnectorReconnectPageProps {
   detail: ConnectorDetail;
@@ -29,28 +24,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
   }
 
   return (
-    <AppShell
-      surface="setup"
-      topBarProps={{
-        tenantName: 'Apex Retail Group',
-        showLocked: true,
-        context: `Setup · ${detail.name} · Reconnect`,
-      }}
-      middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
-    >
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Auth Governor' }}
-        quote={`${reconnectProfile.callToAction} for ${detail.name}. Current state: ${detail.status}. Record the credential handoff here, then validate the next live checkpoint separately from setup.`}
-        agentContext="Steward · Setup · reconnect auth flow"
-        actions={[
-          { letter: 'A', text: reconnectProfile.callToAction, detail: 'Open the canonical handoff step for this connector' },
-          { letter: 'B', text: 'Review queued flows', detail: 'Confirm inbound and outbound sync scope before reconnecting' },
-          { letter: 'C', text: 'Return to connector detail', detail: 'Verify health once re-auth completes' },
-        ]}
-        surface="setup"
-      />
-
-      <div
+    <div
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -260,6 +234,5 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
           )}
         </div>
       </div>
-    </AppShell>
   );
 }
