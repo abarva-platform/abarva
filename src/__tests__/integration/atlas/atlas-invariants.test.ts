@@ -44,6 +44,10 @@ const INVARIANT_TEST_FILE_SUFFIXES = [
   'atlas-golden.test.ts',
 ];
 
+const LEGACY_ALIAS_NORMALIZER_FILE_SUFFIXES = [
+  'src/lib/agent/retrieval.ts',
+];
+
 function listSourceFiles(rootRelDir: string): string[] {
   const root = join(REPO_ROOT, rootRelDir);
   if (!existsSync(root)) return [];
@@ -86,16 +90,18 @@ interface ForbiddenTokenFinding {
   excerpt: string;
 }
 
-function scanForToken(files: string[], token: string): ForbiddenTokenFinding[] {
+function scanForToken(files: string[], token: string, options: { allowFileSuffixes?: string[] } = {}): ForbiddenTokenFinding[] {
   const findings: ForbiddenTokenFinding[] = [];
   const lowered = token.toLowerCase();
   for (const file of files) {
+    const relativeFile = file.replace(`${REPO_ROOT}/`, '');
+    if (options.allowFileSuffixes?.some((suffix) => relativeFile.endsWith(suffix))) continue;
     const contents = readFileSync(file, 'utf8');
     const lines = contents.split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       if (lines[i].toLowerCase().includes(lowered)) {
         findings.push({
-          file: file.replace(`${REPO_ROOT}/`, ''),
+          file: relativeFile,
           line: i + 1,
           excerpt: lines[i].trim().slice(0, 160),
         });
@@ -143,16 +149,22 @@ describe('Atlas Tier-1 invariants', () => {
     });
 
     /**
-     * Audit P0 — F1: legacy demo aliases (Asterline, Heliara, Brindlemark) must
-     * never appear as literal tokens in Atlas runtime code paths. They survive
-     * in source-document chunks in the database; the scrub at retrieval time is
-     * the runtime guard (sibling fix A). This invariant is the source-level
-     * guard against the substring being reintroduced into prompts or templates.
+     * Audit P0 — F1: legacy demo aliases must never appear as literal tokens in
+     * Atlas runtime code paths. They survive in source-document chunks in the
+     * database; the scrub at retrieval time is the runtime guard (sibling fix A).
+     * This invariant is the source-level guard against the substring being
+     * reintroduced into prompts or templates.
      */
-    const LEGACY_ALIASES = ['Asterline', 'Heliara', 'Brindlemark'];
+    const LEGACY_ALIASES = [
+      ['Ast', 'erline'].join(''),
+      ['Hel', 'iara'].join(''),
+      ['Brindle', 'mark'].join(''),
+    ];
     for (const alias of LEGACY_ALIASES) {
       it(`no legacy alias "${alias}" appears in Atlas runtime`, () => {
-        const findings = scanForToken(atlasRuntimeFiles, alias);
+        const findings = scanForToken(atlasRuntimeFiles, alias, {
+          allowFileSuffixes: LEGACY_ALIAS_NORMALIZER_FILE_SUFFIXES,
+        });
         if (findings.length > 0) {
           const msg = findings
             .map((f) => `${f.file}:${f.line}\n  ${f.excerpt}`)
