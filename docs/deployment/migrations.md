@@ -1,9 +1,13 @@
-# Auto-applying Supabase migrations on Vercel deploys
+# Auto-applying Postgres migrations on Vercel deploys
 
 This repo wires `supabase/migrations/*.sql` into the Vercel build so that
-**every production deploy applies any pending migrations before serving
-traffic**. The manual "paste the SQL into the Supabase dashboard" step is
-gone for non-destructive migrations.
+**production deploys that change migration files apply any pending migrations
+before serving traffic**. Docs-only and app-only production deploys skip the
+migration runner, which keeps parallel Vercel deploys from opening unnecessary
+database sessions.
+
+The migration path uses direct Postgres via `pg`. It must not use the Supabase
+JS client or Supabase session-mode pooler credentials at build/deploy time.
 
 This document covers:
 
@@ -28,11 +32,13 @@ Three pieces:
    `case` statement.
 
 2. **`scripts/vercel-build.sh`** runs at deploy time on Vercel
-   infrastructure. It branches on `$VERCEL_ENV`:
+   infrastructure. It branches on `$VERCEL_ENV` and the deploy commit:
 
-   - `production` → `npm run db:migrate -- --ci`, then `npm run build`.
-     A migration failure (`set -e`) propagates non-zero and aborts the
-     deploy.
+   - `production` with changes under `supabase/migrations/` →
+     `npm run db:migrate -- --ci`, then `npm run build`. A migration
+     failure (`set -e`) propagates non-zero and aborts the deploy.
+   - `production` without migration-file changes → log a skip line, then
+     `npm run build`.
    - any other value → log a skip line, then `npm run build`.
 
 3. **`src/scripts/run-migrations.ts`** is the existing one-command runner.
@@ -52,7 +58,8 @@ half-applied schema can desync from a half-deployed app.
 
 | `VERCEL_ENV` | Pre-build action | Build runs |
 |---|---|---|
-| `production` | `npm run db:migrate -- --ci` | yes (only if migrations succeed) |
+| `production` with `supabase/migrations/` changes | `npm run db:migrate -- --ci` | yes (only if migrations succeed) |
+| `production` without migration changes | log skip line | yes |
 | `preview` | log skip line | yes |
 | `development` | log skip line | yes |
 | unset (local `npm run build`) | n/a — `vercel.ts` only applies on Vercel | yes |
@@ -170,25 +177,28 @@ auto-apply to work:
 
 | Env var | Used by | Likely already set? |
 |---|---|---|
-| `DATABASE_URL` | `run-migrations.ts` (Postgres connection) | yes — required for runtime DB access |
+| `ABARVA_AZURE_DATABASE_URL` | `run-migrations.ts` (preferred migration connection) | recommended |
+| `AZURE_DATABASE_URL` | `run-migrations.ts` (fallback migration connection) | optional |
+| `DATABASE_URL` | `run-migrations.ts` (final fallback Postgres connection) | yes — required for runtime DB access |
 | `NEXT_PUBLIC_SUPABASE_URL` | runtime | yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | runtime | yes |
 | `SUPABASE_SERVICE_ROLE_KEY` | runtime | yes |
 
-The runner connects via `DATABASE_URL` only (it uses `pg`, not the
-Supabase JS client). If `DATABASE_URL` is missing the deploy fails with:
+The runner resolves `ABARVA_AZURE_DATABASE_URL`, then `AZURE_DATABASE_URL`,
+then `DATABASE_URL`. It uses `pg`, not the Supabase JS client. If none of
+those Postgres connection strings are present, the deploy fails with:
 
 ```
-✗  DATABASE_URL required in .env.local
+✗  ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL, or DATABASE_URL required in environment
 ```
 
-If you see that on a Vercel deploy, set `DATABASE_URL` in the project's
-production environment and redeploy.
+If you see that on a Vercel deploy, set one of those direct Postgres
+connection strings in the project's production environment and redeploy.
 
-> **Tip:** For migrations specifically, prefer the Supabase **Session-mode
-> pooler** URL (port 5432). The transaction-mode pooler (port 6543) is for
-> short-lived runtime queries and won't reliably support multi-statement
-> migrations.
+> **Tip:** For migrations specifically, prefer the Azure/Postgres direct
+> migration URL. Do not point Vercel build-time migration env vars at a
+> Supabase session-mode pooler; parallel deploys can exhaust session-mode
+> clients before `next build` starts.
 
 ---
 
