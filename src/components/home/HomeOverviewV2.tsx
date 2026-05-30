@@ -15,6 +15,8 @@
 // CSS module needed for the first slice. Refactor into smaller
 // components as the page evolves.
 
+import { Suspense, type ReactNode } from 'react';
+
 import type { ClientKey } from '@/lib/client-config';
 import type {
   ModuleReadinessV2,
@@ -35,6 +37,13 @@ import {
   TenantSwitcher,
   type TenantSwitcherOption,
 } from '@/components/admin/TenantSwitcher';
+import {
+  ActionQueueSkeleton,
+  AuditRibbonSkeleton,
+  PostureGridSkeleton,
+  StewardOrientationSkeleton,
+  TrustStripSkeleton,
+} from '@/components/admin/skeletons';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -198,6 +207,27 @@ interface Props {
    * Existing non-empty paths are untouched.
    */
   emptyTenant?: boolean;
+  /**
+   * Wave 3 PR-7 · Per-zone streaming slots.
+   *
+   * When a slot is provided, the page wraps it in its own
+   * `<Suspense>` boundary with the matching skeleton fallback. The
+   * masthead remains synchronous and renders immediately; each zone
+   * below streams independently as its async server component
+   * resolves. No spinners — that's a founder principle per the
+   * verdict §5.6 Loading state.
+   *
+   * Slot priority: when a slot is provided it WINS over the static
+   * data prop for that zone (e.g. `trustStripSlot` supersedes
+   * `trustChips`). The static props remain supported so existing
+   * test fixtures and any synchronous caller (e.g. legacy DOM-order
+   * tests) continue to render eagerly.
+   */
+  trustStripSlot?: ReactNode;
+  actionQueueSlot?: ReactNode;
+  postureGridSlot?: ReactNode;
+  stewardOrientationSlot?: ReactNode;
+  auditRibbonSlot?: ReactNode;
 }
 
 export function HomeOverviewV2({
@@ -214,6 +244,11 @@ export function HomeOverviewV2({
   tenantSwitchOptions,
   postureCards,
   emptyTenant = false,
+  trustStripSlot,
+  actionQueueSlot,
+  postureGridSlot,
+  stewardOrientationSlot,
+  auditRibbonSlot,
 }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
@@ -330,8 +365,14 @@ export function HomeOverviewV2({
       {/* ── TRUST STRIP (Zone B · 56px) ──────────────────────────────
           Verdict §5.6: four equal-width chips conveying the entire
           trust posture at a glance. Rendered between masthead and
-          content; clicking jumps to the relevant group page. */}
-      {trustChips && trustChips.length > 0 && (
+          content; clicking jumps to the relevant group page.
+
+          Wave 3 PR-7: if `trustStripSlot` is provided, wrap it in a
+          Suspense boundary so the chip numbers stream in while the
+          rest of the page renders. Otherwise fall back to the eager
+          static-prop path so existing callers (tests, legacy
+          renders) keep working. */}
+      {trustStripSlot ? (
         <div
           data-testid="home-overview-v2-trust-strip"
           style={{
@@ -340,8 +381,21 @@ export function HomeOverviewV2({
             padding: '16px 64px 18px',
           }}
         >
-          <TrustStrip chips={trustChips} />
+          <Suspense fallback={<TrustStripSkeleton />}>{trustStripSlot}</Suspense>
         </div>
+      ) : (
+        trustChips && trustChips.length > 0 && (
+          <div
+            data-testid="home-overview-v2-trust-strip"
+            style={{
+              background: C.surface,
+              borderBottom: `1px solid ${C.borderLight}`,
+              padding: '16px 64px 18px',
+            }}
+          >
+            <TrustStrip chips={trustChips} />
+          </div>
+        )
       )}
 
       {/* ── CONTENT ─────────────────────────────────────────── */}
@@ -360,11 +414,20 @@ export function HomeOverviewV2({
             and actions above prose. The Steward orientation block
             (previously Section 02) now lives below this queue.
 
-            Wave 3 PR-6 · empty-tenant variant. When `emptyTenant` is
-            true the queue is replaced with a single editorial primary
-            card ("Upload your first dataset to begin grounding.") plus
-            two ghost suggestions per verdict §5.6. */}
-        {emptyTenant ? (
+            Wave 3 PR-7: when `actionQueueSlot` is provided, render
+            it inside its own Suspense boundary so the queue can
+            stream independently of the trust strip and posture grid.
+            Wave 3 PR-6: when `emptyTenant` is true the queue is
+            replaced with a single editorial primary card per §5.6.
+            Slot wins over empty-state wins over static. */}
+        {actionQueueSlot ? (
+          <>
+            <Section eyebrowNum="02" eyebrowLabel="WHAT NEEDS YOU TODAY" title="Action queue" lead="Listed in priority order — gate-blocking first, substrate-blocking next, advisory last.">
+              <Suspense fallback={<ActionQueueSkeleton />}>{actionQueueSlot}</Suspense>
+            </Section>
+            <Rule />
+          </>
+        ) : emptyTenant ? (
           <>
             <Section
               eyebrowNum="02"
@@ -436,11 +499,24 @@ export function HomeOverviewV2({
             four trust dimensions, then reads the Steward voice. Card
             click jumps to the relevant group page.
 
-            Wave 3 PR-6 · empty-tenant variant. When `emptyTenant` is
-            true the 2×2 grid is replaced with a 4-column upload
-            affordance naming the first-4 datasets per verdict §5.6
-            (Organization · KPIs · Vendors · Customer). */}
-        {emptyTenant ? (
+            Wave 3 PR-7: when `postureGridSlot` is provided, wrap it
+            in its own Suspense boundary so the four cards can stream
+            independently.
+            Wave 3 PR-6 · empty-tenant: 4-column upload affordance.
+            Slot wins over empty wins over static. */}
+        {postureGridSlot ? (
+          <>
+            <Section
+              eyebrowNum="02b"
+              eyebrowLabel="POSTURE AT A GLANCE"
+              title="Trust posture"
+              lead="Four cards — Substrate · Connector health · Auth & isolation · Approvals & policy. Each card pulls from the same TrustSpine that drives the strip above; click to jump into the group."
+            >
+              <Suspense fallback={<PostureGridSkeleton />}>{postureGridSlot}</Suspense>
+            </Section>
+            <Rule />
+          </>
+        ) : emptyTenant ? (
           <>
             <Section
               eyebrowNum="02b"
@@ -469,7 +545,17 @@ export function HomeOverviewV2({
         {/* Section 03 — Steward orientation (moved below action queue
             in Wave 1 PR-5; verdict §5.6 Zone F — "Steward's read":
             retained as the editorial anchor below the operator
-            actions, not as the opening block). */}
+            actions, not as the opening block).
+
+            Wave 3 PR-7: when `stewardOrientationSlot` is provided,
+            wrap it in its own Suspense boundary. The skeleton holds
+            the editorial shape so the page doesn't shift when the
+            paragraph streams in. */}
+        {stewardOrientationSlot ? (
+          <Section eyebrowNum="03" eyebrowLabel="STEWARD VOICE" title="What's loaded, what's missing" lead="Steward watches what's been ingested, what depth it's reached, and what's still authored placeholder versus grounded fact. Read this before any module — it's the constraint on what the agents can say with confidence.">
+            <Suspense fallback={<StewardOrientationSkeleton />}>{stewardOrientationSlot}</Suspense>
+          </Section>
+        ) : (
         <Section eyebrowNum="03" eyebrowLabel="STEWARD VOICE" title="What's loaded, what's missing" lead="Steward watches what's been ingested, what depth it's reached, and what's still authored placeholder versus grounded fact. Read this before any module — it's the constraint on what the agents can say with confidence.">
           <div
             style={{
@@ -555,6 +641,7 @@ export function HomeOverviewV2({
             )}
           </div>
         </Section>
+        )}
 
         <Rule />
 
@@ -616,8 +703,16 @@ export function HomeOverviewV2({
 
         {/* Section 06 — Audit ribbon · Wave 1 PR-6 · Zone E per the
             Trust Plane verdict. Renders even when empty so the page
-            shape stays predictable for incident-response triage. */}
-        <AuditRibbon events={auditEvents ?? []} />
+            shape stays predictable for incident-response triage.
+
+            Wave 3 PR-7: when `auditRibbonSlot` is provided, wrap it
+            in its own Suspense boundary so it streams independently.
+            Otherwise fall back to eager rendering with `auditEvents`. */}
+        {auditRibbonSlot ? (
+          <Suspense fallback={<AuditRibbonSkeleton />}>{auditRibbonSlot}</Suspense>
+        ) : (
+          <AuditRibbon events={auditEvents ?? []} />
+        )}
       </main>
     </div>
   );

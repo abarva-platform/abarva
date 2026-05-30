@@ -22,13 +22,15 @@ surfaces as dead routes.
 - `runtime-app-lane`: Hardens Setup/Admin, Evidence Ledger, and crawl-index
   routes. Moves tenant-admin access helper out of the Next.js layout export
   surface so App Router type generation stays valid. Moves `/product` into the
-  public route group to avoid a clean-checkout Turbopack route conflict.
+  public route group and retires the duplicate authenticated product route to
+  avoid a clean-checkout Turbopack route conflict.
 - `admin-control-lane`: Normalizes TrustSpine, policy, isolation, approval, and
   setup inventory timestamp fields before UI render.
 - `evidence-lane`: Normalizes Evidence Ledger freshness values before citation
   rendering.
 - `qa-validation-lane`: Adds regression tests for timestamp serialization and
-  makes the hygiene build gate use the real `next build` exit code on Node 24.
+  makes the hygiene build gate use the real `next build` exit code on Node 24
+  with an explicit 4 GB heap for the clean GitHub build.
 - `data-plane-lane`: No database mutation in this PR.
 
 ## Client Applicability
@@ -50,6 +52,7 @@ surfaces as dead routes.
 - `src/lib/admin/tenant-admin-access.ts`
 - `src/app/(maestro)/admin/layout.tsx`
 - `src/app/(public)/product/page.tsx`
+- `src/app/(maestro)/product/page.tsx`
 - `src/app/(maestro)/evidence-ledger/page.tsx`
 - `src/app/(maestro)/tower/lens/page.tsx`
 - `src/app/(maestro)/tower/pressures/page.tsx`
@@ -59,7 +62,7 @@ surfaces as dead routes.
 - Focused regression tests for setup-data, isolation posture, policy events,
   evidence citations, and tenant-admin access.
 - Hygiene CI alignment with the repo runtime (`node:24-bookworm-slim`) and
-  deterministic build-log reporting.
+  deterministic build-log reporting plus a stable heap budget.
 
 ## QA / Validation
 

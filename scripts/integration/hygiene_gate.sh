@@ -118,7 +118,12 @@ if [ "$SKIP_BUILD" -eq 1 ]; then
   pass "Build skipped (--skip-build)"
 else
   BUILD_LOG="$(mktemp)"
-  if npm run build >"$BUILD_LOG" 2>&1; then
+  BUILD_NODE_OPTIONS="${NODE_OPTIONS:-}"
+  case " $BUILD_NODE_OPTIONS " in
+    *" --max-old-space-size="* | *" --max_old_space_size="*) ;;
+    *) BUILD_NODE_OPTIONS="${BUILD_NODE_OPTIONS:+$BUILD_NODE_OPTIONS }--max-old-space-size=4096" ;;
+  esac
+  if NODE_OPTIONS="$BUILD_NODE_OPTIONS" npm run build >"$BUILD_LOG" 2>&1; then
     pass "npm run build succeeded"
   else
     fail "npm run build failed"
