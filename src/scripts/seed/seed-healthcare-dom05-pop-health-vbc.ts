@@ -28,7 +28,7 @@ const HEALTHCARE_POP_HEALTH_PATTERNS: HealthcarePopHealthPatternSeed[] = [
     name: 'Risk Stratification Model Not Validated Against Actual Utilisation',
     officeCategory: 'middle_office',
     failureRatePct: 72,
-    description: 'ACO risk stratification algorithms assign tier scores using claims-derived comorbidity indices and pharmacy fills, but the proprietary scoring logic is never back-tested against realised utilisation — ED visits, inpatient admissions, and total cost of care — for the attributed population. When care management teams prioritise outreach based on risk tier, they find that high-tier patients frequently have stable chronic conditions while the actual high-utiliser cohort sits in the moderate tier due to undercoded diagnoses and recent care transitions not yet reflected in claims. Meridian's Epic Healthy Planet risk model diverges from Arcadia-calculated scores by more than two risk tiers for 18% of attributed patients because the two platforms weight diagnosis recency differently, and neither has been validated against 12-month actual utilisation in the MSSP contract year.',
+    description: `ACO risk stratification algorithms assign tier scores using claims-derived comorbidity indices and pharmacy fills, but the proprietary scoring logic is never back-tested against realised utilisation — ED visits, inpatient admissions, and total cost of care — for the attributed population. When care management teams prioritise outreach based on risk tier, they find that high-tier patients frequently have stable chronic conditions while the actual high-utiliser cohort sits in the moderate tier due to undercoded diagnoses and recent care transitions not yet reflected in claims. Meridian's Epic Healthy Planet risk model diverges from Arcadia-calculated scores by more than two risk tiers for 18% of attributed patients because the two platforms weight diagnosis recency differently, and neither has been validated against 12-month actual utilisation in the MSSP contract year.`,
     keywords: ['risk stratification', 'PHM', 'population health platform', 'utilisation validation', 'ACO'],
     demoRelevant: true,
   },
@@ -1391,3 +1391,5 @@ const HEALTHCARE_POP_HEALTH_PATTERNS: HealthcarePopHealthPatternSeed[] = [
     keywords: ['readmission', 'caregiver engagement', 'transition of care', 'TOC', 'care management'],
     demoRelevant: false,
   },
+
+];

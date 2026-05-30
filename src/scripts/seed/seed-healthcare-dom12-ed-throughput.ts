@@ -950,3 +950,5 @@ const HEALTHCARE_ED_PATTERNS: HealthcareEDPatternSeed[] = [
       'Activating surge beds (hallway beds, overflow bays, converted conference rooms) requires CMO or designee approval — the approval chain requires 45–75 minutes to reach on nights and weekends when the CMO is not on campus; surge beds that could reduce boarding within 30 minutes of threshold crossing are unavailable during the approval delay; removing the approval requirement and replacing it with an automatic activation protocol at defined TeleTracking thresholds would reduce surge bed activation time to under 10 minutes.',
     keywords: ['capacity management', 'surge bed', 'ED boarding', 'TeleTracking', 'capacity command centre', 'approval workflow'],
   },
+
+];

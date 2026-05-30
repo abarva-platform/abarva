@@ -994,3 +994,5 @@ const HEALTHCARE_SUPPLY_CHAIN_PATTERNS: HealthcareSupplyChainPatternSeed[] = [
     demoRelevant: true,
   },
 
+
+];

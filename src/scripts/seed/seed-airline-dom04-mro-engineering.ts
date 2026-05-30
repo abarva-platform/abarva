@@ -128,7 +128,7 @@ export const AIRLINE_MRO_PATTERNS: AirlineMROPatternSeed[] = [
     officeCategory: 'back_office',
     failureRatePct: 73,
     description:
-      'During engine shop visits at third-party AMOs, individual module components (HPT blades, LPT discs, combustor liners) are removed and their serial numbers should be tracked against the engine serial number in AMOS. In practice, the AMO submits a module-level work package that groups component removals without individual serial-number entries, creating a gap in component history that only surfaces when a specific part's traceability is queried for AD compliance or end-of-lease purposes.',
+      `During engine shop visits at third-party AMOs, individual module components (HPT blades, LPT discs, combustor liners) are removed and their serial numbers should be tracked against the engine serial number in AMOS. In practice, the AMO submits a module-level work package that groups component removals without individual serial-number entries, creating a gap in component history that only surfaces when a specific part's traceability is queried for AD compliance or end-of-lease purposes.`,
     keywords: ['engine MRO', 'module component', 'shop visit', 'serial number tracking', 'AMO'],
   },
   {

@@ -1431,3 +1431,5 @@ const AIRLINE_CREW_PATTERNS: AirlineCrewPatternSeed[] = [
     description: 'FAR Part 117 requires extended rest after consecutive duty periods that include WOCL hours — specifically, after three or more consecutive nights involving WOCL duty, a crew member must receive a rest period that exceeds the standard minimum. AIMS enforces the WOCL extended rest requirement for individual duty periods but does not count consecutive WOCL nights to trigger the extended post-sequence rest. Crews completing three-night international pairings with WOCL duty on each night are returned to the reserve pool after standard rest, below the level required by the consecutive-nights provision.',
     keywords: ['FAR Part 117', 'WOCL', 'rest period', 'consecutive nights', 'AIMS'],
   },
+
+];

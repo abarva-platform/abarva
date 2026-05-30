@@ -432,3 +432,5 @@ const AIRLINE_PSS_PATTERNS: AirlinePssPatternSeed[] = [
     description: 'Exit row seats require a passenger self-certification that they meet physical and willingness requirements to assist in an emergency. SkyHarbor\'s mobile app seat selection flow presents the certification checkbox, but due to a validation logic error, the checkbox result is not written to the Altéa SSR field — only the seat assignment is committed. At check-in, the DCS system does not receive the eligibility confirmation and flags the passenger for verbal re-confirmation, slowing the check-in queue significantly during peak periods. For passengers who did not actually agree to the responsibility, a safety gap exists.',
     keywords: ['exit row', 'seat eligibility', 'mobile app', 'Altéa', 'SSR', 'check-in', 'safety'],
   },
+
+];

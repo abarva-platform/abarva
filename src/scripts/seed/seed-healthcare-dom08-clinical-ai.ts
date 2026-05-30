@@ -40,7 +40,7 @@ const HEALTHCARE_CLINICAL_AI_PATTERNS: HealthcarePatternSeed[] = [
     failureRatePct: 71,
     demoRelevant: true,
     description:
-      'Vendor sepsis algorithms trained on academic medical centre data are deployed without local population recalibration in community hospitals with different patient acuity, comorbidity mix, and baseline vital sign distributions. The model's sensitivity threshold was set on a population where sepsis prevalence was 4–6%; Meridian's community patient mix has 1.8% sepsis prevalence, causing the positive predictive value to collapse below clinical utility. JAMA Internal Medicine research demonstrates that sepsis model PPV is highly sensitive to local base rates and that recalibration on even 6 months of local data improves PPV by 30–50 percentage points without sacrificing sensitivity.',
+      `Vendor sepsis algorithms trained on academic medical centre data are deployed without local population recalibration in community hospitals with different patient acuity, comorbidity mix, and baseline vital sign distributions. The model's sensitivity threshold was set on a population where sepsis prevalence was 4–6%; Meridian's community patient mix has 1.8% sepsis prevalence, causing the positive predictive value to collapse below clinical utility. JAMA Internal Medicine research demonstrates that sepsis model PPV is highly sensitive to local base rates and that recalibration on even 6 months of local data improves PPV by 30–50 percentage points without sacrificing sensitivity.`,
     keywords: ['sepsis predictor', 'model calibration', 'clinical validation', 'population mismatch', 'positive predictive value'],
   },
   {
@@ -109,7 +109,7 @@ const HEALTHCARE_CLINICAL_AI_PATTERNS: HealthcarePatternSeed[] = [
     failureRatePct: 67,
     demoRelevant: true,
     description:
-      'The health system has no operational dashboard tracking time-from-alert to first clinical intervention for sepsis AI alerts, making it impossible to distinguish whether the system is improving Hour-1 bundle compliance or simply generating documentation. Quality improvement committees review sepsis mortality and length-of-stay but do not drill into alert-to-response latency as a process metric. CMS Sepsis Core Measure (SEP-1) reporting requires bundle compliance evidence; without response time tracking, the AI's contribution to compliance cannot be demonstrated to payers or regulators.',
+      `The health system has no operational dashboard tracking time-from-alert to first clinical intervention for sepsis AI alerts, making it impossible to distinguish whether the system is improving Hour-1 bundle compliance or simply generating documentation. Quality improvement committees review sepsis mortality and length-of-stay but do not drill into alert-to-response latency as a process metric. CMS Sepsis Core Measure (SEP-1) reporting requires bundle compliance evidence; without response time tracking, the AI's contribution to compliance cannot be demonstrated to payers or regulators.`,
     keywords: ['sepsis bundle', 'SEP-1', 'response time', 'quality metric', 'CMS'],
   },
   {
@@ -119,7 +119,7 @@ const HEALTHCARE_CLINICAL_AI_PATTERNS: HealthcarePatternSeed[] = [
     failureRatePct: 73,
     demoRelevant: true,
     description:
-      'Following an Epic upgrade that changed the LOINC encoding for certain vital sign observations, the sepsis AI model's feature extraction pipeline silently began receiving null values for respiratory rate and temperature. The model continued to score patients and generate alerts using stale values, degrading sensitivity without triggering any model health alarm. The issue was discovered four months later during a clinical audit. FDA guidance on SaMD performance monitoring specifically calls out EHR interface changes as a trigger for mandatory model revalidation under PCCP obligations.',
+      `Following an Epic upgrade that changed the LOINC encoding for certain vital sign observations, the sepsis AI model's feature extraction pipeline silently began receiving null values for respiratory rate and temperature. The model continued to score patients and generate alerts using stale values, degrading sensitivity without triggering any model health alarm. The issue was discovered four months later during a clinical audit. FDA guidance on SaMD performance monitoring specifically calls out EHR interface changes as a trigger for mandatory model revalidation under PCCP obligations.`,
     keywords: ['model drift', 'EHR upgrade', 'LOINC', 'PCCP', 'SaMD revalidation'],
   },
   {

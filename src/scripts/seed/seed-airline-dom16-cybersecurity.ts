@@ -1352,3 +1352,5 @@ const AIRLINE_CYBER_PATTERNS: AirlineCyberPatternSeed[] = [
     keywords: ['phishing reporting', 'IOC', 'SIEM', 'A-ISAC', 'threat intelligence', 'security operations'],
   },
 
+
+];

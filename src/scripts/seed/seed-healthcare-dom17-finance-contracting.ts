@@ -965,3 +965,5 @@ export const HEALTHCARE_FINANCE_PATTERNS: HealthcareFinancePatternSeed[] = [
       'Meridian\'s bond covenants include capital expenditure restrictions tied to debt service coverage ratio performance — the capital planning team builds the annual capital plan without modelling covenant compliance thresholds; in years when operating margin declines, the capital plan is inconsistent with covenant requirements, requiring last-minute capital project cancellations that disrupt clinical program development timelines.',
     keywords: ['capital planning', 'debt covenant', 'FP&A', 'operating margin', 'capital allocation', 'Kaufman Hall'],
   },
+
+];

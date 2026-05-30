@@ -695,3 +695,5 @@ const AIRLINE_SUSTAINABILITY_PATTERNS: AirlinePatternSeed[] = [
       'A refinery co-processing bio-feedstock with conventional crude offers SkyHarbor a co-processing credit representing 15% SAF content; ASTM D7566 and CORSIA limit co-processed fuel to a maximum 50% SAF blend in the final fuel; SkyHarbor\'s claim documentation does not verify the blend does not exceed the CORSIA-accepted co-processing methodology limits; the verifier rejects 8,000 tCO₂e of claimed CORSIA benefit pending independent blend analysis.',
     keywords: ['SAF', 'co-processing', 'ASTM D7566', 'CORSIA', 'blend limit', 'verification'],
   },
+
+];
