@@ -7,8 +7,8 @@
 //     [--dry-run]
 //
 // Reads the workbook, validates rows, and upserts into
-// `tower_ai_tool_usage` keyed on (tool='claude_code', tenant, developer_id,
-// period_start). Idempotent: rerunning the same file is a no-op.
+// `tower_claude_code_usage` keyed on (tenant, developer_id, period_start).
+// Idempotent: rerunning the same file is a no-op.
 //
 // Requires DATABASE_URL (or ABARVA_AZURE_DATABASE_URL) for write mode.
 // --dry-run skips DB writes and reports planned actions only.
@@ -20,7 +20,7 @@ import { config as loadEnv } from 'dotenv';
 import { parseClaudeCodeCsv, parseClaudeCodeXlsx } from '@/lib/tower/ingest/claude-code/parse';
 import { validateClaudeCodeRows } from '@/lib/tower/ingest/claude-code/validate';
 import { buildPayload, classifyUpsert } from '@/lib/tower/ingest/claude-code/plan';
-import { CLAUDE_CODE_TOOL, type ClaudeCodeUsageRow } from '@/lib/tower/ingest/claude-code/types';
+import { type ClaudeCodeUsageRow } from '@/lib/tower/ingest/claude-code/types';
 
 loadEnv({ path: resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -93,9 +93,8 @@ async function upsertRows(
     // inserted/updated/unchanged. The downstream upsert is the single source
     // of truth for the write.
     const probe = await sb
-      .from('tower_ai_tool_usage')
+      .from('tower_claude_code_usage')
       .select('id,sessions,prompt_tokens,output_tokens,monthly_cost_usd,primary_use_case,team,period_end')
-      .eq('tool', CLAUDE_CODE_TOOL)
       .eq('tenant_client_key', tenant)
       .eq('developer_id', row.developer_id)
       .eq('period_start', row.period_start);
@@ -104,8 +103,8 @@ async function upsertRows(
     const action = classifyUpsert(row, existing);
     const payload = buildPayload(row, tenant, sourceFile);
 
-    const writeRes = await sb.from('tower_ai_tool_usage').upsert(payload, {
-      onConflict: 'tool,tenant_client_key,developer_id,period_start',
+    const writeRes = await sb.from('tower_claude_code_usage').upsert(payload, {
+      onConflict: 'tenant_client_key,developer_id,period_start',
     });
 
     if (writeRes.error) {

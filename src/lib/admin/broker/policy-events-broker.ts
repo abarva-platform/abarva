@@ -67,17 +67,17 @@
  * §7 Wave 2 PR-3 for the surface narrative this fulfills.
  */
 
-import 'server-only';
+import "server-only";
 
-import { azureRead } from '@/lib/data-plane/azureRead';
-import { resolveClientId } from '@/lib/admin/data/admin-db-helpers';
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { resolveClientId } from "@/lib/admin/data/admin-db-helpers";
 
 // ── Contract ────────────────────────────────────────────────────────────────
 
 export type PolicyAction =
-  | 'policy created'
-  | 'policy updated'
-  | 'policy deleted';
+  | "policy created"
+  | "policy updated"
+  | "policy deleted";
 
 export interface PolicyEvent {
   id: string;
@@ -125,16 +125,21 @@ interface PolicyAuditRow {
   tenant_id: string;
   actor_label: string | null;
   reason: string;
-  created_at: string;
+  created_at: string | Date;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function clampReason(value: string | null | undefined): string {
-  if (!value) return '';
+  if (!value) return "";
   const trimmed = value.trim();
   if (trimmed.length <= REASON_MAX_LEN) return trimmed;
-  return trimmed.slice(0, REASON_MAX_LEN - 1) + '…';
+  return trimmed.slice(0, REASON_MAX_LEN - 1) + "…";
+}
+
+function toIsoString(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 function isoWindowStart(): string {
@@ -147,13 +152,14 @@ function mapRow(row: PolicyAuditRow, tenantKey: string): PolicyEvent {
   // Action: today every row is an in-place update of the tenant's
   // single `ai_policy` JSONB column. When a richer schema lands,
   // branch here on the (future) event_type column.
-  const action: PolicyAction = 'policy updated';
+  const action: PolicyAction = "policy updated";
   return {
     id: row.id,
-    ts: row.created_at,
-    actor: row.actor_label && row.actor_label.length > 0
-      ? row.actor_label
-      : 'system',
+    ts: toIsoString(row.created_at) ?? new Date(0).toISOString(),
+    actor:
+      row.actor_label && row.actor_label.length > 0
+        ? row.actor_label
+        : "system",
     action,
     target: tenantKey,
     reason: clampReason(row.reason),
@@ -187,7 +193,7 @@ export async function getRecentPolicyEvents(
   } catch (error) {
     console.warn(
       JSON.stringify({
-        event: 'policy_events.client_resolve_failed',
+        event: "policy_events.client_resolve_failed",
         tenantKey,
         reason: error instanceof Error ? error.message : String(error),
       }),
@@ -207,26 +213,26 @@ export async function getRecentPolicyEvents(
   let rows: PolicyAuditRow[] = [];
   try {
     rows = await azureRead.select<PolicyAuditRow>({
-      table: 'tenant_policy_audit',
+      table: "tenant_policy_audit",
       // Allow-list: id, tenant_id, actor_label, reason, created_at.
       // NEVER select prior_policy / new_policy / actor_id —
       // payload-fingerprint and internal-id columns are kept out
       // of the broker result per W2-PR-2 precedent.
-      columns: ['id', 'tenant_id', 'actor_label', 'reason', 'created_at'],
+      columns: ["id", "tenant_id", "actor_label", "reason", "created_at"],
       where: {
         tenant_id: clientId,
-        created_at: { op: 'gte', value: windowStart },
+        created_at: { op: "gte", value: windowStart },
       },
-      orderBy: { column: 'created_at', direction: 'desc' },
+      orderBy: { column: "created_at", direction: "desc" },
       limit: POLICY_EVENT_LIMIT,
       // Migration may not be applied in every environment — return
       // [] rather than throwing if the relation is missing.
-      missingTable: 'empty',
+      missingTable: "empty",
     });
   } catch (error) {
     console.warn(
       JSON.stringify({
-        event: 'policy_events.query_failed',
+        event: "policy_events.query_failed",
         tenantKey,
         reason: error instanceof Error ? error.message : String(error),
       }),

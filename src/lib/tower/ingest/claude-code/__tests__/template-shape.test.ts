@@ -57,10 +57,10 @@ describe('Claude Code template files', () => {
     expect(periods.size).toBe(12);
   });
 
-  it('registry exposes a claude-code entry pointing at the shared table and CLI', () => {
+  it('registry exposes a claude-code entry pointing at the per-developer table and CLI', () => {
     const entry = findTowerIngestSource('claude-code');
     expect(entry).toBeDefined();
-    expect(entry?.targetTable).toBe('tower_ai_tool_usage');
+    expect(entry?.targetTable).toBe('tower_claude_code_usage');
     expect(entry?.cliScript).toBe('ingest-claude-code');
     expect(entry?.templatePath).toBe('/templates/tower/claude-code/template.xlsx');
   });

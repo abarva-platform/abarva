@@ -10,7 +10,7 @@ export const claudeCodeSource: TowerIngestSource = {
   displayName: 'Claude Code (Anthropic)',
   vendor: 'Anthropic',
   kind: 'usage',
-  targetTable: 'tower_ai_tool_usage',
+  targetTable: 'tower_claude_code_usage',
   templatePath: '/templates/tower/claude-code/template.xlsx',
   samplePath: '/templates/tower/claude-code/sample-filled.xlsx',
   readmePath: 'docs/templates/tower/claude-code/README.md',

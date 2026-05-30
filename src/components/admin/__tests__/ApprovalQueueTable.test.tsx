@@ -17,6 +17,7 @@ import { render, screen } from '@testing-library/react';
 
 import {
   ApprovalQueueTable,
+  describePending,
   formatRelativeTime,
 } from '../programs/ApprovalQueueTable';
 import type { ApprovalRequest } from '@/lib/programs/approval';
@@ -39,6 +40,10 @@ function fixture(overrides: Partial<ApprovalRequest> = {}): ApprovalRequest {
     },
     createdAt: '2026-04-29T12:00:00Z',
     updatedAt: '2026-04-29T12:00:00Z',
+    escalationLevel: 0,
+    lastNotifiedAt: null,
+    notifyCount: 0,
+    escalatedToUserId: null,
     ...overrides,
   };
 }
@@ -114,6 +119,52 @@ describe('ApprovalQueueTable', () => {
     const req = fixture({ briefSnapshot: {} });
     render(<ApprovalQueueTable requests={[req]} />);
     expect(screen.getByText('Untitled program')).toBeInTheDocument();
+  });
+
+  // ── PRE-W4-PR-4 · SLA badge + longest-pending sort ──────────────────
+  it('renders a Pending {N}h badge on every row', () => {
+    const now = new Date('2026-05-30T12:00:00Z');
+    const req = fixture({
+      id: 'req-x',
+      requestedAt: '2026-05-29T12:00:00Z',
+    });
+    render(<ApprovalQueueTable requests={[req]} now={now} />);
+    const badge = screen.getByTestId('approval-queue-pending-badge');
+    expect(badge).toHaveTextContent('Pending 24h');
+    expect(badge.getAttribute('data-sla-bucket')).toBe('warning');
+  });
+
+  it('places longest-pending row first regardless of input order', () => {
+    const now = new Date('2026-05-30T12:00:00Z');
+    const newer = fixture({
+      id: 'req-new',
+      briefSnapshot: { program_name: 'Newer Program' },
+      requestedAt: '2026-05-30T10:00:00Z',
+    });
+    const older = fixture({
+      id: 'req-old',
+      briefSnapshot: { program_name: 'Older Program' },
+      requestedAt: '2026-05-25T10:00:00Z',
+    });
+    render(
+      <ApprovalQueueTable requests={[newer, older]} now={now} />,
+    );
+    const rows = screen.getAllByTestId('approval-queue-row');
+    expect(rows[0]).toHaveTextContent('Older Program');
+    expect(rows[1]).toHaveTextContent('Newer Program');
+  });
+
+  it('describePending buckets correctly', () => {
+    const now = new Date('2026-05-30T12:00:00Z');
+    expect(
+      describePending('2026-05-30T11:00:00Z', now).bucket,
+    ).toBe('fresh');
+    expect(
+      describePending('2026-05-29T11:00:00Z', now).bucket,
+    ).toBe('warning');
+    expect(
+      describePending('2026-05-28T10:00:00Z', now).bucket,
+    ).toBe('breach');
   });
 
   it('formatRelativeTime buckets common deltas', () => {

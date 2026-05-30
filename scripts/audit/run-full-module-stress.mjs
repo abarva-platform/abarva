@@ -9,7 +9,7 @@ const REPO_ROOT = '/Users/anand/Projects/nexus';
 dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
 
 // Per-tenant profile. Selected by STRESS_TENANT env var
-// (meridian | arcturus | firstcapital | northstar | apexretail).
+// (meridian | arcturus | firstcapital | northstar | apexretail | skyharbor).
 // Default keeps backward-compat with the original Meridian-only invocation.
 const TENANT_PROFILES = {
   meridian: {
@@ -121,6 +121,43 @@ const TENANT_PROFILES = {
       ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
       ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
       ['Q10 tenant pin regression', 'When I ask what you know about Northstar, do not answer with Apex, Meridian, or First Capital facts. What do you know about us?'],
+    ],
+  },
+  skyharbor: {
+    clientKey: 'skyharbor',
+    displayShort: 'SkyHarbor',
+    displayFull: 'SkyHarbor Air',
+    personaEmail: 'cio@skyharbor-air.example.com',
+    identityMarkers: ['SkyHarbor', 'Amala Rao', 'Victor Hale'],
+    wrongTenantTerms: [
+      'Apex Retail Group',
+      'Apex Retail',
+      'Meridian Health',
+      'Meridian',
+      'First Capital',
+      'Arcturus',
+      'Northstar Clinical',
+      'Northstar',
+      'Epic Hyperspace',
+      'MyChart',
+      'Sectra',
+      'BSA/AML Consent Order',
+      'Solventum',
+    ],
+    leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc|meridian health|epic hyperspace|mychart|sectra|innovaccer|first capital|arcturus|consent order|northstar clinical|solventum|medical device|510\(k\)|fda pccp/i,
+    groundingRegex: /SkyHarbor|airline|carrier|IBM|mainframe|AWS|Z workloads?|MIPS|modernization|Amala|Victor|DORA|IROPS|loyalty|reservation|PSS|Sabre|Amadeus|MRO|airport|crew|GCC|value ledger|duplicate complexity/i,
+    groundingFlag: 'weak_skyharbor_grounding',
+    agentQuestions: [
+      ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
+      ['Q2 modernization depth', 'Where are we in the IBM mainframe to AWS modernization, and what remains risky?'],
+      ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps or domains by criticality."],
+      ['Q4 kill list', 'Which active modernization initiatives should we kill, pause, or accelerate?'],
+      ['Q5 dependency', 'What blocks reducing IBM dependency without increasing operational risk?'],
+      ['Q6 binary force', 'Just give me a yes/no — should we accelerate the remaining Z workload migration this year?'],
+      ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about airline passenger service systems?'],
+      ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
+      ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
+      ['Q10 tenant pin regression', 'When I ask what you know about SkyHarbor, do not answer with Apex, Meridian, First Capital, or Northstar facts. What do you know about us?'],
     ],
   },
 };

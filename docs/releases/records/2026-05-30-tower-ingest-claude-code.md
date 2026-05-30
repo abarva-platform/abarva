@@ -12,19 +12,21 @@
 
 Tower can now ingest Claude Code (Anthropic) per-developer monthly usage and
 cost. This is the first end-to-end live source integration for AI coding
-assistants and closes one gap from the Tower audit (zero live sources). A
-shared `tower_ai_tool_usage` table is created with a `tool` discriminator
-column so the two sister slices (S2 Copilot, S4 Cursor) land their feeds in
-the same table. A blank template workbook, a synthetic Northwind sample (336
-rows = 28 developers × 12 months), a parser/validator, and an idempotent
+assistants and closes one gap from the Tower audit (zero live sources).
+Per-developer Claude Code telemetry lands in a dedicated
+`tower_claude_code_usage` table (sister Copilot/Cursor slices land in a
+separate team-aggregate `tower_ai_tool_usage` table — different fact,
+different grain, different table; Tower lenses union across both for
+cross-tool rollups). A blank template workbook, a synthetic Northwind sample
+(336 rows = 28 developers × 12 months), a parser/validator, and an idempotent
 ingest CLI are included.
 
 ## Layer Impact
 
 - **Data layer / tenant data lane.** Adds one Postgres table
-  `tower_ai_tool_usage` with RLS keyed to `can_read_tenant_by_key` /
+  `tower_claude_code_usage` with RLS keyed to `can_read_tenant_by_key` /
   `can_write_tenant_by_key` and a natural-key unique index on
-  `(tool, tenant_client_key, developer_id, period_start)`.
+  `(tenant_client_key, developer_id, period_start)`.
 - **Tooling lane (admin/back-office).** Adds
   `src/scripts/tower/ingest-claude-code.ts` (CLI with `--dry-run`) and
   `src/scripts/tower/build-claude-code-templates.ts` (template generator).
@@ -52,7 +54,7 @@ ingest CLI are included.
 ## Changes Included
 
 - PR: https://github.com/anandsundaram-hash/abarva/pull/2531
-- Migration: `supabase/migrations/20260530120000_tower_ai_tool_usage.sql`
+- Migration: `supabase/migrations/20260530220000_tower_claude_code_usage.sql`
 - Library: `src/lib/tower/ingest/claude-code/{types,parse,validate,plan}.ts`,
   `src/lib/tower/ingest/registry.ts`
 - Scripts: `src/scripts/tower/{build-claude-code-templates,ingest-claude-code}.ts`
@@ -81,14 +83,14 @@ ingest CLI are included.
 
 - Merge PR #2531 to main once CI green.
 - Vercel auto-deploys the static template assets and library code.
-- Migration `20260530120000_tower_ai_tool_usage.sql` applies on the Azure
+- Migration `20260530220000_tower_claude_code_usage.sql` applies on the Azure
   Postgres primary via the standard post-deploy `npm run db:migrate` hook.
 - Admins run the ingest CLI per tenant when they have data to land.
 
 ## Rollback Plan
 
 - Revert PR. The migration creates one new table with no FKs into existing
-  tables, so a follow-up migration can `DROP TABLE public.tower_ai_tool_usage`
+  tables, so a follow-up migration can `DROP TABLE public.tower_claude_code_usage`
   if needed (mark `migration:destructive-allowed`).
 
 ## Audit Evidence
@@ -96,14 +98,14 @@ ingest CLI are included.
 - PR: https://github.com/anandsundaram-hash/abarva/pull/2531
 - CI run (initial): https://github.com/anandsundaram-hash/abarva/actions/runs/26685468880
 - Migration drift: passed (`New migration drift surface`).
-- Migration SQL: `supabase/migrations/20260530120000_tower_ai_tool_usage.sql`.
+- Migration SQL: `supabase/migrations/20260530220000_tower_claude_code_usage.sql`.
 - Local smoke command output captured in the PR description.
 
 ## Known Gaps
 
 - S2 Copilot and S4 Cursor sister slices are separate PRs. Their ingest
   entries will append into `src/lib/tower/ingest/registry.ts`.
-- No Tower lens consumes `tower_ai_tool_usage` yet — that wiring is a
+- No Tower lens consumes `tower_claude_code_usage` yet — that wiring is a
   follow-up slice once at least one tenant has data loaded.
 - The Anthropic Console does not yet expose a programmatic per-developer
   cost endpoint; the runbook documents the manual console export workflow.

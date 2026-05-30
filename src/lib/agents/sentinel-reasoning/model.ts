@@ -54,6 +54,9 @@ export async function callSentinelModel(args: {
   metadata?: Record<string, unknown>;
 }): Promise<{ text: string; auditId: string | null; denied: boolean }> {
   const { clientId, policy } = await loadSentinelClientPolicy(args.clientId);
+  // PRE-W4-PR-6: stamp intended + resolved tenant on every audit row.
+  // `args.clientId` is what the caller asked for (slug or UUID); the
+  // resolved `clientId` is what the policy loader returned.
   const result = await callModel({
     tenantId: clientId,
     userId: args.userId ?? undefined,
@@ -69,7 +72,11 @@ export async function callSentinelModel(args: {
       agent: 'Sentinel',
     },
     policy,
-    auditSink: createSentinelAiAuditSink(),
+    auditSink: createSentinelAiAuditSink({
+      intendedTenantKey: args.clientId,
+      resolvedTenantKey: clientId,
+      tenantId: clientId,
+    }),
     adapter: createSentinelAdapter(args.fallbackResponse),
   });
 

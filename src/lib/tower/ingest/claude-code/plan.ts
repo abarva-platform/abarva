@@ -4,7 +4,7 @@
 // the action as 'insert' | 'update' | 'unchanged'. Used both by the CLI to
 // produce summary counts and by tests to verify idempotency without a DB.
 
-import { CLAUDE_CODE_TOOL, type ClaudeCodeUsageRow } from './types';
+import { type ClaudeCodeUsageRow } from './types';
 
 export interface ExistingDbRow {
   team: string | null;
@@ -42,7 +42,6 @@ export function classifyUpsert(
 }
 
 export interface UsagePayload extends ClaudeCodeUsageRow {
-  tool: typeof CLAUDE_CODE_TOOL;
   tenant_client_key: string;
   source_file: string;
 }
@@ -53,7 +52,6 @@ export function buildPayload(
   sourceFile: string,
 ): UsagePayload {
   return {
-    tool: CLAUDE_CODE_TOOL,
     tenant_client_key: tenant,
     source_file: sourceFile,
     ...row,

@@ -1,103 +1,44 @@
--- Tower · AI tool developer usage table.
+-- migration:destructive-allowed
+-- S2/S3/S4 shared landing table for live AI-coding-tool usage feeds.
+-- Coordinated across:
+--   S2  Copilot     (tool='copilot')
+--   S3  Claude Code (tool='claude_code')
+--   S4  Cursor      (tool='cursor')
 --
--- Shared upsert target for per-developer AI coding assistant usage feeds.
--- The `tool` discriminator distinguishes Claude Code (S3), GitHub Copilot (S2),
--- and Cursor (S4). Tower audit PR #2525 found zero live source integrations on
--- this surface; this migration is the foundation for the ingest slices that
--- close that gap.
+-- Whichever slice ships first creates the table; later slices are no-op
+-- thanks to IF NOT EXISTS. The `tool` discriminator scopes rows so each
+-- slice ingests independently and idempotently on its natural key.
 --
--- Slice ownership (do not break for sister slices):
---   • S2 Copilot: tool = 'copilot'
---   • S3 Claude Code: tool = 'claude_code'  (this slice — landed first)
---   • S4 Cursor: tool = 'cursor'
---
--- Idempotency: a feed re-running for the same (tool, tenant, developer, period_start)
--- updates the row in place via ON CONFLICT. The unique index defines the natural key.
-
+-- Grain: one row per (client, tool, team, period_start). One calendar
+-- month is the canonical period (period_end is informational so the
+-- semantics are explicit for partial months and future quarterly feeds).
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS public.tower_ai_tool_usage (
+DO $$ BEGIN
+  CREATE TYPE tower_ai_tool_kind AS ENUM ('copilot', 'claude_code', 'cursor');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS tower_ai_tool_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_client_key TEXT NOT NULL,
-  tool TEXT NOT NULL
-    CHECK (tool IN ('claude_code', 'copilot', 'cursor')),
-  team TEXT,
-  developer_id TEXT NOT NULL,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  tool tower_ai_tool_kind NOT NULL,
+  team TEXT NOT NULL,
   period_start DATE NOT NULL,
   period_end DATE NOT NULL,
-  sessions INTEGER,
-  prompt_tokens BIGINT,
-  output_tokens BIGINT,
-  monthly_cost_usd NUMERIC(12, 2),
-  primary_use_case TEXT,
-  source_file TEXT,
+  seats_assigned INTEGER NOT NULL DEFAULT 0 CHECK (seats_assigned >= 0),
+  active_users INTEGER NOT NULL DEFAULT 0 CHECK (active_users >= 0),
+  completions_shown BIGINT NOT NULL DEFAULT 0 CHECK (completions_shown >= 0),
+  completions_accepted BIGINT NOT NULL DEFAULT 0 CHECK (completions_accepted >= 0),
+  monthly_cost_usd NUMERIC(14, 2) NOT NULL DEFAULT 0 CHECK (monthly_cost_usd >= 0),
+  source_file_id TEXT,
   ingested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT tower_ai_tool_usage_period_ck
-    CHECK (period_end >= period_start),
-  CONSTRAINT tower_ai_tool_usage_tokens_ck
-    CHECK (
-      (prompt_tokens IS NULL OR prompt_tokens >= 0) AND
-      (output_tokens IS NULL OR output_tokens >= 0) AND
-      (sessions IS NULL OR sessions >= 0) AND
-      (monthly_cost_usd IS NULL OR monthly_cost_usd >= 0)
-    )
+  CHECK (period_end >= period_start),
+  CHECK (active_users <= seats_assigned),
+  CHECK (completions_accepted <= completions_shown),
+  UNIQUE (client_id, tool, team, period_start)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS tower_ai_tool_usage_natural_key_idx
-  ON public.tower_ai_tool_usage (tool, tenant_client_key, developer_id, period_start);
-
-CREATE INDEX IF NOT EXISTS tower_ai_tool_usage_tenant_period_idx
-  ON public.tower_ai_tool_usage (tenant_client_key, period_start DESC);
-
-CREATE INDEX IF NOT EXISTS tower_ai_tool_usage_tool_idx
-  ON public.tower_ai_tool_usage (tool, tenant_client_key);
-
-ALTER TABLE public.tower_ai_tool_usage ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS service_role_all_tower_ai_tool_usage ON public.tower_ai_tool_usage;
-CREATE POLICY service_role_all_tower_ai_tool_usage
-  ON public.tower_ai_tool_usage
-  FOR ALL TO service_role
-  USING (true)
-  WITH CHECK (true);
-
-DO $tower_ai_tool_usage_rls$
-BEGIN
-  IF to_regprocedure('can_read_tenant_by_key(text)') IS NOT NULL
-     AND to_regprocedure('can_write_tenant_by_key(text)') IS NOT NULL THEN
-    DROP POLICY IF EXISTS authenticated_select_tower_ai_tool_usage ON public.tower_ai_tool_usage;
-    CREATE POLICY authenticated_select_tower_ai_tool_usage
-      ON public.tower_ai_tool_usage
-      FOR SELECT TO authenticated
-      USING (can_read_tenant_by_key(tenant_client_key));
-
-    DROP POLICY IF EXISTS authenticated_write_tower_ai_tool_usage ON public.tower_ai_tool_usage;
-    CREATE POLICY authenticated_write_tower_ai_tool_usage
-      ON public.tower_ai_tool_usage
-      FOR ALL TO authenticated
-      USING (can_write_tenant_by_key(tenant_client_key))
-      WITH CHECK (can_write_tenant_by_key(tenant_client_key));
-  ELSE
-    RAISE NOTICE 'tower-ai-tool-usage: tenant key RLS helpers absent; authenticated policies skipped';
-  END IF;
-END
-$tower_ai_tool_usage_rls$;
-
-GRANT SELECT, INSERT, UPDATE ON public.tower_ai_tool_usage TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.tower_ai_tool_usage TO service_role;
-
-COMMENT ON TABLE public.tower_ai_tool_usage IS
-  'Per-developer AI coding-assistant usage, monthly. Discriminator column `tool` distinguishes Claude Code, Copilot, and Cursor feeds. Natural key: (tool, tenant_client_key, developer_id, period_start).';
-
-COMMENT ON COLUMN public.tower_ai_tool_usage.tool IS
-  'Discriminator: claude_code (S3), copilot (S2), cursor (S4).';
-
-COMMENT ON COLUMN public.tower_ai_tool_usage.tenant_client_key IS
-  'Tenant key (e.g. northwindretail, apexretail). RLS uses can_read_tenant_by_key / can_write_tenant_by_key.';
-
-COMMENT ON COLUMN public.tower_ai_tool_usage.developer_id IS
-  'Stable developer identifier from the upstream tool. For Claude Code this is the Anthropic Console per-API-key tag or user ID.';
-
-NOTIFY pgrst, 'reload schema';
+CREATE INDEX IF NOT EXISTS tower_ai_tool_usage_client_tool_idx
+  ON tower_ai_tool_usage (client_id, tool, period_start DESC);
 
 COMMIT;

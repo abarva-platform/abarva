@@ -76,9 +76,8 @@ describe('classifyUpsert', () => {
 });
 
 describe('buildPayload', () => {
-  it('tags rows with the claude_code discriminator and tenant', () => {
+  it('tags rows with the tenant and source file', () => {
     const payload = buildPayload(desired(), 'northwindretail', '/tmp/file.xlsx');
-    expect(payload.tool).toBe('claude_code');
     expect(payload.tenant_client_key).toBe('northwindretail');
     expect(payload.source_file).toBe('/tmp/file.xlsx');
     expect(payload.developer_id).toBe('dev_a');

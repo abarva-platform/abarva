@@ -1,8 +1,18 @@
 # Tower · Claude Code Developer Usage Ingest
 
 Per-developer Claude Code (Anthropic) usage and cost feed. Lands one row per
-developer × monthly period into the shared `tower_ai_tool_usage` table
-(discriminator `tool = 'claude_code'`).
+developer × monthly period into the dedicated `tower_claude_code_usage` table.
+
+## Grain note (read this first)
+
+Sister slices Copilot (S2) and Cursor (S4) feed into a separate
+`tower_ai_tool_usage` table on a **team-aggregate** grain (seats / active users /
+completions / monthly cost). Claude Code's Anthropic Console surface gives us a
+fundamentally different fact — **per-developer** telemetry (sessions, prompt /
+output tokens, primary use case) — so S3 lands in its own table. Different
+fact, different grain, different table. Tower lenses union or query both for
+cross-tool rollups; forcing both grains into one shape would make half the
+columns nullable on every row.
 
 ## What this closes
 
@@ -40,8 +50,8 @@ Validation rules (mirrored in DB CHECK constraints):
 
 - `period_end >= period_start`.
 - All numeric columns non-negative.
-- Natural key `(tool, tenant_client_key, developer_id, period_start)` is
-  unique. Re-running the same file is an idempotent no-op.
+- Natural key `(tenant_client_key, developer_id, period_start)` is unique.
+  Re-running the same file is an idempotent no-op.
 
 ## Templates
 
@@ -77,30 +87,26 @@ is the marker for true idempotency.
 
 ## Database
 
-Migration `supabase/migrations/20260530120000_tower_ai_tool_usage.sql` creates
-the shared `tower_ai_tool_usage` table with discriminator `tool`. Run via
+Migration `supabase/migrations/20260530220000_tower_claude_code_usage.sql`
+creates the per-developer `tower_claude_code_usage` table. Run via
 `npm run db:migrate`.
 
-The table is shared with sister slices:
+Sister slices land separately:
 
-| Slice | Discriminator | Owner |
-|---|---|---|
-| S2 | `copilot` | GitHub Copilot |
-| S3 | `claude_code` | This slice |
-| S4 | `cursor` | Cursor |
-
-If S2 or S4 land first, their migration may already exist with the same name
-prefix. The intent is union-merge; the table schema is shared. Do not drop
-columns another slice uses.
+| Slice | Table | Grain | Owner |
+|---|---|---|---|
+| S2 | `tower_ai_tool_usage` | team-aggregate | GitHub Copilot |
+| S3 | `tower_claude_code_usage` | per-developer | This slice |
+| S4 | `tower_ai_tool_usage` | team-aggregate | Cursor |
 
 ## Registry
 
-The ingest entry is registered at
-`src/lib/tower/ingest/registry.ts` (`CLAUDE_CODE_INGEST`). Sister slices
-append their own entries to `TOWER_INGEST_REGISTRY`.
+The ingest entry is registered at `src/lib/tower/ingest/registry.ts` as
+`claudeCodeSource`. Sister slices append their own entries to the same array.
 
 ## Where it surfaces
 
-Once rows land, Tower lenses that consume `tower_ai_tool_usage` will pick up
-the developer-level series automatically. The discriminator lets the value
-and cost lenses filter to a specific tool or aggregate across all three.
+Once rows land, Tower lenses that consume `tower_claude_code_usage` will pick
+up the developer-level series automatically. Cross-tool rollups (e.g. total AI
+coding spend across Copilot / Claude Code / Cursor) UNION the per-developer
+view with team-aggregate `tower_ai_tool_usage`.

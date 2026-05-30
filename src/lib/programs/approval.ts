@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 // OV2-2a · Tenant-admin approval workflow · server lib
 //
@@ -17,30 +17,30 @@ import 'server-only';
 // layer for the decide path; the migration's RLS is the second line of
 // defense for any direct authenticated client.
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   notifyApprovalApproved,
   notifyApprovalRejected,
   notifyApprovalSubmitted,
-} from '@/lib/programs/approval-notifications';
-import { writeProgramAuditLogBestEffort } from './audit-log';
+} from "@/lib/programs/approval-notifications";
+import { writeProgramAuditLogBestEffort } from "./audit-log";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
 export type LifecycleState =
-  | 'draft'
-  | 'submitted_for_approval'
-  | 'approved'
-  | 'rejected'
-  | 'paused'
-  | 'canceled'
-  | 'completed';
+  | "draft"
+  | "submitted_for_approval"
+  | "approved"
+  | "rejected"
+  | "paused"
+  | "canceled"
+  | "completed";
 
 export type ApprovalRequestStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'withdrawn';
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "withdrawn";
 
 export interface ApprovalRequest {
   id: string;
@@ -55,6 +55,12 @@ export interface ApprovalRequest {
   briefSnapshot: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  // PRE-W4-PR-4 · escalation bookkeeping (admin-initiated only).
+  // See supabase/migrations/20260530210000_approval_escalation.sql.
+  escalationLevel: 0 | 1 | 2;
+  lastNotifiedAt: string | null;
+  notifyCount: number;
+  escalatedToUserId: string | null;
 }
 
 export interface SubmitForApprovalInput {
@@ -67,7 +73,7 @@ export interface SubmitForApprovalInput {
 export interface DecideApprovalInput {
   requestId: string;
   decidedByUserId: string;
-  decision: 'approved' | 'rejected';
+  decision: "approved" | "rejected";
   /** Required (and non-empty) when decision === 'rejected'. */
   rationale?: string;
 }
@@ -79,35 +85,55 @@ interface ApprovalRequestRow {
   tenant_key: string;
   program_id: string;
   requested_by_user_id: string;
-  requested_at: string;
+  requested_at: string | Date;
   request_status: ApprovalRequestStatus;
   decided_by_user_id: string | null;
-  decided_at: string | null;
+  decided_at: string | Date | null;
   decision_rationale: string | null;
   brief_snapshot: Record<string, unknown> | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  escalation_level?: number | null;
+  last_notified_at?: string | Date | null;
+  notify_count?: number | null;
+  escalated_to_user_id?: string | null;
 }
 
 const APPROVAL_COLUMNS =
-  'id, tenant_key, program_id, requested_by_user_id, requested_at, ' +
-  'request_status, decided_by_user_id, decided_at, decision_rationale, ' +
-  'brief_snapshot, created_at, updated_at';
+  "id, tenant_key, program_id, requested_by_user_id, requested_at, " +
+  "request_status, decided_by_user_id, decided_at, decision_rationale, " +
+  "brief_snapshot, created_at, updated_at, " +
+  "escalation_level, last_notified_at, notify_count, escalated_to_user_id";
+
+function toIsoString(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
+}
 
 function rowToApprovalRequest(row: ApprovalRequestRow): ApprovalRequest {
+  const rawLevel = row.escalation_level ?? 0;
+  const normalizedLevel: 0 | 1 | 2 =
+    rawLevel === 1 || rawLevel === 2 ? (rawLevel as 1 | 2) : 0;
   return {
     id: row.id,
     tenantKey: row.tenant_key,
     programId: row.program_id,
     requestedByUserId: row.requested_by_user_id,
-    requestedAt: row.requested_at,
+    requestedAt: toIsoString(row.requested_at) ?? new Date(0).toISOString(),
     requestStatus: row.request_status,
     decidedByUserId: row.decided_by_user_id,
-    decidedAt: row.decided_at,
+    decidedAt: toIsoString(row.decided_at),
     decisionRationale: row.decision_rationale,
     briefSnapshot: (row.brief_snapshot ?? {}) as Record<string, unknown>,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: toIsoString(row.created_at) ?? new Date(0).toISOString(),
+    updatedAt: toIsoString(row.updated_at) ?? new Date(0).toISOString(),
+    escalationLevel: normalizedLevel,
+    lastNotifiedAt: toIsoString(row.last_notified_at ?? null),
+    notifyCount:
+      typeof row.notify_count === "number" && row.notify_count >= 0
+        ? row.notify_count
+        : 0,
+    escalatedToUserId: row.escalated_to_user_id ?? null,
   };
 }
 
@@ -116,7 +142,7 @@ function readBriefUuid(
   key: string,
 ): string | null {
   const value = briefSnapshot[key];
-  return typeof value === 'string' && value.trim().length > 0
+  return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : null;
 }
@@ -127,7 +153,7 @@ class ApprovalError extends Error {
     public readonly context: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'ApprovalError';
+    this.name = "ApprovalError";
   }
 }
 
@@ -137,7 +163,7 @@ function wrapDbError(
   context: Record<string, unknown>,
 ): ApprovalError {
   const detail =
-    cause && typeof cause === 'object' && 'message' in cause
+    cause && typeof cause === "object" && "message" in cause
       ? String((cause as { message: unknown }).message)
       : String(cause);
   return new ApprovalError(`${message}: ${detail}`, { ...context, cause });
@@ -153,18 +179,18 @@ export async function submitForApproval(
   input: SubmitForApprovalInput,
 ): Promise<ApprovalRequest> {
   if (!input.tenantKey) {
-    throw new ApprovalError('submitForApproval: tenantKey is required', {
+    throw new ApprovalError("submitForApproval: tenantKey is required", {
       input,
     });
   }
   if (!input.programId) {
-    throw new ApprovalError('submitForApproval: programId is required', {
+    throw new ApprovalError("submitForApproval: programId is required", {
       input,
     });
   }
   if (!input.requestedByUserId) {
     throw new ApprovalError(
-      'submitForApproval: requestedByUserId is required',
+      "submitForApproval: requestedByUserId is required",
       { input },
     );
   }
@@ -172,7 +198,7 @@ export async function submitForApproval(
   const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
-    .from('program_approval_requests')
+    .from("program_approval_requests")
     .insert({
       tenant_key: input.tenantKey,
       program_id: input.programId,
@@ -184,7 +210,7 @@ export async function submitForApproval(
 
   if (error || !data) {
     throw wrapDbError(
-      'submitForApproval: insert into program_approval_requests failed',
+      "submitForApproval: insert into program_approval_requests failed",
       error,
       { input },
     );
@@ -193,13 +219,13 @@ export async function submitForApproval(
   // Flip the engagement's lifecycle_state. The decision-trigger only
   // covers approve/reject transitions; the submission flip is plain SQL.
   const { error: engError } = await sb
-    .from('engagements')
-    .update({ lifecycle_state: 'submitted_for_approval' })
-    .eq('id', input.programId);
+    .from("engagements")
+    .update({ lifecycle_state: "submitted_for_approval" })
+    .eq("id", input.programId);
 
   if (engError) {
     throw wrapDbError(
-      'submitForApproval: failed to update engagements.lifecycle_state to submitted_for_approval',
+      "submitForApproval: failed to update engagements.lifecycle_state to submitted_for_approval",
       engError,
       { input },
     );
@@ -209,18 +235,18 @@ export async function submitForApproval(
 
   await writeProgramAuditLogBestEffort(
     {
-      clientId: '',
+      clientId: "",
       userId: input.requestedByUserId,
-      role: 'program_user',
+      role: "program_user",
     },
     {
       tenantKey: input.tenantKey,
       programId: input.programId,
       engagementId: input.programId,
-      action: 'program_approval_submitted',
-      fromState: 'draft',
-      toState: 'submitted_for_approval',
-      rationale: 'Program brief submitted for tenant-admin approval.',
+      action: "program_approval_submitted",
+      fromState: "draft",
+      toState: "submitted_for_approval",
+      rationale: "Program brief submitted for tenant-admin approval.",
       evidenceRefs: [],
     },
   );
@@ -228,8 +254,7 @@ export async function submitForApproval(
   // OV2-2d-NOTIFY · fire-and-forget email to tenant admins. Email
   // failures must not block the approval workflow.
   void notifyApprovalSubmitted(request).catch((err: unknown) => {
-     
-    console.error('[approval] notifyApprovalSubmitted threw', {
+    console.error("[approval] notifyApprovalSubmitted threw", {
       requestId: request.id,
       err: err instanceof Error ? err.message : String(err),
     });
@@ -251,27 +276,27 @@ export async function decideApprovalRequest(
   input: DecideApprovalInput,
 ): Promise<ApprovalRequest> {
   if (!input.requestId) {
-    throw new ApprovalError('decideApprovalRequest: requestId is required', {
+    throw new ApprovalError("decideApprovalRequest: requestId is required", {
       input,
     });
   }
   if (!input.decidedByUserId) {
     throw new ApprovalError(
-      'decideApprovalRequest: decidedByUserId is required',
+      "decideApprovalRequest: decidedByUserId is required",
       { input },
     );
   }
-  if (input.decision !== 'approved' && input.decision !== 'rejected') {
+  if (input.decision !== "approved" && input.decision !== "rejected") {
     throw new ApprovalError(
       `decideApprovalRequest: decision must be 'approved' or 'rejected', got '${input.decision}'`,
       { input },
     );
   }
-  if (input.decision === 'rejected') {
-    const r = (input.rationale ?? '').trim();
+  if (input.decision === "rejected") {
+    const r = (input.rationale ?? "").trim();
     if (r.length === 0) {
       throw new ApprovalError(
-        'decideApprovalRequest: rationale is required when decision is rejected',
+        "decideApprovalRequest: rationale is required when decision is rejected",
         { input },
       );
     }
@@ -282,21 +307,21 @@ export async function decideApprovalRequest(
   // Conditional update — only succeeds if the row is still 'pending'.
   // This protects against double-decision races.
   const { data, error } = await sb
-    .from('program_approval_requests')
+    .from("program_approval_requests")
     .update({
       request_status: input.decision,
       decided_by_user_id: input.decidedByUserId,
       decided_at: new Date().toISOString(),
       decision_rationale: input.rationale?.trim() || null,
     })
-    .eq('id', input.requestId)
-    .eq('request_status', 'pending')
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
     .select(APPROVAL_COLUMNS)
     .single();
 
   if (error || !data) {
     throw wrapDbError(
-      'decideApprovalRequest: failed to update request (already decided?)',
+      "decideApprovalRequest: failed to update request (already decided?)",
       error,
       { input },
     );
@@ -304,13 +329,19 @@ export async function decideApprovalRequest(
 
   const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 
-  const sponsorPersonIdFromBrief = readBriefUuid(request.briefSnapshot, 'sponsor_person_id');
-  const leadPersonIdFromBrief = readBriefUuid(request.briefSnapshot, 'lead_person_id');
+  const sponsorPersonIdFromBrief = readBriefUuid(
+    request.briefSnapshot,
+    "sponsor_person_id",
+  );
+  const leadPersonIdFromBrief = readBriefUuid(
+    request.briefSnapshot,
+    "lead_person_id",
+  );
   const engagementPatch =
-    request.requestStatus === 'approved'
+    request.requestStatus === "approved"
       ? {
-          lifecycle_state: 'approved',
-          status: 'active',
+          lifecycle_state: "approved",
+          status: "active",
           current_phase: 0,
           ...(sponsorPersonIdFromBrief
             ? { sponsor_person_id: sponsorPersonIdFromBrief }
@@ -319,15 +350,15 @@ export async function decideApprovalRequest(
             ? { maestro_person_id: leadPersonIdFromBrief }
             : {}),
         }
-      : { lifecycle_state: 'rejected', status: 'draft' };
+      : { lifecycle_state: "rejected", status: "draft" };
   const { error: engagementError } = await sb
-    .from('engagements')
+    .from("engagements")
     .update(engagementPatch)
-    .eq('id', request.programId);
+    .eq("id", request.programId);
 
   if (engagementError) {
     throw wrapDbError(
-      'decideApprovalRequest: failed to synchronize engagement lifecycle',
+      "decideApprovalRequest: failed to synchronize engagement lifecycle",
       engagementError,
       { input, programId: request.programId, engagementPatch },
     );
@@ -335,17 +366,17 @@ export async function decideApprovalRequest(
 
   await writeProgramAuditLogBestEffort(
     {
-      clientId: '',
+      clientId: "",
       userId: input.decidedByUserId,
-      role: 'client_admin',
+      role: "client_admin",
     },
     {
       tenantKey: request.tenantKey,
       programId: request.programId,
       engagementId: request.programId,
       action: `program_approval_${request.requestStatus}`,
-      fromState: 'submitted_for_approval',
-      toState: request.requestStatus === 'approved' ? 'approved' : 'rejected',
+      fromState: "submitted_for_approval",
+      toState: request.requestStatus === "approved" ? "approved" : "rejected",
       rationale: input.rationale?.trim() || null,
       evidenceRefs: [request.id],
     },
@@ -354,12 +385,11 @@ export async function decideApprovalRequest(
   // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
   // failures must not block the approval workflow.
   const notify =
-    request.requestStatus === 'approved'
+    request.requestStatus === "approved"
       ? notifyApprovalApproved
       : notifyApprovalRejected;
   void notify(request).catch((err: unknown) => {
-     
-    console.error('[approval] notify decision threw', {
+    console.error("[approval] notify decision threw", {
       requestId: request.id,
       decision: request.requestStatus,
       err: err instanceof Error ? err.message : String(err),
@@ -379,14 +409,14 @@ export async function withdrawApprovalRequest(
   requestedByUserId: string,
 ): Promise<ApprovalRequest> {
   if (!requestId) {
-    throw new ApprovalError(
-      'withdrawApprovalRequest: requestId is required',
-      { requestId, requestedByUserId },
-    );
+    throw new ApprovalError("withdrawApprovalRequest: requestId is required", {
+      requestId,
+      requestedByUserId,
+    });
   }
   if (!requestedByUserId) {
     throw new ApprovalError(
-      'withdrawApprovalRequest: requestedByUserId is required',
+      "withdrawApprovalRequest: requestedByUserId is required",
       { requestId, requestedByUserId },
     );
   }
@@ -394,20 +424,20 @@ export async function withdrawApprovalRequest(
   const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
-    .from('program_approval_requests')
+    .from("program_approval_requests")
     .update({
-      request_status: 'withdrawn',
+      request_status: "withdrawn",
       decided_at: new Date().toISOString(),
     })
-    .eq('id', requestId)
-    .eq('requested_by_user_id', requestedByUserId)
-    .eq('request_status', 'pending')
+    .eq("id", requestId)
+    .eq("requested_by_user_id", requestedByUserId)
+    .eq("request_status", "pending")
     .select(APPROVAL_COLUMNS)
     .single();
 
   if (error || !data) {
     throw wrapDbError(
-      'withdrawApprovalRequest: failed to withdraw (not the requester, or not pending?)',
+      "withdrawApprovalRequest: failed to withdraw (not the requester, or not pending?)",
       error,
       { requestId, requestedByUserId },
     );
@@ -416,18 +446,18 @@ export async function withdrawApprovalRequest(
   const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
   await writeProgramAuditLogBestEffort(
     {
-      clientId: '',
+      clientId: "",
       userId: requestedByUserId,
-      role: 'program_user',
+      role: "program_user",
     },
     {
       tenantKey: request.tenantKey,
       programId: request.programId,
       engagementId: request.programId,
-      action: 'program_approval_withdrawn',
-      fromState: 'submitted_for_approval',
-      toState: 'draft',
-      rationale: 'Requester withdrew the pending program approval request.',
+      action: "program_approval_withdrawn",
+      fromState: "submitted_for_approval",
+      toState: "draft",
+      rationale: "Requester withdrew the pending program approval request.",
       evidenceRefs: [request.id],
     },
   );
@@ -436,64 +466,202 @@ export async function withdrawApprovalRequest(
 
 /**
  * Tenant admin queue. Returns pending requests for a tenant, ordered
- * by requested_at descending. Caller must enforce admin role at the
- * API/UI layer; RLS is the second line of defense.
+ * by requested_at ASCENDING (longest-pending first), so SLA-stuck
+ * requests bubble to the top of the queue. Caller must enforce admin
+ * role at the API/UI layer; RLS is the second line of defense.
  */
 export async function getApprovalQueueForTenant(
   tenantKey: string,
 ): Promise<ApprovalRequest[]> {
   if (!tenantKey) {
     throw new ApprovalError(
-      'getApprovalQueueForTenant: tenantKey is required',
+      "getApprovalQueueForTenant: tenantKey is required",
       { tenantKey },
     );
   }
 
   const sb = getAzureWriteFluentClient();
 
+  // PRE-W4-PR-4 · order longest-pending first so the SLA-stuck
+  // requests bubble to the top of the queue. The detail page sort key
+  // matches the SLA elapsed-time indicator the queue table renders.
   const { data, error } = await sb
-    .from('program_approval_requests')
+    .from("program_approval_requests")
     .select(APPROVAL_COLUMNS)
-    .eq('tenant_key', tenantKey)
-    .eq('request_status', 'pending')
-    .order('requested_at', { ascending: false });
+    .eq("tenant_key", tenantKey)
+    .eq("request_status", "pending")
+    .order("requested_at", { ascending: true });
 
   if (error) {
-    throw wrapDbError(
-      'getApprovalQueueForTenant: query failed',
-      error,
-      { tenantKey },
-    );
+    throw wrapDbError("getApprovalQueueForTenant: query failed", error, {
+      tenantKey,
+    });
   }
 
   const rows = (data ?? []) as unknown as ApprovalRequestRow[];
   return rows.map(rowToApprovalRequest);
 }
 
+// ── PRE-W4-PR-4 · escalation primitives ───────────────────────────────
+//
+// Two admin-initiated transitions are exposed here. Both are append-only
+// in spirit — the original `requested_at` and `request_status` stay
+// untouched, only the escalation columns flip. The audit row (written
+// by the server action) is the immutable record.
+//
+// These two helpers are the source of `approval.escalated` (Wave 4)
+// notification events. The Wave 4 spec routes them at severity = critical.
+
+export interface MarkSponsorNotifiedInput {
+  requestId: string;
+}
+
+export interface EscalateToPlatformAdminInput {
+  requestId: string;
+  escalatedToUserId: string;
+}
+
+/**
+ * Tier 1 escalation · "notify sponsor".
+ *
+ * Updates `last_notified_at = now()`, increments `notify_count`, and
+ * bumps `escalation_level` to 1 IF it was previously 0. If the request
+ * has already been escalated to platform-admin (level=2), the notify
+ * call is still accepted (admin may want to ping the sponsor in
+ * addition to the platform-admin) but escalation_level stays at 2.
+ *
+ * Throws if the request is not in `pending` status — once a decision
+ * lands there's nothing to remind/escalate.
+ */
+export async function markSponsorNotified(
+  input: MarkSponsorNotifiedInput,
+): Promise<ApprovalRequest> {
+  if (!input.requestId) {
+    throw new ApprovalError("markSponsorNotified: requestId is required", {
+      input,
+    });
+  }
+  const sb = getAzureWriteFluentClient();
+
+  // Read-then-write: we need the prior notify_count + escalation_level
+  // to decide the new values without a race-prone increment.
+  const { data: existing, error: readError } = await sb
+    .from("program_approval_requests")
+    .select(APPROVAL_COLUMNS)
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .maybeSingle();
+
+  if (readError) {
+    throw wrapDbError(
+      "markSponsorNotified: lookup failed",
+      readError,
+      { input },
+    );
+  }
+  if (!existing) {
+    throw new ApprovalError(
+      "markSponsorNotified: request not found or already decided",
+      { input },
+    );
+  }
+  const current = rowToApprovalRequest(
+    existing as unknown as ApprovalRequestRow,
+  );
+
+  const nextNotifyCount = (current.notifyCount ?? 0) + 1;
+  const nextLevel: 0 | 1 | 2 =
+    current.escalationLevel === 0 ? 1 : current.escalationLevel;
+
+  const { data, error } = await sb
+    .from("program_approval_requests")
+    .update({
+      last_notified_at: new Date().toISOString(),
+      notify_count: nextNotifyCount,
+      escalation_level: nextLevel,
+    })
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .select(APPROVAL_COLUMNS)
+    .single();
+
+  if (error || !data) {
+    throw wrapDbError(
+      "markSponsorNotified: update failed",
+      error,
+      { input },
+    );
+  }
+  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+}
+
+/**
+ * Tier 2 escalation · "escalate to platform admin".
+ *
+ * Sets `escalation_level = 2` and stores the platform-admin user id in
+ * `escalated_to_user_id`. Idempotent re-routes (level was already 2)
+ * are rejected so the audit trail stays clean — a re-escalation should
+ * route to a *different* admin or re-trigger via a fresh request flow.
+ */
+export async function escalateToPlatformAdmin(
+  input: EscalateToPlatformAdminInput,
+): Promise<ApprovalRequest> {
+  if (!input.requestId) {
+    throw new ApprovalError("escalateToPlatformAdmin: requestId is required", {
+      input,
+    });
+  }
+  if (!input.escalatedToUserId) {
+    throw new ApprovalError(
+      "escalateToPlatformAdmin: escalatedToUserId is required",
+      { input },
+    );
+  }
+  const sb = getAzureWriteFluentClient();
+
+  const { data, error } = await sb
+    .from("program_approval_requests")
+    .update({
+      escalation_level: 2,
+      escalated_to_user_id: input.escalatedToUserId,
+    })
+    .eq("id", input.requestId)
+    .eq("request_status", "pending")
+    .lt("escalation_level", 2)
+    .select(APPROVAL_COLUMNS)
+    .single();
+
+  if (error || !data) {
+    throw wrapDbError(
+      "escalateToPlatformAdmin: update failed (already escalated or not pending?)",
+      error,
+      { input },
+    );
+  }
+  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+}
+
 export async function getApprovalRequestById(
   requestId: string,
 ): Promise<ApprovalRequest | null> {
   if (!requestId) {
-    throw new ApprovalError(
-      'getApprovalRequestById: requestId is required',
-      { requestId },
-    );
+    throw new ApprovalError("getApprovalRequestById: requestId is required", {
+      requestId,
+    });
   }
 
   const sb = getAzureWriteFluentClient();
 
   const { data, error } = await sb
-    .from('program_approval_requests')
+    .from("program_approval_requests")
     .select(APPROVAL_COLUMNS)
-    .eq('id', requestId)
+    .eq("id", requestId)
     .maybeSingle();
 
   if (error) {
-    throw wrapDbError(
-      'getApprovalRequestById: query failed',
-      error,
-      { requestId },
-    );
+    throw wrapDbError("getApprovalRequestById: query failed", error, {
+      requestId,
+    });
   }
 
   if (!data) return null;

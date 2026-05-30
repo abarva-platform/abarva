@@ -1,9 +1,9 @@
 // Tower · Claude Code developer usage ingest — shared types.
 //
 // One row per developer × monthly period. Schema mirrors the
-// `tower_ai_tool_usage` table (tool='claude_code').
-
-export const CLAUDE_CODE_TOOL = 'claude_code' as const;
+// `tower_claude_code_usage` table. This is a single-tool table; sister
+// slices (Copilot, Cursor) write into team-aggregate `tower_ai_tool_usage`
+// on a different grain.
 
 export interface ClaudeCodeUsageRow {
   team: string;

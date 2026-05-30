@@ -1,7 +1,7 @@
 // Tower · Claude Code developer usage ingest — validator.
 //
 // Lightweight rules that mirror the DB CHECK constraints, plus dedup
-// detection on the natural key (tool, tenant, developer_id, period_start).
+// detection on the natural key (tenant, developer_id, period_start).
 
 import type {
   ClaudeCodeUsageRow,
