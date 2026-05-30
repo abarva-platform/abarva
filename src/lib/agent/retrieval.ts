@@ -1,5 +1,8 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { azureRead } from '@/lib/data-plane/azureRead';
+import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+import { composeAtlasIacAnswer, type AtlasIacComposition } from '@/lib/atlas/composition/compose';
+import type { AtlasTenancyCtx } from '@/lib/atlas/initiative-deep/types';
 import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import {
   clientVectorMetadataFilter,
@@ -29,6 +32,7 @@ export interface RetrievalContext {
   clientChunks: RetrievedChunk[];
   industryChunks: RetrievedChunk[];
   topicChunks: RetrievedChunk[];
+  atlasIacComposition?: AtlasIacComposition | null;
 }
 
 export interface AssembleRetrievalArgs {
@@ -41,6 +45,8 @@ export interface AssembleRetrievalArgs {
   topKClient?: number;
   topKIndustry?: number;
   topKTopic?: number;
+  atlasTenancy?: AtlasTenancyCtx | null;
+  initiativeDeepClient?: PostgresCompatClient;
 }
 
 const DAY_MS = 86_400_000;
@@ -338,7 +344,16 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     clientChunks: [],
     industryChunks: [],
     topicChunks: [],
+    atlasIacComposition: null,
   };
+
+  const atlasIacComposition = args.atlasTenancy
+    ? await composeAtlasIacAnswer({
+        prompt: args.userQuery,
+        tenancy: args.atlasTenancy,
+        client: args.initiativeDeepClient,
+      })
+    : null;
 
   const vector = await embed(composeEmbeddingQuery(args.userQuery, args.turnHistory), clientId);
   if (!vector) {
@@ -354,6 +369,7 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       clientChunks: scrubChunks(fallback.clientChunks),
       industryChunks: scrubChunks(fallback.industryChunks),
       topicChunks: scrubChunks(fallback.topicChunks),
+      atlasIacComposition,
     };
   }
 
@@ -392,6 +408,7 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
       clientChunks: scrubChunks(fallback.clientChunks),
       industryChunks: scrubChunks(fallback.industryChunks),
       topicChunks: scrubChunks(fallback.topicChunks),
+      atlasIacComposition,
     };
   }
 
@@ -405,5 +422,6 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     clientChunks: scrubChunks(clientChunks),
     industryChunks: scrubChunks(industryChunks),
     topicChunks: scrubChunks(topicChunks),
+    atlasIacComposition,
   };
 }

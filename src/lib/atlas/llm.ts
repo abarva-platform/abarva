@@ -65,7 +65,8 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
       toolResults.retrievalContext &&
       (toolResults.retrievalContext.industryChunks.length > 0 ||
         toolResults.retrievalContext.topicChunks.length > 0 ||
-        toolResults.retrievalContext.clientChunks.length > 0)
+        toolResults.retrievalContext.clientChunks.length > 0 ||
+        Boolean(toolResults.retrievalContext.atlasIacComposition))
         ? 'I also pulled corpus or industry context for this turn.'
         : 'No corpus or industry chunks were retrieved for this turn, so I will keep external comparisons qualified.';
     return [
@@ -115,6 +116,7 @@ export async function runAtlasLlm(
       topKClient: 3,
       topKIndustry: 4,
       topKTopic: 3,
+      atlasTenancy: ctx,
     }),
   ]);
 

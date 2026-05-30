@@ -32,10 +32,18 @@ function formatChunk(c: RetrievedChunk): string[] {
 
 export function formatRetrievedContext(ctx: RetrievalContext): string {
   const anyContent =
-    ctx.clientChunks.length > 0 || ctx.industryChunks.length > 0 || ctx.topicChunks.length > 0;
+    ctx.clientChunks.length > 0 ||
+    ctx.industryChunks.length > 0 ||
+    ctx.topicChunks.length > 0 ||
+    Boolean(ctx.atlasIacComposition);
   if (!anyContent) return '';
 
   const lines: string[] = ['RETRIEVED CONTEXT', ''];
+
+  if (ctx.atlasIacComposition) {
+    lines.push('ATLAS INITIATIVE + INDUSTRY CONTEXT');
+    lines.push(ctx.atlasIacComposition.response, '');
+  }
 
   if (ctx.industryChunks.length > 0) {
     lines.push(`INDUSTRY KNOWLEDGE · ${industryLabel(ctx.industry)}`);
