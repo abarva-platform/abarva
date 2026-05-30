@@ -26,6 +26,10 @@ import type { TrustAuditEvent } from '@/lib/admin/broker/trust-spine-broker';
 import { AuditRibbon } from '@/components/admin/AuditRibbon';
 import { TrustStrip, type TrustStripChip } from '@/components/admin/TrustStrip';
 import { PanelCardCta } from '@/components/home/PanelCardCta';
+import {
+  TenantSwitcher,
+  type TenantSwitcherOption,
+} from '@/components/admin/TenantSwitcher';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -151,6 +155,24 @@ interface Props {
    * render the empty-state line; omit to fall back to [].
    */
   auditEvents?: TrustAuditEvent[];
+  /**
+   * Wave 2 PR-5 · the inline masthead tenant-switcher chip.
+   * - `canSwitchTenant === true` renders the TenantSwitcher chip
+   *   ("acting as <Tenant> · switch") inline at the h1 baseline.
+   * - `canSwitchTenant === false` (default) renders a static
+   *   `<span>` with the same content; non-admins never see the
+   *   switch affordance.
+   * The 5 canonical tenants come from
+   * `getCanonicalTenantSwitchOptions()` in
+   * `src/lib/admin/tenant-switch-authority.ts`. The component
+   * hard-validates the dropdown against this prop and only POSTs
+   * canonical keys from the list.
+   */
+  canSwitchTenant?: boolean;
+  /** Canonical key of the active tenant — required when canSwitchTenant is true. */
+  currentCanonicalTenantKey?: string | null;
+  /** The 5 canonical tenant options surfaced in the dropdown. */
+  tenantSwitchOptions?: ReadonlyArray<TenantSwitcherOption>;
 }
 
 export function HomeOverviewV2({
@@ -162,6 +184,9 @@ export function HomeOverviewV2({
   trustChips,
   liveSnapshotPresent = false,
   auditEvents,
+  canSwitchTenant = false,
+  currentCanonicalTenantKey = null,
+  tenantSwitchOptions,
 }: Props) {
   const known = clientKey ? TENANT_BRAND[clientKey] : undefined;
   const brand: TenantBrand = known ?? {
@@ -202,20 +227,57 @@ export function HomeOverviewV2({
           >
             HOME · <span style={{ color: C.ink }}>WHERE YOU STAND AND WHAT TO DO NEXT</span>
           </div>
-          <h1
+          {/* Verdict §5.6 Zone A: the masthead carries a single inline
+              switcher chip ("acting as <Tenant> · switch") for founder
+              + multi-tenant admins. Non-admins see a static label in
+              the same DOM slot (still inline with h1) so non-admin
+              snapshots never carry the chip affordance. Wave 2 PR-5. */}
+          <div
             style={{
-              fontFamily: F_DISPLAY,
-              fontSize: 30,
-              fontWeight: 400,
-              color: C.ink,
-              letterSpacing: '-0.015em',
-              lineHeight: 1.1,
-              margin: 0,
-              marginBottom: 4,
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
             }}
           >
-            {tenantName}
-          </h1>
+            <h1
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 30,
+                fontWeight: 400,
+                color: C.ink,
+                letterSpacing: '-0.015em',
+                lineHeight: 1.1,
+                margin: 0,
+                marginBottom: 4,
+              }}
+            >
+              {tenantName}
+            </h1>
+            {canSwitchTenant && currentCanonicalTenantKey && tenantSwitchOptions ? (
+              <TenantSwitcher
+                canSwitch
+                currentCanonicalKey={currentCanonicalTenantKey}
+                currentDisplayName={tenantName}
+                options={tenantSwitchOptions}
+              />
+            ) : (
+              <span
+                data-testid="tenant-switcher-static"
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: C.faint,
+                }}
+              >
+                Acting as · {tenantName}
+              </span>
+            )}
+          </div>
           {taglineText && (
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>{taglineText}</div>
           )}
