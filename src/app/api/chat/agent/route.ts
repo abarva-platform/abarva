@@ -72,6 +72,15 @@ import {
   composeStewardSystemPrompt,
   isStewardVoiceDoctrineEnabled,
 } from '@/lib/agent/voice-doctrine/steward';
+// Wave 3 PR-3 · TrustSpine grounding for the Steward chat dock.
+// Pulls live tenant posture (substrate, connectors, isolation,
+// governance) and threads it into the system prompt so Steward can
+// answer "what should I do next" with grounded context.
+import {
+  buildStewardTrustSpineBlock,
+  matchesNextPriorityQuestion,
+  shouldInjectStewardTrustSpine,
+} from '@/lib/admin/steward-trust-spine-context';
 // PR-G surface canonicalization — translates semantic surface keys
 // ('programs-detail') into URL-shaped keys ('/programs/<id>') so tool
 // resolution and the artifact-channel gate stay aligned.
@@ -747,6 +756,40 @@ export async function POST(request: Request) {
     ? clientKeyToInventorySubstrateKey(effectiveClientKey)
     : null;
   const brokerTenantKey = tenantInventoryKey;
+
+  // Wave 3 PR-3 · Steward TrustSpine grounding.
+  //
+  // When the user is talking to Steward on a Setup/Admin surface, pull
+  // the TrustSpine read model and compose a system-prompt block so
+  // Steward answers "what should I do next" with grounded context
+  // (sparsest segment, degraded connectors, isolation anomalies, open
+  // approvals, SSO posture) instead of generic guidance. Broker
+  // failure is non-fatal — the block falls back to '' and Steward
+  // keeps its existing voice-doctrine prompt.
+  //
+  // Note the tenantKey shape: the TrustSpine broker (like the
+  // substrate broker it composes) expects the inventory-substrate
+  // key (`apex-retail`, `meridian-health`, `first-capital`). We pass
+  // `tenantInventoryKey` here so the spine resolves against the same
+  // tenant the rest of the prompt context is grounded in.
+  const stewardNextPriorityQuestion = matchesNextPriorityQuestion(message);
+  const stewardTrustSpineBlockResult =
+    shouldInjectStewardTrustSpine(agentName, surface) && tenantInventoryKey
+      ? await buildStewardTrustSpineBlock({
+          tenantName: activeClientDisplayName,
+          tenantKey: tenantInventoryKey,
+          industry: activeClient?.industry_code ?? null,
+        })
+      : { block: '', resolved: false, spine: null };
+  // Strong directive when the user asks one of the deterministic
+  // "next priority" questions. Steward still composes the prose; this
+  // tells the model to lead from the action queue rather than reciting
+  // generic onboarding advice.
+  const stewardNextPriorityDirective =
+    stewardNextPriorityQuestion && stewardTrustSpineBlockResult.resolved
+      ? 'STEWARD NEXT-PRIORITY DIRECTIVE: the user asked what to do next. Lead your reply with the highest-leverage item from the action queue above (degraded connector → high-severity anomaly → sparsest substrate segment → pending approvals → SSO). Quote the specific name from the posture. Do not give generic onboarding guidance.'
+      : '';
+
   const programEvidenceLedgerBlock =
     programId && tenancy
       ? await listProgramEvidenceForPrompt(tenancy, programId)
@@ -1022,6 +1065,13 @@ export async function POST(request: Request) {
     // PR-R / CXO grounding · tenant current-state block for all
     // canonical agents on tenant-scoped surfaces.
     agentTenantContextBlock,
+    "",
+    // Wave 3 PR-3 · Steward TrustSpine context. Empty string for
+    // non-Steward / non-admin turns. Positioned with the broker /
+    // tenant grounding so Steward reads tenant posture before any
+    // generic response guidance.
+    stewardTrustSpineBlockResult.block,
+    stewardNextPriorityDirective,
     "",
     // TD-7 · cross-program-signal block for Nexus on /programs surfaces.
     // Lists the canonical multi-program dependency / conflict signals
