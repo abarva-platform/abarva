@@ -142,13 +142,17 @@ describe('agent route · CB-6 context-bundle wiring', () => {
 
   it('short-circuits cross-tenant program writes before model/tool execution', () => {
     const guardIdx = source.indexOf('detectCrossTenantWriteIntent({');
+    const alertIdx = source.indexOf('recordTenantBleedAlert({');
     const refusalIdx = source.indexOf('formatCrossTenantWriteRefusal(crossTenantWriteIntent)');
     const loopIdx = source.indexOf('await runToolUseLoop({');
     expect(guardIdx).toBeGreaterThan(-1);
+    expect(alertIdx).toBeGreaterThan(guardIdx);
+    expect(alertIdx).toBeLessThan(refusalIdx);
     expect(refusalIdx).toBeGreaterThan(guardIdx);
     expect(refusalIdx).toBeLessThan(loopIdx);
     expect(source).toContain('activeClientKey: activeClientKey ?? null');
     expect(source).toContain('activeClientName: activeClientDisplayName');
+    expect(source).toContain("route: '/api/chat/agent'");
   });
 
   it('instructs Programs origination to ask one question and report record status clearly', () => {
