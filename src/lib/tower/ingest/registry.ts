@@ -1,59 +1,63 @@
-// Tower ingest-source registry.
-//
-// One entry per live source connector. Each entry is the single source of
-// truth for: template file location, README path, parser entrypoint module,
-// target DB table, and human-readable description. Slices append exactly one
-// entry to TOWER_INGEST_SOURCES — `union-merge` semantics mean entries with
-// the same `key` are deduped (last-write-wins), so concurrent slices don't
-// clobber each other when their PRs merge.
+/**
+ * Tower ingest source registry.
+ *
+ * Each entry describes ONE live integration that feeds Tower. Sibling slices
+ * append their entry by importing their own descriptor and adding it to the
+ * `TOWER_INGEST_SOURCES` array below. This file is the union of all such
+ * descriptors — keep additions alphabetical to make merge conflicts trivial.
+ *
+ * Audit context: PR #2525 found ZERO live integrations. Tower has lots of
+ * synthesis but nothing watching a real source. Every entry in this array is
+ * a real watch: a real-world extract path, a template, a parser, a validator,
+ * a CLI, and a target table.
+ */
+
+import { azureCostSource } from './azure-cost';
+import { copilotSource } from './copilot';
+import { servicenowItsmSource } from './servicenow-itsm';
+
+export type TowerIngestKind = 'cost' | 'inventory' | 'productivity' | 'risk' | 'usage' | 'value';
 
 export interface TowerIngestSource {
+  /** Stable key used as the source identifier on disk and in registries. */
   key: string;
-  label: string;
-  recordType: 'itsm' | 'observability' | 'fin-ops' | 'governance' | 'identity' | 'other';
-  description: string;
-  templatePath: string; // public/templates/...
-  readmePath: string; // docs/templates/...
-  parserModule: string; // import path
-  cliScript: string; // src/scripts/...
+  /** Human-friendly name shown in catalog / chooser UIs. */
+  displayName: string;
+  /** Vendor or system of record. */
+  vendor: string;
+  /** Tower dimension this source primarily feeds. */
+  kind: TowerIngestKind;
+  /** Stable target DB table name (must match the migration this slice ships). */
   targetTable: string;
-  status: 'planned' | 'available';
+  /** Public path of the blank template file (relative to /public). */
+  templatePath: string;
+  /** Public path of the sample-filled workbook (relative to /public). */
+  samplePath: string;
+  /** Project-relative path of the README for this source. */
+  readmePath: string;
+  /** Module path (relative to src) of the parser entrypoint. */
+  parserModule: string;
+  /** Module path (relative to src) of the validator entrypoint. */
+  validatorModule: string;
+  /** Script name (under src/scripts/tower) for the CLI ingest tool. */
+  cliScript: string;
+  /** Real-world extract path summary (one line for catalog cards). */
+  extractPath: string;
+  /** Sample-row count and tenant — for synthetic banner sizing. */
+  sampleSummary: { tenant: string; rowsApprox: number };
 }
 
-/**
- * Union-merge: keep entries unique by `key`, preserving last-write-wins so a
- * downstream extension can override an entry without rewriting the registry.
- */
-export function mergeIngestSources(
-  base: readonly TowerIngestSource[],
-  extra: readonly TowerIngestSource[],
-): TowerIngestSource[] {
-  const out = new Map<string, TowerIngestSource>();
-  for (const src of base) out.set(src.key, src);
-  for (const src of extra) out.set(src.key, src);
-  return Array.from(out.values());
-}
-
-const REGISTRY_BASE: TowerIngestSource[] = [
-  {
-    key: 'servicenow-itsm',
-    label: 'ServiceNow ITSM',
-    recordType: 'itsm',
-    description:
-      'Incidents, problems, and changes from ServiceNow ITSM tables. Feeds Atlas MTTR / P1 / P2 / change-success read models.',
-    templatePath: 'public/templates/tower/servicenow-itsm/template.xlsx',
-    readmePath: 'docs/templates/tower/servicenow-itsm/README.md',
-    parserModule: '@/lib/tower/ingest/servicenow-itsm',
-    cliScript: 'src/scripts/tower/ingest-servicenow-itsm.ts',
-    targetTable: 'tower_itsm_records',
-    status: 'available',
-  },
+export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
+  azureCostSource,
+  copilotSource,
+  servicenowItsmSource,
+  // Sibling slices append here, alphabetical by `key`.
 ];
 
-// Final registry — derived via union-merge so future appends preserve
-// idempotency and don't bork if two slices touch the same line.
-export const TOWER_INGEST_SOURCES: TowerIngestSource[] = mergeIngestSources(REGISTRY_BASE, []);
-
-export function findIngestSource(key: string): TowerIngestSource | undefined {
+export function findTowerIngestSource(key: string): TowerIngestSource | undefined {
   return TOWER_INGEST_SOURCES.find((s) => s.key === key);
+}
+
+export function towerIngestKindsCovered(): TowerIngestKind[] {
+  return Array.from(new Set(TOWER_INGEST_SOURCES.map((s) => s.kind))).sort();
 }

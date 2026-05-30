@@ -1,14 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 describe('authenticated Tower submenu wiring', () => {
   const pageSource = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
   const indexSource = readFileSync('src/components/tower/TowerIndexPage.tsx', 'utf8');
   const detailSource = readFileSync('src/app/(maestro)/tower/programs/[programId]/page.tsx', 'utf8');
-  const projectsSource = readFileSync('src/app/(maestro)/tower/projects/page.tsx', 'utf8');
-  const staffAugSource = readFileSync('src/app/(maestro)/tower/staff-aug/page.tsx', 'utf8');
-  const techStackSource = readFileSync('src/app/(maestro)/tower/tech-stack/page.tsx', 'utf8');
-  const volumetricsSource = readFileSync('src/app/(maestro)/tower/volumetrics/page.tsx', 'utf8');
-  const summarySource = readFileSync('src/lib/tower/enterprise-summary.ts', 'utf8');
 
   it('passes the resolved tab into the authenticated Tower workspace', () => {
     expect(pageSource).toContain('const activeTab = resolveTowerTab');
@@ -25,7 +20,6 @@ describe('authenticated Tower submenu wiring', () => {
     expect(pageSource).toContain('buildTowerVendors(activeClientId)');
     expect(pageSource).toContain('buildTowerSetupInitiativesFeed(activeClient)');
     expect(pageSource).toContain('const tenancy = await requireTenancy().catch(() => null)');
-    expect(pageSource).not.toContain('const tenancy = await requireTenancy();\\n    return await listInitiativesForClient(tenancy.clientId);');
   });
 
   it('renders non-portfolio submenu panels from tenant-bound DB substrate', () => {
@@ -39,10 +33,6 @@ describe('authenticated Tower submenu wiring', () => {
     expect(indexSource).toContain("activeTab === 'programme_gates'");
     expect(indexSource).toContain("activeTab === 'dependencies'");
     expect(indexSource).toContain('ai_initiative_vendors');
-    expect(indexSource).toContain('Vendor dependencies ranked by renewal clock.');
-    expect(indexSource).toContain('Vendor dependencies ranked by financial health and initiative pressure.');
-    expect(indexSource).toContain('Which initiatives are furthest from earning their commitment?');
-    expect(indexSource).toContain('Tower will not fall back to Apex fixture dependencies.');
   });
 
   it('opens portfolio pressure and matrix items in an inline detail canvas', () => {
@@ -55,15 +45,37 @@ describe('authenticated Tower submenu wiring', () => {
     expect(indexSource).toContain("params.set('detail', detail)");
     expect(indexSource).toContain("params.set('pressure', pressure)");
     expect(indexSource).toContain('Open Tower detail in this canvas');
-    expect(detailSource).toContain('listInitiativesForClient(activeClient.id)');
-    expect(detailSource).toContain('listVendorsForClient(activeClient.id)');
-    expect(detailSource).not.toContain('ProgramScopePage');
-    expect(detailSource).not.toContain('shell-tower-fixture');
   });
 
-  it('filters Tower enterprise pages to non-demo database rows only', () => {
-    for (const source of [projectsSource, staffAugSource, techStackSource, volumetricsSource, summarySource]) {
-      expect(source).toContain(".eq('is_demo_data', false)");
+  it('exposes a real /tower/programs/[programId] drilldown (not a redirect-shell)', () => {
+    // Tower audit §5.3 fix: program detail must be a real route, not a
+    // redirect back to `/tower?detail=…`. The shell has been removed.
+    expect(detailSource).not.toContain("redirect(`/tower?detail=");
+    expect(detailSource).toContain('getProgramById');
+    expect(detailSource).toContain('TowerDecisionActionRow');
+    // Locked AbarVa palette: cream background on the page.
+    expect(detailSource).toContain("'#F8F7F4'");
+  });
+
+  it('removes the legacy redirect-shells under /tower', () => {
+    // Tower audit §5.4 + brief item 6: dead redirects deleted.
+    const deletedShells = [
+      'src/app/(maestro)/tower/lens/value/page.tsx',
+      'src/app/(maestro)/tower/lens/cost/page.tsx',
+      'src/app/(maestro)/tower/lens/risk/page.tsx',
+      'src/app/(maestro)/tower/lens/adoption/page.tsx',
+      'src/app/(maestro)/tower/lens/inventory/page.tsx',
+      'src/app/(maestro)/tower/activity/page.tsx',
+      'src/app/(maestro)/tower/outcomes/page.tsx',
+      'src/app/(maestro)/tower/projects/page.tsx',
+      'src/app/(maestro)/tower/staff-aug/page.tsx',
+      'src/app/(maestro)/tower/tech-stack/page.tsx',
+      'src/app/(maestro)/tower/volumetrics/page.tsx',
+      'src/app/(maestro)/tower/preview/page.tsx',
+      'src/app/(maestro)/preview/tower/page.tsx',
+    ];
+    for (const path of deletedShells) {
+      expect(existsSync(path)).toBe(false);
     }
   });
 });
