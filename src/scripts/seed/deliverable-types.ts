@@ -3,6 +3,9 @@ import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 import { timelineResourceEstimateDeliverableType } from '@/lib/deliverables/templates/timeline_resource_estimate';
 import { executionRoadmapTrackerDeliverableType } from '@/lib/deliverables/templates/execution_roadmap_tracker';
+import { executiveBriefingMemoDeliverableType } from '@/lib/deliverables/templates/executive_briefing_memo';
+import { strategicDecisionPaperDeliverableType } from '@/lib/deliverables/templates/strategic_decision_paper';
+import { quarterlyExecutiveMemoDeliverableType } from '@/lib/deliverables/templates/quarterly_executive_memo';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -754,6 +757,9 @@ function toSeedFromTemplate(template: {
 TYPES.push(
   toSeedFromTemplate(timelineResourceEstimateDeliverableType),
   toSeedFromTemplate(executionRoadmapTrackerDeliverableType),
+  toSeedFromTemplate(executiveBriefingMemoDeliverableType),
+  toSeedFromTemplate(strategicDecisionPaperDeliverableType),
+  toSeedFromTemplate(quarterlyExecutiveMemoDeliverableType),
 );
 
 function getSb() {
