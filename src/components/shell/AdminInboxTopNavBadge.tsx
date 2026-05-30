@@ -9,6 +9,13 @@ interface InboxResponse {
 }
 
 export function AdminInboxTopNavBadge() {
+  if (process.env.NEXT_PUBLIC_ENABLE_ADMIN_INBOX_BADGE !== "true") {
+    return null;
+  }
+  return <AdminInboxTopNavBadgeInner />;
+}
+
+function AdminInboxTopNavBadgeInner() {
   const [available, setAvailable] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
