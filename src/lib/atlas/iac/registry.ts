@@ -14,12 +14,16 @@ import type { InitiativeArchetype } from './types';
 import { claudeCodeArchetype } from './archetypes/claude-code';
 import { githubCopilotArchetype } from './archetypes/github-copilot';
 import { microsoft365CopilotArchetype } from './archetypes/microsoft-365-copilot';
+import { oracleAiAgentsArchetype } from './archetypes/oracle-ai-agents';
 import { salesforceEinsteinAgentforceArchetype } from './archetypes/salesforce-einstein-agentforce';
+import { workdayAiAgentsArchetype } from './archetypes/workday-ai-agents';
 
 export const INITIATIVE_ARCHETYPES: InitiativeArchetype[] = [
   claudeCodeArchetype,
   githubCopilotArchetype,
   microsoft365CopilotArchetype,
+  oracleAiAgentsArchetype,
   salesforceEinsteinAgentforceArchetype,
+  workdayAiAgentsArchetype,
   // Sibling slices append here, alphabetical by `archetypeKey`.
 ];
