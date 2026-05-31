@@ -1137,7 +1137,6 @@ export const BANKING_DOM05_CONSUMER_LENDING_PART4_PATTERNS: PatternSeed[] = [
   {
     code: 'B1533',
     name: 'HMDA LAR Ethnicity Self-Identification Not Offered for Telephone Applications',
-    officeAddress: 'back_office',
     officeCategory: 'back_office',
     failureRatePct: 61,
     description:
