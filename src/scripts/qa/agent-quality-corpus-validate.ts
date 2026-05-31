@@ -2,6 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 type AgentName = 'sentinel' | 'atlas' | 'nexus' | 'source' | 'steward';
+const REQUIRED_TENANTS = new Set([
+  'apex-retail',
+  'meridian-health',
+  'first-capital',
+  'skyharbor-air',
+]);
 
 interface AgentQualityCase {
   id: string;
@@ -108,6 +114,7 @@ const cases = parseCorpus();
 const ids = new Set<string>();
 const byAgent = {} as Record<AgentName, number>;
 const byCategory: Record<string, number> = {};
+const byTenant: Record<string, number> = {};
 const failures: string[] = [];
 
 for (const testCase of cases) {
@@ -116,6 +123,7 @@ for (const testCase of cases) {
 
   if (AGENTS.includes(testCase.agent)) increment(byAgent, testCase.agent);
   increment(byCategory, testCase.category);
+  increment(byTenant, testCase.tenant);
 
   const caseFailures = validateCase(testCase);
   failures.push(...caseFailures.map((failure) => `${testCase.id}: ${failure}`));
@@ -135,8 +143,13 @@ for (const category of REQUIRED_CATEGORIES) {
   if ((byCategory[category] ?? 0) === 0) failures.push(`missing category: ${category}`);
 }
 
+for (const tenant of REQUIRED_TENANTS) {
+  if ((byTenant[tenant] ?? 0) === 0) failures.push(`missing tenant: ${tenant}`);
+}
+
 console.log(`Agent quality corpus: ${cases.length} cases`);
 console.log(`By agent: ${JSON.stringify(byAgent)}`);
+console.log(`By tenant: ${JSON.stringify(byTenant)}`);
 console.log(`By category: ${JSON.stringify(byCategory)}`);
 
 if (failures.length > 0) {
