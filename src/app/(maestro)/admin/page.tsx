@@ -1,4 +1,4 @@
-import { AppShell } from '@/components/shell/AppShell';
+import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getClientOption } from '@/lib/client-config';
 import { COLORS, TYPOGRAPHY } from '@/lib/design/design-tokens';
@@ -104,18 +104,11 @@ export default async function AdminOverviewPage() {
   const mark = clientMark(tenant.tenantName);
 
   return (
-    <AppShell
-      surface="home"
-      agentName="Steward"
-      showProductNav
-      topBarProps={{ tenantName: tenant.tenantName }}
-    >
+    <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <main
         data-admin-home-native="true"
         style={{
-          flex: 1,
-          minHeight: 0,
-          overflow: 'auto',
+          minHeight: '100%',
           background: palette.paper,
           color: palette.ink,
           padding: '26px 30px 34px',
@@ -379,6 +372,6 @@ export default async function AdminOverviewPage() {
           </div>
         </section>
       </main>
-    </AppShell>
+    </AdminCanonShellV2>
   );
 }

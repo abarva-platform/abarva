@@ -321,6 +321,7 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
     it('/admin home renders a native Maestro canvas instead of the legacy setup dashboard', () => {
       const src = readFileSync(resolve(root, 'src/app/(maestro)/admin/page.tsx'), 'utf8');
       expect(src).toContain('data-admin-home-native');
+      expect(src).toContain('AdminCanonShellV2');
       expect(src).toContain('resolveAdminTenant');
       expect(src).toContain('Loaded data by dimension');
       expect(src).not.toContain('iframe');
