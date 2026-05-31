@@ -24,11 +24,12 @@ describe('Setup W6 policies and tenant governance lock', () => {
     expect(tenantRouteAbsent).toBe(true);
 
     const adminRoute = readWorkspaceFile('src/app/(maestro)/admin/page.tsx');
-    expect(adminRoute).toContain('data-admin-home-wireframe');
-    expect(adminRoute).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+    expect(adminRoute).toContain('data-admin-home-native');
     expect(adminRoute).toContain("import { AppShell }");
+    expect(adminRoute).toContain('resolveAdminTenant');
     expect(adminRoute).not.toContain('AdminOverviewTabs');
     expect(adminRoute).not.toContain('AdminTenantTab');
+    expect(adminRoute).not.toContain('iframe');
 
     const proxy = readWorkspaceFile('src/proxy.ts');
     expect(proxy).toContain("'/admin/tenant'");

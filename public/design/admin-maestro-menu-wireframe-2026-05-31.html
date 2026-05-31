@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AbarVa Admin Maestro Wireframe - First Viewport Design</title>
+  <title>AbarVa Admin Home</title>
   <style>
     :root {
       --ink: #0a0a0a;
@@ -75,6 +75,28 @@
       color: var(--muted);
       max-width: 980px;
       font-size: 15px;
+    }
+
+    .client-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .client-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.24);
     }
 
     main {
@@ -427,14 +449,17 @@
 </head>
 <body>
   <header>
-    <p class="eyebrow">Design wireframe - before app/module changes</p>
-    <h1>Maestro admin pages: first-viewport decision design</h1>
-    <p class="subhead">Each page must explain status, completeness, risk, and next action without deep scrolling. Long audit trails and implementation details move below the fold or into drawers.</p>
+    <div class="client-line">
+      <span class="client-mark" data-client-mark>AV</span>
+      <p class="eyebrow"><span data-client-vertical>Enterprise</span> admin command center</p>
+    </div>
+    <h1><span data-client-name>Client</span> admin home</h1>
+    <p class="subhead">Track loaded data, readiness, access, notifications, and next actions for this client without hunting through deep dashboards.</p>
   </header>
 
   <main>
-    <nav aria-label="Wireframe sections">
-      <a href="#principles">Design principles</a>
+    <nav aria-label="Admin home sections">
+      <a href="#principles">Operating principles</a>
       <a href="#home">Admin home</a>
       <a href="#data-trust">Data loaded by dimension</a>
       <a href="#connectors">Connectors</a>
@@ -444,8 +469,8 @@
       <a href="#production">Production readiness</a>
       <a href="#patternops">PatternOps</a>
       <a href="#traces">Reasoning audit</a>
-      <a href="#binding">Data binding contract</a>
-      <a href="#qa">QA and test gates</a>
+      <a href="#binding">Operating data contract</a>
+      <a href="#qa">Readiness checks</a>
     </nav>
 
     <section class="content">
@@ -454,14 +479,14 @@
         <div class="page">
           <div class="page-top">
             <div class="decision">
-              <p class="eyebrow">Perfect top-of-page standard</p>
+              <p class="eyebrow">Top-of-page standard</p>
               <h2>Every menu page answers one question in the first viewport.</h2>
-              <p>The first screen always has a decision sentence, four scan tiles, one meaningful visual/table, and one next action. Data quality and completeness are shown as operator facts, not internal plumbing. The finished pages must feel board-ready: calm hierarchy, exact labels, balanced spacing, readable tables, and no decorative clutter.</p>
+              <p>The first screen always has a decision sentence, four scan tiles, one meaningful visual/table, and one next action. Data quality and completeness are shown as operator facts, not internal plumbing. The pages must feel board-ready: calm hierarchy, exact labels, balanced spacing, readable tables, and no decorative clutter.</p>
             </div>
             <div class="action-card">
-              <strong>Primary design gate</strong>
+              <strong>Primary operating gate</strong>
               <span>If a Maestro cannot say what is ready, blocked, and next within 10 seconds, the page fails.</span>
-              <a class="button" href="#qa">Review QA gates</a>
+              <a class="button" href="#qa">Review readiness checks</a>
             </div>
           </div>
 
@@ -485,7 +510,7 @@
                   <th>Zone</th>
                   <th>What renders</th>
                   <th>Why it matters</th>
-                  <th>QA assertion</th>
+                  <th>Acceptance check</th>
                 </tr>
               </thead>
               <tbody>
@@ -517,7 +542,7 @@
                   <td>Polish</td>
                   <td>Executive-grade typography, spacing, color restraint, and table density</td>
                   <td>Maestros trust the page before reading every row</td>
-                  <td>Visual QA screenshot passes desktop and mobile polish review</td>
+                  <td>Desktop and mobile screenshots pass polish review</td>
                 </tr>
               </tbody>
             </table>
@@ -958,11 +983,11 @@
       </section>
 
       <section id="binding" class="contract">
-        <p class="eyebrow">Architecture and data binding contract</p>
-        <h2>Design must be backed by read-models, not page-local calculations.</h2>
-        <p>The app implementation should keep page components thin. Each menu page receives one typed view-model from the admin broker/data layer. UI renders the view. Tests assert the view-model has enough data to support the first viewport.</p>
+        <p class="eyebrow">Architecture and operating data contract</p>
+        <h2>Every page is backed by read-models, not page-local calculations.</h2>
+        <p>The admin experience keeps page components thin. Each menu page receives one typed view-model from the admin broker/data layer. UI renders the view. Tests assert the view-model has enough data to support the first viewport.</p>
         <table>
-          <thead><tr><th>Page</th><th>Required view-model fields</th><th>Likely current source</th><th>Binding QA</th></tr></thead>
+          <thead><tr><th>Page</th><th>Required view-model fields</th><th>Likely current source</th><th>Binding check</th></tr></thead>
           <tbody>
             <tr><td>Admin home</td><td>gateSummary, topBlockers[3], nextActions[3], dimensionCoverage</td><td>admin overview + production readiness summary</td><td>Fails if blocker/action arrays are empty</td></tr>
             <tr><td>Data Trust</td><td>dimensions[], loadedCount, evidenceReadyCount, completenessPercent, missing[], nextAction</td><td>dataset-domain-inventory.ts</td><td>Every canonical dimension appears exactly once</td></tr>
@@ -978,23 +1003,23 @@
       </section>
 
       <section id="qa" class="page-frame">
-        <div class="viewport-label"><span>QA before app touch</span><span>Required design, binding, and no-leak gates</span></div>
+        <div class="viewport-label"><span>Readiness checks</span><span>Required clarity, binding, and no-leak gates</span></div>
         <div class="page">
           <div class="page-top">
             <div class="decision">
               <p class="eyebrow">Test strategy</p>
-              <h2>The wireframe becomes acceptance criteria before any module code changes.</h2>
+              <h2>Every release proves the page is clear, grounded, and tenant-safe.</h2>
               <p>Each implementation PR should prove first-viewport clarity, data-binding integrity, tenant isolation, and no jargon in default page copy.</p>
             </div>
             <div class="action-card">
               <strong>Implementation sequence</strong>
-              <span>Approve wireframe, add view-model tests, then change one page at a time.</span>
+              <span>Confirm the operating contract, add view-model tests, then change one page at a time.</span>
               <a class="button" href="#principles">Back to principles</a>
             </div>
           </div>
 
           <div class="qa-grid">
-            <div class="qa"><strong>1. Wireframe approval</strong><span>HTML is reviewed first. No runtime module changes until page intent and data contract are accepted.</span></div>
+            <div class="qa"><strong>1. Page intent</strong><span>The page question, decision summary, and data contract are clear before runtime behavior changes.</span></div>
             <div class="qa"><strong>2. View-model tests</strong><span>Unit tests assert the data exists: dimensions, counts, percentages, blockers, owners, safe actions, blocked reasons.</span></div>
             <div class="qa"><strong>3. Rendering tests</strong><span>Component tests assert first-viewport copy uses operator language and hides implementation labels.</span></div>
             <div class="qa"><strong>4. Browser smoke</strong><span>Authenticated Playwright checks 1440x900 and mobile: scrollY starts at 0, top facts visible, no permanent clutter rail.</span></div>
@@ -1022,5 +1047,38 @@
       </section>
     </section>
   </main>
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const clientName = params.get('clientName') || 'Client';
+      const clientKey = params.get('clientKey') || '';
+      const clientVertical = params.get('clientVertical') || 'Enterprise';
+      const clientMark = params.get('clientMark') || clientName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || '')
+        .join('');
+      const colors = {
+        apexretail: '#8a5a00',
+        meridian: '#0f6b5b',
+        skyharbor: '#0b4a91',
+        arcturus: '#1b2b5c',
+        northstar: '#2d6a4f',
+      };
+      document.title = `${clientName} Admin Home | AbarVa`;
+      document.querySelectorAll('[data-client-name]').forEach((node) => {
+        node.textContent = clientName;
+      });
+      document.querySelectorAll('[data-client-vertical]').forEach((node) => {
+        node.textContent = clientVertical;
+      });
+      document.querySelectorAll('[data-client-mark]').forEach((node) => {
+        node.textContent = clientMark;
+        node.style.background = colors[clientKey] || '#0b4a91';
+        node.setAttribute('aria-label', `${clientName} client mark`);
+      });
+    })();
+  </script>
 </body>
 </html>

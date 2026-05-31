@@ -19,11 +19,12 @@ describe('DESROUTE3 admin shell enforcement', () => {
   const legacyAdminRoute = 'src/app/(maestro)/platform/admin/page.tsx';
   const legacyProductionRoute = 'src/app/(maestro)/platform/admin/production-readiness/page.tsx';
 
-  it('admin home hosts the Maestro wireframe while production keeps the canonical shell', () => {
+  it('admin home renders natively while production keeps the canonical shell', () => {
     const adminSource = read(adminRoute);
-    expect(adminSource).toContain('data-admin-home-wireframe');
-    expect(adminSource).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+    expect(adminSource).toContain('data-admin-home-native');
     expect(adminSource).toContain('AppShell');
+    expect(adminSource).toContain('resolveAdminTenant');
+    expect(adminSource).not.toContain('iframe');
     expect(adminSource).not.toContain('HomeOverviewV2');
 
     const productionSource = read(productionRoute);
