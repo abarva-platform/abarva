@@ -1,4 +1,5 @@
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
+import { ADMIN_PAGE_HEADER_STYLES } from '@/components/admin/admin-page-header-styles';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getClientOption } from '@/lib/client-config';
 import { COLORS, TYPOGRAPHY } from '@/lib/design/design-tokens';
@@ -148,30 +149,22 @@ export default async function AdminOverviewPage() {
               <div>
                 <p
                   style={{
-                    margin: 0,
+                    ...ADMIN_PAGE_HEADER_STYLES.eyebrow,
                     color: palette.muted,
-                    fontSize: 11,
-                    fontWeight: 850,
-                    letterSpacing: '0.11em',
-                    textTransform: 'uppercase',
                   }}
                 >
                   {clientOption.vertical} admin command center
                 </p>
                 <h1
                   style={{
-                    margin: '5px 0 0',
-                    fontFamily: TYPOGRAPHY.serif,
-                    fontSize: 38,
-                    lineHeight: 1.04,
-                    letterSpacing: 0,
+                    ...ADMIN_PAGE_HEADER_STYLES.title,
                   }}
                 >
                   {tenant.tenantName} admin home
                 </h1>
               </div>
             </div>
-            <p style={{ maxWidth: 860, margin: 0, color: palette.ink, fontSize: 16, lineHeight: 1.48 }}>
+            <p style={{ ...ADMIN_PAGE_HEADER_STYLES.subtitle, color: palette.ink }}>
               One native control canvas for loaded data, readiness, access, notifications, and next
               actions. The first screen shows what is ready, what is incomplete, and who owns the next move.
             </p>

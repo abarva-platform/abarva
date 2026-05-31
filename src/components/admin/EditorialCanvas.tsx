@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { COLORS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { SPACING } from '@/lib/design/design-tokens';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { ADMIN_PAGE_HEADER_STYLES } from './admin-page-header-styles';
 
 export interface EditorialCanvasProps {
   eyebrow: string;
@@ -25,26 +26,15 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
       <header>
         <p
           style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 11,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: COLORS.navy,
-            margin: 0,
-            fontWeight: 600,
+            ...ADMIN_PAGE_HEADER_STYLES.eyebrow,
           }}
         >
           {eyebrow}
         </p>
         <h1
           style={{
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 56,
-            fontWeight: 700,
+            ...ADMIN_PAGE_HEADER_STYLES.title,
             color: SHELL.INK,
-            margin: '8px 0 0',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
           }}
         >
           {title}
@@ -52,12 +42,9 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
         {subtitle ? (
           <p
             style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 15,
+              ...ADMIN_PAGE_HEADER_STYLES.subtitle,
               color: SHELL.INK_SOFT,
-              marginTop: SPACING.md,
-              lineHeight: 1.5,
-              maxWidth: '720px',
+              maxWidth: 760,
             }}
           >
             {subtitle}

@@ -1,5 +1,6 @@
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
+import { ADMIN_PAGE_HEADER_STYLES } from '@/components/admin/admin-page-header-styles';
 import type { ReactNode } from 'react';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import {
@@ -348,33 +349,21 @@ export default async function CustomerAdminPage() {
         >
           <div
             style={{
-              fontFamily: TYPOGRAPHY.mono,
-              fontSize: 11,
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: COLORS.navy,
+              ...ADMIN_PAGE_HEADER_STYLES.eyebrow,
             }}
           >
             Setup · Customer Admin · {view.tenant.tenantName}
           </div>
           <h1
             style={{
-              fontFamily: TYPOGRAPHY.serif,
-              fontSize: 42,
-              lineHeight: 1.05,
-              margin: 0,
-              color: COLORS.ink,
+              ...ADMIN_PAGE_HEADER_STYLES.title,
             }}
           >
             Customer admin
           </h1>
           <p
             style={{
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 15,
-              lineHeight: 1.6,
-              margin: 0,
-              color: `${COLORS.ink}b8`,
+              ...ADMIN_PAGE_HEADER_STYLES.subtitle,
             }}
           >
             Read-only tenant control room for users, audit activity, AI egress, usage, and substrate inventory.
