@@ -18,8 +18,9 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-function shortDate(iso: string | null | undefined): string {
-  if (!iso) return 'Not recorded';
+function shortDate(value: unknown): string {
+  if (value === null || value === undefined || value === '') return 'Not recorded';
+  const iso = value instanceof Date ? value.toISOString() : String(value);
   return iso.slice(0, 16).replace('T', ' ');
 }
 

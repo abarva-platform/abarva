@@ -53,6 +53,17 @@ describe('agent response shape', () => {
     expect(shaped.split(/\s+/).length).toBeLessThanOrEqual(75);
   });
 
+  it('scrubs raw portfolio signal ids from Tower copy', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Demand Forecasting attestation is overdue — warning, signal:39901c16-2e8b-4c8c-80aa-8a0182f26754.',
+    );
+
+    expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
+    expect(shaped).not.toContain('signal:');
+    expect(shaped).toContain('the referenced portfolio signal');
+  });
+
   it('uses a comparison table when the answer is choosing between options', () => {
     const raw = [
       'Markdown optimization is the better second Move, but compare the two paths carefully.',

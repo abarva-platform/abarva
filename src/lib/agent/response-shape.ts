@@ -69,6 +69,8 @@ function scrubInternalAdvisorText(text: string): string {
     .replace(/\bworldview\s+corpus\b/gi, 'strategic corpus')
     .replace(/\bworldview:W\d+:\d{3}\b/gi, 'strategic framing')
     .replace(/\bsig:[a-z0-9:_-]+\b/gi, 'the cross-program signal')
+    .replace(/\bsignal:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'the referenced portfolio signal')
+    .replace(/\bsignal:[a-z0-9:_-]{8,}\b/gi, 'the referenced portfolio signal')
     .replace(
       /\b(?:fcfi|firstcapital|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/gi,
       (match) => humanizeInternalProgramId(match),
