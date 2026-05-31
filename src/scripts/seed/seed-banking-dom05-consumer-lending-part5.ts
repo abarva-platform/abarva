@@ -1,17 +1,3 @@
-interface PatternSeed {
-  code: string;
-  name: string;
-  description: string;
-  vertical: string;
-  office_category: string;
-  keywords: string[];
-  failure_rate_pct: number;
-  is_active: boolean;
-  demoRelevant: boolean;
-  subTopic: string;
-  data: Record<string, string | number | boolean>;
-}
-
 export const BANKING_DOM05_CONSUMER_LENDING_PART5_PATTERNS: PatternSeed[] = [
   // ── ai-consumer-lending (B1540–B1557) ──────────────────────────────────────
   {
