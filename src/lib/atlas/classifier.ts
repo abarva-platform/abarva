@@ -154,10 +154,12 @@ const INTENT_RULES: IntentRule[] = [
     intent: 'strategy_refusal',
     routeType: 'scripted',
     terms: [
-      'should we',
       'is this the right move',
       'what should our strategy be',
+      'should we buy',
       'should we consolidate',
+      'should we fund',
+      'should we renew',
       'should we exit',
       'should we double down',
       'cancel the',

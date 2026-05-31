@@ -68,6 +68,13 @@ function scrubInternalAdvisorText(text: string): string {
     .replace(/\bThe\s+worldview\s+corpus\s+is\s+being\s+authored[^\n.]*\.?\s*/gi, '')
     .replace(/\bworldview\s+corpus\b/gi, 'strategic corpus')
     .replace(/\bworldview:W\d+:\d{3}\b/gi, 'strategic framing')
+    .replace(/\bcanonical\s+value\s+pattern\b/gi, 'validated benchmark pattern')
+    .replace(/\bretrieved\s+corpus\s+chunk\b/gi, 'retrieved industry evidence')
+    .replace(/\bloaded\s+corpus\s+chunk\b/gi, 'loaded industry evidence')
+    .replace(/\baudited\s+substrate\b/gi, 'audited evidence base')
+    .replace(/\btenant\s+substrate\b/gi, 'tenant evidence base')
+    .replace(/\bsubstrate\b/gi, 'evidence base')
+    .replace(/\bnot\s+exposed\s+in\s+this\s+surface\b/gi, 'not available in the current evidence')
     .replace(/\bsig:[a-z0-9:_-]+\b/gi, 'the cross-program signal')
     .replace(/\bsignal\s*:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'the referenced portfolio signal')
     .replace(/\bsignal:[a-z0-9:_-]{8,}\b/gi, 'the referenced portfolio signal')
@@ -262,6 +269,12 @@ function compactComparisonText(text: string): string | null {
   const existingTable = preserveReadableTable(text);
   if (existingTable) return existingTable;
   if (!/\b(compare|option|vendor|scenario|versus| vs\.? |fit|strength|weakness)\b/i.test(text)) return null;
+  if (
+    !/\b(Strength|Weakness|Fit):/i.test(text) &&
+    !/\b(?:Option\s*)?[A-Z0-9][A-Za-z0-9 /&+-]{2,45}\s+[—-]\s+\b/i.test(text)
+  ) {
+    return null;
+  }
 
   const sentences = splitSentences(text);
   const items = extractComparisonItems(text);
@@ -500,6 +513,21 @@ function shouldCompactSurface(surface: string): boolean {
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);
 }
 
+function isTowerSurface(surface: string): boolean {
+  const semanticSurface = surface.replace(/^\/+/, '');
+  return surface === 'tower' || surface === '/tower' || surface.startsWith('/tower/') || semanticSurface === 'tower';
+}
+
+function hasConcreteNextAction(text: string): boolean {
+  return /(?:\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b|(?:^|\n)\s*-?\s*Next:)/i.test(text);
+}
+
+function ensureTowerNextAction(surface: string, text: string): string {
+  if (!isTowerSurface(surface) || hasConcreteNextAction(text)) return text;
+  const suffix = '- Next: open the cited initiative, signal, or evidence item in Tower and assign the owner for the first missing decision input.';
+  return normalizeVisibleWhitespace(`${text}\n\n${suffix}`);
+}
+
 // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (percentile labeling):
 // Every percentile rendered to a user MUST include the metric, the cohort
 // definition, and the sample size. If any of those is missing, do NOT
@@ -633,5 +661,5 @@ export function shapeAgentResponseForSurface(surface: string, text: string): str
   const shaped = shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
     ? compactConsultantChatText(cleaned, 120)
     : cleaned;
-  return repairAgentOutputContractText(shaped).text;
+  return repairAgentOutputContractText(ensureTowerNextAction(surface, shaped)).text;
 }

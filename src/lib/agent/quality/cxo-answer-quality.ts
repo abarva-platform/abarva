@@ -90,7 +90,7 @@ const BANNED_PHRASES = [
 ];
 
 const ACTION_CUES =
-  /\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b/i;
+  /(?:\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b|(?:^|\n)\s*-?\s*Next:)/i;
 
 const VAGUE_ACTION =
   /\b(consider exploring|consider looking|keep an eye|monitor this|review as needed|circle back)\b/i;
@@ -204,7 +204,7 @@ export function validateCxoAnswer(
   const longParagraph = text
     .split(/\n{2,}/)
     .map((part) => part.trim())
-    .find((part) => wordCount(part) > 95);
+    .find((part) => isHardToScanParagraph(part));
   if (longParagraph) {
     issues.push({
       code: 'wall_of_text',
@@ -259,6 +259,14 @@ function normalize(text: string): string {
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function isHardToScanParagraph(text: string): boolean {
+  if (wordCount(text) <= 95) return false;
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+  const isStructured = lines.length >= 2 && lines.every((line) => /^([-*·]\s+|\d+\.\s+|\|.+\|$)/.test(line));
+  if (!isStructured) return true;
+  return lines.some((line) => wordCount(line) > 45);
 }
 
 function trimWords(text: string, maxWords: number): string {
