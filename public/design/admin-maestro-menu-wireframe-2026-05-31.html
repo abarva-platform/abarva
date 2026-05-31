@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbarVa Admin Maestro Wireframe - First Viewport Design</title>
+  <style>
+    :root {
+      --ink: #0a0a0a;
+      --muted: #5f6470;
+      --line: #d8d3c8;
+      --paper: #fbfaf7;
+      --white: #ffffff;
+      --blue: #0b4a91;
+      --mint: #0f6b5b;
+      --amber: #8a5a00;
+      --coral: #9c2f1f;
+      --soft-mint: #e7f5ef;
+      --soft-amber: #fff4df;
+      --soft-coral: #fdecea;
+      --soft-blue: #eaf2fb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    header {
+      padding: 28px 34px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      max-width: 980px;
+    }
+
+    h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+    }
+
+    h3 { font-size: 15px; }
+
+    p { margin: 0; }
+
+    .subhead {
+      margin-top: 10px;
+      color: var(--muted);
+      max-width: 980px;
+      font-size: 15px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: calc(100vh - 118px);
+    }
+
+    nav {
+      border-right: 1px solid var(--line);
+      padding: 22px 18px;
+      background: #f5f1ea;
+      position: sticky;
+      top: 118px;
+      height: calc(100vh - 118px);
+      overflow: auto;
+    }
+
+    nav a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 9px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    nav a:hover { background: var(--white); }
+
+    .content {
+      padding: 24px 30px 50px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .page-frame {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 44px rgba(10, 10, 10, .06);
+    }
+
+    .viewport-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f7f4ee;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .page {
+      min-height: 720px;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .page-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .decision {
+      display: grid;
+      gap: 10px;
+    }
+
+    .decision p {
+      max-width: 780px;
+      color: #2f343b;
+      font-size: 15px;
+    }
+
+    .action-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfaf7;
+      display: grid;
+      gap: 8px;
+    }
+
+    .action-card strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .action-card span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .button {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 86px;
+      display: grid;
+      align-content: space-between;
+      background: var(--white);
+    }
+
+    .tile label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .tile strong {
+      margin-top: 6px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .tile span {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .ok { background: var(--soft-mint); border-color: #b8dfd2; }
+    .warn { background: var(--soft-amber); border-color: #ead19c; }
+    .bad { background: var(--soft-coral); border-color: #efb7ae; }
+    .info { background: var(--soft-blue); border-color: #c9dced; }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfaf7;
+    }
+
+    .panel-head p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px 0;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fbfaf7;
+    }
+
+    .tab.active {
+      background: var(--ink);
+      color: var(--white);
+      border-color: var(--ink);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #ebe6dc;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: #fbfaf7;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e6e0d5;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--blue);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      background: #eee9df;
+      color: #343434;
+    }
+
+    .pill.ok { color: var(--mint); background: var(--soft-mint); }
+    .pill.warn { color: var(--amber); background: var(--soft-amber); }
+    .pill.bad { color: var(--coral); background: var(--soft-coral); }
+    .pill.info { color: var(--blue); background: var(--soft-blue); }
+
+    .mini-list {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      list-style: none;
+      margin: 0;
+    }
+
+    .mini-list li {
+      display: grid;
+      gap: 3px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #ebe6dc;
+    }
+
+    .mini-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+    .mini-list strong { font-size: 13px; }
+    .mini-list span { color: var(--muted); font-size: 12px; }
+
+    .heat {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+      padding: 12px;
+    }
+
+    .heat div {
+      min-height: 48px;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      font-weight: 750;
+      border: 1px solid var(--line);
+      background: #f5f1ea;
+    }
+
+    .contract {
+      display: grid;
+      gap: 14px;
+      background: #111;
+      color: #f7f4ee;
+      padding: 22px;
+      border-radius: 8px;
+    }
+
+    .contract h2 { color: #fff; }
+    .contract table th { background: #1d1d1d; color: #bbb; border-color: #333; }
+    .contract table td { border-color: #333; }
+    .contract .pill { background: #2a2a2a; color: #f7f4ee; }
+
+    .qa-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .qa {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--white);
+      display: grid;
+      gap: 8px;
+    }
+
+    .qa strong { font-size: 14px; }
+    .qa span { color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+      nav { position: relative; top: auto; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .page-top, .split { grid-template-columns: 1fr; }
+      .tiles, .qa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      header { position: static; padding: 22px 18px; }
+      .content { padding: 18px; }
+      .tiles, .qa-grid { grid-template-columns: 1fr; }
+      .heat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Design wireframe - before app/module changes</p>
+    <h1>Maestro admin pages: first-viewport decision design</h1>
+    <p class="subhead">Each page must explain status, completeness, risk, and next action without deep scrolling. Long audit trails and implementation details move below the fold or into drawers.</p>
+  </header>
+
+  <main>
+    <nav aria-label="Wireframe sections">
+      <a href="#principles">Design principles</a>
+      <a href="#home">Admin home</a>
+      <a href="#data-trust">Data loaded by dimension</a>
+      <a href="#connectors">Connectors</a>
+      <a href="#users">Users and access</a>
+      <a href="#notifications">Notifications</a>
+      <a href="#agent-readiness">Assistant readiness</a>
+      <a href="#production">Production readiness</a>
+      <a href="#patternops">PatternOps</a>
+      <a href="#traces">Reasoning audit</a>
+      <a href="#binding">Data binding contract</a>
+      <a href="#qa">QA and test gates</a>
+    </nav>
+
+    <section class="content">
+      <section id="principles" class="page-frame">
+        <div class="viewport-label"><span>Global rule</span><span>No deep-scroll to understand the page</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Perfect top-of-page standard</p>
+              <h2>Every menu page answers one question in the first viewport.</h2>
+              <p>The first screen always has a decision sentence, four scan tiles, one meaningful visual/table, and one next action. Data quality and completeness are shown as operator facts, not internal plumbing. The finished pages must feel board-ready: calm hierarchy, exact labels, balanced spacing, readable tables, and no decorative clutter.</p>
+            </div>
+            <div class="action-card">
+              <strong>Primary design gate</strong>
+              <span>If a Maestro cannot say what is ready, blocked, and next within 10 seconds, the page fails.</span>
+              <a class="button" href="#qa">Review QA gates</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Above fold</label><strong>1</strong><span>Decision summary</span></div>
+            <div class="tile info"><label>Visual scan</label><strong>4</strong><span>Status tiles max</span></div>
+            <div class="tile warn"><label>Primary table</label><strong>5-7</strong><span>Rows visible, then expand</span></div>
+            <div class="tile bad"><label>Jargon</label><strong>0</strong><span>No wave, seed, component names</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Universal first-viewport layout</h3>
+                <p>Applied consistently across all admin menu pages.</p>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Zone</th>
+                  <th>What renders</th>
+                  <th>Why it matters</th>
+                  <th>QA assertion</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Decision header</td>
+                  <td>Plain title + one sentence answering the page question</td>
+                  <td>Prevents dashboard hunting</td>
+                  <td>Title and decision summary visible before scroll</td>
+                </tr>
+                <tr>
+                  <td>Status tiles</td>
+                  <td>Ready, partial, blocked, source status, next owner</td>
+                  <td>Fast executive scan</td>
+                  <td>Exactly 3-4 tiles; no vague vanity metric</td>
+                </tr>
+                <tr>
+                  <td>Primary visual/table</td>
+                  <td>The one table or matrix that proves the decision</td>
+                  <td>Shows evidence immediately</td>
+                  <td>At least 5 useful rows or cells visible at 1440x900</td>
+                </tr>
+                <tr>
+                  <td>Action</td>
+                  <td>One primary action, with blocked reason if unavailable</td>
+                  <td>Makes the page operational</td>
+                  <td>Safe action links; blocked action explains dependency</td>
+                </tr>
+                <tr>
+                  <td>Polish</td>
+                  <td>Executive-grade typography, spacing, color restraint, and table density</td>
+                  <td>Maestros trust the page before reading every row</td>
+                  <td>Visual QA screenshot passes desktop and mobile polish review</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="home" class="page-frame">
+        <div class="viewport-label"><span>/admin</span><span>Question: what needs attention today?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Apex Retail admin home</p>
+              <h2>Demo is ready. Pilot is partial. Production is blocked by evidence, SSO, and live connector validation.</h2>
+              <p>The home page should be a triage board, not a full control plane. It summarizes the client, the biggest blockers, and the next three actions.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Review the top blocker before moving into detail pages.</span>
+              <a class="button" href="#production">Review production blockers</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Demo</label><strong>Ready</strong><span>Prepared evidence available</span></div>
+            <div class="tile warn"><label>Pilot</label><strong>Partial</strong><span>SSO and connectors pending</span></div>
+            <div class="tile bad"><label>Production</label><strong>Blocked</strong><span>Audit and live data required</span></div>
+            <div class="tile info"><label>Data coverage</label><strong>68%</strong><span>Across core dimensions</span></div>
+          </div>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Top blockers</h3>
+                  <p>The first three things preventing pilot or production.</p>
+                </div>
+              </div>
+              <table>
+                <thead><tr><th>Blocker</th><th>Impact</th><th>Owner</th><th>Next step</th></tr></thead>
+                <tbody>
+                  <tr><td>SSO not configured</td><td><span class="pill bad">Pilot blocked</span></td><td>Client IT</td><td>Configure identity provider</td></tr>
+                  <tr><td>ERP connector not live</td><td><span class="pill warn">Evidence partial</span></td><td>Client + AbarVa</td><td>Approve OAuth and credentials</td></tr>
+                  <tr><td>Audit logging not enabled</td><td><span class="pill bad">Production blocked</span></td><td>AbarVa</td><td>Enable write audit path</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Next actions</h3><p>Only actions that matter now.</p></div>
+              <ul class="mini-list">
+                <li><strong>Configure SSO</strong><span>Required before live invites and role changes.</span></li>
+                <li><strong>Validate ERP connector</strong><span>Required for spend and vendor evidence.</span></li>
+                <li><strong>Approve evidence owner list</strong><span>Required to move loaded data into usable evidence.</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="data-trust" class="page-frame">
+        <div class="viewport-label"><span>/admin/data-trust</span><span>Question: what data has been loaded and how complete is it?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Data trust</p>
+              <h2>8 of 12 data dimensions have usable coverage. Four dimensions still need owner, source, or freshness completion.</h2>
+              <p>This page should lead with a simple completeness table by dimension. The Maestro sees what is loaded, what is evidence-ready, and exactly what is missing.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Assign owners for the missing dimensions before relying on assistant output.</span>
+              <a class="button" href="#binding">Review data contract</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile info"><label>Dimensions</label><strong>12</strong><span>Canonical data groups</span></div>
+            <div class="tile ok"><label>Loaded</label><strong>8</strong><span>Have source material</span></div>
+            <div class="tile warn"><label>Evidence-ready</label><strong>5</strong><span>Usable in decisions</span></div>
+            <div class="tile bad"><label>Missing</label><strong>4</strong><span>Need owner or source</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Loaded data by dimension</h3>
+                <p>Simple table first. Detailed evidence records move below the fold.</p>
+              </div>
+              <span class="pill info">First viewport table</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Loaded data</th>
+                  <th>Completeness</th>
+                  <th>Evidence state</th>
+                  <th>What is missing</th>
+                  <th>Next action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Enterprise strategy</td>
+                  <td>Board deck, OKRs, priorities</td>
+                  <td>86%<div class="bar"><i style="width:86%"></i></div></td>
+                  <td><span class="pill ok">Usable</span></td>
+                  <td>Chunk-level client scope on older deck</td>
+                  <td>Add evidence IDs</td>
+                </tr>
+                <tr>
+                  <td>Application portfolio</td>
+                  <td>App inventory, owners, lifecycle</td>
+                  <td>72%<div class="bar"><i style="width:72%"></i></div></td>
+                  <td><span class="pill warn">Partial</span></td>
+                  <td>AI-readiness flag and cost owner</td>
+                  <td>Complete metadata</td>
+                </tr>
+                <tr>
+                  <td>Vendor / contract / spend</td>
+                  <td>Vendor list, contracts, spend extracts</td>
+                  <td>64%<div class="bar"><i style="width:64%"></i></div></td>
+                  <td><span class="pill warn">Partial</span></td>
+                  <td>ERP and contract connector validation</td>
+                  <td>Validate connector</td>
+                </tr>
+                <tr>
+                  <td>IT financials and KPIs</td>
+                  <td>Run-rate model, KPI dictionary</td>
+                  <td>58%<div class="bar"><i style="width:58%"></i></div></td>
+                  <td><span class="pill warn">Partial</span></td>
+                  <td>Fresh finance export and owner signoff</td>
+                  <td>Upload current export</td>
+                </tr>
+                <tr>
+                  <td>Risk / compliance</td>
+                  <td>Control notes, policy artifacts</td>
+                  <td>41%<div class="bar"><i style="width:41%"></i></div></td>
+                  <td><span class="pill bad">Thin</span></td>
+                  <td>Evidence approval and control mapping</td>
+                  <td>Assign compliance owner</td>
+                </tr>
+                <tr>
+                  <td>Operating telemetry</td>
+                  <td>Limited operating snapshots</td>
+                  <td>24%<div class="bar"><i style="width:24%"></i></div></td>
+                  <td><span class="pill bad">Blocked</span></td>
+                  <td>Live telemetry source</td>
+                  <td>Connect telemetry feed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="connectors" class="page-frame">
+        <div class="viewport-label"><span>/admin/connectors</span><span>Question: which systems are live, partial, or blocking pilot?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Connector readiness</p>
+              <h2>Identity and ERP are the pilot-critical connectors. Identity can be configured now; ERP still needs client credentials.</h2>
+              <p>The top of this page should not show every log. It should show the required systems, status, owner, and impact.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Configure SSO first because it unlocks invite and access controls.</span>
+              <a class="button" href="#users">Configure SSO</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile warn"><label>Required for pilot</label><strong>2</strong><span>Identity, ERP</span></div>
+            <div class="tile ok"><label>Prepared</label><strong>4</strong><span>Have setup records</span></div>
+            <div class="tile bad"><label>Blocked</label><strong>1</strong><span>ERP credentials missing</span></div>
+            <div class="tile info"><label>Last check</label><strong>Today</strong><span>Prepared setup view</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="tabs"><span class="tab active">Pilot-critical</span><span class="tab">All connectors</span><span class="tab">Requirements</span><span class="tab">Logs</span></div>
+            <table>
+              <thead><tr><th>System</th><th>Status</th><th>Required for</th><th>Owner</th><th>Missing</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Identity / SSO</td><td><span class="pill warn">Ready to configure</span></td><td>Users, roles, audit</td><td>Client IT</td><td>IdP metadata</td><td>Open SSO setup</td></tr>
+                <tr><td>ERP / Finance</td><td><span class="pill bad">Blocked</span></td><td>Spend, run-rate, vendor evidence</td><td>Client Finance IT</td><td>OAuth approval and credentials</td><td>Request credentials</td></tr>
+                <tr><td>Contract management</td><td><span class="pill warn">Partial</span></td><td>Vendor contract evidence</td><td>Procurement</td><td>Live validation</td><td>Schedule connector test</td></tr>
+                <tr><td>Market intelligence</td><td><span class="pill ok">Prepared</span></td><td>Source and Sentinel context</td><td>AbarVa</td><td>None for demo</td><td>Review coverage</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="users" class="page-frame">
+        <div class="viewport-label"><span>/admin/users-access</span><span>Question: who can access this client and what is missing?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Users and access</p>
+              <h2>Access is read-only until SSO is configured. Current roles are visible, but live invites require identity and audit logging.</h2>
+              <p>The above-fold view should answer whether access is safe, who is assigned, and what action unlocks live operation.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>SSO unlocks live invite, revoke, and role-change workflows.</span>
+              <a class="button" href="#users">Open SSO setup</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile bad"><label>SSO</label><strong>Not live</strong><span>Required for mutations</span></div>
+            <div class="tile info"><label>Active users</label><strong>9</strong><span>Prepared roster</span></div>
+            <div class="tile warn"><label>Pending invites</label><strong>3</strong><span>Live sends disabled</span></div>
+            <div class="tile ok"><label>Client scope</label><strong>Clean</strong><span>No cross-client roster</span></div>
+          </div>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head"><h3>Role coverage</h3><p>Show the client roster by business role.</p></div>
+              <table>
+                <thead><tr><th>Role</th><th>Users</th><th>Access scope</th><th>Risk</th><th>Next action</th></tr></thead>
+                <tbody>
+                  <tr><td>Tenant admin</td><td>2</td><td>Client workspace</td><td><span class="pill ok">Covered</span></td><td>Confirm SSO mapping</td></tr>
+                  <tr><td>Maestro</td><td>3</td><td>Programs and deliverables</td><td><span class="pill ok">Covered</span></td><td>Review active owners</td></tr>
+                  <tr><td>Sponsor</td><td>2</td><td>Tower briefs</td><td><span class="pill warn">Partial</span></td><td>Confirm approver list</td></tr>
+                  <tr><td>Observer</td><td>0</td><td>Reserved</td><td><span class="pill info">No risk</span></td><td>No action</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>SSO checklist</h3><p>Clear unlock path.</p></div>
+              <ul class="mini-list">
+                <li><strong>Identity provider metadata</strong><span>Needed from client IT.</span></li>
+                <li><strong>Role mapping</strong><span>Map admin, Maestro, sponsor, observer.</span></li>
+                <li><strong>Audit logging</strong><span>Required before live role mutations.</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="notifications" class="page-frame">
+        <div class="viewport-label"><span>/admin/users-access/notifications</span><span>Question: who gets urgent alerts?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Notification coverage</p>
+              <h2>Mandatory urgent alerts are covered for admins. Non-critical preferences are optional and can wait.</h2>
+              <p>This page should show coverage and delivery risk first, not the full preference surface.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Confirm admin recipients for mandatory incidents.</span>
+              <a class="button" href="#notifications">Review recipients</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Mandatory alerts</label><strong>5/5</strong><span>Covered for admins</span></div>
+            <div class="tile warn"><label>Optional alerts</label><strong>3</strong><span>Need preference review</span></div>
+            <div class="tile ok"><label>Delivery risk</label><strong>Low</strong><span>No current bounce signal</span></div>
+            <div class="tile info"><label>Channel</label><strong>Email</strong><span>Slack later</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Urgent event coverage</h3><p>Only the alert classes that matter operationally.</p></div>
+            <table>
+              <thead><tr><th>Event</th><th>Required audience</th><th>Coverage</th><th>Delivery</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Isolation anomaly</td><td>Admins</td><td><span class="pill ok">Covered</span></td><td>Email</td><td>Keep mandatory</td></tr>
+                <tr><td>Policy breach</td><td>Admins</td><td><span class="pill ok">Covered</span></td><td>Email</td><td>Keep mandatory</td></tr>
+                <tr><td>Role changed</td><td>Admins</td><td><span class="pill ok">Covered</span></td><td>Email</td><td>Review recipients</td></tr>
+                <tr><td>Connector failed</td><td>Admins + owner</td><td><span class="pill warn">Owner missing</span></td><td>Email</td><td>Assign owner</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="agent-readiness" class="page-frame">
+        <div class="viewport-label"><span>/admin/agent-readiness</span><span>Question: can the assistants be trusted for this client?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Assistant readiness</p>
+              <h2>Nexus and Steward are usable for guided setup. Atlas is blocked by thin financial and system data.</h2>
+              <p>The page should summarize assistant trust by the data each assistant needs, then show the capability matrix in compact form.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Complete IT financials and system landscape before relying on Atlas.</span>
+              <a class="button" href="#data-trust">Open data gaps</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Steward</label><strong>Ready</strong><span>Governance and citation checks</span></div>
+            <div class="tile warn"><label>Nexus</label><strong>Partial</strong><span>Program data loaded</span></div>
+            <div class="tile warn"><label>Sentinel</label><strong>Partial</strong><span>Vendor context incomplete</span></div>
+            <div class="tile bad"><label>Atlas</label><strong>Thin</strong><span>Financials and systems missing</span></div>
+          </div>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head"><h3>Capability matrix</h3><p>Compact heatmap first; detailed drill below.</p></div>
+              <div class="heat">
+                <div class="ok">Cite evidence<br>Strong</div>
+                <div class="warn">Model run-rate<br>Thin</div>
+                <div class="warn">Detect risk<br>Partial</div>
+                <div class="ok">Synthesize programs<br>Usable</div>
+                <div class="warn">Advance lifecycle<br>Partial</div>
+                <div class="ok">Audit / govern<br>Strong</div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Top assistant blockers</h3><p>Actionable data gaps.</p></div>
+              <ul class="mini-list">
+                <li><strong>Atlas</strong><span>Needs IT financials and system landscape completion.</span></li>
+                <li><strong>Sentinel</strong><span>Needs vendor and contract data validation.</span></li>
+                <li><strong>Nexus</strong><span>Needs program deliverable evidence IDs.</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="production" class="page-frame">
+        <div class="viewport-label"><span>/admin/production-readiness</span><span>Question: can we demo, pilot, or go live?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Production readiness</p>
+              <h2>Demo is ready, pilot is partial, production is blocked. The blockers are explicit and owned.</h2>
+              <p>This page should be the cleanest decision page in the admin menu. Three gates, three blockers, one next action.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Clear SSO and audit logging before approving pilot expansion.</span>
+              <a class="button" href="#users">Clear access blocker</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Demo</label><strong>Ready</strong><span>Prepared evidence</span></div>
+            <div class="tile warn"><label>Pilot</label><strong>Partial</strong><span>Identity and connectors pending</span></div>
+            <div class="tile bad"><label>Production</label><strong>Blocked</strong><span>Audit and live data missing</span></div>
+            <div class="tile info"><label>Owners</label><strong>3</strong><span>Client IT, AbarVa, Compliance</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Gate blockers</h3><p>Only blockers that change the readiness decision.</p></div>
+            <table>
+              <thead><tr><th>Gate</th><th>Status</th><th>Blocking condition</th><th>Owner</th><th>Acceptance test</th></tr></thead>
+              <tbody>
+                <tr><td>Demo</td><td><span class="pill ok">Ready</span></td><td>None for guided demo</td><td>AbarVa</td><td>Route smoke passes</td></tr>
+                <tr><td>Pilot</td><td><span class="pill warn">Partial</span></td><td>SSO not configured</td><td>Client IT</td><td>SSO metadata accepted</td></tr>
+                <tr><td>Pilot</td><td><span class="pill warn">Partial</span></td><td>ERP connector not live</td><td>Client Finance IT</td><td>Connector health passes</td></tr>
+                <tr><td>Production</td><td><span class="pill bad">Blocked</span></td><td>Audit logging not enabled</td><td>AbarVa</td><td>Role-change audit event stored</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="patternops" class="page-frame">
+        <div class="viewport-label"><span>/admin/patternops</span><span>Question: is the intelligence library usable?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">PatternOps</p>
+              <h2>Retail and healthcare coverage is strong. Finance and source-event coverage need targeted corpus completion.</h2>
+              <p>The top page should show domain coverage and freshness, not a giant corpus table.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Close the highest-value pattern gaps before demoing that tenant vertical.</span>
+              <a class="button" href="#patternops">Review gaps</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Patterns loaded</label><strong>2,140</strong><span>Across active corpus</span></div>
+            <div class="tile ok"><label>Retail</label><strong>Strong</strong><span>Apex coverage</span></div>
+            <div class="tile warn"><label>Healthcare</label><strong>Partial</strong><span>Meridian gaps</span></div>
+            <div class="tile bad"><label>Finance</label><strong>Thin</strong><span>Needs First Capital pack</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Coverage by domain</h3><p>Operator summary first; detail below.</p></div>
+            <table>
+              <thead><tr><th>Domain</th><th>Coverage</th><th>Freshness</th><th>Primary gap</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Retail modernization</td><td>88%<div class="bar"><i style="width:88%"></i></div></td><td><span class="pill ok">Current</span></td><td>Store telemetry</td><td>Optional</td></tr>
+                <tr><td>Healthcare operations</td><td>71%<div class="bar"><i style="width:71%"></i></div></td><td><span class="pill warn">Review</span></td><td>Clinical evidence chain</td><td>Complete pack</td></tr>
+                <tr><td>Financial services</td><td>43%<div class="bar"><i style="width:43%"></i></div></td><td><span class="pill bad">Thin</span></td><td>Risk/compliance scenarios</td><td>Generate corpus</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="traces" class="page-frame">
+        <div class="viewport-label"><span>/engineering/traces</span><span>Question: what did the system decide and why?</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Reasoning audit</p>
+              <h2>Latest Apex traces are scoped to the active client. No all-client selector appears in the default audit view.</h2>
+              <p>This is an engineering/audit page, but the top should still summarize failures, drift, and the active client.</p>
+            </div>
+            <div class="action-card">
+              <strong>Next best action</strong>
+              <span>Open only flagged traces first.</span>
+              <a class="button" href="#traces">Review flagged traces</a>
+            </div>
+          </div>
+
+          <div class="tiles">
+            <div class="tile ok"><label>Client scope</label><strong>Apex</strong><span>Active client only</span></div>
+            <div class="tile info"><label>Latest traces</label><strong>12</strong><span>Visible in audit list</span></div>
+            <div class="tile warn"><label>Flagged</label><strong>2</strong><span>Need review</span></div>
+            <div class="tile ok"><label>Leak check</label><strong>Clean</strong><span>No other clients visible</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Flagged trace review</h3><p>Short, scoped, operational.</p></div>
+            <table>
+              <thead><tr><th>Trace</th><th>Decision</th><th>Risk</th><th>Evidence</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>trc-1042</td><td>Connector readiness answer</td><td><span class="pill warn">Partial evidence</span></td><td>Connector + data trust</td><td>Review source</td></tr>
+                <tr><td>trc-1041</td><td>Production gate answer</td><td><span class="pill ok">Grounded</span></td><td>Readiness model</td><td>No action</td></tr>
+                <tr><td>trc-1040</td><td>SSO recommendation</td><td><span class="pill warn">Owner missing</span></td><td>Users/access</td><td>Assign owner</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="binding" class="contract">
+        <p class="eyebrow">Architecture and data binding contract</p>
+        <h2>Design must be backed by read-models, not page-local calculations.</h2>
+        <p>The app implementation should keep page components thin. Each menu page receives one typed view-model from the admin broker/data layer. UI renders the view. Tests assert the view-model has enough data to support the first viewport.</p>
+        <table>
+          <thead><tr><th>Page</th><th>Required view-model fields</th><th>Likely current source</th><th>Binding QA</th></tr></thead>
+          <tbody>
+            <tr><td>Admin home</td><td>gateSummary, topBlockers[3], nextActions[3], dimensionCoverage</td><td>admin overview + production readiness summary</td><td>Fails if blocker/action arrays are empty</td></tr>
+            <tr><td>Data Trust</td><td>dimensions[], loadedCount, evidenceReadyCount, completenessPercent, missing[], nextAction</td><td>dataset-domain-inventory.ts</td><td>Every canonical dimension appears exactly once</td></tr>
+            <tr><td>Connectors</td><td>criticalConnectors[], statusCounts, owner, missingDependency, requirements</td><td>connectors-page-view.ts</td><td>No raw connector enum labels in rendered copy</td></tr>
+            <tr><td>Users and Access</td><td>ssoStatus, activeUsers, pendingInvites, roleCoverage[], actionStrip</td><td>users-access-page-view.ts</td><td>Safe actions have href; blocked actions have reason</td></tr>
+            <tr><td>Notifications</td><td>mandatoryCoverage[], deliveryRisk, failedDeliveries, recipientGaps</td><td>notification preferences / notifications broker</td><td>Mandatory admin subscriptions cannot be hidden</td></tr>
+            <tr><td>Assistant Readiness</td><td>assistantStates[], capabilityMatrix, topDataGaps[], nextAction</td><td>agent-readiness-composer.ts</td><td>Each assistant maps to at least one required data family</td></tr>
+            <tr><td>Production Readiness</td><td>demo/pilot/production gates, blockers[], owners[], acceptanceTests[]</td><td>production-readiness-page-view.ts</td><td>No production-ready claim when blockers exist</td></tr>
+            <tr><td>PatternOps</td><td>domainCoverage[], freshness, gapPriority[], corpusHealth</td><td>pattern/corpus read-model</td><td>Coverage percentage derived from counts, not hardcoded in component</td></tr>
+            <tr><td>Reasoning Audit</td><td>activeClient, latestTraces[], flaggedTraces[], evidenceRefs[]</td><td>trace broker scoped by active tenant</td><td>No all-client selector and no cross-client trace rows</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="qa" class="page-frame">
+        <div class="viewport-label"><span>QA before app touch</span><span>Required design, binding, and no-leak gates</span></div>
+        <div class="page">
+          <div class="page-top">
+            <div class="decision">
+              <p class="eyebrow">Test strategy</p>
+              <h2>The wireframe becomes acceptance criteria before any module code changes.</h2>
+              <p>Each implementation PR should prove first-viewport clarity, data-binding integrity, tenant isolation, and no jargon in default page copy.</p>
+            </div>
+            <div class="action-card">
+              <strong>Implementation sequence</strong>
+              <span>Approve wireframe, add view-model tests, then change one page at a time.</span>
+              <a class="button" href="#principles">Back to principles</a>
+            </div>
+          </div>
+
+          <div class="qa-grid">
+            <div class="qa"><strong>1. Wireframe approval</strong><span>HTML is reviewed first. No runtime module changes until page intent and data contract are accepted.</span></div>
+            <div class="qa"><strong>2. View-model tests</strong><span>Unit tests assert the data exists: dimensions, counts, percentages, blockers, owners, safe actions, blocked reasons.</span></div>
+            <div class="qa"><strong>3. Rendering tests</strong><span>Component tests assert first-viewport copy uses operator language and hides implementation labels.</span></div>
+            <div class="qa"><strong>4. Browser smoke</strong><span>Authenticated Playwright checks 1440x900 and mobile: scrollY starts at 0, top facts visible, no permanent clutter rail.</span></div>
+            <div class="qa"><strong>5. Tenant isolation</strong><span>Run Apex, SkyHarbor, Meridian. Each login/logout cycle confirms active client only and no data leakage.</span></div>
+            <div class="qa"><strong>6. Polish gate</strong><span>Desktop and mobile screenshots must pass visual review for spacing, hierarchy, text fit, table density, and scan quality.</span></div>
+            <div class="qa"><strong>7. Architecture gate</strong><span>Components cannot compute cross-page facts locally. They render typed read-models from broker/data adapters.</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Automated checks to add with implementation</h3><p>These are the gates that prevent pretty but ungrounded UI.</p></div>
+            <table>
+              <thead><tr><th>Check</th><th>Purpose</th><th>Example assertion</th></tr></thead>
+              <tbody>
+                <tr><td>firstViewportContract.test.ts</td><td>Every page has decision summary, 3-4 tiles, primary table/visual</td><td>getByTestId("admin-first-viewport-summary") exists</td></tr>
+                <tr><td>dataCompletenessView.test.ts</td><td>Dimension table is complete and percentages are derived</td><td>12 canonical dimensions, percent in 0..100</td></tr>
+                <tr><td>adminLanguageGuard.test.ts</td><td>No internal labels in default copy</td><td>Not contains "Wave", "deterministic seed", component names</td></tr>
+                <tr><td>tenantIsolation.e2e.ts</td><td>Login/logout per client and no client leakage</td><td>Apex page never includes Meridian/SkyHarbor names</td></tr>
+                <tr><td>viewModelArchitecture.test.ts</td><td>UI does not import raw data-plane clients</td><td>Admin pages import view-model only</td></tr>
+                <tr><td>visualSmoke.spec.ts</td><td>Meaningful facts visible without scroll</td><td>Top blocker and completeness table visible at 1440x900</td></tr>
+                <tr><td>visualPolish.spec.ts</td><td>Page quality bar stays high</td><td>No overlapping text, no cramped tiles, no one-note color palette, no low-value panels above the fold</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
