@@ -12,8 +12,7 @@ export type AdminSubSectionId =
   | "production-readiness"
   | "compliance"
   | "engineering-traces"
-  | "releases"
-  | "training";
+  | "releases";
 
 /**
  * Sidebar group label. Used by `AdminSidebar` to render a small
@@ -29,8 +28,7 @@ export type AdminSidebarGroup =
   | "Setup"
   | "Governance"
   | "Diagnostics"
-  | "Releases"
-  | "Learn";
+  | "Releases";
 
 export interface AdminSubSection {
   id: AdminSubSectionId;
@@ -131,13 +129,6 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     subtitle: "Change history",
     href: "/admin/releases",
     group: "Releases",
-  },
-  {
-    id: "training",
-    label: "Training",
-    subtitle: "Guide and reference",
-    href: "/home/learn",
-    group: "Learn",
   },
 ];
 
