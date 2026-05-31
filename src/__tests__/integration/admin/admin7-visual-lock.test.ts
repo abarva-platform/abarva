@@ -318,10 +318,12 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
       });
     });
 
-    it('/admin home hosts the Maestro wireframe instead of the legacy setup dashboard', () => {
+    it('/admin home renders a native Maestro canvas instead of the legacy setup dashboard', () => {
       const src = readFileSync(resolve(root, 'src/app/(maestro)/admin/page.tsx'), 'utf8');
-      expect(src).toContain('data-admin-home-wireframe');
-      expect(src).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+      expect(src).toContain('data-admin-home-native');
+      expect(src).toContain('resolveAdminTenant');
+      expect(src).toContain('Loaded data by dimension');
+      expect(src).not.toContain('iframe');
       expect(src).not.toContain('HomeOverviewV2');
     });
   });
@@ -609,7 +611,7 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
     it('all 5 shell-backed admin sub-routes are covered by ADMIN_PAGE_PATHS', () => {
       // ai-initiatives route removed in admin-completion wave (PR #ADMIN7-cleanup).
       // build-progress, architecture, reasoning also retired. /admin home now
-      // hosts the Maestro wireframe and is asserted separately above.
+      // hosts the native Maestro canvas and is asserted separately above.
       expect(ADMIN_PAGE_PATHS).toHaveLength(5);
     });
 

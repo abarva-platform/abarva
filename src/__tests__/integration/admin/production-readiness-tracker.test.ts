@@ -488,11 +488,12 @@ describe('module hygiene', () => {
     // is no longer mounted on the route — that mount is intentionally retired.
     expect(routeSource).toMatch(/AdminCanonShellV2/);
     expect(routeSource).toMatch(/buildProductionReadinessPageView/);
-    // HOME-WIREFRAME — /admin is now the simple Maestro home that embeds the
-    // approved first-viewport wireframe. Production readiness keeps its own
-    // canonical shell and remains linked from the wireframe.
-    expect(adminPageSource).toMatch(/data-admin-home-wireframe/);
-    expect(adminPageSource).toMatch(/admin-maestro-menu-wireframe-2026-05-31\.html/);
+    // HOME-NATIVE — /admin is a native Maestro home canvas. Production
+    // readiness keeps its own canonical shell and remains linked from the
+    // top action.
+    expect(adminPageSource).toMatch(/data-admin-home-native/);
+    expect(adminPageSource).toMatch(/\/admin\/production-readiness/);
+    expect(adminPageSource).not.toMatch(/iframe/);
   });
 });
 
