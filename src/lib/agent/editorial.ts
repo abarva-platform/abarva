@@ -29,14 +29,14 @@ interface EditorialTemplate {
 const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   architecture: {
     agentLabel: 'Atlas + Steward',
-    title: 'Atlas + Steward editorial · Architecture posture',
+    title: 'Architecture posture',
     body: () =>
       'The architecture is credible as a SaaS operating experience with optional private data plane. The lab is planned, not deployed; do not claim customer-tenant operation yet.',
     primaryAction: { label: 'Review lab', href: '/admin/architecture#lab' },
   },
   'production-readiness': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Readiness decision',
+    title: 'Readiness decision',
     body: (ctx) =>
       `Demo readiness is strong for ${ctx.tenant.name}. Pilot is partial. Production is blocked by live audit, model gateway execution, tenant security review, and Azure private data-plane proof.`,
     primaryAction: {
@@ -46,7 +46,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   overview: {
     agentLabel: 'Steward',
-    title: 'Steward editorial · What needs setup',
+    title: 'What needs setup',
     body: () =>
       'Demo posture is strong. Pilot requires data trust loaded, connectors configured, users granted, agent readiness reviewed, and production readiness assessed. None of these are claimed live in this environment.',
     primaryAction: {
@@ -56,7 +56,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   'data-trust': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Trust ladder',
+    title: 'Trust ladder',
     body: () =>
       'Loaded artifacts are present from seed. Usable evidence is partial. Decision-grade evidence requires approved datasets and source-of-truth confirmations not yet in place.',
     primaryAction: {
@@ -66,7 +66,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   connectors: {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Connector readiness',
+    title: 'Connector readiness',
     body: () =>
       '0 of 0 connectors configured as stubs. None are live in this environment. Pilot cannot proceed until pilot-required connectors clear Steward review.',
     primaryAction: {
@@ -76,7 +76,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   'users-access': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Access posture',
+    title: 'Access posture',
     body: () =>
       'Roles and seat counts are seeded deterministically. SSO is not yet configured. Invite, revoke, and permission edit pipelines are not wired in this environment.',
     primaryAction: {
@@ -86,7 +86,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   'agent-readiness': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Agent posture',
+    title: 'Assistant readiness',
     body: () =>
       'Each agent is reviewed against mission queue, context injection, evidence integration, and audit trail readiness. Posture is honest — no agent claims live operation in this environment.',
     primaryAction: {
@@ -96,7 +96,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
   },
   'build-progress': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Build posture',
+    title: 'Build posture',
     body: () =>
       '0 waves merged. Admin redesign in progress. The page does not poll CI or Vercel; it reflects the canonical build manifest only.',
     primaryAction: {
@@ -108,7 +108,7 @@ const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
 
 const FALLBACK_TEMPLATE: EditorialTemplate = {
   agentLabel: 'Steward',
-  title: 'Steward editorial',
+  title: 'Setup guidance',
   body: (ctx) =>
     ctx.contextSources.length === 0
       ? 'No context loaded for this surface yet. Steward cannot speak with confidence.'

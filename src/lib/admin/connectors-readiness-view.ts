@@ -182,7 +182,7 @@ const MERIDIAN_CONNECTORS: ConnectorReadiness[] = [
 ];
 
 const DETERMINISTIC_CAVEAT =
-  'Connector statuses are deterministic seed data — not live connectivity checks. ' +
+  'Connector statuses are prepared setup data, not live connectivity checks. ' +
   'No connector claims production-ready status until Steward validates live data flow.';
 
 // ---------------------------------------------------------------------------

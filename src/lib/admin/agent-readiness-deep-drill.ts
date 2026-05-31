@@ -173,7 +173,7 @@ export function buildAgentReadinessDeepDrill(): AgentReadinessDeepDrill {
 
   return {
     generatedAt: '2026-04-26',
-    deterministicSourceCaption: 'Static manifest — not live agent execution',
+    deterministicSourceCaption: 'Prepared readiness review — not live assistant execution',
     agents,
     missionQueueReadiness: 'partial',
     contextReadiness: 'partial',

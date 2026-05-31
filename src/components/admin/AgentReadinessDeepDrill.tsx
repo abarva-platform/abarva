@@ -116,7 +116,6 @@ function SystemDimensionRow({
   label: string
   level: AgentReadinessLevel
 }) {
-  const tone = readinessTone(level)
   return (
     <div
       style={{
@@ -301,8 +300,8 @@ export function AgentReadinessDeepDrill() {
               Agent Readiness Deep Drill
             </h1>
             <p style={{ ...TYPE.body, margin: 0, maxWidth: 760, color: COLORS.body }}>
-              Deterministic readiness inventory for all four AbarVa agents — Nexus, Sentinel,
-              Atlas, and Steward. Each agent is assessed across its key readiness factors,
+              Prepared readiness inventory for all four AbarVa assistants — Nexus, Sentinel,
+              Atlas, and Steward. Each assistant is assessed across its key readiness factors,
               active blockers, and recommended next action.
             </p>
           </div>

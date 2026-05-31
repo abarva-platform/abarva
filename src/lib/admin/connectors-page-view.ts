@@ -178,10 +178,10 @@ const CATEGORY_ORDER: ConnectorKind[] = [
 ];
 
 const HARD_GATE_REASON =
-  'Live connector configure/test is blocked until Setup W4 implements the OAuth and steward validation boundary.';
+  'Live connector configure/test requires OAuth setup and Steward validation.';
 
 const DETERMINISTIC_CAVEAT =
-  'Connector statuses are deterministic seed data — not live connectivity checks. ' +
+  'Connector statuses are prepared setup data, not live connectivity checks. ' +
   'No connector claims production-ready status until Steward validates live data flow.';
 
 // ---------------------------------------------------------------------------
@@ -520,7 +520,7 @@ const CONNECTOR_ENRICHMENT: Readonly<Record<string, ConnectorEnrichment>> = {
         label: 'Redirect URI',
         type: 'url',
         maskedValue: 'https://app.abarva.ai/api/setup/microsoft-graph/callback',
-        helpText: 'Planned W4 callback boundary; inactive in this deterministic seed.',
+        helpText: 'Callback boundary is planned; inactive until live connector setup is enabled.',
       },
       adminConsent: {
         label: 'Admin consent',

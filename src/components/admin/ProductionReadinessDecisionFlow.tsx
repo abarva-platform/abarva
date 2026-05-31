@@ -75,13 +75,13 @@ export function buildDecisionFlowView(): DecisionFlowView {
     canWeDemo: {
       answer: 'yes',
       rationale:
-        'Core demo routes (Source, Intelligence, Tower, Admin) render deterministic seed data and pass route smoke tests.',
+        'Core demo routes open with prepared evidence and pass route smoke tests.',
       blockers: [],
     },
     canWePilot: {
       answer: 'partial',
       rationale:
-        'Live vendor ingestion not wired. Pilots can run on seed data with explicit caveats.',
+        'Live vendor ingestion is not wired. Pilots can run with prepared evidence and explicit caveats.',
       blockers: [
         'Live vendor data ingestion (deferred)',
         'Customer-tenant Azure deployment (in progress)',

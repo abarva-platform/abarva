@@ -68,7 +68,7 @@ export function UserDetailDrawer({ user, baseUrl, returnTab }: UserDetailDrawerP
               marginBottom: SPACING.xs,
             }}
           >
-            User detail · deterministic seed
+            User detail
           </div>
           <h3
             style={{

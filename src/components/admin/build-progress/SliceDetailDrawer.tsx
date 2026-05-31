@@ -242,8 +242,7 @@ export function SliceDetailDrawer({ slice, closeHref }: SliceDetailDrawerProps) 
           color: `${COLORS.ink}80`,
         }}
       >
-        PR URL is deterministically synthesized for non-merged slices. Real GitHub
-        integration is deferred to Wave 27.
+        PR links are shown when available. Live GitHub sync is not enabled yet.
       </p>
     </aside>
   );

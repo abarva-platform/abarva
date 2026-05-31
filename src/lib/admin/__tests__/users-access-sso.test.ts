@@ -54,6 +54,6 @@ describe('Users & Access SSO (PR 5)', () => {
     expect(invite).toBeDefined();
     expect(invite?.status).toBe('hard_gated');
     expect(invite?.reason).toContain('SSO');
-    expect(invite?.reason).toContain('Wave 27');
+    expect(invite?.reason).toContain('audit logging');
   });
 });
