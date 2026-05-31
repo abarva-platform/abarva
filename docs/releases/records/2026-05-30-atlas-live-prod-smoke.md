@@ -83,10 +83,13 @@ LLM route. Surfaced as an observation in the report; tracked for follow-up.
 - `docs/releases/records/2026-05-30-atlas-live-prod-smoke.md` — this record.
 
 ## QA / Validation
-- `npx tsc --noEmit -p tsconfig.json` clean on the new file.
-- Live run against `https://app.abarva.ai` on 2026-05-31T00:20:51Z:
-  6/6 status 200, 6/6 `x-atlas-mode: live`, 5/6 `routeType='llm'` (=
-  actually invoked Anthropic), 0/5 LLM-turn fallbacks.
+- Overall status: **PASS** (all required smoke checks green; one P2
+  observation surfaced but not blocking).
+- `npx tsc --noEmit -p tsconfig.json` **passed** on the new file.
+- Live run against `https://app.abarva.ai` on 2026-05-31T00:20:51Z
+  **passed**: 6/6 status 200, 6/6 `x-atlas-mode: live`, 5/6
+  `routeType='llm'` (= actually invoked Anthropic), 0/5 LLM-turn
+  fallbacks. HI-1 (PR #2611) verified holding on deployed prod.
 - The one transient 307 observed on L05 was Clerk session expiring during
   the long-running Anthropic-call deck (~75s total elapsed before L05).
   The script handles this with a single re-auth + retry; retry succeeded
