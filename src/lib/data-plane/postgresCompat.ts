@@ -84,12 +84,20 @@ async function loadPg(): Promise<typeof import('pg')> {
   return loadPg('pg');
 }
 
+/**
+ * Resolve the per-instance Postgres pool size for the write/compat pool.
+ *
+ * Default: 1. Cap: 20 (raised from 5 on 2026-05-30 in sync with the
+ * azure read-adapter session pool — see
+ * `src/lib/data-plane/read-adapters/azureSession.ts`'s
+ * `resolveAzurePoolMax` for the rationale).
+ */
 export function resolvePostgresPoolMax(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.ABARVA_PG_POOL_MAX?.trim() || env.PGPOOL_MAX?.trim();
   if (!raw) return 1;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
-  return Math.min(parsed, 5);
+  return Math.min(parsed, 20);
 }
 
 async function getPool(connectionString: string): Promise<import('pg').Pool> {

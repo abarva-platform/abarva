@@ -38,10 +38,14 @@ describe('Postgres compatibility database URL fallback', () => {
     }))).toBe(false);
   });
 
-  it('defaults Postgres compatibility pools to a serverless-safe size', () => {
+  it('defaults Postgres compatibility pools to a serverless-safe size, with cap raised to 20', () => {
     expect(resolvePostgresPoolMax({} as NodeJS.ProcessEnv)).toBe(1);
     expect(resolvePostgresPoolMax({ PGPOOL_MAX: '2' } as unknown as NodeJS.ProcessEnv)).toBe(2);
-    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '12' } as unknown as NodeJS.ProcessEnv)).toBe(5);
+    // Cap raised from 5 to 20 on 2026-05-30 to relieve /admin
+    // fan-out throttling — see docs/build/BROKER_THROW_DIAGNOSIS_2026-05-30.md.
+    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '12' } as unknown as NodeJS.ProcessEnv)).toBe(12);
+    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '20' } as unknown as NodeJS.ProcessEnv)).toBe(20);
+    expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '99' } as unknown as NodeJS.ProcessEnv)).toBe(20);
     expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '0' } as unknown as NodeJS.ProcessEnv)).toBe(1);
   });
 
