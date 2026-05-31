@@ -29,4 +29,11 @@ describe('Atlas classifier', () => {
       routeType: 'scripted',
     });
   });
+
+  it('does not mistake board-language context asks for strategy refusal', () => {
+    expect(classifyAtlasIntent('Explain Workday AI agents in board language: what is real, what is early, and what should we watch?')).toEqual({
+      intent: 'llm',
+      routeType: 'llm',
+    });
+  });
 });

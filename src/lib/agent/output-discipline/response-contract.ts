@@ -11,12 +11,15 @@ export interface AgentOutputContractResult {
 const RAW_MARKDOWN_EMPHASIS_REGEX = /(^|[\s([{])(?:\*\*[^*]+\*\*|\*[^*\n]+\*|__[^_]+__|_[^_\n]+_)(?=$|[\s)\]}.,;:!?])/;
 const BRACKETED_RAW_ID_REGEX = /(?:\s*)[\[(]((?:P|UC|V|PAT)-[A-Z0-9]+(?:-[A-Z0-9]+){1,5}|T\d-[A-Z0-9]+)[\])]/g;
 const BARE_RAW_ENTITY_ID_REGEX = /\b((?:P|UC|V)-[A-Z0-9]+(?:-[A-Z0-9]+){1,5})\b/g;
+const BARE_UUID_REGEX = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+/;
 
 function stripRawEntityIds(text: string): string {
   return text
     .replace(BRACKETED_RAW_ID_REGEX, '')
     .replace(BARE_RAW_ENTITY_ID_REGEX, 'the cited pattern')
+    .replace(/\bsignal\s*:\s*/gi, 'signal: ')
+    .replace(BARE_UUID_REGEX, 'the referenced record')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1');
 }
@@ -50,11 +53,13 @@ export function validateAgentOutputContractText(text: string): AgentOutputContra
 
   BRACKETED_RAW_ID_REGEX.lastIndex = 0;
   BARE_RAW_ENTITY_ID_REGEX.lastIndex = 0;
-  if (BRACKETED_RAW_ID_REGEX.test(text) || BARE_RAW_ENTITY_ID_REGEX.test(text)) {
+  BARE_UUID_REGEX.lastIndex = 0;
+  if (BRACKETED_RAW_ID_REGEX.test(text) || BARE_RAW_ENTITY_ID_REGEX.test(text) || BARE_UUID_REGEX.test(text)) {
     violations.add('raw_visible_entity_id');
   }
   BRACKETED_RAW_ID_REGEX.lastIndex = 0;
   BARE_RAW_ENTITY_ID_REGEX.lastIndex = 0;
+  BARE_UUID_REGEX.lastIndex = 0;
 
   for (const paragraph of text.split(/\n{2,}/)) {
     const trimmed = paragraph.trim();

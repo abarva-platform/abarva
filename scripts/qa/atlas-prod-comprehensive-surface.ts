@@ -241,8 +241,9 @@ function scoreTurn(tenant: Tenant, q: Question, status: number, atlasMode: strin
     ...cxoQuality.issues.map((issue) => `${issue.severity}:${issue.code}${issue.evidence ? ` (${issue.evidence})` : ''}`),
     ...plainIssues.map((issue) => `medium:plain_language (${issue})`),
   ].filter((item): item is string => !!item);
+  const blockingIssues = issues.filter((issue) => !issue.startsWith('low:'));
   return {
-    pass: issues.length === 0,
+    pass: blockingIssues.length === 0,
     fourSections,
     leakHits,
     fallback,

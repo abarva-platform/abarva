@@ -103,6 +103,21 @@ describe('validateCxoAnswer', () => {
     );
   });
 
+  it('does not treat a multi-line executive list as a wall of text', () => {
+    const result = validateCxoAnswer({
+      text: [
+        'What to do next',
+        '1. Route the attestation to the accountable owner this week and record the completion date.',
+        '2. Confirm the trustworthiness drop is not masking model drift before accepting the issue as paperwork.',
+        '3. Note the finding in the pending funding posture so the board sees the control gap was handled.',
+        '- Next: close the attestation before the next governance review.',
+      ].join('\n'),
+      mode: 'live',
+    });
+
+    expect(result.issues.some((issue) => issue.code === 'wall_of_text')).toBe(false);
+  });
+
   it('passes a readable decision-grade answer', () => {
     const result = validateCxoAnswer({
       text:

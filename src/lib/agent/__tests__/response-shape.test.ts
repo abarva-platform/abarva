@@ -64,6 +64,25 @@ describe('agent response shape', () => {
     expect(shaped).toContain('the referenced portfolio signal');
   });
 
+  it('scrubs bare UUIDs from Tower copy even without a signal prefix', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Demand Forecasting attestation is overdue on record 39901c16-2e8b-4c8c-80aa-8a0182f26754.',
+    );
+
+    expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
+    expect(shaped).toContain('the referenced record');
+  });
+
+  it('adds an executable next action when Tower prose has no action cue', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/tower',
+      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.',
+    );
+
+    expect(shaped).toMatch(/^- Next: open the cited initiative/m);
+  });
+
   it('scrubs internal evidence plumbing terms from Tower copy', () => {
     const shaped = shapeAgentResponseForSurface(
       '/tower',

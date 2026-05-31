@@ -513,6 +513,21 @@ function shouldCompactSurface(surface: string): boolean {
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);
 }
 
+function isTowerSurface(surface: string): boolean {
+  const semanticSurface = surface.replace(/^\/+/, '');
+  return surface === 'tower' || surface === '/tower' || surface.startsWith('/tower/') || semanticSurface === 'tower';
+}
+
+function hasConcreteNextAction(text: string): boolean {
+  return /(?:\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b|(?:^|\n)\s*-?\s*Next:)/i.test(text);
+}
+
+function ensureTowerNextAction(surface: string, text: string): string {
+  if (!isTowerSurface(surface) || hasConcreteNextAction(text)) return text;
+  const suffix = '- Next: open the cited initiative, signal, or evidence item in Tower and assign the owner for the first missing decision input.';
+  return normalizeVisibleWhitespace(`${text}\n\n${suffix}`);
+}
+
 // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (percentile labeling):
 // Every percentile rendered to a user MUST include the metric, the cohort
 // definition, and the sample size. If any of those is missing, do NOT
@@ -646,5 +661,5 @@ export function shapeAgentResponseForSurface(surface: string, text: string): str
   const shaped = shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
     ? compactConsultantChatText(cleaned, 120)
     : cleaned;
-  return repairAgentOutputContractText(shaped).text;
+  return repairAgentOutputContractText(ensureTowerNextAction(surface, shaped)).text;
 }
