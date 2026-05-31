@@ -161,7 +161,7 @@ export function AtlasRail({
     setPending(true);
     setMessages((current) => [...current, { id: `user-${Date.now()}`, role: 'user', content: trimmed }]);
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 18_000);
+    const timeout = window.setTimeout(() => controller.abort(), 45_000);
 
     try {
       const res = await fetch('/api/v1/atlas/chat', {

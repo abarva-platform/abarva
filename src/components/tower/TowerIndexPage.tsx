@@ -2201,7 +2201,7 @@ export function TowerIndexPage({
 
       setAtlasPending(true);
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 18_000);
+      const timeout = window.setTimeout(() => controller.abort(), 45_000);
       try {
         const res = await fetch('/api/v1/atlas/chat', {
           method: 'POST',

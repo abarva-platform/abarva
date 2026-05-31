@@ -15,6 +15,7 @@ export type AtlasIntent =
   | 'metric_explanation'
   | 'roi'
   | 'idle_seats'
+  | 'copilot_usage_value'
   | 'signal_detail'
   | 'strategy_refusal'
   | 'llm'

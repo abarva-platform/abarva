@@ -21,6 +21,8 @@ import type {
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 import { formatPercentile } from '@/lib/agent/response-shape';
+import { getArchetype } from '@/lib/atlas/iac/retrieval';
+import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
 
 function dollars(value: number | null | undefined): string {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'n/a';
@@ -167,6 +169,89 @@ function buildIdleSeatsSummary(useCases: Awaited<ReturnType<typeof query_use_cas
     .join(' ');
 }
 
+function initiativeRatio(initiative: AIInitiative): number | null {
+  return ratioPct(initiative.measuredValueUsd, initiative.committedAnnualUsd);
+}
+
+function initiativeDisplayRatio(initiative: AIInitiative): string {
+  const ratio = initiativeRatio(initiative);
+  return ratio === null ? 'not measurable yet' : `${ratio}%`;
+}
+
+function isCopilotInitiative(initiative: AIInitiative): boolean {
+  const text = [
+    initiative.displayId,
+    initiative.name,
+    initiative.description,
+    initiative.primaryCategoryName,
+    initiative.secondaryCategoryName,
+    initiative.statusSummary,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return text.includes('copilot')
+    || text.includes('github')
+    || text.includes('m365')
+    || text.includes('developer productivity');
+}
+
+function formatIndustryMetric(archetypeKey: 'github_copilot' | 'microsoft_365_copilot'): string | null {
+  const archetype = getArchetype(archetypeKey);
+  const metric = archetype?.adoptionMetrics[0];
+  if (!archetype || !metric) return null;
+  const value = metric.range.low === metric.range.high
+    ? `${metric.range.low}${metric.range.unit.startsWith('%') ? '' : ` ${metric.range.unit}`}`
+    : `${metric.range.low}-${metric.range.high}${metric.range.unit.startsWith('%') ? '' : ` ${metric.range.unit}`}`;
+  return `${archetype.label}: ${metric.metric} ${value} (${metric.range.source}, ${metric.range.date}; cohort ${metric.range.cohort}; n=${metric.range.sampleSize}).`;
+}
+
+function buildCopilotUsageValueSummary(
+  portfolio: AtlasPortfolioSummary,
+  tower: AtlasTowerCurrentState | undefined,
+  adoptionBenchmark: Awaited<ReturnType<typeof query_cohort_benchmarks>>,
+): string {
+  const initiatives = (tower?.initiatives ?? []).filter(isCopilotInitiative);
+  const ranked = [...initiatives].sort((a, b) => {
+    const ar = initiativeRatio(a);
+    const br = initiativeRatio(b);
+    return (ar ?? -1) - (br ?? -1);
+  });
+  const initiativeLines = ranked.length > 0
+    ? ranked.slice(0, 5).map((initiative, index) => {
+      const denominator = initiative.committedAnnualUsd != null ? `commit ${dollars(initiative.committedAnnualUsd)}` : 'commit n/a';
+      const measured = initiative.measuredValueUsd != null ? `measured ${dollars(initiative.measuredValueUsd)}` : 'measured n/a';
+      return `${index + 1}. ${initiative.displayId} ${initiative.name} — ${initiativeDisplayRatio(initiative)} measured/commit (${measured}; ${denominator}); ${initiative.statusFlag}; confidence ${initiative.confidenceLevel}.`;
+    }).join('\n')
+    : 'No Copilot-named initiative is loaded in the current Tower initiative registry.';
+  const kpis = (tower?.kpiSnapshots ?? [])
+    .filter((snapshot) => /copilot|github|m365|developer|usage|adoption|cycle|nps/i.test(`${snapshot.initiativeName} ${snapshot.kpiName}`))
+    .slice(0, 4);
+  const kpiLines = kpis.length > 0
+    ? kpis.map((snapshot) => `- ${snapshot.initiativeDisplayId} ${snapshot.kpiName}: ${snapshot.value ?? 'n/a'} vs target ${snapshot.targetValue ?? 'n/a'} (${snapshot.quarter}; confidence ${snapshot.confidenceLevel ?? 'n/a'}).`).join('\n')
+    : '- No Copilot-specific KPI snapshots are loaded; use portfolio adoption and initiative value as the bounded read.';
+  const adoptionLine = portfolio.adoptionPenetrationPctAvg != null
+    ? `Portfolio adoption is ${percent(portfolio.adoptionPenetrationPctAvg)} with ${portfolio.trackedActiveUsers?.toLocaleString() ?? 'n/a'} tracked active users.`
+    : 'Portfolio adoption is not loaded in the aggregate.';
+  const valueLine = portfolio.valueAttainmentPctAvg != null
+    ? `Portfolio value attainment is ${percent(portfolio.valueAttainmentPctAvg)}; verified realized value is ${dollars(portfolio.realizedValueUsd)} against ${dollars(portfolio.estimatedValueUsd)} projected.`
+    : `Verified realized value is ${dollars(portfolio.realizedValueUsd)} against ${dollars(portfolio.estimatedValueUsd)} projected; value-attainment percentage is not loaded.`;
+  const industryLines = [
+    formatIndustryMetric('github_copilot'),
+    formatIndustryMetric('microsoft_365_copilot'),
+  ].filter(Boolean);
+  const benchmarkLine = adoptionBenchmark?.p50 != null
+    ? `Retail cohort adoption median is ${percent(adoptionBenchmark.p50)} (sample size ${adoptionBenchmark.sampleSize ?? adoptionBenchmark.peers.length}); this tenant value is ${percent(adoptionBenchmark.apexValue)}.`
+    : null;
+
+  return [
+    `Your data\n${portfolio.clientName} has ${initiatives.length} Copilot-adjacent initiative${initiatives.length === 1 ? '' : 's'} loaded in Tower. ${adoptionLine} ${valueLine}\n${initiativeLines}\n\nUsage/value evidence\n${kpiLines}`,
+    `Industry context\n${industryLines.join(' ')}${benchmarkLine ? ` ${benchmarkLine}` : ''} Industry context refreshed 2026-05-30.`,
+    `The gap\nThe strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. ${ranked[0] ? `${ranked[0].displayId} is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.` : 'The gap is missing Copilot-specific initiative data in Tower.'}`,
+    `Next move\nOpen the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.`,
+  ].join('\n\n');
+}
+
 function buildStrategyRefusal(): string {
   return "That crosses from portfolio state into strategy. I can show you the concentration facts, evidence chains, program load, and peer context, but the actual choice belongs in Sentinel or a Program charter.";
 }
@@ -188,16 +273,23 @@ function ratioPct(numerator: number | null | undefined, denominator: number | nu
 
 function buildLaggingProgramsByValue(
   portfolio: AtlasPortfolioSummary,
-  programs: AtlasToolResultMap['programs'],
+  tower: AtlasTowerCurrentState | undefined,
 ): string {
-  const programList = programs ?? [];
+  const programList = tower?.initiatives ?? [];
   const overallRatio = ratioPct(portfolio.realizedValueUsd, portfolio.estimatedValueUsd);
-  const ranked = programList.slice(0, 5);
+  const ranked = [...programList]
+    .filter((program) => program.committedAnnualUsd != null || program.measuredValueUsd != null)
+    .sort((a, b) => {
+      const ar = initiativeRatio(a);
+      const br = initiativeRatio(b);
+      if ((ar ?? -1) !== (br ?? -1)) return (ar ?? -1) - (br ?? -1);
+      return (b.committedAnnualUsd ?? 0) - (a.committedAnnualUsd ?? 0);
+    })
+    .slice(0, 5);
   const programLines = ranked.length > 0
     ? ranked
         .map((program, index) => {
-          const phaseStr = program.currentPhase != null ? `phase ${program.currentPhase}` : 'phase n/a';
-          return `${index + 1}. ${program.name} (${phaseStr}) — measured-value-to-commit ratio not yet exposed on this query; ranked by sequence`;
+          return `${index + 1}. ${program.displayId} ${program.name} (${program.stage}${program.stageDetail ? ` / ${program.stageDetail}` : ''}) — ${initiativeDisplayRatio(program)} measured/commit; measured ${dollars(program.measuredValueUsd)} vs committed annual ${dollars(program.committedAnnualUsd)}; ${program.statusFlag}; confidence ${program.confidenceLevel}.`;
         })
         .join('\n')
     : 'No programs returned for this tenant.';
@@ -208,8 +300,10 @@ function buildLaggingProgramsByValue(
     overallRatio != null
       ? `Portfolio-wide realized-to-projected ratio is ${overallRatio}% (${dollars(portfolio.realizedValueUsd)} of ${dollars(portfolio.estimatedValueUsd)} projected).`
       : 'Portfolio-wide realized-to-projected ratio cannot be computed — projected or realized value is missing.',
-    'Per-program measured-value-to-commit ratio requires a `query_program_value_attainment` tool that does not exist yet — this list is sequence-ranked, not value-ranked. That is the gap to close before this turn is decision-grade.',
-    'Next step: open APX-CDP-2026 (or the program at row 1) in Programs to inspect its value evidence and decide whether to reshape, accelerate, or pause.',
+    'This is ranked from loaded Tower initiative facts: measured_value_usd ÷ committed_annual_usd. A missing measured value is treated as an evidence gap, not as proof of zero impact.',
+    ranked[0]
+      ? `Next step: open ${ranked[0].displayId} in Programs and verify the value ledger method before deciding whether to reshape, accelerate, or pause.`
+      : 'Next step: load per-program measured value before using this as a decision-grade CFO ranking.',
   ].join('\n\n');
 }
 
@@ -239,12 +333,12 @@ function buildAtRiskGates(
   const warningSignals = signalList.filter((signal) => signal.severity === 'warning');
   const signalLines = signalList
     .slice(0, 3)
-    .map((signal, index) => `${index + 1}. ${signal.signalTitle} — ${signal.severity}, pillar ${signal.pillar}, signal:${signal.id}`)
+    .map((signal, index) => `${index + 1}. ${signal.signalTitle} — ${signal.severity}, ${signal.pillar} pillar`)
     .join('\n');
   return [
     `${portfolio.clientName} has ${criticalSignals.length} critical and ${warningSignals.length} warning signals on the portfolio; ${programList.length} programs are in flight.`,
     signalLines || 'No active signals returned for this tenant.',
-    'Per-gate-risk scoring is not exposed yet — Atlas can name signals and program count, but the explicit "next gate by date and confidence" view requires a `query_program_gates` tool. Treat the signals above as the proxy until that ships.',
+    'Per-gate-risk scoring by date is not exposed in this surface, so this answer uses the active critical and warning signals as the honest proxy.',
     'Next step: open the top signal evidence chain and walk the program owner through the at-risk gate before the next checkpoint.',
   ].join('\n\n');
 }
@@ -265,7 +359,7 @@ function buildPortfolioConfidence(
       ? `Average value-evidence trustworthiness is ${Math.round(portfolio.averageTrustworthinessScore)}/100.`
       : 'Average value-evidence trustworthiness is missing from the portfolio aggregate.',
     `Substrate coverage: ${portfolio.activeUseCaseCount} active use cases, ${portfolio.criticalSignalCount} critical signals, ${portfolio.warningSignalCount} warning signals.`,
-    'A portfolio-confidence score that rolls these into a single number does not exist yet — what is above is the closest honest read.',
+    'A single blended portfolio-confidence score is not exposed in this surface; the band floor and value-evidence trustworthiness are the closest honest read.',
     'Next step: review the band-floor metric in Tower and decide whether the missing measurement blocks the next gate.',
   ].join(' ');
 }
@@ -318,7 +412,7 @@ function buildCohortLagging(
       : adoptionGap != null
         ? `Gap to median: ${adoptionGap} points above on adoption — the lag, if any, is elsewhere.`
         : 'Gap to median cannot be computed.',
-    'Other percentile dimensions (spend intensity, value attainment, vendor count) are not exposed in this turn — to extend this read I need a multi-metric cohort_compare tool.',
+    'Other percentile dimensions such as spend intensity, value attainment, and vendor count are not exposed in this surface, so do not over-read adoption as the whole portfolio story.',
     'Next step: open the cohort definition in Tower and confirm peer panel size before quoting the gap to the CFO.',
   ].join(' ');
 }
@@ -327,7 +421,7 @@ function buildAiSpendVsBudget(portfolio: AtlasPortfolioSummary): string {
   return [
     `${portfolio.clientName} governed AI spend is running at ${dollars(portfolio.governedAiSpendUsd)} on the latest portfolio aggregate; shadow AI exposure adds ${dollars(portfolio.shadowAiSpendUsd)}.`,
     'AI budget for the fiscal period is not exposed on the portfolio aggregate — Atlas cannot quote a run-rate-vs-budget number without that input.',
-    'What Atlas can ground today is the governed-spend total plus the shadow exposure. To answer "run-rate vs budget" properly the FY budget figure must land in `query_portfolio_aggregates` or a sibling `query_ai_budget` tool.',
+    'What Atlas can ground today is the governed-spend total plus the shadow exposure. To answer "run-rate vs budget" properly, the FY budget figure has to be loaded into the Tower evidence set.',
     'Next step: pull the FY budget from Finance or the Tower today resolver, then re-ask — the answer is a one-line computation once the budget is grounded.',
   ].join(' ');
 }
@@ -352,7 +446,7 @@ function buildVendorConcentrationRisk(
   return [
     `${portfolio.clientName} carries ${portfolio.distinctAiVendorsCount ?? 'n/a'} distinct AI vendors on the portfolio aggregate.`,
     `Top concentration in the active use-case sample: ${concentrationLine}.`,
-    'This is a sample-based concentration read, not a contract-value-weighted one — the value-weighted ranking requires a `query_vendor_spend_by_use_case` tool that does not exist yet.',
+    'This is a sample-based concentration read, not a contract-value-weighted one; value-weighted vendor concentration is not exposed in this surface.',
     'Next step: if a single vendor anchors more than 40% of value-weighted spend, originate a multi-vendor program in Source before the next renewal window.',
   ].join(' ');
 }
@@ -365,8 +459,8 @@ function buildCostOverruns(
   return [
     `${portfolio.clientName} carries ${programList.length} programs in flight; per-program cost-overrun status is not exposed on the listAtlasPrograms shape today.`,
     `Portfolio-wide governed AI spend is ${dollars(portfolio.governedAiSpendUsd)}.`,
-    'Atlas cannot rank programs by overrun magnitude without a `query_program_budget_vs_actual` tool. Treat this as a coverage gap, not a "no overruns" finding.',
-    'Next step: pull the Programs ledger view directly until the cost-overrun tool ships — that is where the budget-to-actual numbers live today.',
+    'Atlas cannot rank programs by overrun magnitude from this surface. Treat this as a coverage gap, not a "no overruns" finding.',
+    'Next step: pull the Programs ledger view directly; that is where budget-to-actual evidence belongs today.',
   ].join(' ');
 }
 
@@ -378,7 +472,7 @@ function buildGovernanceCoverageGaps(
   const governanceSignals = signalList.filter((signal) => signal.pillar === 'risk' || signal.pillar === 'cross_pillar');
   const signalLine = governanceSignals
     .slice(0, 3)
-    .map((signal) => `${signal.signalTitle} (signal:${signal.id})`)
+    .map((signal) => `${signal.signalTitle} (${signal.severity}, ${signal.pillar} pillar)`)
     .join('; ');
   return [
     `${portfolio.clientName} has ${portfolio.criticalSignalCount} critical and ${portfolio.warningSignalCount} warning signals across the portfolio.`,
@@ -386,7 +480,7 @@ function buildGovernanceCoverageGaps(
       ? `Risk and cross-pillar signals that map to governance coverage: ${signalLine}.`
       : 'No risk-pillar signals returned in the top sample — the coverage view requires a wider signal pull.',
     `Stale integrations: ${portfolio.staleIntegrationCount} (these are the most common evidence-of-control gaps).`,
-    'A formal "governance coverage gaps" ranking by policy area requires a `query_governance_attestations` tool that does not exist yet.',
+    'A formal governance-coverage ranking by policy area is not exposed in this surface; Atlas is using risk signals and stale integrations as the bounded proxy.',
     'Next step: triage the highest-severity risk signal first and walk the attestation evidence in Programs.',
   ].join(' ');
 }
@@ -402,10 +496,10 @@ function buildRegulatoryOpenItems(
   return [
     `${portfolio.clientName} regulatory and compliance signal set: ${regulatorySignals.length} of ${signalList.length} sampled signals route to risk or regulatory pillars.`,
     regulatorySignals.length > 0
-      ? `Top items: ${regulatorySignals.slice(0, 3).map((s) => `${s.signalTitle} (signal:${s.id})`).join('; ')}.`
+      ? `Top items: ${regulatorySignals.slice(0, 3).map((s) => `${s.signalTitle} (${s.severity}, ${s.pillar} pillar)`).join('; ')}.`
       : 'No regulatory-pillar signals surfaced in the top sample.',
-    'Open regulatory items as a canonical list require a `query_regulatory_register` tool that does not exist yet — Atlas is inferring from the signal pillar here, not reading a register.',
-    'Next step: pull the Source compliance ledger directly until the register tool ships; that is the audit-bearing list.',
+    'Open regulatory items as a canonical register are not exposed in this surface; Atlas is inferring from the signal pillar here, not reading a register.',
+    'Next step: pull the Source compliance ledger directly; that is the audit-bearing list.',
   ].join(' ');
 }
 
@@ -422,7 +516,7 @@ function buildKillNextWhy(portfolio: AtlasPortfolioSummary, programs: AtlasToolR
   const programList = programs ?? [];
   return [
     `Atlas does not recommend "kill next" — that is a Sentinel decision. What Atlas can show: ${programList.length} active programs on ${portfolio.clientName}; ranking by lagging value attainment is the canonical input.`,
-    'The clean input to a Sentinel kill decision is: (a) a measured-value-to-commit ratio per program, (b) gate-confidence, (c) cohort percentile on value attainment. Atlas can ground (a) once a `query_program_value_attainment` tool exists; (b) and (c) live in Sentinel and the cohort tool respectively.',
+    'The clean input to a Sentinel kill decision is: (a) measured-value-to-commit by program, (b) gate confidence, and (c) cohort percentile on value attainment. Atlas can now ground the measured-value-to-commit part from loaded Tower initiative facts; gate confidence and cohort percentile belong in the Sentinel/cohort surfaces.',
     'Next step: hand off to Sentinel with the lagging-by-value program shortlist; the decision returns there with evidence.',
   ].join(' ');
 }
@@ -621,19 +715,15 @@ export async function runScriptedAtlasIntent(
   }
 
   if (intent === 'lagging_programs_by_value') {
-    const [portfolio, programs] = await Promise.all([
-      query_portfolio_aggregates(ctx),
-      query_programs(ctx),
-    ]);
+    const portfolio = await query_portfolio_aggregates(ctx);
     toolResults.portfolio = portfolio;
-    toolResults.programs = programs;
     return {
-      response: buildLaggingProgramsByValue(portfolio, programs),
+      response: buildLaggingProgramsByValue(portfolio, towerState),
       suggestions: [
         { label: 'Value vs commitment', value: 'Where is value attainment vs commitment?', kind: 'message' },
         { label: 'At-risk gates', value: 'Which bets are at risk of missing the next gate?', kind: 'message' },
       ],
-      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'query_programs'],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates'],
       toolResults,
     };
   }
@@ -883,6 +973,24 @@ export async function runScriptedAtlasIntent(
         { label: 'Shadow AI', value: 'Tell me more about Shadow AI', kind: 'message' },
       ],
       toolsUsed: ['query_tower_current_state', 'query_use_cases', 'query_portfolio_aggregates'],
+      toolResults,
+    };
+  }
+
+  if (intent === 'copilot_usage_value') {
+    const [portfolio, adoptionBenchmark] = await Promise.all([
+      query_portfolio_aggregates(ctx),
+      query_cohort_benchmarks(ctx, 'adoption_penetration_pct_avg'),
+    ]);
+    toolResults.portfolio = portfolio;
+    toolResults.benchmark = adoptionBenchmark;
+    return {
+      response: buildCopilotUsageValueSummary(portfolio, towerState, adoptionBenchmark),
+      suggestions: [
+        { label: 'Lagging programs', value: 'Show me the lagging programs by realized value', kind: 'message' },
+        { label: 'Copilot vs industry', value: 'How does AR-02 compare to industry Copilot adoption?', kind: 'message' },
+      ],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'query_cohort_benchmarks'],
       toolResults,
     };
   }
