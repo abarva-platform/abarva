@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:depth": "npx tsx scripts/lint/depth-lint.ts",
+    "lint:depth": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/lint/depth-lint.ts",
     "test": "jest",
     "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
