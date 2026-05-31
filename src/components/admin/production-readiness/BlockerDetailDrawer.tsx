@@ -65,7 +65,7 @@ export function BlockerDetailDrawer({
               marginBottom: SPACING.xs,
             }}
           >
-            Blocker detail · deterministic seed
+            Blocker detail
           </div>
           <h3
             style={{
@@ -244,7 +244,7 @@ export function BlockerDetailDrawer({
           disabled
           aria-disabled="true"
           data-blocker-mark-resolved="true"
-          title="Resolution write available in Wave 27"
+          title="Resolution updates are available after audit logging is enabled"
           style={{
             padding: `${SPACING.xs} ${SPACING.md}`,
             borderRadius: RADIUS.sm,
@@ -270,7 +270,7 @@ export function BlockerDetailDrawer({
             fontWeight: 600,
           }}
         >
-          Resolution write available in Wave 27
+          Resolution updates require audit logging
         </span>
       </footer>
     </aside>

@@ -147,22 +147,22 @@ const STATIC_ENGINEERING_TRACKED: EngineeringTrackedItem[] = [
   {
     id: 'live-access-mutation',
     capability: 'Live access mutation pipeline (invite / revoke users)',
-    wave: 'Wave 27',
+    wave: 'Planned',
   },
   {
     id: 'confidence-scoring',
     capability: 'Confidence scoring on live evidence',
-    wave: 'Wave 27',
+    wave: 'Planned',
   },
   {
     id: 'pressure-cards-live',
     capability: 'Pressure cards driven by live data instead of fixtures',
-    wave: 'Wave 28',
+    wave: 'Planned',
   },
   {
     id: 'audit-event-store',
     capability: 'Audit event store for tenant-admin actions',
-    wave: 'Wave 27',
+    wave: 'Planned',
   },
 ];
 

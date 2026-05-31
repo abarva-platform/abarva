@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AdminCanonShellV2 } from '../AdminCanonShellV2';
 import { StewardEditorial } from '../StewardEditorial';
+import { ContextBar } from '../ContextBar';
 
 jest.mock('@/components/shell/AppShell', () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -59,5 +60,27 @@ describe('StewardEditorial', () => {
     expect(html).not.toContain('tenant isolation guard');
     expect(html).not.toContain('admin shell config');
     expect(html).toContain('Review roles');
+  });
+});
+
+describe('ContextBar', () => {
+  it('uses Maestro-facing labels and hides implementation labels', () => {
+    const html = renderToStaticMarkup(
+      <ContextBar
+        tenant="Apex Retail"
+        mode="Setup/Admin"
+        agent="Steward"
+        data="Manifest + seeds"
+        liveStatus="Deferred"
+      />,
+    );
+
+    expect(html).toContain('Client');
+    expect(html).toContain('Evidence source');
+    expect(html).toContain('Status');
+    expect(html).not.toContain('Agent');
+    expect(html).not.toContain('Mode');
+    expect(html).not.toContain('Steward');
+    expect(html).not.toContain('Setup/Admin');
   });
 });

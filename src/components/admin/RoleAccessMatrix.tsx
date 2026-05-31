@@ -176,7 +176,7 @@ function SsoUnlocksPanel() {
           <strong>Sponsor access to Tower briefs.</strong> Executive sponsors can read scorecards and pressure cards.
         </li>
         <li>
-          <strong>Cross-tenant role assignment.</strong> Platform admins can manage role assignments across tenants.
+          <strong>Client-scoped role assignment.</strong> Platform admins can manage role assignments for authorized client workspaces.
         </li>
       </ul>
       <p
@@ -188,7 +188,7 @@ function SsoUnlocksPanel() {
           lineHeight: 1.6,
         }}
       >
-        Until SSO is configured, the user roster shown below is read-only and reflects deterministic seed data.
+        Until SSO is configured, the user roster shown below is read-only and reflects prepared setup data.
       </p>
     </aside>
   );

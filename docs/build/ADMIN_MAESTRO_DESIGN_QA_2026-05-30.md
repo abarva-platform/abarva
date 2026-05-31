@@ -54,3 +54,5 @@ It should not show raw matrices, all tenants, long trace tables, or a persistent
 - Dense tables appear below summary sections or behind drilldown controls.
 - Page copy uses role/workflow language before internal agent names.
 - Internal provenance labels such as `Context used`, `tenant isolation guard`, or `admin shell config` stay out of default Maestro cards; they belong in audit detail, logs, or expandable technical views.
+- Shared status bars should use buyer/operator labels (`Client`, `Evidence source`, `Status`) and should not expose implementation labels like `Agent`, `Mode`, or `Setup/Admin`.
+- Visible admin copy should describe what the Maestro can decide or do; implementation labels such as component names, wave numbers, and deterministic seed mechanics stay out of default page content.

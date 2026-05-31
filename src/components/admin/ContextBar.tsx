@@ -19,25 +19,21 @@ const STATUS_COLOR: Record<ContextLiveStatus, string> = {
 
 export function ContextBar({
   tenant,
-  mode,
-  agent,
   data,
   liveStatus,
   liveStatusKind = 'deferred',
 }: ContextBarProps) {
   const cells = [
-    { label: 'Tenant', value: tenant, color: COLORS.ink },
-    { label: 'Mode', value: mode, color: COLORS.ink },
-    { label: 'Agent', value: agent, color: COLORS.ink },
-    { label: 'Data', value: data, color: COLORS.amberInk },
-    { label: 'Live status', value: liveStatus, color: STATUS_COLOR[liveStatusKind] },
+    { label: 'Client', value: tenant, color: COLORS.ink },
+    { label: 'Evidence source', value: data, color: COLORS.amberInk },
+    { label: 'Status', value: liveStatus, color: STATUS_COLOR[liveStatusKind] },
   ];
 
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
         gap: SPACING.md,
         padding: SPACING.md,
         background: COLORS.white,

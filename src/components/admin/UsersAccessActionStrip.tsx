@@ -95,7 +95,7 @@ export function UsersAccessActionStrip({ actions }: UsersAccessActionStripProps)
                 color: COLORS.amberInk,
               }}
             >
-              {action.label} · Wave 27
+              {action.label}
             </span>
             <span
               data-action-reason={action.id}
@@ -106,7 +106,7 @@ export function UsersAccessActionStrip({ actions }: UsersAccessActionStripProps)
                 lineHeight: 1.4,
               }}
             >
-              {action.reason ?? 'Available in pilot environment (Wave 27)'}
+              {action.reason ?? 'Available after SSO and audit logging are enabled'}
             </span>
           </span>
         );
