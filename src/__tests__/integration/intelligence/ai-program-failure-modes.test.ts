@@ -19,9 +19,9 @@ const ALL_AGENTS: AiProgramFailureAgent[] = ['nexus', 'sentinel', 'atlas', 'stew
 // ---------------------------------------------------------------------
 
 describe('listAiProgramFailureModes', () => {
-  it('returns exactly the 12 canonical failure modes in canonical order', () => {
+  it('returns exactly the 16 canonical failure modes in canonical order', () => {
     const modes = listAiProgramFailureModes();
-    expect(modes.length).toBe(12);
+    expect(modes.length).toBe(16);
     const expected: AiProgramFailureKey[] = [
       'weak_data_foundation',
       'poor_use_case_framing',
@@ -35,6 +35,10 @@ describe('listAiProgramFailureModes', () => {
       'no_operating_model_for_scale',
       'pilot_purgatory',
       'ai_tool_sprawl_without_value',
+      'token_cost_explosion_at_adoption_inflection',
+      'model_selection_drift',
+      'embedding_refresh_cost_surprise',
+      'eval_cost_growth',
     ];
     expect(modes.map((m) => m.key)).toEqual(expected);
     expect(AI_PROGRAM_FAILURE_KEYS_IN_ORDER).toEqual(expected);
