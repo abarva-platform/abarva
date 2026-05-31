@@ -75,6 +75,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const tenantIntelligenceActive = pathname.startsWith('/tenant/') && pathname.includes('/intelligence')
   const tenantTowerActive = pathname.startsWith('/tenant/') && pathname.includes('/tower')
   const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
+                              || pathname === '/admin' || pathname.startsWith('/admin/')
                               || pathname === '/dashboard' || pathname.startsWith('/dashboard/')
                               || pathname === '/' || activePage === 'home'
   // engagementsActive / adminActive removed in H1 nav reorganization —
@@ -89,6 +90,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
                               || tenantTowerActive || activePage === 'tower'
   const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
+  const homeHref           = '/admin'
 
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
@@ -245,7 +247,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {signedIn && isOperator && (
           <>
             {staticClientLabel()}
-            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Home', homeHref, homeActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
@@ -258,7 +260,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {signedIn && isClient && (
           <>
             {staticClientLabel()}
-            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Home', homeHref, homeActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}

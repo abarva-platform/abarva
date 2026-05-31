@@ -26,6 +26,7 @@ describe('Setup W6 policies and tenant governance lock', () => {
     const adminRoute = readWorkspaceFile('src/app/(maestro)/admin/page.tsx');
     expect(adminRoute).toContain('data-admin-home-wireframe');
     expect(adminRoute).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+    expect(adminRoute).toContain("import AbarvaNav");
     expect(adminRoute).not.toContain('AdminOverviewTabs');
     expect(adminRoute).not.toContain('AdminTenantTab');
 
