@@ -7,6 +7,7 @@ import type {
 import type { SourceVendorResponseSeedInput } from './vendor-response-types';
 import type {
   SourceBafoCommercialTrapSummary,
+  SourceBafoVendorInferencePricingInput,
   SourceBafoNegotiationInput,
   SourceBafoNegotiationPlan,
   SourceBafoNegotiationQuestion,
@@ -15,6 +16,7 @@ import type {
   SourceBafoVendorNegotiationPlan,
   SourceVendorBafoReadiness,
 } from './bafo-negotiation-types';
+import { buildPricingTierLockClause } from './sourcing/bafo-counter-templates';
 
 const DEFAULT_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
@@ -107,6 +109,12 @@ function pickSnapshots(
   });
 
   return pricing.snapshots;
+}
+
+function buildInferencePricingMap(
+  input: SourceBafoNegotiationInput['event'],
+): Map<string, SourceBafoVendorInferencePricingInput> {
+  return new Map((input.vendorInferencePricing ?? []).map((entry) => [entry.vendorId, entry]));
 }
 
 function evaluateVendorReadiness(vendor: SourceVendorResponseSeedInput): SourceVendorBafoReadiness {
@@ -616,6 +624,13 @@ export function formatSourceBafoNegotiationAsMarkdown(plan: SourceBafoNegotiatio
         lines.push(`    - ${question.question}`);
       }
     }
+    if (vendor.counterClauses.length > 0) {
+      lines.push('  - Counter clauses:');
+      for (const clause of vendor.counterClauses) {
+        lines.push(`    - ${clause.title}: ${clause.clauseText}`);
+        lines.push(`      Peer provenance: ${clause.peerProvenance.join(', ')}`);
+      }
+    }
   }
 
   lines.push('');
@@ -627,9 +642,11 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
   const vendorResponses = pickVendorResponses(input.event);
   const pricingSnapshots = pickSnapshots(input.event, vendorResponses);
   const snapshotByVendor = new Map(pricingSnapshots.map((snapshot) => [snapshot.vendorId, snapshot]));
+  const inferencePricingByVendor = buildInferencePricingMap(input.event);
 
   const vendorPlans: SourceBafoVendorNegotiationPlan[] = vendorResponses.map((vendor) => {
     const snapshot = snapshotByVendor.get(vendor.vendorId);
+    const inferencePricing = inferencePricingByVendor.get(vendor.vendorId);
     const readiness = evaluateVendorReadiness(vendor);
     const questions = buildVendorNegotiationQuestions(vendor, snapshot);
     const keyIssues = buildKeyIssues(vendor, snapshot);
@@ -638,6 +655,17 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
     const expectedValueImpact = buildExpectedValueImpact(vendor, snapshot);
     const riskNotes = buildVendorRiskNotes(vendor, snapshot);
     const blockers = buildBlockers(vendor, questions);
+    const counterClauses = inferencePricing
+      ? [
+          buildPricingTierLockClause({
+            vendorId: vendor.vendorId,
+            vendorName: vendor.vendorName,
+            inferenceEconomics: inferencePricing.inferenceEconomics,
+            projectedCallRamp: inferencePricing.projectedCallRamp,
+            generatedAt,
+          }),
+        ].filter((clause) => clause !== null)
+      : [];
 
     return {
       vendorId: vendor.vendorId,
@@ -651,6 +679,7 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
       riskNotes,
       evidenceStatus: vendor.evidenceStatus,
       blockers,
+      counterClauses,
     };
   });
 
@@ -658,6 +687,7 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
   const blockers = summarizeBlockers(vendorPlans);
   const commercialTrapSummary = buildCommercialTrapSummary(pricingSnapshots);
   const excludedScopeList = aggregateExclusions(vendorResponses, pricingSnapshots);
+  const counterClauses = vendorPlans.flatMap((vendor) => vendor.counterClauses);
 
   const sentinelEvidenceNotes = pricingSnapshots
     .flatMap((snapshot) => snapshot.commercialTraps)
@@ -684,6 +714,7 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
     atlasExecutiveImplication: '',
     blockers,
     nextAction: '',
+    counterClauses,
   });
 
   const tradeoff = tradeoffSummary(vendorPlans, pricingSnapshots);
@@ -718,6 +749,7 @@ export function buildSourceBafoNegotiationPlan(input: SourceBafoNegotiationInput
     atlasExecutiveImplication: `Decision posture is ${readiness}; ${summaryNotes.join(' ')}`,
     blockers,
     nextAction,
+    counterClauses,
   } as SourceBafoNegotiationPlan;
 }
 
