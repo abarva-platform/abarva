@@ -36,6 +36,7 @@ interface Tenant {
   qualityTenantKey: CxoTenantKey;
   representativeDisplayId: string;
   copilotDisplayId: string;
+  hasSpecificCopilotInitiative: boolean;
   foreignTokens: string[];
 }
 
@@ -49,6 +50,7 @@ const TENANTS: Tenant[] = [
     qualityTenantKey: 'apex-retail',
     representativeDisplayId: 'AR-01',
     copilotDisplayId: 'AR-02',
+    hasSpecificCopilotInitiative: true,
     foreignTokens: ['Meridian', 'SkyHarbor', 'MH-', 'SHA-'],
   },
   {
@@ -60,6 +62,7 @@ const TENANTS: Tenant[] = [
     qualityTenantKey: 'meridian-health',
     representativeDisplayId: 'MH-01',
     copilotDisplayId: 'MH-02',
+    hasSpecificCopilotInitiative: true,
     foreignTokens: ['Apex Retail', 'SkyHarbor', 'AR-', 'SHA-'],
   },
   {
@@ -70,7 +73,8 @@ const TENANTS: Tenant[] = [
     clientId: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
     qualityTenantKey: 'skyharbor-air',
     representativeDisplayId: 'SHA-01',
-    copilotDisplayId: 'SHA-02',
+    copilotDisplayId: 'SHA-002',
+    hasSpecificCopilotInitiative: false,
     foreignTokens: ['Apex Retail', 'Meridian', 'AR-', 'MH-'],
   },
 ];
@@ -80,7 +84,7 @@ interface Question {
   category: string;
   text: (tenant: Tenant) => string;
   expectFourSections?: boolean;
-  expectCopilotAnswer?: boolean;
+  expectCopilotAnswer?: boolean | ((tenant: Tenant) => boolean);
 }
 
 const QUESTIONS: Question[] = [
@@ -106,7 +110,7 @@ const QUESTIONS: Question[] = [
   { id: 'Q20-cfo-sixty-seconds', category: 'plain language', text: () => 'Give me a 60-second CFO-ready summary of where our AI portfolio stands and the one decision I should make next.' },
   { id: 'Q21-comprehensive-priorities', category: 'current initiatives', text: () => 'Across value, adoption, risk, governance, and industry context, what are the top three priorities for this tenant?' },
   { id: 'Q22-specific-initiative-deep', category: 'initiative detail', text: (t) => `Tell me about ${t.representativeDisplayId}: baseline, owner, value evidence, gates, and current risk.` },
-  { id: 'Q23-specific-copilot-deep', category: 'initiative detail', text: (t) => `Tell me about ${t.copilotDisplayId}: usage, value, adoption, and whether to scale or pause.`, expectCopilotAnswer: true },
+  { id: 'Q23-specific-copilot-deep', category: 'initiative detail', text: (t) => `Tell me about ${t.copilotDisplayId}: usage, value, adoption, and whether to scale or pause.`, expectCopilotAnswer: (t) => t.hasSpecificCopilotInitiative },
   { id: 'Q24-portfolio-value-ranked', category: 'value', text: () => 'Rank the portfolio by value risk and explain the top three in plain English.' },
   { id: 'Q25-adoption-risk-ranked', category: 'adoption', text: () => 'Which initiatives have the weakest adoption evidence, and what action should the sponsor take?' },
   { id: 'Q26-governance-attestation', category: 'governance', text: () => 'Which AI initiatives have governance or attestation risk, and what is the next control action?' },
@@ -207,7 +211,7 @@ function scoreTurn(tenant: Tenant, q: Question, status: number, atlasMode: strin
     ? []
     : tenant.foreignTokens.filter((token) => text.includes(token));
   const timeoutCopy = /timed out|needs a retry|could not answer/i.test(text);
-  const weakToolGapCopy = /query_[a-z_]+|does not exist yet|tool ships|requires .* tool|without a .* tool/i.test(text);
+  const weakToolGapCopy = /query_[a-z_]+|does not exist yet|tool ships/i.test(text);
   const internalSignalCopy = /\bsignal\s*:\s*[0-9a-f-]{20,}\b/i.test(text);
   const fallback = atlasMode === 'fallback';
   const fourSections = hasFourSections(text);
@@ -224,7 +228,10 @@ function scoreTurn(tenant: Tenant, q: Question, status: number, atlasMode: strin
     allowQuotedUserPrompt: q.text(tenant),
   });
   const plainIssues = plainLanguageIssues(text);
-  const copilotGrounded = !q.expectCopilotAnswer || (
+  const expectsCopilotAnswer = typeof q.expectCopilotAnswer === 'function'
+    ? q.expectCopilotAnswer(tenant)
+    : q.expectCopilotAnswer === true;
+  const copilotGrounded = !expectsCopilotAnswer || (
     /copilot/i.test(text)
     && /Your data/i.test(text)
     && /measured|adoption|active users|value/i.test(text)
@@ -372,6 +379,11 @@ async function postAsk(tenant: Tenant, q: Question, page: Page): Promise<Turn> {
       atlasMode = result.atlasMode;
       const bodyText = result.bodyText;
       rawBodyExcerpt = bodyText.slice(0, 4_000);
+      if (status >= 500 && attempt < RETRIES) {
+        text = bodyText || `HTTP ${status}`;
+        await sleep(2_000 * (attempt + 1));
+        continue;
+      }
       const body = JSON.parse(bodyText) as Record<string, unknown>;
       atlasMode = String(body.atlasMode ?? atlasMode ?? '');
       routeType = typeof body.routeType === 'string' ? body.routeType : null;

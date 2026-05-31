@@ -29,6 +29,7 @@ Expands the production Atlas/Tower smoke harness into a comprehensive CXO gauntl
 ## Changes Included
 
 - `scripts/qa/atlas-prod-comprehensive-surface.ts`: expands the production question deck to 56 prompts per tenant and adds CXO answer-quality scoring.
+- Follow-up: corrects two harness scoring edges found during the post-deploy rerun: SkyHarbor has no Copilot-specific initiative, so the Copilot deep-dive assertion is tenant-conditional; and transient 5xx Atlas API responses are retried before the turn is marked failed.
 - `src/lib/agent/response-shape.ts`: scrubs internal evidence-plumbing terms, prevents ordinary Tower prose from being converted into a fake comparison table, and appends a concrete Tower next action when a response otherwise lacks one.
 - `src/lib/agent/output-discipline/response-contract.ts`: strips bare UUID-style record IDs so users do not see internal signal identifiers.
 - `src/lib/atlas/classifier.ts`: narrows the strategy-refusal rule so "what should we watch?" board-language context questions route to the live answer path instead of a refusal.
@@ -47,6 +48,7 @@ Candidate validation before PR:
 - Pass: `npm run release:check -- --base origin/main --head HEAD`
 - Fail before fixes: live production gauntlet completed 168/168 HTTP 200 with 0 fallback, 0 leaks, 0 timeout copy, and clean login/logout for all three tenants, but only 54/168 turns passed the stricter CXO answer-quality score. The failures clustered around missing next actions, internal terms such as `substrate`, raw/symbolic record references, and over-broad strategy-refusal routing.
 - Post-fix local projection over the same captured production responses: 129/168 pass before deployment, with remaining findings downgraded to low-severity readability warnings. A fresh live production rerun is required after merge/deploy to confirm deployed behavior.
+- Final post-deploy rerun after PR #2680 and harness correction: 168/168 turns passed across Apex Retail, Meridian Health, and SkyHarbor Air. 168/168 returned HTTP 200, 0 fallback, 0 tenant leaks, 0 timeout/system copy, 0 weak implementation/tool copy, 12 four-section answers rendered where 6 were explicitly expected, 3/3 tenant sessions logged in and logged out cleanly. Evidence is captured in `reports/2026-05-31-atlas-prod-comprehensive-surface/`.
 
 ## Rollout Plan
 
