@@ -35,6 +35,12 @@ import {
   getSourceWorkflowValidationReadableReport,
   type SourceWorkflowValidationReadableReport,
 } from './workflow-validation-report';
+import {
+  evaluateLiveAgentAnswerQuality,
+  type LiveAgentAnswerQualityResult,
+} from '@/lib/agent/quality/live-answer-quality';
+import type { ComposeEvidenceLedgerInput } from '@/lib/agent/evidence-ledger/composer';
+import type { ScoreReadinessInput } from '@/lib/agent/readiness-score/scorer';
 
 export const SOURCE_SENTINEL_API_VERSION = 'source-sentinel-api/v1';
 export const SOURCE_SENTINEL_API_GENERATED_AT = '2026-04-25T00:00:00.000Z';
@@ -126,6 +132,7 @@ export interface SourceNexusApiStubResponse {
   };
   sourceIntelligence: SourceNexusSourceIntelligenceSummary | null;
   sourceAnswer: SourceAnswerEngineOutput | null;
+  answerQuality?: LiveAgentAnswerQualityResult;
   sentinelBriefing: SentinelSourceBriefing | null;
   /** @deprecated Use sentinelBriefing. Reconstructed via adapter for back-compat; retire in next wave. */
   multiAgentBriefing: SourceMultiAgentBriefing | null;
@@ -246,9 +253,20 @@ export function createSourceNexusApiStubResponse(
         userRole: input.userRole,
         mode,
       });
+  const answerQuality = sourceAnswer
+    ? evaluateSourceAnswerQuality({
+        eventId,
+        generatedAt,
+        bundle: contextResult.bundle,
+        sourceAnswer,
+      })
+    : undefined;
+  const renderedSourceAnswer = sourceAnswer && answerQuality
+    ? { ...sourceAnswer, answerText: answerQuality.answerText }
+    : sourceAnswer;
   const summary = intakeGuidance
     ? formatIntakeGuidanceSummary(intakeGuidance)
-    : sourceAnswer?.answerText ?? sentinelBriefing.combinedSummary;
+    : renderedSourceAnswer?.answerText ?? sentinelBriefing.combinedSummary;
 
   return {
     ok: answerStatus !== 'error',
@@ -271,17 +289,18 @@ export function createSourceNexusApiStubResponse(
       selectedAttachmentIds: [...contextResult.bundle.selectedAttachmentIds],
     },
     sourceIntelligence: summarizeSourceIntelligence(contextResult.bundle),
-    sourceAnswer,
+    sourceAnswer: renderedSourceAnswer,
+    answerQuality,
     sentinelBriefing,
     multiAgentBriefing,
     nexusSummary: {
-      title: intakeGuidance ? 'Event intake facts required' : sourceAnswer?.title ?? sentinelBriefing.primaryVoice.title,
-      summary: intakeGuidance?.opening ?? sourceAnswer?.answerText ?? sentinelBriefing.primaryVoice.summary,
+      title: intakeGuidance ? 'Event intake facts required' : renderedSourceAnswer?.title ?? sentinelBriefing.primaryVoice.title,
+      summary: intakeGuidance?.opening ?? renderedSourceAnswer?.answerText ?? sentinelBriefing.primaryVoice.summary,
       primaryFinding: intakeGuidance
         ? 'The event can be opened once the minimum facts are captured.'
-        : sourceAnswer?.currentStateFindings[0] ?? sentinelBriefing.primaryVoice.primaryFinding,
-      recommendedNextAction: intakeGuidance?.nextStep ?? sourceAnswer?.recommendedNextAction ?? sentinelBriefing.primaryVoice.recommendedNextAction,
-      confidence: intakeGuidance ? 'medium' : sourceAnswer?.confidence ?? sentinelBriefing.primaryVoice.confidence,
+        : renderedSourceAnswer?.currentStateFindings[0] ?? sentinelBriefing.primaryVoice.primaryFinding,
+      recommendedNextAction: intakeGuidance?.nextStep ?? renderedSourceAnswer?.recommendedNextAction ?? sentinelBriefing.primaryVoice.recommendedNextAction,
+      confidence: intakeGuidance ? 'medium' : renderedSourceAnswer?.confidence ?? sentinelBriefing.primaryVoice.confidence,
     },
     suggestedActions,
     contextValidationSummary: summarizeContextValidation(contextValidationReport),
@@ -294,6 +313,90 @@ export function createSourceNexusApiStubResponse(
     cannotProceedReasons: sentinelBriefing.primaryVoice.cannotProceedReasons,
     summary,
     intakeGuidance,
+  };
+}
+
+function evaluateSourceAnswerQuality(args: {
+  eventId: string;
+  generatedAt: string;
+  bundle: SourceAgentContextBundle;
+  sourceAnswer: SourceAnswerEngineOutput;
+}): LiveAgentAnswerQualityResult {
+  return evaluateLiveAgentAnswerQuality({
+    tenantKey: args.bundle.liveTenantContext?.clientKey
+      ?? args.bundle.tenant.tenantKey
+      ?? args.bundle.tenant.tenantId,
+    answerText: args.sourceAnswer.answerText,
+    evidenceLedger: buildSourceEvidenceLedgerInput(args),
+    readiness: buildSourceReadinessInput(args),
+  });
+}
+
+function buildSourceEvidenceLedgerInput(args: {
+  generatedAt: string;
+  bundle: SourceAgentContextBundle;
+  sourceAnswer: SourceAnswerEngineOutput;
+}): ComposeEvidenceLedgerInput {
+  const liveContext = args.bundle.liveTenantContext;
+  const dataUsed = liveContext?.retrievedEvidence.map((item) => ({
+    substrateId: item.id,
+    label: item.title,
+    sourceTable: item.sourceDoc ?? item.sourceType,
+    rowCount: 1,
+    asOf: args.generatedAt,
+  })) ?? args.sourceAnswer.evidenceCitations.map((item) => ({
+    substrateId: item.id,
+    label: item.label,
+    sourceTable: item.sourceDoc ?? 'source_answer_evidence',
+    rowCount: 1,
+    asOf: args.generatedAt,
+  }));
+  const missing = [
+    ...args.bundle.missingInputs,
+    ...args.sourceAnswer.missingData,
+  ];
+
+  return {
+    owner: args.bundle.decisionOwner
+      ?? args.bundle.eventOwner
+      ?? args.bundle.nextActionOwner
+      ?? args.bundle.tenant.activeClientName
+      ?? args.bundle.tenant.tenantName
+      ?? null,
+    dataUsed,
+    dataMissing: Array.from(new Set(missing.filter(Boolean))).map((gap) => ({
+      requiredFor: 'source answer',
+      gapDescription: gap,
+      nextLoadStep: 'Load or confirm this Source evidence before the next gate.',
+    })),
+    confidence: args.sourceAnswer.confidence === 'high'
+      ? 90
+      : args.sourceAnswer.confidence === 'medium'
+        ? 75
+        : 55,
+    now: new Date(args.generatedAt),
+  };
+}
+
+function buildSourceReadinessInput(args: {
+  eventId: string;
+  bundle: SourceAgentContextBundle;
+  sourceAnswer: SourceAnswerEngineOutput;
+}): ScoreReadinessInput {
+  const presentDimensions = [
+    args.bundle.sourcingEvent ? 'source_event' : null,
+    args.sourceAnswer.evidenceCitations.length > 0 || (args.bundle.liveTenantContext?.retrievedEvidence.length ?? 0) > 0
+      ? 'supplier_responses'
+      : null,
+    args.bundle.decisionOwner || args.bundle.stageGates.length > 0 || args.bundle.allowedActions.length > 0
+      ? 'approval_chain'
+      : null,
+  ].filter((dimension): dimension is string => Boolean(dimension));
+
+  return {
+    questionId: `source:${args.eventId}`,
+    questionKind: 'source_question',
+    presentDimensions,
   };
 }
 

@@ -112,7 +112,24 @@ function wordCount(text: string): number {
 function trimWords(text: string, maxWords: number): string {
   const words = text.trim().split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return text.trim();
-  return words.slice(0, maxWords).join(' ').replace(/[,:;.-]+$/, '');
+  return stripDanglingTrimTail(words.slice(0, maxWords).join(' '));
+}
+
+function stripDanglingTrimTail(text: string): string {
+  const original = text.trim();
+  let cleaned = original.replace(/[,:;.-]+$/, '').trim();
+
+  cleaned = cleaned.replace(
+    /\s+(?:and|or|but)\s+(?:to\s+)?(?:proceed|continue|move|advance|reconcile|decide|approve|fund|cut|defer|pause|compare|validate|use|open|route|escalate)(?:\s+\w+){0,2}$/i,
+    '',
+  ).trim();
+
+  cleaned = cleaned.replace(
+    /\s+\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|if|then)\b$/i,
+    '',
+  ).trim();
+
+  return cleaned || original.replace(/[,:;.-]+$/, '').trim();
 }
 
 function sentenceWithPeriod(text: string): string {

@@ -20,6 +20,8 @@
     "test:e2e:phase-0": "playwright test tests/e2e/programs-phase-0.spec.ts",
     "test:e2e:prod": "BASE_URL=https://nexus-vert-kappa.vercel.app playwright test",
     "test:before-commit": "npm run test:nav && npm run test:behaviors && npm run test:integration && npm run build",
+    "wave0:quality-gate": "node scripts/ci/answer-quality-gate.mjs && jest src/lib/eval/answer-quality/__tests__/scorer.test.ts src/lib/agent/evidence-ledger/__tests__/composer.test.ts src/lib/agent/readiness-score/__tests__/scorer.test.ts src/lib/agent/comprehension-gate/__tests__/lint.test.ts src/lib/observability/__tests__/request-telemetry.test.ts src/lib/agent/quality/__tests__/live-answer-quality.test.ts --runInBand && playwright test tests/e2e/tenant-isolation --list",
+    "wave0:tenant-isolation": "playwright test tests/e2e/tenant-isolation --workers=1",
     "access:check": "node scripts/check-access.mjs",
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",

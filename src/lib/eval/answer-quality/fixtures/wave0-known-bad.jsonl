@@ -1,0 +1,30 @@
+{"id":"bad-01","tenantKey":"apex-retail","surface":"tower","answer":"signal:39901c16-2e8b-4c8c-80aa-8a0182f26754 says this is fine. Keep an eye on it."}
+{"id":"bad-02","tenantKey":"meridian-health","surface":"intelligence","answer":"tenant_id maps to source_event_id. Monitor this."}
+{"id":"bad-03","tenantKey":"skyharbor-air","surface":"source","answer":"STRESS-P0-002 is green. Review as needed."}
+{"id":"bad-04","tenantKey":"first-capital","surface":"moves","answer":"worldview:W4:129 confirms the move. Circle back."}
+{"id":"bad-05","tenantKey":"northstar-clinical","surface":"setup","answer":"usr_123456789 should approve the plan. Consider exploring next steps."}
+{"id":"bad-06","tenantKey":"apex-retail","surface":"tower","answer":"This will save $48.7M. Next step: approve it."}
+{"id":"bad-07","tenantKey":"meridian-health","surface":"intelligence","answer":"This creates 42.3% adoption lift. Next step: approve it."}
+{"id":"bad-08","tenantKey":"skyharbor-air","surface":"source","answer":"The KPIA owner should approve this. Next step: approve it."}
+{"id":"bad-09","tenantKey":"first-capital","surface":"moves","answer":"This is probably fine. Keep an eye on it."}
+{"id":"bad-10","tenantKey":"northstar-clinical","surface":"setup","answer":"Approve it"}
+{"id":"bad-11","tenantKey":"apex-retail","surface":"tower","answer":"signal:39901c16-2e8b-4c8c-80aa-8a0182f26754 says this is fine. Keep an eye on it."}
+{"id":"bad-12","tenantKey":"meridian-health","surface":"intelligence","answer":"tenant_id maps to source_event_id. Monitor this."}
+{"id":"bad-13","tenantKey":"skyharbor-air","surface":"source","answer":"STRESS-P0-002 is green. Review as needed."}
+{"id":"bad-14","tenantKey":"first-capital","surface":"moves","answer":"worldview:W4:129 confirms the move. Circle back."}
+{"id":"bad-15","tenantKey":"northstar-clinical","surface":"setup","answer":"usr_123456789 should approve the plan. Consider exploring next steps."}
+{"id":"bad-16","tenantKey":"apex-retail","surface":"tower","answer":"This will save $48.7M. Next step: approve it."}
+{"id":"bad-17","tenantKey":"meridian-health","surface":"intelligence","answer":"This creates 42.3% adoption lift. Next step: approve it."}
+{"id":"bad-18","tenantKey":"skyharbor-air","surface":"source","answer":"The KPIA owner should approve this. Next step: approve it."}
+{"id":"bad-19","tenantKey":"first-capital","surface":"moves","answer":"This is probably fine. Keep an eye on it."}
+{"id":"bad-20","tenantKey":"northstar-clinical","surface":"setup","answer":"Approve it"}
+{"id":"bad-21","tenantKey":"apex-retail","surface":"tower","answer":"signal:39901c16-2e8b-4c8c-80aa-8a0182f26754 says this is fine. Keep an eye on it."}
+{"id":"bad-22","tenantKey":"meridian-health","surface":"intelligence","answer":"tenant_id maps to source_event_id. Monitor this."}
+{"id":"bad-23","tenantKey":"skyharbor-air","surface":"source","answer":"STRESS-P0-002 is green. Review as needed."}
+{"id":"bad-24","tenantKey":"first-capital","surface":"moves","answer":"worldview:W4:129 confirms the move. Circle back."}
+{"id":"bad-25","tenantKey":"northstar-clinical","surface":"setup","answer":"usr_123456789 should approve the plan. Consider exploring next steps."}
+{"id":"bad-26","tenantKey":"apex-retail","surface":"tower","answer":"This will save $48.7M. Next step: approve it."}
+{"id":"bad-27","tenantKey":"meridian-health","surface":"intelligence","answer":"This creates 42.3% adoption lift. Next step: approve it."}
+{"id":"bad-28","tenantKey":"skyharbor-air","surface":"source","answer":"The KPIA owner should approve this. Next step: approve it."}
+{"id":"bad-29","tenantKey":"first-capital","surface":"moves","answer":"This is probably fine. Keep an eye on it."}
+{"id":"bad-30","tenantKey":"northstar-clinical","surface":"setup","answer":"Approve it"}
