@@ -49,26 +49,26 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
   {
     id: "overview",
     label: "Overview",
-    subtitle: "What needs setup?",
+    subtitle: "Setup status and next actions",
     href: "/admin",
     group: "Setup",
   },
   {
     id: "data-trust",
     label: "Data Trust",
-    subtitle: "Loaded → usable evidence",
+    subtitle: "Loaded evidence and gaps",
     href: "/admin/data-trust",
   },
   {
     id: "connectors",
     label: "Connectors",
-    subtitle: "External systems",
+    subtitle: "Systems to connect",
     href: "/admin/connectors",
   },
   {
     id: "users-access",
     label: "Users & Access",
-    subtitle: "Roles and risk",
+    subtitle: "People, roles, and SSO",
     href: "/admin/users-access",
     group: "Governance",
   },
@@ -81,13 +81,13 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
   {
     id: "customer-admin",
     label: "Customer Admin",
-    subtitle: "Read-only tenant controls",
+    subtitle: "Tenant controls",
     href: "/admin/customer",
   },
   {
     id: "agent-readiness",
     label: "Agent Readiness",
-    subtitle: "Nexus/Sentinel/Atlas/Steward",
+    subtitle: "What assistants can safely do",
     href: "/admin/agent-readiness",
   },
   {
@@ -99,7 +99,7 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
   {
     id: "production-readiness",
     label: "Production Readiness",
-    subtitle: "Demo / pilot / production",
+    subtitle: "Demo, pilot, production",
     href: "/admin/production-readiness",
   },
   {
@@ -107,7 +107,7 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     // Replaces panel-07 dead link (`href: '#'`) per verdict §3.
     id: "compliance",
     label: "Compliance",
-    subtitle: "SOC 2 · GDPR · DPA · Breach SLA",
+    subtitle: "SOC 2, GDPR, DPA",
     href: "/admin/compliance",
   },
   {
@@ -120,22 +120,22 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     // NOT mention Atlas. Future Diagnostics entries (pipeline
     // health, eval runs, etc.) inherit this group.
     id: "engineering-traces",
-    label: "Engineering Traces",
-    subtitle: "Reasoning audit log",
+    label: "Reasoning Audit",
+    subtitle: "Engineering trace review",
     href: "/engineering/traces",
     group: "Diagnostics",
   },
   {
     id: "releases",
     label: "Releases",
-    subtitle: "Change ledger",
+    subtitle: "Change history",
     href: "/admin/releases",
     group: "Releases",
   },
   {
     id: "training",
     label: "Training",
-    subtitle: "AbarVa guide & reference",
+    subtitle: "Guide and reference",
     href: "/home/learn",
     group: "Learn",
   },

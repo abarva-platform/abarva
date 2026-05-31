@@ -32,6 +32,8 @@ const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Record<ClientKey, string> = {
 };
 
 export interface AdminTenantContext {
+  /** Canonical `clients.id` value used by RLS-backed control-plane tables. */
+  clientId: string;
   /** App-side ClientKey (e.g. 'arcturus'). */
   clientKey: ClientKey;
   /** Slug used by Setup page-view builders + agent context broker (e.g. 'first-capital'). */
@@ -78,5 +80,5 @@ export async function resolveAdminTenant(): Promise<AdminTenantContext> {
   if (!tenantName) {
     throw new AdminTenantUnresolvedError(`no canonical name for ${clientKey}`);
   }
-  return { clientKey, tenantSlug, tenantName };
+  return { clientId: row.id, clientKey, tenantSlug, tenantName };
 }

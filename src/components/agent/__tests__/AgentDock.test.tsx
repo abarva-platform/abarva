@@ -383,6 +383,41 @@ describe('AgentDock · thread render', () => {
     expect(screen.getByTestId('agent-dock-turn-agent')).toHaveTextContent('- Evidence:');
     expect(screen.getByTestId('agent-dock-turn-agent')).not.toHaveTextContent('**');
   });
+
+  it('keeps auto-scroll inside the thread pane when new turns arrive', async () => {
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = jest.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    const renderDock = (thread: ChatMessage[]) => (
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={thread}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />
+    );
+
+    try {
+      const { rerender } = render(renderDock([]));
+      const threadPane = screen.getByTestId('agent-dock-thread');
+      Object.defineProperty(threadPane, 'scrollHeight', { value: 720, configurable: true });
+
+      await act(async () => {
+        rerender(renderDock([{ id: 'u1', role: 'user', body: 'Check admin.' }]));
+      });
+
+      expect(threadPane.scrollTop).toBe(720);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      if (originalScrollIntoView) {
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      } else {
+        delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+      }
+    }
+  });
 });
 
 describe('AgentDock · viewport-bound side-rail', () => {

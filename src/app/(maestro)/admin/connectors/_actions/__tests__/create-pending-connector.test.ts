@@ -78,6 +78,7 @@ function policyAdmin(canAdminUsers: boolean) {
 beforeEach(() => {
   jest.resetAllMocks();
   resolveTenantMock.mockResolvedValue({
+    clientId: 'client-apex',
     clientKey: 'apexretail',
     tenantSlug: 'apex-retail',
     tenantName: 'Apex Retail Group',
