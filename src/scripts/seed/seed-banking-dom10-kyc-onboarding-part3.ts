@@ -1,3 +1,17 @@
+interface PatternSeed {
+  code: string;
+  name: string;
+  description: string;
+  vertical: string;
+  office_category: string;
+  keywords: string[];
+  failure_rate_pct: number;
+  is_active: boolean;
+  demoRelevant: boolean;
+  subTopic: string;
+  data: Record<string, string | number | boolean>;
+}
+
 export const BANKING_DOM10_KYC_ONBOARDING_PART3_PATTERNS: PatternSeed[] = [
 
   // ── Screening Automation (B2920–B2931) ────────────────────────────────────
