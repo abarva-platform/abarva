@@ -25,7 +25,7 @@ describe('Setup W6 policies and tenant governance lock', () => {
 
     const adminRoute = readWorkspaceFile('src/app/(maestro)/admin/page.tsx');
     expect(adminRoute).toContain('data-admin-home-native');
-    expect(adminRoute).toContain("import { AppShell }");
+    expect(adminRoute).toContain('AdminCanonShellV2');
     expect(adminRoute).toContain('resolveAdminTenant');
     expect(adminRoute).not.toContain('AdminOverviewTabs');
     expect(adminRoute).not.toContain('AdminTenantTab');

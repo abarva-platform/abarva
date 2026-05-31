@@ -14,6 +14,7 @@ describe('DESROUTE3 admin shell enforcement', () => {
   const adminRoute = 'src/app/(maestro)/admin/page.tsx';
   const productionRoute = 'src/app/(maestro)/admin/production-readiness/page.tsx';
   const adminLayout = 'src/app/(maestro)/admin/layout.tsx';
+  const adminSidebar = 'src/components/admin/AdminSidebar.tsx';
 
   // Legacy redirect pages (must remain redirect-only, not render shells).
   const legacyAdminRoute = 'src/app/(maestro)/platform/admin/page.tsx';
@@ -22,7 +23,7 @@ describe('DESROUTE3 admin shell enforcement', () => {
   it('admin home renders natively while production keeps the canonical shell', () => {
     const adminSource = read(adminRoute);
     expect(adminSource).toContain('data-admin-home-native');
-    expect(adminSource).toContain('AppShell');
+    expect(adminSource).toContain('AdminCanonShellV2');
     expect(adminSource).toContain('resolveAdminTenant');
     expect(adminSource).not.toContain('iframe');
     expect(adminSource).not.toContain('HomeOverviewV2');
@@ -34,6 +35,13 @@ describe('DESROUTE3 admin shell enforcement', () => {
   it('active admin route avoids known legacy rail shell import', () => {
     const source = read(adminRoute);
     expect(source).not.toContain('StewardAdminRail');
+  });
+
+  it('admin shell exposes the native left menu for browser QA', () => {
+    const sidebarSource = read(adminSidebar);
+    expect(sidebarSource).toContain('data-admin-sidebar="true"');
+    expect(sidebarSource).toContain('ADMIN_SUB_SECTIONS');
+    expect(sidebarSource).toContain('Setup · Admin');
   });
 
   it('canonical production readiness route continues to exist', () => {

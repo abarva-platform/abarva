@@ -12,6 +12,7 @@ export function AdminSidebar() {
 
   return (
     <aside
+      data-admin-sidebar="true"
       style={{
         background: COLORS.white,
         borderRight: `1px solid ${COLORS.ink}14`,
