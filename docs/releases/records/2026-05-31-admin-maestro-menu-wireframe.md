@@ -33,6 +33,8 @@ internal-admin lane: Adds the same source artifact under `docs/build/` for relea
 - `src/app/(maestro)/admin/page.tsx`: Authenticated `/admin` home now renders natively inside the canonical AdminCanonShellV2 chrome instead of embedding the HTML reference.
 - `src/components/admin/AdminSidebar.tsx`: Adds a stable sidebar marker for production browser QA so the native left admin menu cannot disappear silently.
 - `src/lib/admin/admin-shell-config.ts`: Removes the Training sidebar item that exited the admin shell to `/home/learn`; Learn remains available from the top product navigation.
+- `src/components/admin/admin-page-header-styles.ts`: Adds the shared admin header type scale used by native admin pages.
+- `src/components/admin/EditorialCanvas.tsx`, `src/app/(maestro)/admin/page.tsx`, and `src/app/(maestro)/admin/customer/page.tsx`: Align header fonts, title size, weight, spacing, and subtitle rhythm.
 - `public/design/admin-maestro-menu-wireframe-2026-05-31.html`: Public reference copy no longer presents wireframe language in the header.
 - Admin integration tests: Updated the route contract to treat `/admin` as the Maestro home and keep shell enforcement on the admin sub-pages.
 - `docs/releases/records/2026-05-31-admin-maestro-menu-wireframe.md`: Release record.

@@ -16,6 +16,7 @@ const FILES = {
   shell: 'src/components/admin/AdminCanonShellV2.tsx',
   sidebar: 'src/components/admin/AdminSidebar.tsx',
   canvas: 'src/components/admin/EditorialCanvas.tsx',
+  headerStyles: 'src/components/admin/admin-page-header-styles.ts',
   rail: 'src/components/admin/AgentRail.tsx',
   config: 'src/lib/admin/admin-shell-config.ts',
   tokens: 'src/lib/design/design-tokens.ts',
@@ -221,6 +222,7 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
 
   describe('EditorialCanvas — eyebrow / title / subtitle / children', () => {
     const src = read(FILES.canvas);
+    const headerSrc = read(FILES.headerStyles);
 
     it('exports EditorialCanvasProps with eyebrow', () => {
       expect(src).toContain('eyebrow: string');
@@ -239,11 +241,13 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
     });
 
     it('renders title with serif typography token', () => {
-      expect(src).toContain('TYPOGRAPHY.serif');
+      expect(headerSrc).toContain('TYPOGRAPHY.serif');
+      expect(src).toContain('ADMIN_PAGE_HEADER_STYLES.title');
     });
 
     it('renders eyebrow with navy color token', () => {
-      expect(src).toContain('COLORS.navy');
+      expect(headerSrc).toContain('COLORS.navy');
+      expect(src).toContain('ADMIN_PAGE_HEADER_STYLES.eyebrow');
     });
   });
 
