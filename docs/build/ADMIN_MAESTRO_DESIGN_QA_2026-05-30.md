@@ -53,3 +53,4 @@ It should not show raw matrices, all tenants, long trace tables, or a persistent
 - No persistent agent rail consumes horizontal space by default.
 - Dense tables appear below summary sections or behind drilldown controls.
 - Page copy uses role/workflow language before internal agent names.
+- Internal provenance labels such as `Context used`, `tenant isolation guard`, or `admin shell config` stay out of default Maestro cards; they belong in audit detail, logs, or expandable technical views.

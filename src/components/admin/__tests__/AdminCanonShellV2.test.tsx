@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AdminCanonShellV2 } from '../AdminCanonShellV2';
+import { StewardEditorial } from '../StewardEditorial';
 
 jest.mock('@/components/shell/AppShell', () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -38,5 +39,25 @@ describe('AdminCanonShellV2', () => {
     expect(html).toContain('data-admin-guidance-drawer');
     expect(html).toContain('Guidance');
     expect(html).not.toContain('grid-template-columns:280px 1fr 320px');
+  });
+});
+
+describe('StewardEditorial', () => {
+  it('does not expose internal context-source chips in the Maestro default card', () => {
+    const html = renderToStaticMarkup(
+      <StewardEditorial
+        title="Access posture"
+        body="Roles and SSO posture are readable."
+        contextUsed={['tenant isolation guard', 'admin shell config']}
+        evidenceStrength="partial"
+        blocker="No SSO configured"
+        primaryAction={{ label: 'Review roles', href: '/admin/users-access' }}
+      />,
+    );
+
+    expect(html).not.toContain('Context used');
+    expect(html).not.toContain('tenant isolation guard');
+    expect(html).not.toContain('admin shell config');
+    expect(html).toContain('Review roles');
   });
 });

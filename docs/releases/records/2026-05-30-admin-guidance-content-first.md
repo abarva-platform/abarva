@@ -29,6 +29,7 @@ Admin menu pages should be simple enough for Maestros to understand without pars
 ## Changes Included
 
 - `src/components/admin/AdminCanonShellV2.tsx`: Converts static `agentRail` content into a fixed, on-demand Guidance drawer and keeps the main layout at `sidebar | content`.
+- `src/components/admin/StewardEditorial.tsx`: Removes internal `Context used` provenance chips from default Maestro-facing editorial cards.
 - `src/components/admin/__tests__/AdminCanonShellV2.test.tsx`: Locks the content-first static guidance layout.
 - `docs/build/ADMIN_MAESTRO_DESIGN_QA_2026-05-30.md`: Records the landing-page versus menu-page design contract and current gap closure.
 
@@ -38,6 +39,8 @@ Admin menu pages should be simple enough for Maestros to understand without pars
 - Passed: `npx jest --runTestsByPath src/components/admin/__tests__/AdminCanonShellV2.test.tsx`
 - Passed: `npm run release:check`
 - Passed: local authenticated browser smoke for `/admin/users-access`, `/admin/connectors`, and `/admin/production-readiness`; each route stayed at `window.scrollY = 0`, rendered one Guidance drawer, and rendered no persistent `aside[data-admin-agent-rail]`.
+- Passed: `npx eslint src/components/admin/AdminCanonShellV2.tsx src/components/admin/StewardEditorial.tsx src/components/admin/__tests__/AdminCanonShellV2.test.tsx`
+- Passed: `npx jest --runTestsByPath src/components/admin/__tests__/AdminCanonShellV2.test.tsx` includes a regression that hides internal `Context used` chips.
 
 ## Rollout Plan
 
@@ -49,7 +52,7 @@ Revert the release commit or PR to restore the persistent static right rail. No 
 
 ## Audit Evidence
 
-- User screenshots showed admin pages that were too crowded for Maestro consumption.
+- User screenshots showed admin pages that were too crowded for Maestro consumption, including internal provenance chips such as `tenant isolation guard` on default cards.
 - The design QA document records the intended landing/menu page split.
 - Regression test asserts no permanent `280px 1fr 320px` admin layout for static guidance pages.
 
