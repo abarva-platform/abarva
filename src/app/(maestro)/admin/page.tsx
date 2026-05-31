@@ -1,4 +1,4 @@
-import AbarvaNav from '@/components/AbarvaNav';
+import { AppShell } from '@/components/shell/AppShell';
 
 export const metadata = { title: 'Admin Home | AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -8,19 +8,12 @@ const ADMIN_MAESTRO_HOME_SRC = '/design/admin-maestro-menu-wireframe-2026-05-31.
 
 export default function AdminOverviewPage() {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#FBFAF7',
-      }}
-    >
-      <nav aria-label="Primary">
-        <AbarvaNav activePage="home" />
-      </nav>
+    <AppShell surface="home" agentName="Steward" showProductNav>
       <main
         data-admin-home-wireframe="true"
         style={{
-          minHeight: 'calc(100vh - 56px)',
+          flex: 1,
+          minHeight: 0,
           background: '#FBFAF7',
         }}
       >
@@ -30,13 +23,13 @@ export default function AdminOverviewPage() {
           style={{
             display: 'block',
             width: '100%',
-            minHeight: 'calc(100vh - 56px)',
-            height: 'calc(100dvh - 56px)',
+            minHeight: 'calc(100vh - 64px)',
+            height: 'calc(100dvh - 64px)',
             border: 0,
             background: '#FBFAF7',
           }}
         />
       </main>
-    </div>
+    </AppShell>
   );
 }
