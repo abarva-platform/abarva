@@ -36,6 +36,33 @@ const RETAIL_MOVE: MoveBusinessCaseInput = {
   baseline_metrics: [],
 };
 
+const AI_OPS_RETAIL_MOVE: MoveBusinessCaseInput = {
+  ...RETAIL_MOVE,
+  name: 'Apex Store Labor AI',
+  charter: { [CHARTER_FUNCTION_PACK_KEY]: 'workforce_labor' },
+  aiOperatingCost: {
+    callRamp: {
+      y1: 300_000,
+      y2: 900_000,
+      y3: 1_500_000,
+      y4: 1_900_000,
+      y5: 2_200_000,
+    },
+    tokensPerCall: { input: 1_800, output: 600, cacheHitRate: 0.25 },
+    modelTier: 'cost_optimized',
+    modelTierRamp: [{ year: 3, tier: 'mid', reasonCode: 'schedule_quality' }],
+    pricingTiers: [
+      {
+        thresholdCallsPerMonth: 100_000,
+        discount: 0,
+        notes: 'requires pricing-tier lock before network-wide rollout',
+      },
+    ],
+    decisionUnit: 'scheduled store-week',
+    decisionsPerCall: 1,
+  },
+};
+
 const HEALTHCARE_MOVE: MoveBusinessCaseInput = {
   industry_code: 'HEALTHCARE_IDN',
   name: 'Reduce clinical documentation burden',
@@ -218,6 +245,30 @@ describe('buildMoveEstimateModel — a Move with no resolvable function', () => 
     // gap and stops.
     expect(html).toContain('Kernel');
     expect(html).toContain('Not run');
+  });
+});
+
+describe('renderMoveEstimateModelHtml — AI Ops cost panel', () => {
+  it('renders the three-axis split, unit economic, and run-cost warnings', () => {
+    const model = buildMoveEstimateModel(
+      AI_OPS_RETAIL_MOVE,
+      GENERATED_ON,
+    ) as MoveEstimateModel;
+    const section = model.sections.workstreamEstimate;
+
+    expect(section.aiOps).not.toBeNull();
+    expect(section.aiOpsCost).toBe(section.aiOps!.threeYearTotal);
+    expect(section.aiOps!.decisionUnit).toBe('scheduled store-week');
+    expect(section.aiOps!.pricingTierShockWarning).toContain('Year');
+    expect(section.aiOps!.modelTierDriftWarning).toContain('schedule_quality');
+
+    const html = renderMoveEstimateModelHtml(AI_OPS_RETAIL_MOVE, GENERATED_ON);
+    expect(html).toContain('Three-axis cost view');
+    expect(html).toContain('AI Ops cost');
+    expect(html).toContain('Unit economic');
+    expect(html).toContain('Pricing-tier alert');
+    expect(html).toContain('Model-tier drift');
+    expect(html).toContain('scheduled store-week');
   });
 });
 
