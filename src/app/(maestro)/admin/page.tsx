@@ -59,13 +59,14 @@ import { AuditRibbon } from '@/components/admin/AuditRibbon';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AdminOverviewTabs, resolveAdminOverviewTab } from '@/components/admin/AdminOverviewTabs';
 import { AdminTenantTab } from '@/components/admin/AdminTenantTab';
+import type { TenantConfig } from '@/components/admin/AdminTenantTab';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
 import { StewardOrientationBlock } from '@/components/home/StewardOrientationBlock';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
-import { isClientKey } from '@/lib/client-config';
+import { getClientOption, isClientKey } from '@/lib/client-config';
 import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
 import {
   canSwitchActiveTenant,
@@ -339,6 +340,23 @@ export default async function AdminOverviewPage({
     industryCode: activeClient?.industry_code ?? null,
     baseContentClientKey: clientKey,
   };
+  const clientOption = getClientOption(clientKey);
+  const tenantTabConfig: TenantConfig = {
+    name: activeClientDisplayName,
+    slug: tenant.tenantSlug,
+    industry: clientOption.vertical,
+    region: activeClient?.industry_code ?? 'Tenant configured',
+    tier: 'Enterprise',
+    status: 'locked',
+    contractStart: 'Tenant record',
+    contractEnd: 'Tenant record',
+    renewalOwner: 'Tenant success',
+    programCount: programsCount,
+    activePrograms: programsCount,
+    dataResidency: 'Tenant configured',
+    ssoProvider: 'Tenant configured',
+    createdDate: 'Tenant record',
+  };
 
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
@@ -362,7 +380,7 @@ export default async function AdminOverviewPage({
           auditRibbonSlot={<AuditRibbonZone ctx={ctx} />}
         />
       ) : (
-        <AdminTenantTab />
+        <AdminTenantTab config={tenantTabConfig} />
       )}
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
