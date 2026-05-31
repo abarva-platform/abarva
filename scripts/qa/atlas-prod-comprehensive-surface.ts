@@ -23,7 +23,8 @@ import {
 } from '@/lib/agent/quality/cxo-answer-quality';
 
 const PROD_URL = process.env.PROD_URL ?? 'https://app.abarva.ai';
-const REPORT_DIR = join(process.cwd(), 'reports', '2026-05-31-atlas-prod-comprehensive-surface');
+const REPORT_DIR = process.env.ATLAS_GAUNTLET_REPORT_DIR
+  ?? join(process.cwd(), 'reports', '2026-05-31-atlas-prod-comprehensive-surface');
 const API_TIMEOUT_MS = Number(process.env.ATLAS_GAUNTLET_API_TIMEOUT_MS ?? 90_000);
 const RETRIES = Number(process.env.ATLAS_GAUNTLET_RETRIES ?? 2);
 
