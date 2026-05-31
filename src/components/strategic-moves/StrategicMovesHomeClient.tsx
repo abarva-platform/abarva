@@ -174,7 +174,7 @@ export function StrategicMovesHomeClient({
       {portfolio.needAttentionMoves.length > 0 ? (
         <div className={styles.attnDrilldown}>
           {portfolio.needAttentionMoves.map((row) => (
-            <Link className={styles.attnRow} key={row.id} href={`/strategic-moves/${row.id}`}>
+            <Link className={styles.attnRow} key={row.id} href={`/strategic-moves/${row.id}`} prefetch={false}>
               <span className={styles.attnBranch}>└─</span>
               <span className={styles.attnBody}>
                 <span className={styles.attnMoveId}>{row.displayCode}</span>
@@ -290,6 +290,7 @@ export function StrategicMovesHomeClient({
                 }`}
                 key={move.id}
                 href={`/strategic-moves/${move.id}`}
+                prefetch={false}
               >
                 <div className={styles.cardStrip} aria-hidden />
                 <div className={styles.cardHead}>
@@ -353,6 +354,7 @@ export function StrategicMovesHomeClient({
                         }`}
                         key={move.id}
                         href={`/strategic-moves/${move.id}`}
+                        prefetch={false}
                       >
                         <div className={styles.kanbanId}>{move.displayCode}</div>
                         <div className={styles.kanbanName}>{move.name}</div>
@@ -441,6 +443,7 @@ export function StrategicMovesHomeClient({
                     valueKnown ? styles.bubbleGreen : styles.bubbleUnknown
                   }`}
                   href={`/strategic-moves/${move.id}`}
+                  prefetch={false}
                   style={{
                     width: `${bubbleSize}px`,
                     height: `${bubbleSize}px`,
