@@ -836,7 +836,12 @@ function findInitiativeDetail(
   rawId: string | null,
 ): AIInitiative | null {
   if (!rawId) return null;
-  const decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  } catch {
+    return null;
+  }
   return initiatives.find((initiative) => (
     initiative.displayId.toLowerCase() === decoded ||
     initiative.initiativeId.toLowerCase() === decoded
@@ -900,6 +905,25 @@ function TowerInlineDetailPanel({
           title="Tower could not find that item in the active tenant substrate."
           body="The URL points at an initiative that is not present for the logged-in client's DB rows. No fixture detail has been substituted."
         />
+        <div style={{ marginTop: 12 }}>
+          <Link
+            href={closeHref}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              border: `1px solid ${T.RULE_STRONG}`,
+              borderRadius: 8,
+              background: T.CREAM_2,
+              color: T.INK,
+              padding: '8px 10px',
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: 'none',
+            }}
+          >
+            Return to portfolio
+          </Link>
+        </div>
       </section>
     );
   }
@@ -2262,8 +2286,8 @@ export function TowerIndexPage({
             id: `atlas-error-${Date.now()}`,
             role: 'atlas',
             content: err instanceof DOMException && err.name === 'AbortError'
-              ? 'Atlas timed out before the portfolio response came back. Retry the prompt or open a linked surface while I keep the Tower summary anchored.'
-              : 'Atlas could not reach the live response path just now. The pressure cards are still server-rendered, but this reply is unavailable until the next retry.',
+              ? 'I could not complete the live Atlas answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.'
+              : 'I could not complete the live Atlas answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.',
           },
         ]);
       } finally {

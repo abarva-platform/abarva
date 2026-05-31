@@ -211,8 +211,8 @@ export function AtlasRail({
           id: `atlas-error-${Date.now()}`,
           role: 'atlas',
           content: err instanceof DOMException && err.name === 'AbortError'
-            ? 'Atlas timed out before the portfolio response came back. Honest answer: retry the prompt or open the linked signal while I keep the Tower summary anchored.'
-            : 'Atlas could not reach the live response path just now. The pressure cards are still server-rendered, but this reply is unavailable until the next retry.',
+            ? 'I could not complete the live Atlas answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.'
+            : 'I could not complete the live Atlas answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.',
         },
       ]);
     } finally {
