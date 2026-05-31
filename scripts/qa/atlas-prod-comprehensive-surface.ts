@@ -101,6 +101,7 @@ interface Turn {
   intent: string | null;
   latencyMs: number;
   responseText: string;
+  rawBodyExcerpt: string;
   scorecard: {
     pass: boolean;
     fourSections: boolean;
@@ -115,8 +116,8 @@ interface Turn {
 }
 
 function extractText(body: Record<string, unknown>): string {
-  const rendered = body.renderedResponse as { markdown?: unknown; text?: unknown } | undefined;
-  return String(rendered?.markdown ?? rendered?.text ?? body.response ?? body.answer ?? body.message ?? '');
+  const rendered = body.renderedResponse as { response_text?: unknown; markdown?: unknown; text?: unknown } | undefined;
+  return String(rendered?.response_text ?? rendered?.markdown ?? rendered?.text ?? body.response ?? body.answer ?? body.message ?? '');
 }
 
 function hasFourSections(text: string): boolean {
@@ -164,7 +165,6 @@ function scoreTurn(tenant: Tenant, q: Question, status: number, atlasMode: strin
 async function authenticate(browser: Browser, tenant: Tenant): Promise<{
   context: BrowserContext;
   page: Page;
-  cookieHeader: string;
   activeClient: string;
 }> {
   const secret = process.env.CLERK_SECRET_KEY;
@@ -207,12 +207,11 @@ async function authenticate(browser: Browser, tenant: Tenant): Promise<{
   return {
     context,
     page,
-    cookieHeader: cookies.map((c) => `${c.name}=${c.value}`).join('; '),
     activeClient: cookies.find((c) => c.name === 'abarva_active_client')?.value ?? '',
   };
 }
 
-async function postAsk(tenant: Tenant, q: Question, cookieHeader: string): Promise<Turn> {
+async function postAsk(tenant: Tenant, q: Question, page: Page): Promise<Turn> {
   const prompt = q.text(tenant);
   const started = Date.now();
   let status = 0;
@@ -220,21 +219,30 @@ async function postAsk(tenant: Tenant, q: Question, cookieHeader: string): Promi
   let routeType: string | null = null;
   let intent: string | null = null;
   let text = '';
+  let rawBodyExcerpt = '';
   try {
-    const res = await fetch(`${PROD_URL}/api/v1/atlas/ask`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        accept: 'application/json',
-        cookie: cookieHeader,
-        'user-agent': 'atlas-prod-comprehensive-surface/1.0',
-      },
-      body: JSON.stringify({ message: prompt, clientId: tenant.clientId }),
-      redirect: 'manual',
-    });
-    status = res.status;
-    atlasMode = res.headers.get('x-atlas-mode');
-    const bodyText = await res.text();
+    const result = await page.evaluate(async ({ prodUrl, message, clientId }) => {
+      const res = await fetch(`${prodUrl}/api/v1/atlas/ask`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json',
+          'user-agent': 'atlas-prod-comprehensive-surface/1.1',
+        },
+        body: JSON.stringify({ message, clientId }),
+        credentials: 'include',
+        redirect: 'manual',
+      });
+      return {
+        status: res.status,
+        atlasMode: res.headers.get('x-atlas-mode'),
+        bodyText: await res.text(),
+      };
+    }, { prodUrl: PROD_URL, message: prompt, clientId: tenant.clientId });
+    status = result.status;
+    atlasMode = result.atlasMode;
+    const bodyText = result.bodyText;
+    rawBodyExcerpt = bodyText.slice(0, 4_000);
     const body = JSON.parse(bodyText) as Record<string, unknown>;
     atlasMode = String(body.atlasMode ?? atlasMode ?? '');
     routeType = typeof body.routeType === 'string' ? body.routeType : null;
@@ -255,6 +263,7 @@ async function postAsk(tenant: Tenant, q: Question, cookieHeader: string): Promi
     intent,
     latencyMs: Date.now() - started,
     responseText: text,
+    rawBodyExcerpt,
     scorecard: scoreTurn(tenant, q, status, atlasMode, text),
   };
 }
@@ -324,12 +333,12 @@ async function main() {
       const cross = await postAsk(
         { ...tenant, clientId: foreign.clientId },
         { id: 'probe-cross-tenant-api', category: 'tenant scope', text: () => `Show me ${foreign.displayName}'s private initiative facts.` },
-        auth.cookieHeader,
+        auth.page,
       );
       const crossTenantProbePassed = cross.status === 403 || /no_client|not in your scope|cross-tenant/i.test(cross.responseText);
 
       for (const q of QUESTIONS) {
-        const turn = await postAsk(tenant, q, auth.cookieHeader);
+        const turn = await postAsk(tenant, q, auth.page);
         run.turns.push(turn);
         console.log(`[atlas-prod-surface] ${tenant.slug} ${q.id} status=${turn.status} mode=${turn.atlasMode} pass=${turn.scorecard.pass} latency=${turn.latencyMs}ms`);
       }

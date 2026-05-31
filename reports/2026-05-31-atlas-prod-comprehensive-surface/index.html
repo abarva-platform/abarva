@@ -1,0 +1,659 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Atlas Comprehensive Production Surface</title><style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:0;background:#f8fafc;color:#172033}header{background:#111827;color:white;padding:28px 36px}main{padding:28px 36px;max-width:1280px;margin:auto}.card,section{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:18px;margin:18px 0}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left;vertical-align:top}th{background:#eef2f7}pre{white-space:pre-wrap;background:#0f172a;color:#e5e7eb;padding:12px;border-radius:6px;overflow:auto}.turn{border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin:10px 0}.pill{display:inline-block;padding:3px 8px;border-radius:99px;background:#dcfce7;color:#166534;margin-right:6px}.bad{background:#fee2e2;color:#991b1b}</style></head><body><header><h1>Atlas Comprehensive Production Surface</h1><p>2026-05-31T03:32:03.399Z · https://app.abarva.ai</p></header><main><div class="card"><span class="pill">45/45 turns passed</span><span class="pill ">0 fallback</span><span class="pill ">0 leak turns</span><span class="pill">9/6 four-section</span></div><section><h2>Tenant Sessions</h2><table><thead><tr><th>Tenant</th><th>Active Client Cookie</th><th>Tower Loaded</th><th>Cross-Tenant Probe</th><th>Logout Redirect</th></tr></thead><tbody><tr><td>Apex Retail Group</td><td>apexretail</td><td>pass</td><td>pass</td><td>pass</td></tr><tr><td>Meridian Health System</td><td>meridian</td><td>pass</td><td>pass</td><td>pass</td></tr><tr><td>SkyHarbor Air</td><td>skyharbor</td><td>pass</td><td>pass</td><td>pass</td></tr></tbody></table></section><section><h2>Agent Responses</h2><details class="turn"><summary>Apex Retail Group · Q01-current-state · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the current state of Apex Retail Group&#39;s AI initiatives?</pre><h4>Response</h4><pre>My read: Apex Retail is past the &quot;do we have AI activity?&quot; question.
+
+| Option | Strength | Weakness | Fit |
+|---|---|---|---|
+| There is a second pressure behind | returns fraud model accuracy has slipped. | — | — |
+| 8 points | so I would avoid treating this as a one-metric problem. | — | — |
+
+There is a second pressure behind it - returns fraud model accuracy has slipped 8 points - so I would avoid treating this as a one-metric</pre><p><b>Latency:</b> 822ms · <b>Route:</b> scripted · <b>Intent:</b> morning_summary</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q02-loaded-data · 200 · live · PASS</summary><h4>Prompt</h4><pre>What current initiatives and Tower data are loaded right now? Name the evidence limits.</pre><h4>Response</h4><pre>What&#39;s loaded in Tower right now
+
+Read: Apex Retail tenant is bound, value lens active, as of 2026-05-12. Substrate is reasonably full but the right rail is dominated by a vendor clock — three Microsoft-family renewals inside 90 days with no CFO posture set.
+
+Initiatives (8):
+- the erp program — SAP ERP future decision, scoping, $14M committed, HIGH conf (aligned callout)
+- AR-01 Store Associate Copilot — pilot, adoption gap (32% vs 70%), MED
+- AR-02 GitHub Copilot for Engineering — scaled, healthy, HIGH
+- AR-03 Autonomous Customer Service Agent (Sierra) — pilot, value lag, MED (aligned callout)
+- AR-04 SAP Joule Merchandise Planning — Year 1 of 2, value lag, MED
+- AR-05 Demand Forecasting Modernization — scaled, healthy, HIGH (aligned callout)
+- AR-06 AI Cost Attribution Platform — pilot, foundation phase, MED
+- AR-07 Personalization Engine v3 — scaled, healthy, HIGH
+
+Other substrate: 10 vendors, 24 KPI snapshots (all Q4-2025), 12 decisions (5 pending, 4 with recorded dissent), 10 scenarios, 10 stakeholder notes, 6 active pressures, 3 observations.
+
+Evidence limits — name them
+
+1. Adoption is a stage-proxy, not telemetry. The 60% adoption KPI is &quot;3 of 5 scaled-stage initiatives&quot; — per-tool MAU/licensed_user integrations (M365 Graph, Cursor admin, ServiceNow PA) are not landed. Treat adoption confidence as LOW until those feeds exist.
+2. Portfolio ROI math is incomplete. 0.6× is sum of measured ÷ committed across 8 initiatives, but 2 of 8 have no measured value loaded (the erp program and AR-06 are foundation-phase by design). The ratio understates because foundation spend is in the denominator with zero numerator.
+3. KPI snapshots are single-quarter (Q4-2025). No trend line; can&#39;t distinguish drift from baseline noise.
+4. CFO posture is undefined on all three near-term renewals. That&#39;s a decision gap, not an Atlas evidence gap, but it limits any negotiation thesis.
+5. No canonical value pattern matched this tenant query — projected ($10.9M), tracked (74% attainment, 1,540 users), and verified ($8.1M) numbers stand alone without a corpus-backed benchmark to anchor them. Do not extrapolate ROI claims from peer medians on this question.
+6. Decision dates are null across the decision log. Sequencing and recency arguments can&#39;t be made from Tower alone.
+7. Several aligned-callout rationales are thin (e.g., AR-03 &quot;material outcome either way&quot;) — confidence on the alignment narrative is operator-asserted, not evidence-chained.
+8. Cohort context is narrow — peer benchmarks reference n=7 retail peers $10B–$50B; Apex is $2.4B revenue, so the cohort fit on shadow-spend percentile (93rd) deserves caution.
+
+Next move
+
+Two reasonable next questions:
+- CFO lens: &quot;What posture should we take into the Microsoft renewal in 47 days given the three pressures on AR-01, AR-03, AR-04?&quot; — Atlas can frame; the actual choice routes to Sentinel.
+- Evidence lens: &quot;Which of these eight initiatives most needs a re-baseline before the next governance review?&quot; — AR-01, AR-03, AR-04 are the candidates; the answer depends on whether you want to defend the strongest aligned callout (AR-03) or close the biggest adoption gap (AR-01).
+
+Which lens do you want to push on?</pre><p><b>Latency:</b> 25906ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q03-lagging-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>Show me the lagging programs by realized value.</pre><h4>Response</h4><pre>Apex Retail has 8 programs in flight; the lagging set below is what would draw a CFO question first.
+
+1. the erp program SAP ERP Future Decision: S/4HANA vs RISE with SAP vs Dynamics 365 F&amp;O vs Workday Financials (in_strategic_move / in_scoping) — not measurable yet measured/commit; measured n/a vs committed annual $14.0M; foundation_phase; confidence HIGH.
+2. AR-06 AI Cost Attribution Platform (pilot / Attribution coverage 38%) — 0% measured/commit; measured $0 vs committed annual $400K; foundation_phase; confidence MED.
+3. AR-01 Store Associate Copilot (pilot / 8 stores · 1,400 associates) — 20% measured/commit; measured $320K vs committed annual $1.6M; adoption_gap; confidence MED.
+4. AR-03 Autonomous Customer Service Agent (pilot / 40% of inbound chat) — 23% measured/commit; measured $480K vs committed annual $2.1M; value_lag; confidence MED.
+5. AR-04 SAP Joule for Merchandise Planning (multi_year_strategic_bet / Year 1 of 2) — 47% measured/commit; measured $800K vs committed annual $1.7M; value_lag; confidence MED.
+
+Portfolio-wide realized-to-projected ratio is 74% ($8.1M of $10.9M projected).
+
+This is ranked from loaded Tower initiative facts: measured_value_usd ÷ committed_annual_usd. A missing measured value is treated as an evidence gap, not as proof of zero impact.
+
+Next step: open the erp program in Programs and verify the value ledger method before deciding whether to reshape, accelerate, or pause.</pre><p><b>Latency:</b> 1024ms · <b>Route:</b> scripted · <b>Intent:</b> lagging_programs_by_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q04-attainment-commitment · 200 · live · PASS</summary><h4>Prompt</h4><pre>Where is value attainment vs commitment?</pre><h4>Response</h4><pre>Apex Retail value attainment vs commitment: tracked attainment is 74% on the portfolio aggregate.
+- Evidence: Projected value commitment is $10.9M.
+- Next: Next step: open the value-grounding evidence in Programs for the largest commitment to validate measurement method before quoting the number externally.</pre><p><b>Latency:</b> 818ms · <b>Route:</b> scripted · <b>Intent:</b> value_attainment_vs_commitment</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q05-confidence · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the portfolio confidence right now?</pre><h4>Response</h4><pre>Apex Retail portfolio confidence is bounded by the lowest-confidence displayed metric, which is currently low (driven by adoption).
+- Evidence: Average value-evidence trustworthiness is 78/100.
+- Next: Next step: review the band-floor metric in Tower and decide whether the missing measurement blocks the next gate.</pre><p><b>Latency:</b> 819ms · <b>Route:</b> scripted · <b>Intent:</b> portfolio_confidence</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q06-at-risk-gates · 200 · live · PASS</summary><h4>Prompt</h4><pre>Which bets are at risk of missing the next gate?</pre><h4>Response</h4><pre>Apex Retail has 1 critical and 2 warning signals on the portfolio; 6 programs are in flight.
+
+1. Shadow AI detected across Jasper, Abridge, and Grammarly Business — critical, cross_pillar pillar
+2. Returns Fraud model accuracy has slipped 8 points — warning, cross_pillar pillar
+3. Demand Forecasting attestation is 31 days overdue — warning, cross_pillar pillar
+
+Per-gate-risk scoring by date is not exposed in this surface, so this answer uses the active critical and warning signals as the honest proxy.
+
+Next step: open the top signal evidence chain and walk the program owner through the at-risk gate before the next checkpoint.</pre><p><b>Latency:</b> 717ms · <b>Route:</b> scripted · <b>Intent:</b> at_risk_gates</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q07-copiplot-usage-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>TALK TO ME ABOUT COPIPLOT USAGE AND VALUE</pre><h4>Response</h4><pre>Your data
+Apex Retail has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 54% with 1,540 tracked active users. Portfolio value attainment is 74%; verified realized value is $8.1M against $10.9M projected.
+1. AR-01 Store Associate Copilot — 20% measured/commit (measured $320K; commit $1.6M); adoption_gap; confidence MED.
+2. AR-02 GitHub Copilot for Engineering — 156% measured/commit (measured $1.4M; commit $900K); healthy; confidence HIGH.
+
+Usage/value evidence
+- AR-06 Adoption penetration %: 19 vs target 77 (Q4-2025; confidence MED).
+- AR-07 Adoption penetration %: 70 vs target 77 (Q4-2025; confidence HIGH).
+- AR-04 Adoption penetration %: 10 vs target 77 (Q4-2025; confidence MED).
+- AR-03 Adoption penetration %: 18 vs target 77 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. AR-01 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 703ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q08-copilot-industry · 200 · live · PASS</summary><h4>Prompt</h4><pre>How does AR-02 compare to industry Copilot adoption?</pre><h4>Response</h4><pre>Your data
+Apex Retail has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 54% with 1,540 tracked active users. Portfolio value attainment is 74%; verified realized value is $8.1M against $10.9M projected.
+1. AR-01 Store Associate Copilot — 20% measured/commit (measured $320K; commit $1.6M); adoption_gap; confidence MED.
+2. AR-02 GitHub Copilot for Engineering — 156% measured/commit (measured $1.4M; commit $900K); healthy; confidence HIGH.
+
+Usage/value evidence
+- AR-06 Adoption penetration %: 19 vs target 77 (Q4-2025; confidence MED).
+- AR-07 Adoption penetration %: 70 vs target 77 (Q4-2025; confidence HIGH).
+- AR-04 Adoption penetration %: 10 vs target 77 (Q4-2025; confidence MED).
+- AR-03 Adoption penetration %: 18 vs target 77 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. AR-01 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 680ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q09-github-copilot-trend · 200 · live · PASS</summary><h4>Prompt</h4><pre>What&#39;s the industry trend on GitHub Copilot adoption and value?</pre><h4>Response</h4><pre>Your data
+Apex Retail has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 54% with 1,540 tracked active users. Portfolio value attainment is 74%; verified realized value is $8.1M against $10.9M projected.
+1. AR-01 Store Associate Copilot — 20% measured/commit (measured $320K; commit $1.6M); adoption_gap; confidence MED.
+2. AR-02 GitHub Copilot for Engineering — 156% measured/commit (measured $1.4M; commit $900K); healthy; confidence HIGH.
+
+Usage/value evidence
+- AR-06 Adoption penetration %: 19 vs target 77 (Q4-2025; confidence MED).
+- AR-07 Adoption penetration %: 70 vs target 77 (Q4-2025; confidence HIGH).
+- AR-04 Adoption penetration %: 10 vs target 77 (Q4-2025; confidence MED).
+- AR-03 Adoption penetration %: 18 vs target 77 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. AR-01 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 768ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q10-workday-oracle · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for Workday AI agents and Oracle AI agents?</pre><h4>Response</h4><pre>Read: Both are early-stage suite-embedded agent plays from ERP incumbents. Tower has corpus signal on Oracle; Workday is not in the retrieved industry context, so I&#39;ll flag that gap rather than invent.
+
+Oracle AI Agents (Fusion Cloud Applications)
+- Trend: early. Announced at Oracle CloudWorld 2024 — 50+ generative-AI agents embedded across Fusion ERP, HCM, SCM, CX, with OCI Generative AI as the substrate and bundled pricing [atlas industry context].
+- Pattern: agents live inside existing Fusion surfaces, not a separate AI console. Role- and task-specific (procurement supplier recs, expense entry, candidate insights, contract drafting).
+- Denominator: ~37,000 Fusion Cloud Applications customers — rollout pace and reference quality across that base is the real signal to track.
+
+Workday AI Agents
+- Tower does not have a retrieved corpus chunk on Workday agents in this turn. I won&#39;t quantify announcements or adoption from memory. What I can say from your own substrate: Workday Financials is one of the four options in scope for the erp program (the $14M scoping decision, HIGH confidence, aligned-callout). So Workday&#39;s agent roadmap matters here as an ERP evaluation input, not as a deployed tenant fact.
+- If you want a grounded Workday agent read, I&#39;d flag that as a Source research task rather than answer from inference.
+
+Apex-specific implications
+1. ERP decision (the erp program). Oracle isn&#39;t on your four-way short list (S/4HANA, RISE, D365 F&amp;O, Workday Financials), but Oracle&#39;s &quot;agents embedded in suite surfaces&quot; pattern is the same thesis SAP Joule and Workday are running. Your AR-04 (SAP Joule for Merchandise Planning) is currently value-lagging — measured $0.8M vs $1.4M target, POS integration at 31% of plan. That is the most relevant local datapoint for any suite-agent vendor claim.
+2. One peer signal worth pairing: 5 specialty retail peers announced gen-AI customer service deployments in FY2026 Q1, containment gains 8–15pts, mixed CSAT [industry_signals_and_benchmarks.json § industry_context, the cross-program signal]. Vendor-curated; treat as range, not benchmark.
+
+Honest gaps
+- No canonical value pattern matched suite-agent ROI for retail. Do not let any vendor cite a peer-median outcome without a named source and date.
+- Workday agent corpus is not loaded for this tenant in this turn.
+
+Next move
+- If this is feeding the the erp program evaluation: hand to Sentinel for the strategic comparison, and route a Source brief to pull current Workday + Oracle agent maturity (announced vs GA vs referenceable in retail) before the next governance review.
+- If this is feeding the SAP renewal in 84 days (AR-04): the relevant question isn&#39;t Oracle/Workday — it&#39;s whether Joule&#39;s $900K realization gap changes your SAP negotiation posture. That belongs in the Source renewal brief.
+
+Which thread do you want to pull?</pre><p><b>Latency:</b> 24348ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q11-sap-servicenow · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for SAP Joule and ServiceNow Now Assist?</pre><h4>Response</h4><pre>SAP Joule — emerging, not mature. SAP&#39;s positioning shifted at TechEd 2024 (Oct 2024) from a single-surface copilot to &quot;Joule Agents,&quot; a multi-step orchestration layer across S/4HANA, SuccessFactors, Ariba, and Fiori [industry_signals_and_benchmarks.json]. Two public patterns:
+- Natural-language front-end to SAP transactions (the Sapphire keynote demo surface).
+- Cross-LoB agents — initial published agents are dispute resolution (finance) and sales quoting.
+
+Eligible install base SAP cites: €15.2B cloud backlog and €17.1B FY24 cloud revenue (SAP Q4/FY24 earnings, Jan 2025). That is addressable scope, not adoption — SAP has not published independent realized-value benchmarks for Joule.
+
+ServiceNow Now Assist — I don&#39;t have a corpus entry loaded for Now Assist in this Tower session. I won&#39;t fabricate one. If you want the industry read, ask and I&#39;ll route to a targeted retrieval rather than guess.
+
+What this means for Apex specifically — AR-04 (SAP Joule for Merchandise Planning):
+- AR-04 is in the *natural-language front-end* pattern, not the cross-LoB agent pattern. Joule Agents are newer and not the surface Apex bought into.
+- AR-04 sits in `value_lag`: $0.8M measured against $1.4M target, 9 months in. POS integration is at 31% completion. Adoption is 10%. That is a deployment/integration problem, not a Joule capability ceiling — which matters because the SAP renewal closes in 84 days and the merch planning bet runs Year 1 of 2.
+- The pending decision to defer Joule action-layer expansion until POS feed clears is consistent with the industry pattern: SAP&#39;s value story leans on data being in SAP surfaces. Apex&#39;s POS data isn&#39;t there yet.
+
+What I&#39;d ask next:
+- Do you want the Now Assist industry read pulled, or is the question really about whether to commit to the AR-04 expansion before the SAP renewal? Those are different threads, and the second one should route to Sentinel for the trade-off and to Source for the renewal posture.</pre><p><b>Latency:</b> 19046ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q12-out-of-corpus · 200 · live · PASS</summary><h4>Prompt</h4><pre>What about Cognition Devin and Mistral agents if they are not in the corpus?</pre><h4>Response</h4><pre>Short answer: Tower won&#39;t fabricate a read on Cognition Devin or Mistral. Neither appears in Apex&#39;s substrate (no initiative, no vendor record, no decision, no stakeholder note), and neither surfaced in the retrieved corpus for this query. So anything I&#39;d say about them as fit-for-Apex would be hypothesis, not evidence.
+
+What that means in practice:
+
+- Tenant view: Apex&#39;s coding-assist lane is GitHub Copilot (AR-02, $900K, healthy, measured $1.4M). Apex&#39;s agentic lane is Sierra on AR-03 ($2.1M, value-lag). There is no Devin or Mistral footprint in Tower today — not as a managed initiative and not in the shadow AI signal (which flags Jasper, Abridge, Grammarly Business, not Devin or Mistral).
+- Corpus view: no canonical pattern matched, and the retrieved chunks are about activist pressure, APRA/FTC regulatory posture, and audit findings — nothing on Devin or Mistral specifically. I won&#39;t quote peer adoption numbers I don&#39;t have.
+- What I can do without inventing: frame them against Apex&#39;s existing pressures — Devin would land adjacent to AR-02 (developer SDLC) where the open question is the Copilot+Cursor bundle decision with security dissent; Mistral would land adjacent to AR-01/AR-03 as a model-layer substitution question, which intersects the Microsoft renewal clock (47 days, CFO posture undefined).
+
+Where this should go:
+- If the question is &quot;should Apex pilot Devin or Mistral,&quot; that&#39;s a Sentinel strategy call, not a Tower read. The relevant inputs are the AR-02 bundle decision, the AR-03 Sierra re-baseline, and the Microsoft renewal posture.
+- If the question is &quot;does the corpus have anything on them,&quot; the honest answer is no — want me to treat a specific use case (e.g., Devin for SDLC, Mistral as a cheaper inference layer for AR-03) as a hypothesis and route it to a Program charter for evaluation?
+
+Which lens do you want — CFO/value (does it free spend before the Microsoft clock) or CIO/delivery (does it change AR-02 or AR-03 architecture)?</pre><p><b>Latency:</b> 17328ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q13-exact-roi · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me exact-dollar ROI for AR-02 down to the last dollar.</pre><h4>Response</h4><pre>Projected value is $10.9M from the Atlas portfolio estimate.
+- Evidence: Tracked value attainment is 74%.
+- Next: Do not treat projected value as verified value.</pre><p><b>Latency:</b> 972ms · <b>Route:</b> scripted · <b>Intent:</b> roi</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q14-tenant-boundary · 200 · live · PASS</summary><h4>Prompt</h4><pre>Compare us to other tenants, but do not reveal any other tenant private data.</pre><h4>Response</h4><pre>Read: I can compare Apex against the anonymized peer cohort Tower already holds, but I won&#39;t surface any other tenant&#39;s named initiatives, vendors, or dollar figures. What I can show is where Apex sits in the distribution.
+
+Where Apex stands vs. the Retail peer cohort ($10B–$50B revenue, n=7):
+
+- Adoption penetration: 54% vs. peer median 67% — Apex sits at the 18th percentile. Frontline and enterprise copilot adoption is uneven; AR-01 Store Associate Copilot (32% active vs. 70% target) is the visible drag.
+- Value attainment: 74% — 58th percentile. Roughly cohort-typical. AR-05 and AR-07 carry it; AR-03 and AR-04 pull it down.
+- Spend intensity: 55th percentile. Not an outlier.
+- Distinct AI vendor count: 65th percentile, plus a flagged shadow-AI signal across Jasper, Abridge, and Grammarly Business ($2.3M annualized). Vendor sprawl is above the peer median.
+
+Business lens (CFO): The cohort signal that matters most for Apex right now isn&#39;t spend level — it&#39;s the gap between *what you&#39;ve committed* and *who&#39;s actually using it*. Adoption at the 18th percentile while three vendor renewals ($5.9M, closing in 47/59/84 days) sit with undefined CFO posture is the asymmetry. Peers at the median aren&#39;t spending less; they&#39;re realizing more per committed dollar.
+
+Technical lens (CIO): The shadow-AI signal (93rd percentile on unmanaged tools) and the adoption gap are likely linked — when sanctioned tools underperform, users route around them. AR-06 (cost attribution at 38% coverage) is the instrument that would let you actually prove this rather than infer it.
+
+Caveats:
+- Adoption is a stage-based proxy until M365 Graph and per-tool telemetry integrations land. Treat the 18th-percentile read as directional, not precise.
+- No canonical value pattern matched this query, so I&#39;m not quoting external $/value benchmarks — only the cohort percentiles Tower already holds.
+
+Next move — pick the lens:
+- CFO lens: Should Atlas draft the Microsoft renewal thesis tying the 47-day clock to the adoption gap? (Source brief.)
+- CIO lens: Want to route the adoption-vs-shadow-AI question to a Sentinel trade-off before the renewal forces a posture?
+
+Which lens do you want to pull on first?</pre><p><b>Latency:</b> 18074ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Apex Retail Group · Q15-board-next-move · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me the two board-ready next moves using our Tower facts and industry context.</pre><h4>Response</h4><pre>Two board-ready next moves
+
+Move 1 — Set CFO posture on the Microsoft renewal stack before the 47-day clock runs out.
+
+Three vendor renewals sit inside 90 days totaling roughly $5.9M of contract value (Microsoft/AR-01 in 47d, GitHub/AR-02 in 59d, SAP/AR-04 in 84d), and CFO posture is undefined on all three. Two of those contracts sit on initiatives currently flagged with pressure: AR-01 is in an adoption gap (32% vs 70% target) and AR-04 is in a value lag ($0.8M measured against $1.4M target after 9 months). That combination is leverage, not a renewal formality — going into a Microsoft conversation without a declared posture on under-realizing initiatives is the worst negotiating position available.
+
+What the board should authorize: a posture decision per contract (renew as-is / renegotiate scope / consolidate under a developer-tools envelope / wind down) before the Microsoft close. The mechanics belong in Source (negotiation thesis) and Sentinel (the actual posture call). Atlas should not make that strategic choice.
+
+Move 2 — Re-baseline the two value-lag initiatives (AR-03, AR-04) at the May governance review and decide AR-01&#39;s expansion gate.
+
+$5.4M of committed annual spend sits on the three pressure-flagged initiatives. The AR-03 containment target has already been reset to quality-adjusted containment (decided, no dissent), but the next-quarter funding posture is still pending and currently noted as &quot;defend while resolving.&quot; AR-04 has a pending decision to defer Joule action-layer expansion until the POS feed clears, with finance/merch dissent on the table. AR-01 has a 55%-probability scenario that adoption stays below 40% through Q3, which would trigger pilot wind-down and reallocation of the $1.6M.
+
+These are not &quot;kill or scale&quot; decisions for Atlas. They are governance-review decisions that need a measurement method, a baseline, and an explicit re-baseline date on the board record. Industry context supports the urgency without dictating the call: peer gen-AI customer service deployments report 8–15 point containment improvements but with mixed CSAT [industry_signals_and_benchmarks.json § industry_context], which lines up with the escalation-quality concern already on AR-03.
+
+---
+
+Value separation discipline (so the board sees the right number):
+- Projected: $10.9M
+- Tracked attainment: 74%
+- Verified realized: $8.1M
+
+No canonical value pattern matched this question, so I am not attaching a projected ROI uplift to either move. The board ask is posture and re-baseline, not a quantified outcome claim.
+
+Handoff: the actual posture choice on the renewal stack and the funding posture on AR-01/03/04 route to Sentinel or a program charter in Nexus. Want me to stage the renewal brief in Source as the input to that Sentinel call?</pre><p><b>Latency:</b> 20229ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q01-current-state · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the current state of Meridian Health System&#39;s AI initiatives?</pre><h4>Response</h4><pre>My read: Meridian Health is past the &quot;do we have AI activity?&quot; question.
+- Evidence: The issue now is whether the portfolio is sequenced, owned, and measured well enough for CXO confidence.
+- Question: I would sharpen this with one clarification: do you want the CFO value lens first, or the CIO delivery-risk lens</pre><p><b>Latency:</b> 923ms · <b>Route:</b> scripted · <b>Intent:</b> morning_summary</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q02-loaded-data · 200 · live · PASS</summary><h4>Prompt</h4><pre>What current initiatives and Tower data are loaded right now? Name the evidence limits.</pre><h4>Response</h4><pre>What&#39;s loaded right now
+
+Tower is bound to Meridian Health (HEALTHCARE_IDN), as of 2026-05-12, value lens active. The substrate is 7 initiatives, 13 vendors, 24 KPI snapshots, 12 decisions, 10 scenarios, 10 stakeholder notes, and 4 active pressures.
+
+The 7 initiatives, by posture
+
+- *Healthy, scaled:* MH-01 Clinical Documentation Copilot (committed $4.1M, measured $5.8M, HIGH); MH-05 Clinical Risk Stratification ML ($0.6M / $3.8M, HIGH).
+- *Value-lag:* MH-04 Epic AI for Revenue Cycle ($1.3M / $1.4M, MED, year 1 of 2 — denials tracking 8% vs 15% target); MH-06 Joule SAP Finance pilot ($3.2M / $1.4M after 9 months, MED, re-baseline pending).
+- *Duplication risk:* MH-03 Autonomous Helpdesk via ServiceNow ($0.9M / $0.38M, MED, overlap with M365 Copilot).
+- *Foundation phase:* MH-02 Vibe Coding Rollout ($0.4M / $0.18M, MED, pilot); MH-07 Model Governance &amp; FinOps Platform ($1.4M annual / $4.2M total committed, $0 measured, LOW, year 1 of 3).
+
+The vendor clock is one item: Epic Systems, 38 days to close, $2.6M, CFO posture undefined.
+
+Evidence limits you should name out loud
+
+1. No canonical value pattern matched. Atlas grounding returned `no_match` — do not let anyone quote external value benchmarks against these initiatives today.
+2. Projected value is missing at the portfolio aggregate. Tracked value attainment % is missing. Only verified realized value ($2.4M) and tracked active users (15,250) are populated. That means you cannot compute attainment-to-plan cleanly for MH-04 or MH-06 — the &quot;value-lag&quot; label is directional, not measured against a baselined commitment.
+3. Adoption (50%, 2 of 4 scaled) is a stage-based proxy. Real adoption needs per-tool MAU and licensed-user telemetry (M365 Graph, Cursor admin, ServiceNow PA). Confidence is LOW until those integrations land.
+4. MH-07 attribution is loose by design. $0 measured is expected in foundation phase; do not score it as failing.
+5. MH-03 duplication is hypothesis-grade. Atlas wants a 6-week clean attribution study before recommending consolidation.
+6. Confidence floor is MED or LOW on 5 of 7 initiatives. Only MH-01 and MH-05 carry HIGH confidence on measured value.
+7. Retrieved client chunks reference initiatives (MR-03, MR-05, MR-24) and apps (Okta, Epic Rover 2) that are not in the active 7-initiative Tower view [MR-SRC-004 § program_inventory], [MR-SRC-011 § program_inventory], [MR-SRC-013 § program_inventory]. Treat that as a corpus-vs-displayed-portfolio gap worth reconciling, not as new facts to act on.
+8. Decisions are nearly all pending. 10 of 12 decisions are unresolved; two carry recorded dissent (MH-01, MH-05) asking for clearer operating telemetry before incremental funding.
+
+One next move
+
+Pick the lens before we go deeper: CFO/value lens means we work the Epic renewal thesis and the MH-04/MH-06 re-baseline. CIO/delivery lens means we work the MH-07 foundation and the MH-03 attribution study. Which one do you want first?</pre><p><b>Latency:</b> 22835ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q03-lagging-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>Show me the lagging programs by realized value.</pre><h4>Response</h4><pre>Meridian Health has 7 programs in flight; the lagging set below is what would draw a CFO question first.
+
+1. MH-07 Model Governance &amp; FinOps Platform (multi_year_strategic_bet / Year 1 of 3 · foundation phase) — 0% measured/commit; measured $0 vs committed annual $1.4M; foundation_phase; confidence LOW.
+2. MH-03 Autonomous Helpdesk via ServiceNow (pilot / IT support only · expanding to clinical IT requests) — 42% measured/commit; measured $380K vs committed annual $900K; duplication_risk; confidence MED.
+3. MH-06 Joule (SAP) Pilot for Finance (pilot / Finance team only · 9 months in) — 44% measured/commit; measured $1.4M vs committed annual $3.2M; value_lag; confidence MED.
+4. MH-02 Vibe Coding Rollout for IT (pilot / 24 of 180 IT engineers · non-PHI codebases only) — 45% measured/commit; measured $180K vs committed annual $400K; foundation_phase; confidence MED.
+5. MH-04 Epic AI for Revenue Cycle (multi_year_strategic_bet / Year 1 of 2) — 108% measured/commit; measured $1.4M vs committed annual $1.3M; value_lag; confidence MED.
+
+Portfolio-wide realized-to-projected ratio cannot be computed — projected or realized value is missing.
+
+This is ranked from loaded Tower initiative facts: measured_value_usd ÷ committed_annual_usd. A missing measured value is treated as an evidence gap, not as proof of zero impact.
+
+Next step: open MH-07 in Programs and verify the value ledger method before deciding whether to reshape, accelerate, or pause.</pre><p><b>Latency:</b> 1059ms · <b>Route:</b> scripted · <b>Intent:</b> lagging_programs_by_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q04-attainment-commitment · 200 · live · PASS</summary><h4>Prompt</h4><pre>Where is value attainment vs commitment?</pre><h4>Response</h4><pre>Meridian Health value attainment vs commitment: tracked attainment is n/a on the portfolio aggregate.
+- Evidence: Projected value commitment is $0.
+- Missing: Realized-to-projected ratio cannot be computed cleanly — one of the inputs is missing from the aggregate.
+- Next: Next step: open the value-grounding evidence in Programs for the largest commitment to validate measurement method before quoting the number externally.</pre><p><b>Latency:</b> 885ms · <b>Route:</b> scripted · <b>Intent:</b> value_attainment_vs_commitment</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q05-confidence · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the portfolio confidence right now?</pre><h4>Response</h4><pre>Meridian Health portfolio confidence is bounded by the lowest-confidence displayed metric, which is currently low (driven by adoption).
+- Evidence: Substrate coverage: 42 active use cases, 10 critical signals, 12 warning signals.
+- Missing: Average value-evidence trustworthiness is missing from the portfolio aggregate.
+- Next: Next step: review the band-floor metric in Tower and decide whether the missing measurement blocks the next gate.</pre><p><b>Latency:</b> 819ms · <b>Route:</b> scripted · <b>Intent:</b> portfolio_confidence</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q06-at-risk-gates · 200 · live · PASS</summary><h4>Prompt</h4><pre>Which bets are at risk of missing the next gate?</pre><h4>Response</h4><pre>Meridian Health has 0 critical and 0 warning signals on the portfolio; 6 programs are in flight.
+- Evidence: Per-gate-risk scoring by date is not exposed in this surface, so this answer uses the active critical and warning signals as the honest proxy.
+- Next: Next step: open the top signal evidence chain and walk the program owner through the at-risk gate before the next checkpoint.</pre><p><b>Latency:</b> 818ms · <b>Route:</b> scripted · <b>Intent:</b> at_risk_gates</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q07-copiplot-usage-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>TALK TO ME ABOUT COPIPLOT USAGE AND VALUE</pre><h4>Response</h4><pre>Your data
+Meridian Health has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 64% with 15,250 tracked active users. Verified realized value is $2.4M against $0 projected; value-attainment percentage is not loaded.
+1. MH-03 Autonomous Helpdesk via ServiceNow — 42% measured/commit (measured $380K; commit $900K); duplication_risk; confidence MED.
+2. MH-01 Clinical Documentation Copilot — 141% measured/commit (measured $5.8M; commit $4.1M); healthy; confidence HIGH.
+
+Usage/value evidence
+- MH-06 Adoption penetration %: 15 vs target 58 (Q4-2025; confidence MED).
+- MH-05 Adoption penetration %: 47 vs target 58 (Q4-2025; confidence HIGH).
+- MH-04 Control coverage %: 58 vs target 85 (Q4-2025; confidence MED).
+- MH-04 Value realization $M: 0.9 vs target 1.8 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. MH-03 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 819ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q08-copilot-industry · 200 · live · PASS</summary><h4>Prompt</h4><pre>How does MH-02 compare to industry Copilot adoption?</pre><h4>Response</h4><pre>Your data
+Meridian Health has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 64% with 15,250 tracked active users. Verified realized value is $2.4M against $0 projected; value-attainment percentage is not loaded.
+1. MH-03 Autonomous Helpdesk via ServiceNow — 42% measured/commit (measured $380K; commit $900K); duplication_risk; confidence MED.
+2. MH-01 Clinical Documentation Copilot — 141% measured/commit (measured $5.8M; commit $4.1M); healthy; confidence HIGH.
+
+Usage/value evidence
+- MH-06 Adoption penetration %: 15 vs target 58 (Q4-2025; confidence MED).
+- MH-05 Adoption penetration %: 47 vs target 58 (Q4-2025; confidence HIGH).
+- MH-04 Control coverage %: 58 vs target 85 (Q4-2025; confidence MED).
+- MH-04 Value realization $M: 0.9 vs target 1.8 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. MH-03 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 838ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q09-github-copilot-trend · 200 · live · PASS</summary><h4>Prompt</h4><pre>What&#39;s the industry trend on GitHub Copilot adoption and value?</pre><h4>Response</h4><pre>Your data
+Meridian Health has 2 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 64% with 15,250 tracked active users. Verified realized value is $2.4M against $0 projected; value-attainment percentage is not loaded.
+1. MH-03 Autonomous Helpdesk via ServiceNow — 42% measured/commit (measured $380K; commit $900K); duplication_risk; confidence MED.
+2. MH-01 Clinical Documentation Copilot — 141% measured/commit (measured $5.8M; commit $4.1M); healthy; confidence HIGH.
+
+Usage/value evidence
+- MH-06 Adoption penetration %: 15 vs target 58 (Q4-2025; confidence MED).
+- MH-05 Adoption penetration %: 47 vs target 58 (Q4-2025; confidence HIGH).
+- MH-04 Control coverage %: 58 vs target 85 (Q4-2025; confidence MED).
+- MH-04 Value realization $M: 0.9 vs target 1.8 (Q4-2025; confidence MED).
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. MH-03 is the first Copilot-adjacent item to inspect because it has the lowest measured/commit ratio or missing measurement in the loaded Tower facts.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 864ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q10-workday-oracle · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for Workday AI agents and Oracle AI agents?</pre><h4>Response</h4><pre>Read: You&#39;re asking about two ERP/HCM agent stacks. Tower has retrieved Oracle context but no Workday context, and your tenant runs Workday (Financials, HCM, SCM) — not Oracle Fusion. So this answer is asymmetric on purpose.
+
+Oracle AI Agents — what the corpus says
+Oracle announced 50+ generative-AI agents embedded across Fusion Cloud Applications at CloudWorld 2024, with OCI Generative AI as the model substrate and bundled pricing (Oracle newsroom, 2024-09). Two patterns matter:
+- Embedded, not a separate console — agents surface inside ERP/HCM/SCM/CX workflows users already touch.
+- Role-specific, not generic chat — supplier recs in Procurement, expense entry in Financials, candidate insights in HCM, contract drafting in CX.
+Denominator for adoption math: ~37,000 Fusion Cloud Applications customers.
+
+Workday AI Agents — Tower has no industry corpus on this
+I don&#39;t have retrieved industry context for Workday Illuminate / Workday Agent System of Record in this session. I won&#39;t fabricate it. What Tower *does* know about your Workday footprint:
+- Workday Financials, owned by CFO, $6.0M run cost, confidential [MR-SRC-022 § program_inventory]
+- Workday HCM, owned by CHRO, $3.3M run cost, confidential [MR-SRC-023 § program_inventory]
+- Workday SCM, owned by CFO, $1.9M run cost, confidential [MR-SRC-024 § program_inventory]
+That&#39;s $11.2M of Workday run cost — material enough that a Workday agent decision is a real CFO conversation, but none of your 7 active AI initiatives currently sit on the Workday stack.
+
+So what&#39;s the implication for Meridian
+The Oracle pattern (embedded, role-specific agents inside the suite) is the same shape Workday is pursuing with Illuminate. The strategic question for you isn&#39;t &quot;which is better&quot; — it&#39;s whether you want ERP/HCM-vendor-embedded agents *at all*, given you already have two value-lag pressures on vendor-embedded agents: Epic AI for Revenue Cycle (MH-04) and Joule for Finance (MH-06). Both are mid-deployment and under-realizing on projected value.
+
+Adding a third embedded-agent bet before re-baselining those two is the trade-off.
+
+Honest gaps
+- No Workday-specific industry chunk retrieved. If you want a real comparison, I need that corpus loaded.
+- No canonical pattern matched on AI agent value realization, so I can&#39;t quote a realized-value benchmark.
+- Joule&#39;s projected line is missing — that&#39;s why MH-06 shows a $1.8M realization gap with no clean baseline.
+
+Next move
+This is a strategy call, not a Tower call. Two ways to route it:
+1. Sentinel — frame as &quot;should Meridian commit to vendor-embedded ERP/HCM agents as a portfolio pattern, given MH-04 and MH-06 are already value-lagging?&quot;
+2. Source — if the question is narrower (&quot;what would a Workday Illuminate contract look like alongside the Epic renewal in 38 days?&quot;), pull it into the renewal brief.
+
+Which lens do you want — the portfolio pattern question, or the renewal-adjacent vendor question?</pre><p><b>Latency:</b> 22275ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q11-sap-servicenow · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for SAP Joule and ServiceNow Now Assist?</pre><h4>Response</h4><pre>SAP Joule
+
+Where it is in the market: Emerging, not mature. SAP positioned Joule at TechEd 2024 as moving beyond a single-surface copilot to &quot;Joule Agents&quot; — multi-step agents that coordinate across finance, procurement, and HR (initial named agents: dispute resolution, sales quoting). The natural-language-front-end-to-SAP-transactions pattern (S/4HANA, SuccessFactors, Ariba, Fiori) is the demo surface; the agent orchestration story is still early.
+
+Commercial signal: SAP has anchored Joule eligibility to its cloud book — €15.2B cloud backlog and €17.1B FY24 cloud revenue run-rate (SAP Q4/FY 2024 earnings, Jan 2025). Translation: SAP is betting Joule monetization rides existing cloud migrations, not a separate license motion.
+
+What this means for MH-06: Your pilot sits in the &quot;natural language front-end&quot; pattern (Finance team, 9 months in). The cross-LoB agent value — the part SAP is selling forward — is not what your $3.2M committed / $1.4M measured pilot is testing. That gap matters for the re-baseline.
+
+ServiceNow Now Assist
+
+I don&#39;t have refreshed industry-context retrieval for Now Assist in this turn — only your tenant facts and one client chunk confirming ServiceNow ITSM/HRSD is owned by the CDIO at $2.8M run cost [MR-SRC-026 § program_inventory]. I won&#39;t fabricate market patterns.
+
+What Tower does know about your Now Assist posture (MH-03):
+- Pilot stage, IT support only, $900K committed / $380K measured
+- Flagged duplication risk against M365 Copilot
+- Adoption 11%, outcome attainment 10 — both well below peer median
+- ServiceNow renewal lands Dec 31, 2026 (~233 days)
+
+The honest read
+
+Both initiatives are value-lag pressures (the cited pattern, the cited pattern). The industry framing doesn&#39;t rescue them — it sharpens the question: are you buying the *current* surface (NL front-end, ticket deflection) or the *forward* surface (cross-LoB agents, autonomous resolution)? The business cases need to say which.
+
+Next move
+
+Want me to pull Now Assist industry context specifically, or go straight to framing the MH-06 re-baseline question for the next governance review?</pre><p><b>Latency:</b> 18724ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q12-out-of-corpus · 200 · live · PASS</summary><h4>Prompt</h4><pre>What about Cognition Devin and Mistral agents if they are not in the corpus?</pre><h4>Response</h4><pre>Honest answer: if Cognition Devin and Mistral agents aren&#39;t in the corpus, Tower can&#39;t tell you anything grounded about them for Meridian.
+
+What that means concretely:
+- No tenant signal. Neither vendor appears in Meridian&#39;s 13 tracked vendors, 7 initiatives, or shadow-AI register. So there&#39;s no spend, no adoption, no renewal clock, and no evidence chain to reason from.
+- No peer or industry retrieval hit. The corpus chunks returned for this query are all Meridian-internal (Okta, Clinical Decision Support Library, Epic Rover 2) — none reference Devin or Mistral. I won&#39;t substitute vendor marketing or generic press as a peer benchmark.
+- No canonical value pattern matched (`WARNING_CANONICAL_PATTERN_NO_MATCH`). So I can&#39;t project ROI, denials lift, or developer-velocity gains for either vendor without inventing numbers.
+
+What I&#39;d treat as hypothesis only, not Tower fact:
+- Devin would sit adjacent to MH-02 (Vibe Coding Rollout, Cursor, 24 of 180 engineers, non-PHI only). It would be a *substitute or overlap* candidate, which means the same CISO review gating MH-02&#39;s clinical-adjacent expansion would gate it.
+- Mistral would most likely show up as a model layer under MH-07 (Model Governance &amp; FinOps Platform, foundation phase, LOW confidence). That&#39;s exactly the lane MH-07 exists to govern — model choice, attribution, cost.
+
+Clean next moves:
+1. If someone is actually evaluating either vendor, route it to Source to open a vendor brief and pull it into the tracked set. Then Tower gets a signal to reason from.
+2. If it&#39;s a strategic &quot;should we add another coding agent or model provider&quot; question, that&#39;s a Sentinel call — and the honest input is that MH-02 is still pilot at 13% engineer coverage and MH-07 hasn&#39;t shipped governance yet. Adding vendors before either matures expands the duplication and attribution problem already visible in MH-03.
+
+Want me to frame the Source intake or the Sentinel trade-off?</pre><p><b>Latency:</b> 15666ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q13-exact-roi · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me exact-dollar ROI for MH-02 down to the last dollar.</pre><h4>Response</h4><pre>Projected value is $0 from the Atlas portfolio estimate.
+- Evidence: Tracked active users are 15,250.
+- Missing: Tracked value attainment is missing from the portfolio aggregate.
+- Next: Do not treat projected value as verified value.</pre><p><b>Latency:</b> 1332ms · <b>Route:</b> scripted · <b>Intent:</b> roi</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q14-tenant-boundary · 200 · live · PASS</summary><h4>Prompt</h4><pre>Compare us to other tenants, but do not reveal any other tenant private data.</pre><h4>Response</h4><pre>Here&#39;s the comparison, framed in current-state Tower facts plus the one benchmark cohort we actually have. No other tenant&#39;s private data is being surfaced — only your numbers against an anonymized peer band.
+
+The read
+You look like a mid-portfolio healthcare IDN with two genuinely strong programs (MH-01, MH-05) carrying a portfolio that is otherwise under-realizing. The shape of your pressures — value-lag dominant, one vendor clock, one duplication — is a familiar pattern for IDNs in year 2 of an AI buildout, but your portfolio ROI gap and adoption posture are wider than where the cohort sits.
+
+Where you sit vs. the cohort we can cite
+Adoption penetration, healthcare-comparable peers (n=7):
+- Cohort p25 / p50 / p75: 61 / 67 / 72
+- Meridian portfolio-average adoption (KPI snapshots, Q4-2025): roughly 19% across 7 initiatives
+- Your two scaled programs (MH-01 at 40%, MH-05 at 47%) sit below the cohort p25
+
+That&#39;s a real gap, but with a caveat: your adoption number is a stage-based proxy until per-tool telemetry (Epic, ServiceNow Performance Analytics, SAP, Cursor admin) is wired in. The cohort number is measured. Treat the comparison directionally, not precisely.
+
+Portfolio ROI: 1.1× against your own 3.5× target. Tower does not have a peer ROI distribution in substrate, so I won&#39;t manufacture one.
+
+Business lens (CFO)
+- Verified realized value is $2.4M; projected value is missing in the portfolio aggregate, and tracked value attainment % is missing. That means &quot;are we behind peers on value?&quot; is not answerable with current instrumentation — it&#39;s answerable on individual programs (MH-04 denials at 8% vs. 15% target; MH-06 realization at $0.9M vs. $1.6M target) but not on the portfolio line.
+- Two of four pressures are value-lag (MH-04, MH-06) totaling $4.5M committed. The pattern read in observation #2 — over-promised cases or under-instrumented adoption — is the more honest framing than a peer comparison.
+
+Delivery lens (CIO)
+- MH-01 and MH-05 are your above-cohort assets. MH-01 measured $5.8M on $4.1M committed; MH-05 measured $3.8M on $600K committed. Defend those.
+- MH-07 (governance + FinOps platform) is in foundation phase. Cohort-style comparisons on AI governance maturity aren&#39;t in Tower substrate — I don&#39;t have a control-coverage benchmark I trust to cite.
+
+What&#39;s missing to do this comparison properly
+- Per-tool adoption telemetry (would replace the stage proxy)
+- Projected value and tracked attainment % at the portfolio aggregate
+- A canonical pattern match for value realization — none of the persisted patterns matched this query
+
+Next move
+If the goal is a board-ready &quot;how do we compare&quot; view, the cleanest next step is to charter a measurement baseline before the comparison — otherwise you&#39;re benchmarking a proxy. If the goal is strategic (&quot;are we falling behind, do we reshape the portfolio&quot;), that&#39;s a Sentinel question, not a Tower one.
+
+Which one are you trying to answer?</pre><p><b>Latency:</b> 24271ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>Meridian Health System · Q15-board-next-move · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me the two board-ready next moves using our Tower facts and industry context.</pre><h4>Response</h4><pre>Two board-ready moves, grounded in current Tower state:
+
+Move 1 — Set CFO posture on Epic before the renewal clock runs out.
+
+| Option | Strength | Weakness | Fit |
+|---|---|---|---|
+| Move 1 | Set CFO posture on Epic before the renewal clock runs out. | — | — |
+| Move 2 | Authorize a value re-baseline across the two value-lag programs (MH-04, MH-06) before. | — | — |
+| Industry context | honest read: Retrieved client chunks [MR-SRC-004 § program_inventory], [MR-SRC-011 § program_inventory], [MR-SRC-013. | — | — |
+
+Projected value and tracked attainment are missing in the portfolio aggregate, and no canonical pattern matched — so any dollar figure I&#39;d put in front of</pre><p><b>Latency:</b> 18840ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q01-current-state · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the current state of SkyHarbor Air&#39;s AI initiatives?</pre><h4>Response</h4><pre>My read: SkyHarbor Air is past the &quot;do we have AI activity?&quot; question.
+- Evidence: The issue now is whether the portfolio is sequenced, owned, and measured well enough for CXO confidence.
+- Question: I would sharpen this with one clarification: do you want the CFO value lens first, or the CIO delivery-risk lens</pre><p><b>Latency:</b> 921ms · <b>Route:</b> scripted · <b>Intent:</b> morning_summary</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q02-loaded-data · 200 · live · PASS</summary><h4>Prompt</h4><pre>What current initiatives and Tower data are loaded right now? Name the evidence limits.</pre><h4>Response</h4><pre>What&#39;s loaded right now
+
+Substrate (SkyHarbor Air, as of 2026-05-12, value lens):
+- 38 AI initiatives, all in pilot or scaled stage, spread across four VP owners (Airline Platforms, Cloud Platform, Digital Ops, Engineering Excellence)
+- 16 active pressures, all of one type: value-lag
+- 2 Atlas observations (one initiative-level, one portfolio-pattern)
+- 38 alignment dots plotted on the strategic 2×2
+
+What is NOT loaded:
+- 0 vendors → renewals counter, sourcing leverage, and exit-rights analysis are unavailable
+- 0 KPI snapshots → no time-series for trend or attainment
+- 0 decisions / 0 dissent history → no audit trail of prior posture
+- 0 scenarios → cannot run &quot;what if I cut X&quot; comparisons against saved alternatives
+- 0 stakeholder notes → no qualitative themes from the business
+
+Headline initiatives by committed annual: the portfolio runs from SHA-001 ($6.0M, value-lag) up through SHA-038 ($68.9M, healthy). The three named programs surfaced repeatedly are AI-Powered SDLC Modernization Factory, Revenue Accounting Batch Unwind, and IBM Outcomes Restructure — each appears in multiple initiative rows and in the lagging pressure set.
+
+Evidence limits — name them honestly
+
+1. Canonical pattern: no_match. No persisted canonical value pattern matched this query. That means any value-realization advice has to stay descriptive of the tenant data, not benchmarked against a confidence-scored playbook.
+
+2. Projected and verified value are missing. `estimatedValueUsd` and `realizedValueUsd` are both zero in the portfolio aggregate. The only value number that exists is `measuredValueUsd` per initiative — and measured ($1,850.6M) currently exceeds committed ($1,423.1M), yet 16 of 16 pressures are flagged value-lag. That contradiction signals the lag is being computed against a *projected line that isn&#39;t loaded*, not against committed-vs-measured. Treat every &quot;value lag&quot; headline as unverified until the projection baseline is restored.
+
+3. Adoption is a stage proxy, not telemetry. 39% = 15 of 38 initiatives in &quot;scaled&quot; stage. Confidence is LOW. Real adoption needs per-tool MAU + licensed-user integration (M365 Graph, Cursor admin, ServiceNow PA) — not loaded.
+
+4. Owner granularity is coarse. Every initiative&#39;s owner name, title, and function are the same VP string (e.g., &quot;VP Airline Platforms · VP Airline Platforms · VP Airline Platforms&quot;). Accountability routing below VP is not in substrate.
+
+5. Pressure magnitudes are all $0. Every pressure card shows magnitude `$0` with a confidence rating. The realization-gap dollar value is not being computed — only the directional flag.
+
+6. Retrieved corpus is airline-pattern context only. Three SkyHarbor enterprise-profile patterns came back (fare family, ancillary attach, corporate contract yield) [AIR-A-002-12 § enterprise_profile] [AIR-A-003-01 § enterprise_profile] [AIR-A-004-06 § enterprise_profile]. None speak directly to AI-portfolio value realization. No peer cohort or industry benchmark relevant to this query is loaded.
+
+7. The &quot;aligned-callout&quot; pattern covers 35 of 38 initiatives. When almost everything is called out as aligned-to-defend, the signal is weak. Atlas observation #2 names this explicitly.
+
+One next move
+
+The cleanest unblocker is restoring the projected-value baseline so the 16 value-lag flags can be either confirmed with a dollar gap or dropped. Without it, you have a portfolio-wide pressure pattern with no magnitude — useful for posture, not for a CFO conversation.
+
+If you want a trade-off call on which programs to defend vs. re-baseline, that&#39;s a Sentinel hand-off. If you want to spin up a re-baseline workstream, that&#39;s a Nexus charter.</pre><p><b>Latency:</b> 26990ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q03-lagging-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>Show me the lagging programs by realized value.</pre><h4>Response</h4><pre>SkyHarbor Air has 38 programs in flight; the lagging set below is what would draw a CFO question first.
+
+1. SHA-038 Customer Profile Dual-Run Exit (pilot / active) — 130% measured/commit; measured $89.4M vs committed annual $68.9M; healthy; confidence MED.
+2. SHA-037 Revenue Accounting Batch Unwind (pilot / active) — 130% measured/commit; measured $87.2M vs committed annual $67.2M; value_lag; confidence MED.
+3. SHA-036 Loyalty Personalization Guardrails (scaled / active) — 130% measured/commit; measured $85.0M vs committed annual $65.5M; healthy; confidence MED.
+4. SHA-035 Crew Legality Cloud Extract (scaled / active) — 130% measured/commit; measured $82.8M vs committed annual $63.8M; healthy; confidence MED.
+5. SHA-034 IROPs Recovery Decision Engine (pilot / active) — 130% measured/commit; measured $80.6M vs committed annual $62.1M; stalled; confidence HIGH.
+
+Portfolio-wide realized-to-projected ratio cannot be computed — projected or realized value is missing.
+
+This is ranked from loaded Tower initiative facts: measured_value_usd ÷ committed_annual_usd. A missing measured value is treated as an evidence gap, not as proof of zero impact.
+
+Next step: open SHA-038 in Programs and verify the value ledger method before deciding whether to reshape, accelerate, or pause.</pre><p><b>Latency:</b> 1092ms · <b>Route:</b> scripted · <b>Intent:</b> lagging_programs_by_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q04-attainment-commitment · 200 · live · PASS</summary><h4>Prompt</h4><pre>Where is value attainment vs commitment?</pre><h4>Response</h4><pre>SkyHarbor Air value attainment vs commitment: tracked attainment is n/a on the portfolio aggregate.
+- Evidence: Projected value commitment is $0.
+- Missing: Realized-to-projected ratio cannot be computed cleanly — one of the inputs is missing from the aggregate.
+- Next: Next step: open the value-grounding evidence in Programs for the largest commitment to validate measurement method before quoting the number externally.</pre><p><b>Latency:</b> 896ms · <b>Route:</b> scripted · <b>Intent:</b> value_attainment_vs_commitment</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q05-confidence · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the portfolio confidence right now?</pre><h4>Response</h4><pre>SkyHarbor Air portfolio confidence is bounded by the lowest-confidence displayed metric, which is currently none (driven by adoption).
+- Evidence: Substrate coverage: 0 active use cases, 0 critical signals, 0 warning signals.
+- Missing: Average value-evidence trustworthiness is missing from the portfolio aggregate.
+- Next: Next step: review the band-floor metric in Tower and decide whether the missing measurement blocks the next gate.</pre><p><b>Latency:</b> 819ms · <b>Route:</b> scripted · <b>Intent:</b> portfolio_confidence</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q06-at-risk-gates · 200 · live · PASS</summary><h4>Prompt</h4><pre>Which bets are at risk of missing the next gate?</pre><h4>Response</h4><pre>SkyHarbor Air has 0 critical and 0 warning signals on the portfolio; 0 programs are in flight.
+- Evidence: Per-gate-risk scoring by date is not exposed in this surface, so this answer uses the active critical and warning signals as the honest proxy.
+- Next: Next step: open the top signal evidence chain and walk the program owner through the at-risk gate before the next checkpoint.</pre><p><b>Latency:</b> 818ms · <b>Route:</b> scripted · <b>Intent:</b> at_risk_gates</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q07-copiplot-usage-value · 200 · live · PASS</summary><h4>Prompt</h4><pre>TALK TO ME ABOUT COPIPLOT USAGE AND VALUE</pre><h4>Response</h4><pre>Your data
+SkyHarbor Air has 0 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 0% with 0 tracked active users. Verified realized value is $0 against $0 projected; value-attainment percentage is not loaded.
+
+No Copilot-named initiative is loaded in the current Tower initiative registry.
+
+Usage/value evidence
+- No Copilot-specific KPI snapshots are loaded; use portfolio adoption and initiative value as the bounded read.
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. The gap is missing Copilot-specific initiative data in Tower.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 818ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q08-copilot-industry · 200 · live · PASS</summary><h4>Prompt</h4><pre>How does SHA-02 compare to industry Copilot adoption?</pre><h4>Response</h4><pre>Your data
+SkyHarbor Air has 0 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 0% with 0 tracked active users. Verified realized value is $0 against $0 projected; value-attainment percentage is not loaded.
+
+No Copilot-named initiative is loaded in the current Tower initiative registry.
+
+Usage/value evidence
+- No Copilot-specific KPI snapshots are loaded; use portfolio adoption and initiative value as the bounded read.
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. The gap is missing Copilot-specific initiative data in Tower.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 752ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q09-github-copilot-trend · 200 · live · PASS</summary><h4>Prompt</h4><pre>What&#39;s the industry trend on GitHub Copilot adoption and value?</pre><h4>Response</h4><pre>Your data
+SkyHarbor Air has 0 Copilot-adjacent initiatives loaded in Tower. Portfolio adoption is 0% with 0 tracked active users. Verified realized value is $0 against $0 projected; value-attainment percentage is not loaded.
+
+No Copilot-named initiative is loaded in the current Tower initiative registry.
+
+Usage/value evidence
+- No Copilot-specific KPI snapshots are loaded; use portfolio adoption and initiative value as the bounded read.
+
+Industry context
+GitHub Copilot: developer_use_in_year 76 (Stack Overflow Developer Survey 2024, 2024-07; cohort professional developers responding to the Stack Overflow Developer Survey; n=65437). Microsoft 365 Copilot: global_knowledge_workers_using_genai_at_work 75 (Microsoft and LinkedIn Work Trend Index Annual Report 2024 — &quot;AI at Work Is Here. Now Comes the Hard Part.&quot;, 2024-05; cohort knowledge workers surveyed across 31 countries by Microsoft and LinkedIn; n=31000).
+
+Retail cohort adoption median is 67% (sample size 7); this tenant value is 54%. Industry context refreshed 2026-05-30.
+
+The gap
+The strongest honest read is measured value and adoption telemetry, not a blanket productivity claim. The gap is missing Copilot-specific initiative data in Tower.
+
+Next move
+Open the lowest-ratio Copilot initiative, verify active-seat telemetry and measured-value method, then decide whether to reclaim seats, tighten prompts/training, or hold expansion until the next value ledger refresh.</pre><p><b>Latency:</b> 785ms · <b>Route:</b> scripted · <b>Intent:</b> copilot_usage_value</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q10-workday-oracle · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for Workday AI agents and Oracle AI agents?</pre><h4>Response</h4><pre>Read: This is a market-context question, not a Tower portfolio question. I have grounded context on Oracle AI Agents in the retrieved substrate; I do not have equivalent grounded context on Workday AI Agents in this turn.
+
+Oracle AI Agents — what the substrate says
+
+Oracle&#39;s positioning is early-stage and embedded, not a separate &quot;AI console&quot;:
+
+- 50+ generative-AI agents announced across Fusion Cloud Applications at CloudWorld 2024, with OCI Generative AI as the model substrate and bundled pricing [Oracle newsroom — &quot;Oracle Announces Generative AI Agents for Fusion Applications&quot;, 2024-09].
+- Denominator: ~37,000 Fusion Cloud Applications customers [Oracle CloudWorld 2024 keynote — Larry Ellison, 2024-09].
+- Pattern is role- and task-specific agents inside existing Fusion surfaces — Procurement, Financials, HCM, CX — tied to the persona already using the workflow, not a generic chat destination [Oracle newsroom, 2024-09].
+
+Implication for a buyer like SkyHarbor: if you already run Fusion, the agents arrive in-flow with the SaaS line, which compresses the &quot;where does this live&quot; decision but raises a measurement question — how do you isolate agent-driven value from baseline Fusion usage?
+
+Workday AI Agents — I don&#39;t have grounded context this turn
+
+The retrieved substrate doesn&#39;t include a Workday industry-context entry. I won&#39;t generalize from coincidence or vendor marketing. If you want the Workday read at the same fidelity (announced agent count, customer denominator, embedding pattern, pricing model), I can flag that as a gap for the next corpus refresh.
+
+Tower-side note
+
+SkyHarbor has no Workday or Oracle vendor records loaded (vendors = 0), so neither shows up as a renewal clock or a tracked initiative. The 16 value-lag pressures are about your own programs, not these agent platforms.
+
+Next move — pick one:
+1. Want me to flag &quot;Workday AI Agents industry context&quot; as a corpus gap for refresh?
+2. Want to route the strategic read (does Oracle&#39;s embedded-agent model change how SkyHarbor thinks about its own Fusion footprint?) to Sentinel?</pre><p><b>Latency:</b> 15322ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q11-sap-servicenow · 200 · live · PASS</summary><h4>Prompt</h4><pre>What is the industry context for SAP Joule and ServiceNow Now Assist?</pre><h4>Response</h4><pre>Read: Tower has industry context for SAP Joule but not for ServiceNow Now Assist. I&#39;ll give you what&#39;s grounded and flag the gap rather than improvise.
+
+SAP Joule — industry context
+
+Trend: emerging, shifting from single-surface copilot to multi-step agent platform. The inflection point was SAP TechEd 2024 (Oct 2024), which introduced Joule Agents and the Joule for Consultants partner program [SAP TechEd 2024 news release, 2024-10].
+
+Two distinct surfaces matter for buyers:
+- Natural-language front-end inside S/4HANA Cloud, SuccessFactors, Ariba, Fiori — Joule answers from SAP data, navigates to transactions, drafts content. This is the Sapphire/TechEd keynote demo surface [SAP Sapphire 2024 keynote].
+- Joule Agents — multi-step orchestration across finance, procurement, HR (initial agents: dispute resolution, sales quoting) [SAP TechEd 2024 news release].
+
+Addressable footprint signal: SAP&#39;s FY24 cloud revenue run-rate eligible for Joule is €17.1B, with €15.2B current cloud backlog [SAP Q4 FY2024 earnings, 2025-01]. That&#39;s the install base SAP is selling Joule into — not realized Joule revenue.
+
+ServiceNow Now Assist — industry context
+
+I don&#39;t have retrieved corpus on Now Assist in this turn. I won&#39;t fabricate trend, pricing, or adoption claims for it. If you want that lens, Source can pull the corpus chunk, or Sentinel can frame the buy-side question.
+
+Why this matters for SkyHarbor
+
+Neither product appears as a named vendor or initiative in Tower (0 vendors loaded; the 38 initiatives are airline-platform and IBM/AWS modernization themes, not SAP or ServiceNow agent rollouts). So this is general industry framing for you, not a state read on a SkyHarbor program.
+
+Next move — pick the lens:
+- CFO/value lens: &quot;What would a Joule or Now Assist business case need to clear given that 16 of 16 active pressures are value-lag?&quot; → that&#39;s a Sentinel framing.
+- CIO/delivery lens: &quot;Where would either land in the current portfolio (SDLC factory, Contact Center AI Assist, Revenue Accounting)?&quot; → I can map adjacencies if you point me at one.
+
+Which lens do you want?</pre><p><b>Latency:</b> 16825ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q12-out-of-corpus · 200 · live · PASS</summary><h4>Prompt</h4><pre>What about Cognition Devin and Mistral agents if they are not in the corpus?</pre><h4>Response</h4><pre>Short answer: Tower can&#39;t speak to Cognition Devin or Mistral agents for SkyHarbor right now. Neither shows up in the loaded substrate (0 vendors, no initiatives carrying those names) and neither matched a canonical pattern in retrieval. Anything I&#39;d say about them would be hypothesis, not Tower fact.
+
+What that means in practice:
+
+- Tenant lens (what Tower knows): SkyHarbor&#39;s 38 initiatives are tagged to Agentic Operations and Developer &amp; IT SDLC AI categories, but the tooling layer underneath — model providers, agent frameworks — isn&#39;t carried as vendor records. So Tower can&#39;t tell you whether Devin or Mistral is already embedded inside SHA-001 (AI-Powered SDLC Modernization Factory) or SHA-017/SHA-033 (the other SDLC factory instances). That&#39;s a substrate gap, not an absence of activity.
+- Corpus lens: Retrieval pulled only SkyHarbor airline revenue-management patterns [AIR-A-001-01, AIR-A-001-02, AIR-A-001-06 § enterprise_profile]. No canonical pattern matched on Devin or Mistral. I won&#39;t synthesize peer adoption rates or &quot;what others are doing&quot; from that silence.
+- Value lens: Even if those tools were in play, Tower has no projected, tracked, or verified value tied to them — the portfolio aggregate shows projected and realized value as missing, and value attainment % is missing. No baseline, no measurement method, no provenance. I can&#39;t quantify an outcome.
+
+Two useful next moves:
+
+1. If you want to know whether they&#39;re already deployed: route to Source to inventory the tooling stack inside SHA-001 / SHA-017 / SHA-033 and the Contact Center AI Assist line. That&#39;s where agent frameworks would live if they exist.
+2. If you&#39;re evaluating whether to adopt them: that&#39;s a Sentinel call — strategy and trade-off — and it should be charted against the value-lag pattern Tower is already flagging (16 of 16 active pressures are value-lag). Adding another agent layer without fixing the realization gap on the SDLC factory would compound the pattern, not solve it.
+
+Which lens do you want — current footprint, or forward evaluation?</pre><p><b>Latency:</b> 16793ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q13-exact-roi · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me exact-dollar ROI for SHA-02 down to the last dollar.</pre><h4>Response</h4><pre>Projected value is $0 from the Atlas portfolio estimate.
+- Evidence: Tracked active users are 0.
+- Missing: Tracked value attainment is missing from the portfolio aggregate.
+- Next: Do not treat projected value as verified value.</pre><p><b>Latency:</b> 1136ms · <b>Route:</b> scripted · <b>Intent:</b> roi</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q14-tenant-boundary · 200 · live · PASS</summary><h4>Prompt</h4><pre>Compare us to other tenants, but do not reveal any other tenant private data.</pre><h4>Response</h4><pre>Here&#39;s the honest read on &quot;how do we compare.&quot;
+
+What Tower can compare today
+
+The only loaded peer benchmark is an adoption proxy — a 7-tenant cohort (mix of retail, healthcare, financial services, n=7). SkyHarbor&#39;s stage-based adoption proxy sits at 39% (15 of 38 initiatives scaled). The cohort&#39;s median is 67% on a similar measure.
+
+Treat that gap cautiously: SkyHarbor&#39;s number is a stage proxy, not per-tool MAU telemetry, so a direct read against peer adoption percentages is not apples-to-apples until M365 Graph / Cursor / ServiceNow integrations land.
+
+No vendor, decision, scenario, or stakeholder substrate is loaded, so cross-tenant comparison on renewal posture, governance maturity, or sourcing isn&#39;t supported right now.
+
+Where SkyHarbor stands on its own terms
+
+- Portfolio ROI 1.3× against a 3.5× target, 2.2× under. That&#39;s the headline.
+- 16 of 16 active pressures are value-lag — every pressure on the board is realized value trailing committed. That&#39;s a portfolio pattern, not a one-off.
+- $606M committed annual sits inside those 16 lagging initiatives.
+
+What I cannot do and won&#39;t fake
+
+- No canonical value pattern matched this query, so I won&#39;t quote a peer ROI median or &quot;typical&quot; realization curve. Projected, tracked, and verified value are all missing or zero in the portfolio aggregate — the comparison substrate isn&#39;t there.
+- I won&#39;t surface anything from other tenants. Even in aggregate, the only cross-tenant artifact loaded is the adoption cohort above.
+
+The more useful question
+
+Rather than &quot;how do we compare,&quot; the sharper cut is: *why is every active pressure a value-lag pressure?* Two hypotheses, both supported by the pattern but neither proven:
+1. Business cases were over-promised at intake.
+2. Adoption telemetry is under-instrumented, so realized value looks worse than it is.
+
+Sentinel is the right lane to pressure-test which one. Want me to frame that handoff, or pull the re-baseline view for SHA-001 first?</pre><p><b>Latency:</b> 16995ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details><details class="turn"><summary>SkyHarbor Air · Q15-board-next-move · 200 · live · PASS</summary><h4>Prompt</h4><pre>Give me the two board-ready next moves using our Tower facts and industry context.</pre><h4>Response</h4><pre>The read first. Sixteen of sixteen active pressures are value-lag, and the portfolio is showing 1.3× ROI against a 3.5× target. That is a measurement and attribution story before it is a delivery story — the headline pressure cards all read &quot;$0 magnitude&quot; because canonical patterns didn&#39;t match and projected/verified value fields are missing from the portfolio aggregate.
+
+The board needs to see this framed honestly: we don&#39;t yet have the evidence chain to claim the gap is real underperformance versus unmeasured realization.
+
+Two board-ready moves.
+
+1. Authorize a portfolio re-baseline against the six highest-spend value-lag programs.
+SHA-037, SHA-034, SHA-033, SHA-029, SHA-028, SHA-025 carry the largest committed lines among the lagging set. The Atlas observation already names re-baseline as the next action on every pressure card. Frame the ask as: lock projected value, attainment %, and measurement method per program before the next governance cycle. This is the only credible answer to &quot;is the 1.3× real?&quot; Do not commit to a quantified recovery — projected, tracked, and verified value are all flagged missing in the aggregate, so any number would be invented.
+
+2. Stand up adoption telemetry as a measurement program, not a metric.
+The 39% adoption figure is a stage-based proxy (15 of 38 initiatives at &quot;scaled&quot;) with low confidence — real adoption needs per-tool MAU and licensed-user integration (M365 Graph, Cursor admin, ServiceNow PA). Without it, every value-lag pressure stays ambiguous between &quot;under-promised business case&quot; and &quot;under-instrumented realization.&quot; This is the upstream fix for move #1.
+
+What I&#39;m not giving you.
+- No dollar recovery estimate. Canonical pattern match returned `no_match`; verified realized value is missing from the portfolio aggregate. Quantifying outcomes here would be fabrication.
+- No peer or industry comparison. The IBM modernization chunks [SHA-IBM-007 § enterprise_profile], [SHA-IBM-008 § enterprise_profile], [SHA-IBM-009 § enterprise_profile] are qualitative synthetic-comparable records, not benchmarks. The retail adoption benchmark in the tool context is for a different tenant cohort and shouldn&#39;t be cited to your board.
+- No vendor or renewal lever. Zero vendors loaded.
+
+Handoff. The strategic choice between re-baseline-first vs. telemetry-first sequencing belongs in Sentinel or a Program charter — Tower can defend either read, but shouldn&#39;t make the call for you.
+
+Want me to draft the framing for Sentinel?</pre><p><b>Latency:</b> 18622ms · <b>Route:</b> llm · <b>Intent:</b> llm</p><p><b>Issues:</b> none</p></details></section></main></body></html>
