@@ -40,14 +40,26 @@ Adds 600 authored genome patterns across banking operational and liquidity risk,
 - `src/scripts/seed/seed-healthcare-dom09-care-transitions-part1.ts`
 - `src/scripts/seed/seed-healthcare-dom10-clinical-quality-part1.ts`
 - `src/scripts/seed/seed-healthcare-dom11-infection-control-part1.ts`
+- `src/scripts/seed/seed-banking-dom10-kyc-onboarding-part3.ts`
+- `src/scripts/seed/seed-banking-dom11-tprm-part6.ts`
+- `src/scripts/seed/seed-banking-dom12-data-governance-part6.ts`
+- `src/scripts/seed/seed-banking-dom13-cloud-infra-part6.ts`
+- `src/scripts/seed/seed-banking-dom14-ai-governance-part5.ts`
+- `src/scripts/seed/seed-healthcare-dom01-rcm-coding-part4.ts`
+- `src/scripts/seed/seed-medtech-dom01-fda-regulatory-part6.ts`
+- `src/scripts/seed/seed-medtech-dom02-eu-mdr-part3.ts`
+- `src/scripts/seed/seed-medtech-dom06-pms-part3.ts`
+- `src/scripts/seed/seed-medtech-dom12-field-service-part3.ts`
 
 ## QA / Validation
 
 - PASS — per-file `npx tsx scripts/corpus/load-authored-genome-seeds.ts --parse-only src/scripts/seed/<file>.ts`
 - PASS — batch `npx tsx scripts/corpus/load-authored-genome-seeds.ts --parse-only` across all 10 files
 - PASS — `npx eslint` across all 10 seed files
+- PASS — `npx eslint` across 10 previously merged seed files that needed local `PatternSeed` declarations
 - PASS — `git diff --check origin/main..HEAD`
-- PENDING — `npm run release:check -- --base origin/main --head HEAD`
+- PASS — `npm run release:check -- --base origin/main --head HEAD`
+- BLOCKED LOCALLY ONLY — `npx tsc --noEmit --pretty false` is blocked in this worktree by missing optional package declarations for `@azure/*`, `pptxgenjs`, and `@resvg/resvg-js`; Vercel/CI installs those dependencies and is the authoritative full-project typecheck.
 
 ## Rollout Plan
 
@@ -59,7 +71,7 @@ Revert this PR to remove the 10 authored seed files and release record; no datab
 
 ## Audit Evidence
 
-Loader parse-only output confirms 10 files and 600 parsed patterns with source keys `first-capital`, `northstar-clinical`, and `meridian-health`.
+Loader parse-only output confirms 10 files and 600 parsed patterns with source keys `first-capital`, `northstar-clinical`, and `meridian-health`; the PR also adds missing local `PatternSeed` declarations to 10 previously merged authored seed files so full project typecheck can reach the new Wave A files.
 
 ## Known Gaps
 
