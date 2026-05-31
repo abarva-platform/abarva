@@ -488,11 +488,11 @@ describe('module hygiene', () => {
     // is no longer mounted on the route — that mount is intentionally retired.
     expect(routeSource).toMatch(/AdminCanonShellV2/);
     expect(routeSource).toMatch(/buildProductionReadinessPageView/);
-    // ADMIN8 — admin overview page is at /admin (was /platform/admin); the
-    // canonical Setup Overview composes the shell, not a hardcoded link to
-    // the production-readiness sub-route. Verify the canonical shell wiring
-    // instead of the legacy URL string match.
-    expect(adminPageSource).toMatch(/AdminCanonShellV2/);
+    // HOME-WIREFRAME — /admin is now the simple Maestro home that embeds the
+    // approved first-viewport wireframe. Production readiness keeps its own
+    // canonical shell and remains linked from the wireframe.
+    expect(adminPageSource).toMatch(/data-admin-home-wireframe/);
+    expect(adminPageSource).toMatch(/admin-maestro-menu-wireframe-2026-05-31\.html/);
   });
 });
 

@@ -19,11 +19,14 @@ describe('DESROUTE3 admin shell enforcement', () => {
   const legacyAdminRoute = 'src/app/(maestro)/platform/admin/page.tsx';
   const legacyProductionRoute = 'src/app/(maestro)/platform/admin/production-readiness/page.tsx';
 
-  it('admin route files use AdminCanonShellV2 (canonical shell)', () => {
-    [adminRoute, productionRoute].forEach((file) => {
-      const source = read(file);
-      expect(source).toContain('AdminCanonShellV2');
-    });
+  it('admin home hosts the Maestro wireframe while production keeps the canonical shell', () => {
+    const adminSource = read(adminRoute);
+    expect(adminSource).toContain('data-admin-home-wireframe');
+    expect(adminSource).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+    expect(adminSource).not.toContain('HomeOverviewV2');
+
+    const productionSource = read(productionRoute);
+    expect(productionSource).toContain('AdminCanonShellV2');
   });
 
   it('active admin route avoids known legacy rail shell import', () => {
@@ -54,10 +57,10 @@ describe('DESROUTE3 admin shell enforcement', () => {
 
   it('allows only the approved demo accounts into Setup for demo walks', () => {
     const source = read(adminLayout);
-    expect(source).toContain("'demo-apexretail+clerk_test@abarva.com'");
-    expect(source).toContain("'demo-meridian+clerk_test@abarva.com'");
-    expect(source).toContain("'demo-firstcapital+clerk_test@abarva.com'");
-    expect(source).not.toContain("'retired-energy-demo@example.com'");
-    expect(source).not.toContain("'demo-arcturus+clerk_test@abarva.com'");
+    expect(source).toContain('"demo-apexretail+clerk_test@abarva.com"');
+    expect(source).toContain('"demo-meridian+clerk_test@abarva.com"');
+    expect(source).toContain('"demo-firstcapital+clerk_test@abarva.com"');
+    expect(source).not.toContain('"retired-energy-demo@example.com"');
+    expect(source).not.toContain('"demo-arcturus+clerk_test@abarva.com"');
   });
 });
