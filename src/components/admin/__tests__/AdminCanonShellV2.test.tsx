@@ -26,4 +26,17 @@ describe('AdminCanonShellV2', () => {
     expect(html).toContain('data-admin-main-scroll');
     expect(html).toContain('data-admin-agent-rail');
   });
+
+  it('keeps static guidance on demand instead of consuming a permanent right rail', () => {
+    const html = renderToStaticMarkup(
+      <AdminCanonShellV2 tenantName="Test Tenant" agentRail={<aside>Rail</aside>}>
+        <main>Users and access</main>
+      </AdminCanonShellV2>,
+    );
+
+    expect(html).toContain('grid-template-columns:280px minmax(0, 1fr)');
+    expect(html).toContain('data-admin-guidance-drawer');
+    expect(html).toContain('Guidance');
+    expect(html).not.toContain('grid-template-columns:280px 1fr 320px');
+  });
 });
