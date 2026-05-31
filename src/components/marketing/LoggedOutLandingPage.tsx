@@ -31,11 +31,13 @@ const proofMetrics = [
   ['1 trail', 'question to artifact to outcome'],
 ] as const
 
-const dashboardMetrics = [
-  ['Value at stake', '$42M'],
-  ['Failure modes caught', '18'],
-  ['Moves ready', '7'],
+const dashboardSignals = [
+  ['Sourcing savings', '$9.8M vendor and SI leverage identified'],
+  ['Failure exposure', '18 risks caught before funding'],
+  ['Tower action', '7 moves redirected, cut, or advanced'],
 ] as const
+
+const valueStages = ['Context', 'Intelligence', 'Moves', 'Source', 'Tower'] as const
 
 const operatingSystem = [
   ['Select', 'Prioritize the AI bets where value, urgency, and readiness intersect.'],
@@ -137,7 +139,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           right: clamp(26px, 5vw, 86px);
           top: clamp(206px, 26vh, 300px);
           z-index: -1;
-          width: min(430px, 30vw);
+          width: min(500px, 35vw);
           border: 1px solid rgba(255, 255, 255, 0.18);
           background:
             linear-gradient(135deg, rgba(9, 18, 34, 0.72), rgba(7, 12, 22, 0.36)),
@@ -181,68 +183,109 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           text-transform: uppercase;
         }
 
-        .hero-product-metrics {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
-          margin-top: 14px;
+        .hero-value-panel {
+          margin-top: 16px;
+          border: 1px solid rgba(121, 189, 255, 0.22);
+          background:
+            radial-gradient(circle at 18% 18%, rgba(121, 189, 255, 0.18), transparent 38%),
+            rgba(0, 102, 204, 0.10);
+          padding: 16px;
         }
 
-        .hero-product-card {
-          min-height: 96px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          background: rgba(255, 255, 255, 0.06);
-          padding: 12px;
+        .hero-value-kicker {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          color: rgba(255, 255, 255, 0.64);
+          font-size: 11px;
+          font-weight: 850;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
         }
 
-        .hero-product-card strong {
-          display: block;
-          font-family: Fraunces, Georgia, serif;
-          font-size: clamp(26px, 2.5vw, 42px);
-          line-height: 1;
-          font-weight: 650;
-          letter-spacing: -0.02em;
-        }
-
-        .hero-product-card span {
+        .hero-value-number {
           display: block;
           margin-top: 10px;
-          color: rgba(255, 255, 255, 0.66);
-          font-size: 11px;
+          font-family: Fraunces, Georgia, serif;
+          font-size: clamp(56px, 5.6vw, 86px);
+          line-height: 0.92;
+          font-weight: 650;
+          letter-spacing: -0.04em;
+        }
+
+        .hero-value-caption {
+          display: block;
+          margin-top: 8px;
+          max-width: 360px;
+          color: rgba(255, 255, 255, 0.70);
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .hero-signal-list {
+          display: grid;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hero-signal {
+          display: grid;
+          grid-template-columns: 136px 1fr;
+          gap: 12px;
+          align-items: center;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.065);
+          padding: 10px 12px;
+        }
+
+        .hero-signal strong {
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 12px;
+          line-height: 1.2;
+        }
+
+        .hero-signal span {
+          color: rgba(255, 255, 255, 0.64);
+          font-size: 12px;
           line-height: 1.35;
         }
 
         .hero-product-flow {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
-          margin-top: 14px;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          margin-top: 16px;
+          border: 1px solid rgba(121, 189, 255, 0.16);
+          background: rgba(5, 7, 11, 0.22);
         }
 
         .hero-flow-step {
           position: relative;
-          min-height: 54px;
-          border: 1px solid rgba(121, 189, 255, 0.18);
-          background: rgba(0, 102, 204, 0.10);
+          min-height: 58px;
+          border-right: 1px solid rgba(121, 189, 255, 0.16);
           color: rgba(255, 255, 255, 0.78);
-          padding: 10px;
-          font-size: 11px;
+          padding: 11px 8px;
+          font-size: 10px;
           font-weight: 800;
-          line-height: 1.25;
+          line-height: 1.2;
+          text-align: center;
         }
 
         .hero-flow-step::after {
-          content: "";
-          position: absolute;
-          right: -9px;
-          top: 50%;
-          width: 9px;
-          height: 1px;
-          background: rgba(121, 189, 255, 0.52);
+          content: "✓";
+          display: block;
+          margin: 0 auto 6px;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: rgba(121, 189, 255, 0.16);
+          color: #bfe0ff;
+          font-size: 11px;
+          line-height: 18px;
         }
 
-        .hero-flow-step:last-child::after {
-          display: none;
+        .hero-flow-step:last-child {
+          border-right: 0;
         }
 
         .hero-content {
@@ -705,6 +748,11 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             z-index: 1;
           }
 
+          .hero-signal {
+            grid-template-columns: 1fr;
+            gap: 6px;
+          }
+
           h1 {
             font-size: clamp(52px, 13vw, 84px);
           }
@@ -837,18 +885,29 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             </span>
             <span className="hero-status"><span className="pulse" /> Verified</span>
           </div>
-          <div className="hero-product-metrics">
-            {dashboardMetrics.map(([label, value]) => (
-              <div className="hero-product-card" key={label}>
-                <strong>{value}</strong>
-                <span>{label}</span>
+          <div className="hero-value-panel">
+            <span className="hero-value-kicker">
+              Value command panel
+              <span>$ verified</span>
+            </span>
+            <strong className="hero-value-number">$42M</strong>
+            <span className="hero-value-caption">
+              projected value protected through better AI bet selection, sourcing leverage,
+              redirected spend, and Tower-backed outcome proof.
+            </span>
+          </div>
+          <div className="hero-signal-list">
+            {dashboardSignals.map(([label, value]) => (
+              <div className="hero-signal" key={label}>
+                <strong>{label}</strong>
+                <span>{value}</span>
               </div>
             ))}
           </div>
           <div className="hero-product-flow">
-            <span className="hero-flow-step">Context loaded</span>
-            <span className="hero-flow-step">Move de-risked</span>
-            <span className="hero-flow-step">Value tracked</span>
+            {valueStages.map((stage) => (
+              <span className="hero-flow-step" key={stage}>{stage}</span>
+            ))}
           </div>
         </div>
 
