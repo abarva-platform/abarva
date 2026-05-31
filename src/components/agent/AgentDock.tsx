@@ -622,7 +622,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Suggested actions */}
         {suggestedActions.length > 0 ? (
           <div style={SUGGESTIONS_STYLE} aria-label="Suggested actions">
-            <div style={SUGGESTIONS_LABEL_STYLE}>Try one</div>
+            <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
             {suggestedActions.map((action) => (
               <button
                 key={action.id}

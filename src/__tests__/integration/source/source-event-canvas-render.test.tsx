@@ -323,7 +323,7 @@ describe('UniversalCanvasShell · SSR render', () => {
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
-  it('renders the AgentDock empty-thread hint and "Try one" suggestions label', () => {
+  it('renders the AgentDock empty-thread hint and suggested questions label', () => {
     const html = render();
     // Scope stage (1-9) renders the Source-branded Sentinel lane.
     expect(html).toContain('Ask Sentinel Source anything.');
@@ -331,7 +331,7 @@ describe('UniversalCanvasShell · SSR render', () => {
     // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
     expect(html).toContain('Drafts artifacts, surfaces evidence, flags gaps before they cost you.');
     // Suggestions block label reflects the populate-not-submit semantics.
-    expect(html).toContain('Try one');
+    expect(html).toContain('Suggested questions');
     expect(html).not.toContain('Three choices for');
   });
 

@@ -56,7 +56,7 @@ describe('agent response shape', () => {
   it('scrubs raw portfolio signal ids from Tower copy', () => {
     const shaped = shapeAgentResponseForSurface(
       '/tower',
-      'Demand Forecasting attestation is overdue — warning, signal:39901c16-2e8b-4c8c-80aa-8a0182f26754.',
+      'Demand Forecasting attestation is overdue — warning, signal: 39901c16-2e8b-4c8c-80aa-8a0182f26754.',
     );
 
     expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');

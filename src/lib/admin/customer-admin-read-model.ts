@@ -328,12 +328,86 @@ async function loadSubstratePanel(
   };
 }
 
+function emptyCustomerAdminPageView(args: {
+  tenant: AdminTenantContext;
+  clientId: string | null;
+  access: CustomerAdminAccessDecision;
+  banners?: ReadonlyArray<string>;
+}): CustomerAdminPageView {
+  return {
+    tenant: args.tenant,
+    clientId: args.clientId,
+    access: args.access,
+    readOnlySections: CUSTOMER_ADMIN_SECTIONS,
+    audit: {
+      events: [],
+      totalEvents: 0,
+    },
+    users: {
+      users: [],
+      activeUsers: 0,
+      pendingInvites: 0,
+    },
+    aiEgress: summarizeAiEgressRows([], args.clientId),
+    usage: summarizeUsageFromAiEgressRows([], args.clientId),
+    substrate: {
+      segments: [],
+      totalRecords: 0,
+      totalChunks: 0,
+      totalNodes: 0,
+      totalEdges: 0,
+      lastIngestedAt: null,
+      source: 'authored_fallback',
+    },
+    banners: args.banners ?? [],
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 export async function buildCustomerAdminPageView(): Promise<CustomerAdminPageView> {
   const tenant = await resolveAdminTenant();
-  const tenancy = await requireTenancy();
-  const policy = await loadUserProgramAccessPolicy(tenancy);
+  const tenancy = await requireTenancy().catch((error) => ({
+    error: error instanceof Error ? error.message : 'unknown tenancy error',
+  }));
+  if ('error' in tenancy) {
+    return emptyCustomerAdminPageView({
+      tenant,
+      clientId: null,
+      access: { allowed: false, reason: 'no_customer_admin_policy' },
+      banners: [`Customer admin tenancy could not be verified. No tenant data was loaded. ${tenancy.error}.`],
+    });
+  }
+  if (tenancy.clientId !== tenant.clientId) {
+    return emptyCustomerAdminPageView({
+      tenant,
+      clientId: null,
+      access: { allowed: false, reason: 'no_customer_admin_policy' },
+      banners: ['Customer admin tenancy does not match the active tenant. No tenant data was loaded.'],
+    });
+  }
+
+  const policy = await loadUserProgramAccessPolicy(tenancy).catch((error) => ({
+    error: error instanceof Error ? error.message : 'unknown policy error',
+  }));
+  if ('error' in policy) {
+    return emptyCustomerAdminPageView({
+      tenant,
+      clientId: tenancy.clientId,
+      access: { allowed: false, reason: 'no_customer_admin_policy' },
+      banners: [`Customer admin policy could not be verified. No tenant data was loaded. ${policy.error}.`],
+    });
+  }
   const access = canReadCustomerAdmin(policy);
   const banners: string[] = [];
+
+  if (!access.allowed) {
+    return emptyCustomerAdminPageView({
+      tenant,
+      clientId: tenancy.clientId,
+      access,
+      banners: ['Customer admin access was not granted for this session. No tenant admin panels were loaded.'],
+    });
+  }
 
   const [auditResult, usersResult, aiEgressResult, substrate] = await Promise.all([
     getAdminAuditEvents(tenant.tenantSlug, { limit: 8 }).catch((error) => {
