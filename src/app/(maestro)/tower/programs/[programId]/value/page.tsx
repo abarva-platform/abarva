@@ -42,6 +42,10 @@ function formatVariance(layer: ValueLayerState): string {
   return `${prefix}${value.toLocaleString()}`;
 }
 
+function formatOpsEvidence(value: string): string {
+  return value.replaceAll('_', ' ');
+}
+
 function StatusPill({ children }: { children: React.ReactNode }) {
   return (
     <span
@@ -199,6 +203,55 @@ export default async function TowerMoveValuePage({
             ))}
           </div>
         </div>
+
+        <section style={{ border: '1px solid #d7d2c6', borderRadius: 8, background: '#fff', padding: 16, marginBottom: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ margin: 0, fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: 24 }}>
+                AI Ops Cost Ledger
+              </h2>
+              <p style={{ margin: '6px 0 0', color: '#4b5563', fontSize: 13, maxWidth: 760, lineHeight: 1.45 }}>
+                Parallel run-cost ledger for projected AI operating cost, realized cost to date, pricing-tier pressure, and model-tier drift.
+              </p>
+            </div>
+            <StatusPill>{formatOpsEvidence(detail.aiOpsCost.entry.evidence)}</StatusPill>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 14 }}>
+            {[
+              ['Projected 3Y', formatUsd(detail.aiOpsCost.entry.projectedThreeYearUsd)],
+              ['Realized to date', formatUsd(detail.aiOpsCost.entry.realizedToDateUsd)],
+              ['Realized as of', detail.aiOpsCost.entry.realizedAsOf.slice(0, 10)],
+              ['Reason code', detail.aiOpsCost.entry.varianceReasonCode ?? 'None on file'],
+            ].map(([label, value]) => (
+              <div key={label} style={{ border: '1px solid #eee9df', borderRadius: 8, padding: 12, background: '#fbfaf7' }}>
+                <div style={{ color: '#6b7280', fontSize: 12, fontWeight: 760 }}>{label}</div>
+                <div style={{ marginTop: 5, color: '#111827', fontSize: 16, fontWeight: 820 }}>{value}</div>
+              </div>
+            ))}
+          </div>
+          {detail.aiOpsCost.alert ? (
+            <div style={{ marginTop: 12, border: '1px solid #f59e0b', background: '#fffbeb', color: '#92400e', borderRadius: 8, padding: 12, fontSize: 13, fontWeight: 720 }}>
+              {detail.aiOpsCost.alert.message}
+            </div>
+          ) : null}
+          {detail.aiOpsCost.entry.tierBreachAlert || detail.aiOpsCost.entry.modelTierDriftAlert ? (
+            <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+              {detail.aiOpsCost.entry.tierBreachAlert ? (
+                <div style={{ border: '1px solid #f59e0b', background: '#fffbeb', color: '#92400e', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                  Pricing tier breach projected at {detail.aiOpsCost.entry.tierBreachAlert.threshold.toLocaleString()} calls per month on {detail.aiOpsCost.entry.tierBreachAlert.projectedDate}.
+                </div>
+              ) : null}
+              {detail.aiOpsCost.entry.modelTierDriftAlert ? (
+                <div style={{ border: '1px solid #dc2626', background: '#fef2f2', color: '#991b1b', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                  Model tier drift from {formatOpsEvidence(detail.aiOpsCost.entry.modelTierDriftAlert.fromTier)} to {formatOpsEvidence(detail.aiOpsCost.entry.modelTierDriftAlert.toTier)} adds {formatUsd(detail.aiOpsCost.entry.modelTierDriftAlert.deltaUsd)}.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <p style={{ margin: '12px 0 0', color: '#6b7280', fontSize: 12, lineHeight: 1.4 }}>
+            Source: {detail.aiOpsCost.entry.source}
+          </p>
+        </section>
 
         <section style={{ border: '1px solid #d7d2c6', borderRadius: 8, background: '#fff', overflow: 'hidden' }}>
           <div

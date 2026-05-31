@@ -3,6 +3,7 @@ import 'server-only';
 import type { PoolClient } from 'pg';
 import { azureRead } from '@/lib/data-plane/azureRead';
 import type { TenancyCtx } from '@/lib/programs/types.db';
+import { buildTowerAiOpsCostLedgerFromValueLayers } from '@/lib/tower/ai-ops-cost-ledger';
 import {
   buildLayerState,
   buildProjectedAndTrackedCells,
@@ -509,6 +510,10 @@ export async function getMoveValueDetail(ctx: TenancyCtx, moveId: string): Promi
     const layers = rowsToLayers(moveId, rows, computed);
     const arrows = await loadP10Arrows(client, ctx.clientId, [moveId]);
     const p10Arrows = arrows.length > 0 ? arrows : buildFallbackArrow(move);
+    const aiOpsCost = buildTowerAiOpsCostLedgerFromValueLayers(
+      layers,
+      new Date().toISOString(),
+    );
 
     return {
       move: {
@@ -535,6 +540,7 @@ export async function getMoveValueDetail(ctx: TenancyCtx, moveId: string): Promi
         trackedHours: sumLayerHours(layers, 'tracked'),
         verifiedHours: sumLayerHours(layers, 'verified'),
       },
+      aiOpsCost,
       canAttest: canAttestTowerValue(ctx),
       p10: {
         source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
@@ -625,6 +631,10 @@ export async function attestValueLayer(
     const rowsAfter = await getValueRows(client, ctx.clientId, input.moveId);
     const layers = rowsToLayers(input.moveId, rowsAfter, computed);
     const arrows = await loadP10Arrows(client, ctx.clientId, [input.moveId]);
+    const aiOpsCost = buildTowerAiOpsCostLedgerFromValueLayers(
+      layers,
+      new Date().toISOString(),
+    );
     return {
       move: {
         id: move.id,
@@ -650,6 +660,7 @@ export async function attestValueLayer(
         trackedHours: sumLayerHours(layers, 'tracked'),
         verifiedHours: sumLayerHours(layers, 'verified'),
       },
+      aiOpsCost,
       canAttest: canAttestTowerValue(ctx),
       p10: {
         source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
