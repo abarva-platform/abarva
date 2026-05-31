@@ -27,6 +27,7 @@ const REPORT_DIR = process.env.ATLAS_GAUNTLET_REPORT_DIR
   ?? join(process.cwd(), 'reports', '2026-05-31-atlas-prod-comprehensive-surface');
 const API_TIMEOUT_MS = Number(process.env.ATLAS_GAUNTLET_API_TIMEOUT_MS ?? 90_000);
 const RETRIES = Number(process.env.ATLAS_GAUNTLET_RETRIES ?? 2);
+const CHROMIUM_CHANNEL = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
 
 interface Tenant {
   slug: string;
@@ -506,7 +507,7 @@ function writeArtifacts(run: {
 
 async function main() {
   mkdirSync(REPORT_DIR, { recursive: true });
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: CHROMIUM_CHANNEL });
   const run = {
     ranAt: new Date().toISOString(),
     prodUrl: PROD_URL,

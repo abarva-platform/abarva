@@ -24,6 +24,7 @@ jobs:
       ATLAS_GAUNTLET_REPORT_DIR: reports/atlas-prod-comprehensive-surface
       ATLAS_GAUNTLET_API_TIMEOUT_MS: "90000"
       ATLAS_GAUNTLET_RETRIES: "2"
+      PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
 
     steps:
       - name: Checkout
@@ -38,8 +39,8 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install chromium --with-deps
+      - name: Verify system Chrome
+        run: google-chrome --version
 
       - name: Verify production auth secret
         shell: bash
