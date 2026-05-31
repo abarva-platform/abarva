@@ -90,7 +90,7 @@ const BANNED_PHRASES = [
 ];
 
 const ACTION_CUES =
-  /\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b/i;
+  /(?:\b(next step|next move|recommend|open|review|validate|pause|approve|reshape|escalate|assign|decide|close|measure|baseline|owner|by the next|before the next)\b|(?:^|\n)\s*-?\s*Next:)/i;
 
 const VAGUE_ACTION =
   /\b(consider exploring|consider looking|keep an eye|monitor this|review as needed|circle back)\b/i;

@@ -92,6 +92,17 @@ describe('validateCxoAnswer', () => {
     );
   });
 
+  it('accepts the visible "- Next:" bullet as a concrete action cue', () => {
+    const result = validateCxoAnswer({
+      text:
+        'Projected value is $10.9M from the Atlas portfolio estimate.\n- Evidence: Tracked value attainment is 74%.\n- Next: Do not treat projected value as verified value.',
+    });
+
+    expect(result.issues.some((issue) => issue.code === 'no_next_action')).toBe(
+      false,
+    );
+  });
+
   it('passes a readable decision-grade answer', () => {
     const result = validateCxoAnswer({
       text:
