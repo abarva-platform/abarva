@@ -8,6 +8,7 @@ export type AdminSubSectionId =
   | "users-access"
   | "customer-admin"
   | "agent-readiness"
+  | "patternops"
   | "production-readiness"
   | "compliance"
   | "engineering-traces"
@@ -88,6 +89,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Agent Readiness",
     subtitle: "Nexus/Sentinel/Atlas/Steward",
     href: "/admin/agent-readiness",
+  },
+  {
+    id: "patternops",
+    label: "PatternOps",
+    subtitle: "Knowledge coverage",
+    href: "/admin/patternops",
   },
   {
     id: "production-readiness",
