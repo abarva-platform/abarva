@@ -8,7 +8,7 @@
  *   1. src/lib/client-config.ts             (ALL_CLIENTS, CLIENT_KEY_TO_DB_NAME,
  *                                            CLIENT_KEY_TO_INDUSTRY_CODE,
  *                                            EMAIL_DOMAIN_TO_CLIENT_KEY)
- *   2. src/lib/active-client.ts             (CLIENT_KEY_TO_DB_SLUGS)
+ *   2. src/lib/tenant/aliases.ts            (TENANT_ALIAS_PROFILES)
  *   3. src/lib/tenants/demo-tenant-data-tiers.ts  (DEMO_TENANT_DATA_TIERS — shell_only default)
  *   4. src/lib/auth/canonical-auth-roster.ts (CANONICAL_AUTH_EMAILS, CANONICAL_CLIENT_ADMIN_EMAILS)
  *
@@ -174,7 +174,7 @@ interface RegistryPaths {
 export function resolveRegistryPaths(repoRoot: string): RegistryPaths {
   const paths: RegistryPaths = {
     clientConfig: path.join(repoRoot, 'src/lib/client-config.ts'),
-    activeClient: path.join(repoRoot, 'src/lib/active-client.ts'),
+    activeClient: path.join(repoRoot, 'src/lib/tenant/aliases.ts'),
     demoTenantDataTiers: path.join(repoRoot, 'src/lib/tenants/demo-tenant-data-tiers.ts'),
     canonicalAuthRoster: path.join(repoRoot, 'src/lib/auth/canonical-auth-roster.ts'),
   };
@@ -189,25 +189,6 @@ export function resolveRegistryPaths(repoRoot: string): RegistryPaths {
 // ---------------------------------------------------------------------------
 // Patch helpers — pure string functions for testability
 // ---------------------------------------------------------------------------
-
-/** Insert a block before the first occurrence of `marker`, only if `idempotencyToken`
- *  is not already present in the file. */
-function insertBeforeMarker(
-  source: string,
-  marker: string,
-  idempotencyToken: string,
-  block: string,
-): { content: string; changed: boolean } {
-  if (source.includes(idempotencyToken)) {
-    return { content: source, changed: false };
-  }
-  const idx = source.indexOf(marker);
-  if (idx === -1) {
-    throw new Error(`Marker not found while patching: ${marker}`);
-  }
-  const content = source.slice(0, idx) + block + source.slice(idx);
-  return { content, changed: true };
-}
 
 // ---------- 1. client-config.ts ----------
 
@@ -361,18 +342,34 @@ export function patchActiveClient(
   source: string,
   input: AddTenantInput,
 ): { content: string; changed: boolean; reason: string } {
-  // CLIENT_KEY_TO_DB_SLUGS is `Record<ClientKey, string[]>`. Each entry maps a
-  // canonical key to the list of slugs that may appear in the clients table.
-  // Convention: include the canonical key itself plus a dashed-name variant.
-  const slugCanonical = input.key;
-  const slugDashed = slugifyFromName(input.name);
-  const slugs = Array.from(new Set([slugCanonical, slugDashed]));
-  const block = `  ${input.key}: [${slugs.map((s) => `'${s}'`).join(', ')}],\n`;
-  const r = insertAtEndOfRecord(source, 'CLIENT_KEY_TO_DB_SLUGS', input.key, block);
+  // Tenant alias profiles replaced the old active-client db-slug record.
+  // New tenants need the canonical app key plus dashed and natural aliases so
+  // URL/query/session/database forms resolve through one tenant boundary.
+  const dashed = slugifyFromName(input.name);
+  const natural = input.name.toLowerCase().trim().replace(/\s+/g, ' ');
+  const aliases = Array.from(new Set([input.key, dashed, natural]));
+  if (source.includes(`appClientKey: '${input.key}'`)) {
+    return { content: source, changed: false, reason: 'already registered' };
+  }
+  const arrayName = 'TENANT_ALIAS_PROFILES';
+  const startIdx = source.indexOf(arrayName);
+  if (startIdx === -1) throw new Error(`${arrayName} not found`);
+  const closeIdx = source.indexOf('] as const;', startIdx);
+  if (closeIdx === -1) throw new Error(`${arrayName} close marker not found`);
+  const block =
+    `  {\n` +
+    `    appClientKey: '${input.key}',\n` +
+    `    canonicalKey: '${dashed}',\n` +
+    `    brokerKey: '${dashed}',\n` +
+    `    displayName: '${escapeSingleQuote(input.name)}',\n` +
+    `    industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.${input.key},\n` +
+    `    aliases: [${aliases.map((s) => `'${escapeSingleQuote(s)}'`).join(', ')}],\n` +
+    `  },\n`;
+  const content = source.slice(0, closeIdx) + block + source.slice(closeIdx);
   return {
-    content: r.content,
-    changed: r.changed,
-    reason: r.changed ? `added CLIENT_KEY_TO_DB_SLUGS entry (slugs: ${slugs.join(', ')})` : 'already registered',
+    content,
+    changed: true,
+    reason: `added TENANT_ALIAS_PROFILES entry (aliases: ${aliases.join(', ')})`,
   };
 }
 

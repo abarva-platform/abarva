@@ -4,7 +4,7 @@
  * Verifies that `src/scripts/tenants/add-tenant.ts` produces correct,
  * idempotent updates to all four hardcoded registries:
  *   1. src/lib/client-config.ts
- *   2. src/lib/active-client.ts
+ *   2. src/lib/tenant/aliases.ts
  *   3. src/lib/tenants/demo-tenant-data-tiers.ts
  *   4. src/lib/auth/canonical-auth-roster.ts
  *
@@ -31,7 +31,7 @@ import {
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const REGISTRY_FILES: Record<string, string> = {
   clientConfig: 'src/lib/client-config.ts',
-  activeClient: 'src/lib/active-client.ts',
+  activeClient: 'src/lib/tenant/aliases.ts',
   demoTenantDataTiers: 'src/lib/tenants/demo-tenant-data-tiers.ts',
   canonicalAuthRoster: 'src/lib/auth/canonical-auth-roster.ts',
 };
@@ -232,11 +232,13 @@ describe('add-tenant — patchActiveClient', () => {
     adminEmail: 'cdo@northwind-retail',
   };
 
-  it('adds CLIENT_KEY_TO_DB_SLUGS entry with canonical + dashed slug', () => {
+  it('adds TENANT_ALIAS_PROFILES entry with app key, canonical key, broker key, and aliases', () => {
     const r = patchActiveClient(ORIGINALS.activeClient, input);
     expect(r.changed).toBe(true);
-    // Both canonical and dashed forms should appear in the same line.
-    expect(r.content).toMatch(/northwind: \['northwind', 'northwind-retail'\]/);
+    expect(r.content).toMatch(/appClientKey: 'northwind'/);
+    expect(r.content).toMatch(/canonicalKey: 'northwind-retail'/);
+    expect(r.content).toMatch(/brokerKey: 'northwind-retail'/);
+    expect(r.content).toMatch(/aliases: \['northwind', 'northwind-retail', 'northwind retail'\]/);
   });
 
   it('is idempotent', () => {
