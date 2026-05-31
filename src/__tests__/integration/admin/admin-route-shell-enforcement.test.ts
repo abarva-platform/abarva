@@ -23,6 +23,7 @@ describe('DESROUTE3 admin shell enforcement', () => {
     const adminSource = read(adminRoute);
     expect(adminSource).toContain('data-admin-home-wireframe');
     expect(adminSource).toContain('admin-maestro-menu-wireframe-2026-05-31.html');
+    expect(adminSource).toContain('AbarvaNav');
     expect(adminSource).not.toContain('HomeOverviewV2');
 
     const productionSource = read(productionRoute);
