@@ -86,6 +86,12 @@ function toNumber(v: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function toIsoDateString(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value);
+}
+
 export async function getInitiativeDetail(
   clientId: string,
   initiativeId: string,
@@ -190,7 +196,7 @@ export async function getInitiativeDetail(
       noteId: r.note_id as string,
       stakeholderName: r.stakeholder_name as string,
       stakeholderTitle: r.stakeholder_title as string,
-      interviewDate: r.interview_date as string,
+      interviewDate: toIsoDateString(r.interview_date) ?? '',
       quote: r.quote as string,
       themes: (r.themes as string[] | null) ?? [],
       attributionConsent: Boolean(r.attribution_consent),
@@ -202,7 +208,7 @@ export async function getInitiativeDetail(
     (r: Record<string, unknown>) => ({
       decisionId: r.decision_id as string,
       decisionName: r.decision_name as string,
-      decisionDate: (r.decision_date as string | null) ?? null,
+      decisionDate: toIsoDateString(r.decision_date),
       sponsorName: (r.sponsor_name as string | null) ?? null,
       decisionStatus: r.decision_status as DecisionStatus,
       dissentRecorded: Boolean(r.dissent_recorded),
@@ -217,7 +223,7 @@ export async function getInitiativeDetail(
       vendorId: r.vendor_id as string,
       vendorName: r.vendor_name as string,
       contractValueUsd: toNumber(r.contract_value_usd as number | string | null),
-      renewalDate: (r.renewal_date as string | null) ?? null,
+      renewalDate: toIsoDateString(r.renewal_date),
       financialHealth: (r.financial_health as VendorFinancialHealth | null) ?? null,
       notes: (r.notes as string | null) ?? null,
       loadedViaTemplate: r.loaded_via_template as string,

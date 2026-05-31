@@ -693,6 +693,20 @@ function formatMetricValue(value: number | null | undefined, unit: string | null
   return unit === '%' ? `${rounded}%` : `${rounded}${unit ? ` ${unit}` : ''}`;
 }
 
+function dateValueToIso(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function formatDateLabel(value: unknown, fallback: string): string {
+  const iso = dateValueToIso(value);
+  if (!iso) return fallback;
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) return iso;
+  return iso.slice(0, 10);
+}
+
 function stageTone(stage: string | null | undefined): string {
   if (stage === 'scaled') return T.GREEN;
   if (stage === 'pilot') return T.AMBER;
@@ -1048,7 +1062,7 @@ function TowerInlineDetailPanel({
                   <div key={decision.decisionId} style={{ borderLeft: `3px solid ${decision.dissentRecorded ? T.AMBER : T.GREEN}`, paddingLeft: 10 }}>
                     <div style={{ fontWeight: 800, color: T.INK, fontSize: 12.5 }}>{decision.decisionName}</div>
                     <div style={{ marginTop: 2, color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.45 }}>
-                      {labelize(decision.decisionStatus)} · {decision.sponsorName ?? 'Sponsor unassigned'} · {decision.decisionDate ?? 'date pending'}
+                      {labelize(decision.decisionStatus)} · {decision.sponsorName ?? 'Sponsor unassigned'} · {formatDateLabel(decision.decisionDate, 'date pending')}
                     </div>
                     {decision.dissentSummary ? (
                       <div style={{ marginTop: 3, color: T.AMBER, fontSize: 11.5, lineHeight: 1.4 }}>{decision.dissentSummary}</div>
@@ -1121,7 +1135,7 @@ function TowerInlineDetailPanel({
                   </div>
                 </div>
                 <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: '1.2px', color: T.GRAY_DK, textTransform: 'uppercase' }}>
-                  {vendor.renewalDate ?? 'No renewal date'}
+                  {formatDateLabel(vendor.renewalDate, 'No renewal date')}
                 </div>
               </div>
             ))}
@@ -1172,16 +1186,18 @@ function initiativeDelta(initiative: AIInitiative): number {
   return initiativeMeasured(initiative) - initiativeCommitment(initiative);
 }
 
-function renewalRank(date: string | null | undefined): number {
-  if (!date) return Number.POSITIVE_INFINITY;
-  const parsed = Date.parse(date);
+function renewalRank(date: unknown): number {
+  const iso = dateValueToIso(date);
+  if (!iso) return Number.POSITIVE_INFINITY;
+  const parsed = Date.parse(iso);
   return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
 }
 
-function daysUntilLabel(date: string | null | undefined): string {
-  if (!date) return 'no renewal date';
-  const parsed = Date.parse(date);
-  if (!Number.isFinite(parsed)) return date;
+function daysUntilLabel(date: unknown): string {
+  const iso = dateValueToIso(date);
+  if (!iso) return 'no renewal date';
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) return iso;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = Math.ceil((parsed - today.getTime()) / (1000 * 60 * 60 * 24));

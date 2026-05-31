@@ -137,6 +137,12 @@ function metadataRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+function toIsoString(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') return value;
+  return String(value ?? '');
+}
+
 function numberFromMetadata(
   metadata: Record<string, unknown> | null,
   keys: ReadonlyArray<string>,
@@ -260,7 +266,7 @@ async function loadAiEgressRows(clientId: string | null): Promise<{
       decision_reason: string;
       request_metadata: unknown;
       error_message: string | null;
-      created_at: string;
+      created_at: string | Date;
     }>({
       table: 'ai_egress_audit',
       columns: [
@@ -286,6 +292,7 @@ async function loadAiEgressRows(clientId: string | null): Promise<{
       rows: rows.map((row) => ({
         ...row,
         request_metadata: metadataRecord(row.request_metadata),
+        created_at: toIsoString(row.created_at),
       })),
     };
   } catch (error) {
