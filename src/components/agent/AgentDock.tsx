@@ -348,7 +348,7 @@ export function AgentDock(props: AgentDockProps) {
   // Composer state
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const threadScrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
 
@@ -379,14 +379,15 @@ export function AgentDock(props: AgentDockProps) {
     }
   }, []);
 
-  // Scroll to bottom on new turns (or attempted send). Guarded because
-  // jsdom doesn't implement scrollIntoView.
+  // Scroll only the dock's internal thread pane. DOM-level scrollIntoView()
+  // can move the hosting admin page when this dock is embedded in /admin.
   useEffect(() => {
-    const node = threadEndRef.current;
-    if (node && typeof node.scrollIntoView === 'function') {
-      node.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (thread.length === 0 && !isAgentBusy) return;
+    const scroller = threadScrollRef.current;
+    if (scroller) {
+      scroller.scrollTop = scroller.scrollHeight;
     }
-  }, [thread.length]);
+  }, [thread.length, isAgentBusy]);
 
   // Submit
   const submit = useCallback(
@@ -561,7 +562,7 @@ export function AgentDock(props: AgentDockProps) {
         ) : null}
 
         {/* Thread */}
-        <div style={THREAD_STYLE} data-testid="agent-dock-thread">
+        <div ref={threadScrollRef} style={THREAD_STYLE} data-testid="agent-dock-thread">
           {thread.length === 0 ? (
             <div style={EMPTY_STATE_STYLE}>
               <p style={EMPTY_TITLE_STYLE}>Ask {agent.name} anything.</p>
@@ -616,7 +617,6 @@ export function AgentDock(props: AgentDockProps) {
               </div>
             </div>
           ) : null}
-          <div ref={threadEndRef} />
         </div>
 
         {/* Suggested actions */}
@@ -753,6 +753,7 @@ export function AgentDock(props: AgentDockProps) {
           style={COLLAPSED_CHIP_STYLE}
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
+          <span style={COLLAPSED_CHIP_LABEL_STYLE}>Ask {agent.name}</span>
         </button>
       </>
     );
@@ -1490,8 +1491,10 @@ const COLLAPSED_CHIP_STYLE: CSSProperties = {
   position: 'fixed',
   bottom: 24,
   right: 24,
-  width: 56,
+  minWidth: 56,
   height: 56,
+  padding: '0 18px',
+  gap: 10,
   borderRadius: 999,
   background: CANVAS.INK,
   color: '#fff',
@@ -1512,6 +1515,14 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
   fontSize: 18,
   fontWeight: 500,
   letterSpacing: '0.02em',
+};
+
+const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: 0,
+  whiteSpace: 'nowrap',
 };
 
 // ── Agent busy throbber ───────────────────────────────────────────────────

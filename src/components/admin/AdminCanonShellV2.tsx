@@ -85,7 +85,7 @@ export function AdminCanonShellV2({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '240px minmax(0, 1fr)',
+            gridTemplateColumns: '280px minmax(0, 1fr)',
             flex: 1,
             minHeight: 0,
             height: 'calc(100vh - 48px)',
@@ -101,6 +101,8 @@ export function AdminCanonShellV2({
             style={{ minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden', background: COLORS.cream }}
           >
             <StewardDockPane
+              surface="admin-steward-content-first-v1"
+              defaultMode="collapsed"
               workspace={
                 <div
                   data-admin-main-scroll
