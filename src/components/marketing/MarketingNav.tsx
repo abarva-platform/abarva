@@ -3,8 +3,8 @@
 /**
  * MarketingNav — Option A public-site navigation.
  *
- * Two grouped dropdowns (Platform, Company) plus Sign in + Request demo CTA.
- * Replaces the flat `Product · Architecture · Customers · Careers` bar.
+ * Lean public navigation plus Sign in + Request access CTA.
+ * IP-heavy learning, architecture, corpus, and client materials stay behind auth.
  *
  * Used by both the shared `MarketingHeader` (site.tsx) and the
  * `LoggedOutLandingPage` so the public nav is consistent everywhere.
@@ -28,23 +28,7 @@ export type MarketingNavGroup = {
   links: MarketingNavLink[]
 }
 
-export const MARKETING_NAV_GROUPS: MarketingNavGroup[] = [
-  {
-    label: 'Platform',
-    links: [
-      { label: 'Product', href: '/product' },
-      { label: 'Learn', href: '/learn' },
-    ],
-  },
-  {
-    label: 'Company',
-    links: [
-      { label: 'Customers', href: '/#customers' },
-      { label: 'Architecture', href: '/architecture' },
-      { label: 'Careers', href: 'mailto:partners@abarva.ai?subject=AbarVa%20careers' },
-    ],
-  },
-]
+export const MARKETING_NAV_GROUPS: MarketingNavGroup[] = []
 
 function isMailto(href: string) {
   return href.startsWith('mailto:')
@@ -255,8 +239,8 @@ export type MarketingNavProps = {
 }
 
 export function MarketingNav({
-  ctaHref = '/sign-in',
-  ctaLabel = 'Request demo',
+  ctaHref = '/contact/',
+  ctaLabel = 'Request access',
   signInHref = '/sign-in',
 }: MarketingNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -277,9 +261,19 @@ export function MarketingNav({
       <MarketingNavStyles />
       <nav className="mkt-nav__bar" aria-label="Primary">
         <div className="mkt-nav__groups">
-          {MARKETING_NAV_GROUPS.map((group) => (
-            <Dropdown key={group.label} group={group} />
-          ))}
+          {MARKETING_NAV_GROUPS.map((group) => {
+            const onlyLink = group.links.length === 1 ? group.links[0] : null
+            if (onlyLink) {
+              return (
+                <NavLinkItem
+                  key={group.label}
+                  link={onlyLink}
+                  className="mkt-nav__top-link"
+                />
+              )
+            }
+            return <Dropdown key={group.label} group={group} />
+          })}
         </div>
         <div className="mkt-nav__actions">
           <Link href={signInHref} className="mkt-nav__signin">
@@ -312,9 +306,13 @@ export function MarketingNav({
         id={mobileId}
         className={`mkt-nav__mobile${mobileOpen ? ' mkt-nav__mobile--open' : ''}`}
       >
-        {MARKETING_NAV_GROUPS.map((group) => (
-          <MobileSection key={group.label} group={group} />
-        ))}
+        {MARKETING_NAV_GROUPS.map((group) => {
+          const onlyLink = group.links.length === 1 ? group.links[0] : null
+          if (onlyLink) {
+            return <NavLinkItem key={group.label} link={onlyLink} className="mkt-nav__m-link" />
+          }
+          return <MobileSection key={group.label} group={group} />
+        })}
         <div className="mkt-nav__m-actions">
           <Link
             href={signInHref}
@@ -389,6 +387,25 @@ function MarketingNavStyles() {
         color: #3c3c3c;
         cursor: pointer;
         border-radius: 8px;
+      }
+
+      .mkt-nav__top-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: #3c3c3c;
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .mkt-nav__top-link:hover,
+      .mkt-nav__top-link:focus-visible {
+        color: #0c0c0c;
+        background: rgba(12, 12, 12, 0.05);
+        outline: none;
       }
 
       .mkt-nav__trigger:hover,

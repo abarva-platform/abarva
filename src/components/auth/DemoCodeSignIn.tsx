@@ -202,7 +202,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           alt="AbarVa"
           width={92}
           height={24}
-          style={{ height: 24, width: 'auto', display: 'block' }}
+          style={{ display: 'block' }}
           priority
         />
         <div aria-hidden="true" style={{ width: 1, height: 18, background: BRAND.hair }} />

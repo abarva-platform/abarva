@@ -375,7 +375,7 @@ function CompositeTenantCaseStudies() {
           }}
         >
           The numbers, leadership, and agent answers above all reconcile to the
-          composite seed data loaded into Supabase. Sign in as any of the nine
+          composite tenant data loaded in the Azure/Postgres data plane. Sign in as any of the nine
           CXOs and ask the same question yourself — the answer the agent
           produces should match what you see here.
         </p>
