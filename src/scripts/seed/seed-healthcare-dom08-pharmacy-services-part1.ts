@@ -266,7 +266,7 @@ export const HEALTHCARE_DOM08_PHARMACY_SERVICES_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Medication Reconciliation Advanced (H2012-H2023) --
   {
@@ -520,7 +520,7 @@ export const HEALTHCARE_DOM08_PHARMACY_SERVICES_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- 340b Program Compliance (H2024-H2035) --
   {
@@ -774,7 +774,7 @@ export const HEALTHCARE_DOM08_PHARMACY_SERVICES_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Sterile Compounding Usp797 (H2036-H2047) --
   {
@@ -1028,7 +1028,7 @@ export const HEALTHCARE_DOM08_PHARMACY_SERVICES_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Pharmacy Automation (H2048-H2059) --
   {

@@ -266,7 +266,7 @@ export const BANKING_DOM17_LIQUIDITY_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Nsfr Compliance (B5072-B5083) --
   {
@@ -520,7 +520,7 @@ export const BANKING_DOM17_LIQUIDITY_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Intraday Liquidity (B5084-B5095) --
   {
@@ -774,7 +774,7 @@ export const BANKING_DOM17_LIQUIDITY_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Stress Testing Liquidity (B5096-B5107) --
   {
@@ -1028,7 +1028,7 @@ export const BANKING_DOM17_LIQUIDITY_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Contingency Funding Plan (B5108-B5119) --
   {

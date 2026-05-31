@@ -266,7 +266,7 @@ export const HEALTHCARE_DOM10_CLINICAL_QUALITY_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Cms Conditions Of Participation (H2132-H2143) --
   {
@@ -520,7 +520,7 @@ export const HEALTHCARE_DOM10_CLINICAL_QUALITY_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Peer Review Program (H2144-H2155) --
   {
@@ -774,7 +774,7 @@ export const HEALTHCARE_DOM10_CLINICAL_QUALITY_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Mortality Morbidity Review (H2156-H2167) --
   {
@@ -1028,7 +1028,7 @@ export const HEALTHCARE_DOM10_CLINICAL_QUALITY_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Accreditation Gap Remediation (H2168-H2179) --
   {

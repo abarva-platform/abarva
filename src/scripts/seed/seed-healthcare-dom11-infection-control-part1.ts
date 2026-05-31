@@ -266,7 +266,7 @@ export const HEALTHCARE_DOM11_INFECTION_CONTROL_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Antimicrobial Stewardship (H2192-H2203) --
   {
@@ -520,7 +520,7 @@ export const HEALTHCARE_DOM11_INFECTION_CONTROL_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Isolation Precaution Compliance (H2204-H2215) --
   {
@@ -774,7 +774,7 @@ export const HEALTHCARE_DOM11_INFECTION_CONTROL_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Environmental Cleaning Validation (H2216-H2227) --
   {
@@ -1028,7 +1028,7 @@ export const HEALTHCARE_DOM11_INFECTION_CONTROL_PART1_PATTERNS: PatternSeed[] = 
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Outbreak Investigation Response (H2228-H2239) --
   {

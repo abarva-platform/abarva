@@ -266,7 +266,7 @@ export const MEDTECH_DOM05_CYBERSECURITY_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Vulnerability Disclosure Program (M2422-M2433) --
   {
@@ -520,7 +520,7 @@ export const MEDTECH_DOM05_CYBERSECURITY_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Cloud Hosted Device Security (M2434-M2445) --
   {
@@ -774,7 +774,7 @@ export const MEDTECH_DOM05_CYBERSECURITY_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Security By Design Advanced (M2446-M2457) --
   {
@@ -1028,7 +1028,7 @@ export const MEDTECH_DOM05_CYBERSECURITY_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Regulatory Cybersecurity Submissions (M2458-M2469) --
   {

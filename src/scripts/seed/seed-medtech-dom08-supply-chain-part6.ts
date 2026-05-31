@@ -266,7 +266,7 @@ export const MEDTECH_DOM08_SUPPLY_CHAIN_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Demand Forecasting Accuracy (M2482-M2493) --
   {
@@ -520,7 +520,7 @@ export const MEDTECH_DOM08_SUPPLY_CHAIN_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Customs Trade Compliance (M2494-M2505) --
   {
@@ -774,7 +774,7 @@ export const MEDTECH_DOM08_SUPPLY_CHAIN_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Direct Material Cost (M2506-M2517) --
   {
@@ -1028,7 +1028,7 @@ export const MEDTECH_DOM08_SUPPLY_CHAIN_PART6_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Supply Chain Digitalization (M2518-M2529) --
   {

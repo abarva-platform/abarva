@@ -266,7 +266,7 @@ export const BANKING_DOM16_OPERATIONAL_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Business Continuity Advanced (B5012-B5023) --
   {
@@ -520,7 +520,7 @@ export const BANKING_DOM16_OPERATIONAL_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Vendor Op Risk (B5024-B5035) --
   {
@@ -774,7 +774,7 @@ export const BANKING_DOM16_OPERATIONAL_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Conduct Risk (B5036-B5047) --
   {
@@ -1028,7 +1028,7 @@ export const BANKING_DOM16_OPERATIONAL_RISK_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Cyber Op Risk (B5048-B5059) --
   {

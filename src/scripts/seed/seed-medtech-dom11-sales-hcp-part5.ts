@@ -266,7 +266,7 @@ export const MEDTECH_DOM11_SALES_HCP_PART5_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Value Based Contracting Medtech (M2542-M2553) --
   {
@@ -520,7 +520,7 @@ export const MEDTECH_DOM11_SALES_HCP_PART5_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Field Reimbursement Support (M2554-M2565) --
   {
@@ -774,7 +774,7 @@ export const MEDTECH_DOM11_SALES_HCP_PART5_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Clinical Education Compliance (M2566-M2577) --
   {
@@ -1028,7 +1028,7 @@ export const MEDTECH_DOM11_SALES_HCP_PART5_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Commercial Data Analytics (M2578-M2589) --
   {

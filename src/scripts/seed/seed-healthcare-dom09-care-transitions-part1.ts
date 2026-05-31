@@ -266,7 +266,7 @@ export const HEALTHCARE_DOM09_CARE_TRANSITIONS_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Snf Placement Quality (H2072-H2083) --
   {
@@ -520,7 +520,7 @@ export const HEALTHCARE_DOM09_CARE_TRANSITIONS_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Home Health Referral (H2084-H2095) --
   {
@@ -774,7 +774,7 @@ export const HEALTHCARE_DOM09_CARE_TRANSITIONS_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Readmission Reduction (H2096-H2107) --
   {
@@ -1028,7 +1028,7 @@ export const HEALTHCARE_DOM09_CARE_TRANSITIONS_PART1_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Care Transition Communication (H2108-H2119) --
   {

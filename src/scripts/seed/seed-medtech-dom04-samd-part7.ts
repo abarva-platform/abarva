@@ -266,7 +266,7 @@ export const MEDTECH_DOM04_SAMD_PART7_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Samd Usability Human Factors (M2362-M2373) --
   {
@@ -520,7 +520,7 @@ export const MEDTECH_DOM04_SAMD_PART7_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Samd Cybersecurity Advanced (M2374-M2385) --
   {
@@ -774,7 +774,7 @@ export const MEDTECH_DOM04_SAMD_PART7_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Samd Ai Transparency (M2386-M2397) --
   {
@@ -1028,7 +1028,7 @@ export const MEDTECH_DOM04_SAMD_PART7_PATTERNS: PatternSeed[] = [
       aiInsertionRisk: true,
       aiRiskDescription: `AI can accelerate this failure when recommendations inherit stale controls or weak evidence gates`,
     },
-  }
+  },
 
   // -- Samd Regulatory Strategy Global (M2398-M2409) --
   {
