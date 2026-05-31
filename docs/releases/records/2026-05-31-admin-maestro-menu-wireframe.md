@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Adds the admin menu redesign reference and makes `/admin` a native, client-specific Maestro home. The live page shows the active client identity, loaded-data completeness, readiness facts, and next actions in the first viewport inside the original admin shell: top bar, logo, and native left admin menu remain present, with no left anchor menu, iframe, or design-spec copy.
+Adds the admin menu redesign reference and makes `/admin` a native, client-specific Maestro home. The live page shows the active client identity, loaded-data completeness, readiness facts, and next actions in the first viewport inside the original admin shell: top bar, logo, and native left admin menu remain present, with no left anchor menu, iframe, design-spec copy, or sidebar escape to the non-admin Learn route.
 
 ## Layer Impact
 
 public-demo lane: Adds a static, publicly served design-review artifact under `/design/admin-maestro-menu-wireframe-2026-05-31.html`.
 
-internal-admin lane: Adds the same source artifact under `docs/build/` for release governance, QA planning, and implementation acceptance criteria. `/admin` now renders a native AdminCanonShellV2 canvas as the Home entry point, preserving the original AppTopBar and AdminSidebar while remaining protected by the existing Clerk admin layout.
+internal-admin lane: Adds the same source artifact under `docs/build/` for release governance, QA planning, and implementation acceptance criteria. `/admin` now renders a native AdminCanonShellV2 canvas as the Home entry point, preserving the original AppTopBar and AdminSidebar while remaining protected by the existing Clerk admin layout. The AdminSidebar no longer points to `/home/learn`, because that guide is outside the admin canvas and can contain cross-client reference examples.
 
 ## Client Applicability
 
@@ -32,6 +32,7 @@ internal-admin lane: Adds the same source artifact under `docs/build/` for relea
 - `public/design/admin-maestro-menu-wireframe-2026-05-31.html`: Public static copy for production review.
 - `src/app/(maestro)/admin/page.tsx`: Authenticated `/admin` home now renders natively inside the canonical AdminCanonShellV2 chrome instead of embedding the HTML reference.
 - `src/components/admin/AdminSidebar.tsx`: Adds a stable sidebar marker for production browser QA so the native left admin menu cannot disappear silently.
+- `src/lib/admin/admin-shell-config.ts`: Removes the Training sidebar item that exited the admin shell to `/home/learn`; Learn remains available from the top product navigation.
 - `public/design/admin-maestro-menu-wireframe-2026-05-31.html`: Public reference copy no longer presents wireframe language in the header.
 - Admin integration tests: Updated the route contract to treat `/admin` as the Maestro home and keep shell enforcement on the admin sub-pages.
 - `docs/releases/records/2026-05-31-admin-maestro-menu-wireframe.md`: Release record.

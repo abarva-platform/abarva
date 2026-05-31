@@ -15,6 +15,7 @@ describe('DESROUTE3 admin shell enforcement', () => {
   const productionRoute = 'src/app/(maestro)/admin/production-readiness/page.tsx';
   const adminLayout = 'src/app/(maestro)/admin/layout.tsx';
   const adminSidebar = 'src/components/admin/AdminSidebar.tsx';
+  const adminShellConfig = 'src/lib/admin/admin-shell-config.ts';
 
   // Legacy redirect pages (must remain redirect-only, not render shells).
   const legacyAdminRoute = 'src/app/(maestro)/platform/admin/page.tsx';
@@ -42,6 +43,12 @@ describe('DESROUTE3 admin shell enforcement', () => {
     expect(sidebarSource).toContain('data-admin-sidebar="true"');
     expect(sidebarSource).toContain('ADMIN_SUB_SECTIONS');
     expect(sidebarSource).toContain('Setup · Admin');
+  });
+
+  it('admin left menu stays inside admin-canvas routes', () => {
+    const configSource = read(adminShellConfig);
+    expect(configSource).not.toContain('id: "training"');
+    expect(configSource).not.toContain('href: "/home/learn"');
   });
 
   it('canonical production readiness route continues to exist', () => {
