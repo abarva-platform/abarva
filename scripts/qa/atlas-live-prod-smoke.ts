@@ -733,9 +733,31 @@ async function main(): Promise<void> {
 
   const liveCount = turns.filter((t) => (t.response.bodyAtlasMode ?? t.response.atlasModeHeader) === 'live').length;
   const fallbackCount = turns.filter((t) => (t.response.bodyAtlasMode ?? t.response.atlasModeHeader) === 'fallback').length;
+  // ATLAS-RUNLLM-COMPOSITION 2026-05-31 — also fail on missing four-section
+  // structure for hybrid turns. The 2026-05-30 live-prod smoke (PR #2629)
+  // showed 0/2 hybrid Qs rendering `Your data / Industry context / The gap /
+  // Next move` even though atlasMode was live. The composition-wire fix is
+  // exactly that gap; this scorecard check makes future regressions caught
+  // by CI / nightly QA instead of by manual eyeball.
+  const hybridTurns = turns.filter((t) => t.block === 'hybrid');
+  const hybridFourSectionFail = hybridTurns.filter(
+    (t) => t.scorecard.fourSectionStructure === false,
+  ).length;
   console.log(`[atlas-live-smoke] DONE — ${liveCount} live / ${fallbackCount} fallback / ${turns.length} ran`);
+  if (hybridTurns.length > 0) {
+    console.log(
+      `[atlas-live-smoke] hybrid four-section fires — ${hybridTurns.length - hybridFourSectionFail}/${hybridTurns.length}`,
+    );
+  }
 
   if (fallbackCount > 0) process.exitCode = 2;
+  if (hybridFourSectionFail > 0) {
+    console.error(
+      `[atlas-live-smoke] HOLD — ${hybridFourSectionFail}/${hybridTurns.length} hybrid turns missing four-section composition. ` +
+        `runAtlasLlm did not route through composeAtlasIacAnswer.`,
+    );
+    process.exitCode = 2;
+  }
 }
 
 main().catch((err) => {
