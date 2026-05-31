@@ -16,6 +16,29 @@ import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas
 import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
 /**
+ * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
+ *
+ * The deployed `/api/v1/atlas/ask` route invokes `runAtlasLlm` for any prompt
+ * the scripted classifier doesn't catch. Before this change, hybrid and
+ * initiative-deep questions (e.g. "How does our Copilot pace in AR-02 compare
+ * to peers?") were sent to Claude with the composed four-section answer
+ * embedded as RETRIEVED CONTEXT — the LLM then paraphrased it, dropping the
+ * `Your data / Industry context / The gap / Next move` structure. The
+ * 2026-05-30 live-prod smoke caught this: 0/2 hybrid turns rendered the
+ * four-section structure even though the in-process composer harness
+ * produced it 21/21.
+ *
+ * Fix: when `composeAtlasIacAnswer` (already invoked inside
+ * `assembleRetrievalContext`) returns a hybrid or initiative-specific
+ * composition, return that composed text directly and skip the Anthropic
+ * call. Mode stays `live` because the composer is a deterministic substrate
+ * read, not a degraded fallback. `archetype-specific` (no tenant initiative
+ * anchor) continues to flow through the LLM since the model adds value by
+ * weaving the corpus context with the user question.
+ */
+const COMPOSITION_MODEL_NAME = 'atlas-composition-deterministic';
+
+/**
  * Atlas Fix C (truncation): canonical CXO response shapes range from short
  * lead-bullet briefs (3–7 lines) to industry-context reads (12–20 lines) and
  * lead-tables. The original 500-token cap chopped industry-context responses
@@ -184,6 +207,49 @@ export async function runAtlasLlm(
   if (topSignal && /shadow ai|signal|evidence|provenance|vendor/i.test(message)) {
     toolResults.signalDetail = await query_signal_evidence(ctx, topSignal.id);
     toolsUsed.push('query_signal_evidence');
+  }
+
+  // ATLAS-RUNLLM-COMPOSITION 2026-05-31 — short-circuit to the deterministic
+  // four-section composer when the prompt is an IAC hybrid or initiative-
+  // specific question and the composer produced a real answer. This wires
+  // the in-process IAC E2E harness path (21/21 four-section render) into
+  // the live deployed route so live prod no longer paraphrases the
+  // structure away.
+  //
+  // Eligibility:
+  //   - intent.kind === 'hybrid'              (initiative + archetype)
+  //   - intent.kind === 'initiative-specific' (tenant initiative anchor)
+  // The 'archetype-specific' path (no tenant anchor) still flows through the
+  // LLM — the model adds value weaving corpus context with the user prompt
+  // there, and forcing a one-section composer answer would regress.
+  const iac = retrievalContext.atlasIacComposition;
+  const eligibleForCompositionShortCircuit =
+    !!iac &&
+    (iac.intent.kind === 'hybrid' || iac.intent.kind === 'initiative-specific');
+  if (eligibleForCompositionShortCircuit && iac) {
+    logAtlasMode({
+      tenantId: ctx.clientId,
+      mode: 'live',
+      reason: null,
+      model: COMPOSITION_MODEL_NAME,
+      workflow: 'atlas-llm',
+    });
+    return {
+      response: iac.response,
+      toolsUsed: [...toolsUsed, 'compose_atlas_iac_answer'],
+      suggestions: [
+        { label: 'Peer context', value: 'How do we compare to peers?', kind: 'message' },
+        { label: 'Industry moves', value: 'What are others doing in this industry?', kind: 'message' },
+        topSignal
+          ? { label: 'Open top signal', value: `signal:${topSignal.id}`, kind: 'signal' }
+          : { label: 'Programs', value: 'Show active programs', kind: 'message' },
+      ],
+      toolResults,
+      modelName: COMPOSITION_MODEL_NAME,
+      atlasMode: 'live',
+      fallbackReason: null,
+      promptVersion: ATLAS_PROMPT_VERSION,
+    };
   }
 
   const apiKeyPresent = !!process.env.ANTHROPIC_API_KEY;
