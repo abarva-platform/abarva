@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { chromium, expect, type Browser, type Page } from '@playwright/test';
+import {
+  validateCxoAnswer,
+  type CxoTenantKey,
+} from '@/lib/agent/quality/cxo-answer-quality';
 
 type AgentName = 'sentinel' | 'atlas' | 'nexus' | 'source' | 'steward';
 type DemoGrade = 'A' | 'B' | 'C' | 'D' | 'F';
@@ -53,6 +57,7 @@ interface CaseScore {
     dissent: 'pass' | 'fail' | 'not-required';
     answerPresent: boolean;
     transport: 'pass' | 'fail';
+    cxoQuality: 'pass' | 'fail';
   };
   failures: string[];
   excerpt: string;
@@ -90,6 +95,7 @@ const TENANT_DISPLAY: Record<string, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
   'first-capital': 'First Capital Financial',
+  'skyharbor-air': 'SkyHarbor Air',
 };
 
 const DEMO_EMAILS: Record<string, Partial<Record<string, string>> & { default: string }> = {
@@ -106,6 +112,11 @@ const DEMO_EMAILS: Record<string, Partial<Record<string, string>> & { default: s
   'first-capital': {
     default: 'cio@firstcapital.example.com',
     cio: 'cio@firstcapital.example.com',
+  },
+  'skyharbor-air': {
+    default: 'cto@skyharbor-air.example.com',
+    cto: 'cto@skyharbor-air.example.com',
+    cio: 'cio@skyharbor-air.example.com',
   },
 };
 
@@ -324,6 +335,17 @@ function gradeFromFailures(failures: string[], forbiddenTermsFound: string[], ha
   return 'F';
 }
 
+function toCxoTenantKey(tenant: string): CxoTenantKey | undefined {
+  if (
+    tenant === 'apex-retail' ||
+    tenant === 'meridian-health' ||
+    tenant === 'skyharbor-air'
+  ) {
+    return tenant;
+  }
+  return undefined;
+}
+
 function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefined): CaseScore {
   const answer = captured?.answer ?? '';
   const visibleAnswer = stripAgentArtifacts(answer);
@@ -334,6 +356,18 @@ function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefi
   const citationOk = !testCase.expected.requiresCitations || hasCitationSignal(visibleAnswer);
   const dissentOk = !testCase.expected.requiresDissent || hasDissentSignal(visibleAnswer);
   const tenantFactsOk = !testCase.expected.requiresTenantFacts || missingTerms.length === 0;
+  const tenantKey = toCxoTenantKey(testCase.tenant);
+  const cxoQuality = validateCxoAnswer({
+    text: visibleAnswer,
+    tenant: tenantKey
+      ? {
+          tenantKey,
+          tenantDisplayName: TENANT_DISPLAY[testCase.tenant] ?? testCase.tenant,
+        }
+      : undefined,
+    expectedActionable: true,
+    allowQuotedUserPrompt: testCase.prompt,
+  });
   const failures: string[] = [];
 
   if (!transportOk) failures.push(`transport failed${captured?.status ? ` (${captured.status})` : ''}`);
@@ -343,6 +377,13 @@ function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefi
   if (testCase.expected.requiresTenantFacts && !tenantFactsOk) failures.push('tenant facts missing');
   if (testCase.expected.requiresCitations && !citationOk) failures.push('citation/evidence signal missing');
   if (testCase.expected.requiresDissent && !dissentOk) failures.push('dissent/risk signal missing');
+  if (!cxoQuality.passed) {
+    failures.push(
+      `CXO quality failed: ${cxoQuality.issues
+        .map((issue) => issue.code)
+        .join(', ')}`,
+    );
+  }
 
   const grade = gradeFromFailures(failures, forbiddenTerms, answerPresent, transportOk);
   return {
@@ -364,6 +405,7 @@ function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefi
       dissent: testCase.expected.requiresDissent ? (dissentOk ? 'pass' : 'fail') : 'not-required',
       answerPresent,
       transport: transportOk ? 'pass' : 'fail',
+      cxoQuality: cxoQuality.passed ? 'pass' : 'fail',
     },
     failures,
     excerpt: normalizeText(visibleAnswer).slice(0, 320),

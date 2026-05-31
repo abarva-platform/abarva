@@ -26,6 +26,10 @@ import { join } from 'node:path';
 
 import { chromium } from 'playwright';
 import { createClerkClient } from '@clerk/backend';
+import {
+  validateCxoAnswer,
+  type CxoAnswerIssue,
+} from '@/lib/agent/quality/cxo-answer-quality';
 
 const PROD_URL = process.env.PROD_URL ?? 'https://app.abarva.ai';
 const TENANT_SLUG = 'apex-retail';
@@ -256,6 +260,8 @@ interface TurnResult {
     bannedPhraseNote: string;
     bannedPhraseEvidence: string | null;
     truncationOrBoilerplate: boolean;
+    cxoQualityPassed: boolean;
+    cxoQualityIssues: CxoAnswerIssue[];
     grade: Grade;
     gradeJustification: string;
   };
@@ -349,6 +355,26 @@ function gradeTurn(q: Question, atlasMode: 'live' | 'fallback' | null, text: str
     grade = grade > 'C' ? 'C' : grade;
     fails.push('truncation or boilerplate detected');
   }
+  const cxoQuality = validateCxoAnswer({
+    text,
+    mode: atlasMode,
+    tenant: {
+      tenantKey: 'apex-retail',
+      tenantDisplayName: TENANT_DISPLAY,
+      allowedDisplayNames: [TENANT_DISPLAY, 'Apex Retail'],
+    },
+    expectedActionable: true,
+    allowQuotedUserPrompt: q.text,
+  });
+  if (!cxoQuality.passed) {
+    const highIssue = cxoQuality.issues.some((issue) => issue.severity === 'high');
+    grade = highIssue ? 'F' : grade > 'C' ? 'C' : grade;
+    fails.push(
+      `CXO quality gate failed: ${cxoQuality.issues
+        .map((issue) => issue.code)
+        .join(', ')}`,
+    );
+  }
 
   return {
     tenantCorrect,
@@ -359,6 +385,8 @@ function gradeTurn(q: Question, atlasMode: 'live' | 'fallback' | null, text: str
     bannedPhraseNote: banned.note,
     bannedPhraseEvidence: banned.evidence,
     truncationOrBoilerplate,
+    cxoQualityPassed: cxoQuality.passed,
+    cxoQualityIssues: cxoQuality.issues,
     grade,
     gradeJustification: fails.length === 0 ? 'all scorecard dims green' : fails.join('; '),
   };
@@ -561,6 +589,7 @@ function renderMd(run: {
   const hybridTurns = run.turns.filter((t) => t.block === 'hybrid');
   const hybridFired = hybridTurns.filter((t) => t.scorecard.fourSectionStructure === true).length;
   const bannedCount = run.turns.filter((t) => t.scorecard.bannedPhrasePresent).length;
+  const cxoQualityFailCount = run.turns.filter((t) => !t.scorecard.cxoQualityPassed).length;
   const errorTurns = run.turns.filter((t) => t.response.status !== 200).length;
   const grades = run.turns.reduce<Record<Grade, number>>(
     (acc, t) => ({ ...acc, [t.scorecard.grade]: (acc[t.scorecard.grade] ?? 0) + 1 }),
@@ -573,6 +602,7 @@ function renderMd(run: {
     }
     if (fallbackCount > 0) return 'HOLD — x-atlas-mode=fallback emitted on live prod.';
     if (errorTurns > 0) return `HOLD — ${errorTurns}/${total} turns returned non-200 status.`;
+    if (cxoQualityFailCount > 0) return `HOLD — ${cxoQualityFailCount}/${total} turns failed the CXO answer-quality gate.`;
     if (bannedCount > 0) return `HOLD — ${bannedCount}/${total} turns emitted a banned phrase outside cited sources.`;
     if (llmInvokedCount === 0) {
       return 'HOLD — no turn in this deck actually invoked the live Anthropic API (every question matched a scripted intent). HI-1 cannot be validated; rephrase the deck to force routeType=llm.';
@@ -595,6 +625,7 @@ function renderMd(run: {
     `- **HI-1 validation: LLM-invoked turns falling back**: ${llmFallbackCount}/${llmInvokedCount} (target 0/${llmInvokedCount})`,
     `- **Hybrid four-section composition fires**: ${hybridFired}/${hybridTurns.length}`,
     `- **Banned-phrase emissions (outside cited sources)**: ${bannedCount}/${total} (target 0)`,
+    `- **CXO answer-quality failures**: ${cxoQualityFailCount}/${total} (target 0)`,
     `- **Non-200 responses**: ${errorTurns}/${total}`,
     `- **Grade distribution**: A=${grades.A} B=${grades.B} C=${grades.C} D=${grades.D} F=${grades.F}`,
     '',
@@ -622,6 +653,9 @@ function renderMd(run: {
         ? ''
         : ` (header=${t.response.atlasModeHeader ?? '<none>'}, body=${t.response.bodyAtlasMode ?? '<none>'})`;
       const excerpt = t.response.bodyExcerpt || (('parseError' in t.response.body) ? `<no JSON: ${t.response.body.parseError}>` : '<empty>');
+      const cxoIssues = t.scorecard.cxoQualityIssues
+        .map((issue) => `${issue.severity}:${issue.code}${issue.evidence ? ` (${issue.evidence})` : ''}`)
+        .join('; ') || 'none';
       return [
         `### ${t.questionId} · ${t.block} · grade=${t.scorecard.grade}`,
         '',
@@ -633,6 +667,7 @@ function renderMd(run: {
         `- **Intent / route**: ${t.response.intent ?? '<none>'} / ${t.response.routeType ?? '<none>'}`,
         t.response.fallbackReason ? `- **Fallback reason**: \`${t.response.fallbackReason}\`` : null,
         `- **Scorecard**: ${t.scorecard.gradeJustification}`,
+        `- **CXO quality**: ${t.scorecard.cxoQualityPassed ? 'pass' : 'fail'} — ${cxoIssues}`,
         t.scorecard.bannedPhraseEvidence
           ? `- **Banned-phrase note**: ${t.scorecard.bannedPhraseNote} (evidence: "${t.scorecard.bannedPhraseEvidence}")`
           : null,
