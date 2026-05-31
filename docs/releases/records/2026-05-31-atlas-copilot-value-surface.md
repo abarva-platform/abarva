@@ -41,7 +41,7 @@ Atlas now handles CIO-style Copilot usage/value questions on a deterministic Tow
 - Pass: `npx tsc --noEmit --pretty false`.
 - Pass: `npx eslint src/lib/atlas/classifier.ts src/lib/atlas/scripted-engine.ts src/components/tower/TowerIndexPage.tsx src/components/atlas/AtlasRail.tsx src/lib/atlas/classifier.test.ts src/components/atlas/__tests__/atlas-timeout-contract.test.ts src/lib/atlas/__tests__/scripted-cxo-language.test.ts scripts/qa/atlas-prod-comprehensive-surface.ts`.
 - Pass: `git diff --check`.
-- Not-run: production comprehensive surface harness against `https://app.abarva.ai`; must run after deploy settles.
+- Pass: production comprehensive surface harness against `https://app.abarva.ai` after deploy settled; 45/45 turns passed across Apex Retail, Meridian Health, and SkyHarbor; 0 fallback, 0 tenant leaks, 0 timeout copy, 0 weak internal-tool language; 3/3 clean login/Tower/cross-tenant-probe/logout sessions.
 
 ## Rollout Plan
 
