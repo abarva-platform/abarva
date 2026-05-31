@@ -104,4 +104,52 @@ Retired tenant references still exist in archived docs.
     expect(renderedText).toContain('legacy financial-services demo tenant');
     expect(renderedText).toContain('legacy healthcare demo tenant');
   });
+
+  it('redacts canonical tenant names and aliases from tenant-visible release fields', () => {
+    const record = parseReleaseRecord(
+      '2026-05-30-canonical-tenant.md',
+      `# Apex Retail command cleanup
+
+## Release ID
+
+\`2026-05-30-canonical-tenant\`
+
+## Status
+
+\`released\`
+
+## Plain-English Summary
+
+Removes a command that used --client-id apexretail from the release ledger.
+
+## Client Applicability
+
+- Meridian Health: visible in admin route walk.
+- SkyHarbor Air: same shared control plane.
+
+## QA / Validation
+
+- PASS: npx tsx src/scripts/tower/ingest-servicenow-cmdb.ts --client-id apexretail --dry-run
+
+## Known Gaps
+
+First Capital and Northstar remain covered by the shared ledger route.
+`,
+    );
+
+    const renderedText = [
+      record.title,
+      record.summary,
+      ...record.clientApplicability,
+      ...record.qaValidation,
+      record.knownGaps,
+    ].join('\n');
+
+    expect(renderedText).toContain('canonical retail tenant');
+    expect(renderedText).toContain('canonical healthcare tenant');
+    expect(renderedText).toContain('canonical airline tenant');
+    expect(renderedText).toContain('canonical financial-services tenant');
+    expect(renderedText).toContain('canonical clinical-technology tenant');
+    expect(renderedText).not.toMatch(/Apex Retail|apexretail|Meridian Health|SkyHarbor Air|First Capital|Northstar/i);
+  });
 });
