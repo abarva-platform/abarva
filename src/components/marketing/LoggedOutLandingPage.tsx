@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo'
 import { MarketingNav } from './MarketingNav'
 
 type LoggedOutLandingPageProps = {
@@ -10,16 +11,33 @@ type LoggedOutLandingPageProps = {
 }
 
 const valueRows = [
-  ['Avoid failed AI spend', 'Catch weak sponsorship, poor data readiness, and overbuilt ideas before money moves.'],
-  ['Shape better moves', 'Turn AI ideas into scoped bets with owner, workflow, evidence, sourcing path, and value model.'],
-  ['Verify outcomes', 'Track projected, observed, and finance-validatable value in one operating view.'],
+  ['Avoid failed AI spend', 'Catch weak sponsorship, poor data readiness, unclear workflow ownership, and overbuilt ideas before money moves.'],
+  ['Shape better moves', 'Turn AI ideas into scoped bets with sponsor, value model, risk logic, adoption plan, sourcing path, and approval gates.'],
+  ['Buy with leverage', 'Frame RFPs, score vendors, pressure-test SI claims, and negotiate productivity, risk, data, and outcome commitments.'],
+  ['Verify outcomes', 'Track projected, observed, and finance-validatable value in one operating view after launch.'],
 ]
 
 const journey = [
-  ['Intelligence', 'Ask Sentinel what is worth doing and why.'],
-  ['Moves', 'Create the bet, pressure-test scope, sponsor, business case, and gates.'],
+  ['Context', 'Load client systems, vendors, initiatives, KPIs, contracts, risks, and operating facts.'],
+  ['Intelligence', 'Ask Sentinel what is worth doing, what evidence is missing, and which failure modes matter.'],
+  ['Moves', 'Use Nexus to shape the bet, pressure-test scope, sponsor, business case, adoption, and gates.'],
   ['Source', 'Run vendor and SI selection with evidence, not sales theater.'],
+  ['Tower', 'Track realized value, blockers, dependencies, risk, and executive pressure.'],
 ]
+
+const cockpitMetrics = [
+  ['$ value', 'protected, created, and verified across AI moves'],
+  ['Failure risk', 'caught before ideas become funded programs'],
+  ['4 gates', 'evidence, value, risk, and adoption before funding'],
+  ['1 trail', 'question to answer to artifact to value outcome'],
+] as const
+
+const successLoop = [
+  ['Select', 'Fund the AI bets with real business value and readiness.'],
+  ['De-risk', 'Detect weak sponsorship, data gaps, vendor traps, and adoption failure modes.'],
+  ['Mobilize', 'Generate the artifacts, gates, sourcing packs, and operating model needed to execute.'],
+  ['Prove', 'Track value realization, blockers, pressure, and finance-validatable outcomes.'],
+] as const
 
 export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPageProps) {
   return (
@@ -28,8 +46,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .logged-out-shell {
           min-height: 100vh;
           background:
-            radial-gradient(circle at 82% 8%, rgba(17, 19, 24, 0.07), transparent 30%),
+            linear-gradient(90deg, rgba(17, 19, 24, 0.045) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(17, 19, 24, 0.035) 1px, transparent 1px),
             linear-gradient(180deg, #ffffff 0%, #f8f7f4 100%);
+          background-size: 72px 72px, 72px 72px, auto;
           color: #0b1220;
           font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
@@ -142,11 +162,27 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         }
 
         .console {
+          position: relative;
+          overflow: hidden;
           border: 1px solid rgba(15, 23, 42, 0.10);
           border-radius: 28px;
-          background: rgba(255, 255, 255, 0.88);
+          background: #05070b;
           box-shadow: 0 28px 80px rgba(15, 23, 42, 0.12);
           padding: clamp(18px, 2vw, 28px);
+        }
+
+        .console::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(135deg, rgba(0, 102, 204, 0.28), transparent 34%),
+            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0.045) 1px, transparent 1px, transparent 48px);
+          pointer-events: none;
+        }
+
+        .console > * {
+          position: relative;
         }
 
         .console-top {
@@ -154,28 +190,84 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           align-items: center;
           justify-content: space-between;
           gap: 14px;
-          border-bottom: 1px solid #e6ebf2;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.12);
           padding-bottom: 18px;
           margin-bottom: 20px;
+        }
+
+        .hero-photo-wrap {
+          position: relative;
+          min-height: 262px;
+          margin: -8px -8px 22px;
+          border-radius: 22px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: #111318;
+        }
+
+        .hero-photo-wrap::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(180deg, rgba(5, 7, 11, 0.04), rgba(5, 7, 11, 0.68)),
+            linear-gradient(90deg, rgba(5, 7, 11, 0.45), transparent 55%);
+        }
+
+        .photo-caption {
+          position: absolute;
+          left: 18px;
+          right: 18px;
+          bottom: 16px;
+          z-index: 2;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 14px;
+          align-items: end;
+        }
+
+        .photo-caption strong {
+          display: block;
+          color: #ffffff;
+          font-size: 16px;
+          line-height: 1.25;
+        }
+
+        .photo-caption span {
+          display: block;
+          margin-top: 4px;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .photo-chip {
+          border-radius: 999px;
+          background: rgba(0, 102, 204, 0.84);
+          color: #ffffff;
+          padding: 7px 10px;
+          font-size: 11px;
+          font-weight: 850;
+          white-space: nowrap;
         }
 
         .console-title {
           font-size: 13px;
           font-weight: 800;
-          color: #101828;
+          color: #ffffff;
         }
 
         .console-subtitle {
           margin-top: 3px;
-          color: #667085;
+          color: rgba(255, 255, 255, 0.58);
           font-size: 12px;
           line-height: 1.4;
         }
 
         .badge {
           border-radius: 999px;
-          background: #ecfdf3;
-          color: #027a48;
+          background: rgba(0, 102, 204, 0.22);
+          color: #b9dcff;
           padding: 6px 9px;
           font-size: 11px;
           font-weight: 800;
@@ -192,37 +284,42 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           grid-template-columns: 84px 1fr;
           gap: 14px;
           align-items: center;
-          border: 1px solid #e6ebf2;
+          border: 1px solid rgba(255, 255, 255, 0.13);
           border-radius: 14px;
-          background: #fbfcfe;
+          background: rgba(255, 255, 255, 0.06);
           padding: 13px;
         }
 
         .layer strong {
-          color: #111318;
+          color: #8ac3ff;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
         }
 
         .layer span {
-          color: #344054;
+          color: rgba(255, 255, 255, 0.72);
           font-size: 13px;
           line-height: 1.45;
         }
 
         .outcomes {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 14px;
           margin-top: 16px;
         }
 
         .metric {
           border-radius: 16px;
-          background: #07111f;
+          border: 1px solid rgba(255, 255, 255, 0.13);
+          background: rgba(255, 255, 255, 0.07);
           color: #ffffff;
           padding: 16px;
+        }
+
+        .metric:first-child {
+          background: linear-gradient(180deg, rgba(0, 102, 204, 0.34), rgba(255, 255, 255, 0.07));
         }
 
         .metric strong {
@@ -310,6 +407,68 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           line-height: 1.55;
         }
 
+        .journey-strip {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 10px;
+          margin: -18px 0 52px;
+        }
+
+        .journey-card {
+          position: relative;
+          min-height: 148px;
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.72);
+          box-shadow: 0 18px 44px rgba(15, 23, 42, 0.055);
+          padding: 16px;
+          overflow: hidden;
+        }
+
+        .journey-card:last-child {
+          background: #111318;
+          color: #ffffff;
+        }
+
+        .journey-card small {
+          display: block;
+          margin-bottom: 30px;
+          color: #0066cc;
+          font-size: 11px;
+          font-weight: 850;
+          letter-spacing: 0.1em;
+        }
+
+        .journey-card:last-child small {
+          color: #8ac3ff;
+        }
+
+        .journey-card strong {
+          display: block;
+          font-size: 17px;
+          margin-bottom: 8px;
+        }
+
+        .journey-card span {
+          display: block;
+          color: #475467;
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .journey-card:last-child span {
+          color: rgba(255, 255, 255, 0.68);
+        }
+
+        .journey-card:not(:last-child)::after {
+          content: "→";
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          color: #0066cc;
+          font-weight: 900;
+        }
+
         @media (max-width: 920px) {
           .hero,
           .section-grid {
@@ -349,6 +508,14 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             border-radius: 22px;
           }
 
+          .hero-photo-wrap {
+            min-height: 198px;
+          }
+
+          .photo-caption {
+            grid-template-columns: 1fr;
+          }
+
           .console-top {
             align-items: flex-start;
           }
@@ -362,6 +529,16 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             grid-template-columns: 1fr;
           }
 
+          [aria-label='AI success loop'] {
+            grid-template-columns: 1fr !important;
+            margin-top: 0 !important;
+          }
+
+          .journey-strip {
+            grid-template-columns: 1fr;
+            margin-top: 0;
+          }
+
           .row {
             grid-template-columns: 1fr;
             gap: 4px;
@@ -372,30 +549,28 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       <div className="frame">
         <header className="nav">
           <Link href="/" aria-label="AbarVa home">
-            <Image
-              src="/brand/abarva-logo-lockup-v2.svg"
-              alt="AbarVa"
-              width={166}
-              height={36}
-              priority
-              style={{ display: 'block' }}
+            <AbarVaLogo
+              variant="wordmark"
+              size="md"
+              label="AbarVa"
+              style={{ height: 26, width: 'auto' }}
             />
           </Link>
-          <MarketingNav ctaHref="/sign-in" ctaLabel="Request demo" />
+          <MarketingNav ctaHref="/contact/" ctaLabel="Request access" />
         </header>
 
         <section className="hero">
           <div>
-            <div className="eyebrow"><span className="pulse" /> Private CXO preview</div>
-            <h1>AbarVa turns AI ambition into verified enterprise value.</h1>
+            <div className="eyebrow"><span className="pulse" /> AI Success Platform</div>
+            <h1>AbarVa turns AI ambition into verified business value.</h1>
             <p className="lead">
-              It is a working AI Success Platform for leaders deciding which AI bets to fund,
-              how to shape them, who should sponsor them, which vendors to trust, and whether
-              the value actually landed.
+              AbarVa helps leaders select the right AI bets, avoid expensive failure modes,
+              shape execution-ready Moves, source with leverage, and prove whether the value
+              actually landed.
             </p>
             <div className="actions">
-              <Link href="/sign-in" className="button button-primary">Enter client workspace</Link>
-              <Link href="/product" className="button button-secondary">Review product story</Link>
+              <Link href="/contact/" className="button button-primary">Request access</Link>
+              <Link href="/sign-in" className="button button-secondary">Sign in</Link>
             </div>
             {signedOut && (
               <div className="signed-out-note">
@@ -406,38 +581,96 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           </div>
 
           <aside className="console" aria-label="AbarVa operating model">
+            <div className="hero-photo-wrap" aria-label="Executive AI success platform workshop">
+              <Image
+                src="/marketing/ai-success-platform-boardroom.png"
+                alt="Executives reviewing AI initiative outcomes, risk gates, sourcing decisions, and value realization metrics."
+                fill
+                priority
+                sizes="(max-width: 920px) 100vw, 48vw"
+                style={{ objectFit: 'cover' }}
+              />
+              <div className="photo-caption">
+                <div>
+                  <strong>From AI idea to funded, governed, value-tracked move.</strong>
+                  <span>Human executives and agents working from the same evidence base.</span>
+                </div>
+                <div className="photo-chip">Failure avoidance</div>
+              </div>
+            </div>
             <div className="console-top">
               <div>
-                <div className="console-title">Human maestro + agent system</div>
-                <div className="console-subtitle">Strategy, moves, sourcing, and value tracking in one loop.</div>
+              <div className="console-title">Outcome cockpit</div>
+              <div className="console-subtitle">Failure avoidance and value realization in one loop.</div>
               </div>
-              <div className="badge">Live product</div>
+              <div className="badge">Private workspace</div>
             </div>
             <div className="architecture">
-              <div className="layer"><strong>01 Intel</strong><span>Tenant context, industry corpus, graph, vectors, and operating facts.</span></div>
-              <div className="layer"><strong>02 Moves</strong><span>AI bets shaped through sponsor, scope, data, workflow, and gate discipline.</span></div>
-              <div className="layer"><strong>03 Source</strong><span>Vendor and SI decisions grounded in evidence, risk, economics, and fit.</span></div>
-              <div className="layer"><strong>04 Tower</strong><span>Outcome tracking, portfolio signals, spend, adoption, and contradictions.</span></div>
+              <div className="layer"><strong>01 Context</strong><span>Client systems, vendors, initiatives, KPIs, contracts, risks, and evidence.</span></div>
+              <div className="layer"><strong>02 Intel</strong><span>Agent reasoning grounded in client facts, relevant patterns, and missing evidence.</span></div>
+              <div className="layer"><strong>03 Moves</strong><span>AI bets shaped through sponsor, scope, data, workflow, value, and gates.</span></div>
+              <div className="layer"><strong>04 Source</strong><span>Vendor and SI decisions grounded in evidence, risk, economics, and fit.</span></div>
             </div>
             <div className="outcomes">
-              <div className="metric"><strong>$18M+</strong><span>Illustrative annual value potential from reduced failure and rework.</span></div>
-              <div className="metric"><strong>2x</strong><span>Faster path from idea to decision-ready Move.</span></div>
-              <div className="metric"><strong>1</strong><span>Evidence trail from question to funded outcome.</span></div>
+              {cockpitMetrics.map(([metric, label]) => (
+                <div className="metric" key={label}>
+                  <strong>{metric}</strong>
+                  <span>{label}</span>
+                </div>
+              ))}
             </div>
           </aside>
         </section>
 
+        <section
+          aria-label="AI success loop"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: 12,
+            margin: '-18px 0 34px',
+          }}
+        >
+          {successLoop.map(([title, body]) => (
+            <div
+              key={title}
+              style={{
+                border: '1px solid rgba(15, 23, 42, 0.12)',
+                borderRadius: 18,
+                background: 'rgba(255, 255, 255, 0.68)',
+                boxShadow: '0 18px 44px rgba(15, 23, 42, 0.045)',
+                padding: 18,
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: 8, fontSize: 16 }}>{title}</strong>
+              <span style={{ display: 'block', color: '#475467', fontSize: 13, lineHeight: 1.5 }}>
+                {body}
+              </span>
+            </div>
+          ))}
+        </section>
+
+        <section className="journey-strip" aria-label="AbarVa value journey">
+          {journey.map(([title, body], index) => (
+            <div className="journey-card" key={title}>
+              <small>0{index + 1}</small>
+              <strong>{title}</strong>
+              <span>{body}</span>
+            </div>
+          ))}
+        </section>
+
         <section className="section-grid">
           <div className="panel">
-            <h2>What the preview should prove.</h2>
+            <h2>What the public page should prove.</h2>
             <p className="panel-copy">
-              This is not demoware. The product runs as a real multi-tenant application with
-              authenticated client workspaces, Postgres-backed operating data, graph and vector
-              retrieval, and agent surfaces for Intelligence, Moves, Source, and Tower.
+              AbarVa is not another chatbot or project tracker. It is a decision-grade operating
+              system for enterprise AI: outcome-first, evidence-governed, human-approved, and
+              designed to turn ambition into funded, sourced, adopted, and measured Moves.
             </p>
             <div className="mobile-note">
-              On mobile, invited users should see this crisp product promise, sign in, and scan
-              the story. The full boardroom demo should still happen on desktop for workbench flows.
+              Detailed training, corpus coverage, client primers, datasets, architecture, and
+              generated artifacts stay inside authenticated or controlled-access workspaces.
             </div>
           </div>
 

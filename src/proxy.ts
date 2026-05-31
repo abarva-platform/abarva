@@ -24,11 +24,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   '/invite(.*)',
   '/auth-redirect(.*)',
   '/',
-  '/demo(.*)',
-  '/investor(.*)',
-  // P13 demo assets live under How it works and must be reachable
-  // before auth so prospects can view the comparison/teaser pages.
-  '/how-it-works(.*)',
+  '/contact(.*)',
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',
@@ -67,17 +63,6 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // initiative counts publicly to anyone who knew the URL. The route is
   // now an authenticated diagnostic (any signed-in user, count-only is
   // still acceptable across the workspace). Removed from the public list.
-  // INT-V3 (2026-05-07) · /intelligence is the public Explore Layer
-  // surface — corpus doctrine, no tenant data leakage. Auth-required
-  // sub-paths (author / quality / synthesize / ask / validate) are
-  // still gated by AUTH_REQUIRED_ROUTE_PATTERNS, which is checked
-  // before the public-route fall-through.
-  '/intelligence(.*)',
-  // `/product` is the public Product overview — the marketing nav's
-  // "Platform → Product" link. It explains the four surfaces
-  // (Intelligence / Moves / Source / Tower) for logged-out visitors
-  // who need to see what the product is before signing in.
-  '/product(.*)',
 ] as const
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
@@ -153,6 +138,20 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/intelligence/ask(.*)',
   '/intelligence/validate(.*)',
   '/source(.*)',
+  '/architecture(.*)',
+  '/atlas(.*)',
+  '/contradictions(.*)',
+  '/demo(.*)',
+  '/digest(.*)',
+  '/editorial(.*)',
+  '/how-it-works(.*)',
+  '/intelligence(.*)',
+  '/investor(.*)',
+  '/investors(.*)',
+  '/patterns(.*)',
+  '/product(.*)',
+  '/solutions(.*)',
+  '/training(.*)',
 ] as const
 
 const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
@@ -381,5 +380,5 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 })
 
 export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)', '/training/:path*'],
 }
