@@ -1403,3 +1403,27 @@ export const BANKING_DOM12_DATA_GOVERNANCE_PART4_PATTERNS: PatternSeed[] = [
     },
   },
 ];
+
+type PatternSeed = {
+  code: string;
+  name: string;
+  description: string;
+  vertical: string;
+  office_category: string;
+  keywords: string[];
+  failure_rate_pct: number;
+  is_active: boolean;
+  demoRelevant?: boolean;
+  subTopic?: string;
+  data: {
+    failureMode: string;
+    regulatoryHook: string;
+    detectionMethod: string;
+    remediationPath: string;
+    estimatedCost: string;
+    timeToRemediate: string;
+    industryBenchmark: string;
+    aiInsertionRisk: boolean;
+    aiRiskDescription: string;
+  };
+};
