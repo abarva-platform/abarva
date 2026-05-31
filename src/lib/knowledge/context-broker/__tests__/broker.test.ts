@@ -218,6 +218,20 @@ describe('extractKeywords', () => {
     expect(out).not.toContain('is');
   });
 
+  it('exposes vendor inference economics through the broker seam', () => {
+    const { broker } = makeBroker();
+
+    expect(broker.getInferenceEconomicsForVendor('DAX Copilot')).toEqual({
+      perCallUsd: null,
+      pricingTierLadder: [],
+      repricingClauseText: null,
+      repricingNoticeDays: null,
+      volumeLockExpiresOn: null,
+      contractCeilingUsdPerYear: null,
+      asOf: '2026-05-31',
+    });
+  });
+
   it('strips trailing punctuation', () => {
     expect(extractKeywords('budget?')).toEqual(['budget']);
   });

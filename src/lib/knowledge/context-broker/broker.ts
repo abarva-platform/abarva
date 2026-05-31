@@ -50,6 +50,10 @@ import {
 import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
 import type { CanonicalIndustry } from '@/lib/intelligence/canonical/industry-ai-pattern';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
+import {
+  getInferenceEconomicsForVendor,
+  type VendorInferenceEconomics,
+} from '@/lib/source/vendor-inference-economics';
 import type {
   ContextChunk,
   GraphNeighborhood,
@@ -75,6 +79,7 @@ import { callWorldviewRetriever } from './worldview-retrieval';
 /** Public contract — what callers and tests pin against. */
 export interface ContextBroker {
   assemble(input: ContextAssembleInput): Promise<ContextBundle>;
+  getInferenceEconomicsForVendor(vendorId: string): VendorInferenceEconomics | null;
 }
 
 export type CorpusPatternRetriever = (
@@ -735,6 +740,10 @@ export class DefaultContextBroker implements ContextBroker {
       return hits as ContextChunk[];
     },
   ) {}
+
+  getInferenceEconomicsForVendor(vendorId: string): VendorInferenceEconomics | null {
+    return getInferenceEconomicsForVendor(vendorId);
+  }
 
   async assemble(input: ContextAssembleInput): Promise<ContextBundle> {
     const maxFacts = clamp(input.maxFacts ?? DEFAULTS.maxFacts, CLAMPS.maxFacts);
