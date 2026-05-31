@@ -16,6 +16,11 @@ import {
   type RoleMixEntry,
   type RoleRateCard,
 } from '@/lib/source/should-cost/should-cost-model';
+import {
+  estimateAiOperatingCost,
+  type AiOperatingCostInput,
+  type AiOpsCostEstimate,
+} from './ai-ops-cost';
 import { RESEARCHED_PLANNING_RATES } from './rate-card/derived-planning-rate-card';
 import { rangeOf, round2, sumRanges, type Range } from './types';
 
@@ -68,6 +73,8 @@ export interface EffortEstimatorInput {
   /** Engagement-level default offshore fraction (0..1). */
   offshoreRatio: number;
   workstreams: WorkstreamInput[];
+  /** Optional AI operating-cost model. Omitted preserves the legacy effort estimate. */
+  aiOps?: AiOperatingCostInput | null;
 }
 
 /**
@@ -109,6 +116,8 @@ export interface BuildVsChangeSplit {
   businessChangeCost: number;
   /** Fraction (0..1) of total base effort that is business change. */
   businessChangeFraction: number;
+  /** Three-year AI operating cost, when modeled; 0 when not supplied. */
+  aiOpsCost: number;
   /** A plain-language read of whether the split looks credible. */
   note: string;
 }
@@ -126,6 +135,8 @@ export interface EffortEstimate {
   effectiveAgentSplit: number;
   /** AI-build vs. business-change effort split. */
   buildVsChange: BuildVsChangeSplit;
+  /** Optional AI run-cost estimate; null keeps non-AI-ops Moves backward compatible. */
+  aiOpsCost: AiOpsCostEstimate | null;
   /** The resolved, provenance-labelled rate card the estimate was built on. */
   rateCard: KernelRateCard;
 }
@@ -294,8 +305,13 @@ export function buildEffortEstimate(
     aiBuildCost,
     businessChangeCost,
     businessChangeFraction,
+    aiOpsCost: 0,
     note: buildSplitNote(businessChangeFraction),
   };
+  const aiOpsCost = input.aiOps ? estimateAiOperatingCost(input.aiOps) : null;
+  if (aiOpsCost) {
+    buildVsChange.aiOpsCost = aiOpsCost.threeYearTotal;
+  }
 
   return {
     moveName: input.moveName,
@@ -306,6 +322,7 @@ export function buildEffortEstimate(
     effectiveAgentSplit:
       totalBase > 0 ? round2(totalAgentCost / totalBase) : 0,
     buildVsChange,
+    aiOpsCost,
     rateCard,
   };
 }

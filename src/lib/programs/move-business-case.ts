@@ -68,6 +68,7 @@ import {
   type EffortEstimate,
   type WorkstreamInput,
 } from './expert-kernel/effort-estimator';
+import type { AiOperatingCostInput } from './expert-kernel/ai-ops-cost';
 import {
   buildValueForecast,
   type HaircutScores,
@@ -173,6 +174,10 @@ export interface MoveBusinessCaseInput {
   id?: string | null;
   move_id?: string | null;
   moveId?: string | null;
+  /** Optional AI run-cost model from the Move charter or originating UI. */
+  ai_operating_cost?: AiOperatingCostInput | null;
+  /** Camel-case alias for view-model callers. */
+  aiOperatingCost?: AiOperatingCostInput | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -304,7 +309,7 @@ export function buildMoveBusinessCase(
     derivationNotes,
   );
   const assumptions = deriveAssumptions(pack, baseline, derivationNotes);
-  const effort = deriveEffort(moveName, pack);
+  const effort = deriveEffort(moveName, pack, readAiOperatingCost(move));
   const value = deriveValue(moveName, pack, baseline, derivationNotes);
   const towerHandoff = deriveTowerHandoff(pack, baseline);
 
@@ -789,7 +794,17 @@ function deriveAssumptions(
  * surfaced as a planning estimate via the `effort_is_planning_estimate`
  * assumption above.
  */
-function deriveEffort(moveName: string, pack: FunctionPack): EffortEstimate {
+function readAiOperatingCost(
+  move: MoveBusinessCaseInput,
+): AiOperatingCostInput | null {
+  return move.aiOperatingCost ?? move.ai_operating_cost ?? null;
+}
+
+function deriveEffort(
+  moveName: string,
+  pack: FunctionPack,
+  aiOps: AiOperatingCostInput | null,
+): EffortEstimate {
   // Pack-derived signals — both clamped to a conservative band so a pack with
   // an unusually long archetype list cannot inflate the estimate without
   // bound.
@@ -907,6 +922,7 @@ function deriveEffort(moveName: string, pack: FunctionPack): EffortEstimate {
     rateCard: DEFAULT_PLANNING_RATE_CARD,
     offshoreRatio: 0.4,
     workstreams,
+    aiOps,
   });
 }
 

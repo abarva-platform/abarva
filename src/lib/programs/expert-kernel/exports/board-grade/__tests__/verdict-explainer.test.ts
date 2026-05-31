@@ -105,6 +105,7 @@ function makeSkeleton(overrides: SkeletonOverrides = {}): BusinessCaseSkeleton {
     },
     valueRange: { low: 0, point: 0, high: 0 },
     effortRange: { low: 1, point: 1, high: 1 },
+    aiOpsCost: null,
     effort: {
       moveName: 'Test Move',
       workstreams: [],
@@ -116,8 +117,10 @@ function makeSkeleton(overrides: SkeletonOverrides = {}): BusinessCaseSkeleton {
         aiBuildCost: 1,
         businessChangeCost: 0,
         businessChangeFraction: 0,
+        aiOpsCost: 0,
         note: '',
       },
+      aiOpsCost: null,
       rateCard: {
         provenance: 'researched_benchmark',
         label: 'test',
