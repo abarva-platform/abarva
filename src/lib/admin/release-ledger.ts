@@ -59,10 +59,13 @@ function stripMarkdown(value: string): string {
 
 function sanitizeTenantNames(value: string): string {
   return value
+    .replace(/\bApex\s+retail-v1\b/gi, 'retail overlay')
     .replace(/\bApex Retail Group\b/gi, 'a canonical retail tenant')
     .replace(/\bApex Retail\b/gi, 'a canonical retail tenant')
     .replace(/\bapex-retail\b/gi, 'a canonical retail tenant')
     .replace(/\bapexretail\b/gi, 'a canonical retail tenant')
+    .replace(/\bApex\b/gi, 'a canonical retail tenant')
+    .replace(/\bretail-v1\b/gi, 'retail overlay')
     .replace(/\bMeridian Health System\b/gi, 'a canonical healthcare tenant')
     .replace(/\bMeridian Health\b/gi, 'a canonical healthcare tenant')
     .replace(/\bmeridian-health\b/gi, 'a canonical healthcare tenant')

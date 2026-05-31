@@ -130,6 +130,7 @@ Removes a command that used --client-id apexretail from the release ledger.
 ## QA / Validation
 
 - PASS: npx tsx src/scripts/tower/ingest-servicenow-cmdb.ts --client-id apexretail --dry-run
+- PASS: Live DB has 5,691 Apex retail-v1 chunks.
 
 ## Known Gaps
 
@@ -150,6 +151,7 @@ First Capital and Northstar remain covered by the shared ledger route.
     expect(renderedText).toContain('canonical airline tenant');
     expect(renderedText).toContain('canonical financial-services tenant');
     expect(renderedText).toContain('canonical clinical-technology tenant');
-    expect(renderedText).not.toMatch(/Apex Retail|apexretail|Meridian Health|SkyHarbor Air|First Capital|Northstar/i);
+    expect(renderedText).toContain('retail overlay chunks');
+    expect(renderedText).not.toMatch(/\bApex\b|Apex Retail|apexretail|retail-v1|Meridian Health|SkyHarbor Air|First Capital|Northstar/i);
   });
 });
