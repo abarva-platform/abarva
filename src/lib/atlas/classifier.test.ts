@@ -11,4 +11,22 @@ describe('Atlas classifier', () => {
       routeType: 'scripted',
     });
   });
+
+  it('routes Copilot usage/value asks, including common typos, to a deterministic grounded path', () => {
+    expect(classifyAtlasIntent('TALK TO ME ABOUT COPIPLOT USAGE AND VALUE')).toEqual({
+      intent: 'copilot_usage_value',
+      routeType: 'scripted',
+    });
+    expect(classifyAtlasIntent('Talk to me about Copilot usage and value')).toEqual({
+      intent: 'copilot_usage_value',
+      routeType: 'scripted',
+    });
+  });
+
+  it('routes lagging realized-value asks to the measured/commit ranking path', () => {
+    expect(classifyAtlasIntent('Show me the lagging programs by realized value')).toEqual({
+      intent: 'lagging_programs_by_value',
+      routeType: 'scripted',
+    });
+  });
 });

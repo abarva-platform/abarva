@@ -350,6 +350,23 @@ const INTENT_RULES: IntentRule[] = [
     routeType: 'scripted',
     terms: ['idle seats', 'copilot seats', 'licensed vs active', 'seat utilization'],
   },
+  {
+    intent: 'copilot_usage_value',
+    routeType: 'scripted',
+    terms: [
+      'copilot usage',
+      'copilot value',
+      'copilot adoption',
+      'copilot utilization',
+      'copilot usage and value',
+      'copilot adoption and value',
+      'talk to me about copilot',
+      'talk to me about copiplot',
+      'copiplot usage',
+      'copiplot value',
+      'copiplot',
+    ],
+  },
 
   // ---- Risk / governance (Q15-Q18)
   {
