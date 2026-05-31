@@ -5,6 +5,7 @@
 // callers see one shape.
 
 import type { Stage, StatusFlag } from '@/lib/admin/ai-initiatives/labels';
+import type { VendorInferenceEconomics } from '@/lib/source/vendor-inference-economics';
 
 export type VendorFinancialHealth = 'strong' | 'moderate' | 'watch' | 'at_risk';
 
@@ -18,6 +19,7 @@ export interface VendorInitiativeLink {
   renewalDate: string | null;
   financialHealth: VendorFinancialHealth | null;
   notes: string | null;
+  inferenceEconomics: VendorInferenceEconomics | null;
 }
 
 export interface VendorRollup {
@@ -28,6 +30,7 @@ export interface VendorRollup {
   worstFinancialHealth: VendorFinancialHealth | null;
   initiativesAtRisk: number;
   totalInitiatives: number;
+  inferenceEconomics: VendorInferenceEconomics | null;
 }
 
 export interface VendorsData {
