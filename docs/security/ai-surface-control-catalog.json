@@ -163,6 +163,51 @@
           ]
         }
       ]
+    },
+    {
+      "id": "source-award-vendor-recommendation",
+      "surface": "Source Award tab vendor recommendation",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/SourceEventDetailPage.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "AwardRecommendationAccountability",
+            "AILabel",
+            "Human award approval required"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "Evidence basis",
+            "accountability.evidenceBasis"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "AIConfidenceIndicator",
+            "accountability.confidenceTier"
+          ]
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "Risk caveats",
+            "accountability.riskCaveats"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "humanApprovalBoundary",
+            "accountability.humanApprovalBoundary"
+          ]
+        }
+      ]
     }
   ]
 }

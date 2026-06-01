@@ -62,6 +62,21 @@ export interface AwardDecisionSummary {
   preAwardConditions: string[];
 }
 
+export interface AwardRecommendationAccountability {
+  /** Visible watermark for the recommendation surface. */
+  watermark: string;
+  /** Shared AI confidence tier for the recommendation. */
+  confidenceTier: 'HIGH' | 'MEDIUM' | 'LOW';
+  /** Plain-English rationale for the confidence marker. */
+  confidenceRationale: string;
+  /** Evidence IDs or source labels that ground the recommendation. */
+  evidenceBasis: string[];
+  /** Risk caveats that must stay visible near the recommendation. */
+  riskCaveats: string[];
+  /** Boundary text making clear the recommendation is not self-executing. */
+  humanApprovalBoundary: string;
+}
+
 export interface AwardDecisionView {
   eventId: string;
   eventName: string;
@@ -71,6 +86,8 @@ export interface AwardDecisionView {
   summary: AwardDecisionSummary;
   /** Atlas guidance synthesis on the award decision. */
   atlasGuidance: string;
+  /** Visible AI accountability controls for the vendor recommendation. */
+  recommendationAccountability: AwardRecommendationAccountability;
   honestDisclaimer: string;
   deterministicSeed: true;
 }
@@ -199,6 +216,25 @@ export function buildAwardDecisionView(): AwardDecisionView {
       'it would require a subsequent architecture change programme. Vendor B remains disqualified ' +
       'until SOC-2 clears, which is past the BAFO timeline. ' +
       'Recommend proceeding to conditional award on May 5 if scope confirmation is received.',
+    recommendationAccountability: {
+      watermark: 'AI-assisted vendor recommendation · human award approval required',
+      confidenceTier: 'MEDIUM',
+      confidenceRationale:
+        'Fixture scorecard, BAFO, risk, and CDP dependency evidence are usable, but Vendor C scope confirmation and final committee ratification remain open.',
+      evidenceBasis: [
+        'SRC-AMS-2026 scorecard: technical 88 / overall 83',
+        'BAFO scope confirmation gate: due May 5 2026',
+        'APX-CDP-2026 dependency: CDP-compatible architecture required',
+        'Vendor B SOC-2 Type II blocker: unresolved at award review',
+      ],
+      riskCaveats: [
+        'Do not treat Vendor C as awarded until scope confirmation is received and recorded.',
+        'CDP integration plan must be validated by the CDP Programme Lead before contract execution.',
+        'Legal must review AI tooling exit clause terms before signature.',
+      ],
+      humanApprovalBoundary:
+        'This recommendation is decision support only. Award, vendor notification, and contract commitment require explicit human committee approval.',
+    },
     honestDisclaimer:
       'Deterministic seed · Award decision reflects fixture evaluation data for the Apex Retail ' +
       'AMS Vendor Consolidation engagement at Stage 7. Live scoring, vendor updates, and final ' +

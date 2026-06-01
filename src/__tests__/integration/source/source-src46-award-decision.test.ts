@@ -50,6 +50,10 @@ describe('SRC46 · award-decision-view · source audit', () => {
     expect(libSrc).toContain('export interface AwardDecisionSummary');
   });
 
+  it('AwardRecommendationAccountability interface is exported', () => {
+    expect(libSrc).toContain('export interface AwardRecommendationAccountability');
+  });
+
   it('module contains no runtime impurity', () => {
     expect(libSrc).not.toMatch(/Date\.now/);
     expect(libSrc).not.toMatch(/Math\.random/);
@@ -104,6 +108,15 @@ describe('SRC46 · SourceEventDetailPage · award tab', () => {
 
   it('has data-testid="source-award-decision-summary"', () => {
     expect(pageSrc).toContain('data-testid="source-award-decision-summary"');
+  });
+
+  it('renders the Source award recommendation accountability controls', () => {
+    expect(pageSrc).toContain('data-testid="source-award-recommendation-accountability"');
+    expect(pageSrc).toContain('AILabel');
+    expect(pageSrc).toContain('AIConfidenceIndicator');
+    expect(pageSrc).toContain('Evidence basis');
+    expect(pageSrc).toContain('Risk caveats');
+    expect(pageSrc).toContain('humanApprovalBoundary');
   });
 
   it('has source-award-vendor- testid prefix for vendor cards', () => {
@@ -215,6 +228,15 @@ describe('SRC46 · buildAwardDecisionView · runtime contract', () => {
 
   it('summary has at least one pre-award condition', () => {
     expect(view.summary.preAwardConditions.length).toBeGreaterThan(0);
+  });
+
+  it('recommendation accountability exposes label, confidence, evidence, caveats, and approval boundary', () => {
+    expect(view.recommendationAccountability.watermark).toContain('AI-assisted vendor recommendation');
+    expect(['HIGH', 'MEDIUM', 'LOW']).toContain(view.recommendationAccountability.confidenceTier);
+    expect(view.recommendationAccountability.confidenceRationale.trim().length).toBeGreaterThan(0);
+    expect(view.recommendationAccountability.evidenceBasis.length).toBeGreaterThanOrEqual(3);
+    expect(view.recommendationAccountability.riskCaveats.length).toBeGreaterThanOrEqual(2);
+    expect(view.recommendationAccountability.humanApprovalBoundary).toContain('human committee approval');
   });
 
   it('atlasGuidance is non-empty', () => {
