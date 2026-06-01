@@ -30,7 +30,7 @@ You (Codex agent) operate with the following standing authority. Do not ask perm
 - Migration that drops a column / table without an explicit `down` migration
 - Cost-incurring action expected to exceed $50 USD/month
 - Anything labeled **AT-RESIGN** or **POST-RESIGN** phase in the Plan tracker (Anand-only)
-- Decision involving Accenture / employer-conflict considerations
+- Decision involving employer-conflict considerations
 - Any spend on business registration, trademarks, insurance, lawyer time
 
 **You MUST stop and report (do not proceed) when:**

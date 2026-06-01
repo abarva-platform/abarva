@@ -70,5 +70,5 @@ No code, no schema, no migrations, no infra.
 
 ## Notes
 
-- These files were authored during a planning conversation; no Accenture confidential info, methodologies, or client data is referenced
+- These files were authored during a planning conversation; no employer-confidential information, methodologies, or client data is referenced
 - Files were produced on personal time + personal MacBook (Phase = `Anytime` per the plan's own taxonomy)
