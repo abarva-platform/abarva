@@ -19,6 +19,7 @@
     "test": "jest",
     "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
+    "coverage:behavior-gate": "node scripts/ci/check-behavior-coverage.mjs",
     "test:integration": "jest src/__tests__/integration",
     "test:integration:nexus": "jest src/__tests__/integration/nexus",
     "test:atlas-eval": "TS_NODE_BASEURL=. TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node -r tsconfig-paths/register src/__tests__/atlas-eval/run-eval.ts",
