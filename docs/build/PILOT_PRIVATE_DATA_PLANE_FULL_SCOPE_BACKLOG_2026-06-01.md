@@ -17,10 +17,10 @@ mini-wave before live client files should be treated as production-ready.
 | T358 | Idempotency and dedupe | Prevent duplicate facts, duplicate approvals, and repeated expensive parsing on same-file re-upload. Authority candidate: `supabase/migrations/20260601090000_pilot_ingestion_load_ledger.sql` and `buildPilotIngestionIdempotencyKey`. |
 | T359 | Template versioning and mapping profiles | Persist template version, mapping profile, and validation rule version for every load. Authority candidate: `pilot_ingestion_template_versions` and `pilot_ingestion_mapping_profiles`. |
 | T360 | Rollback and unload | Make every committed load batch reversible without manual data cleanup. Authority candidate: `pilot_ingestion_load_commit_items`, `pilot_ingestion_rollback_requests`, and `planPilotIngestionRollback`. |
-| T361 | Malware scanning | Scan files before parsing or storage promotion; PHI/PII detection is not enough for enterprise upload flows. |
-| T362 | Encryption and key policy | Decide CMK/BYOK posture, Key Vault ownership, storage encryption, secret rotation, and customer visibility. |
-| T363 | Retention and deletion policy | Define raw-file, quarantine, intermediate, failed-load, committed-load, and pilot-offboarding retention. |
-| T364 | Audit export | Let client admins export upload, load, quarantine, clarification, approval, and rollback history. |
+| T361 | Malware scanning | Scan files before parsing or storage promotion; PHI/PII detection is not enough for enterprise upload flows. Authority candidate: `src/lib/admin/pilot-data-plane-security-policy.ts` and `evaluatePilotMalwareGate`. |
+| T362 | Encryption and key policy | Decide CMK/BYOK posture, Key Vault ownership, storage encryption, secret rotation, and customer visibility. Authority candidate: `validatePilotEncryptionPosture`. |
+| T363 | Retention and deletion policy | Define raw-file, quarantine, intermediate, failed-load, committed-load, and pilot-offboarding retention. Authority candidate: `PILOT_RETENTION_POLICIES`. |
+| T364 | Audit export | Let client admins export upload, load, quarantine, clarification, approval, and rollback history. Authority candidate: `buildPilotAuditExportManifest` and `pilot_ingestion_audit_exports`. |
 | T365 | Observability and cost limits | Alert on queue failures, parse failures, retry storms, long-running jobs, and Azure spend guardrail breaches. |
 | T366 | Tenant isolation test pack | Prove one client cannot see, upload, approve, commit, or export another client data-plane record. |
 | T367 | Legal and data-use policy pack | Align consent copy with DPA, BAA, prohibited-data, retention, and customer offboarding policy. |
