@@ -82,6 +82,20 @@ function buildCitationNodeMap(
   return map;
 }
 
+function hasSubstantiveClaimText(text: string): boolean {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length >= 140) return true;
+  return (normalized.match(/[.!?](?:\s|$)/g) ?? []).length >= 2;
+}
+
+function shouldShowCitationGap(response: RenderedResponse): boolean {
+  return (
+    response.citations.length === 0 &&
+    response.confidence_signal !== "none" &&
+    hasSubstantiveClaimText(response.response_text)
+  );
+}
+
 export function AgentResponse({
   response,
   accent = "#0E9F8C",
@@ -94,6 +108,7 @@ export function AgentResponse({
     compactCitations,
   );
   const viewModel = getHonestDisclosureViewModel(response);
+  const showCitationGap = shouldShowCitationGap(response);
 
   return (
     <div
@@ -117,6 +132,8 @@ export function AgentResponse({
       {response.sparsity_flag ? (
         <SparsitySignal evidenceSummary={viewModel.sparsityEvidenceSummary} />
       ) : null}
+
+      {showCitationGap ? <CitationGapBanner /> : null}
 
       <div
         className="agent-response-body"
@@ -331,6 +348,30 @@ export function AgentResponse({
           <HandoffAffordance affordance={response.handoff_affordance} />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function CitationGapBanner() {
+  return (
+    <div
+      className="agent-citation-gap-banner"
+      aria-label="Citation gap"
+      style={{
+        marginBottom: 12,
+        padding: "9px 11px",
+        borderRadius: 8,
+        border: "1px solid rgba(180,83,9,0.22)",
+        background: "rgba(251,191,36,0.10)",
+        color: "#7c4a04",
+        fontFamily: "JetBrains Mono, monospace",
+        fontSize: 11,
+        fontWeight: 700,
+        lineHeight: 1.45,
+      }}
+    >
+      Citation gap: this AI output has no source citations attached. Treat
+      claims as unverified until evidence is linked.
     </div>
   );
 }

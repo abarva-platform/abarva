@@ -1,0 +1,45 @@
+/**
+ * @jest-environment jsdom
+ */
+
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
+
+import { AgentResponse } from "../AgentResponse";
+import type { RenderedResponse } from "@/lib/agent/renderedResponse";
+
+function response(overrides: Partial<RenderedResponse> = {}): RenderedResponse {
+  return {
+    response_text:
+      "The program is likely ready for the next stage. The evidence still needs review by the accountable owner before any approval is recorded.",
+    citations: [],
+    confidence_signal: "medium",
+    sparsity_flag: false,
+    follow_up_actions: [],
+    handoff_affordance: null,
+    ...overrides,
+  };
+}
+
+describe("AgentResponse citation defense", () => {
+  it("shows a citation gap banner for substantive uncited AI output", () => {
+    render(<AgentResponse response={response()} />);
+
+    expect(screen.getByLabelText("Citation gap")).toHaveTextContent(
+      "no source citations attached",
+    );
+  });
+
+  it("does not show a citation gap for operational non-claim output", () => {
+    render(
+      <AgentResponse
+        response={response({
+          response_text: "I opened the workspace.",
+          confidence_signal: "none",
+        })}
+      />,
+    );
+
+    expect(screen.queryByLabelText("Citation gap")).not.toBeInTheDocument();
+  });
+});
