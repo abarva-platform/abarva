@@ -30,7 +30,7 @@ Adds the QA packet for Wave 2 probabilistic value modeling. The tests verify the
 - Adds Wave 2 answer-quality fixtures for good and bad probabilistic forecast answers.
 - Adds a browser artifact Playwright spec for the board-grade forecast deck.
 - Adds `docs/build/WAVE-2-QA-EVIDENCE-2026-06-01.md`.
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2691
 
 ## QA / Validation
 
@@ -51,7 +51,7 @@ Revert the PR. It only adds tests, fixtures, and documentation.
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2691
 - CI checks: pending.
 - Local validation: Wave 2 Jest, Playwright artifact test, ESLint, TypeScript, release gate, and diff check pass locally.
 
