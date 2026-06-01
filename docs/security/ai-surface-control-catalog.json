@@ -73,6 +73,23 @@
           ]
         }
       ]
+    },
+    {
+      "id": "program-deliverable-approval-actions",
+      "surface": "Programs rich deliverable approval actions",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/deliverables/ApproveActions.tsx",
+      "requiredControls": [
+        {
+          "kind": "edit-before-commit",
+          "evidence": [
+            "data-edit-before-commit=\"true\"",
+            "approve-actions-editable-decision",
+            "reviewedDecision"
+          ]
+        }
+      ]
     }
   ]
 }
