@@ -29,7 +29,7 @@ Changes the scheduled SEC-P0 cross-tenant probe workflow to target production by
 - Updates `.github/workflows/sec-p0-post-deploy.yml` so scheduled runs default to `production`.
 - Leaves `staging` and `azure-lab` selectable for manual `workflow_dispatch` runs.
 - Updates workflow comments to document production scheduled secrets and staging manual secrets.
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2692.
 
 ## QA / Validation
 
@@ -48,7 +48,7 @@ Revert the PR to restore scheduled staging default.
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2692.
 - Failed run that motivated the change: https://github.com/anandsundaram-hash/abarva/actions/runs/26744048540.
 - Local validation: shell syntax check, release gate, diff check.
 
