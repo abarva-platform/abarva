@@ -14,6 +14,10 @@ import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrie
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from '@/lib/ai-liability/human-decision-controls';
 
 /**
  * Atlas live-prod composition wiring (ATLAS-RUNLLM-COMPOSITION 2026-05-31).
@@ -235,7 +239,7 @@ export async function runAtlasLlm(
       workflow: 'atlas-llm',
     });
     return {
-      response: iac.response,
+      response: sanitizeAutonomousDecisionLanguage(iac.response),
       toolsUsed: [...toolsUsed, 'compose_atlas_iac_answer'],
       suggestions: [
         { label: 'Peer context', value: 'How do we compare to peers?', kind: 'message' },
@@ -262,7 +266,7 @@ export async function runAtlasLlm(
       workflow: 'atlas-llm',
     });
     return {
-      response: buildFallback(toolResults),
+      response: sanitizeAutonomousDecisionLanguage(buildFallback(toolResults)),
       toolsUsed,
       suggestions: [
         { label: 'Shadow AI', value: 'Tell me more about Shadow AI', kind: 'message' },
@@ -283,6 +287,8 @@ export async function runAtlasLlm(
   const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
   const userText = [
     `User question: ${message}`,
+    '',
+    AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
     '',
     'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
     '',
@@ -382,7 +388,7 @@ export async function runAtlasLlm(
   }
 
   return {
-    response,
+      response: sanitizeAutonomousDecisionLanguage(response),
     toolsUsed,
     suggestions: [
       { label: 'Peer context', value: 'How do we compare to peers?', kind: 'message' },

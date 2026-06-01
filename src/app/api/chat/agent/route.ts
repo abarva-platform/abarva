@@ -43,6 +43,10 @@ import {
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from "@/lib/ai-liability/human-decision-controls";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
@@ -1045,6 +1049,8 @@ export async function POST(request: Request) {
     "",
     restrictedOutputPolicyBlock,
     "",
+    AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+    "",
     // OV2-WIRE-AND-FM-PROMPT Part 1 — universal failure-mode catalog
     // for Programs surfaces. Positioned AFTER user context (Layer 0)
     // and BEFORE four-layer reasoning so the agent always knows what
@@ -1280,7 +1286,9 @@ export async function POST(request: Request) {
       // commit_program); loop-side writes are agent text deltas.
       const writer = {
         write(text: string) {
-          const safeText = sanitizeRestrictedFinancialText(text, userAccessPolicy);
+          const safeText = sanitizeAutonomousDecisionLanguage(
+            sanitizeRestrictedFinancialText(text, userAccessPolicy),
+          );
           bufferedOutput += safeText;
           controller.enqueue(encoder.encode(safeText));
         },

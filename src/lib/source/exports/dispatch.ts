@@ -29,6 +29,10 @@ import type { Workbook } from 'exceljs';
 import type { DeliverableFormat } from '@/lib/programs/exports/types';
 import type { SourceDeliverableSpec, SourceDeliverableKind } from './types';
 import { routeFormat } from './format-router';
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from '@/lib/ai-liability/human-decision-controls';
 
 // ── Renderer imports ──────────────────────────────────────────────────────
 
@@ -310,7 +314,7 @@ async function renderNarrative(
     eventName: payload.eventName,
     issuedBy: payload.issuedBy,
     generatedAt,
-    body: payload.body,
+    body: withAiDecisionSupportExportNote(payload.body),
     bodyIsAuthored: payload.bodyIsAuthored,
   };
 
@@ -586,6 +590,7 @@ async function renderXlsxOnly(
   if (format !== 'xlsx') {
     throw new Error(`This kind only supports xlsx, got "${format}"`);
   }
+  addAiDecisionSupportWorksheet(workbook);
   const arrayBuf = await workbook.xlsx.writeBuffer();
   const buffer = Buffer.from(arrayBuf as ArrayBuffer);
   return makeResult('xlsx', buffer, filename, XLSX_CONTENT_TYPE);
@@ -623,6 +628,35 @@ function artifactCodeForKind(kind: SourceDeliverableKind): string {
     case 'vendor-risk-pack': return 'dx6b_vendor_risk_pack';
     case 'renewal-decision': return 'dx7_renewal_decision';
   }
+}
+
+function withAiDecisionSupportExportNote(body: string): string {
+  const note = [
+    '',
+    '---',
+    AI_DECISION_SUPPORT_WATERMARK,
+    HUMAN_DECISION_ATTESTATION_TEXT,
+  ].join('\n');
+  return body.includes(AI_DECISION_SUPPORT_WATERMARK) ? body : `${body.trimEnd()}${note}`;
+}
+
+function addAiDecisionSupportWorksheet(workbook: Workbook): void {
+  if (workbook.getWorksheet('AI Decision Support')) return;
+  const sheet = workbook.addWorksheet('AI Decision Support');
+  sheet.columns = [
+    { header: 'Control', key: 'control', width: 28 },
+    { header: 'Text', key: 'text', width: 110 },
+  ];
+  sheet.addRow({ control: 'Watermark', text: AI_DECISION_SUPPORT_WATERMARK });
+  sheet.addRow({ control: 'Human attestation', text: HUMAN_DECISION_ATTESTATION_TEXT });
+  sheet.addRow({
+    control: 'Use limitation',
+    text: 'This workbook supports review and approval by the client decision owner. It is not an autonomous approval, award, renewal, funding, legal, employment, clinical, credit, or insurance determination.',
+  });
+  sheet.getRow(1).font = { bold: true };
+  sheet.eachRow((row) => {
+    row.alignment = { wrapText: true, vertical: 'top' };
+  });
 }
 
 function makeResult(
