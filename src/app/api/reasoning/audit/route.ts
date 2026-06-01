@@ -16,6 +16,7 @@ import {
   isInstanceInTenant,
 } from '@/app/api/reasoning/_auth';
 import type { TenancyCtx } from '@/lib/programs/types.db';
+import type { AiDecisionEvidencePacket } from '@/lib/ai-liability/human-decision-controls';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,8 @@ interface ApprovalAuditRecord {
   actedAt: string;
   /** User id of the approver/rejecter, for audit attribution. */
   actorId?: string;
+  /** Evidence packet proving the human made an informed approve/reject decision. */
+  aiDecisionEvidencePacket?: AiDecisionEvidencePacket;
 }
 
 export const approvalAuditBuffer: ApprovalAuditRecord[] = [];
@@ -201,7 +204,11 @@ function buildLiveEntries(ctx: TenancyCtx): AuditEntry[] {
       type: record.action === 'approve' ? 'gate_approval' : 'gate_reject',
       actor: record.actorId ?? 'demo-user',
       instanceId: record.instanceId,
-      detail: `Gate criterion "${record.criterionId}" ${record.action === 'approve' ? 'approved' : 'rejected'} — ${record.justification}`,
+      detail:
+        `Gate criterion "${record.criterionId}" ${record.action === 'approve' ? 'approved' : 'rejected'} — ${record.justification}` +
+        (record.aiDecisionEvidencePacket
+          ? ` Evidence packet: ${record.aiDecisionEvidencePacket.recommendationId}`
+          : ''),
       timestamp: record.actedAt,
     });
   }

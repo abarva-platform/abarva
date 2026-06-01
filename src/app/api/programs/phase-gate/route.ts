@@ -1,21 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
-import { requireTenancy } from '@/lib/auth/tenancy';
-import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
-import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
-import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
-import { azureRead } from '@/lib/data-plane/azureRead';
-import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
-import { writeProgramAuditLog } from '@/lib/programs/audit-log';
-import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { NextRequest, NextResponse } from "next/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from "fs";
+import { join } from "path";
+import {
+  checkTenantAccessByKey,
+  tenantKeyForProgramCode,
+} from "@/lib/auth/tenant-access";
+import { requireTenancy } from "@/lib/auth/tenancy";
+import { getLatestSponsorCommitment } from "@/lib/workflow/sponsorCommitmentLedger";
+import {
+  getProgramTensionRecords,
+  getStakeholderSuccessRecords,
+} from "@/lib/workflow/stakeholderSuccessLedger";
+import { dataReadinessGateMet } from "@/lib/workflow/dataReadinessLedger";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { getSeedPlan } from "@/lib/deliverables/seed-route-resolver";
+import { writeProgramAuditLog } from "@/lib/programs/audit-log";
+import { selectProgramsWriteAdapter } from "@/lib/data-plane/write-adapters/programsWriteAdapter";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
-} from '@/lib/auth/gate-approval-strict-mode';
+} from "@/lib/auth/gate-approval-strict-mode";
+import {
+  buildMovesPhaseDecisionAuditRefs,
+  buildMovesPhaseDecisionEvidencePacket,
+  coerceDecisionSupportList,
+  normalizeMovesHumanRationale,
+  validateMovesHumanRationale,
+  type MovesPhaseDecisionInput,
+} from "@/lib/programs/moves-ai-liability";
+import type { AiDecisionEvidencePacket } from "@/lib/ai-liability/human-decision-controls";
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -32,6 +47,8 @@ interface PhaseGateEntry {
   fromPhase: number;
   toPhase: number;
   gateCriterion: string;
+  humanRationale: string;
+  aiDecisionEvidencePacket: AiDecisionEvidencePacket;
   advancedById: string;
   advancedByEmail: string | null;
   advancedByName: string | null;
@@ -40,7 +57,7 @@ interface PhaseGateEntry {
 }
 
 interface PhaseGateLedger {
-  schemaVersion: '1.0';
+  schemaVersion: "1.0";
   entries: PhaseGateEntry[];
 }
 
@@ -50,15 +67,24 @@ type PhaseGateEngagementRow = {
   gates_passed: unknown[] | null;
 };
 
-const LEDGER_DIR = join(process.cwd(), '.approvals');
-const LEDGER_PATH = join(LEDGER_DIR, 'phase-gates.json');
+type PhaseGateRequestBody = Partial<PhaseGateEntry> & {
+  rationale?: unknown;
+  humanRationale?: unknown;
+  evidenceIds?: unknown;
+  missingInputs?: unknown;
+  assumptions?: unknown;
+  alternativesConsidered?: unknown;
+};
+
+const LEDGER_DIR = join(process.cwd(), ".approvals");
+const LEDGER_PATH = join(LEDGER_DIR, "phase-gates.json");
 
 function readLedger(): PhaseGateLedger {
-  if (!existsSync(LEDGER_PATH)) return { schemaVersion: '1.0', entries: [] };
+  if (!existsSync(LEDGER_PATH)) return { schemaVersion: "1.0", entries: [] };
   try {
-    return JSON.parse(readFileSync(LEDGER_PATH, 'utf8')) as PhaseGateLedger;
+    return JSON.parse(readFileSync(LEDGER_PATH, "utf8")) as PhaseGateLedger;
   } catch {
-    return { schemaVersion: '1.0', entries: [] };
+    return { schemaVersion: "1.0", entries: [] };
   }
 }
 
@@ -70,25 +96,45 @@ function writeLedger(ledger: PhaseGateLedger): void {
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session.userId) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let body: Partial<PhaseGateEntry>;
+  let body: PhaseGateRequestBody;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
   }
 
-  const programCode = typeof body.programCode === 'string' ? body.programCode.trim() : '';
-  const fromPhase = typeof body.fromPhase === 'number' ? body.fromPhase : null;
-  const toPhase = typeof body.toPhase === 'number' ? body.toPhase : null;
-  const gateCriterion = typeof body.gateCriterion === 'string' ? body.gateCriterion.trim() : 'Phase gate advance';
+  const programCode =
+    typeof body.programCode === "string" ? body.programCode.trim() : "";
+  const fromPhase = typeof body.fromPhase === "number" ? body.fromPhase : null;
+  const toPhase = typeof body.toPhase === "number" ? body.toPhase : null;
+  const gateCriterion =
+    typeof body.gateCriterion === "string"
+      ? body.gateCriterion.trim()
+      : "Phase gate advance";
   if (!programCode || fromPhase === null || toPhase === null) {
-    return NextResponse.json({ error: 'programCode, fromPhase, toPhase required' }, { status: 400 });
+    return NextResponse.json(
+      { error: "programCode, fromPhase, toPhase required" },
+      { status: 400 },
+    );
   }
   if (toPhase !== fromPhase + 1) {
-    return NextResponse.json({ error: 'toPhase must be fromPhase + 1' }, { status: 400 });
+    return NextResponse.json(
+      { error: "toPhase must be fromPhase + 1" },
+      { status: 400 },
+    );
+  }
+  const humanRationale = normalizeMovesHumanRationale(
+    body.humanRationale ?? body.rationale,
+  );
+  const rationaleError = validateMovesHumanRationale(humanRationale);
+  if (rationaleError) {
+    return NextResponse.json(
+      { error: "human_rationale_required", detail: rationaleError },
+      { status: 400 },
+    );
   }
 
   // Tenant gate · same shape as /api/programs/approve. A phase-gate
@@ -96,11 +142,11 @@ export async function POST(request: NextRequest) {
   // requests must fail here too.
   const ownerKey = tenantKeyForProgramCode(programCode);
   if (!ownerKey) {
-    return NextResponse.json({ error: 'unknown programCode' }, { status: 404 });
+    return NextResponse.json({ error: "unknown programCode" }, { status: 404 });
   }
   const access = await checkTenantAccessByKey(ownerKey);
   if (!access.ok) {
-    const status = access.reason === 'unauthenticated' ? 401 : 403;
+    const status = access.reason === "unauthenticated" ? 401 : 403;
     return NextResponse.json({ error: access.reason }, { status });
   }
 
@@ -117,9 +163,9 @@ export async function POST(request: NextRequest) {
     if (!accessPolicy.canApproveGates) {
       return NextResponse.json(
         {
-          error: 'forbidden',
+          error: "forbidden",
           detail:
-            'Advancing a program across a phase gate requires gate-approval permission. Ask a sponsor or client admin to advance, or to grant can_approve_gates.',
+            "Advancing a program across a phase gate requires gate-approval permission. Ask a sponsor or client admin to advance, or to grant can_approve_gates.",
         },
         { status: 403 },
       );
@@ -129,9 +175,9 @@ export async function POST(request: NextRequest) {
     if (isGateApprovalStrictMode() && !isStrictModeApprovalRole(advancerRole)) {
       return NextResponse.json(
         {
-          error: 'forbidden',
+          error: "forbidden",
           detail:
-            'GATE_APPROVAL_STRICT_MODE is enabled — phase-gate advance requires an admin or maestro role.',
+            "GATE_APPROVAL_STRICT_MODE is enabled — phase-gate advance requires an admin or maestro role.",
         },
         { status: 403 },
       );
@@ -139,9 +185,12 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // requireTenancy throwing here means the session/client could not be
     // resolved even though the tenant-key check passed — fail closed.
-    console.error('[phase-gate] access-policy resolution failed', err);
+    console.error("[phase-gate] access-policy resolution failed", err);
     return NextResponse.json(
-      { error: 'forbidden', detail: 'Could not verify gate-approval permission.' },
+      {
+        error: "forbidden",
+        detail: "Could not verify gate-approval permission.",
+      },
       { status: 403 },
     );
   }
@@ -155,9 +204,10 @@ export async function POST(request: NextRequest) {
     if (!commitment) {
       return NextResponse.json(
         {
-          error: 'precondition_failed',
-          precondition: 'sponsor_commitment',
-          message: 'Phase 1 → Phase 2 requires a sponsor commitment record. Submit the commitment form on D01 Charter first.',
+          error: "precondition_failed",
+          precondition: "sponsor_commitment",
+          message:
+            "Phase 1 → Phase 2 requires a sponsor commitment record. Submit the commitment form on D01 Charter first.",
         },
         { status: 412 },
       );
@@ -169,9 +219,10 @@ export async function POST(request: NextRequest) {
     if (successRecords.length === 0) {
       return NextResponse.json(
         {
-          error: 'precondition_failed',
-          precondition: 'stakeholder_success',
-          message: 'Phase 1 → Phase 2 requires at least one stakeholder success definition. Capture on D02 Stakeholder Map first.',
+          error: "precondition_failed",
+          precondition: "stakeholder_success",
+          message:
+            "Phase 1 → Phase 2 requires at least one stakeholder success definition. Capture on D02 Stakeholder Map first.",
         },
         { status: 412 },
       );
@@ -180,9 +231,10 @@ export async function POST(request: NextRequest) {
     if (tensionRecords.length === 0) {
       return NextResponse.json(
         {
-          error: 'precondition_failed',
-          precondition: 'program_tension',
-          message: 'Phase 1 → Phase 2 requires at least one program tension with named owner. Capture on D04 Intake Synthesis first.',
+          error: "precondition_failed",
+          precondition: "program_tension",
+          message:
+            "Phase 1 → Phase 2 requires at least one program tension with named owner. Capture on D04 Intake Synthesis first.",
         },
         { status: 412 },
       );
@@ -194,14 +246,14 @@ export async function POST(request: NextRequest) {
     if (!readinessGate.met) {
       return NextResponse.json(
         {
-          error: 'precondition_failed',
-          precondition: 'data_readiness',
+          error: "precondition_failed",
+          precondition: "data_readiness",
           reason: readinessGate.reason,
           blockedDimensions: readinessGate.blockedDimensions,
           message:
-            readinessGate.reason === 'no_record'
-              ? 'Phase 1 → Phase 2 requires a data-readiness assessment. Submit the five-dimension form on D03 Success Metric Tree first.'
-              : `Phase 1 → Phase 2 is blocked by ${readinessGate.blockedDimensions.length} data dimension${readinessGate.blockedDimensions.length === 1 ? '' : 's'} (${readinessGate.blockedDimensions.join(', ')}). Resolve or reclassify before advancing.`,
+            readinessGate.reason === "no_record"
+              ? "Phase 1 → Phase 2 requires a data-readiness assessment. Submit the five-dimension form on D03 Success Metric Tree first."
+              : `Phase 1 → Phase 2 is blocked by ${readinessGate.blockedDimensions.length} data dimension${readinessGate.blockedDimensions.length === 1 ? "" : "s"} (${readinessGate.blockedDimensions.join(", ")}). Resolve or reclassify before advancing.`,
         },
         { status: 412 },
       );
@@ -212,7 +264,29 @@ export async function POST(request: NextRequest) {
   const user = await clerk.users.getUser(session.userId);
   const role = (user.publicMetadata?.role as string | undefined) ?? null;
   const email = user.emailAddresses[0]?.emailAddress ?? null;
-  const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email;
+  const name =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || email;
+  const evidencePacket = buildMovesPhaseDecisionEvidencePacket({
+    programId: programCode,
+    tenantName: ownerKey,
+    fromPhase,
+    toPhase,
+    gateCriterion,
+    humanRationale,
+    decisionOwner: {
+      name: name ?? "Unknown approver",
+      title: role ?? advancerRole ?? "Gate approver",
+      tenantName: ownerKey,
+      userId: session.userId,
+    },
+    evidenceIds: coerceDecisionSupportList(body.evidenceIds),
+    missingInputs: coerceDecisionSupportList(body.missingInputs),
+    assumptions: coerceDecisionSupportList(body.assumptions),
+    alternativesConsidered: coerceDecisionSupportList(
+      body.alternativesConsidered,
+    ),
+    overrideDisposition: "accepted",
+  } satisfies MovesPhaseDecisionInput);
 
   const entry: PhaseGateEntry = {
     id: `${programCode}:P${fromPhase}->P${toPhase}:${Date.now()}`,
@@ -220,6 +294,8 @@ export async function POST(request: NextRequest) {
     fromPhase,
     toPhase,
     gateCriterion,
+    humanRationale,
+    aiDecisionEvidencePacket: evidencePacket,
     advancedById: session.userId,
     advancedByEmail: email,
     advancedByName: name,
@@ -247,8 +323,8 @@ export async function POST(request: NextRequest) {
     if (graphNodeId) {
       // 1. Look up the engagement row.
       const engRow = await azureRead.maybeSingle<PhaseGateEngagementRow>({
-        table: 'engagements',
-        columns: ['id', 'current_phase', 'gates_passed'],
+        table: "engagements",
+        columns: ["id", "current_phase", "gates_passed"],
         where: { graph_node_id: graphNodeId },
       });
 
@@ -256,8 +332,12 @@ export async function POST(request: NextRequest) {
         engagementId = engRow.id;
 
         // 2. Build the deduplicated gates_passed array with the new phase appended.
-        const existingGates: number[] = Array.isArray(engRow.gates_passed) ? (engRow.gates_passed as number[]) : [];
-        const updatedGates = Array.from(new Set([...existingGates, toPhase])).sort((a, b) => a - b);
+        const existingGates: number[] = Array.isArray(engRow.gates_passed)
+          ? (engRow.gates_passed as number[])
+          : [];
+        const updatedGates = Array.from(
+          new Set([...existingGates, toPhase]),
+        ).sort((a, b) => a - b);
 
         // 3. UPDATE engagements.current_phase and gates_passed — routed through
         // the data-plane write seam (Slice 3a). The engagement-row lookup above
@@ -269,16 +349,27 @@ export async function POST(request: NextRequest) {
           tenantKey: ownerKey,
         });
         if (!ok) {
-          console.error('[phase-gate] engagement phase update failed', { programCode, engagementId });
+          console.error("[phase-gate] engagement phase update failed", {
+            programCode,
+            engagementId,
+          });
         }
       } else {
-        console.warn('[phase-gate] no engagement row found for graph_node_id', { programCode, graphNodeId });
+        console.warn("[phase-gate] no engagement row found for graph_node_id", {
+          programCode,
+          graphNodeId,
+        });
       }
     } else {
-      console.warn('[phase-gate] no graphNodeId resolved for programCode', { programCode });
+      console.warn("[phase-gate] no graphNodeId resolved for programCode", {
+        programCode,
+      });
     }
   } catch (err) {
-    console.error('[phase-gate] supabase write threw', { programCode, message: err instanceof Error ? err.message : String(err) });
+    console.error("[phase-gate] supabase write threw", {
+      programCode,
+      message: err instanceof Error ? err.message : String(err),
+    });
   }
 
   // 4. AUTHORITATIVE audit-log write. This is the durable record of the
@@ -286,27 +377,32 @@ export async function POST(request: NextRequest) {
   // success on an advance that left no audit trail.
   try {
     await writeProgramAuditLog(
-      { clientId: ownerKey, userId: session.userId, role: role ?? advancerRole ?? undefined },
+      {
+        clientId: ownerKey,
+        userId: session.userId,
+        role: role ?? advancerRole ?? undefined,
+      },
       {
         tenantKey: ownerKey,
         programId: programCode,
         engagementId: engagementId ?? undefined,
-        action: 'PHASE_GATE_ADVANCED',
+        action: "PHASE_GATE_ADVANCED",
         fromState: `P${fromPhase}`,
         toState: `P${toPhase}`,
-        rationale: gateCriterion,
+        rationale: humanRationale,
+        evidenceRefs: buildMovesPhaseDecisionAuditRefs(evidencePacket),
       },
     );
   } catch (err) {
-    console.error('[phase-gate] authoritative audit-log write failed', {
+    console.error("[phase-gate] authoritative audit-log write failed", {
       programCode,
       message: err instanceof Error ? err.message : String(err),
     });
     return NextResponse.json(
       {
-        error: 'audit_log_write_failed',
+        error: "audit_log_write_failed",
         detail:
-          'The phase-gate advance could not be recorded to the durable audit log. The advance was not committed as confirmed — retry.',
+          "The phase-gate advance could not be recorded to the durable audit log. The advance was not committed as confirmed — retry.",
       },
       { status: 500 },
     );
@@ -319,21 +415,24 @@ export async function POST(request: NextRequest) {
     ledger.entries.push(entry);
     writeLedger(ledger);
   } catch (err) {
-    console.warn('[phase-gate] non-authoritative filesystem ledger write failed (ignored)', {
-      programCode,
-      message: err instanceof Error ? err.message : String(err),
-    });
+    console.warn(
+      "[phase-gate] non-authoritative filesystem ledger write failed (ignored)",
+      {
+        programCode,
+        message: err instanceof Error ? err.message : String(err),
+      },
+    );
   }
 
-  return NextResponse.json({ ok: true, entry });
+  return NextResponse.json({ ok: true, entry, evidencePacket });
 }
 
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session.userId) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const programCode = request.nextUrl.searchParams.get('programCode');
+  const programCode = request.nextUrl.searchParams.get("programCode");
 
   if (programCode) {
     const ownerKey = tenantKeyForProgramCode(programCode);
@@ -342,7 +441,7 @@ export async function GET(request: NextRequest) {
     }
     const access = await checkTenantAccessByKey(ownerKey);
     if (!access.ok) {
-      const status = access.reason === 'unauthenticated' ? 401 : 403;
+      const status = access.reason === "unauthenticated" ? 401 : 403;
       return NextResponse.json({ error: access.reason }, { status });
     }
   } else {
