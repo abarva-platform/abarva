@@ -51,6 +51,7 @@ import {
 } from './cxo-fixtures';
 import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
 import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
+import type { IntelligenceCorpusData } from '@/lib/intelligence-v3/corpus-types';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
@@ -73,6 +74,8 @@ interface Props {
   myStrategyData?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initiatives?: any;
+  intelligenceCorpusData?: IntelligenceCorpusData | null;
+  /** @deprecated Use intelligenceCorpusData. Kept for older tests/callers. */
   apexRetailData?: ApexRetailIntelligenceData | null;
   clientKey?: string | null;
   enterpriseContextOverview?: EnterpriseContextOverview | null;
@@ -81,6 +84,7 @@ interface Props {
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
+  intelligenceCorpusData = null,
   apexRetailData = null,
   clientKey = null,
   enterpriseContextOverview = null,
@@ -120,7 +124,13 @@ export function IntelligenceV3Page({
   };
   const isCorpusStage = stage === 'brief' || stage === 'map';
   const isAopStage = stage === 'art-of-possible';
-  const isApexBound = Boolean(apexRetailData);
+  const corpusData = intelligenceCorpusData ?? apexRetailData;
+  const isApexClient =
+    clientKey === 'apexretail' ||
+    clientKey === 'apex-retail' ||
+    data.tenantName.toLowerCase().includes('apex retail');
+  const isApexBound = Boolean(apexRetailData) || (isApexClient && Boolean(corpusData?.status));
+  const hasBoundCorpus = Boolean(corpusData?.briefData && corpusData?.mapData);
   const isFirstCapitalBound =
     clientKey === 'arcturus' ||
     clientKey === 'firstcapital' ||
@@ -130,30 +140,31 @@ export function IntelligenceV3Page({
     : isFirstCapitalBound
       ? FIRST_CAPITAL_AOP_DEMO
       : data.aopBands ?? MERIDIAN_AOP_DEMO;
-  // Corpus surfaces (Brief / Map) are grounded ONLY by a real loaded
-  // corpus. Apex Retail has `loadApexRetailIntelligenceData`; Meridian
-  // and First Capital have none. No-fabrication rule: rather than fall
-  // back to hand-authored fixture Briefs/Maps with figures that trace
-  // to no seeded substrate, the corpus stages render an honest
-  // "not yet seeded" state for those tenants (see corpusStageNode below).
-  const briefData = apexRetailData?.briefData ?? null;
-  const mapData = apexRetailData?.mapData ?? null;
+  // Corpus surfaces (Brief / Map) render only when a tenant-specific
+  // corpus payload is explicitly supplied by the server resolver. When
+  // absent, we keep the honest not-seeded state instead of inventing
+  // ranked bets or value figures.
+  const briefData = corpusData?.briefData ?? null;
+  const mapData = corpusData?.mapData ?? null;
   const activeTenantName = isApexBound
     ? 'Apex Retail Group'
     : isFirstCapitalBound
       ? 'First Capital Financial'
       : data.tenantName;
   const sentinelOpener = isApexBound
-    ? `Apex Retail intelligence is ready: ${apexRetailData?.status.patterns} retail patterns, ${apexRetailData?.status.summarizedSources}/${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open tensions. Ask me which CXO decision matters first.`
+    ? `Apex Retail intelligence is ready: ${corpusData?.status?.patterns} retail patterns, ${corpusData?.status?.summarizedSources}/${corpusData?.status?.sources} summarized sources, ${corpusData?.status?.useCases} use cases, and ${corpusData?.status?.contradictions} open tensions. Ask me which CXO decision matters first.`
+    : hasBoundCorpus
+      ? `${activeTenantName}'s Intelligence corpus is ready: ${briefData?.bets.length ?? 0} ranked bets, ${mapData?.totalUseCases ?? 0} mapped use cases, and ${briefData?.patternsTriggered.length ?? 0} triggered patterns. Ask me which CXO decision matters first.`
     : data.sentinelOpener;
   const surfaceContext = buildSentinelIntelContext({
     activeClient: activeTenantName,
     clientKey,
     stage,
     isApexBound,
-    status: apexRetailData?.status ?? null,
-    patterns: apexRetailData?.patterns ?? [],
-    todayItems: apexRetailData?.todayItems ?? [],
+    hasBoundCorpus,
+    status: corpusData?.status ?? null,
+    patterns: corpusData?.patterns ?? [],
+    todayItems: corpusData?.todayItems ?? [],
     aopBands,
     briefData,
     mapData,
@@ -247,7 +258,7 @@ export function IntelligenceV3Page({
         </div>
       </div>
 
-      {apexRetailData && <ApexReadinessStrip status={apexRetailData.status} />}
+      {isApexBound && corpusData?.status && <ApexReadinessStrip status={corpusData.status} />}
 
       {isCorpusStage ? (
         // PR-K2 corpus surfaces · render full-width (Brief/Map carry
@@ -255,11 +266,9 @@ export function IntelligenceV3Page({
         // grid would squeeze them). Sentinel chat is integrated into
         // each component's left-rail design (post-AgentDock migration).
         //
-        // No-fabrication rule: Brief/Map only render when a real corpus
-        // is loaded (`briefData`/`mapData` non-null — Apex only). For
-        // Meridian and First Capital there is no seeded corpus, so the
-        // honest "not yet seeded" state renders instead of a fabricated
-        // fixture Brief/Map.
+        // No-fabrication rule: Brief/Map only render when the server
+        // supplies tenant-specific `briefData` / `mapData`. Otherwise
+        // the honest "not yet seeded" state renders.
         stage === 'brief'
           ? briefData
             ? <IntelligenceBrief data={briefData} activeClient={activeTenantName} surfaceContext={surfaceContext} />

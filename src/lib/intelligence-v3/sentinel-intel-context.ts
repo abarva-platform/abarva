@@ -16,6 +16,7 @@ export interface BuildSentinelIntelContextArgs {
   clientKey?: string | null;
   stage: StageKey;
   isApexBound: boolean;
+  hasBoundCorpus?: boolean;
   status: RetailIntelligenceStatus | null;
   patterns: readonly PatternRow[];
   todayItems: readonly AttentionItem[];
@@ -84,7 +85,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
 
 function stageSurfaceFacts(args: BuildSentinelIntelContextArgs): string[] {
   if (args.stage === 'enterprise-context') return enterpriseContextFacts(args.enterpriseContext);
-  if (!args.isApexBound) return [];
+  if (!args.isApexBound && !args.hasBoundCorpus) return [];
   switch (args.stage) {
     case 'brief':
       return briefFacts(args.briefData);
