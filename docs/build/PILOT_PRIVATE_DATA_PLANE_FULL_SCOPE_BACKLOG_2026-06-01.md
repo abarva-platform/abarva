@@ -13,10 +13,10 @@ mini-wave before live client files should be treated as production-ready.
 | T354 | SSO and SCIM role mapping | Map Entra/Clerk orgs to admin, uploader, reviewer, and approver roles with seeded test users. Authority candidate: `src/lib/admin/pilot-private-data-plane-runbook.ts`. |
 | T355 | Private-data runbook | Document end-to-end rehearsal from sign-in to data load, quarantine, clarification, approval, commit, rollback, and audit export. Authority candidate: `docs/architecture/azure/PILOT-PRIVATE-DATA-PLANE-REHEARSAL-RUNBOOK-2026-06-01.md`. |
 | T356 | Processing service decision | Lock the execution services for parsing and enrichment: Functions or Container Apps jobs, Service Bus, Document Intelligence, AI Search, and retry semantics. Authority candidate: `src/lib/admin/pilot-private-data-plane-runbook.ts`. |
-| T357 | Durable ingestion schema | Add tables for upload runs, file manifests, quarantine cases, clarifications, approvals, load commits, and audit export. |
-| T358 | Idempotency and dedupe | Prevent duplicate facts, duplicate approvals, and repeated expensive parsing on same-file re-upload. |
-| T359 | Template versioning and mapping profiles | Persist template version, mapping profile, and validation rule version for every load. |
-| T360 | Rollback and unload | Make every committed load batch reversible without manual data cleanup. |
+| T357 | Durable ingestion schema | Add tables for upload runs, file manifests, quarantine cases, clarifications, approvals, load commits, and audit export. Authority candidate: `supabase/migrations/20260601090000_pilot_ingestion_load_ledger.sql` and `src/lib/admin/pilot-ingestion-ledger.ts`. |
+| T358 | Idempotency and dedupe | Prevent duplicate facts, duplicate approvals, and repeated expensive parsing on same-file re-upload. Authority candidate: `supabase/migrations/20260601090000_pilot_ingestion_load_ledger.sql` and `buildPilotIngestionIdempotencyKey`. |
+| T359 | Template versioning and mapping profiles | Persist template version, mapping profile, and validation rule version for every load. Authority candidate: `pilot_ingestion_template_versions` and `pilot_ingestion_mapping_profiles`. |
+| T360 | Rollback and unload | Make every committed load batch reversible without manual data cleanup. Authority candidate: `pilot_ingestion_load_commit_items`, `pilot_ingestion_rollback_requests`, and `planPilotIngestionRollback`. |
 | T361 | Malware scanning | Scan files before parsing or storage promotion; PHI/PII detection is not enough for enterprise upload flows. |
 | T362 | Encryption and key policy | Decide CMK/BYOK posture, Key Vault ownership, storage encryption, secret rotation, and customer visibility. |
 | T363 | Retention and deletion policy | Define raw-file, quarantine, intermediate, failed-load, committed-load, and pilot-offboarding retention. |
