@@ -1,11 +1,11 @@
-import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
-import { ADMIN_PAGE_HEADER_STYLES } from '@/components/admin/admin-page-header-styles';
-import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
-import { getClientOption } from '@/lib/client-config';
-import { COLORS, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { AdminCanonShellV2 } from "@/components/admin/AdminCanonShellV2";
+import { ADMIN_PAGE_HEADER_STYLES } from "@/components/admin/admin-page-header-styles";
+import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
+import { getClientOption } from "@/lib/client-config";
+import { COLORS, TYPOGRAPHY } from "@/lib/design/design-tokens";
 
-export const metadata = { title: 'Admin Home | AbarVa' };
-export const dynamic = 'force-dynamic';
+export const metadata = { title: "Admin Home | AbarVa" };
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const palette = {
@@ -27,60 +27,60 @@ const palette = {
 
 const dataRows = [
   {
-    dimension: 'Enterprise profile',
-    loaded: 'Ready',
-    completeness: '92%',
-    evidence: 'Leadership, footprint, operating model',
-    next: 'Keep current',
+    dimension: "Enterprise profile",
+    loaded: "Ready",
+    completeness: "92%",
+    evidence: "Leadership, footprint, operating model",
+    next: "Keep current",
   },
   {
-    dimension: 'Data estate',
-    loaded: 'In progress',
-    completeness: '81%',
-    evidence: 'Systems, ownership, lineage',
-    next: 'Confirm stale source owners',
+    dimension: "Data estate",
+    loaded: "In progress",
+    completeness: "81%",
+    evidence: "Systems, ownership, lineage",
+    next: "Confirm stale source owners",
   },
   {
-    dimension: 'Access and roles',
-    loaded: 'Needs attention',
-    completeness: '74%',
-    evidence: 'Admins, pending invites, SSO posture',
-    next: 'Clear two access gaps',
+    dimension: "Access and roles",
+    loaded: "Needs attention",
+    completeness: "74%",
+    evidence: "Admins, pending invites, SSO posture",
+    next: "Clear two access gaps",
   },
   {
-    dimension: 'Connectors',
-    loaded: 'In progress',
-    completeness: '68%',
-    evidence: 'Critical sources and test results',
-    next: 'Reconnect priority systems',
+    dimension: "Connectors",
+    loaded: "In progress",
+    completeness: "68%",
+    evidence: "Critical sources and test results",
+    next: "Reconnect priority systems",
   },
   {
-    dimension: 'Assistant grounding',
-    loaded: 'Ready',
-    completeness: '86%',
-    evidence: 'Capabilities mapped to evidence',
-    next: 'Review gap queue',
+    dimension: "Assistant grounding",
+    loaded: "Ready",
+    completeness: "86%",
+    evidence: "Capabilities mapped to evidence",
+    next: "Review gap queue",
   },
 ] as const;
 
 const actionRows = [
   {
-    label: 'Clear access blocker',
-    owner: 'Admin owner',
-    due: 'Today',
-    impact: 'Unblocks pilot approvals and notification coverage.',
+    label: "Clear access blocker",
+    owner: "Admin owner",
+    due: "Today",
+    impact: "Unblocks pilot approvals and notification coverage.",
   },
   {
-    label: 'Confirm connector owners',
-    owner: 'Data steward',
-    due: 'This week',
-    impact: 'Raises data estate completeness for assistant answers.',
+    label: "Confirm connector owners",
+    owner: "Data steward",
+    due: "This week",
+    impact: "Raises data estate completeness for assistant answers.",
   },
   {
-    label: 'Review production blockers',
-    owner: 'Release lead',
-    due: 'This week',
-    impact: 'Keeps demo, pilot, and production gates separated.',
+    label: "Review production blockers",
+    owner: "Release lead",
+    due: "This week",
+    impact: "Keeps demo, pilot, and production gates separated.",
   },
 ] as const;
 
@@ -89,13 +89,15 @@ function clientMark(name: string): string {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 function statusColor(status: string): { color: string; background: string } {
-  if (status === 'Ready') return { color: palette.mint, background: palette.softMint };
-  if (status === 'Needs attention') return { color: palette.coral, background: palette.softCoral };
+  if (status === "Ready")
+    return { color: palette.mint, background: palette.softMint };
+  if (status === "Needs attention")
+    return { color: palette.coral, background: palette.softCoral };
   return { color: palette.amber, background: palette.softAmber };
 }
 
@@ -109,39 +111,46 @@ export default async function AdminOverviewPage() {
       <main
         data-admin-home-native="true"
         style={{
-          minHeight: '100%',
+          minHeight: "100%",
           background: palette.paper,
           color: palette.ink,
-          padding: '26px 30px 34px',
+          padding: "26px 30px 34px",
         }}
       >
         <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 320px',
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) 320px",
             gap: 22,
-            alignItems: 'stretch',
+            alignItems: "stretch",
             marginBottom: 18,
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                marginBottom: 12,
+              }}
+            >
               <div
                 aria-label={`${tenant.tenantName} client mark`}
                 style={{
                   width: 46,
                   height: 46,
                   borderRadius: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   background: clientOption.color,
                   color: palette.white,
                   fontFamily: TYPOGRAPHY.sans,
                   fontSize: 14,
                   fontWeight: 850,
-                  letterSpacing: '0.08em',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.26)',
+                  letterSpacing: "0.08em",
+                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.26)",
                 }}
               >
                 {mark}
@@ -153,20 +162,26 @@ export default async function AdminOverviewPage() {
                     color: palette.muted,
                   }}
                 >
-                  {clientOption.vertical} admin command center
+                  {clientOption.vertical} system review
                 </p>
                 <h1
                   style={{
                     ...ADMIN_PAGE_HEADER_STYLES.title,
                   }}
                 >
-                  {tenant.tenantName} admin home
+                  {tenant.tenantName} home
                 </h1>
               </div>
             </div>
-            <p style={{ ...ADMIN_PAGE_HEADER_STYLES.subtitle, color: palette.ink }}>
-              One native control canvas for loaded data, readiness, access, notifications, and next
-              actions. The first screen shows what is ready, what is incomplete, and who owns the next move.
+            <p
+              style={{
+                ...ADMIN_PAGE_HEADER_STYLES.subtitle,
+                color: palette.ink,
+              }}
+            >
+              Read-only view of what AbarVa currently knows for this client:
+              loaded dimensions, evidence quality, readiness, and the highest
+              impact gaps. Operators load and process files in Data Loads.
             </p>
           </div>
 
@@ -176,9 +191,9 @@ export default async function AdminOverviewPage() {
               borderRadius: 8,
               background: palette.card,
               padding: 16,
-              display: 'grid',
+              display: "grid",
               gap: 10,
-              alignContent: 'start',
+              alignContent: "start",
             }}
           >
             <p
@@ -187,30 +202,41 @@ export default async function AdminOverviewPage() {
                 color: palette.muted,
                 fontSize: 11,
                 fontWeight: 850,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
               }}
             >
               Next decision
             </p>
             <h2 style={{ margin: 0, fontSize: 20, lineHeight: 1.18 }}>
-              Clear access and connector gaps before expanding production scope.
+              Review the loaded dimensions before expanding production scope.
             </h2>
-            <a
-              href="/admin/production-readiness"
+            <p
               style={{
-                width: 'fit-content',
+                margin: 0,
+                color: palette.muted,
+                fontSize: 13,
+                lineHeight: 1.45,
+              }}
+            >
+              Home is for reviewing what is in the system. Setup is for the
+              restricted upload, processing, approval, and commit workflow.
+            </p>
+            <a
+              href="/admin/setup"
+              style={{
+                width: "fit-content",
                 marginTop: 4,
                 color: palette.white,
                 background: palette.blue,
                 borderRadius: 6,
-                padding: '8px 12px',
+                padding: "8px 12px",
                 fontSize: 13,
                 fontWeight: 800,
-                textDecoration: 'none',
+                textDecoration: "none",
               }}
             >
-              Open readiness
+              Open Data Loads
             </a>
           </aside>
         </section>
@@ -218,17 +244,41 @@ export default async function AdminOverviewPage() {
         <section
           aria-label="Admin status summary"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
             gap: 12,
             marginBottom: 18,
           }}
         >
           {[
-            ['Data completeness', '81%', 'Across critical dimensions', palette.softBlue, palette.blue],
-            ['Admin actions', '3', 'Need owner attention', palette.softAmber, palette.amber],
-            ['Access posture', '74%', 'SSO and role coverage', palette.softCoral, palette.coral],
-            ['Assistant grounding', '86%', 'Evidence-backed answers', palette.softMint, palette.mint],
+            [
+              "Data completeness",
+              "81%",
+              "Across critical dimensions",
+              palette.softBlue,
+              palette.blue,
+            ],
+            [
+              "Admin actions",
+              "3",
+              "Need owner attention",
+              palette.softAmber,
+              palette.amber,
+            ],
+            [
+              "Access posture",
+              "74%",
+              "SSO and role coverage",
+              palette.softCoral,
+              palette.coral,
+            ],
+            [
+              "Assistant grounding",
+              "86%",
+              "Evidence-backed answers",
+              palette.softMint,
+              palette.mint,
+            ],
           ].map(([label, value, detail, background, color]) => (
             <div
               key={label}
@@ -236,7 +286,7 @@ export default async function AdminOverviewPage() {
                 border: `1px solid ${palette.line}`,
                 borderRadius: 8,
                 background,
-                padding: '14px 15px',
+                padding: "14px 15px",
                 minHeight: 104,
               }}
             >
@@ -246,16 +296,30 @@ export default async function AdminOverviewPage() {
                   color,
                   fontSize: 11,
                   fontWeight: 850,
-                  letterSpacing: '0.09em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
                 }}
               >
                 {label}
               </p>
-              <strong style={{ display: 'block', marginTop: 10, fontSize: 30, lineHeight: 1 }}>
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: 10,
+                  fontSize: 30,
+                  lineHeight: 1,
+                }}
+              >
                 {value}
               </strong>
-              <span style={{ display: 'block', marginTop: 8, color: palette.muted, fontSize: 13 }}>
+              <span
+                style={{
+                  display: "block",
+                  marginTop: 8,
+                  color: palette.muted,
+                  fontSize: 13,
+                }}
+              >
                 {detail}
               </span>
             </div>
@@ -264,69 +328,148 @@ export default async function AdminOverviewPage() {
 
         <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)',
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.65fr)",
             gap: 18,
           }}
         >
-          <div style={{ border: `1px solid ${palette.line}`, borderRadius: 8, background: palette.card }}>
+          <div
+            style={{
+              border: `1px solid ${palette.line}`,
+              borderRadius: 8,
+              background: palette.card,
+            }}
+          >
             <div
               style={{
-                padding: '14px 16px',
+                padding: "14px 16px",
                 borderBottom: `1px solid ${palette.line}`,
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: "flex",
+                justifyContent: "space-between",
                 gap: 12,
               }}
             >
               <div>
-                <h2 style={{ margin: 0, fontSize: 18 }}>Loaded data by dimension</h2>
-                <p style={{ margin: '4px 0 0', color: palette.muted, fontSize: 13 }}>
-                  Completeness is shown as client-facing operating coverage, not implementation detail.
+                <h2 style={{ margin: 0, fontSize: 18 }}>
+                  What is in the system
+                </h2>
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    color: palette.muted,
+                    fontSize: 13,
+                  }}
+                >
+                  Completeness is shown as client-facing operating coverage, not
+                  upload pipeline detail.
                 </p>
               </div>
               <a
                 href="/admin/data-trust"
-                style={{ color: palette.blue, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                style={{
+                  color: palette.blue,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textDecoration: "none",
+                }}
               >
                 View data trust
               </a>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13.5,
+              }}
+            >
               <thead>
-                <tr style={{ color: palette.muted, textAlign: 'left' }}>
-                  <th style={{ padding: '10px 14px', fontSize: 11, textTransform: 'uppercase' }}>Dimension</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, textTransform: 'uppercase' }}>Status</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, textTransform: 'uppercase' }}>Complete</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, textTransform: 'uppercase' }}>Evidence</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, textTransform: 'uppercase' }}>Next</th>
+                <tr style={{ color: palette.muted, textAlign: "left" }}>
+                  <th
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Dimension
+                  </th>
+                  <th
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Status
+                  </th>
+                  <th
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Complete
+                  </th>
+                  <th
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Evidence
+                  </th>
+                  <th
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Next
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {dataRows.map((row) => {
                   const status = statusColor(row.loaded);
                   return (
-                    <tr key={row.dimension} style={{ borderTop: `1px solid ${palette.line}` }}>
-                      <td style={{ padding: '11px 14px', fontWeight: 750 }}>{row.dimension}</td>
-                      <td style={{ padding: '11px 14px' }}>
+                    <tr
+                      key={row.dimension}
+                      style={{ borderTop: `1px solid ${palette.line}` }}
+                    >
+                      <td style={{ padding: "11px 14px", fontWeight: 750 }}>
+                        {row.dimension}
+                      </td>
+                      <td style={{ padding: "11px 14px" }}>
                         <span
                           style={{
-                            display: 'inline-flex',
+                            display: "inline-flex",
                             borderRadius: 999,
-                            padding: '4px 8px',
+                            padding: "4px 8px",
                             color: status.color,
                             background: status.background,
                             fontSize: 12,
                             fontWeight: 800,
-                            whiteSpace: 'nowrap',
+                            whiteSpace: "nowrap",
                           }}
                         >
                           {row.loaded}
                         </span>
                       </td>
-                      <td style={{ padding: '11px 14px', fontWeight: 800 }}>{row.completeness}</td>
-                      <td style={{ padding: '11px 14px', color: palette.ink }}>{row.evidence}</td>
-                      <td style={{ padding: '11px 14px', color: palette.muted }}>{row.next}</td>
+                      <td style={{ padding: "11px 14px", fontWeight: 800 }}>
+                        {row.completeness}
+                      </td>
+                      <td style={{ padding: "11px 14px", color: palette.ink }}>
+                        {row.evidence}
+                      </td>
+                      <td
+                        style={{ padding: "11px 14px", color: palette.muted }}
+                      >
+                        {row.next}
+                      </td>
                     </tr>
                   );
                 })}
@@ -334,21 +477,40 @@ export default async function AdminOverviewPage() {
             </table>
           </div>
 
-          <div style={{ border: `1px solid ${palette.line}`, borderRadius: 8, background: palette.card }}>
-            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${palette.line}` }}>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Action queue</h2>
-              <p style={{ margin: '4px 0 0', color: palette.muted, fontSize: 13 }}>
-                Only items that change client readiness appear here.
+          <div
+            style={{
+              border: `1px solid ${palette.line}`,
+              borderRadius: 8,
+              background: palette.card,
+            }}
+          >
+            <div
+              style={{
+                padding: "14px 16px",
+                borderBottom: `1px solid ${palette.line}`,
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: 18 }}>Review queue</h2>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  color: palette.muted,
+                  fontSize: 13,
+                }}
+              >
+                Read-only gaps that change client readiness. Loading controls
+                stay in Data Loads.
               </p>
             </div>
-            <div style={{ display: 'grid' }}>
+            <div style={{ display: "grid" }}>
               {actionRows.map((action, index) => (
                 <div
                   key={action.label}
                   style={{
-                    padding: '13px 16px',
-                    borderTop: index === 0 ? 'none' : `1px solid ${palette.line}`,
-                    display: 'grid',
+                    padding: "13px 16px",
+                    borderTop:
+                      index === 0 ? "none" : `1px solid ${palette.line}`,
+                    display: "grid",
                     gap: 6,
                   }}
                 >
@@ -356,7 +518,14 @@ export default async function AdminOverviewPage() {
                   <span style={{ color: palette.muted, fontSize: 12.5 }}>
                     {action.owner} - {action.due}
                   </span>
-                  <p style={{ margin: 0, color: palette.ink, fontSize: 13, lineHeight: 1.38 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: palette.ink,
+                      fontSize: 13,
+                      lineHeight: 1.38,
+                    }}
+                  >
                     {action.impact}
                   </p>
                 </div>
