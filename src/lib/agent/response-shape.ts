@@ -636,9 +636,15 @@ function shouldCompactSurface(surface: string): boolean {
   //     'strategic-moves-workspace' / '/strategic-moves'  (legacy aliases, swept for completeness)
   //
   // Surfaces kept (correctly compacted — dashboard / form, not advisor chat):
-  //   - 'tower' / '/tower'                            (Tower — separate doctrine, no Brief A/B/C)
   //   - 'setup' / '/setup'                            (setup wizard form surface)
   //   - '/platform/admin'                             (admin form surface)
+  //
+  // Wave 0 L6 production retests later proved Tower is also an advisor
+  // surface for Atlas chat: the compactor turned real answers into
+  // malformed tables, dangling numbered lists, and "Evidence: 1." stubs.
+  // Tower now preserves natural Atlas output and only applies safety
+  // repairs (markup/id scrubbing, malformed-table repair, next-action
+  // fallback).
   //
   // The anti-regression guard test in response-shape.test.ts asserts that
   // every expert-posture surface returns false from this function. If a
@@ -646,9 +652,7 @@ function shouldCompactSurface(surface: string): boolean {
   // guard fails at PR review.
   const semanticSurface = surface.replace(/^\/+/, '');
   return [
-    'tower',
     'setup',
-    '/tower',
     '/setup',
     '/platform/admin',
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);
