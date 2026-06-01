@@ -27,6 +27,7 @@ import type {
   SynthesisTelemetryEvent,
   TelemetryBackend,
 } from '@/lib/reasoning/synthesis-telemetry';
+import { runtimePostgresPoolConfig } from '@/lib/data-plane/postgresCompat';
 
 /**
  * Minimal shape of the SQL executor we depend on. The real implementation
@@ -54,12 +55,7 @@ function defaultExecutorFactory(): PostgresSqlExecutor {
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
-  return new Pool({
-    connectionString: url,
-    ssl: { rejectUnauthorized: false },
-    // Telemetry writes are tiny; keep the pool small.
-    max: 4,
-  });
+  return new Pool(runtimePostgresPoolConfig(url, 'nexus-reasoning-telemetry'));
 }
 
 const INSERT_SQL = `

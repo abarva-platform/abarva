@@ -4,6 +4,7 @@ import {
   isConnectionFallbackError,
   resolvePostgresPoolMax,
   resolveDatabaseUrlCandidates,
+  runtimePostgresPoolConfig,
 } from '@/lib/supabase-server';
 
 describe('Postgres compatibility database URL fallback', () => {
@@ -42,5 +43,33 @@ describe('Postgres compatibility database URL fallback', () => {
     expect(resolvePostgresPoolMax({ PGPOOL_MAX: '2' } as unknown as NodeJS.ProcessEnv)).toBe(2);
     expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '12' } as unknown as NodeJS.ProcessEnv)).toBe(5);
     expect(resolvePostgresPoolMax({ ABARVA_PG_POOL_MAX: '0' } as unknown as NodeJS.ProcessEnv)).toBe(1);
+  });
+
+  it('builds one-connection runtime pool config with idle teardown', () => {
+    const previousAbarvaPoolMax = process.env.ABARVA_PG_POOL_MAX;
+    const previousPgPoolMax = process.env.PGPOOL_MAX;
+    delete process.env.ABARVA_PG_POOL_MAX;
+    delete process.env.PGPOOL_MAX;
+    let config!: ReturnType<typeof runtimePostgresPoolConfig>;
+    try {
+      config = runtimePostgresPoolConfig(
+        'postgres://user:pass@db.example.com:5432/app',
+        'nexus-test-pool',
+      );
+    } finally {
+      if (previousAbarvaPoolMax === undefined) delete process.env.ABARVA_PG_POOL_MAX;
+      else process.env.ABARVA_PG_POOL_MAX = previousAbarvaPoolMax;
+      if (previousPgPoolMax === undefined) delete process.env.PGPOOL_MAX;
+      else process.env.PGPOOL_MAX = previousPgPoolMax;
+    }
+
+    expect(config).toEqual(expect.objectContaining({
+      application_name: 'nexus-test-pool',
+      max: 1,
+      idleTimeoutMillis: 5_000,
+      connectionTimeoutMillis: 5_000,
+      allowExitOnIdle: true,
+      ssl: { rejectUnauthorized: false },
+    }));
   });
 });

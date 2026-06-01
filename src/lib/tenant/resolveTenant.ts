@@ -74,6 +74,16 @@ function firstResolvedCandidate(
   return null;
 }
 
+function isTenantRowInfrastructureError(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const code = typeof record?.code === 'string' ? record.code : '';
+  const message = typeof record?.message === 'string' ? record.message : String(error ?? '');
+  return (
+    ['EMAXCONN', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET'].includes(code) ||
+    /max client connections|remaining connection slots|too many clients|connection\s+timeout|connection\s+terminated|connect\s+etimedout|econnrefused|enotfound/i.test(message)
+  );
+}
+
 async function resolveClientRow(
   appClientKey: ClientKey,
 ): Promise<{ id: string; name: string | null; industry_code: string | null } | null> {
@@ -106,7 +116,8 @@ async function resolveClientRow(
       });
       if (data) return data;
     }
-  } catch {
+  } catch (error) {
+    if (isTenantRowInfrastructureError(error)) throw error;
     return null;
   }
   return null;

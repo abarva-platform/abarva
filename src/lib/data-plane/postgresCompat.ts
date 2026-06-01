@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { PoolConfig } from 'pg';
+
 type JsonRecord = Record<string, unknown>;
 type FilterOp = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'is' | 'in' | 'like' | 'ilike' | 'contains' | 'overlaps' | 'text_search';
 
@@ -60,6 +62,21 @@ function disableSsl(connectionString: string): boolean {
   }
 }
 
+export function runtimePostgresPoolConfig(
+  connectionString: string,
+  applicationName: string,
+): PoolConfig {
+  return {
+    connectionString,
+    application_name: applicationName,
+    max: resolvePostgresPoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
+    ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
+  };
+}
+
 async function loadPg(): Promise<typeof import('pg')> {
   const loadPg = new Function('specifier', 'return import(specifier)') as (
     specifier: string,
@@ -79,15 +96,7 @@ async function getPool(connectionString: string): Promise<import('pg').Pool> {
   const existing = pools.get(connectionString);
   if (existing) return existing;
   const { Pool } = await loadPg();
-  const pool = new Pool({
-    connectionString,
-    application_name: 'abarva-postgres-compat',
-    max: resolvePostgresPoolMax(),
-    idleTimeoutMillis: 5_000,
-    connectionTimeoutMillis: 5_000,
-    allowExitOnIdle: true,
-    ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
-  });
+  const pool = new Pool(runtimePostgresPoolConfig(connectionString, 'abarva-postgres-compat'));
   pools.set(connectionString, pool);
   return pool;
 }

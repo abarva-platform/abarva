@@ -1,5 +1,6 @@
 import {
   getAzureReadFluentClient,
+  runtimePostgresPoolConfig,
   type PostgresCompatClient,
 } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
@@ -307,12 +308,7 @@ function getPrivatePgPool(): Pool | null {
     cachedPrivatePgPool = null;
     return cachedPrivatePgPool;
   }
-  cachedPrivatePgPool = new Pool({
-    connectionString,
-    max: 2,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 5_000,
-  });
+  cachedPrivatePgPool = new Pool(runtimePostgresPoolConfig(connectionString, 'nexus-tenant-data-private'));
   return cachedPrivatePgPool;
 }
 

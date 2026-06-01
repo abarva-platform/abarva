@@ -29,6 +29,16 @@ import {
 
 export { ACTIVE_CLIENT_COOKIE };
 
+function isTenantLookupInfrastructureError(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const code = typeof record?.code === 'string' ? record.code : '';
+  const message = typeof record?.message === 'string' ? record.message : String(error ?? '');
+  return (
+    ['EMAXCONN', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET'].includes(code) ||
+    /max client connections|remaining connection slots|too many clients|connection\s+timeout|connection\s+terminated|connect\s+etimedout|econnrefused|enotfound/i.test(message)
+  );
+}
+
 export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
   const tenant = await resolveTenant({ requestedClient: requestedClientId });
   return tenant.appClientKey;
@@ -67,7 +77,11 @@ export async function hasLockedTenantSession(): Promise<boolean> {
 export async function getActiveClientRow(
   requestedClientId?: string | null,
 ): Promise<{ id: string; name: string; industry_code: string | null; key: ClientKey } | null> {
-  const tenant = await resolveTenant({ requestedClient: requestedClientId });
+  const tenant = await resolveTenant({ requestedClient: requestedClientId }).catch((error) => {
+    if (isTenantLookupInfrastructureError(error)) throw error;
+    return null;
+  });
+  if (!tenant) return null;
   if (!tenant.clientId) return null;
   return {
     id: tenant.clientId,
