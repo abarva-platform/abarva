@@ -56,6 +56,9 @@ const RISK_LABEL: Record<SourceRiskLevel, string> = {
   blocked: 'Source: blocked',
 };
 
+export const TOWER_PROJECTED_VALUE_DISCLOSURE =
+  'Projection caveat: projected value is directional decision support, not earned value. Confirm the baseline, measurement window, and owner-approved assumptions before using it for funding, board, or phase-gate decisions.';
+
 /** A small monospace status chip, ghost-styled — no new colours. */
 function Chip({ text }: { text: string }) {
   return (
@@ -108,13 +111,33 @@ function PortfolioCard({ card }: { card: MovePortfolioCard }) {
       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
         <Chip text={`Ledger: ${LEDGER_LABEL[card.ledgerStatus]}`} />
         {card.projectedValueUsd > 0 ? (
-          <Chip text={`Projected ${formatUsd(card.projectedValueUsd)}`} />
+          <Chip text={`Projected ${formatUsd(card.projectedValueUsd)} · directional`} />
         ) : null}
         {card.sourceRiskLevel ? <Chip text={RISK_LABEL[card.sourceRiskLevel]} /> : null}
         {card.sourceCostExposureUsd > 0 ? (
           <Chip text={`Cost exposure ${formatUsd(card.sourceCostExposureUsd)}`} />
         ) : null}
       </div>
+
+      {card.projectedValueUsd > 0 ? (
+        <div
+          data-testid="tower-projected-value-disclosure"
+          style={{
+            marginTop: 8,
+            padding: '8px 10px',
+            border: `1px dashed ${RULE}`,
+            borderRadius: 6,
+            fontSize: 11,
+            color: INK_SOFT,
+            lineHeight: 1.5,
+          }}
+        >
+          <span style={{ ...LABEL, display: 'block', marginBottom: 3 }}>
+            Projection assumptions · confidence projected
+          </span>
+          {TOWER_PROJECTED_VALUE_DISCLOSURE}
+        </div>
+      ) : null}
 
       {card.sourceRiskReadout ? (
         <div style={{ marginTop: 9, fontSize: 12, color: INK_SOFT, lineHeight: 1.5 }}>
