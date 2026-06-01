@@ -30,7 +30,7 @@ Adds a board-grade renderer and reusable Programs card for probabilistic Move fo
 - Adds `src/components/programs/ProbabilisticForecastCard.tsx`.
 - Exports the board-grade renderer from `src/lib/programs/expert-kernel/exports/board-grade/index.ts`.
 - Adds renderer and component contract tests.
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2690
 
 ## QA / Validation
 
@@ -50,7 +50,7 @@ Revert the PR. The renderer and card are additive exports and do not persist sta
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2690
 - CI checks: pending.
 - Local validation: focused Jest, ESLint, TypeScript, release gate, and diff check pass locally.
 
