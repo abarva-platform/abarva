@@ -9,6 +9,8 @@
     "lint": "eslint",
     "lint:depth": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/lint/depth-lint.ts",
     "audit:architecture-boundaries": "depcruise -c .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json src/app src/components",
+    "secrets:scan": "gitleaks git --redact --no-banner",
+    "secrets:staged": "gitleaks git --staged --redact --no-banner",
     "test": "jest",
     "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
@@ -243,6 +245,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@nogoo9/gitleaks": "^8.30.1-post.2",
     "@playwright/test": "^1.59.1",
     "@supabase/supabase-js": "^2.104.0",
     "@tailwindcss/postcss": "^4",
