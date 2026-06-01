@@ -1,24 +1,30 @@
-import { notFound, redirect } from 'next/navigation';
-import { requireProductModule } from '@/lib/auth/server-module-access';
-import { getStrategicMoveById } from '@/lib/programs/queries';
-import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
-import { AppShell } from '@/components/shell/AppShell';
-import { StrategicMovePhaseClient } from '@/components/strategic-moves/StrategicMovePhaseClient';
+import { notFound, redirect } from "next/navigation";
+import { requireProductModule } from "@/lib/auth/server-module-access";
+import { getStrategicMoveById } from "@/lib/programs/queries";
+import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
+import { AppShell } from "@/components/shell/AppShell";
+import { StrategicMovePhaseClient } from "@/components/strategic-moves/StrategicMovePhaseClient";
+import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ moveId: string; phaseNum: string }>;
 }
 
-export default async function StrategicMovePhaseWorkspacePage({ params }: Props) {
-  await requireProductModule('programs');
+export default async function StrategicMovePhaseWorkspacePage({
+  params,
+}: Props) {
+  await requireProductModule("programs");
   const ctx = await getStrategicMovesTenancy();
   if (!ctx) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
   const { moveId, phaseNum } = await params;
+  if (!isStrategicMoveRouteId(moveId)) {
+    notFound();
+  }
 
   // Validate phaseNum is 1–5
   const parsedPhase = parseInt(phaseNum, 10);

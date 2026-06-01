@@ -1,23 +1,24 @@
-import { notFound, redirect } from 'next/navigation';
-import { requireProductModule } from '@/lib/auth/server-module-access';
-import { getStrategicMoveById } from '@/lib/programs/queries';
-import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
+import { notFound, redirect } from "next/navigation";
+import { requireProductModule } from "@/lib/auth/server-module-access";
+import { getStrategicMoveById } from "@/lib/programs/queries";
+import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import {
   StrategicMoveDetailView,
   type LinkedSourceEvent,
-} from '@/components/strategic-moves/StrategicMoveDetailView';
-import { AppShell } from '@/components/shell/AppShell';
-import { runMoveToSourceHandoff } from '@/lib/programs/source-trigger/move-to-source-handoff';
-import { getActiveClientRow } from '@/lib/active-client';
-import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
-import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
-import type { StrategicMove } from '@/lib/programs/types.ui';
-import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
-import { getAskSessionForMove } from '@/lib/intelligence/ask/session-memory';
+} from "@/components/strategic-moves/StrategicMoveDetailView";
+import { AppShell } from "@/components/shell/AppShell";
+import { runMoveToSourceHandoff } from "@/lib/programs/source-trigger/move-to-source-handoff";
+import { getActiveClientRow } from "@/lib/active-client";
+import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
+import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
+import type { StrategicMove } from "@/lib/programs/types.ui";
+import { ensureThreadForMove } from "@/lib/decisions/auto-linker";
+import { getAskSessionForMove } from "@/lib/intelligence/ask/session-memory";
+import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-type Tab = 'overview' | 'documents' | 'activity';
+type Tab = "overview" | "documents" | "activity";
 
 interface Props {
   params: Promise<{ moveId: string }>;
@@ -25,13 +26,13 @@ interface Props {
 }
 
 function resolveTab(raw: string | undefined): Tab {
-  if (raw === 'documents' || raw === 'activity') return raw;
-  return 'overview';
+  if (raw === "documents" || raw === "activity") return raw;
+  return "overview";
 }
 
 /** True when the Move carries a P3 sourcing-strategy deliverable. */
 function hasSourcingDeliverable(move: StrategicMove): boolean {
-  return move.deliverables.some((d) => d.typeKey === 'sourcing_strategy');
+  return move.deliverables.some((d) => d.typeKey === "sourcing_strategy");
 }
 
 /**
@@ -72,13 +73,20 @@ async function resolveHandoff(move: StrategicMove): Promise<{
   return { handoff, linkedSourceEvent };
 }
 
-export default async function StrategicMoveDetailPage({ params, searchParams }: Props) {
-  await requireProductModule('programs');
+export default async function StrategicMoveDetailPage({
+  params,
+  searchParams,
+}: Props) {
+  await requireProductModule("programs");
   const ctx = await getStrategicMovesTenancy();
-  if (!ctx) redirect('/sign-in');
+  if (!ctx) redirect("/sign-in");
 
   const [{ moveId }, sp] = await Promise.all([params, searchParams]);
   const activeTab = resolveTab(sp.tab);
+
+  if (!isStrategicMoveRouteId(moveId)) {
+    notFound();
+  }
 
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
@@ -90,7 +98,7 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
     moveId: move.id,
   }).catch((error) => {
     console.error(
-      '[StrategicMoveDetailPage] originating Intelligence ask session lookup failed',
+      "[StrategicMoveDetailPage] originating Intelligence ask session lookup failed",
       error instanceof Error ? error.message : String(error),
     );
     return null;
@@ -99,11 +107,11 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
     clientId: activeClient?.key ?? move.tenant.id,
     moveId: move.id,
     title: move.name,
-    ownerRole: move.sponsor?.role ?? 'CIO',
+    ownerRole: move.sponsor?.role ?? "CIO",
     linkedBy: ctx.userId,
   }).catch((error) => {
     console.error(
-      '[StrategicMoveDetailPage] decision dossier auto-link failed',
+      "[StrategicMoveDetailPage] decision dossier auto-link failed",
       error instanceof Error ? error.message : String(error),
     );
     return null;
@@ -117,7 +125,9 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
         handoff={handoff}
         linkedSourceEvent={linkedSourceEvent}
         decisionThreadId={decisionThread?.id ?? null}
-        originatingIntelligenceSessionId={originatingAskSession?.sessionId ?? null}
+        originatingIntelligenceSessionId={
+          originatingAskSession?.sessionId ?? null
+        }
       />
     </AppShell>
   );
