@@ -21,6 +21,11 @@ import {
   type AiOperatingCostInput,
   type AiOpsCostEstimate,
 } from './ai-ops-cost';
+import {
+  buildEffortCostDistribution,
+  type EffortCostDistribution,
+  type ProbabilisticInputs,
+} from './probabilistic';
 import { RESEARCHED_PLANNING_RATES } from './rate-card/derived-planning-rate-card';
 import { rangeOf, round2, sumRanges, type Range } from './types';
 
@@ -75,6 +80,8 @@ export interface EffortEstimatorInput {
   workstreams: WorkstreamInput[];
   /** Optional AI operating-cost model. Omitted preserves the legacy effort estimate. */
   aiOps?: AiOperatingCostInput | null;
+  /** Optional probabilistic wrapper inputs. Omitted preserves deterministic output. */
+  probabilistic?: ProbabilisticInputs | null;
 }
 
 /**
@@ -137,6 +144,8 @@ export interface EffortEstimate {
   buildVsChange: BuildVsChangeSplit;
   /** Optional AI run-cost estimate; null keeps non-AI-ops Moves backward compatible. */
   aiOpsCost: AiOpsCostEstimate | null;
+  /** Optional distribution wrapper for the total effort cost. */
+  probabilistic?: EffortCostDistribution | null;
   /** The resolved, provenance-labelled rate card the estimate was built on. */
   rateCard: KernelRateCard;
 }
@@ -312,6 +321,10 @@ export function buildEffortEstimate(
   if (aiOpsCost) {
     buildVsChange.aiOpsCost = aiOpsCost.threeYearTotal;
   }
+  const probabilistic = buildEffortCostDistribution(
+    totalCost,
+    input.probabilistic,
+  );
 
   return {
     moveName: input.moveName,
@@ -323,6 +336,7 @@ export function buildEffortEstimate(
       totalBase > 0 ? round2(totalAgentCost / totalBase) : 0,
     buildVsChange,
     aiOpsCost,
+    probabilistic,
     rateCard,
   };
 }
