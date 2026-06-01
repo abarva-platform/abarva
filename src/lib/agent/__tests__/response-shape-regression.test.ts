@@ -210,5 +210,42 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).not.toMatch(/\bSkyHarbor has no\.$/m);
       expect(shaped).not.toMatch(/\b(has|no|and|or|but)\.$/m);
     });
+
+    it('repairs malformed option tables emitted by live SkyHarbor P1 output', () => {
+      // Production retest after the first hotfix showed the LLM/table
+      // preservation path could still keep a malformed comparison table:
+      // "Which room are you walking" was rendered as an Option. The
+      // response shaper should degrade that table to prose instead.
+      const raw = [
+        "The read: Your highest-priority decision isn't picking one program to fix — it's deciding whether to re-baseline the portfolio's value math before",
+        '',
+        '| Option | Strength | Weakness | Fit |',
+        '|---|---|---|---|',
+        "| SHA-012 Data Product Catalog Adoption | it's the only HIGH-confidence value-lag card, and adoption is a foundational dependency. | — | — |",
+        '| Which room are you walking | finance or delivery? | — | — |',
+        '',
+        'But projected, tracked attainment, and verified realized value are all missing from the aggregate — so the gap is partly a measurement artifact, not just performance.',
+      ].join('\n');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bbefore\s*(?:\n|$)/i);
+      expect(shaped).toContain('SHA-012 Data Product Catalog Adoption');
+      expect(shaped).toContain('Question: finance or delivery?');
+    });
+
+    it('does not duplicate an existing Next label in compact Tower output', () => {
+      const raw = [
+        'Every flagged initiative shows measured value above committed.',
+        'Evidence: Until projected vs. committed vs. realized are reconciled, treat the 16 value-lag flags as a measurement question, not a delivery verdict.',
+        'Next: open the cited initiative, signal, or evidence item in Tower and assign the owner for the first missing decision input.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).toContain('- Next: open the cited initiative');
+      expect(shaped).not.toContain('- Next: - Next:');
+    });
   });
 });

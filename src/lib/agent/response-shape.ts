@@ -125,7 +125,7 @@ function stripDanglingTrimTail(text: string): string {
   ).trim();
 
   cleaned = cleaned.replace(
-    /\s+\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|if|then)\b$/i,
+    /\s+\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|before|after|if|then)\b$/i,
     '',
   ).trim();
 
@@ -224,10 +224,107 @@ function extractQuestionLine(text: string): string | null {
   return trimWords(question, 22);
 }
 
+function parseTableCells(line: string): string[] {
+  return line
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => normalizeCompactLine(cell));
+}
+
+function stripDanglingParagraphTail(text: string): string {
+  return text
+    .replace(/\s+\b(?:and|or|but|with|to|of|for|against|because|before|after|while|if|then|vs|versus)\s*$/i, '')
+    .trim();
+}
+
+function isMalformedOptionComparisonTable(tableLines: string[]): boolean {
+  const header = tableLines[0] ?? '';
+  if (!/^\|\s*Option\s*\|\s*Strength\s*\|\s*Weakness\s*\|\s*Fit\s*\|$/i.test(header)) {
+    return false;
+  }
+
+  const rows = tableLines
+    .slice(2)
+    .map(parseTableCells)
+    .filter((cells) => cells.length >= 4);
+
+  if (rows.length === 0) return true;
+
+  return rows.some(([option, strength, weakness, fit]) => {
+    const placeholderCount = [strength, weakness, fit]
+      .filter((cell) => cell === COMPARISON_CELL_PLACEHOLDER)
+      .length;
+    return (
+      /^(which|what|who|where|when|why|how)\b/i.test(option) ||
+      /\b(?:and|or|but|with|to|of|for|against|because|before|after|vs|versus|has|no)\.?$/i.test(strength) ||
+      (placeholderCount >= 2 && option.split(/\s+/).length > 4)
+    );
+  });
+}
+
+function optionTableRowsToPlainText(tableLines: string[]): string[] {
+  return tableLines
+    .slice(2)
+    .map(parseTableCells)
+    .filter((cells) => cells.length >= 4)
+    .map(([option, strength]) => {
+      if (!option || option === COMPARISON_CELL_PLACEHOLDER) return null;
+      const cleanStrength = strength && strength !== COMPARISON_CELL_PLACEHOLDER
+        ? stripDanglingParagraphTail(strength)
+        : '';
+      const prefix = /^(which|what|who|where|when|why|how)\b/i.test(option)
+        ? 'Question'
+        : option;
+      const detail = cleanStrength ? `: ${cleanStrength}` : '';
+      return sentenceWithPeriod(`${prefix}${detail}`);
+    })
+    .filter((line): line is string => Boolean(line));
+}
+
+function repairMalformedComparisonTables(text: string): string {
+  const lines = text.split('\n');
+  const repaired: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? '';
+    if (!/^\|\s*Option\s*\|\s*Strength\s*\|\s*Weakness\s*\|\s*Fit\s*\|$/i.test(line.trim())) {
+      repaired.push(line);
+      continue;
+    }
+
+    const tableLines = [line];
+    let cursor = index + 1;
+    while (cursor < lines.length && /^\|.+\|$/.test((lines[cursor] ?? '').trim())) {
+      tableLines.push(lines[cursor] ?? '');
+      cursor += 1;
+    }
+
+    if (!isMalformedOptionComparisonTable(tableLines)) {
+      repaired.push(...tableLines);
+      index = cursor - 1;
+      continue;
+    }
+
+    const trailingBlankLines: string[] = [];
+    while (repaired.length > 0 && (repaired[repaired.length - 1] ?? '').trim() === '') {
+      trailingBlankLines.push(repaired.pop() ?? '');
+    }
+    const previous = repaired.pop();
+    if (previous != null) repaired.push(stripDanglingParagraphTail(previous));
+    repaired.push(...trailingBlankLines);
+    repaired.push(...optionTableRowsToPlainText(tableLines));
+    index = cursor - 1;
+  }
+
+  return normalizeVisibleWhitespace(repaired.join('\n'));
+}
+
 function preserveReadableTable(text: string): string | null {
   const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
   const tableLines = lines.filter((line) => /^\|.+\|$/.test(line));
   if (tableLines.length < 2) return null;
+  if (isMalformedOptionComparisonTable(tableLines)) return null;
   const lead = lines.find((line) => !/^\|.+\|$/.test(line) && !/^[-:| ]+$/.test(line));
   const table = tableLines.slice(0, 7).join('\n');
   return normalizeVisibleWhitespace([lead ? trimWords(lead, 24) : null, table].filter(Boolean).join('\n\n'));
@@ -503,7 +600,7 @@ function compactConsultantChatText(text: string, maxWords: number): string {
     headline,
     evidence ? `- Evidence: ${sentenceWithPeriod(trimWords(evidence, 28))}` : null,
     missing ? `- Missing: ${sentenceWithPeriod(missing)}` : null,
-    recommendation ? `- Next: ${sentenceWithPeriod(trimWords(recommendation, 22))}` : null,
+    recommendation ? `- Next: ${sentenceWithPeriod(trimWords(recommendation.replace(/^[-·]?\s*Next:\s*/i, ''), 22))}` : null,
     question ? `- Question: ${normalizeCompactLine(trimWords(question, 20))}` : null,
   ].filter(Boolean);
 
@@ -618,7 +715,9 @@ export function formatPercentile(ctx: PercentileContext): string {
 }
 
 export function shapeStreamingAgentTextForSurface(_surface: string, text: string): string {
-  const cleaned = scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
+  const cleaned = repairMalformedComparisonTables(
+    scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text))),
+  );
   return repairAgentOutputContractText(cleaned).text;
 }
 
@@ -699,7 +798,9 @@ export function shapeAgentResponseForSurface(surface: string, text: string): str
   // bypass class as compactConsultantChatText (different shape, same Brief
   // violation by construction). Surfaces correctly compacted now flow
   // through the single shouldCompactSurface gate.
-  const cleaned = scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
+  const cleaned = repairMalformedComparisonTables(
+    scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text))),
+  );
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
   // returned well-formed structure. See looksAlreadyStructured() above.
   const shaped = shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
