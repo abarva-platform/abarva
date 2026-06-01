@@ -21,10 +21,10 @@ mini-wave before live client files should be treated as production-ready.
 | T362 | Encryption and key policy | Decide CMK/BYOK posture, Key Vault ownership, storage encryption, secret rotation, and customer visibility. Authority candidate: `validatePilotEncryptionPosture`. |
 | T363 | Retention and deletion policy | Define raw-file, quarantine, intermediate, failed-load, committed-load, and pilot-offboarding retention. Authority candidate: `PILOT_RETENTION_POLICIES`. |
 | T364 | Audit export | Let client admins export upload, load, quarantine, clarification, approval, and rollback history. Authority candidate: `buildPilotAuditExportManifest` and `pilot_ingestion_audit_exports`. |
-| T365 | Observability and cost limits | Alert on queue failures, parse failures, retry storms, long-running jobs, and Azure spend guardrail breaches. |
-| T366 | Tenant isolation test pack | Prove one client cannot see, upload, approve, commit, or export another client data-plane record. |
-| T367 | Legal and data-use policy pack | Align consent copy with DPA, BAA, prohibited-data, retention, and customer offboarding policy. |
-| T368 | End-to-end pilot smoke | Browser/API/data-plane smoke from SSO to committed load and Source/Moves/Tower/Intelligence output visibility. |
+| T365 | Observability and cost limits | Alert on queue failures, parse failures, retry storms, long-running jobs, and Azure spend guardrail breaches. Authority candidate: `PILOT_ALERT_RULES` in `src/lib/admin/pilot-observability-isolation-smoke.ts`. |
+| T366 | Tenant isolation test pack | Prove one client cannot see, upload, approve, commit, or export another client data-plane record. Authority candidate: `buildPilotIsolationProbes` and `docs/architecture/azure/PILOT-PRIVATE-DATA-PLANE-OBSERVABILITY-ISOLATION-SMOKE-2026-06-01.md`. |
+| T367 | Legal and data-use policy pack | Align consent copy with DPA, BAA, prohibited-data, retention, and customer offboarding policy. Authority candidate: `docs/legal/PILOT_PRIVATE_DATA_USE_POLICY_PACK_2026-06-01.md`. |
+| T368 | End-to-end pilot smoke | Browser/API/data-plane smoke from SSO to committed load and Source/Moves/Tower/Intelligence output visibility. Authority candidate: `PILOT_SMOKE_STEPS` and `getPilotSmokeStepsForClient`. |
 
 Execution rule: do not mark the pilot private data-plane robust until these rows
 have PRs, tests, release records, and production evidence.
