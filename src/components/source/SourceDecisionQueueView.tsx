@@ -449,9 +449,7 @@ export function SourceDecisionQueueView({
             : 'Nothing needs a decision today'}
         </h1>
         <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, margin: 0 }}>
-          What the sourcing function should decide today — one card per contract,
-          bundling its renewal, auto-renewal trap, overlap and should-cost signals,
-          sorted by urgency then value at stake.
+          Renewal decisions that need action today, sorted by risk and value at stake.
         </p>
         {total > 0 ? (
           <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>

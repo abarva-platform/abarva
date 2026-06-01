@@ -579,6 +579,24 @@ export function SourceOriginatePage({
             {submitState.status === 'submitting' ? 'Opening event canvas…' : 'Open sourcing event →'}
           </button>
 
+          {!intake.trigger.trim() && submitState.status !== 'submitting' && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                borderRadius: 8,
+                border: `1px solid ${SHELL.PEACH_LINE}`,
+                background: SHELL.PEACH_BG,
+                padding: '8px 10px',
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.PEACH_TEXT,
+              }}
+            >
+              Add the <strong>Why now / trigger</strong> field to open the event canvas.
+            </div>
+          )}
+
           {submitState.status === 'error' && (
             <div
               role="alert"
