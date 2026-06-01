@@ -221,7 +221,8 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       return Response.json(
         {
           error: 'criterion_not_found',
-          detail: `No criterion ${criterionId} on event ${eventId}. Run db:backfill:source-canvas to scaffold.`,
+          detail:
+            `No criterion ${criterionId} on this Source event. Refresh the Source canvas substrate before approving this gate.`,
         },
         { status: 404 },
       );

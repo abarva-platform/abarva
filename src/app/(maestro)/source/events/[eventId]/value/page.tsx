@@ -27,7 +27,13 @@ export default async function SourceEventValueProofPage({ params }: PageProps) {
   if (!event) notFound();
   const chainResult = await getValueChain(event.id).then(
     (chain) => ({ chain }),
-    (error) => ({ error: error instanceof Error ? error.message : 'Unknown value-chain load error' }),
+    (error) => {
+      console.error(
+        '[SourceEventValueProofPage] value-chain load failed',
+        error instanceof Error ? error.message : String(error),
+      );
+      return { error: true };
+    },
   );
 
   const states = 'chain' in chainResult ? chainResult.chain.states : [];
@@ -55,7 +61,10 @@ export default async function SourceEventValueProofPage({ params }: PageProps) {
 
         {'error' in chainResult && (
           <section style={errorStyle}>
-            <strong>Value chain unavailable:</strong> {chainResult.error}
+            <strong>Value proof not loaded yet.</strong> Baseline, negotiated, and
+            realized-value records are not ready for this event. Do not use this
+            page as savings proof until the evidence ledger and finance
+            attestation are populated.
           </section>
         )}
 
@@ -98,9 +107,9 @@ function StateDetails({ state }: { state: SourceValueStateRow }) {
 
 function MissingState({ layer }: { layer: SourceValueStateLayer }) {
   const copy =
-    layer === 'baseline' ? 'Run computeBaseline() after the Source event is created.'
-      : layer === 'intervention' ? 'Recorded when the Source event is confirmed.'
-        : layer === 'negotiated' ? 'Manual negotiated outcome entry or CLM webhook needed.'
+    layer === 'baseline' ? 'Baseline exposure must be loaded from contract, spend, or approved intake evidence.'
+      : layer === 'intervention' ? 'AbarVa intervention is recorded only after the sourcing action is confirmed.'
+        : layer === 'negotiated' ? 'Negotiated outcome requires vendor pricing, terms, or contract evidence.'
           : 'CFO attestation required; realized value cannot be auto-claimed.';
   return <div style={missingStyle}>{copy}</div>;
 }

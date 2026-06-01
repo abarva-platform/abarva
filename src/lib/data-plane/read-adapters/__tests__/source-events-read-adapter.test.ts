@@ -44,6 +44,7 @@ function fakeSupabase(result: { data: unknown; error: unknown }): {
   };
   builder.select = chain('select');
   builder.eq = chain('eq');
+  builder.ilike = chain('ilike');
   builder.neq = chain('neq');
   builder.order = chain('order');
   builder.limit = chain('limit');
@@ -137,10 +138,13 @@ describe('supabaseSourceEventsReadAdapter', () => {
   });
 
   it('resolves a single event by code, taking the first row', async () => {
-    const adapter = createSupabaseSourceEventsReadAdapter(
-      () => fakeSupabase({ data: [ROW], error: null }).client,
-    );
+    const { client, calls } = fakeSupabase({ data: [ROW], error: null });
+    const adapter = createSupabaseSourceEventsReadAdapter(() => client);
     expect(await adapter.getEventByCodeForClient('SRC-APX-101', 'apexretail')).toEqual(ROW);
+    expect(
+      calls.some((c) => c.method === 'ilike' && c.args[0] === 'event_code'
+        && c.args[1] === 'SRC-APX-101'),
+    ).toBe(true);
   });
 
   it('logs and degrades to [] / null on a query error', async () => {
@@ -191,6 +195,20 @@ describe('azureSourceEventsReadAdapter', () => {
 
     const codeMiss = createAzureSourceEventsReadAdapter(fakeSession(() => []));
     expect(await codeMiss.getEventByCodeForClient('SRC-X', 'apexretail')).toBeNull();
+  });
+
+  it('uses case-insensitive event_code lookup for shared event links', async () => {
+    const seen: { sql: string; params: unknown[] }[] = [];
+    const adapter = createAzureSourceEventsReadAdapter(
+      fakeSession((sql, params) => {
+        seen.push({ sql, params });
+        return [ROW];
+      }),
+    );
+
+    expect(await adapter.getEventByCodeForClient('src-apx-101', 'apexretail')).toEqual(ROW);
+    expect(seen[0].sql).toContain('lower(event_code) = lower($1)');
+    expect(seen[0].params).toEqual(['src-apx-101', 'apexretail']);
   });
 
   it('logs and degrades when the session throws', async () => {

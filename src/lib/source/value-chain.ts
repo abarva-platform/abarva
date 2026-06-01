@@ -89,14 +89,32 @@ function iso(value: string | Date | null | undefined): string | null {
 }
 
 async function loadSourceEvent(sourceEventId: string): Promise<SourceEventRowForValue> {
+  const resolvedEventId = await resolveSourceEventIdForValue(sourceEventId);
   const { data, error } = await getAzureWriteFluentClient()
     .from('source_events')
     .select('id,client_key,event_code,event_name,estimated_value_usd,trigger_description,scope_description,decision_owner,updated_at')
-    .eq('id', sourceEventId)
+    .eq('id', resolvedEventId)
     .maybeSingle();
   if (error) throw new Error(`source event value load failed: ${error.message}`);
   if (!data) throw new Error(`source event not found: ${sourceEventId}`);
   return data as SourceEventRowForValue;
+}
+
+async function resolveSourceEventIdForValue(sourceEventIdOrCode: string): Promise<string> {
+  if (isUuid(sourceEventIdOrCode)) return sourceEventIdOrCode;
+  const { data, error } = await getAzureWriteFluentClient()
+    .from('source_events')
+    .select('id')
+    .ilike('event_code', sourceEventIdOrCode)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+  if (error) throw new Error(`source event value lookup failed: ${error.message}`);
+  const row = ((data ?? []) as Array<{ id?: string | null }>)[0];
+  return row?.id ?? sourceEventIdOrCode;
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
 async function latestState(sourceEventId: string, layer: SourceValueStateLayer): Promise<SourceValueStateRow | null> {
@@ -346,16 +364,17 @@ export async function attestRealized(
 }
 
 export async function getValueChain(sourceEventId: string): Promise<SourceValueChainView> {
+  const resolvedEventId = await resolveSourceEventIdForValue(sourceEventId);
   const [statesResult, chainResult] = await Promise.all([
     getAzureWriteFluentClient()
       .from('source_value_states')
       .select('*')
-      .eq('source_event_id', sourceEventId)
+      .eq('source_event_id', resolvedEventId)
       .order('state_date', { ascending: true }),
     getAzureWriteFluentClient()
       .from('source_value_chain')
       .select('*')
-      .eq('source_event_id', sourceEventId)
+      .eq('source_event_id', resolvedEventId)
       .order('chain_step', { ascending: true }),
   ]);
   if (statesResult.error) throw new Error(`source value states load failed: ${statesResult.error.message}`);
