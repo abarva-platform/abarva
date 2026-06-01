@@ -64,5 +64,9 @@ export const config: VercelConfig = {
       path: '/api/cron/notifications-tick',
       schedule: '* * * * *',
     },
+    {
+      path: '/api/cron/board-pack',
+      schedule: '0 14 1 */3 *',
+    },
   ],
 };
