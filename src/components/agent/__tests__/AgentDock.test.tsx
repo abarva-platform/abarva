@@ -16,8 +16,8 @@
 // We mock global.fetch for the upload POST so the test environment
 // doesn't try to actually hit the route handler.
 
-import '@testing-library/jest-dom';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import "@testing-library/jest-dom";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import {
   AgentDock,
@@ -26,17 +26,17 @@ import {
   splitStorageKey,
   type AttachmentRef,
   type ChatMessage,
-} from '../AgentDock';
+} from "../AgentDock";
 
-const SURFACE = 'test/agent-dock';
+const SURFACE = "test/agent-dock";
 
 const AGENT = {
-  initials: 'S',
-  name: 'Sentinel',
-  role: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
+  initials: "S",
+  name: "Sentinel",
+  role: "Drafts artifacts, surfaces evidence, flags gaps before they cost you.",
 };
 
-function makeFile(name: string, mime: string, body = 'hello'): File {
+function makeFile(name: string, mime: string, body = "hello"): File {
   return new File([body], name, { type: mime });
 }
 
@@ -58,8 +58,8 @@ beforeEach(() => {
   (global as { fetch: unknown }).fetch = undefined;
 });
 
-describe('AgentDock · default mode', () => {
-  it('renders in side-rail mode when no preference is stored', () => {
+describe("AgentDock · default mode", () => {
+  it("renders in side-rail mode when no preference is stored", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -69,11 +69,14 @@ describe('AgentDock · default mode', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    expect(screen.getByTestId('agent-dock-panel')).toHaveAttribute('data-mode', 'side-rail');
-    expect(screen.getByTestId('workspace')).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+      "data-mode",
+      "side-rail",
+    );
+    expect(screen.getByTestId("workspace")).toBeInTheDocument();
   });
 
-  it('honours an explicit defaultMode when no stored preference', () => {
+  it("honours an explicit defaultMode when no stored preference", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -84,12 +87,15 @@ describe('AgentDock · default mode', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    expect(screen.getByTestId('agent-dock-panel')).toHaveAttribute('data-mode', 'pin-bottom');
-    expect(screen.getByTestId('agent-dock-pin-bottom')).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+      "data-mode",
+      "pin-bottom",
+    );
+    expect(screen.getByTestId("agent-dock-pin-bottom")).toBeInTheDocument();
   });
 
-  it('reads a stored mode preference', () => {
-    window.localStorage.setItem(modeStorageKey(SURFACE), 'expand');
+  it("reads a stored mode preference", () => {
+    window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
     render(
       <AgentDock
         agent={AGENT}
@@ -99,12 +105,42 @@ describe('AgentDock · default mode', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    expect(screen.getByTestId('agent-dock-expand-overlay')).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument();
+  });
+
+  it("marks agent turns as AI drafts while leaving user turns unmarked", () => {
+    const thread: ChatMessage[] = [
+      { id: "u1", role: "user", body: "What should we do next?" },
+      {
+        id: "a1",
+        role: "agent",
+        body: "Review the evidence packet before approving.",
+      },
+    ];
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={thread}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const agentTurn = screen.getByTestId("agent-dock-turn-agent");
+    const userTurn = screen.getByTestId("agent-dock-turn-user");
+
+    expect(within(agentTurn).getByText("AI Draft")).toBeInTheDocument();
+    expect(
+      within(agentTurn).getByText("Review before acting"),
+    ).toBeInTheDocument();
+    expect(within(userTurn).queryByText("AI Draft")).not.toBeInTheDocument();
   });
 });
 
-describe('AgentDock · mode picker', () => {
-  it('switches modes and persists each choice', () => {
+describe("AgentDock · mode picker", () => {
+  it("switches modes and persists each choice", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -115,30 +151,43 @@ describe('AgentDock · mode picker', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('agent-dock-mode-pin-bottom'));
-    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe('pin-bottom');
-    expect(screen.getByTestId('agent-dock-panel')).toHaveAttribute('data-mode', 'pin-bottom');
+    fireEvent.click(screen.getByTestId("agent-dock-mode-pin-bottom"));
+    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe(
+      "pin-bottom",
+    );
+    expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+      "data-mode",
+      "pin-bottom",
+    );
 
-    fireEvent.click(screen.getByTestId('agent-dock-mode-pin-top'));
-    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe('pin-top');
+    fireEvent.click(screen.getByTestId("agent-dock-mode-pin-top"));
+    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe(
+      "pin-top",
+    );
 
-    fireEvent.click(screen.getByTestId('agent-dock-mode-expand'));
-    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe('expand');
-    expect(screen.getByTestId('agent-dock-expand-overlay')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("agent-dock-mode-expand"));
+    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe("expand");
+    expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('agent-dock-mode-collapsed'));
-    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe('collapsed');
-    expect(screen.getByTestId('agent-dock-collapsed-chip')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("agent-dock-mode-collapsed"));
+    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe(
+      "collapsed",
+    );
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
   });
 
-  it('uses a per-surface localStorage key', () => {
-    expect(modeStorageKey('source/new')).toBe('abarva.agent-dock.source/new.mode');
-    expect(splitStorageKey('source/new')).toBe('abarva.agent-dock.source/new.split');
+  it("uses a per-surface localStorage key", () => {
+    expect(modeStorageKey("source/new")).toBe(
+      "abarva.agent-dock.source/new.mode",
+    );
+    expect(splitStorageKey("source/new")).toBe(
+      "abarva.agent-dock.source/new.split",
+    );
   });
 });
 
-describe('AgentDock · composer', () => {
-  it('auto-grows the textarea on input', () => {
+describe("AgentDock · composer", () => {
+  it("auto-grows the textarea on input", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -148,14 +197,17 @@ describe('AgentDock · composer', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const ta = screen.getByTestId('agent-dock-input') as HTMLTextAreaElement;
+    const ta = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
     // Stub scrollHeight so the auto-grow path can pick a non-trivial size.
-    Object.defineProperty(ta, 'scrollHeight', { value: 80, configurable: true });
-    fireEvent.change(ta, { target: { value: 'one\ntwo\nthree' } });
-    expect(ta.style.height).toBe('80px');
+    Object.defineProperty(ta, "scrollHeight", {
+      value: 80,
+      configurable: true,
+    });
+    fireEvent.change(ta, { target: { value: "one\ntwo\nthree" } });
+    expect(ta.style.height).toBe("80px");
   });
 
-  it('submits on Enter and inserts newline on Shift+Enter', async () => {
+  it("submits on Enter and inserts newline on Shift+Enter", async () => {
     const onMessage = jest.fn().mockResolvedValue(undefined);
     render(
       <AgentDock
@@ -166,21 +218,21 @@ describe('AgentDock · composer', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const ta = screen.getByTestId('agent-dock-input') as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: 'hello' } });
+    const ta = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
+    fireEvent.change(ta, { target: { value: "hello" } });
 
     // Shift+Enter — onMessage should NOT fire
-    fireEvent.keyDown(ta, { key: 'Enter', shiftKey: true });
+    fireEvent.keyDown(ta, { key: "Enter", shiftKey: true });
     expect(onMessage).not.toHaveBeenCalled();
 
     // Enter — submits
     await act(async () => {
-      fireEvent.keyDown(ta, { key: 'Enter', shiftKey: false });
+      fireEvent.keyDown(ta, { key: "Enter", shiftKey: false });
     });
-    expect(onMessage).toHaveBeenCalledWith('hello', []);
+    expect(onMessage).toHaveBeenCalledWith("hello", []);
   });
 
-  it('disables Send when there is no draft and no attachment', () => {
+  it("disables Send when there is no draft and no attachment", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -190,17 +242,21 @@ describe('AgentDock · composer', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const send = screen.getByTestId('agent-dock-send') as HTMLButtonElement;
+    const send = screen.getByTestId("agent-dock-send") as HTMLButtonElement;
     expect(send).toBeDisabled();
-    const ta = screen.getByTestId('agent-dock-input') as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: 'hi' } });
+    const ta = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
+    fireEvent.change(ta, { target: { value: "hi" } });
     expect(send).not.toBeDisabled();
   });
 });
 
-describe('AgentDock · attachments', () => {
-  it('disables Send while an upload is pending and re-enables on success', async () => {
-    let resolveFetch: (value: { ok: boolean; status: number; json: () => Promise<AttachmentRef> }) => void = () => {};
+describe("AgentDock · attachments", () => {
+  it("disables Send while an upload is pending and re-enables on success", async () => {
+    let resolveFetch: (value: {
+      ok: boolean;
+      status: number;
+      json: () => Promise<AttachmentRef>;
+    }) => void = () => {};
     const fetchMock = jest.fn().mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -219,17 +275,19 @@ describe('AgentDock · attachments', () => {
       />,
     );
 
-    const fileInput = screen.getByTestId('agent-dock-file-input') as HTMLInputElement;
-    const file = makeFile('a.txt', 'text/plain');
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
+    const file = makeFile("a.txt", "text/plain");
 
     await act(async () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
     // Send should be disabled while uploading.
-    const send = screen.getByTestId('agent-dock-send') as HTMLButtonElement;
+    const send = screen.getByTestId("agent-dock-send") as HTMLButtonElement;
     expect(send).toBeDisabled();
-    expect(screen.getByTestId('agent-dock-chips')).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-chips")).toBeInTheDocument();
 
     // Resolve the upload — chip flips to done, Send re-enables.
     await act(async () => {
@@ -237,12 +295,12 @@ describe('AgentDock · attachments', () => {
         ok: true,
         status: 200,
         json: async () => ({
-          id: 'att-1',
-          file_name: 'a.txt',
-          mime: 'text/plain',
+          id: "att-1",
+          file_name: "a.txt",
+          mime: "text/plain",
           bytes: 5,
-          storage_path: 'tenant/u/att-1-a.txt',
-          extracted_text_preview: 'hello',
+          storage_path: "tenant/u/att-1-a.txt",
+          extracted_text_preview: "hello",
         }),
       });
     });
@@ -251,14 +309,14 @@ describe('AgentDock · attachments', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('removing a chip drops the ref from the next submit', async () => {
+  it("removing a chip drops the ref from the next submit", async () => {
     setupFetchMock({
-      id: 'att-2',
-      file_name: 'b.txt',
-      mime: 'text/plain',
+      id: "att-2",
+      file_name: "b.txt",
+      mime: "text/plain",
       bytes: 5,
-      storage_path: 'tenant/u/att-2-b.txt',
-      extracted_text_preview: 'hello',
+      storage_path: "tenant/u/att-2-b.txt",
+      extracted_text_preview: "hello",
     });
 
     const onMessage = jest.fn().mockResolvedValue(undefined);
@@ -271,34 +329,38 @@ describe('AgentDock · attachments', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const fileInput = screen.getByTestId('agent-dock-file-input') as HTMLInputElement;
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
     await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [makeFile('b.txt', 'text/plain')] } });
+      fireEvent.change(fileInput, {
+        target: { files: [makeFile("b.txt", "text/plain")] },
+      });
     });
 
     // Now the chip is done — find the remove button via testid prefix.
-    const chips = screen.getByTestId('agent-dock-chips');
-    const removeBtn = within(chips).getAllByRole('button')[0];
+    const chips = screen.getByTestId("agent-dock-chips");
+    const removeBtn = within(chips).getAllByRole("button")[0];
     fireEvent.click(removeBtn);
-    expect(screen.queryByTestId('agent-dock-chips')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-chips")).not.toBeInTheDocument();
 
     // Type something and submit — the attachment list passed to onMessage is empty.
-    const ta = screen.getByTestId('agent-dock-input') as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: 'go' } });
+    const ta = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
+    fireEvent.change(ta, { target: { value: "go" } });
     await act(async () => {
-      fireEvent.keyDown(ta, { key: 'Enter', shiftKey: false });
+      fireEvent.keyDown(ta, { key: "Enter", shiftKey: false });
     });
-    expect(onMessage).toHaveBeenCalledWith('go', []);
+    expect(onMessage).toHaveBeenCalledWith("go", []);
   });
 
-  it('exposes the same MIME allowlist as the API contract', () => {
-    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain('application/pdf');
-    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain('image/png');
-    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain('image/jpeg');
-    expect(AGENT_DOCK_MIME_ALLOWLIST).not.toContain('application/x-msdownload');
+  it("exposes the same MIME allowlist as the API contract", () => {
+    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain("application/pdf");
+    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain("image/png");
+    expect(AGENT_DOCK_MIME_ALLOWLIST).toContain("image/jpeg");
+    expect(AGENT_DOCK_MIME_ALLOWLIST).not.toContain("application/x-msdownload");
   });
 
-  it('skips files with an unsupported mime type', async () => {
+  it("skips files with an unsupported mime type", async () => {
     const fetchMock = jest.fn();
     (global as { fetch: unknown }).fetch = fetchMock;
     render(
@@ -310,19 +372,21 @@ describe('AgentDock · attachments', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const fileInput = screen.getByTestId('agent-dock-file-input') as HTMLInputElement;
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
     await act(async () => {
       fireEvent.change(fileInput, {
-        target: { files: [makeFile('x.exe', 'application/x-msdownload')] },
+        target: { files: [makeFile("x.exe", "application/x-msdownload")] },
       });
     });
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('agent-dock-chips')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-chips")).not.toBeInTheDocument();
   });
 });
 
-describe('AgentDock · drag-drop', () => {
-  it('highlights the panel on dragover', () => {
+describe("AgentDock · drag-drop", () => {
+  it("highlights the panel on dragover", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -332,20 +396,20 @@ describe('AgentDock · drag-drop', () => {
         workspace={<div data-testid="workspace">workspace</div>}
       />,
     );
-    const panel = screen.getByTestId('agent-dock-panel');
-    expect(panel).toHaveAttribute('data-dragging', 'false');
+    const panel = screen.getByTestId("agent-dock-panel");
+    expect(panel).toHaveAttribute("data-dragging", "false");
     fireEvent.dragOver(panel);
-    expect(panel).toHaveAttribute('data-dragging', 'true');
+    expect(panel).toHaveAttribute("data-dragging", "true");
     fireEvent.dragLeave(panel);
-    expect(panel).toHaveAttribute('data-dragging', 'false');
+    expect(panel).toHaveAttribute("data-dragging", "false");
   });
 });
 
-describe('AgentDock · thread render', () => {
-  it('renders thread turns in order with role data attribute', () => {
+describe("AgentDock · thread render", () => {
+  it("renders thread turns in order with role data attribute", () => {
     const thread: ChatMessage[] = [
-      { id: 'a', role: 'agent', body: 'Hello.' },
-      { id: 'b', role: 'user', body: 'Hi.' },
+      { id: "a", role: "agent", body: "Hello." },
+      { id: "b", role: "user", body: "Hi." },
     ];
     render(
       <AgentDock
@@ -358,20 +422,20 @@ describe('AgentDock · thread render', () => {
     );
     const turns = screen.getAllByTestId(/agent-dock-turn-/);
     expect(turns).toHaveLength(2);
-    expect(turns[0]).toHaveAttribute('data-testid', 'agent-dock-turn-agent');
-    expect(turns[1]).toHaveAttribute('data-testid', 'agent-dock-turn-user');
+    expect(turns[0]).toHaveAttribute("data-testid", "agent-dock-turn-agent");
+    expect(turns[1]).toHaveAttribute("data-testid", "agent-dock-turn-user");
   });
 
-  it('renders compact agent responses without raw markdown markers', () => {
+  it("renders compact agent responses without raw markdown markers", () => {
     render(
       <AgentDock
         agent={AGENT}
         surface="tower"
         thread={[
           {
-            id: 'a',
-            role: 'agent',
-            body: '**APX-04 is the highest value-risk item this quarter.** Portfolio KPI evidence shows sponsor ambiguity and value-baseline gaps. I recommend a gate review today.',
+            id: "a",
+            role: "agent",
+            body: "**APX-04 is the highest value-risk item this quarter.** Portfolio KPI evidence shows sponsor ambiguity and value-baseline gaps. I recommend a gate review today.",
           },
         ]}
         onMessage={jest.fn()}
@@ -379,12 +443,18 @@ describe('AgentDock · thread render', () => {
       />,
     );
 
-    expect(screen.getByTestId('agent-dock-turn-agent')).toHaveTextContent('APX-04 is the highest value-risk item this quarter.');
-    expect(screen.getByTestId('agent-dock-turn-agent')).toHaveTextContent('- Evidence:');
-    expect(screen.getByTestId('agent-dock-turn-agent')).not.toHaveTextContent('**');
+    expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
+      "APX-04 is the highest value-risk item this quarter.",
+    );
+    expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
+      "AI Draft",
+    );
+    expect(screen.getByTestId("agent-dock-turn-agent")).not.toHaveTextContent(
+      "**",
+    );
   });
 
-  it('keeps auto-scroll inside the thread pane when new turns arrive', async () => {
+  it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -401,11 +471,16 @@ describe('AgentDock · thread render', () => {
 
     try {
       const { rerender } = render(renderDock([]));
-      const threadPane = screen.getByTestId('agent-dock-thread');
-      Object.defineProperty(threadPane, 'scrollHeight', { value: 720, configurable: true });
+      const threadPane = screen.getByTestId("agent-dock-thread");
+      Object.defineProperty(threadPane, "scrollHeight", {
+        value: 720,
+        configurable: true,
+      });
 
       await act(async () => {
-        rerender(renderDock([{ id: 'u1', role: 'user', body: 'Check admin.' }]));
+        rerender(
+          renderDock([{ id: "u1", role: "user", body: "Check admin." }]),
+        );
       });
 
       expect(threadPane.scrollTop).toBe(720);
@@ -420,7 +495,7 @@ describe('AgentDock · thread render', () => {
   });
 });
 
-describe('AgentDock · viewport-bound side-rail', () => {
+describe("AgentDock · viewport-bound side-rail", () => {
   // Regression: prior to this fix, side-rail dock height was inherited from
   // its parent flex pane. On surfaces whose document scrolled (e.g.
   // /source/new with 1587px doc height vs 827px viewport), the composer
@@ -428,7 +503,7 @@ describe('AgentDock · viewport-bound side-rail', () => {
   //   height: calc(100vh - var(--agent-dock-self-top, ...))
   // so the dock stays viewport-bounded irrespective of workspace height.
 
-  it('renders the dock inside a viewport-bound shell with explicit height', () => {
+  it("renders the dock inside a viewport-bound shell with explicit height", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -443,7 +518,7 @@ describe('AgentDock · viewport-bound side-rail', () => {
       />,
     );
 
-    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    const shell = screen.getByTestId("agent-dock-side-rail-shell");
     expect(shell).toBeInTheDocument();
 
     // jsdom doesn't compute layout, so we assert on the inline style
@@ -454,13 +529,13 @@ describe('AgentDock · viewport-bound side-rail', () => {
     const maxHeight = shell.style.maxHeight;
     expect(height).toMatch(/calc\(100vh/);
     // self-top is the primary source; legacy top-offset is the fallback.
-    expect(height).toContain('var(--agent-dock-self-top');
-    expect(height).toContain('var(--agent-dock-top-offset');
+    expect(height).toContain("var(--agent-dock-self-top");
+    expect(height).toContain("var(--agent-dock-top-offset");
     // dvh fallback for mobile address-bar collapse.
     expect(maxHeight).toMatch(/calc\(100dvh/);
   });
 
-  it('does not depend on parent flex height — dock height is self-imposed', () => {
+  it("does not depend on parent flex height — dock height is self-imposed", () => {
     // Render the dock inside a deliberately mis-sized parent. Pre-fix,
     // dock height tracked parent. Post-fix, dock has its own height.
     render(
@@ -475,36 +550,36 @@ describe('AgentDock · viewport-bound side-rail', () => {
       </div>,
     );
 
-    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    const shell = screen.getByTestId("agent-dock-side-rail-shell");
     // Height comes from the calc() expression, NOT from `100%`.
-    expect(shell.style.height.startsWith('calc(')).toBe(true);
-    expect(shell.style.height).not.toBe('100%');
+    expect(shell.style.height.startsWith("calc(")).toBe(true);
+    expect(shell.style.height).not.toBe("100%");
   });
 
-  it('keeps the panel and composer using a single chat-panel background', () => {
+  it("keeps the panel and composer using a single chat-panel background", () => {
     render(
       <AgentDock
         agent={AGENT}
         surface={SURFACE}
-        thread={[{ id: 'a', role: 'agent', body: 'Hi.' }]}
+        thread={[{ id: "a", role: "agent", body: "Hi." }]}
         onMessage={jest.fn()}
         workspace={<div>w</div>}
       />,
     );
-    const panel = screen.getByTestId('agent-dock-panel');
-    const thread = screen.getByTestId('agent-dock-thread');
-    const form = screen.getByTestId('agent-dock-form');
+    const panel = screen.getByTestId("agent-dock-panel");
+    const thread = screen.getByTestId("agent-dock-thread");
+    const form = screen.getByTestId("agent-dock-form");
 
     // Panel, thread, and composer all read from CANVAS.CHAT_BG. Tokens
     // resolve to `rgb(253, 251, 247)` in jsdom. They must match — the
     // user explicitly flagged background striping.
-    const expected = 'rgb(253, 251, 247)';
+    const expected = "rgb(253, 251, 247)";
     expect(panel.style.background).toBe(expected);
     expect(thread.style.background).toBe(expected);
     expect(form.style.background).toBe(expected);
   });
 
-  it('drops the legacy sticky-bottom on the composer (handled by flex-column now)', () => {
+  it("drops the legacy sticky-bottom on the composer (handled by flex-column now)", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -514,13 +589,13 @@ describe('AgentDock · viewport-bound side-rail', () => {
         workspace={<div>w</div>}
       />,
     );
-    const form = screen.getByTestId('agent-dock-form');
+    const form = screen.getByTestId("agent-dock-form");
     // Should NOT carry position:sticky any longer.
-    expect(form.style.position).not.toBe('sticky');
+    expect(form.style.position).not.toBe("sticky");
   });
 });
 
-describe('AgentDock · self-measured top offset', () => {
+describe("AgentDock · self-measured top offset", () => {
   // Regression: PR #1773 hardcoded a 64px top offset. On surfaces with
   // additional sticky chrome above the dock (Intelligence's secondary
   // tab nav adds 84px, Source canvas's 11-stage rail, the events
@@ -533,13 +608,13 @@ describe('AgentDock · self-measured top offset', () => {
   // offset, falling back to the legacy 64px var only if measurement
   // hasn't run yet.
 
-  it('writes --agent-dock-self-top after mount based on getBoundingClientRect', () => {
+  it("writes --agent-dock-self-top after mount based on getBoundingClientRect", () => {
     // Force getBoundingClientRect to report a 200px push-down so we can
     // assert on the measured value. jsdom's default rect is all zeros.
     const originalGBCR = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function (): DOMRect {
       // Only override for the side-rail shell. Other elements keep zeros.
-      if (this.getAttribute('data-testid') === 'agent-dock-side-rail-shell') {
+      if (this.getAttribute("data-testid") === "agent-dock-side-rail-shell") {
         return {
           top: 200,
           left: 0,
@@ -568,16 +643,18 @@ describe('AgentDock · self-measured top offset', () => {
         </div>,
       );
 
-      const shell = screen.getByTestId('agent-dock-side-rail-shell');
+      const shell = screen.getByTestId("agent-dock-side-rail-shell");
       // useLayoutEffect runs synchronously during render in @testing-library.
       // The hook should have set the custom property to 200px.
-      expect(shell.style.getPropertyValue('--agent-dock-self-top')).toBe('200px');
+      expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe(
+        "200px",
+      );
     } finally {
       HTMLElement.prototype.getBoundingClientRect = originalGBCR;
     }
   });
 
-  it('uses the measured value as the primary source in the height calc', () => {
+  it("uses the measured value as the primary source in the height calc", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -587,17 +664,17 @@ describe('AgentDock · self-measured top offset', () => {
         workspace={<div>w</div>}
       />,
     );
-    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    const shell = screen.getByTestId("agent-dock-side-rail-shell");
     // The height calc must consume --agent-dock-self-top with a fallback
     // chain to --agent-dock-top-offset → 64px.
-    expect(shell.style.height).toContain('var(--agent-dock-self-top');
-    expect(shell.style.height).toContain('var(--agent-dock-top-offset, 64px)');
+    expect(shell.style.height).toContain("var(--agent-dock-self-top");
+    expect(shell.style.height).toContain("var(--agent-dock-top-offset, 64px)");
     // The sticky `top` uses the same measured value.
-    expect(shell.style.top).toContain('var(--agent-dock-self-top');
+    expect(shell.style.top).toContain("var(--agent-dock-self-top");
   });
 
-  it('also applies the measured top to pin-top and pin-bottom layouts', () => {
-    window.localStorage.setItem(modeStorageKey(SURFACE), 'pin-bottom');
+  it("also applies the measured top to pin-top and pin-bottom layouts", () => {
+    window.localStorage.setItem(modeStorageKey(SURFACE), "pin-bottom");
     render(
       <AgentDock
         agent={AGENT}
@@ -607,8 +684,8 @@ describe('AgentDock · self-measured top offset', () => {
         workspace={<div>w</div>}
       />,
     );
-    const pinShell = screen.getByTestId('agent-dock-pin-shell');
-    expect(pinShell.style.height).toContain('var(--agent-dock-self-top');
-    expect(pinShell.style.top).toContain('var(--agent-dock-self-top');
+    const pinShell = screen.getByTestId("agent-dock-pin-shell");
+    expect(pinShell.style.height).toContain("var(--agent-dock-self-top");
+    expect(pinShell.style.top).toContain("var(--agent-dock-self-top");
   });
 });
