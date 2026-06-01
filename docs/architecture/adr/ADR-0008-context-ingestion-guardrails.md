@@ -62,6 +62,33 @@ The baseline accepted formats are the formats already represented in `src/lib/co
 | Archives          | `zip`                          | Treat as batch container; each child file must pass its own template and sensitivity checks |
 | Unknown           | `unknown`                      | Reject or route to metadata clarification before parsing                                    |
 
+### Pilot Format Matrix
+
+For pilot context ingestion, the dimension-template matrix uses a narrower
+set than the Source artifact registry. `src/lib/source/artifact-registry/*`
+already allows Source event artifacts such as `txt`, `image/png`, and
+`image/jpeg`; that is a separate sourcing-event evidence workflow. Context
+ingestion should not treat those formats as template-ready until the table
+below says so.
+
+| Requested format  | Context-ingestion decision                                        | Rationale                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pdf`             | Supported when listed by the selected template                    | Document fact extraction with page provenance is part of the target ingestion posture.                                                                                                    |
+| `docx`            | Supported when listed by the selected template                    | Document fact extraction with paragraph/section provenance is part of the target ingestion posture.                                                                                       |
+| `xlsx`            | Supported when listed by the selected template                    | Workbook sheets can be validated against required columns before persistence.                                                                                                             |
+| `pptx`            | Supported when listed by the selected template                    | Slide-level fact extraction is allowed for board packs, strategy decks, and quarterly-report artifacts.                                                                                   |
+| `csv`             | Supported when listed by the selected template                    | Structured rows can be validated against required fields before persistence.                                                                                                              |
+| `md` / `markdown` | Supported when listed by the selected template                    | Markdown can carry structured narrative facts with paragraph provenance.                                                                                                                  |
+| `txt`             | Metadata-only intake until a template explicitly allows it        | Plain text has weak structure; it may be attached as evidence or routed for clarification, but should not be parsed into tenant context without a declared dimension and expected fields. |
+| `png`             | Evidence attachment or OCR queue only, not template-ready context | Image files require OCR, image provenance, and confidence handling before facts can enter retrieval or evidence ledgers.                                                                  |
+| `jpg` / `jpeg`    | Evidence attachment or OCR queue only, not template-ready context | Same posture as `png`; image content must not be silently converted into context facts.                                                                                                   |
+
+Any unsupported or metadata-only file may still be stored as an uploaded
+artifact in a module-specific registry when that module allows it. It must not
+enter approved context chunks, indexes, graph projections, or generated
+deliverables until a human confirms the dimension, metadata, parser path, and
+data classification.
+
 ## Upload Limits
 
 Until client-specific contracts override them, pilot ingestion should use conservative default limits:
@@ -151,7 +178,10 @@ Rejected. Reprocessing duplicate content wastes cost and can create inconsistent
 
 - `src/lib/context-ingestion/template-registry.ts`
 - `src/lib/context-ingestion/file-classifier.ts`
+- `src/lib/context-ingestion/types.ts`
 - `src/lib/context-ingestion/validation-engine.ts`
 - `src/lib/ingestion/azure-landing-zone-types.ts`
+- `src/lib/source/artifact-registry/mime.ts`
+- `src/lib/source/artifact-registry/upload-contract.ts`
 - `docs/architecture/ABARVA_DATA_EVIDENCE_FLOW.md`
 - `docs/architecture/ARCH1_AGENTIC_PLATFORM_ARCHITECTURE_CONTRACT.md`
