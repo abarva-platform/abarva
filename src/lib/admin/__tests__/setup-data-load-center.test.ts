@@ -23,6 +23,28 @@ describe('setup data load center read model', () => {
       workbookCount: 15,
       version: '2026.05.day-one.v1',
     });
+    expect(model.dimensionReadiness).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dimension: 'Application portfolio',
+          completenessPercent: 72,
+          currentGate: 'Template validation',
+        }),
+        expect.objectContaining({
+          dimension: 'Vendor contracts',
+          completenessPercent: 100,
+          currentGate: 'Committed',
+        }),
+      ]),
+    );
+    expect(model.workQueue).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Answer application owner gaps',
+          severity: 'blocked',
+        }),
+      ]),
+    );
   });
 
   it('runs deterministic queue, upload guard, and validation probes', () => {

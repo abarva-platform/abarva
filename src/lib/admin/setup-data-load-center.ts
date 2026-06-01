@@ -96,6 +96,19 @@ export interface SetupDataLoadCenterModel {
   }>;
   rehearsalGates: ReadonlyArray<DataLoadRehearsalGate>;
   templateRows: ReadonlyArray<DataLoadTemplateRow>;
+  dimensionReadiness: ReadonlyArray<{
+    dimension: string;
+    completenessPercent: number;
+    currentGate: string;
+    nextAction: string;
+    unlocks: string;
+  }>;
+  workQueue: ReadonlyArray<{
+    id: string;
+    title: string;
+    detail: string;
+    severity: 'ready' | 'attention' | 'blocked';
+  }>;
 }
 
 const ENTERPRISE_CONTEXT_MANIFESTS = [
@@ -218,6 +231,62 @@ function buildTemplateRows(): DataLoadTemplateRow[] {
   ].sort((a, b) => a.family.localeCompare(b.family) || a.title.localeCompare(b.title));
 }
 
+function buildDimensionReadiness(): SetupDataLoadCenterModel['dimensionReadiness'] {
+  return [
+    {
+      dimension: 'Application portfolio',
+      completenessPercent: 72,
+      currentGate: 'Template validation',
+      nextAction: 'Resolve 2 owner fields',
+      unlocks: 'Intelligence, Moves, Tower',
+    },
+    {
+      dimension: 'Vendor contracts',
+      completenessPercent: 100,
+      currentGate: 'Committed',
+      nextAction: 'None',
+      unlocks: 'Source, Tower',
+    },
+    {
+      dimension: 'ERP landscape',
+      completenessPercent: 48,
+      currentGate: 'Upload scan',
+      nextAction: 'Retry malware scan',
+      unlocks: 'Moves, Tower',
+    },
+    {
+      dimension: 'Org roles and teams',
+      completenessPercent: 81,
+      currentGate: 'Approval',
+      nextAction: 'Approver signoff',
+      unlocks: 'All assistants',
+    },
+  ];
+}
+
+function buildWorkQueue(): SetupDataLoadCenterModel['workQueue'] {
+  return [
+    {
+      id: 'approve-org-roles',
+      title: 'Approve org roles preview',
+      detail: '81% complete. No quarantine cases. Approver action required.',
+      severity: 'attention',
+    },
+    {
+      id: 'answer-application-owner-gaps',
+      title: 'Answer application owner gaps',
+      detail: '2 required fields missing before the load can commit.',
+      severity: 'blocked',
+    },
+    {
+      id: 'retry-erp-malware-scan',
+      title: 'Retry ERP malware scan',
+      detail: 'Scan failed. Parsing is blocked until clean.',
+      severity: 'blocked',
+    },
+  ];
+}
+
 function findTenantManifest(clientKey: ClientKey): EnterpriseContextTemplateManifest | null {
   const manifestKey = MANIFEST_KEY_BY_CLIENT_KEY[clientKey];
   if (!manifestKey) return null;
@@ -329,5 +398,7 @@ export function buildSetupDataLoadCenterModel(args: {
     }),
     rehearsalGates: REHEARSAL_GATES,
     templateRows: buildTemplateRows(),
+    dimensionReadiness: buildDimensionReadiness(),
+    workQueue: buildWorkQueue(),
   };
 }
