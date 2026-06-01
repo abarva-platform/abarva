@@ -70,6 +70,7 @@ export interface GateCriterionUpdate {
   readonly state: string;
   readonly reviewerUserId: string | null;
   readonly reviewedAtIso: string | null;
+  readonly notes: string | null;
   readonly updatedAtIso: string;
 }
 
@@ -227,6 +228,7 @@ export function createSupabaseSourceWriteAdapter(
           state: input.state,
           reviewer_user_id: input.reviewerUserId,
           reviewed_at: input.reviewedAtIso,
+          notes: input.notes,
           updated_at: input.updatedAtIso,
         })
         .eq('id', input.criterionRowId)
@@ -391,13 +393,14 @@ export function createAzureSourceWriteAdapter(
         const rows = await session((run) =>
           run<Record<string, unknown>>(
             `UPDATE source_event_gate_criterion_states
-               SET state = $1, reviewer_user_id = $2, reviewed_at = $3, updated_at = $4
-             WHERE id = $5
+               SET state = $1, reviewer_user_id = $2, reviewed_at = $3, notes = $4, updated_at = $5
+             WHERE id = $6
              RETURNING *`,
             [
               input.state,
               input.reviewerUserId,
               input.reviewedAtIso,
+              input.notes,
               input.updatedAtIso,
               input.criterionRowId,
             ],

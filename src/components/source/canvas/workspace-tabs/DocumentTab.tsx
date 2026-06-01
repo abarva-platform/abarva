@@ -672,6 +672,7 @@ function ArtifactStatusControls({
 }: ArtifactStatusControlsProps) {
   const isTerminal = artifact.status === 'locked' || artifact.status === 'superseded';
   const isApproved = artifact.status === 'approved';
+  const hasCommittedContent = Boolean(artifact.linkedArtifactId || artifact.body?.trim());
   return (
     <div style={STATUS_CONTROLS_STYLE}>
       <StatusPill status={artifact.status} />
@@ -689,10 +690,15 @@ function ArtifactStatusControls({
         ) : (
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || !hasCommittedContent}
             onClick={() => onChangeStatus(artifact.artifactCode, 'approved')}
             data-testid={`source-canvas-artifact-mark-complete-${artifact.artifactCode}`}
-            style={{ ...PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+            title={
+              hasCommittedContent
+                ? 'Mark artifact complete'
+                : 'Author content or link an uploaded artifact before marking complete.'
+            }
+            style={{ ...PRIMARY_BUTTON_STYLE, opacity: pending || !hasCommittedContent ? 0.55 : 1 }}
           >
             {pending ? 'Saving…' : 'Mark complete'}
           </button>

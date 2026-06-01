@@ -18,6 +18,15 @@ import { getSourceEventSeed } from '@/lib/source/mock-seed';
 import { isCanonicalSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
+import {
+  gateCriterionStateRowToView,
+  type SourceEventGateCriterionStateRow,
+} from '@/lib/source/canvas-substrate/types';
+import {
+  evaluateStagePromotionReadiness,
+  firstGovernanceBlocker,
+  normalizeApprovalReason,
+} from '@/lib/source/source-governance-enforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +36,10 @@ type RouteCtx = { params: Promise<{ eventId: string }> };
 function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
   const normalized = email?.trim().toLowerCase() ?? '';
   return CANONICAL_CLIENT_ADMIN_EMAILS.includes(normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number]);
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
@@ -45,8 +58,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       getCurrentUser().catch(() => null),
     ]);
 
-    const body = (await req.json()) as { stageKey?: unknown };
+    const body = (await req.json()) as { stageKey?: unknown; reason?: unknown };
     const stageKey = body?.stageKey;
+    const reason = normalizeApprovalReason(body?.reason);
 
     if (!isCanonicalSourceStageKey(stageKey)) {
       return Response.json(
@@ -59,11 +73,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     }
 
     const supabase = getAzureReadFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
+    const eventQuery = supabase
       .from('source_events')
-      .select('id, client_key, current_stage_key, lifecycle_state')
-      .eq('id', eventId)
-      .maybeSingle();
+      .select('id, client_key, current_stage_key, lifecycle_state');
+    const { data: persistedEvent, error: fetchError } = isUuid(eventId)
+      ? await eventQuery.eq('id', eventId).maybeSingle()
+      : { data: null, error: null };
 
     if (fetchError) {
       return Response.json({ error: 'lookup_failed', detail: fetchError.message }, { status: 500 });
@@ -102,6 +117,34 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
       }
 
+      const { data: criterionRows, error: criteriaFetchError } = await supabase
+        .from('source_event_gate_criterion_states')
+        .select('*')
+        .eq('source_event_id', eventId);
+      if (criteriaFetchError) {
+        return Response.json({ error: 'lookup_failed', detail: criteriaFetchError.message }, { status: 500 });
+      }
+
+      const promotionReadiness = evaluateStagePromotionReadiness({
+        currentStage: persistedEvent.current_stage_key as SourceStageKey,
+        targetStage: stageKey,
+        criteria: ((criterionRows ?? []) as SourceEventGateCriterionStateRow[]).map(
+          gateCriterionStateRowToView,
+        ),
+        reason,
+      });
+      if (!promotionReadiness.ok) {
+        const blocker = firstGovernanceBlocker(promotionReadiness);
+        return Response.json(
+          {
+            error: blocker.code,
+            detail: blocker.detail,
+            blockers: promotionReadiness.blockers,
+          },
+          { status: 409 },
+        );
+      }
+
       // DB write routed through the data-plane write seam (Slice 3b).
       const stageWrite = await selectSourceWriteAdapter(
         undefined,
@@ -124,6 +167,24 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const event = getSourceEventSeed(eventId);
     if (!event) {
       return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
+    }
+
+    const seedPromotionReadiness = evaluateStagePromotionReadiness({
+      currentStage: event.currentStageKey,
+      targetStage: stageKey,
+      criteria: [],
+      reason,
+    });
+    if (!seedPromotionReadiness.ok) {
+      const blocker = firstGovernanceBlocker(seedPromotionReadiness);
+      return Response.json(
+        {
+          error: blocker.code,
+          detail: blocker.detail,
+          blockers: seedPromotionReadiness.blockers,
+        },
+        { status: 409 },
+      );
     }
 
     setStageOverride(eventId, stageKey as SourceStageKey);

@@ -247,20 +247,22 @@ export function UniversalCanvasShell({
     };
   }, [stageArtifacts, stageCriteria, stageEvidence]);
 
-  const handlePromoteStage = async (toStage: SourceStageKey): Promise<void> => {
+  const handlePromoteStage = async (
+    toStage: SourceStageKey,
+    reason: string,
+  ): Promise<void> => {
     if (promotePending) return;
     setPromotePending(true);
     try {
       const res = await fetch(`/api/v1/source/${event.id}/stage`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stageKey: toStage }),
+        body: JSON.stringify({ stageKey: toStage, reason }),
       });
       if (!res.ok) return;
       // Re-fetch the SSR data with the new stage in view, so artifacts +
       // criteria + evidence + chat-lane all switch to the new stage.
-      const stageLabel = SOURCE_STAGE_LABELS[toStage];
-      router.push(`/source/events/${event.id}?stage=${stageLabel}`);
+      router.push(`/source/events/${event.id}?stage=${toStage}`);
       router.refresh();
     } finally {
       setPromotePending(false);
@@ -270,6 +272,7 @@ export function UniversalCanvasShell({
   const handleCriterionStateChange = async (
     criterionId: string,
     next: SourceEventGateCriterionState,
+    reason: string,
   ): Promise<void> => {
     const previous = criterionStateMap[criterionId];
     if (!previous) return;
@@ -286,7 +289,7 @@ export function UniversalCanvasShell({
         {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ state: next }),
+          body: JSON.stringify({ state: next, reason }),
         },
       );
       if (!res.ok) {
