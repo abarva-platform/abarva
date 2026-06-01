@@ -36,11 +36,20 @@ async function main() {
   await fs.mkdir(path.join(out, 'transcripts'), { recursive: true });
 
   const observations: CrawlPageObservation[] = [];
+  const personas = resolveCrawlPersonas(args.persona);
+  const surfaces = resolveCrawlSurfaces(args.surface);
+  const plannedObservationCount = personas.length * surfaces.length;
+  const baseline = args.baseline ? await readBaseline(args.baseline) : null;
+  const persistProgress = async (complete: boolean) => {
+    const run = buildCrawlRun(args.baseUrl, runId, observations);
+    const comparison = buildCrawlComparison(run, baseline, complete, plannedObservationCount);
+    await writeCrawlArtifacts(args.outputDir, out, run, comparison);
+  };
+
   let fatalError: unknown = null;
   try {
-    for (const persona of resolveCrawlPersonas(args.persona)) {
+    for (const persona of personas) {
       const browser = await launchCrawlBrowser();
-      const surfaces = resolveCrawlSurfaces(args.surface);
       let personaContext: { context: BrowserContext; page: Page } | null = null;
       try {
         const activeContext = args.noAuth
@@ -49,6 +58,7 @@ async function main() {
         personaContext = activeContext;
         for (const surface of surfaces) {
           observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out));
+          await persistProgress(false);
         }
       } finally {
         await personaContext?.context.close().catch(() => undefined);
@@ -59,13 +69,7 @@ async function main() {
     fatalError = error;
   }
 
-  const run: CrawlRun = {
-    runId,
-    baseUrl: args.baseUrl,
-    commitSha: process.env.VERCEL_GIT_COMMIT_SHA,
-    createdAt: new Date().toISOString(),
-    observations,
-  };
+  const run = buildCrawlRun(args.baseUrl, runId, observations);
 
   if (fatalError) {
     const comparison: CrawlComparison = {
@@ -86,8 +90,7 @@ async function main() {
     throw fatalError;
   }
 
-  const baseline = args.baseline ? await readBaseline(args.baseline) : null;
-  const comparison = compareCrawlToBaseline(run, baseline);
+  const comparison = buildCrawlComparison(run, baseline, true, plannedObservationCount);
   await writeCrawlArtifacts(args.outputDir, out, run, comparison);
 
   console.log(`Post-deploy crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`);
@@ -99,6 +102,41 @@ async function main() {
       console.error('P0 findings detected. Run scripts/crawl/auto-rollback.ts with --execute only from the controlled deploy workflow.');
     }
   }
+}
+
+function buildCrawlRun(baseUrl: string, runId: string, observations: CrawlPageObservation[]): CrawlRun {
+  return {
+    runId,
+    baseUrl,
+    commitSha: process.env.VERCEL_GIT_COMMIT_SHA,
+    createdAt: new Date().toISOString(),
+    observations,
+  };
+}
+
+function buildCrawlComparison(
+  run: CrawlRun,
+  baseline: CrawlBaseline | null,
+  complete: boolean,
+  plannedObservationCount: number,
+): CrawlComparison {
+  const comparison = compareCrawlToBaseline(run, baseline);
+  if (!complete) {
+    comparison.findings.push({
+      severity: 'P1',
+      tenantKey: 'unknown',
+      personaKey: 'crawl-harness',
+      surfaceId: 'partial-run',
+      dimension: 'crawl-execution',
+      message: `Post-deploy crawl is still partial: captured ${run.observations.length} of ${plannedObservationCount} planned observations.`,
+      evidence: {
+        capturedObservationCount: run.observations.length,
+        plannedObservationCount,
+      },
+    });
+    comparison.p1 += 1;
+  }
+  return comparison;
 }
 
 async function writeCrawlArtifacts(
