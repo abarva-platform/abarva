@@ -24,6 +24,7 @@ export const assignSponsorTool: AgentTool<AssignSponsorInput> = {
   description:
     'Assign a person as program sponsor. This satisfies the sponsor_assigned hard gate ' +
     'required before advancing from Phase 2 to Phase 3. ' +
+    'Use this only after the user explicitly confirms that this person should be the sponsor. ' +
     'person_id must be a UUID from the persons table — use lookup_person first if needed. ' +
     'If the person is already a participant, their authority is upgraded to sponsor.',
   surfaces: ['/programs/:id'],
