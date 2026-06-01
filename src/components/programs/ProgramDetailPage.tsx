@@ -99,6 +99,10 @@ import { AddProgramEvidenceForm } from "@/components/programs/AddProgramEvidence
 import { BulkEvidenceImportButton } from "@/components/programs/BulkEvidenceImportButton";
 import { CascadeImpactSection } from "@/components/_shared/CascadeImpactSection";
 import { PhaseAdvanceButton } from "@/components/programs/PhaseAdvanceButton";
+import {
+  canSubmitHumanApproval,
+  HumanApprovalGate,
+} from "@/components/abarva/HumanApprovalGate";
 import { EvidenceCoverageHeatmap } from "@/components/reasoning/EvidenceCoverageHeatmap";
 import { EvidenceNetworkGraph } from "@/components/reasoning/EvidenceNetworkGraph";
 import { ReasoningErrorBoundary } from "@/components/reasoning/ReasoningErrorBoundary";
@@ -1080,12 +1084,16 @@ function GateApproveModal({
   error = null,
 }: GateApproveModalProps) {
   const [rationale, setRationale] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [acceptedResponsibility, setAcceptedResponsibility] = useState(false);
   void fromPhase;
   const toPhaseLabel =
     PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
 
-  const canApprove = rationale.trim().length >= MOVES_HUMAN_RATIONALE_MIN_CHARS;
+  const canApprove = canSubmitHumanApproval({
+    acceptedResponsibility,
+    justification: rationale,
+    minChars: MOVES_HUMAN_RATIONALE_MIN_CHARS,
+  });
 
   return (
     <div
@@ -1168,73 +1176,17 @@ function GateApproveModal({
           </div>
         )}
 
-        <div
-          data-testid="moves-gate-human-decision-attestation"
-          style={{
-            background: SHELL.MINT_BG,
-            border: `1px solid ${SHELL.MINT_LINE}`,
-            borderRadius: 8,
-            padding: "10px 12px",
-            marginBottom: 16,
-            fontFamily: SHELL.SANS,
-            fontSize: 12,
-            color: SHELL.INK_SOFT,
-            lineHeight: 1.45,
-          }}
-        >
-          <strong>{AI_DECISION_SUPPORT_WATERMARK}</strong>{" "}
-          {HUMAN_DECISION_ATTESTATION_TEXT}
-        </div>
-
-        {/* Rationale textarea */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: SHELL.INK_MUTED,
-              marginBottom: 6,
-            }}
-          >
-            Approval Rationale (required)
-          </div>
-          <textarea
-            ref={textareaRef}
-            rows={4}
-            value={rationale}
-            onChange={(e) => setRationale(e.target.value)}
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 6,
-              padding: 10,
-              width: "100%",
-              boxSizing: "border-box",
-              resize: "vertical",
-              color: SHELL.INK,
-              outline: "none",
-              lineHeight: 1.5,
-            }}
-            placeholder="State the human reason for this gate advance and the evidence you reviewed..."
-          />
-          <div
-            style={{
-              marginTop: 6,
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              color: SHELL.INK_MUTED,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            Minimum {MOVES_HUMAN_RATIONALE_MIN_CHARS} characters · human commit
-            required
-          </div>
-        </div>
+        <HumanApprovalGate
+          justification={rationale}
+          onJustificationChange={setRationale}
+          acceptedResponsibility={acceptedResponsibility}
+          onAcceptedResponsibilityChange={setAcceptedResponsibility}
+          minChars={MOVES_HUMAN_RATIONALE_MIN_CHARS}
+          disabled={isLoading}
+          label="Approval rationale"
+          placeholder="State the human reason for this gate advance and the evidence you reviewed..."
+          style={{ marginBottom: 24 }}
+        />
 
         {/* Error message */}
         {error && (
