@@ -18,13 +18,14 @@ import {
   FONT,
   RADIUS,
   SPACING,
-} from '@/lib/design/abarva-theme';
-import { AgentBadge } from '@/components/abarva/AgentBadge';
+} from "@/lib/design/abarva-theme";
+import { AgentBadge } from "@/components/abarva/AgentBadge";
 import {
   buildAgentInlineRecommendationView,
   type AgentInlineRecommendationView,
   type InlineRecommendationItem,
-} from '@/lib/agent/agent-inline-recommendation-view';
+} from "@/lib/agent/agent-inline-recommendation-view";
+import { AILabel } from "@/components/abarva/AILabel";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -40,8 +41,8 @@ function RecommendationRow({ item }: { item: InlineRecommendationItem }) {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: SPACING.xs,
         borderLeft: `2px solid ${accentColor}`,
         paddingLeft: SPACING.sm,
@@ -52,20 +53,23 @@ function RecommendationRow({ item }: { item: InlineRecommendationItem }) {
       {/* Header row: agent badge + priority + type */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: SPACING.xs,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
         }}
       >
-        <AgentBadge agent={item.mission.agent} status={item.mission.type.replace(/_/g, ' ')} />
+        <AgentBadge
+          agent={item.mission.agent}
+          status={item.mission.type.replace(/_/g, " ")}
+        />
         <span
           style={{
             fontFamily: FONT.mono,
             fontSize: 9,
             fontWeight: 600,
-            letterSpacing: '0.10em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.10em",
+            textTransform: "uppercase",
             color: item.isUrgent ? COLORS.navy : COLORS.muted,
           }}
         >
@@ -75,7 +79,7 @@ function RecommendationRow({ item }: { item: InlineRecommendationItem }) {
           style={{
             fontFamily: FONT.mono,
             fontSize: 9,
-            letterSpacing: '0.06em',
+            letterSpacing: "0.06em",
             color: COLORS.mutedSoft,
           }}
         >
@@ -90,10 +94,10 @@ function RecommendationRow({ item }: { item: InlineRecommendationItem }) {
           fontSize: 12,
           color: COLORS.body,
           lineHeight: 1.4,
-          display: '-webkit-box',
+          display: "-webkit-box",
           WebkitLineClamp: 1,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
         }}
       >
         {item.mission.rationale}
@@ -134,8 +138,8 @@ export function AgentInlineRecommendation({
       data-agent-inline-recommendation="act2"
       aria-label={view.sectionLabel}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: SPACING.sm,
         background: COLORS.card,
         border: BORDER.hairline,
@@ -155,12 +159,18 @@ export function AgentInlineRecommendation({
           fontFamily: FONT.mono,
           fontSize: 10,
           fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
           color: COLORS.muted,
         }}
       >
-        {view.sectionLabel}
+        <span>{view.sectionLabel}</span>
+        <AILabel
+          status="suggested"
+          detail="Validate before action"
+          compact
+          style={{ marginLeft: SPACING.xs }}
+        />
         {view.hasUrgentRecommendation && (
           <span
             style={{
@@ -182,7 +192,9 @@ export function AgentInlineRecommendation({
 
       {/* Recommendation rows */}
       {view.allRecommendations.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: SPACING.sm }}
+        >
           {view.allRecommendations.map((item) => (
             <RecommendationRow key={item.mission.id} item={item} />
           ))}
@@ -196,7 +208,7 @@ export function AgentInlineRecommendation({
         style={{
           fontFamily: FONT.mono,
           fontSize: 9,
-          letterSpacing: '0.06em',
+          letterSpacing: "0.06em",
           color: COLORS.mutedSoft,
         }}
       >

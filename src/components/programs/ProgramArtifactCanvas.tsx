@@ -16,22 +16,23 @@
 //   - src/lib/auth/**
 //   - supabase/**
 
-import { EvidenceChip } from '@/components/abarva/EvidenceChip';
-import { FileTypeChip } from '@/components/abarva/FileTypeChip';
+import { EvidenceChip } from "@/components/abarva/EvidenceChip";
+import { FileTypeChip } from "@/components/abarva/FileTypeChip";
+import { AILabel } from "@/components/abarva/AILabel";
 import {
   BORDER,
   COLORS,
   FONT,
   RADIUS,
   SPACING,
-} from '@/lib/design/abarva-theme';
+} from "@/lib/design/abarva-theme";
 import type {
   CanvasAction,
   CanvasRenderMode,
   ProgramArtifactCanvasListEntry,
   ProgramArtifactCanvasSelection,
   ProgramArtifactCanvasView,
-} from '@/lib/programs/program-artifact-canvas-view';
+} from "@/lib/programs/program-artifact-canvas-view";
 
 export interface ProgramArtifactCanvasProps {
   view: ProgramArtifactCanvasView;
@@ -46,7 +47,7 @@ export function ProgramArtifactCanvas({ view }: ProgramArtifactCanvasProps) {
         background: COLORS.card,
         border: BORDER.hairline,
         borderRadius: RADIUS.lg,
-        overflow: 'hidden',
+        overflow: "hidden",
         fontFamily: FONT.body,
         color: COLORS.ink,
       }}
@@ -54,10 +55,10 @@ export function ProgramArtifactCanvas({ view }: ProgramArtifactCanvasProps) {
       <CanvasHeader view={view} />
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(280px, 320px) minmax(0, 1fr)',
+          display: "grid",
+          gridTemplateColumns: "minmax(280px, 320px) minmax(0, 1fr)",
           gap: 0,
-          alignItems: 'stretch',
+          alignItems: "stretch",
         }}
       >
         <CanvasList view={view} />
@@ -69,8 +70,8 @@ export function ProgramArtifactCanvas({ view }: ProgramArtifactCanvasProps) {
           borderTop: BORDER.hairlineSoft,
           fontFamily: FONT.mono,
           fontSize: 9,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
           color: COLORS.mutedSoft,
         }}
       >
@@ -88,39 +89,39 @@ function CanvasHeader({ view }: { view: ProgramArtifactCanvasView }) {
       style={{
         padding: `${SPACING.md}px ${SPACING.lg}px`,
         borderBottom: BORDER.hairlineSoft,
-        display: 'flex',
-        alignItems: 'baseline',
-        justifyContent: 'space-between',
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "space-between",
         gap: SPACING.md,
-        flexWrap: 'wrap',
+        flexWrap: "wrap",
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <span
           style={{
             fontFamily: FONT.mono,
             fontSize: 10,
             fontWeight: 500,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
             color: COLORS.muted,
           }}
         >
           PDEL5 · Deliverable / artifact canvas
         </span>
         <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>
-          {view.programName ? view.programName : 'Program canvas'}
-          {view.programCode ? ` · ${view.programCode}` : ''}
+          {view.programName ? view.programName : "Program canvas"}
+          {view.programCode ? ` · ${view.programCode}` : ""}
         </span>
       </div>
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: SPACING.md,
           fontFamily: FONT.mono,
           fontSize: 10,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
           color: COLORS.mutedSoft,
         }}
       >
@@ -142,7 +143,7 @@ function CanvasList({ view }: { view: ProgramArtifactCanvasView }) {
           borderRight: BORDER.hairlineSoft,
           fontSize: 13,
           color: COLORS.muted,
-          fontStyle: 'italic',
+          fontStyle: "italic",
           background: COLORS.surface2,
         }}
       >
@@ -154,37 +155,37 @@ function CanvasList({ view }: { view: ProgramArtifactCanvasView }) {
     <ol
       aria-label="Program artifacts"
       style={{
-        listStyle: 'none',
+        listStyle: "none",
         padding: 0,
         margin: 0,
         borderRight: BORDER.hairlineSoft,
         background: COLORS.surface,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         maxHeight: 720,
-        overflowY: 'auto',
+        overflowY: "auto",
       }}
     >
       {view.list.map((entry) => (
         <li
           key={entry.artifactId}
           data-artifact-id={entry.artifactId}
-          data-selected={entry.isSelected ? 'true' : 'false'}
+          data-selected={entry.isSelected ? "true" : "false"}
           style={{
             padding: `${SPACING.sm + 2}px ${SPACING.md}px`,
             borderBottom: BORDER.hairlineSoft,
-            background: entry.isSelected ? COLORS.navySoft : 'transparent',
-            display: 'flex',
-            flexDirection: 'column',
+            background: entry.isSelected ? COLORS.navySoft : "transparent",
+            display: "flex",
+            flexDirection: "column",
             gap: 4,
           }}
         >
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: SPACING.sm,
-              flexWrap: 'wrap',
+              flexWrap: "wrap",
             }}
           >
             <FileTypeChip type={entry.fileChip} />
@@ -193,8 +194,8 @@ function CanvasList({ view }: { view: ProgramArtifactCanvasView }) {
                 fontFamily: FONT.mono,
                 fontSize: 10,
                 fontWeight: 500,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
                 color: COLORS.muted,
               }}
             >
@@ -206,10 +207,10 @@ function CanvasList({ view }: { view: ProgramArtifactCanvasView }) {
           </span>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: SPACING.sm,
-              flexWrap: 'wrap',
+              flexWrap: "wrap",
             }}
           >
             <RenderModePill mode={entry.renderMode} />
@@ -231,9 +232,7 @@ function CanvasList({ view }: { view: ProgramArtifactCanvasView }) {
 }
 
 function EvidenceUsableDot({ usable }: { usable: boolean }) {
-  return (
-    <EvidenceChip state={usable ? 'usable_as_evidence' : 'partial'} />
-  );
+  return <EvidenceChip state={usable ? "usable_as_evidence" : "partial"} />;
 }
 
 // --- Right pane -----------------------------------------------------
@@ -252,11 +251,11 @@ function CanvasRightPane({
           fontSize: 13,
           color: COLORS.muted,
           background: COLORS.card,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           minHeight: 320,
-          fontStyle: 'italic',
+          fontStyle: "italic",
         }}
         data-program-artifact-canvas-empty="true"
       >
@@ -269,8 +268,8 @@ function CanvasRightPane({
       style={{
         padding: SPACING.lg,
         background: COLORS.card,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: SPACING.md,
       }}
       data-program-artifact-canvas-selected={selected.artifactId}
@@ -290,13 +289,13 @@ function SelectionHeader({
   selection: ProgramArtifactCanvasSelection;
 }) {
   return (
-    <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: SPACING.sm,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
         }}
       >
         <FileTypeChip type={selection.fileChip} />
@@ -305,8 +304,8 @@ function SelectionHeader({
             fontFamily: FONT.mono,
             fontSize: 10,
             fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
             color: COLORS.muted,
           }}
         >
@@ -314,8 +313,11 @@ function SelectionHeader({
         </span>
         <RenderModePill mode={selection.renderMode} />
         <EvidenceChip
-          state={selection.evidenceUsable ? 'usable_as_evidence' : 'partial'}
+          state={selection.evidenceUsable ? "usable_as_evidence" : "partial"}
         />
+        {selection.origin === "generated" ? (
+          <AILabel status="draft" detail="Edit before commit" compact />
+        ) : null}
       </div>
       <h3
         style={{
@@ -343,8 +345,8 @@ function MissingInputsCallout({ missingInputs }: { missingInputs: string[] }) {
         background: COLORS.redSoft,
         border: `1px solid ${COLORS.red}33`,
         borderRadius: RADIUS.md,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 4,
       }}
       data-canvas-missing-inputs={missingInputs.length}
@@ -354,8 +356,8 @@ function MissingInputsCallout({ missingInputs }: { missingInputs: string[] }) {
           fontFamily: FONT.mono,
           fontSize: 10,
           fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
           color: COLORS.red,
         }}
       >
@@ -363,11 +365,11 @@ function MissingInputsCallout({ missingInputs }: { missingInputs: string[] }) {
       </span>
       <ul
         style={{
-          listStyle: 'disc',
+          listStyle: "disc",
           paddingLeft: 18,
           margin: 0,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 2,
         }}
       >
@@ -387,16 +389,16 @@ function MissingInputsCallout({ missingInputs }: { missingInputs: string[] }) {
 function OriginRow({
   origin,
 }: {
-  origin: ProgramArtifactCanvasSelection['origin'];
+  origin: ProgramArtifactCanvasSelection["origin"];
 }) {
   const label = (() => {
     switch (origin) {
-      case 'generated':
-        return 'Generated · deterministic seed';
-      case 'uploaded':
-        return 'Uploaded · placeholder (parser deferred)';
-      case 'workshop_note':
-        return 'Workshop note · captured in seed';
+      case "generated":
+        return "Generated · deterministic seed";
+      case "uploaded":
+        return "Uploaded · placeholder (parser deferred)";
+      case "workshop_note":
+        return "Workshop note · captured in seed";
     }
   })();
   return (
@@ -405,8 +407,8 @@ function OriginRow({
         fontFamily: FONT.mono,
         fontSize: 10,
         fontWeight: 500,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
         color: COLORS.muted,
       }}
       data-canvas-origin={origin}
@@ -422,7 +424,7 @@ function PreviewBody({
   selection: ProgramArtifactCanvasSelection;
 }) {
   const { preview } = selection;
-  if (preview.mode === 'html') {
+  if (preview.mode === "html") {
     return (
       <div
         data-canvas-preview-mode="html"
@@ -441,7 +443,7 @@ function PreviewBody({
       />
     );
   }
-  if (preview.mode === 'markdown') {
+  if (preview.mode === "markdown") {
     return (
       <pre
         data-canvas-preview-mode="markdown"
@@ -455,8 +457,8 @@ function PreviewBody({
           fontSize: 12,
           lineHeight: 1.5,
           color: COLORS.body,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}
       >
         {preview.body}
@@ -472,9 +474,9 @@ function PreviewBody({
         border: `1px dashed ${COLORS.border}`,
         borderRadius: RADIUS.md,
         fontSize: 12,
-        fontStyle: 'italic',
+        fontStyle: "italic",
         color: COLORS.muted,
-        textAlign: 'center',
+        textAlign: "center",
       }}
     >
       {preview.body}
@@ -488,9 +490,9 @@ function ActionsRow({ actions }: { actions: CanvasAction[] }) {
       role="group"
       aria-label="Artifact actions (deferred)"
       style={{
-        display: 'flex',
+        display: "flex",
         gap: SPACING.sm,
-        flexWrap: 'wrap',
+        flexWrap: "wrap",
         paddingTop: SPACING.sm,
         borderTop: BORDER.hairlineSoft,
       }}
@@ -506,12 +508,12 @@ function ActionButton({ action }: { action: CanvasAction }) {
   return (
     <span
       style={{
-        display: 'inline-flex',
-        flexDirection: 'column',
+        display: "inline-flex",
+        flexDirection: "column",
         gap: 2,
       }}
       data-canvas-action={action.key}
-      data-canvas-action-enabled={action.enabled ? 'true' : 'false'}
+      data-canvas-action-enabled={action.enabled ? "true" : "false"}
     >
       <button
         type="button"
@@ -526,8 +528,8 @@ function ActionButton({ action }: { action: CanvasAction }) {
           background: COLORS.surface2,
           border: `1px solid ${COLORS.border}`,
           borderRadius: RADIUS.md,
-          padding: '6px 10px',
-          cursor: 'not-allowed',
+          padding: "6px 10px",
+          cursor: "not-allowed",
           opacity: 0.7,
         }}
       >
@@ -537,8 +539,8 @@ function ActionButton({ action }: { action: CanvasAction }) {
         style={{
           fontFamily: FONT.mono,
           fontSize: 9,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
           color: COLORS.mutedSoft,
         }}
       >
@@ -548,16 +550,16 @@ function ActionButton({ action }: { action: CanvasAction }) {
   );
 }
 
-function actionLabel(key: CanvasAction['key']): string {
+function actionLabel(key: CanvasAction["key"]): string {
   switch (key) {
-    case 'edit':
-      return 'Edit';
-    case 'regenerate':
-      return 'Regenerate';
-    case 'download':
-      return 'Download';
-    case 'approve':
-      return 'Approve';
+    case "edit":
+      return "Edit";
+    case "regenerate":
+      return "Regenerate";
+    case "download":
+      return "Download";
+    case "approve":
+      return "Approve";
   }
 }
 
@@ -572,15 +574,15 @@ function RenderModePill({ mode }: { mode: CanvasRenderMode }) {
         fontFamily: FONT.mono,
         fontSize: 9,
         fontWeight: 600,
-        letterSpacing: '0.10em',
-        textTransform: 'uppercase',
+        letterSpacing: "0.10em",
+        textTransform: "uppercase",
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.border}`,
         borderRadius: RADIUS.pill,
-        padding: '2px 8px',
+        padding: "2px 8px",
         lineHeight: 1.4,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {renderModeLabel(mode)}
@@ -593,7 +595,7 @@ function renderModeTone(mode: CanvasRenderMode): {
   bg: string;
   border: string;
 } {
-  if (mode === 'html' || mode === 'markdown') {
+  if (mode === "html" || mode === "markdown") {
     return {
       fg: COLORS.navy,
       bg: COLORS.navySoft,
@@ -609,15 +611,15 @@ function renderModeTone(mode: CanvasRenderMode): {
 
 function renderModeLabel(mode: CanvasRenderMode): string {
   switch (mode) {
-    case 'html':
-      return 'HTML';
-    case 'markdown':
-      return 'Markdown';
-    case 'pdf_export_later':
-      return 'PDF · later';
-    case 'docx_export_later':
-      return 'DOCX · later';
-    case 'ppt_export_later':
-      return 'PPT · later';
+    case "html":
+      return "HTML";
+    case "markdown":
+      return "Markdown";
+    case "pdf_export_later":
+      return "PDF · later";
+    case "docx_export_later":
+      return "DOCX · later";
+    case "ppt_export_later":
+      return "PPT · later";
   }
 }
