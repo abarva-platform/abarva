@@ -18,4 +18,3 @@ export const QUESTION_REQUIREMENTS: Record<ReadinessQuestionKind, string[]> = {
 export function requirementsForQuestion(kind: ReadinessQuestionKind): string[] {
   return QUESTION_REQUIREMENTS[kind];
 }
-

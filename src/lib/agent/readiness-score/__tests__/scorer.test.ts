@@ -25,4 +25,3 @@ describe('scoreReadiness', () => {
     expect(answerPrefixForReadiness(assessment)).toContain('should not advise');
   });
 });
-

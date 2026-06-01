@@ -51,4 +51,3 @@ export function EvidenceLedgerDrawer({ ledger }: EvidenceLedgerDrawerProps) {
     </details>
   );
 }
-

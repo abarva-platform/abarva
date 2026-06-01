@@ -50,4 +50,3 @@ describe('request telemetry', () => {
     );
   });
 });
-

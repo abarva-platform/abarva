@@ -81,4 +81,3 @@ function clampPercent(value: number): number {
 function normalizeOwner(owner: string | null | undefined): string {
   return owner?.trim() || 'Unassigned substrate owner';
 }
-

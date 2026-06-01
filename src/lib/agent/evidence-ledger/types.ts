@@ -37,4 +37,3 @@ export interface ComposeEvidenceLedgerInput {
   patternsApplied?: EvidenceLedgerPatternApplied[];
   now?: Date;
 }
-

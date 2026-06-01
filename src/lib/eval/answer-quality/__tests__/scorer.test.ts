@@ -40,4 +40,3 @@ describe('scoreAnswer', () => {
     expect(result.violations.some((violation) => violation.dimension === 'noFakePrecision')).toBe(true);
   });
 });
-

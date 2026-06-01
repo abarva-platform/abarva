@@ -24,4 +24,3 @@ export function emitRequestTelemetryToPosthog(
   });
   return true;
 }
-

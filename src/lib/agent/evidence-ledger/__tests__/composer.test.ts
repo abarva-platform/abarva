@@ -38,4 +38,3 @@ describe('composeEvidenceLedger', () => {
     expect(assertEvidenceLedgerReady(ledger).passed).toBe(true);
   });
 });
-

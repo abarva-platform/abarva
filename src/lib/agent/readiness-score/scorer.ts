@@ -55,4 +55,3 @@ function recommendationFor(missing: string[], completenessPercent: number): stri
   if (completenessPercent < 40) return `${load} Refuse advisory guidance until these dimensions are present.`;
   return `${load} Lead the answer with these gaps and avoid unsupported precision.`;
 }
-

@@ -21,4 +21,3 @@ describe('comprehension gate', () => {
     expect(result.blockReason).toContain('unexplained acronyms');
   });
 });
-
