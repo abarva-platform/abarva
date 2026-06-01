@@ -235,7 +235,7 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).toContain('Question: finance or delivery?');
     });
 
-    it('does not duplicate an existing Next label in compact Tower output', () => {
+    it('does not duplicate an existing Next label in Tower output', () => {
       const raw = [
         'Every flagged initiative shows measured value above committed.',
         'Evidence: Until projected vs. committed vs. realized are reconciled, treat the 16 value-lag flags as a measurement question, not a delivery verdict.',
@@ -244,8 +244,9 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
 
       const shaped = shapeAgentResponseForSurface('/tower', raw);
 
-      expect(shaped).toContain('- Next: open the cited initiative');
+      expect(shaped).toContain('Next: open the cited initiative');
       expect(shaped).not.toContain('- Next: - Next:');
+      expect(shaped).not.toContain('Next: Next:');
     });
   });
 });
