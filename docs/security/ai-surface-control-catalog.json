@@ -27,6 +27,13 @@
         {
           "kind": "confidence",
           "evidence": ["AIConfidenceIndicator", "viewModel.confidence.tier"]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "follow_up_actions"
+          ]
         }
       ]
     },
@@ -51,6 +58,13 @@
             "CitationGapNotice",
             "shouldShowPlainTextCitationGap"
           ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "ACTION_APPROVAL_NOTICE_WRAP_STYLE"
+          ]
         }
       ]
     },
@@ -74,6 +88,13 @@
           "evidence": [
             "CitationGapNotice",
             "shouldShowPlainTextCitationGap"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "AgentActionApprovalNotice",
+            "tone=\"dark\""
           ]
         }
       ]

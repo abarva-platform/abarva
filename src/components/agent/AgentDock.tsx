@@ -48,6 +48,7 @@ import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { CitationGapNotice } from "./CitationGapNotice";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -758,6 +759,9 @@ export function AgentDock(props: AgentDockProps) {
             ↑
           </button>
         </form>
+        <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
+          <AgentActionApprovalNotice compact />
+        </div>
         <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
           <AIResponsibilityFooter compact />
         </div>
@@ -1508,6 +1512,12 @@ const INPUT_FORM_STYLE: CSSProperties = {
 
 const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
   padding: "0 18px 14px",
+  background: CANVAS.CHAT_BG,
+  flex: "0 0 auto",
+};
+
+const ACTION_APPROVAL_NOTICE_WRAP_STYLE: CSSProperties = {
+  padding: "0 18px 8px",
   background: CANVAS.CHAT_BG,
   flex: "0 0 auto",
 };
