@@ -704,3 +704,41 @@ describe("AgentDock · self-measured top offset", () => {
     expect(pinShell.style.top).toContain("var(--agent-dock-self-top");
   });
 });
+
+describe("AgentDock · citation guard", () => {
+  function renderThread(body: string) {
+    const thread: ChatMessage[] = [
+      {
+        id: "agent-1",
+        role: "agent",
+        body,
+      },
+    ];
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={thread}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+  }
+
+  it("shows a citation gap notice for substantive uncited agent turns", () => {
+    renderThread(
+      "This recommendation changes the next governance decision. It should be reviewed before the program advances.",
+    );
+
+    expect(screen.getByLabelText("Citation gap")).toBeInTheDocument();
+  });
+
+  it("does not show a citation gap when citation markup is present", () => {
+    renderThread(
+      "This recommendation changes the next governance decision. It should be reviewed before the program advances. [tenant-specific: approval ledger]",
+    );
+
+    expect(screen.queryByLabelText("Citation gap")).not.toBeInTheDocument();
+  });
+});

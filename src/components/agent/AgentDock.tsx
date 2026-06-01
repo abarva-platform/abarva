@@ -47,6 +47,8 @@ import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
+import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { CitationGapNotice } from "./CitationGapNotice";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -607,6 +609,10 @@ export function AgentDock(props: AgentDockProps) {
                   </div>
                 ) : null}
                 <div style={BUBBLE_STYLE}>
+                  {turn.role === "agent" &&
+                  shouldShowPlainTextCitationGap(turn.body) ? (
+                    <CitationGapNotice compact />
+                  ) : null}
                   {turn.role === "agent"
                     ? shapeAgentResponseForSurface(surface, turn.body)
                     : turn.body}
