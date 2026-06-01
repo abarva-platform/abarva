@@ -49,6 +49,26 @@ export interface DataLoadTemplateRow {
   unlocks: string;
 }
 
+export interface DataLoadDimensionCatalogItem {
+  id: string;
+  dimension: string;
+  label: string;
+  summary: string;
+  completenessPercent: number;
+  currentGate: string;
+  nextAction: string;
+  unlocks: string;
+  templateCount: number;
+  formats: ReadonlyArray<string>;
+  templates: ReadonlyArray<string>;
+  requiredFields: ReadonlyArray<string>;
+  ownerOrSource: string;
+  primaryAction: {
+    label: string;
+    href: string;
+  };
+}
+
 export interface EnterpriseContextManifestWorkbook {
   key: string;
   title: string;
@@ -105,6 +125,7 @@ export interface SetupDataLoadCenterModel {
     apiPath: string;
     status: DataLoadGateStatus;
   }>;
+  dimensionCatalog: ReadonlyArray<DataLoadDimensionCatalogItem>;
   templateRows: ReadonlyArray<DataLoadTemplateRow>;
   dimensionReadiness: ReadonlyArray<{
     dimension: string;
@@ -208,12 +229,12 @@ const REHEARSAL_GATES: ReadonlyArray<DataLoadRehearsalGate> = [
 const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
   {
     id: "upload-context-csv",
-    label: "Load CSV context",
+    label: "Load structured context",
     stage: "Upload",
     operatorAction:
-      "Choose a template, map the file columns, and load tenant context rows.",
-    control: "Embedded CSV loader on this page",
-    href: null,
+      "Choose a dimension and template, then upload the matching tenant context file.",
+    control: "Context upload workspace",
+    href: "/admin/context-layer/uploads",
     apiPath: "/api/admin/context-layer/csv-upload",
     status: "ready",
   },
@@ -233,8 +254,8 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     label: "Process landing-zone event",
     stage: "Scan and process",
     operatorAction:
-      "Private worker downloads the tenant-keyed blob, scans it, audits it, and routes it onward.",
-    control: "Azure landing-zone consumer",
+      "Private workers scan, audit, and route the tenant-keyed file before validation.",
+    control: "Private processing lane",
     href: null,
     apiPath: "src/lib/ingestion/azure-landing-zone-consumer.ts",
     status: "monitored",
@@ -245,7 +266,7 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     stage: "Quarantine",
     operatorAction:
       "Release or delete files held by sensitive-data and malware controls before parsing continues.",
-    control: "Sensitive-data quarantine dashboard",
+    control: "Quarantine review",
     href: "/platform/admin/quarantine",
     apiPath: "/api/admin/quarantine/[id]/release",
     status: "needs_configuration",
@@ -256,7 +277,7 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     stage: "Validate",
     operatorAction:
       "Check required fields, schema mismatches, and evidence locators before approval.",
-    control: "Template validation engine",
+    control: "Template validation",
     href: null,
     apiPath: "src/lib/context-ingestion/validation-engine.ts",
     status: "ready",
@@ -267,7 +288,7 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     stage: "Approve",
     operatorAction:
       "Send blocked loads to the named approval queue before assistants can use the evidence.",
-    control: "Program approval queue",
+    control: "Approval queue",
     href: "/admin/programs/approvals",
     apiPath: "/api/admin/programs/approvals",
     status: "ready",
@@ -278,7 +299,7 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     stage: "Commit",
     operatorAction:
       "Commit only when quarantine, clarification, approval, and idempotency gates are clean.",
-    control: "Pilot ingestion ledger contract",
+    control: "Load ledger",
     href: "/admin/data-trust",
     apiPath: "src/lib/admin/pilot-ingestion-ledger.ts",
     status: "monitored",
@@ -372,6 +393,151 @@ function buildDimensionReadiness(): SetupDataLoadCenterModel["dimensionReadiness
       unlocks: "All assistants",
     },
   ];
+}
+
+const DIMENSION_COPY: Record<string, { label: string; summary: string }> = {
+  application_portfolio: {
+    label: "Application portfolio",
+    summary:
+      "Systems, owners, lifecycle, criticality, and service relationships.",
+  },
+  "Application portfolio": {
+    label: "Application portfolio",
+    summary:
+      "Systems, owners, lifecycle, criticality, and service relationships.",
+  },
+  vendor_contracts: {
+    label: "Vendor contracts",
+    summary:
+      "Supplier agreements, renewal dates, spend terms, and contract controls.",
+  },
+  "Vendor contracts": {
+    label: "Vendor contracts",
+    summary:
+      "Supplier agreements, renewal dates, spend terms, and contract controls.",
+  },
+  erp_landscape: {
+    label: "ERP landscape",
+    summary:
+      "Finance, procurement, inventory, and operational system extracts.",
+  },
+  "ERP landscape": {
+    label: "ERP landscape",
+    summary:
+      "Finance, procurement, inventory, and operational system extracts.",
+  },
+  org_roles_teams: {
+    label: "Org roles and teams",
+    summary: "Named owners, approvers, teams, and accountable operating roles.",
+  },
+  "Org roles and teams": {
+    label: "Org roles and teams",
+    summary: "Named owners, approvers, teams, and accountable operating roles.",
+  },
+};
+
+const DAY_ONE_DIMENSION_ALIASES: Record<string, string> = {
+  application_portfolio: "application_portfolio",
+  application_portfolio_: "application_portfolio",
+  application_portfolio_and_services: "application_portfolio",
+  vendor_contracts: "vendor_contracts",
+  erp_landscape: "erp_landscape",
+  org_roles_and_teams: "org_roles_teams",
+  org_roles_teams: "org_roles_teams",
+  applications: "application_portfolio",
+  cmdb: "application_portfolio",
+  vendor_management: "vendor_contracts",
+  vendor: "vendor_contracts",
+  contracts: "vendor_contracts",
+  finance: "erp_landscape",
+  financial: "erp_landscape",
+  procurement: "erp_landscape",
+  organization: "org_roles_teams",
+  org: "org_roles_teams",
+  people: "org_roles_teams",
+};
+
+function normalizeDimensionKey(dimension: string): string {
+  const key = dimension
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+  return DAY_ONE_DIMENSION_ALIASES[key] ?? key;
+}
+
+function splitCsvList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => item.toUpperCase());
+}
+
+function firstRequiredFields(
+  rows: ReadonlyArray<DataLoadTemplateRow>,
+): string[] {
+  const fields = new Set<string>();
+  for (const row of rows) {
+    for (const field of row.requiredFields.split(",")) {
+      const clean = field.trim();
+      if (!clean || clean.startsWith("+")) continue;
+      fields.add(clean);
+      if (fields.size >= 5) return [...fields];
+    }
+  }
+  return [...fields];
+}
+
+function buildDimensionCatalog(
+  templateRows: ReadonlyArray<DataLoadTemplateRow>,
+  readinessRows: SetupDataLoadCenterModel["dimensionReadiness"],
+): DataLoadDimensionCatalogItem[] {
+  return readinessRows.map((readiness) => {
+    const dimensionKey = normalizeDimensionKey(readiness.dimension);
+    const relatedTemplates = templateRows.filter((template) => {
+      const templateDimension = normalizeDimensionKey(template.dimension);
+      return (
+        templateDimension === dimensionKey ||
+        templateDimension === normalizeDimensionKey(readiness.dimension)
+      );
+    });
+    const formatSet = new Set<string>();
+    relatedTemplates.forEach((template) => {
+      splitCsvList(template.formats).forEach((format) => formatSet.add(format));
+    });
+    const copy =
+      DIMENSION_COPY[dimensionKey] ?? DIMENSION_COPY[readiness.dimension];
+
+    return {
+      id: dimensionKey.replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
+      dimension: dimensionKey,
+      label: copy?.label ?? readiness.dimension,
+      summary:
+        copy?.summary ??
+        "Template-backed records that determine what assistants can safely use.",
+      completenessPercent: readiness.completenessPercent,
+      currentGate: readiness.currentGate,
+      nextAction: readiness.nextAction,
+      unlocks: readiness.unlocks,
+      templateCount: relatedTemplates.length,
+      formats: [...formatSet].sort(),
+      templates: relatedTemplates.slice(0, 4).map((template) => template.title),
+      requiredFields: firstRequiredFields(relatedTemplates),
+      ownerOrSource: compactList(
+        [
+          ...new Set(
+            relatedTemplates.map((template) => template.ownerOrSource),
+          ),
+        ],
+        2,
+      ),
+      primaryAction: {
+        label:
+          readiness.currentGate === "Committed" ? "Review load" : "Start load",
+        href: "/admin/context-layer/uploads",
+      },
+    };
+  });
 }
 
 function buildWorkQueue(): SetupDataLoadCenterModel["workQueue"] {
@@ -473,6 +639,8 @@ export function buildSetupDataLoadCenterModel(args: {
 }): SetupDataLoadCenterModel {
   const tenantOption = getClientOption(args.clientKey);
   const tenantManifest = findTenantManifest(args.clientKey);
+  const templateRows = buildTemplateRows();
+  const dimensionReadiness = buildDimensionReadiness();
   const guardProbe = evaluateSensitiveUpload({
     filename: "pilot-rehearsal.csv",
     mimeType: "text/csv",
@@ -518,8 +686,9 @@ export function buildSetupDataLoadCenterModel(args: {
     }),
     rehearsalGates: REHEARSAL_GATES,
     workflowControls: WORKFLOW_CONTROLS,
-    templateRows: buildTemplateRows(),
-    dimensionReadiness: buildDimensionReadiness(),
+    dimensionCatalog: buildDimensionCatalog(templateRows, dimensionReadiness),
+    templateRows,
+    dimensionReadiness,
     workQueue: buildWorkQueue(),
   };
 }

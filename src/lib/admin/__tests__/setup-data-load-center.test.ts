@@ -48,7 +48,8 @@ describe("setup data load center read model", () => {
     expect(model.workflowControls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          label: "Load CSV context",
+          label: "Load structured context",
+          href: "/admin/context-layer/uploads",
           apiPath: "/api/admin/context-layer/csv-upload",
           status: "ready",
         }),
@@ -64,6 +65,32 @@ describe("setup data load center read model", () => {
         }),
       ]),
     );
+    expect(model.dimensionCatalog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Application portfolio",
+          completenessPercent: 72,
+          templateCount: expect.any(Number),
+          formats: expect.arrayContaining(["CSV"]),
+          primaryAction: {
+            label: "Start load",
+            href: "/admin/context-layer/uploads",
+          },
+        }),
+        expect.objectContaining({
+          label: "Vendor contracts",
+          primaryAction: {
+            label: "Review load",
+            href: "/admin/context-layer/uploads",
+          },
+        }),
+      ]),
+    );
+    expect(
+      model.dimensionCatalog.find(
+        (dimension) => dimension.label === "Application portfolio",
+      )?.templateCount,
+    ).toBeGreaterThan(0);
   });
 
   it("runs deterministic queue, upload guard, and validation probes", () => {
@@ -120,5 +147,11 @@ describe("setup data load center read model", () => {
         }),
       ]),
     );
+    expect(model.dimensionCatalog.map((dimension) => dimension.label)).toEqual([
+      "Application portfolio",
+      "Vendor contracts",
+      "ERP landscape",
+      "Org roles and teams",
+    ]);
   });
 });
