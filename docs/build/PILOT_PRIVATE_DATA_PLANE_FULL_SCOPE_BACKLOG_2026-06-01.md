@@ -1,0 +1,30 @@
+# Pilot Private Data Plane Full-Scope Backlog
+
+Date: 2026-06-01
+
+This note keeps the full pilot private data-plane scope visible while T341-T343
+ship the first foundation slice. T341-T343 create the governed Setup Data Load
+Center surface and template explorer. The rows below are the next required
+mini-wave before live client files should be treated as production-ready.
+
+| Row | Theme | Required outcome |
+| --- | --- | --- |
+| T353 | Azure provisioning runbook | Define Blob Storage, Service Bus, Postgres/data-plane, Key Vault, identities, networking, and environment promotion steps. |
+| T354 | SSO and SCIM role mapping | Map Entra/Clerk orgs to admin, uploader, reviewer, and approver roles with seeded test users. |
+| T355 | Private-data runbook | Document end-to-end rehearsal from sign-in to data load, quarantine, clarification, approval, commit, rollback, and audit export. |
+| T356 | Processing service decision | Lock the execution services for parsing and enrichment: Functions or Container Apps jobs, Service Bus, Document Intelligence, AI Search, and retry semantics. |
+| T357 | Durable ingestion schema | Add tables for upload runs, file manifests, quarantine cases, clarifications, approvals, load commits, and audit export. |
+| T358 | Idempotency and dedupe | Prevent duplicate facts, duplicate approvals, and repeated expensive parsing on same-file re-upload. |
+| T359 | Template versioning and mapping profiles | Persist template version, mapping profile, and validation rule version for every load. |
+| T360 | Rollback and unload | Make every committed load batch reversible without manual data cleanup. |
+| T361 | Malware scanning | Scan files before parsing or storage promotion; PHI/PII detection is not enough for enterprise upload flows. |
+| T362 | Encryption and key policy | Decide CMK/BYOK posture, Key Vault ownership, storage encryption, secret rotation, and customer visibility. |
+| T363 | Retention and deletion policy | Define raw-file, quarantine, intermediate, failed-load, committed-load, and pilot-offboarding retention. |
+| T364 | Audit export | Let client admins export upload, load, quarantine, clarification, approval, and rollback history. |
+| T365 | Observability and cost limits | Alert on queue failures, parse failures, retry storms, long-running jobs, and Azure spend guardrail breaches. |
+| T366 | Tenant isolation test pack | Prove one client cannot see, upload, approve, commit, or export another client data-plane record. |
+| T367 | Legal and data-use policy pack | Align consent copy with DPA, BAA, prohibited-data, retention, and customer offboarding policy. |
+| T368 | End-to-end pilot smoke | Browser/API/data-plane smoke from SSO to committed load and Source/Moves/Tower/Intelligence output visibility. |
+
+Execution rule: do not mark the pilot private data-plane robust until these rows
+have PRs, tests, release records, and production evidence.

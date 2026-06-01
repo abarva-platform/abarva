@@ -2,6 +2,7 @@ import { COLORS, ADMIN_LAYOUT } from "@/lib/design/design-tokens";
 
 export type AdminSubSectionId =
   | "overview"
+  | "data-loads"
   | "data-trust"
   | "connectors"
   | "inbox"
@@ -50,6 +51,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     subtitle: "Setup status and next actions",
     href: "/admin",
     group: "Setup",
+  },
+  {
+    id: "data-loads",
+    label: "Data Loads",
+    subtitle: "Upload runs and templates",
+    href: "/admin/setup",
   },
   {
     id: "data-trust",
