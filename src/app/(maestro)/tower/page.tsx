@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/TowerIndexPage';
+import { PortfolioSequenceView } from '@/components/admin/tower/PortfolioSequenceView';
 import { MovePortfolioCardPanel } from '@/components/tower/MovePortfolioCardPanel';
 import { TowerOutcomeReportDownload } from '@/components/tower/TowerOutcomeReportDownload';
 import {
@@ -50,6 +51,7 @@ import {
   type AtlasReasoningInput,
 } from '@/lib/tower/atlas-interpretation-view';
 import { buildTowerRightRailReasoningTrace } from '@/lib/tower/atlas-reasoning-trace';
+import { buildPortfolioSequenceView } from '@/lib/tower/portfolio-sequence-view';
 import { appendAtlasReasoningTrace } from '@/lib/atlas/repository';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
@@ -538,6 +540,12 @@ export default async function TowerPage({
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
   const towerSubstrateCounts = await buildTowerSubstrateCounts(towerInitiatives, towerVendors);
+  const portfolioSequenceView = activeClient
+    ? buildPortfolioSequenceView({
+        clientKey: activeClient.key,
+        clientName: towerSetupInitiativesFeed.tenantName,
+      })
+    : null;
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   // The dashboard band is fixed. Canvas controls can change the lower pane,
   // but stale ?lens= URLs must not re-rank the executive metrics underneath.
@@ -606,6 +614,7 @@ export default async function TowerPage({
       substrateCounts={towerSubstrateCounts}
       activeTab={activeTab}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
+      portfolioSequenceSlot={portfolioSequenceView ? <PortfolioSequenceView model={portfolioSequenceView} /> : null}
       reportDownloadSlot={
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link

@@ -2063,6 +2063,7 @@ interface TowerIndexPageProps {
   portfolioSummarySlot?: ReactNode;
   cascadeGraphSlot?: ReactNode;
   towerHandoffSlot?: ReactNode;
+  portfolioSequenceSlot?: ReactNode;
   towerSubmenuSlot?: ReactNode;
   towerLensSlot?: ReactNode;
   /**
@@ -2108,6 +2109,7 @@ export function TowerIndexPage({
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
   towerHandoffSlot: _p4,
+  portfolioSequenceSlot,
   towerSubmenuSlot,
   towerLensSlot: _p6,
   reportDownloadSlot,
@@ -2468,6 +2470,7 @@ export function TowerIndexPage({
           {activeTab === 'portfolio' ? (
             <>
           {kpiBand}
+          {portfolioSequenceSlot}
 
           <CanvasViewTabs
             active={activeCanvasView}
