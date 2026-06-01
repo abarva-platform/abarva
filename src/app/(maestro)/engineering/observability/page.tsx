@@ -99,13 +99,13 @@ const S = {
 
 function isPlatformAdmin(user: Awaited<ReturnType<typeof currentUser>>): boolean {
   const role = (user?.publicMetadata?.role as string | undefined) ?? '';
-  const fallbackRole =
-    (user?.unsafeMetadata?.role as string | undefined)
-    ?? (user?.publicMetadata?.legacyRole as string | undefined);
+  const platformRole =
+    (user?.publicMetadata?.platformRole as string | undefined)
+    ?? (user?.unsafeMetadata?.platformRole as string | undefined);
   const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
   return (
-    role === 'admin'
-    || fallbackRole === 'admin'
+    role === 'platform_admin'
+    || platformRole === 'platform_admin'
     || (!!primaryEmail && PLATFORM_ADMIN_EMAIL_ALLOWLIST.has(primaryEmail))
   );
 }

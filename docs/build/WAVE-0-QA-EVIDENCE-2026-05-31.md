@@ -2,7 +2,7 @@
 
 ## Status
 
-Candidate evidence packet for Wave 0 quality-spine harnesses. Local implementation checks and credentialed L4 tenant-isolation passed. L6 human retest on the PR preview found a NO-GO on `/engineering/observability` tenant exposure; this packet records the corrective action and the remaining preview retest scope.
+Candidate evidence packet for Wave 0 quality-spine harnesses. Local implementation checks and credentialed L4 tenant-isolation passed. L6 human retest on the PR preview found a NO-GO on `/engineering/observability` tenant exposure; deployed browser crawl then found the same class of exposure for the SkyHarbor tenant-admin persona. This packet records the tightened platform-only corrective action and the remaining preview retest scope.
 
 ## Coverage Summary
 
@@ -13,7 +13,7 @@ Candidate evidence packet for Wave 0 quality-spine harnesses. Local implementati
 | L3 Contract | Pure TypeScript interfaces for answer-quality score, evidence ledger, readiness assessment, telemetry, comprehension gate, and Source Nexus `answerQuality` response | Passed: `npx tsc --noEmit --pretty false` |
 | L4 E2E | `tests/e2e/tenant-isolation/*` for protected-route redirect, per-client DOM isolation, and network-response probe | Passed credentialed local serial run: 10 tests |
 | L5 Answer quality | `src/lib/eval/answer-quality/fixtures/wave0-known-good.jsonl` and `wave0-known-bad.jsonl` plus CI gate script | Passed: 50 known-good accepted, 30 known-bad rejected |
-| L6 Human | Browser walkthrough as Apex, Meridian, SkyHarbor on PR preview | Retest found one critical observability isolation blocker; route now locally gated to platform admins pending preview redeploy/retest |
+| L6 Human | Browser walkthrough as Apex, Meridian, SkyHarbor on PR preview | Retest found one critical observability isolation blocker; deployed automation also found tenant-admin exposure; route now locally gated to explicit platform admins pending preview redeploy/retest |
 
 ## Harness Scores
 
@@ -42,7 +42,7 @@ Local HTTP crawl was run against `next start` on port 3011 with the local env lo
 | `/engineering/observability` | 307 to `/sign-in?redirect=%2Fengineering%2Fobservability` |
 | `/api/health` | 200 JSON: `ok: true`; `postgres: true`; `direct_postgres: true`; `azure_graph: postgres` |
 
-Vercel PR preview browser access is protected by Vercel Authentication, so unauthenticated preview crawling stops at the Vercel login screen. In-app localhost browser navigation also returned `ERR_BLOCKED_BY_CLIENT`; local validation used HTTP crawl instead.
+Vercel PR preview browser access is protected by Vercel Authentication. The first in-app and headless attempts stopped at the Vercel login screen. Follow-up automation used Vercel's protected-deployment bypass path without logging the bypass secret and reached the deployed AbarVa sign-in page.
 
 Credentialed L4 tenant isolation was run against `next start` on port 3012 with the same local env. A parallel run produced a false red from concurrent Clerk server-ticket sessions for the same persona set; the deterministic serial run passed all 10 tests. `npm run wave0:tenant-isolation` pins this run to one worker.
 
@@ -56,6 +56,16 @@ Credentialed L6 retest on the PR preview with canonical personas (`cio@apex-reta
 - `/engineering/observability` rendered multi-client sample telemetry to all three client personas; this was treated as a critical NO-GO because the route is documented as internal-only.
 
 Corrective action: `/engineering/observability` now requires a platform-admin role or allowlisted platform operator email before rendering telemetry rows. Authenticated non-admin client personas receive an `Admin access only` notice and no `apex-retail`, `meridian-health`, or `skyharbor-air` telemetry row labels.
+
+Additional deployed browser crawl after bypassing Vercel Deployment Protection:
+
+- Logged-out `/home`, `/tower`, `/source`, and `/engineering/observability` redirected to `/sign-in` with no tenant names visible.
+- Apex Retail, Meridian Health, and SkyHarbor executive personas authenticated successfully with access code `424242`.
+- Deployed route matrix for those three personas passed `/home`, `/tower`, `/source`, `/intelligence`, `/engineering/observability`, and query-param isolation checks with no forbidden tenant names and no captured route/RSC 4xx/5xx responses.
+- `/engineering/observability` was blocked for those three executive personas.
+- Deployed crawl found a remaining critical gap for `admin@skyharbor-air.example.com`: the tenant-admin persona could still view all three telemetry rows because the route treated generic Clerk `role: "admin"` as platform admin.
+
+Second corrective action: `/engineering/observability` no longer treats generic `role: "admin"` or `legacyRole: "admin"` as platform-admin authority. Cross-client telemetry now requires `role: "platform_admin"`, `platformRole: "platform_admin"`, or the explicit AbarVa platform-operator email allowlist. A focused regression now covers the SkyHarbor tenant-admin persona.
 
 Follow-up local browser crawl after the corrective action:
 
@@ -78,7 +88,8 @@ The fixture harness includes 50 known-good and 30 known-bad answers. Human L6 an
 | Priority | Issue | Status |
 |---|---|---|
 | P1 | Playwright isolation requires real Clerk credentials; placeholder auth cannot prove route isolation | Closed for local Wave 0: credentialed serial run passed 10/10 |
-| P1 | L6 retest found `/engineering/observability` exposed all three client row labels to authenticated client personas | Locally remediated with platform-admin gate and focused regression test; requires preview redeploy/retest |
+| P1 | L6 retest found `/engineering/observability` exposed all three client row labels to authenticated client personas | Remediated for executive client personas; deployed crawl then found tenant-admin exposure through generic `role: "admin"` |
+| P1 | Deployed crawl found `admin@skyharbor-air.example.com` could view all three observability telemetry rows | Locally remediated by requiring explicit platform-admin metadata or allowlisted AbarVa operator email; focused regression added; requires preview redeploy/retest |
 | P2 | L6 retest found consistent RSC prefetch 503s on `/admin/dossiers` and `/tower?tab=programme_gates` | Not reproduced locally in authenticated browser crawl; requires Vercel-authenticated preview retest |
 | P2 | L6 retest found SkyHarbor Atlas truncation on prompts 1 and 3 | Locally remediated in Tower response shaper; regression prevents compacted lines ending in `and.`, `or to proceed with.`, or similar connector fragments |
 | P2 | Evidence/readiness/comprehension gates are inserted into Source Nexus runtime responses, but the streaming Nexus route still needs a separate SSE-safe wrapper design | Follow-up runtime wiring before declaring full Wave 0 product enforcement |
@@ -87,7 +98,7 @@ The fixture harness includes 50 known-good and 30 known-bad answers. Human L6 an
 
 ## Go/No-Go Memo
 
-No-go for production sign-off until the remediated `/engineering/observability` platform-admin gate and Atlas truncation fix are redeployed and retested on the PR preview. Local build, contract, release, lint, unit, Wave 0 standing gate, answer-quality gates, credentialed L4 tenant isolation, focused observability access-control regression, and Tower response-shaper truncation regression are green. Remaining L6 preview retest scope: observability gate, RSC prefetch 503s, and SkyHarbor prompts 1/3.
+No-go for production sign-off until the tightened `/engineering/observability` platform-only gate and Atlas truncation fix are redeployed and retested on the PR preview. Local build, contract, release, lint, unit, Wave 0 standing gate, answer-quality gates, credentialed L4 tenant isolation, focused observability access-control regression, and Tower response-shaper truncation regression are green. Remaining L6 preview retest scope: observability gate including tenant-admin persona, RSC prefetch 503s, and SkyHarbor prompts 1/3.
 
 ## Local Validation Log
 
@@ -99,7 +110,7 @@ No-go for production sign-off until the remediated `/engineering/observability` 
 | `BASE_URL=http://127.0.0.1:3012 npx playwright test tests/e2e/tenant-isolation --reporter=list --workers=1` | Passed: 10 credentialed tenant-isolation tests |
 | `npx jest src/lib/source/__tests__/nexus-api-live-context.test.ts src/__tests__/integration/source/source-nexus-api-stub.test.ts src/lib/agent/quality/__tests__/live-answer-quality.test.ts src/lib/agent/comprehension-gate/__tests__/lint.test.ts --runInBand` | Passed: 4 suites, 16 tests |
 | `npx jest src/lib/eval/answer-quality/__tests__/scorer.test.ts src/lib/agent/evidence-ledger/__tests__/composer.test.ts src/lib/agent/readiness-score/__tests__/scorer.test.ts src/lib/agent/comprehension-gate/__tests__/lint.test.ts src/lib/observability/__tests__/request-telemetry.test.ts src/lib/agent/quality/__tests__/live-answer-quality.test.ts --runInBand` | Passed: 6 suites, 14 tests |
-| `npx jest src/__tests__/integration/observability/observability-access.test.tsx --runInBand` | Passed: unauth redirect, client persona block, admin role access, allowlisted operator access |
+| `npx jest src/__tests__/integration/observability/observability-access.test.tsx --runInBand` | Passed: unauth redirect, client persona block, tenant-admin block, explicit platform-admin role access, allowlisted operator access |
 | `npx jest src/lib/agent/__tests__/response-shape-regression.test.ts src/lib/agent/__tests__/response-shape.test.ts --runInBand` | Passed: 2 suites, 48 tests, including no dangling connector fragment after Tower compaction |
 | Authenticated local browser crawl on `next start` port 3028 | Passed: admin sees observability telemetry rows; all three client personas see admin-only notice; Tower tabs and admin dossiers returned 200 with no captured route/RSC 4xx/5xx |
 | `npm run test:nav` | Passed: 1 suite, 26 tests |

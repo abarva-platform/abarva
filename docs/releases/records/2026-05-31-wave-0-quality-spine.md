@@ -35,8 +35,8 @@ Adds the first Wave 0 quality-spine harnesses that future product and Source wav
 - New live-answer quality wrapper under `src/lib/agent/quality/live-answer-quality.ts`.
 - Source Nexus stub responses now include an `answerQuality` result and render Source answers through the Wave 0 quality wrapper.
 - New request telemetry summary and PostHog adapter under `src/lib/observability/**`.
-- New internal route `src/app/(maestro)/engineering/observability/page.tsx`, gated to platform admins so client personas cannot view cross-client telemetry rows.
-- New observability access-control regression test for unauthenticated redirect, client-persona block, admin-role access, and allowlisted operator access.
+- New internal route `src/app/(maestro)/engineering/observability/page.tsx`, gated to explicit platform admins so client personas and tenant-admin personas cannot view cross-client telemetry rows.
+- New observability access-control regression test for unauthenticated redirect, client-persona block, tenant-admin block, explicit platform-admin role access, and allowlisted operator access.
 - Tightens Tower response shaping so compacted Atlas answers do not end on dangling connector fragments such as `and.` or `or to proceed with.` after fixed word-limit trims.
 - New tenant-isolation Playwright specs under `tests/e2e/tenant-isolation/**`.
 - New serial credentialed L4 runner, `npm run wave0:tenant-isolation`, for Clerk server-ticket tenant-isolation execution.
@@ -50,7 +50,7 @@ Adds the first Wave 0 quality-spine harnesses that future product and Source wav
 - Passed local validation: `node scripts/ci/answer-quality-gate.mjs` with 50 known-good, 30 known-bad, and 100% fixture classification.
 - Passed local validation: `npm run wave0:quality-gate`.
 - Passed local validation: focused Source runtime quality wiring tests, 4 suites and 16 tests.
-- Passed local validation: focused observability access-control regression, 1 suite and 4 tests.
+- Passed local validation: focused observability access-control regression, 1 suite and 5 tests.
 - Passed local validation: focused Tower response-shaper regressions, 2 suites and 48 tests.
 - Passed local validation: `npm run test:nav`, 1 suite and 26 tests.
 - Passed local validation: `npm run test:behaviors`, 4 suites and 90 tests.
@@ -64,13 +64,13 @@ Adds the first Wave 0 quality-spine harnesses that future product and Source wav
 - Passed local validation: `git diff --check`.
 - Passed local validation: `npm run release:check -- --base origin/main --head HEAD`.
 - Playwright tenant-isolation specs require real Clerk credentials and a running dev server; placeholder auth is not a green signal. Local credentialed serial run passed.
-- Vercel PR previews are protected by Vercel Authentication, so unauthenticated preview browser crawling reaches the Vercel login screen rather than the app.
-- Credentialed L6 retest on the PR preview passed canonical auth, logged-out protection, non-observability route identity, query-param isolation, and most answer-quality checks. It found a critical observability isolation issue: `/engineering/observability` showed `apex-retail`, `meridian-health`, and `skyharbor-air` sample rows to authenticated client personas. The route is now platform-admin gated locally and needs preview redeploy/retest.
+- Vercel PR previews are protected by Vercel Authentication. Follow-up automation used Vercel's protected-deployment bypass path without logging the bypass secret and reached the deployed AbarVa sign-in page.
+- Credentialed L6 retest on the PR preview passed canonical auth, logged-out protection, non-observability route identity, query-param isolation, and most answer-quality checks. It found a critical observability isolation issue: `/engineering/observability` showed `apex-retail`, `meridian-health`, and `skyharbor-air` sample rows to authenticated client personas. Deployed browser crawl after the first remediation passed the three executive persona checks but found the same exposure for `admin@skyharbor-air.example.com`; the route now requires explicit `platform_admin` metadata or the AbarVa platform-operator email allowlist, and needs preview redeploy/retest.
 - The same L6 retest reported warning-level residuals: consistent RSC prefetch 503s on `/admin/dossiers` and `/tower?tab=programme_gates`, plus two SkyHarbor Atlas responses ending mid-sentence. The Atlas truncation class is now locally remediated in the response shaper. The RSC 503 warning did not reproduce in authenticated local browser crawl and remains a Vercel-authenticated preview retest target.
 
 ## Rollout Plan
 
-Merge to `main` and deploy after credentialed L6 sign-off. The internal dashboard becomes available to platform admins at `/engineering/observability`; authenticated client personas receive an admin-only notice with no telemetry rows. The Wave 0 harnesses become available to CI and future wave PRs through `Wave 0 Quality Gate`.
+Merge to `main` and deploy after credentialed L6 sign-off. The internal dashboard becomes available only to explicit platform admins at `/engineering/observability`; authenticated client and tenant-admin personas receive an admin-only notice with no telemetry rows. The Wave 0 harnesses become available to CI and future wave PRs through `Wave 0 Quality Gate`.
 
 ## Rollback Plan
 
@@ -86,6 +86,6 @@ Merge to `main` and deploy after credentialed L6 sign-off. The internal dashboar
 ## Known Gaps
 
 - This first Wave 0 slice provides deterministic harnesses, standing CI, a live-answer wrapper, and Source Nexus runtime insertion. It does not yet insert the wrapper into the streaming Nexus SSE route; that needs a separate streaming-safe design.
-- Human L6 walkthrough still needs real browser sessions across Apex, Meridian, and SkyHarbor before production sign-off.
+- Human L6 walkthrough still needs real browser sessions across Apex, Meridian, SkyHarbor, and the SkyHarbor tenant-admin persona before production sign-off.
 - After the observability access-control and Atlas truncation patches deploy, retest the PR preview for the observability gate, RSC prefetch 503s, and SkyHarbor prompts 1/3.
 - Broad `npm run test:integration` is an existing red baseline and must be treated separately from Wave 0-specific green gates unless a fresh `origin/main` baseline proves otherwise.

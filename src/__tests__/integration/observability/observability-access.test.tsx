@@ -69,9 +69,25 @@ describe('/engineering/observability access control', () => {
     expect(html).not.toContain('Live mode');
   });
 
-  it('shows telemetry rows to platform admin roles', async () => {
+  it('blocks tenant admin roles from cross-client telemetry rows', async () => {
     signedInAs({
-      publicMetadata: { role: 'admin' },
+      publicMetadata: { role: 'admin', clientId: 'skyharbor' },
+      unsafeMetadata: {},
+      primaryEmailAddress: { emailAddress: 'admin@skyharbor-air.example.com' },
+    });
+
+    const html = await renderObservabilityPage();
+
+    expect(html).toContain('Admin access only');
+    for (const clientKey of CLIENT_KEYS) {
+      expect(html).not.toContain(clientKey);
+    }
+    expect(html).not.toContain('Live mode');
+  });
+
+  it('shows telemetry rows to explicit platform admin roles', async () => {
+    signedInAs({
+      publicMetadata: { role: 'platform_admin' },
       unsafeMetadata: {},
       primaryEmailAddress: { emailAddress: 'operator@example.com' },
     });
