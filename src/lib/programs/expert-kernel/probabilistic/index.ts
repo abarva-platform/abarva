@@ -13,3 +13,8 @@ export {
   buildProbabilisticConfig,
   buildValueForecastDistributions,
 } from './input-wrappers';
+export type {
+  ProbabilisticValueForecast,
+  ProbabilisticValueForecastInput,
+} from './value-forecast-mc';
+export { buildProbabilisticValueForecast } from './value-forecast-mc';
