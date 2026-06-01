@@ -14,6 +14,7 @@ import { AMS_VENDOR_CONSOLIDATION_2026_INSTANCE } from '@/lib/source/source-even
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { PatternChip } from '@/components/source/PatternChip';
+import { EstimateAssumptionDisclosure } from '@/components/source/EstimateAssumptionDisclosure';
 import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
@@ -725,6 +726,14 @@ function BafoScenarioCompare() {
       >
         Deterministic seed · SRC-AMS-2026 BAFO scenarios reflect fixture context only. Saving estimates are directional and deterministic — not live predictions. Vendor B and Vendor C scenarios are contingent on active blocker resolution.
       </div>
+      <EstimateAssumptionDisclosure
+        basis="BAFO savings and cost comparisons are directional estimates derived from fixture scenario values, normalized vendor pricing, and blocker status."
+        assumptions={[
+          'Vendor scope remains comparable through BAFO and no hidden carve-outs are accepted.',
+          'Transition one-time costs remain separated from steady-state run-rate savings.',
+          'Active blockers for Vendor B and Vendor C are resolved before any scenario is treated as executable.',
+        ]}
+      />
     </div>
   );
 }
@@ -2173,6 +2182,14 @@ function AwardDecisionTab() {
         AMS Vendor Consolidation engagement. Live scoring and committee ratification are deferred
         to the programme award management workflow.
       </div>
+      <EstimateAssumptionDisclosure
+        basis="Award recommendation economics are directional estimates tied to fixture scoring, normalized TCO, and pre-award condition status."
+        assumptions={[
+          'The recommended vendor preserves the same scope and service-level basis used in the normalized comparison.',
+          'Pre-award conditions close before supplier commitment or signature.',
+          'Finance validates baseline spend, transition costs, and realized savings before the value is reported as verified.',
+        ]}
+      />
     </div>
   );
 }
