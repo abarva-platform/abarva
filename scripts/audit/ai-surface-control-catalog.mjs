@@ -12,6 +12,7 @@ const CATALOG_PATH = path.join(
 const REQUIRED_CONTROL_KINDS = new Set([
   'ai-label',
   'citation',
+  'citation-gap',
   'confidence',
   'human-approval-gate',
   'edit-before-commit',

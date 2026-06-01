@@ -18,6 +18,13 @@
           "evidence": ["AgentCitation", "response.citations", "inlineNodes"]
         },
         {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowRenderedResponseCitationGap"
+          ]
+        },
+        {
           "kind": "confidence",
           "evidence": ["AIConfidenceIndicator", "viewModel.confidence.tier"]
         }
@@ -37,6 +44,13 @@
         {
           "kind": "responsibility-footer",
           "evidence": ["AIResponsibilityFooter", "compact"]
+        },
+        {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowPlainTextCitationGap"
+          ]
         }
       ]
     },
@@ -54,6 +68,13 @@
         {
           "kind": "responsibility-footer",
           "evidence": ["AIResponsibilityFooter", "tone=\"dark\"", "compact"]
+        },
+        {
+          "kind": "citation-gap",
+          "evidence": [
+            "CitationGapNotice",
+            "shouldShowPlainTextCitationGap"
+          ]
         }
       ]
     },

@@ -21,6 +21,8 @@ import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { stripArtifactsForDisplay, type Artifact } from "@/lib/agent/artifacts";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
+import { CitationGapNotice } from "@/components/agent/CitationGapNotice";
+import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1102,6 +1104,9 @@ function DrawerStreamingTurn({
             {/* Surface 2 PR1 — render through AgentMarkdown so Nexus's
                 markdown (bold, tables, IDs, citation chips) renders
                 properly instead of as raw text. */}
+            {shouldShowPlainTextCitationGap(response) ? (
+              <CitationGapNotice tone="dark" compact />
+            ) : null}
             <AgentMarkdown text={response} />
             {isStreaming && (
               <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
@@ -1156,6 +1161,7 @@ function DrawerChatBubble({
   onArtifact?: (artifact: Artifact) => void;
 }) {
   const isUser = role === "user";
+  const cleanedAgentText = isUser ? text : stripArtifactsForDisplay(text);
 
   return (
     <div
@@ -1216,14 +1222,13 @@ function DrawerChatBubble({
           wordBreak: "break-word",
         }}
       >
-        {isUser ? (
-          text
-        ) : (
-          <AgentMarkdown text={stripArtifactsForDisplay(text)} />
-        )}
+        {!isUser && shouldShowPlainTextCitationGap(cleanedAgentText) ? (
+          <CitationGapNotice tone="dark" compact />
+        ) : null}
+        {isUser ? text : <AgentMarkdown text={cleanedAgentText} />}
         {!isUser ? (
           <GeneratedSourceArtifactSave
-            text={stripArtifactsForDisplay(text)}
+            text={cleanedAgentText}
             sourceUploadContext={sourceUploadContext}
             onArtifact={onArtifact}
           />
