@@ -19,7 +19,11 @@ import { isCanonicalSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/cons
 import type { SourceStageKey } from '@/lib/source/types';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
+  artifactStateRowToView,
+  evidenceStateRowToView,
   gateCriterionStateRowToView,
+  type SourceEventArtifactStateRow,
+  type SourceEventEvidenceStateRow,
   type SourceEventGateCriterionStateRow,
 } from '@/lib/source/canvas-substrate/types';
 import {
@@ -117,12 +121,34 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
       }
 
-      const { data: criterionRows, error: criteriaFetchError } = await supabase
-        .from('source_event_gate_criterion_states')
-        .select('*')
-        .eq('source_event_id', eventId);
+      const [
+        { data: criterionRows, error: criteriaFetchError },
+        { data: artifactRows, error: artifactFetchError },
+        { data: evidenceRows, error: evidenceFetchError },
+      ] = await Promise.all([
+        supabase
+          .from('source_event_gate_criterion_states')
+          .select('*')
+          .eq('source_event_id', eventId),
+        supabase
+          .from('source_event_artifact_states')
+          .select('*')
+          .eq('source_event_id', eventId)
+          .eq('stage_key', persistedEvent.current_stage_key),
+        supabase
+          .from('source_event_evidence_states')
+          .select('*')
+          .eq('source_event_id', eventId)
+          .eq('stage_key', persistedEvent.current_stage_key),
+      ]);
       if (criteriaFetchError) {
         return Response.json({ error: 'lookup_failed', detail: criteriaFetchError.message }, { status: 500 });
+      }
+      if (artifactFetchError) {
+        return Response.json({ error: 'lookup_failed', detail: artifactFetchError.message }, { status: 500 });
+      }
+      if (evidenceFetchError) {
+        return Response.json({ error: 'lookup_failed', detail: evidenceFetchError.message }, { status: 500 });
       }
 
       const promotionReadiness = evaluateStagePromotionReadiness({
@@ -130,6 +156,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         targetStage: stageKey,
         criteria: ((criterionRows ?? []) as SourceEventGateCriterionStateRow[]).map(
           gateCriterionStateRowToView,
+        ),
+        artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
+          artifactStateRowToView,
+        ),
+        evidence: ((evidenceRows ?? []) as SourceEventEvidenceStateRow[]).map(
+          evidenceStateRowToView,
         ),
         reason,
       });

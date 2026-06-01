@@ -59,7 +59,10 @@ export default async function SourceEventsPage({
           workspace={
             <SourceWorkingPane>
               {pendingEvents.length > 0 && (
-                <AdminSourceEventApprovalQueue events={pendingEvents} />
+                <AdminSourceEventApprovalQueue
+                  events={pendingEvents}
+                  currentUserId={tenancy?.userId ?? null}
+                />
               )}
               <SourceEventsEntryHeader
                 events={events}

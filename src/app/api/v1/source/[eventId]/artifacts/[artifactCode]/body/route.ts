@@ -179,11 +179,23 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     // Empty body clears the column → falls back to template.
     const trimmed = body.trim();
     const nowIso = new Date().toISOString();
+    const existingGenerationMetadata =
+      artifactRow.body_generation_metadata && typeof artifactRow.body_generation_metadata === 'object'
+        ? artifactRow.body_generation_metadata
+        : null;
     const update: Partial<SourceEventArtifactStateRow> = {
       body: trimmed.length === 0 ? null : body,
       body_format: format,
       body_authored_by: currentUser?.clerkUserId ?? null,
       body_updated_at: nowIso,
+      body_generation_metadata:
+        trimmed.length > 0 && existingGenerationMetadata
+          ? {
+              ...existingGenerationMetadata,
+              humanEditedAt: nowIso,
+              humanEditedByUserId: currentUser?.clerkUserId ?? null,
+            }
+          : existingGenerationMetadata,
       updated_at: nowIso,
     };
     // Authoring real content moves the tier off `stub` automatically —

@@ -31,6 +31,7 @@ import {
   type SourceEventArtifactStateRow,
   type SourceEventArtifactStatus,
 } from '@/lib/source/canvas-substrate/types';
+import { isArtifactHumanReviewed } from '@/lib/source/source-governance-enforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -189,16 +190,17 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 409 },
       );
     }
-    if (
-      (status === 'approved' || status === 'locked') &&
-      !artifactRow.linked_artifact_id &&
-      !artifactRow.body?.trim()
-    ) {
+    const artifactView = artifactStateRowToView(artifactRow);
+    if ((status === 'approved' || status === 'locked') && !isArtifactHumanReviewed(artifactView)) {
       return Response.json(
         {
-          error: 'artifact_content_required',
+          error: artifactRow.body_generation_metadata
+            ? 'human_review_required'
+            : 'artifact_content_required',
           detail:
-            `Artifact ${artifactCode} must have authored body content or a linked uploaded artifact before it can be marked ${status}.`,
+            artifactRow.body_generation_metadata
+              ? `Artifact ${artifactCode} is AI-generated and must be human-edited before it can be marked ${status}.`
+              : `Artifact ${artifactCode} must have authored body content or a linked uploaded artifact before it can be marked ${status}.`,
         },
         { status: 409 },
       );

@@ -1,7 +1,9 @@
 import {
   evaluateCriterionMetReadiness,
   evaluateStagePromotionReadiness,
+  isArtifactHumanReviewed,
   validateApprovalReason,
+  verifiedGateCriterionForDisplay,
 } from '../source-governance-enforcement';
 import type {
   SourceEventArtifactState,
@@ -80,6 +82,36 @@ describe('Source governance enforcement', () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it('does not treat an AI-only generated body as human-reviewed artifact evidence', () => {
+    expect(
+      isArtifactHumanReviewed(
+        artifact({
+          artifactCode: 'd01_strategy_memo',
+          status: 'approved',
+          body: 'AI generated strategy outline.',
+          bodyGenerationMetadata: {
+            model: 'claude-sonnet-4-6',
+            generatedAt: '2026-06-01T00:00:00.000Z',
+          },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isArtifactHumanReviewed(
+        artifact({
+          artifactCode: 'd01_strategy_memo',
+          status: 'approved',
+          body: 'AI generated strategy outline with human edits.',
+          bodyGenerationMetadata: {
+            model: 'claude-sonnet-4-6',
+            generatedAt: '2026-06-01T00:00:00.000Z',
+            humanEditedAt: '2026-06-01T00:05:00.000Z',
+          },
+        }),
+      ),
+    ).toBe(true);
+  });
+
   it('blocks non-adjacent stage promotion even when criteria are met', () => {
     const verdict = evaluateStagePromotionReadiness({
       currentStage: 'strategy',
@@ -125,6 +157,58 @@ describe('Source governance enforcement', () => {
     });
 
     expect(verdict.ok).toBe(true);
+  });
+
+  it('blocks adjacent promotion when legacy met criteria lack verified artifacts/evidence/reason', () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: 'strategy',
+      targetStage: 'scope',
+      criteria: [
+        criterion({ criterionId: 'GATE-STRATEGY-01', state: 'met', notes: null }),
+        criterion({ criterionId: 'GATE-STRATEGY-02', state: 'met', notes: null }),
+        criterion({ criterionId: 'GATE-STRATEGY-03', state: 'met', notes: null }),
+      ],
+      artifacts: [
+        artifact({
+          artifactCode: 'd01_strategy_memo',
+          status: 'not_started',
+          body: null,
+        }),
+      ],
+      evidence: [
+        evidence({
+          requirementId: 'EVID-SRC-STR-INCUMBENT',
+          currentState: 'Not Requested',
+        }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers.map((b) => b.code)).toContain('gate_criterion_unverified');
+  });
+
+  it('does not display legacy invalid met criteria as met', () => {
+    const display = verifiedGateCriterionForDisplay({
+      criterion: criterion({ criterionId: 'GATE-STRATEGY-01', state: 'met', notes: null }),
+      artifacts: [
+        artifact({
+          artifactCode: 'd01_strategy_memo',
+          status: 'not_started',
+          body: null,
+        }),
+      ],
+      evidence: [
+        evidence({
+          requirementId: 'EVID-SRC-STR-INCUMBENT',
+          currentState: 'Not Requested',
+        }),
+      ],
+    });
+
+    expect(display.state).toBe('pending');
+    expect(display.reviewedAt).toBeNull();
+    expect(display.notes).toContain('Previously marked met');
   });
 });
 
