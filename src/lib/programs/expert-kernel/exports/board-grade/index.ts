@@ -76,6 +76,10 @@ export {
   type EstimateModel,
   type EstimateSections,
 } from './estimate-model-model';
+export {
+  renderProbabilisticForecastHtml,
+  type ProbabilisticForecastRendererInput,
+} from './probabilistic-forecast-renderer';
 
 // The generic, kernel-derived sibling of the Apex reference Estimate Model —
 // the board-grade Estimate & Financial Model for a REAL, originated Move.
