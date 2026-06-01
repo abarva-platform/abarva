@@ -12,6 +12,8 @@ import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
 import { AMS_VENDOR_CONSOLIDATION_2026_INSTANCE } from '@/lib/source/source-event-instances';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { AILabel } from '@/components/abarva/AILabel';
+import { AIConfidenceIndicator } from '@/components/abarva/AIConfidenceIndicator';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { PatternChip } from '@/components/source/PatternChip';
 import { EstimateAssumptionDisclosure } from '@/components/source/EstimateAssumptionDisclosure';
@@ -2100,6 +2102,79 @@ function AwardVendorCard({ vendor }: { vendor: VendorAwardProfile }) {
   );
 }
 
+function AwardRecommendationAccountability({
+  accountability,
+}: {
+  accountability: ReturnType<typeof buildAwardDecisionView>['recommendationAccountability'];
+}) {
+  return (
+    <section
+      data-testid="source-award-recommendation-accountability"
+      style={{
+        padding: '12px 14px',
+        background: SHELL.PAPER_SOFT,
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 8,
+        margin: '0 0 18px',
+        display: 'grid',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <AILabel status="suggested" detail="Human award approval required" compact />
+        <AIConfidenceIndicator
+          tier={accountability.confidenceTier}
+          rationale={accountability.confidenceRationale}
+          compact
+        />
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        {accountability.watermark}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+        <div>
+          <div style={AWARD_ACCOUNTABILITY_LABEL}>Evidence basis</div>
+          <ul style={AWARD_ACCOUNTABILITY_LIST}>
+            {accountability.evidenceBasis.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <div style={AWARD_ACCOUNTABILITY_LABEL}>Risk caveats</div>
+          <ul style={AWARD_ACCOUNTABILITY_LIST}>
+            {accountability.riskCaveats.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 11.5,
+          lineHeight: 1.5,
+          color: SHELL.PEACH_TEXT,
+          background: SHELL.PEACH_BG,
+          border: `1px solid ${SHELL.PEACH_LINE}`,
+          borderRadius: 6,
+          padding: '7px 9px',
+        }}
+      >
+        {accountability.humanApprovalBoundary}
+      </div>
+    </section>
+  );
+}
+
 function AwardDecisionTab() {
   const view = buildAwardDecisionView();
 
@@ -2157,6 +2232,8 @@ function AwardDecisionTab() {
         )}
       </div>
 
+      <AwardRecommendationAccountability accountability={view.recommendationAccountability} />
+
       {/* Atlas guidance */}
       <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.6, margin: '0 0 20px' }}>
         {view.atlasGuidance}
@@ -2193,3 +2270,23 @@ function AwardDecisionTab() {
     </div>
   );
 }
+
+const AWARD_ACCOUNTABILITY_LABEL = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase' as const,
+  color: SHELL.INK_MUTED,
+  marginBottom: 5,
+};
+
+const AWARD_ACCOUNTABILITY_LIST = {
+  margin: 0,
+  paddingLeft: 16,
+  display: 'grid',
+  gap: 4,
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
+};

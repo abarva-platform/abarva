@@ -17,6 +17,7 @@ const REQUIRED_CONTROL_KINDS = new Set([
   'human-approval-gate',
   'edit-before-commit',
   'responsibility-footer',
+  'risk-caveat',
 ]);
 
 function fail(message, details = []) {
