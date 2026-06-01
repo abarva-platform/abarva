@@ -19,6 +19,7 @@
 import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
+import { AI_RESPONSIBILITY_FOOTER_COPY } from "@/components/abarva/AIResponsibilityFooter";
 import {
   AgentDock,
   AGENT_DOCK_MIME_ALLOWLIST,
@@ -136,6 +137,20 @@ describe("AgentDock · default mode", () => {
       within(agentTurn).getByText("Review before acting"),
     ).toBeInTheDocument();
     expect(within(userTurn).queryByText("AI Draft")).not.toBeInTheDocument();
+  });
+
+  it("renders the persistent AI responsibility footer", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByText(AI_RESPONSIBILITY_FOOTER_COPY)).toBeInTheDocument();
   });
 });
 
