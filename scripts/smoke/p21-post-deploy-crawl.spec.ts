@@ -44,4 +44,45 @@ assert.equal(comparison.p0, 1);
 assert.match(summarizeComparison(comparison), /1 P0/);
 assert.equal(comparison.findings[0]?.dimension, 'tenant-leakage');
 
+const renderedWithClerkCorsNoise: CrawlRun = {
+  ...run,
+  observations: [{
+    ...run.observations[0],
+    visibleText: 'Apex Retail Group production readiness page rendered',
+    consoleErrors: [
+      "Access to fetch at 'https://boss-griffon-61.clerk.accounts.dev/v1/client?__clerk_api_version=2025-11-10' from origin 'https://app.abarva.ai' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      'Failed to load resource: net::ERR_FAILED',
+    ],
+  }],
+};
+const clerkNoiseComparison = compareCrawlToBaseline(renderedWithClerkCorsNoise, null);
+assert.equal(clerkNoiseComparison.p0, 0);
+assert.equal(clerkNoiseComparison.p2, 1);
+assert.deepEqual(
+  clerkNoiseComparison.findings.map((finding) => finding.dimension),
+  ['third-party-console-noise'],
+);
+
+const renderedWithAppConsoleError: CrawlRun = {
+  ...renderedWithClerkCorsNoise,
+  observations: [{
+    ...renderedWithClerkCorsNoise.observations[0],
+    consoleErrors: ['TypeError: Cannot read properties of undefined'],
+  }],
+};
+const appErrorComparison = compareCrawlToBaseline(renderedWithAppConsoleError, null);
+assert.equal(appErrorComparison.p0, 1);
+assert.equal(appErrorComparison.findings[0]?.dimension, 'console-errors');
+
+const renderedWithBareNetworkConsoleError: CrawlRun = {
+  ...renderedWithClerkCorsNoise,
+  observations: [{
+    ...renderedWithClerkCorsNoise.observations[0],
+    consoleErrors: ['Failed to load resource: net::ERR_FAILED'],
+  }],
+};
+const bareNetworkConsoleComparison = compareCrawlToBaseline(renderedWithBareNetworkConsoleError, null);
+assert.equal(bareNetworkConsoleComparison.p0, 1);
+assert.equal(bareNetworkConsoleComparison.findings[0]?.dimension, 'console-errors');
+
 console.log('P21 smoke passed: personas, surface count, hard questions, and P0 tenant-leakage comparator are deterministic.');
