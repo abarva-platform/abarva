@@ -12,6 +12,14 @@ on:
         description: Production URL to test
         default: https://app.abarva.ai
         required: true
+      profile:
+        description: Gauntlet profile to run
+        default: full
+        required: true
+        type: choice
+        options:
+          - full
+          - smoke
 
 jobs:
   atlas-prod-cxo-gauntlet:
@@ -24,6 +32,7 @@ jobs:
       ATLAS_GAUNTLET_REPORT_DIR: reports/atlas-prod-comprehensive-surface
       ATLAS_GAUNTLET_API_TIMEOUT_MS: "90000"
       ATLAS_GAUNTLET_RETRIES: "2"
+      ATLAS_GAUNTLET_PROFILE: ${{ inputs.profile || 'full' }}
       PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
 
     steps:

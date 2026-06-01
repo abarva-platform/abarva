@@ -10,7 +10,7 @@
  *     scripts/qa/atlas-prod-comprehensive-surface.ts dotenv_config_path=.env.local
  */
 import 'dotenv/config';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { createClerkClient } from '@clerk/backend';
@@ -28,6 +28,8 @@ const REPORT_DIR = process.env.ATLAS_GAUNTLET_REPORT_DIR
 const API_TIMEOUT_MS = Number(process.env.ATLAS_GAUNTLET_API_TIMEOUT_MS ?? 90_000);
 const RETRIES = Number(process.env.ATLAS_GAUNTLET_RETRIES ?? 2);
 const CHROMIUM_CHANNEL = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
+const PROFILE = process.env.ATLAS_GAUNTLET_PROFILE ?? 'full';
+const PROGRESS_PATH = join(REPORT_DIR, 'progress.ndjson');
 
 interface Tenant {
   slug: string;
@@ -147,6 +149,23 @@ const QUESTIONS: Question[] = [
   { id: 'Q55-data-gaps', category: 'loaded data', text: () => 'What data is missing that prevents Atlas from giving a decision-grade answer?' },
   { id: 'Q56-executive-brief', category: 'plain language', text: () => 'Write the executive brief I can read aloud: current state, risk, industry context, and next move.' },
 ];
+
+const SMOKE_QUESTION_IDS = new Set([
+  'Q01-current-state',
+  'Q07-copiplot-usage-value',
+  'Q08-copilot-industry',
+  'Q16-signal-id-plain-english',
+  'Q40-cross-tenant-adversarial',
+  'Q48-plain-english-summary',
+]);
+
+const ACTIVE_QUESTIONS = PROFILE === 'smoke'
+  ? QUESTIONS.filter((question) => SMOKE_QUESTION_IDS.has(question.id))
+  : QUESTIONS;
+
+if (PROFILE !== 'full' && PROFILE !== 'smoke') {
+  throw new Error(`Unsupported ATLAS_GAUNTLET_PROFILE "${PROFILE}". Use "full" or "smoke".`);
+}
 
 interface Turn {
   tenantSlug: string;
@@ -473,12 +492,13 @@ function updateTotals(run: {
   turns: Turn[];
   totals: Record<string, unknown>;
 }) {
-  const expectedFourSection = run.turns.filter((turn) => QUESTIONS.find((q) => q.id === turn.questionId)?.expectFourSections).length;
+  const expectedFourSection = run.turns.filter((turn) => ACTIVE_QUESTIONS.find((q) => q.id === turn.questionId)?.expectFourSections).length;
   run.totals = {
+    profile: PROFILE,
     tenants: run.tenants.length,
     expectedTenants: TENANTS.length,
     turns: run.turns.length,
-    expectedTurns: TENANTS.length * QUESTIONS.length,
+    expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
     passedTurns: run.turns.filter((turn) => turn.scorecard.pass).length,
     status200: run.turns.filter((turn) => turn.status === 200).length,
     fallbacks: run.turns.filter((turn) => turn.scorecard.fallback).length,
@@ -491,6 +511,18 @@ function updateTotals(run: {
     tenantSessionsPassed: run.tenants.filter((tenant) => tenant.towerLoaded && tenant.crossTenantProbePassed && tenant.logoutRedirected).length,
     abortedSessions: run.tenants.filter((tenant) => tenant.aborted || tenant.sessionError).length,
   };
+}
+
+function recordProgress(event: string, payload: Record<string, unknown> = {}) {
+  const entry = {
+    ts: new Date().toISOString(),
+    event,
+    profile: PROFILE,
+    ...payload,
+  };
+  const line = JSON.stringify(entry);
+  appendFileSync(PROGRESS_PATH, `${line}\n`);
+  console.log(`[atlas-prod-surface:progress] ${line}`);
 }
 
 function writeArtifacts(run: {
@@ -507,6 +539,13 @@ function writeArtifacts(run: {
 
 async function main() {
   mkdirSync(REPORT_DIR, { recursive: true });
+  writeFileSync(PROGRESS_PATH, '');
+  recordProgress('run_started', {
+    prodUrl: PROD_URL,
+    tenants: TENANTS.length,
+    questionsPerTenant: ACTIVE_QUESTIONS.length,
+    expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+  });
   const browser = await chromium.launch({ headless: true, channel: CHROMIUM_CHANNEL });
   const run = {
     ranAt: new Date().toISOString(),
@@ -519,6 +558,7 @@ async function main() {
   try {
     for (const tenant of TENANTS) {
       console.log(`[atlas-prod-surface] login ${tenant.displayName}`);
+      recordProgress('tenant_login_started', { tenantSlug: tenant.slug, tenantDisplay: tenant.displayName });
       let auth: Awaited<ReturnType<typeof authenticate>> | null = null;
       try {
         auth = await authenticateWithRetry(browser, tenant);
@@ -531,14 +571,39 @@ async function main() {
           auth.page,
         );
         const crossTenantProbePassed = cross.status === 403 || /no_client|not in your scope|cross-tenant/i.test(cross.responseText);
+        recordProgress('tenant_session_ready', {
+          tenantSlug: tenant.slug,
+          activeClient: auth.activeClient,
+          towerLoaded,
+          crossTenantProbePassed,
+          crossTenantProbeStatus: cross.status,
+        });
 
         let networkFailureStreak = 0;
         let aborted = false;
         let abortReason: string | null = null;
-        for (const q of QUESTIONS) {
+        for (const q of ACTIVE_QUESTIONS) {
+          recordProgress('turn_started', {
+            tenantSlug: tenant.slug,
+            questionId: q.id,
+            category: q.category,
+            completedTurns: run.turns.length,
+            expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+          });
           const turn = await postAsk(tenant, q, auth.page);
           run.turns.push(turn);
           console.log(`[atlas-prod-surface] ${tenant.slug} ${q.id} status=${turn.status} mode=${turn.atlasMode} pass=${turn.scorecard.pass} latency=${turn.latencyMs}ms`);
+          recordProgress('turn_completed', {
+            tenantSlug: tenant.slug,
+            questionId: q.id,
+            status: turn.status,
+            atlasMode: turn.atlasMode,
+            pass: turn.scorecard.pass,
+            latencyMs: turn.latencyMs,
+            issues: turn.scorecard.issues,
+            completedTurns: run.turns.length,
+            expectedTurns: TENANTS.length * ACTIVE_QUESTIONS.length,
+          });
           writeArtifacts(run);
 
           networkFailureStreak = turn.status === 0 && isNetworkInterruption(turn.responseText)
@@ -548,6 +613,7 @@ async function main() {
             aborted = true;
             abortReason = `network interruption after ${q.id}`;
             console.warn(`[atlas-prod-surface] aborting ${tenant.slug}: ${abortReason}`);
+            recordProgress('tenant_aborted', { tenantSlug: tenant.slug, abortReason });
             break;
           }
         }
@@ -564,6 +630,14 @@ async function main() {
           logoutRedirected: logout.redirected,
           logoutUrl: logout.url,
           logoutError: logout.error,
+          aborted,
+          abortReason,
+        });
+        recordProgress('tenant_completed', {
+          tenantSlug: tenant.slug,
+          towerLoaded,
+          crossTenantProbePassed,
+          logoutRedirected: logout.redirected,
           aborted,
           abortReason,
         });
@@ -584,6 +658,7 @@ async function main() {
           aborted: true,
         });
         writeArtifacts(run);
+        recordProgress('tenant_failed', { tenantSlug: tenant.slug, message });
         console.error(`[atlas-prod-surface] tenant ${tenant.slug} aborted: ${message}`);
       } finally {
         await auth?.context.close().catch(() => undefined);
@@ -594,6 +669,7 @@ async function main() {
   }
 
   writeArtifacts(run);
+  recordProgress('run_completed', { totals: run.totals });
   console.log(`[atlas-prod-surface] wrote ${join(REPORT_DIR, 'raw.json')}`);
   console.log(`[atlas-prod-surface] wrote ${join(REPORT_DIR, 'index.html')}`);
   console.log(`[atlas-prod-surface] totals ${JSON.stringify(run.totals)}`);
