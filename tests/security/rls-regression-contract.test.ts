@@ -10,6 +10,8 @@ describe('RLS regression SQL contract', () => {
   it('classifies known service-role-only tables without hiding unexpected permission errors', () => {
     expect(sql).toContain('rls_regression_service_role_only_tables');
     expect(sql).toContain("EXCEPTION WHEN insufficient_privilege THEN");
+    expect(sql).toContain("WHEN OTHERS THEN\n        INSERT INTO rls_regression_findings");
+    expect(sql).not.toContain("EXCEPTION WHEN OTHERS THEN\n        INSERT INTO rls_regression_findings");
     expect(sql).toContain("'service_role_only'");
     expect(sql).toContain("'error: ' || SQLERRM");
   });

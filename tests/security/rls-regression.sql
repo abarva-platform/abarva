@@ -294,7 +294,7 @@ BEGIN
           );
         END IF;
         CONTINUE;
-      EXCEPTION WHEN OTHERS THEN
+      WHEN OTHERS THEN
         INSERT INTO rls_regression_findings VALUES (
           v_tenant.tenant_key, v_table.table_name, v_filter_col,
           -1, -1, -1, 'error: ' || SQLERRM
