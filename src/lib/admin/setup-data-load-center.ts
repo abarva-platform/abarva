@@ -1,31 +1,31 @@
-import type { ClientKey } from '@/lib/client-config';
-import { getClientOption } from '@/lib/client-config';
+import type { ClientKey } from "@/lib/client-config";
+import { getClientOption } from "@/lib/client-config";
 import {
   SEGMENT_KEYS,
   parseIngestionMessage,
   type SegmentKey,
-} from '@/lib/ingestion/azure-landing-zone-types';
-import { evaluateSensitiveUpload } from '@/lib/security/sensitive-upload-guard';
+} from "@/lib/ingestion/azure-landing-zone-types";
+import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
 import {
   NORTHSTAR_CONTEXT_TEMPLATES,
   type ContextTemplateDefinition,
-} from '@/lib/context-ingestion/template-registry';
-import { validateExtractedFacts } from '@/lib/context-ingestion/validation-engine';
+} from "@/lib/context-ingestion/template-registry";
+import { validateExtractedFacts } from "@/lib/context-ingestion/validation-engine";
 import type {
   FileClassification,
   ExtractedContextFact,
-} from '@/lib/context-ingestion/types';
+} from "@/lib/context-ingestion/types";
 import {
   ENTERPRISE_CONTEXT_TEMPLATE_TENANTS,
   ENTERPRISE_CONTEXT_TEMPLATE_VERSION,
   ENTERPRISE_CONTEXT_TEMPLATE_WORKBOOKS,
   type EnterpriseContextTemplateWorkbook,
-} from '@/lib/enterprise-context/template-schema';
-import apexManifest from '../../../docs/enterprise-context/templates/apexretail/manifest.json';
-import meridianManifest from '../../../docs/enterprise-context/templates/meridian/manifest.json';
-import arcturusManifest from '../../../docs/enterprise-context/templates/arcturus/manifest.json';
+} from "@/lib/enterprise-context/template-schema";
+import apexManifest from "../../../docs/enterprise-context/templates/apexretail/manifest.json";
+import meridianManifest from "../../../docs/enterprise-context/templates/meridian/manifest.json";
+import arcturusManifest from "../../../docs/enterprise-context/templates/arcturus/manifest.json";
 
-export type DataLoadGateStatus = 'ready' | 'needs_configuration' | 'monitored';
+export type DataLoadGateStatus = "ready" | "needs_configuration" | "monitored";
 
 export interface DataLoadRehearsalGate {
   id: string;
@@ -38,7 +38,7 @@ export interface DataLoadRehearsalGate {
 
 export interface DataLoadTemplateRow {
   id: string;
-  family: 'Context registry' | 'Day One workbook';
+  family: "Context registry" | "Day One workbook";
   dimension: string;
   title: string;
   formats: string;
@@ -81,10 +81,10 @@ export interface SetupDataLoadCenterModel {
     dayOneWorkbooks: number;
   };
   privateDataPlane: {
-    queueSchema: 'abarva.ingestion.v1';
+    queueSchema: "abarva.ingestion.v1";
     sampleSegment: SegmentKey;
     sampleMessageAccepted: boolean;
-    uploadGuardDecision: 'allow' | 'quarantine';
+    uploadGuardDecision: "allow" | "quarantine";
     validationProbeFindings: number;
   };
   tenantManifest: EnterpriseContextTemplateManifest | null;
@@ -95,6 +95,16 @@ export interface SetupDataLoadCenterModel {
     version: string;
   }>;
   rehearsalGates: ReadonlyArray<DataLoadRehearsalGate>;
+  workflowControls: ReadonlyArray<{
+    id: string;
+    label: string;
+    stage: string;
+    operatorAction: string;
+    control: string;
+    href: string | null;
+    apiPath: string;
+    status: DataLoadGateStatus;
+  }>;
   templateRows: ReadonlyArray<DataLoadTemplateRow>;
   dimensionReadiness: ReadonlyArray<{
     dimension: string;
@@ -107,7 +117,7 @@ export interface SetupDataLoadCenterModel {
     id: string;
     title: string;
     detail: string;
-    severity: 'ready' | 'attention' | 'blocked';
+    severity: "ready" | "attention" | "blocked";
   }>;
 }
 
@@ -118,91 +128,188 @@ const ENTERPRISE_CONTEXT_MANIFESTS = [
 ] as readonly EnterpriseContextTemplateManifest[];
 
 const MANIFEST_KEY_BY_CLIENT_KEY: Partial<Record<ClientKey, string>> = {
-  apexretail: 'apexretail',
-  meridian: 'meridian',
-  arcturus: 'arcturus',
+  apexretail: "apexretail",
+  meridian: "meridian",
+  arcturus: "arcturus",
 };
 
 const REHEARSAL_GATES: ReadonlyArray<DataLoadRehearsalGate> = [
   {
-    id: 'sso',
-    label: 'SSO and admin access',
-    objective: 'Admin enters through Clerk and the tenant resolver before seeing setup controls.',
-    proof: 'resolveAdminTenant and requireTenancy keep the page pinned to the active client.',
-    existingPath: 'src/lib/admin/admin-tenant.ts',
-    status: 'ready',
+    id: "sso",
+    label: "SSO and admin access",
+    objective:
+      "Admin enters through Clerk and the tenant resolver before seeing setup controls.",
+    proof:
+      "resolveAdminTenant and requireTenancy keep the page pinned to the active client.",
+    existingPath: "src/lib/admin/admin-tenant.ts",
+    status: "ready",
   },
   {
-    id: 'consent',
-    label: 'Consent and role boundary',
-    objective: 'Only upload-capable admins can send files into tenant data lanes.',
-    proof: 'Tower upload enforces tenant match and upload permission before storage.',
-    existingPath: 'src/app/api/tower/upload/route.ts',
-    status: 'ready',
+    id: "consent",
+    label: "Consent and role boundary",
+    objective:
+      "Only upload-capable admins can send files into tenant data lanes.",
+    proof:
+      "Tower upload enforces tenant match and upload permission before storage.",
+    existingPath: "src/app/api/tower/upload/route.ts",
+    status: "ready",
   },
   {
-    id: 'storage',
-    label: 'Client-scoped landing zone',
-    objective: 'Pilot files land as tenant-keyed Azure landing-zone events.',
-    proof: 'Queue messages carry tenantClientKey, segmentKey, storage path, hash, and producer metadata.',
-    existingPath: 'src/lib/ingestion/azure-landing-zone-types.ts',
-    status: 'ready',
+    id: "storage",
+    label: "Client-scoped landing zone",
+    objective: "Pilot files land as tenant-keyed Azure landing-zone events.",
+    proof:
+      "Queue messages carry tenantClientKey, segmentKey, storage path, hash, and producer metadata.",
+    existingPath: "src/lib/ingestion/azure-landing-zone-types.ts",
+    status: "ready",
   },
   {
-    id: 'quarantine',
-    label: 'Sensitive upload guard',
-    objective: 'PHI, PII, and financial identifiers are stopped before storage/indexing.',
-    proof: 'evaluateSensitiveUpload runs before context CSV and Tower persistence.',
-    existingPath: 'src/lib/security/sensitive-upload-guard.ts',
-    status: 'ready',
+    id: "quarantine",
+    label: "Sensitive upload guard",
+    objective:
+      "PHI, PII, and financial identifiers are stopped before storage/indexing.",
+    proof:
+      "evaluateSensitiveUpload runs before context CSV and Tower persistence.",
+    existingPath: "src/lib/security/sensitive-upload-guard.ts",
+    status: "ready",
   },
   {
-    id: 'processing',
-    label: 'Queue processing',
-    objective: 'Landing-zone events can be downloaded, scanned, audited, and routed to the pipeline.',
-    proof: 'consumeOneMessage returns accepted, quarantined, rejected, or transient failure outcomes.',
-    existingPath: 'src/lib/ingestion/azure-landing-zone-consumer.ts',
-    status: 'monitored',
+    id: "processing",
+    label: "Queue processing",
+    objective:
+      "Landing-zone events can be downloaded, scanned, audited, and routed to the pipeline.",
+    proof:
+      "consumeOneMessage returns accepted, quarantined, rejected, or transient failure outcomes.",
+    existingPath: "src/lib/ingestion/azure-landing-zone-consumer.ts",
+    status: "monitored",
   },
   {
-    id: 'validation',
-    label: 'Template validation',
-    objective: 'Loaded rows must satisfy the matching template before approval.',
-    proof: 'validation-engine checks required fields, numeric values, owners, and enum values.',
-    existingPath: 'src/lib/context-ingestion/validation-engine.ts',
-    status: 'ready',
+    id: "validation",
+    label: "Template validation",
+    objective:
+      "Loaded rows must satisfy the matching template before approval.",
+    proof:
+      "validation-engine checks required fields, numeric values, owners, and enum values.",
+    existingPath: "src/lib/context-ingestion/validation-engine.ts",
+    status: "ready",
   },
   {
-    id: 'availability',
-    label: 'Available to assistants',
-    objective: 'Approved context becomes evidence-backed substrate for Source, Moves, Tower, and Intelligence.',
-    proof: 'Context upload connector persists tenant facts and evidence rows through the existing context layer.',
-    existingPath: 'src/app/api/admin/context-layer/csv-upload/route.ts',
-    status: 'needs_configuration',
+    id: "availability",
+    label: "Available to assistants",
+    objective:
+      "Approved context becomes evidence-backed substrate for Source, Moves, Tower, and Intelligence.",
+    proof:
+      "Context upload connector persists tenant facts and evidence rows through the existing context layer.",
+    existingPath: "src/app/api/admin/context-layer/csv-upload/route.ts",
+    status: "needs_configuration",
+  },
+];
+
+const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
+  {
+    id: "upload-context-csv",
+    label: "Load CSV context",
+    stage: "Upload",
+    operatorAction:
+      "Choose a template, map the file columns, and load tenant context rows.",
+    control: "Embedded CSV loader on this page",
+    href: null,
+    apiPath: "/api/admin/context-layer/csv-upload",
+    status: "ready",
+  },
+  {
+    id: "upload-operational-file",
+    label: "Load operational file",
+    stage: "Upload",
+    operatorAction:
+      "Send Excel, PDF, JSON, or billing-style extracts through classification and ingest.",
+    control: "Data console upload workflow",
+    href: "/platform/data/new",
+    apiPath: "/api/data/upload",
+    status: "ready",
+  },
+  {
+    id: "landing-zone-worker",
+    label: "Process landing-zone event",
+    stage: "Scan and process",
+    operatorAction:
+      "Private worker downloads the tenant-keyed blob, scans it, audits it, and routes it onward.",
+    control: "Azure landing-zone consumer",
+    href: null,
+    apiPath: "src/lib/ingestion/azure-landing-zone-consumer.ts",
+    status: "monitored",
+  },
+  {
+    id: "quarantine-review",
+    label: "Review quarantine",
+    stage: "Quarantine",
+    operatorAction:
+      "Release or delete files held by sensitive-data and malware controls before parsing continues.",
+    control: "Sensitive-data quarantine dashboard",
+    href: "/platform/admin/quarantine",
+    apiPath: "/api/admin/quarantine/[id]/release",
+    status: "needs_configuration",
+  },
+  {
+    id: "template-validation",
+    label: "Validate template fit",
+    stage: "Validate",
+    operatorAction:
+      "Check required fields, schema mismatches, and evidence locators before approval.",
+    control: "Template validation engine",
+    href: null,
+    apiPath: "src/lib/context-ingestion/validation-engine.ts",
+    status: "ready",
+  },
+  {
+    id: "approval-queue",
+    label: "Approve for use",
+    stage: "Approve",
+    operatorAction:
+      "Send blocked loads to the named approval queue before assistants can use the evidence.",
+    control: "Program approval queue",
+    href: "/admin/programs/approvals",
+    apiPath: "/api/admin/programs/approvals",
+    status: "ready",
+  },
+  {
+    id: "commit-ledger",
+    label: "Commit or roll back",
+    stage: "Commit",
+    operatorAction:
+      "Commit only when quarantine, clarification, approval, and idempotency gates are clean.",
+    control: "Pilot ingestion ledger contract",
+    href: "/admin/data-trust",
+    apiPath: "src/lib/admin/pilot-ingestion-ledger.ts",
+    status: "monitored",
   },
 ];
 
 function compactList(values: ReadonlyArray<string>, limit = 4): string {
-  if (values.length <= limit) return values.join(', ');
-  return `${values.slice(0, limit).join(', ')} +${values.length - limit}`;
+  if (values.length <= limit) return values.join(", ");
+  return `${values.slice(0, limit).join(", ")} +${values.length - limit}`;
 }
 
-function fromContextTemplate(template: ContextTemplateDefinition): DataLoadTemplateRow {
+function fromContextTemplate(
+  template: ContextTemplateDefinition,
+): DataLoadTemplateRow {
   return {
     id: `context:${template.id}`,
-    family: 'Context registry',
+    family: "Context registry",
     dimension: template.dimension,
     title: template.label,
-    formats: template.acceptedFormats.join(', '),
+    formats: template.acceptedFormats.join(", "),
     requiredFields: compactList(template.requiredFields, 5),
-    optionalFields: compactList(template.optionalFields, 4) || 'None',
+    optionalFields: compactList(template.optionalFields, 4) || "None",
     ownerOrSource: template.ownerRole,
     cadenceOrDomain: template.refreshCadence,
     unlocks: compactList(template.unlocks, 2),
   };
 }
 
-function fromEnterpriseWorkbook(workbook: EnterpriseContextTemplateWorkbook): DataLoadTemplateRow {
+function fromEnterpriseWorkbook(
+  workbook: EnterpriseContextTemplateWorkbook,
+): DataLoadTemplateRow {
   const requiredFields = workbook.columns
     .filter((column) => column.required)
     .map((column) => column.key);
@@ -212,12 +319,12 @@ function fromEnterpriseWorkbook(workbook: EnterpriseContextTemplateWorkbook): Da
 
   return {
     id: `day-one:${workbook.key}`,
-    family: 'Day One workbook',
+    family: "Day One workbook",
     dimension: workbook.domain,
     title: workbook.title,
-    formats: 'xlsx, csv',
+    formats: "xlsx, csv",
     requiredFields: compactList(requiredFields, 5),
-    optionalFields: compactList(optionalFields, 4) || 'None',
+    optionalFields: compactList(optionalFields, 4) || "None",
     ownerOrSource: compactList(workbook.sourceSystems, 3),
     cadenceOrDomain: workbook.domain,
     unlocks: workbook.description,
@@ -228,90 +335,99 @@ function buildTemplateRows(): DataLoadTemplateRow[] {
   return [
     ...NORTHSTAR_CONTEXT_TEMPLATES.map(fromContextTemplate),
     ...ENTERPRISE_CONTEXT_TEMPLATE_WORKBOOKS.map(fromEnterpriseWorkbook),
-  ].sort((a, b) => a.family.localeCompare(b.family) || a.title.localeCompare(b.title));
+  ].sort(
+    (a, b) =>
+      a.family.localeCompare(b.family) || a.title.localeCompare(b.title),
+  );
 }
 
-function buildDimensionReadiness(): SetupDataLoadCenterModel['dimensionReadiness'] {
+function buildDimensionReadiness(): SetupDataLoadCenterModel["dimensionReadiness"] {
   return [
     {
-      dimension: 'Application portfolio',
+      dimension: "Application portfolio",
       completenessPercent: 72,
-      currentGate: 'Template validation',
-      nextAction: 'Resolve 2 owner fields',
-      unlocks: 'Intelligence, Moves, Tower',
+      currentGate: "Template validation",
+      nextAction: "Resolve 2 owner fields",
+      unlocks: "Intelligence, Moves, Tower",
     },
     {
-      dimension: 'Vendor contracts',
+      dimension: "Vendor contracts",
       completenessPercent: 100,
-      currentGate: 'Committed',
-      nextAction: 'None',
-      unlocks: 'Source, Tower',
+      currentGate: "Committed",
+      nextAction: "None",
+      unlocks: "Source, Tower",
     },
     {
-      dimension: 'ERP landscape',
+      dimension: "ERP landscape",
       completenessPercent: 48,
-      currentGate: 'Upload scan',
-      nextAction: 'Retry malware scan',
-      unlocks: 'Moves, Tower',
+      currentGate: "Upload scan",
+      nextAction: "Retry malware scan",
+      unlocks: "Moves, Tower",
     },
     {
-      dimension: 'Org roles and teams',
+      dimension: "Org roles and teams",
       completenessPercent: 81,
-      currentGate: 'Approval',
-      nextAction: 'Approver signoff',
-      unlocks: 'All assistants',
+      currentGate: "Approval",
+      nextAction: "Approver signoff",
+      unlocks: "All assistants",
     },
   ];
 }
 
-function buildWorkQueue(): SetupDataLoadCenterModel['workQueue'] {
+function buildWorkQueue(): SetupDataLoadCenterModel["workQueue"] {
   return [
     {
-      id: 'approve-org-roles',
-      title: 'Approve org roles preview',
-      detail: '81% complete. No quarantine cases. Approver action required.',
-      severity: 'attention',
+      id: "approve-org-roles",
+      title: "Approve org roles preview",
+      detail: "81% complete. No quarantine cases. Approver action required.",
+      severity: "attention",
     },
     {
-      id: 'answer-application-owner-gaps',
-      title: 'Answer application owner gaps',
-      detail: '2 required fields missing before the load can commit.',
-      severity: 'blocked',
+      id: "answer-application-owner-gaps",
+      title: "Answer application owner gaps",
+      detail: "2 required fields missing before the load can commit.",
+      severity: "blocked",
     },
     {
-      id: 'retry-erp-malware-scan',
-      title: 'Retry ERP malware scan',
-      detail: 'Scan failed. Parsing is blocked until clean.',
-      severity: 'blocked',
+      id: "retry-erp-malware-scan",
+      title: "Retry ERP malware scan",
+      detail: "Scan failed. Parsing is blocked until clean.",
+      severity: "blocked",
     },
   ];
 }
 
-function findTenantManifest(clientKey: ClientKey): EnterpriseContextTemplateManifest | null {
+function findTenantManifest(
+  clientKey: ClientKey,
+): EnterpriseContextTemplateManifest | null {
   const manifestKey = MANIFEST_KEY_BY_CLIENT_KEY[clientKey];
   if (!manifestKey) return null;
-  return ENTERPRISE_CONTEXT_MANIFESTS.find((manifest) => manifest.tenantKey === manifestKey) ?? null;
+  return (
+    ENTERPRISE_CONTEXT_MANIFESTS.find(
+      (manifest) => manifest.tenantKey === manifestKey,
+    ) ?? null
+  );
 }
 
 function runQueueShapeProbe(): boolean {
   try {
     const parsed = parseIngestionMessage({
-      schema: 'abarva.ingestion.v1',
-      tenantClientKey: 'pilot-rehearsal',
-      segmentKey: 'enterprise_profile',
+      schema: "abarva.ingestion.v1",
+      tenantClientKey: "pilot-rehearsal",
+      segmentKey: "enterprise_profile",
       storage: {
-        accountName: 'pilotstorage',
-        containerName: 'context-ingestion',
-        blobPath: 'pilot-rehearsal/enterprise_profile/sample.csv',
+        accountName: "pilotstorage",
+        containerName: "context-ingestion",
+        blobPath: "pilot-rehearsal/enterprise_profile/sample.csv",
         sizeBytes: 128,
-        contentType: 'text/csv',
-        sha256: 'pilot-rehearsal-sha256',
+        contentType: "text/csv",
+        sha256: "pilot-rehearsal-sha256",
       },
-      declaredClassification: 'confidential_business',
-      producedAt: '2026-06-01T00:00:00.000Z',
+      declaredClassification: "confidential_business",
+      producedAt: "2026-06-01T00:00:00.000Z",
       metadata: { rehearsal: true },
     });
-    return parsed.segmentKey === 'enterprise_profile';
+    return parsed.segmentKey === "enterprise_profile";
   } catch {
     return false;
   }
@@ -319,31 +435,31 @@ function runQueueShapeProbe(): boolean {
 
 function runValidationProbe(): number {
   const classification: FileClassification = {
-    templateType: 'application-portfolio',
-    dimension: 'application_portfolio',
-    format: 'csv',
-    likelySourceSystem: 'pilot-rehearsal',
+    templateType: "application-portfolio",
+    dimension: "application_portfolio",
+    format: "csv",
+    likelySourceSystem: "pilot-rehearsal",
     confidence: 0.95,
-    extractionStrategy: 'structured_rows',
-    requiredApprovalRole: 'VP Enterprise Architecture',
+    extractionStrategy: "structured_rows",
+    requiredApprovalRole: "VP Enterprise Architecture",
     llmExtractionNeeded: false,
   };
   const facts: ExtractedContextFact[] = [
     {
-      id: 'pilot-rehearsal-fact-1',
-      tenantKey: 'northstar',
-      dimension: 'application_portfolio',
-      entityType: 'application',
-      entityKey: 'APP-PILOT-1',
-      field: 'app_id',
-      value: 'APP-PILOT-1',
-      valueText: 'APP-PILOT-1',
-      sourceFileId: 'pilot-rehearsal-file',
-      sourceLocator: { fileName: 'pilot-rehearsal.csv', row: 2 },
+      id: "pilot-rehearsal-fact-1",
+      tenantKey: "northstar",
+      dimension: "application_portfolio",
+      entityType: "application",
+      entityKey: "APP-PILOT-1",
+      field: "app_id",
+      value: "APP-PILOT-1",
+      valueText: "APP-PILOT-1",
+      sourceFileId: "pilot-rehearsal-file",
+      sourceLocator: { fileName: "pilot-rehearsal.csv", row: 2 },
       confidence: 0.95,
-      extractionMethod: 'deterministic',
+      extractionMethod: "deterministic",
       requiresApproval: true,
-      approvalRole: 'VP Enterprise Architecture',
+      approvalRole: "VP Enterprise Architecture",
       validationFindings: [],
     },
   ];
@@ -358,10 +474,12 @@ export function buildSetupDataLoadCenterModel(args: {
   const tenantOption = getClientOption(args.clientKey);
   const tenantManifest = findTenantManifest(args.clientKey);
   const guardProbe = evaluateSensitiveUpload({
-    filename: 'pilot-rehearsal.csv',
-    mimeType: 'text/csv',
-    bytes: new TextEncoder().encode('source_system,source_record_id\nmanual_attestation,SYS-1'),
-    declaredClassification: 'confidential_business',
+    filename: "pilot-rehearsal.csv",
+    mimeType: "text/csv",
+    bytes: new TextEncoder().encode(
+      "source_system,source_record_id\nmanual_attestation,SYS-1",
+    ),
+    declaredClassification: "confidential_business",
   });
 
   return {
@@ -375,11 +493,13 @@ export function buildSetupDataLoadCenterModel(args: {
       rehearsalGates: REHEARSAL_GATES.length,
       setupSegments: SEGMENT_KEYS.length,
       contextRegistryTemplates: NORTHSTAR_CONTEXT_TEMPLATES.length,
-      dayOneWorkbooks: tenantManifest?.workbookCount ?? ENTERPRISE_CONTEXT_TEMPLATE_WORKBOOKS.length,
+      dayOneWorkbooks:
+        tenantManifest?.workbookCount ??
+        ENTERPRISE_CONTEXT_TEMPLATE_WORKBOOKS.length,
     },
     privateDataPlane: {
-      queueSchema: 'abarva.ingestion.v1',
-      sampleSegment: 'enterprise_profile',
+      queueSchema: "abarva.ingestion.v1",
+      sampleSegment: "enterprise_profile",
       sampleMessageAccepted: runQueueShapeProbe(),
       uploadGuardDecision: guardProbe.decision,
       validationProbeFindings: runValidationProbe(),
@@ -397,6 +517,7 @@ export function buildSetupDataLoadCenterModel(args: {
       };
     }),
     rehearsalGates: REHEARSAL_GATES,
+    workflowControls: WORKFLOW_CONTROLS,
     templateRows: buildTemplateRows(),
     dimensionReadiness: buildDimensionReadiness(),
     workQueue: buildWorkQueue(),
