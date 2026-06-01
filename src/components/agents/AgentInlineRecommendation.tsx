@@ -26,6 +26,7 @@ import {
   type InlineRecommendationItem,
 } from "@/lib/agent/agent-inline-recommendation-view";
 import { AILabel } from "@/components/abarva/AILabel";
+import { AIConfidenceIndicator } from "@/components/abarva/AIConfidenceIndicator";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,11 @@ function RecommendationRow({ item }: { item: InlineRecommendationItem }) {
         >
           {item.stateLabel}
         </span>
+        <AIConfidenceIndicator
+          tier={item.confidence}
+          rationale="Derived from recommendation priority"
+          compact
+        />
       </div>
 
       {/* Rationale (clamped to 1 line) */}

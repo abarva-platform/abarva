@@ -25,8 +25,8 @@ import { AgentCitation } from "./AgentCitation";
 import { SparsitySignal } from "./SparsitySignal";
 import { HandoffAffordance } from "./HandoffAffordance";
 import { HonestDisclosureBanner } from "./HonestDisclosureBanner";
-import { ConfidenceQualifier } from "./ConfidenceQualifier";
 import { AILabel } from "@/components/abarva/AILabel";
+import { AIConfidenceIndicator } from "@/components/abarva/AIConfidenceIndicator";
 
 interface AgentResponseProps {
   response: RenderedResponse;
@@ -151,10 +151,10 @@ export function AgentResponse({
           }}
         >
           {viewModel.confidence ? (
-            <ConfidenceQualifier
+            <AIConfidenceIndicator
               tier={viewModel.confidence.tier}
-              accent={accent}
-              detail={viewModel.confidence.reason}
+              rationale={viewModel.confidence.reason}
+              compact
             />
           ) : null}
 
