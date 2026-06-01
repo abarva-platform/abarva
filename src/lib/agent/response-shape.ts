@@ -129,6 +129,16 @@ function stripDanglingTrimTail(text: string): string {
     '',
   ).trim();
 
+  cleaned = cleaned.replace(
+    /\s+\b(?:vs|versus|has|have|had|is|are|was|were|be|being|been|not|no|without)\b$/i,
+    '',
+  ).trim();
+
+  cleaned = cleaned.replace(
+    /\bnot\s+because\s+[^.?!]{0,80}\b(?:has|have|had|is|are|was|were|no)\b$/i,
+    '',
+  ).trim();
+
   return cleaned || original.replace(/[,:;.-]+$/, '').trim();
 }
 
@@ -137,9 +147,13 @@ function sentenceWithPeriod(text: string): string {
   return /[!?]$/.test(normalized) ? normalized : `${normalized}.`;
 }
 
+const VS_DOT_SENTINEL = 'ABARVA_VS_DOT_SENTINEL';
+
 function splitSentences(text: string): string[] {
   return text
+    .replace(/\bvs\./gi, (match) => match.replace('.', VS_DOT_SENTINEL))
     .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.replaceAll(VS_DOT_SENTINEL, '.'))
     .map((sentence) => sentence.trim())
     .filter(Boolean);
 }
@@ -286,16 +300,29 @@ function compactComparisonText(text: string): string | null {
   const existingTable = preserveReadableTable(text);
   if (existingTable) return existingTable;
   if (!/\b(compare|option|vendor|scenario|versus| vs\.? |fit|strength|weakness)\b/i.test(text)) return null;
-  if (
-    !/\b(Strength|Weakness|Fit):/i.test(text) &&
-    !/\b(?:Option\s*)?[A-Z0-9][A-Za-z0-9 /&+-]{2,45}\s+[—-]\s+\b/i.test(text)
-  ) {
+  const hasExplicitCells = /\b(Strength|Weakness|Fit):/i.test(text);
+  const hasOptionBlocks = /\b(?:Option\s*)?[A-Z0-9][A-Za-z0-9 /&+-]{2,45}\s+[—-]\s+\b/i.test(text);
+  const hasComparisonDomainCue =
+    /\b(candidates?|paths?|scenarios?|options?|alternatives?|routes?)\b/i.test(text) ||
+    /\b(?:vendor\s+(?:candidates?|comparison|shortlist)|between\s+vendors?|vendors?\s+to\s+compare)\b/i.test(text);
+  if (!hasExplicitCells && !hasOptionBlocks) {
+    return null;
+  }
+
+  if (!hasExplicitCells && !hasComparisonDomainCue) {
     return null;
   }
 
   const sentences = splitSentences(text);
   const items = extractComparisonItems(text);
   if (items.length < 2) return null;
+
+  const hasDanglingCell = items.some((item) =>
+    [item.option, item.strength, item.weakness, item.fit]
+      .filter((value) => value !== COMPARISON_CELL_PLACEHOLDER)
+      .some((value) => /\b(?:and|or|but|with|to|of|for|against|because|vs|versus|has|have|had|is|are|was|were|not|no)\.?$/i.test(value)),
+  );
+  if (hasDanglingCell) return null;
 
   const lead = trimWords(sentences[0] ?? 'The comparison comes down to fit and evidence.', 22);
   // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B: never wrap the empty-cell
