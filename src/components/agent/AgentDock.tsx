@@ -46,6 +46,7 @@ import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbac
 import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AILabel } from "@/components/abarva/AILabel";
+import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -751,6 +752,9 @@ export function AgentDock(props: AgentDockProps) {
             ↑
           </button>
         </form>
+        <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
+          <AIResponsibilityFooter compact />
+        </div>
       </div>
     );
   }, [
@@ -1490,8 +1494,14 @@ const INPUT_FORM_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "flex-end",
   gap: 8,
-  padding: "12px 18px 16px",
+  padding: "12px 18px 8px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  background: CANVAS.CHAT_BG,
+  flex: "0 0 auto",
+};
+
+const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
+  padding: "0 18px 14px",
   background: CANVAS.CHAT_BG,
   flex: "0 0 auto",
 };

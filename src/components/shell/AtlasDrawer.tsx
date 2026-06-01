@@ -20,6 +20,7 @@ import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { stripArtifactsForDisplay, type Artifact } from "@/lib/agent/artifacts";
 import { AILabel } from "@/components/abarva/AILabel";
+import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -620,6 +621,7 @@ export function AtlasDrawer({
           )}
         </button>
       </div>
+      <AIResponsibilityFooter tone="dark" compact style={{ marginTop: 8 }} />
     </div>
   );
 
