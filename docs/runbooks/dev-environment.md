@@ -4,7 +4,7 @@
 
 This repository uses Husky for local Git hooks:
 
-- `pre-commit` runs `npx lint-staged`.
+- `pre-commit` runs `npm run secrets:staged`, then `npx lint-staged`.
 - `commit-msg` runs `npx --no -- commitlint --edit ${1}`.
 
 `lint-staged` formats and fixes staged files before a commit is created:
@@ -13,6 +13,13 @@ This repository uses Husky for local Git hooks:
 - `**/*.{md,json,yml,yaml}` runs `prettier --write`.
 
 Commit messages follow Conventional Commits. Allowed types are `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `perf`, `ci`, `build`, and `revert`.
+
+Secret scanning uses gitleaks:
+
+- Staged-file hook: `npm run secrets:staged`
+- PR-diff/full branch scan: `npm run secrets:scan -- --log-opts="origin/main..HEAD"`
+
+If the hook finds a secret, remove the secret from the staged diff and rotate the credential if it was real.
 
 ## Setup
 

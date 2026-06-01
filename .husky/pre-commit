@@ -1,1 +1,2 @@
+npm run secrets:staged
 npx lint-staged
