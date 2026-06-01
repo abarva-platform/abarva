@@ -65,7 +65,7 @@ Adds the first Wave 0 quality-spine harnesses that future product and Source wav
 - Passed local validation: `npm run release:check -- --base origin/main --head HEAD`.
 - Playwright tenant-isolation specs require real Clerk credentials and a running dev server; placeholder auth is not a green signal. Local credentialed serial run passed.
 - Vercel PR previews are protected by Vercel Authentication. Follow-up automation used Vercel's protected-deployment bypass path without logging the bypass secret and reached the deployed AbarVa sign-in page.
-- Credentialed L6 retest on the PR preview passed canonical auth, logged-out protection, non-observability route identity, query-param isolation, and most answer-quality checks. It found a critical observability isolation issue: `/engineering/observability` showed `apex-retail`, `meridian-health`, and `skyharbor-air` sample rows to authenticated client personas. Deployed browser crawl after the first remediation passed the three executive persona checks but found the same exposure for `admin@skyharbor-air.example.com`; the route now requires explicit `platform_admin` metadata or the AbarVa platform-operator email allowlist, and needs preview redeploy/retest.
+- Credentialed L6 retest on the PR preview passed canonical auth, logged-out protection, non-observability route identity, query-param isolation, and most answer-quality checks. It found a critical observability isolation issue: `/engineering/observability` showed `apex-retail`, `meridian-health`, and `skyharbor-air` sample rows to authenticated client personas. Deployed browser crawl after the first remediation passed the three executive persona checks but found the same exposure for `admin@skyharbor-air.example.com`; the route now requires explicit `platform_admin` metadata or the AbarVa platform-operator email allowlist. Redeployed preview retest passed for Apex CIO, Meridian CDIO, SkyHarbor CTO, and SkyHarbor tenant-admin: all see `Admin access only`, no telemetry rows, and no captured route/RSC 4xx/5xx.
 - The same L6 retest reported warning-level residuals: consistent RSC prefetch 503s on `/admin/dossiers` and `/tower?tab=programme_gates`, plus two SkyHarbor Atlas responses ending mid-sentence. The Atlas truncation class is now locally remediated in the response shaper. The RSC 503 warning did not reproduce in authenticated local browser crawl and remains a Vercel-authenticated preview retest target.
 
 ## Rollout Plan
@@ -86,6 +86,6 @@ Merge to `main` and deploy after credentialed L6 sign-off. The internal dashboar
 ## Known Gaps
 
 - This first Wave 0 slice provides deterministic harnesses, standing CI, a live-answer wrapper, and Source Nexus runtime insertion. It does not yet insert the wrapper into the streaming Nexus SSE route; that needs a separate streaming-safe design.
-- Human L6 walkthrough still needs real browser sessions across Apex, Meridian, SkyHarbor, and the SkyHarbor tenant-admin persona before production sign-off.
-- After the observability access-control and Atlas truncation patches deploy, retest the PR preview for the observability gate, RSC prefetch 503s, and SkyHarbor prompts 1/3.
+- Human L6 walkthrough still needs remaining warning retests before production sign-off.
+- After the Atlas truncation patch deploy, retest the PR preview for RSC prefetch 503s and SkyHarbor prompts 1/3.
 - Broad `npm run test:integration` is an existing red baseline and must be treated separately from Wave 0-specific green gates unless a fresh `origin/main` baseline proves otherwise.
