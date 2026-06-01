@@ -101,6 +101,7 @@
     "audit:runtime-supabase-imports": "node scripts/audit/runtime-supabase-import-census.mjs",
     "audit:runtime-supabase-imports:guard": "node scripts/audit/runtime-supabase-import-census.mjs --fail --max-files=1 --max-import-matches=1 --allowlist=scripts/audit/runtime-supabase-import-allowlist.json",
     "audit:deprecated-pattern-table-writes": "node scripts/audit/deprecated-pattern-table-write-guard.mjs",
+    "audit:no-auto-action-boundary": "node scripts/audit/no-auto-action-boundary.mjs",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
     "audit:categories": "npx tsx src/scripts/audit/audit-steward-categories.ts",
