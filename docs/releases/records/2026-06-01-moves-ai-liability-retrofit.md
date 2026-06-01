@@ -36,10 +36,14 @@ Moves phase advancement now requires a human rationale before a gate can be appr
 - `src/lib/programs/deliverable-canvas-polish-view.ts` carries AI Draft and edit-before-commit requirements in the Moves deliverables view model.
 - `src/components/programs/PhaseAdvanceButton.tsx` opens a human-rationale commit step before the phase-advance API call.
 - `src/components/programs/ProgramDetailPage.tsx` adds the human decision attestation to gate approval UI, enforces the rationale bar in inline approvals, and labels Moves deliverables as AI drafts.
+- `src/components/strategic-moves/PhaseDocumentsPanel.tsx` and `src/components/strategic-moves/GeneratePhasePackage.tsx` now expose the same AI Draft, edit-before-commit, and human decision-support labels on the production Strategic Moves document and phase-generation surfaces.
+- `src/lib/programs/strategic-move-route-params.ts` rejects legacy slug-like route ids before Strategic Moves database reads so `/programs/:legacySlug` redirects do not become production 500s.
 - `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` marks T235-T237 as done with implementation notes.
 
 ## QA / Validation
 
+- Passed: `npx jest src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx src/lib/programs/__tests__/strategic-move-route-params.test.ts --runInBand`
+- Passed: `npx jest src/lib/programs/__tests__/strategic-move-route-params.test.ts src/lib/programs/__tests__/deliverable-canvas-ai-draft.test.ts --runInBand`
 - Passed: `npx jest src/lib/programs/__tests__/moves-ai-liability.test.ts src/lib/programs/__tests__/deliverable-canvas-ai-draft.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts 'src/app/api/v1/programs/[programId]/advance/__tests__/route.test.ts' src/lib/agent/tools/__tests__/advancePhase.test.ts src/components/programs/__tests__/PhaseAdvanceButton.test.tsx --runInBand`
 - Passed: `npx jest src/components/programs/__tests__/PhaseAdvanceButton.test.tsx --runInBand`
 - Passed: `./node_modules/.bin/tsc --noEmit --pretty false`
@@ -58,6 +62,8 @@ Revert the merge commit. This restores the prior phase-gate request contracts an
 ## Audit Evidence
 
 - Pull request: https://github.com/anandsundaram-hash/abarva/pull/2719
+- Pull request: https://github.com/anandsundaram-hash/abarva/pull/2721
+- Follow-up branch: `codex/moves-liability-prod-surface-fix`
 - Local focused Jest and TypeScript validation listed above.
 - Release record: this file.
 - Tracker evidence: `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` and `/Users/anand/Downloads/ABARVA_PILOT_READINESS_PLAN.xlsx` rows T235-T237.
