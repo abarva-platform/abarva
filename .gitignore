@@ -75,3 +75,6 @@ supabase/.branches/
 # Parallel-run diff harness default output (run artifacts, not committed)
 parallel-run-diff-results.json
 parallel-run-diff-results.md
+
+# Local dependency vulnerability report output; CI uploads it as an artifact.
+/audit-artifacts/dependency-vulnerability/
