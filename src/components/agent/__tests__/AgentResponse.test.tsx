@@ -5,6 +5,7 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
+import { AGENT_ACTION_APPROVAL_NOTICE_COPY } from "../AgentActionApprovalNotice";
 import { AgentResponse } from "../AgentResponse";
 import type { RenderedResponse } from "@/lib/agent/renderedResponse";
 
@@ -41,5 +42,27 @@ describe("AgentResponse citation defense", () => {
     );
 
     expect(screen.queryByLabelText("Citation gap")).not.toBeInTheDocument();
+  });
+});
+
+describe("AgentResponse action approval boundary", () => {
+  it("shows human approval language before follow-up action chips", () => {
+    render(
+      <AgentResponse
+        response={response({
+          follow_up_actions: [
+            {
+              id: "approve-next-step",
+              kind: "next_turn",
+              label: "Approve next step",
+            },
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Human approval required for agent actions"),
+    ).toHaveTextContent(AGENT_ACTION_APPROVAL_NOTICE_COPY);
   });
 });

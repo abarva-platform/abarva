@@ -21,6 +21,7 @@ import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { stripArtifactsForDisplay, type Artifact } from "@/lib/agent/artifacts";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
+import { AgentActionApprovalNotice } from "@/components/agent/AgentActionApprovalNotice";
 import { CitationGapNotice } from "@/components/agent/CitationGapNotice";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 
@@ -623,6 +624,11 @@ export function AtlasDrawer({
           )}
         </button>
       </div>
+      <AgentActionApprovalNotice
+        tone="dark"
+        compact
+        style={{ marginTop: 8 }}
+      />
       <AIResponsibilityFooter tone="dark" compact style={{ marginTop: 8 }} />
     </div>
   );

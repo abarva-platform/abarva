@@ -27,6 +27,7 @@ import { HandoffAffordance } from "./HandoffAffordance";
 import { HonestDisclosureBanner } from "./HonestDisclosureBanner";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIConfidenceIndicator } from "@/components/abarva/AIConfidenceIndicator";
+import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { CitationGapNotice } from "./CitationGapNotice";
 import { shouldShowRenderedResponseCitationGap } from "@/lib/agent/citation-gap";
 
@@ -277,6 +278,7 @@ export function AgentResponse({
           >
             Next
           </div>
+          <AgentActionApprovalNotice compact />
           {response.follow_up_actions.map((action) => (
             <button
               key={action.id}

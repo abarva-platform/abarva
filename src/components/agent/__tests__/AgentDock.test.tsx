@@ -20,6 +20,7 @@ import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { AI_RESPONSIBILITY_FOOTER_COPY } from "@/components/abarva/AIResponsibilityFooter";
+import { AGENT_ACTION_APPROVAL_NOTICE_COPY } from "../AgentActionApprovalNotice";
 import {
   AgentDock,
   AGENT_DOCK_MIME_ALLOWLIST,
@@ -151,6 +152,22 @@ describe("AgentDock · default mode", () => {
     );
 
     expect(screen.getByText(AI_RESPONSIBILITY_FOOTER_COPY)).toBeInTheDocument();
+  });
+
+  it("renders the in-chat human approval boundary for agent actions", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("Human approval required for agent actions"),
+    ).toHaveTextContent(AGENT_ACTION_APPROVAL_NOTICE_COPY);
   });
 });
 
