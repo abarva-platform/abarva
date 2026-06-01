@@ -25,6 +25,7 @@ import type {
   MissionStateBackend,
   MissionStatus,
 } from '@/lib/reasoning/mission-state-store';
+import { runtimePostgresPoolConfig } from '@/lib/data-plane/postgresCompat';
 
 /**
  * Minimal shape of the SQL executor we depend on. The real implementation
@@ -47,11 +48,7 @@ function defaultExecutorFactory(): PostgresSqlExecutor {
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
-  return new Pool({
-    connectionString: url,
-    ssl: { rejectUnauthorized: false },
-    max: 4,
-  });
+  return new Pool(runtimePostgresPoolConfig(url, 'nexus-reasoning-mission-state'));
 }
 
 const UPSERT_SQL = `

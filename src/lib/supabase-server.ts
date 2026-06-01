@@ -7,6 +7,7 @@ export {
   isConnectionFallbackError,
   resolvePostgresPoolMax,
   resolveDatabaseUrlCandidates,
+  runtimePostgresPoolConfig,
 } from './data-plane/postgresCompat';
 export type { PostgresCompatClient } from './data-plane/postgresCompat';
 

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "crypto";
 import { Pool } from "pg";
+import { runtimePostgresPoolConfig } from "@/lib/data-plane/postgresCompat";
 import {
   applySetupAiInitiativeFinancialFirewall,
   type SetupAiInitiativeRecord,
@@ -50,12 +51,7 @@ function getPool(): Pool | null {
   if (cachedPool !== undefined) return cachedPool;
   const connectionString = process.env.DATABASE_URL?.trim();
   cachedPool = connectionString
-    ? new Pool({
-        connectionString,
-        max: 2,
-        idleTimeoutMillis: 10_000,
-        connectionTimeoutMillis: 5_000,
-      })
+    ? new Pool(runtimePostgresPoolConfig(connectionString, 'nexus-setup-ai-initiatives'))
     : null;
   return cachedPool;
 }
