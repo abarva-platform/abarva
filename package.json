@@ -11,6 +11,7 @@
     "audit:architecture-boundaries": "depcruise -c .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json src/app src/components",
     "secrets:scan": "gitleaks git --redact --no-banner",
     "secrets:staged": "gitleaks git --staged --redact --no-banner",
+    "security:audit": "node scripts/security/npm-audit-report.mjs",
     "test": "jest",
     "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
