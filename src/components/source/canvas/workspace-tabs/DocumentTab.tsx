@@ -145,9 +145,9 @@ export function DocumentTab({
       <div data-testid="source-canvas-document-tab" style={EMPTY_STYLE}>
         <p style={EMPTY_TITLE_STYLE}>No artifacts scaffolded for {SOURCE_STAGE_LABELS[stage]}.</p>
         <p style={EMPTY_BODY_STYLE}>
-          The canvas substrate for this stage is empty. Either this is a
-          legacy event missing scaffolding, or the canonical specs need to be
-          extended. Run <code>npm run db:backfill:source-canvas</code>.
+          This stage&apos;s working materials are not loaded yet. Contact your
+          AbarVa lead to refresh the Source canvas before using this stage for
+          an executive decision, vendor communication, or approval.
         </p>
       </div>
     );

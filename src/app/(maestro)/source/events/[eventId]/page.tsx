@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { UniversalCanvasShell } from '@/components/source/canvas/UniversalCanvasShell';
-import { getSourcingEvent } from '@/lib/source/queries';
+import { getSourcingEvent, scaffoldNewEventSubstrate } from '@/lib/source/queries';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalClientDisplayName } from '@/lib/client-config';
@@ -56,11 +56,30 @@ export default async function SourceEventDetailPage({
   // event.id (UUID) — when the slug is an event_code (B7), passing the
   // raw URL slug to these queries returns empty silently because
   // source_event_*_states.source_event_id is a UUID FK.
-  const [artifactStates, gateCriterionStates, evidenceStates] = await Promise.all([
+  let [artifactStates, gateCriterionStates, evidenceStates] = await Promise.all([
     listArtifactStatesForEvent(event.id),
     listGateCriterionStatesForEvent(event.id),
     listEvidenceStatesForEvent(event.id),
   ]);
+  if (
+    activeClient?.key &&
+    isUuid(event.id) &&
+    artifactStates.length === 0 &&
+    gateCriterionStates.length === 0 &&
+    evidenceStates.length === 0
+  ) {
+    await scaffoldNewEventSubstrate(event.id, activeClient.key).catch((error) => {
+      console.error(
+        '[SourceEventDetailPage] legacy canvas substrate scaffold failed',
+        error instanceof Error ? error.message : String(error),
+      );
+    });
+    [artifactStates, gateCriterionStates, evidenceStates] = await Promise.all([
+      listArtifactStatesForEvent(event.id),
+      listGateCriterionStatesForEvent(event.id),
+      listEvidenceStatesForEvent(event.id),
+    ]);
+  }
   const registryArtifacts = await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
     console.error(
       '[SourceEventDetailPage] source_artifacts registry read failed',
@@ -242,4 +261,8 @@ async function resolveSourceActorLabels(
 function labelForActor(actorId: string | null, labels: Map<string, string>): string | null {
   if (!actorId) return null;
   return labels.get(actorId) ?? 'Unresolved approver (record incomplete)';
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }

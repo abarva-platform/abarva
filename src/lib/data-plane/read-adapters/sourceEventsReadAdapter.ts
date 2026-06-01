@@ -147,7 +147,7 @@ export function createSupabaseSourceEventsReadAdapter(
       const { data, error } = await sb
         .from('source_events')
         .select('*')
-        .eq('event_code', eventCode)
+        .ilike('event_code', eventCode)
         .eq('client_key', clientKey)
         .order('updated_at', { ascending: false })
         .limit(1);
@@ -228,7 +228,7 @@ export function createAzureSourceEventsReadAdapter(
         const rows = await session((run) =>
           run<SourceEventDbRow>(
             `SELECT ${SOURCE_EVENT_COLUMNS} FROM source_events
-              WHERE event_code = $1 AND client_key = $2
+              WHERE lower(event_code) = lower($1) AND client_key = $2
               ORDER BY updated_at DESC LIMIT 1`,
             [eventCode, clientKey],
           ),

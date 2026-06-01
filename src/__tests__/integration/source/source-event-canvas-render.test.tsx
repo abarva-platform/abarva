@@ -487,5 +487,7 @@ describe('UniversalCanvasShell · SSR render', () => {
     );
     expect(html).toContain('source-canvas-document-tab');
     expect(html).toContain('No artifacts scaffolded');
+    expect(html).toContain('Contact your AbarVa lead');
+    expect(html).not.toContain('npm run db:backfill:source-canvas');
   });
 });

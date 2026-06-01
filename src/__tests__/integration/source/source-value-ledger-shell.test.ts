@@ -60,4 +60,18 @@ describe('Source value ledger shell', () => {
       expect(source).not.toContain('live savings');
     }
   });
+
+  it('keeps event value proof route free of raw DB and developer recovery copy', () => {
+    const routeSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/value/page.tsx'),
+      'utf8',
+    );
+
+    expect(routeSource).toContain('Value proof not loaded yet');
+    expect(routeSource).toContain('Do not use this');
+    expect(routeSource).toContain('page as savings proof');
+    expect(routeSource).not.toContain('invalid input syntax');
+    expect(routeSource).not.toContain('computeBaseline()');
+    expect(routeSource).not.toContain('source value states load failed');
+  });
 });
