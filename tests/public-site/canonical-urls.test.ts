@@ -61,6 +61,12 @@ describe('CANONICAL_URLS', () => {
     expect(CANONICAL_URLS.contact.endsWith('/')).toBe(true);
   });
 
+  it('AI trust pages are public canonical routes', () => {
+    expect(new URL(CANONICAL_URLS.responsibleAi).pathname).toBe('/responsible-ai/');
+    expect(new URL(CANONICAL_URLS.modelCard).pathname).toBe('/model-card/');
+    expect(new URL(CANONICAL_URLS.knownLimitations).pathname).toBe('/known-limitations/');
+  });
+
   it('sitemap ends with .xml', () => {
     expect(CANONICAL_URLS.sitemap.endsWith('.xml')).toBe(true);
   });

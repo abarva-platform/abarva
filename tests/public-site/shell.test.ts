@@ -81,18 +81,40 @@ describe('Footer', () => {
     expect(screen.getByText(/Training, client primers, corpus detail/)).toBeTruthy();
   });
 
-  it('renders the company column', () => {
+  it('renders the trust column', () => {
     render(React.createElement(Footer));
-    expect(screen.getByText('Company')).toBeTruthy();
+    expect(screen.getByText('Trust')).toBeTruthy();
     expect(screen.getAllByText('Contact').length).toBeGreaterThan(0);
+  });
+
+  it('renders public AI trust links', () => {
+    render(React.createElement(Footer));
+    expect(
+      screen
+        .getAllByText('Responsible AI')
+        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/responsible-ai/')
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByText('Model card')
+        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/model-card/')
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByText('Known limitations')
+        .some(
+          (node) => (node as HTMLAnchorElement).getAttribute('href') === '/known-limitations/'
+        )
+    ).toBe(true);
   });
 
   it('renders a Contact link', () => {
     render(React.createElement(Footer));
-    const link = screen.getAllByText('Contact').find(
-      (node) => (node as HTMLAnchorElement).getAttribute('href') === '/contact/'
-    );
-    expect(link).toBeTruthy();
+    expect(
+      screen
+        .getAllByText('Contact')
+        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/contact/')
+    ).toBe(true);
   });
 
   it('renders invite-only workspace copy', () => {

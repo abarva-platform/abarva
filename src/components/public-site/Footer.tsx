@@ -6,6 +6,9 @@ const PRODUCT_LINKS = [
 ] as const;
 
 const TRUST_LINKS = [
+  { label: 'Responsible AI', href: '/responsible-ai/' },
+  { label: 'Model card', href: '/model-card/' },
+  { label: 'Known limitations', href: '/known-limitations/' },
   { label: 'Contact', href: '/contact/' },
 ] as const;
 
@@ -48,8 +51,8 @@ export function Footer() {
           </p>
         </nav>
 
-        <nav aria-label="Company navigation">
-          <p className="pub-footer__col-label">Company</p>
+        <nav aria-label="Trust navigation">
+          <p className="pub-footer__col-label">Trust</p>
           <ul className="pub-footer__links" role="list">
             {TRUST_LINKS.map(({ label, href }) => (
               <li key={href}>
