@@ -34,6 +34,10 @@ import {
   paybackText,
   recommendationLabel,
 } from './format-helpers';
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from '@/lib/ai-liability/human-decision-controls';
 
 /** Input to the XLSX renderer. */
 export interface KernelXlsxInput {
@@ -93,6 +97,8 @@ export function buildKernelFinancialModelXlsx(
       `Recommendation: ${recommendationLabel(skeleton.recommendation)}. ${skeleton.recommendationRationale}`,
       `Payback: ${paybackText(skeleton)}.`,
       'Effort rests on a researched planning rate card — a market range, not a quote.',
+      AI_DECISION_SUPPORT_WATERMARK,
+      HUMAN_DECISION_ATTESTATION_TEXT,
       HONESTY_FOOTER,
     ],
   });

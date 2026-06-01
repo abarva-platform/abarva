@@ -22,6 +22,10 @@ import type {
   SentinelConfidenceBand,
   SentinelQueryResponse,
 } from '@/lib/sentinel/types';
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from '@/lib/ai-liability/human-decision-controls';
 
 export interface SentinelTenancyCtx {
   clientKey: string;
@@ -248,7 +252,10 @@ async function synthesizeWithClaude(args: {
     null,
     2,
   );
-  const system = args.activePrompt.buildSystemPrompt();
+  const system = [
+    args.activePrompt.buildSystemPrompt(),
+    AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  ].join('\n\n');
   const { client } = await getAuditedAnthropicClient({
     tenantId: args.ctx.clientKey,
     userId: args.ctx.userId ?? undefined,
@@ -344,7 +351,7 @@ export async function runSentinelTurn(args: {
     rankedPatterns,
     activePrompt,
   }).catch(() => null);
-  const responseText = [llmText ?? fallback.text, groundingFlagText]
+  const responseText = [sanitizeAutonomousDecisionLanguage(llmText ?? fallback.text), groundingFlagText]
     .filter(Boolean)
     .join(' ');
 

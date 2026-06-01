@@ -5,6 +5,10 @@ import {
   type QuarterlyBoardPackInput,
   type QuarterlyBoardPackSection,
 } from './quarterly-board-pack-model';
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from '@/lib/ai-liability/human-decision-controls';
 
 function renderRows(section: QuarterlyBoardPackSection): string {
   if (section.rows.length === 0) {
@@ -68,7 +72,7 @@ export function renderBoardPackHtml(pack: QuarterlyBoardPack): string {
     `<span class="pill">Evidence gaps: ${pack.evidenceGapCount}</span>` +
     '</div></section>' +
     pack.sections.map(renderSection).join('') +
-    `<p class="disclaimer">${esc(pack.disclaimer)}</p>` +
+    `<p class="disclaimer">${esc(pack.disclaimer)} ${esc(AI_DECISION_SUPPORT_WATERMARK)} ${esc(HUMAN_DECISION_ATTESTATION_TEXT)}</p>` +
     '</main></div></body></html>'
   );
 }

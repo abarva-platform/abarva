@@ -26,7 +26,15 @@ const RENEWAL_COMPLETE: SourceArtifactQualitySignals = {
     'negotiation_posture_table',
     'srm_action_queue',
   ],
-  evidenceIds: ['vendor_contracts', 'notice_terms', 'usage_telemetry', 'benchmark', 'owner'],
+  evidenceIds: [
+    'vendor_contracts',
+    'notice_terms',
+    'usage_telemetry',
+    'benchmark',
+    'owner',
+    'human_decision_owner',
+    'ai_decision_attestation',
+  ],
   text: 'Renegotiate ServiceNow before notice deadline.',
 };
 
@@ -92,10 +100,32 @@ describe('Source artifact standards', () => {
       kind: 'decision-brief',
       sectionIds: ['answer', 'evidence', 'analysis', 'challenge', 'next_actions'],
       visualIds: ['decision_summary', 'evidence_table'],
-      evidenceIds: ['tenant_substrate', 'source_methodology'],
+      evidenceIds: [
+        'tenant_substrate',
+        'source_methodology',
+        'human_decision_owner',
+        'ai_decision_attestation',
+      ],
       text: 'Award Supplier A because the normalized evidence supports the tradeoff.',
     });
     expect(score.passed).toBe(false);
     expect(score.missingVisuals).toContain('risk_or_tradeoff_view');
+  });
+
+  it('requires human decision accountability for decision-bearing artifacts', () => {
+    const score = scoreSourceArtifactQuality({
+      kind: 'decision-brief',
+      sectionIds: ['answer', 'evidence', 'analysis', 'challenge', 'next_actions'],
+      visualIds: ['decision_summary', 'evidence_table', 'risk_or_tradeoff_view'],
+      evidenceIds: ['tenant_substrate', 'source_methodology'],
+      text: 'Recommend Supplier A as a candidate path for review.',
+    });
+
+    expect(score.passed).toBe(false);
+    expect(score.hardFailures).toContain('missing_human_decision_accountability');
+    expect(score.missingEvidence).toEqual(expect.arrayContaining([
+      'human_decision_owner',
+      'ai_decision_attestation',
+    ]));
   });
 });

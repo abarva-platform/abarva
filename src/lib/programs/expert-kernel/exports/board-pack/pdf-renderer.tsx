@@ -11,6 +11,10 @@ import type { ReactElement } from 'react';
 
 import { PDF_COLORS, PDF_STYLES } from '@/lib/exports-shared/pdf-base';
 import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from '@/lib/ai-liability/human-decision-controls';
+import {
   buildQuarterlyBoardPack,
   type QuarterlyBoardPack,
   type QuarterlyBoardPackInput,
@@ -66,6 +70,9 @@ export function buildBoardPackPdfElement(
         ))}
         <View style={PDF_STYLES.divider} />
         <Text style={PDF_STYLES.body}>{pack.disclaimer}</Text>
+        <Text style={{ ...PDF_STYLES.body, color: PDF_COLORS.MUTED }}>
+          {AI_DECISION_SUPPORT_WATERMARK} {HUMAN_DECISION_ATTESTATION_TEXT}
+        </Text>
       </Page>
     </Document>
   );
