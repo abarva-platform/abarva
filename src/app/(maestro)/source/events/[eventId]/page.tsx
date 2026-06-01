@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { UniversalCanvasShell } from '@/components/source/canvas/UniversalCanvasShell';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { getActiveClientRow } from '@/lib/active-client';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import {
   listArtifactStatesForEvent,
@@ -13,8 +14,10 @@ import { listSourceArtifactsForSourceEventId } from '@/lib/source/artifact-regis
 import { SOURCE_ARTIFACT_SPECS } from '@/lib/source/canonical-specs';
 import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
+import type { SourceEventGateCriterion } from '@/lib/source/canvas-substrate';
 import type { ActivityEntry } from '@/components/source/canvas/workspace-tabs/LogTab';
 import { ensureThreadForSourceEvent } from '@/lib/decisions/auto-linker';
+import { verifiedGateCriterionForDisplay } from '@/lib/source/source-governance-enforcement';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +68,25 @@ export default async function SourceEventDetailPage({
     );
     return [];
   });
+  const actorLabels = await resolveSourceActorLabels([
+    ...gateCriterionStates.map((criterion) => criterion.reviewerUserId),
+    ...artifactStates.map((artifact) => artifact.bodyAuthoredBy),
+  ]);
+  const labeledGateCriterionStates = gateCriterionStates.map((criterion) => ({
+    ...criterion,
+    reviewerUserId: labelForActor(criterion.reviewerUserId, actorLabels),
+  }));
+  const displayGateCriterionStates = labeledGateCriterionStates.map((criterion) =>
+    verifiedGateCriterionForDisplay({
+      criterion,
+      artifacts: artifactStates,
+      evidence: evidenceStates,
+    }),
+  );
+  const labeledArtifactStates = artifactStates.map((artifact) => ({
+    ...artifact,
+    bodyAuthoredBy: labelForActor(artifact.bodyAuthoredBy, actorLabels),
+  }));
 
   // Pre-load all template bodies — server-side only because the loader uses
   // fs. Pre-loading the full catalog keeps tab switching snappy without a
@@ -99,16 +121,17 @@ export default async function SourceEventDetailPage({
   const activityEntries: ActivityEntry[] = buildActivityEntriesPlaceholder(
     event.id,
     evidenceStates.length,
-    artifactStates,
-    gateCriterionStates,
+    labeledArtifactStates,
+    labeledGateCriterionStates,
+    displayGateCriterionStates,
   );
 
   return (
     <UniversalCanvasShell
       event={event}
       viewStage={viewStage}
-      artifactStates={artifactStates}
-      gateCriterionStates={gateCriterionStates}
+      artifactStates={labeledArtifactStates}
+      gateCriterionStates={displayGateCriterionStates}
       evidenceStates={evidenceStates}
       registryArtifacts={registryArtifacts}
       templateByCode={templateByCode}
@@ -124,6 +147,7 @@ function buildActivityEntriesPlaceholder(
   evidenceCount: number,
   artifactStates: Awaited<ReturnType<typeof listArtifactStatesForEvent>>,
   gateCriterionStates: Awaited<ReturnType<typeof listGateCriterionStatesForEvent>>,
+  displayGateCriterionStates: SourceEventGateCriterion[],
 ): ActivityEntry[] {
   const now = new Date().toISOString();
   const entries: ActivityEntry[] = [];
@@ -148,6 +172,19 @@ function buildActivityEntriesPlaceholder(
       actor: criterion.reviewerUserId ?? 'Source approver',
       body: `Gate ${criterion.criterionId} ${action}. Reason: ${criterion.notes ?? 'No reason recorded.'}`,
     });
+  }
+
+  const displayById = new Map(displayGateCriterionStates.map((criterion) => [criterion.id, criterion]));
+  for (const criterion of reviewedCriteria) {
+    const display = displayById.get(criterion.id);
+    if (criterion.state === 'met' && display?.state === 'pending') {
+      entries.push({
+        id: `gate-invalidated-${criterion.id}-${criterion.updatedAt}`,
+        at: criterion.updatedAt,
+        actor: 'Source governance',
+        body: `Gate ${criterion.criterionId} was previously marked met, but is not counted because current controls require a reason, committed artifact, and ready evidence.`,
+      });
+    }
   }
 
   const authoredArtifacts = artifactStates
@@ -177,4 +214,32 @@ function buildActivityEntriesPlaceholder(
     });
   }
   return entries;
+}
+
+async function resolveSourceActorLabels(
+  actorIds: Array<string | null | undefined>,
+): Promise<Map<string, string>> {
+  const ids = [...new Set(actorIds.filter((id): id is string => Boolean(id)))];
+  const personIds = ids.filter((id) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
+  );
+  const labels = new Map<string, string>();
+  if (personIds.length === 0) return labels;
+  const { data, error } = await getAzureReadFluentClient()
+    .from('persons')
+    .select('id, name, email')
+    .in('id', personIds);
+  if (error) {
+    console.error('[SourceEventDetailPage] actor label lookup failed', error.message);
+    return labels;
+  }
+  for (const row of (data ?? []) as Array<{ id: string; name?: string | null; email?: string | null }>) {
+    labels.set(row.id, row.name || row.email || row.id);
+  }
+  return labels;
+}
+
+function labelForActor(actorId: string | null, labels: Map<string, string>): string | null {
+  if (!actorId) return null;
+  return labels.get(actorId) ?? 'Unresolved approver (record incomplete)';
 }

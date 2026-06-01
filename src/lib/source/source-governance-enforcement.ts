@@ -11,6 +11,10 @@ import type {
 import type { SourceStageKey } from './types';
 
 export const SOURCE_APPROVAL_REASON_MIN_LENGTH = 12;
+export const SOURCE_HUMAN_EDIT_METADATA_KEYS = [
+  'humanEditedAt',
+  'humanReviewedAt',
+] as const;
 
 export interface SourceGovernanceBlocker {
   code: string;
@@ -50,10 +54,19 @@ export function validateApprovalReason(reason: unknown): SourceGovernanceVerdict
   });
 }
 
+export function isArtifactHumanReviewed(artifact: SourceEventArtifactState | undefined): boolean {
+  if (!artifact) return false;
+  if (artifact.linkedArtifactId) return true;
+  if (!artifact.body?.trim()) return false;
+  const metadata = artifact.bodyGenerationMetadata;
+  if (!metadata) return true;
+  return SOURCE_HUMAN_EDIT_METADATA_KEYS.some((key) => typeof metadata[key] === 'string');
+}
+
 export function isArtifactGateReady(artifact: SourceEventArtifactState | undefined): boolean {
   if (!artifact) return false;
   if (!PASSING_ARTIFACT_STATUSES.has(artifact.status)) return false;
-  return Boolean(artifact.linkedArtifactId || artifact.body?.trim());
+  return isArtifactHumanReviewed(artifact);
 }
 
 export function evaluateCriterionMetReadiness(input: {
@@ -102,6 +115,8 @@ export function evaluateStagePromotionReadiness(input: {
   currentStage: SourceStageKey;
   targetStage: SourceStageKey;
   criteria: SourceEventGateCriterion[];
+  artifacts?: SourceEventArtifactState[];
+  evidence?: SourceEventEvidence[];
   reason: unknown;
 }): SourceGovernanceVerdict {
   const blockers: SourceGovernanceBlocker[] = [
@@ -133,6 +148,27 @@ export function evaluateStagePromotionReadiness(input: {
         code: 'gate_criterion_open',
         detail: `${definition?.title ?? criterion.criterionId} is ${criterion.state}.`,
       });
+      continue;
+    }
+    if (
+      blocksPromotion &&
+      criterion.state === 'met' &&
+      input.artifacts &&
+      input.evidence
+    ) {
+      const criterionReadiness = evaluateCriterionMetReadiness({
+        criterion,
+        artifacts: input.artifacts,
+        evidence: input.evidence,
+        reason: criterion.notes,
+      });
+      if (!criterionReadiness.ok) {
+        blockers.push({
+          code: 'gate_criterion_unverified',
+          detail: `${definition?.title ?? criterion.criterionId} was previously marked met, but no longer satisfies artifact, evidence, and reason controls.`,
+        });
+        blockers.push(...criterionReadiness.blockers);
+      }
     }
   }
 
@@ -144,6 +180,30 @@ export function evaluateStagePromotionReadiness(input: {
   }
 
   return { ok: blockers.length === 0, blockers };
+}
+
+export function verifiedGateCriterionForDisplay(input: {
+  criterion: SourceEventGateCriterion;
+  artifacts: SourceEventArtifactState[];
+  evidence: SourceEventEvidence[];
+}): SourceEventGateCriterion {
+  if (input.criterion.state !== 'met') return input.criterion;
+  const readiness = evaluateCriterionMetReadiness({
+    criterion: input.criterion,
+    artifacts: input.artifacts,
+    evidence: input.evidence,
+    reason: input.criterion.notes,
+  });
+  if (readiness.ok) return input.criterion;
+  return {
+    ...input.criterion,
+    state: 'pending',
+    reviewedAt: null,
+    reviewerUserId: null,
+    notes: `Previously marked met, but blocked by current governance controls: ${readiness.blockers
+      .map((blocker) => blocker.detail)
+      .join(' ')}`,
+  };
 }
 
 export function firstGovernanceBlocker(verdict: SourceGovernanceVerdict): SourceGovernanceBlocker {

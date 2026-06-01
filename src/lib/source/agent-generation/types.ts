@@ -54,6 +54,10 @@ export interface SourceArtifactBodyGenerationMetadata {
   tokensOut: number | null;
   /** Anthropic stop reason (`end_turn`, `max_tokens`, …). */
   stopReason: string | null;
+  /** ISO timestamp set when a human edits/saves the AI draft. */
+  humanEditedAt?: string;
+  /** Clerk user id of the human who edited/saved the AI draft. */
+  humanEditedByUserId?: string | null;
 }
 
 /**

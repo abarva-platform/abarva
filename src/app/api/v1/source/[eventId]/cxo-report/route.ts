@@ -18,10 +18,6 @@ import {
   SOURCE_CXO_HTML_CONTENT_TYPE,
   renderSourceCxoNarrativeHtml,
 } from '@/lib/source/exports/cxo-report/source-cxo-narrative-html';
-import {
-  SOURCE_CXO_PPTX_CONTENT_TYPE,
-  renderSourceCxoNarrativePptx,
-} from '@/lib/source/exports/cxo-report/source-cxo-narrative-pptx';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,6 +96,10 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
     const dealPack = await assembleDealPack(ctx, generatedAt);
     const report = buildSourceCxoNarrativeReport(dealPack.input);
     if (format === 'pptx') {
+      const {
+        SOURCE_CXO_PPTX_CONTENT_TYPE,
+        renderSourceCxoNarrativePptx,
+      } = await import('@/lib/source/exports/cxo-report/source-cxo-narrative-pptx');
       const buffer = await renderSourceCxoNarrativePptx(report);
       return new Response(buffer as unknown as ArrayBuffer, {
         status: 200,

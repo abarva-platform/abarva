@@ -10,10 +10,16 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import {
+  firstGovernanceBlocker,
+  normalizeApprovalReason,
+  validateApprovalReason,
+} from '@/lib/source/source-governance-enforcement';
 
 interface ApproveBody {
   action: 'approve' | 'reject';
   notes?: string;
+  confirmed?: boolean;
 }
 
 export async function POST(
@@ -56,13 +62,35 @@ export async function POST(
   if (body.action !== 'approve' && body.action !== 'reject') {
     return Response.json({ error: 'invalid_action', detail: 'action must be "approve" or "reject"' }, { status: 400 });
   }
+  if (body.confirmed !== true) {
+    return Response.json(
+      {
+        error: 'confirmation_required',
+        detail: 'A confirmation step is required before approving or rejecting a Source event.',
+      },
+      { status: 409 },
+    );
+  }
+  const reason = normalizeApprovalReason(body.notes);
+  const reasonVerdict = validateApprovalReason(reason);
+  if (!reasonVerdict.ok) {
+    const blocker = firstGovernanceBlocker(reasonVerdict);
+    return Response.json(
+      {
+        error: blocker.code,
+        detail: blocker.detail,
+        blockers: reasonVerdict.blockers,
+      },
+      { status: 409 },
+    );
+  }
 
   const supabase = getAzureReadFluentClient();
 
   // Fetch the event to check it exists and get current state
   const { data: event, error: fetchError } = await supabase
     .from('source_events')
-    .select('id, lifecycle_state, event_name, event_code, client_key')
+    .select('id, lifecycle_state, event_name, event_code, client_key, created_by_user_id')
     .eq('id', eventId)
     .eq('client_key', activeClient.key)
     .single();
@@ -73,6 +101,13 @@ export async function POST(
 
   const fromState = event.lifecycle_state as string;
   const toState = body.action === 'approve' ? 'active' : 'archived';
+  const isSelfApproval = event.created_by_user_id === tenancy.userId;
+  const approvalNotes = [
+    reason,
+    isSelfApproval ? 'Self-approval notice: approver is also the recorded event creator.' : null,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 
   // DB write routed through the data-plane write seam (Slice 3b): the
   // lifecycle update + the append-only approval record. On Azure the two
@@ -88,7 +123,7 @@ export async function POST(
     toState,
     approvalAction: body.action === 'approve' ? 'admin_review' : 'rejected',
     approvedByUserId: tenancy.userId,
-    notes: body.notes ?? null,
+    notes: approvalNotes,
   });
 
   if (!approvalWrite.ok) {
@@ -103,5 +138,6 @@ export async function POST(
     eventId,
     action: body.action,
     newLifecycleState: toState,
+    selfApproval: isSelfApproval,
   });
 }
