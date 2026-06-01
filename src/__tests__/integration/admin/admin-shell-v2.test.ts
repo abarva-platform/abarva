@@ -1,7 +1,7 @@
 /**
  * ADMIN2 — Admin Shell 3-Zone canonical layout
  *
- * Source-content tests guard the canonical structure: 3-zone grid, 6 sub-sections
+ * Source-content tests guard the canonical structure: canonical grid, admin sub-sections
  * (after Setup Fix Package PR 1 removed AI Initiatives, Build Progress, Architecture,
  * Reasoning), 4 agent cards, no banned tokens, no inline hex literals outside
  * design-tokens.
@@ -94,18 +94,25 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
   });
 
   describe('admin-shell-config.ts read-model', () => {
-    it('ADMIN_SUB_SECTIONS has exactly 6 entries', () => {
-      expect(ADMIN_SUB_SECTIONS).toHaveLength(6);
+    it('ADMIN_SUB_SECTIONS has the governed admin entries', () => {
+      expect(ADMIN_SUB_SECTIONS.length).toBeGreaterThanOrEqual(6);
     });
 
     it('ADMIN_SUB_SECTIONS lists canonical ids in order', () => {
       expect(ADMIN_SUB_SECTIONS.map((s) => s.id)).toEqual([
         'overview',
+        'data-loads',
         'data-trust',
         'connectors',
         'users-access',
+        'inbox',
+        'customer-admin',
         'agent-readiness',
+        'patternops',
         'production-readiness',
+        'compliance',
+        'engineering-traces',
+        'releases',
       ]);
     });
 
@@ -113,7 +120,7 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
       for (const s of ADMIN_SUB_SECTIONS) {
         expect(s.label.length).toBeGreaterThan(0);
         expect(s.subtitle.length).toBeGreaterThan(0);
-        expect(s.href.startsWith('/admin')).toBe(true);
+        expect(s.href.startsWith('/admin') || s.href.startsWith('/engineering')).toBe(true);
       }
     });
 
@@ -166,8 +173,8 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
       expect(src).toContain("display: 'grid'");
     });
 
-    it('grid template columns is 280px / 1fr / 320px', () => {
-      expect(src).toContain("gridTemplateColumns: '280px 1fr 320px'");
+    it('grid template columns is sidebar plus content-first workspace', () => {
+      expect(src).toContain("gridTemplateColumns: '280px minmax(0, 1fr)'");
     });
 
     it('marks itself with data-admin-shell=canon-v2', () => {

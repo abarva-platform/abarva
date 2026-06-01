@@ -20,6 +20,19 @@ describe('Setup canonical route registry parity', () => {
     expect(route!.notes).toContain('/platform/admin');
   });
 
+  it('registers /admin/setup as the native Setup Data Loads route', () => {
+    const route = getRouteById('admin-setup-data-loads');
+
+    expect(route).toBeDefined();
+    expect(route!.pattern).toBe('/admin/setup');
+    expect(route!.label).toBe('Setup Data Loads');
+    expect(route!.shellKind).toBe('admin');
+    expect(route!.surface).toBe('admin');
+    expect(route!.primaryAgent).toBe('Steward');
+    expect(route!.requiresAuth).toBe(true);
+    expect(route!.active).toBe(true);
+  });
+
   it('registers canonical W6 Setup governance routes under /admin/*', () => {
     const expected = [
       ['admin-policies', '/admin/policies', 'Setup Policies'],
@@ -81,7 +94,7 @@ describe('Setup canonical route registry parity', () => {
     expect(adminRoutes).not.toContain('/platform/admin/audit');
   });
 
-  it('keeps /setup as a thin compatibility bridge to the canonical /admin setup control plane', () => {
+  it('keeps /setup as a thin compatibility bridge while /admin/setup is native', () => {
     const setupPageSource = fs.readFileSync(
       path.join(process.cwd(), 'src/app/setup/page.tsx'),
       'utf8',
@@ -97,8 +110,9 @@ describe('Setup canonical route registry parity', () => {
 
     expect(setupPageSource).toContain("redirect('/admin')");
     expect(setupPageSource).not.toContain('AdminCanonShellV2');
-    expect(adminSetupPageSource).toContain("redirect('/admin')");
-    expect(adminSetupPageSource).not.toContain('AdminCanonShellV2');
+    expect(adminSetupPageSource).toContain('AdminSetupDataLoadCenterPage');
+    expect(adminSetupPageSource).toContain('AdminCanonShellV2');
+    expect(adminSetupPageSource).not.toContain("redirect('/admin')");
     expect(proxySource).toContain("request.nextUrl.pathname === '/setup'");
     expect(proxySource).toContain("request.nextUrl.pathname.startsWith('/setup/')");
     expect(proxySource).toContain("NextResponse.redirect(new URL('/admin', request.url), 301)");

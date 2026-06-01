@@ -165,6 +165,17 @@ const ROUTE_REGISTRY: ReadonlyArray<RouteRegistryEntry> = [
     notes: 'Legacy /platform/admin redirects to /admin; /admin is the canonical Setup operator entry.',
   },
   {
+    routeId: 'admin-setup-data-loads',
+    pattern: '/admin/setup',
+    label: 'Setup Data Loads',
+    shellKind: 'admin',
+    surface: 'admin',
+    primaryAgent: 'Steward',
+    requiresAuth: true,
+    active: true,
+    notes: 'Pilot private data-plane foundation route for data-load rehearsal and template exploration.',
+  },
+  {
     routeId: 'admin-connectors',
     pattern: '/admin/connectors',
     label: 'Setup Connectors',

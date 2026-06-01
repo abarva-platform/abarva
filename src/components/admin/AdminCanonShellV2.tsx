@@ -94,8 +94,8 @@ export function AdminCanonShellV2({
             padding: 0 18px !important;
             border-bottom: 0 !important;
             border-radius: 999px;
-            background: #0A0C12 !important;
-            color: #FFFFFF !important;
+              background: ${SHELL.INK} !important;
+              color: ${SHELL.CARD_WHITE} !important;
             box-shadow: 0 12px 28px rgba(0,0,0,0.24);
           }
         `}
@@ -182,7 +182,7 @@ export function AdminCanonShellV2({
                 overflow: 'auto',
                 border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
                 borderRadius: 8,
-                background: '#fff',
+                background: SHELL.CARD_WHITE,
                 boxShadow: '0 18px 48px rgba(0,0,0,0.18)',
               }}
             >
@@ -198,7 +198,7 @@ export function AdminCanonShellV2({
                   fontSize: 13,
                   fontWeight: 800,
                   color: SHELL.INK,
-                  background: '#fff',
+                  background: SHELL.CARD_WHITE,
                   borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
                 }}
               >
