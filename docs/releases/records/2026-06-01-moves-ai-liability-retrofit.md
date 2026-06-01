@@ -15,7 +15,7 @@ Moves phase advancement now requires a human rationale before a gate can be appr
 ## Layer Impact
 
 - `global-control-lane`: Adds shared runtime controls to Moves phase-gate APIs, the agent phase-advance tool, and the Moves workspace UI for all clients.
-- `internal-admin`: Updates the pilot readiness tracker to show T235-T237 as actively in branch execution.
+- `internal-admin`: Updates the pilot readiness tracker to show T235-T237 as completed for this branch while leaving broader persistence/legal sign-off rows unchanged.
 
 ## Client Applicability
 
@@ -33,16 +33,19 @@ Moves phase advancement now requires a human rationale before a gate can be appr
 - `src/lib/agent/tools/program/advancePhase.ts` rejects agent phase-advance calls that do not include a human rationale and records decision-support metadata when advancing.
 - `src/app/api/reasoning/gate-approval/route.ts` enforces the same minimum rationale bar for gate approval.
 - `src/app/api/reasoning/audit/route.ts` exposes the decision evidence packet reference in approval audit output when present.
+- `src/lib/programs/deliverable-canvas-polish-view.ts` carries AI Draft and edit-before-commit requirements in the Moves deliverables view model.
 - `src/components/programs/PhaseAdvanceButton.tsx` opens a human-rationale commit step before the phase-advance API call.
 - `src/components/programs/ProgramDetailPage.tsx` adds the human decision attestation to gate approval UI, enforces the rationale bar in inline approvals, and labels Moves deliverables as AI drafts.
-- `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` marks T235-T237 as in progress for this branch.
+- `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` marks T235-T237 as done with implementation notes.
 
 ## QA / Validation
 
-- Passed: `npx jest src/lib/programs/__tests__/moves-ai-liability.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts 'src/app/api/v1/programs/[programId]/advance/__tests__/route.test.ts' src/lib/agent/tools/__tests__/advancePhase.test.ts src/components/programs/__tests__/PhaseAdvanceButton.test.tsx --runInBand`
-- Passed: `npx jest src/lib/agent/tools/__tests__/advancePhase.test.ts --runInBand`
+- Passed: `npx jest src/lib/programs/__tests__/moves-ai-liability.test.ts src/lib/programs/__tests__/deliverable-canvas-ai-draft.test.ts src/app/api/programs/phase-gate/__tests__/route.test.ts 'src/app/api/v1/programs/[programId]/advance/__tests__/route.test.ts' src/lib/agent/tools/__tests__/advancePhase.test.ts src/components/programs/__tests__/PhaseAdvanceButton.test.tsx --runInBand`
+- Passed: `npx jest src/components/programs/__tests__/PhaseAdvanceButton.test.tsx --runInBand`
 - Passed: `./node_modules/.bin/tsc --noEmit --pretty false`
 - Passed: `npm run release:check -- --base origin/main --head HEAD`
+- Passed: `npm run audit:runtime-supabase-imports:guard` (only allowlisted `src/lib/supabase-server.ts` runtime helper import remains; broad legacy string matches are not runtime imports).
+- Passed: tracker inspection for `Plan!A25:M27` in both `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` and `/Users/anand/Downloads/ABARVA_PILOT_READINESS_PLAN.xlsx`; T235-T237 are `Done`.
 
 ## Rollout Plan
 
@@ -57,7 +60,7 @@ Revert the merge commit. This restores the prior phase-gate request contracts an
 - Pull request: https://github.com/anandsundaram-hash/abarva/pull/2719
 - Local focused Jest and TypeScript validation listed above.
 - Release record: this file.
-- Tracker evidence: `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` rows T235-T237.
+- Tracker evidence: `docs/planning/ABARVA_PILOT_READINESS_PLAN.xlsx` and `/Users/anand/Downloads/ABARVA_PILOT_READINESS_PLAN.xlsx` rows T235-T237.
 
 ## Known Gaps
 
