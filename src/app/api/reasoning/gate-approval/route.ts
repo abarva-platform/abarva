@@ -9,32 +9,38 @@
 // in-memory store key is namespaced by tenant so a process-level Map
 // can never be read cross-tenant by instanceId.
 
-import { recordApproval } from '@/app/api/reasoning/audit/route';
+import { recordApproval } from "@/app/api/reasoning/audit/route";
 import {
   requireReasoningTenancy,
   tenancyErrorResponse,
   assertInstanceInTenant,
   requireGateApprovalRole,
   reasoningTenantId,
-} from '@/app/api/reasoning/_auth';
+} from "@/app/api/reasoning/_auth";
+import type { AiDecisionEvidencePacket } from "@/lib/ai-liability/human-decision-controls";
+import {
+  buildMovesGateApprovalEvidencePacket,
+  validateMovesHumanRationale,
+} from "@/lib/programs/moves-ai-liability";
 
 interface GateApprovalBody {
   instanceId: string;
   criterionId: string;
   justification: string;
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
 }
 
 export interface ApprovalRecord {
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
   justification: string;
   timestamp: string;
+  aiDecisionEvidencePacket: AiDecisionEvidencePacket;
 }
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -77,8 +83,10 @@ export async function POST(request: Request): Promise<Response> {
   try {
     ctx = await requireReasoningTenancy();
   } catch (err) {
-    try { return tenancyErrorResponse(err); } catch {}
-    return jsonResponse({ error: 'internal_error' }, 500);
+    try {
+      return tenancyErrorResponse(err);
+    } catch {}
+    return jsonResponse({ error: "internal_error" }, 500);
   }
 
   // Approve / reject is a privileged write — enforce role before anything else.
@@ -89,32 +97,44 @@ export async function POST(request: Request): Promise<Response> {
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: 'invalid JSON body' }, 400);
+    return jsonResponse({ error: "invalid JSON body" }, 400);
   }
 
-  if (!body || typeof body !== 'object') {
-    return jsonResponse({ error: 'body must be an object' }, 400);
+  if (!body || typeof body !== "object") {
+    return jsonResponse({ error: "body must be an object" }, 400);
   }
 
-  const { instanceId, criterionId, justification, action } = body as Partial<GateApprovalBody>;
+  const { instanceId, criterionId, justification, action } =
+    body as Partial<GateApprovalBody>;
 
-  if (typeof instanceId !== 'string' || instanceId.length === 0) {
-    return jsonResponse({ error: 'instanceId is required' }, 400);
+  if (typeof instanceId !== "string" || instanceId.length === 0) {
+    return jsonResponse({ error: "instanceId is required" }, 400);
   }
 
-  if (typeof criterionId !== 'string' || criterionId.length === 0) {
-    return jsonResponse({ error: 'criterionId is required' }, 400);
+  if (typeof criterionId !== "string" || criterionId.length === 0) {
+    return jsonResponse({ error: "criterionId is required" }, 400);
   }
 
-  if (typeof justification !== 'string' || justification.length === 0) {
-    return jsonResponse({ error: 'justification is required' }, 400);
+  if (typeof justification !== "string" || justification.length === 0) {
+    return jsonResponse({ error: "justification is required" }, 400);
+  }
+
+  const justificationError = validateMovesHumanRationale(justification);
+  if (justificationError) {
+    return jsonResponse(
+      { error: "human_rationale_required", detail: justificationError },
+      400,
+    );
   }
 
   if (justification.length > 200) {
-    return jsonResponse({ error: 'justification must be 200 characters or fewer' }, 400);
+    return jsonResponse(
+      { error: "justification must be 200 characters or fewer" },
+      400,
+    );
   }
 
-  if (action !== 'approve' && action !== 'reject') {
+  if (action !== "approve" && action !== "reject") {
     return jsonResponse({ error: "action must be 'approve' or 'reject'" }, 400);
   }
 
@@ -125,7 +145,25 @@ export async function POST(request: Request): Promise<Response> {
 
   const tenantId = reasoningTenantId(ctx);
   const key = `${tenantId}::${instanceId}::${criterionId}`;
-  const record: ApprovalRecord = { action, justification, timestamp: new Date().toISOString() };
+  const evidencePacket = buildMovesGateApprovalEvidencePacket({
+    instanceId,
+    tenantName: tenantId,
+    criterionId,
+    humanRationale: justification,
+    action,
+    decisionOwner: {
+      name: ctx.email ?? ctx.userId,
+      title: ctx.role ?? "Gate approver",
+      tenantName: tenantId,
+      userId: ctx.userId,
+    },
+  });
+  const record: ApprovalRecord = {
+    action,
+    justification,
+    timestamp: new Date().toISOString(),
+    aiDecisionEvidencePacket: evidencePacket,
+  };
   approvalStore.set(key, record);
 
   recordApproval({
@@ -136,7 +174,11 @@ export async function POST(request: Request): Promise<Response> {
     justification,
     actedAt: record.timestamp,
     actorId: ctx.userId,
+    aiDecisionEvidencePacket: evidencePacket,
   });
 
-  return jsonResponse({ ok: true, action, timestamp: record.timestamp }, 200);
+  return jsonResponse(
+    { ok: true, action, timestamp: record.timestamp, evidencePacket },
+    200,
+  );
 }

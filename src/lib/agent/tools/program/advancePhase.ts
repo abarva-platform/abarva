@@ -31,13 +31,22 @@
 //     → "Holding on Execution Roadmap — privacy attestation pending. Want to push
 //        anyway with sponsor sign-off, or wait?"
 
-import type { AgentTool, ToolResult } from '../registry';
-import { registerTool } from '../registry';
-import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { advancePhase as advancePhaseMutation } from '@/lib/programs/mutations';
-import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance';
-import { getProgramById } from '@/lib/programs/queries';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import type { AgentTool, ToolResult } from "../registry";
+import { registerTool } from "../registry";
+import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
+import { advancePhase as advancePhaseMutation } from "@/lib/programs/mutations";
+import {
+  evaluateGate,
+  requestFounderApproval,
+} from "@/lib/programs/governance";
+import { getProgramById } from "@/lib/programs/queries";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import {
+  appendMovesDecisionSupportToSnapshot,
+  buildMovesPhaseDecisionEvidencePacket,
+  normalizeMovesHumanRationale,
+  validateMovesHumanRationale,
+} from "@/lib/programs/moves-ai-liability";
 
 interface AdvancePhaseInput {
   /** Engagement id (or graph_node_id) of the program to advance. */
@@ -62,7 +71,7 @@ interface AdvancePhaseInput {
 
 function formatAdvanceError(err: unknown): string {
   if (err instanceof Error) return err.message;
-  if (typeof err === 'string') return err;
+  if (typeof err === "string") return err;
   try {
     return JSON.stringify(err);
   } catch {
@@ -71,48 +80,56 @@ function formatAdvanceError(err: unknown): string {
 }
 
 export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
-  name: 'advance_phase',
+  name: "advance_phase",
   description:
-    'Advance a program to the next phase. Always evaluate gates first — the tool will return ' +
-    'gate_blocked_hard with the unmet criteria when hard-gate checks fail. When that happens, surface ' +
-    'each unmet criterion to the user via gate-evaluation artifacts; do NOT announce success or ' +
-    'pretend the advance happened. Only call this when the user has explicitly asked to advance ' +
+    "Advance a program to the next phase. Always evaluate gates first — the tool will return " +
+    "gate_blocked_hard with the unmet criteria when hard-gate checks fail. When that happens, surface " +
+    "each unmet criterion to the user via gate-evaluation artifacts; do NOT announce success or " +
+    "pretend the advance happened. Only call this when the user has explicitly asked to advance " +
     '(e.g. "move to Execution Roadmap", "advance the phase"). Default bypass_gate to false; only set true ' +
-    'when the user explicitly invokes a sponsor override and provides a rationale. ' +
-    'This tool never SATISFIES a gate approval — when a gate requires approval it CREATES a pending ' +
-    'approval request and tells the user it is pending. Self-approval is a deterministic UI action; ' +
-    'do not attempt to approve a gate on the user\'s behalf from chat.',
-  surfaces: ['/programs/:id'],
+    "when the user explicitly invokes a sponsor override and provides a rationale. " +
+    "This tool never SATISFIES a gate approval — when a gate requires approval it CREATES a pending " +
+    "approval request and tells the user it is pending. Self-approval is a deterministic UI action; " +
+    "do not attempt to approve a gate on the user's behalf from chat.",
+  surfaces: ["/programs/:id"],
   input_schema: {
-    type: 'object',
+    type: "object",
     properties: {
       program_id: {
-        type: 'string',
-        description: 'Engagement id or graph_node_id (e.g. apx-cdp-2026 or its UUID).',
+        type: "string",
+        description:
+          "Engagement id or graph_node_id (e.g. apx-cdp-2026 or its UUID).",
       },
       to_phase: {
-        type: 'number',
-        description: 'Target phase 0-6. Must equal current_phase + 1 unless bypass_gate is true.',
+        type: "number",
+        description:
+          "Target phase 0-6. Must equal current_phase + 1 unless bypass_gate is true.",
       },
       rationale: {
-        type: 'string',
-        description: 'Plain-language rationale, especially when bypass_gate is true.',
+        type: "string",
+        description:
+          "Plain-language rationale, especially when bypass_gate is true.",
       },
       bypass_gate: {
-        type: 'boolean',
+        type: "boolean",
         description:
-          'Default false. Only set true when the user explicitly invokes a sponsor override; ' +
-          'soft-fail bypass routes through founder approval if needed. Hard fails always block.',
+          "Default false. Only set true when the user explicitly invokes a sponsor override; " +
+          "soft-fail bypass routes through founder approval if needed. Hard fails always block.",
       },
     },
-    required: ['program_id', 'to_phase'],
+    required: ["program_id", "to_phase"],
   },
   handler: async (input, ctx): Promise<ToolResult> => {
-    if (typeof input.to_phase !== 'number' || input.to_phase < 0 || input.to_phase > 6) {
+    if (
+      typeof input.to_phase !== "number" ||
+      input.to_phase < 0 ||
+      input.to_phase > 6
+    ) {
       return {
         success: false,
-        error: 'invalid_to_phase',
-        recovery: 'Target phase must be 0-6. Tell me which phase you actually want to advance to.',
+        error: "invalid_to_phase",
+        recovery:
+          "Target phase must be 0-6. Tell me which phase you actually want to advance to.",
       };
     }
 
@@ -125,7 +142,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
           success: false,
           error: `auth:${err.code}`,
           recovery:
-            err.code === 'unauthenticated'
+            err.code === "unauthenticated"
               ? "Your session expired. Sign back in and we'll pick up the advance."
               : "There's no active client on this session. Set the active client and I'll try again.",
         };
@@ -137,9 +154,8 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     if (!program) {
       return {
         success: false,
-        error: 'program_not_found',
-        recovery:
-          `Couldn't find program "${input.program_id}" in this tenant. Confirm the id and I'll retry.`,
+        error: "program_not_found",
+        recovery: `Couldn't find program "${input.program_id}" in this tenant. Confirm the id and I'll retry.`,
       };
     }
 
@@ -147,7 +163,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     if (input.to_phase !== fromPhase + 1 && !input.bypass_gate) {
       return {
         success: false,
-        error: 'non_adjacent_phase',
+        error: "non_adjacent_phase",
         recovery:
           `The program is at phase ${fromPhase}; you asked for ${input.to_phase}. Phases advance ` +
           `one at a time unless you explicitly bypass. Want me to advance one step (${fromPhase} → ${fromPhase + 1}) instead?`,
@@ -156,35 +172,54 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
 
     let gate;
     try {
-      gate = await evaluateGate(tenancy, input.program_id, fromPhase, input.to_phase);
+      gate = await evaluateGate(
+        tenancy,
+        input.program_id,
+        fromPhase,
+        input.to_phase,
+      );
     } catch (err) {
       const message = formatAdvanceError(err);
       return {
         success: false,
         error: `gate_eval_failed: ${message}`,
-        recovery: "Couldn't evaluate the gate. Want me to retry, or pull the criteria for review?",
+        recovery:
+          "Couldn't evaluate the gate. Want me to retry, or pull the criteria for review?",
       };
     }
 
-    const hardFails = gate.failedChecks.filter((c) => c.severity === 'hard');
+    const hardFails = gate.failedChecks.filter((c) => c.severity === "hard");
     if (hardFails.length > 0) {
       return {
         success: false,
-        error: 'gate_blocked_hard',
+        error: "gate_blocked_hard",
         // Pass the unmet criteria back to Nexus so it can emit
         // gate-evaluation artifacts to the user. The recovery string
         // is what the agent reads to know what to surface.
         recovery:
-          `Can't advance — ${hardFails.length} hard-gate check${hardFails.length === 1 ? '' : 's'} ` +
-          `unmet: ${hardFails.map((c) => `${c.check} (${c.reason})`).join('; ')}. Surface these to ` +
+          `Can't advance — ${hardFails.length} hard-gate check${hardFails.length === 1 ? "" : "s"} ` +
+          `unmet: ${hardFails.map((c) => `${c.check} (${c.reason})`).join("; ")}. Surface these to ` +
           'the user as gate-evaluation artifacts (status: "blocked") so they can resolve them, ' +
-          'then we can retry.',
+          "then we can retry.",
       };
     }
 
-    const accessPolicy = ctx.accessPolicy ?? await loadUserProgramAccessPolicy(tenancy, {
-      programId: input.program_id,
-    });
+    const humanRationale = normalizeMovesHumanRationale(input.rationale);
+    const rationaleError = validateMovesHumanRationale(humanRationale);
+    if (rationaleError) {
+      return {
+        success: false,
+        error: "human_rationale_required",
+        recovery:
+          "A phase advance needs an explicit human rationale before commit. Ask the user for a full-sentence reason, then retry.",
+      };
+    }
+
+    const accessPolicy =
+      ctx.accessPolicy ??
+      (await loadUserProgramAccessPolicy(tenancy, {
+        programId: input.program_id,
+      }));
 
     // SECURITY (audit 2026-05-22, P2-8): a bypass_gate request still
     // requires gate-approval rights, but the agent NEVER self-satisfies a
@@ -194,13 +229,13 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     if (
       input.bypass_gate === true &&
       accessPolicy.canApproveGates !== true &&
-      tenancy.role !== 'founder'
+      tenancy.role !== "founder"
     ) {
       return {
         success: false,
-        error: 'approval_permission_required',
+        error: "approval_permission_required",
         recovery:
-          'This session does not have phase-gate approval rights. Ask a tenant admin or sponsor approver to approve the gate, then retry.',
+          "This session does not have phase-gate approval rights. Ask a tenant admin or sponsor approver to approve the gate, then retry.",
       };
     }
 
@@ -211,14 +246,14 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       // approval itself — that is a deterministic UI confirmation.
       try {
         await requestFounderApproval(tenancy, input.program_id, {
-          requestType: 'phase_gate',
+          requestType: "phase_gate",
           headline: `Approve phase ${fromPhase} → ${input.to_phase} gate`,
-          approverRole: gate.approverRole ?? 'sponsor',
+          approverRole: gate.approverRole ?? "sponsor",
           deadlineHours: 48,
           context: {
             from_phase: fromPhase,
             to_phase: input.to_phase,
-            rationale: input.rationale ?? null,
+            rationale: humanRationale,
           },
         });
       } catch {
@@ -226,7 +261,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       }
       return {
         success: false,
-        error: 'approval_required',
+        error: "approval_required",
         recovery:
           `Phase advance requires sponsor approval. I've queued a request — once it's approved in the ` +
           `Programs UI, the phase ${fromPhase} → ${input.to_phase} advance can proceed. Tell the user ` +
@@ -234,21 +269,35 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       };
     }
 
+    const evidencePacket = buildMovesPhaseDecisionEvidencePacket({
+      programId: input.program_id,
+      tenantName: tenancy.clientKey ?? tenancy.clientId,
+      fromPhase,
+      toPhase: input.to_phase,
+      gateCriterion: `Nexus phase advance ${fromPhase} -> ${input.to_phase}`,
+      humanRationale,
+      decisionOwner: {
+        name: tenancy.email ?? tenancy.userId,
+        title: tenancy.role ?? "Gate approver",
+        tenantName: tenancy.clientKey ?? tenancy.clientId,
+        userId: tenancy.userId,
+      },
+      overrideDisposition: input.bypass_gate ? "modified" : "accepted",
+    });
+
     try {
       const result = await advancePhaseMutation(tenancy, {
         programId: input.program_id,
         fromPhase,
         toPhase: input.to_phase,
-        snapshot: input.rationale
-          ? {
-              rationale: input.rationale,
-              advancedAt: new Date().toISOString(),
-              self_approved: false,
-            }
-          : {
-              advancedAt: new Date().toISOString(),
-              self_approved: false,
-            },
+        snapshot: appendMovesDecisionSupportToSnapshot(
+          {
+            rationale: humanRationale,
+            advancedAt: new Date().toISOString(),
+            self_approved: false,
+          },
+          evidencePacket,
+        ),
         // The agent never records itself as the gate approver. When a
         // gate required approval the code path above already returned
         // 'approval_required'; reaching here means either no approval was
@@ -288,7 +337,8 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       return {
         success: false,
         error: `advance_failed: ${message}`,
-        recovery: "Couldn't write the advance to the database. Want me to retry, or escalate to admin?",
+        recovery:
+          "Couldn't write the advance to the database. Want me to retry, or escalate to admin?",
       };
     }
   },

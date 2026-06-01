@@ -30,6 +30,12 @@ describe('PhaseAdvanceButton', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /advance to p1/i }));
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/human rationale for phase advance/i), {
+      target: { value: 'I reviewed the evidence and accept this phase advance.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /commit human decision/i }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -38,7 +44,11 @@ describe('PhaseAdvanceButton', () => {
     expect(JSON.parse(String(init.body))).toEqual({
       toPhase: 1,
       selfApproveIfAuthorized: true,
-      snapshot: { requested_from: 'program_detail_phase_advance_button' },
+      humanRationale: 'I reviewed the evidence and accept this phase advance.',
+      snapshot: {
+        requested_from: 'program_detail_phase_advance_button',
+        humanRationale: 'I reviewed the evidence and accept this phase advance.',
+      },
     });
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });

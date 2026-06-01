@@ -25,107 +25,114 @@ const readFileSync = jest.fn();
 const writeFileSync = jest.fn();
 const existsSync = jest.fn();
 
-jest.mock('@clerk/nextjs/server', () => ({
+jest.mock("@clerk/nextjs/server", () => ({
   auth,
   clerkClient,
 }));
 
-jest.mock('fs', () => ({
+jest.mock("fs", () => ({
   mkdirSync,
   readFileSync,
   writeFileSync,
   existsSync,
 }));
 
-jest.mock('@/lib/auth/tenant-access', () => ({
+jest.mock("@/lib/auth/tenant-access", () => ({
   checkTenantAccessByKey,
   tenantKeyForProgramCode,
 }));
 
-jest.mock('@/lib/auth/tenancy', () => ({
+jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy,
 }));
 
-jest.mock('@/lib/workflow/sponsorCommitmentLedger', () => ({
+jest.mock("@/lib/workflow/sponsorCommitmentLedger", () => ({
   getLatestSponsorCommitment,
 }));
 
-jest.mock('@/lib/workflow/stakeholderSuccessLedger', () => ({
+jest.mock("@/lib/workflow/stakeholderSuccessLedger", () => ({
   getProgramTensionRecords,
   getStakeholderSuccessRecords,
 }));
 
-jest.mock('@/lib/workflow/dataReadinessLedger', () => ({
+jest.mock("@/lib/workflow/dataReadinessLedger", () => ({
   dataReadinessGateMet,
 }));
 
-jest.mock('@/lib/data-plane/azureRead', () => ({
+jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: mockAzureRead,
 }));
 
-jest.mock('@/lib/deliverables/seed-route-resolver', () => ({
+jest.mock("@/lib/deliverables/seed-route-resolver", () => ({
   getSeedPlan,
 }));
 
-jest.mock('@/lib/programs/audit-log', () => ({
+jest.mock("@/lib/programs/audit-log", () => ({
   writeProgramAuditLog,
 }));
 
-jest.mock('@/lib/data-plane/write-adapters/programsWriteAdapter', () => ({
+jest.mock("@/lib/data-plane/write-adapters/programsWriteAdapter", () => ({
   selectProgramsWriteAdapter: () => ({ advanceEngagementPhase }),
 }));
 
-jest.mock('@/lib/auth/program-access-policy', () => ({
+jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy,
 }));
 
-jest.mock('@/lib/auth/gate-approval-strict-mode', () => ({
+jest.mock("@/lib/auth/gate-approval-strict-mode", () => ({
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
 }));
 
 function phaseGateRequest(): Request {
-  return new Request('http://localhost/api/programs/phase-gate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  return new Request("http://localhost/api/programs/phase-gate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      programCode: 'APX-01',
+      programCode: "APX-01",
       fromPhase: 2,
       toPhase: 3,
-      gateCriterion: 'Gate 3 advance',
+      gateCriterion: "Gate 3 advance",
+      humanRationale:
+        "I reviewed the gate evidence and approve advancing this Move to design.",
     }),
   });
 }
 
-describe('POST /api/programs/phase-gate read plane', () => {
+describe("POST /api/programs/phase-gate read plane", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    auth.mockResolvedValue({ userId: 'user_1' });
+    auth.mockResolvedValue({ userId: "user_1" });
     clerkClient.mockResolvedValue({
       users: {
         getUser: jest.fn().mockResolvedValue({
-          firstName: 'Maya',
-          lastName: 'Patel',
-          publicMetadata: { role: 'admin' },
-          emailAddresses: [{ emailAddress: 'maya@example.com' }],
+          firstName: "Maya",
+          lastName: "Patel",
+          publicMetadata: { role: "admin" },
+          emailAddresses: [{ emailAddress: "maya@example.com" }],
         }),
       },
     });
-    tenantKeyForProgramCode.mockReturnValue('apex-retail');
+    tenantKeyForProgramCode.mockReturnValue("apex-retail");
     checkTenantAccessByKey.mockResolvedValue({ ok: true });
-    requireTenancy.mockResolvedValue({ clientId: 'client_1', clientKey: 'apex-retail', userId: 'user_1', role: 'admin' });
+    requireTenancy.mockResolvedValue({
+      clientId: "client_1",
+      clientKey: "apex-retail",
+      userId: "user_1",
+      role: "admin",
+    });
     loadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
     isGateApprovalStrictMode.mockReturnValue(false);
     isStrictModeApprovalRole.mockReturnValue(true);
-    getLatestSponsorCommitment.mockReturnValue({ id: 'commitment_1' });
-    getProgramTensionRecords.mockReturnValue([{ id: 'tension_1' }]);
-    getStakeholderSuccessRecords.mockReturnValue([{ id: 'success_1' }]);
+    getLatestSponsorCommitment.mockReturnValue({ id: "commitment_1" });
+    getProgramTensionRecords.mockReturnValue([{ id: "tension_1" }]);
+    getStakeholderSuccessRecords.mockReturnValue([{ id: "success_1" }]);
     dataReadinessGateMet.mockReturnValue({ met: true, blockedDimensions: [] });
     getSeedPlan.mockReturnValue({
-      programs: [{ code: 'APX-01', graphNodeId: 'graph_program_1' }],
+      programs: [{ code: "APX-01", graphNodeId: "graph_program_1" }],
     });
     mockAzureRead.maybeSingle.mockResolvedValue({
-      id: 'engagement_1',
+      id: "engagement_1",
       current_phase: 2,
       gates_passed: [1, 2],
     });
@@ -134,40 +141,75 @@ describe('POST /api/programs/phase-gate read plane', () => {
     existsSync.mockReturnValue(false);
   });
 
-  it('resolves the engagement through azureRead and preserves write/audit side effects', async () => {
-    const { POST } = await import('@/app/api/programs/phase-gate/route');
+  it("resolves the engagement through azureRead and preserves write/audit side effects", async () => {
+    const { POST } = await import("@/app/api/programs/phase-gate/route");
     const res = await POST(phaseGateRequest() as never);
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
       ok: true,
       entry: {
-        programCode: 'APX-01',
+        programCode: "APX-01",
         fromPhase: 2,
         toPhase: 3,
+        humanRationale:
+          "I reviewed the gate evidence and approve advancing this Move to design.",
+        aiDecisionEvidencePacket: expect.objectContaining({
+          recommendationId: "moves-phase-gate:APX-01:P2->P3",
+          humanRationale:
+            "I reviewed the gate evidence and approve advancing this Move to design.",
+        }),
       },
     });
     expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith({
-      table: 'engagements',
-      columns: ['id', 'current_phase', 'gates_passed'],
-      where: { graph_node_id: 'graph_program_1' },
+      table: "engagements",
+      columns: ["id", "current_phase", "gates_passed"],
+      where: { graph_node_id: "graph_program_1" },
     });
     expect(advanceEngagementPhase).toHaveBeenCalledWith({
-      engagementId: 'engagement_1',
+      engagementId: "engagement_1",
       toPhase: 3,
       gatesPassed: [1, 2, 3],
-      tenantKey: 'apex-retail',
+      tenantKey: "apex-retail",
     });
     expect(writeProgramAuditLog).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'apex-retail', userId: 'user_1' }),
+      expect.objectContaining({ clientId: "apex-retail", userId: "user_1" }),
       expect.objectContaining({
-        tenantKey: 'apex-retail',
-        programId: 'APX-01',
-        engagementId: 'engagement_1',
-        action: 'PHASE_GATE_ADVANCED',
+        tenantKey: "apex-retail",
+        programId: "APX-01",
+        engagementId: "engagement_1",
+        action: "PHASE_GATE_ADVANCED",
+        rationale:
+          "I reviewed the gate evidence and approve advancing this Move to design.",
+        evidenceRefs: expect.arrayContaining([
+          "moves-phase-gate:APX-01:P2->P3",
+        ]),
       }),
     );
     expect(writeFileSync).toHaveBeenCalled();
+  });
+
+  it("rejects phase-gate advances without a human rationale", async () => {
+    const { POST } = await import("@/app/api/programs/phase-gate/route");
+    const res = await POST(
+      new Request("http://localhost/api/programs/phase-gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          programCode: "APX-01",
+          fromPhase: 2,
+          toPhase: 3,
+          gateCriterion: "Gate 3 advance",
+        }),
+      }) as never,
+    );
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "human_rationale_required",
+    });
+    expect(writeProgramAuditLog).not.toHaveBeenCalled();
+    expect(advanceEngagementPhase).not.toHaveBeenCalled();
   });
 });
 

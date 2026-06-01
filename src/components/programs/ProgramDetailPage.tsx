@@ -68,6 +68,11 @@ import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narra
 import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
+import {
+  AI_DECISION_SUPPORT_WATERMARK,
+  HUMAN_DECISION_ATTESTATION_TEXT,
+} from '@/lib/ai-liability/human-decision-controls';
+import { MOVES_HUMAN_RATIONALE_MIN_CHARS } from '@/lib/programs/moves-ai-liability';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -859,7 +864,7 @@ function GateApproveModal({
   void fromPhase;
   const toPhaseLabel = PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
 
-  const canApprove = rationale.trim().length > 10;
+  const canApprove = rationale.trim().length >= MOVES_HUMAN_RATIONALE_MIN_CHARS;
 
   return (
     <div
@@ -942,6 +947,23 @@ function GateApproveModal({
           </div>
         )}
 
+        <div
+          data-testid="moves-gate-human-decision-attestation"
+          style={{
+            background: SHELL.MINT_BG,
+            border: `1px solid ${SHELL.MINT_LINE}`,
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 16,
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.45,
+          }}
+        >
+          <strong>{AI_DECISION_SUPPORT_WATERMARK}</strong> {HUMAN_DECISION_ATTESTATION_TEXT}
+        </div>
+
         {/* Rationale textarea */}
         <div style={{ marginBottom: 24 }}>
           <div
@@ -975,8 +997,20 @@ function GateApproveModal({
               outline: 'none',
               lineHeight: 1.5,
             }}
-            placeholder="Describe why this gate advance is approved despite any open criteria…"
+            placeholder="State the human reason for this gate advance and the evidence you reviewed..."
           />
+          <div
+            style={{
+              marginTop: 6,
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Minimum {MOVES_HUMAN_RATIONALE_MIN_CHARS} characters · human commit required
+          </div>
         </div>
 
         {/* Error message */}
@@ -1037,7 +1071,7 @@ function GateApproveModal({
               cursor: canApprove && !isLoading ? 'pointer' : 'not-allowed',
             }}
           >
-            {isLoading ? 'Approving...' : 'Approve gate'}
+            {isLoading ? 'Approving...' : 'Approve human decision'}
           </button>
         </div>
       </div>
@@ -1071,6 +1105,7 @@ function GateCriteriaList({
   const [expandedApproval, setExpandedApproval] = useState<number | null>(null);
   const [justificationText, setJustificationText] = useState('');
   const [approvalInFlight, setApprovalInFlight] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
 
   async function handleWaive(index: number, criterion: string) {
     setInFlightIndices((prev) => new Set(prev).add(index));
@@ -1104,37 +1139,53 @@ function GateCriteriaList({
   function openApprovalInput(index: number) {
     setExpandedApproval(index);
     setJustificationText('');
+    setApprovalError(null);
   }
 
   function cancelApproval() {
     setExpandedApproval(null);
     setJustificationText('');
+    setApprovalError(null);
   }
 
   async function confirmApproval(index: number, action: ApprovalAction) {
-    if (justificationText.trim().length === 0) return;
+    const justification = justificationText.trim().replace(/\s+/g, ' ');
+    if (justification.length < MOVES_HUMAN_RATIONALE_MIN_CHARS) {
+      setApprovalError(
+        `Human justification must be at least ${MOVES_HUMAN_RATIONALE_MIN_CHARS} characters.`,
+      );
+      return;
+    }
     setApprovalInFlight(true);
+    setApprovalError(null);
     try {
-      await fetch('/api/reasoning/gate-approval', {
+      const res = await fetch('/api/reasoning/gate-approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           instanceId,
           criterionId: `${instanceId}::${index}`,
-          justification: justificationText.trim(),
+          justification,
           action,
         }),
       });
-    } finally {
-      setApprovalInFlight(false);
-      // Optimistic update regardless of server response — demo state only.
+      const data = (await res.json().catch(() => ({}))) as {
+        detail?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        setApprovalError(data.detail ?? data.error ?? 'Gate approval failed.');
+        return;
+      }
       setApprovedMap((prev) => {
         const next = new Map(prev);
-        next.set(index, { action, justification: justificationText.trim() });
+        next.set(index, { action, justification });
         return next;
       });
       setExpandedApproval(null);
       setJustificationText('');
+    } finally {
+      setApprovalInFlight(false);
     }
   }
 
@@ -1165,6 +1216,8 @@ function GateCriteriaList({
           const isApproved = approvalRecord?.action === 'approve';
           const isRejected = approvalRecord?.action === 'reject';
           const isExpanded = expandedApproval === i;
+          const canSubmitApproval =
+            justificationText.trim().length >= MOVES_HUMAN_RATIONALE_MIN_CHARS;
           // Pending approval action for this row.
           const pendingAction: ApprovalAction = g.met ? 'approve' : 'reject';
 
@@ -1409,7 +1462,7 @@ function GateCriteriaList({
                     autoFocus
                     maxLength={200}
                     rows={2}
-                    placeholder="Justification (required, max 200 chars)"
+                    placeholder="Human justification with evidence reviewed (required, max 200 chars)"
                     value={justificationText}
                     onChange={(e) => setJustificationText(e.target.value)}
                     style={{
@@ -1426,6 +1479,29 @@ function GateCriteriaList({
                       outline: 'none',
                     }}
                   />
+                  <div
+                    style={{
+                      marginTop: 5,
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      color: canSubmitApproval ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    Minimum {MOVES_HUMAN_RATIONALE_MIN_CHARS} characters · evidence bundle recorded
+                  </div>
+                  {approvalError && (
+                    <div
+                      style={{
+                        marginTop: 5,
+                        fontFamily: SHELL.SANS,
+                        fontSize: 10,
+                        color: SHELL.RUST_TEXT,
+                      }}
+                    >
+                      {approvalError}
+                    </div>
+                  )}
                   <div
                     style={{
                       display: 'flex',
@@ -1454,7 +1530,7 @@ function GateCriteriaList({
                       Cancel
                     </button>
                     <button
-                      disabled={approvalInFlight || justificationText.trim().length === 0}
+                      disabled={approvalInFlight || !canSubmitApproval}
                       onClick={() => confirmApproval(i, pendingAction)}
                       style={{
                         fontFamily: SHELL.MONO,
@@ -1463,14 +1539,14 @@ function GateCriteriaList({
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
                         color:
-                          approvalInFlight || justificationText.trim().length === 0
+                          approvalInFlight || !canSubmitApproval
                             ? SHELL.INK_MUTED
                             : pendingAction === 'approve'
                             ? SHELL.MINT_TEXT
                             : SHELL.RUST_TEXT,
                         background: 'none',
                         border: `1px solid ${
-                          approvalInFlight || justificationText.trim().length === 0
+                          approvalInFlight || !canSubmitApproval
                             ? SHELL.GRAY_LINE
                             : pendingAction === 'approve'
                             ? SHELL.MINT_LINE
@@ -1479,7 +1555,7 @@ function GateCriteriaList({
                         borderRadius: 4,
                         padding: '2px 8px',
                         cursor:
-                          approvalInFlight || justificationText.trim().length === 0
+                          approvalInFlight || !canSubmitApproval
                             ? 'not-allowed'
                             : 'pointer',
                         lineHeight: 1.6,
@@ -1661,6 +1737,22 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
                   <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
                     · {item.status}
                   </span>
+                  <span
+                    data-testid="moves-deliverable-ai-draft-label"
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      color: SHELL.INK_MUTED,
+                      background: SHELL.GRAY_BG,
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 4,
+                      padding: '2px 6px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    AI Draft · edit before commit
+                  </span>
                 </div>
               </div>
             </div>
@@ -1742,7 +1834,7 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
         data-honest-disclaimer="deliverables-canvas"
         style={{ marginTop: 16, fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.6 }}
       >
-        {canvasView.honestDisclaimer}
+        {canvasView.honestDisclaimer} {AI_DECISION_SUPPORT_WATERMARK}
       </div>
     </div>
   );
@@ -3813,7 +3905,7 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
           data-honest-disclaimer="gate-approval"
           style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
         >
-          {drawerView.honestDisclaimer}
+          {drawerView.honestDisclaimer} {AI_DECISION_SUPPORT_WATERMARK}
         </div>
       </div>
     </div>
@@ -5622,7 +5714,12 @@ export function ProgramDetailPage({
                 body: JSON.stringify({
                   toPhase: view.viewingPhase + 1,
                   bypassGate: true,
-                  snapshot: { rationale, approvedAt: new Date().toISOString() },
+                  humanRationale: rationale,
+                  snapshot: {
+                    rationale,
+                    humanRationale: rationale,
+                    approvedAt: new Date().toISOString(),
+                  },
                 }),
               });
               const data = await res.json();
