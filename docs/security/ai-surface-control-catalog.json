@@ -33,6 +33,27 @@
         {
           "kind": "ai-label",
           "evidence": ["AILabel", "status=\"draft\"", "Review before acting"]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": ["AIResponsibilityFooter", "compact"]
+        }
+      ]
+    },
+    {
+      "id": "atlas-drawer-chat-shell",
+      "surface": "AtlasDrawer embedded and overlay chat shell",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/shell/AtlasDrawer.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": ["AIResponsibilityFooter", "tone=\"dark\"", "compact"]
         }
       ]
     },

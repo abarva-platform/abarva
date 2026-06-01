@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a catalog-backed CI gate for audited AI output and consequential-action surfaces. The first catalog entries cover the structured agent response renderer, shared AgentDock chat rail, and Programs gate approval modal, with code-token evidence for AI label, citation, confidence, and human approval controls.
+Adds a catalog-backed CI gate for audited AI output and consequential-action surfaces. The first catalog entries cover the structured agent response renderer, shared AgentDock chat rail, AtlasDrawer chat shell, and Programs gate approval modal, with code-token evidence for AI label, citation, confidence, responsibility footer, and human approval controls.
 
 ## Layer Impact
 
