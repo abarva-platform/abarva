@@ -1,9 +1,9 @@
 import { COLORS, RADIUS, TYPOGRAPHY } from "@/lib/design/design-tokens";
 import type {
   DataLoadGateStatus,
+  DataLoadDimensionCatalogItem,
   SetupDataLoadCenterModel,
 } from "@/lib/admin/setup-data-load-center";
-import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 
 interface SetupDataLoadCenterProps {
   model: SetupDataLoadCenterModel;
@@ -117,6 +117,174 @@ function actionHref(
   );
 }
 
+function primaryButton(href: string, label: string) {
+  return (
+    <a
+      href={href}
+      style={{
+        width: "fit-content",
+        borderRadius: RADIUS.sm,
+        padding: "9px 12px",
+        background: COLORS.navy,
+        color: COLORS.white,
+        fontSize: 12,
+        fontWeight: 800,
+        textDecoration: "none",
+      }}
+    >
+      {label}
+    </a>
+  );
+}
+
+function secondaryButton(href: string, label: string) {
+  return (
+    <a
+      href={href}
+      style={{
+        width: "fit-content",
+        border: `1px solid ${COLORS.ink}24`,
+        borderRadius: RADIUS.sm,
+        padding: "8px 11px",
+        background: COLORS.white,
+        color: COLORS.ink,
+        fontSize: 12,
+        fontWeight: 800,
+        textDecoration: "none",
+      }}
+    >
+      {label}
+    </a>
+  );
+}
+
+function progressBar(label: string, value: number) {
+  return (
+    <div
+      aria-label={`${label} ${value}% complete`}
+      style={{
+        height: 8,
+        borderRadius: RADIUS.pill,
+        background: `${COLORS.ink}14`,
+        overflow: "hidden",
+      }}
+    >
+      <span
+        style={{
+          display: "block",
+          width: `${value}%`,
+          height: "100%",
+          background: value >= 90 ? COLORS.mintInk : COLORS.navy,
+        }}
+      />
+    </div>
+  );
+}
+
+function chip(label: string) {
+  return (
+    <span
+      key={label}
+      style={{
+        borderRadius: RADIUS.pill,
+        padding: "4px 8px",
+        background: COLORS.skyPale,
+        color: COLORS.navy,
+        fontSize: 11,
+        fontWeight: 800,
+        lineHeight: 1,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function dimensionCard(
+  dimension: DataLoadDimensionCatalogItem,
+  isPrimary: boolean,
+) {
+  return (
+    <article
+      key={dimension.id}
+      style={{
+        border: `1px solid ${isPrimary ? COLORS.navy : COLORS.ink}24`,
+        borderRadius: RADIUS.md,
+        padding: 14,
+        background: isPrimary ? COLORS.skyPale : COLORS.white,
+        display: "grid",
+        gap: 10,
+        minHeight: 190,
+      }}
+    >
+      <div style={{ display: "grid", gap: 5 }}>
+        <span style={labelStyle(isPrimary ? COLORS.navy : `${COLORS.ink}99`)}>
+          {dimension.currentGate}
+        </span>
+        <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.2 }}>
+          {dimension.label}
+        </h3>
+        <p
+          style={{
+            margin: 0,
+            color: `${COLORS.ink}aa`,
+            fontSize: 12,
+            lineHeight: 1.35,
+          }}
+        >
+          {dimension.summary}
+        </p>
+      </div>
+      <div style={{ display: "grid", gap: 7 }}>
+        {progressBar(dimension.label, dimension.completenessPercent)}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            color: `${COLORS.ink}aa`,
+            fontSize: 12,
+          }}
+        >
+          <strong style={{ color: COLORS.ink }}>
+            {dimension.completenessPercent}% complete
+          </strong>
+          <span>{dimension.templateCount} templates</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {(dimension.formats.length > 0
+          ? dimension.formats
+          : ["CSV", "XLSX", "JSON"]
+        ).map(chip)}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "end",
+          gap: 10,
+          marginTop: "auto",
+        }}
+      >
+        <span
+          style={{
+            color: `${COLORS.ink}b8`,
+            fontSize: 12,
+            lineHeight: 1.3,
+          }}
+        >
+          Next: {dimension.nextAction}
+        </span>
+        {primaryButton(
+          dimension.primaryAction.href,
+          dimension.primaryAction.label,
+        )}
+      </div>
+    </article>
+  );
+}
+
 function setupCompleteness(model: SetupDataLoadCenterModel): number {
   const rows = model.dimensionReadiness;
   if (rows.length === 0) return 0;
@@ -133,6 +301,20 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
   const activeGate = model.rehearsalGates.find(
     (gate) => gate.status === "needs_configuration",
   );
+  const primaryDimension =
+    model.dimensionCatalog.find(
+      (dimension) => dimension.currentGate !== "Committed",
+    ) ?? model.dimensionCatalog[0];
+  const primaryTemplates = primaryDimension
+    ? model.templateRows
+        .filter(
+          (template) =>
+            template.dimension === primaryDimension.dimension ||
+            template.dimension === primaryDimension.label ||
+            primaryDimension.templates.includes(template.title),
+        )
+        .slice(0, 5)
+    : model.templateRows.slice(0, 5);
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -141,17 +323,20 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
           @media (max-width: 1120px) {
             [data-setup-wireframe-grid="hero"],
             [data-setup-wireframe-grid="below"],
-            [data-setup-wireframe-grid="operations"] {
+            [data-setup-wireframe-grid="studio"],
+            [data-setup-wireframe-grid="operator"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
             [data-setup-wireframe-grid="metrics"],
-            [data-setup-wireframe-grid="workflow"] {
+            [data-setup-wireframe-grid="workflow"],
+            [data-setup-wireframe-grid="dimensions"] {
               grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
           }
           @media (max-width: 700px) {
             [data-setup-wireframe-grid="metrics"],
             [data-setup-wireframe-grid="workflow"],
+            [data-setup-wireframe-grid="dimensions"],
             [data-setup-wireframe-grid="manifest"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
@@ -182,7 +367,7 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
               Active client verified
             </span>
             <h2 style={{ margin: "8px 0 0", fontSize: 28, lineHeight: 1.12 }}>
-              {model.tenant.tenantName} data load command center
+              Load data for {model.tenant.tenantName}
             </h2>
             <p
               style={{
@@ -193,10 +378,23 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                 maxWidth: 860,
               }}
             >
-              Review what is loaded, what is blocked, and what can be committed
-              for this client. Detailed ledgers and diagnostics stay below the
-              fold so Maestros see decisions first.
+              Setup is the governed operator workspace for bringing client data
+              into AbarVa. Start with the business dimension, pick the right
+              template and format, then move through scan, validation, approval,
+              and commit.
             </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: 14,
+              }}
+            >
+              {primaryButton("/admin/context-layer/uploads", "Start a load")}
+              {secondaryButton("#template-library", "View templates")}
+              {secondaryButton("/admin/data-trust", "Review loaded data")}
+            </div>
           </div>
 
           <aside
@@ -211,7 +409,11 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
           >
             <span style={labelStyle(COLORS.amberInk)}>Next decision</span>
             <strong style={{ fontSize: 16, lineHeight: 1.25 }}>
-              {activeGate ? activeGate.label : "Ready for next load"}
+              {primaryDimension
+                ? `${primaryDimension.label}: ${primaryDimension.nextAction}`
+                : activeGate
+                  ? activeGate.label
+                  : "Ready for next load"}
             </strong>
             <p
               style={{
@@ -221,9 +423,11 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                 lineHeight: 1.4,
               }}
             >
-              {activeGate
-                ? activeGate.objective
-                : "All visible workflow gates are clear for the current setup view."}
+              {primaryDimension
+                ? `${primaryDimension.templateCount} templates accept ${primaryDimension.formats.join(", ") || "structured files"} for this dimension.`
+                : activeGate
+                  ? activeGate.objective
+                  : "All visible workflow gates are clear for the current setup view."}
             </p>
           </aside>
         </div>
@@ -259,37 +463,47 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
         </div>
 
         <div
-          data-setup-wireframe-grid="operations"
+          data-setup-wireframe-grid="studio"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(360px, 0.9fr) minmax(0, 1.1fr)",
-            gap: 14,
+            gridTemplateColumns: "minmax(0, 1.15fr) minmax(340px, 0.85fr)",
+            gap: 16,
             alignItems: "start",
           }}
-          aria-label="Load and process data controls"
+          aria-label="Data Load Studio"
         >
-          <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gap: 12 }}>
             <div>
-              <span style={labelStyle(COLORS.navy)}>Load data here</span>
-              <h2 style={{ margin: "6px 0 0", fontSize: 18 }}>
-                Upload tenant context
+              <span style={labelStyle(COLORS.navy)}>Data Load Studio</span>
+              <h2 style={{ margin: "6px 0 0", fontSize: 20 }}>
+                Choose the dimension before choosing the file
               </h2>
               <p
                 style={{
-                  margin: "5px 0 0",
+                  margin: "6px 0 0",
                   color: `${COLORS.ink}aa`,
                   fontSize: 13,
                   lineHeight: 1.45,
+                  maxWidth: 760,
                 }}
               >
-                This is the operator workspace. Home stays read-only; this page
-                owns upload, scan, validate, approve, and commit controls.
+                Each dimension shows completeness, accepted formats, available
+                templates, and the next control needed to safely commit data for
+                the active client.
               </p>
             </div>
-            <CsvUploadConnector
-              clientId={model.tenant.clientId}
-              tenantName={model.tenant.tenantName}
-            />
+            <div
+              data-setup-wireframe-grid="dimensions"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 12,
+              }}
+            >
+              {model.dimensionCatalog.map((dimension, index) =>
+                dimensionCard(dimension, index === 0),
+              )}
+            </div>
           </div>
 
           <div style={{ ...cardStyle, overflow: "hidden" }}>
@@ -299,7 +513,9 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                 borderBottom: `1px solid ${COLORS.ink}14`,
               }}
             >
-              <h2 style={{ margin: 0, fontSize: 18 }}>Workflow and controls</h2>
+              <h2 style={{ margin: 0, fontSize: 18 }}>
+                Governed load workflow
+              </h2>
               <p
                 style={{
                   margin: "5px 0 0",
@@ -308,10 +524,9 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                   lineHeight: 1.45,
                 }}
               >
-                The data load path is explicit: upload, scan, quarantine,
-                validate, approve, then commit. Controls marked Monitor are
-                private data-plane workers or ledger contracts, not fake UI
-                actions.
+                The operator journey is simple: select a dimension, upload a
+                matching template, scan the file, validate the mapping, approve
+                evidence, then commit or roll back the load.
               </p>
             </div>
             <div style={{ display: "grid" }}>
@@ -320,7 +535,7 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                   key={control.id}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "92px minmax(0, 1fr) auto",
+                    gridTemplateColumns: "80px minmax(0, 1fr) auto",
                     gap: 12,
                     padding: "12px 14px",
                     borderTop:
@@ -359,12 +574,54 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                         lineHeight: 1.35,
                       }}
                     >
-                      {control.control} · {control.apiPath}
+                      Control: {control.control}
                     </span>
                   </div>
                   {actionHref(control)}
                 </div>
               ))}
+            </div>
+            <div
+              style={{
+                borderTop: `1px solid ${COLORS.ink}14`,
+                padding: 14,
+                display: "grid",
+                gap: 10,
+                background: COLORS.cream,
+              }}
+            >
+              <span style={labelStyle(COLORS.navy)}>Templates ready now</span>
+              <div style={{ display: "grid", gap: 8 }}>
+                {primaryTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    style={{
+                      border: `1px solid ${COLORS.ink}12`,
+                      borderRadius: RADIUS.sm,
+                      padding: 10,
+                      background: COLORS.white,
+                      display: "grid",
+                      gap: 5,
+                    }}
+                  >
+                    <strong style={{ fontSize: 13 }}>{template.title}</strong>
+                    <span
+                      style={{
+                        color: `${COLORS.ink}aa`,
+                        fontSize: 12,
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {template.family} · {template.formats} ·{" "}
+                      {template.requiredFields}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {primaryButton("/admin/context-layer/uploads", "Open upload")}
+                {secondaryButton("#template-library", "Browse all templates")}
+              </div>
             </div>
           </div>
         </div>
@@ -575,14 +832,16 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
         </aside>
       </section>
 
-      <section style={cardStyle}>
+      <section id="template-library" style={cardStyle}>
         <div
           style={{
             padding: "14px 16px",
             borderBottom: `1px solid ${COLORS.ink}14`,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18 }}>Template explorer</h2>
+          <h2 style={{ margin: 0, fontSize: 18 }}>
+            Template and format library
+          </h2>
           <p
             style={{
               margin: "5px 0 0",
@@ -591,8 +850,9 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
               lineHeight: 1.45,
             }}
           >
-            Registry templates and Day One workbooks stay available for drill-in
-            review after the decision summary.
+            Registry templates and Day One workbooks stay visible by dimension
+            so Maestros know exactly what can be loaded before they open an
+            upload control.
           </p>
         </div>
         <div style={{ overflowX: "auto", maxHeight: 380, overflowY: "auto" }}>

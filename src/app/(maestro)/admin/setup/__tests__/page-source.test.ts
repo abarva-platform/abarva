@@ -30,11 +30,22 @@ describe("/admin/setup data load center page source", () => {
     expect(source).toContain("clientKey: tenant.clientKey");
   });
 
-  it("renders actual load and process controls in the setup canvas", () => {
-    expect(componentSource).toContain("CsvUploadConnector");
-    expect(componentSource).toContain("Load data here");
-    expect(componentSource).toContain("Workflow and controls");
+  it("renders a dimension-first Data Load Studio instead of a raw connector", () => {
+    expect(componentSource).not.toContain("CsvUploadConnector");
+    expect(componentSource).toContain("Data Load Studio");
+    expect(componentSource).toContain(
+      "Choose the dimension before choosing the file",
+    );
+    expect(componentSource).toContain("model.dimensionCatalog.map");
+    expect(componentSource).toContain("Template and format library");
+  });
+
+  it("keeps implementation plumbing out of the Maestro-facing setup canvas", () => {
+    expect(componentSource).toContain("Governed load workflow");
     expect(componentSource).toContain("model.workflowControls.map");
+    expect(componentSource).not.toContain(
+      "{control.control} · {control.apiPath}",
+    );
   });
 
   it("keeps cross-client manifest coverage out of the runtime setup page", () => {
