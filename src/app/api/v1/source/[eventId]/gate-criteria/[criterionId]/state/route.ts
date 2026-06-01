@@ -26,11 +26,21 @@ import {
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
+  artifactStateRowToView,
+  evidenceStateRowToView,
   gateCriterionStateRowToView,
+  type SourceEventArtifactStateRow,
+  type SourceEventEvidenceStateRow,
   type SourceEventGateCriterion,
   type SourceEventGateCriterionState,
   type SourceEventGateCriterionStateRow,
 } from '@/lib/source/canvas-substrate/types';
+import {
+  evaluateCriterionMetReadiness,
+  firstGovernanceBlocker,
+  normalizeApprovalReason,
+  validateApprovalReason,
+} from '@/lib/source/source-governance-enforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +66,10 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   );
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   let tenancy;
   let tenancyError: unknown = null;
@@ -72,8 +86,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       getCurrentUser().catch(() => null),
     ]);
 
-    const body = (await req.json().catch(() => null)) as { state?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as {
+      state?: unknown;
+      reason?: unknown;
+    } | null;
     const state = body?.state;
+    const reason = normalizeApprovalReason(body?.reason);
     if (!isAllowedState(state)) {
       return Response.json(
         {
@@ -95,13 +113,28 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 409 },
       );
     }
+    if (state !== 'pending') {
+      const reasonVerdict = validateApprovalReason(reason);
+      if (!reasonVerdict.ok) {
+        const blocker = firstGovernanceBlocker(reasonVerdict);
+        return Response.json(
+          {
+            error: blocker.code,
+            detail: blocker.detail,
+            blockers: reasonVerdict.blockers,
+          },
+          { status: 409 },
+        );
+      }
+    }
 
     const supabase = getAzureReadFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
+    const eventQuery = supabase
       .from('source_events')
-      .select('id, client_key')
-      .eq('id', eventId)
-      .maybeSingle();
+      .select('id, client_key');
+    const { data: persistedEvent, error: fetchError } = isUuid(eventId)
+      ? await eventQuery.eq('id', eventId).maybeSingle()
+      : { data: null, error: null };
     if (fetchError) {
       return Response.json(
         { error: 'lookup_failed', detail: fetchError.message },
@@ -194,9 +227,62 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
+    if (state === 'met') {
+      const [
+        { data: artifactRows, error: artifactFetchError },
+        { data: evidenceRows, error: evidenceFetchError },
+      ] = await Promise.all([
+        supabase
+          .from('source_event_artifact_states')
+          .select('*')
+          .eq('source_event_id', eventId)
+          .eq('stage_key', criterionRow.from_stage),
+        supabase
+          .from('source_event_evidence_states')
+          .select('*')
+          .eq('source_event_id', eventId)
+          .eq('stage_key', criterionRow.from_stage),
+      ]);
+      if (artifactFetchError) {
+        return Response.json(
+          { error: 'lookup_failed', detail: artifactFetchError.message },
+          { status: 500 },
+        );
+      }
+      if (evidenceFetchError) {
+        return Response.json(
+          { error: 'lookup_failed', detail: evidenceFetchError.message },
+          { status: 500 },
+        );
+      }
+
+      const readiness = evaluateCriterionMetReadiness({
+        criterion: gateCriterionStateRowToView(criterionRow),
+        artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
+          artifactStateRowToView,
+        ),
+        evidence: ((evidenceRows ?? []) as SourceEventEvidenceStateRow[]).map(
+          evidenceStateRowToView,
+        ),
+        reason,
+      });
+      if (!readiness.ok) {
+        const blocker = firstGovernanceBlocker(readiness);
+        return Response.json(
+          {
+            error: blocker.code,
+            detail: blocker.detail,
+            blockers: readiness.blockers,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const reviewerUserId = currentUser?.personId ?? null;
     const reviewedAt =
       state === 'met' || state === 'not_met' ? new Date().toISOString() : null;
+    const notes = state === 'pending' ? null : reason;
 
     // DB write routed through the data-plane write seam (Slice 3b).
     const criterionWrite = await selectSourceWriteAdapter(
@@ -207,6 +293,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       state,
       reviewerUserId: state === 'pending' ? null : reviewerUserId,
       reviewedAtIso: reviewedAt,
+      notes,
       updatedAtIso: new Date().toISOString(),
     });
     if (!criterionWrite.ok || !criterionWrite.data) {

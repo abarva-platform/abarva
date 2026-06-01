@@ -38,9 +38,16 @@ export default async function SourceEventDetailPage({
   // Resolve viewing stage from ?stage=<key>; default to current stage.
   const stageParam = typeof sp.stage === 'string' ? sp.stage : null;
   const normalizedView = stageParam ? normalizeSourceStageKey(stageParam) : null;
+  const currentStage: SourceStageKey = SOURCE_STAGE_ORDER.includes(event.currentStageKey)
+    ? event.currentStageKey
+    : 'strategy';
+  const requestedStage = normalizedView ?? currentStage;
+  const currentStageIndex = SOURCE_STAGE_ORDER.indexOf(currentStage);
+  const requestedStageIndex = SOURCE_STAGE_ORDER.indexOf(requestedStage);
   const viewStage: SourceStageKey =
-    normalizedView ??
-    (SOURCE_STAGE_ORDER.includes(event.currentStageKey) ? event.currentStageKey : 'strategy');
+    requestedStageIndex >= 0 && requestedStageIndex <= currentStageIndex
+      ? requestedStage
+      : currentStage;
 
   // Read canvas substrate (RLS-scoped server-side). Use the resolved
   // event.id (UUID) — when the slug is an event_code (B7), passing the
@@ -91,9 +98,9 @@ export default async function SourceEventDetailPage({
   // table is wired. Wave 2 will read from a source_event_activity table.
   const activityEntries: ActivityEntry[] = buildActivityEntriesPlaceholder(
     event.id,
-    artifactStates.length,
-    gateCriterionStates.length,
     evidenceStates.length,
+    artifactStates,
+    gateCriterionStates,
   );
 
   return (
@@ -114,12 +121,53 @@ export default async function SourceEventDetailPage({
 
 function buildActivityEntriesPlaceholder(
   eventId: string,
-  artifactCount: number,
-  criterionCount: number,
   evidenceCount: number,
+  artifactStates: Awaited<ReturnType<typeof listArtifactStatesForEvent>>,
+  gateCriterionStates: Awaited<ReturnType<typeof listGateCriterionStatesForEvent>>,
 ): ActivityEntry[] {
   const now = new Date().toISOString();
   const entries: ActivityEntry[] = [];
+  const reviewedCriteria = gateCriterionStates
+    .filter((criterion) => criterion.reviewedAt)
+    .sort((a, b) => {
+      const at = new Date(a.reviewedAt ?? 0).getTime();
+      const bt = new Date(b.reviewedAt ?? 0).getTime();
+      return bt - at;
+    });
+
+  for (const criterion of reviewedCriteria) {
+    const action =
+      criterion.state === 'met'
+        ? 'marked met'
+        : criterion.state === 'not_met'
+          ? 'marked not met'
+          : criterion.state;
+    entries.push({
+      id: `gate-${criterion.id}-${criterion.updatedAt}`,
+      at: criterion.reviewedAt ?? criterion.updatedAt,
+      actor: criterion.reviewerUserId ?? 'Source approver',
+      body: `Gate ${criterion.criterionId} ${action}. Reason: ${criterion.notes ?? 'No reason recorded.'}`,
+    });
+  }
+
+  const authoredArtifacts = artifactStates
+    .filter((artifact) => artifact.bodyUpdatedAt)
+    .sort((a, b) => {
+      const at = new Date(a.bodyUpdatedAt ?? 0).getTime();
+      const bt = new Date(b.bodyUpdatedAt ?? 0).getTime();
+      return bt - at;
+    });
+  for (const artifact of authoredArtifacts.slice(0, 12)) {
+    entries.push({
+      id: `artifact-${artifact.id}-${artifact.bodyUpdatedAt}`,
+      at: artifact.bodyUpdatedAt ?? artifact.updatedAt,
+      actor: artifact.bodyAuthoredBy ?? 'Source author',
+      body: `Artifact ${artifact.artifactCode} body updated. Status: ${artifact.status}.`,
+    });
+  }
+
+  const artifactCount = artifactStates.length;
+  const criterionCount = gateCriterionStates.length;
   if (artifactCount > 0) {
     entries.push({
       id: `placeholder-scaffold-${eventId}`,

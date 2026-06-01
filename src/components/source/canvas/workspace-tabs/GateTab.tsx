@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import {
   criterionById,
   type SourceGateCriterion,
@@ -8,6 +8,7 @@ import type {
   SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
+import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from '@/lib/source/source-governance-enforcement';
 import type { SourceStageKey } from '@/lib/source/types';
 import { CANVAS } from '../canvas-tokens';
 
@@ -28,12 +29,13 @@ interface GateTabProps {
   onChangeCriterionState?: (
     criterionId: string,
     next: SourceEventGateCriterionState,
+    reason: string,
   ) => Promise<void>;
   /** Per-criterion pending flag — disables the button while in flight. */
   pendingByCriterionId?: Record<string, boolean>;
   /** Promote handler. Called when "Promote to {next}" is clicked
    * with all criteria met. Receives the target stage key. */
-  onPromoteStage?: (toStage: SourceStageKey) => Promise<void>;
+  onPromoteStage?: (toStage: SourceStageKey, reason: string) => Promise<void>;
   /** Disable the promote button while a promote is in flight. */
   promotePending?: boolean;
 }
@@ -52,6 +54,7 @@ export function GateTab({
   onPromoteStage,
   promotePending,
 }: GateTabProps) {
+  const [promotionReason, setPromotionReason] = useState('');
   const ordered = [...states].sort((a, b) => a.criterionId.localeCompare(b.criterionId));
   const total = ordered.length;
   const met = ordered.filter((s) => s.state === 'met' || s.state === 'waived').length;
@@ -70,6 +73,15 @@ export function GateTab({
     .map((s) => ({ state: s, def: criterionById(s.criterionId) }));
   const hardBlockers = blockers.filter((b) => b.def?.severity === 'hard');
   const promoteHelpId = 'source-canvas-gate-promote-help';
+  const promotionReasonReady =
+    promotionReason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
+  const canPromote =
+    allMet &&
+    promotionReasonReady &&
+    Boolean(onPromoteStage) &&
+    Boolean(targetStage) &&
+    targetStage !== 'closed' &&
+    !promotePending;
 
   return (
     <div data-testid="source-canvas-gate-tab" style={CONTAINER_STYLE}>
@@ -91,31 +103,40 @@ export function GateTab({
             <p style={SUBLINE_STYLE}>All criteria met. Promote when ready.</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          disabled={!allMet || promotePending || !onPromoteStage}
-          aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
-          onClick={() => {
-            if (
-              allMet &&
-              onPromoteStage &&
-              targetStage &&
-              targetStage !== 'closed'
-            ) {
-              void onPromoteStage(targetStage as SourceStageKey);
-            }
-          }}
-          style={{
-            ...PROMOTE_BUTTON_STYLE,
-            background: allMet && onPromoteStage ? CANVAS.INK : 'rgba(10,10,11,0.08)',
-            color: allMet && onPromoteStage ? '#fff' : CANVAS.INK_MUTED,
-            cursor: allMet && onPromoteStage && !promotePending ? 'pointer' : 'not-allowed',
-            opacity: promotePending ? 0.7 : 1,
-          }}
-          data-testid="source-canvas-gate-promote"
-        >
-          {promotePending ? 'Promoting…' : `Promote to ${targetLabel}`}
-        </button>
+        <div style={PROMOTE_CONTROL_STYLE}>
+          <label style={REASON_LABEL_STYLE} htmlFor="source-canvas-gate-promote-reason">
+            Promotion reason
+          </label>
+          <textarea
+            id="source-canvas-gate-promote-reason"
+            data-testid="source-canvas-gate-promote-reason"
+            value={promotionReason}
+            onChange={(event) => setPromotionReason(event.target.value)}
+            placeholder="Record the human reason for advancing this sourcing stage."
+            rows={3}
+            style={REASON_TEXTAREA_STYLE}
+          />
+          <button
+            type="button"
+            disabled={!canPromote}
+            aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
+            onClick={() => {
+              if (canPromote && onPromoteStage && targetStage) {
+                void onPromoteStage(targetStage as SourceStageKey, promotionReason.trim());
+              }
+            }}
+            style={{
+              ...PROMOTE_BUTTON_STYLE,
+              background: canPromote ? CANVAS.INK : 'rgba(10,10,11,0.08)',
+              color: canPromote ? '#fff' : CANVAS.INK_MUTED,
+              cursor: canPromote ? 'pointer' : 'not-allowed',
+              opacity: promotePending ? 0.7 : 1,
+            }}
+            data-testid="source-canvas-gate-promote"
+          >
+            {promotePending ? 'Promoting…' : `Promote to ${targetLabel}`}
+          </button>
+        </div>
       </header>
 
       {/* B3 — blocker summary surfaces the specific reasons promotion
@@ -192,11 +213,13 @@ interface CriterionRowProps {
   onChangeState?: (
     criterionId: string,
     next: SourceEventGateCriterionState,
+    reason: string,
   ) => Promise<void>;
   pending: boolean;
 }
 
 function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps) {
+  const [reason, setReason] = useState('');
   const isMet = state.state === 'met' || state.state === 'waived';
   const indicatorColor = isMet
     ? CANVAS.ACTIVE
@@ -207,6 +230,7 @@ function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps)
         : CANVAS.GRAY;
 
   const isMetOrWaived = state.state === 'met' || state.state === 'waived';
+  const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
   return (
     <li style={ROW_STYLE} data-testid={`source-canvas-gate-criterion-${state.criterionId}`}>
       <span aria-hidden style={{ ...DOT_STYLE, background: indicatorColor }} />
@@ -220,7 +244,7 @@ function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps)
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => onChangeState(state.criterionId, 'pending')}
+                onClick={() => onChangeState(state.criterionId, 'pending', '')}
                 data-testid={`source-canvas-gate-criterion-reopen-${state.criterionId}`}
                 style={{ ...ROW_GHOST_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
               >
@@ -229,16 +253,35 @@ function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps)
             ) : (
               <button
                 type="button"
-                disabled={pending}
-                onClick={() => onChangeState(state.criterionId, 'met')}
+                disabled={pending || !reasonReady}
+                onClick={() => onChangeState(state.criterionId, 'met', reason.trim())}
                 data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
-                style={{ ...ROW_PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+                style={{ ...ROW_PRIMARY_BUTTON_STYLE, opacity: pending || !reasonReady ? 0.55 : 1 }}
               >
                 {pending ? 'Saving…' : 'Mark met'}
               </button>
             )
           ) : null}
         </div>
+        {!isMetOrWaived && onChangeState ? (
+          <label style={ROW_REASON_WRAP_STYLE}>
+            <span style={REASON_LABEL_STYLE}>Human approval reason</span>
+            <textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              rows={2}
+              placeholder="Explain what evidence you reviewed and why this gate is ready."
+              data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
+              style={REASON_TEXTAREA_STYLE}
+            />
+          </label>
+        ) : null}
+        {isMetOrWaived && state.reviewedAt ? (
+          <div style={ROW_AUDIT_STYLE} data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}>
+            Approved by {state.reviewerUserId ?? 'recorded user'} · {formatAuditTimestamp(state.reviewedAt)}
+            {state.notes ? ` · Reason: ${state.notes}` : ''}
+          </div>
+        ) : null}
         {def?.description ? <div style={ROW_DESC_STYLE}>{def.description}</div> : null}
         <div style={ROW_META_STYLE}>
           <span style={CRITERION_CODE}>{state.criterionId}</span>
@@ -258,6 +301,17 @@ function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps)
       </div>
     </li>
   );
+}
+
+function formatAuditTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function StatePill({ state }: { state: SourceEventGateCriterionState }) {
@@ -345,6 +399,36 @@ const PROMOTE_BUTTON_STYLE: CSSProperties = {
   alignSelf: 'center',
 };
 
+const PROMOTE_CONTROL_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 8,
+  minWidth: 260,
+  maxWidth: 320,
+};
+
+const REASON_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: CANVAS.GRAY_DK,
+  fontWeight: 700,
+};
+
+const REASON_TEXTAREA_STYLE: CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box',
+  resize: 'vertical',
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  padding: '8px 10px',
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: CANVAS.INK,
+  background: '#ffffff',
+};
+
 const LIST_STYLE: CSSProperties = {
   listStyle: 'none',
   padding: 0,
@@ -380,6 +464,20 @@ const ROW_TITLE_STYLE: CSSProperties = {
   alignItems: 'center',
   gap: 8,
   flexWrap: 'wrap',
+};
+
+const ROW_REASON_WRAP_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 5,
+  maxWidth: 540,
+  marginTop: 4,
+};
+
+const ROW_AUDIT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  lineHeight: 1.5,
+  color: CANVAS.GRAY_DK,
 };
 
 const ROW_TITLE_TEXT: CSSProperties = {

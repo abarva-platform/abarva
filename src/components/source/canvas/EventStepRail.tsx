@@ -23,7 +23,8 @@ interface EventStepRailProps {
  *   - Selected (viewing) overrides current treatment with the strong ring
  *   - Progress line fills behind done + current
  *   - Hover: subtle scale + label color shift
- *   - Click navigates to /source/events/[id]?stage=<key>
+ *   - Past/current steps navigate to /source/events/[id]?stage=<key>
+ *   - Future steps are locked; advancement must use the Gate promotion action.
  */
 export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRailProps) {
   const currentIdx = SOURCE_STAGE_ORDER.indexOf(currentStage);
@@ -48,6 +49,7 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
         {SOURCE_STAGE_ORDER.map((stage, i) => {
           const isDone = i < currentIdx;
           const isCurrent = i === currentIdx;
+          const isFuture = i > currentIdx;
           const isSelected = i === selectedIdx;
           const isHover = i === hoverIdx;
 
@@ -62,20 +64,13 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
               ? CANVAS.INK_2
               : CANVAS.INK_MUTED;
 
-          return (
-            <Link
-              key={stage}
-              href={`/source/events/${eventId}?stage=${stage}`}
-              style={{
-                ...NODE_STYLE,
-                left: `calc(${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}% - 16px)`,
-              }}
-              onMouseEnter={() => setHoverIdx(i)}
-              onMouseLeave={() => setHoverIdx(null)}
-              title={`${i + 1}. ${SOURCE_STAGE_LABELS[stage]}`}
-              data-testid={`source-canvas-step-${stage}`}
-              aria-current={isCurrent ? 'step' : undefined}
-            >
+          const nodeStyle = {
+            ...NODE_STYLE,
+            left: `calc(${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}% - 16px)`,
+            cursor: isFuture ? 'not-allowed' : 'pointer',
+          };
+          const nodeBody = (
+            <>
               <span style={DOT_WRAPPER_STYLE}>
                 {showHalo ? <span aria-hidden style={HALO_STYLE} /> : null}
                 <span
@@ -83,7 +78,8 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
                     ...DOT_STYLE,
                     background: dotBg,
                     borderColor: dotBorder,
-                    transform: isHover && !isSelected ? 'scale(1.12)' : 'scale(1)',
+                    transform: isHover && !isSelected && !isFuture ? 'scale(1.12)' : 'scale(1)',
+                    opacity: isFuture ? 0.58 : 1,
                   }}
                 />
               </span>
@@ -105,6 +101,33 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
                 </span>
                 <span style={NAME_STYLE}>{SOURCE_STAGE_LABELS[stage]}</span>
               </span>
+            </>
+          );
+
+          return isFuture ? (
+            <span
+              key={stage}
+              style={nodeStyle}
+              onMouseEnter={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}
+              title={`${i + 1}. ${SOURCE_STAGE_LABELS[stage]} · locked until prior gate promotion`}
+              data-testid={`source-canvas-step-${stage}`}
+              aria-disabled="true"
+            >
+              {nodeBody}
+            </span>
+          ) : (
+            <Link
+              key={stage}
+              href={`/source/events/${eventId}?stage=${stage}`}
+              style={nodeStyle}
+              onMouseEnter={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}
+              title={`${i + 1}. ${SOURCE_STAGE_LABELS[stage]}`}
+              data-testid={`source-canvas-step-${stage}`}
+              aria-current={isCurrent ? 'step' : undefined}
+            >
+              {nodeBody}
             </Link>
           );
         })}

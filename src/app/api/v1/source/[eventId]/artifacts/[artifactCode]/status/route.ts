@@ -57,6 +57,10 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   );
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   let tenancy;
   let tenancyError: unknown = null;
@@ -86,11 +90,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     }
 
     const supabase = getAzureReadFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
+    const eventQuery = supabase
       .from('source_events')
-      .select('id, client_key')
-      .eq('id', eventId)
-      .maybeSingle();
+      .select('id, client_key');
+    const { data: persistedEvent, error: fetchError } = isUuid(eventId)
+      ? await eventQuery.eq('id', eventId).maybeSingle()
+      : { data: null, error: null };
     if (fetchError) {
       return Response.json(
         { error: 'lookup_failed', detail: fetchError.message },
@@ -180,6 +185,20 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         {
           error: 'terminal_state',
           detail: `Artifact ${artifactCode} is ${artifactRow.status}; cannot transition to ${status} from the canvas.`,
+        },
+        { status: 409 },
+      );
+    }
+    if (
+      (status === 'approved' || status === 'locked') &&
+      !artifactRow.linked_artifact_id &&
+      !artifactRow.body?.trim()
+    ) {
+      return Response.json(
+        {
+          error: 'artifact_content_required',
+          detail:
+            `Artifact ${artifactCode} must have authored body content or a linked uploaded artifact before it can be marked ${status}.`,
         },
         { status: 409 },
       );
