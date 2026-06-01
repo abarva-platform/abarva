@@ -21,10 +21,7 @@ import {
 import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
 import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
-import {
-  loadApexRetailIntelligenceData,
-  loadApexRetailIntelligenceDataForDemo,
-} from '@/lib/intelligence-v3/apex-retail-live';
+import { loadTenantIntelligenceCorpusData } from '@/lib/intelligence-v3/tenant-corpus-loader';
 
 export const metadata = {
   title: 'Intelligence · Explore layer for AI bets | AbarVa',
@@ -58,7 +55,6 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
   const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const resolvedClientKey = client?.key ?? requestedClient;
-  const forceApexRetail = resolvedClientKey === 'apexretail';
 
   const [
     { data, isLiveBound },
@@ -67,7 +63,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     peerActivityData,
     myStrategyData,
     initiatives,
-    apexRetailData,
+    intelligenceCorpusData,
     enterpriseContextOverview,
   ] = await Promise.all([
     buildIntelligenceV3PageData(resolvedClientKey),
@@ -76,11 +72,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     getPeerActivityData().catch(() => null),
     getMyStrategyData().catch(() => null),
     client ? listInitiativesForClient(client.id).catch(() => []) : Promise.resolve([]),
-    (
-      forceApexRetail
-        ? loadApexRetailIntelligenceDataForDemo()
-        : loadApexRetailIntelligenceData(client)
-    ).catch(() => null),
+    loadTenantIntelligenceCorpusData(client, resolvedClientKey).catch(() => null),
     client ? getEnterpriseContextOverviewForTenant(client.key, client.name).catch(() => null) : Promise.resolve(null),
   ]);
 
@@ -93,7 +85,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       peerActivityData={peerActivityData}
       myStrategyData={myStrategyData}
       initiatives={initiatives}
-      apexRetailData={apexRetailData}
+      intelligenceCorpusData={intelligenceCorpusData}
       clientKey={client?.key ?? requestedClient ?? null}
       enterpriseContextOverview={enterpriseContextOverview}
     />

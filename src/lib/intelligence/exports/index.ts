@@ -1,13 +1,12 @@
 // Intelligence · CXO brief exports · public surface
 //
 // Server-only entry point for the Intelligence brief export. Loads the
-// real per-tenant data (corpus brief for Apex, ai_initiatives portfolio
+// real per-tenant data (tenant corpus brief when seeded, ai_initiatives portfolio
 // for all 3 tenants), assembles the brief payload, and exposes the
 // DOCX / PDF renderers.
 //
-// Grounding: see brief-payload.ts — Apex carries corpus content;
-// Meridian / First Capital export only ai_initiatives content plus an
-// honest "corpus not yet seeded" disclosure. No fabrication.
+// Grounding: see brief-payload.ts. Corpus sections render only when a
+// tenant-specific corpus payload is bound. No fabrication.
 
 import 'server-only';
 
@@ -15,10 +14,7 @@ import type { Document as DocxDocument } from 'docx';
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { buildIntelligenceV3PageData } from '@/lib/intelligence-v3/page-data';
-import {
-  loadApexRetailIntelligenceData,
-  loadApexRetailIntelligenceDataForDemo,
-} from '@/lib/intelligence-v3/apex-retail-live';
+import { loadTenantIntelligenceCorpusData } from '@/lib/intelligence-v3/tenant-corpus-loader';
 import {
   buildIntelligenceBriefPayload,
   type IntelligenceBriefPayload,
@@ -47,19 +43,15 @@ export async function buildIntelligenceBriefPayloadForActiveTenant(
 ): Promise<IntelligenceBriefPayload> {
   const client = await getActiveClientRow(requestedClientKey).catch(() => null);
   const resolvedClientKey = client?.key ?? requestedClientKey;
-  const forceApexRetail = resolvedClientKey === 'apexretail';
 
-  const [{ data: pageData }, apexRetailData] = await Promise.all([
+  const [{ data: pageData }, intelligenceCorpusData] = await Promise.all([
     buildIntelligenceV3PageData(resolvedClientKey),
-    (forceApexRetail
-      ? loadApexRetailIntelligenceDataForDemo()
-      : loadApexRetailIntelligenceData(client)
-    ).catch(() => null),
+    loadTenantIntelligenceCorpusData(client, resolvedClientKey).catch(() => null),
   ]);
 
   return buildIntelligenceBriefPayload({
     tenantName: pageData.tenantName,
-    briefData: apexRetailData?.briefData ?? null,
+    briefData: intelligenceCorpusData?.briefData ?? null,
     pageData,
     generatedAt,
   });
