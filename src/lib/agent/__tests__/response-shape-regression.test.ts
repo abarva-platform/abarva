@@ -149,5 +149,26 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).not.toMatch(/\|.*the markdown rate has climbed.*\|/);
       expect(shaped).not.toMatch(/\|.*inventory turns are flat.*\|/);
     });
+
+    it('does not end compacted Tower lines on dangling conjunctions or connective fragments', () => {
+      // L6 Wave 0 retest caught two executive-answer endings that were
+      // syntactically damaged after the Tower compactor trimmed a sentence:
+      //   - "or to proceed with."
+      //   - "and."
+      // The shaper may compact loose prose, but the final line still has to
+      // read as a complete executive sentence.
+      const raw = [
+        'The highest-priority decision is whether the current value evidence is strong enough to let SkyHarbor treat the portfolio as governed rather than only inventoried.',
+        'Evidence: $606M is flagged as exposed value across the Tower view, 16 of 16 pressure cards mention value-lag risk, and the cited operating picture depends on initiative-level measured-value rows.',
+        'Missing: verified realized value, finance-attested baseline, tracked attainment, and owner-signed measurement method are not loaded yet.',
+        'Next: require the governance forum to decide whether the portfolio is allowed to keep using the $606M figure, whether to pause dependent executive claims, or to proceed with a narrowed evidence-only read until Finance signs the baseline.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toMatch(/\bor to proceed with\.$/m);
+      expect(shaped).not.toMatch(/\band\.$/m);
+      expect(shaped).not.toMatch(/\b(with|and|or|but|to|of|for|against)\.$/m);
+    });
   });
 });

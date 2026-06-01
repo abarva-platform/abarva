@@ -106,6 +106,12 @@ describe('Source Nexus API live context', () => {
       recommendedNextAction: 'Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.',
     });
     expect(response.sourceAnswer?.answerText).toContain('CXO guidance');
+    expect(response.answerQuality).toMatchObject({
+      renderable: true,
+      evidenceLedgerCheck: { passed: true },
+      readiness: { readinessVerdict: 'sufficient' },
+    });
+    expect(response.answerQuality?.evidenceLedger.dataUsed.length).toBeGreaterThanOrEqual(2);
     expect(response.sourceAnswer?.evidenceCitations.map((citation) => citation.sourceDoc)).toEqual(
       expect.arrayContaining([
         'CDP-Round-1-Selection-Memo-2026-04-15.pdf',
@@ -184,5 +190,6 @@ describe('Source Nexus API live context', () => {
     expect(response.sourceAnswer?.answerText).toMatch(/Nathan Kohl|commercial baseline|hub-decision architecture/i);
     expect(response.sourceAnswer?.answerText).not.toMatch(/current-state inventory records are unavailable/i);
     expect(response.sourceAnswer?.answerText).not.toMatch(/^Workflow gates contain blockers/m);
+    expect(response.answerQuality?.renderable).toBe(true);
   });
 });
