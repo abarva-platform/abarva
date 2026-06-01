@@ -170,5 +170,45 @@ describe('Atlas /tower response-shaper · HI-3 damage regressions', () => {
       expect(shaped).not.toMatch(/\band\.$/m);
       expect(shaped).not.toMatch(/\b(with|and|or|but|to|of|for|against)\.$/m);
     });
+
+    it('does not synthesize a broken comparison table for the SkyHarbor P1 decision answer', () => {
+      // L6 Wave 0 retest against the deployed preview saw this answer
+      // compacted into "| Option | Strength | Weakness | Fit |" rows,
+      // ending on "re-baseline now vs." The prompt is a decision read,
+      // not a vendor/path comparison, so the synthetic comparison table
+      // should not run.
+      const raw = [
+        'The read: Tower is signaling one decision, not many.',
+        'Every active pressure — 16 of 16 — is a value-lag flag, and the portfolio ROI is un-instrumented.',
+        'Authorize a portfolio-wide value re-baseline — start with the three HIGH-confidence pressures: SHA-012 Data Product Catalog, SHA-023 Baggage, and SHA-034 Maintenance.',
+        'The actual choice — re-baseline now vs. letting executive claims continue before Finance signs the baseline.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bvs\.$/m);
+      expect(shaped).not.toMatch(/\bre-baseline now vs\.\s*(?:\n|$)/i);
+      expect(shaped).toContain('re-baseline now vs. letting executive claims continue');
+    });
+
+    it('does not truncate the SkyHarbor P3 assumption warning into has/no fragments', () => {
+      // L6 Wave 0 retest saw a malformed table row that repeated and
+      // truncated "not because SkyHarbor has no..." The answer is a set
+      // of assumptions to avoid, not a comparison matrix.
+      const raw = [
+        'Good question to ask before a governance review.',
+        'Treat it as a hypothesis — over-promised business cases or under-instrumented adoption telemetry, not a finding.',
+        '90d shows 0 and vendor count looks empty — but that is because no vendor records are loaded, not because SkyHarbor has no vendor estate.',
+        'Do not assume adoption is weak at 39% until the telemetry source and tracked attainment field are reconciled.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/tower', raw);
+
+      expect(shaped).not.toContain('| Option | Strength | Weakness | Fit |');
+      expect(shaped).not.toMatch(/\bSkyHarbor has\.$/m);
+      expect(shaped).not.toMatch(/\bSkyHarbor has no\.$/m);
+      expect(shaped).not.toMatch(/\b(has|no|and|or|but)\.$/m);
+    });
   });
 });
