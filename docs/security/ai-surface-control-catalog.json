@@ -111,6 +111,37 @@
           ]
         }
       ]
+    },
+    {
+      "id": "tower-atlas-program-pressure-brief",
+      "surface": "Tower Atlas program pressure executive brief",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/tower/ProgramPressureCards.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "data-testid=\"atlas-brief-accountability\"",
+            "AI-assisted decision support",
+            "brief.accountability.watermark"
+          ]
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "Evidence basis",
+            "brief.accountability.evidenceBasis"
+          ]
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "confidence ·",
+            "brief.confidenceLabel"
+          ]
+        }
+      ]
     }
   ]
 }
