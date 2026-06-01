@@ -52,7 +52,7 @@ Merge to `main`. This slice is pure TypeScript with no database migration, route
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/anandsundaram-hash/abarva/pull/2688.
 - CI run: pending.
 - Local validation: pending.
 
