@@ -275,9 +275,56 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
         ) : null}
         <BriefLine
           label="Recommended action"
-          value={brief.recommendedExecutiveAction}
+          value={brief.accountability.sanitizedRecommendation}
           tone={accent}
         />
+      </div>
+
+      <div
+        data-testid="atlas-brief-accountability"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          padding: '10px 12px',
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 8,
+          background: '#F8F7F4',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: accent,
+            fontWeight: 700,
+          }}
+        >
+          AI-assisted decision support
+        </span>
+        <span style={{ color: COLORS.ink, fontSize: 12, lineHeight: 1.5 }}>
+          {brief.accountability.watermark} {brief.accountability.humanApprovalRequired}
+        </span>
+        <span style={{ color: COLORS.muted, fontSize: 11, lineHeight: 1.5 }}>
+          {brief.accountability.missingDataBanner}
+        </span>
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: COLORS.mutedSoft,
+            fontWeight: 700,
+          }}
+        >
+          Evidence basis · {brief.accountability.evidenceBasis.slice(0, 3).join(' · ')}
+          {brief.accountability.evidenceBasis.length > 3
+            ? ` · +${brief.accountability.evidenceBasis.length - 3}`
+            : ''}
+        </span>
       </div>
 
       <div
