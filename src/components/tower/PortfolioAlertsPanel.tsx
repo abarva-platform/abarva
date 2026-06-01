@@ -50,6 +50,9 @@ const KIND_LINE: Record<PortfolioAlert['kind'], string> = {
   cascade: SHELL.PEACH_LINE,
 };
 
+export const PORTFOLIO_ALERT_HUMAN_ACKNOWLEDGMENT_TEXT =
+  'Human acknowledgment required: review the evidence, owner, and recommended next step before acting on or dismissing each executive alert.';
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface PortfolioAlertsPanelProps {
@@ -312,6 +315,35 @@ export function PortfolioAlertsPanel({
         </div>
       ) : (
         <>
+          <div
+            data-testid="portfolio-alerts-human-ack-boundary"
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: SHELL.INK_SOFT,
+              lineHeight: 1.5,
+              padding: '8px 10px',
+              background: SHELL.CARD_WHITE,
+              border: `1px dashed ${SHELL.CARD_LINE}`,
+              borderRadius: 7,
+            }}
+          >
+            <span
+              style={{
+                display: 'block',
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+                fontWeight: 700,
+                marginBottom: 3,
+              }}
+            >
+              Executive alert control
+            </span>
+            {PORTFOLIO_ALERT_HUMAN_ACKNOWLEDGMENT_TEXT}
+          </div>
           <AlertGroup severity="high" alerts={high} />
           <AlertGroup severity="medium" alerts={medium} />
         </>
