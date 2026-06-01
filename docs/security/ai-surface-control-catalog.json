@@ -1,0 +1,78 @@
+{
+  "schema": "abarva.ai-surface-control-catalog.v1",
+  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence.",
+  "controls": [
+    {
+      "id": "agent-response-output",
+      "surface": "Shared structured agent response renderer",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/agent/AgentResponse.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"]
+        },
+        {
+          "kind": "citation",
+          "evidence": ["AgentCitation", "response.citations", "inlineNodes"]
+        },
+        {
+          "kind": "confidence",
+          "evidence": ["AIConfidenceIndicator", "viewModel.confidence.tier"]
+        }
+      ]
+    },
+    {
+      "id": "agent-dock-chat-turns",
+      "surface": "Shared AgentDock chat rail",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/agent/AgentDock.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": ["AIResponsibilityFooter", "compact"]
+        }
+      ]
+    },
+    {
+      "id": "atlas-drawer-chat-shell",
+      "surface": "AtlasDrawer embedded and overlay chat shell",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/shell/AtlasDrawer.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"]
+        },
+        {
+          "kind": "responsibility-footer",
+          "evidence": ["AIResponsibilityFooter", "tone=\"dark\"", "compact"]
+        }
+      ]
+    },
+    {
+      "id": "program-gate-approval",
+      "surface": "Programs gate approval modal",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/programs/ProgramDetailPage.tsx",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "HumanApprovalGate",
+            "canSubmitHumanApproval",
+            "MOVES_HUMAN_RATIONALE_MIN_CHARS"
+          ]
+        }
+      ]
+    }
+  ]
+}
