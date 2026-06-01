@@ -25,6 +25,7 @@
     "access:check": "node scripts/check-access.mjs",
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
+    "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
     "verify:meridian-context-showcase": "node scripts/verify/meridian-context-showcase.mjs",
