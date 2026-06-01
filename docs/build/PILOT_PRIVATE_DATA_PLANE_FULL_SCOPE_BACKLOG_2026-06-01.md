@@ -9,10 +9,10 @@ mini-wave before live client files should be treated as production-ready.
 
 | Row | Theme | Required outcome |
 | --- | --- | --- |
-| T353 | Azure provisioning runbook | Define Blob Storage, Service Bus, Postgres/data-plane, Key Vault, identities, networking, and environment promotion steps. |
-| T354 | SSO and SCIM role mapping | Map Entra/Clerk orgs to admin, uploader, reviewer, and approver roles with seeded test users. |
-| T355 | Private-data runbook | Document end-to-end rehearsal from sign-in to data load, quarantine, clarification, approval, commit, rollback, and audit export. |
-| T356 | Processing service decision | Lock the execution services for parsing and enrichment: Functions or Container Apps jobs, Service Bus, Document Intelligence, AI Search, and retry semantics. |
+| T353 | Azure provisioning runbook | Define Blob Storage, Service Bus, Postgres/data-plane, Key Vault, identities, networking, and environment promotion steps. Authority candidate: `docs/architecture/azure/PILOT-PRIVATE-DATA-PLANE-REHEARSAL-RUNBOOK-2026-06-01.md`. |
+| T354 | SSO and SCIM role mapping | Map Entra/Clerk orgs to admin, uploader, reviewer, and approver roles with seeded test users. Authority candidate: `src/lib/admin/pilot-private-data-plane-runbook.ts`. |
+| T355 | Private-data runbook | Document end-to-end rehearsal from sign-in to data load, quarantine, clarification, approval, commit, rollback, and audit export. Authority candidate: `docs/architecture/azure/PILOT-PRIVATE-DATA-PLANE-REHEARSAL-RUNBOOK-2026-06-01.md`. |
+| T356 | Processing service decision | Lock the execution services for parsing and enrichment: Functions or Container Apps jobs, Service Bus, Document Intelligence, AI Search, and retry semantics. Authority candidate: `src/lib/admin/pilot-private-data-plane-runbook.ts`. |
 | T357 | Durable ingestion schema | Add tables for upload runs, file manifests, quarantine cases, clarifications, approvals, load commits, and audit export. |
 | T358 | Idempotency and dedupe | Prevent duplicate facts, duplicate approvals, and repeated expensive parsing on same-file re-upload. |
 | T359 | Template versioning and mapping profiles | Persist template version, mapping profile, and validation rule version for every load. |
