@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AtlasChatPanel · Tower-flavored AgentDock preset.
 //
@@ -21,27 +21,30 @@
 // (mode + side-rail split width) and acts as the telemetry key for upload
 // rows in `agent_attachment`.
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from "react";
 import {
   AgentDock,
   type AgentProfile,
   type AttachmentRef,
   type ChatMessage,
   type DockMode,
-} from '@/components/agent/AgentDock';
-import type { AtlasSuggestion } from '@/lib/atlas/types';
+} from "@/components/agent/AgentDock";
+import type { AtlasSuggestion } from "@/lib/atlas/types";
 
 export interface AtlasMessage {
   id: string;
-  role: 'atlas' | 'user';
+  role: "atlas" | "user";
   content: string;
 }
 
 export const ATLAS_AGENT: AgentProfile = {
-  initials: 'A',
-  name: 'Atlas',
-  role: 'Tower Conductor — observes portfolio pressure, drift, and signals.',
+  initials: "A",
+  name: "Atlas",
+  role: "Tower Conductor — observes portfolio pressure, drift, and signals.",
 };
+
+export const ATLAS_DECISION_SUPPORT_DISCLOSURE =
+  "AI-assisted decision support: Atlas outputs require human review of citations, assumptions, and missing data before action.";
 
 export interface AtlasChatPanelProps {
   /** Conversation thread. Atlas turns + user turns. */
@@ -82,7 +85,7 @@ export interface AtlasChatPanelProps {
   defaultMode?: DockMode;
 }
 
-const ATLAS_THINKING_ID = 'atlas-thinking-transient';
+const ATLAS_THINKING_ID = "atlas-thinking-transient";
 
 export function AtlasChatPanel({
   messages,
@@ -91,13 +94,13 @@ export function AtlasChatPanel({
   suggestions,
   onSuggestion,
   workspace,
-  surface = 'tower',
+  surface = "tower",
   surfaceContext,
   agent = ATLAS_AGENT,
-  initialQuote,
+  initialQuote = ATLAS_DECISION_SUPPORT_DISCLOSURE,
   defaultLeftPercent = 35,
   minLeftPx = 320,
-  defaultMode = 'side-rail',
+  defaultMode = "side-rail",
 }: AtlasChatPanelProps) {
   // Translate legacy AtlasMessage[] → AgentDock ChatMessage[].
   // Append a transient "thinking" turn while the caller is awaiting the
@@ -105,14 +108,14 @@ export function AtlasChatPanel({
   const thread: ChatMessage[] = useMemo(() => {
     const base: ChatMessage[] = messages.map((m) => ({
       id: m.id,
-      role: m.role === 'atlas' ? 'agent' : 'user',
+      role: m.role === "atlas" ? "agent" : "user",
       body: m.content,
     }));
     if (pending) {
       base.push({
         id: ATLAS_THINKING_ID,
-        role: 'agent',
-        body: 'Atlas is thinking…',
+        role: "agent",
+        body: "Atlas is thinking…",
       });
     }
     return base;
@@ -125,7 +128,7 @@ export function AtlasChatPanel({
   const suggestedActions = useMemo(
     () =>
       suggestions.map((s, i) => ({
-        id: `${s.kind ?? 'message'}-${i}`,
+        id: `${s.kind ?? "message"}-${i}`,
         label: s.label,
         body: s.value,
         onClick: () => onSuggestion(s),
