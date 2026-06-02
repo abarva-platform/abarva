@@ -14,6 +14,13 @@ describe("setup data load center read model", () => {
       tenantName: "Apex Retail Group",
       vertical: "Retail",
     });
+    expect(model.singleClientBoundary).toMatchObject({
+      label: "Apex Retail Group only",
+      activeClientId: "client-apex",
+      activeClientKey: "apexretail",
+    });
+    expect(model.singleClientBoundary.assertion).toMatch(/strictly limited to the active client/i);
+    expect(model.singleClientBoundary.denialRule).toMatch(/fail before storage, parsing, indexing, notification, or commit/i);
     expect(model.metrics.rehearsalGates).toBe(7);
     expect(model.metrics.setupSegments).toBe(14);
     expect(model.metrics.contextRegistryTemplates).toBeGreaterThanOrEqual(18);
@@ -251,5 +258,81 @@ describe("setup data load center read model", () => {
       "ERP landscape",
       "Org roles and teams",
     ]);
+  });
+
+  it("spells out the reload path, Azure/system handoffs, checks, approvals, and communications", () => {
+    const model = buildSetupDataLoadCenterModel({
+      clientId: "client-apex",
+      clientKey: "apexretail",
+      tenantName: "Apex Retail Group",
+    });
+
+    expect(model.reloadCommandPlan.map((step) => step.id)).toEqual([
+      "scope-client",
+      "choose-template",
+      "attest-upload",
+      "scan-parse",
+      "approve-commit",
+    ]);
+    expect(model.reloadCommandPlan).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "attest-upload",
+          azureOrSystemAction: expect.stringContaining("Azure Blob landing-zone event"),
+          requiredCheck: expect.stringContaining("Attestation"),
+          approvalOrCommunication: expect.stringContaining("notification"),
+        }),
+        expect.objectContaining({
+          id: "scan-parse",
+          azureOrSystemAction: expect.stringContaining("Azure Document Intelligence"),
+          requiredCheck: expect.stringContaining("PHI"),
+          approvalOrCommunication: expect.stringContaining("block commit"),
+          status: "needs_configuration",
+        }),
+        expect.objectContaining({
+          id: "approve-commit",
+          azureOrSystemAction: expect.stringContaining("client-scoped Postgres/search substrate"),
+          requiredCheck: expect.stringContaining("idempotency conflict"),
+          approvalOrCommunication: expect.stringContaining("outputs and deliverables"),
+        }),
+      ]),
+    );
+  });
+
+  it("supports major formats and controlled-exception metadata for nonmatching client templates", () => {
+    const model = buildSetupDataLoadCenterModel({
+      clientId: "client-meridian",
+      clientKey: "meridian",
+      tenantName: "Meridian Health",
+    });
+
+    expect(model.exceptionIntake.supportedFormats).toEqual([
+      "CSV",
+      "XLSX",
+      "JSON",
+      "JSONL",
+      "PDF",
+      "DOCX",
+      "PPTX",
+      "MARKDOWN",
+      "ZIP",
+    ]);
+    expect(model.exceptionIntake.rule).toMatch(/controlled exception/i);
+    expect(model.exceptionIntake.rule).toMatch(/processing pauses/i);
+    expect(model.exceptionIntake.metadataRequirements).toEqual(
+      expect.arrayContaining([
+        "Source system",
+        "Data owner",
+        "Sensitivity declaration",
+        "Field mapping",
+        "Parse instructions",
+        "Authoritative sections",
+        "Metric dictionary",
+        "Archive manifest",
+      ]),
+    );
+    expect(model.exceptionIntake.clarificationQueueHref).toBe(
+      "/admin/context-layer/approval-queue",
+    );
   });
 });

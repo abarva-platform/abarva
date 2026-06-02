@@ -39,6 +39,9 @@ describe("/admin/setup data load center page source", () => {
     expect(componentSource).toContain("Loader readiness");
     expect(componentSource).toContain("Pilot verifier posture");
     expect(componentSource).toContain("Next actions");
+    expect(componentSource).toContain("Single-client reload");
+    expect(componentSource).toContain("Reload command plan");
+    expect(componentSource).toContain("Exception intake");
     expect(componentSource).toContain("Dimension library");
     expect(componentSource).toContain("model.dimensionCatalog.map");
     expect(componentSource).toContain("Templates by dimension");
@@ -47,6 +50,9 @@ describe("/admin/setup data load center page source", () => {
   it("keeps implementation plumbing out of the Maestro-facing setup canvas", () => {
     expect(componentSource).toContain("Governed load workflow");
     expect(componentSource).toContain("model.workflowControls.map");
+    expect(componentSource).toContain("model.reloadCommandPlan.map");
+    expect(componentSource).toContain("model.singleClientBoundary.assertion");
+    expect(componentSource).toContain("model.exceptionIntake.supportedFormats.map");
     expect(componentSource).not.toContain(
       "{control.control} · {control.apiPath}",
     );
@@ -64,6 +70,12 @@ describe("/admin/setup data load center page source", () => {
 
   it("keeps cross-client manifest coverage out of the runtime setup page", () => {
     expect(componentSource).not.toContain("model.manifestCoverage.map");
+  });
+
+  it("states that data loading is scoped to the active client only", () => {
+    expect(componentSource).toContain("commit for this client only");
+    expect(componentSource).toContain("Single-client reload");
+    expect(componentSource).not.toContain("cross-tenant loading");
   });
 
   it("keeps the T342 shell disjoint from the open template-preflight slice", () => {
