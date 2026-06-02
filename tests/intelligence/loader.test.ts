@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(424);
+    expect(corpus.patterns).toHaveLength(460);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -76,6 +76,20 @@ describe('intelligence corpus loader', () => {
     expect(amsRateCardBenchmark).not.toHaveProperty('rangeLow');
     expect(amsRateCardBenchmark).not.toHaveProperty('rangeHigh');
     expect(amsRateCardBenchmark).not.toHaveProperty('median');
+    expect(corpus.patternsById.get('PAT-SRC-CGV-TENANT-EVIDENCE-SCOPING')).toMatchObject({
+      slug: 'tenant-evidence-scoping',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-CGV-SAVINGS-CLAIM-GATE')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-pattern-generated-savings',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER')).toMatchObject({
+      slug: 'no-evidence-no-number',
+      category: 'pricing_intelligence',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPF-BAFO-DELTA-LEDGER')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Evidence-backed value proof',
+    });
   });
 
   it('indexes every loaded entity by id', () => {

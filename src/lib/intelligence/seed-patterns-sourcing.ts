@@ -4,6 +4,7 @@ import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-c
 import { SOURCING_BENCHMARK_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-benchmark-governance";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
 import { SOURCING_COMMERCIAL_LEVER_PATTERNS } from "./seed-patterns-sourcing-commercial-levers";
+import { SOURCING_CORPUS_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-corpus-governance";
 import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
 import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from "./seed-patterns-sourcing-contracts-commercial";
 import { SOURCING_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-contracts";
@@ -16,6 +17,7 @@ import { SOURCING_PROCESS_PATTERNS } from "./seed-patterns-sourcing-process";
 import { SOURCING_REGULATORY_AI_PATTERNS } from "./seed-patterns-sourcing-regulatory-ai";
 import { SOURCING_REGULATORY_PATTERNS } from "./seed-patterns-sourcing-regulatory";
 import { SOURCING_RETAIL_IT_PATTERNS } from "./seed-patterns-sourcing-retail-it";
+import { SOURCING_VALUE_PROOF_PATTERNS } from "./seed-patterns-sourcing-value-proof";
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from "./seed-patterns-sourcing-vendors-cloudflare";
 import { PAT_SRC_VEN_CONTENTSTACK_001 } from "./seed-patterns-sourcing-vendors-contentstack";
 import { SOURCING_VENDOR_COUPA_PATTERNS } from "./seed-patterns-sourcing-vendors-coupa";
@@ -1134,6 +1136,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_BENCHMARK_GOVERNANCE_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
   ...SOURCING_COMMERCIAL_LEVER_PATTERNS,
+  ...SOURCING_CORPUS_GOVERNANCE_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
   ...SOURCING_CONTRACT_PATTERNS,
   ...SOURCING_CONTRACTS_COMMERCIAL_PATTERNS,
@@ -1146,6 +1149,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
   ...SOURCING_RETAIL_IT_PATTERNS,
+  ...SOURCING_VALUE_PROOF_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,
   ...SOURCING_VENDOR_GITLAB_PATTERNS,
