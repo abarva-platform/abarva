@@ -74,7 +74,7 @@ export const HOME_PANELS: ReadonlyArray<HomePanelMetadata> = [
   {
     id: 'configuration',
     label: 'Configuration',
-    route: '/home/configuration',
+    route: '/admin/setup',
     group: 'configure',
     visibleToRoles: ['admin'],
     description: 'Platform settings and feature flags',

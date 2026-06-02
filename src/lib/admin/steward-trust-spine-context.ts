@@ -244,15 +244,13 @@ export function matchesNextPriorityQuestion(message: string): boolean {
 
 const STEWARD_TRUST_SPINE_SURFACES: ReadonlySet<string> = new Set([
   '/admin',
-  '/home/data-trust',
-  '/home/connectors',
-  '/home/production-readiness',
 ]);
 
 /**
  * True when the (agent, surface) pair is one where Steward should
- * receive the TrustSpine context block. Mirrors the Steward voice
- * doctrine gate in the chat route, plus the `/admin/*` subtree.
+ * receive the TrustSpine context block. Setup/Admin context belongs to
+ * `/admin/*`; legacy `/home/*` setup aliases must not keep Steward in
+ * setup posture after the Home/Admin separation.
  */
 export function shouldInjectStewardTrustSpine(
   agentName: string | null,

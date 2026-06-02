@@ -319,10 +319,10 @@ describe('shouldInjectStewardTrustSpine', () => {
     expect(shouldInjectStewardTrustSpine('Steward', '/admin/users')).toBe(true);
   });
 
-  it('returns true for Steward on /home setup surfaces', () => {
-    expect(shouldInjectStewardTrustSpine('Steward', '/home/data-trust')).toBe(true);
-    expect(shouldInjectStewardTrustSpine('Steward', '/home/connectors')).toBe(true);
-    expect(shouldInjectStewardTrustSpine('Steward', '/home/production-readiness')).toBe(true);
+  it('returns false for legacy /home setup surfaces', () => {
+    expect(shouldInjectStewardTrustSpine('Steward', '/home/data-trust')).toBe(false);
+    expect(shouldInjectStewardTrustSpine('Steward', '/home/connectors')).toBe(false);
+    expect(shouldInjectStewardTrustSpine('Steward', '/home/production-readiness')).toBe(false);
   });
 
   it('returns false for non-Steward agents', () => {

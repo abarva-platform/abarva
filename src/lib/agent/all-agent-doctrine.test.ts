@@ -33,7 +33,7 @@ describe('composeAllAgentDoctrineBlock', () => {
   });
 
   it('maps setup, intelligence, moves, source, and tower surfaces', () => {
-    expect(composeAllAgentDoctrineBlock({ agentName: 'Steward', surface: '/setup' })).toContain(
+    expect(composeAllAgentDoctrineBlock({ agentName: 'Steward', surface: '/admin/setup' })).toContain(
       'Surface family: setup_governance',
     );
     expect(composeAllAgentDoctrineBlock({ agentName: 'Sentinel', surface: '/intelligence' })).toContain(
