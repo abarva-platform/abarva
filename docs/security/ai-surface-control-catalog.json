@@ -130,6 +130,14 @@
             "approve-actions-editable-decision",
             "reviewedDecision"
           ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "canApprove",
+            "Approval not available to this viewer",
+            "Logs you as approver"
+          ]
         }
       ]
     },
@@ -160,6 +168,20 @@
           "evidence": [
             "confidence ·",
             "brief.confidenceLabel"
+          ]
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "brief.accountability.humanApprovalRequired",
+            "brief.accountability.sanitizedRecommendation"
+          ]
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "brief.accountability.missingDataBanner",
+            "evidenceValueWarning"
           ]
         }
       ]
@@ -205,6 +227,47 @@
           "evidence": [
             "humanApprovalBoundary",
             "accountability.humanApprovalBoundary"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-admin-event-approval-queue",
+      "surface": "Source admin event approval queue",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/AdminSourceEventApprovalQueue.tsx",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "SOURCE_APPROVAL_REASON_MIN_LENGTH",
+            "confirmed: true",
+            "I confirm this is my accountable human approval decision."
+          ]
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "Self-approval notice",
+            "Approval action failed."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-estimate-assumption-disclosure",
+      "surface": "Source savings and cost estimate assumption disclosure",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/source/EstimateAssumptionDisclosure.tsx",
+      "requiredControls": [
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "data-source-estimate-disclosure=\"true\"",
+            "Directional estimate only",
+            "assumptions.map"
           ]
         }
       ]
