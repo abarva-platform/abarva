@@ -16,10 +16,11 @@ const ROUTES = [
   { label: 'Tower · Portfolio', path: '/tower/portfolio', surface: 'Tower', key: 'twr' },
   { label: 'Tower · Portfolio DAG', path: '/tower/portfolio-dag', surface: 'Tower', key: 'twr' },
   { label: 'Tower · Onboarding', path: '/tower/onboard', surface: 'Tower', key: 'twr' },
-  { label: 'Setup · Connectors', path: '/admin', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Users', path: '/admin/users', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Policies', path: '/admin/policies', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Tenant', path: '/admin?tab=tenant', surface: 'Setup', key: 'set' },
+  { label: 'Admin · Overview', path: '/admin', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Connectors', path: '/admin/connectors', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Users & Access', path: '/admin/users-access', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Policies', path: '/admin/policies', surface: 'Admin', key: 'adm' },
+  { label: 'Admin · Tenant profile', path: '/admin?tab=tenant', surface: 'Admin', key: 'adm' },
 ] as const;
 
 type Route = (typeof ROUTES)[number];
