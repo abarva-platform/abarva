@@ -6,9 +6,13 @@
 // state — never a fabricated number. A client with no loaded initiatives
 // shows "No initiatives in flight yet", not sample rows.
 
-import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
-import { STAGE_LABELS, STATUS_LABELS, formatUsd } from '@/lib/admin/ai-initiatives/labels';
-import type { ApprovalRequest } from '@/lib/programs/approval';
+import type { AIInitiative } from "@/lib/admin/ai-initiatives/queries";
+import {
+  STAGE_LABELS,
+  STATUS_LABELS,
+  formatUsd,
+} from "@/lib/admin/ai-initiatives/labels";
+import type { ApprovalRequest } from "@/lib/programs/approval";
 
 export interface HomeKpi {
   label: string;
@@ -24,7 +28,7 @@ export interface HomePortfolioRow {
   stage: string;
   status: string;
   /** 'risk' | 'ok' | 'gate' drives the hairline pill accent. */
-  tone: 'risk' | 'ok' | 'gate';
+  tone: "risk" | "ok" | "gate";
 }
 
 export interface HomeDecision {
@@ -54,11 +58,11 @@ export interface HomeBrief {
 }
 
 const RISK_STATUSES = new Set([
-  'adoption_gap',
-  'value_lag',
-  'cost_overrun',
-  'duplication_risk',
-  'stalled',
+  "adoption_gap",
+  "value_lag",
+  "cost_overrun",
+  "duplication_risk",
+  "stalled",
 ]);
 
 function initialsFor(name: string): string {
@@ -66,14 +70,24 @@ function initialsFor(name: string): string {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
-function statusTone(flag: AIInitiative['statusFlag']): HomePortfolioRow['tone'] {
-  if (flag === 'healthy') return 'ok';
-  if (RISK_STATUSES.has(flag)) return 'risk';
-  return 'gate'; // foundation_phase / in_move — neutral amber
+function statusTone(
+  flag: AIInitiative["statusFlag"],
+): HomePortfolioRow["tone"] {
+  if (flag === "healthy") return "ok";
+  if (RISK_STATUSES.has(flag)) return "risk";
+  return "gate"; // foundation_phase / in_move — neutral amber
+}
+
+function greetingFor(firstName: string | null): string {
+  const name = firstName?.trim();
+  if (!name) return "Good morning.";
+
+  const punctuation = /[.!?]$/.test(name) ? "" : ".";
+  return `Good morning, ${name}${punctuation}`;
 }
 
 export function buildHomeBrief(input: {
@@ -84,7 +98,14 @@ export function buildHomeBrief(input: {
   initiatives: ReadonlyArray<AIInitiative>;
   approvals: ReadonlyArray<ApprovalRequest>;
 }): HomeBrief {
-  const { tenantName, industryLabel, logoColor, firstName, initiatives, approvals } = input;
+  const {
+    tenantName,
+    industryLabel,
+    logoColor,
+    firstName,
+    initiatives,
+    approvals,
+  } = input;
 
   const hasPortfolio = initiatives.length > 0;
   const decisionsCount = approvals.length;
@@ -111,30 +132,34 @@ export function buildHomeBrief(input: {
     (sum, i) => sum + (i.measuredValueUsd ?? 0),
     0,
   );
-  const atRisk = initiatives.filter((i) => RISK_STATUSES.has(i.statusFlag)).length;
+  const atRisk = initiatives.filter((i) =>
+    RISK_STATUSES.has(i.statusFlag),
+  ).length;
   const realizedPct =
     valueAtStake > 0 ? Math.round((realized / valueAtStake) * 100) : 0;
 
   const kpis: HomeKpi[] = [
     {
-      label: 'Value at stake',
-      value: valueAtStake > 0 ? formatUsd(valueAtStake) : '—',
-      note: hasPortfolio ? `${initiatives.length} initiatives` : 'No initiatives loaded',
+      label: "Value at stake",
+      value: valueAtStake > 0 ? formatUsd(valueAtStake) : "—",
+      note: hasPortfolio
+        ? `${initiatives.length} initiatives`
+        : "No initiatives loaded",
     },
     {
-      label: 'Realized to date',
-      value: realized > 0 ? formatUsd(realized) : '—',
-      note: valueAtStake > 0 ? `${realizedPct}% of committed` : '',
+      label: "Realized to date",
+      value: realized > 0 ? formatUsd(realized) : "—",
+      note: valueAtStake > 0 ? `${realizedPct}% of committed` : "",
     },
     {
-      label: 'Decisions for you',
+      label: "Decisions for you",
       value: String(decisionsCount),
-      note: decisionsCount > 0 ? 'awaiting review' : 'none pending',
+      note: decisionsCount > 0 ? "awaiting review" : "none pending",
     },
     {
-      label: 'Initiatives at risk',
-      value: hasPortfolio ? `${atRisk}/${initiatives.length}` : '—',
-      note: atRisk > 0 ? 'need attention' : 'all healthy',
+      label: "Initiatives at risk",
+      value: hasPortfolio ? `${atRisk}/${initiatives.length}` : "—",
+      note: atRisk > 0 ? "need attention" : "all healthy",
     },
   ];
 
@@ -147,21 +172,19 @@ export function buildHomeBrief(input: {
     const briefTitle =
       (top.briefSnapshot?.title as string | undefined) ??
       (top.briefSnapshot?.programName as string | undefined) ??
-      'Program decision';
+      "Program decision";
     decision = {
-      eyebrow: 'Needs review today',
+      eyebrow: "Needs review today",
       question: `Review and decide: ${briefTitle}.`,
       detail:
-        'Decision-support only — Home surfaces the request. Approve, send back, ' +
-        'and the rationale + audit happen inside the owning workspace, where the ' +
-        'full evidence pack and your permission checks live.',
+        "Decision-support only — Home surfaces the request. Approve, send back, " +
+        "and the rationale + audit happen inside the owning workspace, where the " +
+        "full evidence pack and your permission checks live.",
       href: `/strategic-moves?program=${encodeURIComponent(top.programId)}`,
     };
   }
 
-  const greeting = firstName
-    ? `Good morning, ${firstName}.`
-    : 'Good morning.';
+  const greeting = greetingFor(firstName);
 
   return {
     tenantName,
