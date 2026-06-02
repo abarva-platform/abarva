@@ -48,6 +48,7 @@ import {
 } from "./artifact-registry";
 import { buildEventScaffold } from "./canvas-substrate";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
+import { coerceUsdAmountOrZero } from "./usd-amount";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -353,7 +354,7 @@ export function sourceEventRowToSummary(
   const status = isSourceLifecycleStatus(row.lifecycle_state)
     ? row.lifecycle_state
     : "waiting_on_client";
-  const valueAtStakeUsd = row.estimated_value_usd ?? 0;
+  const valueAtStakeUsd = coerceUsdAmountOrZero(row.estimated_value_usd);
   const waitingForApproval = status === "waiting_on_client";
   const approvalCopy =
     "Tenant admin approval required; S0 exit then needs decision-owner and sourcing-lead co-sign.";
@@ -872,7 +873,8 @@ function buildValueLedgerForRow(
   row: SourceEventRow,
   kind: ValueLedgerEntry["kind"],
 ): ValueLedgerEntry[] {
-  if (kind === "realized" || !row.estimated_value_usd) return [];
+  const amountUsd = coerceUsdAmountOrZero(row.estimated_value_usd);
+  if (kind === "realized" || amountUsd <= 0) return [];
   return [
     {
       id: `${row.id}:projected-value`,
@@ -881,7 +883,7 @@ function buildValueLedgerForRow(
       kind,
       label: "Projected sourcing value",
       stageKey: normalizeSourceStageKey(row.current_stage_key) ?? "strategy",
-      amountUsd: row.estimated_value_usd,
+      amountUsd,
       confidence: "low",
       evidenceCount: 1,
       note: "Intake estimate only; exact financial output remains governed by user financial visibility.",

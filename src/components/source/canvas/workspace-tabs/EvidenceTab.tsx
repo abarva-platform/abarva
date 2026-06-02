@@ -1,15 +1,15 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from "react";
 import {
   evidenceById,
   type SourceEvidenceRequirement,
-} from '@/lib/source/canonical-specs';
+} from "@/lib/source/canonical-specs";
 import type {
   SourceEventEvidence,
   SourceEventEvidenceCurrentState,
-} from '@/lib/source/canvas-substrate';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
-import { CANVAS } from '../canvas-tokens';
+} from "@/lib/source/canvas-substrate";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
+import { CANVAS } from "../canvas-tokens";
 
 interface EvidenceTabProps {
   stage: SourceStageKey;
@@ -27,7 +27,9 @@ export function EvidenceTab({ stage, states }: EvidenceTabProps) {
   return (
     <div data-testid="source-canvas-evidence-tab" style={CONTAINER_STYLE}>
       <header style={HEADER_STYLE}>
-        <div style={EYEBROW_STYLE}>Evidence readiness · {SOURCE_STAGE_LABELS[stage]}</div>
+        <div style={EYEBROW_STYLE}>
+          Evidence readiness · {SOURCE_STAGE_LABELS[stage]}
+        </div>
         <h2 style={TITLE_STYLE}>
           {totals.usable} of {states.length} sources at usable evidence
         </h2>
@@ -41,17 +43,24 @@ export function EvidenceTab({ stage, states }: EvidenceTabProps) {
       <div style={LEGEND_STYLE} aria-label="Seven-state ramp legend">
         {(
           [
-            ['Usable Evidence', CANVAS.ACTIVE, 'Validated, citable in artifacts and gates'],
-            ['Available', CANVAS.ACTIVE, 'Parsed and sample-checked'],
-            ['Parsed', CANVAS.WAITING, 'Fields extracted, not yet validated'],
-            ['Loaded', CANVAS.WAITING, 'File ingested, not yet parsed'],
-            ['Not Requested', CANVAS.GRAY, 'Known source, not yet pulled'],
-            ['Stale', CANVAS.BLOCKED, 'Older than freshness window'],
-            ['Low Confidence', CANVAS.BLOCKED, 'Sentinel-flagged'],
+            [
+              "Usable Evidence",
+              CANVAS.ACTIVE,
+              "Validated, citable in artifacts and gates",
+            ],
+            ["Available", CANVAS.ACTIVE, "Parsed and sample-checked"],
+            ["Parsed", CANVAS.WAITING, "Fields extracted, not yet validated"],
+            ["Loaded", CANVAS.WAITING, "File ingested, not yet parsed"],
+            ["Not Requested", CANVAS.GRAY, "Known source, not yet pulled"],
+            ["Stale", CANVAS.BLOCKED, "Older than freshness window"],
+            ["Low Confidence", CANVAS.BLOCKED, "Sentinel-flagged"],
           ] as const
         ).map(([label, color, desc]) => (
           <div key={label} style={LEGEND_ITEM_STYLE}>
-            <span aria-hidden style={{ ...LEGEND_DOT_STYLE, background: color }} />
+            <span
+              aria-hidden
+              style={{ ...LEGEND_DOT_STYLE, background: color }}
+            />
             <span style={LEGEND_LABEL_STYLE}>{label}</span>
             <span style={LEGEND_DESC_STYLE}>{desc}</span>
           </div>
@@ -60,7 +69,9 @@ export function EvidenceTab({ stage, states }: EvidenceTabProps) {
 
       <ul style={LIST_STYLE}>
         {states.length === 0 ? (
-          <li style={EMPTY_BODY_STYLE}>No evidence requirements for this stage.</li>
+          <li style={EMPTY_BODY_STYLE}>
+            No evidence requirements for this stage.
+          </li>
         ) : (
           states.map((s) => {
             const def = evidenceById(s.requirementId);
@@ -72,10 +83,14 @@ export function EvidenceTab({ stage, states }: EvidenceTabProps) {
   );
 }
 
-function countByState(states: SourceEventEvidence[]): { usable: number; total: number } {
+function countByState(states: SourceEventEvidence[]): {
+  usable: number;
+  total: number;
+} {
   return {
     usable: states.filter(
-      (s) => s.currentState === 'Usable Evidence' || s.currentState === 'Available',
+      (s) =>
+        s.currentState === "Usable Evidence" || s.currentState === "Available",
     ).length,
     total: states.length,
   };
@@ -90,14 +105,21 @@ function EvidenceRow({
 }) {
   const color = colorForState(state.currentState);
   return (
-    <li style={ROW_STYLE} data-testid={`source-canvas-evidence-${state.requirementId}`}>
+    <li
+      style={ROW_STYLE}
+      data-testid={`source-canvas-evidence-${state.requirementId}`}
+    >
       <span aria-hidden style={{ ...DOT_STYLE, background: color }} />
       <div style={ROW_BODY_STYLE}>
         <div style={ROW_TITLE_STYLE}>
           {def?.label ?? state.requirementId}
-          {def?.level === 'required' ? <span style={REQUIRED_TAG_STYLE}>required</span> : null}
+          {def?.level === "required" ? (
+            <span style={REQUIRED_TAG_STYLE}>required</span>
+          ) : null}
         </div>
-        {def?.description ? <div style={ROW_DESC_STYLE}>{def.description}</div> : null}
+        {def?.description ? (
+          <div style={ROW_DESC_STYLE}>{def.description}</div>
+        ) : null}
         <div style={ROW_META_STYLE}>
           {def?.sourceLabel ? <span>{def.sourceLabel}</span> : null}
           {def?.sourceLabel ? <span style={DOT_INLINE_STYLE}>·</span> : null}
@@ -109,26 +131,55 @@ function EvidenceRow({
             </>
           ) : null}
         </div>
+        {state.currentState === "Not Requested" ? (
+          <a
+            href={requestEvidenceHref(state, def)}
+            style={REQUEST_LINK_STYLE}
+            data-testid={`source-canvas-evidence-request-${state.requirementId}`}
+          >
+            Request evidence
+          </a>
+        ) : null}
       </div>
     </li>
   );
 }
 
+function requestEvidenceHref(
+  state: SourceEventEvidence,
+  def: SourceEvidenceRequirement | undefined,
+): string {
+  const label = def?.label ?? state.requirementId;
+  const source = def?.sourceLabel ?? "source owner";
+  const subject = `Source evidence request: ${label}`;
+  const body = [
+    `Please provide the evidence item "${label}" for the Source event.`,
+    `Expected source: ${source}.`,
+    def?.minimumState
+      ? `Minimum readiness required: ${def.minimumState}.`
+      : null,
+    `Requirement ID: ${state.requirementId}.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function colorForState(s: SourceEventEvidenceCurrentState): string {
-  if (s === 'Usable Evidence' || s === 'Available') return CANVAS.ACTIVE;
-  if (s === 'Parsed' || s === 'Loaded') return CANVAS.WAITING;
-  if (s === 'Stale' || s === 'Low Confidence') return CANVAS.BLOCKED;
+  if (s === "Usable Evidence" || s === "Available") return CANVAS.ACTIVE;
+  if (s === "Parsed" || s === "Loaded") return CANVAS.WAITING;
+  if (s === "Stale" || s === "Low Confidence") return CANVAS.BLOCKED;
   return CANVAS.GRAY;
 }
 
 const CONTAINER_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 24,
   maxWidth: 880,
 };
 
 const HEADER_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 6,
   paddingBottom: 16,
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
@@ -137,8 +188,8 @@ const HEADER_STYLE: CSSProperties = {
 const EYEBROW_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
 };
 
@@ -146,7 +197,7 @@ const TITLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SERIF,
   fontSize: 24,
   fontWeight: 400,
-  letterSpacing: '-0.015em',
+  letterSpacing: "-0.015em",
   color: CANVAS.INK,
   margin: 0,
 };
@@ -160,18 +211,18 @@ const SUBLINE_STYLE: CSSProperties = {
 };
 
 const LEGEND_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: 8,
-  padding: '12px 14px',
+  padding: "12px 14px",
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: CANVAS.RADIUS_TIGHT,
   background: CANVAS.CARD,
 };
 
 const LEGEND_ITEM_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'baseline',
+  display: "inline-flex",
+  alignItems: "baseline",
   gap: 8,
   fontFamily: CANVAS.SANS,
   fontSize: 12,
@@ -181,9 +232,9 @@ const LEGEND_DOT_STYLE: CSSProperties = {
   width: 8,
   height: 8,
   borderRadius: 999,
-  display: 'inline-block',
+  display: "inline-block",
   flexShrink: 0,
-  alignSelf: 'center',
+  alignSelf: "center",
 };
 
 const LEGEND_LABEL_STYLE: CSSProperties = {
@@ -196,16 +247,16 @@ const LEGEND_DESC_STYLE: CSSProperties = {
 };
 
 const LIST_STYLE: CSSProperties = {
-  listStyle: 'none',
+  listStyle: "none",
   padding: 0,
   margin: 0,
 };
 
 const ROW_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto minmax(0, 1fr)',
+  display: "grid",
+  gridTemplateColumns: "auto minmax(0, 1fr)",
   gap: 14,
-  padding: '14px 0',
+  padding: "14px 0",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
@@ -218,14 +269,14 @@ const DOT_STYLE: CSSProperties = {
 };
 
 const ROW_BODY_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 4,
   minWidth: 0,
 };
 
 const ROW_TITLE_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 8,
   fontFamily: CANVAS.SANS,
   fontSize: 14,
@@ -236,8 +287,8 @@ const ROW_TITLE_STYLE: CSSProperties = {
 const REQUIRED_TAG_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   fontWeight: 600,
 };
@@ -250,19 +301,31 @@ const ROW_DESC_STYLE: CSSProperties = {
 };
 
 const ROW_META_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 6,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.04em',
+  letterSpacing: "0.04em",
   color: CANVAS.GRAY_DK,
-  flexWrap: 'wrap',
+  flexWrap: "wrap",
 };
 
 const STATE_LABEL_STYLE: CSSProperties = {
   fontWeight: 600,
   color: CANVAS.INK,
+};
+
+const REQUEST_LINK_STYLE: CSSProperties = {
+  width: "fit-content",
+  marginTop: 4,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: CANVAS.ACTIVE,
+  textDecoration: "none",
+  borderBottom: `1px solid ${CANVAS.ACTIVE}`,
 };
 
 const DOT_INLINE_STYLE: CSSProperties = {
@@ -273,5 +336,5 @@ const EMPTY_BODY_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   color: CANVAS.INK_SOFT,
-  padding: '12px 0',
+  padding: "12px 0",
 };
