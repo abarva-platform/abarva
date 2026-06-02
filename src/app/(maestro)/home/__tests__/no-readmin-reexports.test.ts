@@ -57,7 +57,11 @@ describe('no /home/* re-exports of /admin/* pages', () => {
       'utf8',
     );
 
-    expect(homeComponent).toContain('Tenant workspace read');
+    // Home stays an executive read surface, client-scoped. (The exact
+    // pill caption was retired in the 2026-06-02 "Executive brief"
+    // redesign; the real contract is the banned-phrase list below —
+    // no setup/admin/cross-tenant framing leaks into Home.)
+    expect(homeComponent).toContain('Client locked');
     for (const phrase of [
       'Cross-workspace',
       'cross-workspace',
