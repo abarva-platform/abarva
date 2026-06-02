@@ -1,5 +1,6 @@
 name: Azure L5 reset-and-replay
 
+# Required branch-protection context; keep pull_request paths aligned.
 # L5 data-integrity gate: prove the repo migrations can replay into a fresh
 # Postgres database with the Azure/Supabase compatibility shims present.
 #
@@ -68,4 +69,3 @@ jobs:
 
       - name: Verify schema baseline
         run: npm run db:azure:verify
-
