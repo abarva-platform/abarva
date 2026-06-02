@@ -111,6 +111,55 @@ describe('source access policy', () => {
     expect(policy.canViewFinancialData).toBe(false);
   });
 
+  // Security regression guard (SEC-P1-* fix on canonical-admin shortcut at
+  // source-access-policy.ts:209–227). Before the fix, a canonical admin (e.g.
+  // cdio@meridian-health) acting against a *different* active tenant
+  // (`apexretail`) was granted unlimited `client_admin` scope, leaking
+  // cross-tenant Source events. After the fix the canonical-admin shortcut
+  // only fires when the inferred home tenant matches `activeClientKey`;
+  // otherwise the caller falls through to ordinary membership/participant
+  // scoping (no membership row → no_source_access → denied).
+  it('refuses canonical admin cross-tenant access (meridian admin reaching apexretail event)', async () => {
+    setupRows({}); // no membership, no participants in apexretail
+    const { loadUserSourceAccessPolicy, canReadSourceEvent } = await import(
+      '../source-access-policy'
+    );
+    const meridianTenancy = {
+      clientId: 'client-apex',
+      userId: 'clerk:user_meridian_admin',
+      role: 'client_viewer',
+      email: 'cdio@meridian-health.example.com',
+    };
+
+    const policy = await loadUserSourceAccessPolicy(meridianTenancy, {
+      activeClientKey: 'apexretail',
+    });
+
+    expect(policy.accessLevel).toBe('no_source_access');
+    expect(policy.sourceEventIdsAllowed).toEqual([]);
+    await expect(
+      canReadSourceEvent(meridianTenancy, 'apexretail', 'apex-event-1'),
+    ).resolves.toBe(false);
+  });
+
+  it('still grants canonical admin full source access on their inferred home client', async () => {
+    setupRows({});
+    const { canReadSourceEvent } = await import('../source-access-policy');
+    const canonicalAdminTenancy = {
+      clientId: 'client-apex',
+      userId: 'clerk:user_apex_admin',
+      role: 'client_admin',
+      email: 'cio@apex-retail.example.com',
+    };
+
+    // inferClientKeyFromEmail('cio@apex-retail.example.com') === 'apexretail',
+    // so the canonical-admin shortcut fires and any event id under that
+    // active client is readable (`sourceEventIdsAllowed === null`).
+    await expect(
+      canReadSourceEvent(canonicalAdminTenancy, 'apexretail', 'apex-event-1'),
+    ).resolves.toBe(true);
+  });
+
   it('restricts source members to assigned source event ids', async () => {
     setupRows({
       person_client_memberships: { access_level: 'source_member', financial_visibility: false },

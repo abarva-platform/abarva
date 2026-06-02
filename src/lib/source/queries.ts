@@ -407,6 +407,10 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
       ) {
         return null;
       }
+      // defense-in-depth: access policy MUST scope this, but we re-verify here so a future policy bug doesn't leak data
+      if (persistedEvent.client_key !== activeClient.key) {
+        return null;
+      }
       return sourceEventRowToDetail(persistedEvent, activeClient.name);
     }
   } else {
@@ -417,6 +421,10 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     if (fallbackClient) {
       const persistedEvent = await getPersistedSourceEventRow(eventId, fallbackClient.key);
       if (persistedEvent) {
+        // defense-in-depth: access policy MUST scope this, but we re-verify here so a future policy bug doesn't leak data
+        if (persistedEvent.client_key !== fallbackClient.key) {
+          return null;
+        }
         return sourceEventRowToDetail(persistedEvent, fallbackClient.name);
       }
     }

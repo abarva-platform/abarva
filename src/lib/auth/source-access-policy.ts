@@ -2,6 +2,7 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
 
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
+import { inferClientKeyFromEmail } from '@/lib/client-config';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export type SourceAccessLevel =
@@ -206,20 +207,24 @@ export async function loadUserSourceAccessPolicy(
   opts: { activeClientKey: string; sourceEventId?: string | null },
 ): Promise<UserSourceAccessPolicy> {
   if (!isUuidLike(ctx.userId) && isCanonicalClientAdminEmail(ctx.email)) {
-    return buildPolicy({
-      ctx,
-      activeClientKey: opts.activeClientKey,
-      accessLevel: 'client_admin',
-      sourceEventIdsAllowed: null,
-      canViewFinancialData: false,
-      canAdminUsers: true,
-      canCreateSourceEvents: true,
-      canApproveSourceStages: true,
-      canApproveAward: true,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-      canPublishSourcingArtifacts: true,
-    });
+    // Security boundary: canonical admin gets unlimited source-event scope ONLY when acting as their inferred home client; otherwise fall through to regular membership/participant scoping so they cannot read another tenant's events.
+    const inferredAdminClientKey = inferClientKeyFromEmail(ctx.email);
+    if (inferredAdminClientKey && opts.activeClientKey === inferredAdminClientKey) {
+      return buildPolicy({
+        ctx,
+        activeClientKey: opts.activeClientKey,
+        accessLevel: 'client_admin',
+        sourceEventIdsAllowed: null,
+        canViewFinancialData: false,
+        canAdminUsers: true,
+        canCreateSourceEvents: true,
+        canApproveSourceStages: true,
+        canApproveAward: true,
+        canUploadSourceArtifacts: true,
+        canGenerateSourcingArtifacts: true,
+        canPublishSourcingArtifacts: true,
+      });
+    }
   }
 
   const membership = await loadClientMembership(ctx);
