@@ -120,7 +120,7 @@ export function IntelligenceEmptyState({
           New-tenant onboarding runbook
         </a>
         <a
-          href="/setup"
+          href="/admin/setup"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -138,7 +138,7 @@ export function IntelligenceEmptyState({
             border: `1px solid ${SHELL.INK}`,
           }}
         >
-          Open Setup
+          Open Admin Setup
         </a>
       </div>
     </div>
