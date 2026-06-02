@@ -43,9 +43,9 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     ],
   },
   {
-    group: 'Setup',
+    group: 'Admin Guide',
     items: [
-      { slug: 'setup', label: 'Setup & connectors' },
+      { slug: 'admin', label: 'Admin workspace & connectors' },
     ],
   },
   {
@@ -77,7 +77,7 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     //
     // Slug convention: nested under `source/` so the `[section]/[slug]`
     // route can dispatch on a stable prefix without colliding with the
-    // top-level guide section slugs (welcome, setup, intelligence …).
+    // top-level guide section slugs (welcome, admin, intelligence ...).
     group: 'Source',
     items: [
       { slug: 'source/welcome', label: 'Welcome & overview' },

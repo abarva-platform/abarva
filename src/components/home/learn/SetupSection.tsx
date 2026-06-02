@@ -8,8 +8,8 @@ export function SetupSection() {
   return (
     <>
       <HeroBand color="slate">
-        <Eyebrow light>Setup · Apex Retail</Eyebrow>
-        <SectionTitle light size="xl">Preloaded substrate. Current-state answers. No setup theatre.</SectionTitle>
+        <Eyebrow light>Admin workspace · Apex Retail</Eyebrow>
+        <SectionTitle light size="xl">Preloaded substrate. Current-state answers. No configuration theatre.</SectionTitle>
         <Lead light>
           For the CXO review, Apex Retail is already loaded. The point is not to watch connectors get configured; it is to prove <InlineAbarvaLogo light /> can reason from a believable enterprise baseline before it recommends an AI bet.
         </Lead>
@@ -20,7 +20,7 @@ export function SetupSection() {
         <Eyebrow>Case study · Apex Retail</Eyebrow>
         <SectionTitle>What the Apex substrate already knows</SectionTitle>
         <Lead>
-          Treat Setup as the evidence room behind the demo. Apex has enterprise profile, org structure, IT landscape, IT financials, KPI history, vendor contracts, sourcing artifacts, decision traces, evidence, telemetry, graph relationships, and AI transformation records loaded before the reviewer arrives.
+          Treat Admin as the evidence room behind the demo. Apex has enterprise profile, org structure, IT landscape, IT financials, KPI history, vendor contracts, sourcing artifacts, decision traces, evidence, telemetry, graph relationships, and AI transformation records loaded before the reviewer arrives.
         </Lead>
 
         <div style={{ margin: '24px 0' }}>
@@ -154,13 +154,13 @@ export function SetupSection() {
         </div>
 
         <Callout kind="success" icon="✓" label="Demo-ready baseline">
-          The CXO reviewer does not need to set anything up. Setup should communicate what is loaded, what is stubbed or pending, and why the current-state substrate is strong enough to support a real product-and-technology conversation.
+          The CXO reviewer does not need to configure anything. Admin should communicate what is loaded, what is stubbed or pending, and why the current-state substrate is strong enough to support a real product-and-technology conversation.
         </Callout>
       </Section>
 
       {/* Tenant profile */}
       <Section>
-        <Eyebrow>Setup · Tenant Profile</Eyebrow>
+        <Eyebrow>Admin workspace · Tenant Profile</Eyebrow>
         <SectionTitle>Apex Retail&rsquo;s tenant profile</SectionTitle>
         <Lead>
           The tenant profile is the context layer that makes signals specific to your company. Without it, Intelligence produces generic industry patterns — with it, Sentinel can say &ldquo;Marcus Chen, COO, owns the markdown calendar that&rsquo;s driving the promo miss rate.&rdquo;
@@ -368,10 +368,10 @@ export function SetupSection() {
         </div>
       </Section>
 
-      {/* How to do your setup */}
+      {/* How to prepare your admin workspace */}
       <Section>
-        <Eyebrow>Your Setup</Eyebrow>
-        <SectionTitle>How setup should feel for a real customer</SectionTitle>
+        <Eyebrow>Your Admin Workspace</Eyebrow>
+        <SectionTitle>How admin readiness should feel for a real customer</SectionTitle>
         <Lead>
           The demo starts from a loaded composite tenant. In a real implementation, Steward should be explicit about what is connected, what is document-loaded, what is inferred, and what is not ready yet. That honesty is part of the product.
         </Lead>
@@ -394,8 +394,8 @@ export function SetupSection() {
 
       {/* Key terms */}
       <Section>
-        <Eyebrow>Setup · Key Terms</Eyebrow>
-        <SectionTitle>Key terms in Setup</SectionTitle>
+        <Eyebrow>Admin workspace · Key Terms</Eyebrow>
+        <SectionTitle>Key terms in Admin</SectionTitle>
         <TermGrid>
           <Term name="Connector">
             An integration between <InlineAbarvaLogo /> and an external data system. Connectors strengthen freshness, but they are not the only evidence path. <em>Verified documents, extracts, and persisted tenant records can also ground Intelligence and Moves.</em>
@@ -404,7 +404,7 @@ export function SetupSection() {
             The combined data layer that agents query. It includes tenant records, documents, embeddings, graph relationships, program state, sourcing artifacts, and connector data where available. <em>Think of it as the shared evidence base, not a generic memory.</em>
           </Term>
           <Term name="Steward">
-            The Setup agent. Guides connector configuration, runs data quality checks, and declares substrate readiness. <em>Steward is the only agent that can flag &ldquo;foundation not ready&rdquo; — a hard blocker on Move P3 sourcing quality.</em>
+            The Admin agent. Guides connector configuration, runs data quality checks, and declares substrate readiness. <em>Steward is the only agent that can flag &ldquo;foundation not ready&rdquo; — a hard blocker on Move P3 sourcing quality.</em>
           </Term>
           <Term name="Tenant profile">
             Your organization&rsquo;s context layer: executive roster, strategic priorities, business units. <em>Low-effort, high-leverage — takes 30 minutes and makes every Nexus document more specific.</em>
@@ -413,7 +413,7 @@ export function SetupSection() {
             An assessment of how complete and current your substrate is for a given initiative. <em>Low readiness = thin P3 design documents and weak P4 financial models. Steward surfaces readiness gaps at origination.</em>
           </Term>
           <Term name="Data quality flag">
-            A Steward alert that a connector is returning sparse, stale, or malformed data. <em>Flags appear in Setup before they affect signal quality — better to catch here than in Intelligence.</em>
+            A Steward alert that a connector is returning sparse, stale, or malformed data. <em>Flags appear in Admin before they affect signal quality — better to catch here than in Intelligence.</em>
           </Term>
         </TermGrid>
       </Section>
