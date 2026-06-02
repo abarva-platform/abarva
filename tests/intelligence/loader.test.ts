@@ -6,10 +6,35 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(186);
+    expect(corpus.patterns).toHaveLength(330);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
+  });
+
+  it('loads Source pricing, BAFO, and retail overlay pilot patterns', () => {
+    expect(corpus.patternsById.get('PAT-SRC-PNG-001')).toMatchObject({
+      slug: 'ams-transition-cost-burial',
+      category: 'pricing_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-007')?.industryVariants?.[0]).toMatchObject({
+      industry: 'retail_cpg',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-009')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Price for term',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-PNG-011')?.standardClauses?.[0]).toMatchObject({
+      clauseArea: 'Benchmarking and exit',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-003')).toMatchObject({
+      slug: 'transition-holdback-and-warranty',
+      category: 'contract_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-008')?.standardClauses?.[0]).toMatchObject({
+      clauseArea: 'Benchmarking',
+    });
   });
 
   it('indexes every loaded entity by id', () => {
