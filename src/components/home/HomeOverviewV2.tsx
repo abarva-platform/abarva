@@ -4,7 +4,7 @@
 //   02 Steward orientation (loaded vs missing + next-load)
 //   03 Action queue
 //   04 Recent activity
-//   05 Home action surfaces
+//   05 Admin action surfaces
 //
 // Type triad: Fraunces (display) · Inter (body) · JetBrains Mono
 // (eyebrows / labels). Loaded via next/font in src/app/layout.tsx
@@ -819,8 +819,13 @@ export function HomeOverviewV2({
           </>
         )}
 
-        {/* Section 05 — Home action surfaces */}
-        <Section eyebrowNum="05" eyebrowLabel="WHERE TO GO" title="Home action surfaces" lead="Insight, decision, and action paths for the active client.">
+        {/* Section 05 — Admin action surfaces */}
+        <Section
+          eyebrowNum="05"
+          eyebrowLabel="WHERE TO GO"
+          title="Admin action surfaces"
+          lead="Setup, access, readiness, and audit controls for the active client."
+        >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
           </div>

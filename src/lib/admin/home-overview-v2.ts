@@ -1,7 +1,7 @@
-// View-builder for the v2 Setup/Home overview · adds the two
+// View-builder for the v2 Admin overview · adds the two
 // sections the wireframe introduces beyond the existing
 // `composeOverviewBlocks` output: Readiness across modules
-// (Section 01) and Setup panels (Section 05).
+// (Section 01) and Admin action surfaces (Section 05).
 //
 // Section 02 (Steward orientation), 03 (Action queue), and 04
 // (Recent activity) reuse OverviewBlocks unchanged.
@@ -185,13 +185,12 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
     { num: '01', name: 'Data Trust',           status: sparseOrPartial > 5 ? 'attn' : 'ready',                                 desc: 'Substrate inventory, segment health, provenance of every record.',   foot: `${segments.length} segments · ${totalRecords.toLocaleString()} records`, href: '/admin/data-trust' },
     // PRE-W4-PR-5 fix #2 (persona report §9 fix #2 + audit verdict
     // §5.5): panel #02 ("AI Initiatives") used to link at
-    // /home/ai-initiatives which now hard-redirects to /home —
-    // ejecting the tenant admin from /admin every time they clicked
-    // the card. The Intelligence wave will redesign the initiatives
-    // surface; until then the panel is retired entirely. The two
-    // following panels keep their original numbers (03 Connectors,
-    // 04 Users & Access) so deep links and the design vocabulary
-    // ("Setup panel 03 Connectors") remain stable.
+    // /home/ai-initiatives, which moved out of the Admin setup
+    // overview. The Intelligence wave owns that Home insight surface;
+    // this Admin overview keeps only setup, access, readiness, and
+    // audit actions. The two following panels keep their original
+    // numbers (03 Connectors, 04 Users & Access) so historical deep
+    // links and design vocabulary remain stable.
     {
       num: '03',
       name: 'Connectors',
