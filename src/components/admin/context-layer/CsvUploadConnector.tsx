@@ -3,6 +3,7 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 
 import { NORTHSTAR_CONTEXT_TEMPLATES } from '@/lib/context-ingestion/template-registry';
+import { buildTemplateSchemaPreflight } from '@/lib/context-ingestion/schema-preflight';
 
 type UploadResult = {
   ok: boolean;
@@ -75,6 +76,11 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
     () => NORTHSTAR_CONTEXT_TEMPLATES.find((item) => item.id === templateId) ?? NORTHSTAR_CONTEXT_TEMPLATES[0],
     [templateId],
   );
+  const schemaPreflight = useMemo(
+    () => headers.length > 0 ? buildTemplateSchemaPreflight({ templateId, headers }) : null,
+    [headers, templateId],
+  );
+  const requiredFieldsBlocked = (schemaPreflight?.missingRequiredFields.length ?? 0) > 0;
 
   async function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
@@ -117,6 +123,14 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
     if (titleColumn) formData.set('titleColumn', titleColumn);
     formData.set('textColumns', JSON.stringify(selectedTextColumns));
     formData.set('fieldMappings', JSON.stringify({}));
+    if (schemaPreflight) {
+      formData.set('schemaPreflight', JSON.stringify({
+        templateId,
+        clarificationRequired: schemaPreflight.clarificationRequired,
+        missingRequiredFields: schemaPreflight.missingRequiredFields,
+        unknownColumns: schemaPreflight.unknownColumns,
+      }));
+    }
 
     try {
       const response = await fetch('/api/admin/context-layer/csv-upload', {
@@ -199,13 +213,43 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
           </fieldset>
         )}
 
+        {schemaPreflight && (
+          <section aria-label="Template schema preflight" style={{ border: '1px solid #e3decf', borderRadius: 6, padding: 12, background: schemaPreflight.clarificationRequired ? '#FFF9EC' : '#F4F8F1', display: 'grid', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <strong>{schemaPreflight.clarificationRequired ? 'Schema clarification required' : 'Template fit confirmed'}</strong>
+              <span style={{ color: '#6b665c' }}>
+                {schemaPreflight.mappedRequiredFields.length}/{template.requiredFields.length} required fields mapped
+              </span>
+            </div>
+            {schemaPreflight.missingRequiredFields.length > 0 && (
+              <div>
+                <span style={{ fontWeight: 700 }}>Missing required fields: </span>
+                <span>{schemaPreflight.missingRequiredFields.join(', ')}</span>
+              </div>
+            )}
+            {schemaPreflight.unknownColumns.length > 0 && (
+              <div>
+                <span style={{ fontWeight: 700 }}>Columns needing context: </span>
+                <span>{schemaPreflight.unknownColumns.join(', ')}</span>
+              </div>
+            )}
+            {schemaPreflight.clarificationRequests.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: 18, color: '#514c43' }}>
+                {schemaPreflight.clarificationRequests.slice(0, 4).map((request) => (
+                  <li key={`${request.action}:${request.field}`}>{request.message}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
         <div>
           <button
             type="submit"
-            disabled={!file || pending}
-            style={{ border: '1px solid #171717', borderRadius: 6, padding: '10px 14px', background: pending ? '#d8d2c4' : '#171717', color: pending ? '#514c43' : '#fff', fontFamily: 'DM Sans, sans-serif', cursor: !file || pending ? 'not-allowed' : 'pointer' }}
+            disabled={!file || pending || requiredFieldsBlocked}
+            style={{ border: '1px solid #171717', borderRadius: 6, padding: '10px 14px', background: pending || requiredFieldsBlocked ? '#d8d2c4' : '#171717', color: pending || requiredFieldsBlocked ? '#514c43' : '#fff', fontFamily: 'DM Sans, sans-serif', cursor: !file || pending || requiredFieldsBlocked ? 'not-allowed' : 'pointer' }}
           >
-            {pending ? 'Loading CSV...' : 'Load CSV'}
+            {pending ? 'Loading CSV...' : requiredFieldsBlocked ? 'Resolve required fields' : 'Load CSV'}
           </button>
         </div>
       </form>
