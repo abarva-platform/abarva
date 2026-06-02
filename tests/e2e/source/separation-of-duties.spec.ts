@@ -244,7 +244,7 @@ test.describe('Source · Separation of duties · pilot vs production', () => {
   // ──────────────────────────────────────────────────────────────────────
   // 4. Production mode · same-person self-approval MUST be rejected
   // ──────────────────────────────────────────────────────────────────────
-  test('production mode · GATE_APPROVAL_STRICT_MODE rejects same-person self-approval', async () => {
+  test('production mode · GATE_APPROVAL_STRICT_MODE rejects same-person self-approval', async ({ page }) => {
     // This test is meaningful only when the strict-mode flag is ON. Per
     // user-memory · project_gate_approval_model.md, production must
     // reject same-person approval with a 403 and a strict-mode reason.

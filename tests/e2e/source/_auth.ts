@@ -319,6 +319,7 @@ export async function signInAs(
   const storagePath = sourcePersonaStorageState(key);
 
   if (persona.gapNote) {
+    // eslint-disable-next-line no-console
     console.warn(`[source/_auth] Persona '${key}' has a documented gap: ${persona.gapNote}`);
   }
 
