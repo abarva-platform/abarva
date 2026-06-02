@@ -1,3 +1,4 @@
+import { SOURCING_BAFO_CONTRACT_PATTERNS } from "../intelligence/seed-patterns-sourcing-bafo-contracts";
 import { SOURCING_PRICING_GAMING_PATTERNS } from "../intelligence/seed-patterns-sourcing-pricing-gaming";
 import { SOURCE_GOLDEN_EVENT_IDS } from "./constants";
 import type { SourcePatternSectionContext } from "./agent-context";
@@ -58,9 +59,12 @@ function addCorpusTrap(
 }
 
 export function getSourceCorpusUpliftPatterns() {
-  return SOURCING_PRICING_GAMING_PATTERNS.filter((pattern) =>
-    (SOURCE1_PATTERN_IDS as readonly string[]).includes(pattern.id),
-  );
+  return [
+    ...SOURCING_PRICING_GAMING_PATTERNS.filter((pattern) =>
+      (SOURCE1_PATTERN_IDS as readonly string[]).includes(pattern.id),
+    ),
+    ...SOURCING_BAFO_CONTRACT_PATTERNS,
+  ];
 }
 
 export function getSourceCorpusUpliftPatternSections(
@@ -107,6 +111,22 @@ export function getSourceCorpusUpliftPatternSections(
       kind: "artifactRules",
       summary:
         "Require benchmark rights, market-adjustment remedy, exit-assistance rates, tooling handback, and knowledge artifact transfer before treating savings as durable.",
+      confidence: "high",
+    },
+    {
+      id: "PAT-SRC-BAFO-003",
+      title: "Transition holdback and warranty",
+      kind: "artifactRules",
+      summary:
+        "Transition-heavy AMS BAFOs should tie fee release to knowledge transfer, service readiness, cutover, and stabilization criteria.",
+      confidence: "high",
+    },
+    {
+      id: "PAT-SRC-BAFO-008",
+      title: "Benchmark remedy, not just benchmark right",
+      kind: "artifactRules",
+      summary:
+        "Benchmark clauses need a market-adjustment remedy, reopener, or termination right; a study without remedy is not leverage.",
       confidence: "high",
     },
   ];
@@ -221,6 +241,10 @@ export function getSourceCorpusBafoAsks(
     "Submit Q4 retail peak support pricing for POS, OMS, WMS, eCommerce, BOPIS, returns, code-freeze support, and emergency-change coverage.",
     "Convert automation savings into dated milestones, ticket-deflection baselines, commercial holdback, and failure remedies.",
     "Add annual benchmark rights, market-adjustment remedy, exit-assistance rate card, tooling handback, and knowledge-artifact transfer.",
+    "Add transition holdback and stabilization warranty language tied to knowledge transfer, cutover, service readiness, and early-life SLA performance.",
+    "Quantify any payment-term concession as a named discount or waived fee, with acceptance milestones and refund rights if stabilization fails.",
+    "Add SLA credit step-ups for repeat misses, peak-window incidents, and critical-system failures rather than a flat credit table.",
+    "Disclose subcontractors, delivery locations, data access, and buyer approval rights for material offshore or subcontractor changes.",
   ]);
 
   if (input.vendor?.pricingTemplateStatus !== "complete") {
@@ -259,5 +283,10 @@ export function getSourceCorpusAssumptionLocks(
     "Retail Q4 peak, code-freeze, and store-hour support assumptions are locked before BAFO comparison.",
     "Run-rate savings remain provisional until transition-inclusive TCO and excluded-scope pricing are visible.",
     "Benchmarking, exit assistance, tooling handback, and knowledge-transfer rights are value-protection gates.",
+    "Transition holdback, stabilization warranty, SLA credit step-ups, and payment-term trades are locked before final award recommendation.",
   ];
+}
+
+export function getSourceBafoContractUpliftPatterns() {
+  return SOURCING_BAFO_CONTRACT_PATTERNS;
 }

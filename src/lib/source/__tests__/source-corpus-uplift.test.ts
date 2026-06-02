@@ -136,6 +136,15 @@ describe("Source sourcing corpus uplift pilot", () => {
     ).toMatchObject({
       clauseArea: "Benchmarking and exit",
     });
+    expect(corpus.patternsById.get("PAT-SRC-BAFO-003")).toMatchObject({
+      title: "Transition Holdback and Warranty",
+      category: "contract_intelligence",
+    });
+    expect(
+      corpus.patternsById.get("PAT-SRC-BAFO-008")?.standardClauses?.[0],
+    ).toMatchObject({
+      clauseArea: "Benchmarking",
+    });
   });
 
   it("injects Apex AMS relevant pattern sections without applying them to unrelated events", () => {
@@ -152,6 +161,8 @@ describe("Source sourcing corpus uplift pilot", () => {
         "PAT-SRC-PNG-007",
         "PAT-SRC-PNG-009",
         "PAT-SRC-PNG-011",
+        "PAT-SRC-BAFO-003",
+        "PAT-SRC-BAFO-008",
       ]),
     );
     expect(apexSections.map((section) => section.summary).join(" ")).toMatch(
@@ -218,7 +229,14 @@ describe("Source sourcing corpus uplift pilot", () => {
     expect(askText).toMatch(/Q4 retail peak support/i);
     expect(askText).toMatch(/automation savings/i);
     expect(askText).toMatch(/annual benchmark rights/i);
+    expect(askText).toMatch(/transition holdback/i);
+    expect(askText).toMatch(/payment-term concession/i);
+    expect(askText).toMatch(/SLA credit step-ups/i);
+    expect(askText).toMatch(/subcontractors, delivery locations/i);
     expect(assumptionText).toMatch(/Retail Q4 peak/i);
     expect(assumptionText).toMatch(/Run-rate savings remain provisional/i);
+    expect(assumptionText).toMatch(
+      /Transition holdback, stabilization warranty/i,
+    );
   });
 });

@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(318);
+    expect(corpus.patterns).toHaveLength(330);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -26,6 +26,14 @@ describe('intelligence corpus loader', () => {
     });
     expect(corpus.patternsById.get('PAT-SRC-PNG-011')?.standardClauses?.[0]).toMatchObject({
       clauseArea: 'Benchmarking and exit',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-003')).toMatchObject({
+      slug: 'transition-holdback-and-warranty',
+      category: 'contract_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BAFO-008')?.standardClauses?.[0]).toMatchObject({
+      clauseArea: 'Benchmarking',
     });
   });
 

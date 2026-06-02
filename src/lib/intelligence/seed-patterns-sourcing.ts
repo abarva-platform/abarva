@@ -1,4 +1,5 @@
 import type { PatternSeed } from "./seed-types";
+import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
 import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
 import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from "./seed-patterns-sourcing-contracts-commercial";
@@ -1123,6 +1124,7 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 ## Contract terms to negotiate hard
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
+  ...SOURCING_BAFO_CONTRACT_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
   ...SOURCING_CONTRACT_PATTERNS,

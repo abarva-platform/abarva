@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a pilot Source knowledge pack for Apex Retail AMS sourcing. The pack gives Source concrete sourcing expertise around pricing normalization, vendor gaming, BAFO negotiation levers, contract value-protection clauses, and retail IT operating constraints. It is designed to make Apex AMS pricing and BAFO guidance more specific without inventing savings or treating pattern guidance as client evidence.
+This release adds a 24-pattern pilot Source knowledge pack for Apex Retail AMS sourcing. The pack gives Source concrete sourcing expertise around pricing normalization, vendor gaming, BAFO negotiation levers, contract value-protection clauses, and retail IT operating constraints. It is designed to make Apex AMS pricing and BAFO guidance more specific without inventing savings or treating pattern guidance as client evidence.
 
 ## Layer Impact
 
@@ -29,6 +29,7 @@ This release adds a pilot Source knowledge pack for Apex Retail AMS sourcing. Th
 ## Changes Included
 
 - Added `src/lib/intelligence/seed-patterns-sourcing-pricing-gaming.ts` with 12 Source-1/Retail-1 pilot patterns.
+- Added `src/lib/intelligence/seed-patterns-sourcing-bafo-contracts.ts` with 12 Source-2 BAFO/contract-lever pilot patterns.
 - Added `src/lib/source/source-corpus-uplift.ts` to adapt the pilot corpus into Source pattern sections, pricing traps, BAFO asks, and assumption locks.
 - Updated `src/lib/intelligence/seed-patterns-sourcing.ts` to include the new pilot pack in the loaded corpus.
 - Updated `src/lib/source/mock-seed.ts` so Apex AMS receives relevant pattern sections.
