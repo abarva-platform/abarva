@@ -57,6 +57,46 @@ describe('A2b · consumeOneMessage', () => {
     expect(calls.audit).toBe(1);
   });
 
+  it('passes accepted files to the pilot ledger writer in audit-only mode', async () => {
+    const ledgerPlans: unknown[] = [];
+    const { ctx } = makeCtx({
+      writePilotLedger: jest.fn(async (plan) => {
+        ledgerPlans.push(plan);
+      }) as unknown as ConsumeContext['writePilotLedger'],
+    });
+    const outcome = await consumeOneMessage(
+      {
+        ...validMessage,
+        metadata: {
+          sourceSystem: 'Workday',
+          templateVersion: '2026.06',
+          mappingProfileKey: 'default',
+          mappingProfileVersion: '1',
+        },
+      },
+      ctx,
+    );
+
+    expect(outcome.status).toBe('accepted');
+    expect(ledgerPlans).toHaveLength(1);
+    expect(ledgerPlans[0]).toMatchObject({
+      mode: 'audit_only',
+      tenantKey: 'apexretail',
+      uploadRun: {
+        status: 'awaiting_approval',
+        sourceSystem: 'Workday',
+        segmentKey: 'kpi_dictionary',
+        auditRowId: 'audit-1',
+      },
+      fileManifest: {
+        tenantKey: 'apexretail',
+        blobPath: 'kpi/2026-Q2/kpi-snapshot.csv',
+        protectionDecision: 'allow',
+      },
+      commitBlocked: true,
+    });
+  });
+
   it('rejects (no audit row) when the schema is wrong', async () => {
     const { ctx, calls } = makeCtx();
     const outcome = await consumeOneMessage(
@@ -100,6 +140,54 @@ describe('A2b · consumeOneMessage', () => {
     );
     expect(outcome.status).toBe('quarantined');
     expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
+  it('passes quarantined files to the pilot ledger writer with reason codes', async () => {
+    const ledgerPlans: unknown[] = [];
+    const { ctx } = makeCtx({
+      download: jest.fn(async () => {
+        const bytes = new TextEncoder().encode('SSN: 123-45-6789');
+        return { bytes, filename: 'leak.txt' };
+      }) as unknown as ConsumeContext['download'],
+      writePilotLedger: jest.fn(async (plan) => {
+        ledgerPlans.push(plan);
+      }) as unknown as ConsumeContext['writePilotLedger'],
+    });
+
+    const outcome = await consumeOneMessage(
+      { ...validMessage, declaredClassification: 'regulated_phi_pii_suspected' },
+      ctx,
+    );
+
+    expect(outcome.status).toBe('quarantined');
+    expect(ledgerPlans).toHaveLength(1);
+    expect(ledgerPlans[0]).toMatchObject({
+      mode: 'audit_only',
+      uploadRun: { status: 'quarantined' },
+      fileManifest: { protectionDecision: 'quarantine' },
+      quarantineCase: {
+        tenantKey: 'apexretail',
+        segmentKey: 'kpi_dictionary',
+        auditRowId: 'audit-1',
+        status: 'open',
+      },
+    });
+  });
+
+  it('returns transient_failure if the pilot ledger writer fails', async () => {
+    const { ctx, calls } = makeCtx({
+      writePilotLedger: jest.fn(async () => {
+        throw new Error('ledger unavailable');
+      }) as unknown as ConsumeContext['writePilotLedger'],
+    });
+
+    const outcome = await consumeOneMessage(validMessage, ctx);
+
+    expect(outcome).toMatchObject({
+      status: 'transient_failure',
+      reason: 'pilot_ledger_write_failed:ledger unavailable',
+    });
     expect(calls.audit).toBe(1);
   });
 

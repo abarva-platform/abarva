@@ -27,6 +27,10 @@ import {
   type UploadProtectionResult,
 } from '@/lib/security/sensitive-upload-guard';
 import {
+  buildPilotIngestionAuditOnlyWritePlan,
+  type PilotIngestionAuditOnlyWritePlan,
+} from '@/lib/admin/pilot-ingestion-ledger';
+import {
   parseIngestionMessage,
   type AzureLandingZoneMessage,
   type IngestionOutcome,
@@ -52,6 +56,8 @@ export type AuditWriter = (args: {
   protectionResult?: UploadProtectionResult;
 }) => Promise<string>; // returns the audit-row id
 
+export type PilotLedgerWriter = (plan: PilotIngestionAuditOnlyWritePlan) => Promise<void>;
+
 /**
  * Optional downstream-pipeline hook. After the guard passes, the
  * caller decides what to do with the bytes — write to the broker
@@ -68,6 +74,54 @@ export interface ConsumeContext {
   readonly download: BlobDownloader;
   readonly writeAudit: AuditWriter;
   readonly runPipeline: IngestionPipeline;
+  readonly writePilotLedger?: PilotLedgerWriter;
+}
+
+function metadataString(
+  metadata: AzureLandingZoneMessage['metadata'] | undefined,
+  key: string,
+): string | undefined {
+  const value = metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+async function writePilotLedgerOrTransient(args: {
+  ctx: ConsumeContext;
+  message: AzureLandingZoneMessage;
+  outcome: Extract<IngestionOutcome, { status: 'accepted' | 'quarantined' }>;
+  protectionResult: UploadProtectionResult;
+}): Promise<IngestionOutcome | null> {
+  if (!args.ctx.writePilotLedger) return null;
+
+  try {
+    await args.ctx.writePilotLedger(
+      buildPilotIngestionAuditOnlyWritePlan({
+        tenantKey: args.message.tenantClientKey,
+        segmentKey: args.message.segmentKey,
+        storage: args.message.storage,
+        producedAt: args.message.producedAt,
+        sourceSystem: metadataString(args.message.metadata, 'sourceSystem'),
+        templateVersion: metadataString(args.message.metadata, 'templateVersion'),
+        mappingProfileKey: metadataString(args.message.metadata, 'mappingProfileKey'),
+        mappingProfileVersion: metadataString(args.message.metadata, 'mappingProfileVersion'),
+        auditRowId: args.outcome.auditRowId,
+        outcome:
+          args.outcome.status === 'accepted'
+            ? { status: 'accepted', chunksWritten: args.outcome.chunksWritten }
+            : { status: 'quarantined', reasonCodes: args.outcome.reasonCodes },
+        protectionDecision: args.protectionResult.decision,
+      }),
+    );
+    return null;
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'pilot_ledger_write_failed';
+    return {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: `pilot_ledger_write_failed:${reason}`,
+      durationMs: args.outcome.durationMs,
+    };
+  }
 }
 
 /**
@@ -147,7 +201,13 @@ export async function consumeOneMessage(
       outcome,
       protectionResult: protection,
     });
-    return { ...outcome, auditRowId };
+    const outcomeWithAudit = { ...outcome, auditRowId };
+    return (await writePilotLedgerOrTransient({
+      ctx,
+      message: msg,
+      outcome: outcomeWithAudit,
+      protectionResult: protection,
+    })) ?? outcomeWithAudit;
   }
 
   // ── 4. Run the downstream pipeline ───────────────────────────────
@@ -182,5 +242,11 @@ export async function consumeOneMessage(
     outcome,
     protectionResult: protection,
   });
-  return { ...outcome, auditRowId };
+  const outcomeWithAudit = { ...outcome, auditRowId };
+  return (await writePilotLedgerOrTransient({
+    ctx,
+    message: msg,
+    outcome: outcomeWithAudit,
+    protectionResult: protection,
+  })) ?? outcomeWithAudit;
 }
