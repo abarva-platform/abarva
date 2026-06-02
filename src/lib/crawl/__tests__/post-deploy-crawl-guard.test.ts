@@ -80,4 +80,22 @@ describe("post-deploy crawl guard", () => {
       ),
     ).toBe(false);
   });
+
+  it("does not flag release-ledger audit records that describe prior SkyHarbor findings", () => {
+    const findings = comparePage(
+      observation({
+        surfaceId: "admin-releases",
+        path: "/admin/releases",
+        url: "https://app.abarva.ai/admin/releases",
+        visibleText:
+          "SkyHarbor Air release record: guard terms Clinical care ambient AI MH-07 Innovaccer revenue cycle are documented here as audit evidence.",
+      }),
+    );
+
+    expect(
+      findings.some(
+        (finding) => finding.dimension === "tenant-specific-leakage",
+      ),
+    ).toBe(false);
+  });
 });

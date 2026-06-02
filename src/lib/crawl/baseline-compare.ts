@@ -164,18 +164,22 @@ export function comparePage(
     );
   }
 
-  const tenantForbidden = (
-    TENANT_SPECIFIC_FORBIDDEN_REFERENCES[observation.tenantKey] ?? []
-  ).filter((term) =>
-    new RegExp(`\\b${escapeRegex(term)}\\b`, "i").test(observation.visibleText),
-  );
-  if (tenantForbidden.length > 0) {
-    add(
-      "P0",
-      "tenant-specific-leakage",
-      `Forbidden ${observation.expectedTenantName} cross-tenant reference(s) found: ${tenantForbidden.join(", ")}.`,
-      { forbidden: tenantForbidden },
+  if (observation.surfaceId !== "admin-releases") {
+    const tenantForbidden = (
+      TENANT_SPECIFIC_FORBIDDEN_REFERENCES[observation.tenantKey] ?? []
+    ).filter((term) =>
+      new RegExp(`\\b${escapeRegex(term)}\\b`, "i").test(
+        observation.visibleText,
+      ),
     );
+    if (tenantForbidden.length > 0) {
+      add(
+        "P0",
+        "tenant-specific-leakage",
+        `Forbidden ${observation.expectedTenantName} cross-tenant reference(s) found: ${tenantForbidden.join(", ")}.`,
+        { forbidden: tenantForbidden },
+      );
+    }
   }
 
   const generic = GENERIC_TENANT_REFERENCES.filter((term) =>
