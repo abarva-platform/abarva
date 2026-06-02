@@ -62,6 +62,18 @@ describe('proxy public route patterns', () => {
     expect(isAuthRequiredRoute(request)).toBe(false);
   });
 
+  it('keeps Responsible AI pages public at proxy level to avoid Clerk redirects in RSC fetches', () => {
+    for (const path of [
+      '/responsible-ai',
+      '/responsible-ai/acknowledgment',
+      '/responsible-ai/training',
+    ]) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(true);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
   it('exposes the public How it works demo pages without Clerk protection', () => {
     for (const path of [
       '/how-it-works',
