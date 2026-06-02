@@ -54,6 +54,7 @@ untracked documents.
 | Sync AI tool rules | `docs/runbooks/sync-ai-rules.md` | `AGENTS.md`, `scripts/governance/sync-ai-rules.ts` |
 | Scaffold governance artifacts | `docs/runbooks/scaffold-scripts.md` | `scripts/governance/` |
 | Prepare security review material | `docs/security/`, `docs/compliance/` | `docs/architecture/ai/ENTERPRISE-AI-READINESS-ROADMAP.md`, `docs/releases/records/` |
+| Prepare a sales engineering conversation | `docs/gtm/sales-engineering-toolkit/README.md` | `docs/demo/ABARVA_BOARDROOM_DEMO_SCRIPT.md`, `docs/pilot/SECURITY_POSTURE.md`, `docs/gtm/D1-NARRATIVE-AND-VALUE-PROP.md` |
 | Find pilot/customer context | `docs/pilot/`, `docs/enterprise-context/`, `docs/build/` | Current release records and tracker notes |
 
 ## 4. Ownership Rules
