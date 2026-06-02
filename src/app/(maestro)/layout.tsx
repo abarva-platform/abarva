@@ -1,13 +1,25 @@
+import { redirect } from 'next/navigation';
+
 import '@/styles/canon-tokens.css';
 import { AppChrome } from '@/components/chrome/AppChrome';
 import { DrawerProvider } from '@/components/drawer/DrawerProvider';
 import { AttentionProvider } from '@/components/attention/AttentionEvents';
 import { GlobalSearchModalLoader } from '@/components/shell/GlobalSearchModalLoader';
+import {
+  RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
+  getResponsibleAiAcknowledgmentStatusForCurrentRequest,
+} from '@/lib/ai-liability/responsible-ai-acknowledgment';
 // AtlasStateProvider (stub) intentionally removed — each page's AppShell mounts
 // AtlasPageStateProvider with the correct surface + agentName, so the stub outer
 // wrapper was shadowing real API responses with buildAtlasContextualReply.
 
 export default async function MaestroLayout({ children }: { children: React.ReactNode }) {
+  const acknowledgmentStatus =
+    await getResponsibleAiAcknowledgmentStatusForCurrentRequest();
+  if (acknowledgmentStatus.required) {
+    redirect(RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE);
+  }
+
   return (
     <AttentionProvider>
       <DrawerProvider>
