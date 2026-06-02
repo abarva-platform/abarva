@@ -70,7 +70,7 @@ export function canonicalizeSurface(
     case 'intelligence':
       return '/intelligence';
     case 'setup':
-      return '/setup';
+      return '/admin/setup';
     case 'strategic-moves-new':
       return '/strategic-moves/new';
     // Add cases here as detail-level surfaces gain canonical URL forms.

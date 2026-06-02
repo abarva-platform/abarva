@@ -61,9 +61,10 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('production readiness, lab, block, evidence, source, and risk');
   });
 
-  it('applies Steward doctrine on home setup and production-readiness surfaces', () => {
-    expect(routeSource).toContain("surface === '/home/data-trust'");
-    expect(routeSource).toContain("surface === '/home/connectors'");
-    expect(routeSource).toContain("surface === '/home/production-readiness'");
+  it('applies Steward doctrine only on admin setup surfaces', () => {
+    expect(routeSource).toContain("surface.startsWith('/admin')");
+    expect(routeSource).not.toContain("surface === '/home/data-trust'");
+    expect(routeSource).not.toContain("surface === '/home/connectors'");
+    expect(routeSource).not.toContain("surface === '/home/production-readiness'");
   });
 });

@@ -148,7 +148,7 @@ export default async function SsoConfigurationPage() {
                 <strong>Sponsor access to Tower briefs.</strong> Executive sponsors can read scorecards and pressure cards.
               </li>
               <li>
-                <strong>Client-scoped role assignment.</strong> Platform admins can manage role assignments for authorized client workspaces.
+                <strong>Single-client role assignment.</strong> Tenant admins can manage role assignments only inside {tenant.tenantName}.
               </li>
             </ul>
             <p style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: `${COLORS.ink}cc`, margin: 0, lineHeight: 1.6 }}>
