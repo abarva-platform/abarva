@@ -1,7 +1,11 @@
 import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+  RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS,
+  getResponsibleAiAcknowledgmentCycle,
+  getResponsibleAiAcknowledgmentExpiresAt,
   getResponsibleAiAcknowledgmentStatus,
+  isResponsibleAiAcknowledgmentExpired,
   recordResponsibleAiAcknowledgment,
   type ResponsibleAiAcknowledgmentAcceptance,
   type ResponsibleAiAcknowledgmentStore,
@@ -29,6 +33,7 @@ function fakeStore(args: {
         client_id: subject.clientId,
         user_id: subject.userId,
         text_version: RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+        acknowledgment_cycle: 'annual-2026',
         accepted_at: args.acceptedAt,
       };
     },
@@ -58,6 +63,22 @@ describe('responsible AI acknowledgment', () => {
     expect(status.required).toBe(false);
     expect(status.reason).toBe('accepted');
     expect(status.acceptedAt).toBe('2026-06-02T16:00:00.000Z');
+    expect(status.expiresAt).toBe('2027-06-02T16:00:00.000Z');
+    expect(status.reacknowledgmentIntervalDays).toBe(
+      RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS,
+    );
+  });
+
+  it('requires annual re-acknowledgment when the latest accepted row is expired', async () => {
+    const status = await getResponsibleAiAcknowledgmentStatus(
+      subject,
+      fakeStore({ acceptedAt: '2024-01-01T00:00:00.000Z' }),
+    );
+
+    expect(status.required).toBe(true);
+    expect(status.reason).toBe('expired');
+    expect(status.acceptedAt).toBe('2024-01-01T00:00:00.000Z');
+    expect(status.expiresAt).toBe('2024-12-31T00:00:00.000Z');
   });
 
   it('fails closed when the acknowledgment ledger is unavailable', async () => {
@@ -93,5 +114,31 @@ describe('responsible AI acknowledgment', () => {
         source: 'first_login_clickwrap',
       },
     ]);
+  });
+
+  it('uses UTC annual cycle keys for renewal rows', () => {
+    expect(
+      getResponsibleAiAcknowledgmentCycle(new Date('2027-06-02T12:30:00.000Z')),
+    ).toBe('annual-2027');
+  });
+
+  it('calculates acknowledgment expiration at the annual interval', () => {
+    const acceptedAt = '2026-06-02T16:00:00.000Z';
+
+    expect(getResponsibleAiAcknowledgmentExpiresAt(acceptedAt)).toBe(
+      '2027-06-02T16:00:00.000Z',
+    );
+    expect(
+      isResponsibleAiAcknowledgmentExpired(
+        acceptedAt,
+        new Date('2027-06-02T15:59:59.999Z'),
+      ),
+    ).toBe(false);
+    expect(
+      isResponsibleAiAcknowledgmentExpired(
+        acceptedAt,
+        new Date('2027-06-02T16:00:00.000Z'),
+      ),
+    ).toBe(true);
   });
 });

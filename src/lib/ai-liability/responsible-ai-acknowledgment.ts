@@ -10,12 +10,14 @@ import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+  RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS,
 } from './responsible-ai-acknowledgment-copy';
 
 export {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+  RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS,
 };
 
 export interface ResponsibleAiAcknowledgmentSubject {
@@ -30,6 +32,7 @@ export interface ResponsibleAiAcknowledgmentRecord {
   readonly client_id: string;
   readonly user_id: string;
   readonly text_version: string;
+  readonly acknowledgment_cycle: string | null;
   readonly accepted_at: string;
 }
 
@@ -39,9 +42,12 @@ export interface ResponsibleAiAcknowledgmentStatus {
   readonly consentText: string;
   readonly storageAvailable: boolean;
   readonly acceptedAt: string | null;
+  readonly expiresAt: string | null;
+  readonly reacknowledgmentIntervalDays: number;
   readonly reason:
     | 'accepted'
     | 'missing'
+    | 'expired'
     | 'storage_unavailable'
     | 'unauthenticated'
     | 'no_client';
@@ -74,10 +80,14 @@ export function createPostgresResponsibleAiAcknowledgmentStore(args: {
     async getAcceptedRecord(subject) {
       const { data, error } = await getReadClient()
         .from('responsible_ai_acknowledgments')
-        .select('id, client_id, user_id, text_version, accepted_at')
+        .select(
+          'id, client_id, user_id, text_version, acknowledgment_cycle, accepted_at',
+        )
         .eq('client_id', subject.clientId)
         .eq('user_id', subject.userId)
         .eq('text_version', RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION)
+        .order('accepted_at', { ascending: false })
+        .limit(1)
         .maybeSingle<ResponsibleAiAcknowledgmentRecord>();
 
       if (error) {
@@ -97,6 +107,7 @@ export function createPostgresResponsibleAiAcknowledgmentStore(args: {
             user_id: subject.userId,
             user_email: subject.userEmail,
             text_version: RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+            acknowledgment_cycle: getResponsibleAiAcknowledgmentCycle(),
             consent_text: RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT,
             ip_address: acceptance.ipAddress,
             user_agent: acceptance.userAgent,
@@ -106,7 +117,7 @@ export function createPostgresResponsibleAiAcknowledgmentStore(args: {
             },
           },
           {
-            onConflict: 'client_id,user_id,text_version',
+            onConflict: 'client_id,user_id,text_version,acknowledgment_cycle',
             ignoreDuplicates: true,
           },
         );
@@ -122,17 +133,23 @@ export async function getResponsibleAiAcknowledgmentStatus(
   store: ResponsibleAiAcknowledgmentStore = createPostgresResponsibleAiAcknowledgmentStore(),
 ): Promise<ResponsibleAiAcknowledgmentStatus> {
   if (!subject) {
-    return status(false, 'unauthenticated', true, null);
+    return status(false, 'unauthenticated', true, null, null);
   }
 
   try {
     const record = await store.getAcceptedRecord(subject);
     if (record) {
-      return status(false, 'accepted', true, record.accepted_at);
+      const expiresAt = getResponsibleAiAcknowledgmentExpiresAt(
+        record.accepted_at,
+      );
+      if (isResponsibleAiAcknowledgmentExpired(record.accepted_at)) {
+        return status(true, 'expired', true, record.accepted_at, expiresAt);
+      }
+      return status(false, 'accepted', true, record.accepted_at, expiresAt);
     }
-    return status(true, 'missing', true, null);
+    return status(true, 'missing', true, null, null);
   } catch {
-    return status(true, 'storage_unavailable', false, null);
+    return status(true, 'storage_unavailable', false, null, null);
   }
 }
 
@@ -189,10 +206,36 @@ export async function getResponsibleAiAcknowledgmentStatusForCurrentRequest(
   );
   if (subject === null) {
     const { userId } = await auth().catch(() => ({ userId: null }));
-    if (userId) return status(true, 'storage_unavailable', false, null);
+    if (userId) return status(true, 'storage_unavailable', false, null, null);
   }
-  if (!subject) return status(false, 'no_client', true, null);
+  if (!subject) return status(false, 'no_client', true, null, null);
   return getResponsibleAiAcknowledgmentStatus(subject, store);
+}
+
+export function getResponsibleAiAcknowledgmentCycle(
+  date: Date = new Date(),
+): string {
+  return `annual-${date.getUTCFullYear()}`;
+}
+
+export function getResponsibleAiAcknowledgmentExpiresAt(
+  acceptedAt: string,
+): string {
+  const acceptedTime = new Date(acceptedAt).getTime();
+  return new Date(
+    acceptedTime +
+      RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+}
+
+export function isResponsibleAiAcknowledgmentExpired(
+  acceptedAt: string,
+  now: Date = new Date(),
+): boolean {
+  return (
+    now.getTime() >=
+    new Date(getResponsibleAiAcknowledgmentExpiresAt(acceptedAt)).getTime()
+  );
 }
 
 function status(
@@ -200,13 +243,17 @@ function status(
   reason: ResponsibleAiAcknowledgmentStatus['reason'],
   storageAvailable: boolean,
   acceptedAt: string | null,
+  expiresAt: string | null,
 ): ResponsibleAiAcknowledgmentStatus {
   return {
     required,
     reason,
     storageAvailable,
     acceptedAt,
+    expiresAt,
     textVersion: RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
     consentText: RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT,
+    reacknowledgmentIntervalDays:
+      RESPONSIBLE_AI_REACKNOWLEDGMENT_INTERVAL_DAYS,
   };
 }
