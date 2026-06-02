@@ -15,7 +15,6 @@
  *   - /home/queue            (Action queue)
  *   - /home/learn            (Training / user guide)
  *   - /home/ai-initiatives   (redirect stub — /admin counterpart retired)
- *   - /home/configuration    (placeholder index UI · own component)
  *   - /home/training         (alias → /home/learn)
  */
 
@@ -28,6 +27,7 @@ const DELETED_REEXPORT_SEGMENTS: ReadonlyArray<string> = [
   'data-trust',
   'connectors',
   'agent-readiness',
+  'configuration',
   'tenant-profile',
 ];
 
@@ -35,10 +35,13 @@ describe('no /home/* re-exports of /admin/* pages', () => {
   for (const segment of DELETED_REEXPORT_SEGMENTS) {
     it(`/home/${segment} must not exist as a route`, () => {
       const segmentDir = path.join(HOME_ROOT, segment);
-      const exists = fs.existsSync(segmentDir);
+      const exists = fs.existsSync(path.join(segmentDir, 'page.tsx')) ||
+        fs.existsSync(path.join(segmentDir, 'page.ts')) ||
+        fs.existsSync(path.join(segmentDir, 'route.tsx')) ||
+        fs.existsSync(path.join(segmentDir, 'route.ts'));
       if (exists) {
         throw new Error(
-          `Wave 1 PR-1 hygiene violation: src/app/(maestro)/home/${segment}/ has been reintroduced. ` +
+          `Home/Admin separation hygiene violation: src/app/(maestro)/home/${segment}/ has a route file. ` +
             `/admin/${segment} (or /admin/tenant for tenant-profile) is the canonical route. ` +
             `Update callers to point at /admin/* instead of re-creating the /home/* shim.`,
         );

@@ -223,24 +223,19 @@ const clerkProtectedProxy = clerkMiddleware(async (auth, request: NextRequest) =
   // continue to resolve.
   //
   // /home, /home/queue, /home/learn, /home/ai-initiatives*,
-  // /home/configuration, /home/training stay as real /home pages and
-  // are NOT remapped here.
+  // and /home/training stay as real /home pages and are NOT remapped
+  // here. Setup/admin surfaces such as configuration, connectors,
+  // data trust, agent readiness, and tenant profile stay canonical
+  // under /admin.
   //
   // Wave 1 PR-3 (2026-05-30) · `/home/tenant-profile` now lands on the
   // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
   // was demoted to a tab inside /admin Overview — see AdminTenantTab).
   const homeToAdminMap: Record<string, string> = {
-    // CL-1 (2026-05-30) · Bare /home now redirects to the Trust Plane
-    // at /admin. The orphan src/app/(maestro)/home/page.tsx that
-    // rendered the retired 2026-05-08 fixture landing has been
-    // deleted. The /home/<subpage> routes below (queue, decision,
-    // source, learn, ai-initiatives, configuration, training) remain
-    // legitimate surfaces and are NOT remapped here. See
-    // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §2.
-    '/home': '/admin',
     '/home/data-trust': '/admin/data-trust',
     '/home/agent-readiness': '/admin/agent-readiness',
     '/home/connectors': '/admin/connectors',
+    '/home/configuration': '/admin',
     '/home/tenant-profile': '/admin?tab=tenant',
   }
   const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname]
