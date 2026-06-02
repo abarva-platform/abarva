@@ -73,4 +73,30 @@ describe('no /home/* re-exports of /admin/* pages', () => {
       expect(homeComponent).not.toContain(phrase);
     }
   });
+
+  it('keeps visible Home entry copy aligned to Admin instead of setup-era labels', () => {
+    const homeEntry = fs.readFileSync(
+      path.join(COMPONENT_ROOT, 'AgenticHomeEntry.tsx'),
+      'utf8',
+    );
+    const homeIndex = fs.readFileSync(
+      path.join(COMPONENT_ROOT, 'HomeIndexPage.tsx'),
+      'utf8',
+    );
+    const overview = fs.readFileSync(
+      path.join(COMPONENT_ROOT, 'HomeOverviewV2.tsx'),
+      'utf8',
+    );
+
+    expect(homeEntry).toContain("title: 'Admin'");
+    expect(homeEntry).toContain("eyebrow: 'Admin · dataset domains'");
+    expect(homeEntry).not.toContain("title: 'Admin Setup'");
+    expect(homeEntry).not.toContain("eyebrow: 'Setup · dataset domains'");
+
+    expect(homeIndex).toContain('access from Admin');
+    expect(homeIndex).not.toContain('access from Setup');
+
+    expect(overview).toContain('lead="Access, readiness, and audit controls for the active client."');
+    expect(overview).not.toContain('lead="Setup, access, readiness, and audit controls for the active client."');
+  });
 });
