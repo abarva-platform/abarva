@@ -150,7 +150,7 @@ export interface AuditContext {
  * want richer evidence destructure `audit` as well.
  */
 export const auditedTest = base.extend<AuditFixtures>({
-  context: async ({ browser }, fixtureUse, testInfo) => {
+  context: async ({ browser }, use, testInfo) => {
     const slug = slugify(testInfo.titlePath.join(' '));
     const outputDir = path.join(RUN_ROOT, slug);
     ensureDir(outputDir);
@@ -175,7 +175,7 @@ export const auditedTest = base.extend<AuditFixtures>({
     };
     PACKETS_BY_SLUG.set(slug, packet);
 
-    await fixtureUse(context);
+    await use(context);
 
     packet.finishedAt = new Date().toISOString();
     packet.status = mapStatus(testInfo.status);
@@ -183,7 +183,7 @@ export const auditedTest = base.extend<AuditFixtures>({
     writePacketSync(packet);
   },
 
-  page: async ({ context }, fixtureUse, testInfo) => {
+  page: async ({ context }, use, testInfo) => {
     const slug = slugify(testInfo.titlePath.join(' '));
     const packet = PACKETS_BY_SLUG.get(slug);
     if (!packet) {
@@ -234,13 +234,13 @@ export const auditedTest = base.extend<AuditFixtures>({
       }
     });
 
-    await fixtureUse(page);
+    await use(page);
 
     await new Promise<void>((resolve) => consoleStream.end(() => resolve()));
     writePacketSync(packet);
   },
 
-  audit: async ({}, fixtureUse, testInfo) => {
+  audit: async ({}, use, testInfo) => {
     const slug = slugify(testInfo.titlePath.join(' '));
     const packet = PACKETS_BY_SLUG.get(slug);
     if (!packet) {
@@ -284,7 +284,7 @@ export const auditedTest = base.extend<AuditFixtures>({
       },
     };
 
-    await fixtureUse(ctx);
+    await use(ctx);
   },
 });
 
