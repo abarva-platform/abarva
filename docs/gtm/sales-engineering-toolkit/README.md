@@ -15,6 +15,7 @@ story across unrelated documents.
 | Artifact | Use it for | Source anchors |
 | --- | --- | --- |
 | [Reference architecture deck outline](reference-architecture-deck.md) | 10-12 slide architecture walkthrough for CIO/CISO/enterprise architecture review. | `docs/architecture/ABARVA_PLANES_ARCHITECTURE.md`, `docs/architecture/adr/ADR-0007-vercel-control-plane-posture.md`, `docs/architecture/MODEL1_AZURE_CLAUDE_ROUTE_VALIDATION.md` |
+| [Security review reference architecture deck](../../security/REFERENCE_ARCHITECTURE_SECURITY_REVIEW_DECK.md) | 15-slide CISO/security architecture leave-behind for pilot reviews. | `docs/security/INFOSEC-ACCELERATOR.md`, `docs/architecture/adr/ADR-0001-control-plane-vs-data-plane.md`, `docs/architecture/adr/ADR-0002-agent-context-broker-boundary.md` |
 | [Demo script](demo-script.md) | 30-minute sales-engineering demo run of show. | `docs/demo/ABARVA_BOARDROOM_DEMO_SCRIPT.md`, `docs/demo/SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md` |
 | [ROI calculator template](roi-calculator-template.md) | Discovery worksheet for estimating value-at-stake, implementation cost, and payback. | `docs/gtm/D2-MONETIZATION-TIERS.md`, `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` |
 | [Security one-pager](security-one-pager.md) | First-pass response for security and procurement teams. | `docs/pilot/SECURITY_POSTURE.md`, `docs/security/INFOSEC-ACCELERATOR.md`, `docs/pilot/SECURITY_CONTROLS_MATRIX.md` |
@@ -37,7 +38,7 @@ story across unrelated documents.
 | Buyer | Primary asset | Supporting asset | What to emphasize |
 | --- | --- | --- | --- |
 | CIO / enterprise architecture | Reference architecture deck | Demo script | Control plane vs private data plane, deployment options, integration path. |
-| CISO / security reviewer | Security one-pager | Reference architecture deck | Current posture, known gaps, SSO/RBAC/RLS, release evidence, no hidden compliance claims. |
+| CISO / security reviewer | Security one-pager | Security review reference architecture deck | Current posture, known gaps, SSO/RBAC/RLS, release evidence, no hidden compliance claims. |
 | CFO | ROI calculator template | Demo script | Value-at-stake, founder-time assumptions, payback, decision accountability. |
 | COO / CDO | Demo script | ROI calculator template | Phase-gated moves, evidence-backed operating rhythm, accountable approvals. |
 | AI transformation lead | Reference architecture deck | Demo script | Agent governance, model gateway, context broker, evidence trail. |
