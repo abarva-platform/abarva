@@ -41,6 +41,29 @@ export function ArtOfPossibleCanvas({ data }: Props) {
   const isRetail = isApexRetailData(data);
   const blockedLabel = blockedOpportunityLabel(data);
 
+  if (data.bands.length === 0) {
+    return (
+      <section data-canvas="art-of-possible" data-view="empty">
+        <MockHero
+          eyebrow="Stage · Art of Possible"
+          title="This tenant's Art of Possible has not been loaded yet."
+          lead="AbarVa will not borrow another client's value pools, vendors, or initiative codes to fill this view. Load tenant-specific opportunity bands before using this surface for a decision."
+          decisionTitle="Load tenant-specific opportunity bands"
+          metrics={[
+            ['Possible', 'Not loaded'],
+            ['Captured', 'Not loaded'],
+            ['Blocked', 'Not loaded'],
+            ['Best first', 'Not loaded'],
+          ]}
+        />
+        <EmptyTenantCanvas
+          title="No tenant-specific opportunity bands are available"
+          body="Use the Brief and Map if this tenant has a seeded corpus. This panel will populate after opportunity bands are loaded for the active tenant."
+        />
+      </section>
+    );
+  }
+
   return (
     <section data-canvas="art-of-possible" data-view={view}>
       <div style={{ display: 'none' }} aria-hidden="true">
@@ -73,6 +96,44 @@ export function ArtOfPossibleCanvas({ data }: Props) {
       {view === 'stacked' && <StackedView data={data} />}
       {view === 'kanban' && <KanbanView data={data} />}
     </section>
+  );
+}
+
+function EmptyTenantCanvas({ title, body }: { title: string; body: string }) {
+  return (
+    <div
+      role="status"
+      style={{
+        background: COLORS.card,
+        border: BORDER.hairline,
+        borderRadius: RADIUS.md,
+        padding: SPACING.xl,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: FONT.display,
+          fontSize: 24,
+          fontWeight: 400,
+          color: COLORS.ink,
+          letterSpacing: '-0.01em',
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+      <p
+        style={{
+          color: COLORS.body,
+          fontSize: 14,
+          lineHeight: 1.55,
+          margin: 0,
+          maxWidth: 760,
+        }}
+      >
+        {body}
+      </p>
+    </div>
   );
 }
 
