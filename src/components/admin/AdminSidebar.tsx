@@ -42,7 +42,7 @@ export function AdminSidebar() {
             marginBottom: 6,
           }}
         >
-          Setup · Admin
+          Admin workspace
         </div>
         <div
           style={{
@@ -64,7 +64,7 @@ export function AdminSidebar() {
             lineHeight: 1.4,
           }}
         >
-          Control plane · tenant setup &amp; readiness
+          Control plane · tenant readiness
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export function AdminSidebar() {
           // Group header: render when this entry declares a `group`
           // distinct from any prior entry. The first entry's
           // `Setup` group is intentionally suppressed because the
-          // shell already shows "Setup · Admin" in the header
+          // shell already shows Admin workspace in the header
           // (avoids visual duplication). Subsequent groups always
           // render so operators can scan by capability.
           const showGroupHeader = section.group !== undefined && index !== 0;
