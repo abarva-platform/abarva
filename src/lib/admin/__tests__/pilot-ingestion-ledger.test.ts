@@ -4,7 +4,40 @@ import {
   evaluatePilotIngestionCommitReadiness,
   getPilotIngestionLedgerTables,
   planPilotIngestionRollback,
+  writeDurablePilotIngestionAuditOnlyLedger,
 } from '@/lib/admin/pilot-ingestion-ledger';
+
+type WriteCapture = {
+  table: string;
+  operation: 'upsert';
+  payload: Record<string, unknown>;
+  options: Record<string, unknown>;
+};
+
+function fakeLedgerDb(options: { failTable?: string } = {}) {
+  const writes: WriteCapture[] = [];
+  const counters = new Map<string, number>();
+  const db = {
+    from(table: string) {
+      return {
+        upsert(payload: Record<string, unknown>, upsertOptions: Record<string, unknown>) {
+          writes.push({ table, operation: 'upsert', payload, options: upsertOptions });
+          return {
+            async select() {
+              if (options.failTable === table) {
+                return { data: null, error: { message: `${table} unavailable` } };
+              }
+              const next = (counters.get(table) ?? 0) + 1;
+              counters.set(table, next);
+              return { data: [{ id: `${table}-id-${next}` }], error: null };
+            },
+          };
+        },
+      };
+    },
+  };
+  return { db, writes };
+}
 
 describe('pilot ingestion ledger contract', () => {
   it('covers T357-T360 with tenant-scoped ledger tables', () => {
@@ -169,5 +202,159 @@ describe('pilot ingestion ledger contract', () => {
       reasonCodes: ['ssn', 'email'],
       status: 'open',
     });
+  });
+
+  it('writes accepted audit-only plans to durable upload and manifest ledger tables', async () => {
+    const { db, writes } = fakeLedgerDb();
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: 'apexretail',
+      segmentKey: 'application_portfolio',
+      storage: {
+        accountName: 'staapex',
+        containerName: 'landing',
+        blobPath: 'apex/apps.csv',
+        sizeBytes: 1024,
+        contentType: 'text/csv',
+        sha256: 'abc123',
+      },
+      producedAt: '2026-06-02T11:00:00Z',
+      sourceSystem: 'Azure Blob',
+      templateVersion: '2026.06',
+      mappingProfileKey: 'default',
+      mappingProfileVersion: '1',
+      auditRowId: 'audit-accepted-1',
+      outcome: { status: 'accepted', chunksWritten: 12 },
+      protectionDecision: 'allow',
+    });
+
+    const result = await writeDurablePilotIngestionAuditOnlyLedger({
+      clientId: '9b6c62cb-26d2-4d45-9107-eeb5f2f55252',
+      initiatedByUserId: 'user-1',
+      attestationVersion: 'pilot-loader-data-load-attestation-v1',
+      originalFilename: 'apps.csv',
+      plan,
+      db: db as never,
+    });
+
+    expect(result).toEqual({
+      status: 'written',
+      uploadRunId: 'pilot_ingestion_upload_runs-id-1',
+      fileManifestId: 'pilot_ingestion_file_manifests-id-1',
+      quarantineCaseId: null,
+      idempotencyKey: plan.uploadRun.idempotencyKey,
+      commitBlocked: true,
+      commitBlockers: plan.commitBlockers,
+    });
+    expect(writes.map((write) => write.table)).toEqual([
+      'pilot_ingestion_upload_runs',
+      'pilot_ingestion_file_manifests',
+    ]);
+    expect(writes[0]).toMatchObject({
+      table: 'pilot_ingestion_upload_runs',
+      options: { onConflict: 'tenant_key,run_key' },
+      payload: {
+        client_id: '9b6c62cb-26d2-4d45-9107-eeb5f2f55252',
+        tenant_key: 'apexretail',
+        run_key: 'audit-accepted-1',
+        initiated_by_user_id: 'user-1',
+        attestation_version: 'pilot-loader-data-load-attestation-v1',
+        status: 'awaiting_approval',
+      },
+    });
+    expect(writes[1]).toMatchObject({
+      table: 'pilot_ingestion_file_manifests',
+      options: { onConflict: 'tenant_key,upload_run_id,file_key' },
+      payload: {
+        tenant_key: 'apexretail',
+        upload_run_id: 'pilot_ingestion_upload_runs-id-1',
+        original_filename: 'apps.csv',
+        blob_uri: 'azure://staapex/landing/apex/apps.csv',
+        storage_state: 'landed',
+        sensitive_data_status: 'allowed',
+      },
+    });
+  });
+
+  it('writes an open durable quarantine case for quarantined audit-only plans', async () => {
+    const { db, writes } = fakeLedgerDb();
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: 'meridian',
+      segmentKey: 'evidence_ledger',
+      storage: {
+        accountName: 'stameridian',
+        containerName: 'quarantine',
+        blobPath: 'meridian/leak.csv',
+        sizeBytes: 2048,
+        contentType: 'text/csv',
+        sha256: 'def456',
+      },
+      producedAt: '2026-06-02T11:00:00Z',
+      auditRowId: 'audit-quarantine-1',
+      outcome: { status: 'quarantined', reasonCodes: ['ssn', 'dob'] },
+      protectionDecision: 'quarantine',
+    });
+
+    const result = await writeDurablePilotIngestionAuditOnlyLedger({
+      clientId: '59ade265-7bda-46be-a5d4-8f346b3cac0a',
+      initiatedByUserId: 'user-2',
+      attestationVersion: 'pilot-loader-data-load-attestation-v1',
+      originalFilename: 'leak.csv',
+      plan,
+      db: db as never,
+    });
+
+    expect(result.quarantineCaseId).toBe('pilot_ingestion_quarantine_cases-id-1');
+    expect(writes.map((write) => write.table)).toEqual([
+      'pilot_ingestion_upload_runs',
+      'pilot_ingestion_file_manifests',
+      'pilot_ingestion_quarantine_cases',
+    ]);
+    expect(writes[1].payload).toMatchObject({
+      storage_state: 'quarantined',
+      sensitive_data_status: 'quarantined',
+    });
+    expect(writes[2]).toMatchObject({
+      table: 'pilot_ingestion_quarantine_cases',
+      options: { onConflict: 'tenant_key,case_key' },
+      payload: {
+        tenant_key: 'meridian',
+        upload_run_id: 'pilot_ingestion_upload_runs-id-1',
+        file_manifest_id: 'pilot_ingestion_file_manifests-id-1',
+        case_key: 'evidence_ledger:audit-quarantine-1',
+        reason_codes: ['ssn', 'dob'],
+        status: 'open',
+      },
+    });
+  });
+
+  it('fails loudly when a durable ledger table write fails', async () => {
+    const { db } = fakeLedgerDb({ failTable: 'pilot_ingestion_file_manifests' });
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: 'apexretail',
+      segmentKey: 'application_portfolio',
+      storage: {
+        accountName: 'staapex',
+        containerName: 'landing',
+        blobPath: 'apex/apps.csv',
+        sizeBytes: 1024,
+        contentType: 'text/csv',
+        sha256: 'abc123',
+      },
+      producedAt: '2026-06-02T11:00:00Z',
+      auditRowId: 'audit-failure-1',
+      outcome: { status: 'accepted', chunksWritten: 12 },
+      protectionDecision: 'allow',
+    });
+
+    await expect(writeDurablePilotIngestionAuditOnlyLedger({
+      clientId: '9b6c62cb-26d2-4d45-9107-eeb5f2f55252',
+      initiatedByUserId: 'user-1',
+      attestationVersion: 'pilot-loader-data-load-attestation-v1',
+      originalFilename: 'apps.csv',
+      plan,
+      db: db as never,
+    })).rejects.toThrow(
+      'pilot_ledger_write_failed:pilot_ingestion_file_manifests:pilot_ingestion_file_manifests unavailable',
+    );
   });
 });
