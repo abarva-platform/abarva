@@ -21,11 +21,21 @@ import {
   ENTERPRISE_CONTEXT_TEMPLATE_WORKBOOKS,
   type EnterpriseContextTemplateWorkbook,
 } from "@/lib/enterprise-context/template-schema";
+import {
+  buildPilotIngestionAuditOnlyWritePlan,
+  evaluatePilotIngestionCommitReadiness,
+  getPilotIngestionLedgerTables,
+  planPilotIngestionRollback,
+} from "@/lib/admin/pilot-ingestion-ledger";
 import apexManifest from "../../../docs/enterprise-context/templates/apexretail/manifest.json";
 import meridianManifest from "../../../docs/enterprise-context/templates/meridian/manifest.json";
 import arcturusManifest from "../../../docs/enterprise-context/templates/arcturus/manifest.json";
 
 export type DataLoadGateStatus = "ready" | "needs_configuration" | "monitored";
+export type PilotVerifierHopStatus =
+  | "live_ready"
+  | "stub_fail_closed"
+  | "blocked";
 
 export interface DataLoadRehearsalGate {
   id: string;
@@ -107,6 +117,42 @@ export interface SetupDataLoadCenterModel {
     uploadGuardDecision: "allow" | "quarantine";
     validationProbeFindings: number;
   };
+  pilotVerifier: {
+    schema: "abarva.pilot-data-plane-verification.v1";
+    mode: "stub-aware";
+    command: "npm run verify:pilot-data-plane";
+    liveCommand: "npm run verify:pilot-data-plane -- --live";
+    posture: DataLoadGateStatus;
+    summary: {
+      liveReady: number;
+      stubFailClosed: number;
+      blocked: number;
+      exitCode: 0 | 1;
+    };
+    hops: ReadonlyArray<{
+      id: string;
+      label: string;
+      status: PilotVerifierHopStatus;
+      configuredKeyCount: number;
+      missingKeyGroupCount: number;
+      nextAction: string;
+    }>;
+  };
+  loaderReadiness: ReadonlyArray<{
+    id: string;
+    label: string;
+    status: DataLoadGateStatus;
+    detail: string;
+    nextAction: string;
+    href: string | null;
+  }>;
+  launchActions: ReadonlyArray<{
+    id: string;
+    label: string;
+    detail: string;
+    href: string;
+    kind: "primary" | "secondary";
+  }>;
   tenantManifest: EnterpriseContextTemplateManifest | null;
   manifestCoverage: ReadonlyArray<{
     tenantKey: string;
@@ -305,6 +351,82 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     status: "monitored",
   },
 ];
+
+const PILOT_VERIFIER_HOPS = [
+  {
+    id: "sso",
+    label: "SSO and role binding",
+    required: [["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"], ["CLERK_SECRET_KEY"]],
+  },
+  {
+    id: "blob",
+    label: "Private Azure Blob landing zone",
+    required: [
+      [
+        "AZURE_BLOB_CONNECTION_STRING",
+        "DATA_PLANE_OBJECT_STORE_CONNECTION_STRING",
+        "AZURE_OBJECT_STORAGE_CONNECTION_STRING",
+        "AZURE_STORAGE_CONNECTION_STRING",
+      ],
+      [
+        "AZURE_BLOB_LANDING_CONTAINER",
+        "DATA_PLANE_OBJECT_STORE_CONTAINER",
+        "AZURE_OBJECT_STORAGE_CONTAINER",
+      ],
+    ],
+  },
+  {
+    id: "queue",
+    label: "Durable processing queue",
+    required: [
+      [
+        "AZURE_QUEUE_CONNECTION_STRING",
+        "AZURE_SERVICE_BUS_CONNECTION_STRING",
+        "VERCEL_QUEUE_TOKEN",
+      ],
+      [
+        "AZURE_QUEUE_NAME",
+        "AZURE_SERVICE_BUS_QUEUE_NAME",
+        "VERCEL_QUEUE_INGESTION_TOPIC",
+      ],
+    ],
+  },
+  {
+    id: "database",
+    label: "Client-scoped Postgres data plane",
+    required: [["DATABASE_URL"]],
+  },
+  {
+    id: "audit",
+    label: "Immutable audit and ingestion ledger",
+    required: [["DATABASE_URL"]],
+  },
+  {
+    id: "scan",
+    label: "Malware and restricted-data scan gate",
+    required: [["AZURE_DEFENDER_SCAN_MODE"]],
+  },
+  {
+    id: "search",
+    label: "Approved-data search index",
+    required: [
+      ["AZURE_SEARCH_ENDPOINT", "AZURE_AI_SEARCH_ENDPOINT"],
+      ["AZURE_SEARCH_INDEX_NAME", "AZURE_AI_SEARCH_INDEX_NAME"],
+    ],
+  },
+  {
+    id: "notifications",
+    label: "In-app and email notification fan-out",
+    required: [["RESEND_API_KEY"], ["RESEND_FROM"]],
+  },
+  {
+    id: "admin_access",
+    label: "Role-gated admin access",
+    required: [["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"], ["CLERK_SECRET_KEY"]],
+  },
+] as const;
+
+type EnvMap = Record<string, string | undefined>;
 
 function compactList(values: ReadonlyArray<string>, limit = 4): string {
   if (values.length <= limit) return values.join(", ");
@@ -563,6 +685,158 @@ function buildWorkQueue(): SetupDataLoadCenterModel["workQueue"] {
   ];
 }
 
+function hasEnv(env: EnvMap, key: string): boolean {
+  return typeof env[key] === "string" && env[key]?.trim().length > 0;
+}
+
+function buildPilotVerifierPosture(
+  env: EnvMap,
+): SetupDataLoadCenterModel["pilotVerifier"] {
+  const hops: SetupDataLoadCenterModel["pilotVerifier"]["hops"] =
+    PILOT_VERIFIER_HOPS.map((hop) => {
+    const missingGroups = hop.required.filter(
+      (group) => !group.some((key) => hasEnv(env, key)),
+    );
+    const configuredKeyCount = hop.required.filter((group) =>
+      group.some((key) => hasEnv(env, key)),
+    ).length;
+    const scanStubbed =
+      hop.id === "scan" && env.AZURE_DEFENDER_SCAN_MODE?.trim() === "stub";
+    const status: PilotVerifierHopStatus =
+      missingGroups.length > 0 || scanStubbed
+        ? "stub_fail_closed"
+        : "live_ready";
+
+    return {
+      id: hop.id,
+      label: hop.label,
+      status,
+      configuredKeyCount,
+      missingKeyGroupCount: missingGroups.length,
+      nextAction:
+        status === "live_ready"
+          ? "Run live verifier before commit-ready pilot use."
+          : "Configure required key group or keep this hop fail-closed.",
+    };
+  });
+  const liveReady = hops.filter((hop) => hop.status === "live_ready").length;
+  const stubFailClosed = hops.filter(
+    (hop) => hop.status === "stub_fail_closed",
+  ).length;
+  const blocked = hops.filter((hop) => hop.status === "blocked").length;
+
+  return {
+    schema: "abarva.pilot-data-plane-verification.v1",
+    mode: "stub-aware",
+    command: "npm run verify:pilot-data-plane",
+    liveCommand: "npm run verify:pilot-data-plane -- --live",
+    posture:
+      blocked > 0 || stubFailClosed > 0 ? "needs_configuration" : "ready",
+    summary: {
+      liveReady,
+      stubFailClosed,
+      blocked,
+      exitCode: blocked > 0 ? 1 : 0,
+    },
+    hops,
+  };
+}
+
+function buildLoaderReadiness(): SetupDataLoadCenterModel["loaderReadiness"] {
+  const auditPlan = buildPilotIngestionAuditOnlyWritePlan({
+    tenantKey: "pilot-rehearsal",
+    segmentKey: "enterprise_profile",
+    storage: {
+      accountName: "pilotstorage",
+      containerName: "landing",
+      blobPath: "pilot-rehearsal/enterprise_profile/sample.csv",
+      sizeBytes: 128,
+      contentType: "text/csv",
+      sha256: "pilot-rehearsal-sha256",
+    },
+    producedAt: "2026-06-02T00:00:00.000Z",
+    auditRowId: "pilot-rehearsal-audit",
+    outcome: { status: "accepted", chunksWritten: 0 },
+    protectionDecision: "allow",
+  });
+  const commitReadiness = evaluatePilotIngestionCommitReadiness({
+    uploadStatus: auditPlan.uploadRun.status,
+    openQuarantineCases: 0,
+    openClarificationRequests: 0,
+    approvalDecision: null,
+    idempotencyConflict: false,
+  });
+  const rollbackPlan = planPilotIngestionRollback({
+    commitStatus: "committed",
+    activeCommitItems: 1,
+    alreadyUnloadedItems: 0,
+  });
+  const ledgerTables = getPilotIngestionLedgerTables();
+
+  return [
+    {
+      id: "loader-entrypoint",
+      label: "Admin entrypoint",
+      status: "ready",
+      detail: "Setup resolves the active client and opens the governed load plan.",
+      nextAction: "Start from the active-client Data Load Center.",
+      href: "/admin/setup",
+    },
+    {
+      id: "ledger-contract",
+      label: "Audit-only ingestion ledger",
+      status: "monitored",
+      detail: `${ledgerTables.length} tenant-scoped ledger tables are defined for T357-T360; current hook records audit-only load plans.`,
+      nextAction: "Use audit-only evidence until durable commit tables land.",
+      href: "/admin/data-trust",
+    },
+    {
+      id: "commit-readiness",
+      label: "Commit readiness",
+      status: commitReadiness.ready ? "ready" : "needs_configuration",
+      detail: commitReadiness.ready
+        ? "Preview, quarantine, clarification, approval, and idempotency gates are clean."
+        : commitReadiness.blockers[0] ?? "Commit is not ready.",
+      nextAction: "Clear preview approval before enabling commit.",
+      href: "/admin/programs/approvals",
+    },
+    {
+      id: "rollback-plan",
+      label: "Rollback and unload",
+      status: rollbackPlan.reversible ? "monitored" : "needs_configuration",
+      detail: rollbackPlan.actions[0],
+      nextAction: "Keep rollback evidence linked to every committed batch.",
+      href: "/admin/data-trust",
+    },
+  ];
+}
+
+function buildLaunchActions(): SetupDataLoadCenterModel["launchActions"] {
+  return [
+    {
+      id: "start-governed-load",
+      label: "Start governed load",
+      detail: "Open the upload workspace for the active client's first or next load.",
+      href: "/admin/context-layer/uploads",
+      kind: "primary",
+    },
+    {
+      id: "run-verifier",
+      label: "Run verifier",
+      detail: "Check live/stub-fail-closed posture before pilot data-plane use.",
+      href: "/admin/setup#pilot-verifier",
+      kind: "secondary",
+    },
+    {
+      id: "review-quarantine",
+      label: "Review quarantine",
+      detail: "Resolve sensitive upload holds before parse and approval continue.",
+      href: "/platform/admin/quarantine",
+      kind: "secondary",
+    },
+  ];
+}
+
 function findTenantManifest(
   clientKey: ClientKey,
 ): EnterpriseContextTemplateManifest | null {
@@ -636,7 +910,7 @@ export function buildSetupDataLoadCenterModel(args: {
   clientId: string;
   clientKey: ClientKey;
   tenantName: string;
-}): SetupDataLoadCenterModel {
+}, env: EnvMap = process.env): SetupDataLoadCenterModel {
   const tenantOption = getClientOption(args.clientKey);
   const tenantManifest = findTenantManifest(args.clientKey);
   const templateRows = buildTemplateRows();
@@ -672,6 +946,9 @@ export function buildSetupDataLoadCenterModel(args: {
       uploadGuardDecision: guardProbe.decision,
       validationProbeFindings: runValidationProbe(),
     },
+    pilotVerifier: buildPilotVerifierPosture(env),
+    loaderReadiness: buildLoaderReadiness(),
+    launchActions: buildLaunchActions(),
     tenantManifest,
     manifestCoverage: ENTERPRISE_CONTEXT_TEMPLATE_TENANTS.map((tenant) => {
       const manifest = ENTERPRISE_CONTEXT_MANIFESTS.find(

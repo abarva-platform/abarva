@@ -110,6 +110,104 @@ describe("setup data load center read model", () => {
     expect(model.privateDataPlane.validationProbeFindings).toBeGreaterThan(0);
   });
 
+  it("surfaces pilot verifier posture and fails closed when env keys are absent", () => {
+    const model = buildSetupDataLoadCenterModel(
+      {
+        clientId: "client-apex",
+        clientKey: "apexretail",
+        tenantName: "Apex Retail Group",
+      },
+      {},
+    );
+
+    expect(model.pilotVerifier.schema).toBe(
+      "abarva.pilot-data-plane-verification.v1",
+    );
+    expect(model.pilotVerifier.command).toBe("npm run verify:pilot-data-plane");
+    expect(model.pilotVerifier.summary).toEqual({
+      liveReady: 0,
+      stubFailClosed: 9,
+      blocked: 0,
+      exitCode: 0,
+    });
+    expect(model.pilotVerifier.posture).toBe("needs_configuration");
+    expect(model.pilotVerifier.hops.every((hop) => hop.status === "stub_fail_closed")).toBe(
+      true,
+    );
+  });
+
+  it("marks the verifier live-ready from configured key names without exposing values", () => {
+    const model = buildSetupDataLoadCenterModel(
+      {
+        clientId: "client-apex",
+        clientKey: "apexretail",
+        tenantName: "Apex Retail Group",
+      },
+      {
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_secret",
+        CLERK_SECRET_KEY: "secret-value",
+        AZURE_BLOB_CONNECTION_STRING: "secret-value",
+        AZURE_BLOB_LANDING_CONTAINER: "landing",
+        AZURE_QUEUE_CONNECTION_STRING: "secret-value",
+        AZURE_QUEUE_NAME: "queue",
+        DATABASE_URL: "secret-value",
+        AZURE_DEFENDER_SCAN_MODE: "live",
+        AZURE_SEARCH_ENDPOINT: "https://example.search.windows.net",
+        AZURE_SEARCH_INDEX_NAME: "tenant-context",
+        RESEND_API_KEY: "secret-value",
+        RESEND_FROM: "pilot@example.com",
+      },
+    );
+
+    expect(model.pilotVerifier.summary.liveReady).toBe(9);
+    expect(model.pilotVerifier.summary.stubFailClosed).toBe(0);
+    expect(JSON.stringify(model.pilotVerifier)).not.toContain("secret-value");
+  });
+
+  it("exposes loader readiness, audit-only ledger posture, and launch affordances", () => {
+    const model = buildSetupDataLoadCenterModel(
+      {
+        clientId: "client-apex",
+        clientKey: "apexretail",
+        tenantName: "Apex Retail Group",
+      },
+      {},
+    );
+
+    expect(model.loaderReadiness).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Admin entrypoint",
+          status: "ready",
+          href: "/admin/setup",
+        }),
+        expect.objectContaining({
+          label: "Audit-only ingestion ledger",
+          status: "monitored",
+          detail: expect.stringContaining("11 tenant-scoped ledger tables"),
+        }),
+        expect.objectContaining({
+          label: "Commit readiness",
+          status: "needs_configuration",
+          nextAction: "Clear preview approval before enabling commit.",
+        }),
+      ]),
+    );
+    expect(model.launchActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Start governed load",
+          href: "/admin/context-layer/uploads",
+          kind: "primary",
+        }),
+        expect.objectContaining({
+          label: "Run verifier",
+          href: "/admin/setup#pilot-verifier",
+        }),
+      ]),
+    );
+  });
+
   it("keeps unsupported Day One tenants from leaking another manifest", () => {
     const model = buildSetupDataLoadCenterModel({
       clientId: "client-skyharbor",
