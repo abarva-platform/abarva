@@ -34,4 +34,20 @@ describe('loadTenantIntelligenceCorpusData', () => {
     expect(corpus?.briefData.bets[0]?.useCase.name).toContain('FedNow');
     expect(corpus?.mapData.totalUseCases).toBeGreaterThan(0);
   });
+
+  it('loads SkyHarbor seeded airline corpus data', async () => {
+    const corpus = await loadTenantIntelligenceCorpusData(
+      {
+        id: 'client_skyharbor',
+        key: 'skyharbor',
+        name: 'SkyHarbor Air',
+        industry_code: 'airline',
+      },
+      'skyharbor',
+    );
+
+    expect(corpus?.briefData.tenantName).toBe('SkyHarbor Air');
+    expect(corpus?.briefData.bets[0]?.useCase.name).toContain('IROPs Recovery');
+    expect(corpus?.mapData.totalUseCases).toBeGreaterThan(0);
+  });
 });

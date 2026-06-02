@@ -749,6 +749,12 @@ const VALUE_AT_STAKE_FALLBACK: Record<BriefData['industry'], NonNullable<BriefDa
     { label: 'Loss reduction', value: '$8-$22M', captured: 16, blocked: 36, candidate: 28, tone: 'red' },
     { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: 'navy' },
   ],
+  airline: [
+    { label: 'Operational recovery', value: '$10-$30M', captured: 24, blocked: 34, candidate: 22, tone: 'teal' },
+    { label: 'Legacy extraction', value: '$12-$40M', captured: 18, blocked: 42, candidate: 24, tone: 'amber' },
+    { label: 'Customer trust', value: '$8-$24M', captured: 16, blocked: 32, candidate: 26, tone: 'red' },
+    { label: 'Platform foundation', value: '$10-$28M', captured: 28, blocked: 28, candidate: 24, tone: 'navy' },
+  ],
 };
 
 function ValueAtStakePanel({ data }: { data: BriefData }) {
@@ -858,6 +864,23 @@ const OPEN_TENSIONS_FALLBACK: Record<BriefData['industry'], NonNullable<BriefDat
     {
       title: 'AI timeline assumes data readiness not shown.',
       body: 'Decisioning models should wait for evidence on consent posture and reference-data lineage.',
+      severity: 'red',
+    },
+  ],
+  airline: [
+    {
+      title: 'Operations owns reliability, IT owns the modernization path.',
+      body: 'Do not accelerate extraction until peak-day constraints and rollback ownership are explicit.',
+      severity: 'red',
+    },
+    {
+      title: 'CFO wants vendor savings, CTO is funding dual-run.',
+      body: 'The business case needs to separate realized value from vendor productivity claims.',
+      severity: 'amber',
+    },
+    {
+      title: 'AI timeline assumes operational readiness not shown.',
+      body: 'Disruption recovery and crew legality AI should wait for exception telemetry and accountable owners.',
       severity: 'red',
     },
   ],

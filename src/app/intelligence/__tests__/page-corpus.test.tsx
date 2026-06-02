@@ -123,7 +123,7 @@ describe('/intelligence tenant corpus route binding', () => {
     expect(props.intelligenceCorpusData?.mapData.totalUseCases).toBeGreaterThan(0);
   });
 
-  it('does not fabricate SkyHarbor corpus data until a real corpus fixture is wired', async () => {
+  it('passes SkyHarbor seeded corpus data into the Intelligence page', async () => {
     const props = await propsFor('skyharbor', {
       id: 'client_skyharbor',
       key: 'skyharbor',
@@ -132,6 +132,8 @@ describe('/intelligence tenant corpus route binding', () => {
     });
 
     expect(props.clientKey).toBe('skyharbor');
-    expect(props.intelligenceCorpusData).toBeNull();
+    expect(props.intelligenceCorpusData?.briefData.tenantName).toBe('SkyHarbor Air');
+    expect(props.intelligenceCorpusData?.briefData.bets[0]?.useCase.name).toContain('IROPs Recovery');
+    expect(props.intelligenceCorpusData?.mapData.totalUseCases).toBeGreaterThan(0);
   });
 });
