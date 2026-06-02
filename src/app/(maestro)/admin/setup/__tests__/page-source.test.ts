@@ -36,6 +36,9 @@ describe("/admin/setup data load center page source", () => {
     // Calm reskin 2026-06-01: dimension-first headline (was "Choose the
     // dimension before choosing the file").
     expect(componentSource).toContain("Pick the business dimension first.");
+    expect(componentSource).toContain("Loader readiness");
+    expect(componentSource).toContain("Pilot verifier posture");
+    expect(componentSource).toContain("Next actions");
     expect(componentSource).toContain("Dimension library");
     expect(componentSource).toContain("model.dimensionCatalog.map");
     expect(componentSource).toContain("Templates by dimension");
@@ -61,5 +64,10 @@ describe("/admin/setup data load center page source", () => {
 
   it("keeps cross-client manifest coverage out of the runtime setup page", () => {
     expect(componentSource).not.toContain("model.manifestCoverage.map");
+  });
+
+  it("keeps the T342 shell disjoint from the open template-preflight slice", () => {
+    expect(componentSource).not.toContain("schema-preflight");
+    expect(source).not.toContain("schema-preflight");
   });
 });

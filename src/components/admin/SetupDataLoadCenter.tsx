@@ -2,6 +2,7 @@ import { COLORS, RADIUS, TYPOGRAPHY } from "@/lib/design/design-tokens";
 import type {
   DataLoadGateStatus,
   DataLoadDimensionCatalogItem,
+  PilotVerifierHopStatus,
   SetupDataLoadCenterModel,
 } from "@/lib/admin/setup-data-load-center";
 
@@ -19,6 +20,12 @@ const statusCopy: Record<DataLoadGateStatus, string> = {
   ready: "Ready",
   monitored: "Monitored",
   needs_configuration: "Action needed",
+};
+
+const verifierStatusCopy: Record<PilotVerifierHopStatus, string> = {
+  live_ready: "Live-ready",
+  stub_fail_closed: "Fail-closed",
+  blocked: "Blocked",
 };
 
 // Accent only where it earns attention. Ready + monitored read as quiet
@@ -63,6 +70,27 @@ function statusPill(status: DataLoadGateStatus) {
       }}
     >
       {statusCopy[status]}
+    </span>
+  );
+}
+
+function verifierPill(status: PilotVerifierHopStatus) {
+  const accent = status === "live_ready" ? `${COLORS.ink}99` : COLORS.amberInk;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        width: "fit-content",
+        borderRadius: RADIUS.pill,
+        padding: "3px 9px",
+        border: `1px solid ${accent}44`,
+        color: accent,
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 700,
+      }}
+    >
+      {verifierStatusCopy[status]}
     </span>
   );
 }
@@ -234,6 +262,7 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
         {`
           @media (max-width: 1120px) {
             [data-setup-grid="hero"],
+            [data-setup-grid="command"],
             [data-setup-grid="studio"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
@@ -401,6 +430,148 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
               {primaryDimension.primaryAction.label} →
             </a>
           ) : null}
+        </aside>
+      </section>
+
+      <section
+        data-setup-grid="command"
+        id="pilot-verifier"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.1fr) minmax(280px, 0.9fr) 280px",
+          gap: 16,
+          alignItems: "stretch",
+        }}
+        aria-label="Loader readiness and pilot verifier posture"
+      >
+        <div style={{ ...cardStyle, padding: 18, display: "grid", gap: 14 }}>
+          <div>
+            <span style={labelStyle()}>Loader readiness</span>
+            <h2
+              style={{
+                margin: "6px 0 0",
+                fontSize: 18,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              Current load status
+            </h2>
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {model.loaderReadiness.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  gap: 10,
+                  alignItems: "start",
+                  paddingTop: 10,
+                  borderTop: `1px solid ${COLORS.ink}0e`,
+                }}
+              >
+                <div style={{ display: "grid", gap: 4 }}>
+                  <strong style={{ fontSize: 13.5, fontWeight: 650 }}>
+                    {item.label}
+                  </strong>
+                  <span
+                    style={{
+                      color: `${COLORS.ink}a0`,
+                      fontSize: 12.5,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {item.detail}
+                  </span>
+                  <span style={{ color: `${COLORS.ink}90`, fontSize: 12 }}>
+                    {item.nextAction}
+                  </span>
+                </div>
+                {statusPill(item.status)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, padding: 18, display: "grid", gap: 14 }}>
+          <div>
+            <span style={labelStyle()}>Pilot verifier posture</span>
+            <h2
+              style={{
+                margin: "6px 0 0",
+                fontSize: 18,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              {model.pilotVerifier.summary.liveReady} live-ready ·{" "}
+              {model.pilotVerifier.summary.stubFailClosed} fail-closed
+            </h2>
+          </div>
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: RADIUS.sm,
+              background: COLORS.cream,
+              color: `${COLORS.ink}b0`,
+              fontFamily: TYPOGRAPHY.mono,
+              fontSize: 11,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {model.pilotVerifier.command}
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {model.pilotVerifier.hops.slice(0, 5).map((hop) => (
+              <div
+                key={hop.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ color: `${COLORS.ink}b0`, fontSize: 12.5 }}>
+                  {hop.label}
+                </span>
+                {verifierPill(hop.status)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside style={{ ...cardStyle, padding: 18, display: "grid", gap: 12 }}>
+          <div>
+            <span style={labelStyle()}>Launch</span>
+            <h2
+              style={{
+                margin: "6px 0 0",
+                fontSize: 18,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              Next actions
+            </h2>
+          </div>
+          {model.launchActions.map((action) => (
+            <div key={action.id} style={{ display: "grid", gap: 6 }}>
+              {action.kind === "primary"
+                ? primaryButton(action.href, action.label)
+                : ghostButton(action.href, action.label)}
+              <span
+                style={{
+                  color: `${COLORS.ink}94`,
+                  fontSize: 12.5,
+                  lineHeight: 1.4,
+                }}
+              >
+                {action.detail}
+              </span>
+            </div>
+          ))}
         </aside>
       </section>
 
