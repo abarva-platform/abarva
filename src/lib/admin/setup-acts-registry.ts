@@ -21,7 +21,7 @@
 //     pattern, the date.
 //   - Provenance is naked: every fact cites its source segment.
 
-import type { ClientKey } from '@/lib/client-config';
+import { getClientOption, type ClientKey } from '@/lib/client-config';
 
 export type ActOneFactType =
   | 'enterprise'
@@ -1174,7 +1174,7 @@ const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   meridian: 'Meridian Health System',
   arcturus: 'First Capital Financial',
   apexretail: 'Apex Retail Group',
-  northstar: 'Northstar Clinical Technologies',
+  northstar: getClientOption('northstar').name,
   skyharbor: 'SkyHarbor Air',
 };
 

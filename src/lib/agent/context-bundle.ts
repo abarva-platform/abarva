@@ -596,12 +596,15 @@ const APEX_TENANT = {
   tier: 'rich' as TenantTier,
 };
 
+const NORTHSTAR_DISPLAY_NAME =
+  canonicalClientDisplayName({ key: 'northstar' }) ?? 'northstar-clinical';
+
 const TENANT_CONTEXT_BY_SLUG: Record<string, { name: string; tier: TenantTier }> = {
   'apex-retail': { name: 'Apex Retail', tier: 'rich' },
   'meridian': { name: 'Meridian Health System', tier: 'rich' },
   'meridian-health': { name: 'Meridian Health System', tier: 'rich' },
   'first-capital': { name: 'First Capital Financial', tier: 'rich' },
-  'northstar-clinical': { name: 'Northstar Clinical Technologies', tier: 'rich' },
+  'northstar-clinical': { name: NORTHSTAR_DISPLAY_NAME, tier: 'rich' },
   'skyharbor-air': { name: 'SkyHarbor Air', tier: 'rich' },
 };
 
@@ -831,7 +834,7 @@ function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) 
 const ALLOWED_CANONICAL_DISPLAY_NAMES: ReadonlySet<string> = new Set([
   'Meridian Health',
   'First Capital Financial',
-  'Northstar Clinical Technologies',
+  NORTHSTAR_DISPLAY_NAME,
   'SkyHarbor Air',
 ]);
 
