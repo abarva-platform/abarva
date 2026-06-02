@@ -2,92 +2,127 @@ import {
   buildSourceAnswerEngine,
   detectSourceAnswerMode,
   type SourceAnswerMode,
-} from '../source-answer-engine';
-import type { SourceAgentContextBundle, SourceLiveTenantContextSnapshot } from '../agent-context';
+} from "../source-answer-engine";
+import { SOURCE_GOLDEN_EVENT_IDS } from "../constants";
+import type {
+  SourceAgentContextBundle,
+  SourceLiveTenantContextSnapshot,
+} from "../agent-context";
 
 const liveTenantContext: SourceLiveTenantContextSnapshot = {
-  clientKey: 'apexretail',
-  brokerTenantKey: 'apex-retail',
+  clientKey: "apexretail",
+  brokerTenantKey: "apex-retail",
   inventoryRecordCount: 883,
   contextChunkCount: 935,
   embeddedContextChunkCount: 935,
   sourceEventFound: true,
   segments: [
-    { segmentId: 'it_landscape', inventoryRecords: 96, contextChunks: 96, embeddedChunks: 96 },
-    { segmentId: 'evidence_ledger', inventoryRecords: 20, contextChunks: 20, embeddedChunks: 20 },
-    { segmentId: 'vendor_contracts', inventoryRecords: 38, contextChunks: 38, embeddedChunks: 38 },
-    { segmentId: 'financial_model', inventoryRecords: 63, contextChunks: 63, embeddedChunks: 63 },
+    {
+      segmentId: "it_landscape",
+      inventoryRecords: 96,
+      contextChunks: 96,
+      embeddedChunks: 96,
+    },
+    {
+      segmentId: "evidence_ledger",
+      inventoryRecords: 20,
+      contextChunks: 20,
+      embeddedChunks: 20,
+    },
+    {
+      segmentId: "vendor_contracts",
+      inventoryRecords: 38,
+      contextChunks: 38,
+      embeddedChunks: 38,
+    },
+    {
+      segmentId: "financial_model",
+      inventoryRecords: 63,
+      contextChunks: 63,
+      embeddedChunks: 63,
+    },
   ],
-  currentStateAreas: ['IT Landscape', 'Evidence Ledger', 'Vendor Contracts', 'Financial Model'],
+  currentStateAreas: [
+    "IT Landscape",
+    "Evidence Ledger",
+    "Vendor Contracts",
+    "Financial Model",
+  ],
   evidenceBasis: [
-    'IT Landscape: 96 records, 96 chunks, 96 embedded',
-    'Evidence Ledger: 20 records, 20 chunks, 20 embedded',
+    "IT Landscape: 96 records, 96 chunks, 96 embedded",
+    "Evidence Ledger: 20 records, 20 chunks, 20 embedded",
   ],
   retrievedEvidence: [
     {
-      id: 'chunk:evidence_ledger:identity',
-      segmentId: 'evidence_ledger',
-      recordId: 'evidence_ledger:ev:apex:001',
-      title: 'Identity match baseline',
-      sourceType: 'contextChunk',
-      sourceDoc: 'data-quality-baseline-2026-q1.xlsx',
-      excerpt: 'claim: Identity match rate across customer source systems is currently 71%.',
-      confidence: 'high',
+      id: "chunk:evidence_ledger:identity",
+      segmentId: "evidence_ledger",
+      recordId: "evidence_ledger:ev:apex:001",
+      title: "Identity match baseline",
+      sourceType: "contextChunk",
+      sourceDoc: "data-quality-baseline-2026-q1.xlsx",
+      excerpt:
+        "claim: Identity match rate across customer source systems is currently 71%.",
+      confidence: "high",
       score: 14,
     },
     {
-      id: 'chunk:evidence_ledger:cdp',
-      segmentId: 'evidence_ledger',
-      recordId: 'evidence_ledger:ev:apex:009',
-      title: 'CDP selection memo',
-      sourceType: 'contextChunk',
-      sourceDoc: 'CDP-Round-1-Selection-Memo-2026-04-15.pdf',
-      excerpt: 'claim: Deloitte Digital was selected as CDP implementation partner; Treasure Data and Segment advanced to BAFO.',
-      confidence: 'high',
+      id: "chunk:evidence_ledger:cdp",
+      segmentId: "evidence_ledger",
+      recordId: "evidence_ledger:ev:apex:009",
+      title: "CDP selection memo",
+      sourceType: "contextChunk",
+      sourceDoc: "CDP-Round-1-Selection-Memo-2026-04-15.pdf",
+      excerpt:
+        "claim: Deloitte Digital was selected as CDP implementation partner; Treasure Data and Segment advanced to BAFO.",
+      confidence: "high",
       score: 13,
     },
     {
-      id: 'chunk:it_landscape:martech',
-      segmentId: 'it_landscape',
-      recordId: 'it_landscape:martech',
-      title: 'Martech integration landscape',
-      sourceType: 'contextChunk',
-      sourceDoc: 'martech-architecture-inventory.csv',
-      excerpt: 'Current martech estate includes loyalty, email, web analytics, customer service, and data lake integrations.',
-      confidence: 'high',
+      id: "chunk:it_landscape:martech",
+      segmentId: "it_landscape",
+      recordId: "it_landscape:martech",
+      title: "Martech integration landscape",
+      sourceType: "contextChunk",
+      sourceDoc: "martech-architecture-inventory.csv",
+      excerpt:
+        "Current martech estate includes loyalty, email, web analytics, customer service, and data lake integrations.",
+      confidence: "high",
       score: 12,
     },
     {
-      id: 'chunk:vendor_contracts:cdp',
-      segmentId: 'vendor_contracts',
-      recordId: 'vendor_contracts:cdp',
-      title: 'CDP contract baseline',
-      sourceType: 'contextChunk',
-      sourceDoc: 'vendor-contract-register.csv',
-      excerpt: 'Current customer data vendors include renewal and data-processing constraints that affect CDP implementation scope.',
-      confidence: 'high',
+      id: "chunk:vendor_contracts:cdp",
+      segmentId: "vendor_contracts",
+      recordId: "vendor_contracts:cdp",
+      title: "CDP contract baseline",
+      sourceType: "contextChunk",
+      sourceDoc: "vendor-contract-register.csv",
+      excerpt:
+        "Current customer data vendors include renewal and data-processing constraints that affect CDP implementation scope.",
+      confidence: "high",
       score: 11,
     },
     {
-      id: 'chunk:financial_model:cdp',
-      segmentId: 'financial_model',
-      recordId: 'financial_model:cdp',
-      title: 'CDP value case',
-      sourceType: 'contextChunk',
-      sourceDoc: 'cdp-value-model.xlsx',
-      excerpt: 'CDP value model separates platform subscription, implementation, data engineering, and run support.',
-      confidence: 'high',
+      id: "chunk:financial_model:cdp",
+      segmentId: "financial_model",
+      recordId: "financial_model:cdp",
+      title: "CDP value case",
+      sourceType: "contextChunk",
+      sourceDoc: "cdp-value-model.xlsx",
+      excerpt:
+        "CDP value model separates platform subscription, implementation, data engineering, and run support.",
+      confidence: "high",
       score: 10,
     },
     {
-      id: 'chunk:org_structure:cdo',
-      segmentId: 'org_structure',
-      recordId: 'org_structure:cdo',
-      title: 'CDO ownership',
-      sourceType: 'contextChunk',
-      sourceDoc: 'org-structure.csv',
-      excerpt: 'Customer data activation decision rights sit with the CDO and CIO governance forum.',
-      confidence: 'high',
+      id: "chunk:org_structure:cdo",
+      segmentId: "org_structure",
+      recordId: "org_structure:cdo",
+      title: "CDO ownership",
+      sourceType: "contextChunk",
+      sourceDoc: "org-structure.csv",
+      excerpt:
+        "Customer data activation decision rights sit with the CDO and CIO governance forum.",
+      confidence: "high",
       score: 9,
     },
   ],
@@ -95,26 +130,30 @@ const liveTenantContext: SourceLiveTenantContextSnapshot = {
 };
 
 const contextBundle: SourceAgentContextBundle = {
-  tenant: { tenantId: 'apex-retail', tenantKey: 'apexretail', tenantName: 'Apex Retail Group' },
-  user: { id: 'user-source-answer' },
-  userRole: 'cio',
-  persona: 'cio',
-  route: '/api/v1/source/APX-SRC-CDP-2026/nexus/ask',
-  surface: 'nexusPanel',
-  contextScope: 'event',
+  tenant: {
+    tenantId: "apex-retail",
+    tenantKey: "apexretail",
+    tenantName: "Apex Retail Group",
+  },
+  user: { id: "user-source-answer" },
+  userRole: "cio",
+  persona: "cio",
+  route: "/api/v1/source/APX-SRC-CDP-2026/nexus/ask",
+  surface: "nexusPanel",
+  contextScope: "event",
   sourcingEvent: {
-    id: 'apx-src-cdp-2026',
-    code: 'APX-SRC-CDP-2026',
-    name: 'CDP Vendor Selection',
-    accountName: 'Apex Retail Group',
-    archetype: 'platform_selection',
-    rigor: 'strategic',
-    lifecycleStatus: 'active',
-    owner: 'Chief Digital Officer',
-    currentStageKey: 'evaluation',
+    id: "apx-src-cdp-2026",
+    code: "APX-SRC-CDP-2026",
+    name: "CDP Vendor Selection",
+    accountName: "Apex Retail Group",
+    archetype: "platform_selection",
+    rigor: "strategic",
+    lifecycleStatus: "active",
+    owner: "Chief Digital Officer",
+    currentStageKey: "evaluation",
     valueAtStakeUsd: 2_400_000,
   },
-  sourcingArchetype: 'platform_selection',
+  sourcingArchetype: "platform_selection",
   liveTenantContext,
   blockers: [],
   requiredInputs: [],
@@ -132,8 +171,8 @@ const contextBundle: SourceAgentContextBundle = {
   evidenceCitations: [],
   relevantPatternSections: [],
   priorConversationTurns: [],
-  userPrompt: 'How should the CIO shape the CDP sourcing event?',
-  normalizedIntent: 'unknown',
+  userPrompt: "How should the CIO shape the CDP sourcing event?",
+  normalizedIntent: "unknown",
   systemProposedActions: [],
   contextQuality: {
     contextCompleteness: 5,
@@ -143,126 +182,187 @@ const contextBundle: SourceAgentContextBundle = {
     missingInputAwareness: 5,
     actionability: 5,
     vanillaResponseRisk: 1,
-    overallConfidence: 'high',
+    overallConfidence: "high",
     missingContextReasons: [],
   },
 };
 
-describe('Source answer engine', () => {
+describe("Source answer engine", () => {
   it.each([
-    ['What is Apex current state of affairs for the CDP event?', 'current_state'],
-    ['Summarize org structure and tech landscape for this sourcing event.', 'current_state'],
-    ['What should the CIO recommend before BAFO?', 'cxo_guidance'],
-    ['What traps should we watch in CDP sourcing?', 'risk_traps'],
-    ['What data is missing before we proceed?', 'missing_data'],
-    ['How smart is Sentinel Source about IT outsourcing?', 'expert_sourcing'],
-    ['What is the current financial baseline?', 'current_state'],
-    ['How should the CFO shape value and pricing?', 'cxo_guidance'],
-    ['Which vendor risk should we avoid?', 'risk_traps'],
-    ['What gaps block a decision-grade recommendation?', 'missing_data'],
-    ['How do we scope the RFP?', 'event_shaping'],
-    ['What does the market and corpus say about CDP sourcing?', 'expert_sourcing'],
-    ['What is the current tech landscape?', 'current_state'],
-    ['How should this event be scored?', 'event_shaping'],
-    ['Give CXO guidance for the selection decision.', 'cxo_guidance'],
-    ['What commercial gotchas should we avoid?', 'risk_traps'],
-    ['What baseline do we need?', 'missing_data'],
-    ['Explain expert sourcing posture for AMS.', 'expert_sourcing'],
-    ['What is the org structure implication?', 'current_state'],
-    ['How should vendors be evaluated?', 'event_shaping'],
-    ['What should the CDO steer?', 'cxo_guidance'],
-    ['What red flags are in vendor demos?', 'risk_traps'],
-    ['What required evidence is not ready?', 'missing_data'],
-    ['What is the sourcing expertise lens?', 'expert_sourcing'],
-    ['What is our financial and technology current state?', 'current_state'],
-    ['How should the event shape the scorecard?', 'event_shaping'],
-    ['What decision should the CFO make?', 'cxo_guidance'],
-    ['What failure modes should Sentinel flag?', 'risk_traps'],
-    ['What cannot proceed without more data?', 'missing_data'],
-    ['What outsourcing knowledge should Source apply?', 'expert_sourcing'],
-  ] satisfies Array<[string, SourceAnswerMode]>)('classifies %s', (prompt, mode) => {
-    expect(detectSourceAnswerMode(prompt)).toBe(mode);
-  });
+    [
+      "What is Apex current state of affairs for the CDP event?",
+      "current_state",
+    ],
+    [
+      "Summarize org structure and tech landscape for this sourcing event.",
+      "current_state",
+    ],
+    ["What should the CIO recommend before BAFO?", "cxo_guidance"],
+    ["What traps should we watch in CDP sourcing?", "risk_traps"],
+    ["What data is missing before we proceed?", "missing_data"],
+    ["How smart is Sentinel Source about IT outsourcing?", "expert_sourcing"],
+    ["What is the current financial baseline?", "current_state"],
+    ["How should the CFO shape value and pricing?", "cxo_guidance"],
+    ["Which vendor risk should we avoid?", "risk_traps"],
+    ["What gaps block a decision-grade recommendation?", "missing_data"],
+    ["How do we scope the RFP?", "event_shaping"],
+    [
+      "What does the market and corpus say about CDP sourcing?",
+      "expert_sourcing",
+    ],
+    ["What is the current tech landscape?", "current_state"],
+    ["How should this event be scored?", "event_shaping"],
+    ["Give CXO guidance for the selection decision.", "cxo_guidance"],
+    ["What commercial gotchas should we avoid?", "risk_traps"],
+    ["What baseline do we need?", "missing_data"],
+    ["Explain expert sourcing posture for AMS.", "expert_sourcing"],
+    ["What is the org structure implication?", "current_state"],
+    ["How should vendors be evaluated?", "event_shaping"],
+    ["What should the CDO steer?", "cxo_guidance"],
+    ["What red flags are in vendor demos?", "risk_traps"],
+    ["What required evidence is not ready?", "missing_data"],
+    ["What is the sourcing expertise lens?", "expert_sourcing"],
+    ["What is our financial and technology current state?", "current_state"],
+    ["How should the event shape the scorecard?", "event_shaping"],
+    ["What decision should the CFO make?", "cxo_guidance"],
+    ["What failure modes should Sentinel flag?", "risk_traps"],
+    ["What cannot proceed without more data?", "missing_data"],
+    ["What outsourcing knowledge should Source apply?", "expert_sourcing"],
+  ] satisfies Array<[string, SourceAnswerMode]>)(
+    "classifies %s",
+    (prompt, mode) => {
+      expect(detectSourceAnswerMode(prompt)).toBe(mode);
+    },
+  );
 
-  it('builds a cited CXO answer with current-state facts and CDP sourcing guidance', () => {
+  it("builds a cited CXO answer with current-state facts and CDP sourcing guidance", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: 'How should the CIO shape the CDP sourcing event?',
+      prompt: "How should the CIO shape the CDP sourcing event?",
       contextBundle,
-      userRole: 'cio',
+      userRole: "cio",
     });
 
     expect(answer).toMatchObject({
-      engineVersion: 'source-answer-engine/v1',
-      mode: 'cxo_guidance',
-      confidence: 'high',
-      recommendedNextAction: 'Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.',
+      engineVersion: "source-answer-engine/v1",
+      mode: "cxo_guidance",
+      confidence: "high",
+      recommendedNextAction:
+        "Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.",
     });
-    expect(answer?.answerText).toContain('Current state');
-    expect(answer?.answerText).toContain('CXO guidance');
-    expect(answer?.expertLens[0]).toContain('enterprise data operating model');
+    expect(answer?.answerText).toContain("Current state");
+    expect(answer?.answerText).toContain("CXO guidance");
+    expect(answer?.expertLens[0]).toContain("enterprise data operating model");
     expect(answer?.evidenceCitations.length).toBeGreaterThanOrEqual(5);
-    expect(answer?.evidenceCitations.map((citation) => citation.sourceDoc)).toEqual(
+    expect(
+      answer?.evidenceCitations.map((citation) => citation.sourceDoc),
+    ).toEqual(
       expect.arrayContaining([
-        'data-quality-baseline-2026-q1.xlsx',
-        'CDP-Round-1-Selection-Memo-2026-04-15.pdf',
+        "data-quality-baseline-2026-q1.xlsx",
+        "CDP-Round-1-Selection-Memo-2026-04-15.pdf",
       ]),
     );
   });
 
-  it('attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)', () => {
+  it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: 'How should the CIO shape the CDP sourcing event?',
+      prompt: "How should the CIO shape the CDP sourcing event?",
       contextBundle,
-      userRole: 'cio',
+      userRole: "cio",
     });
 
     const strategy = answer?.categoryStrategy;
     expect(strategy).not.toBeNull();
-    expect(strategy?.categoryId).toBe('data_ai_platform');
-    expect(strategy?.buyingMotion).toBe('competitive_rfp');
+    expect(strategy?.categoryId).toBe("data_ai_platform");
+    expect(strategy?.buyingMotion).toBe("competitive_rfp");
     // it_financials is a required input for data/AI platform and the fixture
     // live context does not load it — so it must surface as an evidence gap.
-    expect(strategy?.evidenceGaps.map((gap) => gap.segment)).toContain('it_financials');
-    expect(strategy?.classifierVersion).toBe('source-category-classifier/v1');
+    expect(strategy?.evidenceGaps.map((gap) => gap.segment)).toContain(
+      "it_financials",
+    );
+    expect(strategy?.classifierVersion).toBe("source-category-classifier/v1");
   });
 
-  it('attaches a Slice 1.3 should-cost estimate modelling the full TCO iceberg', () => {
+  it("attaches a Slice 1.3 should-cost estimate modelling the full TCO iceberg", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: 'How should the CIO shape the CDP sourcing event?',
+      prompt: "How should the CIO shape the CDP sourcing event?",
       contextBundle,
-      userRole: 'cio',
+      userRole: "cio",
     });
 
     const estimate = answer?.shouldCostEstimate;
     expect(estimate).not.toBeNull();
-    expect(estimate?.modelVersion).toBe('1.0');
-    expect(estimate?.estimateLabel).toBe('CDP Vendor Selection');
+    expect(estimate?.modelVersion).toBe("1.0");
+    expect(estimate?.estimateLabel).toBe("CDP Vendor Selection");
     // The visible quoted layer is anchored to the event value-at-stake.
     expect(estimate?.vendorQuotedCost).toBe(2_400_000);
     // The iceberg surfaces the visible layer plus seven hidden layers.
     expect(estimate?.icebergLayers.length).toBe(8);
     // Should-cost must exceed the quote once the hidden layers are modelled.
     expect(estimate?.totalHigh ?? 0).toBeGreaterThan(2_400_000);
-    expect(estimate?.headline).toContain('should-cost');
+    expect(estimate?.headline).toContain("should-cost");
   });
 
-  it('attaches a Slice 1.4 proposal-normalization matrix scoped to the event', () => {
+  it("attaches a Slice 1.4 proposal-normalization matrix scoped to the event", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: 'How should the CIO shape the CDP sourcing event?',
+      prompt: "How should the CIO shape the CDP sourcing event?",
       contextBundle,
-      userRole: 'cio',
+      userRole: "cio",
     });
 
     const matrix = answer?.proposalNormalization;
     expect(matrix).not.toBeNull();
-    expect(matrix?.eventId).toBe('apx-src-cdp-2026');
-    expect(matrix?.eventName).toBe('CDP Vendor Selection');
+    expect(matrix?.eventId).toBe("apx-src-cdp-2026");
+    expect(matrix?.eventName).toBe("CDP Vendor Selection");
     // The matrix covers all eight proposal dimensions.
     expect(matrix?.summary.totalDimensions).toBe(8);
     expect(matrix?.rows.length).toBe(8);
     // No structured vendor proposals on the bundle yet — the normalizer must
     // return the conservative "collect responses first" posture.
     expect(matrix?.summary.totalVendors).toBe(0);
-    expect(matrix?.recommendedNextAction).toContain('Collect responses');
+    expect(matrix?.recommendedNextAction).toContain("Collect responses");
+  });
+
+  it("grounds Apex AMS BAFO savings questions in the expanded Source corpus doctrine", () => {
+    const apexAmsBundle: SourceAgentContextBundle = {
+      ...contextBundle,
+      route: "/api/v1/source/apex-retail-ams-outsourcing-2026/nexus/ask",
+      sourcingArchetype: "managed_services",
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent,
+        id: SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026,
+        code: "SRC-004",
+        name: "Apex Retail AMS Outsourcing 2026",
+        accountName: "Apex Retail Group",
+        archetype: "managed_services",
+        rigor: "strategic",
+        lifecycleStatus: "active",
+        owner: "CIO Office",
+        currentStageKey: "bafo",
+        valueAtStakeUsd: 35_000_000,
+      },
+      userPrompt:
+        "How do we prove BAFO pricing savings to the CFO without overstating the number?",
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt:
+        "How do we prove BAFO pricing savings to the CFO without overstating the number?",
+      contextBundle: apexAmsBundle,
+      userRole: "cio",
+    });
+
+    const answerText = [
+      ...(answer?.expertLens ?? []),
+      ...(answer?.riskTraps ?? []),
+      ...(answer?.missingData ?? []),
+      ...(answer?.limits ?? []),
+    ].join("\n");
+
+    expect(answerText).toContain("PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER");
+    expect(answerText).toMatch(/savings|evidence/i);
+    expect(answerText).toContain("global doctrine");
+    expect(answer?.limits).toContain(
+      "Corpus guidance is global doctrine; tenant, vendor, benchmark, and savings claims still require cited evidence.",
+    );
   });
 });
