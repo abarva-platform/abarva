@@ -35,6 +35,8 @@ export default async function ResponsibleAiAcknowledgmentPage() {
         consentText: '',
         storageAvailable: false,
         acceptedAt: null,
+        expiresAt: null,
+        reacknowledgmentIntervalDays: 365,
         reason: 'storage_unavailable' as const,
       };
   if (!status.required) redirect('/home');
@@ -93,6 +95,7 @@ export default async function ResponsibleAiAcknowledgmentPage() {
         </div>
         <ResponsibleAiAcknowledgmentForm
           clientName={clientName}
+          reason={status.reason}
           storageAvailable={status.storageAvailable}
         />
       </section>
