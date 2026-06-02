@@ -42,7 +42,8 @@ describe('DESROUTE3 admin shell enforcement', () => {
     const sidebarSource = read(adminSidebar);
     expect(sidebarSource).toContain('data-admin-sidebar="true"');
     expect(sidebarSource).toContain('ADMIN_SUB_SECTIONS');
-    expect(sidebarSource).toContain('Setup · Admin');
+    expect(sidebarSource).toContain('Admin workspace');
+    expect(sidebarSource).not.toContain('Setup · Admin');
   });
 
   it('admin left menu stays inside admin-canvas routes', () => {
