@@ -13,7 +13,7 @@ interface Props {
   params: Promise<{ connectorId: string }>;
 }
 
-export const metadata: Metadata = { title: 'Reconnect · Setup' };
+export const metadata: Metadata = { title: 'Reconnect · Admin' };
 
 export default async function Page({ params }: Props) {
   const { connectorId } = await params;

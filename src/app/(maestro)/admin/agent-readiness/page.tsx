@@ -33,7 +33,7 @@ import { composeAgentReadinessBlocks } from '@/lib/admin/agent-readiness-compose
 import { SPACING } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Agent Readiness | AbarVa Setup',
+  title: 'Agent Readiness | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -85,7 +85,7 @@ export default async function AgentReadinessPage({
         }}
       >
         <PageHead
-          eyebrow={`Setup · Agent Readiness · ${tenant.tenantName}`}
+          eyebrow={`Admin · Agent Readiness · ${tenant.tenantName}`}
           title="What your agents can confidently do today"
           lede="Per-agent state, segment-by-capability map, and what closes each gap."
         />

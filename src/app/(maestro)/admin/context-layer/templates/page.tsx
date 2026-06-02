@@ -4,7 +4,7 @@ import {
   getTemplateFormatCoverage,
 } from '@/lib/context-ingestion/template-registry';
 
-export const metadata = { title: 'Context Templates | AbarVa Setup' };
+export const metadata = { title: 'Context Templates | AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -32,7 +32,7 @@ export default function ContextTemplatesPage() {
       <section style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gap: 18 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', margin: 0 }}>
-            Setup · Context templates
+            Admin · Context templates
           </p>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42, margin: '4px 0 0' }}>
             Context template explorer

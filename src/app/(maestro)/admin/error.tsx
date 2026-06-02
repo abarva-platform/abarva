@@ -95,7 +95,7 @@ function UnresolvedTenantPanel({
                 marginBottom: 12,
               }}
             >
-              We couldn&apos;t identify your active tenant for the Setup / Admin
+              We couldn&apos;t identify your active tenant for the Admin workspace
               control plane. Please switch tenants or sign out and back in.
             </div>
 

@@ -1,7 +1,7 @@
 import { getActiveClientRow } from '@/lib/active-client';
 import { getTenantPendingChunks } from '@/lib/context-ingestion/tenant-context-read-model';
 
-export const metadata = { title: 'Context Approval Queue | AbarVa Setup' };
+export const metadata = { title: 'Context Approval Queue | AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -23,7 +23,7 @@ export default async function ContextApprovalQueuePage() {
       <section style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gap: 18 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
-            Setup · Approval queue
+            Admin · Approval queue
           </p>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42, margin: 0 }}>
             {activeClient ? `${activeClient.name} approval queue` : 'Approval queue'}

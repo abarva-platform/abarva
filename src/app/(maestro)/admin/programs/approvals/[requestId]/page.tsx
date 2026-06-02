@@ -21,7 +21,7 @@ import { safeApprovalActorLabel } from '@/lib/programs/approval-display';
 import { notifySponsorAction } from '../_actions/notify-sponsor';
 import { escalateApprovalAction } from '../_actions/escalate-approval';
 
-export const metadata = { title: 'Review Approval · AbarVa Setup' };
+export const metadata = { title: 'Review Approval · AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
