@@ -74,6 +74,18 @@ export interface CrawlComparison {
 
 export const FORBIDDEN_TENANT_REFERENCES = ["Heliara", "Arcturus"] as const;
 
+const TENANT_SPECIFIC_FORBIDDEN_REFERENCES: Partial<
+  Record<CrawlPageObservation["tenantKey"], readonly string[]>
+> = {
+  skyharbor: [
+    "Clinical care",
+    "ambient AI",
+    "MH-07",
+    "Innovaccer",
+    "revenue cycle",
+  ],
+};
+
 export const GENERIC_TENANT_REFERENCES = [
   "generic tenant",
   "sample client",
@@ -149,6 +161,20 @@ export function comparePage(
       "tenant-leakage",
       `Forbidden tenant/demo reference(s) found: ${forbidden.join(", ")}.`,
       { forbidden },
+    );
+  }
+
+  const tenantForbidden = (
+    TENANT_SPECIFIC_FORBIDDEN_REFERENCES[observation.tenantKey] ?? []
+  ).filter((term) =>
+    new RegExp(`\\b${escapeRegex(term)}\\b`, "i").test(observation.visibleText),
+  );
+  if (tenantForbidden.length > 0) {
+    add(
+      "P0",
+      "tenant-specific-leakage",
+      `Forbidden ${observation.expectedTenantName} cross-tenant reference(s) found: ${tenantForbidden.join(", ")}.`,
+      { forbidden: tenantForbidden },
     );
   }
 
