@@ -57,6 +57,7 @@ untracked documents.
 | Prepare security review material | `docs/security/`, `docs/compliance/` | `docs/architecture/ai/ENTERPRISE-AI-READINESS-ROADMAP.md`, `docs/releases/records/` |
 | Prepare a sales engineering conversation | `docs/gtm/sales-engineering-toolkit/README.md` | `docs/demo/ABARVA_BOARDROOM_DEMO_SCRIPT.md`, `docs/pilot/SECURITY_POSTURE.md`, `docs/gtm/D1-NARRATIVE-AND-VALUE-PROP.md` |
 | Find pilot/customer context | `docs/pilot/`, `docs/enterprise-context/`, `docs/build/` | Current release records and tracker notes |
+| Pin or audit a corpus release | `docs/runbooks/corpus-release-manifest.md` | `docs/knowledge-corpus/releases/README.md`, `docs/knowledge-corpus/PROVENANCE_AND_VERSIONING.md` |
 
 ## 4. Ownership Rules
 
