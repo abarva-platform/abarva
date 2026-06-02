@@ -29,6 +29,7 @@ Adds a Lighthouse CI gate for public routes so Core Web Vitals and buyer-facing 
 
 - `.github/workflows/lighthouse-ci.yml`
 - `.lighthouserc.cjs`
+- `docs/compliance/license-policy.json`
 - `package.json`
 - `package-lock.json`
 - `docs/runbooks/lighthouse-ci.md`
@@ -43,6 +44,7 @@ Adds a Lighthouse CI gate for public routes so Core Web Vitals and buyer-facing 
 - Passed: `npm run release:check -- --base origin/main --head HEAD`
 - Passed: `git diff --check`
 - Passed: `npm run secrets:staged`
+- Passed: `npm run compliance:supply-chain` after adding the `parse-cache-control@1.0.1` dev-only transitive license exception required by `@lhci/cli`; result was `0 denied`, `0 unclassified`, `43 review`, `4 exceptions`.
 
 ## Rollout Plan
 
@@ -60,4 +62,4 @@ Revert the PR to remove the workflow, LHCI config, npm script, dependency, runbo
 
 ## Known Gaps
 
-Thresholds are intentionally conservative for the first gate. The homepage CLS baseline is currently high, so the CLS threshold is a regression ceiling and should be tightened after the underlying layout shift is fixed.
+Thresholds are intentionally conservative for the first gate. The homepage CLS baseline is currently high, so the CLS threshold is a regression ceiling and should be tightened after the underlying layout shift is fixed. `@lhci/cli` introduces `parse-cache-control@1.0.1`, a dev-only transitive package with no license metadata in `package-lock.json`; it is recorded as a named license-policy exception pending review.
