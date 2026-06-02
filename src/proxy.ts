@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import type { NextFetchEvent, NextRequest } from 'next/server'
 import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
@@ -156,6 +156,10 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
 
 const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
 
+function shouldBypassClerkForAxe(request: NextRequest) {
+  return process.env.ACCESSIBILITY_AXE_DISABLE_CLERK === '1' && isPublicRoute(request)
+}
+
 function createSignInRedirect(request: NextRequest) {
   const url = new URL('/sign-in', request.url)
   const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`
@@ -178,7 +182,7 @@ function withProductionReadinessNoStoreHeaders<T extends NextResponse>(request: 
   return response
 }
 
-export default clerkMiddleware(async (auth, request: NextRequest) => {
+const clerkProtectedProxy = clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const metadata = (sessionClaims?.publicMetadata as { role?: string; clientId?: string; defaultClientId?: string } | undefined) ?? {}
   const metadataRole = metadata.role ?? null
@@ -378,6 +382,23 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   if (response) return response
 })
+
+export default function proxy(request: NextRequest, event: NextFetchEvent) {
+  if (shouldBypassClerkForAxe(request)) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-abarva-accessibility-axe', '1')
+
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+    response.cookies.delete(ACTIVE_CLIENT_COOKIE)
+    return response
+  }
+
+  return clerkProtectedProxy(request, event)
+}
 
 export const config = {
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)', '/training/:path*'],

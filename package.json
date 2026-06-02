@@ -26,6 +26,7 @@
     "test:atlas-eval": "TS_NODE_BASEURL=. TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node -r tsconfig-paths/register src/__tests__/atlas-eval/run-eval.ts",
     "atlas:eval": "jest src/__tests__/integration/atlas/atlas-invariants.test.ts src/__tests__/integration/atlas/atlas-golden.test.ts",
     "test:e2e": "playwright test",
+    "accessibility:axe": "playwright test --config=playwright.accessibility.config.ts",
     "test:e2e:intelligence": "playwright test tests/e2e/intelligence-*.spec.ts",
     "test:e2e:phase-0": "playwright test tests/e2e/programs-phase-0.spec.ts",
     "test:e2e:prod": "BASE_URL=https://nexus-vert-kappa.vercel.app playwright test",
@@ -250,6 +251,7 @@
     "stripe": "^22.0.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@nogoo9/gitleaks": "^8.30.1-post.2",
