@@ -8,6 +8,7 @@ import {
   resolvePostSignInPath,
   resolveSessionClientKey,
   resolveSessionRole,
+  shouldDenySourceEventSlugForActiveClient,
   shouldDenySourceEventSlugForPinnedClient,
   shouldStripUnauthorizedClientParam,
 } from '@/lib/auth/access-routing';
@@ -132,6 +133,13 @@ describe('access-routing', () => {
         'apex-retail-ams-outsourcing-2026',
       ),
     ).toBe(false);
+  });
+
+  test('denies Source event slugs that conflict with the active client cookie', () => {
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'apex-retail-ams-outsourcing-2026')).toBe(true);
+    expect(shouldDenySourceEventSlugForActiveClient('apexretail', 'apex-retail-ams-outsourcing-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('unknown', 'apex-retail-ams-outsourcing-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'source-event-without-tenant-hint')).toBe(false);
   });
 
   test('routes external users to the public surface', () => {

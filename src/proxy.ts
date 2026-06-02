@@ -1,7 +1,14 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextFetchEvent, NextRequest } from 'next/server'
-import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldDenySourceEventSlugForPinnedClient, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
+import {
+  isExternalOnlyRole,
+  resolvePinnedSessionClientKey,
+  resolveSessionRole,
+  shouldDenySourceEventSlugForActiveClient,
+  shouldDenySourceEventSlugForPinnedClient,
+  shouldStripUnauthorizedClientParam,
+} from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
@@ -205,6 +212,7 @@ const clerkProtectedProxy = clerkMiddleware(async (auth, request: NextRequest) =
   const email = (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ?? null
   const role = resolveSessionRole(metadataRole, email)
   const requestedClientId = request.nextUrl.searchParams.get('client')
+  const activeClientId = request.cookies.get(ACTIVE_CLIENT_COOKIE)?.value ?? null
 
   // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
   // /admin/* is the single canonical route tree for the Setup/Admin
@@ -354,15 +362,16 @@ const clerkProtectedProxy = clerkMiddleware(async (auth, request: NextRequest) =
   if (
     requiresAuth
     && sourceEventSlug
-    && shouldDenySourceEventSlugForPinnedClient(
-      role,
-      {
-        clientId: metadata.clientId,
-        defaultClientId: metadata.defaultClientId,
-        email,
-      },
-      sourceEventSlug,
-    )
+    && (shouldDenySourceEventSlugForActiveClient(activeClientId, sourceEventSlug) ||
+      shouldDenySourceEventSlugForPinnedClient(
+        role,
+        {
+          clientId: metadata.clientId,
+          defaultClientId: metadata.defaultClientId,
+          email,
+        },
+        sourceEventSlug,
+      ))
   ) {
     return createGenericNotFoundResponse()
   }

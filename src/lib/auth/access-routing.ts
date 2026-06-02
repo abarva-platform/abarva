@@ -133,6 +133,16 @@ export function shouldDenySourceEventSlugForPinnedClient(
   return eventClientKey !== pinnedClientId;
 }
 
+export function shouldDenySourceEventSlugForActiveClient(
+  activeClientId: string | null | undefined,
+  eventSlug: string | null | undefined,
+): boolean {
+  if (!isClientKey(activeClientId)) return false;
+  const eventClientKey = inferSourceEventClientKeyFromSlug(eventSlug);
+  if (!eventClientKey) return false;
+  return eventClientKey !== activeClientId;
+}
+
 export function isExternalOnlyRole(role: AppSessionRole): role is 'external' {
   return role === 'external';
 }

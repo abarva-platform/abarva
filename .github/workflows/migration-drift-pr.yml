@@ -6,10 +6,6 @@ name: Migration drift · PR check
 
 on:
   pull_request:
-    paths:
-      - 'supabase/migrations/**'
-      - 'src/scripts/run-migrations.ts'
-      - 'package.json'
 
 jobs:
   check:
