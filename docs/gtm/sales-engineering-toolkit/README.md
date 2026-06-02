@@ -18,6 +18,7 @@ story across unrelated documents.
 | [Demo script](demo-script.md) | 30-minute sales-engineering demo run of show. | `docs/demo/ABARVA_BOARDROOM_DEMO_SCRIPT.md`, `docs/demo/SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md` |
 | [ROI calculator template](roi-calculator-template.md) | Discovery worksheet for estimating value-at-stake, implementation cost, and payback. | `docs/gtm/D2-MONETIZATION-TIERS.md`, `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` |
 | [Security one-pager](security-one-pager.md) | First-pass response for security and procurement teams. | `docs/pilot/SECURITY_POSTURE.md`, `docs/security/INFOSEC-ACCELERATOR.md`, `docs/pilot/SECURITY_CONTROLS_MATRIX.md` |
+| [Competitive intelligence brief](../COMPETITIVE_INTELLIGENCE.md) | Internal differentiation against Glean, Hebbia, Writer, Anthropic, BCG, and McKinsey. | Public/official competitor pages checked on 2026-06-02. |
 
 ## How To Use
 
