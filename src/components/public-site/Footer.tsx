@@ -9,6 +9,7 @@ const TRUST_LINKS = [
   { label: 'Responsible AI', href: '/responsible-ai/' },
   { label: 'Model card', href: '/model-card/' },
   { label: 'Known limitations', href: '/known-limitations/' },
+  { label: 'Subprocessors', href: '/subprocessors/' },
   { label: 'Contact', href: '/contact/' },
 ] as const;
 
