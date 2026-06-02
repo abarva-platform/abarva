@@ -263,11 +263,15 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
           @media (max-width: 1120px) {
             [data-setup-grid="hero"],
             [data-setup-grid="command"],
+            [data-setup-grid="reload"],
             [data-setup-grid="studio"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
             [data-setup-grid="dimensions"] {
               grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+            [data-reload-step-grid] {
+              grid-template-columns: minmax(0, 1fr) !important;
             }
           }
           @media (max-width: 700px) {
@@ -316,7 +320,7 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
           >
             Start with the business dimension you want to load. The studio
             walks each one through consent, upload, validation, approval, and
-            commit. Private data plane ready.
+            commit for this client only. Private data plane ready.
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
             {primaryButton(
@@ -430,6 +434,212 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
               {primaryDimension.primaryAction.label} →
             </a>
           ) : null}
+        </aside>
+      </section>
+
+      <section
+        data-setup-grid="reload"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.45fr) minmax(320px, 0.55fr)",
+          gap: 16,
+          alignItems: "stretch",
+        }}
+        aria-label="Single-client reload command plan"
+      >
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+          <div
+            style={{
+              padding: "16px 18px",
+              borderBottom: `1px solid ${COLORS.ink}14`,
+              display: "grid",
+              gap: 8,
+            }}
+          >
+            <span style={labelStyle()}>Single-client reload</span>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              Reload command plan
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                color: `${COLORS.ink}a0`,
+                fontSize: 13,
+                lineHeight: 1.45,
+                maxWidth: 820,
+              }}
+            >
+              {model.singleClientBoundary.assertion}
+            </p>
+          </div>
+          <div style={{ display: "grid" }}>
+            {model.reloadCommandPlan.map((step, index) => (
+              <div
+                key={step.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "34px minmax(0, 1fr)",
+                  gap: 14,
+                  padding: "15px 18px",
+                  borderTop:
+                    index === 0 ? undefined : `1px solid ${COLORS.ink}0e`,
+                }}
+              >
+                <span style={labelStyle(`${COLORS.ink}70`)}>
+                  {step.stage}
+                </span>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <strong style={{ fontSize: 14, fontWeight: 650 }}>
+                      {step.operatorAction}
+                    </strong>
+                    {statusPill(step.status)}
+                  </div>
+                  <div
+                    data-reload-step-grid
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                      gap: 10,
+                    }}
+                  >
+                    {[
+                      ["Azure/system", step.azureOrSystemAction],
+                      ["Required check", step.requiredCheck],
+                      ["Approval/comms", step.approvalOrCommunication],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        style={{
+                          border: `1px solid ${COLORS.ink}10`,
+                          borderRadius: RADIUS.sm,
+                          padding: "9px 10px",
+                          background: COLORS.cream,
+                          display: "grid",
+                          gap: 4,
+                        }}
+                      >
+                        <span style={labelStyle(`${COLORS.ink}70`)}>
+                          {label}
+                        </span>
+                        <span
+                          style={{
+                            color: `${COLORS.ink}a8`,
+                            fontSize: 12,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside
+          style={{
+            ...cardStyle,
+            padding: 18,
+            display: "grid",
+            gap: 14,
+            alignContent: "start",
+          }}
+        >
+          <div style={{ display: "grid", gap: 6 }}>
+            <span style={labelStyle()}>Boundary</span>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 18,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              {model.singleClientBoundary.label}
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                color: `${COLORS.ink}a0`,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+              }}
+            >
+              {model.singleClientBoundary.denialRule}
+            </p>
+          </div>
+          <div style={{ display: "grid", gap: 7 }}>
+            <span style={labelStyle()}>Exception intake</span>
+            <p
+              style={{
+                margin: 0,
+                color: `${COLORS.ink}a0`,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+              }}
+            >
+              {model.exceptionIntake.rule}
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {model.exceptionIntake.supportedFormats.map(chip)}
+            </div>
+          </div>
+          <details
+            style={{
+              border: `1px solid ${COLORS.ink}14`,
+              borderRadius: RADIUS.sm,
+              padding: "10px 12px",
+              background: COLORS.cream,
+            }}
+          >
+            <summary
+              style={{
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 700,
+                color: COLORS.ink,
+              }}
+            >
+              Required exception metadata
+            </summary>
+            <ul
+              style={{
+                margin: "10px 0 0",
+                paddingLeft: 18,
+                color: `${COLORS.ink}a8`,
+                fontSize: 12,
+                lineHeight: 1.55,
+              }}
+            >
+              {model.exceptionIntake.metadataRequirements
+                .slice(0, 9)
+                .map((requirement) => (
+                  <li key={requirement}>{requirement}</li>
+                ))}
+            </ul>
+          </details>
+          {ghostButton(
+            model.exceptionIntake.clarificationQueueHref,
+            "Open clarification queue",
+          )}
         </aside>
       </section>
 

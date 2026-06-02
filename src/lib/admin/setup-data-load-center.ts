@@ -8,6 +8,7 @@ import {
 import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
 import {
   NORTHSTAR_CONTEXT_TEMPLATES,
+  SUPPORTED_CONTEXT_UPLOAD_FORMATS,
   type ContextTemplateDefinition,
 } from "@/lib/context-ingestion/template-registry";
 import { validateExtractedFacts } from "@/lib/context-ingestion/validation-engine";
@@ -104,6 +105,13 @@ export interface SetupDataLoadCenterModel {
     tenantName: string;
     vertical: string;
   };
+  singleClientBoundary: {
+    label: string;
+    assertion: string;
+    activeClientId: string;
+    activeClientKey: ClientKey;
+    denialRule: string;
+  };
   metrics: {
     rehearsalGates: number;
     setupSegments: number;
@@ -171,6 +179,21 @@ export interface SetupDataLoadCenterModel {
     apiPath: string;
     status: DataLoadGateStatus;
   }>;
+  reloadCommandPlan: ReadonlyArray<{
+    id: string;
+    stage: string;
+    operatorAction: string;
+    azureOrSystemAction: string;
+    requiredCheck: string;
+    approvalOrCommunication: string;
+    status: DataLoadGateStatus;
+  }>;
+  exceptionIntake: {
+    supportedFormats: ReadonlyArray<string>;
+    metadataRequirements: ReadonlyArray<string>;
+    rule: string;
+    clarificationQueueHref: string;
+  };
   dimensionCatalog: ReadonlyArray<DataLoadDimensionCatalogItem>;
   templateRows: ReadonlyArray<DataLoadTemplateRow>;
   dimensionReadiness: ReadonlyArray<{
@@ -322,9 +345,9 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     label: "Validate template fit",
     stage: "Validate",
     operatorAction:
-      "Check required fields, schema mismatches, and evidence locators before approval.",
+      "Check required fields, schema mismatches, unknown columns, and evidence locators before approval.",
     control: "Template validation",
-    href: null,
+    href: "/admin/context-layer/approval-queue",
     apiPath: "src/lib/context-ingestion/validation-engine.ts",
     status: "ready",
   },
@@ -351,6 +374,95 @@ const WORKFLOW_CONTROLS: SetupDataLoadCenterModel["workflowControls"] = [
     status: "monitored",
   },
 ];
+
+function buildReloadCommandPlan(): SetupDataLoadCenterModel["reloadCommandPlan"] {
+  return [
+    {
+      id: "scope-client",
+      stage: "1",
+      operatorAction:
+        "Confirm the active client at the top of Admin before selecting any dimension.",
+      azureOrSystemAction:
+        "Tenant resolver pins every load run to the active client id and client key.",
+      requiredCheck:
+        "Reject any request whose submitted client id differs from the active Admin tenant.",
+      approvalOrCommunication:
+        "Show the client name in every load, approval, notification, and export.",
+      status: "ready",
+    },
+    {
+      id: "choose-template",
+      stage: "2",
+      operatorAction:
+        "Pick a dimension template, or mark the file as a controlled exception.",
+      azureOrSystemAction:
+        "Template registry selects row parser, workbook parser, JSON parser, document fact parser, slide fact parser, or archive manifest path.",
+      requiredCheck:
+        "Canonical fields, owner, cadence, sensitivity, and parser mode must be known before upload can proceed.",
+      approvalOrCommunication:
+        "Exception files pause in the clarification queue until metadata is complete.",
+      status: "ready",
+    },
+    {
+      id: "attest-upload",
+      stage: "3",
+      operatorAction:
+        "Accept the data-load disclaimer, declare sensitivity, and upload files for this client only.",
+      azureOrSystemAction:
+        "Azure Blob landing-zone event carries tenantClientKey, segmentKey, storage path, hash, classification, and producer metadata.",
+      requiredCheck:
+        "Attestation, uploader, timestamp, file hash, and dimension are written before processing starts.",
+      approvalOrCommunication:
+        "Uploader sees the accepted/quarantined state and the approver receives an in-app/email notification when configured.",
+      status: "monitored",
+    },
+    {
+      id: "scan-parse",
+      stage: "4",
+      operatorAction:
+        "Review quarantine holds or processing anomalies before any parse is committed.",
+      azureOrSystemAction:
+        "Defender/Purview-style malware and restricted-data scans run before native parsers and Azure Document Intelligence-style document extraction.",
+      requiredCheck:
+        "PHI, PII, payment-card, DOB, malware, schema drift, and parser confidence gates must be clean or triaged.",
+      approvalOrCommunication:
+        "Quarantine and anomaly cases notify data reviewer and block commit while open.",
+      status: "needs_configuration",
+    },
+    {
+      id: "approve-commit",
+      stage: "5",
+      operatorAction:
+        "Preview extracted rows/facts, answer schema clarifications, then approve commit with rationale.",
+      azureOrSystemAction:
+        "Approved data commits to the client-scoped Postgres/search substrate with provenance, freshness, sensitivity, and source locators.",
+      requiredCheck:
+        "No open quarantine, no unresolved schema clarification, approval captured, and idempotency conflict cleared.",
+      approvalOrCommunication:
+        "Admins are notified when processing is done; outputs and deliverables become visible from Admin explorers.",
+      status: "monitored",
+    },
+  ];
+}
+
+function buildExceptionIntake(): SetupDataLoadCenterModel["exceptionIntake"] {
+  const metadata = new Set<string>();
+  for (const template of NORTHSTAR_CONTEXT_TEMPLATES) {
+    for (const requirement of template.exceptionMetadataRequirements) {
+      metadata.add(requirement.label);
+    }
+  }
+
+  return {
+    supportedFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) =>
+      format.toUpperCase(),
+    ),
+    metadataRequirements: [...metadata],
+    rule:
+      "A nonmatching client file can be accepted only as a controlled exception; processing pauses until owner, sensitivity, parser instructions, field/page/sheet mapping, and authoritative source context are complete.",
+    clarificationQueueHref: "/admin/context-layer/approval-queue",
+  };
+}
 
 const PILOT_VERIFIER_HOPS = [
   {
@@ -931,6 +1043,15 @@ export function buildSetupDataLoadCenterModel(args: {
       tenantName: args.tenantName,
       vertical: tenantOption.vertical,
     },
+    singleClientBoundary: {
+      label: `${args.tenantName} only`,
+      assertion:
+        "Data loading is strictly limited to the active client. No cross-client batch load, shared staging selection, or tenant override is exposed from Admin.",
+      activeClientId: args.clientId,
+      activeClientKey: args.clientKey,
+      denialRule:
+        "If submitted client identity does not match the resolved Admin tenant, the request must fail before storage, parsing, indexing, notification, or commit.",
+    },
     metrics: {
       rehearsalGates: REHEARSAL_GATES.length,
       setupSegments: SEGMENT_KEYS.length,
@@ -963,6 +1084,8 @@ export function buildSetupDataLoadCenterModel(args: {
     }),
     rehearsalGates: REHEARSAL_GATES,
     workflowControls: WORKFLOW_CONTROLS,
+    reloadCommandPlan: buildReloadCommandPlan(),
+    exceptionIntake: buildExceptionIntake(),
     dimensionCatalog: buildDimensionCatalog(templateRows, dimensionReadiness),
     templateRows,
     dimensionReadiness,
