@@ -1,15 +1,214 @@
 import type { ContextDimension, UploadedFileFormat } from './types';
 
+export type TemplateParserMode =
+  | 'structured_rows'
+  | 'workbook_sheets'
+  | 'document_facts'
+  | 'slide_facts'
+  | 'json_records'
+  | 'batch_archive';
+
+export interface TemplateFormatSupportProfile {
+  format: Exclude<UploadedFileFormat, 'unknown'>;
+  parserMode: TemplateParserMode;
+  parserLabel: string;
+  requiresMetadataForException: boolean;
+}
+
+export interface TemplateExceptionMetadataRequirement {
+  key: string;
+  label: string;
+  purpose: string;
+  requiredForFormats: Exclude<UploadedFileFormat, 'unknown'>[];
+}
+
 export interface ContextTemplateDefinition {
   id: string;
   dimension: ContextDimension;
   label: string;
   acceptedFormats: UploadedFileFormat[];
+  exceptionFormats: Exclude<UploadedFileFormat, 'unknown'>[];
+  formatProfiles: TemplateFormatSupportProfile[];
   requiredFields: string[];
   optionalFields: string[];
   ownerRole: string;
   refreshCadence: string;
+  exceptionMetadataRequirements: TemplateExceptionMetadataRequirement[];
   unlocks: string[];
+}
+
+export const SUPPORTED_CONTEXT_UPLOAD_FORMATS: Exclude<UploadedFileFormat, 'unknown'>[] = [
+  'csv',
+  'xlsx',
+  'json',
+  'jsonl',
+  'pdf',
+  'docx',
+  'pptx',
+  'markdown',
+  'zip',
+];
+
+const FORMAT_SUPPORT_PROFILES: Record<
+  Exclude<UploadedFileFormat, 'unknown'>,
+  TemplateFormatSupportProfile
+> = {
+  csv: {
+    format: 'csv',
+    parserMode: 'structured_rows',
+    parserLabel: 'Delimited table with header row and deterministic column mapping',
+    requiresMetadataForException: false,
+  },
+  xlsx: {
+    format: 'xlsx',
+    parserMode: 'workbook_sheets',
+    parserLabel: 'Workbook sheets with sheet map, header row, units, and grain',
+    requiresMetadataForException: false,
+  },
+  json: {
+    format: 'json',
+    parserMode: 'json_records',
+    parserLabel: 'JSON records with declared root path and field mapping',
+    requiresMetadataForException: true,
+  },
+  jsonl: {
+    format: 'jsonl',
+    parserMode: 'json_records',
+    parserLabel: 'Line-delimited JSON records with declared record path and field mapping',
+    requiresMetadataForException: true,
+  },
+  pdf: {
+    format: 'pdf',
+    parserMode: 'document_facts',
+    parserLabel: 'Document facts with page anchors, section scope, and metric dictionary',
+    requiresMetadataForException: true,
+  },
+  docx: {
+    format: 'docx',
+    parserMode: 'document_facts',
+    parserLabel: 'Document facts with heading anchors, section scope, and metric dictionary',
+    requiresMetadataForException: true,
+  },
+  pptx: {
+    format: 'pptx',
+    parserMode: 'slide_facts',
+    parserLabel: 'Slide facts with slide anchors, KPI callouts, and source notes',
+    requiresMetadataForException: true,
+  },
+  markdown: {
+    format: 'markdown',
+    parserMode: 'document_facts',
+    parserLabel: 'Markdown facts with heading anchors and explicit source links',
+    requiresMetadataForException: true,
+  },
+  zip: {
+    format: 'zip',
+    parserMode: 'batch_archive',
+    parserLabel: 'Batch archive with manifest, per-file template mapping, and quarantine scan',
+    requiresMetadataForException: true,
+  },
+};
+
+const BASE_EXCEPTION_METADATA: TemplateExceptionMetadataRequirement[] = [
+  {
+    key: 'source_system',
+    label: 'Source system',
+    purpose: 'Names the system, report, or team that produced the file.',
+    requiredForFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+  },
+  {
+    key: 'data_owner',
+    label: 'Data owner',
+    purpose: 'Identifies the human accountable for the load and later clarification.',
+    requiredForFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+  },
+  {
+    key: 'sensitivity_declaration',
+    label: 'Sensitivity declaration',
+    purpose: 'Confirms whether the file contains PHI, PII, payroll, contract, financial, or regulated data.',
+    requiredForFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+  },
+  {
+    key: 'field_mapping',
+    label: 'Field mapping',
+    purpose: 'Maps client columns, JSON paths, pages, headings, or slide callouts to AbarVa template fields.',
+    requiredForFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+  },
+  {
+    key: 'parse_instructions',
+    label: 'Parse instructions',
+    purpose: 'Explains exclusions, rollups, fiscal calendar, units, and any client-specific conventions.',
+    requiredForFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+  },
+];
+
+const STRUCTURED_EXCEPTION_METADATA: TemplateExceptionMetadataRequirement[] = [
+  {
+    key: 'record_grain',
+    label: 'Record grain',
+    purpose: 'Defines whether each row is an app, vendor, person, metric-period, site, incident, or initiative.',
+    requiredForFormats: ['csv', 'xlsx', 'json', 'jsonl'],
+  },
+  {
+    key: 'header_row',
+    label: 'Header row or record path',
+    purpose: 'Names the workbook sheet/header row or JSON path that contains the canonical records.',
+    requiredForFormats: ['xlsx', 'json', 'jsonl'],
+  },
+];
+
+const DOCUMENT_EXCEPTION_METADATA: TemplateExceptionMetadataRequirement[] = [
+  {
+    key: 'document_purpose',
+    label: 'Document purpose',
+    purpose: 'Declares whether the document is annual results, KPI evidence, org structure, contract evidence, or strategy context.',
+    requiredForFormats: ['pdf', 'docx', 'pptx', 'markdown'],
+  },
+  {
+    key: 'authoritative_sections',
+    label: 'Authoritative sections',
+    purpose: 'Names the pages, headings, tables, or slides AbarVa should treat as authoritative.',
+    requiredForFormats: ['pdf', 'docx', 'pptx', 'markdown'],
+  },
+  {
+    key: 'metric_dictionary',
+    label: 'Metric dictionary',
+    purpose: 'Defines KPI names, formulas, currencies, units, time periods, and source-of-truth precedence.',
+    requiredForFormats: ['pdf', 'docx', 'pptx', 'markdown'],
+  },
+];
+
+const ARCHIVE_EXCEPTION_METADATA: TemplateExceptionMetadataRequirement[] = [
+  {
+    key: 'archive_manifest',
+    label: 'Archive manifest',
+    purpose: 'Lists every file in a batch, expected template, sensitivity class, and owner.',
+    requiredForFormats: ['zip'],
+  },
+];
+
+function buildExceptionMetadataRequirements(
+  acceptedFormats: UploadedFileFormat[],
+): TemplateExceptionMetadataRequirement[] {
+  const accepted = new Set(acceptedFormats);
+  const all = [
+    ...BASE_EXCEPTION_METADATA,
+    ...STRUCTURED_EXCEPTION_METADATA,
+    ...DOCUMENT_EXCEPTION_METADATA,
+    ...ARCHIVE_EXCEPTION_METADATA,
+  ];
+  return all.filter((requirement) =>
+    requirement.requiredForFormats.some(
+      (format) => !accepted.has(format) || FORMAT_SUPPORT_PROFILES[format].requiresMetadataForException,
+    ),
+  );
+}
+
+export function getFormatSupportProfile(
+  format: UploadedFileFormat,
+): TemplateFormatSupportProfile | null {
+  if (format === 'unknown') return null;
+  return FORMAT_SUPPORT_PROFILES[format] ?? null;
 }
 
 export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
@@ -36,10 +235,15 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   dimension: dimension as ContextDimension,
   label: label as string,
   acceptedFormats: acceptedFormats as UploadedFileFormat[],
+  exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+    (format) => !(acceptedFormats as UploadedFileFormat[]).includes(format),
+  ),
+  formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) => FORMAT_SUPPORT_PROFILES[format]),
   requiredFields: requiredFields as string[],
   optionalFields: optionalFields as string[],
   ownerRole: ownerRole as string,
   refreshCadence: refreshCadence as string,
+  exceptionMetadataRequirements: buildExceptionMetadataRequirements(acceptedFormats as UploadedFileFormat[]),
   unlocks: [
     'Evidence chips cite uploaded source locators',
     'Sentinel can answer tenant-grounded questions',
@@ -55,4 +259,15 @@ export function getTemplateForDimension(
   dimension: ContextDimension,
 ): ContextTemplateDefinition | null {
   return NORTHSTAR_CONTEXT_TEMPLATES.find((template) => template.dimension === dimension) ?? null;
+}
+
+export function getTemplateFormatCoverage(): Record<Exclude<UploadedFileFormat, 'unknown'>, number> {
+  return Object.fromEntries(
+    SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) => [
+      format,
+      NORTHSTAR_CONTEXT_TEMPLATES.filter(
+        (template) => template.acceptedFormats.includes(format) || template.exceptionFormats.includes(format),
+      ).length,
+    ]),
+  ) as Record<Exclude<UploadedFileFormat, 'unknown'>, number>;
 }
