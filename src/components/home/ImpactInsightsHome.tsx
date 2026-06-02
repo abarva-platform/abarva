@@ -1,26 +1,26 @@
-import type { CSSProperties } from 'react';
-import Link from 'next/link';
+import type { CSSProperties } from "react";
+import Link from "next/link";
 
-import { AppShell } from '@/components/shell/AppShell';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import type { HomeBrief } from '@/lib/home/home-brief';
+import { AppShell } from "@/components/shell/AppShell";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import type { HomeBrief } from "@/lib/home/home-brief";
 
 const C = {
-  paper: '#F6F1EA',
-  panel: '#FFFFFF',
-  panelSoft: '#FBF8F2',
-  ink: '#0C1A3A',
-  body: '#27324A',
-  muted: '#69758A',
-  faint: '#8B95A8',
-  line: '#E6DFD6',
-  lineStrong: '#D0C5B8',
-  amber: '#9A5A00',
-  red: '#9F3E3B',
-  green: '#0E7668',
+  paper: "#F6F1EA",
+  panel: "#FFFFFF",
+  panelSoft: "#FBF8F2",
+  ink: "#0C1A3A",
+  body: "#27324A",
+  muted: "#69758A",
+  faint: "#8B95A8",
+  line: "#E6DFD6",
+  lineStrong: "#D0C5B8",
+  amber: "#9A5A00",
+  red: "#9F3E3B",
+  green: "#0E7668",
 };
 
-const toneColor: Record<HomeBrief['portfolio'][number]['tone'], string> = {
+const toneColor: Record<HomeBrief["portfolio"][number]["tone"], string> = {
   ok: C.green,
   risk: C.red,
   gate: C.amber,
@@ -36,7 +36,7 @@ function InsightConstellation() {
       height="22"
       viewBox="0 0 22 22"
       aria-hidden
-      style={{ flex: 'none' }}
+      style={{ flex: "none" }}
     >
       <circle cx="11" cy="11" r="3" fill={C.ink} />
       <circle cx="4" cy="5" r="1.5" fill={C.faint} />
@@ -64,12 +64,20 @@ export function ImpactInsightsHome({
   // fabricated timestamps): the pending decision + at-risk initiatives.
   const attention = [
     ...(decision
-      ? [{ module: 'Decision', text: decision.question.replace(/^Review and decide:\s*/, '') }]
+      ? [
+          {
+            module: "Decision",
+            text: decision.question.replace(/^Review and decide:\s*/, ""),
+          },
+        ]
       : []),
     ...portfolio
-      .filter((row) => row.tone === 'risk')
+      .filter((row) => row.tone === "risk")
       .slice(0, 3)
-      .map((row) => ({ module: row.stage, text: `${row.name} — ${row.status}` })),
+      .map((row) => ({
+        module: row.stage,
+        text: `${row.name} — ${row.status}`,
+      })),
   ];
 
   return (
@@ -78,21 +86,21 @@ export function ImpactInsightsHome({
       topBarProps={{
         tenantName: activeTenantName,
         showLocked: hasTenantKey,
-        context: 'Home',
+        context: "Home",
       }}
       hasTenantKey={hasTenantKey}
       middleStrip={
         <div
           data-testid="home-impact-strip"
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 10,
-            width: '100%',
+            width: "100%",
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: SHELL.INK_SOFT,
           }}
         >
@@ -108,7 +116,7 @@ export function ImpactInsightsHome({
         style={{
           minHeight: 0,
           flex: 1,
-          overflowY: 'auto',
+          overflowY: "auto",
           background: C.paper,
           color: C.body,
           fontFamily: SHELL.SANS,
@@ -117,10 +125,10 @@ export function ImpactInsightsHome({
         {/* ── CLIENT IDENTITY BAND ── */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 18,
-            padding: '30px clamp(22px, 4vw, 44px) 24px',
+            padding: "30px clamp(22px, 4vw, 44px) 24px",
             borderBottom: `1px solid ${C.line}`,
           }}
         >
@@ -130,17 +138,17 @@ export function ImpactInsightsHome({
               width: 52,
               height: 52,
               borderRadius: 14,
-              flex: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              flex: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               background: brief.logoColor ?? C.ink,
-              color: '#fff',
+              color: "#fff",
               fontFamily: SHELL.SANS,
               fontWeight: 800,
               fontSize: 17,
-              letterSpacing: '0.04em',
-              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.22)',
+              letterSpacing: "0.04em",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)",
             }}
           >
             {brief.initials}
@@ -153,61 +161,70 @@ export function ImpactInsightsHome({
                 fontWeight: 500,
                 color: C.ink,
                 lineHeight: 1.1,
-                letterSpacing: '-0.01em',
+                letterSpacing: 0,
               }}
             >
               {brief.tenantName}
             </div>
             <div style={{ marginTop: 3, fontSize: 13, color: C.muted }}>
-              {brief.industryLabel ? `${brief.industryLabel} · ` : ''}Executive brief
+              {brief.industryLabel ? `${brief.industryLabel} · ` : ""}Executive
+              brief
             </div>
           </div>
-          <div style={{ marginLeft: 'auto', flex: 'none' }}>
+          <div style={{ marginLeft: "auto", flex: "none" }}>
             <InsightConstellation />
           </div>
         </div>
 
-        <div style={{ padding: '34px clamp(22px, 4vw, 44px) 48px' }}>
+        <div style={{ padding: "34px clamp(22px, 4vw, 44px) 48px" }}>
           {/* ── HERO (greeting binds to signed-in user) ── */}
           <h1
             style={{
-              margin: '0 0 28px',
-              maxWidth: 760,
+              margin: "0 0 28px",
+              maxWidth: 1120,
               fontFamily: SHELL.SERIF_DISPLAY,
               fontSize: 30,
               lineHeight: 1.2,
               fontWeight: 400,
               color: C.ink,
-              letterSpacing: '-0.01em',
+              letterSpacing: 0,
             }}
           >
-            {brief.greeting}{' '}
+            {brief.greeting}{" "}
             {decision ? (
-              <strong style={{ fontWeight: 600 }}>One decision needs review today.</strong>
+              <strong style={{ fontWeight: 600 }}>
+                One decision needs review today.
+              </strong>
             ) : hasPortfolio ? (
-              <strong style={{ fontWeight: 600 }}>Nothing needs you right now — here is where the portfolio stands.</strong>
+              <strong style={{ fontWeight: 600 }}>
+                Nothing needs you right now — here is where the portfolio
+                stands.
+              </strong>
             ) : (
-              <strong style={{ fontWeight: 600 }}>This client has no initiatives in flight yet.</strong>
+              <strong style={{ fontWeight: 600 }}>
+                This client has no initiatives in flight yet.
+              </strong>
             )}
           </h1>
 
           {/* ── KPI STRIP (one borderless airy panel) ── */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
               background: C.panel,
               border: `1px solid ${C.line}`,
               borderRadius: 14,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             {kpis.map((k, i) => (
               <div
                 key={k.label}
                 style={{
-                  padding: '22px 24px',
-                  borderRight: i < kpis.length - 1 ? `1px solid ${C.line}` : undefined,
+                  padding: "22px 24px",
+                  borderRight:
+                    i < kpis.length - 1 ? `1px solid ${C.line}` : undefined,
                 }}
               >
                 <div style={kpiLabel}>{k.label}</div>
@@ -224,15 +241,17 @@ export function ImpactInsightsHome({
               <div
                 style={{
                   background: C.ink,
-                  color: '#fff',
+                  color: "#fff",
                   borderRadius: 16,
-                  padding: '32px 34px',
+                  padding: "32px 34px",
                 }}
               >
-                <div style={{ ...kpiLabel, color: '#9bc6ff' }}>{decision.eyebrow}</div>
+                <div style={{ ...kpiLabel, color: "#9bc6ff" }}>
+                  {decision.eyebrow}
+                </div>
                 <h2
                   style={{
-                    margin: '12px 0 10px',
+                    margin: "12px 0 10px",
                     fontFamily: SHELL.SERIF_DISPLAY,
                     fontWeight: 500,
                     fontSize: 25,
@@ -242,10 +261,18 @@ export function ImpactInsightsHome({
                 >
                   {decision.question}
                 </h2>
-                <p style={{ margin: '0 0 22px', color: '#cdd6e4', fontSize: 14.5, lineHeight: 1.55, maxWidth: 680 }}>
+                <p
+                  style={{
+                    margin: "0 0 22px",
+                    color: "#cdd6e4",
+                    fontSize: 14.5,
+                    lineHeight: 1.55,
+                    maxWidth: 680,
+                  }}
+                >
                   {decision.detail}
                 </p>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <Link href={decision.href} style={primaryBtn}>
                     Open in the workspace — review &amp; decide →
                   </Link>
@@ -261,25 +288,36 @@ export function ImpactInsightsHome({
           <div style={sectLabel}>Your portfolio</div>
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1.5fr) minmax(280px, 0.5fr)',
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.5fr) minmax(280px, 0.5fr)",
               gap: 28,
-              alignItems: 'start',
+              alignItems: "start",
             }}
           >
             <div style={panel}>
               {hasPortfolio ? (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 13.5,
+                  }}
+                >
                   <thead>
                     <tr>
-                      {['Initiative', 'Owner', 'Value', 'Stage', 'Status'].map((h, i) => (
-                        <th
-                          key={h}
-                          style={{ ...th, textAlign: i >= 2 && i !== 3 ? 'right' : 'left' }}
-                        >
-                          {h}
-                        </th>
-                      ))}
+                      {["Initiative", "Owner", "Value", "Stage", "Status"].map(
+                        (h, i) => (
+                          <th
+                            key={h}
+                            style={{
+                              ...th,
+                              textAlign: i >= 2 && i !== 3 ? "right" : "left",
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -287,15 +325,24 @@ export function ImpactInsightsHome({
                       <tr key={row.name}>
                         <td style={{ ...td, fontWeight: 600 }}>{row.name}</td>
                         <td style={{ ...td, color: C.muted }}>{row.owner}</td>
-                        <td style={{ ...td, textAlign: 'right', fontWeight: 600, color: C.muted }}>{row.value}</td>
+                        <td
+                          style={{
+                            ...td,
+                            textAlign: "right",
+                            fontWeight: 600,
+                            color: C.muted,
+                          }}
+                        >
+                          {row.value}
+                        </td>
                         <td style={{ ...td, color: C.muted }}>{row.stage}</td>
-                        <td style={{ ...td, textAlign: 'right' }}>
+                        <td style={{ ...td, textAlign: "right" }}>
                           <span
                             style={{
-                              display: 'inline-block',
+                              display: "inline-block",
                               fontSize: 11,
                               fontWeight: 700,
-                              padding: '3px 11px',
+                              padding: "3px 11px",
                               borderRadius: 999,
                               border: `1px solid ${toneColor[row.tone]}44`,
                               color: toneColor[row.tone],
@@ -309,13 +356,29 @@ export function ImpactInsightsHome({
                   </tbody>
                 </table>
               ) : (
-                <div style={{ padding: 28, textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: C.ink }}>
+                <div style={{ padding: 28, textAlign: "center" }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: C.ink,
+                    }}
+                  >
                     No initiatives in flight yet
                   </h3>
-                  <p style={{ margin: '8px auto 0', maxWidth: 380, color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
-                    Once {activeTenantName}&rsquo;s initiatives are loaded, they appear here with
-                    real value, stage, owner, and status — never placeholder numbers.
+                  <p
+                    style={{
+                      margin: "8px auto 0",
+                      maxWidth: 380,
+                      color: C.muted,
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Once {activeTenantName}&rsquo;s initiatives are loaded, they
+                    appear here with real value, stage, owner, and status —
+                    never placeholder numbers.
                   </p>
                 </div>
               )}
@@ -329,19 +392,19 @@ export function ImpactInsightsHome({
                     <div
                       key={`${a.module}-${i}`}
                       style={{
-                        padding: '13px 16px',
-                        borderTop: i === 0 ? 'none' : `1px solid ${C.line}`,
+                        padding: "13px 16px",
+                        borderTop: i === 0 ? "none" : `1px solid ${C.line}`,
                         fontSize: 13,
                         lineHeight: 1.5,
                       }}
                     >
                       <span
                         style={{
-                          display: 'block',
+                          display: "block",
                           fontFamily: SHELL.MONO,
                           fontSize: 9.5,
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
                           color: C.faint,
                           marginBottom: 4,
                         }}
@@ -352,7 +415,9 @@ export function ImpactInsightsHome({
                     </div>
                   ))
                 ) : (
-                  <div style={{ padding: '16px', color: C.muted, fontSize: 13 }}>
+                  <div
+                    style={{ padding: "16px", color: C.muted, fontSize: 13 }}
+                  >
                     Nothing needs attention — every initiative is healthy.
                   </div>
                 )}
@@ -360,8 +425,16 @@ export function ImpactInsightsHome({
               {/* Executive evidence read lives in Tower (value + grounding),
                   not the operator surfaces. Home stays a read/route surface. */}
               <p style={{ marginTop: 18, fontSize: 13, color: C.body }}>
-                Client evidence ready ·{' '}
-                <Link href="/tower" style={{ color: C.ink, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                Client evidence ready ·{" "}
+                <Link
+                  href="/tower"
+                  style={{
+                    color: C.ink,
+                    fontWeight: 600,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
                   View in Tower →
                 </Link>
               </p>
@@ -376,8 +449,8 @@ export function ImpactInsightsHome({
 const kpiLabel = {
   fontFamily: SHELL.MONO,
   fontSize: 9.5,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
   color: C.faint,
   fontWeight: 700,
 } satisfies CSSProperties;
@@ -386,8 +459,8 @@ const kpiValue = {
   fontFamily: SHELL.SERIF_DISPLAY,
   fontSize: 32,
   fontWeight: 500,
-  margin: '10px 0 4px',
-  letterSpacing: '-0.02em',
+  margin: "10px 0 4px",
+  letterSpacing: "-0.02em",
   lineHeight: 1,
   color: C.ink,
 } satisfies CSSProperties;
@@ -400,53 +473,53 @@ const kpiNote = {
 const sectLabel = {
   fontFamily: SHELL.MONO,
   fontSize: 10,
-  letterSpacing: '0.2em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.2em",
+  textTransform: "uppercase",
   color: C.faint,
   fontWeight: 700,
-  margin: '40px 0 16px',
+  margin: "40px 0 16px",
 } satisfies CSSProperties;
 
 const panel = {
   background: C.panel,
   border: `1px solid ${C.line}`,
   borderRadius: 14,
-  padding: '6px 18px',
+  padding: "6px 18px",
 } satisfies CSSProperties;
 
 const th = {
   fontFamily: SHELL.MONO,
   fontSize: 9.5,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
   color: C.faint,
-  padding: '14px 8px 12px',
+  padding: "14px 8px 12px",
   borderBottom: `1px solid ${C.line}`,
   fontWeight: 700,
 } satisfies CSSProperties;
 
 const td = {
-  padding: '15px 8px',
+  padding: "15px 8px",
   borderBottom: `1px solid ${C.line}`,
 } satisfies CSSProperties;
 
 const primaryBtn = {
-  background: '#fff',
+  background: "#fff",
   color: C.ink,
   borderRadius: 8,
-  padding: '11px 18px',
+  padding: "11px 18px",
   fontSize: 13,
   fontWeight: 700,
-  textDecoration: 'none',
+  textDecoration: "none",
 } satisfies CSSProperties;
 
 const ghostBtn = {
-  border: '1px solid rgba(255,255,255,0.22)',
-  background: 'transparent',
-  color: '#fff',
+  border: "1px solid rgba(255,255,255,0.22)",
+  background: "transparent",
+  color: "#fff",
   borderRadius: 8,
-  padding: '11px 18px',
+  padding: "11px 18px",
   fontSize: 13,
   fontWeight: 700,
-  textDecoration: 'none',
+  textDecoration: "none",
 } satisfies CSSProperties;
