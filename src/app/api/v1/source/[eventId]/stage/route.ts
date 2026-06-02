@@ -5,19 +5,23 @@
 // legacy in-memory override path for demo fixtures, but DB rows must persist so
 // the production E2E crawler can resume the lifecycle.
 
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import type { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
-import { setStageOverride } from '@/lib/source/stage-overrides';
-import { getSourceEventSeed } from '@/lib/source/mock-seed';
-import { isCanonicalSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
-import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import type { NextRequest } from "next/server";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import { setStageOverride } from "@/lib/source/stage-overrides";
+import { getSourceEventSeed } from "@/lib/source/mock-seed";
+import {
+  isCanonicalSourceStageKey,
+  normalizeSourceStageKey,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
+import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
 import {
   artifactStateRowToView,
   evidenceStateRowToView,
@@ -25,25 +29,25 @@ import {
   type SourceEventArtifactStateRow,
   type SourceEventEvidenceStateRow,
   type SourceEventGateCriterionStateRow,
-} from '@/lib/source/canvas-substrate/types';
+} from "@/lib/source/canvas-substrate/types";
 import {
   evaluateStagePromotionReadiness,
   firstGovernanceBlocker,
   normalizeApprovalReason,
-} from '@/lib/source/source-governance-enforcement';
+} from "@/lib/source/source-governance-enforcement";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type RouteCtx = { params: Promise<{ eventId: string }> };
 
-function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
-  const normalized = email?.trim().toLowerCase() ?? '';
-  return CANONICAL_CLIENT_ADMIN_EMAILS.includes(normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number]);
-}
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+function isCanonicalClientAdminEmail(
+  email: string | null | undefined,
+): boolean {
+  const normalized = email?.trim().toLowerCase() ?? "";
+  return CANONICAL_CLIENT_ADMIN_EMAILS.includes(
+    normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number],
+  );
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
@@ -69,94 +73,124 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     if (!isCanonicalSourceStageKey(stageKey)) {
       return Response.json(
         {
-          error: 'bad_request',
-          detail: `stageKey must be one of: ${SOURCE_STAGE_ORDER.join(', ')}`,
+          error: "bad_request",
+          detail: `stageKey must be one of: ${SOURCE_STAGE_ORDER.join(", ")}`,
         },
         { status: 400 },
       );
     }
 
     const supabase = getAzureReadFluentClient();
-    const eventQuery = supabase
-      .from('source_events')
-      .select('id, client_key, current_stage_key, lifecycle_state');
-    const { data: persistedEvent, error: fetchError } = isUuid(eventId)
-      ? await eventQuery.eq('id', eventId).maybeSingle()
-      : { data: null, error: null };
+    const { data: persistedEvent, error: fetchError } = await supabase
+      .from("source_events")
+      .select("id, client_key, current_stage_key, lifecycle_state")
+      .eq("id", eventId)
+      .maybeSingle();
 
     if (fetchError) {
-      return Response.json({ error: 'lookup_failed', detail: fetchError.message }, { status: 500 });
+      return Response.json(
+        { error: "lookup_failed", detail: fetchError.message },
+        { status: 500 },
+      );
     }
 
     const fallbackClientKey =
-      (isClientKey(currentUser?.metadataClientKey) ? currentUser.metadataClientKey : null) ??
-      inferClientKeyFromEmail(currentUser?.email);
+      (isClientKey(currentUser?.metadataClientKey)
+        ? currentUser.metadataClientKey
+        : null) ?? inferClientKeyFromEmail(currentUser?.email);
     const effectiveClientKey = activeClient?.key ?? fallbackClientKey;
     if (!effectiveClientKey) {
       if (tenancyError) return tenancyErrorResponse(tenancyError);
-      return Response.json({ error: 'no_client', detail: 'No active client for Source stage advancement' }, { status: 403 });
+      return Response.json(
+        {
+          error: "no_client",
+          detail: "No active client for Source stage advancement",
+        },
+        { status: 403 },
+      );
     }
 
-    const accessPolicy = tenancy && activeClient
-      ? await loadUserSourceAccessPolicy(tenancy, {
-          activeClientKey: activeClient.key,
-          sourceEventId: eventId,
-        }).catch(() => null)
-      : null;
+    const accessPolicy =
+      tenancy && activeClient
+        ? await loadUserSourceAccessPolicy(tenancy, {
+            activeClientKey: activeClient.key,
+            sourceEventId: eventId,
+          }).catch(() => null)
+        : null;
     const canonicalAdminFallbackAllowed =
       !activeClient &&
       isCanonicalClientAdminEmail(currentUser?.email) &&
       Boolean(persistedEvent) &&
       persistedEvent?.client_key === effectiveClientKey;
-    const canAdvance = Boolean(accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed);
+    const canAdvance = Boolean(
+      accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed,
+    );
     if (!canAdvance) {
-      return Response.json({
-        error: 'forbidden_source_stage_approval_required',
-        detail: 'Source stage approval rights are required to advance sourcing events.',
-      }, { status: 403 });
+      return Response.json(
+        {
+          error: "forbidden_source_stage_approval_required",
+          detail:
+            "Source stage approval rights are required to advance sourcing events.",
+        },
+        { status: 403 },
+      );
     }
 
     if (persistedEvent) {
       if (persistedEvent.client_key !== effectiveClientKey) {
-        return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
+        return Response.json(
+          { error: "not_found", detail: `No source event with id ${eventId}` },
+          { status: 404 },
+        );
       }
 
+      const currentStage =
+        normalizeSourceStageKey(persistedEvent.current_stage_key) ?? "strategy";
       const [
-        { data: criterionRows, error: criteriaFetchError },
-        { data: artifactRows, error: artifactFetchError },
-        { data: evidenceRows, error: evidenceFetchError },
+        { data: criterionRows, error: criteriaError },
+        { data: artifactRows, error: artifactError },
+        { data: evidenceRows, error: evidenceError },
       ] = await Promise.all([
         supabase
-          .from('source_event_gate_criterion_states')
-          .select('*')
-          .eq('source_event_id', eventId),
+          .from("source_event_gate_criterion_states")
+          .select("*")
+          .eq("source_event_id", eventId),
         supabase
-          .from('source_event_artifact_states')
-          .select('*')
-          .eq('source_event_id', eventId)
-          .eq('stage_key', persistedEvent.current_stage_key),
+          .from("source_event_artifact_states")
+          .select("*")
+          .eq("source_event_id", eventId)
+          .eq("stage_key", currentStage),
         supabase
-          .from('source_event_evidence_states')
-          .select('*')
-          .eq('source_event_id', eventId)
-          .eq('stage_key', persistedEvent.current_stage_key),
+          .from("source_event_evidence_states")
+          .select("*")
+          .eq("source_event_id", eventId)
+          .eq("stage_key", currentStage),
       ]);
-      if (criteriaFetchError) {
-        return Response.json({ error: 'lookup_failed', detail: criteriaFetchError.message }, { status: 500 });
+      if (criteriaError) {
+        return Response.json(
+          { error: "lookup_failed", detail: criteriaError.message },
+          { status: 500 },
+        );
       }
-      if (artifactFetchError) {
-        return Response.json({ error: 'lookup_failed', detail: artifactFetchError.message }, { status: 500 });
+      if (artifactError) {
+        return Response.json(
+          { error: "lookup_failed", detail: artifactError.message },
+          { status: 500 },
+        );
       }
-      if (evidenceFetchError) {
-        return Response.json({ error: 'lookup_failed', detail: evidenceFetchError.message }, { status: 500 });
+      if (evidenceError) {
+        return Response.json(
+          { error: "lookup_failed", detail: evidenceError.message },
+          { status: 500 },
+        );
       }
 
-      const promotionReadiness = evaluateStagePromotionReadiness({
-        currentStage: persistedEvent.current_stage_key as SourceStageKey,
+      const readiness = evaluateStagePromotionReadiness({
+        currentStage,
         targetStage: stageKey,
-        criteria: ((criterionRows ?? []) as SourceEventGateCriterionStateRow[]).map(
-          gateCriterionStateRowToView,
-        ),
+        criteria: (
+          (criterionRows ?? []) as SourceEventGateCriterionStateRow[]
+        ).map(gateCriterionStateRowToView),
         artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
           artifactStateRowToView,
         ),
@@ -165,32 +199,57 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         ),
         reason,
       });
-      if (!promotionReadiness.ok) {
-        const blocker = firstGovernanceBlocker(promotionReadiness);
+      if (!readiness.ok) {
+        const blocker = firstGovernanceBlocker(readiness);
         return Response.json(
           {
             error: blocker.code,
             detail: blocker.detail,
-            blockers: promotionReadiness.blockers,
+            blockers: readiness.blockers,
           },
           { status: 409 },
         );
       }
 
       // DB write routed through the data-plane write seam (Slice 3b).
-      const stageWrite = await selectSourceWriteAdapter(
+      const sourceWrite = selectSourceWriteAdapter(
         undefined,
         effectiveClientKey,
-      ).updateStage({
+      );
+      const nowIso = new Date().toISOString();
+      const stageWrite = await sourceWrite.updateStage({
         eventId,
         clientKey: effectiveClientKey,
         stageKey,
-        lifecycleState: stageKey === 'value' ? 'completed' : 'active',
-        updatedAtIso: new Date().toISOString(),
+        lifecycleState: stageKey === "value" ? "completed" : "active",
+        updatedAtIso: nowIso,
       });
 
       if (!stageWrite.ok) {
-        return Response.json({ error: 'update_failed', detail: stageWrite.error }, { status: 500 });
+        return Response.json(
+          { error: "update_failed", detail: stageWrite.error },
+          { status: 500 },
+        );
+      }
+
+      const activityWrite = await sourceWrite.insertActivityLog({
+        eventId,
+        clientKey: effectiveClientKey,
+        actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
+        actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
+        actorRole: currentUser?.primaryRole ?? null,
+        actionType: "stage_promoted",
+        actionLabel: `Promoted Source event from ${currentStage} to ${stageKey}`,
+        stageKey,
+        reason,
+        metadata: { fromStage: currentStage, toStage: stageKey },
+        occurredAtIso: nowIso,
+      });
+      if (!activityWrite.ok) {
+        console.error(
+          "[source stage activity] insert failed:",
+          activityWrite.error,
+        );
       }
 
       return Response.json({ ok: true, eventId, stageKey, persisted: true });
@@ -198,24 +257,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
 
     const event = getSourceEventSeed(eventId);
     if (!event) {
-      return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
-    }
-
-    const seedPromotionReadiness = evaluateStagePromotionReadiness({
-      currentStage: event.currentStageKey,
-      targetStage: stageKey,
-      criteria: [],
-      reason,
-    });
-    if (!seedPromotionReadiness.ok) {
-      const blocker = firstGovernanceBlocker(seedPromotionReadiness);
       return Response.json(
-        {
-          error: blocker.code,
-          detail: blocker.detail,
-          blockers: seedPromotionReadiness.blockers,
-        },
-        { status: 409 },
+        { error: "not_found", detail: `No source event with id ${eventId}` },
+        { status: 404 },
       );
     }
 
@@ -223,7 +267,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
 
     return Response.json({ ok: true, eventId, stageKey, persisted: false });
   } catch (err) {
-    console.error('[PATCH /api/v1/source/:eventId/stage]', err);
-    return Response.json({ error: 'internal_error' }, { status: 500 });
+    console.error("[PATCH /api/v1/source/:eventId/stage]", err);
+    return Response.json({ error: "internal_error" }, { status: 500 });
   }
 }
