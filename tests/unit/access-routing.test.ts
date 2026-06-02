@@ -1,4 +1,5 @@
 import {
+  inferSourceEventClientKeyFromSlug,
   inferSessionRoleFromEmail,
   isLockedTenantRole,
   isExternalOnlyRole,
@@ -7,6 +8,7 @@ import {
   resolvePostSignInPath,
   resolveSessionClientKey,
   resolveSessionRole,
+  shouldDenySourceEventSlugForPinnedClient,
   shouldStripUnauthorizedClientParam,
 } from '@/lib/auth/access-routing';
 
@@ -97,6 +99,39 @@ describe('access-routing', () => {
         'apexretail',
       ),
     ).toBe(true);
+  });
+
+  test('infers client ownership from Source event slugs with tenant hints', () => {
+    expect(inferSourceEventClientKeyFromSlug('apex-retail-ams-outsourcing-2026')).toBe('apexretail');
+    expect(inferSourceEventClientKeyFromSlug('SRC-MER-046')).toBe('meridian');
+    expect(inferSourceEventClientKeyFromSlug('skyharbor-air-renewal-2026')).toBe('skyharbor');
+    expect(inferSourceEventClientKeyFromSlug('unknown-source-event')).toBeNull();
+  });
+
+  test('denies locked client users when a Source event slug clearly belongs to another client', () => {
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cdio@meridian-health.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cio@apex-retail.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(false);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        'admin',
+        { email: 'anand.sundaram@thesundaram.com', defaultClientId: 'meridian' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(false);
   });
 
   test('routes external users to the public surface', () => {
