@@ -374,7 +374,7 @@ export const FIRSTCAPITAL_DECISION_HOME_BINDING: DecisionHomeBinding = {
           'yet — a precise, named seed gap.',
         evidenceRestsOnSeedGap: true,
         gestureLabel: 'Review the real-time-fraud seed gaps',
-        gestureHref: '/home/data-trust',
+        gestureHref: '/admin/data-trust',
       },
     ];
 
