@@ -31,4 +31,12 @@ describe('Admin shell vocabulary', () => {
     expect(commandPalette).not.toContain("surface: 'Setup'");
     expect(commandPalette).not.toContain("path: '/admin/users'");
   });
+
+  it('labels the legacy topbar account shortcut as Admin', () => {
+    const legacyTopbar = readRepoFile('src/components/AbarvaNav.tsx');
+
+    expect(legacyTopbar).toContain('<Link href="/admin"');
+    expect(legacyTopbar).toContain('Admin');
+    expect(legacyTopbar).not.toContain('>\n                      Setup\n                    </Link>');
+  });
 });
