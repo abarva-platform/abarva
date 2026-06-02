@@ -7,6 +7,10 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import { getSetupInventorySnapshot } from "@/lib/admin/setup-data-broker";
 import type { InventorySegmentRollup } from "@/lib/admin/setup-acts-registry";
 import { composeDataTrustBlocks } from "@/lib/admin/data-trust-composer";
+import {
+  getCapabilityGrounding,
+  type CapabilityGroundingLevel,
+} from "@/lib/admin/broker/capability-grounding-broker";
 
 export const metadata = { title: "Admin Home | AbarVa" };
 export const dynamic = "force-dynamic";
@@ -57,6 +61,17 @@ function pct(score: number): string {
   return `${Math.max(0, Math.min(100, n))}%`;
 }
 
+// Assistant grounding %: the average per-agent grounding level across the
+// capability catalog, where L0=0, L1=33, L2=67, L3=100. Real + tenant-
+// scoped (from getCapabilityGrounding). Honest by construction — a cold
+// tenant with no substrate averages low rather than showing a fixed number.
+const LEVEL_PCT: Record<CapabilityGroundingLevel, number> = {
+  L0: 0,
+  L1: 33,
+  L2: 67,
+  L3: 100,
+};
+
 export default async function AdminOverviewPage() {
   const tenant = await resolveAdminTenant();
   const clientOption = getClientOption(tenant.clientKey);
@@ -78,6 +93,23 @@ export default async function AdminOverviewPage() {
   const segmentsLoaded = blocks.state.segmentsLoaded;
   const segmentsTotal = segments.length;
   const blocking = blocks.state.emptyBlocking;
+
+  // Assistant grounding — real, tenant-scoped. Reuse the snapshot already
+  // fetched above via snapshotOverride so no second DB read is issued.
+  const grounding = brokerTenantKey
+    ? await getCapabilityGrounding(brokerTenantKey, {
+        snapshotOverride: snapshot,
+      }).catch(() => null)
+    : null;
+  const groundingPct = grounding && grounding.perAgent.length > 0
+    ? Math.round(
+        grounding.perAgent.reduce(
+          (sum, a) => sum + LEVEL_PCT[a.averageLevel],
+          0,
+        ) / grounding.perAgent.length,
+      )
+    : null;
+  const groundingIsLive = grounding?.evidence === "live";
 
   // The dimension table: top segments by record weight, calm + real.
   const dimensionRows = [...segments]
@@ -222,6 +254,23 @@ export default async function AdminOverviewPage() {
               >
                 <strong>{blocking}</strong> blocking
               </span>
+              {groundingPct !== null && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>
+                    <strong style={{ color: palette.ink }}>
+                      {groundingPct}%
+                    </strong>{" "}
+                    assistant grounding
+                    {!groundingIsLive && (
+                      <span style={{ color: palette.muted }}>
+                        {" "}
+                        (estimated)
+                      </span>
+                    )}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
