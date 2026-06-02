@@ -48,6 +48,7 @@ untracked documents.
 | Explain AI/model egress posture | `docs/architecture/ai/ENTERPRISE-AI-READINESS-ROADMAP.md` | `docs/architecture/MODEL1_AZURE_CLAUDE_ROUTE_VALIDATION.md`, `docs/architecture/ABARVA_MODEL_GATEWAY_AND_TOOL_PLANE.md` |
 | Roll back a release | `docs/runbooks/rollback.md` | `docs/runbooks/disaster-recovery.md`, release record for the change |
 | Handle an incident | `docs/runbooks/incident-response.md` | `docs/runbooks/on-call.md`, `docs/runbooks/disaster-recovery.md` |
+| Run a disaster tabletop drill | `docs/runbooks/disaster-scenario-drills.md` | `docs/runbooks/disaster-recovery.md`, `docs/runbooks/incident-response.md`, `docs/pilot/SUPPORT-MODEL.md` |
 | Manage secrets and leak scans | `docs/runbooks/secret-scanning.md` | `docs/deployment/ENV_EXAMPLE_POLICY.md` |
 | Check supply-chain posture | `docs/runbooks/license-sbom-compliance.md` | `docs/compliance/` |
 | Understand branch/quality gates | `docs/runbooks/bundle-budget.md`, `docs/runbooks/lighthouse-ci.md`, `docs/runbooks/coverage-threshold.md` | `docs/runbooks/accessibility-axe.md`, `docs/runbooks/dependency-vulnerability-management.md` |
