@@ -12,6 +12,7 @@ import {
   type TenantPortfolioSeed,
   type TenantProgramSeed,
 } from './enhancement-spec';
+import { getClientOption } from '@/lib/client-config';
 import type { ArchetypeKey } from './types.ui';
 
 export interface DeliverableTypeSeedSpec {
@@ -103,7 +104,7 @@ const DEMO_ROUTE_STUB_TENANTS: readonly TenantSeedPlan[] = Object.freeze([
   {
     tenantKey: 'northstar',
     routeSlug: 'northstar-clinical',
-    displayName: 'Northstar Clinical Technologies',
+    displayName: getClientOption('northstar').name,
     programs: [],
   },
   {

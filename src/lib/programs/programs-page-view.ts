@@ -34,6 +34,7 @@ import type {
   ProgramSummary,
   ViewerRole,
 } from './types.ui';
+import { getClientOption } from '@/lib/client-config';
 
 // ── Canonical phase model (7-phase P0–P6) ─────────────────────────────
 // Shell wave canonical lifecycle per PHASE_LABEL_MAP in programs-fixture.ts.
@@ -282,7 +283,7 @@ const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
   'first-capital': 'First Capital Financial',
-  'northstar-clinical': 'Northstar Clinical Technologies',
+  'northstar-clinical': getClientOption('northstar').name,
   'skyharbor-air': 'SkyHarbor Air',
 };
 

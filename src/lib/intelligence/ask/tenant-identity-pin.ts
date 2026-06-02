@@ -47,6 +47,8 @@ interface VerticalProfile {
   offLimitsTenantNames: string[];
 }
 
+const NORTHSTAR_DISPLAY_NAME = getClientOption('northstar').name;
+
 // Per-vertical guardrails. Each profile lists the terminology that should NOT
 // surface to a tenant of THIS vertical (drawn from the other verticals). The
 // lists are intentionally generous — false-positives ("regulatory" referring
@@ -108,7 +110,7 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
       'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
       'commercial deposit', 'real-time payments rail',
     ],
-    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus', 'Northstar', 'Northstar Clinical Technologies'],
+    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus', 'Northstar', NORTHSTAR_DISPLAY_NAME],
   },
 };
 
