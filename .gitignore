@@ -12,10 +12,6 @@
 
 # testing
 /coverage
-/playwright-report
-/test-results
-/.lighthouseci
-/audit-artifacts/performance/lighthouse/
 
 # next.js
 /.next/
