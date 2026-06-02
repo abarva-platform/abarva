@@ -24,6 +24,7 @@ export const CANONICAL_URLS = {
   responsibleAi: 'https://abarva.ai/responsible-ai/',
   modelCard: 'https://abarva.ai/model-card/',
   knownLimitations: 'https://abarva.ai/known-limitations/',
+  subprocessors: 'https://abarva.ai/subprocessors/',
   sitemap: 'https://abarva.ai/sitemap.xml',
   robots: 'https://abarva.ai/robots.txt',
 } as const;

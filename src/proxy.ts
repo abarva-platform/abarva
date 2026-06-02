@@ -32,6 +32,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   '/auth-redirect(.*)',
   '/',
   '/contact(.*)',
+  '/subprocessors(.*)',
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',

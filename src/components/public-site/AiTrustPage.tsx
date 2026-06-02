@@ -147,6 +147,7 @@ export function TrustLinkStrip() {
         ['Responsible AI', '/responsible-ai/'],
         ['Model card', '/model-card/'],
         ['Known limitations', '/known-limitations/'],
+        ['Subprocessors', '/subprocessors/'],
       ].map(([label, href]) => (
         <Link
           key={href}
