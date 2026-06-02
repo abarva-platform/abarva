@@ -6,6 +6,16 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    rules: {
+      // Next.js 16.2.7 now surfaces stricter React compiler lint checks through
+      // eslint-config-next. Keep this dependency refresh behavior-preserving;
+      // adopt these rules later as a deliberate cleanup wave.
+      "react-hooks/immutability": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
     files: [
       "src/scripts/**",
       "scripts/**",
