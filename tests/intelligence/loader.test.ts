@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(460);
+    expect(corpus.patterns).toHaveLength(510);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -89,6 +89,20 @@ describe('intelligence corpus loader', () => {
     });
     expect(corpus.patternsById.get('PAT-SRC-VPF-BAFO-DELTA-LEDGER')?.negotiationLevers?.[0]).toMatchObject({
       lever: 'Evidence-backed value proof',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RFP-EVAL-018')).toMatchObject({
+      slug: 'weight-set-governance',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RFP-EVAL-023')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Tradeoff clarity before BAFO',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-ART-PRICING-WORKBOOK')).toMatchObject({
+      slug: 'pricing-normalization-workbook-quality-gate',
+      category: 'pricing_intelligence',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-ART-DEAL-PACK')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-deal-pack-caveat-loss',
     });
   });
 

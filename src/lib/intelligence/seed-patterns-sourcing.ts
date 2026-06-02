@@ -1,5 +1,6 @@
 import type { PatternSeed } from "./seed-types";
 import { SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS } from "./seed-patterns-sourcing-archetypes-failure-modes";
+import { SOURCING_ARTIFACT_TEMPLATE_PATTERNS } from "./seed-patterns-sourcing-artifact-templates";
 import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
 import { SOURCING_BENCHMARK_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-benchmark-governance";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
@@ -17,6 +18,7 @@ import { SOURCING_PROCESS_PATTERNS } from "./seed-patterns-sourcing-process";
 import { SOURCING_REGULATORY_AI_PATTERNS } from "./seed-patterns-sourcing-regulatory-ai";
 import { SOURCING_REGULATORY_PATTERNS } from "./seed-patterns-sourcing-regulatory";
 import { SOURCING_RETAIL_IT_PATTERNS } from "./seed-patterns-sourcing-retail-it";
+import { SOURCING_RFP_EVALUATION_PATTERNS } from "./seed-patterns-sourcing-rfp-evaluation";
 import { SOURCING_VALUE_PROOF_PATTERNS } from "./seed-patterns-sourcing-value-proof";
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from "./seed-patterns-sourcing-vendors-cloudflare";
 import { PAT_SRC_VEN_CONTENTSTACK_001 } from "./seed-patterns-sourcing-vendors-contentstack";
@@ -1132,6 +1134,7 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
   ...SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS,
+  ...SOURCING_ARTIFACT_TEMPLATE_PATTERNS,
   ...SOURCING_BAFO_CONTRACT_PATTERNS,
   ...SOURCING_BENCHMARK_GOVERNANCE_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
@@ -1149,6 +1152,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
   ...SOURCING_RETAIL_IT_PATTERNS,
+  ...SOURCING_RFP_EVALUATION_PATTERNS,
   ...SOURCING_VALUE_PROOF_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,

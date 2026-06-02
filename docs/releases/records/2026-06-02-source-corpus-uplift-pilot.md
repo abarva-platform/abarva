@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds a 154-pattern pilot Source knowledge pack for Apex Retail AMS sourcing. The pack gives Source concrete sourcing expertise around pricing normalization, vendor gaming, sourcing archetypes, failure modes, BAFO negotiation levers, contract value-protection clauses, retail IT operating constraints, vendor-profile evidence requirements, benchmark governance, corpus visibility doctrine, and CFO-auditable value proof. It is designed to make Apex AMS pricing and BAFO guidance more specific without inventing savings, vendor posture, or numeric benchmark ranges.
+This release adds a 204-pattern pilot Source knowledge pack for Apex Retail AMS sourcing. The pack gives Source concrete sourcing expertise around pricing normalization, vendor gaming, sourcing archetypes, failure modes, BAFO negotiation levers, contract value-protection clauses, retail IT operating constraints, vendor-profile evidence requirements, benchmark governance, corpus visibility doctrine, CFO-auditable value proof, RFP/evaluation criteria, and Source artifact quality gates. It is designed to make Apex AMS pricing and BAFO guidance more specific without inventing savings, vendor posture, or numeric benchmark ranges.
 
 ## Layer Impact
 
@@ -37,6 +37,8 @@ This release adds a 154-pattern pilot Source knowledge pack for Apex Retail AMS 
 - Added `src/lib/intelligence/seed-patterns-sourcing-benchmark-governance.ts` with 16 benchmark/rate-card evidence guardrails that prevent unsupported numeric ranges.
 - Added `src/lib/intelligence/seed-patterns-sourcing-corpus-governance.ts` with 16 corpus visibility and source-basis governance patterns.
 - Added `src/lib/intelligence/seed-patterns-sourcing-value-proof.ts` with 20 CFO-auditable value-proof patterns.
+- Added `src/lib/intelligence/seed-patterns-sourcing-rfp-evaluation.ts` with 24 RFP and evaluation criteria patterns.
+- Added `src/lib/intelligence/seed-patterns-sourcing-artifact-templates.ts` with 26 Source artifact quality-gate patterns.
 - Added `src/lib/source/source-corpus-uplift.ts` to adapt the pilot corpus into Source pattern sections, pricing traps, BAFO asks, and assumption locks.
 - Updated `src/lib/intelligence/seed-patterns-sourcing.ts` to include the new pilot pack in the loaded corpus.
 - Updated `src/lib/source/mock-seed.ts` so Apex AMS receives relevant pattern sections.
