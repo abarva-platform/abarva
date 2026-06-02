@@ -3,7 +3,7 @@ import { SetupDataLoadCenter } from '@/components/admin/SetupDataLoadCenter';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { buildSetupDataLoadCenterModel } from '@/lib/admin/setup-data-load-center';
 
-export const metadata = { title: 'Data Load Center | AbarVa Setup' };
+export const metadata = { title: 'Data Load Center | AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

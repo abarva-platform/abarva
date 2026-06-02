@@ -6,7 +6,7 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { SetupPoliciesPage } from '@/components/setup/SetupPoliciesPage';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
-export const metadata = { title: 'Setup · Policies · AbarVa' };
+export const metadata = { title: 'Admin · Policies · AbarVa' };
 
 export default async function AdminPoliciesPage() {
   const tenant = await resolveAdminTenant();

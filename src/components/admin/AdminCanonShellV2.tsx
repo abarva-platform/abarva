@@ -57,7 +57,7 @@ export function AdminCanonShellV2({
       topBarProps={{
         tenantName,
         showLocked: true,
-        context: 'Setup / Admin',
+        context: 'Admin workspace',
       }}
     >
       <style>

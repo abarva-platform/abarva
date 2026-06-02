@@ -291,7 +291,7 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
       >
         <div>
           <span style={labelStyle(`${COLORS.ink}80`)}>
-            Setup · Data Load Studio · {model.tenant.tenantName}
+            Admin · Data Load Studio · {model.tenant.tenantName}
           </span>
           <h1
             style={{

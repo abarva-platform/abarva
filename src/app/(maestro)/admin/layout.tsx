@@ -45,7 +45,7 @@ function AdminAccessDenied() {
       <EditorialCanvas
         eyebrow="Restricted area"
         title="Admin access only"
-        subtitle="The Setup / Admin control plane is restricted to platform administrators. Return to your tenant home or request admin access from the Steward."
+        subtitle="The Admin workspace control plane is restricted to platform administrators. Return to your tenant home or request admin access from the Steward."
       >
         <div />
       </EditorialCanvas>

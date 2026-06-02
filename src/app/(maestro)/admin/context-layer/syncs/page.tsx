@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getTenantEmbeddingHistory } from '@/lib/context-ingestion/tenant-context-read-model';
 
-export const metadata = { title: 'Context Syncs | AbarVa Setup' };
+export const metadata = { title: 'Context Syncs | AbarVa Admin' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -25,7 +25,7 @@ export default async function ContextSyncsPage() {
       <section style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gap: 18 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
-            Setup · Embedding syncs
+            Admin · Embedding syncs
           </p>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42, margin: 0 }}>
             {activeClient ? `${activeClient.name} sync history` : 'Sync history'}

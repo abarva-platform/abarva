@@ -8,7 +8,7 @@ import {
 import { NORTHSTAR_CONTEXT_TEMPLATES } from '@/lib/context-ingestion/template-registry';
 
 export const metadata = {
-  title: 'Context Layer | AbarVa Setup',
+  title: 'Context Layer | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -68,7 +68,7 @@ export default async function ContextLayerPage() {
       <section style={{ maxWidth: 1180, margin: '0 auto', display: 'grid', gap: 24 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
-            Setup · Context layer
+            Admin · Context layer
           </p>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 44, lineHeight: 1.05, margin: '8px 0' }}>
             {activeClient.name} Context Layer

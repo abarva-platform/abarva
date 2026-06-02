@@ -13,7 +13,7 @@ import {
 import { getPatternOpsCoverageReport } from '@/lib/patternops/coverage-report';
 
 export const metadata = {
-  title: 'PatternOps | AbarVa Setup',
+  title: 'PatternOps | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -161,7 +161,7 @@ export default async function PatternOpsPage() {
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <EditorialCanvas
-        eyebrow="Setup / PatternOps"
+        eyebrow="Admin / PatternOps"
         title="PatternOps"
         subtitle="A quiet control plane for what AbarVa knows, what agents used, what is trusted, and where the corpus still needs review."
       >

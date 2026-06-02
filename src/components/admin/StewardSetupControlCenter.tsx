@@ -147,7 +147,7 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
             marginBottom: 4,
           }}
         >
-          {resolvedView.workspaceLabel} · Setup · seed-only
+          {resolvedView.workspaceLabel} · Admin · seed-only
         </div>
         <div
           style={{

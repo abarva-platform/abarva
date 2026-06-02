@@ -7,7 +7,7 @@ import { listPatterns } from '@/lib/corpus/authoring';
 import { CorpusAdminClient } from './CorpusAdminClient';
 
 export const metadata = {
-  title: 'Corpus | AbarVa Setup',
+  title: 'Corpus | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function AdminCorpusPage() {
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
       <EditorialCanvas
-        eyebrow="Setup / Corpus"
+        eyebrow="Admin / Corpus"
         title="Corpus"
         subtitle="Versioned patterns, review workflow, retrieval metadata, and publish state."
       >

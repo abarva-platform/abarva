@@ -17,7 +17,7 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
-  title: 'Configure SSO | AbarVa Setup',
+  title: 'Configure SSO | AbarVa Admin',
 };
 
 export default async function SsoConfigurationPage() {

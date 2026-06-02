@@ -20,7 +20,7 @@ import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getCompliancePosture } from '@/lib/admin/broker/compliance-posture-broker';
 import { SETUP } from '@/lib/admin/setup-tokens';
 
-export const metadata = { title: 'Setup · Compliance · AbarVa' };
+export const metadata = { title: 'Admin · Compliance · AbarVa' };
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +54,7 @@ export default async function AdminCompliancePage() {
         }}
       >
         <PageHead
-          eyebrow="Setup · Governance"
+          eyebrow="Admin · Governance"
           title="Compliance posture"
           lede={
             'Plain-English digest of where AbarVa stands on SOC 2, GDPR ' +

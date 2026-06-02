@@ -32,7 +32,7 @@ import { composeDataTrustBlocks } from '@/lib/admin/data-trust-composer';
 import { SPACING } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Data Trust | AbarVa Setup',
+  title: 'Data Trust | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -74,7 +74,7 @@ export default async function DataTrustPage({ searchParams }: DataTrustPageProps
         }}
       >
         <PageHead
-          eyebrow={`Setup · Data Trust · ${tenant.tenantName}`}
+          eyebrow={`Admin · Data Trust · ${tenant.tenantName}`}
           title="What we know about you, and what's missing"
           lede="The substrate panel — what's loaded, what to load next, and what each segment unlocks."
         />

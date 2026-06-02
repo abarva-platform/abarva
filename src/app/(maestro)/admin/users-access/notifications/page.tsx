@@ -33,7 +33,7 @@ import { seedDefaults } from './_actions/seed-defaults';
 import { sendTest } from './_actions/send-test';
 
 export const metadata = {
-  title: 'Notifications | AbarVa Setup',
+  title: 'Notifications | AbarVa Admin',
 };
 
 export default async function NotificationsPreferencesRoute() {

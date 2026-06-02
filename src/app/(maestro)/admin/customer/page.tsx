@@ -13,7 +13,7 @@ import {
 } from '@/lib/admin/customer-admin-read-model';
 
 export const metadata = {
-  title: 'Customer Admin | AbarVa Setup',
+  title: 'Customer Admin | AbarVa Admin',
 };
 
 export const dynamic = 'force-dynamic';
@@ -352,7 +352,7 @@ export default async function CustomerAdminPage() {
               ...ADMIN_PAGE_HEADER_STYLES.eyebrow,
             }}
           >
-            Setup · Customer Admin · {view.tenant.tenantName}
+            Admin · Customer Admin · {view.tenant.tenantName}
           </div>
           <h1
             style={{

@@ -23,7 +23,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 
 export const metadata = {
-  title: 'Users & Access | AbarVa Setup',
+  title: 'Users & Access | AbarVa Admin',
 };
 
 const BASE_URL = '/admin/users-access';
