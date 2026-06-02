@@ -3,86 +3,29 @@ import { ADMIN_PAGE_HEADER_STYLES } from "@/components/admin/admin-page-header-s
 import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
 import { getClientOption } from "@/lib/client-config";
 import { COLORS, TYPOGRAPHY } from "@/lib/design/design-tokens";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
+import { getSetupInventorySnapshot } from "@/lib/admin/setup-data-broker";
+import type { InventorySegmentRollup } from "@/lib/admin/setup-acts-registry";
+import { composeDataTrustBlocks } from "@/lib/admin/data-trust-composer";
 
 export const metadata = { title: "Admin Home | AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Locked design system only — cream + near-black ink, hairline borders,
+// one restrained accent. No multi-hue stat tiles.
 const palette = {
   paper: COLORS.cream,
   card: COLORS.white,
-  line: COLORS.skyPale,
+  line: `${COLORS.ink}14`,
   ink: COLORS.ink,
-  muted: COLORS.amberInk,
-  blue: COLORS.navy,
-  mint: COLORS.mintInk,
+  muted: `${COLORS.ink}99`,
+  soft: `${COLORS.ink}b0`,
   amber: COLORS.amberInk,
+  amberSoft: COLORS.amberSoft,
   coral: COLORS.coralInk,
-  softBlue: COLORS.skyPale,
-  softMint: COLORS.mintSoft,
-  softAmber: COLORS.amberSoft,
-  softCoral: COLORS.coralSoft,
   white: COLORS.white,
 };
-
-const dataRows = [
-  {
-    dimension: "Enterprise profile",
-    loaded: "Ready",
-    completeness: "92%",
-    evidence: "Leadership, footprint, operating model",
-    next: "Keep current",
-  },
-  {
-    dimension: "Data estate",
-    loaded: "In progress",
-    completeness: "81%",
-    evidence: "Systems, ownership, lineage",
-    next: "Confirm stale source owners",
-  },
-  {
-    dimension: "Access and roles",
-    loaded: "Needs attention",
-    completeness: "74%",
-    evidence: "Admins, pending invites, SSO posture",
-    next: "Clear two access gaps",
-  },
-  {
-    dimension: "Connectors",
-    loaded: "In progress",
-    completeness: "68%",
-    evidence: "Critical sources and test results",
-    next: "Reconnect priority systems",
-  },
-  {
-    dimension: "Assistant grounding",
-    loaded: "Ready",
-    completeness: "86%",
-    evidence: "Capabilities mapped to evidence",
-    next: "Review gap queue",
-  },
-] as const;
-
-const actionRows = [
-  {
-    label: "Clear access blocker",
-    owner: "Admin owner",
-    due: "Today",
-    impact: "Unblocks pilot approvals and notification coverage.",
-  },
-  {
-    label: "Confirm connector owners",
-    owner: "Data steward",
-    due: "This week",
-    impact: "Raises data estate completeness for assistant answers.",
-  },
-  {
-    label: "Review production blockers",
-    owner: "Release lead",
-    due: "This week",
-    impact: "Keeps demo, pilot, and production gates separated.",
-  },
-] as const;
 
 function clientMark(name: string): string {
   return name
@@ -93,18 +36,68 @@ function clientMark(name: string): string {
     .join("");
 }
 
-function statusColor(status: string): { color: string; background: string } {
-  if (status === "Ready")
-    return { color: palette.mint, background: palette.softMint };
-  if (status === "Needs attention")
-    return { color: palette.coral, background: palette.softCoral };
-  return { color: palette.amber, background: palette.softAmber };
+// Map a segment's health to a calm, plain-language status word + accent.
+function segmentStatus(health: string): { label: string; accent: string } {
+  switch (health) {
+    case "complete":
+      return { label: "Ready", accent: `${COLORS.ink}99` };
+    case "not_started":
+      return { label: "Not started", accent: COLORS.coralInk };
+    case "critical":
+    case "sparse":
+      return { label: "Needs attention", accent: COLORS.amberInk };
+    default:
+      return { label: "In progress", accent: COLORS.amberInk };
+  }
+}
+
+function pct(score: number): string {
+  // coverage_score is 0..1 in the rollup; render as a whole percent.
+  const n = score <= 1 ? Math.round(score * 100) : Math.round(score);
+  return `${Math.max(0, Math.min(100, n))}%`;
 }
 
 export default async function AdminOverviewPage() {
   const tenant = await resolveAdminTenant();
   const clientOption = getClientOption(tenant.clientKey);
   const mark = clientMark(tenant.tenantName);
+
+  // ── Real per-tenant substrate (same broker Data Trust uses) ──────────
+  // Replaces the previous hardcoded mock numbers that were identical for
+  // every tenant. Falls back to a calm empty state if the broker is down
+  // or the tenant has no loaded substrate yet — never invented numbers.
+  const brokerTenantKey = clientKeyToInventorySubstrateKey(tenant.clientKey);
+  const snapshot = brokerTenantKey
+    ? await getSetupInventorySnapshot(brokerTenantKey).catch(() => null)
+    : null;
+  const segments: InventorySegmentRollup[] = snapshot?.segments ?? [];
+  const blocks = composeDataTrustBlocks(segments);
+
+  const totalRecords = segments.reduce((n, s) => n + s.recordCount, 0);
+  const decisionGrade = blocks.state.decisionGrade;
+  const segmentsLoaded = blocks.state.segmentsLoaded;
+  const segmentsTotal = segments.length;
+  const blocking = blocks.state.emptyBlocking;
+
+  // The dimension table: top segments by record weight, calm + real.
+  const dimensionRows = [...segments]
+    .sort((a, b) => b.recordCount - a.recordCount)
+    .slice(0, 6)
+    .map((s) => {
+      const status = segmentStatus(String(s.healthState));
+      return {
+        dimension: s.segmentName,
+        status,
+        records: s.recordCount,
+        coverage: pct(s.coverageScore),
+      };
+    });
+
+  // Review queue: real gaps surfaced by the composer (read-only — loading
+  // controls live in Data Loads, not here).
+  const reviewItems = blocks.actionQueue.slice(0, 4);
+
+  const hasSubstrate = segmentsTotal > 0;
 
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
@@ -114,16 +107,17 @@ export default async function AdminOverviewPage() {
           minHeight: "100%",
           background: palette.paper,
           color: palette.ink,
-          padding: "26px 30px 34px",
+          padding: "30px 34px 38px",
         }}
       >
+        {/* ── Hero: client identity + one read-only orientation + one CTA ── */}
         <section
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) 320px",
-            gap: 22,
-            alignItems: "stretch",
-            marginBottom: 18,
+            gap: 24,
+            alignItems: "start",
+            marginBottom: 24,
           }}
         >
           <div>
@@ -132,15 +126,15 @@ export default async function AdminOverviewPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 14,
-                marginBottom: 12,
+                marginBottom: 14,
               }}
             >
               <div
                 aria-label={`${tenant.tenantName} client mark`}
                 style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 12,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 11,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -148,9 +142,8 @@ export default async function AdminOverviewPage() {
                   color: palette.white,
                   fontFamily: TYPOGRAPHY.sans,
                   fontSize: 14,
-                  fontWeight: 850,
-                  letterSpacing: "0.08em",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.26)",
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
                 }}
               >
                 {mark}
@@ -162,11 +155,13 @@ export default async function AdminOverviewPage() {
                     color: palette.muted,
                   }}
                 >
-                  {clientOption.vertical} system review
+                  {clientOption.vertical} · system review
                 </p>
                 <h1
                   style={{
                     ...ADMIN_PAGE_HEADER_STYLES.title,
+                    fontFamily: TYPOGRAPHY.serif,
+                    fontWeight: 400,
                   }}
                 >
                   {tenant.tenantName} home
@@ -176,21 +171,66 @@ export default async function AdminOverviewPage() {
             <p
               style={{
                 ...ADMIN_PAGE_HEADER_STYLES.subtitle,
-                color: palette.ink,
+                color: palette.soft,
+                maxWidth: 560,
               }}
             >
-              Read-only view of what AbarVa currently knows for this client:
-              loaded dimensions, evidence quality, readiness, and the highest
-              impact gaps. Operators load and process files in Data Loads.
+              A read-only view of what AbarVa knows for this client today:
+              loaded dimensions, evidence quality, and the gaps that change
+              readiness. Operators load and process files in Data Loads.
             </p>
+
+            {/* One-line readiness strip — real per-tenant numbers. */}
+            <div
+              style={{
+                marginTop: 20,
+                padding: "12px 16px",
+                border: `1px solid ${palette.line}`,
+                borderRadius: 8,
+                background: palette.paper,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px 18px",
+                alignItems: "center",
+                fontSize: 13,
+                color: palette.soft,
+              }}
+              aria-label="Substrate readiness summary"
+            >
+              <span>
+                <strong style={{ color: palette.ink }}>{segmentsLoaded}</strong>
+                /{segmentsTotal} dimensions loaded
+              </span>
+              <span aria-hidden>·</span>
+              <span>
+                <strong style={{ color: palette.ink }}>
+                  {totalRecords.toLocaleString()}
+                </strong>{" "}
+                records
+              </span>
+              <span aria-hidden>·</span>
+              <span>
+                <strong style={{ color: palette.ink }}>{decisionGrade}</strong>{" "}
+                decision-grade
+              </span>
+              <span aria-hidden>·</span>
+              <span
+                style={{
+                  color: blocking > 0 ? palette.coral : palette.soft,
+                  fontWeight: blocking > 0 ? 700 : 400,
+                }}
+              >
+                <strong>{blocking}</strong> blocking
+              </span>
+            </div>
           </div>
 
           <aside
             style={{
-              border: `1px solid ${palette.line}`,
+              border: `1px solid ${palette.amber}2a`,
               borderRadius: 8,
-              background: palette.card,
-              padding: 16,
+              background: palette.amberSoft,
+              padding: 18,
               display: "grid",
               gap: 10,
               alignContent: "start",
@@ -199,40 +239,50 @@ export default async function AdminOverviewPage() {
             <p
               style={{
                 margin: 0,
-                color: palette.muted,
-                fontSize: 11,
-                fontWeight: 850,
+                color: palette.amber,
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 10,
+                fontWeight: 800,
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
               }}
             >
               Next decision
             </p>
-            <h2 style={{ margin: 0, fontSize: 20, lineHeight: 1.18 }}>
-              Review the loaded dimensions before expanding production scope.
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 18,
+                lineHeight: 1.25,
+                fontWeight: 600,
+              }}
+            >
+              {hasSubstrate
+                ? "Review the loaded dimensions before expanding production scope."
+                : `Begin the first governed load for ${tenant.tenantName}.`}
             </h2>
             <p
               style={{
                 margin: 0,
-                color: palette.muted,
+                color: palette.amber,
                 fontSize: 13,
                 lineHeight: 1.45,
               }}
             >
-              Home is for reviewing what is in the system. Setup is for the
-              restricted upload, processing, approval, and commit workflow.
+              Home reviews what is in the system. Data Loads is the governed
+              upload, validation, approval, and commit workflow.
             </p>
             <a
               href="/admin/setup"
               style={{
                 width: "fit-content",
-                marginTop: 4,
+                marginTop: 2,
                 color: palette.white,
-                background: palette.blue,
+                background: palette.ink,
                 borderRadius: 6,
-                padding: "8px 12px",
+                padding: "9px 14px",
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 textDecoration: "none",
               }}
             >
@@ -241,96 +291,12 @@ export default async function AdminOverviewPage() {
           </aside>
         </section>
 
-        <section
-          aria-label="Admin status summary"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 12,
-            marginBottom: 18,
-          }}
-        >
-          {[
-            [
-              "Data completeness",
-              "81%",
-              "Across critical dimensions",
-              palette.softBlue,
-              palette.blue,
-            ],
-            [
-              "Admin actions",
-              "3",
-              "Need owner attention",
-              palette.softAmber,
-              palette.amber,
-            ],
-            [
-              "Access posture",
-              "74%",
-              "SSO and role coverage",
-              palette.softCoral,
-              palette.coral,
-            ],
-            [
-              "Assistant grounding",
-              "86%",
-              "Evidence-backed answers",
-              palette.softMint,
-              palette.mint,
-            ],
-          ].map(([label, value, detail, background, color]) => (
-            <div
-              key={label}
-              style={{
-                border: `1px solid ${palette.line}`,
-                borderRadius: 8,
-                background,
-                padding: "14px 15px",
-                minHeight: 104,
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  color,
-                  fontSize: 11,
-                  fontWeight: 850,
-                  letterSpacing: "0.09em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {label}
-              </p>
-              <strong
-                style={{
-                  display: "block",
-                  marginTop: 10,
-                  fontSize: 30,
-                  lineHeight: 1,
-                }}
-              >
-                {value}
-              </strong>
-              <span
-                style={{
-                  display: "block",
-                  marginTop: 8,
-                  color: palette.muted,
-                  fontSize: 13,
-                }}
-              >
-                {detail}
-              </span>
-            </div>
-          ))}
-        </section>
-
+        {/* ── Loaded data by dimension + review queue ── */}
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.65fr)",
-            gap: 18,
+            gridTemplateColumns: "minmax(0, 1.4fr) minmax(320px, 0.6fr)",
+            gap: 20,
           }}
         >
           <div
@@ -342,139 +308,137 @@ export default async function AdminOverviewPage() {
           >
             <div
               style={{
-                padding: "14px 16px",
+                padding: "16px 18px",
                 borderBottom: `1px solid ${palette.line}`,
                 display: "flex",
                 justifyContent: "space-between",
                 gap: 12,
+                alignItems: "baseline",
               }}
             >
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18 }}>
-                  What is in the system
-                </h2>
-                <p
-                  style={{
-                    margin: "4px 0 0",
-                    color: palette.muted,
-                    fontSize: 13,
-                  }}
-                >
-                  Completeness is shown as client-facing operating coverage, not
-                  upload pipeline detail.
-                </p>
-              </div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  fontFamily: TYPOGRAPHY.serif,
+                  fontWeight: 400,
+                }}
+              >
+                Loaded data by dimension
+              </h2>
               <a
                 href="/admin/data-trust"
                 style={{
-                  color: palette.blue,
+                  color: palette.ink,
                   fontSize: 13,
-                  fontWeight: 800,
-                  textDecoration: "none",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
                 }}
               >
                 View data trust
               </a>
             </div>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13.5,
-              }}
-            >
-              <thead>
-                <tr style={{ color: palette.muted, textAlign: "left" }}>
-                  <th
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Dimension
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Complete
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Evidence
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Next
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {dataRows.map((row) => {
-                  const status = statusColor(row.loaded);
-                  return (
+
+            {hasSubstrate ? (
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 13.5,
+                }}
+              >
+                <thead>
+                  <tr style={{ textAlign: "left" }}>
+                    {["Dimension", "Status", "Records", "Coverage"].map(
+                      (head) => (
+                        <th
+                          key={head}
+                          style={{
+                            padding: "11px 16px",
+                            color: palette.muted,
+                            fontFamily: TYPOGRAPHY.mono,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            borderBottom: `1px solid ${palette.line}`,
+                          }}
+                        >
+                          {head}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {dimensionRows.map((row) => (
                     <tr
                       key={row.dimension}
                       style={{ borderTop: `1px solid ${palette.line}` }}
                     >
-                      <td style={{ padding: "11px 14px", fontWeight: 750 }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>
                         {row.dimension}
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
+                      <td style={{ padding: "12px 16px" }}>
                         <span
                           style={{
                             display: "inline-flex",
                             borderRadius: 999,
-                            padding: "4px 8px",
-                            color: status.color,
-                            background: status.background,
-                            fontSize: 12,
-                            fontWeight: 800,
+                            padding: "3px 9px",
+                            border: `1px solid ${row.status.accent}44`,
+                            color: row.status.accent,
+                            fontSize: 11,
+                            fontWeight: 700,
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {row.loaded}
+                          {row.status.label}
                         </span>
                       </td>
-                      <td style={{ padding: "11px 14px", fontWeight: 800 }}>
-                        {row.completeness}
-                      </td>
-                      <td style={{ padding: "11px 14px", color: palette.ink }}>
-                        {row.evidence}
-                      </td>
                       <td
-                        style={{ padding: "11px 14px", color: palette.muted }}
+                        style={{
+                          padding: "12px 16px",
+                          color: palette.soft,
+                          fontWeight: 600,
+                        }}
                       >
-                        {row.next}
+                        {row.records.toLocaleString()}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontWeight: 700 }}>
+                        {row.coverage}
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div
+                style={{
+                  padding: 28,
+                  display: "grid",
+                  gap: 8,
+                  textAlign: "center",
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                  No dimensions loaded yet
+                </h3>
+                <p
+                  style={{
+                    margin: "0 auto",
+                    maxWidth: 380,
+                    color: palette.soft,
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Open Data Loads to begin the first governed load for{" "}
+                  {tenant.tenantName}. Numbers here reflect real committed
+                  substrate only — never placeholder values.
+                </p>
+              </div>
+            )}
           </div>
 
           <div
@@ -486,50 +450,58 @@ export default async function AdminOverviewPage() {
           >
             <div
               style={{
-                padding: "14px 16px",
+                padding: "16px 18px",
                 borderBottom: `1px solid ${palette.line}`,
               }}
             >
-              <h2 style={{ margin: 0, fontSize: 18 }}>Review queue</h2>
-              <p
+              <h2
                 style={{
-                  margin: "4px 0 0",
-                  color: palette.muted,
-                  fontSize: 13,
+                  margin: 0,
+                  fontSize: 18,
+                  fontFamily: TYPOGRAPHY.serif,
+                  fontWeight: 400,
                 }}
               >
+                Review queue
+              </h2>
+              <p style={{ margin: "5px 0 0", color: palette.muted, fontSize: 13 }}>
                 Read-only gaps that change client readiness. Loading controls
                 stay in Data Loads.
               </p>
             </div>
             <div style={{ display: "grid" }}>
-              {actionRows.map((action, index) => (
-                <div
-                  key={action.label}
-                  style={{
-                    padding: "13px 16px",
-                    borderTop:
-                      index === 0 ? "none" : `1px solid ${palette.line}`,
-                    display: "grid",
-                    gap: 6,
-                  }}
-                >
-                  <strong style={{ fontSize: 14 }}>{action.label}</strong>
-                  <span style={{ color: palette.muted, fontSize: 12.5 }}>
-                    {action.owner} - {action.due}
-                  </span>
-                  <p
+              {reviewItems.length > 0 ? (
+                reviewItems.map((item, index) => (
+                  <div
+                    key={item.id}
                     style={{
-                      margin: 0,
-                      color: palette.ink,
-                      fontSize: 13,
-                      lineHeight: 1.38,
+                      padding: "14px 18px",
+                      borderTop:
+                        index === 0 ? "none" : `1px solid ${palette.line}`,
+                      display: "grid",
+                      gap: 5,
                     }}
                   >
-                    {action.impact}
-                  </p>
+                    <strong style={{ fontSize: 14, fontWeight: 600 }}>
+                      {item.segmentName}
+                    </strong>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: palette.soft,
+                        fontSize: 13,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.consequence}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: "18px", color: palette.soft, fontSize: 13 }}>
+                  Nothing needs review — every loaded dimension is current.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </section>
