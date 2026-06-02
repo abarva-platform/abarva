@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(388);
+    expect(corpus.patterns).toHaveLength(424);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -58,6 +58,24 @@ describe('intelligence corpus loader', () => {
     expect(corpus.patternsById.get('PAT-SRC-AFM-012')?.riskFactors?.[0]).toMatchObject({
       id: 'risk-benchmark-theater',
     });
+    expect(corpus.patternsById.get('PAT-SRC-VPR-WIPRO')).toMatchObject({
+      slug: 'wipro-profile-evidence-requirements',
+      category: 'services',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-VPR-WIPRO')?.pricingBenchmarks?.[0].sourceBasis[0]).toMatchObject({
+      type: 'founder-data-gap',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-BEN-AMS-FTE-RATE-CARD')).toMatchObject({
+      slug: 'ams-fte-rate-card-benchmark-governance',
+      category: 'pricing_intelligence',
+    });
+    const amsRateCardBenchmark = corpus.patternsById.get('PAT-SRC-BEN-AMS-FTE-RATE-CARD')?.pricingBenchmarks?.[0];
+    expect(amsRateCardBenchmark).toMatchObject({
+      sourceBasis: [expect.objectContaining({ type: 'founder-data-gap' })],
+    });
+    expect(amsRateCardBenchmark).not.toHaveProperty('rangeLow');
+    expect(amsRateCardBenchmark).not.toHaveProperty('rangeHigh');
+    expect(amsRateCardBenchmark).not.toHaveProperty('median');
   });
 
   it('indexes every loaded entity by id', () => {

@@ -1,6 +1,7 @@
 import type { PatternSeed } from "./seed-types";
 import { SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS } from "./seed-patterns-sourcing-archetypes-failure-modes";
 import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
+import { SOURCING_BENCHMARK_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-benchmark-governance";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
 import { SOURCING_COMMERCIAL_LEVER_PATTERNS } from "./seed-patterns-sourcing-commercial-levers";
 import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
@@ -36,6 +37,7 @@ import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-ven
 import { SOURCING_VENDOR_GITLAB_PATTERNS } from "./seed-patterns-sourcing-vendors-gitlab";
 import { ASANA_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-vendors-asana";
 import { SOURCING_VENDOR_SPLUNK_PATTERNS } from "./seed-patterns-sourcing-vendors-splunk";
+import { SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS } from "./seed-patterns-sourcing-vendor-profile-requirements";
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1129,6 +1131,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   },
   ...SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS,
   ...SOURCING_BAFO_CONTRACT_PATTERNS,
+  ...SOURCING_BENCHMARK_GOVERNANCE_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
   ...SOURCING_COMMERCIAL_LEVER_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
@@ -1151,6 +1154,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SMARTSHEET_VENDOR_PROFILE_PATTERNS,
   ...SOURCING_VENDOR_COUPA_PATTERNS,
   ...SOURCING_VENDOR_SPLUNK_PATTERNS,
+  ...SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS,
   PAT_SRC_VEN_NEWRELIC_001,
   PAT_SRC_VEN_ELASTIC_001,
   ...SOURCING_VENDOR_SAP_PATTERNS,
