@@ -75,7 +75,7 @@ export function HomeTenantHeader({
   tenantName,
   clientKey,
   headline = 'Where you stand and what to do next.',
-  subline = 'Eight panels do the work. This page orients you and routes you to the right one.',
+  subline = 'Insight, decisions, and actions are ready in one place.',
 }: Props) {
   // TODO: when clients.logo_url ships, prefer the live logo over the
   // monogram. For now, the monogram is the brand mark.

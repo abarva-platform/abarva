@@ -1,10 +1,10 @@
-// HomeOverviewV2 · the canonical /home Setup page per the wireframe
+// HomeOverviewV2 · legacy Home overview component per the wireframe
 // approved 2026-05-08. Renders the masthead + 5 sections inline:
 //   01 Readiness across modules
 //   02 Steward orientation (loaded vs missing + next-load)
 //   03 Action queue
 //   04 Recent activity
-//   05 Setup panels
+//   05 Home action surfaces
 //
 // Type triad: Fraunces (display) · Inter (body) · JetBrains Mono
 // (eyebrows / labels). Loaded via next/font in src/app/layout.tsx
@@ -819,8 +819,8 @@ export function HomeOverviewV2({
           </>
         )}
 
-        {/* Section 05 — Setup panels */}
-        <Section eyebrowNum="05" eyebrowLabel="WHERE TO GO" title="Setup panels" lead="Eight panels for tenant administration. Status pill is derived from live substrate state.">
+        {/* Section 05 — Home action surfaces */}
+        <Section eyebrowNum="05" eyebrowLabel="WHERE TO GO" title="Home action surfaces" lead="Insight, decision, and action paths for the active client.">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
           </div>

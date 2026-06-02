@@ -1,23 +1,41 @@
 import { HOME_PANELS } from '../panel-inventory';
 
 describe('HOME_PANELS', () => {
-  it('routes setup/admin panels to Admin instead of legacy Home setup paths', () => {
+  it('keeps Home panels focused on insight, decision, action, and learning', () => {
     const byId = Object.fromEntries(HOME_PANELS.map((panel) => [panel.id, panel]));
 
-    expect(byId.configuration?.route).toBe('/admin/setup');
-    expect(byId.connectors?.route).toBe('/admin/connectors');
-    expect(byId['data-trust']?.route).toBe('/admin/data-trust');
-    expect(byId['agent-readiness']?.route).toBe('/admin/agent-readiness');
-    expect(byId['tenant-profile']?.route).toBe('/admin/tenant');
+    expect(Object.keys(byId)).toEqual([
+      'overview',
+      'ai-initiatives',
+      'decision',
+      'queue',
+      'source',
+      'learn',
+    ]);
 
-    for (const id of [
-      'configuration',
-      'connectors',
-      'data-trust',
-      'agent-readiness',
-      'tenant-profile',
-    ]) {
-      expect(byId[id]?.route).not.toMatch(/^\/home\//);
+    expect(byId.overview?.group).toBe('insight');
+    expect(byId['ai-initiatives']?.group).toBe('insight');
+    expect(byId.decision?.group).toBe('decision');
+    expect(byId.queue?.group).toBe('action');
+    expect(byId.source?.group).toBe('action');
+    expect(byId.learn?.group).toBe('learn');
+  });
+
+  it('keeps setup/admin taxonomy out of Home panel metadata', () => {
+    for (const panel of HOME_PANELS) {
+      expect(panel.group).not.toBe('configure');
+      expect(panel.route).not.toMatch(/^\/admin(\/|$)/);
+      expect(panel.route).not.toMatch(/^\/setup(\/|$)/);
     }
+
+    expect(HOME_PANELS.map((panel) => panel.id)).not.toEqual(
+      expect.arrayContaining([
+        'configuration',
+        'connectors',
+        'data-trust',
+        'agent-readiness',
+        'tenant-profile',
+      ]),
+    );
   });
 });

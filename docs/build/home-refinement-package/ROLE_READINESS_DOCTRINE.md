@@ -20,19 +20,19 @@ These patterns are cheap today (just metadata) and expensive to retrofit later. 
 
 ## Pattern 1 · Section by audience
 
-**Today:** Home panels are grouped visually as Explore (operational), Configure (admin), Learn (everyone) — per HOME_PANELS_INVENTORY.md layout.
+**Today:** Home panels are grouped visually as Insight, Decision, Action, and Learn — per HOME_PANELS_INVENTORY.md layout. Admin/setup workspaces live under `/admin/*`, not as a Home group.
 
-**Tomorrow:** When role logic ships, hiding the Configure group entirely from non-admins is a single conditional render. No reorganization of panels needed.
+**Tomorrow:** When role logic ships, Home can filter each operational panel by `visibleToRoles` while Admin keeps its own separate role gate. No reorganization of Home panels is needed.
 
 **The discipline:**
 - Don't interleave admin and operational content in the same panel
 - Don't put an admin-only field in the middle of a CXO-facing card
-- If something is admin-only, it lives in an admin-only panel OR is clearly marked for role-gating
+- If something is admin-only, it lives under Admin OR is clearly marked for role-gating
 
 **Examples in current packages:**
-- Setup Redesign Package's Overview ("operational status") vs Configuration ("admin settings") — clean separation ✓
+- Home Overview ("operational status") vs Admin Setup ("admin settings") — clean separation ✓
 - AI Initiatives Substrate Package's initiative card ("AI Initiative info") vs Edit/Delete affordances ("admin actions") — these need explicit role-gating metadata
-- Connectors panel — entirely admin; no need for finer-grained gating within ✓
+- Connectors — entirely Admin-owned; no need for Home panel treatment ✓
 
 ---
 
@@ -101,7 +101,7 @@ One filter. No retrofit.
 **Definitely:**
 - Every Home panel (per HOME_PANELS_INVENTORY.md)
 - Every nav item (top-level surfaces — though these may all be visible to everyone in v1)
-- Every Configure-group action (admin-only)
+- Every Admin action (admin-only)
 - Every "Edit" / "Delete" / "Reset" / "Re-integrate" button
 - Every settings or config panel
 
