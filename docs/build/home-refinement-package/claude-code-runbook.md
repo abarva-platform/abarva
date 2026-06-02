@@ -49,19 +49,19 @@ PR-H1 · Top nav reorganization
   - Stop condition: if current top nav has structural assumptions that conflict with 5-item layout, halt
 
 PR-H2 · Route consolidation
-  - Add Home landing route at /
-  - Migrate /setup → / and /setup/* → /home/* per ROUTE_MIGRATION.md
+  - Keep Home as the everyday product workspace at /home
+  - Migrate /setup → /admin and /setup/* → /admin/* per ROUTE_MIGRATION.md
   - Implement 301 redirects per ROUTE_MIGRATION.md
   - Browser-Chrome verify per ROUTE_MIGRATION.md verification spec (6 verification steps)
   - Acceptance criteria §2
-  - Stop condition: if existing root / page conflicts with Home content, halt for decision
+  - Stop condition: if any setup/admin route would land in Home, halt for decision
 
 PR-H3 · Home page shell + panel inventory
-  - Build Home landing page rendering 8 panels
-  - Layout per HOME_PANELS_INVENTORY.md (Explore / Configure / Learn groupings)
+  - Build Home landing page rendering the current 6 Home panels
+  - Layout per HOME_PANELS_INVENTORY.md (Insight / Decision / Action / Learn groupings)
   - Each panel routes to its sub-page per HOME_PANELS_INVENTORY routes
-  - Existing panel designs preserved (no design regressions)
-  - Browser-Chrome verify (9 screenshots: landing + 8 panels)
+  - Existing product-work panel designs preserved (no design regressions)
+  - Browser-Chrome verify (landing + current Home panels)
   - Acceptance criteria §3
 
 PR-H4 · Learn panel route + skeleton
@@ -162,7 +162,7 @@ Browser-Chrome screenshots: [total count] across 6 PRs
 Acceptance criteria: 6 of 6 sections passed
 
 Top nav: Home · Intelligence · Moves · Source · Tower ✓
-Routes: /setup/* → /home/* via 301 ✓
+Routes: /setup/* → /admin/* via 301 ✓
 Home panels: 8 panels accessible ✓
 Learn shell: 6 sections rendered ✓
 Role-readiness: metadata present, not enforced ✓
