@@ -1,3 +1,5 @@
+import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+
 export type PilotIngestionBacklogRowId = 'T357' | 'T358' | 'T359' | 'T360';
 
 export type PilotIngestionTableKey =
@@ -142,6 +144,25 @@ export interface PilotIngestionAuditOnlyWritePlan {
     reasonCodes: readonly string[];
     status: 'open';
   };
+  commitBlocked: true;
+  commitBlockers: readonly string[];
+}
+
+export interface DurablePilotIngestionLedgerWriteInput {
+  clientId: string;
+  initiatedByUserId: string;
+  attestationVersion: string;
+  originalFilename: string;
+  plan: PilotIngestionAuditOnlyWritePlan;
+  db?: PostgresCompatClient;
+}
+
+export interface DurablePilotIngestionLedgerWriteResult {
+  status: 'written';
+  uploadRunId: string;
+  fileManifestId: string;
+  quarantineCaseId: string | null;
+  idempotencyKey: string;
   commitBlocked: true;
   commitBlockers: readonly string[];
 }
@@ -377,4 +398,125 @@ export function buildPilotIngestionAuditOnlyWritePlan(
 
 export function getPilotIngestionLedgerTables(): readonly PilotIngestionLedgerTable[] {
   return PILOT_INGESTION_LEDGER_TABLES;
+}
+
+function requireNonEmpty(value: string, label: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error(`${label}_required`);
+  return trimmed;
+}
+
+function firstRowId(data: unknown, table: PilotIngestionTableKey): string {
+  const row = Array.isArray(data) ? data[0] : data;
+  const id = (row as { id?: unknown } | null)?.id;
+  if (typeof id !== 'string' || id.trim() === '') {
+    throw new Error(`pilot_ledger_write_missing_id:${table}`);
+  }
+  return id;
+}
+
+function writeError(table: PilotIngestionTableKey, error: { message?: string } | null | undefined): Error {
+  return new Error(`pilot_ledger_write_failed:${table}:${error?.message ?? 'unknown error'}`);
+}
+
+export async function writeDurablePilotIngestionAuditOnlyLedger(
+  input: DurablePilotIngestionLedgerWriteInput,
+): Promise<DurablePilotIngestionLedgerWriteResult> {
+  const clientId = requireNonEmpty(input.clientId, 'client_id');
+  const initiatedByUserId = requireNonEmpty(input.initiatedByUserId, 'initiated_by_user_id');
+  const attestationVersion = requireNonEmpty(input.attestationVersion, 'attestation_version');
+  const originalFilename = requireNonEmpty(input.originalFilename, 'original_filename');
+  const db = input.db ?? getAzureWriteFluentClient();
+  const { plan } = input;
+  const now = plan.uploadRun.producedAt;
+  const runKey = plan.uploadRun.auditRowId;
+
+  const uploadRunRow = {
+    client_id: clientId,
+    tenant_key: plan.tenantKey,
+    run_key: runKey,
+    idempotency_key: plan.uploadRun.idempotencyKey,
+    initiated_by_user_id: initiatedByUserId,
+    attestation_version: attestationVersion,
+    source_system: plan.uploadRun.sourceSystem,
+    load_intent: plan.uploadRun.loadIntent,
+    status: plan.uploadRun.status,
+    row_counts: {
+      audit_row_id: plan.uploadRun.auditRowId,
+      segment_key: plan.uploadRun.segmentKey,
+    },
+    validation_summary: {
+      mode: plan.mode,
+      commit_blocked: plan.commitBlocked,
+      commit_blockers: plan.commitBlockers,
+      produced_at: now,
+    },
+    error_report: [],
+  };
+
+  const uploadRunWrite = await db
+    .from('pilot_ingestion_upload_runs')
+    .upsert(uploadRunRow, { onConflict: 'tenant_key,run_key' })
+    .select('id');
+  if (uploadRunWrite.error) throw writeError('pilot_ingestion_upload_runs', uploadRunWrite.error);
+  const uploadRunId = firstRowId(uploadRunWrite.data, 'pilot_ingestion_upload_runs');
+
+  const fileKey = `${plan.fileManifest.segmentKey}:${plan.fileManifest.sha256}`;
+  const fileManifestWrite = await db
+    .from('pilot_ingestion_file_manifests')
+    .upsert({
+      client_id: clientId,
+      tenant_key: plan.tenantKey,
+      upload_run_id: uploadRunId,
+      file_key: fileKey,
+      original_filename: originalFilename,
+      blob_uri: `azure://${plan.fileManifest.accountName}/${plan.fileManifest.containerName}/${plan.fileManifest.blobPath}`,
+      sha256: plan.fileManifest.sha256,
+      parse_cache_key: `${plan.tenantKey}:${plan.fileManifest.sha256}`,
+      byte_size: plan.fileManifest.sizeBytes,
+      mime_type: plan.fileManifest.contentType,
+      manifest_role: 'raw',
+      storage_state: plan.fileManifest.protectionDecision === 'quarantine' ? 'quarantined' : 'landed',
+      malware_status: 'pending',
+      sensitive_data_status: plan.fileManifest.protectionDecision === 'quarantine' ? 'quarantined' : 'allowed',
+      metadata: {
+        segment_key: plan.fileManifest.segmentKey,
+        account_name: plan.fileManifest.accountName,
+        container_name: plan.fileManifest.containerName,
+        blob_path: plan.fileManifest.blobPath,
+        protection_decision: plan.fileManifest.protectionDecision,
+      },
+    }, { onConflict: 'tenant_key,upload_run_id,file_key' })
+    .select('id');
+  if (fileManifestWrite.error) throw writeError('pilot_ingestion_file_manifests', fileManifestWrite.error);
+  const fileManifestId = firstRowId(fileManifestWrite.data, 'pilot_ingestion_file_manifests');
+
+  let quarantineCaseId: string | null = null;
+  if (plan.quarantineCase) {
+    const caseKey = `${plan.quarantineCase.segmentKey}:${plan.quarantineCase.auditRowId}`;
+    const quarantineWrite = await db
+      .from('pilot_ingestion_quarantine_cases')
+      .upsert({
+        client_id: clientId,
+        tenant_key: plan.tenantKey,
+        upload_run_id: uploadRunId,
+        file_manifest_id: fileManifestId,
+        case_key: caseKey,
+        reason_codes: [...plan.quarantineCase.reasonCodes],
+        status: plan.quarantineCase.status,
+      }, { onConflict: 'tenant_key,case_key' })
+      .select('id');
+    if (quarantineWrite.error) throw writeError('pilot_ingestion_quarantine_cases', quarantineWrite.error);
+    quarantineCaseId = firstRowId(quarantineWrite.data, 'pilot_ingestion_quarantine_cases');
+  }
+
+  return {
+    status: 'written',
+    uploadRunId,
+    fileManifestId,
+    quarantineCaseId,
+    idempotencyKey: plan.uploadRun.idempotencyKey,
+    commitBlocked: true,
+    commitBlockers: plan.commitBlockers,
+  };
 }
