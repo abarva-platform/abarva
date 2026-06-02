@@ -6,11 +6,13 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
-This release closes a Source security gap found by the production E2E bar: a canonical client admin could receive broad Source-event access even while acting under another active client. The fix limits canonical-admin elevation to the user's inferred home client, adds a tenant-safe event lookup API that returns 404 for missing or cross-tenant events, and adds Source E2E specs that preserve the production failure as an executable regression gate.
+This release closed the first Source security gap found by the production E2E bar: a canonical client admin could receive broad Source-event access even while acting under another active client. The fix limits canonical-admin elevation to the user's inferred home client, adds a tenant-safe event lookup API that returns 404 for missing or cross-tenant events, and adds Source E2E specs that preserve the production failure as an executable regression gate.
+
+Post-deploy note: the live UI route retest still failed after this release because the Source detail page could fall through to unscoped seeded demo events. That remaining UI leak is addressed by follow-up release `2026-06-02-source-seed-tenant-boundary`.
 
 ## Layer Impact
 
@@ -40,13 +42,16 @@ This release closes a Source security gap found by the production E2E bar: a can
 - PASS: `npx jest src/lib/auth/__tests__/source-access-policy.test.ts --runInBand`
 - PASS: `npx tsx scripts/provision-cxo-personas.ts --dry-run`
 - PASS: `npx tsx scripts/provision-cxo-personas.ts --apply` updated 22 canonical Clerk/Supabase personas; banned 0 legacy accounts.
-- FAIL, unrelated existing repo issue: `npx tsc --noEmit --pretty false` currently fails on pre-existing seed script `PatternSeed` type errors outside this release.
+- PASS: `npx tsc --noEmit --pretty false`
+- PASS: `npx eslint src/lib/auth/source-access-policy.ts src/lib/source/queries.ts 'src/app/api/v1/source/events/[eventId]/route.ts' src/lib/auth/__tests__/source-access-policy.test.ts tests/e2e/source`
+- PASS: `npm run release:check -- --base origin/main --head HEAD`
 - FAIL before deployment, expected: `BASE_URL=https://app.abarva.ai SOURCE_AUTH_REFRESH=1 npx playwright test tests/e2e/source/ --reporter=list` still reports the production 200-vs-404 isolation failure because this code is not deployed yet.
+- FAIL after deployment: `DOTENV_CONFIG_PATH=/Users/anand/Projects/nexus/.env.local BASE_URL=https://app.abarva.ai SOURCE_AUTH_REFRESH=1 node -r dotenv/config ./node_modules/.bin/playwright test tests/e2e/source/cross-tenant-isolation.spec.ts --reporter=list` returned 200 for the UI route and rendered Apex event content to Meridian. Follow-up release `2026-06-02-source-seed-tenant-boundary` is required.
 - IMPROVED: after persona alignment, the Golden Event spec no longer fails on retired `demo-apexretail+clerk_test`; it reaches the Source UI and times out on the missing stage-advance control.
 
 ## Rollout Plan
 
-Merge to `main`, allow Vercel production deployment, then rerun `BASE_URL=https://app.abarva.ai SOURCE_AUTH_REFRESH=1 npx playwright test tests/e2e/source/cross-tenant-isolation.spec.ts --reporter=list` to verify the P0 security finding flips from 200 to 404.
+Merged to `main` via PR #2785 and deployed to Vercel production. Post-deploy validation found the remaining seeded-event UI fallback leak; deploy follow-up release `2026-06-02-source-seed-tenant-boundary` before calling the P0 closed.
 
 ## Rollback Plan
 
@@ -63,4 +68,4 @@ Revert this release commit if legitimate home-tenant Source admin access regress
 
 - Full Source Golden Event E2E remains red on product readiness items such as stage-advance control visibility, artifact backing, and value-ledger linkage.
 - Separation-of-duties still depends on the new Source event GET route being deployed before the first API lookup can pass against production.
-- Existing repo-wide TypeScript check fails on unrelated seed script `PatternSeed` errors.
+- Post-deploy Source UI route validation remains red until follow-up release `2026-06-02-source-seed-tenant-boundary` is merged and deployed.
