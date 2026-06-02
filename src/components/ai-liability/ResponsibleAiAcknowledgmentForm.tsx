@@ -10,15 +10,18 @@ import {
 
 export function ResponsibleAiAcknowledgmentForm({
   clientName,
+  reason,
   storageAvailable,
 }: {
   clientName: string;
+  reason?: 'missing' | 'expired' | 'storage_unavailable' | string;
   storageAvailable: boolean;
 }) {
   const router = useRouter();
   const [accepted, setAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isAnnualRenewal = reason === 'expired';
 
   async function submit() {
     if (!accepted || submitting) return;
@@ -77,11 +80,25 @@ export function ResponsibleAiAcknowledgmentForm({
             textTransform: 'uppercase',
           }}
         >
-          Required for {clientName}
+          {isAnnualRenewal ? 'Annual renewal' : 'Required'} for {clientName}
         </div>
         <p style={{ margin: 0, color: '#0C1A3A', fontSize: 15, lineHeight: 1.55 }}>
           {RESPONSIBLE_AI_ACKNOWLEDGMENT_TEXT}
         </p>
+        {isAnnualRenewal && (
+          <p
+            style={{
+              margin: 0,
+              color: '#59667A',
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}
+          >
+            Your previous Responsible AI acknowledgment has reached its annual
+            renewal point. Confirm the current human decision boundary before
+            continuing.
+          </p>
+        )}
       </div>
 
       {!storageAvailable && (
@@ -121,8 +138,9 @@ export function ResponsibleAiAcknowledgmentForm({
           style={{ marginTop: 3 }}
         />
         <span>
-          I have read and understand this Responsible AI Use acknowledgment.
-          I accept it for my access to {clientName}.
+          I have read and understand this Responsible AI Use acknowledgment. I
+          {isAnnualRenewal ? ' renew' : ' accept'} it for my access to{' '}
+          {clientName}.
         </span>
       </label>
 
@@ -148,7 +166,11 @@ export function ResponsibleAiAcknowledgmentForm({
           padding: '11px 16px',
         }}
       >
-        {submitting ? 'Recording...' : 'Accept and continue'}
+        {submitting
+          ? 'Recording...'
+          : isAnnualRenewal
+            ? 'Renew acknowledgment and continue'
+            : 'Accept and continue'}
       </button>
     </div>
   );

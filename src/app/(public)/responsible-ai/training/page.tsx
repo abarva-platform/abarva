@@ -1,22 +1,26 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { ResponsibleAiAcknowledgmentForm } from '@/components/ai-liability/ResponsibleAiAcknowledgmentForm';
+import { ResponsibleAiTrainingForm } from '@/components/ai-liability/ResponsibleAiTrainingForm';
 import { getActiveClientRow } from '@/lib/active-client';
 import {
+  RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   getResponsibleAiAcknowledgmentStatus,
   getResponsibleAiAcknowledgmentSubjectForRequest,
 } from '@/lib/ai-liability/responsible-ai-acknowledgment';
+import {
+  getResponsibleAiTrainingStatus,
+} from '@/lib/ai-liability/responsible-ai-training';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata: Metadata = {
-  title: 'Responsible AI Acknowledgment | AbarVa',
+  title: 'Responsible AI Training | AbarVa',
 };
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ResponsibleAiAcknowledgmentPage() {
+export default async function ResponsibleAiTrainingPage() {
   const [subjectResult, activeClient] = await Promise.all([
     getResponsibleAiAcknowledgmentSubjectForRequest()
       .then((subject) => ({ subject, failed: false }))
@@ -27,19 +31,23 @@ export default async function ResponsibleAiAcknowledgmentPage() {
 
   if (!subject && !subjectResult.failed) redirect('/sign-in');
 
-  const status = subject
+  const acknowledgmentStatus = subject
     ? await getResponsibleAiAcknowledgmentStatus(subject)
+    : { required: true, storageAvailable: false };
+  if (acknowledgmentStatus.required) redirect(RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE);
+
+  const trainingStatus = subject
+    ? await getResponsibleAiTrainingStatus(subject)
     : {
         required: true,
-        textVersion: '',
-        consentText: '',
+        trainingVersion: '',
+        completionStatement: '',
+        estimatedMinutes: 10,
         storageAvailable: false,
-        acceptedAt: null,
-        expiresAt: null,
-        reacknowledgmentIntervalDays: 365,
+        completedAt: null,
         reason: 'storage_unavailable' as const,
       };
-  if (!status.required) redirect('/home');
+  if (!trainingStatus.required) redirect('/home');
 
   const clientName =
     canonicalClientDisplayName({
@@ -59,7 +67,7 @@ export default async function ResponsibleAiAcknowledgmentPage() {
         fontFamily: 'var(--font-inter)',
       }}
     >
-      <section style={{ width: 'min(720px, 100%)', display: 'grid', gap: 18 }}>
+      <section style={{ width: 'min(760px, 100%)', display: 'grid', gap: 18 }}>
         <div>
           <div
             style={{
@@ -72,7 +80,7 @@ export default async function ResponsibleAiAcknowledgmentPage() {
               textTransform: 'uppercase',
             }}
           >
-            Responsible AI use
+            Responsible AI training
           </div>
           <h1
             style={{
@@ -85,18 +93,17 @@ export default async function ResponsibleAiAcknowledgmentPage() {
               lineHeight: 1.08,
             }}
           >
-            Confirm the human decision boundary before entering AbarVa.
+            Complete the human-accountability training before entering AbarVa.
           </h1>
           <p style={{ margin: '12px 0 0', color: '#69758A', fontSize: 15, lineHeight: 1.6 }}>
-            AbarVa is decision-support software. The client decision owner remains
-            responsible for reviewing evidence, validating assumptions, and approving
-            actions before they are taken.
+            This short module sets the operating standard for AI-assisted work:
+            review evidence, validate assumptions, document reasoning, and keep
+            human approval in control of consequential actions.
           </p>
         </div>
-        <ResponsibleAiAcknowledgmentForm
+        <ResponsibleAiTrainingForm
           clientName={clientName}
-          reason={status.reason}
-          storageAvailable={status.storageAvailable}
+          storageAvailable={trainingStatus.storageAvailable}
         />
       </section>
     </main>
