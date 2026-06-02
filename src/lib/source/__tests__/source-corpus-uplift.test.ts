@@ -163,6 +163,10 @@ describe("Source sourcing corpus uplift pilot", () => {
         "PAT-SRC-PNG-011",
         "PAT-SRC-BAFO-003",
         "PAT-SRC-BAFO-008",
+        "PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER",
+        "PAT-SRC-RFP-EVAL-018",
+        "PAT-SRC-ART-PRICING-WORKBOOK",
+        "PAT-SRC-CGV-SAVINGS-CLAIM-GATE",
       ]),
     );
     expect(apexSections.map((section) => section.summary).join(" ")).toMatch(

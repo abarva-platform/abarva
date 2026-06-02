@@ -2,6 +2,7 @@ import type {
   SourceAgentContextBundle,
   SourceLiveTenantContextSnapshot,
   SourceLiveTenantEvidenceItem,
+  SourcePatternSectionContext,
   SourceUserRole,
 } from "./agent-context";
 import type { SourceAgentBriefingMode } from "./multi-agent-types";
@@ -27,6 +28,7 @@ import type {
 } from "./proposal-normalization/proposal-normalization-types";
 import type { TenantContextSegment } from "./taxonomy/category-taxonomy";
 import { answerHardSourceQuestion } from "./expert-judgment/source-hard-question-answer";
+import { getSourceCorpusAnswerPatternSections } from "./source-corpus-uplift";
 
 export type SourceAnswerMode =
   | "current_state"
@@ -129,6 +131,29 @@ export function buildSourceAnswerEngine(
     input.prompt,
   );
   const evidence = rankAnswerEvidence(live, mode).slice(0, 8);
+  const corpusSections = getSourceCorpusAnswerPatternSections({
+    event: input.contextBundle.sourcingEvent ?? {},
+    prompt: input.prompt,
+    mode,
+    maxSections: 8,
+  });
+  const corpusExpertLens = corpusSections
+    .slice(0, 3)
+    .map(formatCorpusExpertLens);
+  const corpusRiskTraps = corpusSections
+    .filter((section) =>
+      ["risks", "failureModes", "artifactRules"].includes(section.kind),
+    )
+    .slice(0, 4)
+    .map(formatCorpusPressurePoint);
+  const corpusMissingData = corpusSections
+    .filter((section) =>
+      ["requiredInputs", "evidence", "scorecardDefaults"].includes(
+        section.kind,
+      ),
+    )
+    .slice(0, 4)
+    .map(formatCorpusEvidenceRequirement);
   const hardQuestionAnswer = answerHardSourceQuestion(
     input.prompt,
     [
@@ -156,6 +181,11 @@ export function buildSourceAnswerEngine(
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
     ...live.warnings,
+    ...(corpusSections.length > 0
+      ? [
+          "Corpus guidance is global doctrine; tenant, vendor, benchmark, and savings claims still require cited evidence.",
+        ]
+      : []),
     ...(evidence.length < 5
       ? ["Retrieved evidence is thin for a decision-grade CXO answer."]
       : []),
@@ -177,8 +207,8 @@ export function buildSourceAnswerEngine(
         currentStateFindings,
         sourcingImplications,
         cxoGuidance,
-        riskTraps,
-        missingData,
+        riskTraps: unique([...riskTraps, ...corpusRiskTraps]),
+        missingData: unique([...missingData, ...corpusMissingData]),
         confidence,
         evidence,
         limits,
@@ -190,11 +220,12 @@ export function buildSourceAnswerEngine(
           hardQuestionAnswer.directAnswer,
           hardQuestionAnswer.sourcingJudgment,
           hardQuestionAnswer.whatWouldChangeTheAnswer,
+          ...corpusExpertLens,
         ]
       : cxoGuidance,
-    expertLens: playbook.expertLens,
-    riskTraps,
-    missingData,
+    expertLens: unique([...playbook.expertLens, ...corpusExpertLens]),
+    riskTraps: unique([...riskTraps, ...corpusRiskTraps]),
+    missingData: unique([...missingData, ...corpusMissingData]),
     recommendedNextAction:
       hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction,
     confidence,
@@ -391,6 +422,22 @@ function collectLoadedSegments(
     }
   }
   return [...loaded];
+}
+
+function formatCorpusExpertLens(section: SourcePatternSectionContext): string {
+  return `Corpus ${section.id}: ${section.title} - ${section.summary}`;
+}
+
+function formatCorpusPressurePoint(
+  section: SourcePatternSectionContext,
+): string {
+  return `Corpus ${section.id}: ${section.title} - ${section.summary}`;
+}
+
+function formatCorpusEvidenceRequirement(
+  section: SourcePatternSectionContext,
+): string {
+  return `Corpus ${section.id}: ${section.title} requires evidence - ${section.summary}`;
 }
 
 export function detectSourceAnswerMode(prompt: string): SourceAnswerMode {

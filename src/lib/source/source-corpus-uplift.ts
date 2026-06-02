@@ -1,5 +1,6 @@
+import type { PatternSeed, SourcingCategory } from "../intelligence/seed-types";
+import { SOURCING_PATTERNS } from "../intelligence/seed-patterns-sourcing";
 import { SOURCING_BAFO_CONTRACT_PATTERNS } from "../intelligence/seed-patterns-sourcing-bafo-contracts";
-import { SOURCING_PRICING_GAMING_PATTERNS } from "../intelligence/seed-patterns-sourcing-pricing-gaming";
 import { SOURCE_GOLDEN_EVENT_IDS } from "./constants";
 import type { SourcePatternSectionContext } from "./agent-context";
 import type {
@@ -22,19 +23,40 @@ type SourceCorpusBafoInput = SourceCorpusEventRef & {
   snapshotCategories?: string[];
 };
 
-const SOURCE1_PATTERN_IDS = [
-  "PAT-SRC-PNG-001",
-  "PAT-SRC-PNG-002",
-  "PAT-SRC-PNG-003",
-  "PAT-SRC-PNG-004",
-  "PAT-SRC-PNG-005",
-  "PAT-SRC-PNG-006",
-  "PAT-SRC-PNG-007",
-  "PAT-SRC-PNG-008",
-  "PAT-SRC-PNG-009",
-  "PAT-SRC-PNG-010",
-  "PAT-SRC-PNG-011",
-  "PAT-SRC-PNG-012",
+type SourceCorpusAnswerMode =
+  | "current_state"
+  | "event_shaping"
+  | "cxo_guidance"
+  | "risk_traps"
+  | "missing_data"
+  | "expert_sourcing";
+
+type SourceCorpusAnswerPatternInput = {
+  event: SourceCorpusEventRef;
+  prompt: string;
+  mode: SourceCorpusAnswerMode;
+  maxSections?: number;
+};
+
+const EXPANDED_SOURCE_CORPUS_PREFIXES = [
+  "PAT-SRC-PNG-",
+  "PAT-SRC-BAFO-",
+  "PAT-SRC-LEV-",
+  "PAT-SRC-RIT-",
+  "PAT-SRC-AFM-",
+  "PAT-SRC-VPR-",
+  "PAT-SRC-BEN-",
+  "PAT-SRC-CGV-",
+  "PAT-SRC-VPF-",
+  "PAT-SRC-RFP-EVAL-",
+  "PAT-SRC-ART-",
+] as const;
+
+const APEX_AMS_REQUIRED_EXPANDED_PATTERN_IDS = [
+  "PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER",
+  "PAT-SRC-RFP-EVAL-018",
+  "PAT-SRC-ART-PRICING-WORKBOOK",
+  "PAT-SRC-CGV-SAVINGS-CLAIM-GATE",
 ] as const;
 
 function isApexAmsEvent(event: SourceCorpusEventRef): boolean {
@@ -59,12 +81,15 @@ function addCorpusTrap(
 }
 
 export function getSourceCorpusUpliftPatterns() {
-  return [
-    ...SOURCING_PRICING_GAMING_PATTERNS.filter((pattern) =>
-      (SOURCE1_PATTERN_IDS as readonly string[]).includes(pattern.id),
+  return getExpandedSourceCorpusPatterns();
+}
+
+export function getExpandedSourceCorpusPatterns(): PatternSeed[] {
+  return SOURCING_PATTERNS.filter((pattern) =>
+    EXPANDED_SOURCE_CORPUS_PREFIXES.some((prefix) =>
+      pattern.id.startsWith(prefix),
     ),
-    ...SOURCING_BAFO_CONTRACT_PATTERNS,
-  ];
+  );
 }
 
 export function getSourceCorpusUpliftPatternSections(
@@ -72,6 +97,31 @@ export function getSourceCorpusUpliftPatternSections(
 ): SourcePatternSectionContext[] {
   if (!isApexAmsEvent(event)) return [];
 
+  return uniquePatternSections([
+    ...getLegacyApexAmsPatternSections(),
+    ...getPatternsById(APEX_AMS_REQUIRED_EXPANDED_PATTERN_IDS).map(
+      patternToSection,
+    ),
+    ...rankSourceCorpusPatterns({
+      event,
+      prompt: `${event.name ?? ""} AMS retail pricing BAFO savings proof RFP evaluation artifact governance`,
+      mode: "expert_sourcing",
+      maxSections: 18,
+    }).map(patternToSection),
+  ]);
+}
+
+export function getSourceCorpusAnswerPatternSections(
+  input: SourceCorpusAnswerPatternInput,
+): SourcePatternSectionContext[] {
+  if (!isApexAmsEvent(input.event)) return [];
+
+  return uniquePatternSections(
+    rankSourceCorpusPatterns(input).map(patternToSection),
+  );
+}
+
+function getLegacyApexAmsPatternSections(): SourcePatternSectionContext[] {
   return [
     {
       id: "PAT-SRC-PNG-001",
@@ -130,6 +180,228 @@ export function getSourceCorpusUpliftPatternSections(
       confidence: "high",
     },
   ];
+}
+
+function rankSourceCorpusPatterns(
+  input: SourceCorpusAnswerPatternInput,
+): PatternSeed[] {
+  const text = `${input.event.name ?? ""} ${input.prompt} ${input.mode}`
+    .toLowerCase()
+    .replace(/[_-]/g, " ");
+  const maxSections = input.maxSections ?? 8;
+
+  return getExpandedSourceCorpusPatterns()
+    .map((pattern) => ({
+      pattern,
+      score: scoreSourcePattern(pattern, text, input.mode),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) => b.score - a.score || a.pattern.id.localeCompare(b.pattern.id),
+    )
+    .slice(0, maxSections)
+    .map((entry) => entry.pattern);
+}
+
+function scoreSourcePattern(
+  pattern: PatternSeed,
+  text: string,
+  mode: SourceCorpusAnswerMode,
+): number {
+  let score = 0;
+  const haystack =
+    `${pattern.id} ${pattern.title} ${pattern.slug} ${pattern.category ?? ""} ${pattern.thesis} ${pattern.applicability} ${pattern.body}`
+      .toLowerCase()
+      .replace(/[_-]/g, " ");
+
+  for (const token of extractRankingTokens(text)) {
+    if (haystack.includes(token)) score += token.length > 4 ? 3 : 1;
+  }
+
+  if (pattern.id.startsWith("PAT-SRC-RIT-")) score += 6;
+  if (pattern.id.startsWith("PAT-SRC-PNG-")) score += 5;
+  if (pattern.id.startsWith("PAT-SRC-VPF-")) score += 5;
+  if (pattern.id.startsWith("PAT-SRC-CGV-")) score += 3;
+
+  if (/\b(pricing|tco|normalization|commercial|cost)\b/.test(text)) {
+    if (
+      pattern.id.startsWith("PAT-SRC-PNG-") ||
+      pattern.id.startsWith("PAT-SRC-BEN-") ||
+      pattern.id.startsWith("PAT-SRC-ART-PRICING")
+    ) {
+      score += 8;
+    }
+  }
+
+  if (/\b(bafo|negotia|lever|walk away|walkaway)\b/.test(text)) {
+    if (
+      pattern.id.startsWith("PAT-SRC-BAFO-") ||
+      pattern.id.startsWith("PAT-SRC-LEV-") ||
+      pattern.id.startsWith("PAT-SRC-PNG-009")
+    ) {
+      score += 8;
+    }
+  }
+
+  if (/\b(savings|value|cfo|proof|roi|claim|ledger)\b/.test(text)) {
+    if (
+      pattern.id.startsWith("PAT-SRC-VPF-") ||
+      pattern.id === "PAT-SRC-CGV-SAVINGS-CLAIM-GATE" ||
+      pattern.id.startsWith("PAT-SRC-ART-VALUE")
+    ) {
+      score += 10;
+    }
+  }
+  if (
+    pattern.id === "PAT-SRC-VPF-NO-EVIDENCE-NO-NUMBER" &&
+    /\b(overstat|without overstating|no number|prove|proof|savings)\b/.test(
+      text,
+    )
+  ) {
+    score += 18;
+  }
+
+  if (/\b(rfp|criteria|scorecard|weight|evaluation|scoring)\b/.test(text)) {
+    if (
+      pattern.id.startsWith("PAT-SRC-RFP-EVAL-") ||
+      pattern.id === "PAT-SRC-ART-EVALUATION-SCORECARD" ||
+      pattern.id === "PAT-SRC-ART-WEIGHT-SET-GOVERNANCE-LOG"
+    ) {
+      score += 10;
+    }
+  }
+
+  if (/\b(vendor|wipro|infosys|tcs|profile|benchmark|rate card)\b/.test(text)) {
+    if (
+      pattern.id.startsWith("PAT-SRC-VPR-") ||
+      pattern.id.startsWith("PAT-SRC-BEN-")
+    ) {
+      score += 7;
+    }
+  }
+
+  if (/\b(retail|q4|holiday|pos|oms|wms|bopis|returns|store)\b/.test(text)) {
+    if (pattern.id.startsWith("PAT-SRC-RIT-")) score += 10;
+    if (pattern.id === "PAT-SRC-PNG-007") score += 8;
+  }
+
+  if (mode === "risk_traps" && pattern.riskFactors?.length) score += 8;
+  if (mode === "missing_data" && isEvidenceRequiredPattern(pattern)) score += 8;
+  if (mode === "event_shaping" && pattern.id.startsWith("PAT-SRC-RFP-EVAL-")) {
+    score += 5;
+  }
+
+  return score;
+}
+
+function extractRankingTokens(text: string): string[] {
+  return Array.from(
+    new Set(
+      text
+        .split(/[^a-z0-9]+/)
+        .filter((token) => token.length >= 4)
+        .filter(
+          (token) =>
+            ![
+              "what",
+              "should",
+              "this",
+              "that",
+              "with",
+              "from",
+              "event",
+              "source",
+            ].includes(token),
+        ),
+    ),
+  ).slice(0, 30);
+}
+
+function patternToSection(pattern: PatternSeed): SourcePatternSectionContext {
+  return {
+    id: pattern.id,
+    title: pattern.title,
+    kind: patternToSectionKind(pattern),
+    summary: summarizePattern(pattern),
+    confidence: confidenceToSection(pattern.confidence),
+  };
+}
+
+function getPatternsById(ids: readonly string[]): PatternSeed[] {
+  const patternsById = new Map(
+    getExpandedSourceCorpusPatterns().map((pattern) => [pattern.id, pattern]),
+  );
+  return ids
+    .map((id) => patternsById.get(id))
+    .filter((pattern): pattern is PatternSeed => Boolean(pattern));
+}
+
+function patternToSectionKind(
+  pattern: PatternSeed,
+): SourcePatternSectionContext["kind"] {
+  if (pattern.id.startsWith("PAT-SRC-RFP-EVAL-")) return "scorecardDefaults";
+  if (pattern.id.startsWith("PAT-SRC-RIT-")) return "requiredInputs";
+  if (pattern.id.startsWith("PAT-SRC-VPR-")) return "evidence";
+  if (pattern.id.startsWith("PAT-SRC-BEN-")) return "evidence";
+  if (pattern.id.startsWith("PAT-SRC-CGV-")) return "evidence";
+  if (pattern.id.startsWith("PAT-SRC-VPF-")) return "evidence";
+  if (pattern.id.startsWith("PAT-SRC-ART-")) return "artifactRules";
+  if (pattern.id.startsWith("PAT-SRC-LEV-")) return "interventions";
+  if (pattern.id.startsWith("PAT-SRC-AFM-")) return "failureModes";
+  if (pattern.riskFactors?.length) return "risks";
+  if (isArtifactCategory(pattern.category)) return "artifactRules";
+  return "stageGuidance";
+}
+
+function summarizePattern(pattern: PatternSeed): string {
+  const caveat = isEvidenceRequiredPattern(pattern)
+    ? " Evidence-required; do not claim numeric, vendor, benchmark, or savings facts without citations."
+    : "";
+  return `${trimSentence(pattern.thesis || pattern.applicability)}${caveat}`;
+}
+
+function isEvidenceRequiredPattern(pattern: PatternSeed): boolean {
+  return (
+    pattern.id.startsWith("PAT-SRC-VPR-") ||
+    pattern.id.startsWith("PAT-SRC-BEN-") ||
+    pattern.id.startsWith("PAT-SRC-CGV-") ||
+    pattern.id.startsWith("PAT-SRC-VPF-") ||
+    pattern.id.startsWith("PAT-SRC-ART-")
+  );
+}
+
+function isArtifactCategory(category?: SourcingCategory): boolean {
+  return (
+    category === "pricing_intelligence" ||
+    category === "contract_intelligence" ||
+    category === "process_methodology"
+  );
+}
+
+function confidenceToSection(
+  confidence: number,
+): SourcePatternSectionContext["confidence"] {
+  if (confidence >= 0.82) return "high";
+  if (confidence >= 0.7) return "medium";
+  return "low";
+}
+
+function trimSentence(value: string): string {
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  return trimmed.replace(/[.。]?$/, ".");
+}
+
+function uniquePatternSections(
+  sections: SourcePatternSectionContext[],
+): SourcePatternSectionContext[] {
+  const seen = new Set<string>();
+  const uniqueSections: SourcePatternSectionContext[] = [];
+  for (const section of sections) {
+    if (seen.has(section.id)) continue;
+    seen.add(section.id);
+    uniqueSections.push(section);
+  }
+  return uniqueSections;
 }
 
 export function getSourceCorpusCommercialTraps(
