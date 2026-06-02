@@ -24,7 +24,7 @@ const links = [
 
 const shellStyle = {
   background: '#F8F7F4',
-  minHeight: '100vh',
+  minHeight: '100%',
   padding: 32,
   color: '#171717',
 };
@@ -131,7 +131,9 @@ export default async function ContextLayerPage() {
             <h2 style={{ fontFamily: 'Georgia, serif', marginTop: 0 }}>Template catalog</h2>
             <ul style={{ columns: 2, fontFamily: 'DM Sans, sans-serif', lineHeight: 1.8, margin: 0 }}>
               {NORTHSTAR_CONTEXT_TEMPLATES.map((template) => (
-                <li key={template.id}>{template.label}</li>
+                <li key={template.id}>
+                  {template.label} · {template.unlocks.join(', ')}
+                </li>
               ))}
             </ul>
           </div>

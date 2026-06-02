@@ -39,7 +39,7 @@ export default async function ContextEvidenceMapPage({
     : [];
 
   return (
-    <main style={{ background: '#F8F7F4', minHeight: '100vh', padding: 32 }}>
+    <main style={{ background: '#F8F7F4', minHeight: '100%', padding: 32 }}>
       <section style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gap: 18 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
