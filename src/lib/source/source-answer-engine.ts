@@ -3,38 +3,38 @@ import type {
   SourceLiveTenantContextSnapshot,
   SourceLiveTenantEvidenceItem,
   SourceUserRole,
-} from './agent-context';
-import type { SourceAgentBriefingMode } from './multi-agent-types';
+} from "./agent-context";
+import type { SourceAgentBriefingMode } from "./multi-agent-types";
 import {
   classifySourcingEvent,
   type CategoryClassification,
-} from './classifier/category-classifier';
+} from "./classifier/category-classifier";
 import {
   runDeliveryModelGate,
   type DeliveryModelGateResult,
   type DeliveryModelSignals,
-} from './delivery-model/delivery-model-gate';
+} from "./delivery-model/delivery-model-gate";
 import {
   buildShouldCostEstimate,
   type RoleMixEntry,
   type RoleRateCard,
   type ShouldCostEstimate,
-} from './should-cost/should-cost-model';
-import { buildProposalNormalizationMatrix } from './proposal-normalization/proposal-normalization';
+} from "./should-cost/should-cost-model";
+import { buildProposalNormalizationMatrix } from "./proposal-normalization/proposal-normalization";
 import type {
   ProposalNormalizationMatrix,
   RawVendorProposal,
-} from './proposal-normalization/proposal-normalization-types';
-import type { TenantContextSegment } from './taxonomy/category-taxonomy';
-import { answerHardSourceQuestion } from './expert-judgment/source-hard-question-answer';
+} from "./proposal-normalization/proposal-normalization-types";
+import type { TenantContextSegment } from "./taxonomy/category-taxonomy";
+import { answerHardSourceQuestion } from "./expert-judgment/source-hard-question-answer";
 
 export type SourceAnswerMode =
-  | 'current_state'
-  | 'event_shaping'
-  | 'cxo_guidance'
-  | 'risk_traps'
-  | 'missing_data'
-  | 'expert_sourcing';
+  | "current_state"
+  | "event_shaping"
+  | "cxo_guidance"
+  | "risk_traps"
+  | "missing_data"
+  | "expert_sourcing";
 
 export interface SourceAnswerEvidenceCitation {
   id: string;
@@ -44,11 +44,11 @@ export interface SourceAnswerEvidenceCitation {
   sourceDoc?: string;
   sourcePath?: string;
   excerpt: string;
-  confidence: SourceLiveTenantEvidenceItem['confidence'];
+  confidence: SourceLiveTenantEvidenceItem["confidence"];
 }
 
 export interface SourceAnswerEngineOutput {
-  engineVersion: 'source-answer-engine/v1';
+  engineVersion: "source-answer-engine/v1";
   mode: SourceAnswerMode;
   title: string;
   answerText: string;
@@ -59,7 +59,7 @@ export interface SourceAnswerEngineOutput {
   riskTraps: string[];
   missingData: string[];
   recommendedNextAction: string;
-  confidence: 'low' | 'medium' | 'high';
+  confidence: "low" | "medium" | "high";
   limits: string[];
   evidenceCitations: SourceAnswerEvidenceCitation[];
   /**
@@ -124,7 +124,10 @@ export function buildSourceAnswerEngine(
   if (!live) return null;
 
   const mode = detectSourceAnswerMode(input.prompt);
-  const playbook = selectSourceExpertPlaybook(input.contextBundle, input.prompt);
+  const playbook = selectSourceExpertPlaybook(
+    input.contextBundle,
+    input.prompt,
+  );
   const evidence = rankAnswerEvidence(live, mode).slice(0, 8);
   const hardQuestionAnswer = answerHardSourceQuestion(
     input.prompt,
@@ -133,43 +136,53 @@ export function buildSourceAnswerEngine(
       ...input.contextBundle.blockers,
       ...input.contextBundle.missingInputs,
       ...live.warnings,
-    ].join('\n'),
+    ].join("\n"),
   );
   const currentStateFindings = toCurrentStateFindings(evidence, live);
   const sourcingImplications = selectByMode(mode, playbook.eventShaping, [
     `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
   ]);
   const cxoGuidance = selectByMode(mode, playbook.cxoGuidance, [
-    'Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.',
+    "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
   ]);
   const riskTraps = selectByMode(mode, playbook.riskTraps, [
-    'Do not let vendor demos substitute for baseline evidence, integration ownership, pricing normalization, or transition accountability.',
+    "Do not let vendor demos substitute for baseline evidence, integration ownership, pricing normalization, or transition accountability.",
   ]);
-  const missingData = selectByMode(mode, playbook.missingData, inferMissingData(input.contextBundle, live));
+  const missingData = selectByMode(
+    mode,
+    playbook.missingData,
+    inferMissingData(input.contextBundle, live),
+  );
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
     ...live.warnings,
-    ...(evidence.length < 5 ? ['Retrieved evidence is thin for a decision-grade CXO answer.'] : []),
+    ...(evidence.length < 5
+      ? ["Retrieved evidence is thin for a decision-grade CXO answer."]
+      : []),
     ...(input.contextBundle.missingInputs.length > 0
-      ? [`Workflow missing inputs remain: ${input.contextBundle.missingInputs.join('; ')}.`]
+      ? [
+          `Workflow missing inputs remain: ${input.contextBundle.missingInputs.join("; ")}.`,
+        ]
       : []),
   ]);
 
   return {
-    engineVersion: 'source-answer-engine/v1',
+    engineVersion: "source-answer-engine/v1",
     mode,
     title: `${playbook.label} answer`,
-    answerText: hardQuestionAnswer?.answerText ?? formatAnswerText({
-      mode,
-      currentStateFindings,
-      sourcingImplications,
-      cxoGuidance,
-      riskTraps,
-      missingData,
-      confidence,
-      evidence,
-      limits,
-    }),
+    answerText:
+      hardQuestionAnswer?.answerText ??
+      formatAnswerText({
+        mode,
+        currentStateFindings,
+        sourcingImplications,
+        cxoGuidance,
+        riskTraps,
+        missingData,
+        confidence,
+        evidence,
+        limits,
+      }),
     currentStateFindings,
     sourcingImplications,
     cxoGuidance: hardQuestionAnswer
@@ -182,7 +195,8 @@ export function buildSourceAnswerEngine(
     expertLens: playbook.expertLens,
     riskTraps,
     missingData,
-    recommendedNextAction: hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction,
+    recommendedNextAction:
+      hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction,
     confidence,
     limits,
     evidenceCitations: evidence.map(toAnswerCitation),
@@ -234,7 +248,8 @@ export function estimateEventShouldCost(
 ): ShouldCostEstimate | null {
   const event = bundle.sourcingEvent;
   if (!event) return null;
-  const vendorQuotedCost = event.valueAtStakeUsd ?? event.projectedValueUsd ?? 0;
+  const vendorQuotedCost =
+    event.valueAtStakeUsd ?? event.projectedValueUsd ?? 0;
   if (vendorQuotedCost <= 0) return null;
 
   // Conservative default delivery scaffold. The blended labour base is sized
@@ -243,18 +258,38 @@ export function estimateEventShouldCost(
   const durationMonths = 12;
   const annualLabourBudget = vendorQuotedCost * 0.6;
   const rateCard: RoleRateCard[] = [
-    { role: 'engagement_lead', onshoreAnnualRate: 320_000, offshoreAnnualRate: 150_000 },
-    { role: 'solution_architect', onshoreAnnualRate: 280_000, offshoreAnnualRate: 130_000 },
-    { role: 'senior_engineer', onshoreAnnualRate: 220_000, offshoreAnnualRate: 95_000 },
-    { role: 'engineer', onshoreAnnualRate: 170_000, offshoreAnnualRate: 70_000 },
-    { role: 'project_manager', onshoreAnnualRate: 200_000, offshoreAnnualRate: 90_000 },
+    {
+      role: "engagement_lead",
+      onshoreAnnualRate: 320_000,
+      offshoreAnnualRate: 150_000,
+    },
+    {
+      role: "solution_architect",
+      onshoreAnnualRate: 280_000,
+      offshoreAnnualRate: 130_000,
+    },
+    {
+      role: "senior_engineer",
+      onshoreAnnualRate: 220_000,
+      offshoreAnnualRate: 95_000,
+    },
+    {
+      role: "engineer",
+      onshoreAnnualRate: 170_000,
+      offshoreAnnualRate: 70_000,
+    },
+    {
+      role: "project_manager",
+      onshoreAnnualRate: 200_000,
+      offshoreAnnualRate: 90_000,
+    },
   ];
   const roleMix: RoleMixEntry[] = [
-    { role: 'engagement_lead', headcount: 0.5 },
-    { role: 'solution_architect', headcount: 1 },
-    { role: 'senior_engineer', headcount: 2 },
-    { role: 'engineer', headcount: 3 },
-    { role: 'project_manager', headcount: 1 },
+    { role: "engagement_lead", headcount: 0.5 },
+    { role: "solution_architect", headcount: 1 },
+    { role: "senior_engineer", headcount: 2 },
+    { role: "engineer", headcount: 3 },
+    { role: "project_manager", headcount: 1 },
   ];
 
   return buildShouldCostEstimate({
@@ -318,7 +353,7 @@ export function classifyEventCategory(
       name: event.name,
       archetype: bundle.sourcingArchetype ?? event.archetype,
       patternId: undefined,
-      description: bundle.blockers.join('; ') || undefined,
+      description: bundle.blockers.join("; ") || undefined,
     },
     { loadedSegments: collectLoadedSegments(bundle.liveTenantContext) },
   );
@@ -330,13 +365,13 @@ export function classifyEventCategory(
  * taxonomy grounds against are relevant to evidence-gap detection.
  */
 const TAXONOMY_SEGMENTS: readonly TenantContextSegment[] = [
-  'vendor_contracts',
-  'it_landscape',
-  'it_financials',
-  'program_inventory',
-  'operating_telemetry',
-  'industry_context',
-  'compliance',
+  "vendor_contracts",
+  "it_landscape",
+  "it_financials",
+  "program_inventory",
+  "operating_telemetry",
+  "industry_context",
+  "compliance",
 ];
 
 function collectLoadedSegments(
@@ -360,29 +395,65 @@ function collectLoadedSegments(
 
 export function detectSourceAnswerMode(prompt: string): SourceAnswerMode {
   const text = prompt.toLowerCase();
-  if (/\b(risk|trap|watch|avoid|failure|red flags?|gotcha|pitfall)\b/.test(text)) return 'risk_traps';
-  if (/\b(missing|need|gaps?|required|before we proceed|cannot proceed|data request)\b/.test(text)) return 'missing_data';
-  if (/\b(cxo|cio|cfo|cto|guidance|recommend|decision|steer)\b/.test(text)) return 'cxo_guidance';
-  if (/\b(current state|state of affairs|org structure|financial|tech landscape|landscape|baseline)\b/.test(text)) return 'current_state';
-  if (/\b(shape|scope|event|rfp|evaluat(?:e|ed|ion)|scorecard|vendors?|commercial)\b/.test(text)) return 'event_shaping';
-  return 'expert_sourcing';
+  if (
+    /\b(risk|trap|watch|avoid|failure|red flags?|gotcha|pitfall)\b/.test(text)
+  )
+    return "risk_traps";
+  if (
+    /\b(missing|need|gaps?|required|before we proceed|cannot proceed|data request)\b/.test(
+      text,
+    )
+  )
+    return "missing_data";
+  if (/\b(cxo|cio|cfo|cto|guidance|recommend|decision|steer)\b/.test(text))
+    return "cxo_guidance";
+  if (
+    /\b(current state|state of affairs|org structure|financial|tech landscape|landscape|baseline)\b/.test(
+      text,
+    )
+  )
+    return "current_state";
+  if (
+    /\b(shape|scope|event|rfp|evaluat(?:e|ed|ion)|scorecard|vendors?|commercial)\b/.test(
+      text,
+    )
+  )
+    return "event_shaping";
+  return "expert_sourcing";
 }
 
 function selectSourceExpertPlaybook(
   bundle: SourceAgentContextBundle,
   prompt: string,
 ): SourceExpertPlaybook {
-  const text = `${bundle.sourcingEvent?.name ?? ''} ${bundle.sourcingArchetype ?? ''} ${prompt}`.toLowerCase();
-  if (/\b(cdp|customer data|identity|activation|personalization|segment|treasure data)\b/.test(text)) {
+  const text =
+    `${bundle.sourcingEvent?.name ?? ""} ${bundle.sourcingArchetype ?? ""} ${prompt}`.toLowerCase();
+  if (
+    /\b(cdp|customer data|identity|activation|personalization|segment|treasure data)\b/.test(
+      text,
+    )
+  ) {
     return CDP_PLAYBOOK;
   }
-  if (/\b(contact center|call center|agent assist|containment|ivr|nice|aht)\b/.test(text)) {
+  if (
+    /\b(contact center|call center|agent assist|containment|ivr|nice|aht)\b/.test(
+      text,
+    )
+  ) {
     return CONTACT_CENTER_AI_PLAYBOOK;
   }
-  if (/\b(store associate|store productivity|labor|workforce|associate)\b/.test(text)) {
+  if (
+    /\b(store associate|store productivity|labor|workforce|associate)\b/.test(
+      text,
+    )
+  ) {
     return STORE_PRODUCTIVITY_PLAYBOOK;
   }
-  if (/\b(ams|managed service|outsourcing|application support|sla|transition)\b/.test(text)) {
+  if (
+    /\b(ams|managed service|outsourcing|application support|sla|transition)\b/.test(
+      text,
+    )
+  ) {
     return AMS_OUTSOURCING_PLAYBOOK;
   }
   return PLATFORM_SOURCING_PLAYBOOK;
@@ -393,18 +464,54 @@ function rankAnswerEvidence(
   mode: SourceAnswerMode,
 ): SourceLiveTenantEvidenceItem[] {
   const modeSegments: Partial<Record<SourceAnswerMode, string[]>> = {
-    current_state: ['org_structure', 'it_financials', 'it_landscape', 'kpi_history', 'vendor_contracts'],
-    event_shaping: ['sourcing_artifacts', 'evidence_ledger', 'vendor_contracts', 'it_landscape', 'financial_model'],
-    cxo_guidance: ['evidence_ledger', 'financial_model', 'it_financials', 'decision_traces', 'stakeholder_notes'],
-    risk_traps: ['compliance', 'vendor_contracts', 'evidence_ledger', 'decision_traces', 'program_inventory'],
-    missing_data: ['sourcing_artifacts', 'evidence_ledger', 'kpi_dictionary', 'operating_telemetry', 'financial_model'],
-    expert_sourcing: ['evidence_ledger', 'sourcing_artifacts', 'vendor_contracts', 'peer_benchmarks', 'vendor_intelligence'],
+    current_state: [
+      "org_structure",
+      "it_financials",
+      "it_landscape",
+      "kpi_history",
+      "vendor_contracts",
+    ],
+    event_shaping: [
+      "sourcing_artifacts",
+      "evidence_ledger",
+      "vendor_contracts",
+      "it_landscape",
+      "financial_model",
+    ],
+    cxo_guidance: [
+      "evidence_ledger",
+      "financial_model",
+      "it_financials",
+      "decision_traces",
+      "stakeholder_notes",
+    ],
+    risk_traps: [
+      "compliance",
+      "vendor_contracts",
+      "evidence_ledger",
+      "decision_traces",
+      "program_inventory",
+    ],
+    missing_data: [
+      "sourcing_artifacts",
+      "evidence_ledger",
+      "kpi_dictionary",
+      "operating_telemetry",
+      "financial_model",
+    ],
+    expert_sourcing: [
+      "evidence_ledger",
+      "sourcing_artifacts",
+      "vendor_contracts",
+      "peer_benchmarks",
+      "vendor_intelligence",
+    ],
   };
   const preferred = new Set(modeSegments[mode] ?? []);
   return [...live.retrievedEvidence].sort((a, b) => {
     const aBoost = preferred.has(a.segmentId) ? 4 : 0;
     const bBoost = preferred.has(b.segmentId) ? 4 : 0;
-    return (b.score + bBoost) - (a.score + aBoost);
+    return b.score + bBoost - (a.score + aBoost);
   });
 }
 
@@ -412,11 +519,16 @@ function toCurrentStateFindings(
   evidence: SourceLiveTenantEvidenceItem[],
   live: SourceLiveTenantContextSnapshot,
 ): string[] {
-  const findings = evidence.slice(0, 4).map((item) => (
-    `${formatSegmentLabel(item.segmentId)}: ${cleanEvidenceExcerpt(item.excerpt)}`
-  ));
+  const findings = evidence
+    .slice(0, 4)
+    .map(
+      (item) =>
+        `${formatSegmentLabel(item.segmentId)}: ${cleanEvidenceExcerpt(item.excerpt)}`,
+    );
   if (findings.length > 0) return findings;
-  return live.evidenceBasis.slice(0, 4).map((basis) => `Loaded context: ${basis}.`);
+  return live.evidenceBasis
+    .slice(0, 4)
+    .map((basis) => `Loaded context: ${basis}.`);
 }
 
 function selectByMode(
@@ -424,9 +536,9 @@ function selectByMode(
   primary: string[],
   fallback: string[],
 ): string[] {
-  if (mode === 'current_state') return primary.slice(0, 2);
-  if (mode === 'risk_traps') return primary.slice(0, 4);
-  if (mode === 'missing_data') return primary.slice(0, 4);
+  if (mode === "current_state") return primary.slice(0, 2);
+  if (mode === "risk_traps") return primary.slice(0, 4);
+  if (mode === "missing_data") return primary.slice(0, 4);
   return (primary.length ? primary : fallback).slice(0, 3);
 }
 
@@ -436,23 +548,45 @@ function inferMissingData(
 ): string[] {
   return unique([
     ...bundle.missingInputs,
-    ...(live.segments.some((segment) => segment.segmentId === 'operating_telemetry') ? [] : ['Operating telemetry baseline.']),
-    ...(live.segments.some((segment) => segment.segmentId === 'vendor_contracts') ? [] : ['Current vendor contract and renewal baseline.']),
-    ...(live.segments.some((segment) => segment.segmentId === 'it_financials') ? [] : ['IT financial baseline.']),
+    ...(live.segments.some(
+      (segment) => segment.segmentId === "operating_telemetry",
+    )
+      ? []
+      : ["Operating telemetry baseline."]),
+    ...(live.segments.some(
+      (segment) => segment.segmentId === "vendor_contracts",
+    )
+      ? []
+      : ["Current vendor contract and renewal baseline."]),
+    ...(live.segments.some((segment) => segment.segmentId === "it_financials")
+      ? []
+      : ["IT financial baseline."]),
   ]);
 }
 
 function deriveAnswerConfidence(
   live: SourceLiveTenantContextSnapshot,
   evidence: SourceLiveTenantEvidenceItem[],
-): SourceAnswerEngineOutput['confidence'] {
-  const highEvidence = evidence.filter((item) => item.confidence === 'high').length;
-  if (live.embeddedContextChunkCount > 0 && evidence.length >= 6 && highEvidence >= 4 && live.warnings.length === 0) {
-    return 'high';
+): SourceAnswerEngineOutput["confidence"] {
+  const highEvidence = evidence.filter(
+    (item) => item.confidence === "high",
+  ).length;
+  if (
+    live.embeddedContextChunkCount > 0 &&
+    evidence.length >= 6 &&
+    highEvidence >= 4 &&
+    live.warnings.length === 0
+  ) {
+    return "high";
   }
-  if (live.embeddedContextChunkCount > 0 && evidence.length >= 2 && highEvidence >= 2) return 'medium';
-  if (evidence.length >= 3) return 'medium';
-  return 'low';
+  if (
+    live.embeddedContextChunkCount > 0 &&
+    evidence.length >= 2 &&
+    highEvidence >= 2
+  )
+    return "medium";
+  if (evidence.length >= 3) return "medium";
+  return "low";
 }
 
 function formatAnswerText(args: {
@@ -462,27 +596,38 @@ function formatAnswerText(args: {
   cxoGuidance: string[];
   riskTraps: string[];
   missingData: string[];
-  confidence: SourceAnswerEngineOutput['confidence'];
+  confidence: SourceAnswerEngineOutput["confidence"];
   evidence: SourceLiveTenantEvidenceItem[];
   limits: string[];
 }): string {
-  const evidenceLabels = args.evidence.slice(0, 4).map((item, index) => (
-    `[${index + 1}] ${formatSegmentLabel(item.segmentId)} - ${item.sourceDoc ?? item.recordId}`
-  ));
+  const evidenceLabels = args.evidence
+    .slice(0, 4)
+    .map(
+      (item, index) =>
+        `[${index + 1}] ${formatSegmentLabel(item.segmentId)} - ${item.sourceDoc ?? item.recordId}`,
+    );
   const body = [
     `Mode: ${formatMode(args.mode)}. Confidence: ${args.confidence}.`,
     `Current state: ${joinSentences(args.currentStateFindings)}`,
     `Sourcing implication: ${joinSentences(args.sourcingImplications)}`,
     `CXO guidance: ${joinSentences(args.cxoGuidance)}`,
-    args.riskTraps.length ? `Risks/traps: ${joinSentences(args.riskTraps)}` : '',
-    args.missingData.length ? `Missing data: ${joinSentences(args.missingData)}` : '',
-    evidenceLabels.length ? `Evidence: ${evidenceLabels.join('; ')}.` : '',
-    args.limits.length ? `Limits: ${args.limits.join(' ')}` : '',
-  ].filter(Boolean).join('\n');
-  return body.slice(0, 1800);
+    args.riskTraps.length
+      ? `Risks/traps: ${joinSentences(args.riskTraps)}`
+      : "",
+    args.missingData.length
+      ? `Missing data: ${joinSentences(args.missingData)}`
+      : "",
+    evidenceLabels.length ? `Evidence: ${evidenceLabels.join("; ")}.` : "",
+    args.limits.length ? `Limits: ${args.limits.join(" ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return body;
 }
 
-function toAnswerCitation(item: SourceLiveTenantEvidenceItem): SourceAnswerEvidenceCitation {
+function toAnswerCitation(
+  item: SourceLiveTenantEvidenceItem,
+): SourceAnswerEvidenceCitation {
   return {
     id: item.id,
     label: `${formatSegmentLabel(item.segmentId)} - ${item.title}`,
@@ -496,183 +641,194 @@ function toAnswerCitation(item: SourceLiveTenantEvidenceItem): SourceAnswerEvide
 }
 
 function eventName(bundle: SourceAgentContextBundle): string {
-  return bundle.sourcingEvent?.name ?? 'this sourcing event';
+  return bundle.sourcingEvent?.name ?? "this sourcing event";
 }
 
 function formatMode(mode: SourceAnswerMode): string {
-  return mode.replace(/_/g, ' ');
+  return mode.replace(/_/g, " ");
 }
 
 function formatSegmentLabel(segmentId: string): string {
-  const acronyms = new Set(['ai', 'it', 'kpi']);
+  const acronyms = new Set(["ai", "it", "kpi"]);
   return segmentId
-    .split('_')
-    .map((part) => acronyms.has(part) ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .split("_")
+    .map((part) =>
+      acronyms.has(part)
+        ? part.toUpperCase()
+        : part.charAt(0).toUpperCase() + part.slice(1),
+    )
+    .join(" ");
 }
 
 function cleanEvidenceExcerpt(excerpt: string): string {
   return excerpt
-    .replace(/^id:\s*[^ ]+\s+/i, '')
-    .replace(/^claim:\s*/i, '')
-    .replace(/\s+source_type:.*$/i, '')
+    .replace(/^id:\s*[^ ]+\s+/i, "")
+    .replace(/^claim:\s*/i, "")
+    .replace(/\s+source_type:.*$/i, "")
     .trim()
-    .replace(/[.。]?$/, '.');
+    .replace(/[.。]?$/, ".");
 }
 
 function joinSentences(items: string[]): string {
-  if (items.length === 0) return 'No cited current-state finding is available.';
-  return items.map((item) => item.replace(/[.。]?$/, '.')).join(' ');
+  if (items.length === 0) return "No cited current-state finding is available.";
+  return items.map((item) => item.replace(/[.。]?$/, ".")).join(" ");
 }
 
 function unique(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  );
 }
 
 const CDP_PLAYBOOK: SourceExpertPlaybook = {
-  id: 'cdp-platform-sourcing',
-  label: 'CDP platform sourcing',
+  id: "cdp-platform-sourcing",
+  label: "CDP platform sourcing",
   expertLens: [
-    'CDP sourcing should be governed as an enterprise data operating model decision, not only a marketing platform buy.',
-    'Identity resolution, consent, activation latency, integration ownership, and implementation partner fit carry as much risk as license price.',
+    "CDP sourcing should be governed as an enterprise data operating model decision, not only a marketing platform buy.",
+    "Identity resolution, consent, activation latency, integration ownership, and implementation partner fit carry as much risk as license price.",
   ],
   eventShaping: [
-    'Anchor the RFP in identity match-rate gaps, approved-system constraints, activation use cases, and integration work split between platform vendor and SI.',
-    'Score vendors on data model flexibility, governance controls, activation connectors, implementation partner accountability, and measurable lift in customer outcomes.',
-    'Make pricing normalize license, events/profiles, implementation, data engineering, run support, and change management so the CFO sees full TCO.',
+    "Anchor the RFP in identity match-rate gaps, approved-system constraints, activation use cases, and integration work split between platform vendor and SI.",
+    "Score vendors on data model flexibility, governance controls, activation connectors, implementation partner accountability, and measurable lift in customer outcomes.",
+    "Make pricing normalize license, events/profiles, implementation, data engineering, run support, and change management so the CFO sees full TCO.",
   ],
   cxoGuidance: [
-    'The CIO should force clarity on integration ownership and approved data-system posture before shortlist.',
-    'The CMO/CDO should define the first three activation use cases and measurable lift threshold before demos.',
-    'The CFO should require a value case that separates platform subscription, SI delivery, internal data effort, and run cost.',
+    "The CIO should force clarity on integration ownership and approved data-system posture before shortlist.",
+    "The CMO/CDO should define the first three activation use cases and measurable lift threshold before demos.",
+    "The CFO should require a value case that separates platform subscription, SI delivery, internal data effort, and run cost.",
   ],
   riskTraps: [
-    'Do not buy a CDP to repair unresolved master-data and consent governance gaps without funding the operating model.',
-    'Do not let vendor demos overfit to clean demo data while Apex identity and approved-system constraints remain unresolved.',
-    'Do not compare subscription quotes without normalizing events, profile volumes, implementation scope, and managed services.',
+    "Do not buy a CDP to repair unresolved master-data and consent governance gaps without funding the operating model.",
+    "Do not let vendor demos overfit to clean demo data while Apex identity and approved-system constraints remain unresolved.",
+    "Do not compare subscription quotes without normalizing events, profile volumes, implementation scope, and managed services.",
   ],
   missingData: [
-    'Customer identity match baseline by source system.',
-    'Approved-system and data-classification constraints for customer data.',
-    'Activation use cases with owner, KPI, and target lift.',
-    'Implementation work split across vendor, SI, and internal teams.',
+    "Customer identity match baseline by source system.",
+    "Approved-system and data-classification constraints for customer data.",
+    "Activation use cases with owner, KPI, and target lift.",
+    "Implementation work split across vendor, SI, and internal teams.",
   ],
-  nextAction: 'Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.',
+  nextAction:
+    "Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.",
 };
 
 const CONTACT_CENTER_AI_PLAYBOOK: SourceExpertPlaybook = {
-  id: 'contact-center-ai-platform',
-  label: 'Contact Center AI sourcing',
+  id: "contact-center-ai-platform",
+  label: "Contact Center AI sourcing",
   expertLens: [
-    'Contact Center AI value depends on intent coverage, containment quality, agent adoption, knowledge governance, and measurement trust.',
-    'The sourcing event must separate vendor-reported containment from independently measured customer and operational outcomes.',
+    "Contact Center AI value depends on intent coverage, containment quality, agent adoption, knowledge governance, and measurement trust.",
+    "The sourcing event must separate vendor-reported containment from independently measured customer and operational outcomes.",
   ],
   eventShaping: [
-    'Require vendors to prove performance on Apex top intents, escalation rules, knowledge freshness, and agent workflow integration.',
-    'Score platforms on measurement transparency, human handoff quality, compliance controls, and operational change requirements.',
-    'Normalize commercial proposals by interaction volume, channels, model usage, implementation, QA, and run support.',
+    "Require vendors to prove performance on Apex top intents, escalation rules, knowledge freshness, and agent workflow integration.",
+    "Score platforms on measurement transparency, human handoff quality, compliance controls, and operational change requirements.",
+    "Normalize commercial proposals by interaction volume, channels, model usage, implementation, QA, and run support.",
   ],
   cxoGuidance: [
-    'The COO should approve the containment and service-quality tradeoff before automation targets become commitments.',
-    'The CIO should require integration and data-retention evidence before platform selection.',
-    'The CFO should treat vendor containment claims as projected until independently measured against Apex baselines.',
+    "The COO should approve the containment and service-quality tradeoff before automation targets become commitments.",
+    "The CIO should require integration and data-retention evidence before platform selection.",
+    "The CFO should treat vendor containment claims as projected until independently measured against Apex baselines.",
   ],
   riskTraps: [
-    'Do not accept vendor containment metrics without reconciling them to Apex dashboards and QA definitions.',
-    'Do not underfund knowledge management, agent enablement, and model monitoring.',
-    'Do not let per-interaction pricing hide model, channel, analytics, and implementation costs.',
+    "Do not accept vendor containment metrics without reconciling them to Apex dashboards and QA definitions.",
+    "Do not underfund knowledge management, agent enablement, and model monitoring.",
+    "Do not let per-interaction pricing hide model, channel, analytics, and implementation costs.",
   ],
   missingData: [
-    'Top intents, volume, AHT, containment, transfer, and CSAT baselines.',
-    'Knowledge-base freshness and ownership model.',
-    'Compliance and retention requirements for call data.',
-    'Independent measurement plan for containment and service quality.',
+    "Top intents, volume, AHT, containment, transfer, and CSAT baselines.",
+    "Knowledge-base freshness and ownership model.",
+    "Compliance and retention requirements for call data.",
+    "Independent measurement plan for containment and service quality.",
   ],
-  nextAction: 'Build the vendor test script around Apex top intents and reconcile vendor metrics to the internal baseline before scoring.',
+  nextAction:
+    "Build the vendor test script around Apex top intents and reconcile vendor metrics to the internal baseline before scoring.",
 };
 
 const STORE_PRODUCTIVITY_PLAYBOOK: SourceExpertPlaybook = {
-  id: 'store-associate-productivity',
-  label: 'Store associate productivity sourcing',
+  id: "store-associate-productivity",
+  label: "Store associate productivity sourcing",
   expertLens: [
-    'Store productivity tools succeed when labor model, store workflows, device constraints, and manager adoption are designed together.',
-    'The event should measure task displacement, queue time, adoption, training burden, and operational variance by store format.',
+    "Store productivity tools succeed when labor model, store workflows, device constraints, and manager adoption are designed together.",
+    "The event should measure task displacement, queue time, adoption, training burden, and operational variance by store format.",
   ],
   eventShaping: [
-    'Scope pilots by store archetype, associate workflow, integration footprint, labor KPI, and change-management owner.',
-    'Score vendors on workflow fit, offline/device support, manager controls, analytics, and implementation simplicity.',
+    "Scope pilots by store archetype, associate workflow, integration footprint, labor KPI, and change-management owner.",
+    "Score vendors on workflow fit, offline/device support, manager controls, analytics, and implementation simplicity.",
   ],
   cxoGuidance: [
-    'The COO should define which labor outcomes matter and which customer experience constraints cannot be traded away.',
-    'The CIO should test integration and device readiness before scale commitment.',
-    'The CFO should require store-level measurement before labeling productivity value as realized.',
+    "The COO should define which labor outcomes matter and which customer experience constraints cannot be traded away.",
+    "The CIO should test integration and device readiness before scale commitment.",
+    "The CFO should require store-level measurement before labeling productivity value as realized.",
   ],
   riskTraps: [
-    'Do not average store productivity across formats if the workflow burden varies materially.',
-    'Do not buy tools that add associate steps without proving labor displacement or conversion lift.',
+    "Do not average store productivity across formats if the workflow burden varies materially.",
+    "Do not buy tools that add associate steps without proving labor displacement or conversion lift.",
   ],
   missingData: [
-    'Store workflow baseline by format.',
-    'Device, network, and identity readiness.',
-    'Labor KPI history and measurement owner.',
+    "Store workflow baseline by format.",
+    "Device, network, and identity readiness.",
+    "Labor KPI history and measurement owner.",
   ],
-  nextAction: 'Define store pilot cohorts and measurement ownership before vendor demos.',
+  nextAction:
+    "Define store pilot cohorts and measurement ownership before vendor demos.",
 };
 
 const AMS_OUTSOURCING_PLAYBOOK: SourceExpertPlaybook = {
-  id: 'ams-outsourcing',
-  label: 'AMS and IT outsourcing sourcing',
+  id: "ams-outsourcing",
+  label: "AMS and IT outsourcing sourcing",
   expertLens: [
-    'AMS sourcing is a service operating model redesign: scope clarity, ticket baseline, retained roles, SLA economics, and transition risk decide outcomes.',
-    'Expert diligence must normalize provider pricing across volumes, towers, service levels, transition, tooling, and retained-client work.',
+    "AMS sourcing is a service operating model redesign: scope clarity, ticket baseline, retained roles, SLA economics, and transition risk decide outcomes.",
+    "Expert diligence must normalize provider pricing across volumes, towers, service levels, transition, tooling, and retained-client work.",
   ],
   eventShaping: [
-    'Force tower scope, application inventory, incident/request/change baseline, service levels, and retained role assumptions into the RFP.',
-    'Score providers on transition realism, automation roadmap, domain coverage, governance model, commercial transparency, and incumbent knowledge capture.',
-    'Separate run-rate savings from one-time transition cost, stranded cost, and service risk.',
+    "Force tower scope, application inventory, incident/request/change baseline, service levels, and retained role assumptions into the RFP.",
+    "Score providers on transition realism, automation roadmap, domain coverage, governance model, commercial transparency, and incumbent knowledge capture.",
+    "Separate run-rate savings from one-time transition cost, stranded cost, and service risk.",
   ],
   cxoGuidance: [
-    'The CIO should approve retained organization design and transition risk appetite before BAFO.',
-    'The CFO should require apples-to-apples pricing normalization across towers, volumes, transition, tools, and retained cost.',
-    'The COO/business sponsors should confirm service-level tradeoffs before cost takeout becomes the only decision frame.',
+    "The CIO should approve retained organization design and transition risk appetite before BAFO.",
+    "The CFO should require apples-to-apples pricing normalization across towers, volumes, transition, tools, and retained cost.",
+    "The COO/business sponsors should confirm service-level tradeoffs before cost takeout becomes the only decision frame.",
   ],
   riskTraps: [
-    'Do not let providers price a thin baseline and later recover margin through exclusions, change orders, and service credits that do not protect operations.',
-    'Do not outsource accountability for unstable applications without explicit remediation and retained-architecture ownership.',
-    'Do not under-specify transition knowledge capture, tooling, and governance cadence.',
+    "Do not let providers price a thin baseline and later recover margin through exclusions, change orders, and service credits that do not protect operations.",
+    "Do not outsource accountability for unstable applications without explicit remediation and retained-architecture ownership.",
+    "Do not under-specify transition knowledge capture, tooling, and governance cadence.",
   ],
   missingData: [
-    'Application inventory with criticality, owner, ticket volume, and run cost.',
-    'Incident/request/change baseline and SLA performance.',
-    'Current vendor contracts, renewal dates, rate cards, and exclusions.',
-    'Retained organization design and governance model.',
+    "Application inventory with criticality, owner, ticket volume, and run cost.",
+    "Incident/request/change baseline and SLA performance.",
+    "Current vendor contracts, renewal dates, rate cards, and exclusions.",
+    "Retained organization design and governance model.",
   ],
-  nextAction: 'Complete AMS baseline and pricing-normalization pack before BAFO or executive recommendation.',
+  nextAction:
+    "Complete AMS baseline and pricing-normalization pack before BAFO or executive recommendation.",
 };
 
 const PLATFORM_SOURCING_PLAYBOOK: SourceExpertPlaybook = {
-  id: 'enterprise-platform-sourcing',
-  label: 'Enterprise platform sourcing',
+  id: "enterprise-platform-sourcing",
+  label: "Enterprise platform sourcing",
   expertLens: [
-    'Enterprise sourcing needs current-state evidence, commercial normalization, operating-model fit, and decision governance.',
-    'The strongest answers separate facts, implications, CXO choices, and unsupported assumptions.',
+    "Enterprise sourcing needs current-state evidence, commercial normalization, operating-model fit, and decision governance.",
+    "The strongest answers separate facts, implications, CXO choices, and unsupported assumptions.",
   ],
   eventShaping: [
-    'Anchor the event in current-state pain, quantified value, integration constraints, vendor fit, and stage-gate evidence.',
-    'Score vendors against outcomes and delivery risk, not feature lists alone.',
+    "Anchor the event in current-state pain, quantified value, integration constraints, vendor fit, and stage-gate evidence.",
+    "Score vendors against outcomes and delivery risk, not feature lists alone.",
   ],
   cxoGuidance: [
-    'The CXO sponsor should approve value, risk appetite, and decision rights before the market narrative hardens.',
-    'The CFO should require normalized TCO and evidence labels for projected vs. realized value.',
+    "The CXO sponsor should approve value, risk appetite, and decision rights before the market narrative hardens.",
+    "The CFO should require normalized TCO and evidence labels for projected vs. realized value.",
   ],
   riskTraps: [
-    'Do not let vendor materials replace client evidence.',
-    'Do not advance without owners for baseline, scorecard, data, and value measurement.',
+    "Do not let vendor materials replace client evidence.",
+    "Do not advance without owners for baseline, scorecard, data, and value measurement.",
   ],
   missingData: [
-    'Baseline metrics and owner.',
-    'Current contracts and technical constraints.',
-    'Decision rights and approval forum.',
+    "Baseline metrics and owner.",
+    "Current contracts and technical constraints.",
+    "Decision rights and approval forum.",
   ],
-  nextAction: 'Convert the current-state evidence into scorecard criteria, missing-data requests, and CXO decision gates.',
+  nextAction:
+    "Convert the current-state evidence into scorecard criteria, missing-data requests, and CXO decision gates.",
 };

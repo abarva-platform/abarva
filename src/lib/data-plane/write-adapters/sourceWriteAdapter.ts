@@ -29,11 +29,14 @@
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { canonicalTenantKey } from '@/lib/tenant-keys';
-import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
-import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
-import type { DataPlane } from './types';
+} from "@/lib/data-plane/postgresCompat";
+import { canonicalTenantKey } from "@/lib/tenant-keys";
+import {
+  createTxSession,
+  type TxSessionRunner,
+} from "../read-adapters/azureSession";
+import { resolveDataPlane } from "../read-adapters/resolveDataPlane";
+import type { DataPlane } from "./types";
 
 // --- write inputs ----------------------------------------------------------
 
@@ -50,9 +53,26 @@ export interface SourceApprovalWrite {
   readonly clientKey: string;
   readonly fromState: string;
   readonly toState: string;
-  readonly approvalAction: 'admin_review' | 'rejected';
+  readonly approvalAction: "admin_review" | "rejected";
   readonly approvedByUserId: string;
   readonly notes: string | null;
+}
+
+/** Append a named Source event activity log row. */
+export interface SourceActivityInsert {
+  readonly eventId: string;
+  readonly clientKey: string;
+  readonly actorUserId: string | null;
+  readonly actorDisplayName: string | null;
+  readonly actorRole: string | null;
+  readonly actionType: string;
+  readonly actionLabel: string;
+  readonly stageKey?: string | null;
+  readonly artifactCode?: string | null;
+  readonly criterionId?: string | null;
+  readonly reason?: string | null;
+  readonly metadata?: Readonly<Record<string, unknown>> | null;
+  readonly occurredAtIso: string;
 }
 
 /** Advance a persisted Source event to a new stage. */
@@ -116,7 +136,9 @@ export interface SourceWriteAdapter {
   readonly name: DataPlane;
   /** Insert the event-creator participant row. Idempotent-ish: the route
    *  already tolerates a missing table; a duplicate is harmless. */
-  insertParticipant(input: SourceParticipantInsert): Promise<SourceWriteOutcome<void>>;
+  insertParticipant(
+    input: SourceParticipantInsert,
+  ): Promise<SourceWriteOutcome<void>>;
   /** Atomically advance lifecycle_state and append the approval record. The
    *  approval insert is best-effort: a failure there does not fail the call
    *  (the route logs it), matching the pre-seam behavior. */
@@ -136,7 +158,13 @@ export interface SourceWriteAdapter {
     input: ArtifactStatusUpdate,
   ): Promise<SourceWriteOutcome<Record<string, unknown>>>;
   /** Link agent-attachment rows to a Source event (best-effort, never throws). */
-  linkAttachments(input: AttachmentLinkUpdate): Promise<SourceWriteOutcome<void>>;
+  linkAttachments(
+    input: AttachmentLinkUpdate,
+  ): Promise<SourceWriteOutcome<void>>;
+  /** Append an audit log row. Best-effort; callers should not roll back core writes. */
+  insertActivityLog(
+    input: SourceActivityInsert,
+  ): Promise<SourceWriteOutcome<void>>;
 }
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
@@ -153,29 +181,34 @@ export function createSupabaseSourceWriteAdapter(
   getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): SourceWriteAdapter {
   return {
-    name: 'supabase',
+    name: "supabase",
 
     async insertParticipant(input) {
       const { error } = await getClient()
-        .from('source_event_participants')
+        .from("source_event_participants")
         .insert({
           client_key: input.clientKey,
           source_event_id: input.sourceEventId,
           source_event_row_id: input.sourceEventId,
           user_id: input.userId,
-          role: 'source creator',
-          approval_authority: 'contributor',
-          source_access_level: 'source_member',
+          role: "source creator",
+          approval_authority: "contributor",
+          source_access_level: "source_member",
           can_view_financial: false,
           can_upload_source_artifacts: true,
           can_generate_sourcing_artifacts: true,
           can_publish_sourcing_artifacts: false,
           can_approve_source_stages: false,
           can_approve_award: false,
-          notify_on: ['source_event_update', 'approval_needed'],
+          notify_on: ["source_event_update", "approval_needed"],
         });
       // The route only treats a missing-table error as benign.
-      if (error && !/source_event_participants|schema cache|does not exist/i.test(error.message)) {
+      if (
+        error &&
+        !/source_event_participants|schema cache|does not exist/i.test(
+          error.message,
+        )
+      ) {
         return fail(`source participant assignment failed: ${error.message}`);
       }
       return ok();
@@ -184,14 +217,14 @@ export function createSupabaseSourceWriteAdapter(
     async applyApproval(input) {
       const sb = getClient();
       const { error: updateError } = await sb
-        .from('source_events')
+        .from("source_events")
         .update({ lifecycle_state: input.toState })
-        .eq('id', input.eventId)
-        .eq('client_key', input.clientKey);
+        .eq("id", input.eventId)
+        .eq("client_key", input.clientKey);
       if (updateError) return fail(updateError.message);
 
       const { error: approvalError } = await sb
-        .from('source_event_approvals')
+        .from("source_event_approvals")
         .insert({
           event_id: input.eventId,
           action: input.approvalAction,
@@ -202,28 +235,31 @@ export function createSupabaseSourceWriteAdapter(
         });
       if (approvalError) {
         // Non-fatal — the event is already updated. Surface for the route log.
-        console.error('[sourceWriteAdapter] approval record insert failed:', approvalError.message);
+        console.error(
+          "[sourceWriteAdapter] approval record insert failed:",
+          approvalError.message,
+        );
       }
       return ok();
     },
 
     async updateStage(input) {
       const { error } = await getClient()
-        .from('source_events')
+        .from("source_events")
         .update({
           current_stage_key: input.stageKey,
           lifecycle_state: input.lifecycleState,
           updated_at: input.updatedAtIso,
         })
-        .eq('id', input.eventId)
-        .eq('client_key', input.clientKey);
+        .eq("id", input.eventId)
+        .eq("client_key", input.clientKey);
       if (error) return fail(error.message);
       return ok();
     },
 
     async updateGateCriterion(input) {
       const { data, error } = await getClient()
-        .from('source_event_gate_criterion_states')
+        .from("source_event_gate_criterion_states")
         .update({
           state: input.state,
           reviewer_user_id: input.reviewerUserId,
@@ -231,8 +267,8 @@ export function createSupabaseSourceWriteAdapter(
           notes: input.notes,
           updated_at: input.updatedAtIso,
         })
-        .eq('id', input.criterionRowId)
-        .select('*')
+        .eq("id", input.criterionRowId)
+        .select("*")
         .single();
       if (error) return fail(error.message);
       return ok(data as Record<string, unknown>);
@@ -240,10 +276,10 @@ export function createSupabaseSourceWriteAdapter(
 
     async updateArtifactBody(input) {
       const { data, error } = await getClient()
-        .from('source_event_artifact_states')
+        .from("source_event_artifact_states")
         .update({ ...input.columns })
-        .eq('id', input.artifactRowId)
-        .select('*')
+        .eq("id", input.artifactRowId)
+        .select("*")
         .single();
       if (error) return fail(error.message);
       return ok(data as Record<string, unknown>);
@@ -251,10 +287,10 @@ export function createSupabaseSourceWriteAdapter(
 
     async updateArtifactStatus(input) {
       const { data, error } = await getClient()
-        .from('source_event_artifact_states')
+        .from("source_event_artifact_states")
         .update({ status: input.status, updated_at: input.updatedAtIso })
-        .eq('id', input.artifactRowId)
-        .select('*')
+        .eq("id", input.artifactRowId)
+        .select("*")
         .single();
       if (error) return fail(error.message);
       return ok(data as Record<string, unknown>);
@@ -264,16 +300,40 @@ export function createSupabaseSourceWriteAdapter(
       if (input.attachmentIds.length === 0) return ok();
       try {
         await getClient()
-          .from('agent_attachment')
+          .from("agent_attachment")
           .update({ linked_event_id: input.eventId })
-          .in('id', [...input.attachmentIds])
-          .eq('tenant_id', input.tenantId)
-          .is('linked_event_id', null);
+          .in("id", [...input.attachmentIds])
+          .eq("tenant_id", input.tenantId)
+          .is("linked_event_id", null);
         return ok();
       } catch (err) {
         // Best-effort — never block the agent turn on attachment metadata.
-        return fail(err instanceof Error ? err.message : 'attachment link failed');
+        return fail(
+          err instanceof Error ? err.message : "attachment link failed",
+        );
       }
+    },
+
+    async insertActivityLog(input) {
+      const { error } = await getClient()
+        .from("source_event_activity")
+        .insert({
+          event_id: input.eventId,
+          client_key: input.clientKey,
+          actor_user_id: input.actorUserId,
+          actor_display_name: input.actorDisplayName,
+          actor_role: input.actorRole,
+          action_type: input.actionType,
+          action_label: input.actionLabel,
+          stage_key: input.stageKey ?? null,
+          artifact_code: input.artifactCode ?? null,
+          criterion_id: input.criterionId ?? null,
+          reason: input.reason ?? null,
+          metadata: input.metadata ?? {},
+          occurred_at: input.occurredAtIso,
+        });
+      if (error) return fail(error.message);
+      return ok();
     },
   };
 }
@@ -281,18 +341,18 @@ export function createSupabaseSourceWriteAdapter(
 // --- Azure Postgres adapter (opt-in) ---------------------------------------
 
 /** SQLSTATE for a unique-violation. */
-const UNIQUE_VIOLATION = '23505';
+const UNIQUE_VIOLATION = "23505";
 
 function pgCode(err: unknown): string | undefined {
   return (err as { code?: string } | null)?.code;
 }
 function isUniqueViolation(err: unknown): boolean {
   if (pgCode(err) === UNIQUE_VIOLATION) return true;
-  const msg = err instanceof Error ? err.message : String(err ?? '');
+  const msg = err instanceof Error ? err.message : String(err ?? "");
   return /duplicate key value|already exists/i.test(msg);
 }
 function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err ?? 'unknown');
+  return err instanceof Error ? err.message : String(err ?? "unknown");
 }
 
 /**
@@ -304,10 +364,10 @@ function errMessage(err: unknown): string {
  * Postgres.
  */
 export function createAzureSourceWriteAdapter(
-  session: TxSessionRunner = createTxSession('abarva-data-plane-source-write'),
+  session: TxSessionRunner = createTxSession("abarva-data-plane-source-write"),
 ): SourceWriteAdapter {
   return {
-    name: 'azure-postgres',
+    name: "azure-postgres",
 
     async insertParticipant(input) {
       try {
@@ -325,7 +385,7 @@ export function createAzureSourceWriteAdapter(
               input.clientKey,
               input.sourceEventId,
               input.userId,
-              ['source_event_update', 'approval_needed'],
+              ["source_event_update", "approval_needed"],
             ],
           ),
         );
@@ -406,7 +466,7 @@ export function createAzureSourceWriteAdapter(
             ],
           ),
         );
-        if (!rows[0]) return fail('gate criterion row not found after update');
+        if (!rows[0]) return fail("gate criterion row not found after update");
         return ok(rows[0]);
       } catch (err) {
         return fail(errMessage(err));
@@ -416,7 +476,7 @@ export function createAzureSourceWriteAdapter(
     async updateArtifactBody(input) {
       try {
         const keys = Object.keys(input.columns);
-        const assignments = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+        const assignments = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
         const values = keys.map((k) => input.columns[k]);
         const rows = await session((run) =>
           run<Record<string, unknown>>(
@@ -427,7 +487,7 @@ export function createAzureSourceWriteAdapter(
             [...values, input.artifactRowId],
           ),
         );
-        if (!rows[0]) return fail('artifact row not found after update');
+        if (!rows[0]) return fail("artifact row not found after update");
         return ok(rows[0]);
       } catch (err) {
         return fail(errMessage(err));
@@ -445,7 +505,7 @@ export function createAzureSourceWriteAdapter(
             [input.status, input.updatedAtIso, input.artifactRowId],
           ),
         );
-        if (!rows[0]) return fail('artifact row not found after update');
+        if (!rows[0]) return fail("artifact row not found after update");
         return ok(rows[0]);
       } catch (err) {
         return fail(errMessage(err));
@@ -460,6 +520,38 @@ export function createAzureSourceWriteAdapter(
             `UPDATE agent_attachment SET linked_event_id = $1
              WHERE id = ANY($2::text[]) AND tenant_id = $3 AND linked_event_id IS NULL`,
             [input.eventId, [...input.attachmentIds], input.tenantId],
+          ),
+        );
+        return ok();
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
+    async insertActivityLog(input) {
+      try {
+        await session((run) =>
+          run(
+            `INSERT INTO source_event_activity
+               (event_id, client_key, actor_user_id, actor_display_name, actor_role,
+                action_type, action_label, stage_key, artifact_code, criterion_id,
+                reason, metadata, occurred_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13)`,
+            [
+              input.eventId,
+              input.clientKey,
+              input.actorUserId,
+              input.actorDisplayName,
+              input.actorRole,
+              input.actionType,
+              input.actionLabel,
+              input.stageKey ?? null,
+              input.artifactCode ?? null,
+              input.criterionId ?? null,
+              input.reason ?? null,
+              JSON.stringify(input.metadata ?? {}),
+              input.occurredAtIso,
+            ],
           ),
         );
         return ok();
@@ -490,7 +582,7 @@ export function selectSourceWriteAdapter(
 ): SourceWriteAdapter {
   if (tenantKey) void canonicalTenantKey(tenantKey);
   const target = plane ?? resolveDataPlane();
-  return target === 'azure-postgres'
+  return target === "azure-postgres"
     ? azureSourceWriteAdapter
     : supabaseSourceWriteAdapter;
 }

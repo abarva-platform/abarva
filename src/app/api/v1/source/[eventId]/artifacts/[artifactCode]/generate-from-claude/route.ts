@@ -14,30 +14,30 @@
 // simplicity in this slice; streaming arrives when the canvas surfaces
 // a progress UI.
 
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
-import type { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import type { NextRequest } from "next/server";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import {
   buildSourceGenerationContext,
   collectUpstreamBodies,
   findMissingUpstreamCodes,
   getPromptTemplate,
   type SourceArtifactBodyGenerationMetadata,
-} from '@/lib/source/agent-generation/server';
+} from "@/lib/source/agent-generation/server";
 import {
   artifactStateRowToView,
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
-} from '@/lib/source/canvas-substrate/types';
+} from "@/lib/source/canvas-substrate/types";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 // Long ceiling — large RFP-class generations stream tokens for 60–120s.
 // Vercel Pro caps Node functions at 300s; matching that gives room for
 // retries inside the route without surfacing a timeout to the user.
@@ -45,8 +45,10 @@ export const maxDuration = 300;
 
 type RouteCtx = { params: Promise<{ eventId: string; artifactCode: string }> };
 
-function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
-  const normalized = email?.trim().toLowerCase() ?? '';
+function isCanonicalClientAdminEmail(
+  email: string | null | undefined,
+): boolean {
+  const normalized = email?.trim().toLowerCase() ?? "";
   return CANONICAL_CLIENT_ADMIN_EMAILS.includes(
     normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number],
   );
@@ -69,8 +71,8 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (!apiKey) {
     return Response.json(
       {
-        error: 'agent_unavailable',
-        detail: 'ANTHROPIC_API_KEY is not configured for this environment.',
+        error: "agent_unavailable",
+        detail: "ANTHROPIC_API_KEY is not configured for this environment.",
       },
       { status: 503 },
     );
@@ -81,7 +83,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (!template) {
     return Response.json(
       {
-        error: 'unsupported_artifact',
+        error: "unsupported_artifact",
         detail: `Generation is not yet wired for ${artifactCode}. Supported codes are listed in the prompt registry.`,
       },
       { status: 404 },
@@ -92,7 +94,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   const ctx = await buildSourceGenerationContext(eventId);
   if (!ctx) {
     return Response.json(
-      { error: 'not_found', detail: `No source event with slug ${eventId}` },
+      { error: "not_found", detail: `No source event with slug ${eventId}` },
       { status: 404 },
     );
   }
@@ -112,19 +114,19 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   const canonicalAdminFallbackAllowed =
     !activeClient &&
     isCanonicalClientAdminEmail(currentUser?.email) &&
-    ctx.tenantKey === 'unknown'; // canonical-admin path skips active-client gating
+    ctx.tenantKey === "unknown"; // canonical-admin path skips active-client gating
 
   const canGenerate = Boolean(
     accessPolicy?.canGenerateSourcingArtifacts ||
-      accessPolicy?.canUploadSourceArtifacts ||
-      canonicalAdminFallbackAllowed,
+    accessPolicy?.canUploadSourceArtifacts ||
+    canonicalAdminFallbackAllowed,
   );
   if (!canGenerate) {
     if (tenancyError) return tenancyErrorResponse(tenancyError);
     return Response.json(
       {
-        error: 'forbidden',
-        detail: 'Generation rights (canGenerateSourcingArtifacts) required.',
+        error: "forbidden",
+        detail: "Generation rights (canGenerateSourcingArtifacts) required.",
       },
       { status: 403 },
     );
@@ -136,8 +138,8 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (missingUpstream.length > 0) {
     return Response.json(
       {
-        error: 'upstream_required',
-        detail: `Cannot generate ${artifactCode} — author and approve these upstream artifacts first: ${missingUpstream.join(', ')}.`,
+        error: "upstream_required",
+        detail: `Cannot generate ${artifactCode} — author and approve these upstream artifacts first: ${missingUpstream.join(", ")}.`,
         missingUpstream,
       },
       { status: 409 },
@@ -147,30 +149,30 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // Find the substrate row for the artifact we're generating into.
   const supabase = getAzureReadFluentClient();
   const { data: artifactRow, error: artifactFetchError } = await supabase
-    .from('source_event_artifact_states')
-    .select('*')
-    .eq('source_event_id', ctx.event.id)
-    .eq('artifact_code', artifactCode)
+    .from("source_event_artifact_states")
+    .select("*")
+    .eq("source_event_id", ctx.event.id)
+    .eq("artifact_code", artifactCode)
     .maybeSingle<SourceEventArtifactStateRow>();
   if (artifactFetchError) {
     return Response.json(
-      { error: 'lookup_failed', detail: artifactFetchError.message },
+      { error: "lookup_failed", detail: artifactFetchError.message },
       { status: 500 },
     );
   }
   if (!artifactRow) {
     return Response.json(
       {
-        error: 'artifact_not_found',
+        error: "artifact_not_found",
         detail: `No artifact ${artifactCode} on event ${ctx.event.code}.`,
       },
       { status: 404 },
     );
   }
-  if (artifactRow.status === 'locked' || artifactRow.status === 'superseded') {
+  if (artifactRow.status === "locked" || artifactRow.status === "superseded") {
     return Response.json(
       {
-        error: 'terminal_state',
+        error: "terminal_state",
         detail: `Artifact ${artifactCode} is ${artifactRow.status}; body cannot be regenerated.`,
       },
       { status: 409 },
@@ -189,7 +191,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // arrives in 1–3s, full body in 30–60s, and we can detect mid-stream
   // failures cleanly.
   const startedAt = Date.now();
-  let body = '';
+  let body = "";
   let stopReason: string | null = null;
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
@@ -200,17 +202,21 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     const preflight = await preflightAnthropicDirectClient({
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
-      workflow: 'source-artifact-generate',
+      workflow: "source-artifact-generate",
       artifactId: eventId,
       artifactType: artifactCode,
       model: template.model,
-      prompt: [template.systemPrompt, userMessage].join('\n\n'),
-      dataClass: 'confidential',
+      prompt: [template.systemPrompt, userMessage].join("\n\n"),
+      dataClass: "confidential",
       metadata: { eventId, artifactCode },
     });
     if (!preflight.ok) {
       return Response.json(
-        { error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId },
+        {
+          error: "ai_egress_denied",
+          detail: preflight.reason,
+          auditId: preflight.auditId,
+        },
         { status: 403 },
       );
     }
@@ -219,12 +225,12 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       model: template.model,
       max_tokens: template.maxTokens,
       system: template.systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [{ role: "user", content: userMessage }],
     });
     for await (const chunk of stream) {
       if (
-        chunk.type === 'content_block_delta' &&
-        chunk.delta.type === 'text_delta'
+        chunk.type === "content_block_delta" &&
+        chunk.delta.type === "text_delta"
       ) {
         body += chunk.delta.text;
       }
@@ -235,13 +241,13 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     tokensOut = final.usage?.output_tokens ?? null;
   } catch (err) {
     console.error(
-      '[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] Anthropic error',
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] Anthropic error",
       err,
     );
     return Response.json(
       {
-        error: 'generation_failed',
-        detail: err instanceof Error ? err.message : 'Anthropic call failed',
+        error: "generation_failed",
+        detail: err instanceof Error ? err.message : "Anthropic call failed",
       },
       { status: 502 },
     );
@@ -250,8 +256,9 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (body.trim().length === 0) {
     return Response.json(
       {
-        error: 'empty_generation',
-        detail: 'Anthropic returned an empty body. Retry, or surface a gap in the upstream context.',
+        error: "empty_generation",
+        detail:
+          "Anthropic returned an empty body. Retry, or surface a gap in the upstream context.",
       },
       { status: 502 },
     );
@@ -273,26 +280,27 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
 
   const update: Partial<SourceEventArtifactStateRow> = {
     body,
-    body_format: 'markdown',
+    body_format: "markdown",
     body_authored_by: currentUser?.clerkUserId ?? null,
     body_updated_at: nowIso,
-    body_generation_metadata: generationMetadata as unknown as Record<string, unknown>,
+    body_generation_metadata: generationMetadata as unknown as Record<
+      string,
+      unknown
+    >,
     updated_at: nowIso,
   };
-  if (artifactRow.tier === 'stub') update.tier = 'outline';
+  if (artifactRow.tier === "stub") update.tier = "outline";
 
   // DB write routed through the data-plane write seam (Slice 3b). The
   // Claude call above stays route-side; the seam owns only the body persist.
-  const bodyWrite = await selectSourceWriteAdapter(
-    undefined,
-    ctx.tenantKey,
-  ).updateArtifactBody({
+  const sourceWrite = selectSourceWriteAdapter(undefined, ctx.tenantKey);
+  const bodyWrite = await sourceWrite.updateArtifactBody({
     artifactRowId: artifactRow.id,
     columns: update as Record<string, unknown>,
   });
   if (!bodyWrite.ok || !bodyWrite.data) {
     return Response.json(
-      { error: 'update_failed', detail: bodyWrite.error },
+      { error: "update_failed", detail: bodyWrite.error },
       { status: 500 },
     );
   }
@@ -300,6 +308,33 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   const view: SourceEventArtifactState = artifactStateRowToView(
     bodyWrite.data as unknown as SourceEventArtifactStateRow,
   );
+  const activityWrite = await sourceWrite.insertActivityLog({
+    eventId: ctx.event.id,
+    clientKey: ctx.tenantKey,
+    actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
+    actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
+    actorRole: currentUser?.primaryRole ?? null,
+    actionType: "artifact_generated",
+    actionLabel: `Generated AI draft for ${artifactCode}`,
+    stageKey: artifactRow.stage_key,
+    artifactCode,
+    reason: null,
+    metadata: {
+      model: template.model,
+      promptTemplateVersion: template.version,
+      stopReason,
+      tokensIn,
+      tokensOut,
+      latencyMs: Date.now() - startedAt,
+    },
+    occurredAtIso: nowIso,
+  });
+  if (!activityWrite.ok) {
+    console.error(
+      "[source artifact generation activity] insert failed:",
+      activityWrite.error,
+    );
+  }
   return Response.json({
     ok: true,
     artifact: view,
