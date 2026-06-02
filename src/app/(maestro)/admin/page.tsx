@@ -12,7 +12,7 @@ import {
   type CapabilityGroundingLevel,
 } from "@/lib/admin/broker/capability-grounding-broker";
 
-export const metadata = { title: "Admin Home | AbarVa" };
+export const metadata = { title: "Admin Control Center | AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -196,7 +196,7 @@ export default async function AdminOverviewPage() {
                     fontWeight: 400,
                   }}
                 >
-                  {tenant.tenantName} home
+                  Admin Control Center
                 </h1>
               </div>
             </div>
@@ -207,9 +207,9 @@ export default async function AdminOverviewPage() {
                 maxWidth: 560,
               }}
             >
-              A read-only view of what AbarVa knows for this client today:
-              loaded dimensions, evidence quality, and the gaps that change
-              readiness. Operators load and process files in Data Loads.
+              Setup, users, connectors, templates, data loads, approvals,
+              audit, and production readiness for {tenant.tenantName}. This is
+              the operator workspace; Home stays insight-first and read-only.
             </p>
 
             {/* One-line readiness strip — real per-tenant numbers. */}
@@ -307,7 +307,7 @@ export default async function AdminOverviewPage() {
               }}
             >
               {hasSubstrate
-                ? "Review the loaded dimensions before expanding production scope."
+                ? "Review the admin controls before expanding production scope."
                 : `Begin the first governed load for ${tenant.tenantName}.`}
             </h2>
             <p
@@ -318,8 +318,9 @@ export default async function AdminOverviewPage() {
                 lineHeight: 1.45,
               }}
             >
-              Home reviews what is in the system. Data Loads is the governed
-              upload, validation, approval, and commit workflow.
+              Data Loads is the governed upload, validation, approval, and
+              commit workflow. Users, connectors, templates, and policies stay
+              under this Admin boundary.
             </p>
             <a
               href="/admin/setup"
@@ -338,6 +339,83 @@ export default async function AdminOverviewPage() {
               Open Data Loads
             </a>
           </aside>
+        </section>
+
+        {/* ── Admin control groups ── */}
+        <section
+          aria-label="Admin control groups"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          {[
+            {
+              label: "Users & Access",
+              detail: "People, roles, SSO, invite flow, and tenant access.",
+              href: "/admin/users-access",
+            },
+            {
+              label: "Data Loads",
+              detail: "One-client-only uploads, templates, attestation, and processing.",
+              href: "/admin/setup",
+            },
+            {
+              label: "Connectors",
+              detail: "Future API-led connections and current integration posture.",
+              href: "/admin/connectors",
+            },
+            {
+              label: "Templates",
+              detail: "Approved data templates, dimensions, owners, and formats.",
+              href: "/admin/templates",
+            },
+            {
+              label: "Approvals",
+              detail: "Human decision queues, rationale, and escalation paths.",
+              href: "/admin/programs/approvals",
+            },
+            {
+              label: "Audit",
+              detail: "Control evidence, policy events, and approval records.",
+              href: "/admin/audit",
+            },
+            {
+              label: "Production Readiness",
+              detail: "Pilot, demo, and production readiness controls.",
+              href: "/admin/production-readiness",
+            },
+            {
+              label: "Releases",
+              detail: "Controlled change history and rollback evidence.",
+              href: "/admin/releases",
+            },
+          ].map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              style={{
+                display: "grid",
+                gap: 8,
+                minHeight: 124,
+                border: `1px solid ${palette.line}`,
+                borderRadius: 8,
+                background: palette.card,
+                padding: 16,
+                color: "inherit",
+                textDecoration: "none",
+              }}
+            >
+              <strong style={{ color: palette.ink, fontSize: 15 }}>
+                {item.label}
+              </strong>
+              <span style={{ color: palette.soft, fontSize: 13, lineHeight: 1.45 }}>
+                {item.detail}
+              </span>
+            </a>
+          ))}
         </section>
 
         {/* ── Loaded data by dimension + review queue ── */}

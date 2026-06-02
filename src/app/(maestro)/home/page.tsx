@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 
-import { HomeIndexPage } from '@/components/home/HomeIndexPage';
+import { ImpactInsightsHome } from '@/components/home/ImpactInsightsHome';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getCurrentModuleAccess } from '@/lib/auth/server-module-access';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata: Metadata = {
@@ -13,10 +12,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const [activeClient, moduleAccess] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    getCurrentModuleAccess(),
-  ]);
+  const activeClient = await getActiveClientRow().catch(() => null);
 
   const activeTenantName =
     canonicalClientDisplayName({
@@ -25,10 +21,9 @@ export default async function HomePage() {
     }) ?? activeClient?.name ?? 'Your workspace';
 
   return (
-    <HomeIndexPage
+    <ImpactInsightsHome
       activeTenantName={activeTenantName}
       hasTenantKey={Boolean(activeClient?.key)}
-      moduleAccess={moduleAccess.access}
     />
   );
 }
