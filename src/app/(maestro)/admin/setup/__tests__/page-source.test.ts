@@ -33,11 +33,12 @@ describe("/admin/setup data load center page source", () => {
   it("renders a dimension-first Data Load Studio instead of a raw connector", () => {
     expect(componentSource).not.toContain("CsvUploadConnector");
     expect(componentSource).toContain("Data Load Studio");
-    expect(componentSource).toContain(
-      "Choose the dimension before choosing the file",
-    );
+    // Calm reskin 2026-06-01: dimension-first headline (was "Choose the
+    // dimension before choosing the file").
+    expect(componentSource).toContain("Pick the business dimension first.");
+    expect(componentSource).toContain("Dimension library");
     expect(componentSource).toContain("model.dimensionCatalog.map");
-    expect(componentSource).toContain("Template and format library");
+    expect(componentSource).toContain("Templates by dimension");
   });
 
   it("keeps implementation plumbing out of the Maestro-facing setup canvas", () => {
@@ -46,6 +47,16 @@ describe("/admin/setup data load center page source", () => {
     expect(componentSource).not.toContain(
       "{control.control} · {control.apiPath}",
     );
+    // Calm reskin: the raw "Control: {control.control}" infra label was
+    // removed from the stepper (design spec principle 4).
+    expect(componentSource).not.toContain("Control: {control.control}");
+  });
+
+  it("uses the locked calm palette, not navy fills", () => {
+    // Design-system fidelity: black + ghost buttons only; no COLORS.navy
+    // primary fills or decorative sky/mint/coral chip backgrounds.
+    expect(componentSource).not.toContain("background: COLORS.navy");
+    expect(componentSource).toContain("Start a governed load");
   });
 
   it("keeps cross-client manifest coverage out of the runtime setup page", () => {
