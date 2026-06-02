@@ -1,4 +1,5 @@
 import {
+  buildPilotIngestionAuditOnlyWritePlan,
   buildPilotIngestionIdempotencyKey,
   evaluatePilotIngestionCommitReadiness,
   getPilotIngestionLedgerTables,
@@ -104,6 +105,69 @@ describe('pilot ingestion ledger contract', () => {
       reversible: false,
       nextStatus: 'not_required',
       actions: ['commit already rolled back; no unload action required'],
+    });
+  });
+
+  it('builds an audit-only upload/file manifest plan that blocks commit', () => {
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: 'apexretail',
+      segmentKey: 'kpi_dictionary',
+      storage: {
+        accountName: 'staapex',
+        containerName: 'landing',
+        blobPath: 'apex/kpi.csv',
+        sizeBytes: 42,
+        contentType: 'text/csv',
+        sha256: 'abc123',
+      },
+      producedAt: '2026-06-02T11:00:00Z',
+      sourceSystem: 'Workday',
+      templateVersion: '2026.06',
+      mappingProfileKey: 'default',
+      mappingProfileVersion: '1',
+      auditRowId: 'audit-1',
+      outcome: { status: 'accepted', chunksWritten: 0 },
+      protectionDecision: 'allow',
+    });
+
+    expect(plan.mode).toBe('audit_only');
+    expect(plan.tenantKey).toBe('apexretail');
+    expect(plan.uploadRun.status).toBe('awaiting_approval');
+    expect(plan.fileManifest.blobPath).toBe('apex/kpi.csv');
+    expect(plan.quarantineCase).toBeUndefined();
+    expect(plan.commitBlocked).toBe(true);
+    expect(plan.commitBlockers).toContain('audit-only ledger recording does not commit parsed facts');
+    expect(plan.uploadRun.idempotencyKey).toBe(
+      'pilot-load:apexretail:workday:abc123:kpi_dictionary:2026.06:default:1:pilot_rehearsal',
+    );
+  });
+
+  it('adds an open quarantine case when the landing-zone guard quarantines a file', () => {
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: 'meridian',
+      segmentKey: 'evidence_ledger',
+      storage: {
+        accountName: 'stameridian',
+        containerName: 'landing',
+        blobPath: 'meridian/leak.csv',
+        sizeBytes: 77,
+        contentType: 'text/csv',
+        sha256: 'def456',
+      },
+      producedAt: '2026-06-02T11:00:00Z',
+      auditRowId: 'audit-2',
+      outcome: { status: 'quarantined', reasonCodes: ['ssn', 'email'] },
+      protectionDecision: 'quarantine',
+    });
+
+    expect(plan.uploadRun.status).toBe('quarantined');
+    expect(plan.fileManifest.protectionDecision).toBe('quarantine');
+    expect(plan.quarantineCase).toEqual({
+      tenantKey: 'meridian',
+      segmentKey: 'evidence_ledger',
+      auditRowId: 'audit-2',
+      reasonCodes: ['ssn', 'email'],
+      status: 'open',
     });
   });
 });

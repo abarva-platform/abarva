@@ -88,6 +88,64 @@ export interface PilotIngestionRollbackPlan {
   actions: readonly string[];
 }
 
+export interface PilotIngestionAuditOnlyWriteInput {
+  tenantKey: string;
+  segmentKey: string;
+  storage: {
+    accountName: string;
+    containerName: string;
+    blobPath: string;
+    sizeBytes: number;
+    contentType: string;
+    sha256: string;
+  };
+  producedAt: string;
+  sourceSystem?: string;
+  templateVersion?: string;
+  mappingProfileKey?: string;
+  mappingProfileVersion?: string;
+  auditRowId: string;
+  outcome:
+    | { status: 'accepted'; chunksWritten: number }
+    | { status: 'quarantined'; reasonCodes: readonly string[] };
+  protectionDecision: 'allow' | 'quarantine';
+}
+
+export interface PilotIngestionAuditOnlyWritePlan {
+  mode: 'audit_only';
+  tenantKey: string;
+  uploadRun: {
+    tenantKey: string;
+    loadIntent: PilotIngestionLoadIntent;
+    status: PilotIngestionLoadStatus;
+    sourceSystem: string;
+    segmentKey: string;
+    auditRowId: string;
+    producedAt: string;
+    idempotencyKey: string;
+  };
+  fileManifest: {
+    tenantKey: string;
+    segmentKey: string;
+    accountName: string;
+    containerName: string;
+    blobPath: string;
+    sizeBytes: number;
+    contentType: string;
+    sha256: string;
+    protectionDecision: 'allow' | 'quarantine';
+  };
+  quarantineCase?: {
+    tenantKey: string;
+    segmentKey: string;
+    auditRowId: string;
+    reasonCodes: readonly string[];
+    status: 'open';
+  };
+  commitBlocked: true;
+  commitBlockers: readonly string[];
+}
+
 export const PILOT_INGESTION_BACKLOG_ROWS: readonly PilotIngestionBacklogRowId[] = [
   'T357',
   'T358',
@@ -250,6 +308,71 @@ export function planPilotIngestionRollback(
       'mark commit items as unloaded with rollback evidence',
     ],
   };
+}
+
+export function buildPilotIngestionAuditOnlyWritePlan(
+  input: PilotIngestionAuditOnlyWriteInput,
+): PilotIngestionAuditOnlyWritePlan {
+  const sourceSystem = input.sourceSystem?.trim() || 'azure_landing_zone';
+  const templateVersion = input.templateVersion?.trim() || 'unversioned';
+  const mappingProfileKey = input.mappingProfileKey?.trim() || 'unmapped';
+  const mappingProfileVersion = input.mappingProfileVersion?.trim() || 'unversioned';
+  const loadIntent: PilotIngestionLoadIntent = 'pilot_rehearsal';
+  const status: PilotIngestionLoadStatus =
+    input.outcome.status === 'quarantined' ? 'quarantined' : 'awaiting_approval';
+  const idempotencyKey = buildPilotIngestionIdempotencyKey({
+    tenantKey: input.tenantKey,
+    sourceSystem,
+    fileSha256: input.storage.sha256,
+    templateKey: input.segmentKey,
+    templateVersion,
+    mappingProfileKey,
+    mappingProfileVersion,
+    loadIntent,
+  });
+
+  const plan: PilotIngestionAuditOnlyWritePlan = {
+    mode: 'audit_only',
+    tenantKey: input.tenantKey,
+    uploadRun: {
+      tenantKey: input.tenantKey,
+      loadIntent,
+      status,
+      sourceSystem,
+      segmentKey: input.segmentKey,
+      auditRowId: input.auditRowId,
+      producedAt: input.producedAt,
+      idempotencyKey,
+    },
+    fileManifest: {
+      tenantKey: input.tenantKey,
+      segmentKey: input.segmentKey,
+      accountName: input.storage.accountName,
+      containerName: input.storage.containerName,
+      blobPath: input.storage.blobPath,
+      sizeBytes: input.storage.sizeBytes,
+      contentType: input.storage.contentType,
+      sha256: input.storage.sha256,
+      protectionDecision: input.protectionDecision,
+    },
+    commitBlocked: true,
+    commitBlockers: [
+      'audit-only ledger recording does not commit parsed facts',
+      'human preview approval and commit adapter are required before data-plane writes',
+    ],
+  };
+
+  if (input.outcome.status === 'quarantined') {
+    plan.quarantineCase = {
+      tenantKey: input.tenantKey,
+      segmentKey: input.segmentKey,
+      auditRowId: input.auditRowId,
+      reasonCodes: input.outcome.reasonCodes,
+      status: 'open',
+    };
+  }
+
+  return plan;
 }
 
 export function getPilotIngestionLedgerTables(): readonly PilotIngestionLedgerTable[] {
