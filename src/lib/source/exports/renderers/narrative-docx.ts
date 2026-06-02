@@ -16,9 +16,9 @@
 // header label, and the confidentiality note — all of which come in
 // via NarrativeDocxConfig.
 
-import 'server-only';
+import "server-only";
 
-import { Document, Footer, Header, Paragraph, TextRun } from 'docx';
+import { Document, Footer, Header, Paragraph, TextRun } from "docx";
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -29,8 +29,8 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
-} from '@/lib/exports-shared/docx-base';
-import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
+} from "@/lib/exports-shared/docx-base";
+import { markdownToDocxBlocks } from "@/lib/exports-shared/markdown-to-docx";
 
 /** Payload all narrative renderers consume. */
 export interface NarrativeDocxPayload {
@@ -67,7 +67,7 @@ export function buildNarrativeDocx(
   config: NarrativeDocxConfig,
 ): Document {
   const cover = buildCoverBlock(payload, config);
-  const bodyBlocks = markdownToDocxBlocks(payload.body || '');
+  const bodyBlocks = markdownToDocxBlocks(payload.body || "");
   const footerNote = bodyParagraph([
     bodyRun(
       `Source canvas · ${payload.eventCode} · scaffolded by AbarVa Sentinel · generated ${payload.generatedAt}`,
@@ -76,7 +76,7 @@ export function buildNarrativeDocx(
   ]);
 
   return new Document({
-    creator: 'AbarVa · Sentinel',
+    creator: "AbarVa · Sentinel",
     title: `${config.documentTitle} · ${payload.eventCode}`,
     description: `${config.headerLabel} for sourcing event ${payload.eventCode}.`,
     numbering: ORDERED_NUMBERING_CONFIG,
@@ -147,7 +147,7 @@ function buildCoverBlock(
   if (!payload.bodyIsAuthored) {
     blocks.push(
       bodyParagraph([
-        boldRun('TEMPLATE SCAFFOLD — body has not been authored yet. ', {
+        boldRun("TEMPLATE SCAFFOLD — body has not been authored yet. ", {
           color: SOURCE_DOCX.WARNING_COLOR,
         }),
         bodyRun(
@@ -162,68 +162,77 @@ function buildCoverBlock(
 
 // ── Per-artifact configs ───────────────────────────────────────────────────
 
+export const STRATEGY_MEMO_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: "d01_strategy_memo",
+  headerLabel: "d01 Sourcing Strategy Memo",
+  eyebrowFor: (tenant) => `d01 · Sourcing Strategy Memo · ${tenant}`,
+  documentTitle: "Sourcing Strategy Memo",
+  confidentialityNote:
+    "Confidential — internal sourcing-strategy memo; share with sponsor + procurement panel only",
+};
+
 export const SCOPE_MEMO_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'd05_scope_memo',
-  headerLabel: 'd05 Scope Memo',
+  artifactCode: "d05_scope_memo",
+  headerLabel: "d05 Scope Memo",
   eyebrowFor: (tenant) => `d05 · Scope Memo · ${tenant}`,
-  documentTitle: 'Scope Memo',
-  confidentialityNote: 'Confidential — distribute only to procurement panel',
+  documentTitle: "Scope Memo",
+  confidentialityNote: "Confidential — distribute only to procurement panel",
 };
 
 export const RFP_PACK_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'd09_rfp_pack',
-  headerLabel: 'd09 RFP Package',
+  artifactCode: "d09_rfp_pack",
+  headerLabel: "d09 RFP Package",
   eyebrowFor: (tenant) => `d09 · RFP Package · ${tenant}`,
-  documentTitle: 'RFP Package',
+  documentTitle: "RFP Package",
   confidentialityNote:
-    'Confidential vendor RFP — do not redistribute outside the named bidder panel',
+    "Confidential vendor RFP — do not redistribute outside the named bidder panel",
 };
 
 export const DECISION_BRIEF_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'd24_decision_brief',
-  headerLabel: 'd24 Atlas Decision Brief',
+  artifactCode: "d24_decision_brief",
+  headerLabel: "d24 Atlas Decision Brief",
   eyebrowFor: (tenant) => `d24 · Atlas Decision Brief · ${tenant}`,
-  documentTitle: 'Decision Brief',
+  documentTitle: "Decision Brief",
   confidentialityNote:
-    'Executive review only — pre-decision; not for vendor distribution',
+    "Executive review only — pre-decision; not for vendor distribution",
 };
 
 export const SELECTION_MEMO_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'd27_selection_memo',
-  headerLabel: 'd27 Selection Memo',
+  artifactCode: "d27_selection_memo",
+  headerLabel: "d27 Selection Memo",
   eyebrowFor: (tenant) => `d27 · Selection Memo · ${tenant}`,
-  documentTitle: 'Selection Memo',
+  documentTitle: "Selection Memo",
   confidentialityNote:
-    'Confidential — final selection memo; release after sponsor sign-off only',
+    "Confidential — final selection memo; release after sponsor sign-off only",
 };
 
 // ── Lifecycle-coverage wave configs ────────────────────────────────────────
 // Stage 0 — demand challenge (the "should we even source this?" verdict)
 export const DEMAND_CHALLENGE_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'dx0_demand_challenge',
-  headerLabel: 'Demand Challenge',
+  artifactCode: "dx0_demand_challenge",
+  headerLabel: "Demand Challenge",
   eyebrowFor: (tenant) => `Stage 0 · Demand Challenge · ${tenant}`,
-  documentTitle: 'Demand Challenge',
+  documentTitle: "Demand Challenge",
   confidentialityNote:
-    'Confidential — internal demand-challenge verdict; precedes any vendor engagement',
+    "Confidential — internal demand-challenge verdict; precedes any vendor engagement",
 };
 
 // Stage 1 — sourcing approach (RFI vs RFP, commercial model, SI lane)
 export const SOURCING_APPROACH_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'dx1_sourcing_approach',
-  headerLabel: 'Sourcing Approach',
+  artifactCode: "dx1_sourcing_approach",
+  headerLabel: "Sourcing Approach",
   eyebrowFor: (tenant) => `Stage 1 · Sourcing Approach · ${tenant}`,
-  documentTitle: 'Sourcing Approach',
+  documentTitle: "Sourcing Approach",
   confidentialityNote:
-    'Confidential — sourcing-approach recommendation; share with sponsor + procurement panel only',
+    "Confidential — sourcing-approach recommendation; share with sponsor + procurement panel only",
 };
 
 // Stage 6 — vendor risk pack (security / financial / concentration / 4P)
 export const VENDOR_RISK_PACK_DOCX_CONFIG: NarrativeDocxConfig = {
-  artifactCode: 'dx6b_vendor_risk_pack',
-  headerLabel: 'Vendor Risk Pack',
+  artifactCode: "dx6b_vendor_risk_pack",
+  headerLabel: "Vendor Risk Pack",
   eyebrowFor: (tenant) => `Stage 6 · Vendor Risk Pack · ${tenant}`,
-  documentTitle: 'Vendor Risk Pack',
+  documentTitle: "Vendor Risk Pack",
   confidentialityNote:
-    'Confidential — vendor risk pack; distribute to risk + compliance + sponsor only',
+    "Confidential — vendor risk pack; distribute to risk + compliance + sponsor only",
 };
