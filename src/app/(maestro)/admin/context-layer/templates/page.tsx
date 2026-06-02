@@ -28,7 +28,7 @@ export default function ContextTemplatesPage() {
   const coverage = getTemplateFormatCoverage();
 
   return (
-    <main style={{ background: '#F8F7F4', minHeight: '100vh', padding: 32 }}>
+    <main style={{ background: '#F8F7F4', minHeight: '100%', padding: 32 }}>
       <section style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gap: 18 }}>
         <div>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase', margin: 0 }}>
@@ -58,6 +58,7 @@ export default function ContextTemplatesPage() {
                 'Exception formats',
                 'Required fields',
                 'Metadata packet',
+                'Surfaces unlocked',
                 'Owner',
                 'Refresh',
               ].map((head) => (
@@ -81,6 +82,7 @@ export default function ContextTemplatesPage() {
                     .join(', ')}
                   {template.exceptionMetadataRequirements.length > 5 ? ' + more' : ''}
                 </td>
+                <td style={{ borderBottom: '1px solid #eee7d8', padding: 10 }}>{template.unlocks.join(', ')}</td>
                 <td style={{ borderBottom: '1px solid #eee7d8', padding: 10 }}>{template.ownerRole}</td>
                 <td style={{ borderBottom: '1px solid #eee7d8', padding: 10 }}>{template.refreshCadence}</td>
               </tr>
