@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextFetchEvent, NextRequest } from 'next/server'
-import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
+import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldDenySourceEventSlugForPinnedClient, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
@@ -173,6 +173,22 @@ function isProductionReadinessNoStoreRequest(request: NextRequest) {
   return PRODUCTION_READINESS_NO_STORE_PATHS.has(request.nextUrl.pathname)
 }
 
+function sourceEventSlugFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/source\/events\/([^/]+)(?:\/.*)?$/)
+  return match?.[1] ?? null
+}
+
+function createGenericNotFoundResponse(): NextResponse {
+  return new NextResponse('Not Found', {
+    status: 404,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+    },
+  })
+}
+
 function withProductionReadinessNoStoreHeaders<T extends NextResponse>(request: NextRequest, response: T): T {
   if (!isProductionReadinessNoStoreRequest(request)) return response
 
@@ -332,6 +348,23 @@ const clerkProtectedProxy = clerkMiddleware(async (auth, request: NextRequest) =
 
   if (requiresAuth && isExternalOnlyRole(role)) {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
+  }
+
+  const sourceEventSlug = sourceEventSlugFromPath(request.nextUrl.pathname)
+  if (
+    requiresAuth
+    && sourceEventSlug
+    && shouldDenySourceEventSlugForPinnedClient(
+      role,
+      {
+        clientId: metadata.clientId,
+        defaultClientId: metadata.defaultClientId,
+        email,
+      },
+      sourceEventSlug,
+    )
+  ) {
+    return createGenericNotFoundResponse()
   }
 
   if (!isPublicRoute(request)) {

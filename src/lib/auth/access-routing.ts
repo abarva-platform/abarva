@@ -103,6 +103,36 @@ export function shouldStripUnauthorizedClientParam(
   return requestedClientId !== pinnedClientId;
 }
 
+const SOURCE_EVENT_TENANT_HINTS: ReadonlyArray<readonly [RegExp, ClientKey]> = [
+  [/\b(?:apex-retail|apexretail|src-apx|apx-src)\b/i, 'apexretail'],
+  [/\b(?:meridian-health|meridian|src-mer|mer-src)\b/i, 'meridian'],
+  [/\b(?:firstcapital|first-capital|arcturus|src-fc|fc-src|src-arc|arc-src)\b/i, 'arcturus'],
+  [/\b(?:northstar-clinical|northstar|src-ns|ns-src)\b/i, 'northstar'],
+  [/\b(?:skyharbor-air|skyharbor|src-sh|sh-src)\b/i, 'skyharbor'],
+];
+
+export function inferSourceEventClientKeyFromSlug(eventSlug: string | null | undefined): ClientKey | null {
+  const normalized = eventSlug?.trim() ?? '';
+  if (!normalized) return null;
+  for (const [pattern, clientKey] of SOURCE_EVENT_TENANT_HINTS) {
+    if (pattern.test(normalized)) return clientKey;
+  }
+  return null;
+}
+
+export function shouldDenySourceEventSlugForPinnedClient(
+  role: AppSessionRole,
+  input: ResolveClientInput,
+  eventSlug: string | null | undefined,
+): boolean {
+  if (!isLockedTenantRole(role, input.email)) return false;
+  const pinnedClientId = resolvePinnedSessionClientKey(input);
+  if (!pinnedClientId) return false;
+  const eventClientKey = inferSourceEventClientKeyFromSlug(eventSlug);
+  if (!eventClientKey) return false;
+  return eventClientKey !== pinnedClientId;
+}
+
 export function isExternalOnlyRole(role: AppSessionRole): role is 'external' {
   return role === 'external';
 }
