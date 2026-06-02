@@ -11,49 +11,47 @@
 // renderSourceDeliverable. The legacy per-format routes still work
 // in parallel during the transition; Slice 8.5 deletes them.
 
-import 'server-only';
+import "server-only";
 
-import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
-import type {
-  SourceDeliverableKind,
-  SourceDeliverableSpec,
-} from './types';
+import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
+import type { SourceDeliverableKind, SourceDeliverableSpec } from "./types";
 
-import { buildNarrativeDocxPayloadFromContext } from './payloads/narrative-docx-payload';
-import { buildAppInventoryPayloadFromContext } from './payloads/app-inventory-payload';
-import { buildResponseChecklistPayloadFromContext } from './payloads/response-checklist-payload';
-import { buildScorecardPayloadFromContext } from './payloads/scorecard-payload';
-import { buildPricingTemplatePayloadFromContext } from './payloads/pricing-template-payload';
-import { buildPricingComparisonPayloadFromContext } from './payloads/pricing-comparison-payload';
-import { buildTrapLogPayloadFromContext } from './payloads/trap-log-payload';
-import { buildBafoQuestionPackPayloadFromContext } from './payloads/bafo-question-pack-payload';
-import { buildDemandChallengePayloadFromContext } from './payloads/demand-challenge-payload';
-import { buildSourcingApproachPayloadFromContext } from './payloads/sourcing-approach-payload';
-import { buildVendorRiskPackPayloadFromContext } from './payloads/vendor-risk-pack-payload';
-import { buildMarketScanPayloadFromContext } from './payloads/market-scan-payload';
-import { buildTcoIcebergPayloadFromContext } from './payloads/tco-iceberg-payload';
-import { buildAiClauseGapPayloadFromContext } from './payloads/ai-clause-gap-payload';
-import { buildRenewalDecisionPayloadFromContext } from './payloads/renewal-decision-payload';
+import { buildNarrativeDocxPayloadFromContext } from "./payloads/narrative-docx-payload";
+import { buildAppInventoryPayloadFromContext } from "./payloads/app-inventory-payload";
+import { buildResponseChecklistPayloadFromContext } from "./payloads/response-checklist-payload";
+import { buildScorecardPayloadFromContext } from "./payloads/scorecard-payload";
+import { buildPricingTemplatePayloadFromContext } from "./payloads/pricing-template-payload";
+import { buildPricingComparisonPayloadFromContext } from "./payloads/pricing-comparison-payload";
+import { buildTrapLogPayloadFromContext } from "./payloads/trap-log-payload";
+import { buildBafoQuestionPackPayloadFromContext } from "./payloads/bafo-question-pack-payload";
+import { buildDemandChallengePayloadFromContext } from "./payloads/demand-challenge-payload";
+import { buildSourcingApproachPayloadFromContext } from "./payloads/sourcing-approach-payload";
+import { buildVendorRiskPackPayloadFromContext } from "./payloads/vendor-risk-pack-payload";
+import { buildMarketScanPayloadFromContext } from "./payloads/market-scan-payload";
+import { buildTcoIcebergPayloadFromContext } from "./payloads/tco-iceberg-payload";
+import { buildAiClauseGapPayloadFromContext } from "./payloads/ai-clause-gap-payload";
+import { buildRenewalDecisionPayloadFromContext } from "./payloads/renewal-decision-payload";
 
 const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
-  'scope-memo': 'd05_scope_memo',
-  'rfp-package': 'd09_rfp_pack',
-  'decision-brief': 'd24_decision_brief',
-  'selection-memo': 'd27_selection_memo',
-  'app-inventory': 'd04_app_inv',
-  'response-checklist': 'd11_response_checklist',
-  'scorecard': 'd16_scorecard',
-  'pricing-template': 'd19_pricing_workbook',
-  'pricing-comparison': 'd19_pricing_workbook',
-  'trap-log': 'd20_trap_log',
-  'bafo-question-pack': 'd22_bafo_question_pack',
-  'demand-challenge': 'dx0_demand_challenge',
-  'sourcing-approach': 'dx1_sourcing_approach',
-  'market-scan': 'dx2_market_scan',
-  'tco-iceberg': 'dx4_tco_iceberg',
-  'ai-clause-gap': 'dx6a_ai_clause_gap',
-  'vendor-risk-pack': 'dx6b_vendor_risk_pack',
-  'renewal-decision': 'dx7_renewal_decision',
+  "strategy-memo": "d01_strategy_memo",
+  "scope-memo": "d05_scope_memo",
+  "rfp-package": "d09_rfp_pack",
+  "decision-brief": "d24_decision_brief",
+  "selection-memo": "d27_selection_memo",
+  "app-inventory": "d04_app_inv",
+  "response-checklist": "d11_response_checklist",
+  scorecard: "d16_scorecard",
+  "pricing-template": "d19_pricing_workbook",
+  "pricing-comparison": "d19_pricing_workbook",
+  "trap-log": "d20_trap_log",
+  "bafo-question-pack": "d22_bafo_question_pack",
+  "demand-challenge": "dx0_demand_challenge",
+  "sourcing-approach": "dx1_sourcing_approach",
+  "market-scan": "dx2_market_scan",
+  "tco-iceberg": "dx4_tco_iceberg",
+  "ai-clause-gap": "dx6a_ai_clause_gap",
+  "vendor-risk-pack": "dx6b_vendor_risk_pack",
+  "renewal-decision": "dx7_renewal_decision",
 };
 
 // Narrative kinds use the shared NarrativeDocxPayload shape. The
@@ -62,19 +60,20 @@ const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
 // builders, so it gets its own list of async narrative binders below
 // rather than going through buildNarrativeDocxPayloadFromContext.
 const NARRATIVE_KINDS = new Set<SourceDeliverableKind>([
-  'scope-memo',
-  'rfp-package',
-  'decision-brief',
-  'selection-memo',
+  "strategy-memo",
+  "scope-memo",
+  "rfp-package",
+  "decision-brief",
+  "selection-memo",
 ]);
 
 const LIFECYCLE_NARRATIVE_KINDS: Record<
   string,
   (ctx: SourceGenerationContext, at: string) => Promise<unknown>
 > = {
-  'demand-challenge': buildDemandChallengePayloadFromContext,
-  'sourcing-approach': buildSourcingApproachPayloadFromContext,
-  'vendor-risk-pack': buildVendorRiskPackPayloadFromContext,
+  "demand-challenge": buildDemandChallengePayloadFromContext,
+  "sourcing-approach": buildSourcingApproachPayloadFromContext,
+  "vendor-risk-pack": buildVendorRiskPackPayloadFromContext,
 };
 
 /**
@@ -95,7 +94,11 @@ export async function buildSourceDeliverableSpec(
 
   if (NARRATIVE_KINDS.has(kind)) {
     const artifactCode = KIND_TO_ARTIFACT_CODE[kind];
-    const payload = buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
+    const payload = buildNarrativeDocxPayloadFromContext(
+      ctx,
+      artifactCode,
+      generatedAt,
+    );
     return {
       ...base,
       kind,
@@ -110,51 +113,72 @@ export async function buildSourceDeliverableSpec(
   }
 
   switch (kind) {
-    case 'app-inventory':
+    case "app-inventory":
       return {
         ...base,
         kind,
-        payload: buildAppInventoryPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildAppInventoryPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'response-checklist':
+    case "response-checklist":
       return {
         ...base,
         kind,
-        payload: buildResponseChecklistPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildResponseChecklistPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'scorecard':
+    case "scorecard":
       return {
         ...base,
         kind,
-        payload: buildScorecardPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildScorecardPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'pricing-template':
+    case "pricing-template":
       return {
         ...base,
         kind,
-        payload: buildPricingTemplatePayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildPricingTemplatePayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'pricing-comparison':
+    case "pricing-comparison":
       return {
         ...base,
         kind,
-        payload: (await buildPricingComparisonPayloadFromContext(ctx, generatedAt)) as unknown as Record<string, unknown>,
+        payload: (await buildPricingComparisonPayloadFromContext(
+          ctx,
+          generatedAt,
+        )) as unknown as Record<string, unknown>,
       };
-    case 'trap-log':
+    case "trap-log":
       return {
         ...base,
         kind,
-        payload: buildTrapLogPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildTrapLogPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'bafo-question-pack':
+    case "bafo-question-pack":
       return {
         ...base,
         kind,
-        payload: buildBafoQuestionPackPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildBafoQuestionPackPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'demand-challenge':
-    case 'sourcing-approach':
-    case 'vendor-risk-pack': {
+    case "demand-challenge":
+    case "sourcing-approach":
+    case "vendor-risk-pack": {
       const builder = LIFECYCLE_NARRATIVE_KINDS[kind]!;
       const payload = (await builder(ctx, generatedAt)) as {
         eventCode: string;
@@ -175,29 +199,41 @@ export async function buildSourceDeliverableSpec(
         } as unknown as Record<string, unknown>,
       };
     }
-    case 'market-scan':
+    case "market-scan":
       return {
         ...base,
         kind,
-        payload: (await buildMarketScanPayloadFromContext(ctx, generatedAt)) as unknown as Record<string, unknown>,
+        payload: (await buildMarketScanPayloadFromContext(
+          ctx,
+          generatedAt,
+        )) as unknown as Record<string, unknown>,
       };
-    case 'tco-iceberg':
+    case "tco-iceberg":
       return {
         ...base,
         kind,
-        payload: buildTcoIcebergPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildTcoIcebergPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'ai-clause-gap':
+    case "ai-clause-gap":
       return {
         ...base,
         kind,
-        payload: buildAiClauseGapPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+        payload: buildAiClauseGapPayloadFromContext(
+          ctx,
+          generatedAt,
+        ) as unknown as Record<string, unknown>,
       };
-    case 'renewal-decision':
+    case "renewal-decision":
       return {
         ...base,
         kind,
-        payload: (await buildRenewalDecisionPayloadFromContext(ctx, generatedAt)) as unknown as Record<string, unknown>,
+        payload: (await buildRenewalDecisionPayloadFromContext(
+          ctx,
+          generatedAt,
+        )) as unknown as Record<string, unknown>,
       };
     default:
       throw new Error(`spec-builder does not know kind "${kind}"`);
@@ -207,10 +243,10 @@ export async function buildSourceDeliverableSpec(
 /** Translate a canonical artifact code to the dispatcher's kind. */
 export function kindForArtifactCode(
   artifactCode: string,
-  variant?: 'template' | 'comparison',
+  variant?: "template" | "comparison",
 ): SourceDeliverableKind | null {
-  if (artifactCode === 'd19_pricing_workbook') {
-    return variant === 'comparison' ? 'pricing-comparison' : 'pricing-template';
+  if (artifactCode === "d19_pricing_workbook") {
+    return variant === "comparison" ? "pricing-comparison" : "pricing-template";
   }
   for (const [k, code] of Object.entries(KIND_TO_ARTIFACT_CODE)) {
     if (code === artifactCode) return k as SourceDeliverableKind;

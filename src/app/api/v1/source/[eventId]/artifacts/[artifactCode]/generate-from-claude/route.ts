@@ -203,12 +203,12 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
       workflow: "source-artifact-generate",
-      artifactId: eventId,
+      artifactId: ctx.event.id,
       artifactType: artifactCode,
       model: template.model,
       prompt: [template.systemPrompt, userMessage].join("\n\n"),
       dataClass: "confidential",
-      metadata: { eventId, artifactCode },
+      metadata: { eventId: ctx.event.id, artifactCode },
     });
     if (!preflight.ok) {
       return Response.json(
