@@ -19,84 +19,105 @@
 // - AtlasExecutiveBriefCanvas.tsx contains 'ATLAS'
 // - AtlasExecutiveBriefCanvas.tsx does NOT contain '#14B8A6'
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import {
   buildAtlasExecutiveBriefView,
   type AtlasExecutiveBriefView,
-} from '@/lib/tower/atlas-executive-brief-canvas';
+} from "@/lib/tower/atlas-executive-brief-canvas";
 
-const apexView: AtlasExecutiveBriefView = buildAtlasExecutiveBriefView('apex-retail');
-const arcturusView: AtlasExecutiveBriefView = buildAtlasExecutiveBriefView('arcturus');
+const apexView: AtlasExecutiveBriefView =
+  buildAtlasExecutiveBriefView("apex-retail");
+const arcturusView: AtlasExecutiveBriefView =
+  buildAtlasExecutiveBriefView("arcturus");
 
 const COMPONENT_PATH = path.resolve(
   __dirname,
-  '..',
-  '..',
-  '..',
-  'components',
-  'tower',
-  'AtlasExecutiveBriefCanvas.tsx',
+  "..",
+  "..",
+  "..",
+  "components",
+  "tower",
+  "AtlasExecutiveBriefCanvas.tsx",
 );
 
-const COMPONENT_SOURCE = fs.readFileSync(COMPONENT_PATH, 'utf8');
+const COMPONENT_SOURCE = fs.readFileSync(COMPONENT_PATH, "utf8");
 
 // -------------------------------------------------------------------------
 // View model assertions
 // -------------------------------------------------------------------------
 
-describe('buildAtlasExecutiveBriefView — apex-retail', () => {
-  it('returns a non-null view', () => {
+describe("buildAtlasExecutiveBriefView — apex-retail", () => {
+  it("returns a non-null view", () => {
     expect(apexView).not.toBeNull();
   });
 
-  it('briefTitle is non-empty', () => {
+  it("briefTitle is non-empty", () => {
     expect(apexView.briefTitle.length).toBeGreaterThan(0);
   });
 
-  it('topValueSignal.deterministicSeed === true', () => {
+  it("topValueSignal.deterministicSeed === true", () => {
     expect(apexView.topValueSignal.deterministicSeed).toBe(true);
   });
 
   it('topRiskSignal.signalType === "risk"', () => {
-    expect(apexView.topRiskSignal.signalType).toBe('risk');
+    expect(apexView.topRiskSignal.signalType).toBe("risk");
   });
 
   it('adoptionSignal.signalType === "adoption"', () => {
-    expect(apexView.adoptionSignal.signalType).toBe('adoption');
+    expect(apexView.adoptionSignal.signalType).toBe("adoption");
   });
 
-  it('portfolioReadiness.deterministicSeed === true', () => {
+  it("portfolioReadiness.deterministicSeed === true", () => {
     expect(apexView.portfolioReadiness.deterministicSeed).toBe(true);
   });
 
-  it('missingData has exactly 3 items', () => {
+  it("missingData has exactly 3 items", () => {
     expect(apexView.missingData).toHaveLength(3);
   });
 
-  it('recommendedExecutiveAction is non-empty', () => {
+  it("recommendedExecutiveAction is non-empty", () => {
     expect(apexView.recommendedExecutiveAction.length).toBeGreaterThan(0);
   });
 
-  it('deterministicSeed === true', () => {
+  it("deterministicSeed === true", () => {
     expect(apexView.deterministicSeed).toBe(true);
   });
 
   it('deterministicSeedCaveat contains "seed" or "Deterministic"', () => {
     const caveat = apexView.deterministicSeedCaveat;
-    const matches = caveat.includes('seed') || caveat.includes('Deterministic');
+    const matches = caveat.includes("seed") || caveat.includes("Deterministic");
     expect(matches).toBe(true);
   });
 
-  it('commercialSignalNote is non-null for apex-retail', () => {
+  it("commercialSignalNote is non-null for apex-retail", () => {
     expect(apexView.commercialSignalNote).not.toBeNull();
+  });
+
+  it("exposes AI-assisted decision-support accountability disclosure", () => {
+    expect(apexView.accountabilityDisclosure).toEqual(
+      expect.objectContaining({
+        decisionSupportLabel: "AI-assisted decision support",
+        generatedBy: "Atlas",
+        deterministicSeed: true,
+      }),
+    );
+    expect(apexView.accountabilityDisclosure.humanDecisionBoundary).toContain(
+      "does not approve",
+    );
+    expect(
+      apexView.accountabilityDisclosure.citations.length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(apexView.accountabilityDisclosure.assumptionDisclosure).toContain(
+      "Confirmed value measurement framework",
+    );
   });
 });
 
-describe('buildAtlasExecutiveBriefView — arcturus', () => {
+describe("buildAtlasExecutiveBriefView — arcturus", () => {
   it('portfolioReadiness.readinessScore === "not_ready"', () => {
-    expect(arcturusView.portfolioReadiness.readinessScore).toBe('not_ready');
+    expect(arcturusView.portfolioReadiness.readinessScore).toBe("not_ready");
   });
 });
 
@@ -104,16 +125,22 @@ describe('buildAtlasExecutiveBriefView — arcturus', () => {
 // Component file assertions
 // -------------------------------------------------------------------------
 
-describe('AtlasExecutiveBriefCanvas.tsx static checks', () => {
-  it('component file exists', () => {
+describe("AtlasExecutiveBriefCanvas.tsx static checks", () => {
+  it("component file exists", () => {
     expect(fs.existsSync(COMPONENT_PATH)).toBe(true);
   });
 
   it('contains "ATLAS"', () => {
-    expect(COMPONENT_SOURCE).toContain('ATLAS');
+    expect(COMPONENT_SOURCE).toContain("ATLAS");
+  });
+
+  it("renders accountability disclosure copy", () => {
+    expect(COMPONENT_SOURCE).toContain("atlas-brief-accountability-disclosure");
+    expect(COMPONENT_SOURCE).toMatch(/human review\s+required/);
+    expect(COMPONENT_SOURCE).toContain("Citation");
   });
 
   it('does NOT contain "#14B8A6" (teal is banned)', () => {
-    expect(COMPONENT_SOURCE).not.toContain('#14B8A6');
+    expect(COMPONENT_SOURCE).not.toContain("#14B8A6");
   });
 });
