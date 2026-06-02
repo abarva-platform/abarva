@@ -222,7 +222,7 @@ export async function getSourceDashboardData(): Promise<AbarvaSourceDashboardDat
 export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   const seedEvents = listSourceEventSeed().map(normalizeSourcingEventSummaryStage);
   const activeClient = await getActiveClientRow().catch(() => null);
-  if (!activeClient) return seedEvents;
+  if (!activeClient) return [];
   const activeClientSeedEvents = seedEvents.filter((event) =>
     seedEventMatchesClient(event, activeClient.key),
   );
@@ -433,11 +433,12 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
   // Seed events use UUIDs only — code lookup is a no-op there.
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
-  if (
-    activeClient &&
-    tenancy &&
-    !(await canReadSourceEvent(tenancy, activeClient.key, event.id).catch(() => false))
-  ) {
+
+  if (!activeClient || !seedEventMatchesClient(event, activeClient.key)) {
+    return null;
+  }
+
+  if (!tenancy || !(await canReadSourceEvent(tenancy, activeClient.key, event.id).catch(() => false))) {
     return null;
   }
   const override = getStageOverride(eventId);
