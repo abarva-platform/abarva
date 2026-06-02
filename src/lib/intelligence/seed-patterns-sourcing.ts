@@ -1,6 +1,8 @@
 import type { PatternSeed } from "./seed-types";
+import { SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS } from "./seed-patterns-sourcing-archetypes-failure-modes";
 import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
+import { SOURCING_COMMERCIAL_LEVER_PATTERNS } from "./seed-patterns-sourcing-commercial-levers";
 import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
 import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from "./seed-patterns-sourcing-contracts-commercial";
 import { SOURCING_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-contracts";
@@ -12,6 +14,7 @@ import { SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS } from "./seed-patterns-sour
 import { SOURCING_PROCESS_PATTERNS } from "./seed-patterns-sourcing-process";
 import { SOURCING_REGULATORY_AI_PATTERNS } from "./seed-patterns-sourcing-regulatory-ai";
 import { SOURCING_REGULATORY_PATTERNS } from "./seed-patterns-sourcing-regulatory";
+import { SOURCING_RETAIL_IT_PATTERNS } from "./seed-patterns-sourcing-retail-it";
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from "./seed-patterns-sourcing-vendors-cloudflare";
 import { PAT_SRC_VEN_CONTENTSTACK_001 } from "./seed-patterns-sourcing-vendors-contentstack";
 import { SOURCING_VENDOR_COUPA_PATTERNS } from "./seed-patterns-sourcing-vendors-coupa";
@@ -1124,8 +1127,10 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 ## Contract terms to negotiate hard
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
+  ...SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS,
   ...SOURCING_BAFO_CONTRACT_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
+  ...SOURCING_COMMERCIAL_LEVER_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
   ...SOURCING_CONTRACT_PATTERNS,
   ...SOURCING_CONTRACTS_COMMERCIAL_PATTERNS,
@@ -1137,6 +1142,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_PROCESS_PATTERNS,
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
+  ...SOURCING_RETAIL_IT_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,
   ...SOURCING_VENDOR_GITLAB_PATTERNS,

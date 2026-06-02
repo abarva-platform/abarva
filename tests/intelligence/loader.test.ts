@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(330);
+    expect(corpus.patterns).toHaveLength(388);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -34,6 +34,29 @@ describe('intelligence corpus loader', () => {
     });
     expect(corpus.patternsById.get('PAT-SRC-BAFO-008')?.standardClauses?.[0]).toMatchObject({
       clauseArea: 'Benchmarking',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-LEV-008')).toMatchObject({
+      slug: 'benchmark-remedy-envelope',
+      category: 'contract_intelligence',
+      vendorClass: 'service',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-LEV-018')?.negotiationLevers?.[0]).toMatchObject({
+      lever: 'Redline value control',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RIT-001')).toMatchObject({
+      slug: 'pos-peak-freeze-readiness',
+      vertical: 'retail-cpg',
+      category: 'customer_facing',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-RIT-005')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-inventory-authority-ambiguity',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-AFM-001')).toMatchObject({
+      slug: 'incumbent-renegotiation-fact-base',
+      category: 'process_methodology',
+    });
+    expect(corpus.patternsById.get('PAT-SRC-AFM-012')?.riskFactors?.[0]).toMatchObject({
+      id: 'risk-benchmark-theater',
     });
   });
 
