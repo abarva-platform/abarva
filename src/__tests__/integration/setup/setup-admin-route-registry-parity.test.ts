@@ -5,8 +5,8 @@ import {
 import fs from 'node:fs';
 import path from 'node:path';
 
-describe('Setup canonical route registry parity', () => {
-  it('registers /admin as the canonical Setup operator entry', () => {
+describe('Admin canonical route registry parity', () => {
+  it('registers /admin as the canonical Admin operator entry', () => {
     const route = getRouteById('admin-index');
 
     expect(route).toBeDefined();
@@ -20,12 +20,12 @@ describe('Setup canonical route registry parity', () => {
     expect(route!.notes).toContain('/platform/admin');
   });
 
-  it('registers /admin/setup as the native Setup Data Loads route', () => {
+  it('registers /admin/setup as the native Admin Data Loads route', () => {
     const route = getRouteById('admin-setup-data-loads');
 
     expect(route).toBeDefined();
     expect(route!.pattern).toBe('/admin/setup');
-    expect(route!.label).toBe('Setup Data Loads');
+    expect(route!.label).toBe('Admin Data Loads');
     expect(route!.shellKind).toBe('admin');
     expect(route!.surface).toBe('admin');
     expect(route!.primaryAgent).toBe('Steward');
@@ -33,10 +33,10 @@ describe('Setup canonical route registry parity', () => {
     expect(route!.active).toBe(true);
   });
 
-  it('registers canonical W6 Setup governance routes under /admin/*', () => {
+  it('registers canonical W6 Admin governance routes under /admin/*', () => {
     const expected = [
-      ['admin-policies', '/admin/policies', 'Setup Policies'],
-      ['admin-tenant', '/admin?tab=tenant', 'Setup Tenant'],
+      ['admin-policies', '/admin/policies', 'Admin Policies'],
+      ['admin-tenant', '/admin?tab=tenant', 'Admin Tenant Profile'],
       ['admin-architecture', '/admin/architecture', 'Admin Architecture'],
     ] as const;
 
@@ -53,15 +53,15 @@ describe('Setup canonical route registry parity', () => {
     }
   });
 
-  it('registers canonical connector, users, invite, and audit Setup routes under /admin/*', () => {
+  it('registers canonical connector, users, invite, and audit Admin routes under /admin/*', () => {
     const expected = [
-      ['admin-connectors', '/admin/connectors', 'Setup Connectors'],
-      ['admin-connector-detail', '/admin/connectors/[connectorId]', 'Setup Connector Detail'],
-      ['admin-connector-reconnect', '/admin/connectors/[connectorId]/reconnect', 'Setup Connector Reconnect'],
-      ['admin-users', '/admin/users', 'Setup Users'],
-      ['admin-users-access', '/admin/users-access', 'Setup Users Access'],
-      ['admin-invite', '/admin/invite', 'Setup Invite User'],
-      ['admin-audit', '/admin/audit', 'Setup Audit Log'],
+      ['admin-connectors', '/admin/connectors', 'Admin Connectors'],
+      ['admin-connector-detail', '/admin/connectors/[connectorId]', 'Admin Connector Detail'],
+      ['admin-connector-reconnect', '/admin/connectors/[connectorId]/reconnect', 'Admin Connector Reconnect'],
+      ['admin-users', '/admin/users', 'Admin Users'],
+      ['admin-users-access', '/admin/users-access', 'Admin Users Access'],
+      ['admin-invite', '/admin/invite', 'Admin Invite User'],
+      ['admin-audit', '/admin/audit', 'Admin Audit Log'],
     ] as const;
 
     for (const [routeId, pattern, label] of expected) {
@@ -94,6 +94,19 @@ describe('Setup canonical route registry parity', () => {
     expect(adminRoutes).not.toContain('/platform/admin/audit');
   });
 
+  it('does not expose setup-era labels for canonical Admin routes', () => {
+    const adminRoutes = getRoutesBySurface('admin');
+
+    expect(adminRoutes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ routeId: 'admin-index', label: 'Admin Portal' }),
+        expect.objectContaining({ routeId: 'admin-connectors', label: 'Admin Connectors' }),
+        expect.objectContaining({ routeId: 'admin-users-access', label: 'Admin Users Access' }),
+      ]),
+    );
+    expect(adminRoutes.map((route) => route.label).filter((label) => label.startsWith('Setup '))).toEqual([]);
+  });
+
   it('keeps /setup as a thin compatibility bridge while /admin/setup is native', () => {
     const setupPageSource = fs.readFileSync(
       path.join(process.cwd(), 'src/app/setup/page.tsx'),
@@ -113,8 +126,8 @@ describe('Setup canonical route registry parity', () => {
     expect(adminSetupPageSource).toContain('AdminSetupDataLoadCenterPage');
     expect(adminSetupPageSource).toContain('AdminCanonShellV2');
     expect(adminSetupPageSource).not.toContain("redirect('/admin')");
-    expect(proxySource).toContain("request.nextUrl.pathname === '/setup'");
-    expect(proxySource).toContain("request.nextUrl.pathname.startsWith('/setup/')");
-    expect(proxySource).toContain("NextResponse.redirect(new URL('/admin', request.url), 301)");
+    expect(proxySource).toMatch(/request\.nextUrl\.pathname === ["']\/setup["']/);
+    expect(proxySource).toMatch(/request\.nextUrl\.pathname\.startsWith\(["']\/setup\/["']\)/);
+    expect(proxySource).toMatch(/NextResponse\.redirect\(new URL\(["']\/admin["'], request\.url\), 301\)/);
   });
 });
