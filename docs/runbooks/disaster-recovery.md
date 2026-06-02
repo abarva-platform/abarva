@@ -8,6 +8,10 @@ failure. Disaster recovery is a controlled operational event: protect client
 data, preserve evidence, restore the smallest safe surface, validate before
 reopening, and communicate only confirmed facts.
 
+For pre-pilot tabletop practice across Vercel, model-provider, Azure region,
+and key-person continuity scenarios, use
+`docs/runbooks/disaster-scenario-drills.md`.
+
 This runbook defines pilot-ready recovery objectives. They are operating
 targets, not contractual service levels, until a signed client agreement and
 fresh restore evidence say otherwise.
