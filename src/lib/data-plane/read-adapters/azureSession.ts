@@ -63,12 +63,30 @@ export function isAzureSessionFallbackError(error: unknown): boolean {
 
 const pools = new Map<string, Pool>();
 
+/**
+ * Resolve the per-instance Postgres pool size.
+ *
+ * Default: 1 (single connection) — kept conservative for backwards
+ * compatibility on bare/preview/CI environments where pool capacity
+ * is unknown.
+ *
+ * Cap: 20 (raised from 5 on 2026-05-30). Azure Postgres Flexible
+ * Server B-tier supports 100+ concurrent connections per instance;
+ * the prior 5-cap was throttling production /admin renders that
+ * fan out across ~12 distinct queries per request (broker throw
+ * diagnosis · `docs/build/BROKER_THROW_DIAGNOSIS_2026-05-30.md`).
+ *
+ * Operators set `ABARVA_PG_POOL_MAX` (preferred) or `PGPOOL_MAX`
+ * (legacy) at deploy time; any positive integer below the cap is
+ * honored, values above the cap are clamped, garbage is treated
+ * as "use the default".
+ */
 export function resolveAzurePoolMax(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.ABARVA_PG_POOL_MAX?.trim() || env.PGPOOL_MAX?.trim();
   if (!raw) return 1;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
-  return Math.min(parsed, 5);
+  return Math.min(parsed, 20);
 }
 
 function clientConfig(connectionString: string, applicationName: string): PoolConfig {
