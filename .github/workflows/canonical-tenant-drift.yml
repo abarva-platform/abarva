@@ -1,5 +1,6 @@
 name: Canonical Tenant Drift
 
+# Required branch-protection context; keep pull_request paths aligned.
 on:
   pull_request:
     branches:

@@ -1,5 +1,6 @@
 name: Agent quality corpus
 
+# Required branch-protection context; keep pull_request paths aligned.
 on:
   pull_request:
     paths:
