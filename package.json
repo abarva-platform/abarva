@@ -16,6 +16,7 @@
     "sbom:check": "node scripts/compliance/generate-sbom.mjs",
     "sbom:generate": "node scripts/compliance/generate-sbom.mjs --output audit-artifacts/compliance/sbom.cdx.json",
     "compliance:supply-chain": "npm run license:check && npm run sbom:check",
+    "bundle:budget": "node scripts/ci/check-next-bundle-budget.mjs",
     "test": "jest",
     "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
