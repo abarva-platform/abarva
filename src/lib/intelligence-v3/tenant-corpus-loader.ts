@@ -13,6 +13,10 @@ import {
   getFirstCapitalBriefData,
   getFirstCapitalMapData,
 } from '@/lib/knowledge-corpus/fixtures/first-capital-finserv';
+import {
+  getSkyHarborBriefData,
+  getSkyHarborMapData,
+} from '@/lib/knowledge-corpus/fixtures/skyharbor-airline';
 
 interface ClientRow {
   id: string;
@@ -33,6 +37,7 @@ function resolveCorpusKey(client: ClientRow | null, requestedClientKey: string |
   const name = client?.name.toLowerCase() ?? '';
   if (name.includes('meridian')) return 'meridian';
   if (name.includes('first capital') || name.includes('arcturus')) return 'firstcapital';
+  if (name.includes('skyharbor')) return 'skyharbor';
   if (name.includes('apex')) return 'apexretail';
   return null;
 }
@@ -64,6 +69,13 @@ export async function loadTenantIntelligenceCorpusData(
     return {
       briefData: getFirstCapitalBriefData(),
       mapData: getFirstCapitalMapData(),
+    };
+  }
+
+  if (key === 'skyharbor' || key === 'skyharborair' || key === 'skyharborairline') {
+    return {
+      briefData: getSkyHarborBriefData(),
+      mapData: getSkyHarborMapData(),
     };
   }
 
