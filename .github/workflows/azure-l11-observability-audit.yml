@@ -30,7 +30,7 @@ jobs:
           subscription-id: 701a8554-a166-46e9-bf13-743bc50e3b20
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
