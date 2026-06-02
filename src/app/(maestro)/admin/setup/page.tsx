@@ -1,5 +1,4 @@
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
-import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { SetupDataLoadCenter } from '@/components/admin/SetupDataLoadCenter';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { buildSetupDataLoadCenterModel } from '@/lib/admin/setup-data-load-center';
@@ -16,15 +15,12 @@ export default async function AdminSetupDataLoadCenterPage() {
     tenantName: tenant.tenantName,
   });
 
+  // The Studio renders its own calm hero (eyebrow + serif H1 + one-line
+  // summary strip), so an EditorialCanvas wrapper would double the title.
+  // Mount the Studio directly inside the shell for a single, calm header.
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
-      <EditorialCanvas
-        eyebrow={`Setup · Data loads · ${tenant.tenantName}`}
-        title="Data Load Center"
-        subtitle="Pilot data onboarding in one place: access, consent, landing-zone upload, quarantine, validation, approval, load history, and the templates each data family unlocks."
-      >
-        <SetupDataLoadCenter model={model} />
-      </EditorialCanvas>
+      <SetupDataLoadCenter model={model} />
     </AdminCanonShellV2>
   );
 }

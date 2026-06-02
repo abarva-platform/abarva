@@ -9,26 +9,24 @@ interface SetupDataLoadCenterProps {
   model: SetupDataLoadCenterModel;
 }
 
+// ── Calm status vocabulary ──────────────────────────────────────────
+// Apple-calm reskin (2026-06-01): the locked design system is cream +
+// near-black ink + black/ghost buttons. Status is conveyed by a single
+// restrained accent (amber = needs action), never by decorative sky/
+// mint/coral fills. Pills are hairline outlines, not filled chips.
+
 const statusCopy: Record<DataLoadGateStatus, string> = {
   ready: "Ready",
-  monitored: "Monitor",
+  monitored: "Monitored",
   needs_configuration: "Action needed",
 };
 
-const statusColors: Record<DataLoadGateStatus, { bg: string; fg: string }> = {
-  ready: { bg: COLORS.mintSoft, fg: COLORS.mintInk },
-  monitored: { bg: COLORS.skyPale, fg: COLORS.navy },
-  needs_configuration: { bg: COLORS.amberSoft, fg: COLORS.amberInk },
-};
-
-const queueColors: Record<
-  SetupDataLoadCenterModel["workQueue"][number]["severity"],
-  { bg: string; fg: string }
-> = {
-  ready: { bg: COLORS.mintSoft, fg: COLORS.mintInk },
-  attention: { bg: COLORS.amberSoft, fg: COLORS.amberInk },
-  blocked: { bg: COLORS.coralSoft, fg: COLORS.coralInk },
-};
+// Accent only where it earns attention. Ready + monitored read as quiet
+// ink; only "action needed" gets the amber accent so the eye lands on
+// the one thing the operator must do.
+function statusAccent(status: DataLoadGateStatus): string {
+  return status === "needs_configuration" ? COLORS.amberInk : `${COLORS.ink}99`;
+}
 
 const cardStyle = {
   border: `1px solid ${COLORS.ink}14`,
@@ -47,20 +45,21 @@ function labelStyle(color = `${COLORS.ink}99`) {
   } as const;
 }
 
+// Hairline outline pill — calm, no filled background.
 function statusPill(status: DataLoadGateStatus) {
-  const colors = statusColors[status];
+  const accent = statusAccent(status);
   return (
     <span
       style={{
         display: "inline-flex",
         width: "fit-content",
         borderRadius: RADIUS.pill,
-        padding: "4px 8px",
-        background: colors.bg,
-        color: colors.fg,
+        padding: "3px 9px",
+        border: `1px solid ${accent}44`,
+        color: accent,
         fontFamily: TYPOGRAPHY.sans,
         fontSize: 11,
-        fontWeight: 800,
+        fontWeight: 700,
       }}
     >
       {statusCopy[status]}
@@ -68,55 +67,7 @@ function statusPill(status: DataLoadGateStatus) {
   );
 }
 
-function metric(label: string, value: string | number, detail: string) {
-  return (
-    <div
-      style={{
-        ...cardStyle,
-        padding: 14,
-        minHeight: 94,
-        display: "grid",
-        alignContent: "start",
-        gap: 7,
-        background: COLORS.white,
-      }}
-    >
-      <span style={labelStyle()}>{label}</span>
-      <strong style={{ color: COLORS.ink, fontSize: 26, lineHeight: 1 }}>
-        {value}
-      </strong>
-      <span
-        style={{ color: `${COLORS.ink}aa`, fontSize: 12, lineHeight: 1.35 }}
-      >
-        {detail}
-      </span>
-    </div>
-  );
-}
-
-function actionHref(
-  control: SetupDataLoadCenterModel["workflowControls"][number],
-) {
-  if (!control.href) return null;
-  return (
-    <a
-      href={control.href}
-      style={{
-        width: "fit-content",
-        borderRadius: RADIUS.sm,
-        padding: "7px 9px",
-        background: COLORS.navy,
-        color: COLORS.white,
-        fontSize: 12,
-        fontWeight: 800,
-        textDecoration: "none",
-      }}
-    >
-      Open control
-    </a>
-  );
-}
-
+// One primary action per viewport. Black fill, locked system.
 function primaryButton(href: string, label: string) {
   return (
     <a
@@ -124,11 +75,11 @@ function primaryButton(href: string, label: string) {
       style={{
         width: "fit-content",
         borderRadius: RADIUS.sm,
-        padding: "9px 12px",
-        background: COLORS.navy,
+        padding: "10px 16px",
+        background: COLORS.ink,
         color: COLORS.white,
-        fontSize: 12,
-        fontWeight: 800,
+        fontSize: 13,
+        fontWeight: 700,
         textDecoration: "none",
       }}
     >
@@ -137,7 +88,8 @@ function primaryButton(href: string, label: string) {
   );
 }
 
-function secondaryButton(href: string, label: string) {
+// Ghost secondary — hairline border, never a second filled button.
+function ghostButton(href: string, label: string) {
   return (
     <a
       href={href}
@@ -145,11 +97,11 @@ function secondaryButton(href: string, label: string) {
         width: "fit-content",
         border: `1px solid ${COLORS.ink}24`,
         borderRadius: RADIUS.sm,
-        padding: "8px 11px",
+        padding: "9px 14px",
         background: COLORS.white,
         color: COLORS.ink,
-        fontSize: 12,
-        fontWeight: 800,
+        fontSize: 13,
+        fontWeight: 600,
         textDecoration: "none",
       }}
     >
@@ -163,9 +115,9 @@ function progressBar(label: string, value: number) {
     <div
       aria-label={`${label} ${value}% complete`}
       style={{
-        height: 8,
+        height: 6,
         borderRadius: RADIUS.pill,
-        background: `${COLORS.ink}14`,
+        background: `${COLORS.ink}12`,
         overflow: "hidden",
       }}
     >
@@ -174,25 +126,26 @@ function progressBar(label: string, value: number) {
           display: "block",
           width: `${value}%`,
           height: "100%",
-          background: value >= 90 ? COLORS.mintInk : COLORS.navy,
+          background: COLORS.ink,
         }}
       />
     </div>
   );
 }
 
+// Format chips: hairline ghost, not filled sky-blue.
 function chip(label: string) {
   return (
     <span
       key={label}
       style={{
         borderRadius: RADIUS.pill,
-        padding: "4px 8px",
-        background: COLORS.skyPale,
-        color: COLORS.navy,
+        padding: "3px 9px",
+        border: `1px solid ${COLORS.ink}1f`,
+        color: `${COLORS.ink}b0`,
         fontSize: 11,
-        fontWeight: 800,
-        lineHeight: 1,
+        fontWeight: 600,
+        lineHeight: 1.4,
       }}
     >
       {label}
@@ -200,83 +153,45 @@ function chip(label: string) {
   );
 }
 
-function dimensionCard(
-  dimension: DataLoadDimensionCatalogItem,
-  isPrimary: boolean,
-) {
+function dimensionCard(dimension: DataLoadDimensionCatalogItem) {
   return (
     <article
       key={dimension.id}
       style={{
-        border: `1px solid ${isPrimary ? COLORS.navy : COLORS.ink}24`,
+        border: `1px solid ${COLORS.ink}14`,
         borderRadius: RADIUS.md,
-        padding: 14,
-        background: isPrimary ? COLORS.skyPale : COLORS.white,
+        padding: 18,
+        background: COLORS.white,
         display: "grid",
-        gap: 10,
-        minHeight: 190,
+        gap: 12,
+        minHeight: 184,
       }}
     >
-      <div style={{ display: "grid", gap: 5 }}>
-        <span style={labelStyle(isPrimary ? COLORS.navy : `${COLORS.ink}99`)}>
-          {dimension.currentGate}
-        </span>
-        <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.2 }}>
+      <div style={{ display: "grid", gap: 6 }}>
+        <span style={labelStyle()}>{dimension.currentGate}</span>
+        <h3 style={{ margin: 0, fontSize: 17, lineHeight: 1.2, fontWeight: 600 }}>
           {dimension.label}
         </h3>
         <p
           style={{
             margin: 0,
-            color: `${COLORS.ink}aa`,
-            fontSize: 12,
-            lineHeight: 1.35,
+            color: `${COLORS.ink}a0`,
+            fontSize: 12.5,
+            lineHeight: 1.4,
           }}
         >
           {dimension.summary}
         </p>
       </div>
-      <div style={{ display: "grid", gap: 7 }}>
-        {progressBar(dimension.label, dimension.completenessPercent)}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 10,
-            color: `${COLORS.ink}aa`,
-            fontSize: 12,
-          }}
-        >
-          <strong style={{ color: COLORS.ink }}>
-            {dimension.completenessPercent}% complete
-          </strong>
-          <span>{dimension.templateCount} templates</span>
-        </div>
-      </div>
+      {progressBar(dimension.label, dimension.completenessPercent)}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {(dimension.formats.length > 0
           ? dimension.formats
           : ["CSV", "XLSX", "JSON"]
         ).map(chip)}
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "end",
-          gap: 10,
-          marginTop: "auto",
-        }}
-      >
-        <span
-          style={{
-            color: `${COLORS.ink}b8`,
-            fontSize: 12,
-            lineHeight: 1.3,
-          }}
-        >
-          Next: {dimension.nextAction}
-        </span>
-        {primaryButton(
+      <div style={{ marginTop: "auto" }}>
+        {ghostButton(
           dimension.primaryAction.href,
           dimension.primaryAction.label,
         )}
@@ -297,6 +212,10 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
   const committedDimensions = model.dimensionReadiness.filter(
     (row) => row.currentGate === "Committed",
   ).length;
+  const totalDimensions = model.dimensionReadiness.length;
+  const blockedActions = model.workQueue.filter(
+    (item) => item.severity === "blocked",
+  ).length;
   const openActions = model.workQueue.length;
   const activeGate = model.rehearsalGates.find(
     (gate) => gate.status === "needs_configuration",
@@ -305,580 +224,388 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
     model.dimensionCatalog.find(
       (dimension) => dimension.currentGate !== "Committed",
     ) ?? model.dimensionCatalog[0];
-  const primaryTemplates = primaryDimension
-    ? model.templateRows
-        .filter(
-          (template) =>
-            template.dimension === primaryDimension.dimension ||
-            template.dimension === primaryDimension.label ||
-            primaryDimension.templates.includes(template.title),
-        )
-        .slice(0, 5)
-    : model.templateRows.slice(0, 5);
+
+  // Calm empty / first-load state for a freshly-seeded client.
+  const isEmpty = committedDimensions === 0 && totalDimensions > 0;
 
   return (
-    <div style={{ display: "grid", gap: 18 }}>
+    <div style={{ display: "grid", gap: 22 }}>
       <style>
         {`
           @media (max-width: 1120px) {
-            [data-setup-wireframe-grid="hero"],
-            [data-setup-wireframe-grid="below"],
-            [data-setup-wireframe-grid="studio"],
-            [data-setup-wireframe-grid="operator"] {
+            [data-setup-grid="hero"],
+            [data-setup-grid="studio"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
-            [data-setup-wireframe-grid="metrics"],
-            [data-setup-wireframe-grid="workflow"],
-            [data-setup-wireframe-grid="dimensions"] {
+            [data-setup-grid="dimensions"] {
               grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
           }
           @media (max-width: 700px) {
-            [data-setup-wireframe-grid="metrics"],
-            [data-setup-wireframe-grid="workflow"],
-            [data-setup-wireframe-grid="dimensions"],
-            [data-setup-wireframe-grid="manifest"] {
+            [data-setup-grid="dimensions"] {
               grid-template-columns: minmax(0, 1fr) !important;
             }
           }
         `}
       </style>
 
+      {/* ── Hero: context + one primary action + next-decision aside ── */}
       <section
+        data-setup-grid="hero"
         style={{
-          ...cardStyle,
-          padding: 20,
           display: "grid",
-          gap: 18,
+          gridTemplateColumns: "minmax(0, 1fr) 320px",
+          gap: 24,
+          alignItems: "start",
         }}
-        aria-label="Data Load Center decision summary"
+        aria-label="Data Load Studio"
       >
-        <div
-          data-setup-wireframe-grid="hero"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 300px",
-            gap: 18,
-            alignItems: "start",
-          }}
-        >
-          <div>
-            <span style={labelStyle(COLORS.amberInk)}>
-              Active client verified
-            </span>
-            <h2 style={{ margin: "8px 0 0", fontSize: 28, lineHeight: 1.12 }}>
-              Load data for {model.tenant.tenantName}
-            </h2>
-            <p
-              style={{
-                margin: "8px 0 0",
-                color: `${COLORS.ink}b8`,
-                fontSize: 14,
-                lineHeight: 1.45,
-                maxWidth: 860,
-              }}
-            >
-              Setup is the governed operator workspace for bringing client data
-              into AbarVa. Start with the business dimension, pick the right
-              template and format, then move through scan, validation, approval,
-              and commit.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
-                marginTop: 14,
-              }}
-            >
-              {primaryButton("/admin/context-layer/uploads", "Start a load")}
-              {secondaryButton("#template-library", "View templates")}
-              {secondaryButton("/admin/data-trust", "Review loaded data")}
-            </div>
-          </div>
-
-          <aside
+        <div>
+          <span style={labelStyle(`${COLORS.ink}80`)}>
+            Setup · Data Load Studio · {model.tenant.tenantName}
+          </span>
+          <h1
             style={{
-              border: `1px solid ${COLORS.amberInk}33`,
-              borderRadius: RADIUS.md,
-              padding: 14,
-              background: COLORS.amberSoft,
-              display: "grid",
-              gap: 10,
+              margin: "10px 0 0",
+              fontSize: 34,
+              lineHeight: 1.1,
+              fontWeight: 400,
+              fontFamily: TYPOGRAPHY.serif,
+              letterSpacing: "-0.01em",
             }}
           >
-            <span style={labelStyle(COLORS.amberInk)}>Next decision</span>
-            <strong style={{ fontSize: 16, lineHeight: 1.25 }}>
-              {primaryDimension
-                ? `${primaryDimension.label}: ${primaryDimension.nextAction}`
-                : activeGate
-                  ? activeGate.label
-                  : "Ready for next load"}
-            </strong>
-            <p
+            Load data for {model.tenant.tenantName}
+          </h1>
+          <p
+            style={{
+              margin: "12px 0 0",
+              color: `${COLORS.ink}a8`,
+              fontSize: 15,
+              lineHeight: 1.5,
+              maxWidth: 560,
+            }}
+          >
+            Start with the business dimension you want to load. The studio
+            walks each one through consent, upload, validation, approval, and
+            commit. Private data plane ready.
+          </p>
+          <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+            {primaryButton(
+              "/admin/context-layer/uploads",
+              "Start a governed load",
+            )}
+            {ghostButton("#template-library", "View templates")}
+          </div>
+
+          {/* One-line summary strip — replaces four heavy stat tiles.
+              Blocked count is load-bearing (exceptions above the fold). */}
+          <div
+            style={{
+              marginTop: 22,
+              padding: "12px 16px",
+              border: `1px solid ${COLORS.ink}14`,
+              borderRadius: RADIUS.md,
+              background: COLORS.cream,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "6px 18px",
+              alignItems: "center",
+              fontSize: 13,
+              color: `${COLORS.ink}b0`,
+            }}
+            aria-label="Load readiness summary"
+          >
+            <span>
+              <strong style={{ color: COLORS.ink }}>
+                {overallCompleteness}%
+              </strong>{" "}
+              ready
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <strong style={{ color: COLORS.ink }}>
+                {committedDimensions}/{totalDimensions}
+              </strong>{" "}
+              dimensions loaded
+            </span>
+            <span aria-hidden>·</span>
+            <span
               style={{
-                margin: 0,
+                color: blockedActions > 0 ? COLORS.coralInk : `${COLORS.ink}b0`,
+                fontWeight: blockedActions > 0 ? 700 : 400,
+              }}
+            >
+              <strong>{blockedActions}</strong> blocked
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <strong style={{ color: COLORS.ink }}>{openActions}</strong> open
+              actions
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <strong style={{ color: COLORS.ink }}>
+                {model.templateRows.length}
+              </strong>{" "}
+              templates
+            </span>
+          </div>
+        </div>
+
+        {/* Next-decision: the single focal aside */}
+        <aside
+          style={{
+            border: `1px solid ${COLORS.amberInk}2a`,
+            borderRadius: RADIUS.md,
+            padding: 18,
+            background: COLORS.amberSoft,
+            display: "grid",
+            gap: 10,
+            alignContent: "start",
+          }}
+        >
+          <span style={labelStyle(COLORS.amberInk)}>Next decision</span>
+          <strong style={{ fontSize: 17, lineHeight: 1.25, fontWeight: 600 }}>
+            {primaryDimension
+              ? primaryDimension.label
+              : activeGate
+                ? activeGate.label
+                : "Ready for next load"}
+          </strong>
+          <p
+            style={{
+              margin: 0,
+              color: COLORS.amberInk,
+              fontSize: 13,
+              lineHeight: 1.45,
+            }}
+          >
+            {primaryDimension
+              ? primaryDimension.nextAction
+              : activeGate
+                ? activeGate.objective
+                : "All visible workflow gates are clear for the current setup view."}
+          </p>
+          {primaryDimension ? (
+            <a
+              href={primaryDimension.primaryAction.href}
+              style={{
+                marginTop: 2,
                 color: COLORS.amberInk,
                 fontSize: 13,
-                lineHeight: 1.4,
+                fontWeight: 700,
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
               }}
             >
-              {primaryDimension
-                ? `${primaryDimension.templateCount} templates accept ${primaryDimension.formats.join(", ") || "structured files"} for this dimension.`
-                : activeGate
-                  ? activeGate.objective
-                  : "All visible workflow gates are clear for the current setup view."}
-            </p>
-          </aside>
-        </div>
-
-        <div
-          data-setup-wireframe-grid="metrics"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 12,
-          }}
-        >
-          {metric(
-            "Overall readiness",
-            `${overallCompleteness}%`,
-            "Average of visible required data dimensions",
-          )}
-          {metric(
-            "Loaded dimensions",
-            `${committedDimensions} / ${model.dimensionReadiness.length}`,
-            "Committed dimensions in this view",
-          )}
-          {metric(
-            "Open actions",
-            openActions,
-            "Clarification, scan, and approval items",
-          )}
-          {metric(
-            "Templates available",
-            model.templateRows.length,
-            "Registry and Day One workbook templates",
-          )}
-        </div>
-
-        <div
-          data-setup-wireframe-grid="studio"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.15fr) minmax(340px, 0.85fr)",
-            gap: 16,
-            alignItems: "start",
-          }}
-          aria-label="Data Load Studio"
-        >
-          <div style={{ display: "grid", gap: 12 }}>
-            <div>
-              <span style={labelStyle(COLORS.navy)}>Data Load Studio</span>
-              <h2 style={{ margin: "6px 0 0", fontSize: 20 }}>
-                Choose the dimension before choosing the file
-              </h2>
-              <p
-                style={{
-                  margin: "6px 0 0",
-                  color: `${COLORS.ink}aa`,
-                  fontSize: 13,
-                  lineHeight: 1.45,
-                  maxWidth: 760,
-                }}
-              >
-                Each dimension shows completeness, accepted formats, available
-                templates, and the next control needed to safely commit data for
-                the active client.
-              </p>
-            </div>
-            <div
-              data-setup-wireframe-grid="dimensions"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 12,
-              }}
-            >
-              {model.dimensionCatalog.map((dimension, index) =>
-                dimensionCard(dimension, index === 0),
-              )}
-            </div>
-          </div>
-
-          <div style={{ ...cardStyle, overflow: "hidden" }}>
-            <div
-              style={{
-                padding: "14px 16px",
-                borderBottom: `1px solid ${COLORS.ink}14`,
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: 18 }}>
-                Governed load workflow
-              </h2>
-              <p
-                style={{
-                  margin: "5px 0 0",
-                  color: `${COLORS.ink}aa`,
-                  fontSize: 13,
-                  lineHeight: 1.45,
-                }}
-              >
-                The operator journey is simple: select a dimension, upload a
-                matching template, scan the file, validate the mapping, approve
-                evidence, then commit or roll back the load.
-              </p>
-            </div>
-            <div style={{ display: "grid" }}>
-              {model.workflowControls.map((control, index) => (
-                <div
-                  key={control.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "80px minmax(0, 1fr) auto",
-                    gap: 12,
-                    padding: "12px 14px",
-                    borderTop:
-                      index === 0 ? undefined : `1px solid ${COLORS.ink}10`,
-                    alignItems: "start",
-                  }}
-                >
-                  <span style={labelStyle(COLORS.amberInk)}>
-                    {control.stage}
-                  </span>
-                  <div style={{ display: "grid", gap: 5 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <strong style={{ fontSize: 14 }}>{control.label}</strong>
-                      {statusPill(control.status)}
-                    </div>
-                    <span
-                      style={{
-                        color: `${COLORS.ink}aa`,
-                        fontSize: 12,
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {control.operatorAction}
-                    </span>
-                    <span
-                      style={{
-                        color: `${COLORS.ink}99`,
-                        fontSize: 11,
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      Control: {control.control}
-                    </span>
-                  </div>
-                  {actionHref(control)}
-                </div>
-              ))}
-            </div>
-            <div
-              style={{
-                borderTop: `1px solid ${COLORS.ink}14`,
-                padding: 14,
-                display: "grid",
-                gap: 10,
-                background: COLORS.cream,
-              }}
-            >
-              <span style={labelStyle(COLORS.navy)}>Templates ready now</span>
-              <div style={{ display: "grid", gap: 8 }}>
-                {primaryTemplates.map((template) => (
-                  <div
-                    key={template.id}
-                    style={{
-                      border: `1px solid ${COLORS.ink}12`,
-                      borderRadius: RADIUS.sm,
-                      padding: 10,
-                      background: COLORS.white,
-                      display: "grid",
-                      gap: 5,
-                    }}
-                  >
-                    <strong style={{ fontSize: 13 }}>{template.title}</strong>
-                    <span
-                      style={{
-                        color: `${COLORS.ink}aa`,
-                        fontSize: 12,
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {template.family} · {template.formats} ·{" "}
-                      {template.requiredFields}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {primaryButton("/admin/context-layer/uploads", "Open upload")}
-                {secondaryButton("#template-library", "Browse all templates")}
-              </div>
-            </div>
-          </div>
-        </div>
+              {primaryDimension.primaryAction.label} →
+            </a>
+          ) : null}
+        </aside>
       </section>
 
+      {/* ── Dimension library + governed workflow ── */}
       <section
-        data-setup-wireframe-grid="below"
+        data-setup-grid="studio"
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.65fr)",
-          gap: 18,
+          gridTemplateColumns: "minmax(0, 1.2fr) minmax(320px, 0.8fr)",
+          gap: 22,
           alignItems: "start",
         }}
       >
-        <article style={cardStyle}>
+        <div style={{ display: "grid", gap: 16 }}>
+          <div>
+            <span style={labelStyle()}>Dimension library</span>
+            <h2
+              style={{
+                margin: "8px 0 0",
+                fontSize: 22,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Pick the business dimension first.
+            </h2>
+          </div>
+
+          {isEmpty ? (
+            <div
+              style={{
+                ...cardStyle,
+                padding: 28,
+                display: "grid",
+                gap: 10,
+                textAlign: "center",
+                background: COLORS.cream,
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
+                No data loaded yet for {model.tenant.tenantName}
+              </h3>
+              <p
+                style={{
+                  margin: "0 auto",
+                  maxWidth: 420,
+                  color: `${COLORS.ink}a0`,
+                  fontSize: 13.5,
+                  lineHeight: 1.5,
+                }}
+              >
+                Choose any dimension below to begin the first governed load.
+                Each one becomes assistant-ready after approval and commit.
+              </p>
+            </div>
+          ) : null}
+
+          <div
+            data-setup-grid="dimensions"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 14,
+            }}
+          >
+            {model.dimensionCatalog.map((dimension) => dimensionCard(dimension))}
+          </div>
+        </div>
+
+        {/* Governed load workflow — read-as-status stepper. Monitored
+            rows show no button (no fake action, principle 5). */}
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
           <div
             style={{
               padding: "16px 18px",
               borderBottom: `1px solid ${COLORS.ink}14`,
             }}
           >
-            <h2 style={{ margin: 0, fontSize: 18 }}>
-              Data loaded by dimension
+            <span style={labelStyle()}>Active load plan</span>
+            <h2
+              style={{
+                margin: "6px 0 0",
+                fontSize: 18,
+                fontWeight: 400,
+                fontFamily: TYPOGRAPHY.serif,
+              }}
+            >
+              Governed load workflow
             </h2>
-            <p
-              style={{
-                margin: "5px 0 0",
-                color: `${COLORS.ink}aa`,
-                fontSize: 13,
-                lineHeight: 1.45,
-              }}
-            >
-              Clear enough to answer: what is loaded, what is complete, what is
-              blocked, and which product surfaces can use it.
-            </p>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                minWidth: 760,
-                fontSize: 13,
-              }}
-            >
-              <thead>
-                <tr style={{ color: `${COLORS.ink}99`, textAlign: "left" }}>
-                  {[
-                    "Dimension",
-                    "Complete",
-                    "Current gate",
-                    "Needed next",
-                    "Unlocks",
-                  ].map((head) => (
-                    <th
-                      key={head}
-                      style={{
-                        padding: "10px 12px",
-                        borderBottom: `1px solid ${COLORS.ink}14`,
-                        ...labelStyle(),
-                      }}
-                    >
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {model.dimensionReadiness.map((row) => (
-                  <tr key={row.dimension}>
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom: `1px solid ${COLORS.ink}10`,
-                        fontWeight: 800,
-                      }}
-                    >
-                      {row.dimension}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom: `1px solid ${COLORS.ink}10`,
-                        minWidth: 150,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 9,
-                        }}
-                      >
-                        <div
-                          aria-label={`${row.dimension} ${row.completenessPercent}% complete`}
-                          style={{
-                            flex: 1,
-                            height: 8,
-                            borderRadius: RADIUS.pill,
-                            background: `${COLORS.ink}18`,
-                            overflow: "hidden",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "block",
-                              width: `${row.completenessPercent}%`,
-                              height: "100%",
-                              background: COLORS.navy,
-                            }}
-                          />
-                        </div>
-                        <strong style={{ fontSize: 12 }}>
-                          {row.completenessPercent}%
-                        </strong>
-                      </div>
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom: `1px solid ${COLORS.ink}10`,
-                      }}
-                    >
-                      {row.currentGate}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom: `1px solid ${COLORS.ink}10`,
-                      }}
-                    >
-                      {row.nextAction}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom: `1px solid ${COLORS.ink}10`,
-                        color: `${COLORS.ink}cc`,
-                      }}
-                    >
-                      {row.unlocks}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <aside style={{ ...cardStyle, padding: 16, display: "grid", gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Work queue</h2>
-            <p
-              style={{
-                margin: "5px 0 0",
-                color: `${COLORS.ink}aa`,
-                fontSize: 13,
-                lineHeight: 1.45,
-              }}
-            >
-              Plain-language actions for the active client only.
-            </p>
-          </div>
-          {model.workQueue.map((item) => {
-            const colors = queueColors[item.severity];
-            return (
+          <div style={{ display: "grid" }}>
+            {model.workflowControls.map((control, index) => (
               <div
-                key={item.id}
+                key={control.id}
                 style={{
-                  border: `1px solid ${COLORS.ink}14`,
-                  borderRadius: RADIUS.md,
-                  padding: 12,
-                  background: COLORS.white,
                   display: "grid",
-                  gap: 6,
+                  gridTemplateColumns: "44px minmax(0, 1fr) auto",
+                  gap: 12,
+                  padding: "14px 16px",
+                  borderTop:
+                    index === 0 ? undefined : `1px solid ${COLORS.ink}0e`,
+                  alignItems: "start",
                 }}
               >
-                <span
-                  style={{
-                    width: "fit-content",
-                    borderRadius: RADIUS.pill,
-                    padding: "3px 7px",
-                    background: colors.bg,
-                    color: colors.fg,
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  {item.severity === "blocked"
-                    ? "Blocked"
-                    : item.severity === "attention"
-                      ? "Review"
-                      : "Ready"}
+                <span style={labelStyle(`${COLORS.ink}70`)}>
+                  {control.stage}
                 </span>
-                <strong style={{ fontSize: 14 }}>{item.title}</strong>
-                <span
-                  style={{
-                    color: `${COLORS.ink}aa`,
-                    fontSize: 12,
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {item.detail}
-                </span>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <strong style={{ fontSize: 14, fontWeight: 600 }}>
+                      {control.label}
+                    </strong>
+                    {statusPill(control.status)}
+                  </div>
+                  <span
+                    style={{
+                      color: `${COLORS.ink}a0`,
+                      fontSize: 12.5,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {control.operatorAction}
+                  </span>
+                </div>
+                {control.href ? (
+                  <a
+                    href={control.href}
+                    style={{
+                      width: "fit-content",
+                      border: `1px solid ${COLORS.ink}24`,
+                      borderRadius: RADIUS.sm,
+                      padding: "6px 11px",
+                      background: COLORS.white,
+                      color: COLORS.ink,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Open
+                  </a>
+                ) : (
+                  <span
+                    style={{
+                      alignSelf: "center",
+                      color: `${COLORS.ink}70`,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Monitored
+                  </span>
+                )}
               </div>
-            );
-          })}
-        </aside>
+            ))}
+          </div>
+        </div>
       </section>
 
+      {/* ── Template & format library — trimmed to 4 calm columns ── */}
       <section id="template-library" style={cardStyle}>
         <div
           style={{
-            padding: "14px 16px",
+            padding: "16px 18px",
             borderBottom: `1px solid ${COLORS.ink}14`,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18 }}>
-            Template and format library
-          </h2>
-          <p
+          <span style={labelStyle()}>Reference</span>
+          <h2
             style={{
-              margin: "5px 0 0",
-              color: `${COLORS.ink}aa`,
-              fontSize: 13,
-              lineHeight: 1.45,
+              margin: "6px 0 0",
+              fontSize: 18,
+              fontWeight: 400,
+              fontFamily: TYPOGRAPHY.serif,
             }}
           >
-            Registry templates and Day One workbooks stay visible by dimension
-            so Maestros know exactly what can be loaded before they open an
-            upload control.
-          </p>
+            Templates by dimension
+          </h2>
         </div>
-        <div style={{ overflowX: "auto", maxHeight: 380, overflowY: "auto" }}>
+        <div style={{ overflowX: "auto" }}>
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              minWidth: 980,
+              minWidth: 640,
               fontSize: 13,
             }}
           >
             <thead>
-              <tr style={{ color: `${COLORS.ink}aa`, textAlign: "left" }}>
-                {[
-                  "Template",
-                  "Family",
-                  "Dimension",
-                  "Formats",
-                  "Required fields",
-                  "Owner/source",
-                  "Unlocks",
-                ].map((head) => (
+              <tr style={{ textAlign: "left" }}>
+                {["Dimension", "Formats", "Owner", "Unlocks"].map((head) => (
                   <th
                     key={head}
                     style={{
-                      padding: "10px 12px",
+                      padding: "11px 14px",
                       borderBottom: `1px solid ${COLORS.ink}14`,
                       ...labelStyle(),
                     }}
@@ -893,57 +620,35 @@ export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
                 <tr key={template.id}>
                   <td
                     style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {template.title}
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
-                    }}
-                  >
-                    {template.family}
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
+                      padding: "12px 14px",
+                      borderBottom: `1px solid ${COLORS.ink}0e`,
+                      fontWeight: 600,
                     }}
                   >
                     {template.dimension}
                   </td>
                   <td
                     style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
+                      padding: "12px 14px",
+                      borderBottom: `1px solid ${COLORS.ink}0e`,
+                      color: `${COLORS.ink}b0`,
                     }}
                   >
                     {template.formats}
                   </td>
                   <td
                     style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
-                    }}
-                  >
-                    {template.requiredFields}
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
+                      padding: "12px 14px",
+                      borderBottom: `1px solid ${COLORS.ink}0e`,
+                      color: `${COLORS.ink}b0`,
                     }}
                   >
                     {template.ownerOrSource}
                   </td>
                   <td
                     style={{
-                      padding: "11px 12px",
-                      borderBottom: `1px solid ${COLORS.ink}10`,
+                      padding: "12px 14px",
+                      borderBottom: `1px solid ${COLORS.ink}0e`,
                       color: `${COLORS.ink}cc`,
                     }}
                   >
