@@ -11,7 +11,7 @@
  * names, this test fails to surface it before it ships.
  *
  * KEEP-list (intentional real /home/* pages — NOT re-exports of /admin):
- *   - /home                  (Overview)
+ *   - /home                  (Insight-first operating room)
  *   - /home/queue            (Action queue)
  *   - /home/learn            (Training / user guide)
  *   - /home/ai-initiatives   (redirect stub — /admin counterpart retired)
@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const HOME_ROOT = path.resolve(__dirname, '..');
+const COMPONENT_ROOT = path.resolve(__dirname, '../../../../components/home');
 
 const DELETED_REEXPORT_SEGMENTS: ReadonlyArray<string> = [
   'data-trust',
@@ -49,4 +50,27 @@ describe('no /home/* re-exports of /admin/* pages', () => {
       expect(exists).toBe(false);
     });
   }
+
+  it('keeps Home copy tenant-scoped and free of setup/admin framing', () => {
+    const homeComponent = fs.readFileSync(
+      path.join(COMPONENT_ROOT, 'ImpactInsightsHome.tsx'),
+      'utf8',
+    );
+
+    expect(homeComponent).toContain('Tenant workspace read');
+    for (const phrase of [
+      'Cross-workspace',
+      'cross-workspace',
+      'Cross-tenant',
+      'cross-tenant',
+      'Cross tenant',
+      'cross tenant',
+      'Data loads',
+      'Connectors',
+      'Templates',
+      'Setup workflows',
+    ]) {
+      expect(homeComponent).not.toContain(phrase);
+    }
+  });
 });

@@ -341,10 +341,9 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     }
 
-    // /setup compatibility bridge — /setup/* maps to /home/* (which then
-    // hits the home→admin redirects above when applicable). CL-1
-    // (2026-05-30) · /setup itself now hops straight to /admin to avoid
-    // a double-redirect through /home → /admin.
+    // /setup compatibility bridge. /setup itself goes directly to /admin.
+    // Setup-ish descendants resolve through the canonical admin map above;
+    // only retained non-setup Home descendants are allowed to remain /home/*.
     if (request.nextUrl.pathname === "/setup") {
       return withProductionReadinessNoStoreHeaders(
         request,
