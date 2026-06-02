@@ -636,7 +636,8 @@ function shouldCompactSurface(surface: string): boolean {
   //     'strategic-moves-workspace' / '/strategic-moves'  (legacy aliases, swept for completeness)
   //
   // Surfaces kept (correctly compacted — dashboard / form, not advisor chat):
-  //   - 'setup' / '/setup'                            (setup wizard form surface)
+  //   - 'setup' / '/admin/setup'                      (admin setup form surface)
+  //   - '/setup'                                      (legacy compatibility bridge)
   //   - '/platform/admin'                             (admin form surface)
   //
   // Wave 0 L6 production retests later proved Tower is also an advisor
@@ -653,6 +654,7 @@ function shouldCompactSurface(surface: string): boolean {
   const semanticSurface = surface.replace(/^\/+/, '');
   return [
     'setup',
+    '/admin/setup',
     '/setup',
     '/platform/admin',
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);

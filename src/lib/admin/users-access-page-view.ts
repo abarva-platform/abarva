@@ -317,7 +317,7 @@ const PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   {
     id: 'platform.read',
     label: 'Platform read',
-    description: 'Read authorized client workspaces, audit, and deployment posture',
+    description: 'Read the active client workspace, audit, and deployment posture',
     rolesAllowed: ['platform_admin'],
   },
   {
@@ -359,7 +359,7 @@ const PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   {
     id: 'portfolio.read',
     label: 'Portfolio read',
-    description: 'Read aggregate portfolio brief across authorized client workspaces',
+    description: 'Read the active client portfolio brief',
     rolesAllowed: ['investor'],
   },
 ];

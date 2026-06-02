@@ -454,12 +454,7 @@ export async function POST(request: Request) {
   if (
     agentName === 'Steward' &&
     typeof surface === 'string' &&
-    (
-      surface.startsWith('/admin') ||
-      surface === '/home/data-trust' ||
-      surface === '/home/connectors' ||
-      surface === '/home/production-readiness'
-    ) &&
+    surface.startsWith('/admin') &&
     isStewardVoiceDoctrineEnabled()
   ) {
     voiceLine = composeStewardSystemPrompt({ surface });
