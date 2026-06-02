@@ -47,19 +47,71 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   );
 }
 
-export async function GET(req: NextRequest, { params }: RouteCtx) {
+async function readPostRenderOptions(req: NextRequest): Promise<{
+  format?: string | null;
+  variant?: string | null;
+}> {
+  const payload = (await req.json().catch(() => null)) as
+    | { format?: unknown; variant?: unknown }
+    | null;
+  return {
+    format: typeof payload?.format === 'string' ? payload.format : null,
+    variant: typeof payload?.variant === 'string' ? payload.variant : null,
+  };
+}
+
+async function renderArtifact(req: NextRequest, { params }: RouteCtx, method: 'GET' | 'POST') {
   let tenancy;
-  let tenancyError: unknown = null;
   try {
     tenancy = await requireTenancy();
   } catch (err) {
-    tenancyError = err;
+    return tenancyErrorResponse(err);
   }
 
   const { eventId, artifactCode } = await params;
   const url = new URL(req.url);
-  const formatParam = url.searchParams.get('format');
-  const variantParam = url.searchParams.get('variant') ?? undefined;
+  const postOptions = method === 'POST' ? await readPostRenderOptions(req) : {};
+
+  // Resolve event context before validating format, variant, or artifact code.
+  // Cross-tenant callers must always see the same generic 404; otherwise a
+  // bad format/code can reveal that the route exists before tenant scoping ran.
+  const ctx = await buildSourceGenerationContext(eventId);
+  if (!ctx) {
+    return Response.json({ error: 'not_found' }, { status: 404 });
+  }
+
+  // Auth gate (same as legacy routes).
+  const [activeClient, currentUser] = await Promise.all([
+    getActiveClientRow().catch(() => null),
+    getCurrentUser().catch(() => null),
+  ]);
+  const accessPolicy =
+    activeClient
+      ? await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: activeClient.key,
+          sourceEventId: ctx.event.id,
+        }).catch(() => null)
+      : null;
+  const canonicalAdminFallbackAllowed =
+    !activeClient && isCanonicalClientAdminEmail(currentUser?.email);
+  const canExport = Boolean(
+    accessPolicy?.canUploadSourceArtifacts ||
+      accessPolicy?.canGenerateSourcingArtifacts ||
+      canonicalAdminFallbackAllowed,
+  );
+  if (!canExport) {
+    return Response.json(
+      {
+        error: 'forbidden',
+        detail: 'Source artifact rights are required to export documents.',
+      },
+      { status: 403 },
+    );
+  }
+
+  const formatParam = url.searchParams.get('format') ?? postOptions.format ?? null;
+  const variantParam =
+    url.searchParams.get('variant') ?? postOptions.variant ?? undefined;
 
   // Validate format param.
   let requestedFormat: DeliverableFormat | undefined;
@@ -87,7 +139,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
     );
   }
 
-  // Resolve artifact code → kind.
+  // Resolve artifact code → kind after the event/auth boundary.
   const kind = kindForArtifactCode(
     artifactCode,
     variantParam === 'comparison' ? 'comparison' : 'template',
@@ -99,45 +151,6 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
         detail: `No SourceDeliverableKind wired for artifact code "${artifactCode}".`,
       },
       { status: 404 },
-    );
-  }
-
-  // Resolve event context.
-  const ctx = await buildSourceGenerationContext(eventId);
-  if (!ctx) {
-    return Response.json(
-      { error: 'not_found', detail: `No source event with slug ${eventId}` },
-      { status: 404 },
-    );
-  }
-
-  // Auth gate (same as legacy routes).
-  const [activeClient, currentUser] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    getCurrentUser().catch(() => null),
-  ]);
-  const accessPolicy =
-    tenancy && activeClient
-      ? await loadUserSourceAccessPolicy(tenancy, {
-          activeClientKey: activeClient.key,
-          sourceEventId: ctx.event.id,
-        }).catch(() => null)
-      : null;
-  const canonicalAdminFallbackAllowed =
-    !activeClient && isCanonicalClientAdminEmail(currentUser?.email);
-  const canExport = Boolean(
-    accessPolicy?.canUploadSourceArtifacts ||
-      accessPolicy?.canGenerateSourcingArtifacts ||
-      canonicalAdminFallbackAllowed,
-  );
-  if (!canExport) {
-    if (tenancyError) return tenancyErrorResponse(tenancyError);
-    return Response.json(
-      {
-        error: 'forbidden',
-        detail: 'Source artifact rights are required to export documents.',
-      },
-      { status: 403 },
     );
   }
 
@@ -180,4 +193,12 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       ...dispositionHeader,
     },
   });
+}
+
+export async function GET(req: NextRequest, ctx: RouteCtx) {
+  return renderArtifact(req, ctx, 'GET');
+}
+
+export async function POST(req: NextRequest, ctx: RouteCtx) {
+  return renderArtifact(req, ctx, 'POST');
 }

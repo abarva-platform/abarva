@@ -19,11 +19,13 @@ import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster'
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
+import { getSourcingEvent } from '@/lib/source/queries';
 import {
   artifactStateRowToView,
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
 } from '@/lib/source/canvas-substrate/types';
+import type { SourcingEventDetail } from '@/lib/source/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,21 +48,123 @@ function isCanonicalClientAdminEmail(email: string | null | undefined): boolean 
   );
 }
 
-export async function PATCH(req: NextRequest, { params }: RouteCtx) {
+function sourceEventNotFoundResponse() {
+  return Response.json({ error: 'not_found' }, { status: 404 });
+}
+
+async function resolveArtifactBodyAccess(eventId: string): Promise<
+  | {
+      ok: true;
+      event: SourcingEventDetail;
+      currentUser: Awaited<ReturnType<typeof getCurrentUser>> | null;
+      canMutate: boolean;
+    }
+  | { ok: false; response: Response }
+> {
   let tenancy;
-  let tenancyError: unknown = null;
   try {
     tenancy = await requireTenancy();
   } catch (err) {
-    tenancyError = err;
+    return { ok: false, response: tenancyErrorResponse(err) };
   }
 
+  const [event, activeClient, currentUser] = await Promise.all([
+    getSourcingEvent(eventId).catch((err) => {
+      console.error('[source artifact body] event lookup failed', err);
+      return null;
+    }),
+    getActiveClientRow().catch(() => null),
+    getCurrentUser().catch(() => null),
+  ]);
+
+  if (!event) {
+    return { ok: false, response: sourceEventNotFoundResponse() };
+  }
+
+  const fallbackClientKey =
+    (isClientKey(currentUser?.metadataClientKey) ? currentUser.metadataClientKey : null) ??
+    inferClientKeyFromEmail(currentUser?.email);
+  const effectiveClientKey = activeClient?.key ?? fallbackClientKey;
+  if (!effectiveClientKey) {
+    return {
+      ok: false,
+      response: Response.json(
+        { error: 'no_client', detail: 'No active client for Source artifact body access' },
+        { status: 403 },
+      ),
+    };
+  }
+
+  const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: effectiveClientKey,
+    sourceEventId: event.id,
+  }).catch(() => null);
+  const canonicalAdminFallbackAllowed =
+    !activeClient &&
+    isCanonicalClientAdminEmail(currentUser?.email) &&
+    fallbackClientKey === effectiveClientKey;
+  const canMutate = Boolean(
+    accessPolicy?.canUploadSourceArtifacts || canonicalAdminFallbackAllowed,
+  );
+
+  return { ok: true, event, currentUser, canMutate };
+}
+
+async function loadArtifactRow(eventId: string, artifactCode: string) {
+  const supabase = getAzureWriteFluentClient();
+  return supabase
+    .from('source_event_artifact_states')
+    .select('*')
+    .eq('source_event_id', eventId)
+    .eq('artifact_code', artifactCode)
+    .maybeSingle<SourceEventArtifactStateRow>();
+}
+
+export async function GET(_req: NextRequest, { params }: RouteCtx) {
   try {
     const { eventId, artifactCode } = await params;
-    const [activeClient, currentUser] = await Promise.all([
-      getActiveClientRow().catch(() => null),
-      getCurrentUser().catch(() => null),
-    ]);
+    const access = await resolveArtifactBodyAccess(eventId);
+    if (!access.ok) return access.response;
+
+    const { data: artifactRow, error: artifactFetchError } = await loadArtifactRow(
+      access.event.id,
+      artifactCode,
+    );
+    if (artifactFetchError) {
+      return Response.json(
+        { error: 'lookup_failed', detail: artifactFetchError.message },
+        { status: 500 },
+      );
+    }
+    if (!artifactRow) {
+      return Response.json({ error: 'artifact_not_found' }, { status: 404 });
+    }
+
+    return Response.json({
+      ok: true,
+      artifact: artifactStateRowToView(artifactRow),
+    });
+  } catch (err) {
+    console.error('[GET /api/v1/source/:eventId/artifacts/:artifactCode/body]', err);
+    return Response.json({ error: 'internal_error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: RouteCtx) {
+  try {
+    const { eventId, artifactCode } = await params;
+    const access = await resolveArtifactBodyAccess(eventId);
+    if (!access.ok) return access.response;
+    if (!access.canMutate) {
+      return Response.json(
+        {
+          error: 'forbidden',
+          detail: 'Source artifact upload rights are required to author artifact bodies.',
+        },
+        { status: 403 },
+      );
+    }
+    const { currentUser } = access;
 
     const payload = (await req.json().catch(() => null)) as
       | { body?: unknown; format?: unknown }
@@ -85,72 +189,10 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const format: AllowedFormat = isAllowedFormat(payload?.format) ? payload.format : 'markdown';
 
     const supabase = getAzureWriteFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
-      .from('source_events')
-      .select('id, client_key')
-      .eq('id', eventId)
-      .maybeSingle();
-    if (fetchError) {
-      return Response.json(
-        { error: 'lookup_failed', detail: fetchError.message },
-        { status: 500 },
-      );
-    }
-    if (!persistedEvent) {
-      return Response.json(
-        { error: 'not_found', detail: `No source event with id ${eventId}` },
-        { status: 404 },
-      );
-    }
-
-    const fallbackClientKey =
-      (isClientKey(currentUser?.metadataClientKey) ? currentUser.metadataClientKey : null) ??
-      inferClientKeyFromEmail(currentUser?.email);
-    const effectiveClientKey = activeClient?.key ?? fallbackClientKey;
-    if (!effectiveClientKey) {
-      if (tenancyError) return tenancyErrorResponse(tenancyError);
-      return Response.json(
-        { error: 'no_client', detail: 'No active client for Source artifact body mutation' },
-        { status: 403 },
-      );
-    }
-    if (persistedEvent.client_key !== effectiveClientKey) {
-      return Response.json(
-        { error: 'not_found', detail: `No source event with id ${eventId}` },
-        { status: 404 },
-      );
-    }
-
-    const accessPolicy =
-      tenancy && activeClient
-        ? await loadUserSourceAccessPolicy(tenancy, {
-            activeClientKey: activeClient.key,
-            sourceEventId: eventId,
-          }).catch(() => null)
-        : null;
-    const canonicalAdminFallbackAllowed =
-      !activeClient &&
-      isCanonicalClientAdminEmail(currentUser?.email) &&
-      persistedEvent.client_key === effectiveClientKey;
-    const canMutate = Boolean(
-      accessPolicy?.canUploadSourceArtifacts || canonicalAdminFallbackAllowed,
+    const { data: artifactRow, error: artifactFetchError } = await loadArtifactRow(
+      access.event.id,
+      artifactCode,
     );
-    if (!canMutate) {
-      return Response.json(
-        {
-          error: 'forbidden',
-          detail: 'Source artifact upload rights are required to author artifact bodies.',
-        },
-        { status: 403 },
-      );
-    }
-
-    const { data: artifactRow, error: artifactFetchError } = await supabase
-      .from('source_event_artifact_states')
-      .select('*')
-      .eq('source_event_id', eventId)
-      .eq('artifact_code', artifactCode)
-      .maybeSingle<SourceEventArtifactStateRow>();
     if (artifactFetchError) {
       return Response.json(
         { error: 'lookup_failed', detail: artifactFetchError.message },
