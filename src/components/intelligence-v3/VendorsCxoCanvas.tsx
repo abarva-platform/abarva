@@ -42,12 +42,27 @@ interface Props {
 
 export function VendorsCxoCanvas({ spend = MERIDIAN_VENDOR_SPEND }: Props) {
   const [view, setView] = useState<VendorsView>('spend');
-
   const totals = useMemo(() => computeCategoryTotals(spend), [spend]);
+  const decisionVendor = useMemo(() => pickDecisionVendor(spend), [spend]);
+
+  if (spend.length === 0) {
+    return (
+      <section data-canvas="vendors" data-view="empty">
+        <VendorMockHero
+          totalSpendUsdM={0}
+          vendorCount={0}
+          atRisk={0}
+          watchlist={0}
+          decisionVendor={undefined}
+        />
+        <EmptyVendorState />
+      </section>
+    );
+  }
+
   const totalSpendUsdM = totals.reduce((sum, c) => sum + c.totalUsdM, 0);
   const atRisk = spend.filter((v) => v.health === 'risk').length;
   const watchlist = spend.filter((v) => v.health === 'watch').length;
-  const decisionVendor = useMemo(() => pickDecisionVendor(spend), [spend]);
 
   return (
     <section data-canvas="vendors" data-view={view}>
@@ -71,6 +86,44 @@ export function VendorsCxoCanvas({ spend = MERIDIAN_VENDOR_SPEND }: Props) {
       {view === 'renewals' && <RenewalsView spend={spend} />}
       {view === 'risk' && <RiskQuadrantView spend={spend} />}
     </section>
+  );
+}
+
+function EmptyVendorState() {
+  return (
+    <div
+      role="status"
+      style={{
+        background: COLORS.card,
+        border: BORDER.hairline,
+        borderRadius: RADIUS.md,
+        padding: SPACING.xl,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: FONT.display,
+          fontSize: 24,
+          fontWeight: 400,
+          color: COLORS.ink,
+          letterSpacing: '-0.01em',
+          marginBottom: 8,
+        }}
+      >
+        No tenant-specific vendor spend is loaded yet.
+      </div>
+      <p
+        style={{
+          color: COLORS.body,
+          fontSize: 14,
+          lineHeight: 1.55,
+          margin: 0,
+          maxWidth: 760,
+        }}
+      >
+        AbarVa will not recommend a renewal or name a vendor from another client. Load this tenant&apos;s vendor contracts before using the Vendors panel for a sourcing decision.
+      </p>
+    </div>
   );
 }
 

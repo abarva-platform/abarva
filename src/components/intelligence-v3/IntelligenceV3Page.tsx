@@ -38,7 +38,13 @@ import { EnterpriseContextCanvas } from './EnterpriseContextCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { CorpusNotSeededState } from '@/components/intelligence-v4/CorpusNotSeededState';
-import { FIRST_CAPITAL_DEMO, FIRST_CAPITAL_AOP_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
+import {
+  EMPTY_AOP_DEMO,
+  FIRST_CAPITAL_AOP_DEMO,
+  FIRST_CAPITAL_DEMO,
+  MERIDIAN_AOP_DEMO,
+  APEX_RETAIL_AOP_DEMO,
+} from './demo-data';
 import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
 import {
@@ -125,21 +131,31 @@ export function IntelligenceV3Page({
   const isCorpusStage = stage === 'brief' || stage === 'map';
   const isAopStage = stage === 'art-of-possible';
   const corpusData = intelligenceCorpusData ?? apexRetailData;
+  const normalizedClientKey = (clientKey ?? '').toLowerCase();
+  const normalizedTenantName = data.tenantName.toLowerCase();
   const isApexClient =
-    clientKey === 'apexretail' ||
-    clientKey === 'apex-retail' ||
-    data.tenantName.toLowerCase().includes('apex retail');
+    normalizedClientKey === 'apexretail' ||
+    normalizedClientKey === 'apex-retail' ||
+    normalizedTenantName.includes('apex retail');
   const isApexBound = Boolean(apexRetailData) || (isApexClient && Boolean(corpusData?.status));
   const hasBoundCorpus = Boolean(corpusData?.briefData && corpusData?.mapData);
   const isFirstCapitalBound =
-    clientKey === 'arcturus' ||
-    clientKey === 'firstcapital' ||
-    data.tenantName.toLowerCase().includes('first capital');
+    normalizedClientKey === 'arcturus' ||
+    normalizedClientKey === 'firstcapital' ||
+    normalizedTenantName.includes('first capital');
+  const isMeridianClient =
+    normalizedClientKey === 'meridian' ||
+    normalizedClientKey === 'meridian-health' ||
+    normalizedTenantName.includes('meridian health');
+  const shouldUseEmptyNonCorpusFixtures =
+    !isApexBound && !isFirstCapitalBound && !isMeridianClient;
   const aopBands = isApexBound
     ? APEX_RETAIL_AOP_DEMO
     : isFirstCapitalBound
       ? FIRST_CAPITAL_AOP_DEMO
-      : data.aopBands ?? MERIDIAN_AOP_DEMO;
+      : isMeridianClient
+        ? data.aopBands ?? MERIDIAN_AOP_DEMO
+        : data.aopBands ?? EMPTY_AOP_DEMO;
   // Corpus surfaces (Brief / Map) render only when a tenant-specific
   // corpus payload is explicitly supplied by the server resolver. When
   // absent, we keep the honest not-seeded state instead of inventing
@@ -306,24 +322,24 @@ export function IntelligenceV3Page({
                   />
                 )}
                 {/*
-                  L2-L8 fix (2026-05-13): each V3 canvas previously had
+                  L2-L8 / SkyHarbor fix: each V3 canvas previously had
                   `= MERIDIAN_*` as its default prop value and the page only
-                  overrode it when `isApexBound`. Result: First Capital
-                  silently rendered Meridian fixtures across 7 canvases
+                  overrode it when `isApexBound`. Result: First Capital and
+                  later SkyHarbor silently rendered Meridian fixtures
                   (Vendors stage showed Epic / Innovaccer / Abridge / Cohere
-                  on a bank, etc.). Until First Capital fixtures are
-                  shipped, pass `[]` / `0` for the First-Capital path so the
-                  canvases render their empty state rather than another
-                  tenant's content. Meridian still falls through to the
-                  Meridian default (`undefined` → `MERIDIAN_*` inside the
-                  canvas), so Meridian's surface is unchanged.
+                  on non-healthcare tenants). Until tenant-specific fixtures
+                  are shipped, pass `[]` / `0` so the canvases render their
+                  empty state rather than another tenant's content. Meridian
+                  still falls through to the Meridian default (`undefined` →
+                  `MERIDIAN_*` inside the canvas), so Meridian's surface is
+                  unchanged.
                 */}
                 {stage === 'today' && (
                   <TodayCxoCanvas
                     items={
                       isApexBound
                         ? apexRetailData?.todayItems
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
@@ -334,14 +350,14 @@ export function IntelligenceV3Page({
                     rows={
                       isApexBound
                         ? APEX_RETAIL_BY_FN_ROWS
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
                     outcomes={
                       isApexBound
                         ? APEX_RETAIL_BY_FN_OUTCOMES
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
@@ -352,7 +368,7 @@ export function IntelligenceV3Page({
                     patterns={
                       isApexBound
                         ? apexRetailData?.patterns
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
@@ -363,7 +379,7 @@ export function IntelligenceV3Page({
                     spend={
                       isApexBound
                         ? APEX_RETAIL_VENDOR_SPEND
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
@@ -374,15 +390,15 @@ export function IntelligenceV3Page({
                     rows={
                       isApexBound
                         ? APEX_RETAIL_PEER_ROWS
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
                     lead={
                       isApexBound
                         ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
-                        : isFirstCapitalBound
-                          ? 'First Capital substrate not yet bound · peer cohort view will surface once initiatives are loaded.'
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
+                          ? `${activeTenantName} substrate not yet bound · peer cohort view will surface once initiatives are loaded.`
                           : undefined
                     }
                   />
@@ -392,7 +408,7 @@ export function IntelligenceV3Page({
                     bullets={
                       isApexBound
                         ? APEX_RETAIL_STRATEGY_BULLETS
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
@@ -403,15 +419,15 @@ export function IntelligenceV3Page({
                     rows={
                       isApexBound
                         ? APEX_RETAIL_SESSIONS
-                        : isFirstCapitalBound
+                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
                     }
                     totalConversations={
-                      isApexBound ? 18 : isFirstCapitalBound ? 0 : undefined
+                      isApexBound ? 18 : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures ? 0 : undefined
                     }
                     recentWindowCount={
-                      isApexBound ? 6 : isFirstCapitalBound ? 0 : undefined
+                      isApexBound ? 6 : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures ? 0 : undefined
                     }
                   />
                 )}
