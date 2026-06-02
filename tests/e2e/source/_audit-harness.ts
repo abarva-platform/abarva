@@ -21,10 +21,15 @@
  * already consumes raw.json continues to find evidence at a predictable path.
  */
 
-import { test as base, expect, type Page, type TestInfo } from '@playwright/test';
-import { promises as fsp } from 'node:fs';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import {
+  test as base,
+  expect,
+  type Page,
+  type TestInfo,
+} from "@playwright/test";
+import { promises as fsp } from "node:fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 // ---------------------------------------------------------------------------
 // Run-level paths
@@ -37,12 +42,12 @@ import * as path from 'node:path';
 const RUN_STAMP = formatRunStamp(new Date());
 const RUN_ROOT = path.resolve(
   process.cwd(),
-  'reports',
-  'source-golden-event',
+  "reports",
+  "source-golden-event",
   RUN_STAMP,
 );
-const SUITE_INDEX_PATH = path.join(RUN_ROOT, 'INDEX.md');
-const SUITE_MANIFEST_PATH = path.join(RUN_ROOT, 'suite-manifest.json');
+const SUITE_INDEX_PATH = path.join(RUN_ROOT, "INDEX.md");
+const SUITE_MANIFEST_PATH = path.join(RUN_ROOT, "suite-manifest.json");
 
 fs.mkdirSync(RUN_ROOT, { recursive: true });
 
@@ -50,7 +55,12 @@ fs.mkdirSync(RUN_ROOT, { recursive: true });
 // Types
 // ---------------------------------------------------------------------------
 
-export type StepPhase = 'before' | 'after' | 'error' | 'gate-block' | 'approval';
+export type StepPhase =
+  | "before"
+  | "after"
+  | "error"
+  | "gate-block"
+  | "approval";
 
 export interface StepRecord {
   index: number;
@@ -61,7 +71,7 @@ export interface StepRecord {
   pageUrl: string;
   screenshots: Partial<Record<StepPhase, string>>;
   assertions: string[];
-  status: 'passed' | 'failed' | 'gate-blocked' | 'approval' | 'note';
+  status: "passed" | "failed" | "gate-blocked" | "approval" | "note";
   gateBlocked?: boolean;
   gateBlockReason?: string;
   gateCriteria?: string[];
@@ -105,7 +115,13 @@ export interface AuditPacket {
   testSlug: string;
   startedAt: string;
   finishedAt?: string;
-  status?: 'passed' | 'failed' | 'timedOut' | 'interrupted' | 'skipped' | 'unknown';
+  status?:
+    | "passed"
+    | "failed"
+    | "timedOut"
+    | "interrupted"
+    | "skipped"
+    | "unknown";
   outputDir: string;
   steps: StepRecord[];
   consoleErrors: string[];
@@ -150,16 +166,16 @@ export interface AuditContext {
  * want richer evidence destructure `audit` as well.
  */
 export const auditedTest = base.extend<AuditFixtures>({
-  context: async ({ browser }, use, testInfo) => {
-    const slug = slugify(testInfo.titlePath.join(' '));
+  context: async ({ browser }, fixtureUse, testInfo) => {
+    const slug = slugify(testInfo.titlePath.join(" "));
     const outputDir = path.join(RUN_ROOT, slug);
     ensureDir(outputDir);
-    ensureDir(path.join(outputDir, 'screenshots'));
+    ensureDir(path.join(outputDir, "screenshots"));
 
-    const harPath = path.join(outputDir, 'network.har');
+    const harPath = path.join(outputDir, "network.har");
 
     const context = await browser.newContext({
-      recordHar: { path: harPath, content: 'embed' },
+      recordHar: { path: harPath, content: "embed" },
     });
 
     const packet: AuditPacket = {
@@ -175,7 +191,7 @@ export const auditedTest = base.extend<AuditFixtures>({
     };
     PACKETS_BY_SLUG.set(slug, packet);
 
-    await use(context);
+    await fixtureUse(context);
 
     packet.finishedAt = new Date().toISOString();
     packet.status = mapStatus(testInfo.status);
@@ -183,45 +199,47 @@ export const auditedTest = base.extend<AuditFixtures>({
     writePacketSync(packet);
   },
 
-  page: async ({ context }, use, testInfo) => {
-    const slug = slugify(testInfo.titlePath.join(' '));
+  page: async ({ context }, fixtureUse, testInfo) => {
+    const slug = slugify(testInfo.titlePath.join(" "));
     const packet = PACKETS_BY_SLUG.get(slug);
     if (!packet) {
-      throw new Error(`Audit packet missing for "${testInfo.title}" — context fixture did not run first`);
+      throw new Error(
+        `Audit packet missing for "${testInfo.title}" — context fixture did not run first`,
+      );
     }
 
-    const consoleLogPath = path.join(packet.outputDir, 'console.log');
-    const consoleStream = fs.createWriteStream(consoleLogPath, { flags: 'a' });
+    const consoleLogPath = path.join(packet.outputDir, "console.log");
+    const consoleStream = fs.createWriteStream(consoleLogPath, { flags: "a" });
 
     const page = await context.newPage();
     PACKET_BY_PAGE.set(page, packet);
 
-    page.on('console', (msg) => {
+    page.on("console", (msg) => {
       const line = JSON.stringify({
         ts: new Date().toISOString(),
         type: msg.type(),
         text: msg.text(),
         location: msg.location(),
       });
-      consoleStream.write(line + '\n');
+      consoleStream.write(line + "\n");
       packet.consoleEventsTotal += 1;
-      if (msg.type() === 'error') {
+      if (msg.type() === "error") {
         packet.consoleErrors.push(msg.text());
       }
     });
-    page.on('pageerror', (err) => {
+    page.on("pageerror", (err) => {
       consoleStream.write(
         JSON.stringify({
           ts: new Date().toISOString(),
-          type: 'pageerror',
+          type: "pageerror",
           text: err.message,
           stack: err.stack,
-        }) + '\n',
+        }) + "\n",
       );
       packet.consoleEventsTotal += 1;
       packet.consoleErrors.push(err.message);
     });
-    page.on('response', (resp) => {
+    page.on("response", (resp) => {
       const url = resp.url();
       // Keep the network footprint small: only app + API traffic, not assets.
       if (/\/(api|source|programs|moves|intelligence)\//.test(url)) {
@@ -234,14 +252,14 @@ export const auditedTest = base.extend<AuditFixtures>({
       }
     });
 
-    await use(page);
+    await fixtureUse(page);
 
     await new Promise<void>((resolve) => consoleStream.end(() => resolve()));
     writePacketSync(packet);
   },
 
-  audit: async ({}, use, testInfo) => {
-    const slug = slugify(testInfo.titlePath.join(' '));
+  audit: async ({}, fixtureUse, testInfo) => {
+    const slug = slugify(testInfo.titlePath.join(" "));
     const packet = PACKETS_BY_SLUG.get(slug);
     if (!packet) {
       throw new Error(`Audit packet missing for "${testInfo.title}"`);
@@ -255,7 +273,7 @@ export const auditedTest = base.extend<AuditFixtures>({
         if (last) {
           last.notes = last.notes ? `${last.notes}\n${text}` : text;
         } else {
-          const meta = makeMetaStep(packet, 'note', text);
+          const meta = makeMetaStep(packet, "note", text);
           packet.steps.push(meta);
         }
         writePacketSync(packet);
@@ -265,7 +283,7 @@ export const auditedTest = base.extend<AuditFixtures>({
         if (last) {
           last.assertions.push(text);
         } else {
-          const meta = makeMetaStep(packet, 'note', text);
+          const meta = makeMetaStep(packet, "note", text);
           meta.assertions.push(text);
           packet.steps.push(meta);
         }
@@ -276,7 +294,11 @@ export const auditedTest = base.extend<AuditFixtures>({
         if (last) {
           last.artifact = artifact;
         } else {
-          const meta = makeMetaStep(packet, 'note', `artifact:${artifact.label}`);
+          const meta = makeMetaStep(
+            packet,
+            "note",
+            `artifact:${artifact.label}`,
+          );
           meta.artifact = artifact;
           packet.steps.push(meta);
         }
@@ -284,7 +306,7 @@ export const auditedTest = base.extend<AuditFixtures>({
       },
     };
 
-    await use(ctx);
+    await fixtureUse(ctx);
   },
 });
 
@@ -310,27 +332,46 @@ export async function step<T>(
     index,
     name,
     startedAt: new Date().toISOString(),
-    finishedAt: '',
+    finishedAt: "",
     durationMs: 0,
     pageUrl: safeUrl(page),
     screenshots: {},
     assertions: [],
-    status: 'passed',
+    status: "passed",
   };
   packet.steps.push(record);
 
-  record.screenshots.before = await captureScreenshot(page, packet, index, name, 'before');
+  record.screenshots.before = await captureScreenshot(
+    page,
+    packet,
+    index,
+    name,
+    "before",
+  );
 
   const t0 = Date.now();
   try {
     const result = await body();
-    record.screenshots.after = await captureScreenshot(page, packet, index, name, 'after');
+    record.screenshots.after = await captureScreenshot(
+      page,
+      packet,
+      index,
+      name,
+      "after",
+    );
     record.pageUrl = safeUrl(page);
     return result;
   } catch (err) {
-    record.status = 'failed';
-    record.error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-    record.screenshots.error = await captureScreenshot(page, packet, index, name, 'error');
+    record.status = "failed";
+    record.error =
+      err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    record.screenshots.error = await captureScreenshot(
+      page,
+      packet,
+      index,
+      name,
+      "error",
+    );
     throw err;
   } finally {
     record.finishedAt = new Date().toISOString();
@@ -376,9 +417,11 @@ export async function captureGateBlock(
   optionsOrStage: GateBlockOptions | string = {},
 ): Promise<GateBlockRecord> {
   const options: GateBlockOptions =
-    typeof optionsOrStage === 'string' ? { stage: optionsOrStage } : optionsOrStage;
+    typeof optionsOrStage === "string"
+      ? { stage: optionsOrStage }
+      : optionsOrStage;
   const packet = packetForPage(page);
-  const stage = options.stage ?? '(unspecified)';
+  const stage = options.stage ?? "(unspecified)";
 
   const reasonSelectors = options.reasonSelectors ?? [
     '[role="alert"]',
@@ -387,7 +430,7 @@ export async function captureGateBlock(
     '[data-testid*="gate-block"]',
   ];
 
-  let reason = '';
+  let reason = "";
   for (const sel of reasonSelectors) {
     try {
       const locator = page.locator(sel).first();
@@ -423,7 +466,7 @@ export async function captureGateBlock(
   }
 
   const index = packet.steps.length + 1;
-  const blockReason = reason || '(no reason text found in known selectors)';
+  const blockReason = reason || "(no reason text found in known selectors)";
   const record: GateBlockRecord = {
     index,
     name: options.stepName ?? `Gate block · ${stage}`,
@@ -433,7 +476,7 @@ export async function captureGateBlock(
     pageUrl: safeUrl(page),
     screenshots: {},
     assertions: [],
-    status: 'gate-blocked',
+    status: "gate-blocked",
     gateBlocked: true,
     gateBlockReason: blockReason,
     blockMessage: blockReason,
@@ -441,12 +484,12 @@ export async function captureGateBlock(
   };
   packet.steps.push(record);
 
-  record.screenshots['gate-block'] = await captureScreenshot(
+  record.screenshots["gate-block"] = await captureScreenshot(
     page,
     packet,
     index,
     record.name,
-    'gate-block',
+    "gate-block",
   );
   writePacketSync(packet);
   return record;
@@ -497,9 +540,11 @@ export async function captureApprovalRecord(
   optionsOrStage: ApprovalOptions | string = {},
 ): Promise<ApprovalRecord> {
   const options: ApprovalOptions =
-    typeof optionsOrStage === 'string' ? { stage: optionsOrStage } : optionsOrStage;
+    typeof optionsOrStage === "string"
+      ? { stage: optionsOrStage }
+      : optionsOrStage;
   const packet = packetForPage(page);
-  const stage = options.stage ?? '(unspecified)';
+  const stage = options.stage ?? "(unspecified)";
 
   const rootSel =
     options.rootSelector ??
@@ -549,7 +594,7 @@ export async function captureApprovalRecord(
     pageUrl: safeUrl(page),
     screenshots: {},
     assertions: [],
-    status: 'approval',
+    status: "approval",
     approval,
     approver: approval.approver,
     when: approval.when,
@@ -559,7 +604,13 @@ export async function captureApprovalRecord(
   };
   packet.steps.push(record);
 
-  const shot = await captureScreenshot(page, packet, index, record.name, 'approval');
+  const shot = await captureScreenshot(
+    page,
+    packet,
+    index,
+    record.name,
+    "approval",
+  );
   approval.screenshot = shot;
   record.screenshots.approval = shot;
   writePacketSync(packet);
@@ -582,7 +633,7 @@ export async function captureArtifact(
   page: Page,
   stage: string,
   label: string,
-  details: Omit<ArtifactEvidence, 'label' | 'stage'> = {},
+  details: Omit<ArtifactEvidence, "label" | "stage"> = {},
 ): Promise<StepRecord> {
   const packet = packetForPage(page);
   const index = packet.steps.length + 1;
@@ -596,11 +647,17 @@ export async function captureArtifact(
     pageUrl: safeUrl(page),
     screenshots: {},
     assertions: [],
-    status: 'note',
+    status: "note",
     artifact,
   };
   packet.steps.push(record);
-  record.screenshots.after = await captureScreenshot(page, packet, index, record.name, 'after');
+  record.screenshots.after = await captureScreenshot(
+    page,
+    packet,
+    index,
+    record.name,
+    "after",
+  );
   writePacketSync(packet);
   return record;
 }
@@ -619,32 +676,34 @@ export async function finalizePacket(): Promise<string> {
   const lines: string[] = [];
 
   lines.push(`# Source Golden Event — Audit Packet`);
-  lines.push('');
+  lines.push("");
   lines.push(`Run stamp: \`${RUN_STAMP}\``);
   lines.push(`Output root: \`${RUN_ROOT}\``);
   lines.push(`Tests captured: ${packets.length}`);
   lines.push(`Status mix: ${summariseStatuses(packets)}`);
-  lines.push('');
+  lines.push("");
 
-  lines.push('## Tests');
-  lines.push('');
+  lines.push("## Tests");
+  lines.push("");
 
   for (const p of packets) {
-    const status = p.status ?? 'unknown';
+    const status = p.status ?? "unknown";
     lines.push(`### ${p.testTitle}`);
-    lines.push('');
+    lines.push("");
     lines.push(`- Slug: \`${p.testSlug}\``);
     lines.push(`- Status: **${status}**`);
     lines.push(`- Started: ${p.startedAt}`);
     if (p.finishedAt) lines.push(`- Finished: ${p.finishedAt}`);
     lines.push(`- Steps: ${p.steps.length}`);
-    lines.push(`- Console events: ${p.consoleEventsTotal} (errors: ${p.consoleErrors.length})`);
+    lines.push(
+      `- Console events: ${p.consoleEventsTotal} (errors: ${p.consoleErrors.length})`,
+    );
     lines.push(`- Network records: ${p.network.length}`);
-    lines.push(`- Output: \`${path.relative(RUN_ROOT, p.outputDir) || '.'}\``);
+    lines.push(`- Output: \`${path.relative(RUN_ROOT, p.outputDir) || "."}\``);
     if (p.networkHarPath) {
       lines.push(`- HAR: \`${path.relative(RUN_ROOT, p.networkHarPath)}\``);
     }
-    lines.push('');
+    lines.push("");
 
     if (p.steps.length) {
       lines.push(`| # | Step | Status | Duration (ms) | URL |`);
@@ -654,55 +713,57 @@ export async function finalizePacket(): Promise<string> {
           `| ${s.index} | ${escapeMd(s.name)} | ${s.status} | ${s.durationMs} | ${escapeMd(s.pageUrl)} |`,
         );
       }
-      lines.push('');
+      lines.push("");
 
       const blocks = p.steps.filter((s) => s.gateBlocked);
       if (blocks.length) {
-        lines.push('**Gate blocks:**');
+        lines.push("**Gate blocks:**");
         for (const b of blocks) {
           lines.push(
-            `- Step ${b.index} "${escapeMd(b.name)}" — ${escapeMd(b.gateBlockReason ?? '(no reason)')}`,
+            `- Step ${b.index} "${escapeMd(b.name)}" — ${escapeMd(b.gateBlockReason ?? "(no reason)")}`,
           );
           for (const c of b.gateCriteria ?? []) {
             lines.push(`  - criterion: ${escapeMd(c)}`);
           }
         }
-        lines.push('');
+        lines.push("");
       }
 
       const approvals = p.steps.filter((s) => s.approval);
       if (approvals.length) {
-        lines.push('**Approvals:**');
+        lines.push("**Approvals:**");
         for (const a of approvals) {
-          const who = a.approval?.who ?? '?';
-          const when = a.approval?.when ?? '?';
-          const what = a.approval?.what ?? '?';
-          const reason = a.approval?.reason ?? '?';
+          const who = a.approval?.who ?? "?";
+          const when = a.approval?.when ?? "?";
+          const what = a.approval?.what ?? "?";
+          const reason = a.approval?.reason ?? "?";
           lines.push(
             `- Step ${a.index}: who=${escapeMd(who)} · when=${escapeMd(when)} · what=${escapeMd(what)} · reason=${escapeMd(reason)}`,
           );
         }
-        lines.push('');
+        lines.push("");
       }
 
       const errors = p.steps.filter((s) => s.error);
       if (errors.length) {
-        lines.push('**Step errors:**');
+        lines.push("**Step errors:**");
         for (const e of errors) {
-          lines.push(`- Step ${e.index} "${escapeMd(e.name)}": ${escapeMd(e.error ?? '')}`);
+          lines.push(
+            `- Step ${e.index} "${escapeMd(e.name)}": ${escapeMd(e.error ?? "")}`,
+          );
         }
-        lines.push('');
+        lines.push("");
       }
     }
   }
 
-  await fsp.writeFile(SUITE_INDEX_PATH, lines.join('\n'), 'utf8');
+  await fsp.writeFile(SUITE_INDEX_PATH, lines.join("\n"), "utf8");
   return SUITE_INDEX_PATH;
 }
 
 // Best-effort: finalise on worker shutdown so callers don't have to wire an
 // `afterAll`. Idempotent — safe to call multiple times.
-process.on('beforeExit', () => {
+process.on("beforeExit", () => {
   try {
     // We deliberately use the sync variant of the writer where possible; the
     // INDEX rollup is async but small. Fire-and-forget is acceptable during
@@ -723,11 +784,15 @@ function packetForPage(page: Page): AuditPacket {
 
   // Fallback: pick the most-recently-created live packet. Works for the
   // common single-page-per-test case even if WeakMap missed (e.g. popup).
-  const live = Array.from(PACKETS_BY_SLUG.values()).filter((p) => !p.finishedAt);
+  const live = Array.from(PACKETS_BY_SLUG.values()).filter(
+    (p) => !p.finishedAt,
+  );
   if (live.length) return live[live.length - 1]!;
   const all = Array.from(PACKETS_BY_SLUG.values());
   if (all.length) return all[all.length - 1]!;
-  throw new Error('No audit packet has been initialised — is auditedTest in use?');
+  throw new Error(
+    "No audit packet has been initialised — is auditedTest in use?",
+  );
 }
 
 async function captureScreenshot(
@@ -737,8 +802,8 @@ async function captureScreenshot(
   stepName: string,
   phase: StepPhase,
 ): Promise<string> {
-  const fileName = `${String(index).padStart(2, '0')}-${slugify(stepName)}-${phase}.png`;
-  const absPath = path.join(packet.outputDir, 'screenshots', fileName);
+  const fileName = `${String(index).padStart(2, "0")}-${slugify(stepName)}-${phase}.png`;
+  const absPath = path.join(packet.outputDir, "screenshots", fileName);
   try {
     await page.screenshot({ path: absPath, fullPage: false });
   } catch {
@@ -748,17 +813,26 @@ async function captureScreenshot(
 }
 
 function writePacketSync(packet: AuditPacket): void {
-  const auditJsonPath = path.join(packet.outputDir, 'audit.json');
-  fs.writeFileSync(auditJsonPath, JSON.stringify(packet, null, 2) + '\n', 'utf8');
+  const auditJsonPath = path.join(packet.outputDir, "audit.json");
+  fs.writeFileSync(
+    auditJsonPath,
+    JSON.stringify(packet, null, 2) + "\n",
+    "utf8",
+  );
   upsertManifestEntry(packet);
 }
 
 function upsertManifestEntry(packet: AuditPacket): void {
-  type Manifest = { runStamp: string; tests: Array<{ slug: string; dir: string }> };
+  type Manifest = {
+    runStamp: string;
+    tests: Array<{ slug: string; dir: string }>;
+  };
   let manifest: Manifest = { runStamp: RUN_STAMP, tests: [] };
   if (fs.existsSync(SUITE_MANIFEST_PATH)) {
     try {
-      manifest = JSON.parse(fs.readFileSync(SUITE_MANIFEST_PATH, 'utf8')) as Manifest;
+      manifest = JSON.parse(
+        fs.readFileSync(SUITE_MANIFEST_PATH, "utf8"),
+      ) as Manifest;
       if (!Array.isArray(manifest.tests)) manifest.tests = [];
     } catch {
       manifest = { runStamp: RUN_STAMP, tests: [] };
@@ -766,7 +840,11 @@ function upsertManifestEntry(packet: AuditPacket): void {
   }
   if (!manifest.tests.some((t) => t.slug === packet.testSlug)) {
     manifest.tests.push({ slug: packet.testSlug, dir: packet.outputDir });
-    fs.writeFileSync(SUITE_MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(
+      SUITE_MANIFEST_PATH,
+      JSON.stringify(manifest, null, 2) + "\n",
+      "utf8",
+    );
   }
 }
 
@@ -775,14 +853,16 @@ async function loadAllPacketsFromDisk(): Promise<AuditPacket[]> {
     return Array.from(PACKETS_BY_SLUG.values());
   }
   try {
-    const manifest = JSON.parse(await fsp.readFile(SUITE_MANIFEST_PATH, 'utf8')) as {
+    const manifest = JSON.parse(
+      await fsp.readFile(SUITE_MANIFEST_PATH, "utf8"),
+    ) as {
       tests: Array<{ slug: string; dir: string }>;
     };
     const out: AuditPacket[] = [];
     for (const entry of manifest.tests) {
-      const auditPath = path.join(entry.dir, 'audit.json');
+      const auditPath = path.join(entry.dir, "audit.json");
       try {
-        const raw = await fsp.readFile(auditPath, 'utf8');
+        const raw = await fsp.readFile(auditPath, "utf8");
         out.push(JSON.parse(raw) as AuditPacket);
       } catch {
         // skip malformed packets — finalise is best-effort
@@ -794,23 +874,27 @@ async function loadAllPacketsFromDisk(): Promise<AuditPacket[]> {
   }
 }
 
-function makeMetaStep(packet: AuditPacket, kind: 'note', text: string): StepRecord {
+function makeMetaStep(
+  packet: AuditPacket,
+  kind: "note",
+  text: string,
+): StepRecord {
   return {
     index: packet.steps.length + 1,
     name: `[${kind}] ${text.slice(0, 80)}`,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
     durationMs: 0,
-    pageUrl: '',
+    pageUrl: "",
     screenshots: {},
     assertions: [],
-    status: 'note',
+    status: "note",
     notes: text,
   };
 }
 
 async function tryReadText(
-  root: ReturnType<Page['locator']>,
+  root: ReturnType<Page["locator"]>,
   selector: string,
 ): Promise<string | undefined> {
   try {
@@ -829,7 +913,7 @@ function safeUrl(page: Page): string {
   try {
     return page.url();
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -837,9 +921,9 @@ function slugify(input: string): string {
   return (
     input
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 80) || 'unnamed'
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "unnamed"
   );
 }
 
@@ -848,38 +932,38 @@ function ensureDir(dir: string): void {
 }
 
 function formatRunStamp(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(2, "0");
   return (
     `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
     `-${pad(d.getUTCHours())}-${pad(d.getUTCMinutes())}-${pad(d.getUTCSeconds())}`
   );
 }
 
-function mapStatus(status: TestInfo['status']): AuditPacket['status'] {
+function mapStatus(status: TestInfo["status"]): AuditPacket["status"] {
   switch (status) {
-    case 'passed':
-    case 'failed':
-    case 'timedOut':
-    case 'interrupted':
-    case 'skipped':
+    case "passed":
+    case "failed":
+    case "timedOut":
+    case "interrupted":
+    case "skipped":
       return status;
     default:
-      return 'unknown';
+      return "unknown";
   }
 }
 
 function summariseStatuses(packets: AuditPacket[]): string {
-  if (!packets.length) return '(none)';
+  if (!packets.length) return "(none)";
   const counts = new Map<string, number>();
   for (const p of packets) {
-    const key = p.status ?? 'unknown';
+    const key = p.status ?? "unknown";
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return Array.from(counts.entries())
     .map(([k, v]) => `${k}=${v}`)
-    .join(' · ');
+    .join(" · ");
 }
 
 function escapeMd(input: string): string {
-  return input.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+  return input.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
