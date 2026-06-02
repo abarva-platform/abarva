@@ -199,7 +199,7 @@ export function ImpactInsightsHome({
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
               <Pill tone="ok">Client boundary locked</Pill>
-              <Pill>Cross-workspace read</Pill>
+              <Pill>Tenant workspace read</Pill>
               <Pill tone="warn">Human approval stays explicit</Pill>
             </div>
           </div>
