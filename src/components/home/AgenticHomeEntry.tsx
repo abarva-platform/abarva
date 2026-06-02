@@ -88,7 +88,7 @@ const AGENT_SURFACES: readonly AgentSurface[] = [
   },
   {
     key: 'admin',
-    title: 'Admin Setup',
+    title: 'Admin',
     agent: 'steward',
     agentLabel: 'Steward',
     subline: 'Dataset domains, evidence loading, governance.',
@@ -130,7 +130,7 @@ function buildAttentionCards(): readonly AttentionCard[] {
     },
     {
       id: 'home1-attn-domains-partial',
-      eyebrow: 'Setup · dataset domains',
+      eyebrow: 'Admin · dataset domains',
       body: `${DOMAINS_PARTIAL} dataset domains partially loaded.`,
       agent: 'steward',
       agentLabel: 'Steward',

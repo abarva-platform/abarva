@@ -212,7 +212,7 @@ function WorkspaceAccessStrip({
             lineHeight: 1.4,
           }}
         >
-          You are signed in, but no workspace has been assigned yet. A client admin can grant Programs, Source, Intelligence, or Tower access from Setup.
+          You are signed in, but no workspace has been assigned yet. A client admin can grant Programs, Source, Intelligence, or Tower access from Admin.
         </div>
       ) : (
         <div

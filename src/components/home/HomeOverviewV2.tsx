@@ -824,7 +824,7 @@ export function HomeOverviewV2({
           eyebrowNum="05"
           eyebrowLabel="WHERE TO GO"
           title="Admin action surfaces"
-          lead="Setup, access, readiness, and audit controls for the active client."
+          lead="Access, readiness, and audit controls for the active client."
         >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
             {extras.panels.map((p) => <PanelCard key={p.num} panel={p} />)}
