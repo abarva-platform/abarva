@@ -18,10 +18,7 @@
     "Unlicense",
     "Zlib"
   ],
-  "reviewRequiredLicenses": [
-    "LGPL-3.0-or-later",
-    "MPL-2.0"
-  ],
+  "reviewRequiredLicenses": ["LGPL-3.0-or-later", "MPL-2.0"],
   "deniedLicenses": [
     "AGPL-3.0",
     "AGPL-3.0-only",
@@ -52,7 +49,7 @@
     },
     {
       "package": "posthog-js",
-      "version": "1.368.0",
+      "version": "1.378.1",
       "decision": "allow-direct-with-review",
       "owner": "engineering",
       "reviewBy": "2026-07-01",
