@@ -38,7 +38,7 @@ jobs:
         run: npm run crawl:post-deploy -- --base-url "$CRAWL_BASE_URL" --output-dir audit-artifacts/post-deploy-crawl
       - name: Upload crawl artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: post-deploy-crawl
           path: audit-artifacts/post-deploy-crawl
