@@ -167,7 +167,7 @@ Step 5 — Click Tower
 
 Step 6 — Verify old /setup redirects
   ✓ /setup → 301 → /
-  ✓ /setup/data-trust → 301 → /home/data-trust (or wherever per route plan)
+  ✓ /setup/data-trust → 301 → /admin/data-trust per route plan
   ✓ Screenshot of redirect chain
 ```
 
