@@ -147,6 +147,9 @@ describe('SourcingReactivePanel', () => {
     expect(html).toContain('BAFO scoreboard');
     expect(html).toContain('Vendor A');
     expect(html).toContain('Walkaway credibility');
+    expect(html).toContain('data-ai-suggestion-frame="suggested"');
+    expect(html).toContain('Validate before action');
+    expect(html).toContain('Sentinel Source AI suggestion: BAFO scoreboard');
     expect(html).not.toContain('href=');
   });
 });

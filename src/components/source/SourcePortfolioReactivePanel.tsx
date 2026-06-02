@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { AISuggestionFrame } from '@/components/abarva/AISuggestionFrame';
 import type {
   Artifact,
   AntiPatternFlagArtifact,
@@ -354,10 +355,18 @@ function selectSourceArtifacts(artifacts: Artifact[]): Artifact[] {
 
 function Card({ kind, children }: { kind: string; children: React.ReactNode }) {
   return (
-    <article style={CARD}>
+    <AISuggestionFrame
+      status="suggested"
+      detail="Validate before action"
+      ariaLabel={`Sentinel portfolio AI suggestion: ${kind}`}
+      style={{
+        ...CARD,
+        borderLeft: '3px solid #1B2B5C',
+      }}
+    >
       <div style={EYEBROW}>Sentinel - {kind}</div>
       {children}
-    </article>
+    </AISuggestionFrame>
   );
 }
 

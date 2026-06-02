@@ -1,4 +1,7 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { selectVisibleSentinelArtifacts } from '@/components/intelligence/SentinelReactivePanel';
+import { SentinelReactivePanel } from '@/components/intelligence/SentinelReactivePanel';
 import type { Artifact } from '@/lib/agent/artifacts';
 
 describe('selectVisibleSentinelArtifacts', () => {
@@ -105,5 +108,26 @@ describe('selectVisibleSentinelArtifacts', () => {
 
   it('returns empty when no artifacts have streamed', () => {
     expect(selectVisibleSentinelArtifacts([])).toEqual([]);
+  });
+});
+
+describe('SentinelReactivePanel', () => {
+  it('frames visible reasoning cards as AI suggestions', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'pattern-match',
+        patternId: 'PAT-CDP-001',
+        name: 'CDP Activation',
+        summary: 'Customer data platform programme lifecycle.',
+      },
+    ];
+
+    const html = renderToStaticMarkup(
+      createElement(SentinelReactivePanel, { artifacts }),
+    );
+
+    expect(html).toContain('data-ai-suggestion-frame="suggested"');
+    expect(html).toContain('Validate before action');
+    expect(html).toContain('Sentinel AI suggestion: Pattern match');
   });
 });

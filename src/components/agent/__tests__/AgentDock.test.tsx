@@ -137,6 +137,11 @@ describe("AgentDock · default mode", () => {
     expect(
       within(agentTurn).getByText("Review before acting"),
     ).toBeInTheDocument();
+    expect(
+      within(agentTurn).getByRole("status", {
+        name: "AI Draft: Review before acting",
+      }),
+    ).toHaveAttribute("data-ai-label-status", "draft");
     expect(within(userTurn).queryByText("AI Draft")).not.toBeInTheDocument();
   });
 
