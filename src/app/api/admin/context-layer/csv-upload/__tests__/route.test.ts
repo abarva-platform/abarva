@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { PILOT_UPLOAD_ATTESTATION_VERSION } from '@/lib/context-ingestion/upload-attestation';
+
 import { POST } from '../route';
 
 const mockRequireTenancy = jest.fn();
@@ -45,6 +47,14 @@ function csvRequest(formData: FormData) {
   });
 }
 
+function addUploadAttestation(formData: FormData) {
+  formData.set('operatorAttestationVersion', PILOT_UPLOAD_ATTESTATION_VERSION);
+  formData.set('operatorAttestationAccepted', 'true');
+  formData.set('operatorDataAuthorityConfirmed', 'true');
+  formData.set('operatorDataUseConfirmed', 'true');
+  formData.set('operatorSensitiveDataConfirmed', 'true');
+}
+
 describe('/api/admin/context-layer/csv-upload', () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
 
@@ -69,12 +79,38 @@ describe('/api/admin/context-layer/csv-upload', () => {
     const formData = new FormData();
     formData.set('clientId', 'client-other');
     formData.set('file', new File(['app_id,name\napp-1,Claims'], 'apps.csv', { type: 'text/csv' }));
+    addUploadAttestation(formData);
 
     const response = await POST(csvRequest(formData));
     const body = await response.json();
 
     expect(response.status).toBe(403);
     expect(body).toEqual({ error: 'forbidden_cross_tenant' });
+    expect(mockDbCalls).toHaveLength(0);
+  });
+
+  it('rejects uploads before processing when operator attestation is missing', async () => {
+    const formData = new FormData();
+    formData.set('clientId', 'client-apex');
+    formData.set('templateId', 'application-portfolio');
+    formData.set('textColumns', JSON.stringify(['app_id', 'name']));
+    formData.set('file', new File(['app_id,name\napp-1,Claims'], 'application-portfolio.csv', { type: 'text/csv' }));
+
+    const response = await POST(csvRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: 'upload_attestation_required',
+      detail: expect.stringContaining('tenant admin must attest'),
+      missing: [
+        'operatorAttestationVersion',
+        'operatorAttestationAccepted',
+        'operatorDataAuthorityConfirmed',
+        'operatorDataUseConfirmed',
+        'operatorSensitiveDataConfirmed',
+      ],
+    });
     expect(mockDbCalls).toHaveLength(0);
   });
 
@@ -85,6 +121,8 @@ describe('/api/admin/context-layer/csv-upload', () => {
     formData.set('sourceRecordIdColumn', 'app_id');
     formData.set('titleColumn', 'name');
     formData.set('textColumns', JSON.stringify(['app_id', 'name', 'criticality', 'owner_role', 'system_of_record']));
+    addUploadAttestation(formData);
+    formData.set('operatorAttestationNote', 'CAB approval CAB-42');
     formData.set('file', new File([
       [
         'app_id,name,criticality,owner_role,system_of_record',
@@ -104,6 +142,14 @@ describe('/api/admin/context-layer/csv-upload', () => {
         status: 'inserted',
         chunkRowsInserted: 1,
       },
+      attestation: {
+        version: PILOT_UPLOAD_ATTESTATION_VERSION,
+        accepted: true,
+        authorityConfirmed: true,
+        dataUseConfirmed: true,
+        sensitiveDataConfirmed: true,
+        note: 'CAB approval CAB-42',
+      },
       embeddingHandoff: {
         command: 'npm run embed:pending-chunks -- --tenant apex-retail',
       },
@@ -115,8 +161,24 @@ describe('/api/admin/context-layer/csv-upload', () => {
         tenant_key: 'apex-retail',
         source_record_id: 'app-1',
         embedding_status: 'pending',
+        provenance: expect.objectContaining({
+          upload_attestation: expect.objectContaining({
+            version: PILOT_UPLOAD_ATTESTATION_VERSION,
+            accepted: true,
+            note: 'CAB approval CAB-42',
+          }),
+        }),
       }),
     ]);
+    const runInsert = mockDbCalls.find((call) => call.table === 'data_ingestion_runs');
+    expect(runInsert?.payload).toEqual(expect.objectContaining({
+      summary: expect.objectContaining({
+        upload_attestation: expect.objectContaining({
+          version: PILOT_UPLOAD_ATTESTATION_VERSION,
+          accepted: true,
+        }),
+      }),
+    }));
     expect(mockDbCalls.some((call) => call.operation === 'delete')).toBe(false);
   });
 });

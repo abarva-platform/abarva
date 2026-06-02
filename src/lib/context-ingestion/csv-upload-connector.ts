@@ -13,6 +13,7 @@ import {
   type ContextTemplateDefinition,
 } from './template-registry';
 import type { ContextDimension } from './types';
+import type { PilotUploadAttestation } from './upload-attestation';
 
 type CsvRow = Record<string, string>;
 
@@ -32,6 +33,7 @@ export interface CsvUploadInput {
   csvText: string;
   uploadedBy: string;
   mapping?: CsvSchemaMapping;
+  attestation?: PilotUploadAttestation;
   uploadedAt?: string;
   db?: PostgresCompatClient;
 }
@@ -317,6 +319,7 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
         uploaded_at: uploadedAt,
         data_classification: input.mapping?.dataClassification ?? 'confidential',
         schema_mapping: mapping,
+        upload_attestation: input.attestation ?? null,
       },
       chunk_metadata: {
         record_kind: 'csv_upload_row',
@@ -383,6 +386,7 @@ export async function loadCsvUploadToTenantContext(input: CsvUploadInput): Promi
         template_id: prepared.template.id,
         context_dimension: prepared.template.dimension,
         embedding_status: 'pending',
+        upload_attestation: input.attestation ?? null,
       },
     })
     .select('id');

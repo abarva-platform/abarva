@@ -4,6 +4,7 @@ import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 
 import { NORTHSTAR_CONTEXT_TEMPLATES } from '@/lib/context-ingestion/template-registry';
 import { buildTemplateSchemaPreflight } from '@/lib/context-ingestion/schema-preflight';
+import { PILOT_UPLOAD_ATTESTATION_VERSION } from '@/lib/context-ingestion/upload-attestation';
 
 type UploadResult = {
   ok: boolean;
@@ -69,6 +70,8 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
   const [sourceRecordIdColumn, setSourceRecordIdColumn] = useState('');
   const [titleColumn, setTitleColumn] = useState('');
   const [selectedTextColumns, setSelectedTextColumns] = useState<string[]>([]);
+  const [attestationAccepted, setAttestationAccepted] = useState(false);
+  const [attestationNote, setAttestationNote] = useState('');
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
 
@@ -119,6 +122,12 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
     formData.set('file', file);
     formData.set('templateId', templateId);
     formData.set('dataClassification', 'confidential');
+    formData.set('operatorAttestationVersion', PILOT_UPLOAD_ATTESTATION_VERSION);
+    formData.set('operatorAttestationAccepted', String(attestationAccepted));
+    formData.set('operatorDataAuthorityConfirmed', String(attestationAccepted));
+    formData.set('operatorDataUseConfirmed', String(attestationAccepted));
+    formData.set('operatorSensitiveDataConfirmed', String(attestationAccepted));
+    if (attestationNote.trim()) formData.set('operatorAttestationNote', attestationNote.trim());
     if (sourceRecordIdColumn) formData.set('sourceRecordIdColumn', sourceRecordIdColumn);
     if (titleColumn) formData.set('titleColumn', titleColumn);
     formData.set('textColumns', JSON.stringify(selectedTextColumns));
@@ -243,13 +252,40 @@ export function CsvUploadConnector({ clientId, tenantName }: CsvUploadConnectorP
           </section>
         )}
 
+        <fieldset style={{ border: '1px solid #d8d2c4', borderRadius: 6, padding: 12, background: '#fffaf0' }}>
+          <legend>Data load attestation</legend>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.5 }}>
+            <input
+              type="checkbox"
+              checked={attestationAccepted}
+              onChange={(event) => setAttestationAccepted(event.target.checked)}
+              style={{ marginTop: 4 }}
+            />
+            <span>
+              I have authority to load this tenant data, I understand it will be processed as pilot context for {tenantName}, and I have reviewed the file for PHI, PII, payment-card, and other restricted data before starting the load.
+            </span>
+          </label>
+          <label style={{ display: 'grid', gap: 6, marginTop: 10 }}>
+            <span>Attestation note</span>
+            <textarea
+              style={{ ...inputStyle, minHeight: 72 }}
+              value={attestationNote}
+              onChange={(event) => setAttestationNote(event.target.value)}
+              placeholder="Optional context, approval reference, or data-load ticket"
+            />
+          </label>
+          <p style={{ color: '#6b665c', margin: '8px 0 0', lineHeight: 1.45 }}>
+            Version {PILOT_UPLOAD_ATTESTATION_VERSION}. Uploads without this confirmation are rejected before processing starts.
+          </p>
+        </fieldset>
+
         <div>
           <button
             type="submit"
-            disabled={!file || pending || requiredFieldsBlocked}
-            style={{ border: '1px solid #171717', borderRadius: 6, padding: '10px 14px', background: pending || requiredFieldsBlocked ? '#d8d2c4' : '#171717', color: pending || requiredFieldsBlocked ? '#514c43' : '#fff', fontFamily: 'DM Sans, sans-serif', cursor: !file || pending || requiredFieldsBlocked ? 'not-allowed' : 'pointer' }}
+            disabled={!file || pending || requiredFieldsBlocked || !attestationAccepted}
+            style={{ border: '1px solid #171717', borderRadius: 6, padding: '10px 14px', background: pending || requiredFieldsBlocked || !attestationAccepted ? '#d8d2c4' : '#171717', color: pending || requiredFieldsBlocked || !attestationAccepted ? '#514c43' : '#fff', fontFamily: 'DM Sans, sans-serif', cursor: !file || pending || requiredFieldsBlocked || !attestationAccepted ? 'not-allowed' : 'pointer' }}
           >
-            {pending ? 'Loading CSV...' : requiredFieldsBlocked ? 'Resolve required fields' : 'Load CSV'}
+            {pending ? 'Loading CSV...' : requiredFieldsBlocked ? 'Resolve required fields' : !attestationAccepted ? 'Accept attestation' : 'Load CSV'}
           </button>
         </div>
       </form>

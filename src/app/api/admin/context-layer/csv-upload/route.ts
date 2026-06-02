@@ -7,6 +7,9 @@ import {
   parseTextColumns,
 } from '@/lib/context-ingestion/csv-upload-connector';
 import {
+  validatePilotUploadAttestation,
+} from '@/lib/context-ingestion/upload-attestation';
+import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from '@/lib/security/sensitive-upload-guard';
@@ -61,6 +64,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `file exceeds ${MAX_BYTES} bytes` }, { status: 413 });
   }
 
+  const attestation = validatePilotUploadAttestation({
+    accepted: formData.get('operatorAttestationAccepted'),
+    version: formData.get('operatorAttestationVersion'),
+    authorityConfirmed: formData.get('operatorDataAuthorityConfirmed'),
+    dataUseConfirmed: formData.get('operatorDataUseConfirmed'),
+    sensitiveDataConfirmed: formData.get('operatorSensitiveDataConfirmed'),
+    note: formData.get('operatorAttestationNote'),
+  });
+  if ('error' in attestation) {
+    return NextResponse.json(attestation, { status: 400 });
+  }
+
   const bytes = await file.arrayBuffer();
   const dataProtection = evaluateSensitiveUpload({
     filename: file.name,
@@ -80,6 +95,7 @@ export async function POST(request: NextRequest) {
       uploadedBy: tenancy.userId,
       fileName: file.name,
       csvText,
+      attestation,
       mapping: {
         templateId: formString(formData, 'templateId') ?? undefined,
         sourceRecordIdColumn: formString(formData, 'sourceRecordIdColumn'),
@@ -93,6 +109,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: result.persistence.status === 'inserted',
       ...result,
+      attestation,
       dataProtection,
     }, { status: result.persistence.status === 'inserted' ? 200 : 202 });
   } catch (error) {
