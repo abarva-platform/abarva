@@ -115,7 +115,7 @@ const ARCHITECTURE_COMPONENTS_FIXTURE: ReadonlyArray<ArchitectureComponentRecord
     codePath: 'src/lib/agent/editorial.ts',
     state: 'active',
     dependencies: ['context-bundle', 'posture'],
-    summary: 'Setup/Admin editorial agent shipping in AGENT1.',
+    summary: 'Admin workspace editorial agent shipping in AGENT1.',
   },
 
   // Context Plane

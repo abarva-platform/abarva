@@ -33,7 +33,7 @@ export function AdminOverviewTabs({ activeTab }: { activeTab: AdminOverviewTabId
   return (
     <nav
       data-component="AdminOverviewTabs"
-      aria-label="Setup overview sections"
+      aria-label="Admin overview sections"
       style={{
         display: 'flex',
         gap: SPACING.xs,

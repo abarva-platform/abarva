@@ -895,7 +895,7 @@ export async function buildConnectorsPageView(
       'Which external systems are configured, blocked, or deferred. None are live in this environment — all show stub or deferred status.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',
