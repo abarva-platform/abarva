@@ -68,7 +68,7 @@ describe('ContextBar', () => {
     const html = renderToStaticMarkup(
       <ContextBar
         tenant="Apex Retail"
-        mode="Setup/Admin"
+        mode="Admin workspace"
         agent="Steward"
         data="Manifest + seeds"
         liveStatus="Deferred"

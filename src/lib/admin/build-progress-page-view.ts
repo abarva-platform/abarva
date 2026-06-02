@@ -481,7 +481,7 @@ export async function buildBuildProgressPageView(): Promise<BuildProgressPageVie
       'Waves shipped, slices completed, blockers active. Deterministic snapshot — not a live deploy monitor.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Build manifest',
       liveStatus: 'Deferred',

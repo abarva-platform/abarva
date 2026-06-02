@@ -481,7 +481,7 @@ export async function buildProductionReadinessPageView(
       'The canvas tells whether AbarVa can be demoed, piloted, or productionized — and what blocks each step.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',

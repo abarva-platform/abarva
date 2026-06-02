@@ -434,7 +434,7 @@ export async function buildUsersAccessPageView(
       'Role inventory and access posture. No live invite API, no permission editor, no SSO yet — read-only for now.',
     context: {
       tenant: ctx.tenant.name,
-      mode: 'Setup/Admin',
+      mode: 'Admin workspace',
       agent: 'Steward',
       data: 'Manifest + seeds',
       liveStatus: 'Deferred',

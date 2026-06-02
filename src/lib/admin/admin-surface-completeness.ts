@@ -47,7 +47,7 @@ export function buildAdminPanelInventory(): AdminPanel[] {
     },
     {
       panelId: 'steward-setup-control-center',
-      label: 'Steward Setup Control Center',
+      label: 'Steward Admin Control Center',
       status: 'implemented',
       componentPath: 'src/components/admin/StewardSetupControlCenter.tsx',
       sliceId: 'ADM6',
