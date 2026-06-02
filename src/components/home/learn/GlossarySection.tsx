@@ -10,17 +10,17 @@ export function GlossarySection() {
         <SectionTitle level={1}>Tips & common mistakes</SectionTitle>
         <Lead>The most common mistakes new users make — and what to do instead.</Lead>
 
-        <SubHead>Setup</SubHead>
+        <SubHead>Admin workspace</SubHead>
         <TipGrid>
           <Tip
             kind="do"
-            text="Connect at least one operational data source before exploring Intelligence."
-            example="Without a connector, Intelligence produces generic industry patterns, not signals specific to your operations."
+            text="Confirm at least one approved operational data source before exploring Intelligence."
+            example="Without an approved Admin connector or verified document extract, Intelligence produces generic industry patterns, not signals specific to your operations."
           />
           <Tip
             kind="dont"
             text={"Skip the tenant profile because \"it's just metadata.\""}
-            example="Named executives in the tenant profile flow directly into Move stakeholder maps and charter documents — skipping it produces thin output."
+            example="Named executives in the tenant profile flow directly into Move stakeholder maps and charter documents, so incomplete Admin context produces thin output."
           />
         </TipGrid>
 

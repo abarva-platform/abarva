@@ -83,7 +83,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
       { slug: 'sentinel', label: 'Sentinel · Intelligence + Source' },
       { slug: 'atlas', label: 'Atlas · Tower' },
       { slug: 'nexus', label: 'Nexus · Strategic Moves' },
-      { slug: 'steward', label: 'Steward · Setup / Home' },
+      { slug: 'steward', label: 'Steward · Admin workspace' },
     ],
   },
   {
@@ -93,15 +93,15 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     routeSegment: 'workflows',
     oneLineHook: 'Step-by-step for common tasks',
     futureContentSummary:
-      'Originating a Strategic Move, reviewing portfolio, handling a pressure card, onboarding a connector, validating substrate, per-phase guidance.',
+      'Originating a Strategic Move, reviewing portfolio, handling a pressure card, opening Admin connector requests, validating Admin substrate readiness, per-phase guidance.',
     shellPlaceholder:
       'Workflow guides for the most-asked tasks, walked through end to end.',
     sampleSubPages: [
       { slug: 'originate-a-move', label: 'Originate a Strategic Move' },
       { slug: 'review-portfolio', label: 'Review portfolio performance' },
       { slug: 'handle-pressure-card', label: 'Handle a pressure card' },
-      { slug: 'onboard-connector', label: 'Onboard a new connector' },
-      { slug: 'validate-substrate', label: 'Validate substrate completeness' },
+      { slug: 'admin-connector-request', label: 'Open an Admin connector request' },
+      { slug: 'validate-admin-substrate', label: 'Validate Admin substrate readiness' },
     ],
   },
   {
