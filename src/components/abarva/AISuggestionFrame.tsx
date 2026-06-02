@@ -1,9 +1,3 @@
-// DES-AI · AISuggestionFrame.
-//
-// Presentational wrapper for AI-generated recommendations, drafts, and
-// pending-review content. Runtime callers provide the content; this component
-// only makes the AI/human-review state visible.
-
 import type { CSSProperties, ReactNode } from "react";
 import { BORDER, COLORS, RADIUS, SPACING } from "@/lib/design/abarva-theme";
 import { AILabel, type AILabelStatus } from "./AILabel";
@@ -18,22 +12,42 @@ export interface AISuggestionFrameProps {
   children: ReactNode;
   status?: AILabelStatus;
   detail?: string;
+  ariaLabel?: string;
+  className?: string;
+  bodyClassName?: string;
   style?: CSSProperties;
   bodyStyle?: CSSProperties;
 }
 
+/**
+ * Presentational review frame for AI-generated recommendations and drafts.
+ *
+ * Example:
+ * `<AISuggestionFrame status="suggested">Recommended next action</AISuggestionFrame>`
+ */
 export function AISuggestionFrame({
   children,
   status = "suggested",
   detail,
+  ariaLabel,
+  className,
+  bodyClassName,
   style,
   bodyStyle,
 }: AISuggestionFrameProps) {
+  const labelText =
+    status === "draft"
+      ? "AI-generated draft"
+      : status === "pending_review"
+        ? "AI-generated output pending review"
+        : "AI-generated suggestion";
+
   return (
     <section
       role="note"
       data-ai-suggestion-frame={status}
-      aria-label="AI-generated suggestion"
+      aria-label={ariaLabel ?? labelText}
+      className={className}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -47,7 +61,9 @@ export function AISuggestionFrame({
       }}
     >
       <AILabel status={status} detail={detail} />
-      <div style={bodyStyle}>{children}</div>
+      <div className={bodyClassName} style={bodyStyle}>
+        {children}
+      </div>
     </section>
   );
 }
