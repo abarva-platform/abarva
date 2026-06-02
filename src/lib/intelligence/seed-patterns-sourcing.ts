@@ -1,6 +1,11 @@
 import type { PatternSeed } from "./seed-types";
+import { SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS } from "./seed-patterns-sourcing-archetypes-failure-modes";
+import { SOURCING_ARTIFACT_TEMPLATE_PATTERNS } from "./seed-patterns-sourcing-artifact-templates";
 import { SOURCING_BAFO_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-bafo-contracts";
+import { SOURCING_BENCHMARK_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-benchmark-governance";
 import { SOURCING_CATEGORY_PATTERNS } from "./seed-patterns-sourcing-categories";
+import { SOURCING_COMMERCIAL_LEVER_PATTERNS } from "./seed-patterns-sourcing-commercial-levers";
+import { SOURCING_CORPUS_GOVERNANCE_PATTERNS } from "./seed-patterns-sourcing-corpus-governance";
 import { SOURCING_CONTRACT_AUDIT_PATTERNS } from "./seed-patterns-sourcing-contracts-audit";
 import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from "./seed-patterns-sourcing-contracts-commercial";
 import { SOURCING_CONTRACT_PATTERNS } from "./seed-patterns-sourcing-contracts";
@@ -12,6 +17,9 @@ import { SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS } from "./seed-patterns-sour
 import { SOURCING_PROCESS_PATTERNS } from "./seed-patterns-sourcing-process";
 import { SOURCING_REGULATORY_AI_PATTERNS } from "./seed-patterns-sourcing-regulatory-ai";
 import { SOURCING_REGULATORY_PATTERNS } from "./seed-patterns-sourcing-regulatory";
+import { SOURCING_RETAIL_IT_PATTERNS } from "./seed-patterns-sourcing-retail-it";
+import { SOURCING_RFP_EVALUATION_PATTERNS } from "./seed-patterns-sourcing-rfp-evaluation";
+import { SOURCING_VALUE_PROOF_PATTERNS } from "./seed-patterns-sourcing-value-proof";
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from "./seed-patterns-sourcing-vendors-cloudflare";
 import { PAT_SRC_VEN_CONTENTSTACK_001 } from "./seed-patterns-sourcing-vendors-contentstack";
 import { SOURCING_VENDOR_COUPA_PATTERNS } from "./seed-patterns-sourcing-vendors-coupa";
@@ -33,6 +41,7 @@ import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-ven
 import { SOURCING_VENDOR_GITLAB_PATTERNS } from "./seed-patterns-sourcing-vendors-gitlab";
 import { ASANA_VENDOR_PROFILE_PATTERNS } from "./seed-patterns-sourcing-vendors-asana";
 import { SOURCING_VENDOR_SPLUNK_PATTERNS } from "./seed-patterns-sourcing-vendors-splunk";
+import { SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS } from "./seed-patterns-sourcing-vendor-profile-requirements";
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1124,8 +1133,13 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 ## Contract terms to negotiate hard
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
+  ...SOURCING_ARCHETYPE_FAILURE_MODE_PATTERNS,
+  ...SOURCING_ARTIFACT_TEMPLATE_PATTERNS,
   ...SOURCING_BAFO_CONTRACT_PATTERNS,
+  ...SOURCING_BENCHMARK_GOVERNANCE_PATTERNS,
   ...SOURCING_CATEGORY_PATTERNS,
+  ...SOURCING_COMMERCIAL_LEVER_PATTERNS,
+  ...SOURCING_CORPUS_GOVERNANCE_PATTERNS,
   ...SOURCING_CONTRACT_AUDIT_PATTERNS,
   ...SOURCING_CONTRACT_PATTERNS,
   ...SOURCING_CONTRACTS_COMMERCIAL_PATTERNS,
@@ -1137,6 +1151,9 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_PROCESS_PATTERNS,
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
+  ...SOURCING_RETAIL_IT_PATTERNS,
+  ...SOURCING_RFP_EVALUATION_PATTERNS,
+  ...SOURCING_VALUE_PROOF_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,
   ...SOURCING_VENDOR_GITLAB_PATTERNS,
@@ -1145,6 +1162,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SMARTSHEET_VENDOR_PROFILE_PATTERNS,
   ...SOURCING_VENDOR_COUPA_PATTERNS,
   ...SOURCING_VENDOR_SPLUNK_PATTERNS,
+  ...SOURCING_VENDOR_PROFILE_REQUIREMENT_PATTERNS,
   PAT_SRC_VEN_NEWRELIC_001,
   PAT_SRC_VEN_ELASTIC_001,
   ...SOURCING_VENDOR_SAP_PATTERNS,
