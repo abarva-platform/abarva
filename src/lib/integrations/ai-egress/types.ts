@@ -1,24 +1,29 @@
-export type AiDataClass = 'public' | 'internal' | 'confidential' | 'restricted';
+import type {
+  TenantUsageCapConfig,
+  TenantUsageTotals,
+} from "./tenant-usage-cap-policy";
+
+export type AiDataClass = "public" | "internal" | "confidential" | "restricted";
 
 export type AiProvider =
-  | 'anthropic'
-  | 'gamma'
-  | 'openai'
-  | 'azure-foundry'
-  | 'bedrock'
-  | 'gcp-vertex'
-  | 'kernel-only';
+  | "anthropic"
+  | "gamma"
+  | "openai"
+  | "azure-foundry"
+  | "bedrock"
+  | "gcp-vertex"
+  | "kernel-only";
 
 export type AiRoute =
-  | 'anthropic-direct'
-  | 'openai-direct'
-  | 'gamma-api'
-  | 'azure-foundry-private'
-  | 'bedrock-claude'
-  | 'gcp-vertex-claude'
-  | 'kernel-only';
+  | "anthropic-direct"
+  | "openai-direct"
+  | "gamma-api"
+  | "azure-foundry-private"
+  | "bedrock-claude"
+  | "gcp-vertex-claude"
+  | "kernel-only";
 
-export type AiPolicyDecision = 'allow' | 'deny' | 'redact_required' | 'error';
+export type AiPolicyDecision = "allow" | "deny" | "redact_required" | "error";
 
 export interface TenantAiPolicy {
   allowExternalAI: boolean;
@@ -44,6 +49,11 @@ export interface AiEgressRequest {
   dataClass?: AiDataClass;
   metadata?: Record<string, unknown>;
   policy: TenantAiPolicy;
+  usageCap?: {
+    config: TenantUsageCapConfig;
+    current: TenantUsageTotals;
+    pending?: Partial<TenantUsageTotals> | null;
+  } | null;
 }
 
 export interface AiPolicyEvaluation {
@@ -75,7 +85,9 @@ export interface AiEgressAuditRecord {
 }
 
 export interface AiEgressAuditSink {
-  write(record: Omit<AiEgressAuditRecord, 'id' | 'createdAt'>): Promise<AiEgressAuditRecord>;
+  write(
+    record: Omit<AiEgressAuditRecord, "id" | "createdAt">,
+  ): Promise<AiEgressAuditRecord>;
 }
 
 export interface AiModelAdapterRequest {
@@ -90,7 +102,9 @@ export interface AiModelAdapterResponse {
   metadata?: Record<string, unknown>;
 }
 
-export type AiModelAdapter = (request: AiModelAdapterRequest) => Promise<AiModelAdapterResponse>;
+export type AiModelAdapter = (
+  request: AiModelAdapterRequest,
+) => Promise<AiModelAdapterResponse>;
 
 export type AiCallResult =
   | {
