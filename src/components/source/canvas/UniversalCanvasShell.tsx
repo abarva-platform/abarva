@@ -202,6 +202,14 @@ export function UniversalCanvasShell({
   const [pendingGenerationByCode, setPendingGenerationByCode] = useState<
     Record<string, boolean>
   >({});
+  // Stored-documents shelf is server-seeded but mutates client-side when
+  // "Generate with Sentinel" succeeds — the generate-from-claude route now
+  // also writes to the source_artifacts registry and returns the new row.
+  // Keeping this in state lets the shelf reflect the persisted document
+  // without a full page revalidate.
+  const [registryArtifactsState, setRegistryArtifactsState] = useState<
+    SourceArtifactRegistryRecord[]
+  >(registryArtifacts);
   const generatableCodes = useMemo(
     () => new Set(listSupportedGenerationCodes()),
     [],
@@ -355,6 +363,7 @@ export function UniversalCanvasShell({
       );
       const payload = (await res.json().catch(() => null)) as {
         artifact?: SourceEventArtifactState;
+        registryArtifact?: SourceArtifactRegistryRecord | null;
         error?: string;
         detail?: string;
         missingUpstream?: string[];
@@ -372,6 +381,13 @@ export function UniversalCanvasShell({
           ...prev,
           [code]: payload.artifact!,
         }));
+      }
+      if (payload.registryArtifact) {
+        const newRow = payload.registryArtifact;
+        setRegistryArtifactsState((prev) => {
+          const without = prev.filter((doc) => doc.id !== newRow.id);
+          return [newRow, ...without];
+        });
       }
       return { ok: true };
     } catch (err) {
@@ -571,7 +587,7 @@ export function UniversalCanvasShell({
         <DocumentTab
           stage={viewStage}
           artifacts={stageArtifacts}
-          registryArtifacts={registryArtifacts}
+          registryArtifacts={registryArtifactsState}
           templateByCode={templateByCode}
           selectedCode={selectedDocCode}
           onSelectCode={setSelectedDocCode}
