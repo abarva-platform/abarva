@@ -23,11 +23,19 @@ jest.mock("@/lib/agent/attachments", () => {
   const actual = jest.requireActual("@/lib/agent/attachments");
   return {
     ...actual,
-    extractAgentAttachmentText: (args: {
+    extractAgentAttachmentParseResult: (args: {
       filename: string;
       mimeType: string;
       buffer: Buffer;
-    }) => extractAgentAttachmentTextMock(args),
+    }) =>
+      extractAgentAttachmentTextMock(args).then((text: string) => ({
+        text,
+        metadata: {
+          pageCount: args.mimeType === "application/pdf" ? 4 : null,
+          tableCount: args.mimeType === "application/pdf" ? 2 : null,
+          parserId: "mock-parser",
+        },
+      })),
   };
 });
 
@@ -167,6 +175,11 @@ describe("POST /api/v1/agent/attachments", () => {
       bytes: number;
       storage_path: string;
       extracted_text_preview: string;
+      parse_metadata: {
+        page_count: number | null;
+        table_count: number | null;
+        parser_id: string | null;
+      };
       dataProtection: { decision: string; evidenceExtractionAllowed: boolean };
     };
     expect(body.file_name).toBe("handbook.pdf");
@@ -174,6 +187,11 @@ describe("POST /api/v1/agent/attachments", () => {
     expect(body.bytes).toBe(1024);
     expect(body.storage_path).toMatch(/^tenant-uuid-1\/user_123\//);
     expect(body.extracted_text_preview).toBe("PDF text body");
+    expect(body.parse_metadata).toEqual({
+      page_count: 4,
+      table_count: 2,
+      parser_id: "mock-parser",
+    });
     expect(body.dataProtection).toMatchObject({
       decision: "allow",
       evidenceExtractionAllowed: true,

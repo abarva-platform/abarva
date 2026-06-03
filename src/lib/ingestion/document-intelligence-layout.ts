@@ -17,6 +17,7 @@ export interface DocumentIntelligenceLayoutResult {
   text: string;
   warnings: string[];
   pageCount: number | null;
+  tableCount: number | null;
   contentFormat: "markdown" | "text" | string | null;
 }
 
@@ -66,8 +67,9 @@ export async function parsePdfWithDocumentIntelligenceLayout(
   const config = getDocumentIntelligenceConfig();
   if (!config) throw new DocumentIntelligenceNotConfiguredError();
 
-  const [{ default: DocumentIntelligence, isUnexpected, getLongRunningPoller }] =
-    await Promise.all([import("@azure-rest/ai-document-intelligence")]);
+  const [
+    { default: DocumentIntelligence, isUnexpected, getLongRunningPoller },
+  ] = await Promise.all([import("@azure-rest/ai-document-intelligence")]);
 
   const client = config.apiKey
     ? DocumentIntelligence(config.endpoint, { key: config.apiKey })
@@ -77,7 +79,10 @@ export async function parsePdfWithDocumentIntelligenceLayout(
       );
 
   const initialResponse = await client
-    .path("/documentModels/{modelId}:analyze", DOCUMENT_INTELLIGENCE_LAYOUT_MODEL_ID)
+    .path(
+      "/documentModels/{modelId}:analyze",
+      DOCUMENT_INTELLIGENCE_LAYOUT_MODEL_ID,
+    )
     .post({
       contentType: "application/json",
       body: {
@@ -99,13 +104,20 @@ export async function parsePdfWithDocumentIntelligenceLayout(
   const analyzeResult = operation.analyzeResult;
   const text = String(analyzeResult?.content || "").trim();
   if (!text) {
-    throw new Error("Azure AI Document Intelligence returned no readable content.");
+    throw new Error(
+      "Azure AI Document Intelligence returned no readable content.",
+    );
   }
 
   return {
     text,
     warnings: [],
-    pageCount: Array.isArray(analyzeResult?.pages) ? analyzeResult.pages.length : null,
+    pageCount: Array.isArray(analyzeResult?.pages)
+      ? analyzeResult.pages.length
+      : null,
+    tableCount: Array.isArray(analyzeResult?.tables)
+      ? analyzeResult.tables.length
+      : null,
     contentFormat: analyzeResult?.contentFormat || null,
   };
 }
@@ -118,9 +130,14 @@ function describeDocumentIntelligenceError(body: unknown): string {
   if (!error || typeof error !== "object") {
     return "Azure AI Document Intelligence returned an unexpected response.";
   }
-  const code = "code" in error ? String((error as { code?: unknown }).code || "") : "";
+  const code =
+    "code" in error ? String((error as { code?: unknown }).code || "") : "";
   const message =
-    "message" in error ? String((error as { message?: unknown }).message || "") : "";
-  return [code, message].filter(Boolean).join(": ") ||
-    "Azure AI Document Intelligence returned an unexpected response.";
+    "message" in error
+      ? String((error as { message?: unknown }).message || "")
+      : "";
+  return (
+    [code, message].filter(Boolean).join(": ") ||
+    "Azure AI Document Intelligence returned an unexpected response."
+  );
 }

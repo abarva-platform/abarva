@@ -47,6 +47,17 @@ const TEXT_MIMES = new Set(["text/plain", "text/markdown", "text/csv"]);
 const IMAGE_MIMES = new Set(["image/png", "image/jpeg"]);
 const AGENT_ATTACHMENT_PARSER_VERSION = `${CONTENT_HASH_PARSE_CACHE_VERSION}:agent-attachment-v1`;
 
+export interface AgentAttachmentParseMetadata {
+  pageCount: number | null;
+  tableCount: number | null;
+  parserId: string | null;
+}
+
+export interface AgentAttachmentParseResult {
+  text: string;
+  metadata: AgentAttachmentParseMetadata;
+}
+
 export function isAllowedAgentAttachmentMime(mime: string): boolean {
   return AGENT_ATTACHMENT_MIME_ALLOWLIST.includes(mime);
 }
@@ -63,32 +74,54 @@ export async function extractAgentAttachmentText(args: {
   buffer: Buffer;
   cacheScope?: string | null;
 }): Promise<string> {
+  const result = await extractAgentAttachmentParseResult(args);
+  return result.text;
+}
+
+export async function extractAgentAttachmentParseResult(args: {
+  filename: string;
+  mimeType: string;
+  buffer: Buffer;
+  cacheScope?: string | null;
+}): Promise<AgentAttachmentParseResult> {
   try {
     if (TEXT_MIMES.has(args.mimeType)) {
-      return args.buffer.toString("utf-8");
+      return {
+        text: args.buffer.toString("utf-8"),
+        metadata: {
+          pageCount: null,
+          tableCount: args.mimeType === "text/csv" ? 1 : null,
+          parserId: "plain-text",
+        },
+      };
     }
     if (IMAGE_MIMES.has(args.mimeType)) {
       // No OCR pipeline yet — skip and let the model handle the image
       // separately if we ever pass binary parts upstream.
-      return "";
+      return emptyParseResult("image-no-ocr");
     }
     if (args.mimeType === PDF_MIME) {
       return extractCachedAgentPdfText(args);
     }
     if (args.mimeType === DOCX_MIME) {
-      return cachedAgentAttachmentParse(args, "docx-mammoth", () =>
-        extractDocxText(args.buffer),
-      );
+      return cachedAgentAttachmentParse(args, "docx-mammoth", async () => ({
+        text: await extractDocxText(args.buffer),
+        metadata: {
+          pageCount: null,
+          tableCount: null,
+          parserId: "docx-mammoth",
+        },
+      }));
     }
     if (args.mimeType === XLSX_MIME) {
       return cachedAgentAttachmentParse(args, "exceljs-xlsx", () =>
-        extractXlsxText(args.buffer),
+        extractXlsxResult(args.buffer),
       );
     }
-    return "";
+    return emptyParseResult(null);
   } catch {
     // Defensive: parser failures should not turn a 200 into a 500.
-    return "";
+    return emptyParseResult(null);
   }
 }
 
@@ -96,26 +129,35 @@ async function extractCachedAgentPdfText(args: {
   mimeType: string;
   buffer: Buffer;
   cacheScope?: string | null;
-}): Promise<string> {
+}): Promise<AgentAttachmentParseResult> {
   if (isDocumentIntelligenceConfigured()) {
     try {
       return await cachedAgentAttachmentParse(
         args,
         DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
         async () => {
-          const result = await parsePdfWithDocumentIntelligenceLayout(args.buffer);
-          return result.text;
+          const result = await parsePdfWithDocumentIntelligenceLayout(
+            args.buffer,
+          );
+          return {
+            text: result.text,
+            metadata: {
+              pageCount: result.pageCount,
+              tableCount: result.tableCount,
+              parserId: DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+            },
+          };
         },
       );
     } catch {
       return cachedAgentAttachmentParse(args, "pdf-parse", () =>
-        extractPdfText(args.buffer),
+        extractPdfResult(args.buffer),
       );
     }
   }
 
   return cachedAgentAttachmentParse(args, "pdf-parse", () =>
-    extractPdfText(args.buffer),
+    extractPdfResult(args.buffer),
   );
 }
 
@@ -126,8 +168,8 @@ async function cachedAgentAttachmentParse(
     cacheScope?: string | null;
   },
   parserId: string,
-  parse: () => Promise<string>,
-): Promise<string> {
+  parse: () => Promise<AgentAttachmentParseResult>,
+): Promise<AgentAttachmentParseResult> {
   const { value } = await withContentHashParseCache(
     {
       cacheScope: args.cacheScope,
@@ -141,12 +183,31 @@ async function cachedAgentAttachmentParse(
   return value;
 }
 
-async function extractPdfText(buffer: Buffer): Promise<string> {
+async function extractPdfResult(
+  buffer: Buffer,
+): Promise<AgentAttachmentParseResult> {
   const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   try {
-    const result = await parser.getText();
-    return result.text ?? "";
+    const [textResult, tableResult] = await Promise.all([
+      parser.getText(),
+      parser.getTable().catch(() => null),
+    ]);
+    const tableCount = Array.isArray(tableResult?.pages)
+      ? tableResult.pages.reduce((count, page) => {
+          const tables = Array.isArray(page.tables) ? page.tables.length : 0;
+          return count + tables;
+        }, 0)
+      : null;
+    return {
+      text: textResult.text ?? "",
+      metadata: {
+        pageCount:
+          typeof textResult.total === "number" ? textResult.total : null,
+        tableCount,
+        parserId: "pdf-parse",
+      },
+    };
   } finally {
     await parser.destroy().catch(() => undefined);
   }
@@ -158,12 +219,16 @@ async function extractDocxText(buffer: Buffer): Promise<string> {
   return result.value ?? "";
 }
 
-async function extractXlsxText(buffer: Buffer): Promise<string> {
+async function extractXlsxResult(
+  buffer: Buffer,
+): Promise<AgentAttachmentParseResult> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
   const lines: string[] = [];
+  let worksheetCount = 0;
   workbook.eachSheet((worksheet) => {
+    worksheetCount += 1;
     lines.push(`Worksheet: ${worksheet.name}`);
     worksheet.eachRow((row) => {
       const values = Array.isArray(row.values) ? row.values.slice(1) : [];
@@ -185,7 +250,25 @@ async function extractXlsxText(buffer: Buffer): Promise<string> {
       if (line) lines.push(line);
     });
   });
-  return lines.join("\n");
+  return {
+    text: lines.join("\n"),
+    metadata: {
+      pageCount: null,
+      tableCount: worksheetCount,
+      parserId: "exceljs-xlsx",
+    },
+  };
+}
+
+function emptyParseResult(parserId: string | null): AgentAttachmentParseResult {
+  return {
+    text: "",
+    metadata: {
+      pageCount: null,
+      tableCount: null,
+      parserId,
+    },
+  };
 }
 
 /**

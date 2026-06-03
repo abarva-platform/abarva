@@ -302,13 +302,18 @@ describe("AgentDock · attachments", () => {
         bytes: 196_000,
         storage_path: "tenant/user/att-preview-board-pack.pdf",
         extracted_text_preview: `${"Revenue growth ".repeat(20)}tail`,
+        parse_metadata: {
+          page_count: 4,
+          table_count: 2,
+          parser_id: "azure-document-intelligence-layout",
+        },
       },
     });
 
     expect(preview).toEqual({
       snippet: `${"Revenue growth ".repeat(13)}Reven...`,
-      pageSignal: "Pages: ~3 estimated",
-      tableSignal: "Tables: not reported",
+      pageSignal: "Pages: 4",
+      tableSignal: "Tables: 2",
       hasExtractedText: true,
     });
     expect(preview!.snippet.length).toBeLessThanOrEqual(203);
@@ -450,6 +455,11 @@ describe("AgentDock · attachments", () => {
       storage_path: "tenant/u/att-preview-board-pack.pdf",
       extracted_text_preview:
         "Revenue growth accelerated in Q4. Margin pressure remains visible in logistics.",
+      parse_metadata: {
+        page_count: 4,
+        table_count: 2,
+        parser_id: "azure-document-intelligence-layout",
+      },
     });
 
     render(
@@ -482,9 +492,7 @@ describe("AgentDock · attachments", () => {
         "Revenue growth accelerated in Q4. Margin pressure remains visible in logistics.",
       ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pages: ~2 estimated · Tables: not reported"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Pages: 4 · Tables: 2")).toBeInTheDocument();
   });
 
   it("renders a live parsing progress line while upload is pending", async () => {

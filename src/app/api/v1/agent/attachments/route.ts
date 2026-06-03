@@ -28,7 +28,7 @@ import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
   AGENT_ATTACHMENT_BUCKET,
   AGENT_ATTACHMENT_MAX_BYTES,
-  extractAgentAttachmentText,
+  extractAgentAttachmentParseResult,
   isAllowedAgentAttachmentMime,
   safeStorageFileName,
   snipExtractedTextPreview,
@@ -147,12 +147,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Best-effort text extraction — never throws.
-  const extractedText = await extractAgentAttachmentText({
+  const parseResult = await extractAgentAttachmentParseResult({
     filename: file.name,
     mimeType: file.type,
     buffer,
     cacheScope: activeClient.id,
   });
+  const extractedText = parseResult.text;
 
   // Persist metadata row. The DB-write half is routed through the data-plane
   // write seam (Slice 3c); the blob upload above and the rollback below stay
@@ -193,6 +194,11 @@ export async function POST(req: NextRequest) {
       bytes: file.size,
       storage_path: storagePath,
       extracted_text_preview: snipExtractedTextPreview(extractedText),
+      parse_metadata: {
+        page_count: parseResult.metadata.pageCount,
+        table_count: parseResult.metadata.tableCount,
+        parser_id: parseResult.metadata.parserId,
+      },
       dataProtection,
     },
     { status: 200 },

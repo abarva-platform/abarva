@@ -11,7 +11,9 @@ const mockDocumentIntelligence = jest.fn(
     return { path: mockPath };
   },
 );
-const mockIsUnexpected = jest.fn((response: { status: string }) => response.status !== "202");
+const mockIsUnexpected = jest.fn(
+  (response: { status: string }) => response.status !== "202",
+);
 const mockPollUntilDone = jest.fn();
 const mockGetLongRunningPoller = jest.fn(
   (...args: [client?: unknown, response?: unknown, options?: unknown]) => {
@@ -28,8 +30,11 @@ jest.mock("@azure-rest/ai-document-intelligence", () => ({
   default: (endpoint: unknown, credential: unknown, options?: unknown) =>
     mockDocumentIntelligence(endpoint, credential, options),
   isUnexpected: (response: { status: string }) => mockIsUnexpected(response),
-  getLongRunningPoller: (client: unknown, response: unknown, options?: unknown) =>
-    mockGetLongRunningPoller(client, response, options),
+  getLongRunningPoller: (
+    client: unknown,
+    response: unknown,
+    options?: unknown,
+  ) => mockGetLongRunningPoller(client, response, options),
 }));
 
 jest.mock("@azure/identity", () => ({
@@ -85,16 +90,20 @@ describe("Document Intelligence layout parser", () => {
           content: "# Parsed content\n\nAttendees: Sarah Chen",
           contentFormat: "markdown",
           pages: [{ pageNumber: 1 }, { pageNumber: 2 }],
+          tables: [{ rowCount: 3 }],
         },
       },
     });
 
-    const result = await parsePdfWithDocumentIntelligenceLayout(Buffer.from("%PDF-1.7"));
+    const result = await parsePdfWithDocumentIntelligenceLayout(
+      Buffer.from("%PDF-1.7"),
+    );
 
     expect(result).toEqual({
       text: "# Parsed content\n\nAttendees: Sarah Chen",
       warnings: [],
       pageCount: 2,
+      tableCount: 1,
       contentFormat: "markdown",
     });
     expect(mockDocumentIntelligence).toHaveBeenCalledWith(
