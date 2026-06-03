@@ -315,6 +315,8 @@ describe("AgentDock · attachments", () => {
       pageSignal: "Pages: 4",
       tableSignal: "Tables: 2",
       hasExtractedText: true,
+      rawModeEscape: null,
+      rawModeRequested: false,
     });
     expect(preview!.snippet.length).toBeLessThanOrEqual(203);
   });
@@ -338,6 +340,8 @@ describe("AgentDock · attachments", () => {
       pageSignal: "Pages: not reported",
       tableSignal: "Tables: not reported",
       hasExtractedText: false,
+      rawModeEscape: null,
+      rawModeRequested: false,
     });
   });
 
@@ -459,6 +463,16 @@ describe("AgentDock · attachments", () => {
         page_count: 4,
         table_count: 2,
         parser_id: "azure-document-intelligence-layout",
+        raw_mode_escape: {
+          eligible: true,
+          requires_user_approval: true,
+          route: "claude-native-pdf",
+          reason: "pdf_native_last_resort",
+          estimated_tokens_per_turn: 43_334,
+          parser_bug_ticket_id: "parser-bug-ui",
+          cost_warning:
+            "Raw mode will send the original PDF to the model and may use about 44k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+        },
       },
     });
 
@@ -493,6 +507,87 @@ describe("AgentDock · attachments", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Pages: 4 · Tables: 2")).toBeInTheDocument();
+    expect(screen.getByText(/Raw mode will send/)).toBeInTheDocument();
+    expect(screen.getByText("Use raw mode")).toBeInTheDocument();
+  });
+
+  it("requires an explicit raw-mode click and forwards the acknowledgement", async () => {
+    setupFetchMock({
+      id: "att-raw",
+      file_name: "garbled.pdf",
+      mime: "application/pdf",
+      bytes: 130_000,
+      storage_path: "tenant/u/att-raw-garbled.pdf",
+      extracted_text_preview: "P8 C0lumn || unreadable table",
+      parse_metadata: {
+        page_count: 2,
+        table_count: 1,
+        parser_id: "pdf-parse",
+        raw_mode_escape: {
+          eligible: true,
+          requires_user_approval: true,
+          route: "claude-native-pdf",
+          reason: "pdf_native_last_resort",
+          estimated_tokens_per_turn: 43_334,
+          parser_bug_ticket_id: "parser-bug-ui",
+          cost_warning:
+            "Raw mode will send the original PDF to the model and may use about 44k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+        },
+      },
+    });
+    const onMessage = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={onMessage}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      fireEvent.change(fileInput, {
+        target: {
+          files: [
+            makeFile("garbled.pdf", "application/pdf", "x".repeat(130_000)),
+          ],
+        },
+      });
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Use raw mode"));
+    });
+
+    expect(screen.getByText(/Raw mode requested/)).toHaveTextContent(
+      "parser-bug-ui",
+    );
+
+    const ta = screen.getByTestId("agent-dock-input") as HTMLTextAreaElement;
+    fireEvent.change(ta, { target: { value: "Use the original PDF." } });
+
+    await act(async () => {
+      fireEvent.keyDown(ta, { key: "Enter", shiftKey: false });
+    });
+
+    expect(onMessage).toHaveBeenCalledTimes(1);
+    const attachments = onMessage.mock.calls[0][1] as AttachmentRef[];
+    expect(attachments[0]).toMatchObject({
+      id: "att-raw",
+      raw_mode_requested: {
+        parser_bug_ticket_id: "parser-bug-ui",
+        estimated_tokens_per_turn: 43_334,
+      },
+    });
+    expect(attachments[0].raw_mode_requested?.acknowledged_at).toEqual(
+      expect.any(String),
+    );
   });
 
   it("renders a live parsing progress line while upload is pending", async () => {

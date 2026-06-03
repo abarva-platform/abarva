@@ -192,6 +192,20 @@ export interface AttachmentRef {
     page_count?: number | null;
     table_count?: number | null;
     parser_id?: string | null;
+    raw_mode_escape?: {
+      eligible: boolean;
+      requires_user_approval: boolean;
+      route: "claude-native-pdf";
+      reason: string;
+      estimated_tokens_per_turn: number;
+      parser_bug_ticket_id: string | null;
+      cost_warning: string;
+    } | null;
+  };
+  raw_mode_requested?: {
+    acknowledged_at: string;
+    parser_bug_ticket_id: string | null;
+    estimated_tokens_per_turn: number;
   };
 }
 
@@ -304,6 +318,10 @@ export interface UploadParsedPreview {
   pageSignal: string;
   tableSignal: string;
   hasExtractedText: boolean;
+  rawModeEscape:
+    | NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"]
+    | null;
+  rawModeRequested: boolean;
 }
 
 export interface UploadParsingProgress {
@@ -390,6 +408,8 @@ export function buildUploadParsedPreview(
         ? `Tables: ${upload.ref.parse_metadata.table_count}`
         : "Tables: not reported",
     hasExtractedText: rawPreview.length > 0,
+    rawModeEscape: upload.ref.parse_metadata?.raw_mode_escape ?? null,
+    rawModeRequested: Boolean(upload.ref.raw_mode_requested),
   };
 }
 
@@ -610,6 +630,33 @@ export function AgentDock(props: AgentDockProps) {
     setUploads((prev) => prev.filter((u) => u.localId !== localId));
   }, []);
 
+  const requestRawMode = useCallback((localId: string) => {
+    setUploads((prev) =>
+      prev.map((u) => {
+        const rawMode = u.ref?.parse_metadata?.raw_mode_escape;
+        if (
+          u.localId !== localId ||
+          u.status !== "done" ||
+          !u.ref ||
+          !rawMode?.eligible
+        ) {
+          return u;
+        }
+        return {
+          ...u,
+          ref: {
+            ...u.ref,
+            raw_mode_requested: {
+              acknowledged_at: new Date().toISOString(),
+              parser_bug_ticket_id: rawMode.parser_bug_ticket_id,
+              estimated_tokens_per_turn: rawMode.estimated_tokens_per_turn,
+            },
+          },
+        };
+      }),
+    );
+  }, []);
+
   // Drag-drop handlers (cover the entire dock panel)
   const onDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -814,6 +861,7 @@ export function AgentDock(props: AgentDockProps) {
                 progress={buildUploadParsingProgress(u, uploadProgressNowMs)}
                 parsedPreview={buildUploadParsedPreview(u)}
                 onRemove={() => removeUpload(u.localId)}
+                onRequestRawMode={() => requestRawMode(u.localId)}
               />
             ))}
           </div>
@@ -898,6 +946,7 @@ export function AgentDock(props: AgentDockProps) {
     onDragOver,
     onDrop,
     removeUpload,
+    requestRawMode,
     sendDisabled,
     setMode,
     surface,
@@ -1124,6 +1173,7 @@ interface UploadChipProps {
   progress: UploadParsingProgress | null;
   parsedPreview: UploadParsedPreview | null;
   onRemove: () => void;
+  onRequestRawMode: () => void;
 }
 
 function UploadChip({
@@ -1131,6 +1181,7 @@ function UploadChip({
   progress,
   parsedPreview,
   onRemove,
+  onRequestRawMode,
 }: UploadChipProps) {
   const sizeLabel = formatBytes(upload.file.size);
   const isError = upload.status === "error";
@@ -1190,6 +1241,29 @@ function UploadChip({
             <span style={CHIP_PREVIEW_META_STYLE}>
               {parsedPreview.pageSignal} · {parsedPreview.tableSignal}
             </span>
+            {parsedPreview.rawModeEscape?.eligible ? (
+              <span style={CHIP_RAW_MODE_STYLE}>
+                <span>{parsedPreview.rawModeEscape.cost_warning}</span>
+                {parsedPreview.rawModeRequested ? (
+                  <span
+                    data-testid={`agent-dock-chip-raw-mode-requested-${upload.localId}`}
+                    style={CHIP_RAW_MODE_STATUS_STYLE}
+                  >
+                    Raw mode requested · ticket{" "}
+                    {parsedPreview.rawModeEscape.parser_bug_ticket_id}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid={`agent-dock-chip-raw-mode-${upload.localId}`}
+                    onClick={onRequestRawMode}
+                    style={CHIP_RAW_MODE_BUTTON_STYLE}
+                  >
+                    Use raw mode
+                  </button>
+                )}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>
@@ -1665,6 +1739,35 @@ const CHIP_PREVIEW_LABEL_STYLE: CSSProperties = {
 
 const CHIP_PREVIEW_META_STYLE: CSSProperties = {
   color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+};
+
+const CHIP_RAW_MODE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  marginTop: 3,
+  padding: "5px 6px",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  background: "#FFF7ED",
+  color: "#7C2D12",
+};
+
+const CHIP_RAW_MODE_BUTTON_STYLE: CSSProperties = {
+  justifySelf: "start",
+  border: "1px solid #FDBA74",
+  borderRadius: 5,
+  background: "#FFFFFF",
+  color: "#9A3412",
+  cursor: "pointer",
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  padding: "3px 6px",
+};
+
+const CHIP_RAW_MODE_STATUS_STYLE: CSSProperties = {
+  color: "#166534",
   fontFamily: CANVAS.MONO,
   fontSize: 9.5,
 };

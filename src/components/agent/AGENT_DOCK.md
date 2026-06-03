@@ -17,34 +17,43 @@ surface widget is swapped.
 ## API
 
 ```tsx
-import { AgentDock, type ChatMessage, type AttachmentRef } from '@/components/agent/AgentDock';
+import {
+  AgentDock,
+  type ChatMessage,
+  type AttachmentRef,
+} from "@/components/agent/AgentDock";
 
 <AgentDock
-  agent={{ initials: 'S', name: 'Sentinel', role: 'Surfaces evidence …' }}
-  surface="source/new"                       // localStorage namespace + telemetry key
-  defaultMode="side-rail"                    // 'side-rail' | 'pin-bottom' | 'pin-top' | 'expand' | 'collapsed'
-  surfaceContext={{ stage: 'discovery' }}    // optional — round-tripped to upload metadata
-  initialQuote="Quoting the previous turn"   // optional eyebrow above thread
-  suggestedActions={[                        // optional — pre-fills composer on click
-    { id: 'a', label: 'Summarize the last vendor packet.', body: 'Summarize the last vendor packet.' },
+  agent={{ initials: "S", name: "Sentinel", role: "Surfaces evidence …" }}
+  surface="source/new" // localStorage namespace + telemetry key
+  defaultMode="side-rail" // 'side-rail' | 'pin-bottom' | 'pin-top' | 'expand' | 'collapsed'
+  surfaceContext={{ stage: "discovery" }} // optional — round-tripped to upload metadata
+  initialQuote="Quoting the previous turn" // optional eyebrow above thread
+  suggestedActions={[
+    // optional — pre-fills composer on click
+    {
+      id: "a",
+      label: "Summarize the last vendor packet.",
+      body: "Summarize the last vendor packet.",
+    },
   ]}
-  thread={turns}                             // ChatMessage[]
+  thread={turns} // ChatMessage[]
   onMessage={(text, attachments) => post(text, attachments)}
-  workspace={<MainBody />}                   // for side-rail this becomes the right pane
+  workspace={<MainBody />} // for side-rail this becomes the right pane
   minLeftPx={320}
   defaultLeftPercent={38}
-/>
+/>;
 ```
 
 ### Modes
 
-| Mode         | Behavior                                                                 |
-| ------------ | ------------------------------------------------------------------------ |
-| `side-rail`  | Resizable column via `ResizableSplitter`. Default. Width persisted.       |
-| `pin-bottom` | Full-width strip ~480px tall at viewport bottom.                         |
-| `pin-top`    | Mirror of pin-bottom anchored below the AppTopBar.                       |
-| `expand`     | Modal overlay 90×90 vw/vh; workspace dimmed behind. Esc closes.           |
-| `collapsed`  | Floating 56×56 chip bottom-right. Double-click restores last rich mode.   |
+| Mode         | Behavior                                                                |
+| ------------ | ----------------------------------------------------------------------- |
+| `side-rail`  | Resizable column via `ResizableSplitter`. Default. Width persisted.     |
+| `pin-bottom` | Full-width strip ~480px tall at viewport bottom.                        |
+| `pin-top`    | Mirror of pin-bottom anchored below the AppTopBar.                      |
+| `expand`     | Modal overlay 90×90 vw/vh; workspace dimmed behind. Esc closes.         |
+| `collapsed`  | Floating 56×56 chip bottom-right. Double-click restores last rich mode. |
 
 The mode picker is the 5-icon row at top-right of the chat header.
 Single-click switches mode + persists.
@@ -94,7 +103,18 @@ with the file plus the surface and agent name. The route:
 6. Inserts a row in `agent_attachment` with the metadata + extracted
    text.
 7. Returns `{ id, file_name, mime, bytes, storage_path,
-   extracted_text_preview }`. The preview is the first ~4000 chars.
+extracted_text_preview, parse_metadata }`. The preview is the first
+   ~4000 chars; `parse_metadata` carries parser/page/table signals,
+   small-PDF native eligibility, and the raw-mode escape-hatch warning
+   when a PDF can be resent as native model input after explicit user
+   acknowledgement.
+
+When a parsed PDF looks garbled, the chip can show **Use raw mode**.
+Clicking it stamps `raw_mode_requested` on the attachment ref with the
+parser-bug ticket id and the estimated token cost. This is an approval
+contract only: downstream agent runtimes still need to consume that flag
+and route the original PDF bytes through the native document path before
+raw mode is considered fully implemented.
 
 Soft-delete via `DELETE /api/v1/agent/attachments/[id]` stamps
 `deleted_at`. The blob stays — a retention job sweeps later.
@@ -130,7 +150,7 @@ The `agent-attachments` Supabase Storage bucket is **not** created by the
 migration. Create it once per environment:
 
 ```ts
-await sb.storage.createBucket('agent-attachments', { public: false });
+await sb.storage.createBucket("agent-attachments", { public: false });
 ```
 
 Apply a bucket policy that enforces tenant-prefixed paths so anon-key
