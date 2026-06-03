@@ -24,6 +24,7 @@ import { AGENT_ACTION_APPROVAL_NOTICE_COPY } from "../AgentActionApprovalNotice"
 import {
   AgentDock,
   AGENT_DOCK_MIME_ALLOWLIST,
+  buildUploadParsedPreview,
   buildUploadParsingProgress,
   estimateUploadParsePages,
   modeStorageKey,
@@ -290,6 +291,51 @@ describe("AgentDock · composer", () => {
 });
 
 describe("AgentDock · attachments", () => {
+  it("builds a bounded parsed preview from completed upload metadata", () => {
+    const preview = buildUploadParsedPreview({
+      status: "done",
+      estimatedPages: 3,
+      ref: {
+        id: "att-preview",
+        file_name: "board-pack.pdf",
+        mime: "application/pdf",
+        bytes: 196_000,
+        storage_path: "tenant/user/att-preview-board-pack.pdf",
+        extracted_text_preview: `${"Revenue growth ".repeat(20)}tail`,
+      },
+    });
+
+    expect(preview).toEqual({
+      snippet: `${"Revenue growth ".repeat(13)}Reven...`,
+      pageSignal: "Pages: ~3 estimated",
+      tableSignal: "Tables: not reported",
+      hasExtractedText: true,
+    });
+    expect(preview!.snippet.length).toBeLessThanOrEqual(203);
+  });
+
+  it("builds an honest empty parsed preview when extraction returns no text", () => {
+    const preview = buildUploadParsedPreview({
+      status: "done",
+      estimatedPages: null,
+      ref: {
+        id: "att-empty",
+        file_name: "image.png",
+        mime: "image/png",
+        bytes: 1024,
+        storage_path: "tenant/user/att-empty-image.png",
+        extracted_text_preview: "",
+      },
+    });
+
+    expect(preview).toEqual({
+      snippet: "No readable text extracted.",
+      pageSignal: "Pages: not reported",
+      tableSignal: "Tables: not reported",
+      hasExtractedText: false,
+    });
+  });
+
   it("builds honest PDF parsing progress from elapsed time and estimated pages", () => {
     const file = makeFile(
       "board-pack.pdf",
@@ -393,6 +439,52 @@ describe("AgentDock · attachments", () => {
 
     expect(send).not.toBeDisabled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a parsed preview after upload succeeds", async () => {
+    setupFetchMock({
+      id: "att-preview",
+      file_name: "board-pack.pdf",
+      mime: "application/pdf",
+      bytes: 130_000,
+      storage_path: "tenant/u/att-preview-board-pack.pdf",
+      extracted_text_preview:
+        "Revenue growth accelerated in Q4. Margin pressure remains visible in logistics.",
+    });
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      fireEvent.change(fileInput, {
+        target: {
+          files: [
+            makeFile("board-pack.pdf", "application/pdf", "x".repeat(130_000)),
+          ],
+        },
+      });
+    });
+
+    expect(screen.getByText("Parsed preview")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Revenue growth accelerated in Q4. Margin pressure remains visible in logistics.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Pages: ~2 estimated · Tables: not reported"),
+    ).toBeInTheDocument();
   });
 
   it("renders a live parsing progress line while upload is pending", async () => {

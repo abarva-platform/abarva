@@ -294,6 +294,13 @@ interface PendingUpload {
   ref?: AttachmentRef;
 }
 
+export interface UploadParsedPreview {
+  snippet: string;
+  pageSignal: string;
+  tableSignal: string;
+  hasExtractedText: boolean;
+}
+
 export interface UploadParsingProgress {
   label: string;
   elapsedSeconds: number;
@@ -352,6 +359,27 @@ export function buildUploadParsingProgress(
     elapsedSeconds,
     currentPage,
     estimatedPages,
+  };
+}
+
+export function buildUploadParsedPreview(
+  upload: Pick<PendingUpload, "estimatedPages" | "ref" | "status">,
+): UploadParsedPreview | null {
+  if (upload.status !== "done" || !upload.ref) return null;
+  const rawPreview = upload.ref.extracted_text_preview?.trim() ?? "";
+  const snippet = rawPreview
+    ? rawPreview.length > 200
+      ? `${rawPreview.slice(0, 200).trimEnd()}...`
+      : rawPreview
+    : "No readable text extracted.";
+  return {
+    snippet,
+    pageSignal:
+      upload.estimatedPages === null
+        ? "Pages: not reported"
+        : `Pages: ~${upload.estimatedPages} estimated`,
+    tableSignal: "Tables: not reported",
+    hasExtractedText: rawPreview.length > 0,
   };
 }
 
@@ -774,6 +802,7 @@ export function AgentDock(props: AgentDockProps) {
                 key={u.localId}
                 upload={u}
                 progress={buildUploadParsingProgress(u, uploadProgressNowMs)}
+                parsedPreview={buildUploadParsedPreview(u)}
                 onRemove={() => removeUpload(u.localId)}
               />
             ))}
@@ -1083,10 +1112,16 @@ function ModeButton({
 interface UploadChipProps {
   upload: PendingUpload;
   progress: UploadParsingProgress | null;
+  parsedPreview: UploadParsedPreview | null;
   onRemove: () => void;
 }
 
-function UploadChip({ upload, progress, onRemove }: UploadChipProps) {
+function UploadChip({
+  upload,
+  progress,
+  parsedPreview,
+  onRemove,
+}: UploadChipProps) {
   const sizeLabel = formatBytes(upload.file.size);
   const isError = upload.status === "error";
   const isUploading = upload.status === "uploading";
@@ -1128,6 +1163,23 @@ function UploadChip({ upload, progress, onRemove }: UploadChipProps) {
             data-testid={`agent-dock-chip-progress-${upload.localId}`}
           >
             {progress.label}
+          </span>
+        ) : null}
+        {parsedPreview ? (
+          <span
+            style={{
+              ...CHIP_PREVIEW_STYLE,
+              color: parsedPreview.hasExtractedText
+                ? CANVAS.INK
+                : CANVAS.GRAY_DK,
+            }}
+            data-testid={`agent-dock-chip-preview-${upload.localId}`}
+          >
+            <span style={CHIP_PREVIEW_LABEL_STYLE}>Parsed preview</span>
+            <span>{parsedPreview.snippet}</span>
+            <span style={CHIP_PREVIEW_META_STYLE}>
+              {parsedPreview.pageSignal} · {parsedPreview.tableSignal}
+            </span>
           </span>
         ) : null}
       </span>
@@ -1582,6 +1634,29 @@ const CHIP_PROGRESS_STYLE: CSSProperties = {
   fontSize: 9.5,
   lineHeight: 1.25,
   whiteSpace: "nowrap",
+};
+
+const CHIP_PREVIEW_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 2,
+  maxWidth: 260,
+  paddingTop: 3,
+  fontSize: 10.5,
+  lineHeight: 1.35,
+};
+
+const CHIP_PREVIEW_LABEL_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  textTransform: "uppercase",
+  letterSpacing: 0,
+};
+
+const CHIP_PREVIEW_META_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
 };
 
 const CHIP_ERROR_STYLE: CSSProperties = {
