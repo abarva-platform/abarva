@@ -152,6 +152,46 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     );
   });
 
+  it("hydrates eligible AgentDock small PDFs into native Claude document blocks", () => {
+    expect(source).toContain("function extractAgentNativePdfRefs(");
+    expect(source).toContain("surfaceContext.agentAttachments");
+    expect(source).toContain(
+      "async function buildAgentNativePdfContentBlocks(",
+    );
+    expect(source).toContain("getObjectStorageAdapter().download(");
+    expect(source).toContain("AGENT_ATTACHMENT_BUCKET");
+    expect(source).toContain('type: "document"');
+    expect(source).toContain('media_type: "application/pdf"');
+    expect(source).toContain('data: bytes.toString("base64")');
+  });
+
+  it("fails the native-PDF route closed unless tenant, MIME, route, and byte checks pass", () => {
+    expect(source).toContain('ref.mime !== "application/pdf"');
+    expect(source).toContain('shortcut.route !== "claude-native-pdf"');
+    expect(source).toContain("ref.bytes >= thresholds.maxBytes");
+    expect(source).toContain(
+      "ref.storage_path.startsWith(`${input.activeClientId}/`)",
+    );
+    expect(compact).toContain(
+      "bytes.byteLength !== ref.bytes || bytes.byteLength >= thresholds.maxBytes",
+    );
+  });
+
+  it("passes native PDF blocks in the user message before the model loop", () => {
+    const buildIdx = source.indexOf(
+      "const nativePdfContentBlocks = await buildAgentNativePdfContentBlocks({",
+    );
+    const userMessageIdx = source.indexOf("const userMessage: MessageParam =");
+    const loopIdx = source.indexOf("await runToolUseLoop({");
+    expect(buildIdx).toBeGreaterThan(-1);
+    expect(userMessageIdx).toBeGreaterThan(buildIdx);
+    expect(userMessageIdx).toBeLessThan(loopIdx);
+    expect(source).toContain("...nativePdfContentBlocks");
+    expect(source).toContain(
+      "messages: [...conversationHistory.slice(-10), userMessage]",
+    );
+  });
+
   it("locks the corrected P4-P6 lifecycle labels in the Nexus prompt", () => {
     expect(source).toContain("LIFECYCLE LABEL DISCIPLINE");
     expect(source).toContain(

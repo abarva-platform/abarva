@@ -192,6 +192,17 @@ export interface AttachmentRef {
     page_count?: number | null;
     table_count?: number | null;
     parser_id?: string | null;
+    small_doc_shortcut?: {
+      eligible: boolean;
+      route: "claude-native-pdf" | "parser";
+      reason: string;
+      byte_size: number;
+      page_count: number | null;
+      thresholds: {
+        max_bytes: number;
+        max_pages_exclusive: number;
+      };
+    } | null;
     raw_mode_escape?: {
       eligible: boolean;
       requires_user_approval: boolean;

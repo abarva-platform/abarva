@@ -9,7 +9,11 @@
 // The "Atlas doesn't know Apex Retail" bug is guarded by active-client
 // tenant resolution plus broker/context-bundle fallbacks.
 
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import {
+  preflightAnthropicDirectClient,
+  type ContentBlockParam,
+  type MessageParam,
+} from "@/lib/integrations/ai-egress";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
@@ -174,6 +178,11 @@ import {
   extractAttachmentText,
   type AttachmentTextPreview,
 } from "@/lib/programs/attachments/extract-text";
+import {
+  AGENT_ATTACHMENT_BUCKET,
+  getSmallDocumentShortcutThresholds,
+} from "@/lib/agent/attachments";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
   formatProgramEvidenceForPrompt,
   listProgramEvidenceForPrompt,
@@ -1368,6 +1377,10 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
+  const nativePdfContentBlocks = await buildAgentNativePdfContentBlocks({
+    surfaceContext,
+    activeClientId: activeClient.id,
+  });
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
     userId: tenancy?.userId,
@@ -1394,6 +1407,13 @@ export async function POST(request: Request) {
     );
   }
   const anthropicClient = preflight.client;
+  const userMessage: MessageParam =
+    nativePdfContentBlocks.length > 0
+      ? {
+          role: "user",
+          content: [{ type: "text", text: message }, ...nativePdfContentBlocks],
+        }
+      : { role: "user", content: message };
 
   // ── CB-6 · context-bundle assembly ──────────────────────────────────────────
   //
@@ -1451,10 +1471,7 @@ export async function POST(request: Request) {
           model: "claude-sonnet-4-6",
           maxTokens: getAgentResponseTokenBudget(surface),
           system: systemPrompt,
-          messages: [
-            ...conversationHistory.slice(-10),
-            { role: "user", content: message },
-          ],
+          messages: [...conversationHistory.slice(-10), userMessage],
           tools,
           initialToolChoice,
           toolContext: {
@@ -1848,6 +1865,26 @@ function normalizeEnterpriseAgentName(
 
 /** OV2-4c · cap on how many recent attachments we expand into the system prompt. */
 const ATTACHMENT_CONTEXT_LIMIT = 3;
+const AGENT_NATIVE_PDF_CONTEXT_LIMIT = 3;
+
+interface AgentDockNativePdfRef {
+  id: string;
+  file_name: string;
+  mime: string;
+  bytes: number;
+  storage_path: string;
+  parse_metadata?: {
+    small_doc_shortcut?: {
+      eligible?: boolean;
+      route?: string;
+      page_count?: number | null;
+      thresholds?: {
+        max_bytes?: number;
+        max_pages_exclusive?: number;
+      };
+    } | null;
+  };
+}
 
 /**
  * OV2-4c · pull the attachments array off surfaceContext. The chat
@@ -1876,6 +1913,130 @@ function extractSurfaceAttachments(
     out.push({ id, programId, originalName, mimeType, sizeBytes });
   }
   return out;
+}
+
+function extractAgentNativePdfRefs(
+  surfaceContext: Record<string, unknown>,
+): AgentDockNativePdfRef[] {
+  const raw = surfaceContext.agentAttachments;
+  if (!Array.isArray(raw)) return [];
+  const refs: AgentDockNativePdfRef[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const obj = item as Record<string, unknown>;
+    const id = typeof obj.id === "string" ? obj.id : "";
+    const fileName = typeof obj.file_name === "string" ? obj.file_name : "";
+    const mime = typeof obj.mime === "string" ? obj.mime : "";
+    const bytes =
+      typeof obj.bytes === "number" && Number.isFinite(obj.bytes)
+        ? obj.bytes
+        : 0;
+    const storagePath =
+      typeof obj.storage_path === "string" ? obj.storage_path : "";
+    if (!id || !fileName || !mime || !storagePath || bytes <= 0) continue;
+    refs.push({
+      id,
+      file_name: fileName,
+      mime,
+      bytes,
+      storage_path: storagePath,
+      parse_metadata: readAgentNativePdfParseMetadata(obj.parse_metadata),
+    });
+  }
+  return refs;
+}
+
+function readAgentNativePdfParseMetadata(
+  value: unknown,
+): AgentDockNativePdfRef["parse_metadata"] {
+  if (!value || typeof value !== "object") return undefined;
+  const metadata = value as Record<string, unknown>;
+  const shortcut = metadata.small_doc_shortcut;
+  if (!shortcut || typeof shortcut !== "object") {
+    return { small_doc_shortcut: null };
+  }
+  const raw = shortcut as Record<string, unknown>;
+  const thresholds =
+    raw.thresholds && typeof raw.thresholds === "object"
+      ? (raw.thresholds as Record<string, unknown>)
+      : {};
+  return {
+    small_doc_shortcut: {
+      eligible: raw.eligible === true,
+      route: typeof raw.route === "string" ? raw.route : undefined,
+      page_count:
+        typeof raw.page_count === "number" && Number.isFinite(raw.page_count)
+          ? raw.page_count
+          : null,
+      thresholds: {
+        max_bytes:
+          typeof thresholds.max_bytes === "number" &&
+          Number.isFinite(thresholds.max_bytes)
+            ? thresholds.max_bytes
+            : undefined,
+        max_pages_exclusive:
+          typeof thresholds.max_pages_exclusive === "number" &&
+          Number.isFinite(thresholds.max_pages_exclusive)
+            ? thresholds.max_pages_exclusive
+            : undefined,
+      },
+    },
+  };
+}
+
+async function buildAgentNativePdfContentBlocks(input: {
+  surfaceContext: Record<string, unknown>;
+  activeClientId: string | null | undefined;
+}): Promise<ContentBlockParam[]> {
+  if (!input.activeClientId) return [];
+  const thresholds = getSmallDocumentShortcutThresholds();
+  const refs = extractAgentNativePdfRefs(input.surfaceContext).slice(
+    -AGENT_NATIVE_PDF_CONTEXT_LIMIT,
+  );
+  const blocks: ContentBlockParam[] = [];
+
+  for (const ref of refs) {
+    const shortcut = ref.parse_metadata?.small_doc_shortcut;
+    if (
+      ref.mime !== "application/pdf" ||
+      shortcut?.eligible !== true ||
+      shortcut.route !== "claude-native-pdf" ||
+      ref.bytes >= thresholds.maxBytes ||
+      !ref.storage_path.startsWith(`${input.activeClientId}/`)
+    ) {
+      continue;
+    }
+
+    try {
+      const bytes = await getObjectStorageAdapter().download(
+        AGENT_ATTACHMENT_BUCKET,
+        ref.storage_path,
+      );
+      if (
+        bytes.byteLength !== ref.bytes ||
+        bytes.byteLength >= thresholds.maxBytes
+      ) {
+        continue;
+      }
+      blocks.push({
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data: bytes.toString("base64"),
+        },
+        title: ref.file_name.slice(0, 120),
+      } as ContentBlockParam);
+    } catch (err) {
+      console.warn("[chat/agent] native_pdf_attachment_fetch_failed", {
+        attachmentId: ref.id,
+        storagePath: ref.storage_path,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return blocks;
 }
 
 /**
