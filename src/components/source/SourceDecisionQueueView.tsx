@@ -365,28 +365,50 @@ function DecisionBundleCard({
   );
 }
 
-/** The mid-stream entry rail — "I already have …" jump-in buttons (FIX 4). */
+/**
+ * Mid-stream entry — "＋ Start" collapses the six entry-point links.
+ * Six peer chips competed with the queue cards for the eye (audit M4).
+ * One summary button keeps the affordance without the visual noise.
+ */
 function EntryRail() {
   return (
-    <section
+    <details
       style={{
         ...CARD,
         background: SHELL.PAPER_SOFT,
-        gap: 10,
+        gap: 0,
+        padding: '8px 14px',
       }}
     >
-      <span
+      <summary
         style={{
+          listStyle: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
           fontFamily: SHELL.MONO,
           fontSize: 10,
           textTransform: 'uppercase',
           letterSpacing: '0.07em',
           color: SHELL.INK_MUTED,
+          userSelect: 'none',
         }}
       >
-        Already mid-stream? Jump straight in
-      </span>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 14,
+            fontWeight: 700,
+            color: SHELL.INK,
+            lineHeight: 1,
+          }}
+        >
+          ＋
+        </span>
+        Already mid-stream? Start here
+      </summary>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
         {ENTRY_POINTS.map((entry) => (
           <Link
             key={entry.href}
@@ -408,7 +430,7 @@ function EntryRail() {
           </Link>
         ))}
       </div>
-    </section>
+    </details>
   );
 }
 

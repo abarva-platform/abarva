@@ -375,10 +375,6 @@ export function SourceOriginatePage({
   }, []);
 
   const selectedCategory = SOURCE_CATEGORIES.find((c) => c.id === selectedCategoryId) ?? null;
-  const completedCount = useMemo(
-    () => intakeFields.filter((field) => intake[field.id].trim().length > 0).length,
-    [intake, intakeFields]
-  );
   const canCreate = intake.trigger.trim().length > 0 && submitState.status !== 'submitting';
 
   function patchIntake(fieldId: IntakeFieldId, value: string) {
@@ -440,8 +436,6 @@ export function SourceOriginatePage({
           <span style={STRIP_TOKEN}>{clientName.length > 26 ? clientName.slice(0, 24) + '…' : clientName}</span>
           <span style={STRIP_DOT}>·</span>
           <span style={STRIP_TOKEN}>{intakeShape ? intakeShape.eyebrow : 'New sourcing event'}</span>
-          <span style={STRIP_DOT}>·</span>
-          <span style={STRIP_TOKEN}>{completedCount} of {intakeFields.length} captured</span>
         </div>
 
         {/* Header — re-worded when an intent reshapes the intake. */}
@@ -473,8 +467,6 @@ export function SourceOriginatePage({
             </div>
           </div>
         )}
-
-        <CaptureQueue intake={intake} fields={intakeFields} />
 
         {/* Intake fields */}
         <div style={{ display: 'grid', gap: 0 }}>
