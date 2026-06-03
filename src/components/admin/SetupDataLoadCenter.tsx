@@ -1,45 +1,51 @@
 import { COLORS, RADIUS, TYPOGRAPHY } from "@/lib/design/design-tokens";
 import type {
-  DataLoadGateStatus,
-  DataLoadDimensionCatalogItem,
-  PilotVerifierHopStatus,
-  SetupDataLoadCenterModel,
-} from "@/lib/admin/setup-data-load-center";
+  LoadStudioControl,
+  LoadStudioReadinessRow,
+  LoadStudioStep,
+  LoadStudioView,
+  MetricTone,
+  StatusTone,
+  StepState,
+} from "@/lib/admin/setup-load-studio-view";
 
 interface SetupDataLoadCenterProps {
-  model: SetupDataLoadCenterModel;
+  view: LoadStudioView;
 }
 
-// ── Calm status vocabulary ──────────────────────────────────────────
-// Apple-calm reskin (2026-06-01): the locked design system is cream +
-// near-black ink + black/ghost buttons. Status is conveyed by a single
-// restrained accent (amber = needs action), never by decorative sky/
-// mint/coral fills. Pills are hairline outlines, not filled chips.
+/**
+ * Data Loads — the governed data-load workflow for one client.
+ *
+ * 2026-06-02 redesign (audit + v2 wireframe). The page is the
+ * operator workflow only: identity band, real status strip, the
+ * single next action, a governed-load workflow rail, the dimension
+ * readiness table (real per-tenant coverage), the governance
+ * controls, and an audit-trail preview. The reload-command-plan,
+ * pilot-verifier checklist, and 33-row template catalog moved to
+ * their own routes (Production Readiness / Templates). Every number
+ * is real from the inventory snapshot, with honest empty states.
+ *
+ * Locked design system: cream surfaces, near-black ink, serif
+ * display, black + ghost buttons, hairline borders. One accent
+ * (amber = needs action) earns the eye; status is never a decorative
+ * filled chip.
+ */
 
-const statusCopy: Record<DataLoadGateStatus, string> = {
-  ready: "Ready",
-  monitored: "Monitored",
-  needs_configuration: "Action needed",
-};
-
-const verifierStatusCopy: Record<PilotVerifierHopStatus, string> = {
-  live_ready: "Live-ready",
-  stub_fail_closed: "Fail-closed",
-  blocked: "Blocked",
-};
-
-// Accent only where it earns attention. Ready + monitored read as quiet
-// ink; only "action needed" gets the amber accent so the eye lands on
-// the one thing the operator must do.
-function statusAccent(status: DataLoadGateStatus): string {
-  return status === "needs_configuration" ? COLORS.amberInk : `${COLORS.ink}99`;
+// ── Tone → calm accent (the one accent that earns attention) ─────────
+function toneAccent(tone: StatusTone | MetricTone): string {
+  switch (tone) {
+    case "blocked":
+    case "risk":
+      return COLORS.coralInk;
+    case "attention":
+      return COLORS.amberInk;
+    case "ready":
+    case "good":
+      return COLORS.mintInk;
+    default:
+      return `${COLORS.ink}99`;
+  }
 }
-
-const cardStyle = {
-  border: `1px solid ${COLORS.ink}14`,
-  borderRadius: RADIUS.md,
-  background: COLORS.white,
-} as const;
 
 function labelStyle(color = `${COLORS.ink}99`) {
   return {
@@ -52,50 +58,12 @@ function labelStyle(color = `${COLORS.ink}99`) {
   } as const;
 }
 
-// Hairline outline pill — calm, no filled background.
-function statusPill(status: DataLoadGateStatus) {
-  const accent = statusAccent(status);
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        width: "fit-content",
-        borderRadius: RADIUS.pill,
-        padding: "3px 9px",
-        border: `1px solid ${accent}44`,
-        color: accent,
-        fontFamily: TYPOGRAPHY.sans,
-        fontSize: 11,
-        fontWeight: 700,
-      }}
-    >
-      {statusCopy[status]}
-    </span>
-  );
-}
+const cardStyle = {
+  border: `1px solid ${COLORS.ink}14`,
+  borderRadius: RADIUS.md,
+  background: COLORS.white,
+} as const;
 
-function verifierPill(status: PilotVerifierHopStatus) {
-  const accent = status === "live_ready" ? `${COLORS.ink}99` : COLORS.amberInk;
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        width: "fit-content",
-        borderRadius: RADIUS.pill,
-        padding: "3px 9px",
-        border: `1px solid ${accent}44`,
-        color: accent,
-        fontFamily: TYPOGRAPHY.sans,
-        fontSize: 11,
-        fontWeight: 700,
-      }}
-    >
-      {verifierStatusCopy[status]}
-    </span>
-  );
-}
-
-// One primary action per viewport. Black fill, locked system.
 function primaryButton(href: string, label: string) {
   return (
     <a
@@ -109,6 +77,7 @@ function primaryButton(href: string, label: string) {
         fontSize: 13,
         fontWeight: 700,
         textDecoration: "none",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
@@ -116,7 +85,6 @@ function primaryButton(href: string, label: string) {
   );
 }
 
-// Ghost secondary — hairline border, never a second filled button.
 function ghostButton(href: string, label: string) {
   return (
     <a
@@ -131,6 +99,7 @@ function ghostButton(href: string, label: string) {
         fontSize: 13,
         fontWeight: 600,
         textDecoration: "none",
+        whiteSpace: "nowrap",
       }}
     >
       {label}
@@ -138,15 +107,58 @@ function ghostButton(href: string, label: string) {
   );
 }
 
-function progressBar(label: string, value: number) {
+function statusPill(label: string, tone: StatusTone) {
+  const accent = toneAccent(tone);
   return (
-    <div
-      aria-label={`${label} ${value}% complete`}
+    <span
       style={{
+        display: "inline-flex",
+        width: "fit-content",
+        borderRadius: RADIUS.pill,
+        padding: "3px 10px",
+        border: `1px solid ${accent}44`,
+        color: accent,
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 700,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function actionLink(href: string, label: string) {
+  return (
+    <a
+      href={href}
+      style={{
+        color: COLORS.ink,
+        fontSize: 12,
+        fontWeight: 700,
+        textDecoration: "underline",
+        textUnderlineOffset: 3,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </a>
+  );
+}
+
+function progressBar(value: number) {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: "inline-block",
+        width: 82,
         height: 6,
         borderRadius: RADIUS.pill,
         background: `${COLORS.ink}12`,
         overflow: "hidden",
+        verticalAlign: "middle",
       }}
     >
       <span
@@ -157,889 +169,466 @@ function progressBar(label: string, value: number) {
           background: COLORS.ink,
         }}
       />
-    </div>
-  );
-}
-
-// Format chips: hairline ghost, not filled sky-blue.
-function chip(label: string) {
-  return (
-    <span
-      key={label}
-      style={{
-        borderRadius: RADIUS.pill,
-        padding: "3px 9px",
-        border: `1px solid ${COLORS.ink}1f`,
-        color: `${COLORS.ink}b0`,
-        fontSize: 11,
-        fontWeight: 600,
-        lineHeight: 1.4,
-      }}
-    >
-      {label}
     </span>
   );
 }
 
-function dimensionCard(dimension: DataLoadDimensionCatalogItem) {
+// ── Workflow rail ────────────────────────────────────────────────────
+function stepBackground(state: StepState): string {
+  switch (state) {
+    case "done":
+      return COLORS.mintSoft;
+    case "active":
+      return COLORS.amberSoft;
+    case "blocked":
+      return COLORS.coralSoft;
+    default:
+      return COLORS.white;
+  }
+}
+
+function stepAccent(state: StepState): string {
+  switch (state) {
+    case "done":
+      return COLORS.mintInk;
+    case "active":
+      return COLORS.amberInk;
+    case "blocked":
+      return COLORS.coralInk;
+    default:
+      return `${COLORS.ink}88`;
+  }
+}
+
+function workflowStep(step: LoadStudioStep, isLast: boolean) {
   return (
-    <article
-      key={dimension.id}
+    <div
+      key={step.num}
       style={{
-        border: `1px solid ${COLORS.ink}14`,
-        borderRadius: RADIUS.md,
-        padding: 18,
-        background: COLORS.white,
-        display: "grid",
-        gap: 12,
-        minHeight: 184,
+        minHeight: 76,
+        padding: "12px 10px",
+        textAlign: "center",
+        borderRight: isLast ? "none" : `1px solid ${COLORS.ink}14`,
+        background: stepBackground(step.state),
       }}
     >
-      <div style={{ display: "grid", gap: 6 }}>
-        <span style={labelStyle()}>{dimension.currentGate}</span>
-        <h3 style={{ margin: 0, fontSize: 17, lineHeight: 1.2, fontWeight: 600 }}>
-          {dimension.label}
-        </h3>
-        <p
-          style={{
-            margin: 0,
-            color: `${COLORS.ink}a0`,
-            fontSize: 12.5,
-            lineHeight: 1.4,
-          }}
-        >
-          {dimension.summary}
-        </p>
-      </div>
-      {progressBar(dimension.label, dimension.completenessPercent)}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {(dimension.formats.length > 0
-          ? dimension.formats
-          : ["CSV", "XLSX", "JSON"]
-        ).map(chip)}
-      </div>
-      <div style={{ marginTop: "auto" }}>
-        {ghostButton(
-          dimension.primaryAction.href,
-          dimension.primaryAction.label,
+      <span style={{ ...labelStyle(), display: "block" }}>{step.num}</span>
+      <strong
+        style={{
+          display: "block",
+          marginTop: 5,
+          fontSize: 12,
+          color: stepAccent(step.state),
+        }}
+      >
+        {step.name}
+      </strong>
+      <span
+        style={{
+          display: "block",
+          marginTop: 3,
+          fontSize: 10,
+          color: `${COLORS.ink}88`,
+        }}
+      >
+        {step.status}
+      </span>
+    </div>
+  );
+}
+
+// ── Readiness table ──────────────────────────────────────────────────
+function readinessRow(row: LoadStudioReadinessRow, isLast: boolean) {
+  const cell = {
+    padding: "14px",
+    borderBottom: isLast ? "none" : `1px solid ${COLORS.ink}10`,
+    verticalAlign: "middle" as const,
+    fontSize: 13,
+  };
+  return (
+    <tr key={row.segmentId}>
+      <td style={cell}>
+        <strong style={{ display: "block", fontSize: 13.5 }}>
+          {row.dimension}
+        </strong>
+        <span style={{ color: `${COLORS.ink}99`, fontSize: 11 }}>
+          {row.detail}
+        </span>
+      </td>
+      <td style={cell}>{statusPill(row.statusLabel, row.statusTone)}</td>
+      <td style={cell}>
+        {row.completePercent === null ? (
+          <span style={{ color: `${COLORS.ink}66` }}>—</span>
+        ) : (
+          <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+            {progressBar(row.completePercent)}
+            <span style={{ fontSize: 11, color: `${COLORS.ink}99` }}>
+              {row.completePercent}%
+            </span>
+          </span>
         )}
-      </div>
-    </article>
+      </td>
+      <td style={{ ...cell, color: `${COLORS.ink}99`, fontSize: 12 }}>
+        {row.lastLoaded}
+      </td>
+      <td style={cell}>{actionLink(row.action.href, row.action.label)}</td>
+    </tr>
   );
 }
 
-function setupCompleteness(model: SetupDataLoadCenterModel): number {
-  const rows = model.dimensionReadiness;
-  if (rows.length === 0) return 0;
-  const total = rows.reduce((sum, row) => sum + row.completenessPercent, 0);
-  return Math.round(total / rows.length);
+// ── Governance control card ──────────────────────────────────────────
+function controlCard(control: LoadStudioControl, isLast: boolean) {
+  return (
+    <div
+      key={control.label}
+      style={{
+        padding: "16px 18px",
+        borderBottom: isLast ? "none" : `1px solid ${COLORS.ink}14`,
+      }}
+    >
+      <div style={labelStyle()}>{control.label}</div>
+      <strong
+        style={{
+          display: "block",
+          marginTop: 6,
+          fontSize: 14,
+          color: toneAccent(control.tone),
+        }}
+      >
+        {control.headline}
+      </strong>
+      <p style={{ margin: "5px 0 10px", color: `${COLORS.ink}99`, fontSize: 12 }}>
+        {control.detail}
+      </p>
+      {actionLink(control.action.href, control.action.label)}
+    </div>
+  );
 }
 
-export function SetupDataLoadCenter({ model }: SetupDataLoadCenterProps) {
-  const overallCompleteness = setupCompleteness(model);
-  const committedDimensions = model.dimensionReadiness.filter(
-    (row) => row.currentGate === "Committed",
-  ).length;
-  const totalDimensions = model.dimensionReadiness.length;
-  const blockedActions = model.workQueue.filter(
-    (item) => item.severity === "blocked",
-  ).length;
-  const openActions = model.workQueue.length;
-  const activeGate = model.rehearsalGates.find(
-    (gate) => gate.status === "needs_configuration",
-  );
-  const primaryDimension =
-    model.dimensionCatalog.find(
-      (dimension) => dimension.currentGate !== "Committed",
-    ) ?? model.dimensionCatalog[0];
-
-  // Calm empty / first-load state for a freshly-seeded client.
-  const isEmpty = committedDimensions === 0 && totalDimensions > 0;
+export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
+  const { tenant } = view;
 
   return (
-    <div style={{ display: "grid", gap: 22 }}>
-      <style>
-        {`
-          @media (max-width: 1120px) {
-            [data-setup-grid="hero"],
-            [data-setup-grid="command"],
-            [data-setup-grid="reload"],
-            [data-setup-grid="studio"] {
-              grid-template-columns: minmax(0, 1fr) !important;
-            }
-            [data-setup-grid="dimensions"] {
-              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            }
-            [data-reload-step-grid] {
-              grid-template-columns: minmax(0, 1fr) !important;
-            }
-          }
-          @media (max-width: 700px) {
-            [data-setup-grid="dimensions"] {
-              grid-template-columns: minmax(0, 1fr) !important;
-            }
-          }
-        `}
-      </style>
+    <div
+      style={{
+        fontFamily: TYPOGRAPHY.sans,
+        color: COLORS.ink,
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+      }}
+    >
+      {/* Responsive: collapse the two-column grid below 1060px and the
+          multi-column strips below 760px. The masthead + sidebar are
+          owned by AdminCanonShellV2; this is the content canvas only. */}
+      <style>{`
+        @media (max-width: 1060px) {
+          [data-load-grid="body"] { grid-template-columns: minmax(0, 1fr) !important; }
+        }
+        @media (max-width: 760px) {
+          [data-load-grid="metrics"] { grid-template-columns: 1fr 1fr !important; }
+          [data-load-grid="steps"] { grid-template-columns: 1fr 1fr !important; }
+          [data-load-grid="identity"] { flex-wrap: wrap !important; }
+          [data-load-grid="table-scroll"] { overflow-x: auto !important; }
+        }
+      `}</style>
 
-      {/* ── Hero: context + one primary action + next-decision aside ── */}
+      {/* ── Client identity band ──────────────────────────────────── */}
       <section
-        data-setup-grid="hero"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 320px",
-          gap: 24,
-          alignItems: "start",
-        }}
-        aria-label="Data Load Studio"
+        data-load-grid="identity"
+        aria-label="Client and data-load summary"
+        style={{ display: "flex", alignItems: "center", gap: 16 }}
       >
-        <div>
-          <span style={labelStyle(`${COLORS.ink}80`)}>
-            Admin · Data Load Studio · {model.tenant.tenantName}
-          </span>
+        <span
+          aria-hidden
+          style={{
+            width: 56,
+            height: 56,
+            display: "grid",
+            placeItems: "center",
+            borderRadius: RADIUS.lg,
+            background: COLORS.ink,
+            color: COLORS.white,
+            fontFamily: TYPOGRAPHY.serif,
+            fontSize: 20,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {tenant.initials}
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <div style={labelStyle()}>{tenant.breadcrumb}</div>
           <h1
             style={{
-              margin: "10px 0 0",
-              fontSize: 34,
-              lineHeight: 1.1,
-              fontWeight: 400,
+              margin: "4px 0 0",
               fontFamily: TYPOGRAPHY.serif,
-              letterSpacing: "-0.01em",
+              fontSize: 30,
+              lineHeight: 1.1,
+              fontWeight: 500,
             }}
           >
-            Load data for {model.tenant.tenantName}
+            Load data for {tenant.name}
           </h1>
           <p
             style={{
-              margin: "12px 0 0",
-              color: `${COLORS.ink}a8`,
-              fontSize: 15,
-              lineHeight: 1.5,
-              maxWidth: 560,
+              margin: "6px 0 0",
+              maxWidth: 760,
+              color: `${COLORS.ink}99`,
+              fontSize: 14,
             }}
           >
-            Start with the business dimension you want to load. The studio
-            walks each one through consent, upload, validation, approval, and
-            commit for this client only. Private data plane ready.
+            One client at a time. Choose a dimension, load the file, validate
+            it, approve it, and commit it with an audit trail — for this client
+            only.
           </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-            {primaryButton(
-              "/admin/context-layer/uploads",
-              "Start a governed load",
-            )}
-            {ghostButton("#template-library", "View templates")}
-          </div>
-
-          {/* One-line summary strip — replaces four heavy stat tiles.
-              Blocked count is load-bearing (exceptions above the fold). */}
-          <div
-            style={{
-              marginTop: 22,
-              padding: "12px 16px",
-              border: `1px solid ${COLORS.ink}14`,
-              borderRadius: RADIUS.md,
-              background: COLORS.cream,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "6px 18px",
-              alignItems: "center",
-              fontSize: 13,
-              color: `${COLORS.ink}b0`,
-            }}
-            aria-label="Load readiness summary"
-          >
-            <span>
-              <strong style={{ color: COLORS.ink }}>
-                {overallCompleteness}%
-              </strong>{" "}
-              ready
-            </span>
-            <span aria-hidden>·</span>
-            <span>
-              <strong style={{ color: COLORS.ink }}>
-                {committedDimensions}/{totalDimensions}
-              </strong>{" "}
-              dimensions loaded
-            </span>
-            <span aria-hidden>·</span>
-            <span
-              style={{
-                color: blockedActions > 0 ? COLORS.coralInk : `${COLORS.ink}b0`,
-                fontWeight: blockedActions > 0 ? 700 : 400,
-              }}
-            >
-              <strong>{blockedActions}</strong> blocked
-            </span>
-            <span aria-hidden>·</span>
-            <span>
-              <strong style={{ color: COLORS.ink }}>{openActions}</strong> open
-              actions
-            </span>
-            <span aria-hidden>·</span>
-            <span>
-              <strong style={{ color: COLORS.ink }}>
-                {model.templateRows.length}
-              </strong>{" "}
-              templates
-            </span>
-          </div>
         </div>
-
-        {/* Next-decision: the single focal aside */}
-        <aside
+        <div
           style={{
-            border: `1px solid ${COLORS.amberInk}2a`,
-            borderRadius: RADIUS.md,
-            padding: 18,
-            background: COLORS.amberSoft,
-            display: "grid",
+            marginLeft: "auto",
+            display: "flex",
             gap: 10,
-            alignContent: "start",
+            alignItems: "center",
           }}
         >
-          <span style={labelStyle(COLORS.amberInk)}>Next decision</span>
-          <strong style={{ fontSize: 17, lineHeight: 1.25, fontWeight: 600 }}>
-            {primaryDimension
-              ? primaryDimension.label
-              : activeGate
-                ? activeGate.label
-                : "Ready for next load"}
-          </strong>
-          <p
-            style={{
-              margin: 0,
-              color: COLORS.amberInk,
-              fontSize: 13,
-              lineHeight: 1.45,
-            }}
-          >
-            {primaryDimension
-              ? primaryDimension.nextAction
-              : activeGate
-                ? activeGate.objective
-                : "All visible workflow gates are clear for the current setup view."}
-          </p>
-          {primaryDimension ? (
-            <a
-              href={primaryDimension.primaryAction.href}
-              style={{
-                marginTop: 2,
-                color: COLORS.amberInk,
-                fontSize: 13,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              {primaryDimension.primaryAction.label} →
-            </a>
-          ) : null}
-        </aside>
+          {ghostButton(view.templatesHref, "View templates")}
+          {primaryButton(view.startLoadHref, "Start a governed load")}
+        </div>
       </section>
 
+      {/* ── Status strip — every metric real per tenant ───────────── */}
       <section
-        data-setup-grid="reload"
+        data-load-grid="metrics"
+        aria-label="Data-load readiness"
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1.45fr) minmax(320px, 0.55fr)",
-          gap: 16,
-          alignItems: "stretch",
+          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+          ...cardStyle,
+          overflow: "hidden",
         }}
-        aria-label="Single-client reload command plan"
       >
-        <div style={{ ...cardStyle, overflow: "hidden" }}>
+        {view.metrics.map((m, i) => (
           <div
+            key={m.label}
             style={{
               padding: "16px 18px",
-              borderBottom: `1px solid ${COLORS.ink}14`,
-              display: "grid",
-              gap: 8,
+              borderRight:
+                i === view.metrics.length - 1
+                  ? "none"
+                  : `1px solid ${COLORS.ink}14`,
             }}
           >
-            <span style={labelStyle()}>Single-client reload</span>
-            <h2
+            <div style={labelStyle()}>{m.label}</div>
+            <div
               style={{
-                margin: 0,
-                fontSize: 20,
-                fontWeight: 400,
+                marginTop: 8,
                 fontFamily: TYPOGRAPHY.serif,
+                fontSize: 27,
+                lineHeight: 1,
+                fontWeight: 700,
+                color: m.tone === "default" ? COLORS.ink : toneAccent(m.tone),
               }}
             >
-              Reload command plan
-            </h2>
-            <p
-              style={{
-                margin: 0,
-                color: `${COLORS.ink}a0`,
-                fontSize: 13,
-                lineHeight: 1.45,
-                maxWidth: 820,
-              }}
-            >
-              {model.singleClientBoundary.assertion}
-            </p>
+              {m.value}
+            </div>
+            <div style={{ marginTop: 5, color: `${COLORS.ink}99`, fontSize: 12 }}>
+              {m.note}
+            </div>
           </div>
-          <div style={{ display: "grid" }}>
-            {model.reloadCommandPlan.map((step, index) => (
-              <div
-                key={step.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "34px minmax(0, 1fr)",
-                  gap: 14,
-                  padding: "15px 18px",
-                  borderTop:
-                    index === 0 ? undefined : `1px solid ${COLORS.ink}0e`,
-                }}
-              >
-                <span style={labelStyle(`${COLORS.ink}70`)}>
-                  {step.stage}
-                </span>
-                <div style={{ display: "grid", gap: 8 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <strong style={{ fontSize: 14, fontWeight: 650 }}>
-                      {step.operatorAction}
-                    </strong>
-                    {statusPill(step.status)}
-                  </div>
-                  <div
-                    data-reload-step-grid
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    {[
-                      ["Azure/system", step.azureOrSystemAction],
-                      ["Required check", step.requiredCheck],
-                      ["Approval/comms", step.approvalOrCommunication],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label}
-                        style={{
-                          border: `1px solid ${COLORS.ink}10`,
-                          borderRadius: RADIUS.sm,
-                          padding: "9px 10px",
-                          background: COLORS.cream,
-                          display: "grid",
-                          gap: 4,
-                        }}
-                      >
-                        <span style={labelStyle(`${COLORS.ink}70`)}>
-                          {label}
-                        </span>
-                        <span
-                          style={{
-                            color: `${COLORS.ink}a8`,
-                            fontSize: 12,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
+      </section>
 
-        <aside
+      {/* ── Next action — one decisive call-out ───────────────────── */}
+      {view.nextAction ? (
+        <section
+          aria-label="Next data-load action"
           style={{
-            ...cardStyle,
-            padding: 18,
             display: "grid",
-            gap: 14,
-            alignContent: "start",
+            gridTemplateColumns: "minmax(0, 1fr) auto",
+            gap: 18,
+            alignItems: "center",
+            padding: "18px 20px",
+            border: `1px solid ${COLORS.amberInk}40`,
+            borderRadius: RADIUS.md,
+            background: COLORS.amberSoft,
           }}
         >
-          <div style={{ display: "grid", gap: 6 }}>
-            <span style={labelStyle()}>Boundary</span>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: 18,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-              }}
-            >
-              {model.singleClientBoundary.label}
+          <div>
+            <div style={{ ...labelStyle(COLORS.amberInk) }}>Next action</div>
+            <h2 style={{ margin: "4px 0 4px", fontSize: 17, lineHeight: 1.25 }}>
+              {view.nextAction.headline}
             </h2>
-            <p
-              style={{
-                margin: 0,
-                color: `${COLORS.ink}a0`,
-                fontSize: 12.5,
-                lineHeight: 1.45,
-              }}
-            >
-              {model.singleClientBoundary.denialRule}
+            <p style={{ margin: 0, color: COLORS.amberInk, fontSize: 13 }}>
+              {view.nextAction.detail}
             </p>
           </div>
-          <div style={{ display: "grid", gap: 7 }}>
-            <span style={labelStyle()}>Exception intake</span>
-            <p
-              style={{
-                margin: 0,
-                color: `${COLORS.ink}a0`,
-                fontSize: 12.5,
-                lineHeight: 1.45,
-              }}
-            >
-              {model.exceptionIntake.rule}
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {model.exceptionIntake.supportedFormats.map(chip)}
-            </div>
-          </div>
-          <details
-            style={{
-              border: `1px solid ${COLORS.ink}14`,
-              borderRadius: RADIUS.sm,
-              padding: "10px 12px",
-              background: COLORS.cream,
-            }}
-          >
-            <summary
-              style={{
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 700,
-                color: COLORS.ink,
-              }}
-            >
-              Required exception metadata
-            </summary>
-            <ul
-              style={{
-                margin: "10px 0 0",
-                paddingLeft: 18,
-                color: `${COLORS.ink}a8`,
-                fontSize: 12,
-                lineHeight: 1.55,
-              }}
-            >
-              {model.exceptionIntake.metadataRequirements
-                .slice(0, 9)
-                .map((requirement) => (
-                  <li key={requirement}>{requirement}</li>
-                ))}
-            </ul>
-          </details>
-          {ghostButton(
-            model.exceptionIntake.clarificationQueueHref,
-            "Open clarification queue",
+          {view.nextAction.action
+            ? primaryButton(
+                view.nextAction.action.href,
+                view.nextAction.action.label,
+              )
+            : null}
+        </section>
+      ) : null}
+
+      {/* ── Workflow rail — the governed-load sequence ────────────── */}
+      <section aria-label="Governed load workflow">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            marginBottom: 10,
+          }}
+        >
+          <div style={labelStyle()}>Governed load workflow</div>
+          <span style={{ color: `${COLORS.ink}99`, fontSize: 12 }}>
+            Every load follows these seven steps · across all dimensions
+          </span>
+        </div>
+        <div
+          data-load-grid="steps"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+            ...cardStyle,
+            overflow: "hidden",
+          }}
+        >
+          {view.workflow.map((s, i) =>
+            workflowStep(s, i === view.workflow.length - 1),
           )}
-        </aside>
+        </div>
       </section>
 
-      <section
-        data-setup-grid="command"
-        id="pilot-verifier"
+      {/* ── Body: readiness table + governance controls ───────────── */}
+      <div
+        data-load-grid="body"
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1.1fr) minmax(280px, 0.9fr) 280px",
-          gap: 16,
-          alignItems: "stretch",
-        }}
-        aria-label="Loader readiness and pilot verifier posture"
-      >
-        <div style={{ ...cardStyle, padding: 18, display: "grid", gap: 14 }}>
-          <div>
-            <span style={labelStyle()}>Loader readiness</span>
-            <h2
-              style={{
-                margin: "6px 0 0",
-                fontSize: 18,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-              }}
-            >
-              Current load status
-            </h2>
-          </div>
-          <div style={{ display: "grid", gap: 10 }}>
-            {model.loaderReadiness.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto",
-                  gap: 10,
-                  alignItems: "start",
-                  paddingTop: 10,
-                  borderTop: `1px solid ${COLORS.ink}0e`,
-                }}
-              >
-                <div style={{ display: "grid", gap: 4 }}>
-                  <strong style={{ fontSize: 13.5, fontWeight: 650 }}>
-                    {item.label}
-                  </strong>
-                  <span
-                    style={{
-                      color: `${COLORS.ink}a0`,
-                      fontSize: 12.5,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {item.detail}
-                  </span>
-                  <span style={{ color: `${COLORS.ink}90`, fontSize: 12 }}>
-                    {item.nextAction}
-                  </span>
-                </div>
-                {statusPill(item.status)}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ ...cardStyle, padding: 18, display: "grid", gap: 14 }}>
-          <div>
-            <span style={labelStyle()}>Pilot verifier posture</span>
-            <h2
-              style={{
-                margin: "6px 0 0",
-                fontSize: 18,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-              }}
-            >
-              {model.pilotVerifier.summary.liveReady} live-ready ·{" "}
-              {model.pilotVerifier.summary.stubFailClosed} fail-closed
-            </h2>
-          </div>
-          <div
-            style={{
-              padding: "10px 12px",
-              borderRadius: RADIUS.sm,
-              background: COLORS.cream,
-              color: `${COLORS.ink}b0`,
-              fontFamily: TYPOGRAPHY.mono,
-              fontSize: 11,
-              overflowWrap: "anywhere",
-            }}
-          >
-            {model.pilotVerifier.command}
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            {model.pilotVerifier.hops.slice(0, 5).map((hop) => (
-              <div
-                key={hop.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  alignItems: "center",
-                }}
-              >
-                <span style={{ color: `${COLORS.ink}b0`, fontSize: 12.5 }}>
-                  {hop.label}
-                </span>
-                {verifierPill(hop.status)}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <aside style={{ ...cardStyle, padding: 18, display: "grid", gap: 12 }}>
-          <div>
-            <span style={labelStyle()}>Launch</span>
-            <h2
-              style={{
-                margin: "6px 0 0",
-                fontSize: 18,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-              }}
-            >
-              Next actions
-            </h2>
-          </div>
-          {model.launchActions.map((action) => (
-            <div key={action.id} style={{ display: "grid", gap: 6 }}>
-              {action.kind === "primary"
-                ? primaryButton(action.href, action.label)
-                : ghostButton(action.href, action.label)}
-              <span
-                style={{
-                  color: `${COLORS.ink}94`,
-                  fontSize: 12.5,
-                  lineHeight: 1.4,
-                }}
-              >
-                {action.detail}
-              </span>
-            </div>
-          ))}
-        </aside>
-      </section>
-
-      {/* ── Dimension library + governed workflow ── */}
-      <section
-        data-setup-grid="studio"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1.2fr) minmax(320px, 0.8fr)",
-          gap: 22,
+          gridTemplateColumns: "minmax(0, 1fr) 312px",
+          gap: 18,
           alignItems: "start",
         }}
       >
-        <div style={{ display: "grid", gap: 16 }}>
-          <div>
-            <span style={labelStyle()}>Dimension library</span>
-            <h2
-              style={{
-                margin: "8px 0 0",
-                fontSize: 22,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Pick the business dimension first.
-            </h2>
-          </div>
-
-          {isEmpty ? (
-            <div
-              style={{
-                ...cardStyle,
-                padding: 28,
-                display: "grid",
-                gap: 10,
-                textAlign: "center",
-                background: COLORS.cream,
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
-                No data loaded yet for {model.tenant.tenantName}
-              </h3>
-              <p
-                style={{
-                  margin: "0 auto",
-                  maxWidth: 420,
-                  color: `${COLORS.ink}a0`,
-                  fontSize: 13.5,
-                  lineHeight: 1.5,
-                }}
-              >
-                Choose any dimension below to begin the first governed load.
-                Each one becomes assistant-ready after approval and commit.
-              </p>
-            </div>
-          ) : null}
-
+        <section style={cardStyle} aria-label="Loaded data by dimension">
           <div
-            data-setup-grid="dimensions"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               gap: 14,
-            }}
-          >
-            {model.dimensionCatalog.map((dimension) => dimensionCard(dimension))}
-          </div>
-        </div>
-
-        {/* Governed load workflow — read-as-status stepper. Monitored
-            rows show no button (no fake action, principle 5). */}
-        <div style={{ ...cardStyle, overflow: "hidden" }}>
-          <div
-            style={{
               padding: "16px 18px",
               borderBottom: `1px solid ${COLORS.ink}14`,
             }}
           >
-            <span style={labelStyle()}>Active load plan</span>
-            <h2
-              style={{
-                margin: "6px 0 0",
-                fontSize: 18,
-                fontWeight: 400,
-                fontFamily: TYPOGRAPHY.serif,
-              }}
-            >
-              Governed load workflow
-            </h2>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Loaded data by dimension</h2>
+              <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+                What is loaded, what needs attention, and the next action.
+              </p>
+            </div>
+            {ghostButton(view.templatesHref, "All templates")}
           </div>
-          <div style={{ display: "grid" }}>
-            {model.workflowControls.map((control, index) => (
-              <div
-                key={control.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "44px minmax(0, 1fr) auto",
-                  gap: 12,
-                  padding: "14px 16px",
-                  borderTop:
-                    index === 0 ? undefined : `1px solid ${COLORS.ink}0e`,
-                  alignItems: "start",
-                }}
-              >
-                <span style={labelStyle(`${COLORS.ink}70`)}>
-                  {control.stage}
-                </span>
-                <div style={{ display: "grid", gap: 6 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <strong style={{ fontSize: 14, fontWeight: 600 }}>
-                      {control.label}
-                    </strong>
-                    {statusPill(control.status)}
-                  </div>
-                  <span
-                    style={{
-                      color: `${COLORS.ink}a0`,
-                      fontSize: 12.5,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {control.operatorAction}
-                  </span>
-                </div>
-                {control.href ? (
-                  <a
-                    href={control.href}
-                    style={{
-                      width: "fit-content",
-                      border: `1px solid ${COLORS.ink}24`,
-                      borderRadius: RADIUS.sm,
-                      padding: "6px 11px",
-                      background: COLORS.white,
-                      color: COLORS.ink,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Open
-                  </a>
-                ) : (
-                  <span
-                    style={{
-                      alignSelf: "center",
-                      color: `${COLORS.ink}70`,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Monitored
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          {view.readiness.length === 0 ? (
+            <div style={{ padding: "28px 18px", color: `${COLORS.ink}99`, fontSize: 13 }}>
+              No data has been loaded for {tenant.name} yet. Start a governed
+              load to ground this client&rsquo;s assistants.
+            </div>
+          ) : (
+            <div data-load-grid="table-scroll">
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    {["Dimension", "Status", "Complete", "Last loaded", "Next action"].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          style={{
+                            ...labelStyle(),
+                            padding: "12px 14px",
+                            textAlign: "left",
+                            background: COLORS.cream,
+                            borderBottom: `1px solid ${COLORS.ink}14`,
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {view.readiness.map((r, i) =>
+                    readinessRow(r, i === view.readiness.length - 1),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
-      {/* ── Template & format library — trimmed to 4 calm columns ── */}
-      <section id="template-library" style={cardStyle}>
+        <aside style={cardStyle} aria-label="Governance controls">
+          <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.ink}14` }}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>Controls</h2>
+            <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+              Visible actions only — no developer checklist.
+            </p>
+          </div>
+          {view.controls.map((c, i) =>
+            controlCard(c, i === view.controls.length - 1),
+          )}
+        </aside>
+      </div>
+
+      {/* ── Audit-trail preview — real recent events ──────────────── */}
+      <section style={cardStyle} aria-label="Audit trail">
         <div
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 14,
             padding: "16px 18px",
             borderBottom: `1px solid ${COLORS.ink}14`,
           }}
         >
-          <span style={labelStyle()}>Reference</span>
-          <h2
-            style={{
-              margin: "6px 0 0",
-              fontSize: 18,
-              fontWeight: 400,
-              fontFamily: TYPOGRAPHY.serif,
-            }}
-          >
-            Templates by dimension
-          </h2>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 18 }}>Audit trail</h2>
+            <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+              Recent load events for {tenant.name}. The full ledger opens in
+              Data Trust.
+            </p>
+          </div>
+          {ghostButton(view.verifierHref, "Production readiness")}
         </div>
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              minWidth: 640,
-              fontSize: 13,
-            }}
-          >
-            <thead>
-              <tr style={{ textAlign: "left" }}>
-                {["Dimension", "Formats", "Owner", "Unlocks"].map((head) => (
-                  <th
-                    key={head}
-                    style={{
-                      padding: "11px 14px",
-                      borderBottom: `1px solid ${COLORS.ink}14`,
-                      ...labelStyle(),
-                    }}
-                  >
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {model.templateRows.map((template) => (
-                <tr key={template.id}>
-                  <td
-                    style={{
-                      padding: "12px 14px",
-                      borderBottom: `1px solid ${COLORS.ink}0e`,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {template.dimension}
-                  </td>
-                  <td
-                    style={{
-                      padding: "12px 14px",
-                      borderBottom: `1px solid ${COLORS.ink}0e`,
-                      color: `${COLORS.ink}b0`,
-                    }}
-                  >
-                    {template.formats}
-                  </td>
-                  <td
-                    style={{
-                      padding: "12px 14px",
-                      borderBottom: `1px solid ${COLORS.ink}0e`,
-                      color: `${COLORS.ink}b0`,
-                    }}
-                  >
-                    {template.ownerOrSource}
-                  </td>
-                  <td
-                    style={{
-                      padding: "12px 14px",
-                      borderBottom: `1px solid ${COLORS.ink}0e`,
-                      color: `${COLORS.ink}cc`,
-                    }}
-                  >
-                    {template.unlocks}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {view.ledger.length === 0 ? (
+          <div style={{ padding: "22px 18px", color: `${COLORS.ink}99`, fontSize: 13 }}>
+            No load events recorded yet for {tenant.name}.
+          </div>
+        ) : (
+          view.ledger.map((e, i) => (
+            <div
+              key={`${e.what}-${i}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gap: 14,
+                padding: "12px 18px",
+                borderBottom:
+                  i === view.ledger.length - 1
+                    ? "none"
+                    : `1px solid ${COLORS.ink}10`,
+                fontSize: 12,
+              }}
+            >
+              <strong style={{ fontWeight: 600 }}>{e.what}</strong>
+              <span style={{ color: `${COLORS.ink}99` }}>
+                {e.when} · {e.who}
+              </span>
+            </div>
+          ))
+        )}
       </section>
     </div>
   );
