@@ -24,11 +24,11 @@ The checkpoint makes completion measurable by module and separates strict
 
 ## Current Snapshot
 
-- Strict completion: 8 / 20 rows = 40%.
-- Weighted execution signal: 13.5 / 20 = 67.5%.
-- Not-started blocker: T239.
-- In-progress rows needing durable evidence: T233, T234, T238, T240, T242,
-  T243, T244, T245, T247, T248, T250.
+- Strict completion: 10 / 20 rows = 50%.
+- Weighted execution signal: 15 / 20 = 75%.
+- Not-started blockers: none.
+- In-progress rows needing durable evidence: T234, T238, T240, T242, T243,
+  T244, T245, T247, T248, T250.
 
 ## Boundary
 

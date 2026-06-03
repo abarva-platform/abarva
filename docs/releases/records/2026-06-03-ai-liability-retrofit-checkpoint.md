@@ -10,9 +10,10 @@
 
 ## Plain-English Summary
 
-Adds a single completion checkpoint for the AI liability retrofit wave. The
-checkpoint shows which T231-T250 controls are done, in progress, or not
-started, and names the remaining pilot blockers without overstating readiness.
+Refreshes the completion checkpoint for the AI liability retrofit wave. The
+checkpoint shows which T231-T250 controls are done or in progress after the
+latest merges, and names the remaining pilot blockers without overstating
+readiness.
 
 ## Layer Impact
 
@@ -64,5 +65,6 @@ Revert this PR. No runtime or data rollback is required.
 
 T251 remains `In progress` until every row in T231-T250 is `Done` with
 implementation or accepted external evidence. Current strict completion is
-8 / 20 rows = 40%; the weighted signal is 13.5 / 20 = 67.5%; the only
-not-started blocker is T239.
+10 / 20 rows = 50%; the weighted signal is 15 / 20 = 75%; there are no
+remaining `Not started` rows, but 10 rows still require durable evidence,
+broader coverage, or live persistence.

@@ -31,25 +31,25 @@ const release = read(releasePath);
 
 [
   "Backlog row: T251",
-  "Strict completion: 8 / 20 rows = 40%.",
-  "Weighted signal: 13.5 / 20 = 67.5%.",
-  "| T233 | PR #2898 opened with Sentinel active pattern card AI-assisted labels",
-  "| T234 | PR #2898 opened with the from-thread `promotionGate` contract",
-  "| T239 | Source external actions need explicit human gates.",
+  "Strict completion: 10 / 20 rows = 50%.",
+  "Weighted signal: 15 / 20 = 75%.",
+  "| Done | T231, T232, T233, T235, T236, T237, T239, T241, T246, T249 | 10 |",
+  "| Not started | None | 0 |",
+  "| T234 | PR #2902 is open with the consuming Intelligence pattern-to-Move approval dialog",
   "T251 closes only when strict completion reaches 100%.",
 ].forEach((snippet) => requireSnippet(checkpointPath, checkpoint, snippet));
 
 [
   "Do not treat the wave as pilot-complete",
-  "T239: Source external-action human gate",
-  "T234: consuming pattern-to-Move approval dialog",
+  "T234: merge the consuming pattern-to-Move approval dialog",
+  "T250: CI coverage across every audited surface",
   "node scripts/ai-liability/verify-retrofit-completion-checkpoint.mjs",
 ].forEach((snippet) => requireSnippet(runbookPath, runbook, snippet));
 
 [
   "Backlog: T251",
-  "Strict completion: 8 / 20 rows = 40%.",
-  "Not-started blocker: T239.",
+  "Strict completion: 10 / 20 rows = 50%.",
+  "Not-started blockers: none.",
   "does not\nclaim pilot completion",
 ].forEach((snippet) => requireSnippet(buildPath, build, snippet));
 
@@ -58,6 +58,7 @@ const release = read(releasePath);
   "internal-admin",
   "T251 remains `In progress`",
   "Pass: `node scripts/ai-liability/verify-retrofit-completion-checkpoint.mjs`",
+  "10 / 20 rows = 50%",
 ].forEach((snippet) => requireSnippet(releasePath, release, snippet));
 
 const failed = checks.filter((check) => check.status === "fail");

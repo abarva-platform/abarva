@@ -49,8 +49,8 @@ The weighted signal is useful for planning and sequencing, but only strict
 
 ## Current Follow-Up Queue
 
-1. T239: Source external-action human gate for RFP send, contract draft commit,
-   and vendor notification.
-2. T234: consuming pattern-to-Move approval dialog with persisted human
-   justification and evidence packet.
-3. T250: CI coverage across every audited surface.
+1. T234: merge the consuming pattern-to-Move approval dialog with persisted
+   human justification and evidence packet.
+2. T250: CI coverage across every audited surface.
+3. T238/T240: finish Source vendor-recommendation and savings/cost assumption
+   coverage beyond the completed external-action gate.
