@@ -11,6 +11,7 @@
 
 import "server-only";
 
+import { createHash } from "node:crypto";
 import {
   CONTENT_HASH_PARSE_CACHE_VERSION,
   withContentHashParseCache,
@@ -40,6 +41,7 @@ export const AGENT_ATTACHMENT_PREVIEW_MAX_CHARS = 4000;
 
 export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_BYTES = 500 * 1024;
 export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_PAGES_EXCLUSIVE = 4;
+export const AGENT_RAW_MODE_TOKEN_ESTIMATE_BYTES_PER_TOKEN = 3;
 
 const PDF_MIME = "application/pdf";
 const DOCX_MIME =
@@ -69,11 +71,22 @@ export interface AgentAttachmentSmallDocumentShortcut {
   };
 }
 
+export interface AgentAttachmentRawModeEscape {
+  eligible: boolean;
+  requiresUserApproval: true;
+  route: "claude-native-pdf";
+  reason: "pdf_native_last_resort" | "not_pdf";
+  estimatedTokensPerTurn: number;
+  parserBugTicketId: string | null;
+  costWarning: string;
+}
+
 export interface AgentAttachmentParseMetadata {
   pageCount: number | null;
   tableCount: number | null;
   parserId: string | null;
   smallDocumentShortcut: AgentAttachmentSmallDocumentShortcut | null;
+  rawModeEscape: AgentAttachmentRawModeEscape | null;
 }
 
 export interface AgentAttachmentParseResult {
@@ -154,6 +167,39 @@ export function classifySmallPdfNativeShortcut(args: {
   };
 }
 
+export function buildRawModeEscape(args: {
+  mimeType: string;
+  byteSize: number;
+  contentHash: string;
+}): AgentAttachmentRawModeEscape | null {
+  const estimatedTokensPerTurn = estimateRawModeTokens(args.byteSize);
+  if (args.mimeType !== PDF_MIME) {
+    return null;
+  }
+  return {
+    eligible: true,
+    requiresUserApproval: true,
+    route: "claude-native-pdf",
+    reason: "pdf_native_last_resort",
+    estimatedTokensPerTurn,
+    parserBugTicketId: `parser-bug-${args.contentHash.slice(0, 12)}`,
+    costWarning: formatRawModeCostWarning(estimatedTokensPerTurn),
+  };
+}
+
+export function estimateRawModeTokens(byteSize: number): number {
+  if (!Number.isFinite(byteSize) || byteSize <= 0) return 0;
+  return Math.max(
+    1,
+    Math.ceil(byteSize / AGENT_RAW_MODE_TOKEN_ESTIMATE_BYTES_PER_TOKEN),
+  );
+}
+
+export function formatRawModeCostWarning(tokens: number): string {
+  const roundedThousands = Math.max(1, Math.ceil(tokens / 1000));
+  return `Raw mode will send the original PDF to the model and may use about ${roundedThousands}k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.`;
+}
+
 /**
  * Best-effort server-side text extraction. NEVER throws — every parser
  * is wrapped in try/catch so a malformed PDF can't tank the upload
@@ -185,6 +231,7 @@ export async function extractAgentAttachmentParseResult(args: {
           tableCount: args.mimeType === "text/csv" ? 1 : null,
           parserId: "plain-text",
           smallDocumentShortcut: null,
+          rawModeEscape: null,
         },
       };
     }
@@ -204,6 +251,7 @@ export async function extractAgentAttachmentParseResult(args: {
           tableCount: null,
           parserId: "docx-mammoth",
           smallDocumentShortcut: null,
+          rawModeEscape: null,
         },
       }));
     }
@@ -240,6 +288,7 @@ async function extractCachedAgentPdfText(args: {
               tableCount: result.tableCount,
               parserId: DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
               smallDocumentShortcut: null,
+              rawModeEscape: null,
             },
           };
         },
@@ -294,6 +343,11 @@ function withSmallPdfShortcut(
         byteSize: args.buffer.byteLength,
         pageCount: result.metadata.pageCount,
       }),
+      rawModeEscape: buildRawModeEscape({
+        mimeType: args.mimeType,
+        byteSize: args.buffer.byteLength,
+        contentHash: hashBuffer(args.buffer),
+      }),
     },
   };
 }
@@ -322,6 +376,7 @@ async function extractPdfResult(
         tableCount,
         parserId: "pdf-parse",
         smallDocumentShortcut: null,
+        rawModeEscape: null,
       },
     };
   } finally {
@@ -373,6 +428,7 @@ async function extractXlsxResult(
       tableCount: worksheetCount,
       parserId: "exceljs-xlsx",
       smallDocumentShortcut: null,
+      rawModeEscape: null,
     },
   };
 }
@@ -385,6 +441,7 @@ function emptyParseResult(parserId: string | null): AgentAttachmentParseResult {
       tableCount: null,
       parserId,
       smallDocumentShortcut: null,
+      rawModeEscape: null,
     },
   };
 }
@@ -396,6 +453,10 @@ function parsePositiveInteger(
   if (!raw) return fallback;
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function hashBuffer(buffer: Buffer): string {
+  return createHash("sha256").update(buffer).digest("hex");
 }
 
 /**

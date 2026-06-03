@@ -1,6 +1,8 @@
 import { clearContentHashParseCacheForTests } from "../../ingestion/content-hash-parse-cache";
 import {
+  buildRawModeEscape,
   classifySmallPdfNativeShortcut,
+  estimateRawModeTokens,
   extractAgentAttachmentParseResult,
   extractAgentAttachmentText,
 } from "../attachments";
@@ -117,6 +119,16 @@ describe("agent attachment parsing", () => {
             maxPagesExclusive: 4,
           },
         },
+        rawModeEscape: {
+          eligible: true,
+          requiresUserApproval: true,
+          route: "claude-native-pdf",
+          reason: "pdf_native_last_resort",
+          estimatedTokensPerTurn: 3,
+          parserBugTicketId: "parser-bug-86edbaa24831",
+          costWarning:
+            "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+        },
       },
     });
     expect(mockDocumentIntelligencePost).toHaveBeenCalledTimes(1);
@@ -167,6 +179,16 @@ describe("agent attachment parsing", () => {
             maxBytes: 500 * 1024,
             maxPagesExclusive: 4,
           },
+        },
+        rawModeEscape: {
+          eligible: true,
+          requiresUserApproval: true,
+          route: "claude-native-pdf",
+          reason: "pdf_native_last_resort",
+          estimatedTokensPerTurn: 3,
+          parserBugTicketId: "parser-bug-86edbaa24831",
+          costWarning:
+            "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
         },
       },
     });
@@ -230,5 +252,35 @@ describe("agent attachment parsing", () => {
         maxPagesExclusive: 6,
       },
     });
+  });
+
+  it("builds a PDF raw-mode escape hatch with explicit approval and cost warning", () => {
+    expect(estimateRawModeTokens(9_001)).toBe(3001);
+    expect(
+      buildRawModeEscape({
+        mimeType: "application/pdf",
+        byteSize: 9_001,
+        contentHash: "abc123def4567890",
+      }),
+    ).toEqual({
+      eligible: true,
+      requiresUserApproval: true,
+      route: "claude-native-pdf",
+      reason: "pdf_native_last_resort",
+      estimatedTokensPerTurn: 3001,
+      parserBugTicketId: "parser-bug-abc123def456",
+      costWarning:
+        "Raw mode will send the original PDF to the model and may use about 4k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+    });
+  });
+
+  it("does not offer raw mode for non-PDF uploads", () => {
+    expect(
+      buildRawModeEscape({
+        mimeType: "text/plain",
+        byteSize: 1_000,
+        contentHash: "abc123def4567890",
+      }),
+    ).toBeNull();
   });
 });

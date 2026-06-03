@@ -215,6 +215,20 @@ export async function POST(req: NextRequest) {
               },
             }
           : null,
+        raw_mode_escape: parseResult.metadata.rawModeEscape
+          ? {
+              eligible: parseResult.metadata.rawModeEscape.eligible,
+              requires_user_approval:
+                parseResult.metadata.rawModeEscape.requiresUserApproval,
+              route: parseResult.metadata.rawModeEscape.route,
+              reason: parseResult.metadata.rawModeEscape.reason,
+              estimated_tokens_per_turn:
+                parseResult.metadata.rawModeEscape.estimatedTokensPerTurn,
+              parser_bug_ticket_id:
+                parseResult.metadata.rawModeEscape.parserBugTicketId,
+              cost_warning: parseResult.metadata.rawModeEscape.costWarning,
+            }
+          : null,
       },
       dataProtection,
     },

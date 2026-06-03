@@ -48,6 +48,19 @@ jest.mock("@/lib/agent/attachments", () => {
                   },
                 }
               : null,
+          rawModeEscape:
+            args.mimeType === "application/pdf"
+              ? {
+                  eligible: true,
+                  requiresUserApproval: true,
+                  route: "claude-native-pdf",
+                  reason: "pdf_native_last_resort",
+                  estimatedTokensPerTurn: 342,
+                  parserBugTicketId: "parser-bug-mock",
+                  costWarning:
+                    "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+                }
+              : null,
         },
       })),
   };
@@ -204,6 +217,15 @@ describe("POST /api/v1/agent/attachments", () => {
             max_pages_exclusive: number;
           };
         } | null;
+        raw_mode_escape: {
+          eligible: boolean;
+          requires_user_approval: boolean;
+          route: string;
+          reason: string;
+          estimated_tokens_per_turn: number;
+          parser_bug_ticket_id: string | null;
+          cost_warning: string;
+        } | null;
       };
       dataProtection: { decision: string; evidenceExtractionAllowed: boolean };
     };
@@ -226,6 +248,16 @@ describe("POST /api/v1/agent/attachments", () => {
           max_bytes: 500 * 1024,
           max_pages_exclusive: 4,
         },
+      },
+      raw_mode_escape: {
+        eligible: true,
+        requires_user_approval: true,
+        route: "claude-native-pdf",
+        reason: "pdf_native_last_resort",
+        estimated_tokens_per_turn: 342,
+        parser_bug_ticket_id: "parser-bug-mock",
+        cost_warning:
+          "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
       },
     });
     expect(body.dataProtection).toMatchObject({
