@@ -403,10 +403,10 @@ export function sourceEventRowToSummary(
 // the URL slug. UUID hits the existing primary-key path; anything
 // else falls through to event_code lookup. Tenant scope on
 // client_key is preserved.
-const UUID_REGEX =
+export const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function isUuid(value: string): boolean {
+export function isUuid(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
@@ -455,6 +455,14 @@ async function getPersistedSourceEventRow(
     seedEvent.code,
     clientKey,
   )) as SourceEventRow | null;
+}
+
+export async function resolveSourceEventUuidForClient(
+  eventId: string,
+  clientKey: string,
+): Promise<string | null> {
+  const persistedEvent = await getPersistedSourceEventRow(eventId, clientKey);
+  return persistedEvent?.id ?? null;
 }
 
 async function getCanonicalAdminClientFallback(): Promise<{

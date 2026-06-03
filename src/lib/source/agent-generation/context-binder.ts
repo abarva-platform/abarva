@@ -13,7 +13,11 @@ import {
   listEvidenceStatesForEvent,
   listGateCriterionStatesForEvent,
 } from '@/lib/source/canvas-substrate/queries';
-import { getSourcingEvent } from '@/lib/source/queries';
+import {
+  getSourcingEvent,
+  isUuid,
+  resolveSourceEventUuidForClient,
+} from '@/lib/source/queries';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getActiveClientRow } from '@/lib/active-client';
 import type { SourceGenerationContext } from './types';
@@ -39,19 +43,37 @@ export async function buildSourceGenerationContext(
       name: activeClient?.name,
     }) ?? event.accountName;
 
+  let substrateEventId = event.id;
+  if (!isUuid(substrateEventId)) {
+    if (!activeClient) return null;
+    substrateEventId =
+      (await resolveSourceEventUuidForClient(
+        eventIdOrCode,
+        activeClient.key,
+      ).catch(() => null)) ??
+      (event.code && event.code !== eventIdOrCode
+        ? await resolveSourceEventUuidForClient(
+            event.code,
+            activeClient.key,
+          ).catch(() => null)
+        : null) ??
+      substrateEventId;
+  }
+  if (!isUuid(substrateEventId)) return null;
+
   // The substrate queries take a UUID. event.id is always a UUID
   // even when the URL slug is a code.
   const [artifactStates, gateCriteria, evidence] = await Promise.all([
-    listArtifactStatesForEvent(event.id),
-    listGateCriterionStatesForEvent(event.id),
-    listEvidenceStatesForEvent(event.id),
+    listArtifactStatesForEvent(substrateEventId),
+    listGateCriterionStatesForEvent(substrateEventId),
+    listEvidenceStatesForEvent(substrateEventId),
   ]);
 
   return {
     tenantKey: activeClient?.key ?? 'unknown',
     tenantName,
     event: {
-      id: event.id,
+      id: substrateEventId,
       code: event.code,
       name: event.name,
       archetype: event.archetype ?? null,
