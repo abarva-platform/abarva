@@ -14,7 +14,9 @@
 // simplicity in this slice; streaming arrives when the canvas surfaces
 // a progress UI.
 
+import { createHash, randomUUID } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -23,6 +25,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import {
   buildSourceGenerationContext,
   collectUpstreamBodies,
@@ -35,6 +38,23 @@ import {
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
 } from "@/lib/source/canvas-substrate/types";
+import {
+  buildSourceArtifactBlobPath,
+  registerSourceArtifactUpload,
+  type SourceArtifactRegistryRecord,
+} from "@/lib/source/artifact-registry";
+import { specByCode } from "@/lib/source/canonical-specs";
+
+const REGISTRY_STORAGE_BUCKET = "source-artifacts";
+const REGISTRY_GENERATED_MIME = "text/markdown";
+
+function safeRegistryFilename(
+  artifactCode: string,
+  artifactId: string,
+): string {
+  const stem = artifactCode.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 90);
+  return `${stem || "source-generated-artifact"}-${artifactId.slice(0, 8)}.md`;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -312,6 +332,71 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   const view: SourceEventArtifactState = artifactStateRowToView(
     bodyWrite.data as unknown as SourceEventArtifactStateRow,
   );
+
+  // Also persist the generated body to the source_artifacts registry so the
+  // canvas Document tab's "Stored documents" shelf has a row to render. The
+  // registry is the canonical surface for both uploads and AI drafts —
+  // before this brick, the body-only update never created a registry row,
+  // so the shelf stayed at "No DB-backed documents yet." even after a
+  // successful generation. Best-effort: a registry failure is logged but
+  // does not fail the route, since the substrate body already persisted.
+  let registryArtifact: SourceArtifactRegistryRecord | null = null;
+  try {
+    const spec = specByCode(artifactCode);
+    const family = spec?.family ?? "other";
+    const registryArtifactId = randomUUID();
+    const substrateTenantKey = clientKeyToInventorySubstrateKey(ctx.tenantKey);
+    const filename = safeRegistryFilename(artifactCode, registryArtifactId);
+    const blobUri = buildSourceArtifactBlobPath({
+      tenantKey: substrateTenantKey,
+      sourceEventId: ctx.event.id,
+      artifactId: registryArtifactId,
+      filename,
+    });
+    const buffer = Buffer.from(body, "utf8");
+    const sha256 = createHash("sha256").update(buffer).digest("hex");
+    const storage = getObjectStorageAdapter();
+    await storage.upload(REGISTRY_STORAGE_BUCKET, blobUri, buffer, {
+      contentType: REGISTRY_GENERATED_MIME,
+      cacheControl: "private, max-age=0",
+      upsert: false,
+    });
+    try {
+      registryArtifact = await registerSourceArtifactUpload({
+        artifactId: registryArtifactId,
+        tenantKey: substrateTenantKey,
+        sourceEventId: ctx.event.id,
+        stageKey: artifactRow.stage_key,
+        artifactFamily: family,
+        artifactKind: artifactCode,
+        sourceOrigin: "generated",
+        sourceFormat: "markdown",
+        originalName: filename,
+        blobUri,
+        uploaderUserId: currentUser?.clerkUserId ?? tenancy.userId,
+        mimeType: REGISTRY_GENERATED_MIME,
+        sizeBytes: buffer.byteLength,
+        sha256,
+        dataClassification: "Confidential",
+        createdBy: currentUser?.clerkUserId ?? tenancy.userId,
+      });
+    } catch (registryError) {
+      // Roll back the blob so the bucket doesn't leak orphaned bytes,
+      // then log and continue — the substrate body is still persisted.
+      await storage
+        .remove(REGISTRY_STORAGE_BUCKET, [blobUri])
+        .catch(() => undefined);
+      throw registryError;
+    }
+  } catch (registryError) {
+    console.error(
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] registry persist failed",
+      registryError instanceof Error
+        ? registryError.message
+        : String(registryError),
+    );
+  }
+
   const activityWrite = await sourceWrite.insertActivityLog({
     eventId: ctx.event.id,
     clientKey: ctx.tenantKey,
@@ -342,6 +427,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   return Response.json({
     ok: true,
     artifact: view,
+    registryArtifact,
     generation: {
       ...generationMetadata,
       latencyMs: Date.now() - startedAt,
