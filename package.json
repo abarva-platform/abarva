@@ -113,6 +113,8 @@
     "azure:connectivity:smoke": "npx tsx src/scripts/azure-connectivity-smoke.ts",
     "azure:load:primary-surfaces": "node scripts/load/azure-primary-surfaces.mjs",
     "load:backend-regression:check": "node scripts/load/azure-primary-surfaces.mjs --base-url https://example.com --duration-seconds 1 --concurrency 1 --think-time-ms 0 --p95-target-ms 8000 --dry-run",
+    "load:top-journeys": "node scripts/load/top-user-journeys.mjs",
+    "load:top-journeys:check": "node scripts/load/verify-top-user-journeys.mjs",
     "azure:agent-provider-overload:smoke": "node scripts/resilience/agent-provider-overload-smoke.mjs",
     "azure:servicebus:dlq-drill": "npx tsx src/scripts/azure-servicebus-dlq-drill.ts",
     "azure:resource:parity": "node scripts/azure/verify-resource-parity.mjs",

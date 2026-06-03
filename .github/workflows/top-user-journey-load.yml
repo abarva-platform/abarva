@@ -1,0 +1,132 @@
+name: Top User Journey Load
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to test"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - azure-lab
+          - staging
+          - production
+      duration_seconds:
+        description: "Load duration in seconds"
+        required: false
+        default: "300"
+        type: string
+      concurrency:
+        description: "Concurrent workers"
+        required: false
+        default: "10"
+        type: string
+      p95_target_ms:
+        description: "Fail when global p95 exceeds this target"
+        required: false
+        default: "8000"
+        type: string
+      require_2xx:
+        description: "Require 2xx responses instead of allowing auth redirects"
+        required: false
+        default: true
+        type: boolean
+      journeys:
+        description: "Optional comma-separated subset of journey ids"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  top-user-journey-load:
+    name: Top user journey load
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve target
+        id: target
+        run: |
+          set -euo pipefail
+
+          target="${{ inputs.environment }}"
+          case "$target" in
+            production)
+              base_url="${{ secrets.PRODUCTION_BASE_URL }}"
+              cookie="${{ secrets.PRODUCTION_TOP_JOURNEY_COOKIE }}"
+              ;;
+            staging)
+              base_url="${{ secrets.STAGING_BASE_URL }}"
+              cookie="${{ secrets.STAGING_TOP_JOURNEY_COOKIE }}"
+              ;;
+            azure-lab)
+              base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
+              cookie="${{ secrets.AZURE_LAB_TOP_JOURNEY_COOKIE }}"
+              ;;
+            *)
+              echo "Unknown top-journey environment: $target" >&2
+              exit 2
+              ;;
+          esac
+
+          if [[ -z "$base_url" ]]; then
+            echo "Missing base URL secret for $target." >&2
+            exit 2
+          fi
+
+          if [[ -z "$cookie" && "${{ inputs.require_2xx }}" = "true" ]]; then
+            echo "Missing authenticated cookie secret for $target while require_2xx=true." >&2
+            exit 2
+          fi
+
+          echo "base_url=$base_url" >> "$GITHUB_OUTPUT"
+          {
+            echo "cookie<<EOF"
+            echo "$cookie"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run top user journey load
+        env:
+          TOP_JOURNEY_BASE_URL: ${{ steps.target.outputs.base_url }}
+          TOP_JOURNEY_COOKIE: ${{ steps.target.outputs.cookie }}
+        run: |
+          set -euo pipefail
+
+          args=(
+            --duration-seconds "${{ inputs.duration_seconds }}"
+            --concurrency "${{ inputs.concurrency }}"
+            --p95-target-ms "${{ inputs.p95_target_ms }}"
+          )
+
+          if [ "${{ inputs.require_2xx }}" = "true" ]; then
+            args+=(--require-2xx)
+          fi
+
+          if [ -n "${{ inputs.journeys }}" ]; then
+            args+=(--journeys "${{ inputs.journeys }}")
+          fi
+
+          npm run load:top-journeys -- "${args[@]}" | tee top-user-journey-load.json
+
+      - name: Upload top user journey load report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: top-user-journey-load
+          path: top-user-journey-load.json
+          retention-days: 30
+          if-no-files-found: warn
