@@ -191,6 +191,25 @@ describe('POST /api/v1/programs/originate/from-thread', () => {
       .mockResolvedValueOnce([{ topic_key: 'PAT-1', title: 'Pattern One' }]);
     const res = await invoke({ threadId: 'th_1' });
     expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual(
+      expect.objectContaining({
+        sourceThreadId: 'th_1',
+        promotionGate: expect.objectContaining({
+          required: true,
+          source: 'intelligence_thread',
+          sourceThreadId: 'th_1',
+          minimumRationaleChars: 24,
+          requiredEvidence: [
+            'sourceThreadId',
+            'selectedPatternKey',
+            'humanPromotionRationale',
+          ],
+          decisionSupportWarning: expect.stringMatching(
+            /human owner must review evidence/i,
+          ),
+        }),
+      }),
+    );
     expect(azureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
       table: 'intelligence_threads',
       where: expect.objectContaining({ id: 'th_1', client_id: CTX.clientId }),
