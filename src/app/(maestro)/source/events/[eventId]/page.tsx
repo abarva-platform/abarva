@@ -9,6 +9,7 @@ import {
   listGateCriterionStatesForEvent,
   loadArtifactTemplate,
   buildVirtualEventScaffold,
+  mergeMissingVirtualScaffold,
 } from "@/lib/source/canvas-substrate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
@@ -61,18 +62,28 @@ export default async function SourceEventDetailPage({
       listEvidenceStatesForEvent(event.id),
     ],
   );
+  const scaffoldInput = {
+    sourceEventId: event.id,
+    tenantKey: activeClient?.key ?? "unknown",
+  };
   if (
     artifactStates.length === 0 &&
     gateCriterionStates.length === 0 &&
     evidenceStates.length === 0
   ) {
-    const virtualScaffold = buildVirtualEventScaffold({
-      sourceEventId: event.id,
-      tenantKey: activeClient?.key ?? "unknown",
-    });
+    const virtualScaffold = buildVirtualEventScaffold(scaffoldInput);
     artifactStates = virtualScaffold.artifactStates;
     gateCriterionStates = virtualScaffold.gateCriterionStates;
     evidenceStates = virtualScaffold.evidenceStates;
+  } else {
+    const merged = mergeMissingVirtualScaffold(scaffoldInput, {
+      artifactStates,
+      gateCriterionStates,
+      evidenceStates,
+    });
+    artifactStates = merged.artifactStates;
+    gateCriterionStates = merged.gateCriterionStates;
+    evidenceStates = merged.evidenceStates;
   }
   const registryArtifacts = await listSourceArtifactsForSourceEventId(
     event.id,

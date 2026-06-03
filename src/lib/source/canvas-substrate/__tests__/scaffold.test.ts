@@ -1,5 +1,6 @@
 import {
   buildEventScaffold,
+  mergeMissingVirtualScaffold,
   buildVirtualEventScaffold,
   expectedScaffoldRowCount,
 } from "../scaffold";
@@ -145,5 +146,66 @@ describe("buildVirtualEventScaffold", () => {
     expect(
       out.gateCriterionStates.some((row) => row.fromStage === "bafo"),
     ).toBe(true);
+  });
+});
+
+describe("mergeMissingVirtualScaffold", () => {
+  const input = {
+    sourceEventId: "evt-partial-pricing",
+    tenantKey: "apexretail",
+  };
+
+  it("fills missing later-stage artifacts when only early-stage substrate exists", () => {
+    const base = buildVirtualEventScaffold(input);
+    const strategyOnly = {
+      artifactStates: base.artifactStates.filter(
+        (row) => row.stage === "strategy",
+      ),
+      gateCriterionStates: base.gateCriterionStates.filter(
+        (row) => row.fromStage === "strategy",
+      ),
+      evidenceStates: base.evidenceStates.filter(
+        (row) => row.stage === "strategy",
+      ),
+    };
+
+    const merged = mergeMissingVirtualScaffold(input, strategyOnly);
+
+    expect(merged.artifactStates.some((row) => row.stage === "pricing")).toBe(
+      true,
+    );
+    expect(merged.artifactStates.some((row) => row.stage === "bafo")).toBe(
+      true,
+    );
+    expect(
+      merged.gateCriterionStates.some((row) => row.fromStage === "pricing"),
+    ).toBe(true);
+    expect(merged.evidenceStates.some((row) => row.stage === "bafo")).toBe(
+      true,
+    );
+  });
+
+  it("preserves persisted rows when matching virtual scaffold entries exist", () => {
+    const base = buildVirtualEventScaffold(input);
+    const persistedArtifact = {
+      ...base.artifactStates.find(
+        (row) => row.artifactCode === "d01_strategy_memo",
+      )!,
+      status: "approved" as const,
+      body: "Persisted authored memo",
+    };
+
+    const merged = mergeMissingVirtualScaffold(input, {
+      artifactStates: [persistedArtifact],
+    });
+
+    expect(
+      merged.artifactStates.find(
+        (row) => row.artifactCode === "d01_strategy_memo",
+      ),
+    ).toMatchObject({
+      status: "approved",
+      body: "Persisted authored memo",
+    });
   });
 });

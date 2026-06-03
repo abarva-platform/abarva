@@ -81,6 +81,12 @@ export interface VirtualScaffoldOutput {
   evidenceStates: SourceEventEvidence[];
 }
 
+type PersistedVirtualSlice = {
+  artifactStates?: SourceEventArtifactState[];
+  gateCriterionStates?: SourceEventGateCriterion[];
+  evidenceStates?: SourceEventEvidence[];
+};
+
 /**
  * Build the full per-event scaffold from canonical specs. Called once on event
  * creation and again by the backfill script for legacy events.
@@ -176,6 +182,45 @@ export function buildVirtualEventScaffold(
         created_at: nowIso,
         updated_at: nowIso,
       } as SourceEventEvidenceStateRow),
+    ),
+  };
+}
+
+/**
+ * Merge persisted substrate rows onto the canonical virtual scaffold.
+ *
+ * Why this exists:
+ * some legacy / seeded events have partial persisted substrate (for example,
+ * Strategy rows exist but Pricing / BAFO never got scaffolded). The older
+ * all-or-nothing fallback only rendered virtual rows when *all* three lists
+ * were empty, which left those later stages blank. This helper treats the
+ * virtual scaffold as the canonical baseline and overlays any persisted rows
+ * that do exist so missing stages still render with deterministic placeholders.
+ */
+export function mergeMissingVirtualScaffold(
+  input: ScaffoldInput,
+  persisted: PersistedVirtualSlice,
+): VirtualScaffoldOutput {
+  const virtual = buildVirtualEventScaffold(input);
+  const persistedArtifacts = new Map(
+    (persisted.artifactStates ?? []).map((row) => [row.artifactCode, row]),
+  );
+  const persistedCriteria = new Map(
+    (persisted.gateCriterionStates ?? []).map((row) => [row.criterionId, row]),
+  );
+  const persistedEvidence = new Map(
+    (persisted.evidenceStates ?? []).map((row) => [row.requirementId, row]),
+  );
+
+  return {
+    artifactStates: virtual.artifactStates.map(
+      (row) => persistedArtifacts.get(row.artifactCode) ?? row,
+    ),
+    gateCriterionStates: virtual.gateCriterionStates.map(
+      (row) => persistedCriteria.get(row.criterionId) ?? row,
+    ),
+    evidenceStates: virtual.evidenceStates.map(
+      (row) => persistedEvidence.get(row.requirementId) ?? row,
     ),
   };
 }
