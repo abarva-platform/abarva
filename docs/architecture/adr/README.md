@@ -18,5 +18,6 @@ This directory stores durable architecture decisions. New ADRs should use `ADR-t
 | [ADR-0009-release-environments-and-pilot-production.md](ADR-0009-release-environments-and-pilot-production.md) | Release Environments and Pilot Production         | Accepted | 2026-06-03 |
 | [ADR-0010-software-delivery-ai-led-dev-corpus-wave.md](ADR-0010-software-delivery-ai-led-dev-corpus-wave.md)   | Software Delivery and AI-Led Dev Corpus Wave      | Accepted | 2026-06-03 |
 | [ADR-0011-pdf-parser-routing-and-claude-fallback.md](ADR-0011-pdf-parser-routing-and-claude-fallback.md)       | PDF Parser Routing and Claude Fallback            | Accepted | 2026-06-03 |
+| [ADR-0012-cmk-byok-readiness.md](ADR-0012-cmk-byok-readiness.md)                                               | CMK/BYOK Readiness                                | Accepted | 2026-06-03 |
 
 Note: the legacy `0001-canonical-pattern-storage.md` predates this framework. The `ADR-0001-*` series starts the governance ADR set requested on 2026-06-01.
