@@ -109,6 +109,62 @@ describe('A2b · consumeOneMessage', () => {
     expect(calls.audit).toBe(0);
   });
 
+  it('waits for Defender for Storage scan proof before downloading or parsing', async () => {
+    const { ctx, calls } = makeCtx({
+      checkDefenderScan: jest.fn(() => ({
+        decision: 'retry',
+        scanResult: 'missing',
+        reason: 'defender_scan_result_missing',
+      })) as unknown as ConsumeContext['checkDefenderScan'],
+    });
+    const outcome = await consumeOneMessage(validMessage, ctx);
+
+    expect(outcome).toMatchObject({
+      status: 'transient_failure',
+      reason: 'defender_scan_result_missing',
+    });
+    expect(calls.download).toBe(0);
+    expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
+  it('quarantines Defender-malicious blobs before download or parsing', async () => {
+    const { ctx, calls } = makeCtx({
+      checkDefenderScan: jest.fn(() => ({
+        decision: 'quarantine',
+        scanResult: 'malicious',
+        reasonCode: 'malware.defender_storage',
+        message: 'Upload quarantined because Microsoft Defender for Storage reported a malicious blob.',
+      })) as unknown as ConsumeContext['checkDefenderScan'],
+    });
+    const outcome = await consumeOneMessage(validMessage, ctx);
+
+    expect(outcome).toMatchObject({
+      status: 'quarantined',
+      auditRowId: 'audit-1',
+      reasonCodes: ['malware.defender_storage'],
+    });
+    expect(calls.download).toBe(0);
+    expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
+  it('continues to download and parse after Defender reports no threats found', async () => {
+    const { ctx, calls } = makeCtx({
+      checkDefenderScan: jest.fn(() => ({
+        decision: 'allow',
+        scanResult: 'no_threats_found',
+        scanTimeUtc: '2026-06-03T13:35:00Z',
+      })) as unknown as ConsumeContext['checkDefenderScan'],
+    });
+    const outcome = await consumeOneMessage(validMessage, ctx);
+
+    expect(outcome.status).toBe('accepted');
+    expect(calls.download).toBe(1);
+    expect(calls.pipeline).toBe(1);
+    expect(calls.audit).toBe(1);
+  });
+
   it('returns transient_failure when download throws and writes an audit row', async () => {
     const { ctx, calls } = makeCtx({
       download: jest.fn(async () => {

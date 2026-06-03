@@ -35,6 +35,12 @@ import {
   type AzureLandingZoneMessage,
   type IngestionOutcome,
 } from '@/lib/ingestion/azure-landing-zone-types';
+import {
+  buildDefenderStorageProtectionResult,
+  evaluateDefenderStorageScanTags,
+  hasDefenderScanMetadata,
+  type DefenderStorageScanGateResult,
+} from '@/lib/ingestion/defender-storage-scan-gate';
 
 /**
  * Downloads the bytes for an inbound message. The caller passes in a
@@ -58,6 +64,10 @@ export type AuditWriter = (args: {
 
 export type PilotLedgerWriter = (plan: PilotIngestionAuditOnlyWritePlan) => Promise<void>;
 
+export type DefenderStorageScanGate = (
+  message: AzureLandingZoneMessage,
+) => Promise<DefenderStorageScanGateResult> | DefenderStorageScanGateResult;
+
 /**
  * Optional downstream-pipeline hook. After the guard passes, the
  * caller decides what to do with the bytes — write to the broker
@@ -75,6 +85,7 @@ export interface ConsumeContext {
   readonly writeAudit: AuditWriter;
   readonly runPipeline: IngestionPipeline;
   readonly writePilotLedger?: PilotLedgerWriter;
+  readonly checkDefenderScan?: DefenderStorageScanGate;
 }
 
 function metadataString(
@@ -151,6 +162,50 @@ export async function consumeOneMessage(
       reason,
       durationMs: Date.now() - t0,
     };
+  }
+
+  // ── 2. Defender malware scan gate ───────────────────────────────
+  const defenderScan = ctx.checkDefenderScan
+    ? await ctx.checkDefenderScan(msg)
+    : hasDefenderScanMetadata(msg.metadata)
+      ? evaluateDefenderStorageScanTags(msg.metadata)
+      : null;
+
+  if (defenderScan?.decision === 'retry') {
+    const outcome: IngestionOutcome = {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: defenderScan.reason,
+      durationMs: Date.now() - t0,
+    };
+    try {
+      await ctx.writeAudit({ message: msg, outcome });
+    } catch {
+      // Let Service Bus retry; no parsing may occur before Defender scan proof.
+    }
+    return outcome;
+  }
+
+  if (defenderScan?.decision === 'quarantine') {
+    const protection = buildDefenderStorageProtectionResult(defenderScan);
+    const outcome: IngestionOutcome = {
+      status: 'quarantined',
+      auditRowId: '',
+      reasonCodes: [defenderScan.reasonCode],
+      durationMs: Date.now() - t0,
+    };
+    const auditRowId = await ctx.writeAudit({
+      message: msg,
+      outcome,
+      protectionResult: protection,
+    });
+    const outcomeWithAudit = { ...outcome, auditRowId };
+    return (await writePilotLedgerOrTransient({
+      ctx,
+      message: msg,
+      outcome: outcomeWithAudit,
+      protectionResult: protection,
+    })) ?? outcomeWithAudit;
   }
 
   // ── 2. Download ──────────────────────────────────────────────────

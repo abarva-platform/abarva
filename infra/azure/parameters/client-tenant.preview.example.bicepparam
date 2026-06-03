@@ -15,6 +15,8 @@ param postgresAdministratorLoginPassword = readEnvironmentVariable('POSTGRES_ADM
 
 param serviceBusDataOwnerPrincipalIds = []
 param auditLogRetentionDays = 365
+param enableDefenderStorageMalwareScanning = true
+param defenderStorageScanCapGbPerMonth = 1000
 
 param plainRuntimeEnv = [
   {
