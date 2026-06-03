@@ -12,6 +12,11 @@ connectivity, and tenant isolation. This plan connects the product-level pilot
 runbooks with the Azure test layers already documented in
 `docs/architecture/azure/AZURE-FULL-STACK-TEST-LAYERS.md`.
 
+The claim and metadata contract for the SSO side of this plan lives in
+`docs/security/clerk-sso-claim-contract.md`. Run
+`npm run auth:clerk-sso:verify` before a pilot SSO rehearsal to confirm the
+repository still documents and enforces the expected Clerk metadata contract.
+
 This is a test plan, not a claim that every test has already passed for a live
 client.
 
@@ -45,11 +50,25 @@ mapping and audit-trail problems.
 
 1. Register the client organization and allowed domains in Clerk.
 2. Configure the client IdP as SAML or OIDC, depending on the client standard.
-3. Map IdP claims to AbarVa user, organization, client, and role claims.
+3. Map IdP claims to AbarVa user, organization, client, and role claims per
+   `docs/security/clerk-sso-claim-contract.md`.
 4. Invite the test roster.
 5. Verify sign-in for each role.
 6. Verify sign-out and session expiry behavior.
 7. Capture denied access for routes each role should not reach.
+
+Minimum metadata that must resolve after sign-in:
+
+| Clerk metadata | Required behavior |
+| --- | --- |
+| `publicMetadata.clientId` | Matches the one approved client key for the organization. |
+| `publicMetadata.tenantRoles` | Contains only roles for that same client key. |
+| `publicMetadata.role` | Does not grant client users AbarVa platform-admin rights. |
+| `publicMetadata.person_id` | Optional; present only when a data-plane `persons` row is known. |
+
+Client SSO is single-client scoped. Do not use one Clerk Organization for
+multiple pilot clients, and do not give a client user `tenantRoles` entries for
+another client.
 
 ## Connectivity Flow
 
@@ -95,7 +114,11 @@ Every rehearsal produces:
 
 - date, client, environment, commit SHA, and deployment URL,
 - IdP configuration summary,
+- `npm run auth:clerk-sso:verify` output,
 - test roster and role matrix,
+- Clerk Organization id and domain-verification evidence,
+- `publicMetadata.clientId` / `publicMetadata.tenantRoles` evidence for each
+  test user,
 - pass/fail table,
 - command outputs or screenshots,
 - unresolved gaps with owners and due dates,
