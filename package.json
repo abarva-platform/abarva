@@ -12,6 +12,7 @@
     "secrets:scan": "gitleaks git --redact --no-banner",
     "secrets:staged": "gitleaks git --staged --redact --no-banner",
     "security:audit": "node scripts/security/npm-audit-report.mjs",
+    "security:pen-test-readiness:verify": "node scripts/security/verify-pen-test-readiness.mjs",
     "license:check": "node scripts/compliance/check-licenses.mjs",
     "sbom:check": "node scripts/compliance/generate-sbom.mjs",
     "sbom:generate": "node scripts/compliance/generate-sbom.mjs --output audit-artifacts/compliance/sbom.cdx.json",
