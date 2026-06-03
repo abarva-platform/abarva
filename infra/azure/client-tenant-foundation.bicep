@@ -54,6 +54,13 @@ param serviceBusDataOwnerPrincipalIds array = []
 @maxValue(2555)
 param auditLogRetentionDays int = environmentName == 'prod' ? 730 : 365
 
+@description('Enable Defender for Storage on-upload malware scanning for the private data-plane storage account.')
+param enableDefenderStorageMalwareScanning bool = true
+
+@description('Monthly Defender malware scan cap per private data-plane storage account. Use -1 for uncapped.')
+@minValue(-1)
+param defenderStorageScanCapGbPerMonth int = environmentName == 'prod' ? 10000 : 1000
+
 @description('Set true to deploy the app runtime after foundation, database, ingestion, and search are in place.')
 param deployAppRuntime bool = true
 
@@ -129,7 +136,7 @@ module foundation './foundation.bicep' = {
     deployPlaceholderContainerApp: true
     scaleTestMinReplicas: 0
     scaleTestMaxReplicas: environmentName == 'prod' ? 20 : 10
-    defenderPricingTier: environmentName == 'prod' ? 'Standard' : 'Free'
+    defenderPricingTier: enableDefenderStorageMalwareScanning || environmentName == 'prod' ? 'Standard' : 'Free'
   }
 }
 
@@ -229,6 +236,20 @@ module immutableAuditLog './immutable-audit-log.bicep' = {
   }
 }
 
+module defenderStorageMalware './defender-storage-malware.bicep' = if (enableDefenderStorageMalwareScanning) {
+  name: 'client-tenant-defender-storage-malware-${normalizedClientKey}'
+  scope: resourceGroup(privateDataplaneResourceGroupName)
+  dependsOn: [
+    foundation
+  ]
+  params: {
+    storageAccountName: privateDataplaneStorageAccountName
+    scanCapGbPerMonth: defenderStorageScanCapGbPerMonth
+    automatedResponse: 'BlobSoftDelete'
+    blobScanResultsOptions: 'BlobIndexTags'
+  }
+}
+
 module appRuntime './app-runtime-foundation.bicep' = if (deployAppRuntime) {
   name: 'client-tenant-app-runtime-${normalizedClientKey}'
   dependsOn: [
@@ -237,6 +258,7 @@ module appRuntime './app-runtime-foundation.bicep' = if (deployAppRuntime) {
     eventIngestion
     search
     immutableAuditLog
+    defenderStorageMalware
   ]
   params: {
     location: location
@@ -267,3 +289,4 @@ output searchServiceName string = search.outputs.searchServiceName
 output serviceBusNamespaceName string = eventIngestion.outputs.serviceBusNamespaceName
 output auditLogContainerName string = immutableAuditLog.outputs.auditLogContainerName
 output auditLogRetentionDays int = immutableAuditLog.outputs.auditLogRetentionDays
+output defenderStorageMalwareScanEnabled bool = enableDefenderStorageMalwareScanning

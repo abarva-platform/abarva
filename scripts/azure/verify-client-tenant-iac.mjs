@@ -20,6 +20,7 @@ const REQUIRED_BICEP_SNIPPETS = [
   "module eventIngestion './event-ingestion-foundation.bicep'",
   "module search './search-foundation.bicep'",
   "module immutableAuditLog './immutable-audit-log.bicep'",
+  "module defenderStorageMalware './defender-storage-malware.bicep'",
   "module appRuntime './app-runtime-foundation.bicep'",
   "clientIsolation: 'single-client'",
 ];
@@ -31,6 +32,7 @@ const REQUIRED_PARAM_SNIPPETS = [
   "ABARVA_CLIENT_KEY",
   "ABARVA_DATA_PLANE_MODE",
   "param auditLogRetentionDays = 365",
+  "param enableDefenderStorageMalwareScanning = true",
 ];
 
 function read(relativePath) {

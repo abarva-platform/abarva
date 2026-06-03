@@ -116,6 +116,7 @@
     "azure:resource:parity": "node scripts/azure/verify-resource-parity.mjs",
     "azure:client-tenant-iac:verify": "node scripts/azure/verify-client-tenant-iac.mjs",
     "azure:immutable-audit-log:verify": "node scripts/azure/verify-immutable-audit-log.mjs",
+    "azure:defender-storage-malware:verify": "node scripts/azure/verify-defender-storage-malware.mjs",
     "data-plane:tenant-connection:verify": "node scripts/data-plane/verify-tenant-connection-resolution.mjs",
     "azure:security:audit": "node scripts/azure/audit-lab-security.mjs",
     "azure:observability:audit": "node scripts/azure/audit-observability.mjs",
