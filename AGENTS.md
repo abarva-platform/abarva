@@ -50,7 +50,9 @@ Every non-trivial change must be traceable as a controlled release candidate, no
 
 The canonical GitHub repository is `https://github.com/abarva-platform/abarva`. The former personal-account path `anandsundaram-hash/abarva` may redirect for a while, but new branches, PRs, release evidence, and automation should target the `abarva-platform` organization repo.
 
-`main` is protected by repository rulesets and merge queue. Do not push directly to `main`. Open a PR, wait for required checks, and merge through GitHub's merge queue unless Anand explicitly approves a break-glass path.
+`main` is protected by repository rulesets in speed mode. Do not push directly to `main`. Open a PR and use squash merge. The current speed-mode bar is intentionally PR-only for rapid agent execution: local validation is expected, but GitHub does not block merges on queued CI runners.
+
+Merge queue and the fuller pilot-hardening check suite can be re-enabled when the team moves from build speed to customer-pilot governance.
 
 If GitHub CLI auth behaves strangely on this machine, check for an invalid shell-level `GH_TOKEN`; prefer `env -u GH_TOKEN gh ...` so the GitHub CLI keychain credential is used.
 
