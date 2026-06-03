@@ -107,6 +107,25 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('dossierUrl: `/dossier/${decisionThread.id}`');
   });
 
+  it('requires and persists Intelligence pattern promotion approval evidence', () => {
+    expect(source).toContain('@/lib/programs/intelligence-promotion-approval');
+    expect(source).toContain('validateIntelligencePromotionApproval');
+    expect(source).toContain('normalizePromotionRationale');
+    expect(source).toContain('optionalStringArray');
+    expect(source).toContain('humanPromotionAccepted?: boolean | null');
+    expect(source).toContain('humanPromotionRationale?: string | null');
+    expect(source).toContain('promotionEvidenceRefs?: string[] | null');
+    expect(source).toContain("'intelligence_promotion_approval_required'");
+    expect(source).toContain('briefSnapshot.intelligence_promotion_gate');
+    expect(source).toContain("source: 'intelligence_thread'");
+    expect(source).toContain('source_thread_id: input.originatingIntelligenceSessionId');
+    expect(source).toContain('selected_pattern_key: input.matchedPatternId');
+    expect(source).toContain('human_promotion_accepted: input.humanPromotionAccepted === true');
+    expect(source).toContain('human_promotion_rationale: promotionApproval.rationale');
+    expect(source).toContain('evidence_refs: promotionApproval.evidenceRefs');
+    expect(source).toContain('accepted_by_user_id: tenancy.userId');
+  });
+
   it('accepts extended scaffold fields scopeBoundary and evidenceFamily', () => {
     expect(source).toContain('scopeBoundary?: string | null');
     expect(source).toContain('evidenceFamily?: string | null');

@@ -11,9 +11,13 @@
 // and applies each artifact incrementally so the right pane materializes
 // the agent's reasoning as it happens.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import {
+  INTELLIGENCE_PROMOTION_RATIONALE_MIN_CHARS,
+  requiresIntelligencePromotionGate,
+} from '@/lib/programs/intelligence-promotion-approval';
 import type {
   Artifact,
   BriefProgressArtifact,
@@ -375,6 +379,8 @@ export function ProgramOriginationWorkspace({
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [promotionRationale, setPromotionRationale] = useState('');
+  const [promotionApproved, setPromotionApproved] = useState(false);
 
   useEffect(() => {
     try {
@@ -473,6 +479,23 @@ export function ProgramOriginationWorkspace({
     setTurns(next);
   }, []);
 
+  const promotionEvidenceRefs = useMemo(
+    () =>
+      [
+        originatingIntelligenceSessionId
+          ? `sourceThreadId:${originatingIntelligenceSessionId}`
+          : null,
+        briefState.brief.matchedPatternId
+          ? `selectedPatternKey:${briefState.brief.matchedPatternId}`
+          : null,
+      ].filter((ref): ref is string => Boolean(ref)),
+    [briefState.brief.matchedPatternId, originatingIntelligenceSessionId],
+  );
+  const promotionGateRequired = requiresIntelligencePromotionGate({
+    originatingIntelligenceSessionId,
+    matchedPatternId: briefState.brief.matchedPatternId,
+  });
+
   const submitBriefForApproval = useCallback(async () => {
     const brief = briefState.brief;
     setSubmitting(true);
@@ -492,6 +515,15 @@ export function ProgramOriginationWorkspace({
           sponsor: brief.sponsor,
           lead: brief.lead,
           originatingIntelligenceSessionId,
+          humanPromotionRationale: promotionGateRequired
+            ? promotionRationale.trim()
+            : null,
+          humanPromotionAccepted: promotionGateRequired
+            ? promotionApproved
+            : null,
+          promotionEvidenceRefs: promotionGateRequired
+            ? promotionEvidenceRefs
+            : null,
           decisionThreadTitle: brief.programName || brief.problemStatement || null,
           decisionThreadOwnerRole: brief.sponsor || null,
         }),
@@ -535,7 +567,16 @@ export function ProgramOriginationWorkspace({
     } finally {
       setSubmitting(false);
     }
-  }, [briefState.brief, originatingIntelligenceSessionId, router, surface]);
+  }, [
+    briefState.brief,
+    originatingIntelligenceSessionId,
+    promotionEvidenceRefs,
+    promotionApproved,
+    promotionGateRequired,
+    promotionRationale,
+    router,
+    surface,
+  ]);
 
   const operatorChecklist = buildOperatorChecklist({ tenantName, turns, briefState });
 
@@ -665,6 +706,22 @@ export function ProgramOriginationWorkspace({
           registering={submitting}
           submitError={submitError}
           onSubmitForApproval={submitBriefForApproval}
+          promotionApproval={
+            promotionGateRequired
+              ? {
+                  required: true,
+                  sourceThreadId: originatingIntelligenceSessionId,
+                  selectedPatternKey: briefState.brief.matchedPatternId,
+                  evidenceRefs: promotionEvidenceRefs,
+                  rationale: promotionRationale,
+                  minimumRationaleChars:
+                    INTELLIGENCE_PROMOTION_RATIONALE_MIN_CHARS,
+                  approved: promotionApproved,
+                  onRationaleChange: setPromotionRationale,
+                  onApprovedChange: setPromotionApproved,
+                }
+              : null
+          }
         />
       </div>
     </main>
