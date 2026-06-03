@@ -101,6 +101,79 @@ describe('ProgramBriefPanel · OV2-1b meta cards', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  it('requires promotion approval before an Intelligence-pattern Move can be submitted', () => {
+    const onSubmit = jest.fn();
+    const onRationaleChange = jest.fn();
+    const onApprovedChange = jest.fn();
+    render(
+      <ProgramBriefPanel
+        brief={{ ...READY_BRIEF, matchedPatternId: 'PAT-1' }}
+        onSubmitForApproval={onSubmit}
+        promotionApproval={{
+          required: true,
+          sourceThreadId: 'thread-1',
+          selectedPatternKey: 'PAT-1',
+          evidenceRefs: ['sourceThreadId:thread-1', 'selectedPatternKey:PAT-1'],
+          rationale: '',
+          minimumRationaleChars: 24,
+          approved: false,
+          onRationaleChange,
+          onApprovedChange,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText('Intelligence pattern promotion approval'),
+    ).toBeTruthy();
+    expect(screen.getByText('Human promotion gate required')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Submit brief for approval' }),
+    ).toBeNull();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        'Explain why this pattern is appropriate for the Move and which evidence you reviewed.',
+      ),
+      { target: { value: 'I reviewed the pattern evidence.' } },
+    );
+    fireEvent.click(
+      screen.getByLabelText(
+        /I reviewed the selected pattern and evidence refs/i,
+      ),
+    );
+
+    expect(onRationaleChange).toHaveBeenCalledWith(
+      'I reviewed the pattern evidence.',
+    );
+    expect(onApprovedChange).toHaveBeenCalledWith(true);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('allows submit once promotion approval is complete', () => {
+    const onSubmit = jest.fn();
+    render(
+      <ProgramBriefPanel
+        brief={{ ...READY_BRIEF, matchedPatternId: 'PAT-1' }}
+        onSubmitForApproval={onSubmit}
+        promotionApproval={{
+          required: true,
+          sourceThreadId: 'thread-1',
+          selectedPatternKey: 'PAT-1',
+          evidenceRefs: ['sourceThreadId:thread-1', 'selectedPatternKey:PAT-1'],
+          rationale: 'I reviewed the evidence and accept this pattern promotion.',
+          minimumRationaleChars: 24,
+          approved: true,
+          onRationaleChange: jest.fn(),
+          onApprovedChange: jest.fn(),
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Submit brief for approval' }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it('does not surface the deterministic submit button before readiness is complete', () => {
     render(<ProgramBriefPanel brief={EMPTY_BRIEF} onSubmitForApproval={jest.fn()} />);
 

@@ -24,6 +24,11 @@ import {
 } from '@/lib/programs/function-identity';
 import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
 import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
+import {
+  normalizePromotionRationale,
+  optionalStringArray,
+  validateIntelligencePromotionApproval,
+} from '@/lib/programs/intelligence-promotion-approval';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -52,6 +57,9 @@ export interface SubmitOriginationBriefInput {
   originatingIntelligenceSessionId?: string | null;
   decisionThreadTitle?: string | null;
   decisionThreadOwnerRole?: string | null;
+  humanPromotionAccepted?: boolean | null;
+  humanPromotionRationale?: string | null;
+  promotionEvidenceRefs?: string[] | null;
 }
 
 export interface SubmitOriginationBriefResult {
@@ -477,7 +485,21 @@ export async function submitOriginationBrief(
     originatingIntelligenceSessionId: optionalText(rawInput.originatingIntelligenceSessionId),
     decisionThreadTitle: optionalText(rawInput.decisionThreadTitle),
     decisionThreadOwnerRole: optionalText(rawInput.decisionThreadOwnerRole),
+    humanPromotionAccepted: rawInput.humanPromotionAccepted === true,
+    humanPromotionRationale: normalizePromotionRationale(
+      rawInput.humanPromotionRationale,
+    ),
+    promotionEvidenceRefs: optionalStringArray(rawInput.promotionEvidenceRefs),
   };
+
+  const promotionApproval = validateIntelligencePromotionApproval(input);
+  if (promotionApproval.error) {
+    throw new OriginationSubmitError(
+      'intelligence_promotion_approval_required',
+      promotionApproval.error,
+      400,
+    );
+  }
 
   let tenancy;
   try {
@@ -672,6 +694,20 @@ export async function submitOriginationBrief(
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),
     };
+    if (promotionApproval.required) {
+      briefSnapshot.intelligence_promotion_gate = {
+        source: 'intelligence_thread',
+        source_thread_id: input.originatingIntelligenceSessionId,
+        selected_pattern_key: input.matchedPatternId,
+        human_promotion_accepted: input.humanPromotionAccepted === true,
+        human_promotion_rationale: promotionApproval.rationale,
+        evidence_refs: promotionApproval.evidenceRefs,
+        decision_support_warning:
+          'Pattern matches are AI-assisted decision support; a human owner reviewed evidence before Move promotion.',
+        accepted_at: new Date().toISOString(),
+        accepted_by_user_id: tenancy.userId,
+      };
+    }
     if (input.targetOutcome) briefSnapshot.target_outcome = input.targetOutcome;
     if (input.timeline) briefSnapshot.timeline = input.timeline;
 
