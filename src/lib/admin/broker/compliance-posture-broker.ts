@@ -30,6 +30,7 @@ import {
   type GdprPosture,
   type DpaPosture,
   type BreachSlaPosture,
+  type OfacScreeningPosture,
 } from '@/lib/admin/compliance-config';
 
 // ── Contract ────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ export type {
   GdprPosture,
   DpaPosture,
   BreachSlaPosture,
+  OfacScreeningPosture,
 } from '@/lib/admin/compliance-config';
 
 export interface CompliancePosture {
@@ -46,6 +48,7 @@ export interface CompliancePosture {
   gdpr: GdprPosture;
   dpa: DpaPosture;
   breachSla: BreachSlaPosture;
+  ofacScreening: OfacScreeningPosture;
   lastReviewedAt: string;
 }
 
@@ -69,6 +72,7 @@ function composePosture(config: ComplianceConfig): CompliancePosture {
     gdpr: config.gdpr,
     dpa: config.dpa,
     breachSla: config.breachSla,
+    ofacScreening: config.ofacScreening,
     lastReviewedAt: config.lastReviewedAt,
   };
 }

@@ -106,11 +106,20 @@ export interface BreachSlaPosture extends ComplianceCardPosture {
   notes: string;
 }
 
+export interface OfacScreeningPosture extends ComplianceCardPosture {
+  screeningProvider: string;
+  reviewOwner: string;
+  cadence: string;
+  evidenceRequired: ReadonlyArray<string>;
+  notes: string;
+}
+
 export interface ComplianceConfig {
   soc2: Soc2Posture;
   gdpr: GdprPosture;
   dpa: DpaPosture;
   breachSla: BreachSlaPosture;
+  ofacScreening: OfacScreeningPosture;
   /**
    * ISO date string for when this config was last reviewed. Admins
    * update this whenever they touch the file so the page can render
@@ -181,6 +190,25 @@ export const COMPLIANCE_CONFIG: ComplianceConfig = {
       'Aligns with GDPR Art. 33 (72-hour notification to supervisory ' +
       'authorities) and the DPA template. Severity classification per ' +
       'the incident-response playbook.',
+  },
+  ofacScreening: {
+    status: 'committed',
+    statusLabel: 'Committed · screen before customer onboarding',
+    screeningProvider: 'OFAC Sanctions List Search or approved API equivalent',
+    reviewOwner: 'Anand Sundaram',
+    cadence: 'Before customer onboarding and quarterly for active customers',
+    evidenceRequired: [
+      'customer_name',
+      'alias_list',
+      'screened_at',
+      'watchlist_source_version',
+      'manual_review_disposition',
+    ],
+    dataSource: 'config',
+    notes:
+      'New customers must be screened against OFAC sanctions data before ' +
+      'contracting or provisioning. Possible matches fail closed until a ' +
+      'manual compliance disposition is recorded.',
   },
   lastReviewedAt: '2026-05-30',
 };
