@@ -3,6 +3,7 @@ import "server-only";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { recordEvidence } from "@/lib/evidence/ledger";
 import { coerceUsdAmount, coerceUsdAmountOrZero } from "./usd-amount";
+import { formatUsd } from "./value-ledger";
 
 export type SourceValueStateLayer =
   | "baseline"
@@ -62,7 +63,7 @@ interface SourceEventRowForValue {
   client_key: string;
   event_code: string;
   event_name: string;
-  estimated_value_usd: number | null;
+  estimated_value_usd: number | string | null;
   trigger_description: string | null;
   scope_description: string | null;
   decision_owner: string | null;
@@ -89,7 +90,7 @@ function normalizeSourceEventRowForValue(
   return {
     ...row,
     estimated_value_usd: coerceUsdAmount(row.estimated_value_usd),
-  };
+  } satisfies SourceEventRowForValue;
 }
 
 interface RecordStateInput {
@@ -298,7 +299,7 @@ export async function computeBaseline(
     surface: "source",
     artifactType: "value_state",
     artifactRef: sourceEventId,
-    claimText: `Baseline commercial exposure is ${amount} USD for ${event.event_name}.`,
+    claimText: `Baseline commercial exposure is ${formatUsd(amount)} for ${event.event_name}.`,
     sourceType: "tenant_record",
     sourceRef: {
       table: "source_events",
@@ -392,16 +393,17 @@ export async function recordIntervention(
 
 export async function recordNegotiatedOutcome(
   sourceEventId: string,
-  contractValueUsd: number,
+  contractValueUsd: number | string | null,
   terms: string[],
 ): Promise<SourceValueStateRow> {
   const event = await loadSourceEvent(sourceEventId);
+  const negotiatedAmount = coerceUsdAmountOrZero(contractValueUsd);
   const evidenceId = await recordEvidence({
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
     artifactRef: sourceEventId,
-    claimText: `Negotiated outcome is ${contractValueUsd} USD with terms: ${terms.join("; ") || "terms pending"}.`,
+    claimText: `Negotiated outcome is ${formatUsd(negotiatedAmount)} with terms: ${terms.join("; ") || "terms pending"}.`,
     sourceType: terms.length > 0 ? "document_extract" : "no_evidence",
     sourceRef: {
       table: "source_value_states",
@@ -427,7 +429,7 @@ export async function recordNegotiatedOutcome(
     sourceEventId,
     stateLayer: "negotiated",
     stateSubtype: "commercial_terms",
-    amountUsd: contractValueUsd,
+    amountUsd: negotiatedAmount,
     amountBasis: "tracked",
     methodology:
       "Manual negotiated outcome entry compared to baseline exposure.",
@@ -439,18 +441,19 @@ export async function recordNegotiatedOutcome(
 export async function attestRealized(
   sourceEventId: string,
   period: string,
-  actualUsd: number,
+  actualUsd: number | string | null,
   attestor: string,
 ): Promise<SourceValueStateRow> {
   const event = await loadSourceEvent(sourceEventId);
   if (!attestor.trim())
     throw new Error("CFO attestor is required for realized value.");
+  const realizedAmount = coerceUsdAmountOrZero(actualUsd);
   const evidenceId = await recordEvidence({
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
     artifactRef: sourceEventId,
-    claimText: `Realized Source value for ${period} is ${actualUsd} USD, attested by ${attestor}.`,
+    claimText: `Realized Source value for ${period} is ${formatUsd(realizedAmount)}, attested by ${attestor}.`,
     sourceType: "tenant_record",
     sourceRef: {
       table: "source_value_states",
@@ -469,7 +472,7 @@ export async function attestRealized(
     sourceEventId,
     stateLayer: "realized",
     stateSubtype: "value_delivered",
-    amountUsd: actualUsd,
+    amountUsd: realizedAmount,
     amountBasis: "verified",
     methodology: `CFO attestation for ${period}; reconciled against baseline and negotiated outcome.`,
     evidenceLedgerIds: [evidenceId],
