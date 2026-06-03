@@ -198,8 +198,15 @@ export async function createSourcingEvent(
   try {
     await scaffoldNewEventSubstrate(row.id, row.client_key);
   } catch (scaffoldError) {
-    console.error(
-      "[createSourcingEvent] scaffold failed for event",
+    // Keep this as console.warn (not error) per project log discipline.
+    // The event row is already persisted; the substrate scaffold can be
+    // recovered by the backfill script, so this is a non-fatal warning,
+    // not an error. Logging here surfaces silent scaffold failures (RLS
+    // misconfiguration, missing tables, transient DB errors) so they don't
+    // hide behind the catch-all and bite us later as "No artifacts
+    // scaffolded for <Stage>" empty states in the canvas.
+    console.warn(
+      "source scaffold failure:",
       row.id,
       scaffoldError instanceof Error ? scaffoldError.message : scaffoldError,
     );
