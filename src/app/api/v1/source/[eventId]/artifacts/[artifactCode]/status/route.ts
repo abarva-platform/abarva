@@ -32,6 +32,7 @@ import {
   type SourceEventArtifactStatus,
 } from '@/lib/source/canvas-substrate/types';
 import { isArtifactHumanReviewed } from '@/lib/source/source-governance-enforcement';
+import { scaffoldNewEventSubstrate } from '@/lib/source/queries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -128,11 +129,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
+    await scaffoldNewEventSubstrate(
+      persistedEvent.id,
+      persistedEvent.client_key,
+    ).catch((error) => {
+      console.warn(
+        '[source artifact status] substrate scaffold repair failed:',
+        error instanceof Error ? error.message : String(error),
+      );
+    });
+
     const accessPolicy =
       tenancy && activeClient
         ? await loadUserSourceAccessPolicy(tenancy, {
             activeClientKey: activeClient.key,
-            sourceEventId: eventId,
+            sourceEventId: persistedEvent.id,
           }).catch(() => null)
         : null;
     const canonicalAdminFallbackAllowed =
@@ -156,7 +167,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: artifactRow, error: artifactFetchError } = await supabase
       .from('source_event_artifact_states')
       .select('*')
-      .eq('source_event_id', eventId)
+      .eq('source_event_id', persistedEvent.id)
       .eq('artifact_code', artifactCode)
       .maybeSingle<SourceEventArtifactStateRow>();
     if (artifactFetchError) {
@@ -169,7 +180,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       return Response.json(
         {
           error: 'artifact_not_found',
-          detail: `No artifact ${artifactCode} on event ${eventId}. Run db:backfill:source-canvas to scaffold.`,
+          detail: `No artifact ${artifactCode} on event ${persistedEvent.id}.`,
         },
         { status: 404 },
       );

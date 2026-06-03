@@ -35,6 +35,7 @@ import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
+import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,18 +111,18 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const accessPolicy =
-      tenancy && activeClient
-        ? await loadUserSourceAccessPolicy(tenancy, {
-            activeClientKey: activeClient.key,
-            sourceEventId: eventId,
-          }).catch(() => null)
-        : null;
     const canonicalAdminFallbackAllowed =
       !activeClient &&
       isCanonicalClientAdminEmail(currentUser?.email) &&
       Boolean(persistedEvent) &&
       persistedEvent?.client_key === effectiveClientKey;
+    const accessPolicy =
+      tenancy && activeClient
+        ? await loadUserSourceAccessPolicy(tenancy, {
+            activeClientKey: activeClient.key,
+            sourceEventId: persistedEvent?.id ?? eventId,
+          }).catch(() => null)
+        : null;
     const canAdvance = Boolean(
       accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed,
     );
@@ -144,6 +145,15 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         );
       }
 
+      await scaffoldNewEventSubstrate(
+        persistedEvent.id,
+        persistedEvent.client_key,
+      ).catch((error) => {
+        console.warn(
+          "[source stage] substrate scaffold repair failed:",
+          error instanceof Error ? error.message : String(error),
+        );
+      });
       const currentStage =
         normalizeSourceStageKey(persistedEvent.current_stage_key) ?? "strategy";
       const [
@@ -154,16 +164,16 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         supabase
           .from("source_event_gate_criterion_states")
           .select("*")
-          .eq("source_event_id", eventId),
+          .eq("source_event_id", persistedEvent.id),
         supabase
           .from("source_event_artifact_states")
           .select("*")
-          .eq("source_event_id", eventId)
+          .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", currentStage),
         supabase
           .from("source_event_evidence_states")
           .select("*")
-          .eq("source_event_id", eventId)
+          .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", currentStage),
       ]);
       if (criteriaError) {
@@ -218,7 +228,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
       const nowIso = new Date().toISOString();
       const stageWrite = await sourceWrite.updateStage({
-        eventId,
+        eventId: persistedEvent.id,
         clientKey: effectiveClientKey,
         stageKey,
         lifecycleState: stageKey === "value" ? "completed" : "active",
@@ -233,7 +243,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       }
 
       const activityWrite = await sourceWrite.insertActivityLog({
-        eventId,
+        eventId: persistedEvent.id,
         clientKey: effectiveClientKey,
         actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
         actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
@@ -252,7 +262,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         );
       }
 
-      return Response.json({ ok: true, eventId, stageKey, persisted: true });
+      return Response.json({
+        ok: true,
+        eventId: persistedEvent.id,
+        stageKey,
+        persisted: true,
+      });
     }
 
     const event = getSourceEventSeed(eventId);
