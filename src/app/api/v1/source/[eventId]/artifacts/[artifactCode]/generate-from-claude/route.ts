@@ -42,7 +42,10 @@ import {
   type SourceArtifactRegistryRecord,
 } from "@/lib/source/artifact-registry";
 import { specByCode } from "@/lib/source/canonical-specs";
-import { ensurePersistedSourceEventForClient } from "@/lib/source/queries";
+import {
+  ensurePersistedSourceEventForClient,
+  scaffoldNewEventSubstrate,
+} from "@/lib/source/queries";
 
 const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
@@ -148,6 +151,15 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       { status: 404 },
     );
   }
+
+  await scaffoldNewEventSubstrate(ctx.event.id, ctx.tenantKey).catch(
+    (error) => {
+      console.warn(
+        "[source generate] substrate scaffold repair failed:",
+        error instanceof Error ? error.message : String(error),
+      );
+    },
+  );
 
   // Auth check using the resolved event's UUID.
   const activeClient = await getActiveClientRow().catch(() => null);

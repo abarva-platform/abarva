@@ -41,6 +41,7 @@ import {
   normalizeApprovalReason,
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
+import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -172,11 +173,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
+    await scaffoldNewEventSubstrate(
+      persistedEvent.id,
+      persistedEvent.client_key,
+    ).catch((error) => {
+      console.warn(
+        "[source gate criterion] substrate scaffold repair failed:",
+        error instanceof Error ? error.message : String(error),
+      );
+    });
+
     const accessPolicy =
       tenancy && activeClient
         ? await loadUserSourceAccessPolicy(tenancy, {
             activeClientKey: activeClient.key,
-            sourceEventId: eventId,
+            sourceEventId: persistedEvent.id,
           }).catch(() => null)
         : null;
     const canonicalAdminFallbackAllowed =
@@ -218,7 +229,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: criterionRow, error: criterionFetchError } = await supabase
       .from("source_event_gate_criterion_states")
       .select("*")
-      .eq("source_event_id", eventId)
+      .eq("source_event_id", persistedEvent.id)
       .eq("criterion_id", criterionId)
       .maybeSingle<SourceEventGateCriterionStateRow>();
     if (criterionFetchError) {
@@ -231,7 +242,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       return Response.json(
         {
           error: "criterion_not_found",
-          detail: `No criterion ${criterionId} on event ${eventId}. Run db:backfill:source-canvas to scaffold.`,
+          detail: `No criterion ${criterionId} on event ${persistedEvent.id}.`,
         },
         { status: 404 },
       );
@@ -245,12 +256,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         supabase
           .from("source_event_artifact_states")
           .select("*")
-          .eq("source_event_id", eventId)
+          .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", criterionRow.from_stage),
         supabase
           .from("source_event_evidence_states")
           .select("*")
-          .eq("source_event_id", eventId)
+          .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", criterionRow.from_stage),
       ]);
       if (artifactFetchError) {
@@ -316,7 +327,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       criterionWrite.data as unknown as SourceEventGateCriterionStateRow,
     );
     const activityWrite = await sourceWrite.insertActivityLog({
-      eventId,
+      eventId: persistedEvent.id,
       clientKey: effectiveClientKey,
       actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
       actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
