@@ -313,6 +313,7 @@ describe("POST /api/v1/agent/attachments", () => {
       bytes: 1024,
       extracted_text: "PDF text body",
     });
+    expect(insertedRow.parse_metadata).toEqual(body.parse_metadata);
   });
 
   it("quarantines suspected PHI before blob upload, extraction, or metadata persistence", async () => {
