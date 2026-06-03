@@ -1,13 +1,26 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-describe("/admin/setup data load center page source", () => {
+/**
+ * Design-pin for the /admin/setup "Data Loads" surface.
+ *
+ * Rewritten for the 2026-06-02 redesign (audit + v2 wireframe). The
+ * page is now the operator workflow only, bound to REAL per-tenant
+ * inventory data, with the reload-command-plan / pilot-verifier /
+ * 33-row template catalog moved off-page. This test pins the new
+ * contract and guards the regressions the audit called out.
+ */
+describe("/admin/setup data loads page source", () => {
   const source = readFileSync(
     join(process.cwd(), "src/app/(maestro)/admin/setup/page.tsx"),
     "utf8",
   );
   const componentSource = readFileSync(
     join(process.cwd(), "src/components/admin/SetupDataLoadCenter.tsx"),
+    "utf8",
+  );
+  const viewSource = readFileSync(
+    join(process.cwd(), "src/lib/admin/setup-load-studio-view.ts"),
     "utf8",
   );
 
@@ -24,62 +37,75 @@ describe("/admin/setup data load center page source", () => {
     );
   });
 
-  it("binds to the setup data load read model", () => {
-    expect(source).toContain("buildSetupDataLoadCenterModel");
-    expect(source).toContain("clientId: tenant.clientId");
-    expect(source).toContain("clientKey: tenant.clientKey");
+  it("binds to the REAL per-tenant inventory snapshot — not a synthetic model", () => {
+    expect(source).toContain("clientKeyToInventorySubstrateKey");
+    expect(source).toContain("getSetupInventorySnapshot");
+    expect(source).toContain("buildLoadStudioView");
+    // honest fallback, never a thrown page
+    expect(source).toContain(".catch(() => null)");
+    // the old synthetic model is no longer the page's data source
+    expect(source).not.toContain("buildSetupDataLoadCenterModel");
   });
 
-  it("renders a dimension-first Data Load Studio instead of a raw connector", () => {
+  it("renders the v2 operator workflow: identity, status strip, workflow rail, readiness table, controls, audit trail", () => {
     expect(componentSource).not.toContain("CsvUploadConnector");
-    expect(componentSource).toContain("Data Load Studio");
-    // Calm reskin 2026-06-01: dimension-first headline (was "Choose the
-    // dimension before choosing the file").
-    expect(componentSource).toContain("Pick the business dimension first.");
-    expect(componentSource).toContain("Loader readiness");
-    expect(componentSource).toContain("Pilot verifier posture");
-    expect(componentSource).toContain("Next actions");
-    expect(componentSource).toContain("Single-client reload");
-    expect(componentSource).toContain("Reload command plan");
-    expect(componentSource).toContain("Exception intake");
-    expect(componentSource).toContain("Dimension library");
-    expect(componentSource).toContain("model.dimensionCatalog.map");
-    expect(componentSource).toContain("Templates by dimension");
-  });
-
-  it("keeps implementation plumbing out of the Maestro-facing setup canvas", () => {
+    expect(componentSource).toContain("Load data for {tenant.name}");
     expect(componentSource).toContain("Governed load workflow");
-    expect(componentSource).toContain("model.workflowControls.map");
-    expect(componentSource).toContain("model.reloadCommandPlan.map");
-    expect(componentSource).toContain("model.singleClientBoundary.assertion");
-    expect(componentSource).toContain("model.exceptionIntake.supportedFormats.map");
-    expect(componentSource).not.toContain(
-      "{control.control} · {control.apiPath}",
-    );
-    // Calm reskin: the raw "Control: {control.control}" infra label was
-    // removed from the stepper (design spec principle 4).
-    expect(componentSource).not.toContain("Control: {control.control}");
-  });
-
-  it("uses the locked calm palette, not navy fills", () => {
-    // Design-system fidelity: black + ghost buttons only; no COLORS.navy
-    // primary fills or decorative sky/mint/coral chip backgrounds.
-    expect(componentSource).not.toContain("background: COLORS.navy");
+    expect(componentSource).toContain("view.workflow.map");
+    expect(componentSource).toContain("Loaded data by dimension");
+    expect(componentSource).toContain("view.readiness.map");
+    expect(componentSource).toContain("view.metrics.map");
+    expect(componentSource).toContain("view.controls.map");
+    expect(componentSource).toContain("Audit trail");
+    expect(componentSource).toContain("view.ledger");
     expect(componentSource).toContain("Start a governed load");
   });
 
-  it("keeps cross-client manifest coverage out of the runtime setup page", () => {
-    expect(componentSource).not.toContain("model.manifestCoverage.map");
+  it("removes the implementation-doc sections the audit flagged (off-page now)", () => {
+    for (const banned of [
+      "Reload command plan",
+      "Pilot verifier posture",
+      "Loader readiness",
+      "Exception intake",
+      "Templates by dimension",
+      "Dimension library",
+      "model.reloadCommandPlan",
+      "model.dimensionCatalog",
+      "model.manifestCoverage",
+    ]) {
+      expect(componentSource).not.toContain(banned);
+    }
+  });
+
+  it("keeps implementation jargon out of operator-facing copy", () => {
+    for (const file of [componentSource, viewSource]) {
+      // strip block + line comments so doctrine notes can name the jargon
+      const visible = file
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      for (const jargon of [
+        "Azure Blob",
+        "Postgres",
+        "idempotency",
+        "npm run verify",
+        "T357",
+      ]) {
+        expect(visible).not.toContain(jargon);
+      }
+    }
+  });
+
+  it("uses the locked calm palette and routes actions to real product surfaces", () => {
+    expect(componentSource).not.toContain("background: COLORS.navy");
+    // every off-page link target is a real route, never an in-page anchor
+    expect(viewSource).toContain("/admin/templates");
+    expect(viewSource).toContain("/admin/context-layer/uploads");
+    expect(viewSource).toContain("/admin/data-trust");
+    expect(viewSource).not.toContain('"#template-library"');
   });
 
   it("states that data loading is scoped to the active client only", () => {
-    expect(componentSource).toContain("commit for this client only");
-    expect(componentSource).toContain("Single-client reload");
+    expect(componentSource).toContain("for this client");
     expect(componentSource).not.toContain("cross-tenant loading");
-  });
-
-  it("keeps the T342 shell disjoint from the open template-preflight slice", () => {
-    expect(componentSource).not.toContain("schema-preflight");
-    expect(source).not.toContain("schema-preflight");
   });
 });
