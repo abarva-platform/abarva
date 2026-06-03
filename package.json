@@ -56,6 +56,7 @@
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
     "corpus:release-manifest": "node scripts/corpus/release-manifest.mjs",
     "corpus:release-manifest:check": "node scripts/corpus/release-manifest.mjs --check",
+    "corpus:software-delivery-scope:verify": "node scripts/corpus/verify-software-delivery-corpus-scope.mjs",
     "verify:skyharbor-substrate": "node scripts/skyharbor/verify-skyharbor-substrate.mjs",
     "verify:skyharbor-overlay": "node scripts/skyharbor/verify-airline-pattern-overlay.mjs",
     "load:skyharbor-substrate:dry": "TENANT_KEY=skyharbor npx tsx scripts/seed/load-tenant-substrate.ts --dry-run",
