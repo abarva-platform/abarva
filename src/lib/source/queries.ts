@@ -1105,6 +1105,21 @@ async function readSourceArtifactBlobText(
 ): Promise<string | null> {
   if (!/text\/|markdown|json/i.test(record.mimeType)) return null;
 
+  if (record.blobUri.startsWith("inline://source-event-artifact-state/")) {
+    try {
+      const { data, error } = await getAzureWriteFluentClient()
+        .from("source_event_artifact_states")
+        .select("body")
+        .eq("source_event_id", record.sourceEventId)
+        .eq("artifact_code", record.artifactKind)
+        .maybeSingle<{ body: string | null }>();
+      if (error) return null;
+      return data?.body?.slice(0, 30_000) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const bytes = await getObjectStorageAdapter().download(
       "source-artifacts",
