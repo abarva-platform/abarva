@@ -303,7 +303,14 @@ export async function SetupAuditPage({
           {headerTitle}
         </h1>
         {filterSource && (
-          <div style={{ marginTop: 10 }}>
+          <div
+            style={{
+              marginTop: 10,
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
             <a
               href="/admin/audit"
               style={{
@@ -320,6 +327,18 @@ export async function SetupAuditPage({
             >
               Clear filter · show all sources →
             </a>
+            {filterSource === "approval" && (
+              <>
+                <AuditExportLink
+                  href="/api/admin/programs/approvals/export?format=json"
+                  label="Export approvals JSON"
+                />
+                <AuditExportLink
+                  href="/api/admin/programs/approvals/export?format=csv"
+                  label="Export approvals CSV"
+                />
+              </>
+            )}
           </div>
         )}
       </div>
@@ -363,6 +382,27 @@ export async function SetupAuditPage({
         )}
       </div>
     </div>
+  );
+}
+
+function AuditExportLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      style={{
+        fontFamily: SHELL.MONO,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: SHELL.PEACH_TEXT,
+        textDecoration: "none",
+        borderBottom: "1px solid " + SHELL.PEACH_TEXT,
+        paddingBottom: 1,
+      }}
+    >
+      {label} →
+    </a>
   );
 }
 

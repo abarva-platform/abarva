@@ -17,7 +17,10 @@ import "server-only";
 // layer for the decide path; the migration's RLS is the second line of
 // defense for any direct authenticated client.
 
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  getAzureReadFluentClient,
+  getAzureWriteFluentClient,
+} from "@/lib/data-plane/postgresCompat";
 import { emitNotification } from "@/lib/admin/broker/notification-broker";
 import {
   notifyApprovalApproved,
@@ -77,6 +80,14 @@ export interface DecideApprovalInput {
   decision: "approved" | "rejected";
   /** Required (and non-empty) when decision === 'rejected'. */
   rationale?: string;
+}
+
+export interface ListApprovalAuditForTenantInput {
+  tenantKey: string;
+  fromIso?: string | null;
+  toIso?: string | null;
+  status?: ApprovalRequestStatus | "all" | null;
+  limit?: number | null;
 }
 
 // ── Internal helpers ───────────────────────────────────────────────────
@@ -606,6 +617,51 @@ export async function getApprovalQueueForTenant(
   return rows.map(rowToApprovalRequest);
 }
 
+export async function listApprovalAuditForTenant(
+  input: ListApprovalAuditForTenantInput,
+): Promise<ApprovalRequest[]> {
+  if (!input.tenantKey) {
+    throw new ApprovalError(
+      "listApprovalAuditForTenant: tenantKey is required",
+      {
+        input,
+      },
+    );
+  }
+
+  const limit =
+    typeof input.limit === "number" && Number.isFinite(input.limit)
+      ? Math.min(Math.max(Math.trunc(input.limit), 1), 5000)
+      : 1000;
+  const sb = getAzureReadFluentClient();
+  let query = sb
+    .from("program_approval_requests")
+    .select(APPROVAL_COLUMNS)
+    .eq("tenant_key", input.tenantKey)
+    .order("requested_at", { ascending: false })
+    .limit(limit);
+
+  if (input.status && input.status !== "all") {
+    query = query.eq("request_status", input.status);
+  }
+  if (input.fromIso) {
+    query = query.gte("requested_at", input.fromIso);
+  }
+  if (input.toIso) {
+    query = query.lte("requested_at", input.toIso);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw wrapDbError("listApprovalAuditForTenant: query failed", error, {
+      input,
+    });
+  }
+
+  const rows = (data ?? []) as unknown as ApprovalRequestRow[];
+  return rows.map(rowToApprovalRequest);
+}
+
 // ── PRE-W4-PR-4 · escalation primitives ───────────────────────────────
 //
 // Two admin-initiated transitions are exposed here. Both are append-only
@@ -657,11 +713,9 @@ export async function markSponsorNotified(
     .maybeSingle();
 
   if (readError) {
-    throw wrapDbError(
-      "markSponsorNotified: lookup failed",
-      readError,
-      { input },
-    );
+    throw wrapDbError("markSponsorNotified: lookup failed", readError, {
+      input,
+    });
   }
   if (!existing) {
     throw new ApprovalError(
@@ -690,11 +744,7 @@ export async function markSponsorNotified(
     .single();
 
   if (error || !data) {
-    throw wrapDbError(
-      "markSponsorNotified: update failed",
-      error,
-      { input },
-    );
+    throw wrapDbError("markSponsorNotified: update failed", error, { input });
   }
   return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 }
