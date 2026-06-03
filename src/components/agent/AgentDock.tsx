@@ -188,6 +188,11 @@ export interface AttachmentRef {
   storage_path: string;
   /** First ~4000 chars of extracted text. Empty string for images / parse failures. */
   extracted_text_preview?: string;
+  parse_metadata?: {
+    page_count?: number | null;
+    table_count?: number | null;
+    parser_id?: string | null;
+  };
 }
 
 export interface SuggestedAction {
@@ -375,10 +380,15 @@ export function buildUploadParsedPreview(
   return {
     snippet,
     pageSignal:
-      upload.estimatedPages === null
-        ? "Pages: not reported"
-        : `Pages: ~${upload.estimatedPages} estimated`,
-    tableSignal: "Tables: not reported",
+      typeof upload.ref.parse_metadata?.page_count === "number"
+        ? `Pages: ${upload.ref.parse_metadata.page_count}`
+        : upload.estimatedPages === null
+          ? "Pages: not reported"
+          : `Pages: ~${upload.estimatedPages} estimated`,
+    tableSignal:
+      typeof upload.ref.parse_metadata?.table_count === "number"
+        ? `Tables: ${upload.ref.parse_metadata.table_count}`
+        : "Tables: not reported",
     hasExtractedText: rawPreview.length > 0,
   };
 }
