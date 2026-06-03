@@ -234,6 +234,7 @@ export function composeHomeV2Extras(input: ComposeHomeV2Input): HomeOverviewV2Ex
     // certified yet. Honest, not 'ready'. Per verdict §3 + §7 W3-PR-4.
     { num: '07', name: 'Compliance',           status: 'attn',                                                                  desc: 'SOC 2, GDPR, DPA, breach-notification SLA — pilot-stage posture.',     foot: 'In progress · readiness underway', href: '/admin/compliance' },
     { num: '08', name: 'Activity Log',         status: 'ready',                                                                 desc: 'Full audit trail: who did what, when, on which substrate.',             foot: '30-day rolling · /admin/audit', href: '/admin/audit' },
+    { num: '09', name: 'Ops Console',          status: 'attn',                                                                  desc: 'Governed re-index, migration dry-run, backfill, quarantine, and audit-export paths.', foot: 'Approval gated · no raw execution', href: '/admin/ops' },
   ];
 
   return {

@@ -10,6 +10,7 @@ export type AdminSubSectionId =
   | "inbox"
   | "users-access"
   | "customer-admin"
+  | "ops"
   | "agent-readiness"
   | "patternops"
   | "production-readiness"
@@ -102,6 +103,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Customer Admin",
     subtitle: "Tenant controls",
     href: "/admin/customer",
+  },
+  {
+    id: "ops",
+    label: "Ops Console",
+    subtitle: "Runbooks, approvals, audit evidence",
+    href: "/admin/ops",
   },
   {
     id: "agent-readiness",
