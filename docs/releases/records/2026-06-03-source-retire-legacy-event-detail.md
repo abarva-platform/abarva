@@ -29,6 +29,7 @@ This change retires the dead component and the tests that pinned it. It removes 
 - **Deleted** 5 content-assertion test suites that read the dead file: `source-src42-commercial-canvas-tabs`, `source-src43-pricing-completeness-drilldown`, `source-src44-bafo-scenario-compare`, `source-src45-transition-readiness`, `source-src46-award-decision`.
 - **Edited** `programs-detail-prog23-source-link.test.ts` — removed the dead-component block; kept the live `ProgramDetailPage` + `buildProgramSourceLinkView` coverage; fixed two pre-existing single-vs-double-quote assertion failures while in the file.
 - **Edited** `src/__tests__/hygiene/shell-v2-mode-layout.test.ts` — removed the dead file from its Rule 1/3/4 surface lists.
+- **Edited** `docs/security/ai-surface-control-catalog.json` — removed the `source-award-vendor-recommendation` surface entry, which pointed at the deleted file (the CI "AI surface control catalog" gate requires every cataloged control to resolve to real code). That control lived only in the retired component — part of the feature gap below.
 
 ## QA / Validation
 
