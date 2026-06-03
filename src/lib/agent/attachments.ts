@@ -15,6 +15,11 @@ import {
   CONTENT_HASH_PARSE_CACHE_VERSION,
   withContentHashParseCache,
 } from "@/lib/ingestion/content-hash-parse-cache";
+import {
+  DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+  isDocumentIntelligenceConfigured,
+  parsePdfWithDocumentIntelligenceLayout,
+} from "@/lib/ingestion/document-intelligence-layout";
 
 export const AGENT_ATTACHMENT_BUCKET = "agent-attachments";
 
@@ -68,9 +73,7 @@ export async function extractAgentAttachmentText(args: {
       return "";
     }
     if (args.mimeType === PDF_MIME) {
-      return cachedAgentAttachmentParse(args, "pdf-parse", () =>
-        extractPdfText(args.buffer),
-      );
+      return extractCachedAgentPdfText(args);
     }
     if (args.mimeType === DOCX_MIME) {
       return cachedAgentAttachmentParse(args, "docx-mammoth", () =>
@@ -87,6 +90,33 @@ export async function extractAgentAttachmentText(args: {
     // Defensive: parser failures should not turn a 200 into a 500.
     return "";
   }
+}
+
+async function extractCachedAgentPdfText(args: {
+  mimeType: string;
+  buffer: Buffer;
+  cacheScope?: string | null;
+}): Promise<string> {
+  if (isDocumentIntelligenceConfigured()) {
+    try {
+      return await cachedAgentAttachmentParse(
+        args,
+        DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+        async () => {
+          const result = await parsePdfWithDocumentIntelligenceLayout(args.buffer);
+          return result.text;
+        },
+      );
+    } catch {
+      return cachedAgentAttachmentParse(args, "pdf-parse", () =>
+        extractPdfText(args.buffer),
+      );
+    }
+  }
+
+  return cachedAgentAttachmentParse(args, "pdf-parse", () =>
+    extractPdfText(args.buffer),
+  );
 }
 
 async function cachedAgentAttachmentParse(

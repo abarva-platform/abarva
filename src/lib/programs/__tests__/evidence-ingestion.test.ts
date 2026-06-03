@@ -48,7 +48,50 @@ jest.mock("pdf-parse", () => ({
   })),
 }));
 
+const mockDocumentIntelligencePost = jest.fn();
+const mockDocumentIntelligencePath = jest.fn(() => ({
+  post: mockDocumentIntelligencePost,
+}));
+const mockDocumentIntelligence = jest.fn(
+  (...args: [endpoint?: unknown, credential?: unknown, options?: unknown]) => {
+    void args;
+    return { path: mockDocumentIntelligencePath };
+  },
+);
+const mockDocumentIntelligencePollUntilDone = jest.fn();
+const mockDocumentIntelligencePoller = jest.fn(
+  (...args: [client?: unknown, response?: unknown, options?: unknown]) => {
+    void args;
+    return { pollUntilDone: mockDocumentIntelligencePollUntilDone };
+  },
+);
+const mockDocumentIntelligenceIsUnexpected = jest.fn(
+  (response: { status: string }) => response.status !== "202",
+);
+
+jest.mock("@azure-rest/ai-document-intelligence", () => ({
+  __esModule: true,
+  default: (endpoint: unknown, credential: unknown, options?: unknown) =>
+    mockDocumentIntelligence(endpoint, credential, options),
+  isUnexpected: (response: { status: string }) =>
+    mockDocumentIntelligenceIsUnexpected(response),
+  getLongRunningPoller: (client: unknown, response: unknown, options?: unknown) =>
+    mockDocumentIntelligencePoller(client, response, options),
+}));
+
+jest.mock("@azure/identity", () => ({
+  DefaultAzureCredential: jest.fn().mockImplementation(() => ({})),
+}));
+
+const ORIGINAL_ENV = process.env;
+
 beforeEach(() => {
+  process.env = { ...ORIGINAL_ENV };
+  delete process.env.DOCUMENT_INTELLIGENCE_ENDPOINT;
+  delete process.env.DOCUMENT_INTELLIGENCE_API_KEY;
+  delete process.env.DOCUMENT_INTELLIGENCE_USE_AAD;
+  delete process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT;
+  delete process.env.AZURE_DOCUMENT_INTELLIGENCE_API_KEY;
   clearContentHashParseCacheForTests();
   mockMammothExtractRawTextResult = {
     value:
@@ -59,6 +102,16 @@ beforeEach(() => {
   mockEachSheet.mockClear();
   mockPdfGetText.mockClear();
   mockPdfDestroy.mockClear();
+  mockDocumentIntelligencePost.mockReset();
+  mockDocumentIntelligencePath.mockClear();
+  mockDocumentIntelligence.mockClear();
+  mockDocumentIntelligencePollUntilDone.mockReset();
+  mockDocumentIntelligencePoller.mockClear();
+  mockDocumentIntelligenceIsUnexpected.mockClear();
+});
+
+afterAll(() => {
+  process.env = ORIGINAL_ENV;
 });
 
 describe("program evidence ingestion", () => {
@@ -198,6 +251,68 @@ describe("program evidence ingestion", () => {
     expect(evidence.extractedStructured.risks[0]).toContain(
       "Prior authorization",
     );
+    expect(mockPdfDestroy).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses Azure AI Document Intelligence as the primary PDF parser when configured", async () => {
+    process.env.DOCUMENT_INTELLIGENCE_ENDPOINT = "https://doc-intel.example";
+    process.env.DOCUMENT_INTELLIGENCE_API_KEY = "secret";
+    mockDocumentIntelligencePost.mockResolvedValue({ status: "202", body: {} });
+    mockDocumentIntelligencePollUntilDone.mockResolvedValue({
+      body: {
+        analyzeResult: {
+          content: [
+            "Attendees: Sarah Chen",
+            "Decision: Sponsor approves Azure DI as primary PDF parser.",
+            "Baseline: Parser output includes markdown tables.",
+          ].join("\n"),
+          contentFormat: "markdown",
+          pages: [{ pageNumber: 1 }, { pageNumber: 2 }],
+        },
+      },
+    });
+
+    const evidence = await extractProgramEvidenceFromUploadBuffer({
+      filename: "P1 meeting notes.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7"),
+      cacheScope: "client-a",
+    });
+
+    expect(evidence.extractedStructured.parse_method).toBe(
+      "azure-document-intelligence-layout",
+    );
+    expect(evidence.extractedStructured.decisions[0]).toContain(
+      "Sponsor approves Azure DI",
+    );
+    expect(evidence.extractedStructured.baseline_candidates[0]).toContain(
+      "markdown tables",
+    );
+    expect(evidence.extractedStructured.warnings[0]).toContain("2 pages");
+    expect(mockDocumentIntelligencePost).toHaveBeenCalledTimes(1);
+    expect(mockPdfGetText).not.toHaveBeenCalled();
+  });
+
+  it("falls back to pdf-parse when Azure AI Document Intelligence fails", async () => {
+    process.env.DOCUMENT_INTELLIGENCE_ENDPOINT = "https://doc-intel.example";
+    process.env.DOCUMENT_INTELLIGENCE_API_KEY = "secret";
+    mockDocumentIntelligencePost.mockRejectedValue(new Error("service unavailable"));
+
+    const evidence = await extractProgramEvidenceFromUploadBuffer({
+      filename: "P1 meeting notes.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7"),
+      cacheScope: "client-a",
+    });
+
+    expect(evidence.extractedStructured.parse_method).toBe("pdf-parse");
+    expect(evidence.extractedStructured.warnings[0]).toContain(
+      "Azure AI Document Intelligence failed",
+    );
+    expect(evidence.extractedStructured.action_items[0]).toContain(
+      "Finance validates",
+    );
+    expect(mockPdfGetText).toHaveBeenCalledTimes(1);
     expect(mockPdfDestroy).toHaveBeenCalledTimes(1);
   });
 
