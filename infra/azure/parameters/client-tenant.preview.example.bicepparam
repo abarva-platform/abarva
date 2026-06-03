@@ -14,6 +14,7 @@ param postgresAdministratorLogin = 'abarvaadmin'
 param postgresAdministratorLoginPassword = readEnvironmentVariable('POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD')
 
 param serviceBusDataOwnerPrincipalIds = []
+param auditLogRetentionDays = 365
 
 param plainRuntimeEnv = [
   {

@@ -49,6 +49,11 @@ param keyVaultSecretRefs array = []
 @description('Optional Service Bus data-owner object IDs for break-glass operations.')
 param serviceBusDataOwnerPrincipalIds array = []
 
+@description('Immutable audit-log retention period. Preview/pilot must be at least 12 months; production defaults to 24 months.')
+@minValue(365)
+@maxValue(2555)
+param auditLogRetentionDays int = environmentName == 'prod' ? 730 : 365
+
 @description('Set true to deploy the app runtime after foundation, database, ingestion, and search are in place.')
 param deployAppRuntime bool = true
 
@@ -75,6 +80,7 @@ var keyVaultName = take(replace('kv-${normalizedClientKey}-${environmentName}-${
 var privateDataplaneVnetName = 'vnet-${stem}-data-${location}'
 var privateDataplaneNsgName = 'nsg-${stem}-data-${location}'
 var privateDataplaneStorageAccountName = take(replace('st${normalizedClientKey}${environmentName}${uniqueSuffix}', '-', ''), 24)
+var auditLogContainerName = 'audit-ledger'
 var logAnalyticsWorkspaceName = 'log-${stem}-${location}'
 var applicationInsightsName = 'appi-${stem}-${location}'
 var actionGroupName = 'ag-${stem}-${location}'
@@ -208,6 +214,21 @@ module search './search-foundation.bicep' = {
   }
 }
 
+module immutableAuditLog './immutable-audit-log.bicep' = {
+  name: 'client-tenant-immutable-audit-log-${normalizedClientKey}'
+  scope: resourceGroup(privateDataplaneResourceGroupName)
+  dependsOn: [
+    foundation
+  ]
+  params: {
+    storageAccountName: privateDataplaneStorageAccountName
+    auditLogContainerName: auditLogContainerName
+    auditLogRetentionDays: auditLogRetentionDays
+    auditLogSoftDeleteRetentionDays: 365
+    allowProtectedAppendWrites: true
+  }
+}
+
 module appRuntime './app-runtime-foundation.bicep' = if (deployAppRuntime) {
   name: 'client-tenant-app-runtime-${normalizedClientKey}'
   dependsOn: [
@@ -215,6 +236,7 @@ module appRuntime './app-runtime-foundation.bicep' = if (deployAppRuntime) {
     postgres
     eventIngestion
     search
+    immutableAuditLog
   ]
   params: {
     location: location
@@ -243,3 +265,5 @@ output privateDataplaneStorageAccountName string = privateDataplaneStorageAccoun
 output postgresServerName string = postgres.outputs.postgresServerName
 output searchServiceName string = search.outputs.searchServiceName
 output serviceBusNamespaceName string = eventIngestion.outputs.serviceBusNamespaceName
+output auditLogContainerName string = immutableAuditLog.outputs.auditLogContainerName
+output auditLogRetentionDays int = immutableAuditLog.outputs.auditLogRetentionDays

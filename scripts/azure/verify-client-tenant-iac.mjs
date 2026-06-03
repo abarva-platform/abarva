@@ -19,7 +19,9 @@ const REQUIRED_BICEP_SNIPPETS = [
   "module postgres './postgres-foundation.bicep'",
   "module eventIngestion './event-ingestion-foundation.bicep'",
   "module search './search-foundation.bicep'",
+  "module immutableAuditLog './immutable-audit-log.bicep'",
   "module appRuntime './app-runtime-foundation.bicep'",
+  "clientIsolation: 'single-client'",
 ];
 
 const REQUIRED_PARAM_SNIPPETS = [
@@ -28,6 +30,7 @@ const REQUIRED_PARAM_SNIPPETS = [
   "readEnvironmentVariable('POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD')",
   "ABARVA_CLIENT_KEY",
   "ABARVA_DATA_PLANE_MODE",
+  "param auditLogRetentionDays = 365",
 ];
 
 function read(relativePath) {
