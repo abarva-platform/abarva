@@ -38,6 +38,7 @@ jest.mock('../setup-acts-registry', () => ({
 
 import {
   buildCustomerAdminPageView,
+  summarizeDocumentEconomicsFromAiEgressRows,
   summarizeUsageFromAiEgressRows,
 } from '../customer-admin-read-model';
 import { resolveAdminTenant } from '../admin-tenant';
@@ -127,6 +128,104 @@ describe('Customer Admin page view safety', () => {
       outputTokens: 25,
       estimatedCostUsd: 0.000675,
       costBasis: 'provider_metadata',
+    });
+  });
+
+  it('summarizes document-level parse, chat, and cache economics from egress metadata', () => {
+    const economics = summarizeDocumentEconomicsFromAiEgressRows(
+      [
+        {
+          id: 'audit-1',
+          tenant_id: 'client-apex',
+          workflow: 'document-parse',
+          provider: 'azure-document-intelligence',
+          model: null,
+          route: 'azure-parser',
+          data_class: 'confidential',
+          policy_decision: 'allow',
+          decision_reason: 'parser allowed for approved document',
+          request_metadata: {
+            document_key: 'doc-001',
+            original_filename: 'annual-results.pdf',
+            usage: {
+              input_tokens: 300,
+              output_tokens: 50,
+              cost_usd: 0.012,
+              parse_cost_usd: 0.007,
+              cache_hit: false,
+            },
+          },
+          error_message: null,
+          created_at: '2026-06-03T12:00:00Z',
+        },
+        {
+          id: 'audit-2',
+          tenant_id: 'client-apex',
+          workflow: 'agent-answer',
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          route: 'anthropic-direct',
+          data_class: 'confidential',
+          policy_decision: 'allow',
+          decision_reason: 'document-bound chat allowed',
+          request_metadata: {
+            documentKey: 'doc-001',
+            documentLabel: 'Annual results PDF',
+            usage: {
+              input_tokens: 100,
+              output_tokens: 25,
+              cost_usd: 0.003,
+              cache_read_input_tokens: 80,
+            },
+          },
+          error_message: null,
+          created_at: '2026-06-03T12:05:00Z',
+        },
+        {
+          id: 'audit-other-tenant',
+          tenant_id: 'client-meridian',
+          workflow: 'agent-answer',
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          route: 'anthropic-direct',
+          data_class: 'confidential',
+          policy_decision: 'allow',
+          decision_reason: 'other tenant',
+          request_metadata: {
+            document_key: 'doc-001',
+            usage: { cost_usd: 99, cache_hit: true },
+          },
+          error_message: null,
+          created_at: '2026-06-03T12:10:00Z',
+        },
+      ],
+      'client-apex',
+    );
+
+    expect(economics).toEqual({
+      documents: [
+        {
+          documentKey: 'doc-001',
+          label: 'annual-results.pdf',
+          calls: 2,
+          inputTokens: 400,
+          outputTokens: 75,
+          parseCostUsd: 0.007,
+          chatCostUsd: 0.008,
+          totalCostUsd: 0.015,
+          cacheEvents: 2,
+          cacheHits: 1,
+          cacheHitRate: 50,
+          lastSeenAt: '2026-06-03T12:05:00Z',
+          basis: 'provider_metadata',
+        },
+      ],
+      totalDocuments: 1,
+      meteredDocuments: 1,
+      parseCostUsd: 0.007,
+      chatCostUsd: 0.008,
+      totalCostUsd: 0.015,
+      cacheHitRate: 50,
     });
   });
 });

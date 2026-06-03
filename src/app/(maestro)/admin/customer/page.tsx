@@ -7,6 +7,7 @@ import {
   buildCustomerAdminPageView,
   type CustomerAdminAiEgressPanel,
   type CustomerAdminAuditPanel,
+  type CustomerAdminDocumentEconomicsPanel,
   type CustomerAdminSubstratePanel,
   type CustomerAdminUsagePanel,
   type CustomerAdminUsersPanel,
@@ -256,21 +257,72 @@ function AiEgressPanel({ aiEgress }: { aiEgress: CustomerAdminAiEgressPanel }) {
   );
 }
 
-function UsagePanel({ usage }: { usage: CustomerAdminUsagePanel }) {
+function formatUsd(value: number | null, digits = 4): string {
+  return value === null ? 'Not metered' : `$${value.toFixed(digits)}`;
+}
+
+function UsagePanel({
+  usage,
+  documentEconomics,
+}: {
+  usage: CustomerAdminUsagePanel;
+  documentEconomics: CustomerAdminDocumentEconomicsPanel;
+}) {
   const tokens =
     usage.inputTokens === null && usage.outputTokens === null
       ? 'Not metered'
       : `${usage.inputTokens ?? 0} in / ${usage.outputTokens ?? 0} out`;
-  const cost =
-    usage.estimatedCostUsd === null ? 'Not metered' : `$${usage.estimatedCostUsd.toFixed(4)}`;
+  const cost = formatUsd(usage.estimatedCostUsd);
+  const cacheHitRate =
+    documentEconomics.cacheHitRate === null ? 'Not metered' : `${documentEconomics.cacheHitRate}%`;
 
   return (
-    <Panel eyebrow="Cost and usage" title="Usage dashboard">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: SPACING.md }}>
+    <Panel eyebrow="Cost and usage" title="Document economics">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: SPACING.md }}>
         <MetricTile label="Calls" value={usage.calls} detail="Rows in AI egress audit window" />
         <MetricTile label="Tokens" value={tokens} detail="Only when provider metadata records tokens" />
         <MetricTile label="Cost" value={cost} detail={usage.costBasis === 'provider_metadata' ? 'Provider metadata' : 'No first-class billing column yet'} />
+        <MetricTile label="Cache hit rate" value={cacheHitRate} detail="Document/prompt cache telemetry when present" />
       </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: SPACING.md }}>
+        <MetricTile label="Documents" value={documentEconomics.totalDocuments} detail={`${documentEconomics.meteredDocuments} with cost metadata`} />
+        <MetricTile label="Parse cost" value={formatUsd(documentEconomics.parseCostUsd)} detail="Document extraction/parse metadata" />
+        <MetricTile label="Chat cost" value={formatUsd(documentEconomics.chatCostUsd)} detail="Document-bound model egress metadata" />
+      </div>
+      {documentEconomics.documents.length === 0 ? (
+        <EmptyState>
+          No document-attributed usage metadata is available yet. Costs will appear after parser and agent calls include document keys, parse cost, and provider usage metadata.
+        </EmptyState>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {documentEconomics.documents.slice(0, 6).map((document) => (
+            <div
+              key={document.documentKey}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.4fr 80px 90px 90px 80px',
+                gap: SPACING.md,
+                padding: `${SPACING.sm} 0`,
+                borderBottom: `1px solid ${COLORS.ink}10`,
+                fontFamily: TYPOGRAPHY.sans,
+                fontSize: 13,
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <strong>{document.label}</strong>
+                <div style={{ color: `${COLORS.ink}99`, fontSize: 12, marginTop: 2 }}>
+                  {shortDate(document.lastSeenAt)}
+                </div>
+              </div>
+              <span>{document.calls} calls</span>
+              <span>{formatUsd(document.parseCostUsd, 5)}</span>
+              <span>{formatUsd(document.chatCostUsd, 5)}</span>
+              <span>{document.cacheHitRate === null ? 'n/a' : `${document.cacheHitRate}%`}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </Panel>
   );
 }
@@ -410,7 +462,7 @@ export default async function CustomerAdminPage() {
           <AuditPanel audit={view.audit} />
           <UsersPanel users={view.users} />
           <AiEgressPanel aiEgress={view.aiEgress} />
-          <UsagePanel usage={view.usage} />
+          <UsagePanel usage={view.usage} documentEconomics={view.documentEconomics} />
         </div>
         <SubstratePanel substrate={view.substrate} />
       </main>
