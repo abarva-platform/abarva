@@ -426,8 +426,26 @@ async function getPersistedSourceEventRow(
   // renderer ships a defensive `dedupeByEventCode`). The adapter orders
   // by updated_at + limits to one, so the by-code path is resilient
   // regardless of whether the duplicates ever get cleaned.
-  return (await adapter.getEventByCodeForClient(
+  const directByCode = (await adapter.getEventByCodeForClient(
     eventId,
+    clientKey,
+  )) as SourceEventRow | null;
+  if (directByCode) return directByCode;
+
+  // Golden-event shell routes use stable slugs (e.g.
+  // `apex-retail-ams-outsourcing-2026`) while the persisted Source row may
+  // still be keyed by the seeded event_code (e.g. `SRC-004`). If the direct
+  // lookup missed, try the seed's display code before falling back to the
+  // pure seed event. This keeps the public route stable while binding the
+  // canvas and API writes to the real persisted UUID-backed row.
+  const seedEvent = getSourceEventSeed(eventId);
+  if (!seedEvent) return null;
+  if (seedEvent.code.trim().toLowerCase() === eventId.trim().toLowerCase()) {
+    return null;
+  }
+
+  return (await adapter.getEventByCodeForClient(
+    seedEvent.code,
     clientKey,
   )) as SourceEventRow | null;
 }
@@ -529,9 +547,8 @@ export async function getSourcingEvent(
   // Seed events use UUIDs only — code lookup is a no-op there.
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
+  if (!activeClient || !tenancy) return null;
   if (
-    activeClient &&
-    tenancy &&
     !(await canReadSourceEvent(tenancy, activeClient.key, event.id).catch(
       () => false,
     ))
