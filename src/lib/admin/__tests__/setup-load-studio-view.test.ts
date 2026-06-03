@@ -206,6 +206,34 @@ describe("buildLoadStudioView", () => {
     });
   });
 
+  it("surfaces AI setup approval and anomaly triage guardrails", () => {
+    const view = buildLoadStudioView({
+      tenantName: "SkyHarbor Air",
+      vertical: "Airline",
+      snapshot: null,
+    });
+
+    const setupSuggestions = view.controls.find(
+      (control) => control.label === "AI setup suggestions",
+    );
+    const anomalyTriage = view.controls.find(
+      (control) => control.label === "AI anomaly triage",
+    );
+
+    expect(setupSuggestions).toMatchObject({
+      headline: "Admin approval required",
+      detail:
+        "AI-suggested tenant configuration changes cannot apply until an admin approves them and records a reason.",
+      action: { href: "/admin/context-layer/approval-queue" },
+    });
+    expect(anomalyTriage).toMatchObject({
+      headline: "No silent remediation",
+      detail:
+        "AI-detected setup anomalies require human triage acknowledgement before any remediation is applied.",
+      action: { href: "/admin/context-layer/approval-queue" },
+    });
+  });
+
   it("keeps implementation jargon out of every operator-facing string", () => {
     const view = buildLoadStudioView({
       tenantName: "Apex Retail Group",

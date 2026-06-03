@@ -353,6 +353,22 @@ export function buildLoadStudioView(
       action: { label: "Open approval queue", href: HREF.approvals },
     },
     {
+      label: "AI setup suggestions",
+      headline: "Admin approval required",
+      detail:
+        "AI-suggested tenant configuration changes cannot apply until an admin approves them and records a reason.",
+      tone: "attention",
+      action: { label: "Open approval queue", href: HREF.approvals },
+    },
+    {
+      label: "AI anomaly triage",
+      headline: "No silent remediation",
+      detail:
+        "AI-detected setup anomalies require human triage acknowledgement before any remediation is applied.",
+      tone: "attention",
+      action: { label: "Open approval queue", href: HREF.approvals },
+    },
+    {
       label: "Quarantine holds",
       headline: "Restricted-data holds",
       detail:
