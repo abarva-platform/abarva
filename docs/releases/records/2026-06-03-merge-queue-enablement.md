@@ -28,6 +28,7 @@ This release prepares the transferred public GitHub repository for merge-queue g
 ## Changes Included
 
 - Adds `merge_group` triggers to pull-request workflows that back required branch-protection checks.
+- Updates `AGENTS.md` so future agents know the canonical repo moved to `abarva-platform/abarva` and that `main` should be merged through the queue.
 - Documents the repository transfer and merge-queue enablement evidence path.
 - No runtime product code, migrations, tenant data, or public route behavior changed.
 
@@ -35,6 +36,7 @@ This release prepares the transferred public GitHub repository for merge-queue g
 
 - PASS: Workflow diff inspected to confirm only GitHub Actions trigger blocks changed.
 - PASS: YAML syntax validation run for all changed workflows.
+- PASS: Repository-governance instructions added to `AGENTS.md`.
 - PASS: `git diff --check` run for whitespace validation.
 - PASS: `npm run release:check -- --base origin/main --head HEAD` run before PR creation after this record was corrected.
 - PENDING: Post-merge validation will verify that the active repository ruleset exists and that `main` requires the merge queue.
