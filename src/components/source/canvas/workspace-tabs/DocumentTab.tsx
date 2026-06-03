@@ -152,13 +152,12 @@ export function DocumentTab({
     return (
       <div data-testid="source-canvas-document-tab" style={EMPTY_STYLE}>
         <p style={EMPTY_TITLE_STYLE}>
-          No artifacts scaffolded for {SOURCE_STAGE_LABELS[stage]}.
+          No documents yet for {SOURCE_STAGE_LABELS[stage]}.
         </p>
         <p style={EMPTY_BODY_STYLE}>
-          The canvas substrate for this stage is empty. Either this is a legacy
-          event missing scaffolding, or the canonical specs need to be extended.
-          Contact your AbarVa lead to refresh this stage before using it for an
-          executive decision, vendor communication, or approval.
+          Documents appear here as Sentinel drafts them for this stage. If this
+          stage should already have documents, contact your AbarVa lead before
+          using it for an executive decision, vendor communication, or approval.
         </p>
       </div>
     );
