@@ -34,6 +34,20 @@ jest.mock("@/lib/agent/attachments", () => {
           pageCount: args.mimeType === "application/pdf" ? 4 : null,
           tableCount: args.mimeType === "application/pdf" ? 2 : null,
           parserId: "mock-parser",
+          smallDocumentShortcut:
+            args.mimeType === "application/pdf"
+              ? {
+                  eligible: false,
+                  route: "parser",
+                  reason: "over_page_threshold",
+                  byteSize: args.buffer.byteLength,
+                  pageCount: 4,
+                  thresholds: {
+                    maxBytes: 500 * 1024,
+                    maxPagesExclusive: 4,
+                  },
+                }
+              : null,
         },
       })),
   };
@@ -179,6 +193,17 @@ describe("POST /api/v1/agent/attachments", () => {
         page_count: number | null;
         table_count: number | null;
         parser_id: string | null;
+        small_doc_shortcut: {
+          eligible: boolean;
+          route: string;
+          reason: string;
+          byte_size: number;
+          page_count: number | null;
+          thresholds: {
+            max_bytes: number;
+            max_pages_exclusive: number;
+          };
+        } | null;
       };
       dataProtection: { decision: string; evidenceExtractionAllowed: boolean };
     };
@@ -191,6 +216,17 @@ describe("POST /api/v1/agent/attachments", () => {
       page_count: 4,
       table_count: 2,
       parser_id: "mock-parser",
+      small_doc_shortcut: {
+        eligible: false,
+        route: "parser",
+        reason: "over_page_threshold",
+        byte_size: 1024,
+        page_count: 4,
+        thresholds: {
+          max_bytes: 500 * 1024,
+          max_pages_exclusive: 4,
+        },
+      },
     });
     expect(body.dataProtection).toMatchObject({
       decision: "allow",

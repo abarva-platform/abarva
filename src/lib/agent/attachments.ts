@@ -38,6 +38,9 @@ export const AGENT_ATTACHMENT_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export const AGENT_ATTACHMENT_PREVIEW_MAX_CHARS = 4000;
 
+export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_BYTES = 500 * 1024;
+export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_PAGES_EXCLUSIVE = 4;
+
 const PDF_MIME = "application/pdf";
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -47,10 +50,30 @@ const TEXT_MIMES = new Set(["text/plain", "text/markdown", "text/csv"]);
 const IMAGE_MIMES = new Set(["image/png", "image/jpeg"]);
 const AGENT_ATTACHMENT_PARSER_VERSION = `${CONTENT_HASH_PARSE_CACHE_VERSION}:agent-attachment-v1`;
 
+export type AgentAttachmentSmallDocumentShortcutReason =
+  | "not_pdf"
+  | "over_size_threshold"
+  | "page_count_unavailable"
+  | "over_page_threshold"
+  | "small_pdf_under_configured_thresholds";
+
+export interface AgentAttachmentSmallDocumentShortcut {
+  eligible: boolean;
+  route: "claude-native-pdf" | "parser";
+  reason: AgentAttachmentSmallDocumentShortcutReason;
+  byteSize: number;
+  pageCount: number | null;
+  thresholds: {
+    maxBytes: number;
+    maxPagesExclusive: number;
+  };
+}
+
 export interface AgentAttachmentParseMetadata {
   pageCount: number | null;
   tableCount: number | null;
   parserId: string | null;
+  smallDocumentShortcut: AgentAttachmentSmallDocumentShortcut | null;
 }
 
 export interface AgentAttachmentParseResult {
@@ -60,6 +83,75 @@ export interface AgentAttachmentParseResult {
 
 export function isAllowedAgentAttachmentMime(mime: string): boolean {
   return AGENT_ATTACHMENT_MIME_ALLOWLIST.includes(mime);
+}
+
+export function getSmallDocumentShortcutThresholds(
+  env: NodeJS.ProcessEnv = process.env,
+): AgentAttachmentSmallDocumentShortcut["thresholds"] {
+  return {
+    maxBytes: parsePositiveInteger(
+      env.AGENT_SMALL_DOC_NATIVE_PDF_MAX_BYTES,
+      AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_BYTES,
+    ),
+    maxPagesExclusive: parsePositiveInteger(
+      env.AGENT_SMALL_DOC_NATIVE_PDF_MAX_PAGES,
+      AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_PAGES_EXCLUSIVE,
+    ),
+  };
+}
+
+export function classifySmallPdfNativeShortcut(args: {
+  mimeType: string;
+  byteSize: number;
+  pageCount: number | null;
+  env?: NodeJS.ProcessEnv;
+}): AgentAttachmentSmallDocumentShortcut {
+  const thresholds = getSmallDocumentShortcutThresholds(args.env);
+  const base = {
+    byteSize: args.byteSize,
+    pageCount: args.pageCount,
+    thresholds,
+  };
+
+  if (args.mimeType !== PDF_MIME) {
+    return {
+      ...base,
+      eligible: false,
+      route: "parser",
+      reason: "not_pdf",
+    };
+  }
+  if (args.byteSize >= thresholds.maxBytes) {
+    return {
+      ...base,
+      eligible: false,
+      route: "parser",
+      reason: "over_size_threshold",
+    };
+  }
+  if (args.pageCount === null) {
+    return {
+      ...base,
+      eligible: false,
+      route: "parser",
+      reason: "page_count_unavailable",
+    };
+  }
+  if (args.pageCount >= thresholds.maxPagesExclusive) {
+    return {
+      ...base,
+      eligible: false,
+      route: "parser",
+      reason: "over_page_threshold",
+    };
+  }
+
+  return {
+    ...base,
+    eligible: true,
+    route: "claude-native-pdf",
+    reason: "small_pdf_under_configured_thresholds",
+  };
 }
 
 /**
@@ -92,6 +184,7 @@ export async function extractAgentAttachmentParseResult(args: {
           pageCount: null,
           tableCount: args.mimeType === "text/csv" ? 1 : null,
           parserId: "plain-text",
+          smallDocumentShortcut: null,
         },
       };
     }
@@ -101,7 +194,7 @@ export async function extractAgentAttachmentParseResult(args: {
       return emptyParseResult("image-no-ocr");
     }
     if (args.mimeType === PDF_MIME) {
-      return extractCachedAgentPdfText(args);
+      return withSmallPdfShortcut(args, await extractCachedAgentPdfText(args));
     }
     if (args.mimeType === DOCX_MIME) {
       return cachedAgentAttachmentParse(args, "docx-mammoth", async () => ({
@@ -110,6 +203,7 @@ export async function extractAgentAttachmentParseResult(args: {
           pageCount: null,
           tableCount: null,
           parserId: "docx-mammoth",
+          smallDocumentShortcut: null,
         },
       }));
     }
@@ -145,6 +239,7 @@ async function extractCachedAgentPdfText(args: {
               pageCount: result.pageCount,
               tableCount: result.tableCount,
               parserId: DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+              smallDocumentShortcut: null,
             },
           };
         },
@@ -183,6 +278,26 @@ async function cachedAgentAttachmentParse(
   return value;
 }
 
+function withSmallPdfShortcut(
+  args: {
+    mimeType: string;
+    buffer: Buffer;
+  },
+  result: AgentAttachmentParseResult,
+): AgentAttachmentParseResult {
+  return {
+    ...result,
+    metadata: {
+      ...result.metadata,
+      smallDocumentShortcut: classifySmallPdfNativeShortcut({
+        mimeType: args.mimeType,
+        byteSize: args.buffer.byteLength,
+        pageCount: result.metadata.pageCount,
+      }),
+    },
+  };
+}
+
 async function extractPdfResult(
   buffer: Buffer,
 ): Promise<AgentAttachmentParseResult> {
@@ -206,6 +321,7 @@ async function extractPdfResult(
           typeof textResult.total === "number" ? textResult.total : null,
         tableCount,
         parserId: "pdf-parse",
+        smallDocumentShortcut: null,
       },
     };
   } finally {
@@ -256,6 +372,7 @@ async function extractXlsxResult(
       pageCount: null,
       tableCount: worksheetCount,
       parserId: "exceljs-xlsx",
+      smallDocumentShortcut: null,
     },
   };
 }
@@ -267,8 +384,18 @@ function emptyParseResult(parserId: string | null): AgentAttachmentParseResult {
       pageCount: null,
       tableCount: null,
       parserId,
+      smallDocumentShortcut: null,
     },
   };
+}
+
+function parsePositiveInteger(
+  raw: string | undefined,
+  fallback: number,
+): number {
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 /**
