@@ -328,6 +328,14 @@ export function buildLoadStudioView(
   // ── Governance controls — visible actions only, real routes. ──────
   const controls: LoadStudioControl[] = [
     {
+      label: "Pilot data rule",
+      headline: "No bypass loads",
+      detail:
+        "New client data enters through this governed load workflow. If a dimension is missing, add the loader path before ingesting it.",
+      tone: "attention",
+      action: { label: "Start a governed load", href: HREF.upload },
+    },
+    {
       label: "Sensitive data scan",
       headline: "Automatic on every upload",
       detail:
@@ -337,7 +345,8 @@ export function buildLoadStudioView(
     },
     {
       label: "Approval queue",
-      headline: needsAttention > 0 ? "Loads awaiting review" : "Nothing waiting",
+      headline:
+        needsAttention > 0 ? "Loads awaiting review" : "Nothing waiting",
       detail:
         "A load must be approved before it is committed to the client data plane.",
       tone: needsAttention > 0 ? "attention" : "default",
@@ -353,7 +362,9 @@ export function buildLoadStudioView(
     },
     {
       label: "Rollback and unload",
-      headline: hasData ? "Reversible with an audit reason" : "Nothing to roll back",
+      headline: hasData
+        ? "Reversible with an audit reason"
+        : "Nothing to roll back",
       detail:
         "Rolling back a committed load requires confirmation and a recorded reason.",
       tone: "default",
