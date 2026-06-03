@@ -94,7 +94,9 @@ Optional but recommended:
 6. Defender for Storage result must be `No threats found` per
    `docs/runbooks/defender-storage-malware.md`.
 7. Sensitive-data guard evaluates declared classification and detected content
-   using `src/lib/security/sensitive-upload-guard.ts`.
+   using `src/lib/security/sensitive-upload-guard.ts`. Identifier detection
+   delegates to `src/lib/security/preingest-sensitive-scanner.ts`, whose entity
+   names are compatible with the future Microsoft Presidio adapter.
 8. Files pass to parse/schema preview only after malware and sensitive-data
    gates pass.
 9. Schema anomalies pause the processing run and request clarification from the
