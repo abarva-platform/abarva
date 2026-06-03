@@ -21,6 +21,10 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
 import {
+  getSourcingEvent,
+  resolveSourceEventUuidForClient,
+} from "@/lib/source/queries";
+import {
   artifactStateRowToView,
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
@@ -49,6 +53,73 @@ function isCanonicalClientAdminEmail(
   const normalized = email?.trim().toLowerCase() ?? "";
   return CANONICAL_CLIENT_ADMIN_EMAILS.includes(
     normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number],
+  );
+}
+
+export async function GET(_req: NextRequest, { params }: RouteCtx) {
+  try {
+    await requireTenancy();
+  } catch (error) {
+    return tenancyErrorResponse(error);
+  }
+
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (!activeClient) {
+    return Response.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const { eventId, artifactCode } = await params;
+  const event = await getSourcingEvent(eventId).catch(() => null);
+  if (!event) {
+    return Response.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const persistedEventId =
+    (await resolveSourceEventUuidForClient(eventId, activeClient.key).catch(
+      () => null,
+    )) ??
+    (event.code && event.code !== eventId
+      ? await resolveSourceEventUuidForClient(
+          event.code,
+          activeClient.key,
+        ).catch(() => null)
+      : null);
+  if (!persistedEventId) {
+    return Response.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const supabase = getAzureWriteFluentClient();
+  const { data: artifactRow, error } = await supabase
+    .from("source_event_artifact_states")
+    .select("artifact_code, body, body_format, source_event_id")
+    .eq("source_event_id", persistedEventId)
+    .eq("artifact_code", artifactCode)
+    .maybeSingle<{
+      artifact_code: string;
+      body: string | null;
+      body_format: string | null;
+      source_event_id: string;
+    }>();
+
+  if (error) {
+    console.error(
+      "[GET /api/v1/source/:eventId/artifacts/:artifactCode/body]",
+      error,
+    );
+    return Response.json({ error: "internal_error" }, { status: 500 });
+  }
+
+  if (!artifactRow) {
+    return Response.json({ error: "not_found" }, { status: 404 });
+  }
+
+  return Response.json(
+    {
+      artifactCode: artifactRow.artifact_code,
+      body: artifactRow.body,
+      format: artifactRow.body_format ?? "markdown",
+    },
+    { status: 200 },
   );
 }
 

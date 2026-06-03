@@ -294,7 +294,7 @@ export function SourceEventsPortfolio({
           <ContextTile
             label="Linked programs"
             value={`${linkedProgramCount} linked`}
-            detail="Program linkage is deterministic where seeded"
+            detail="Program linkage shown where available"
           />
           <ContextTile
             label="Value at stake"
@@ -379,7 +379,7 @@ export function SourceEventsPortfolio({
               />
               <MissingItem
                 title="Live procurement telemetry"
-                detail="The portfolio is deterministic seed-backed. No live bid ingestion, approvals, or workflow automation are implied."
+                detail="The portfolio is seed-backed today. Live bid ingestion, approvals, and workflow automation are not implied here."
               />
             </div>
           </aside>
@@ -403,7 +403,7 @@ export function SourceEventsPortfolio({
               </div>
               <div style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760 }}>
                 Narrow the seeded queue by sourcing stage or lifecycle posture.
-                Filters are deterministic and update the portfolio in place
+                Filters update the portfolio in place
                 through route query params.
               </div>
             </div>

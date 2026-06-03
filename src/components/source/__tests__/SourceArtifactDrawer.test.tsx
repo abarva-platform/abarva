@@ -2,7 +2,7 @@
  * SRC-S4 · SourceArtifactDrawer — tier indicator snapshot tests.
  *
  * Verifies:
- *   - Renders with each tier: rich, outline, stub
+ *   - Renders with each tier key: rich, outline, stub
  *   - TierIndicator data-testid and data-tier attributes are present
  *   - Provenance panel renders when provenance prop provided
  *   - No tier renders as stub fallback
@@ -46,6 +46,11 @@ const PROVENANCE = {
 
 describe('SourceArtifactDrawer · tier indicator', () => {
   const TIERS: SourceArtifactTier[] = ['rich', 'outline', 'stub'];
+  const TIER_LABELS: Record<SourceArtifactTier, string> = {
+    rich: 'Final',
+    outline: 'In Progress',
+    stub: 'Draft',
+  };
 
   for (const tier of TIERS) {
     it(`renders tier="${tier}" with correct data-tier attribute`, () => {
@@ -56,7 +61,7 @@ describe('SourceArtifactDrawer · tier indicator', () => {
       );
       expect(html).toContain('data-testid="tier-indicator"');
       expect(html).toContain(`data-tier="${tier}"`);
-      expect(html).toContain(tier.charAt(0).toUpperCase() + tier.slice(1));
+      expect(html).toContain(TIER_LABELS[tier]);
     });
   }
 
@@ -84,7 +89,7 @@ describe('SourceArtifactDrawer · provenance panel', () => {
     );
     expect(html).toContain('data-testid="provenance-panel"');
     expect(html).toContain('Visible provenance');
-    expect(html).toContain('deterministic_seed');
+    expect(html).toContain('Seed-backed scenario');
     expect(html).toContain('Evidence ledger entry');
   });
 
@@ -120,11 +125,11 @@ describe('SourceArtifactDrawer · shell', () => {
     expect(html).toContain('Note two');
   });
 
-  it('renders deterministic disclaimer', () => {
+  it('renders seed-backed disclaimer', () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
-    expect(html).toContain('Deterministic seeded artifact shell only');
+    expect(html).toContain('Seed-backed artifact shell only');
   });
 
   it('uses Nexus language for the disabled artifact prompt', () => {

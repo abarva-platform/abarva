@@ -318,7 +318,7 @@ function normalizeSourcingEventSummaryStage(
 }
 
 function seedEventMatchesClient(
-  event: SourcingEventSummary,
+  event: Pick<SourcingEventSummary, "accountName">,
   clientKey: string,
 ): boolean {
   const accountName = event.accountName.trim().toLowerCase();
@@ -635,6 +635,7 @@ export async function getSourcingEvent(
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
   if (!activeClient || !tenancy) return null;
+  if (!seedEventMatchesClient(event, activeClient.key)) return null;
   if (
     !(await canReadSourceEvent(tenancy, activeClient.key, event.id).catch(
       () => false,

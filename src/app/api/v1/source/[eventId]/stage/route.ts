@@ -35,7 +35,10 @@ import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
-import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
+import {
+  resolveSourceEventUuidForClient,
+  scaffoldNewEventSubstrate,
+} from "@/lib/source/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,20 +84,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const supabase = getAzureReadFluentClient();
-    const { data: persistedEvent, error: fetchError } = await supabase
-      .from("source_events")
-      .select("id, client_key, current_stage_key, lifecycle_state")
-      .eq("id", eventId)
-      .maybeSingle();
-
-    if (fetchError) {
-      return Response.json(
-        { error: "lookup_failed", detail: fetchError.message },
-        { status: 500 },
-      );
-    }
-
     const fallbackClientKey =
       (isClientKey(currentUser?.metadataClientKey)
         ? currentUser.metadataClientKey
@@ -108,6 +97,25 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           detail: "No active client for Source stage advancement",
         },
         { status: 403 },
+      );
+    }
+
+    const supabase = getAzureReadFluentClient();
+    const resolvedEventId = await resolveSourceEventUuidForClient(
+      eventId,
+      effectiveClientKey,
+    ).catch(() => null);
+    const persistedEventLookupId = resolvedEventId ?? eventId;
+    const { data: persistedEvent, error: fetchError } = await supabase
+      .from("source_events")
+      .select("id, client_key, current_stage_key, lifecycle_state")
+      .eq("id", persistedEventLookupId)
+      .maybeSingle();
+
+    if (fetchError) {
+      return Response.json(
+        { error: "lookup_failed", detail: fetchError.message },
+        { status: 500 },
       );
     }
 

@@ -80,7 +80,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, type Page } from '@playwright/test';
+import { chromium, type Page, type Response } from '@playwright/test';
 
 import {
   BASE_URL,
@@ -277,11 +277,11 @@ async function primeStorageState(personaKey: SourcePersonaKey): Promise<string> 
     }
 
     // Verify /source/ is reachable.
-    const probe = await page.goto(persona.postLoginProbe, { waitUntil: 'domcontentloaded' });
-    if (probe && probe.status() >= 400) {
+    const probe = await gotoSourceProbe(page, persona.postLoginProbe);
+    if (page.url().includes('/sign-in') || (probe && probe.status() >= 400)) {
       throw new Error(
         `Post-login probe failed for persona '${personaKey}': ` +
-          `GET ${persona.postLoginProbe} returned ${probe.status()}.`,
+          `GET ${persona.postLoginProbe} landed on ${page.url()}.`,
       );
     }
 
@@ -319,7 +319,6 @@ export async function signInAs(
   const storagePath = sourcePersonaStorageState(key);
 
   if (persona.gapNote) {
-    // eslint-disable-next-line no-console
     console.warn(`[source/_auth] Persona '${key}' has a documented gap: ${persona.gapNote}`);
   }
 
@@ -334,18 +333,42 @@ export async function signInAs(
   await injectStorageStateIntoPage(page, storagePath);
 
   // Verify /source/ is reachable from this page.
-  let response = await page.goto(persona.postLoginProbe, { waitUntil: 'domcontentloaded' });
-  if (response && response.status() >= 400) {
+  let response = await gotoSourceProbe(page, persona.postLoginProbe);
+  if (page.url().includes('/sign-in') || (response && response.status() >= 400)) {
     // Cached state expired between freshness check and use — reprime once.
     fs.rmSync(storagePath, { force: true });
     await primeStorageState(key);
     await injectStorageStateIntoPage(page, storagePath);
-    response = await page.goto(persona.postLoginProbe, { waitUntil: 'domcontentloaded' });
-    if (response && response.status() >= 400) {
+    response = await gotoSourceProbe(page, persona.postLoginProbe);
+    if (page.url().includes('/sign-in') || (response && response.status() >= 400)) {
       throw new Error(
-        `signInAs('${key}'): /source probe returned ${response.status()} after refresh.`,
+        `signInAs('${key}'): /source probe landed on ${page.url()} after refresh.`,
       );
     }
+  }
+}
+
+async function gotoSourceProbe(
+  page: Page,
+  url: string,
+): Promise<Response | null> {
+  try {
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/\/source(\/queue|\/portfolio|\/events)?|\/sign-in|\/home/, {
+      timeout: 15000,
+    }).catch(() => null);
+    return response;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('net::ERR_ABORTED')
+    ) {
+      await page.waitForURL(/\/source(\/queue|\/portfolio|\/events)?|\/sign-in|\/home/, {
+        timeout: 15000,
+      });
+      return null;
+    }
+    throw error;
   }
 }
 
@@ -361,9 +384,23 @@ async function injectStorageStateIntoPage(page: Page, storagePath: string): Prom
       secure?: boolean;
       sameSite?: 'Lax' | 'Strict' | 'None';
     }>;
+    origins?: Array<{
+      origin: string;
+      localStorage?: Array<{ name: string; value: string }>;
+    }>;
   };
   if (parsed.cookies && parsed.cookies.length > 0) {
     await page.context().addCookies(parsed.cookies);
+  }
+  for (const originState of parsed.origins ?? []) {
+    if (!originState.origin.startsWith(BASE_URL)) continue;
+    await page.goto(originState.origin, { waitUntil: 'domcontentloaded' });
+    await page.evaluate((entries) => {
+      window.localStorage.clear();
+      for (const entry of entries) {
+        window.localStorage.setItem(entry.name, entry.value);
+      }
+    }, originState.localStorage ?? []);
   }
 }
 

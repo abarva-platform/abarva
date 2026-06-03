@@ -1,6 +1,6 @@
 // Source Decision Queue surface — the triggered-decision inbox for Source.
 //
-// Renders the assembled `SourceDecisionQueue`: a deterministically ordered
+// Renders the assembled `SourceDecisionQueue`: a consistently ordered
 // list of BUNDLED decision cards — one card per contract/vendor decision
 // (Practitioner-Fit FIX 2) — grouped by urgency band, each deep-linking into
 // a pre-loaded workflow. The sub-issues (renewal, notice window, benchmark,

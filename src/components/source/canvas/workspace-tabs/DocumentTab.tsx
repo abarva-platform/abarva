@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import {
   specByCode,
   type SourceArtifactSpec,
@@ -105,6 +105,8 @@ interface DocumentTabProps {
   pdfGeneratableCodes?: ReadonlySet<string>;
   /** Build the PDF download URL for a given artifact code. */
   pdfDownloadHref?: (code: string) => string;
+  /** Optional stage-specific panel shown below the active artifact. */
+  supplementalPanel?: ReactNode;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -147,6 +149,7 @@ export function DocumentTab({
   htmlViewHref,
   pdfGeneratableCodes,
   pdfDownloadHref,
+  supplementalPanel,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -295,6 +298,7 @@ export function DocumentTab({
                   artifactCode={active.artifactCode}
                 />
               ) : null}
+              {supplementalPanel}
               {body ? null : (
                 <p style={MISSING_TEMPLATE_STYLE}>
                   No template content found for this artifact code. Add a
@@ -802,7 +806,7 @@ function tierStyle(tier: SourceEventArtifactState["tier"]): CSSProperties {
 
 function tierLabel(tier: SourceEventArtifactState["tier"]): string {
   if (tier === "rich") return "Authored";
-  if (tier === "outline") return "Outline";
+  if (tier === "outline") return "In progress";
   return "Draft";
 }
 

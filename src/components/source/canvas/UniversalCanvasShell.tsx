@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
@@ -102,7 +101,6 @@ import type {
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
-import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
@@ -119,6 +117,7 @@ import { DocumentTab } from "./workspace-tabs/DocumentTab";
 import { GateTab } from "./workspace-tabs/GateTab";
 import { EvidenceTab } from "./workspace-tabs/EvidenceTab";
 import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
+import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel";
 import { threeChoicesForStage } from "./canvas-three-choices";
 
 interface UniversalCanvasShellProps {
@@ -619,6 +618,7 @@ export function UniversalCanvasShell({
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
           }
           eventId={event.id}
+          supplementalPanel={<StageDecisionLensPanel stage={viewStage} />}
         />
       ),
     },
@@ -650,6 +650,45 @@ export function UniversalCanvasShell({
     },
   ];
 
+  const exportItems = [
+    {
+      key: "cxo-report-html",
+      label: "CXO Report",
+      href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=html`,
+      testId: "source-canvas-cxo-report-html",
+      external: true,
+    },
+    {
+      key: "cxo-report-pptx",
+      label: "Download PPTX",
+      href: `/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=pptx`,
+      testId: "source-canvas-cxo-report-pptx",
+      download: true,
+    },
+    {
+      key: "deal-pack",
+      label: "Download Deal Pack",
+      href: `/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`,
+      testId: "source-canvas-deal-pack-download",
+    },
+    {
+      key: "value-proof",
+      label: "Value Proof",
+      href: `/source/events/${event.id}/value`,
+      testId: "source-canvas-value-proof-link",
+    },
+    ...(decisionThreadId
+      ? [
+          {
+            key: "dossier",
+            label: "View in Dossier",
+            href: `/dossier/${decisionThreadId}`,
+            testId: "source-canvas-dossier-link",
+          },
+        ]
+      : []),
+  ];
+
   return (
     <AppShell
       surface="source-detail"
@@ -668,23 +707,10 @@ export function UniversalCanvasShell({
     >
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
-          <div style={DOSSIER_LINK_WRAP_STYLE}>
-            <Link
-              href={`/source/events/${event.id}/value`}
-              style={DOSSIER_LINK_STYLE}
-            >
-              Value Proof
-            </Link>
-            {decisionThreadId ? (
-              <Link
-                href={`/dossier/${decisionThreadId}`}
-                style={DOSSIER_LINK_STYLE}
-              >
-                View in Dossier
-              </Link>
-            ) : null}
-          </div>
-          <EventIdStrip event={event} />
+          <EventIdStrip
+            event={event}
+            exportItems={exportItems}
+          />
           <EventStepRail
             eventId={event.id}
             currentStage={event.currentStageKey}
@@ -750,57 +776,6 @@ function displayAgentInitials(agent: "Sentinel" | "Atlas"): string {
   return agent === "Sentinel" ? "SS" : agent[0];
 }
 
-interface CanvasContextStripProps {
-  stageKey: SourceStageKey;
-  contextBundle: {
-    readiness: string;
-    artifacts: string;
-    vendors?: string;
-    evidence?: string;
-  };
-  children: ReactNode;
-}
-
-// Stage label + readiness/artifact counts that previously lived inside the
-// chat lane header. AgentDock owns the chat chrome now, so the workspace
-// pane absorbs this strip — same data, same testid surface, just hosted by
-// the right pane instead of the chat one.
-function CanvasContextStrip({
-  stageKey,
-  contextBundle,
-  children,
-}: CanvasContextStripProps) {
-  const stageLabel = SOURCE_STAGE_LABELS[stageKey];
-  return (
-    <div style={WORKSPACE_WRAPPER_STYLE}>
-      <div
-        data-testid="source-canvas-context-strip"
-        style={CONTEXT_STRIP_STYLE}
-        aria-label="Context bundle"
-      >
-        <span style={CONTEXT_LABEL_STYLE}>Step {stageLabel.toUpperCase()}</span>
-        <span style={DOT_SEP}>·</span>
-        <span>Readiness {contextBundle.readiness}</span>
-        <span style={DOT_SEP}>·</span>
-        <span>Artifacts {contextBundle.artifacts}</span>
-        {contextBundle.vendors ? (
-          <>
-            <span style={DOT_SEP}>·</span>
-            <span>Vendors {contextBundle.vendors}</span>
-          </>
-        ) : null}
-        {contextBundle.evidence ? (
-          <>
-            <span style={DOT_SEP}>·</span>
-            <span>Evidence {contextBundle.evidence}</span>
-          </>
-        ) : null}
-      </div>
-      <div style={WORKSPACE_INNER_STYLE}>{children}</div>
-    </div>
-  );
-}
-
 function CanvasTour() {
   const searchParams = useSearchParams();
   const tourActive = searchParams?.get("tour") === "1";
@@ -862,26 +837,6 @@ const CONTAINER_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
-const DOSSIER_LINK_WRAP_STYLE: CSSProperties = {
-  display: "flex",
-  justifyContent: "flex-end",
-  paddingTop: 10,
-};
-
-const DOSSIER_LINK_STYLE: CSSProperties = {
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 6,
-  background: "#fff",
-  color: CANVAS.INK,
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  fontWeight: 800,
-  letterSpacing: "0.08em",
-  padding: "7px 10px",
-  textDecoration: "none",
-  textTransform: "uppercase",
-};
-
 const SPLITTER_WRAPPER_STYLE: CSSProperties = {
   flex: 1,
   display: "flex",
@@ -903,31 +858,4 @@ const WORKSPACE_INNER_STYLE: CSSProperties = {
   flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
-};
-
-const CONTEXT_STRIP_STYLE: CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: 6,
-  padding: "8px 18px",
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.06em",
-  color: CANVAS.INK_SOFT,
-  background: "rgba(10,10,11,0.025)",
-  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
-  flexShrink: 0,
-};
-
-const CONTEXT_LABEL_STYLE: CSSProperties = {
-  fontWeight: 700,
-  color: CANVAS.INK,
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  marginRight: 4,
-};
-
-const DOT_SEP: CSSProperties = {
-  color: CANVAS.GRAY,
 };

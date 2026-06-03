@@ -8,15 +8,27 @@
  * audit caught on a sibling branch.
  *
  * Scope note: this guard is deliberately narrow and precise (no broad term
- * banning, which produces false positives). The pervasive "deterministic"
- * cleanup is a separate, larger pass (M3 pass-2) and is intentionally not
- * enforced here yet.
+ * banning, which produces false positives). It only scans the specific
+ * buyer-facing Source components touched by the simplicity pass.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SRC_SOURCE = join(process.cwd(), 'src/components/source');
+const LANGUAGE_CANON_FILES = [
+  join(SRC_SOURCE, 'SourceEventsPortfolio.tsx'),
+  join(SRC_SOURCE, 'SentinelMissionPanel.tsx'),
+  join(SRC_SOURCE, 'SourceDecisionQueueView.tsx'),
+  join(SRC_SOURCE, 'SourceArtifactDrawer.tsx'),
+  join(SRC_SOURCE, 'canvas/workspace-tabs/DocumentTab.tsx'),
+] as const;
+
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+}
 
 function allTsxFiles(dir: string): string[] {
   const out: string[] = [];
@@ -62,6 +74,22 @@ describe('Source language canon', () => {
         offenders.push(file.replace(process.cwd() + '/', ''));
       }
     }
+    expect(offenders).toEqual([]);
+  });
+
+  it('buyer-facing Source components do not use deterministic wording', () => {
+    const offenders = LANGUAGE_CANON_FILES.filter((file) =>
+      /\bdeterministic\b/i.test(stripComments(readFileSync(file, 'utf8'))),
+    ).map((file) => file.replace(process.cwd() + '/', ''));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('buyer-facing Source tier labels do not render Stub or Outline', () => {
+    const offenders = LANGUAGE_CANON_FILES.filter((file) =>
+      /\bStub\b|\bOutline\b/.test(stripComments(readFileSync(file, 'utf8'))),
+    ).map((file) => file.replace(process.cwd() + '/', ''));
+
     expect(offenders).toEqual([]);
   });
 });
