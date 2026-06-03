@@ -156,6 +156,10 @@ function numberFromMetadata(
       if (Number.isFinite(parsed)) return parsed;
     }
   }
+  const nestedUsage = metadata.usage;
+  if (nestedUsage && typeof nestedUsage === 'object' && !Array.isArray(nestedUsage)) {
+    return numberFromMetadata(nestedUsage as Record<string, unknown>, keys);
+  }
   return null;
 }
 
