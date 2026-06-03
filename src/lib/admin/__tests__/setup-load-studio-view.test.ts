@@ -45,8 +45,19 @@ describe("buildLoadStudioView", () => {
       vertical: "Retail",
       snapshot: snapshot({
         segments: [
-          segment({ segmentId: "a", recordCount: 200, coverageScore: 0.9, healthState: "complete" }),
-          segment({ segmentId: "b", segmentName: "vendor_contracts", recordCount: 80, coverageScore: 0.4, healthState: "critical" }),
+          segment({
+            segmentId: "a",
+            recordCount: 200,
+            coverageScore: 0.9,
+            healthState: "complete",
+          }),
+          segment({
+            segmentId: "b",
+            segmentName: "vendor_contracts",
+            recordCount: 80,
+            coverageScore: 0.4,
+            healthState: "critical",
+          }),
         ],
         totalRecords: 280,
         lastIngestedAt: "2026-05-30T00:00:00Z",
@@ -64,7 +75,9 @@ describe("buildLoadStudioView", () => {
     expect(view.metrics[4]!.value).toBe("2026-05-30");
     // identity
     expect(view.tenant.initials).toBe("AG");
-    expect(view.tenant.breadcrumb).toBe("Admin / Data Loads / Apex Retail Group");
+    expect(view.tenant.breadcrumb).toBe(
+      "Admin / Data Loads / Apex Retail Group",
+    );
   });
 
   it("sorts readiness by record weight and maps health to calm status", () => {
@@ -73,8 +86,16 @@ describe("buildLoadStudioView", () => {
       vertical: "Retail",
       snapshot: snapshot({
         segments: [
-          segment({ segmentId: "small", recordCount: 10, healthState: "sparse" }),
-          segment({ segmentId: "big", recordCount: 500, healthState: "complete" }),
+          segment({
+            segmentId: "small",
+            recordCount: 10,
+            healthState: "sparse",
+          }),
+          segment({
+            segmentId: "big",
+            recordCount: 500,
+            healthState: "complete",
+          }),
         ],
       }),
     });
@@ -91,8 +112,17 @@ describe("buildLoadStudioView", () => {
       vertical: "Retail",
       snapshot: snapshot({
         segments: [
-          segment({ segmentId: "ok", recordCount: 100, healthState: "complete" }),
-          segment({ segmentId: "blk", segmentName: "erp_landscape", recordCount: 0, healthState: "not_started" }),
+          segment({
+            segmentId: "ok",
+            recordCount: 100,
+            healthState: "complete",
+          }),
+          segment({
+            segmentId: "blk",
+            segmentName: "erp_landscape",
+            recordCount: 0,
+            healthState: "not_started",
+          }),
         ],
       }),
     });
@@ -113,8 +143,16 @@ describe("buildLoadStudioView", () => {
       vertical: "Retail",
       snapshot: snapshot({
         recentActivity: [
-          { actor: "Carlos Rivera", what: "Committed vendor contracts", timestampIso: "2026-05-30T10:00:00Z" },
-          { actor: "Import pipeline", what: "Scanned application portfolio", timestampIso: "2026-05-29T10:00:00Z" },
+          {
+            actor: "Carlos Rivera",
+            what: "Committed vendor contracts",
+            timestampIso: "2026-05-30T10:00:00Z",
+          },
+          {
+            actor: "Import pipeline",
+            what: "Scanned application portfolio",
+            timestampIso: "2026-05-29T10:00:00Z",
+          },
         ],
       }),
     });
@@ -143,6 +181,29 @@ describe("buildLoadStudioView", () => {
     // workflow rail waits at Upload
     const upload = view.workflow.find((s) => s.name === "Upload")!;
     expect(upload.state).toBe("active");
+  });
+
+  it("makes the pilot no-bypass data-load rule visible in the operator controls", () => {
+    const view = buildLoadStudioView({
+      tenantName: "SkyHarbor Air",
+      vertical: "Airline",
+      snapshot: null,
+    });
+
+    const pilotRule = view.controls.find(
+      (control) => control.label === "Pilot data rule",
+    );
+    expect(pilotRule).toEqual({
+      label: "Pilot data rule",
+      headline: "No bypass loads",
+      detail:
+        "New client data enters through this governed load workflow. If a dimension is missing, add the loader path before ingesting it.",
+      tone: "attention",
+      action: {
+        label: "Start a governed load",
+        href: "/admin/context-layer/uploads",
+      },
+    });
   });
 
   it("keeps implementation jargon out of every operator-facing string", () => {
