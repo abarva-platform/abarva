@@ -2,9 +2,12 @@ jest.mock('server-only', () => ({}));
 
 import {
   isConnectionFallbackError,
+  maskConnectionString,
+  resolveTenantDatabaseConnection,
   resolvePostgresPoolMax,
   resolveDatabaseUrlCandidates,
   runtimePostgresPoolConfig,
+  tenantDatabaseEnvNamesForScope,
 } from '@/lib/supabase-server';
 
 describe('Postgres compatibility database URL fallback', () => {
@@ -27,6 +30,63 @@ describe('Postgres compatibility database URL fallback', () => {
     } as unknown as NodeJS.ProcessEnv);
 
     expect(candidates).toEqual(['postgres://same.example/db']);
+  });
+
+  it('uses a tenant-scoped projected secret when active client context is present', () => {
+    const candidates = resolveDatabaseUrlCandidates({
+      ABARVA_ACTIVE_CLIENT_KEY: 'meridian-health',
+      ABARVA_CLIENT_DATABASE_URL_MERIDIAN_HEALTH: 'postgres://client.example/meridian',
+      ABARVA_AZURE_DATABASE_URL: 'postgres://shared.example/abarva',
+      DATABASE_URL: 'postgres://mirror.example/postgres',
+    } as unknown as NodeJS.ProcessEnv);
+
+    expect(candidates).toEqual(['postgres://client.example/meridian']);
+  });
+
+  it('fails closed instead of falling back to the shared database when tenant secret is missing', () => {
+    const resolution = resolveTenantDatabaseConnection(
+      { clientKey: 'meridian-health' },
+      {
+        ABARVA_AZURE_DATABASE_URL: 'postgres://shared.example/abarva',
+        DATABASE_URL: 'postgres://mirror.example/postgres',
+      } as unknown as NodeJS.ProcessEnv,
+    );
+
+    expect(resolution.status).toBe('unconfigured');
+    expect(resolution.candidates).toEqual([]);
+    expect(resolution.warnings.join(' ')).toContain('refusing shared fallback');
+  });
+
+  it('allows shared fallback only when explicitly enabled for previews', () => {
+    const resolution = resolveTenantDatabaseConnection(
+      { clientKey: 'meridian-health' },
+      {
+        ABARVA_ALLOW_SHARED_DATABASE_URL_FALLBACK: 'true',
+        ABARVA_AZURE_DATABASE_URL: 'postgres://shared.example/abarva',
+      } as unknown as NodeJS.ProcessEnv,
+    );
+
+    expect(resolution.status).toBe('shared-fallback');
+    expect(resolution.candidates).toEqual(['postgres://shared.example/abarva']);
+  });
+
+  it('normalizes client keys and ids into deterministic env names', () => {
+    expect(tenantDatabaseEnvNamesForScope({
+      clientKey: 'First Capital',
+      clientId: 'client-123',
+    })).toEqual([
+      'ABARVA_CLIENT_DATABASE_URL_FIRST_CAPITAL',
+      'ABARVA_TENANT_DATABASE_URL_FIRST_CAPITAL',
+      'AZURE_CLIENT_DATABASE_URL_FIRST_CAPITAL',
+      'ABARVA_CLIENT_DATABASE_URL_CLIENT_123',
+      'ABARVA_TENANT_DATABASE_URL_CLIENT_123',
+      'AZURE_CLIENT_DATABASE_URL_CLIENT_123',
+    ]);
+  });
+
+  it('masks credentials in connection strings for operator reports', () => {
+    expect(maskConnectionString('postgres://user:secret@db.example.com:5432/clientdb?sslmode=require'))
+      .toBe('postgres://***@db.example.com:5432/clientdb');
   });
 
   it('falls back only for connection-level failures', () => {

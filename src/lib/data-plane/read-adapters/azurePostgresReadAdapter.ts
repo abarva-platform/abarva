@@ -4,17 +4,17 @@
 // Supabase adapter's query semantics row-for-row so the route response
 // shape is identical regardless of which data plane is selected.
 //
-// Connection string resolution (first non-empty wins):
-//   1. ABARVA_AZURE_DATABASE_URL  — explicit override (handy for a local
-//      dry run while DATABASE_URL still points at production)
-//   2. DATABASE_URL               — the deployed Azure container projects
-//      its Azure Postgres connection string here
+// Connection string resolution goes through the tenant connection resolver. If
+// an active client scope is present, only that client's projected database URL
+// secret may be used. Unscoped preview/runtime paths keep the legacy
+// ABARVA_AZURE_DATABASE_URL -> DATABASE_URL fallback order.
 //
 // All queries are read-only. A missing optional table returns 0 / [] —
 // the adapter never throws for absent data.
 
 import { Client, type ClientConfig } from 'pg';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
+import { resolveDatabaseUrlCandidatesForScope } from '../tenantConnectionResolver';
 import {
   TENANT_COUNT_TABLES,
   emptyTenantInvariants,
@@ -60,11 +60,7 @@ function disableSsl(connectionString: string): boolean {
 }
 
 function resolveAzureUrl(): string | null {
-  return (
-    process.env.ABARVA_AZURE_DATABASE_URL?.trim()
-    || process.env.DATABASE_URL?.trim()
-    || null
-  );
+  return resolveDatabaseUrlCandidatesForScope()[0] ?? null;
 }
 
 /** Default session runner — opens one `pg` connection for the whole call. */

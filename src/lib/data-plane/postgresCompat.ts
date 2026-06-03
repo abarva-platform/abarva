@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { PoolConfig } from 'pg';
+import { resolveDatabaseUrlCandidatesForScope } from './tenantConnectionResolver';
 
 type JsonRecord = Record<string, unknown>;
 type FilterOp = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'is' | 'in' | 'like' | 'ilike' | 'contains' | 'overlaps' | 'text_search';
@@ -29,11 +30,7 @@ let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
 
 export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
-  const candidates = [
-    env.ABARVA_AZURE_DATABASE_URL?.trim(),
-    env.DATABASE_URL?.trim(),
-  ].filter((value): value is string => Boolean(value));
-  return [...new Set(candidates)];
+  return resolveDatabaseUrlCandidatesForScope(env);
 }
 
 function resolveDatabaseUrls(): string[] {
