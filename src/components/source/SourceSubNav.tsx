@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { isSourceIaV2 } from '@/lib/source/source-ia-v2';
 
 /**
  * Source surface secondary navigation — a Snowflake-style sticky strip that
@@ -25,12 +26,31 @@ interface SourceSubNavTab {
   href: string;
 }
 
-/** The canonical Source sub-nav tabs, in display order. */
+/**
+ * Legacy three-tab set (IA v1). Retained for `NEXT_PUBLIC_SOURCE_IA_V2=0`
+ * rollback. Queue + Events + Portfolio are three peer views of the same event
+ * set — the overlap the audit flagged.
+ */
 export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
   { key: 'queue', label: 'Queue', href: '/source/queue' },
   { key: 'events', label: 'Events', href: '/source/events' },
   { key: 'portfolio', label: 'Portfolio', href: '/source/portfolio' },
 ] as const;
+
+/**
+ * IA v2 (audit 2026-06-03, Tier 1): two surfaces. "Decisions" is the act-mode
+ * Decision Queue (the landing); "Portfolio" is the analyze-mode event table
+ * (which absorbs the retired Events surface). Default tab set.
+ */
+export const SOURCE_SUBNAV_TABS_V2: readonly SourceSubNavTab[] = [
+  { key: 'queue', label: 'Decisions', href: '/source/queue' },
+  { key: 'portfolio', label: 'Portfolio', href: '/source/portfolio' },
+] as const;
+
+/** The tab set in effect for the current IA flag state. */
+export function activeSourceSubNavTabs(): readonly SourceSubNavTab[] {
+  return isSourceIaV2() ? SOURCE_SUBNAV_TABS_V2 : SOURCE_SUBNAV_TABS;
+}
 
 /**
  * Resolve which tab is active for a given pathname.
@@ -48,9 +68,14 @@ export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
  */
 export function resolveActiveSourceTab(pathname: string | null | undefined): string {
   const path = pathname ?? '';
+  // IA v2: event-detail pages (/source/events/[eventId]) belong to the
+  // Portfolio surface, since the standalone Events index folded into it.
+  if (isSourceIaV2() && (path === '/source/events' || path.startsWith('/source/events/'))) {
+    return 'portfolio';
+  }
   let bestKey = 'queue';
   let bestLen = -1;
-  for (const tab of SOURCE_SUBNAV_TABS) {
+  for (const tab of activeSourceSubNavTabs()) {
     if ((path === tab.href || path.startsWith(tab.href + '/')) && tab.href.length > bestLen) {
       bestKey = tab.key;
       bestLen = tab.href.length;
@@ -63,7 +88,7 @@ export function SourceSubNav() {
   const pathname = usePathname();
   const activeKey = resolveActiveSourceTab(pathname);
 
-  const items = SOURCE_SUBNAV_TABS.map((tab) => ({
+  const items = activeSourceSubNavTabs().map((tab) => ({
     key: tab.key,
     label: tab.label,
     href: tab.href,

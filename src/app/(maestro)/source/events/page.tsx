@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isSourceIaV2 } from "@/lib/source/source-ia-v2";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceEventsAgentDockView } from "@/components/source/SourceEventsAgentDockView";
@@ -30,6 +32,11 @@ export default async function SourceEventsPage({
 }: {
   searchParams: Promise<{ stage?: string; status?: string }>;
 }) {
+  // IA v2 (audit Tier 1): the Events surface folds into Portfolio — its event
+  // table and scorecard are the canonical analyze-mode view. Reversible via
+  // NEXT_PUBLIC_SOURCE_IA_V2=0, which restores this standalone surface.
+  if (isSourceIaV2()) redirect("/source/portfolio");
+
   const { stage, status } = await searchParams;
   const events = await listSourcingEvents();
   // Canonical Source portfolio computation — ONE filtering + counting rule,
