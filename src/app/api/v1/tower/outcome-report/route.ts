@@ -18,22 +18,26 @@
 // substrate; for a thin tenant the renderers emit an honest sparse
 // report. Nothing here invents counts or figures.
 
-import type { NextRequest } from 'next/server';
-import { Packer } from 'docx';
+import type { NextRequest } from "next/server";
+import { Packer } from "docx";
 
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import {
+  canonicalClientDisplayName,
+  inferClientKeyFromEmail,
+} from "@/lib/client-config";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
   listInitiativesForClient,
   listVendorsForClient,
   listKpisForClient,
-} from '@/lib/admin/ai-initiatives/queries';
-import { buildTowerBandMetrics } from '@/lib/tower/band-metrics-view';
-import { resolveTowerToday } from '@/lib/tower/today-resolution';
+} from "@/lib/admin/ai-initiatives/queries";
+import { buildTowerBandMetrics } from "@/lib/tower/band-metrics-view";
+import { resolveTowerToday } from "@/lib/tower/today-resolution";
 import {
   DOCX_CONTENT_TYPE,
   XLSX_CONTENT_TYPE,
@@ -41,28 +45,48 @@ import {
   renderTowerOutcomeReportDocx,
   renderTowerOutcomeReportXlsx,
   type TowerOutcomeKpiInput,
-} from '@/lib/tower/exports';
+} from "@/lib/tower/exports";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
-  const normalized = email?.trim().toLowerCase() ?? '';
+function isCanonicalClientAdminEmail(
+  email: string | null | undefined,
+): boolean {
+  const normalized = email?.trim().toLowerCase() ?? "";
   return CANONICAL_CLIENT_ADMIN_EMAILS.includes(
     normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number],
   );
 }
 
+function isSameClientAdminFallback(
+  currentUser: Awaited<ReturnType<typeof getCurrentUser>>,
+  activeClient: Awaited<ReturnType<typeof getActiveClientRow>>,
+): boolean {
+  if (!currentUser || !activeClient) return false;
+  const metadataClientKey = appClientKeyForTenant(
+    currentUser.metadataClientKey,
+  );
+  const emailClientKey = inferClientKeyFromEmail(currentUser.email);
+  const isSameClient =
+    metadataClientKey === activeClient.key ||
+    emailClientKey === activeClient.key;
+  const isAdminLike =
+    currentUser.primaryRole === "maestro" ||
+    isCanonicalClientAdminEmail(currentUser.email);
+  return isSameClient && isAdminLike;
+}
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const format = (url.searchParams.get('format') ?? 'docx').toLowerCase();
-  const requestedClientKey = url.searchParams.get('client') ?? undefined;
+  const format = (url.searchParams.get("format") ?? "docx").toLowerCase();
+  const requestedClientKey = url.searchParams.get("client") ?? undefined;
 
-  if (format !== 'docx' && format !== 'xlsx') {
+  if (format !== "docx" && format !== "xlsx") {
     return Response.json(
       {
-        error: 'unsupported_format',
+        error: "unsupported_format",
         detail: `format must be "docx" or "xlsx"; received "${format}".`,
       },
       { status: 400 },
@@ -88,17 +112,29 @@ export async function GET(req: NextRequest) {
   let canExport = false;
   if (tenancy && activeClient && tenancy.clientId === activeClient.id) {
     const policy = await loadUserProgramAccessPolicy(tenancy).catch(() => null);
-    canExport = Boolean(policy && policy.accessLevel !== 'no_program_access');
+    canExport = Boolean(policy && policy.accessLevel !== "no_program_access");
   }
-  if (!canExport && !activeClient && isCanonicalClientAdminEmail(currentUser?.email)) {
+  if (
+    !canExport &&
+    activeClient &&
+    isSameClientAdminFallback(currentUser, activeClient)
+  ) {
+    canExport = true;
+  }
+  if (
+    !canExport &&
+    !activeClient &&
+    isCanonicalClientAdminEmail(currentUser?.email)
+  ) {
     canExport = true;
   }
   if (!canExport) {
     if (tenancyError) return tenancyErrorResponse(tenancyError);
     return Response.json(
       {
-        error: 'forbidden',
-        detail: 'Control Tower access is required to export the outcome report.',
+        error: "forbidden",
+        detail:
+          "Control Tower access is required to export the outcome report.",
       },
       { status: 403 },
     );
@@ -107,8 +143,8 @@ export async function GET(req: NextRequest) {
   if (!activeClient) {
     return Response.json(
       {
-        error: 'no_active_client',
-        detail: 'No active client could be resolved for the outcome report.',
+        error: "no_active_client",
+        detail: "No active client could be resolved for the outcome report.",
       },
       { status: 404 },
     );
@@ -127,10 +163,17 @@ export async function GET(req: NextRequest) {
   const towerToday = resolveTowerToday();
   const generatedAt = new Date().toISOString();
   const tenantName =
-    canonicalClientDisplayName({ key: activeClient.key, name: activeClient.name }) ??
-    activeClient.name;
+    canonicalClientDisplayName({
+      key: activeClient.key,
+      name: activeClient.name,
+    }) ?? activeClient.name;
 
-  const bandMetrics = buildTowerBandMetrics(initiatives, vendors, towerToday, 'value');
+  const bandMetrics = buildTowerBandMetrics(
+    initiatives,
+    vendors,
+    towerToday,
+    "value",
+  );
 
   const kpiInputs: TowerOutcomeKpiInput[] = kpis.map((k) => ({
     initiativeId: k.initiativeId,
@@ -159,17 +202,17 @@ export async function GET(req: NextRequest) {
   const datePart = generatedAt.slice(0, 10);
 
   try {
-    if (format === 'docx') {
+    if (format === "docx") {
       const document = renderTowerOutcomeReportDocx(payload);
       const buffer = await Packer.toBuffer(document);
       return new Response(buffer as unknown as ArrayBuffer, {
         status: 200,
         headers: {
-          'content-type': DOCX_CONTENT_TYPE,
-          'content-disposition': `attachment; filename="tower-outcome-report__${activeClient.key}__${datePart}.docx"`,
-          'cache-control': 'no-store',
-          'x-tower-report-format': 'docx',
-          'x-tower-report-tenant': activeClient.key,
+          "content-type": DOCX_CONTENT_TYPE,
+          "content-disposition": `attachment; filename="tower-outcome-report__${activeClient.key}__${datePart}.docx"`,
+          "cache-control": "no-store",
+          "x-tower-report-format": "docx",
+          "x-tower-report-tenant": activeClient.key,
         },
       });
     }
@@ -179,19 +222,20 @@ export async function GET(req: NextRequest) {
     return new Response(buffer as ArrayBuffer, {
       status: 200,
       headers: {
-        'content-type': XLSX_CONTENT_TYPE,
-        'content-disposition': `attachment; filename="tower-outcome-report__${activeClient.key}__${datePart}.xlsx"`,
-        'cache-control': 'no-store',
-        'x-tower-report-format': 'xlsx',
-        'x-tower-report-tenant': activeClient.key,
+        "content-type": XLSX_CONTENT_TYPE,
+        "content-disposition": `attachment; filename="tower-outcome-report__${activeClient.key}__${datePart}.xlsx"`,
+        "cache-control": "no-store",
+        "x-tower-report-format": "xlsx",
+        "x-tower-report-tenant": activeClient.key,
       },
     });
   } catch (err) {
-    console.error('[GET /api/v1/tower/outcome-report] renderer error', err);
+    console.error("[GET /api/v1/tower/outcome-report] renderer error", err);
     return Response.json(
       {
-        error: 'render_failed',
-        detail: err instanceof Error ? err.message : 'outcome-report renderer failed',
+        error: "render_failed",
+        detail:
+          err instanceof Error ? err.message : "outcome-report renderer failed",
       },
       { status: 500 },
     );
