@@ -1,6 +1,7 @@
 name: No Auto-Action Boundary
 
 on:
+  merge_group:
   pull_request:
     branches:
       - main

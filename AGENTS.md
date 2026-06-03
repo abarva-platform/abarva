@@ -46,6 +46,14 @@ The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.
 
 Every non-trivial change must be traceable as a controlled release candidate, not just as a PR. Before opening or updating a PR, classify the release lane, explain the layer impact, identify client applicability, record QA/validation, and describe rollout plus rollback.
 
+### GitHub repository governance
+
+The canonical GitHub repository is `https://github.com/abarva-platform/abarva`. The former personal-account path `anandsundaram-hash/abarva` may redirect for a while, but new branches, PRs, release evidence, and automation should target the `abarva-platform` organization repo.
+
+`main` is protected by repository rulesets and merge queue. Do not push directly to `main`. Open a PR, wait for required checks, and merge through GitHub's merge queue unless Anand explicitly approves a break-glass path.
+
+If GitHub CLI auth behaves strangely on this machine, check for an invalid shell-level `GH_TOKEN`; prefer `env -u GH_TOKEN gh ...` so the GitHub CLI keychain credential is used.
+
 Use these lanes consistently:
 - `global-control-lane`: shared app/control-plane behavior for all clients unless feature-gated.
 - `client-data-lane`: client-scoped schema, RLS, seed, ingestion, retrieval, or private data-plane changes.

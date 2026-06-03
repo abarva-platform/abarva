@@ -1,6 +1,7 @@
 name: Backend Load Regression
 
 on:
+  merge_group:
   pull_request:
     branches:
       - main
