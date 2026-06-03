@@ -48,7 +48,6 @@ describe("SHELL-V2 Rule 1 — no dual-chat surface", () => {
     "components/programs/ProgramsIndexPage.tsx",
     "components/source/SourceIndexPage.tsx",
     "components/programs/ProgramDetailPage.tsx",
-    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of surfaceFiles) {
@@ -100,7 +99,6 @@ describe("SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar", () => {
 describe("SHELL-V2 Rule 3 — Mode B surfaces use AtlasDrawer + RibbonSynthesis", () => {
   const modeBSurfaces = [
     "components/programs/ProgramDetailPage.tsx",
-    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of modeBSurfaces) {
@@ -135,7 +133,6 @@ describe("SHELL-V2 Rule 4 — surface pages do not directly import AtlasPageStat
     "components/programs/ProgramsIndexPage.tsx",
     "components/programs/ProgramDetailPage.tsx",
     "components/source/SourceIndexPage.tsx",
-    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of surfaceFiles) {

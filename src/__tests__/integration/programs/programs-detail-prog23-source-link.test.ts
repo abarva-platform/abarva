@@ -4,8 +4,10 @@
 //   1. ProgramDetailPage imports SourceEventChip + buildProgramSourceLinkView
 //   2. program-source-context-card testid present in Overview section
 //   3. sourceLinkView is derived from view.displayId (deterministic, no API calls)
-//   4. SourceEventDetailPage LinkedProgramTab has testid + honest disclaimer
-//   5. buildProgramSourceLinkView view model contract
+//   4. buildProgramSourceLinkView view model contract
+//
+// (The former Source-side assertions targeted the legacy SourceEventDetailPage
+// component, retired 2026-06-03 — the live route renders UniversalCanvasShell.)
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,28 +17,23 @@ const DETAIL_PATH = join(
   process.cwd(),
   'src/components/programs/ProgramDetailPage.tsx',
 );
-const SOURCE_EVENT_PATH = join(
-  process.cwd(),
-  'src/components/source/SourceEventDetailPage.tsx',
-);
 const LINK_LIB_PATH = join(
   process.cwd(),
   'src/lib/programs/program-source-link-view.ts',
 );
 
 const detailSrc = readFileSync(DETAIL_PATH, 'utf8');
-const sourceEventSrc = readFileSync(SOURCE_EVENT_PATH, 'utf8');
 const linkLibSrc = readFileSync(LINK_LIB_PATH, 'utf8');
 
 // ─── Programs side ────────────────────���───────────────────���────────────────
 
 describe('PROG23 · ProgramDetailPage · source link imports', () => {
   it('imports SourceEventChip from programs components', () => {
-    expect(detailSrc).toContain("from '@/components/programs/SourceEventChip'");
+    expect(detailSrc).toContain('from "@/components/programs/SourceEventChip"');
   });
 
   it('imports buildProgramSourceLinkView from programs lib', () => {
-    expect(detailSrc).toContain("from '@/lib/programs/program-source-link-view'");
+    expect(detailSrc).toContain('from "@/lib/programs/program-source-link-view"');
   });
 
   it('derives sourceLinkView from view.displayId (deterministic)', () => {
@@ -55,27 +52,6 @@ describe('PROG23 · ProgramDetailPage · source context card', () => {
 
   it('source context card is gated on sourceLinkView truthy check', () => {
     expect(detailSrc).toContain('sourceLinkView && (');
-  });
-});
-
-// ─── Source side ─────────────────────────���──────────────────────────────���───
-
-describe('PROG23 · SourceEventDetailPage · LinkedProgramTab', () => {
-  it('has data-testid="source-linked-program-tab"', () => {
-    expect(sourceEventSrc).toContain('data-testid="source-linked-program-tab"');
-  });
-
-  it('has data-honest-disclaimer="source-linked-program"', () => {
-    expect(sourceEventSrc).toContain('data-honest-disclaimer="source-linked-program"');
-  });
-
-  it('honest disclaimer mentions deterministic seed', () => {
-    expect(sourceEventSrc).toContain('Deterministic seed');
-  });
-
-  it('still renders LinkedProgramChip for the program chip', () => {
-    expect(sourceEventSrc).toContain('LinkedProgramChip');
-    expect(sourceEventSrc).toContain('direction="source-to-program"');
   });
 });
 
