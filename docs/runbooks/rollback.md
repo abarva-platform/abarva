@@ -6,6 +6,10 @@ Use this runbook when a release causes or may cause production harm. Rollback is
 a controlled release action: preserve evidence, choose the smallest safe
 reversal, validate after rollback, and record the result.
 
+For the environment promotion model and T039 drill evidence checklist, see the
+Release Environment and Rollback Drill Runbook:
+`docs/runbooks/release-environment-and-rollback-drill.md`.
+
 ## Rollback Triggers
 
 Rollback immediately or disable the affected feature when any of these are true:
