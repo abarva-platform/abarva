@@ -129,6 +129,25 @@ describe("agent attachment parsing", () => {
           costWarning:
             "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
         },
+        economics: {
+          documentKey:
+            "sha256:86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
+          documentHash:
+            "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
+          documentLabel: "brief.pdf",
+          originalFilename: "brief.pdf",
+          mimeType: "application/pdf",
+          byteSize: Buffer.from("%PDF-1.7").byteLength,
+          parserId: "azure-document-intelligence-layout",
+          parseProvider: "azure-document-intelligence",
+          parseCostUsd: 0.01,
+          parseCostBasis:
+            "configured_azure_document_intelligence_page_estimate",
+          parseUnitCount: 1,
+          parseUnit: "page",
+          pageCount: 1,
+          tableCount: 1,
+        },
       },
     });
     expect(mockDocumentIntelligencePost).toHaveBeenCalledTimes(1);
@@ -189,6 +208,47 @@ describe("agent attachment parsing", () => {
           parserBugTicketId: "parser-bug-86edbaa24831",
           costWarning:
             "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
+        },
+        economics: {
+          documentKey:
+            "sha256:86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
+          documentHash:
+            "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
+          documentLabel: "brief.pdf",
+          originalFilename: "brief.pdf",
+          mimeType: "application/pdf",
+          byteSize: Buffer.from("%PDF-1.7").byteLength,
+          parserId: "pdf-parse",
+          parseProvider: "local-parser",
+          parseCostUsd: 0,
+          parseCostBasis: "local_or_unmetered_parser",
+          parseUnitCount: 5,
+          parseUnit: "page",
+          pageCount: 5,
+          tableCount: 3,
+        },
+      },
+    });
+  });
+
+  it("builds deterministic document economics metadata for parser output", () => {
+    const result = extractAgentAttachmentParseResult({
+      filename: "brief.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7"),
+      cacheScope: "client-a",
+    });
+
+    return expect(result).resolves.toMatchObject({
+      metadata: {
+        economics: {
+          documentKey:
+            "sha256:86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
+          originalFilename: "brief.pdf",
+          mimeType: "application/pdf",
+          parseProvider: "local-parser",
+          parseCostUsd: 0,
+          parseCostBasis: "local_or_unmetered_parser",
         },
       },
     });

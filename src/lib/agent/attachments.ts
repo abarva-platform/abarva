@@ -42,6 +42,7 @@ export const AGENT_ATTACHMENT_PREVIEW_MAX_CHARS = 4000;
 export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_BYTES = 500 * 1024;
 export const AGENT_SMALL_DOC_NATIVE_PDF_DEFAULT_MAX_PAGES_EXCLUSIVE = 4;
 export const AGENT_RAW_MODE_TOKEN_ESTIMATE_BYTES_PER_TOKEN = 3;
+export const AGENT_DOCUMENT_INTELLIGENCE_LAYOUT_DEFAULT_COST_USD_PER_PAGE = 0.01;
 
 const PDF_MIME = "application/pdf";
 const DOCX_MIME =
@@ -87,11 +88,32 @@ export interface AgentAttachmentParseMetadata {
   parserId: string | null;
   smallDocumentShortcut: AgentAttachmentSmallDocumentShortcut | null;
   rawModeEscape: AgentAttachmentRawModeEscape | null;
+  economics?: AgentAttachmentEconomicsMetadata;
 }
 
 export interface AgentAttachmentParseResult {
   text: string;
   metadata: AgentAttachmentParseMetadata;
+}
+
+export interface AgentAttachmentEconomicsMetadata {
+  documentKey: string;
+  documentHash: string;
+  documentLabel: string;
+  originalFilename: string;
+  mimeType: string;
+  byteSize: number;
+  parserId: string | null;
+  parseProvider: "azure-document-intelligence" | "local-parser" | "none";
+  parseCostUsd: number;
+  parseCostBasis:
+    | "configured_azure_document_intelligence_page_estimate"
+    | "local_or_unmetered_parser"
+    | "not_parsed";
+  parseUnitCount: number;
+  parseUnit: "page" | "file";
+  pageCount: number | null;
+  tableCount: number | null;
 }
 
 export function isAllowedAgentAttachmentMime(mime: string): boolean {
@@ -223,8 +245,9 @@ export async function extractAgentAttachmentParseResult(args: {
   cacheScope?: string | null;
 }): Promise<AgentAttachmentParseResult> {
   try {
+    const documentHash = hashBuffer(args.buffer);
     if (TEXT_MIMES.has(args.mimeType)) {
-      return {
+      return withEconomicsMetadata(args, documentHash, {
         text: args.buffer.toString("utf-8"),
         metadata: {
           pageCount: null,
@@ -233,37 +256,61 @@ export async function extractAgentAttachmentParseResult(args: {
           smallDocumentShortcut: null,
           rawModeEscape: null,
         },
-      };
+      });
     }
     if (IMAGE_MIMES.has(args.mimeType)) {
       // No OCR pipeline yet — skip and let the model handle the image
       // separately if we ever pass binary parts upstream.
-      return emptyParseResult("image-no-ocr");
-    }
-    if (args.mimeType === PDF_MIME) {
-      return withSmallPdfShortcut(args, await extractCachedAgentPdfText(args));
-    }
-    if (args.mimeType === DOCX_MIME) {
-      return cachedAgentAttachmentParse(args, "docx-mammoth", async () => ({
-        text: await extractDocxText(args.buffer),
-        metadata: {
-          pageCount: null,
-          tableCount: null,
-          parserId: "docx-mammoth",
-          smallDocumentShortcut: null,
-          rawModeEscape: null,
-        },
-      }));
-    }
-    if (args.mimeType === XLSX_MIME) {
-      return cachedAgentAttachmentParse(args, "exceljs-xlsx", () =>
-        extractXlsxResult(args.buffer),
+      return withEconomicsMetadata(
+        args,
+        documentHash,
+        emptyParseResult("image-no-ocr"),
       );
     }
-    return emptyParseResult(null);
+    if (args.mimeType === PDF_MIME) {
+      return withEconomicsMetadata(
+        args,
+        documentHash,
+        withSmallPdfShortcut(
+          args,
+          documentHash,
+          await extractCachedAgentPdfText(args),
+        ),
+      );
+    }
+    if (args.mimeType === DOCX_MIME) {
+      return withEconomicsMetadata(
+        args,
+        documentHash,
+        await cachedAgentAttachmentParse(args, "docx-mammoth", async () => ({
+          text: await extractDocxText(args.buffer),
+          metadata: {
+            pageCount: null,
+            tableCount: null,
+            parserId: "docx-mammoth",
+            smallDocumentShortcut: null,
+            rawModeEscape: null,
+          },
+        })),
+      );
+    }
+    if (args.mimeType === XLSX_MIME) {
+      return withEconomicsMetadata(
+        args,
+        documentHash,
+        await cachedAgentAttachmentParse(args, "exceljs-xlsx", () =>
+          extractXlsxResult(args.buffer),
+        ),
+      );
+    }
+    return withEconomicsMetadata(args, documentHash, emptyParseResult(null));
   } catch {
     // Defensive: parser failures should not turn a 200 into a 500.
-    return emptyParseResult(null);
+    return withEconomicsMetadata(
+      args,
+      hashBuffer(args.buffer),
+      emptyParseResult(null),
+    );
   }
 }
 
@@ -332,6 +379,7 @@ function withSmallPdfShortcut(
     mimeType: string;
     buffer: Buffer;
   },
+  documentHash: string,
   result: AgentAttachmentParseResult,
 ): AgentAttachmentParseResult {
   return {
@@ -346,10 +394,100 @@ function withSmallPdfShortcut(
       rawModeEscape: buildRawModeEscape({
         mimeType: args.mimeType,
         byteSize: args.buffer.byteLength,
-        contentHash: hashBuffer(args.buffer),
+        contentHash: documentHash,
       }),
     },
   };
+}
+
+function withEconomicsMetadata(
+  args: {
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+  },
+  documentHash: string,
+  result: AgentAttachmentParseResult,
+): AgentAttachmentParseResult {
+  return {
+    ...result,
+    metadata: {
+      ...result.metadata,
+      economics: buildAgentAttachmentEconomicsMetadata({
+        filename: args.filename,
+        mimeType: args.mimeType,
+        byteSize: args.buffer.byteLength,
+        documentHash,
+        parserId: result.metadata.parserId,
+        pageCount: result.metadata.pageCount,
+        tableCount: result.metadata.tableCount,
+      }),
+    },
+  };
+}
+
+export function buildAgentAttachmentEconomicsMetadata(args: {
+  filename: string;
+  mimeType: string;
+  byteSize: number;
+  documentHash: string;
+  parserId: string | null;
+  pageCount: number | null;
+  tableCount: number | null;
+  env?: NodeJS.ProcessEnv;
+}): AgentAttachmentEconomicsMetadata {
+  const parseProvider = classifyParseProvider(args.parserId);
+  const parseUnitCount =
+    args.pageCount !== null && args.pageCount > 0 ? args.pageCount : 1;
+  const parseUnit: AgentAttachmentEconomicsMetadata["parseUnit"] =
+    args.pageCount !== null && args.pageCount > 0 ? "page" : "file";
+  const costBasis =
+    parseProvider === "azure-document-intelligence"
+      ? "configured_azure_document_intelligence_page_estimate"
+      : parseProvider === "local-parser"
+        ? "local_or_unmetered_parser"
+        : "not_parsed";
+  const costPerPage =
+    parseProvider === "azure-document-intelligence"
+      ? parseNonNegativeNumber(
+          (args.env ?? process.env)
+            .AGENT_DOCUMENT_INTELLIGENCE_LAYOUT_COST_USD_PER_PAGE,
+          AGENT_DOCUMENT_INTELLIGENCE_LAYOUT_DEFAULT_COST_USD_PER_PAGE,
+        )
+      : 0;
+  const parseCostUsd =
+    parseProvider === "azure-document-intelligence"
+      ? roundCurrency(parseUnitCount * costPerPage)
+      : 0;
+
+  return {
+    documentKey: `sha256:${args.documentHash}`,
+    documentHash: args.documentHash,
+    documentLabel: args.filename,
+    originalFilename: args.filename,
+    mimeType: args.mimeType,
+    byteSize: args.byteSize,
+    parserId: args.parserId,
+    parseProvider,
+    parseCostUsd,
+    parseCostBasis: costBasis,
+    parseUnitCount,
+    parseUnit,
+    pageCount: args.pageCount,
+    tableCount: args.tableCount,
+  };
+}
+
+function classifyParseProvider(
+  parserId: string | null,
+): AgentAttachmentEconomicsMetadata["parseProvider"] {
+  if (parserId === DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD) {
+    return "azure-document-intelligence";
+  }
+  if (parserId) {
+    return "local-parser";
+  }
+  return "none";
 }
 
 async function extractPdfResult(
@@ -453,6 +591,19 @@ function parsePositiveInteger(
   if (!raw) return fallback;
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseNonNegativeNumber(
+  raw: string | undefined,
+  fallback: number,
+): number {
+  if (!raw) return fallback;
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round(value * 100000) / 100000;
 }
 
 function hashBuffer(buffer: Buffer): string {

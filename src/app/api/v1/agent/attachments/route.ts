@@ -198,6 +198,19 @@ export async function POST(req: NextRequest) {
         page_count: parseResult.metadata.pageCount,
         table_count: parseResult.metadata.tableCount,
         parser_id: parseResult.metadata.parserId,
+        document_key: parseResult.metadata.economics?.documentKey ?? null,
+        document_hash: parseResult.metadata.economics?.documentHash ?? null,
+        document_label: parseResult.metadata.economics?.documentLabel ?? null,
+        original_filename:
+          parseResult.metadata.economics?.originalFilename ?? file.name,
+        parse_provider: parseResult.metadata.economics?.parseProvider ?? null,
+        parse_cost_usd: parseResult.metadata.economics?.parseCostUsd ?? null,
+        parse_cost_basis:
+          parseResult.metadata.economics?.parseCostBasis ?? null,
+        parse_unit_count:
+          parseResult.metadata.economics?.parseUnitCount ?? null,
+        parse_unit: parseResult.metadata.economics?.parseUnit ?? null,
+        byte_size: parseResult.metadata.economics?.byteSize ?? file.size,
         small_doc_shortcut: parseResult.metadata.smallDocumentShortcut
           ? {
               eligible: parseResult.metadata.smallDocumentShortcut.eligible,
