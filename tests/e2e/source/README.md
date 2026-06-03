@@ -11,7 +11,7 @@ Encode the Apex AMS $35M end-to-end sourcing event (`apex-retail-ams-outsourcing
 | Spec file | What it covers |
 |---|---|
 | [golden-event-apex-ams.spec.ts](./golden-event-apex-ams.spec.ts) | Canonical 11-stage walkthrough (Strategy → Value). One test per stage + dedicated Executive Decision and Value Ledger deep-dive tests. |
-| [cross-tenant-isolation.spec.ts](./cross-tenant-isolation.spec.ts) | 5 hard `toBe(404)` assertions proving Meridian CDIO cannot see Apex events, artifacts, or list rows. |
+| [cross-tenant-isolation.spec.ts](./cross-tenant-isolation.spec.ts) | 6 hard `toBe(404)` assertions proving Meridian CDIO cannot see Apex events, stored-document artifact drawers, artifacts, or list rows. |
 | [separation-of-duties.spec.ts](./separation-of-duties.spec.ts) | Pilot-vs-production governance contract: non-approver submit, approver clear, pilot self-approve, prod self-approve reject. |
 | [_audit-harness.ts](./_audit-harness.ts) | Playwright fixture emitting per-test evidence packets (screenshots, console.log, HAR, audit.json) under `reports/source-golden-event/<run-stamp>/`. |
 | [_auth.ts](./_auth.ts) | Persona helper (`signInAs(page, personaKey)`) with storageState caching. |
@@ -28,7 +28,7 @@ The 11 audit rules map onto the three specs above:
 | 4 | AI artifacts cannot be committed without human edit/review | `golden-event-apex-ams` (Scope, Decision Brief stages) |
 | 5 | Vendor recommendation requires explicit human approval + reason | `golden-event-apex-ams` (Executive Decision deep-dive) |
 | 6 | Executive packet includes evidence + missing data + risks + dissent + approval record | `golden-event-apex-ams` (Executive Decision deep-dive) |
-| 7 | Apex data is invisible to Meridian/SkyHarbor | `cross-tenant-isolation` (5 hard 404 assertions) |
+| 7 | Apex data is invisible to Meridian/SkyHarbor | `cross-tenant-isolation` (6 hard 404 assertions, including Stored Documents drawer route) |
 | 8 | All outputs downloadable/inspectable | `golden-event-apex-ams` (every `captureArtifact` call) |
 | 9 | No truncation in executive summaries | `golden-event-apex-ams` (Executive Decision: last-paragraph terminal-punctuation check) |
 | 10 | Approver identity + reason persisted on every approval | `golden-event-apex-ams` + `separation-of-duties` (`captureApprovalRecord`) |

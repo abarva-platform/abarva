@@ -8,13 +8,17 @@
  * 403-vs-404 distinction. A 403 would tell an attacker "this ID exists, you
  * just cannot read it" — that is ID enumeration. We deny enumeration entirely.
  *
- * Coverage (5 assertions):
+ * Coverage (6 assertions):
  *   1. UI route: GET /source/events/<apex-event-id>  → 404
  *   2. API event detail: GET /api/v1/source/events/<apex-event-id> → 404
  *   3. API artifact body: GET /api/v1/source/<apex-event-id>/artifacts/<code>/body → 404
- *   4. List leak: GET /source (and /api/v1/source/events) MUST NOT contain
+ *   4. Registry-backed artifact drawer route:
+ *      GET /source/events/<apex-event-id>/artifacts/<artifact-id> → 404
+ *      even when the artifact id is arbitrary. This protects the
+ *      Stored Documents surface added via source_artifacts.
+ *   5. List leak: GET /source (and /api/v1/source/events) MUST NOT contain
  *      the Apex event id or display name anywhere in the response body.
- *   5. Render trigger: POST /api/v1/source/<apex-event-id>/artifacts/<code>/render
+ *   6. Render trigger: POST /api/v1/source/<apex-event-id>/artifacts/<code>/render
  *      → 404 even though the artifact code is valid in the Apex tenant.
  *
  * Each test captures an audit packet (URL, method, status, response snippet
@@ -49,6 +53,7 @@ const APEX_EVENT_ID = 'apex-retail-ams-outsourcing-2026';
 // doesn't matter for the 404 contract — the point is the event/tenant guard
 // fires before code lookup happens.
 const APEX_ARTIFACT_CODE = 'RFP-PACKAGE';
+const APEX_REGISTRY_ARTIFACT_ID = 'generated-memo-regression-probe';
 // Leak-detection literals: if any of these surface in a Meridian list response,
 // it is a tenancy breach.
 const APEX_LEAK_LITERALS: ReadonlyArray<string> = [
@@ -303,7 +308,29 @@ test.describe('source · cross-tenant isolation (Meridian CDIO cannot see Apex)'
     }
   });
 
-  // ─── 4. List endpoints MUST NOT contain Apex events ──────────────────
+  // ─── 4. Registry-backed artifact drawer route 404 ────────────────────
+  test('UI · GET /source/events/<apex-event-id>/artifacts/<artifact-id> returns exactly 404', async ({
+    page,
+  }) => {
+    const testName = 'ui-registry-artifact-drawer-404';
+    const url = `/source/events/${APEX_EVENT_ID}/artifacts/${APEX_REGISTRY_ARTIFACT_ID}`;
+    const { status } = await capturePageNavigation(page, testName, url, 404);
+
+    expect(
+      status,
+      'Apex registry-backed artifact drawer URL must return 404 to prevent Stored Documents enumeration',
+    ).toBe(404);
+
+    const rendered = await page.content();
+    for (const literal of APEX_LEAK_LITERALS) {
+      expect(
+        rendered.toLowerCase().includes(literal.toLowerCase()),
+        `Artifact drawer 404 page leaked Apex literal "${literal}" — must render a generic not-found surface`,
+      ).toBe(false);
+    }
+  });
+
+  // ─── 5. List endpoints MUST NOT contain Apex events ──────────────────
   test('UI · /source list page contains no Apex event id or display literal', async ({
     page,
   }) => {
@@ -379,7 +406,7 @@ test.describe('source · cross-tenant isolation (Meridian CDIO cannot see Apex)'
     }
   });
 
-  // ─── 5. Render trigger 404 (no enumeration via artifact codes) ───────
+  // ─── 6. Render trigger 404 (no enumeration via artifact codes) ───────
   test('API · POST /api/v1/source/<apex-event-id>/artifacts/<code>/render returns exactly 404', async ({
     page,
   }) => {
