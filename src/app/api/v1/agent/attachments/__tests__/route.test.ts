@@ -61,6 +61,22 @@ jest.mock("@/lib/agent/attachments", () => {
                     "Raw mode will send the original PDF to the model and may use about 1k tokens per chat turn. Use only if the parsed preview looks garbled or incomplete.",
                 }
               : null,
+          economics: {
+            documentKey: `sha256:mock-${args.buffer.byteLength}`,
+            documentHash: `mock-${args.buffer.byteLength}`,
+            documentLabel: args.filename,
+            originalFilename: args.filename,
+            mimeType: args.mimeType,
+            byteSize: args.buffer.byteLength,
+            parserId: "mock-parser",
+            parseProvider: "local-parser",
+            parseCostUsd: 0,
+            parseCostBasis: "local_or_unmetered_parser",
+            parseUnitCount: args.mimeType === "application/pdf" ? 4 : 1,
+            parseUnit: args.mimeType === "application/pdf" ? "page" : "file",
+            pageCount: args.mimeType === "application/pdf" ? 4 : null,
+            tableCount: args.mimeType === "application/pdf" ? 2 : null,
+          },
         },
       })),
   };
@@ -206,6 +222,16 @@ describe("POST /api/v1/agent/attachments", () => {
         page_count: number | null;
         table_count: number | null;
         parser_id: string | null;
+        document_key: string | null;
+        document_hash: string | null;
+        document_label: string | null;
+        original_filename: string;
+        parse_provider: string | null;
+        parse_cost_usd: number | null;
+        parse_cost_basis: string | null;
+        parse_unit_count: number | null;
+        parse_unit: string | null;
+        byte_size: number;
         small_doc_shortcut: {
           eligible: boolean;
           route: string;
@@ -238,6 +264,16 @@ describe("POST /api/v1/agent/attachments", () => {
       page_count: 4,
       table_count: 2,
       parser_id: "mock-parser",
+      document_key: "sha256:mock-1024",
+      document_hash: "mock-1024",
+      document_label: "handbook.pdf",
+      original_filename: "handbook.pdf",
+      parse_provider: "local-parser",
+      parse_cost_usd: 0,
+      parse_cost_basis: "local_or_unmetered_parser",
+      parse_unit_count: 4,
+      parse_unit: "page",
+      byte_size: 1024,
       small_doc_shortcut: {
         eligible: false,
         route: "parser",
