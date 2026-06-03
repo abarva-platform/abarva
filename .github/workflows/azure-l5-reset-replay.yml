@@ -10,6 +10,7 @@ name: Azure L5 reset-and-replay
 
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     paths:
       - ".github/workflows/azure-l5-reset-replay.yml"

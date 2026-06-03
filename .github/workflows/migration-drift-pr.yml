@@ -5,6 +5,7 @@ name: Migration drift · PR check
 # explicitly decide when / how to apply them.
 
 on:
+  merge_group:
   pull_request:
 
 jobs:

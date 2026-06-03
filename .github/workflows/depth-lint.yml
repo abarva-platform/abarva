@@ -2,6 +2,7 @@ name: Depth Lint
 
 # Required branch-protection context; keep pull_request paths aligned.
 on:
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:

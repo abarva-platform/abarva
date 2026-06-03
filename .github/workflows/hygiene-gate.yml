@@ -5,6 +5,7 @@
 name: Hygiene Gate
 
 on:
+  merge_group:
   pull_request:
     branches:
       - main

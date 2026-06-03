@@ -1,6 +1,7 @@
 name: Wave 0 Quality Gate
 
 on:
+  merge_group:
   pull_request:
     branches:
       - main

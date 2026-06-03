@@ -2,6 +2,7 @@ name: License and SBOM Compliance
 
 # Required branch-protection context; keep pull_request paths aligned.
 on:
+  merge_group:
   pull_request:
     paths:
       - 'package.json'
