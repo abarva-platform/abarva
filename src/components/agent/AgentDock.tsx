@@ -287,9 +287,72 @@ interface PendingUpload {
   localId: string;
   file: File;
   status: "uploading" | "done" | "error";
+  startedAtMs: number;
+  estimatedPages: number | null;
   errorMessage?: string;
   /** Server-assigned record (only when status === 'done'). */
   ref?: AttachmentRef;
+}
+
+export interface UploadParsingProgress {
+  label: string;
+  elapsedSeconds: number;
+  currentPage: number | null;
+  estimatedPages: number | null;
+}
+
+export interface UploadParsingProgressInput {
+  file: Pick<File, "size" | "type">;
+  startedAtMs: number;
+  estimatedPages: number | null;
+  status: "uploading" | "done" | "error";
+}
+
+export function estimateUploadParsePages(
+  file: Pick<File, "size" | "type">,
+): number | null {
+  if (file.type !== "application/pdf") return null;
+  // The browser cannot know true PDF page count without parsing bytes.
+  // Use a deliberately conservative size heuristic for UX only; server-side
+  // parser metadata remains the source of truth once upload completes.
+  return Math.max(1, Math.min(50, Math.ceil(file.size / 65_000)));
+}
+
+export function buildUploadParsingProgress(
+  upload: UploadParsingProgressInput,
+  nowMs: number,
+): UploadParsingProgress | null {
+  if (upload.status !== "uploading") return null;
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((nowMs - upload.startedAtMs) / 1000),
+  );
+  const estimatedPages = upload.estimatedPages;
+  const currentPage =
+    estimatedPages === null
+      ? null
+      : Math.min(
+          estimatedPages,
+          Math.max(1, Math.floor(elapsedSeconds / 2) + 1),
+        );
+  const stage =
+    upload.file.type === "application/pdf"
+      ? "Parsing PDF"
+      : upload.file.type.includes("spreadsheet")
+        ? "Parsing workbook"
+        : upload.file.type.includes("wordprocessingml")
+          ? "Parsing document"
+          : "Processing upload";
+  const pageLabel =
+    currentPage !== null && estimatedPages !== null
+      ? ` · page ${currentPage} of ~${estimatedPages}`
+      : "";
+  return {
+    label: `${stage}${pageLabel} · ${elapsedSeconds}s elapsed`,
+    elapsedSeconds,
+    currentPage,
+    estimatedPages,
+  };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -374,6 +437,9 @@ export function AgentDock(props: AgentDockProps) {
   const [uploads, setUploads] = useState<PendingUpload[]>([]);
   const [draggingOver, setDraggingOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgressNowMs, setUploadProgressNowMs] = useState(() =>
+    Date.now(),
+  );
 
   const anyUploading = uploads.some((u) => u.status === "uploading");
   const sendDisabled =
@@ -400,6 +466,15 @@ export function AgentDock(props: AgentDockProps) {
       scroller.scrollTop = scroller.scrollHeight;
     }
   }, [thread.length, isAgentBusy]);
+
+  useEffect(() => {
+    if (!anyUploading) return;
+    setUploadProgressNowMs(Date.now());
+    const timer = window.setInterval(() => {
+      setUploadProgressNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [anyUploading]);
 
   // Submit
   const submit = useCallback(
@@ -440,6 +515,8 @@ export function AgentDock(props: AgentDockProps) {
         localId: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         file,
         status: "uploading",
+        startedAtMs: Date.now(),
+        estimatedPages: estimateUploadParsePages(file),
       }));
       if (nextPending.length === 0) return;
       setUploads((prev) => [...prev, ...nextPending]);
@@ -696,6 +773,7 @@ export function AgentDock(props: AgentDockProps) {
               <UploadChip
                 key={u.localId}
                 upload={u}
+                progress={buildUploadParsingProgress(u, uploadProgressNowMs)}
                 onRemove={() => removeUpload(u.localId)}
               />
             ))}
@@ -790,6 +868,7 @@ export function AgentDock(props: AgentDockProps) {
     suggestedActions,
     thread,
     uploads,
+    uploadProgressNowMs,
   ]);
 
   // ── Render by mode ──────────────────────────────────────────────────────
@@ -1003,10 +1082,11 @@ function ModeButton({
 
 interface UploadChipProps {
   upload: PendingUpload;
+  progress: UploadParsingProgress | null;
   onRemove: () => void;
 }
 
-function UploadChip({ upload, onRemove }: UploadChipProps) {
+function UploadChip({ upload, progress, onRemove }: UploadChipProps) {
   const sizeLabel = formatBytes(upload.file.size);
   const isError = upload.status === "error";
   const isUploading = upload.status === "uploading";
@@ -1014,6 +1094,11 @@ function UploadChip({ upload, onRemove }: UploadChipProps) {
     <span
       data-testid={`agent-dock-chip-${upload.localId}`}
       data-status={upload.status}
+      aria-label={
+        progress
+          ? `${upload.file.name}: ${progress.label}`
+          : `${upload.file.name}: ${upload.status}`
+      }
       style={{
         ...CHIP_STYLE,
         borderColor: isError ? "#FCA5A5" : CANVAS.RULE,
@@ -1029,10 +1114,23 @@ function UploadChip({ upload, onRemove }: UploadChipProps) {
           className="agent-dock-spinner"
         />
       ) : null}
-      <span style={CHIP_NAME_STYLE} title={upload.file.name}>
-        {upload.file.name}
+      <span style={CHIP_TEXT_STACK_STYLE}>
+        <span style={CHIP_MAIN_ROW_STYLE}>
+          <span style={CHIP_NAME_STYLE} title={upload.file.name}>
+            {upload.file.name}
+          </span>
+          <span style={CHIP_SIZE_STYLE}>{sizeLabel}</span>
+        </span>
+        {progress ? (
+          <span
+            style={CHIP_PROGRESS_STYLE}
+            aria-live="polite"
+            data-testid={`agent-dock-chip-progress-${upload.localId}`}
+          >
+            {progress.label}
+          </span>
+        ) : null}
       </span>
-      <span style={CHIP_SIZE_STYLE}>{sizeLabel}</span>
       {isError ? (
         <span
           style={CHIP_ERROR_STYLE}
@@ -1440,7 +1538,7 @@ const CHIPS_ROW_STYLE: CSSProperties = {
 
 const CHIP_STYLE: CSSProperties = {
   display: "inline-flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   gap: 6,
   padding: "3px 8px",
   borderRadius: 6,
@@ -1450,6 +1548,19 @@ const CHIP_STYLE: CSSProperties = {
   background: CANVAS.CARD,
   color: CANVAS.INK,
   maxWidth: "100%",
+};
+
+const CHIP_TEXT_STACK_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 1,
+  minWidth: 0,
+};
+
+const CHIP_MAIN_ROW_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  minWidth: 0,
 };
 
 const CHIP_NAME_STYLE: CSSProperties = {
@@ -1463,6 +1574,14 @@ const CHIP_SIZE_STYLE: CSSProperties = {
   color: CANVAS.GRAY_DK,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
+};
+
+const CHIP_PROGRESS_STYLE: CSSProperties = {
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9.5,
+  lineHeight: 1.25,
+  whiteSpace: "nowrap",
 };
 
 const CHIP_ERROR_STYLE: CSSProperties = {

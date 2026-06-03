@@ -24,6 +24,8 @@ import { AGENT_ACTION_APPROVAL_NOTICE_COPY } from "../AgentActionApprovalNotice"
 import {
   AgentDock,
   AGENT_DOCK_MIME_ALLOWLIST,
+  buildUploadParsingProgress,
+  estimateUploadParsePages,
   modeStorageKey,
   splitStorageKey,
   type AttachmentRef,
@@ -288,6 +290,53 @@ describe("AgentDock · composer", () => {
 });
 
 describe("AgentDock · attachments", () => {
+  it("builds honest PDF parsing progress from elapsed time and estimated pages", () => {
+    const file = makeFile(
+      "board-pack.pdf",
+      "application/pdf",
+      "x".repeat(130_000),
+    );
+    const progress = buildUploadParsingProgress(
+      {
+        file,
+        status: "uploading",
+        startedAtMs: 1_000,
+        estimatedPages: estimateUploadParsePages(file),
+      },
+      6_200,
+    );
+
+    expect(progress).toEqual({
+      label: "Parsing PDF · page 2 of ~2 · 5s elapsed",
+      elapsedSeconds: 5,
+      currentPage: 2,
+      estimatedPages: 2,
+    });
+  });
+
+  it("shows workbook progress without claiming a page count", () => {
+    const file = makeFile(
+      "template.xlsx",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    const progress = buildUploadParsingProgress(
+      {
+        file,
+        status: "uploading",
+        startedAtMs: 2_000,
+        estimatedPages: estimateUploadParsePages(file),
+      },
+      5_000,
+    );
+
+    expect(progress).toEqual({
+      label: "Parsing workbook · 3s elapsed",
+      elapsedSeconds: 3,
+      currentPage: null,
+      estimatedPages: null,
+    });
+  });
+
   it("disables Send while an upload is pending and re-enables on success", async () => {
     let resolveFetch: (value: {
       ok: boolean;
@@ -344,6 +393,44 @@ describe("AgentDock · attachments", () => {
 
     expect(send).not.toBeDisabled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a live parsing progress line while upload is pending", async () => {
+    const fetchMock = jest.fn().mockImplementation(
+      () =>
+        new Promise(() => {
+          /* intentionally pending */
+        }),
+    );
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      fireEvent.change(fileInput, {
+        target: {
+          files: [
+            makeFile("board-pack.pdf", "application/pdf", "x".repeat(70_000)),
+          ],
+        },
+      });
+    });
+
+    expect(
+      screen.getByText(/Parsing PDF · page 1 of ~2 · \d+s elapsed/),
+    ).toBeInTheDocument();
   });
 
   it("removing a chip drops the ref from the next submit", async () => {
