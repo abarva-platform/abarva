@@ -84,12 +84,14 @@ Every fallback decision should record:
 - commit status.
 
 The repo-native policy helper emits deterministic decision metadata in
-`src/lib/ingestion/parser-fallback-policy.ts`. Runtime processors should use
-that helper before invoking any fallback parser.
+`src/lib/ingestion/parser-fallback-policy.ts`. The runtime orchestrator in
+`src/lib/ingestion/parser-fallback-runtime.ts` uses that policy before invoking
+any fallback adapter. It records decision, invocation, result, and failure
+events and keeps every fallback parse result uncommitted until human review.
 
 ## Out Of Scope
 
-This runbook and policy helper do not install Marker, provision LlamaParse, or
-send documents to either parser. They define the allowed decision contract so
-the runtime implementation can be added without changing the governance
-boundary.
+This runbook, policy helper, and runtime orchestrator do not install Marker,
+provision LlamaParse, configure external parser credentials, or prove a live
+end-to-end parser run. The runtime uses injected adapters so the governance
+boundary is enforceable and testable before live service wiring.
