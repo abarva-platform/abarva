@@ -32,6 +32,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/auth-redirect(.*)",
   "/",
   "/contact(.*)",
+  "/status(.*)",
   "/subprocessors(.*)",
   // Responsible AI pages live in the public route tree. The acknowledgment
   // and training pages still self-gate with server-side subject checks, but
