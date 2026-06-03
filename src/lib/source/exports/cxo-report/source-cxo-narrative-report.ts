@@ -114,7 +114,7 @@ export function buildSourceCxoNarrativeReport(
         {
           label: "Generated",
           value: input.generatedAt.slice(0, 10),
-          note: "Deterministic event report",
+          note: "System-generated report",
         },
       ],
       notes: [
