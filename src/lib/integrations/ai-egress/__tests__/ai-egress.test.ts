@@ -63,6 +63,12 @@ describe('AI egress control plane Layer 1', () => {
           input_tokens: 111,
           output_tokens: 22,
           cost_usd: 0.000663,
+          cache_creation_input_tokens: 1000,
+          cache_read_input_tokens: 2000,
+        },
+        anthropicPromptCache: {
+          enabled: true,
+          ttl: 'ephemeral_5m',
         },
       },
     }));
@@ -94,6 +100,12 @@ describe('AI egress control plane Layer 1', () => {
         input_tokens: 111,
         output_tokens: 22,
         cost_usd: 0.000663,
+        cache_creation_input_tokens: 1000,
+        cache_read_input_tokens: 2000,
+      },
+      anthropicPromptCache: {
+        enabled: true,
+        ttl: 'ephemeral_5m',
       },
     });
   });
