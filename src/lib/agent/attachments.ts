@@ -9,32 +9,38 @@
 // Spec: this PR · feat(agent): shared AgentDock with 5 modes + Claude-
 // style upload (foundation).
 
-import 'server-only';
+import "server-only";
 
-export const AGENT_ATTACHMENT_BUCKET = 'agent-attachments';
+import {
+  CONTENT_HASH_PARSE_CACHE_VERSION,
+  withContentHashParseCache,
+} from "@/lib/ingestion/content-hash-parse-cache";
+
+export const AGENT_ATTACHMENT_BUCKET = "agent-attachments";
 
 export const AGENT_ATTACHMENT_MIME_ALLOWLIST: readonly string[] = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/csv',
-  'text/plain',
-  'text/markdown',
-  'image/png',
-  'image/jpeg',
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  "text/plain",
+  "text/markdown",
+  "image/png",
+  "image/jpeg",
 ];
 
 export const AGENT_ATTACHMENT_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export const AGENT_ATTACHMENT_PREVIEW_MAX_CHARS = 4000;
 
-const PDF_MIME = 'application/pdf';
+const PDF_MIME = "application/pdf";
 const DOCX_MIME =
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const XLSX_MIME =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const TEXT_MIMES = new Set(['text/plain', 'text/markdown', 'text/csv']);
-const IMAGE_MIMES = new Set(['image/png', 'image/jpeg']);
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const TEXT_MIMES = new Set(["text/plain", "text/markdown", "text/csv"]);
+const IMAGE_MIMES = new Set(["image/png", "image/jpeg"]);
+const AGENT_ATTACHMENT_PARSER_VERSION = `${CONTENT_HASH_PARSE_CACHE_VERSION}:agent-attachment-v1`;
 
 export function isAllowedAgentAttachmentMime(mime: string): boolean {
   return AGENT_ATTACHMENT_MIME_ALLOWLIST.includes(mime);
@@ -50,51 +56,80 @@ export async function extractAgentAttachmentText(args: {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  cacheScope?: string | null;
 }): Promise<string> {
   try {
     if (TEXT_MIMES.has(args.mimeType)) {
-      return args.buffer.toString('utf-8');
+      return args.buffer.toString("utf-8");
     }
     if (IMAGE_MIMES.has(args.mimeType)) {
       // No OCR pipeline yet — skip and let the model handle the image
       // separately if we ever pass binary parts upstream.
-      return '';
+      return "";
     }
     if (args.mimeType === PDF_MIME) {
-      return await extractPdfText(args.buffer);
+      return cachedAgentAttachmentParse(args, "pdf-parse", () =>
+        extractPdfText(args.buffer),
+      );
     }
     if (args.mimeType === DOCX_MIME) {
-      return await extractDocxText(args.buffer);
+      return cachedAgentAttachmentParse(args, "docx-mammoth", () =>
+        extractDocxText(args.buffer),
+      );
     }
     if (args.mimeType === XLSX_MIME) {
-      return await extractXlsxText(args.buffer);
+      return cachedAgentAttachmentParse(args, "exceljs-xlsx", () =>
+        extractXlsxText(args.buffer),
+      );
     }
-    return '';
+    return "";
   } catch {
     // Defensive: parser failures should not turn a 200 into a 500.
-    return '';
+    return "";
   }
 }
 
+async function cachedAgentAttachmentParse(
+  args: {
+    mimeType: string;
+    buffer: Buffer;
+    cacheScope?: string | null;
+  },
+  parserId: string,
+  parse: () => Promise<string>,
+): Promise<string> {
+  const { value } = await withContentHashParseCache(
+    {
+      cacheScope: args.cacheScope,
+      mimeType: args.mimeType,
+      parserId,
+      parserVersion: AGENT_ATTACHMENT_PARSER_VERSION,
+      bytes: args.buffer,
+    },
+    parse,
+  );
+  return value;
+}
+
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  const { PDFParse } = await import('pdf-parse');
+  const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   try {
     const result = await parser.getText();
-    return result.text ?? '';
+    return result.text ?? "";
   } finally {
     await parser.destroy().catch(() => undefined);
   }
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
-  const mammoth = await import('mammoth');
+  const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ buffer });
-  return result.value ?? '';
+  return result.value ?? "";
 }
 
 async function extractXlsxText(buffer: Buffer): Promise<string> {
-  const ExcelJS = (await import('exceljs')).default;
+  const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
   const lines: string[] = [];
@@ -104,23 +139,23 @@ async function extractXlsxText(buffer: Buffer): Promise<string> {
       const values = Array.isArray(row.values) ? row.values.slice(1) : [];
       const line = values
         .map((value) => {
-          if (value === null || value === undefined) return '';
-          if (typeof value === 'object') {
-            if ('text' in value && typeof value.text === 'string') {
+          if (value === null || value === undefined) return "";
+          if (typeof value === "object") {
+            if ("text" in value && typeof value.text === "string") {
               return value.text;
             }
-            if ('result' in value) return String(value.result ?? '');
+            if ("result" in value) return String(value.result ?? "");
             return JSON.stringify(value);
           }
           return String(value);
         })
         .map((value) => value.trim())
         .filter(Boolean)
-        .join(' | ');
+        .join(" | ");
       if (line) lines.push(line);
     });
   });
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -128,7 +163,7 @@ async function extractXlsxText(buffer: Buffer): Promise<string> {
  * boundary when possible.
  */
 export function snipExtractedTextPreview(text: string): string {
-  if (!text) return '';
+  if (!text) return "";
   if (text.length <= AGENT_ATTACHMENT_PREVIEW_MAX_CHARS) return text;
   const head = text.slice(0, AGENT_ATTACHMENT_PREVIEW_MAX_CHARS);
   const minBoundary = Math.floor(AGENT_ATTACHMENT_PREVIEW_MAX_CHARS * 0.75);
@@ -146,9 +181,9 @@ export function snipExtractedTextPreview(text: string): string {
  */
 export function safeStorageFileName(raw: string): string {
   const cleaned = raw
-    .replace(/[\\/]/g, '_')
-    .replace(/\s+/g, '_')
-    .replace(/[^A-Za-z0-9._-]/g, '')
+    .replace(/[\\/]/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Za-z0-9._-]/g, "")
     .slice(0, 96);
-  return cleaned || 'upload';
+  return cleaned || "upload";
 }

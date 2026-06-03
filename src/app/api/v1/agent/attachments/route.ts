@@ -151,6 +151,7 @@ export async function POST(req: NextRequest) {
     filename: file.name,
     mimeType: file.type,
     buffer,
+    cacheScope: activeClient.id,
   });
 
   // Persist metadata row. The DB-write half is routed through the data-plane
