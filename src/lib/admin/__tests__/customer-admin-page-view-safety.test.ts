@@ -36,7 +36,10 @@ jest.mock('../setup-acts-registry', () => ({
   mergeInventorySnapshot: jest.fn((_base, snapshot) => snapshot ?? { segments: [] }),
 }));
 
-import { buildCustomerAdminPageView } from '../customer-admin-read-model';
+import {
+  buildCustomerAdminPageView,
+  summarizeUsageFromAiEgressRows,
+} from '../customer-admin-read-model';
 import { resolveAdminTenant } from '../admin-tenant';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -89,5 +92,41 @@ describe('Customer Admin page view safety', () => {
     expect(getAdminAuditEvents).not.toHaveBeenCalled();
     expect(getAdminUsers).not.toHaveBeenCalled();
     expect(azureRead.select).not.toHaveBeenCalled();
+  });
+
+  it('summarizes nested provider usage metadata for the customer usage panel', () => {
+    const usage = summarizeUsageFromAiEgressRows(
+      [
+        {
+          id: 'audit-1',
+          tenant_id: 'client-apex',
+          workflow: 'source-artifact-generate',
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          route: 'anthropic-direct',
+          data_class: 'confidential',
+          policy_decision: 'allow',
+          decision_reason: 'tenant policy allows this AI egress route',
+          request_metadata: {
+            usage: {
+              input_tokens: 100.4,
+              output_tokens: '25',
+              cost_usd: 0.000675,
+            },
+          },
+          error_message: null,
+          created_at: '2026-06-03T12:00:00Z',
+        },
+      ],
+      'client-apex',
+    );
+
+    expect(usage).toEqual({
+      calls: 1,
+      inputTokens: 100,
+      outputTokens: 25,
+      estimatedCostUsd: 0.000675,
+      costBasis: 'provider_metadata',
+    });
   });
 });

@@ -18,6 +18,37 @@ function auditDecisionToResultDecision(decision: AiPolicyDecision): AiPolicyDeci
   return decision;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeCompletionMetadata(args: {
+  requestMetadata?: Record<string, unknown>;
+  responseMetadata?: Record<string, unknown>;
+  preCallAuditId: string;
+}): Record<string, unknown> {
+  const requestUsage = isRecord(args.requestMetadata?.usage)
+    ? args.requestMetadata.usage
+    : {};
+  const responseUsage = isRecord(args.responseMetadata?.usage)
+    ? args.responseMetadata.usage
+    : {};
+  const merged: Record<string, unknown> = {
+    ...(args.requestMetadata ?? {}),
+    ...(args.responseMetadata ?? {}),
+    preCallAuditId: args.preCallAuditId,
+  };
+
+  if (Object.keys(requestUsage).length > 0 || Object.keys(responseUsage).length > 0) {
+    merged.usage = {
+      ...requestUsage,
+      ...responseUsage,
+    };
+  }
+
+  return merged;
+}
+
 export async function callModel(
   request: AiEgressRequest & {
     adapter: AiModelAdapter;
@@ -90,10 +121,11 @@ export async function callModel(
       decisionReason: 'provider call completed after synchronous pre-call audit',
       promptHash,
       responseHash,
-      requestMetadata: {
-        ...(request.metadata ?? {}),
+      requestMetadata: mergeCompletionMetadata({
+        requestMetadata: request.metadata,
+        responseMetadata: response.metadata,
         preCallAuditId: preCallAudit.id,
-      },
+      }),
     });
 
     return {

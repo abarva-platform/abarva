@@ -55,7 +55,17 @@ describe('AI egress control plane Layer 1', () => {
 
   it('allows an approved Claude route and synchronously audits before returning success', async () => {
     const auditSink = createMemoryAiEgressAuditSink();
-    const adapter = jest.fn(async () => ({ response: 'board-grade answer', model: 'claude-sonnet-4-6' }));
+    const adapter = jest.fn(async () => ({
+      response: 'board-grade answer',
+      model: 'claude-sonnet-4-6',
+      metadata: {
+        usage: {
+          input_tokens: 111,
+          output_tokens: 22,
+          cost_usd: 0.000663,
+        },
+      },
+    }));
 
     const result = await callModel({
       tenantId: '00000000-0000-0000-0000-000000000002',
@@ -78,7 +88,14 @@ describe('AI egress control plane Layer 1', () => {
       decisionReason: 'tenant policy allows this AI egress route',
     });
     expect(auditSink.records[1].responseHash).toHaveLength(64);
-    expect(auditSink.records[1].requestMetadata).toMatchObject({ preCallAuditId: auditSink.records[0].id });
+    expect(auditSink.records[1].requestMetadata).toMatchObject({
+      preCallAuditId: auditSink.records[0].id,
+      usage: {
+        input_tokens: 111,
+        output_tokens: 22,
+        cost_usd: 0.000663,
+      },
+    });
   });
 
   it('allows approved OpenAI embedding egress through the same policy gate', async () => {
