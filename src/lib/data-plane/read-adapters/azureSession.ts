@@ -14,6 +14,7 @@
 // All consumers run read-only queries. The session guarantees teardown.
 
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
+import { resolveDatabaseUrlCandidatesForScope } from '../tenantConnectionResolver';
 
 /** A parameterized query runner bound to a live connection. */
 export type SqlRunner = <R = Record<string, unknown>>(
@@ -44,11 +45,7 @@ export function resolveAzureUrl(): string | null {
 }
 
 export function resolveAzureUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
-  const candidates = [
-    env.ABARVA_AZURE_DATABASE_URL?.trim(),
-    env.DATABASE_URL?.trim(),
-  ].filter((value): value is string => Boolean(value));
-  return [...new Set(candidates)];
+  return resolveDatabaseUrlCandidatesForScope(env);
 }
 
 export function isAzureSessionFallbackError(error: unknown): boolean {
