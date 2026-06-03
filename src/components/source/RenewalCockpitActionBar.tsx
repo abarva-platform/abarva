@@ -37,6 +37,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { SOURCE_EXTERNAL_ACTION_RATIONALE_MIN_CHARS } from '@/lib/source/external-action-gate';
 import type { RenewalCockpit } from '@/lib/source/renewal-cockpit/cockpit';
 import { buildVendorEmailDraft } from '@/lib/source/renewal-cockpit/vendor-email-draft';
 import { buildRenewalNegotiationBrief } from '@/lib/source/renewal-cockpit/negotiation-brief';
@@ -139,6 +140,8 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
 
   // Owner-assignment input.
   const [ownerName, setOwnerName] = useState('');
+  const [serveNoticeJustification, setServeNoticeJustification] =
+    useState('');
 
   // Persisted work-item state — keyed by kind. Each result reflects a real
   // POST /api/v1/source/work-items round-trip; no fake success.
@@ -171,6 +174,9 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
       legalStatus?: string;
       procurementStatus?: string;
       note?: string;
+      humanConfirmed?: boolean;
+      humanJustification?: string;
+      evidenceRefs?: string[];
     },
   ): Promise<void> {
     setWorkItemBusy(kind);
@@ -229,6 +235,14 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
     cockpit.timing.termEndDate,
     cockpit.timing.noticePeriodDays,
   );
+  const serveNoticeEvidenceRefs = [
+    `contract:${cockpit.contractId}`,
+    `vendor:${cockpit.vendorName}`,
+    `posture:${cockpit.postureLabel}`,
+  ];
+  const serveNoticeRationaleReady =
+    serveNoticeJustification.trim().length >=
+    SOURCE_EXTERNAL_ACTION_RATIONALE_MIN_CHARS;
 
   async function createSourceEvent(
     intent: 'rebid' | 'handoff',
@@ -386,11 +400,50 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
                 legal notice. The item shows on the Decision Queue card with
                 its owner and due date.
               </p>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
+                <span style={LABEL}>Human approval rationale</span>
+                <textarea
+                  value={serveNoticeJustification}
+                  onChange={(e) => setServeNoticeJustification(e.target.value)}
+                  placeholder="Summarize the business/legal reason and evidence reviewed before creating this external-action work item."
+                  rows={4}
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 13,
+                    color: SHELL.INK,
+                    border: '1px solid ' + SHELL.CARD_LINE,
+                    borderRadius: 7,
+                    padding: '9px 10px',
+                    lineHeight: 1.45,
+                    resize: 'vertical',
+                  }}
+                />
+              </label>
+              <p style={{ ...BODY, fontSize: 12, color: SHELL.INK_MUTED }}>
+                Required before creation: at least{' '}
+                {SOURCE_EXTERNAL_ACTION_RATIONALE_MIN_CHARS} characters and
+                evidence refs ({serveNoticeEvidenceRefs.join(', ')}). Human
+                review remains responsible for any notice sent outside AbarVa.
+              </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
-                  style={BLACK_BTN}
-                  disabled={workItemBusy === 'serve_notice'}
+                  style={
+                    serveNoticeRationaleReady &&
+                    workItemBusy !== 'serve_notice'
+                      ? BLACK_BTN
+                      : DISABLED_BTN
+                  }
+                  disabled={
+                    !serveNoticeRationaleReady ||
+                    workItemBusy === 'serve_notice'
+                  }
                   onClick={() =>
                     createWorkItem('serve_notice', {
                       title: `Serve notice — ${cockpit.vendorName} ${cockpit.product}`,
@@ -398,6 +451,9 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
                       legalStatus: 'not_started',
                       procurementStatus: 'not_started',
                       note: `Decline the auto-renewal on contract ${cockpit.contractId}. ${cockpit.timing.summary}`,
+                      humanConfirmed: true,
+                      humanJustification: serveNoticeJustification.trim(),
+                      evidenceRefs: serveNoticeEvidenceRefs,
                     })
                   }
                 >
