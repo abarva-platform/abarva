@@ -44,6 +44,7 @@ import {
   type SourceArtifactRegistryRecord,
 } from "@/lib/source/artifact-registry";
 import { specByCode } from "@/lib/source/canonical-specs";
+import { ensurePersistedSourceEventForClient } from "@/lib/source/queries";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const REGISTRY_GENERATED_MIME = "text/markdown";
@@ -110,6 +111,37 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     );
   }
 
+  // Generation is a write surface. If we cannot bind the request to an
+  // active tenant, fail here instead of falling through to a misleading 404.
+  if (!tenancy) {
+    return tenancyErrorResponse(tenancyError);
+  }
+  const tenantClientKey = tenancy.clientKey;
+  if (!tenantClientKey) {
+    return Response.json(
+      { error: "no_client", detail: "No active client for this user" },
+      { status: 403 },
+    );
+  }
+
+  const currentUser = await getCurrentUser().catch(() => null);
+
+  // Legacy golden-shell routes can exist before a matching persisted
+  // source_events row does. Materialize the seeded event into the
+  // UUID-backed substrate on first write so generation, exports, and the
+  // stored-document registry all have a real event row to bind to.
+  await ensurePersistedSourceEventForClient(
+    eventId,
+    tenantClientKey,
+    currentUser?.clerkUserId ?? tenancy.userId,
+  ).catch((error) => {
+    console.error(
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] seed materialization failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    throw error;
+  });
+
   // Bind context (event + tenant + substrate).
   const ctx = await buildSourceGenerationContext(eventId);
   if (!ctx) {
@@ -120,10 +152,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   }
 
   // Auth check using the resolved event's UUID.
-  const [activeClient, currentUser] = await Promise.all([
-    getActiveClientRow().catch(() => null),
-    getCurrentUser().catch(() => null),
-  ]);
+  const activeClient = await getActiveClientRow().catch(() => null);
   const accessPolicy =
     tenancy && activeClient
       ? await loadUserSourceAccessPolicy(tenancy, {
