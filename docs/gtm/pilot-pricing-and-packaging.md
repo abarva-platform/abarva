@@ -2,7 +2,7 @@
 
 Status: founder pricing posture
 Owner: founder
-Backlog tasks: T056, T060, T259
+Backlog tasks: T056, T059, T060, T259
 
 ## Source of Truth
 
@@ -45,6 +45,50 @@ The `$300k` pilot fee is intended to:
 
 The `$950k` year-1 target is intended to position AbarVa as an enterprise
 operating layer, not a departmental chatbot or narrow workflow tool.
+
+## Token And Consumption Cap Policy
+
+Backlog task: T059.
+
+The pilot commercial posture includes a governed token-consumption policy so
+AbarVa can protect gross margin, prevent surprise cloud/model spend, and give
+the client a clear choice between paid overage and rate limiting.
+
+| Policy element | Current posture |
+| --- | --- |
+| Included usage | 50M model tokens per client per month for the pilot subscription. |
+| Metering scope | Client-scoped model usage, including agent chat, summarization, retrieval-augmented answers, generated artifacts, and governed analysis flows. |
+| Exclusions | Azure infrastructure, document parsing, storage, vector/search indexing, direct connectors, premium support, and custom corpus work are priced separately when material. |
+| Alert posture | Notify AbarVa owner and client admin when usage reaches configured warning thresholds before the hard cap. |
+| Hard-cap posture | At the contracted cap, new model calls are blocked or rate-limited unless an approved overage policy is active. |
+| Overage price | `$18` per 1M additional tokens unless superseded by a signed SOW. |
+| Approval owner | Founder or delegated commercial owner must approve any client-specific cap, rate, discount, or uncapped usage exception. |
+| Audit evidence | Usage snapshot, cap decision, approver, client notice, and effective date must be retained with the release or account record. |
+
+The default buyer-facing language is:
+
+> The pilot includes a fair-use allowance of 50M model tokens per month. If
+> usage approaches the allowance, AbarVa will notify the client administrator
+> and review options before material overage is incurred. The client may either
+> approve additional usage at `$18` per 1M tokens or have the platform
+> rate-limit non-critical AI generation until the next monthly cycle.
+
+Do not describe usage as unlimited. Do not silently absorb sustained overage.
+Do not enable uncapped usage for a client without an explicit commercial
+approval trail.
+
+## Cap Exception Workflow
+
+| Step | Owner | Evidence |
+| --- | --- | --- |
+| Confirm usage | AbarVa operator | Client, period, consumed tokens, projected end-of-period usage, and surfaces driving usage. |
+| Decide treatment | Founder or delegated commercial owner | Paid overage, temporary cap increase, rate limit, or custom SOW amendment. |
+| Notify client | Account owner | Plain-language notice with usage state, proposed treatment, price, and effective date. |
+| Activate policy | Engineering or operations owner | Config or runtime cap evidence, approval id, and rollback owner. |
+| Reconcile | Finance or founder | Overage invoice line, waived amount, or documented no-charge exception. |
+
+Any cap exception must be time-bound. Permanent cap changes belong in the SOW
+or order form, not in an ad hoc operations thread.
 
 ## Founder-Time Framing
 
