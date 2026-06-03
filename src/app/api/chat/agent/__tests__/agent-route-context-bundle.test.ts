@@ -165,15 +165,28 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     expect(source).toContain('data: bytes.toString("base64")');
   });
 
+  it("hydrates explicitly acknowledged raw-mode PDFs into native Claude document blocks", () => {
+    expect(source).toContain("raw_mode_escape");
+    expect(source).toContain("raw_mode_requested");
+    expect(source).toContain("function readAgentRawModeRequested(");
+    expect(source).toContain("function isRawModeNativePdfAllowed(");
+    expect(source).toContain("AGENT_RAW_MODE_NATIVE_PDF_MAX_BYTES");
+    expect(source).toContain("acknowledgement.acknowledged_at.length > 0");
+    expect(source).toContain("acknowledgement.estimated_tokens_per_turn ===");
+    expect(source).toContain(
+      "acknowledgement.parser_bug_ticket_id === rawMode.parser_bug_ticket_id",
+    );
+  });
+
   it("fails the native-PDF route closed unless tenant, MIME, route, and byte checks pass", () => {
     expect(source).toContain('ref.mime !== "application/pdf"');
-    expect(source).toContain('shortcut.route !== "claude-native-pdf"');
-    expect(source).toContain("ref.bytes >= thresholds.maxBytes");
+    expect(source).toContain("!smallDocAllowed && !rawModeAllowed");
+    expect(source).toContain("ref.bytes >= maxBytes");
     expect(source).toContain(
       "ref.storage_path.startsWith(`${input.activeClientId}/`)",
     );
     expect(compact).toContain(
-      "bytes.byteLength !== ref.bytes || bytes.byteLength >= thresholds.maxBytes",
+      "bytes.byteLength !== ref.bytes || bytes.byteLength >= maxBytes",
     );
   });
 

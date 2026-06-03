@@ -1866,6 +1866,7 @@ function normalizeEnterpriseAgentName(
 /** OV2-4c · cap on how many recent attachments we expand into the system prompt. */
 const ATTACHMENT_CONTEXT_LIMIT = 3;
 const AGENT_NATIVE_PDF_CONTEXT_LIMIT = 3;
+const AGENT_RAW_MODE_NATIVE_PDF_MAX_BYTES = 10 * 1024 * 1024;
 
 interface AgentDockNativePdfRef {
   id: string;
@@ -1883,6 +1884,18 @@ interface AgentDockNativePdfRef {
         max_pages_exclusive?: number;
       };
     } | null;
+    raw_mode_escape?: {
+      eligible?: boolean;
+      requires_user_approval?: boolean;
+      route?: string;
+      estimated_tokens_per_turn?: number;
+      parser_bug_ticket_id?: string | null;
+    } | null;
+  };
+  raw_mode_requested?: {
+    acknowledged_at?: string;
+    parser_bug_ticket_id?: string | null;
+    estimated_tokens_per_turn?: number;
   };
 }
 
@@ -1941,6 +1954,7 @@ function extractAgentNativePdfRefs(
       bytes,
       storage_path: storagePath,
       parse_metadata: readAgentNativePdfParseMetadata(obj.parse_metadata),
+      raw_mode_requested: readAgentRawModeRequested(obj.raw_mode_requested),
     });
   }
   return refs;
@@ -1951,37 +1965,102 @@ function readAgentNativePdfParseMetadata(
 ): AgentDockNativePdfRef["parse_metadata"] {
   if (!value || typeof value !== "object") return undefined;
   const metadata = value as Record<string, unknown>;
-  const shortcut = metadata.small_doc_shortcut;
-  if (!shortcut || typeof shortcut !== "object") {
-    return { small_doc_shortcut: null };
-  }
-  const raw = shortcut as Record<string, unknown>;
+  return {
+    small_doc_shortcut: readAgentSmallDocShortcut(metadata.small_doc_shortcut),
+    raw_mode_escape: readAgentRawModeEscape(metadata.raw_mode_escape),
+  };
+}
+
+function readAgentSmallDocShortcut(
+  value: unknown,
+): NonNullable<AgentDockNativePdfRef["parse_metadata"]>["small_doc_shortcut"] {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
   const thresholds =
     raw.thresholds && typeof raw.thresholds === "object"
       ? (raw.thresholds as Record<string, unknown>)
       : {};
   return {
-    small_doc_shortcut: {
-      eligible: raw.eligible === true,
-      route: typeof raw.route === "string" ? raw.route : undefined,
-      page_count:
-        typeof raw.page_count === "number" && Number.isFinite(raw.page_count)
-          ? raw.page_count
-          : null,
-      thresholds: {
-        max_bytes:
-          typeof thresholds.max_bytes === "number" &&
-          Number.isFinite(thresholds.max_bytes)
-            ? thresholds.max_bytes
-            : undefined,
-        max_pages_exclusive:
-          typeof thresholds.max_pages_exclusive === "number" &&
-          Number.isFinite(thresholds.max_pages_exclusive)
-            ? thresholds.max_pages_exclusive
-            : undefined,
-      },
+    eligible: raw.eligible === true,
+    route: typeof raw.route === "string" ? raw.route : undefined,
+    page_count:
+      typeof raw.page_count === "number" && Number.isFinite(raw.page_count)
+        ? raw.page_count
+        : null,
+    thresholds: {
+      max_bytes:
+        typeof thresholds.max_bytes === "number" &&
+        Number.isFinite(thresholds.max_bytes)
+          ? thresholds.max_bytes
+          : undefined,
+      max_pages_exclusive:
+        typeof thresholds.max_pages_exclusive === "number" &&
+        Number.isFinite(thresholds.max_pages_exclusive)
+          ? thresholds.max_pages_exclusive
+          : undefined,
     },
   };
+}
+
+function readAgentRawModeEscape(
+  value: unknown,
+): NonNullable<AgentDockNativePdfRef["parse_metadata"]>["raw_mode_escape"] {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  return {
+    eligible: raw.eligible === true,
+    requires_user_approval: raw.requires_user_approval === true,
+    route: typeof raw.route === "string" ? raw.route : undefined,
+    estimated_tokens_per_turn:
+      typeof raw.estimated_tokens_per_turn === "number" &&
+      Number.isFinite(raw.estimated_tokens_per_turn)
+        ? raw.estimated_tokens_per_turn
+        : undefined,
+    parser_bug_ticket_id:
+      typeof raw.parser_bug_ticket_id === "string"
+        ? raw.parser_bug_ticket_id
+        : null,
+  };
+}
+
+function readAgentRawModeRequested(
+  value: unknown,
+): AgentDockNativePdfRef["raw_mode_requested"] {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  return {
+    acknowledged_at:
+      typeof raw.acknowledged_at === "string" ? raw.acknowledged_at : undefined,
+    parser_bug_ticket_id:
+      typeof raw.parser_bug_ticket_id === "string"
+        ? raw.parser_bug_ticket_id
+        : null,
+    estimated_tokens_per_turn:
+      typeof raw.estimated_tokens_per_turn === "number" &&
+      Number.isFinite(raw.estimated_tokens_per_turn)
+        ? raw.estimated_tokens_per_turn
+        : undefined,
+  };
+}
+
+function isSmallDocNativePdfAllowed(ref: AgentDockNativePdfRef): boolean {
+  const shortcut = ref.parse_metadata?.small_doc_shortcut;
+  return shortcut?.eligible === true && shortcut.route === "claude-native-pdf";
+}
+
+function isRawModeNativePdfAllowed(ref: AgentDockNativePdfRef): boolean {
+  const rawMode = ref.parse_metadata?.raw_mode_escape;
+  const acknowledgement = ref.raw_mode_requested;
+  return (
+    rawMode?.eligible === true &&
+    rawMode.requires_user_approval === true &&
+    rawMode.route === "claude-native-pdf" &&
+    typeof acknowledgement?.acknowledged_at === "string" &&
+    acknowledgement.acknowledged_at.length > 0 &&
+    acknowledgement.estimated_tokens_per_turn ===
+      rawMode.estimated_tokens_per_turn &&
+    acknowledgement.parser_bug_ticket_id === rawMode.parser_bug_ticket_id
+  );
 }
 
 async function buildAgentNativePdfContentBlocks(input: {
@@ -1996,12 +2075,15 @@ async function buildAgentNativePdfContentBlocks(input: {
   const blocks: ContentBlockParam[] = [];
 
   for (const ref of refs) {
-    const shortcut = ref.parse_metadata?.small_doc_shortcut;
+    const smallDocAllowed = isSmallDocNativePdfAllowed(ref);
+    const rawModeAllowed = isRawModeNativePdfAllowed(ref);
+    const maxBytes = smallDocAllowed
+      ? thresholds.maxBytes
+      : AGENT_RAW_MODE_NATIVE_PDF_MAX_BYTES;
     if (
       ref.mime !== "application/pdf" ||
-      shortcut?.eligible !== true ||
-      shortcut.route !== "claude-native-pdf" ||
-      ref.bytes >= thresholds.maxBytes ||
+      (!smallDocAllowed && !rawModeAllowed) ||
+      ref.bytes >= maxBytes ||
       !ref.storage_path.startsWith(`${input.activeClientId}/`)
     ) {
       continue;
@@ -2012,10 +2094,7 @@ async function buildAgentNativePdfContentBlocks(input: {
         AGENT_ATTACHMENT_BUCKET,
         ref.storage_path,
       );
-      if (
-        bytes.byteLength !== ref.bytes ||
-        bytes.byteLength >= thresholds.maxBytes
-      ) {
+      if (bytes.byteLength !== ref.bytes || bytes.byteLength >= maxBytes) {
         continue;
       }
       blocks.push({

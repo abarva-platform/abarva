@@ -111,10 +111,12 @@ extracted_text_preview, parse_metadata }`. The preview is the first
 
 When a parsed PDF looks garbled, the chip can show **Use raw mode**.
 Clicking it stamps `raw_mode_requested` on the attachment ref with the
-parser-bug ticket id and the estimated token cost. This is an approval
-contract only: downstream agent runtimes still need to consume that flag
-and route the original PDF bytes through the native document path before
-raw mode is considered fully implemented.
+parser-bug ticket id and the estimated token cost. The shared agent chat
+runtime consumes that acknowledgement, re-checks active-client storage
+scope, MIME, byte-size match, and a conservative raw-mode byte ceiling,
+then sends the original PDF bytes through Claude native document input.
+Raw-mode output still remains decision-support only and does not bypass
+human review or downstream commit gates.
 
 Soft-delete via `DELETE /api/v1/agent/attachments/[id]` stamps
 `deleted_at`. The blob stays — a retention job sweeps later.
