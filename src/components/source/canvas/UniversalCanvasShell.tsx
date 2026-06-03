@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
-import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
+import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
 // here to keep the canvas client-bundle free of `'server-only'` imports
 // — the Source-side xlsx renderer set is small and slow-changing.
 const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
-  'd04_app_inv',
-  'd11_response_checklist',
-  'd16_scorecard',
-  'd19_pricing_workbook',
-  'd20_trap_log',
-  'd22_bafo_question_pack',
+  "d04_app_inv",
+  "d11_response_checklist",
+  "d16_scorecard",
+  "d19_pricing_workbook",
+  "d20_trap_log",
+  "d22_bafo_question_pack",
   // Lifecycle-coverage wave — 4 structured artifacts with xlsx working
   // surface (mirrors the server-side XLSX_GENERATABLE_CODES set).
-  'dx2_market_scan',
-  'dx4_tco_iceberg',
-  'dx6a_ai_clause_gap',
-  'dx7_renewal_decision',
+  "dx2_market_scan",
+  "dx4_tco_iceberg",
+  "dx6a_ai_clause_gap",
+  "dx7_renewal_decision",
 ]);
 // Comparison-mode codes — show a second "Download comparison xlsx"
 // anchor alongside the standard template. Today only d19 (pricing).
 const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
-  'd19_pricing_workbook',
+  "d19_pricing_workbook",
 ]);
 // Codes for which Source has a docx renderer. Slice 3.x shipped
 // narrative artifacts; Slice 5 added the structured-data artifacts
@@ -37,59 +37,62 @@ const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
 // artifact (d19 pricing, d20 trap log, d22 BAFO) has a readable docx
 // alongside its xlsx working surface.
 const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
-  'd04_app_inv',
-  'd05_scope_memo',
-  'd09_rfp_pack',
-  'd11_response_checklist',
-  'd16_scorecard',
-  'd19_pricing_workbook',
-  'd20_trap_log',
-  'd22_bafo_question_pack',
-  'd24_decision_brief',
-  'd27_selection_memo',
+  "d01_strategy_memo",
+  "d04_app_inv",
+  "d05_scope_memo",
+  "d09_rfp_pack",
+  "d11_response_checklist",
+  "d16_scorecard",
+  "d19_pricing_workbook",
+  "d20_trap_log",
+  "d22_bafo_question_pack",
+  "d24_decision_brief",
+  "d27_selection_memo",
   // Lifecycle-coverage wave — all 7 new artifacts produce docx.
-  'dx0_demand_challenge',
-  'dx1_sourcing_approach',
-  'dx2_market_scan',
-  'dx4_tco_iceberg',
-  'dx6a_ai_clause_gap',
-  'dx6b_vendor_risk_pack',
-  'dx7_renewal_decision',
+  "dx0_demand_challenge",
+  "dx1_sourcing_approach",
+  "dx2_market_scan",
+  "dx4_tco_iceberg",
+  "dx6a_ai_clause_gap",
+  "dx6b_vendor_risk_pack",
+  "dx7_renewal_decision",
 ]);
 // Codes for which Source has an HTML renderer. Slice 4.1 — narrative
 // artifacts only; HTML is a long-form share surface, not a structured-
 // grid surface (structured artifacts use xlsx / docx / pdf).
 const HTML_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
-  'd05_scope_memo',
-  'd09_rfp_pack',
-  'd24_decision_brief',
-  'd27_selection_memo',
+  "d01_strategy_memo",
+  "d05_scope_memo",
+  "d09_rfp_pack",
+  "d24_decision_brief",
+  "d27_selection_memo",
   // Lifecycle-coverage wave — AI Clause Gap also has an HTML render
   // for shareable legal-counsel review.
-  'dx6a_ai_clause_gap',
+  "dx6a_ai_clause_gap",
 ]);
 // Codes for which Source has a PDF renderer. Slice 4.2 shipped the
 // narrative artifacts; Slice G7 adds every structured artifact so a
 // board pack never has to embed a spreadsheet.
 const PDF_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
-  'd04_app_inv',
-  'd05_scope_memo',
-  'd09_rfp_pack',
-  'd11_response_checklist',
-  'd16_scorecard',
-  'd19_pricing_workbook',
-  'd20_trap_log',
-  'd22_bafo_question_pack',
-  'd24_decision_brief',
-  'd27_selection_memo',
+  "d01_strategy_memo",
+  "d04_app_inv",
+  "d05_scope_memo",
+  "d09_rfp_pack",
+  "d11_response_checklist",
+  "d16_scorecard",
+  "d19_pricing_workbook",
+  "d20_trap_log",
+  "d22_bafo_question_pack",
+  "d24_decision_brief",
+  "d27_selection_memo",
   // Lifecycle-coverage wave — every new artifact has a PDF surface.
-  'dx0_demand_challenge',
-  'dx1_sourcing_approach',
-  'dx2_market_scan',
-  'dx4_tco_iceberg',
-  'dx6a_ai_clause_gap',
-  'dx6b_vendor_risk_pack',
-  'dx7_renewal_decision',
+  "dx0_demand_challenge",
+  "dx1_sourcing_approach",
+  "dx2_market_scan",
+  "dx4_tco_iceberg",
+  "dx6a_ai_clause_gap",
+  "dx6b_vendor_risk_pack",
+  "dx7_renewal_decision",
 ]);
 import type {
   SourceEventArtifactState,
@@ -97,31 +100,40 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
-} from '@/lib/source/canvas-substrate';
-import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
-import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+} from "@/lib/source/canvas-substrate";
+import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
+import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
   AgentDock,
   type AttachmentRef,
   type ChatMessage,
   type SuggestedAction,
-} from '@/components/agent/AgentDock';
-import { EventIdStrip } from './EventIdStrip';
-import { EventStepRail } from './EventStepRail';
-import { EventWorkspace, type WorkspaceTabKey } from './EventWorkspace';
-import { CANVAS } from './canvas-tokens';
-import { DocumentTab } from './workspace-tabs/DocumentTab';
-import { GateTab } from './workspace-tabs/GateTab';
-import { EvidenceTab } from './workspace-tabs/EvidenceTab';
-import { LogTab, type ActivityEntry } from './workspace-tabs/LogTab';
-import { threeChoicesForStage } from './canvas-three-choices';
+} from "@/components/agent/AgentDock";
+import { EventIdStrip } from "./EventIdStrip";
+import { EventStepRail } from "./EventStepRail";
+import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
+import { CANVAS } from "./canvas-tokens";
+import { DocumentTab } from "./workspace-tabs/DocumentTab";
+import { GateTab } from "./workspace-tabs/GateTab";
+import { EvidenceTab } from "./workspace-tabs/EvidenceTab";
+import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
+import { threeChoicesForStage } from "./canvas-three-choices";
 
 interface UniversalCanvasShellProps {
   event: Pick<
     SourcingEventSummary,
-    'id' | 'code' | 'name' | 'accountName' | 'status' | 'statusLabel' | 'archetype' | 'rigor' | 'owner' | 'currentStageKey'
+    | "id"
+    | "code"
+    | "name"
+    | "accountName"
+    | "status"
+    | "statusLabel"
+    | "archetype"
+    | "rigor"
+    | "owner"
+    | "currentStageKey"
   >;
   /** Stage being viewed in the workspace; defaults to event.currentStageKey. */
   viewStage: SourceStageKey;
@@ -169,7 +181,9 @@ export function UniversalCanvasShell({
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
-  const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(undefined);
+  const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(
+    undefined,
+  );
   const [promotePending, setPromotePending] = useState(false);
 
   // Per-event artifact state lives in client state so "Mark complete"
@@ -197,18 +211,15 @@ export function UniversalCanvasShell({
   const [criterionStateMap, setCriterionStateMap] = useState<
     Record<string, SourceEventGateCriterion>
   >(() => indexByCriterionId(gateCriterionStates));
-  const [pendingCriterionByCriterionId, setPendingCriterionByCriterionId] = useState<
-    Record<string, boolean>
-  >({});
+  const [pendingCriterionByCriterionId, setPendingCriterionByCriterionId] =
+    useState<Record<string, boolean>>({});
 
   const liveArtifactStates = useMemo(
-    () =>
-      artifactStates.map((a) => artifactStateMap[a.artifactCode] ?? a),
+    () => artifactStates.map((a) => artifactStateMap[a.artifactCode] ?? a),
     [artifactStates, artifactStateMap],
   );
   const liveGateCriterionStates = useMemo(
-    () =>
-      gateCriterionStates.map((c) => criterionStateMap[c.criterionId] ?? c),
+    () => gateCriterionStates.map((c) => criterionStateMap[c.criterionId] ?? c),
     [gateCriterionStates, criterionStateMap],
   );
 
@@ -229,13 +240,16 @@ export function UniversalCanvasShell({
   // Context-bundle counts for the chat header.
   const contextBundle = useMemo(() => {
     const usable = stageEvidence.filter(
-      (e) => e.currentState === 'Usable Evidence' || e.currentState === 'Available',
+      (e) =>
+        e.currentState === "Usable Evidence" || e.currentState === "Available",
     ).length;
     const totalEvidence = stageEvidence.length;
-    const liveArtifacts = stageArtifacts.filter((a) => a.tier !== 'stub').length;
+    const liveArtifacts = stageArtifacts.filter(
+      (a) => a.tier !== "stub",
+    ).length;
     const totalArtifacts = stageArtifacts.length;
     const metCriteria = stageCriteria.filter(
-      (c) => c.state === 'met' || c.state === 'waived',
+      (c) => c.state === "met" || c.state === "waived",
     ).length;
     return {
       readiness: `${usable} / ${totalEvidence}`,
@@ -255,8 +269,8 @@ export function UniversalCanvasShell({
     setPromotePending(true);
     try {
       const res = await fetch(`/api/v1/source/${event.id}/stage`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ stageKey: toStage, reason }),
       });
       if (!res.ok) return;
@@ -279,16 +293,23 @@ export function UniversalCanvasShell({
 
     setCriterionStateMap((prev) => ({
       ...prev,
-      [criterionId]: { ...previous, state: next, updatedAt: new Date().toISOString() },
+      [criterionId]: {
+        ...previous,
+        state: next,
+        updatedAt: new Date().toISOString(),
+      },
     }));
-    setPendingCriterionByCriterionId((prev) => ({ ...prev, [criterionId]: true }));
+    setPendingCriterionByCriterionId((prev) => ({
+      ...prev,
+      [criterionId]: true,
+    }));
 
     try {
       const res = await fetch(
         `/api/v1/source/${event.id}/gate-criteria/${encodeURIComponent(criterionId)}/state`,
         {
-          method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ state: next, reason }),
         },
       );
@@ -296,9 +317,14 @@ export function UniversalCanvasShell({
         setCriterionStateMap((prev) => ({ ...prev, [criterionId]: previous }));
         return;
       }
-      const payload = (await res.json()) as { criterion?: SourceEventGateCriterion };
+      const payload = (await res.json()) as {
+        criterion?: SourceEventGateCriterion;
+      };
       if (payload.criterion) {
-        setCriterionStateMap((prev) => ({ ...prev, [criterionId]: payload.criterion! }));
+        setCriterionStateMap((prev) => ({
+          ...prev,
+          [criterionId]: payload.criterion!,
+        }));
       }
     } catch {
       setCriterionStateMap((prev) => ({ ...prev, [criterionId]: previous }));
@@ -314,15 +340,16 @@ export function UniversalCanvasShell({
   const handleArtifactGenerate = async (
     code: string,
   ): Promise<
-    { ok: true } | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+    | { ok: true }
+    | { ok: false; error: string; detail: string; missingUpstream?: string[] }
   > => {
     setPendingGenerationByCode((prev) => ({ ...prev, [code]: true }));
     try {
       const res = await fetch(
         `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate-from-claude`,
         {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          method: "POST",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({}),
         },
       );
@@ -335,7 +362,7 @@ export function UniversalCanvasShell({
       if (!res.ok || !payload) {
         return {
           ok: false,
-          error: payload?.error ?? 'unknown',
+          error: payload?.error ?? "unknown",
           detail: payload?.detail ?? `Generation failed (HTTP ${res.status}).`,
           missingUpstream: payload?.missingUpstream,
         };
@@ -350,8 +377,8 @@ export function UniversalCanvasShell({
     } catch (err) {
       return {
         ok: false,
-        error: 'network',
-        detail: err instanceof Error ? err.message : 'Network error',
+        error: "network",
+        detail: err instanceof Error ? err.message : "Network error",
       };
     } finally {
       setPendingGenerationByCode((prev) => {
@@ -381,8 +408,8 @@ export function UniversalCanvasShell({
       const res = await fetch(
         `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/body`,
         {
-          method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ body }),
         },
       );
@@ -390,7 +417,9 @@ export function UniversalCanvasShell({
         setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
         return;
       }
-      const payload = (await res.json()) as { artifact?: SourceEventArtifactState };
+      const payload = (await res.json()) as {
+        artifact?: SourceEventArtifactState;
+      };
       if (payload.artifact) {
         setArtifactStateMap((prev) => ({ ...prev, [code]: payload.artifact! }));
       }
@@ -415,7 +444,11 @@ export function UniversalCanvasShell({
     // Optimistic update.
     setArtifactStateMap((prev) => ({
       ...prev,
-      [code]: { ...previous, status: next, updatedAt: new Date().toISOString() },
+      [code]: {
+        ...previous,
+        status: next,
+        updatedAt: new Date().toISOString(),
+      },
     }));
     setPendingStatusByCode((prev) => ({ ...prev, [code]: true }));
 
@@ -423,8 +456,8 @@ export function UniversalCanvasShell({
       const res = await fetch(
         `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/status`,
         {
-          method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ status: next }),
         },
       );
@@ -433,7 +466,9 @@ export function UniversalCanvasShell({
         setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
         return;
       }
-      const payload = (await res.json()) as { artifact?: SourceEventArtifactState };
+      const payload = (await res.json()) as {
+        artifact?: SourceEventArtifactState;
+      };
       if (payload.artifact) {
         setArtifactStateMap((prev) => ({ ...prev, [code]: payload.artifact! }));
       }
@@ -464,20 +499,21 @@ export function UniversalCanvasShell({
 
     const userTurn: ChatMessage = {
       id: `u-${Date.now()}`,
-      role: 'user',
-      body: trimmed.length > 0
-        ? trimmed
-        : `Attached ${attachmentIds.length} file${attachmentIds.length === 1 ? '' : 's'}.`,
+      role: "user",
+      body:
+        trimmed.length > 0
+          ? trimmed
+          : `Attached ${attachmentIds.length} file${attachmentIds.length === 1 ? "" : "s"}.`,
     };
     setThread((t) => [...t, userTurn]);
 
     try {
       const res = await fetch(`/api/v1/source/${event.id}/nexus/ask`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           prompt: trimmed,
-          mode: 'event',
+          mode: "event",
           stageKey: viewStage,
           selectedAttachmentIds: attachmentIds,
         }),
@@ -494,18 +530,18 @@ export function UniversalCanvasShell({
         `${dockAgent} could not produce a response right now.`;
       const agentTurn: ChatMessage = {
         id: `a-${Date.now() + 1}`,
-        role: 'agent',
+        role: "agent",
         body,
       };
       setThread((t) => [...t, agentTurn]);
     } catch (err) {
       const agentTurn: ChatMessage = {
         id: `a-${Date.now() + 1}`,
-        role: 'agent',
+        role: "agent",
         body:
           err instanceof Error
             ? `Network error: ${err.message}`
-            : 'Network error reaching the agent runtime.',
+            : "Network error reaching the agent runtime.",
       };
       setThread((t) => [...t, agentTurn]);
     }
@@ -524,12 +560,13 @@ export function UniversalCanvasShell({
     [viewStage],
   );
 
-  const initialTab: WorkspaceTabKey = 'document';
+  const initialTab: WorkspaceTabKey = "document";
   const tabs = [
     {
-      key: 'document' as WorkspaceTabKey,
-      label: 'Document',
-      badge: stageArtifacts.length > 0 ? String(stageArtifacts.length) : undefined,
+      key: "document" as WorkspaceTabKey,
+      label: "Document",
+      badge:
+        stageArtifacts.length > 0 ? String(stageArtifacts.length) : undefined,
       content: (
         <DocumentTab
           stage={viewStage}
@@ -570,8 +607,8 @@ export function UniversalCanvasShell({
       ),
     },
     {
-      key: 'gate' as WorkspaceTabKey,
-      label: 'Gate',
+      key: "gate" as WorkspaceTabKey,
+      label: "Gate",
       badge: `${contextBundle.metCriteria}/${contextBundle.totalCriteria}`,
       content: (
         <GateTab
@@ -585,14 +622,14 @@ export function UniversalCanvasShell({
       ),
     },
     {
-      key: 'evidence' as WorkspaceTabKey,
-      label: 'Evidence',
+      key: "evidence" as WorkspaceTabKey,
+      label: "Evidence",
       badge: contextBundle.readiness,
       content: <EvidenceTab stage={viewStage} states={stageEvidence} />,
     },
     {
-      key: 'log' as WorkspaceTabKey,
-      label: 'Log',
+      key: "log" as WorkspaceTabKey,
+      label: "Log",
       content: <LogTab entries={activityEntries} />,
     },
   ];
@@ -616,11 +653,17 @@ export function UniversalCanvasShell({
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
           <div style={DOSSIER_LINK_WRAP_STYLE}>
-            <Link href={`/source/events/${event.id}/value`} style={DOSSIER_LINK_STYLE}>
+            <Link
+              href={`/source/events/${event.id}/value`}
+              style={DOSSIER_LINK_STYLE}
+            >
               Value Proof
             </Link>
             {decisionThreadId ? (
-              <Link href={`/dossier/${decisionThreadId}`} style={DOSSIER_LINK_STYLE}>
+              <Link
+                href={`/dossier/${decisionThreadId}`}
+                style={DOSSIER_LINK_STYLE}
+              >
                 View in Dossier
               </Link>
             ) : null}
@@ -671,17 +714,18 @@ export function UniversalCanvasShell({
 // user can ask for, not abstract role descriptions. Mirrors the previous
 // EventChatLane.AGENT_DESCRIPTION map (Sentinel + Atlas only — the canvas
 // dock is a binary surface; see `canvasDockAgentForStage`).
-const AGENT_DOCK_ROLE_COPY: Record<'Sentinel' | 'Atlas', string> = {
-  Sentinel: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
-  Atlas: 'Frames the executive brief, ranks finalists, locks the decision.',
+const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
+  Sentinel:
+    "Drafts artifacts, surfaces evidence, flags gaps before they cost you.",
+  Atlas: "Frames the executive brief, ranks finalists, locks the decision.",
 };
 
-function displayAgentName(agent: 'Sentinel' | 'Atlas'): string {
-  return agent === 'Sentinel' ? 'Sentinel Source' : agent;
+function displayAgentName(agent: "Sentinel" | "Atlas"): string {
+  return agent === "Sentinel" ? "Sentinel Source" : agent;
 }
 
-function displayAgentInitials(agent: 'Sentinel' | 'Atlas'): string {
-  return agent === 'Sentinel' ? 'SS' : agent[0];
+function displayAgentInitials(agent: "Sentinel" | "Atlas"): string {
+  return agent === "Sentinel" ? "SS" : agent[0];
 }
 
 interface CanvasContextStripProps {
@@ -699,7 +743,11 @@ interface CanvasContextStripProps {
 // chat lane header. AgentDock owns the chat chrome now, so the workspace
 // pane absorbs this strip — same data, same testid surface, just hosted by
 // the right pane instead of the chat one.
-function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContextStripProps) {
+function CanvasContextStrip({
+  stageKey,
+  contextBundle,
+  children,
+}: CanvasContextStripProps) {
   const stageLabel = SOURCE_STAGE_LABELS[stageKey];
   return (
     <div style={WORKSPACE_WRAPPER_STYLE}>
@@ -733,25 +781,25 @@ function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContext
 
 function CanvasTour() {
   const searchParams = useSearchParams();
-  const tourActive = searchParams?.get('tour') === '1';
+  const tourActive = searchParams?.get("tour") === "1";
   if (!tourActive) return null;
   return (
     <SourceOnboardingTour
       active={tourActive}
       config={{
         step: 3,
-        title: 'This is the universal canvas.',
+        title: "This is the universal canvas.",
         body: (
           <>
-            Each artifact has a <strong>Mark complete</strong> button — flip them
-            as the work lands. Switch to the <strong>Gate</strong> tab to see
-            what&rsquo;s blocking promotion; once everything&rsquo;s green,{' '}
+            Each artifact has a <strong>Mark complete</strong> button — flip
+            them as the work lands. Switch to the <strong>Gate</strong> tab to
+            see what&rsquo;s blocking promotion; once everything&rsquo;s green,{" "}
             <strong>Promote stage</strong> moves the event forward. The agent
             dock on the left can draft any artifact for you — drag a vendor
             response onto it to bring those documents into the conversation.
           </>
         ),
-        nextLabel: 'Got it',
+        nextLabel: "Got it",
       }}
     />
   );
@@ -775,15 +823,15 @@ function indexByCriterionId(
 
 const MAIN_STYLE: CSSProperties = {
   flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
+  display: "flex",
+  flexDirection: "column",
   minHeight: 0,
   // Belt-and-suspenders height pin: AppShell sets minHeight: 100vh + overflow
   // hidden upstream, but explicit height here guarantees the splitter pane
   // (and the chat lane inside it) cannot grow beyond the viewport, so the
   // chat input stays sticky at the bottom without scrolling.
-  height: 'calc(100vh - 64px)',
-  overflow: 'hidden',
+  height: "calc(100vh - 64px)",
+  overflow: "hidden",
   background: CANVAS.PAGE_BG,
 };
 
@@ -793,35 +841,35 @@ const CONTAINER_STYLE: CSSProperties = {
 };
 
 const DOSSIER_LINK_WRAP_STYLE: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'flex-end',
+  display: "flex",
+  justifyContent: "flex-end",
   paddingTop: 10,
 };
 
 const DOSSIER_LINK_STYLE: CSSProperties = {
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: 6,
-  background: '#fff',
+  background: "#fff",
   color: CANVAS.INK,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
   fontWeight: 800,
-  letterSpacing: '0.08em',
-  padding: '7px 10px',
-  textDecoration: 'none',
-  textTransform: 'uppercase',
+  letterSpacing: "0.08em",
+  padding: "7px 10px",
+  textDecoration: "none",
+  textTransform: "uppercase",
 };
 
 const SPLITTER_WRAPPER_STYLE: CSSProperties = {
   flex: 1,
-  display: 'flex',
+  display: "flex",
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const WORKSPACE_WRAPPER_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
+  display: "flex",
+  flexDirection: "column",
   flex: 1,
   minHeight: 0,
   background: CANVAS.PAGE_BG,
@@ -829,23 +877,23 @@ const WORKSPACE_WRAPPER_STYLE: CSSProperties = {
 
 const WORKSPACE_INNER_STYLE: CSSProperties = {
   flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
+  display: "flex",
+  flexDirection: "column",
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const CONTEXT_STRIP_STYLE: CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
   gap: 6,
-  padding: '8px 18px',
+  padding: "8px 18px",
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.06em',
+  letterSpacing: "0.06em",
   color: CANVAS.INK_SOFT,
-  background: 'rgba(10,10,11,0.025)',
+  background: "rgba(10,10,11,0.025)",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
 };
@@ -853,8 +901,8 @@ const CONTEXT_STRIP_STYLE: CSSProperties = {
 const CONTEXT_LABEL_STYLE: CSSProperties = {
   fontWeight: 700,
   color: CANVAS.INK,
-  textTransform: 'uppercase',
-  letterSpacing: '0.12em',
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
   marginRight: 4,
 };
 

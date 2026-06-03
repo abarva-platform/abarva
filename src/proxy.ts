@@ -33,6 +33,11 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/",
   "/contact(.*)",
   "/subprocessors(.*)",
+  // Responsible AI pages live in the public route tree. The acknowledgment
+  // and training pages still self-gate with server-side subject checks, but
+  // keeping the path public at proxy level prevents Clerk HTML redirects from
+  // leaking into same-origin RSC fetches as cross-origin preflight failures.
+  "/responsible-ai(.*)",
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
@@ -395,11 +400,14 @@ const clerkProtectedProxy = clerkMiddleware(
     // For every non-admin role on these route trees, an inbound ?client=
     // param is treated as injection (the canonical tenant binding lives in
     // Clerk metadata + the ACTIVE_CLIENT_COOKIE, not the query string).
-    // /source already strips via shouldStripUnauthorizedClientParam above;
-    // this block extends the same posture to /tower, /home, /admin.
+    // Include /source as defense-in-depth. The access-routing predicate should
+    // already catch unauthorized Source client params, but route-tree stripping
+    // keeps browser history, referrers, and logs free of foreign tenant hints.
     if (requestedClientId && role !== "admin") {
       const pathname = request.nextUrl.pathname;
       const isProtectedTree =
+        pathname === "/source" ||
+        pathname.startsWith("/source/") ||
         pathname === "/tower" ||
         pathname.startsWith("/tower/") ||
         pathname === "/home" ||
