@@ -83,6 +83,7 @@ export {
 } from "./rate-card/rate-card-ingestion";
 export * from "./rate-card/rate-card-row-parser";
 export * from "./rate-card/rate-card-templates";
+export * from "./modernization";
 // Domain Function Packs — the curated, function-indexed industry-depth layer
 // bound into context before the agent reaches for general intelligence.
 export * from "./domain";
