@@ -1,6 +1,7 @@
 name: Bundle Budget
 
 on:
+  merge_group:
   pull_request:
     branches:
       - main
