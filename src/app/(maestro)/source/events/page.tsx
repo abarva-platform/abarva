@@ -13,6 +13,10 @@ import {
   getPendingSourceEvents,
 } from "@/lib/source/queries";
 import type { SourcingEventSummary } from "@/lib/source/types";
+import {
+  computeSourcePortfolioMetrics,
+  type SourcePortfolioMetrics,
+} from "@/lib/source/portfolio-metrics";
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
@@ -28,6 +32,10 @@ export default async function SourceEventsPage({
 }) {
   const { stage, status } = await searchParams;
   const events = await listSourcingEvents();
+  // Canonical Source portfolio computation — ONE filtering + counting rule,
+  // shared with the Portfolio and Decision Queue surfaces so the headline
+  // numbers can never disagree (audit 2026-06-03, Tier 0).
+  const { visibleEvents, metrics } = computeSourcePortfolioMetrics(events);
 
   const [activeClient, tenancy] = await Promise.all([
     getActiveClientRow().catch(() => null),
@@ -59,7 +67,7 @@ export default async function SourceEventsPage({
       }}
       subNav={<SourceSubNav />}
     >
-      {events.length === 0 ? (
+      {visibleEvents.length === 0 ? (
         <SourceEmptyState tenantName={activeClientDisplayName} />
       ) : (
         <SourceEventsAgentDockView
@@ -74,13 +82,14 @@ export default async function SourceEventsPage({
                 />
               )}
               <SourceEventsEntryHeader
-                events={events}
+                events={visibleEvents}
+                metrics={metrics}
                 canViewFinancialValues={
                   sourceAccessPolicy?.canViewFinancialData === true
                 }
               />
               <SourceEventsPortfolio
-                events={events}
+                events={visibleEvents}
                 activeStage={stage ?? null}
                 activeStatus={status ?? null}
                 canViewFinancialValues={
@@ -97,27 +106,18 @@ export default async function SourceEventsPage({
 
 function SourceEventsEntryHeader({
   events,
+  metrics,
   canViewFinancialValues = true,
 }: {
   events: SourcingEventSummary[];
+  metrics: SourcePortfolioMetrics;
   canViewFinancialValues?: boolean;
 }) {
-  const activeEvents = events.filter(
-    (event) => event.status === "active",
-  ).length;
-  const waitingEvents = events.filter((event) =>
-    event.status.startsWith("waiting_on"),
-  ).length;
-  const blockedEvents = events.filter(
-    (event) => event.isAtRisk || event.blocker,
-  ).length;
+  // Counts and value come from the canonical metrics — never recomputed here —
+  // so this surface always agrees with Portfolio and the Decision Queue.
   const linkedEvents = events.filter((event) =>
     buildLinkedProgramBadgeView(event.id),
   ).length;
-  const valueAtStake = events.reduce(
-    (sum, event) => sum + event.valueAtStakeUsd,
-    0,
-  );
 
   return (
     <section
@@ -212,17 +212,17 @@ function SourceEventsEntryHeader({
       >
         <PortfolioMetric
           label="Events"
-          value={String(events.length)}
-          detail={`${activeEvents} active`}
+          value={String(metrics.total)}
+          detail={`${metrics.active} active`}
         />
         <PortfolioMetric
           label="Waiting"
-          value={String(waitingEvents)}
+          value={String(metrics.waiting)}
           detail="client, vendor, or owner hold"
         />
         <PortfolioMetric
           label="Blocked"
-          value={String(blockedEvents)}
+          value={String(metrics.attentionCount)}
           detail="gate or evidence pressure visible"
         />
         <PortfolioMetric
@@ -233,7 +233,7 @@ function SourceEventsEntryHeader({
         <PortfolioMetric
           label="Value at stake"
           value={formatSourceFinancialValue(
-            valueAtStake,
+            metrics.openValueUsd,
             canViewFinancialValues,
           )}
           detail="system-projected"
