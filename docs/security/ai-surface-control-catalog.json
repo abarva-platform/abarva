@@ -426,6 +426,24 @@
       ]
     },
     {
+      "id": "intelligence-pattern-to-move-promotion-submit",
+      "surface": "Intelligence pattern to Move promotion submit gate",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/lib/programs/origination-submit.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "validateIntelligencePromotionApproval",
+            "intelligence_promotion_approval_required",
+            "human_promotion_rationale",
+            "evidence_refs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "moves-deliverable-canvas-view",
       "surface": "Moves deliverable canvas view model",
       "lane": "global-control-lane",
@@ -584,6 +602,12 @@
       "status": "deferred",
       "controlKind": "human-approval-gate",
       "reason": "Approval rationale is covered, but waiver remains lighter and needs separate evidence-packet parity before covered status."
+    },
+    {
+      "key": "consequential|Intelligence|Pattern to Move promotion|human-approval-gate",
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-to-move-promotion-submit",
+      "controlKind": "human-approval-gate"
     },
     {
       "key": "generated-ui|Intelligence|Sentinel reasoning cards|citation",
