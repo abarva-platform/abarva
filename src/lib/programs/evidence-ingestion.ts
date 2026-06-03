@@ -5,6 +5,11 @@ import {
   CONTENT_HASH_PARSE_CACHE_VERSION,
   withContentHashParseCache,
 } from "@/lib/ingestion/content-hash-parse-cache";
+import {
+  DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+  isDocumentIntelligenceConfigured,
+  parsePdfWithDocumentIntelligenceLayout,
+} from "@/lib/ingestion/document-intelligence-layout";
 import type { TenancyCtx } from "./types.db";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
@@ -265,9 +270,15 @@ function fallbackEvidenceWithWarning(args: {
   };
 }
 
+interface ParserTextResult {
+  text: string;
+  warnings: string[];
+  parseMethod?: string;
+}
+
 async function extractDocxText(
   buffer: Buffer,
-): Promise<{ text: string; warnings: string[] }> {
+): Promise<ParserTextResult> {
   const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ buffer });
   const warnings = Array.isArray(result.messages)
@@ -284,12 +295,46 @@ async function extractDocxText(
 
 async function extractPdfText(
   buffer: Buffer,
-): Promise<{ text: string; warnings: string[] }> {
+): Promise<ParserTextResult> {
+  if (isDocumentIntelligenceConfigured()) {
+    try {
+      const result = await parsePdfWithDocumentIntelligenceLayout(buffer);
+      return {
+        text: result.text,
+        warnings: [
+          ...result.warnings,
+          `Azure AI Document Intelligence layout parser used${
+            result.pageCount === null ? "" : ` (${result.pageCount} pages)`
+          }.`,
+        ],
+        parseMethod: DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD,
+      };
+    } catch (err) {
+      const fallback = await extractPdfTextWithPdfParse(buffer);
+      return {
+        ...fallback,
+        warnings: [
+          ...fallback.warnings,
+          `Azure AI Document Intelligence failed; used pdf-parse fallback: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        ],
+        parseMethod: "pdf-parse",
+      };
+    }
+  }
+
+  return extractPdfTextWithPdfParse(buffer);
+}
+
+async function extractPdfTextWithPdfParse(
+  buffer: Buffer,
+): Promise<ParserTextResult> {
   const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   try {
     const result = await parser.getText();
-    return { text: result.text ?? "", warnings: [] };
+    return { text: result.text ?? "", warnings: [], parseMethod: "pdf-parse" };
   } finally {
     await parser.destroy().catch(() => undefined);
   }
@@ -297,7 +342,7 @@ async function extractPdfText(
 
 async function extractXlsxText(
   buffer: Buffer,
-): Promise<{ text: string; warnings: string[] }> {
+): Promise<ParserTextResult> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
@@ -355,7 +400,12 @@ export async function extractProgramEvidenceFromUploadBuffer(args: {
     if (args.mimeType === DOCX_MIME)
       return { method: "docx-mammoth", run: extractDocxText };
     if (args.mimeType === PDF_MIME)
-      return { method: "pdf-parse", run: extractPdfText };
+      return {
+        method: isDocumentIntelligenceConfigured()
+          ? DOCUMENT_INTELLIGENCE_LAYOUT_PARSE_METHOD
+          : "pdf-parse",
+        run: extractPdfText,
+      };
     if (args.mimeType === XLSX_MIME)
       return { method: "exceljs-xlsx", run: extractXlsxText };
     return null;
@@ -365,7 +415,7 @@ export async function extractProgramEvidenceFromUploadBuffer(args: {
 
   try {
     const {
-      value: { text, warnings },
+      value: { text, warnings, parseMethod },
     } = await withContentHashParseCache(
       {
         cacheScope: args.cacheScope,
@@ -389,7 +439,7 @@ export async function extractProgramEvidenceFromUploadBuffer(args: {
         mimeType: args.mimeType,
         text,
       }),
-      parser.method,
+      parseMethod || parser.method,
       warnings,
       0.72,
     );
