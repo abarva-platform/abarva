@@ -15,5 +15,6 @@ This directory stores durable architecture decisions. New ADRs should use `ADR-t
 | [ADR-0006-ai-as-advisor.md](ADR-0006-ai-as-advisor.md)                                 | AI as Advisor, Never Decision-Maker               | Accepted | 2026-06-01 |
 | [ADR-0007-vercel-control-plane-posture.md](ADR-0007-vercel-control-plane-posture.md)   | Vercel Control Plane with Azure Client Data Plane | Accepted | 2026-06-01 |
 | [ADR-0008-context-ingestion-guardrails.md](ADR-0008-context-ingestion-guardrails.md)   | Context Ingestion Guardrails                      | Accepted | 2026-06-01 |
+| [ADR-0009-release-environments-and-pilot-production.md](ADR-0009-release-environments-and-pilot-production.md) | Release Environments and Pilot Production | Accepted | 2026-06-03 |
 
 Note: the legacy `0001-canonical-pattern-storage.md` predates this framework. The `ADR-0001-*` series starts the governance ADR set requested on 2026-06-01.
