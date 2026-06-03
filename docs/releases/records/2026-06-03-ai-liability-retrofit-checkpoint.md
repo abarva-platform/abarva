@@ -32,6 +32,7 @@ readiness.
 ## Changes Included
 
 - `docs/legal/AI_LIABILITY_RETROFIT_COMPLETION_CHECKPOINT.md`
+- `docs/security/ai-surface-control-catalog.json`
 - `docs/runbooks/ai-liability-retrofit-checkpoint.md`
 - `docs/build/AI_LIABILITY_RETROFIT_CHECKPOINT_2026-06-03.md`
 - `scripts/ai-liability/verify-retrofit-completion-checkpoint.mjs`
@@ -65,6 +66,6 @@ Revert this PR. No runtime or data rollback is required.
 
 T251 remains `In progress` until every row in T231-T250 is `Done` with
 implementation or accepted external evidence. Current strict completion is
-10 / 20 rows = 50%; the weighted signal is 15 / 20 = 75%; there are no
-remaining `Not started` rows, but 10 rows still require durable evidence,
+11 / 20 rows = 55%; the weighted signal is 15.5 / 20 = 77.5%; there are no
+remaining `Not started` rows, but 9 rows still require durable evidence,
 broader coverage, or live persistence.

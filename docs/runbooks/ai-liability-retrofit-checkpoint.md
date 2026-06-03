@@ -49,8 +49,9 @@ The weighted signal is useful for planning and sequencing, but only strict
 
 ## Current Follow-Up Queue
 
-1. T234: merge the consuming pattern-to-Move approval dialog with persisted
-   human justification and evidence packet.
-2. T250: CI coverage across every audited surface.
-3. T238/T240: finish Source vendor-recommendation and savings/cost assumption
+1. T250: close deferred catalog claims and extend CI coverage across every
+   audited surface.
+2. T238/T240: finish Source vendor-recommendation and savings/cost assumption
    coverage beyond the completed external-action gate.
+3. T242/T243: finish Tower prediction assumption disclosure and persisted
+   human acknowledgment evidence.

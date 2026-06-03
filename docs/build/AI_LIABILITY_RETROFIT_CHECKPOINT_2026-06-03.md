@@ -15,6 +15,8 @@ The checkpoint makes completion measurable by module and separates strict
 
 - Canonical checkpoint:
   `docs/legal/AI_LIABILITY_RETROFIT_COMPLETION_CHECKPOINT.md`
+- Catalog coverage:
+  `docs/security/ai-surface-control-catalog.json`
 - Runbook:
   `docs/runbooks/ai-liability-retrofit-checkpoint.md`
 - Verifier:
@@ -24,11 +26,11 @@ The checkpoint makes completion measurable by module and separates strict
 
 ## Current Snapshot
 
-- Strict completion: 10 / 20 rows = 50%.
-- Weighted execution signal: 15 / 20 = 75%.
+- Strict completion: 11 / 20 rows = 55%.
+- Weighted execution signal: 15.5 / 20 = 77.5%.
 - Not-started blockers: none.
-- In-progress rows needing durable evidence: T234, T238, T240, T242, T243,
-  T244, T245, T247, T248, T250.
+- In-progress rows needing durable evidence: T238, T240, T242, T243, T244,
+  T245, T247, T248, T250.
 
 ## Boundary
 
