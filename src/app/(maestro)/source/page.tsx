@@ -1,17 +1,17 @@
 import { redirect } from 'next/navigation';
+import { isSourceIaV2 } from '@/lib/source/source-ia-v2';
 
 export const metadata = { title: 'Source · AbarVa' };
 export const dynamic = 'force-dynamic';
 
 /**
- * Source now defaults to the Events surface, which carries the
- * Sentinel Source dock on the left and the sourcing operating view on
- * the right. Queue and Portfolio remain reachable via sub-nav once the
- * user lands inside Source.
+ * Source landing.
  *
- * We redirect rather than re-render so `/source/events` stays the
- * canonical implementation of the default landing view.
+ * IA v2 (audit 2026-06-03, Tier 1): `/source` lands on the Decision Queue
+ * ("Decisions") — the act-mode surface that passes the squint test — rather
+ * than the busy Events page. Reversible via `NEXT_PUBLIC_SOURCE_IA_V2=0`,
+ * which restores the prior `/source/events` landing.
  */
 export default function SourcePage() {
-  redirect('/source/events');
+  redirect(isSourceIaV2() ? '/source/queue' : '/source/events');
 }
