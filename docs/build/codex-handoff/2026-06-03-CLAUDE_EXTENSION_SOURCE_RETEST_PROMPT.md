@@ -292,10 +292,10 @@ Use this exact interpretation:
 
 When done, end with:
 
-`FINAL VERDICT: GO`  
-or  
-`FINAL VERDICT: CONDITIONAL GO`  
-or  
+`FINAL VERDICT: GO`
+or
+`FINAL VERDICT: CONDITIONAL GO`
+or
 `FINAL VERDICT: NO-GO`
 
 and one paragraph explaining why.
