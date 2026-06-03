@@ -503,7 +503,7 @@ export function SourceOriginatePage({
                   }}>
                     {complete
                       ? (chatFilledFields.has(field.id) ? 'From chat' : 'Captured')
-                      : (isRequired ? 'Required' : (field.agent ? `${field.agent} needs` : 'Needed'))}
+                      : (isRequired ? 'Required' : 'Needed')}
                   </span>
                 </div>
                 <textarea
