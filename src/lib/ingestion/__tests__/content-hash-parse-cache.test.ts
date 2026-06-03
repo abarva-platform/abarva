@@ -1,6 +1,8 @@
 import {
   buildContentHashParseCacheKey,
   clearContentHashParseCacheForTests,
+  type ContentHashParseCacheKey,
+  type ContentHashParseCachePersistentStore,
   computeContentSha256,
   getContentHashParseCacheStats,
   withContentHashParseCache,
@@ -104,6 +106,70 @@ describe("content-hash parse cache", () => {
     expect(parse).toHaveBeenCalledTimes(2);
   });
 
+  it("reuses a persistent store across in-memory cache resets", async () => {
+    const persistentStore = createTestPersistentStore<string>();
+    const parse = jest.fn(async () => "persistent parsed body");
+    const args = {
+      cacheScope: "client-a",
+      mimeType: "application/pdf",
+      parserId: "pdf-parse",
+      parserVersion: "parser-v1",
+      bytes: Buffer.from("same upload across sessions"),
+      persistentStore,
+    };
+
+    const first = await withContentHashParseCache(args, parse);
+    clearContentHashParseCacheForTests();
+    const second = await withContentHashParseCache(args, parse);
+
+    expect(first).toMatchObject({
+      value: "persistent parsed body",
+      cacheHit: false,
+      cacheSource: "miss",
+    });
+    expect(second).toMatchObject({
+      value: "persistent parsed body",
+      cacheHit: true,
+      cacheSource: "persistent",
+    });
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(getContentHashParseCacheStats()).toMatchObject({
+      entries: 1,
+      hits: 1,
+    });
+  });
+
+  it("falls back to parsing when the persistent store fails", async () => {
+    const persistentStore: ContentHashParseCachePersistentStore<string> = {
+      async get() {
+        throw new Error("store read failed");
+      },
+      async set() {
+        throw new Error("store write failed");
+      },
+    };
+    const parse = jest.fn(async () => "fresh parse");
+
+    const result = await withContentHashParseCache(
+      {
+        cacheScope: "client-a",
+        mimeType: "application/pdf",
+        parserId: "pdf-parse",
+        parserVersion: "parser-v1",
+        bytes: Buffer.from("store failure upload"),
+        persistentStore,
+      },
+      parse,
+    );
+
+    expect(result).toMatchObject({
+      value: "fresh parse",
+      cacheHit: false,
+      cacheSource: "miss",
+    });
+    expect(parse).toHaveBeenCalledTimes(1);
+  });
+
   it("normalizes cache keys without dropping tenant or parser boundaries", () => {
     const sha256 = computeContentSha256(new Uint8Array([1, 2, 3]));
 
@@ -124,3 +190,27 @@ describe("content-hash parse cache", () => {
     });
   });
 });
+
+function createTestPersistentStore<
+  T,
+>(): ContentHashParseCachePersistentStore<T> {
+  const values = new Map<string, T>();
+  return {
+    async get(key) {
+      return values.get(serializeTestKey(key)) ?? null;
+    },
+    async set(key, value) {
+      values.set(serializeTestKey(key), value);
+    },
+  };
+}
+
+function serializeTestKey(key: ContentHashParseCacheKey): string {
+  return [
+    key.cacheScope,
+    key.mimeType,
+    key.parserId,
+    key.parserVersion,
+    key.sha256,
+  ].join("|");
+}

@@ -15,7 +15,13 @@ export interface ContentHashParseCacheKey {
 export interface ContentHashParseCacheResult<T> {
   value: T;
   cacheHit: boolean;
+  cacheSource: "memory" | "persistent" | "miss";
   key: ContentHashParseCacheKey;
+}
+
+export interface ContentHashParseCachePersistentStore<T = unknown> {
+  get(key: ContentHashParseCacheKey): Promise<T | null>;
+  set(key: ContentHashParseCacheKey, value: T): Promise<void>;
 }
 
 interface CacheEntry {
@@ -83,6 +89,7 @@ export async function withContentHashParseCache<T>(
     parserVersion?: string | null;
     bytes: ArrayBuffer | Uint8Array | Buffer;
     maxEntries?: number;
+    persistentStore?: ContentHashParseCachePersistentStore<T> | null;
   },
   parse: () => Promise<T>,
 ): Promise<ContentHashParseCacheResult<T>> {
@@ -103,7 +110,29 @@ export async function withContentHashParseCache<T>(
       lastHitSequence: ++cacheSequence,
       hits: cached.hits + 1,
     });
-    return { value: cached.value as T, cacheHit: true, key };
+    return {
+      value: cached.value as T,
+      cacheHit: true,
+      cacheSource: "memory",
+      key,
+    };
+  }
+
+  const persistentValue = await readPersistentCache(args.persistentStore, key);
+  if (persistentValue !== null) {
+    cache.set(serializedKey, {
+      value: persistentValue,
+      createdSequence: ++cacheSequence,
+      lastHitSequence: cacheSequence,
+      hits: 1,
+    });
+    enforceMaxEntries(args.maxEntries ?? DEFAULT_MAX_ENTRIES);
+    return {
+      value: persistentValue,
+      cacheHit: true,
+      cacheSource: "persistent",
+      key,
+    };
   }
 
   const value = await parse();
@@ -114,7 +143,8 @@ export async function withContentHashParseCache<T>(
     hits: 0,
   });
   enforceMaxEntries(args.maxEntries ?? DEFAULT_MAX_ENTRIES);
-  return { value, cacheHit: false, key };
+  await writePersistentCache(args.persistentStore, key, value);
+  return { value, cacheHit: false, cacheSource: "miss", key };
 }
 
 export function getContentHashParseCacheStats(): {
@@ -137,4 +167,29 @@ export function getContentHashParseCacheStats(): {
 export function clearContentHashParseCacheForTests() {
   cache.clear();
   cacheSequence = 0;
+}
+
+async function readPersistentCache<T>(
+  persistentStore: ContentHashParseCachePersistentStore<T> | null | undefined,
+  key: ContentHashParseCacheKey,
+): Promise<T | null> {
+  if (!persistentStore) return null;
+  try {
+    return await persistentStore.get(key);
+  } catch {
+    return null;
+  }
+}
+
+async function writePersistentCache<T>(
+  persistentStore: ContentHashParseCachePersistentStore<T> | null | undefined,
+  key: ContentHashParseCacheKey,
+  value: T,
+) {
+  if (!persistentStore) return;
+  try {
+    await persistentStore.set(key, value);
+  } catch {
+    // Persistence is an optimization. Parser correctness must never depend on it.
+  }
 }
