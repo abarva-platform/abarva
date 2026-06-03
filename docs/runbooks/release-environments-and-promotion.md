@@ -110,6 +110,12 @@ Run this tabletop before declaring a pilot production release complete:
 The drill can be dry. Do not mutate production or client data during the drill
 unless Anand explicitly approves a live rollback exercise.
 
+## Drill Evidence Records
+
+| Date | Scope | Evidence |
+| --- | --- | --- |
+| 2026-06-03 | Dry tabletop for AI-egress usage-cap enforcement rollback | `docs/build/ROLLBACK_DRILL_EVIDENCE_2026-06-03_AI_EGRESS_USAGE_CAP.md` |
+
 ## Status Reporting Rules
 
 Use truthful status language:
