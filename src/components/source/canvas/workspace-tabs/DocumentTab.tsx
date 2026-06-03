@@ -226,7 +226,11 @@ export function DocumentTab({
         </aside>
 
         {/* Active artifact body (right) */}
-        <article style={BODY_STYLE} aria-labelledby="active-artifact-title">
+        <article
+          data-testid="source-stage-canvas-panel"
+          style={BODY_STYLE}
+          aria-labelledby="active-artifact-title"
+        >
           {active && activeSpec ? (
             <>
               <header style={BODY_HEADER_STYLE}>
