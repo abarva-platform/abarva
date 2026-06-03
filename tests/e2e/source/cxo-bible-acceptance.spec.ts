@@ -28,9 +28,8 @@
  *     (e.g. a multi-tenant portfolio for the cross-surface value check).
  */
 
-import * as fs from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { signInAs, sourcePersonaStorageState } from './_auth';
+import { signInAs } from './_auth';
 
 const PERSONA = 'apex-vp-sourcing';
 const APEX_AMS_ID = 'apex-retail-ams-outsourcing-2026';
@@ -52,20 +51,13 @@ const BANNED_STRINGS: { term: string; reason: string }[] = [
 ];
 
 test.describe('CXO Bible acceptance — Source surface', () => {
-  // Prime the auth state before the suite runs if the file doesn't exist.
-  // test.use({ storageState }) requires the file to exist at load time, so we
-  // ensure it's present via beforeAll first, then apply it.
-  test.beforeAll(async ({ browser }) => {
-    const statePath = sourcePersonaStorageState(PERSONA);
-    if (!fs.existsSync(statePath)) {
-      const ctx = await browser.newContext();
-      const page = await ctx.newPage();
-      await signInAs(page, PERSONA);
-      await ctx.close();
-    }
+  // Sign in before each test. signInAs reuses the cached .auth/ storage state
+  // when fresh, so only the first test in the suite pays the Clerk round-trip.
+  // This avoids the chicken-and-egg problem with test.use({ storageState })
+  // which requires the file to exist at collect time (before beforeAll runs).
+  test.beforeEach(async ({ page }) => {
+    await signInAs(page, PERSONA);
   });
-
-  test.use({ storageState: sourcePersonaStorageState(PERSONA) });
 
   // ── 1. Trust Gate — navigation lands on Decisions (IA v2) ──────────────────
 
