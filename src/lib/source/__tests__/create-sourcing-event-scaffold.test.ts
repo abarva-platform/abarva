@@ -1,4 +1,8 @@
-import { createSourcingEvent, scaffoldNewEventSubstrate } from "../queries";
+import {
+  createSourcingEvent,
+  ensurePersistedSourceEventForClient,
+  scaffoldNewEventSubstrate,
+} from "../queries";
 import {
   SOURCE_ARTIFACT_SPECS,
   SOURCE_GATE_CRITERIA,
@@ -9,10 +13,20 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(),
 }));
 
+jest.mock("@/lib/data-plane/read-adapters/sourceEventsReadAdapter", () => ({
+  selectSourceEventsReadAdapter: jest.fn(),
+}));
+
 const { getAzureWriteFluentClient } = jest.requireMock(
   "@/lib/data-plane/postgresCompat",
 ) as {
   getAzureWriteFluentClient: jest.Mock;
+};
+
+const { selectSourceEventsReadAdapter } = jest.requireMock(
+  "@/lib/data-plane/read-adapters/sourceEventsReadAdapter",
+) as {
+  selectSourceEventsReadAdapter: jest.Mock;
 };
 
 function setupMockSupabase(insertedEvent: {
@@ -68,6 +82,10 @@ function setupMockSupabase(insertedEvent: {
 describe("createSourcingEvent scaffolding", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    selectSourceEventsReadAdapter.mockReturnValue({
+      getEventByIdForClient: jest.fn().mockResolvedValue(null),
+      getEventByCodeForClient: jest.fn().mockResolvedValue(null),
+    });
   });
 
   it("inserts source_events row + scaffolds 3 substrate tables on success", async () => {
@@ -235,6 +253,47 @@ describe("createSourcingEvent scaffolding", () => {
       expect.any(String),
     );
     consoleSpy.mockRestore();
+  });
+});
+
+describe("ensurePersistedSourceEventForClient", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    selectSourceEventsReadAdapter.mockReturnValue({
+      getEventByIdForClient: jest.fn().mockResolvedValue(null),
+      getEventByCodeForClient: jest.fn().mockResolvedValue(null),
+    });
+  });
+
+  it("materializes seeded golden events into source_events and scaffolds substrate", async () => {
+    const calls = setupMockSupabase({
+      id: "evt-src-004",
+      client_key: "apexretail",
+      event_code: "SRC-004",
+    });
+
+    const row = await ensurePersistedSourceEventForClient(
+      "apex-retail-ams-outsourcing-2026",
+      "apexretail",
+      "clerk:user-1",
+    );
+
+    expect(row?.id).toBe("evt-src-004");
+    const eventInsert = calls.find((c) => c.table === "source_events")!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.event_code).toBe("SRC-004");
+    expect(insertedRow.event_name).toBe("AMS Outsourcing 2026");
+    expect(insertedRow.client_key).toBe("apexretail");
+    expect(insertedRow.event_type).toBe("managed_service");
+    expect(insertedRow.created_by_user_id).toBe("clerk:user-1");
+    expect(calls.map((c) => c.table)).toEqual(
+      expect.arrayContaining([
+        "source_events",
+        "source_event_artifact_states",
+        "source_event_gate_criterion_states",
+        "source_event_evidence_states",
+      ]),
+    );
   });
 });
 

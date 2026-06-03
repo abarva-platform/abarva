@@ -465,6 +465,78 @@ export async function resolveSourceEventUuidForClient(
   return persistedEvent?.id ?? null;
 }
 
+function inferSeedEventType(archetype: string | null | undefined): string {
+  const normalized = archetype?.trim().toLowerCase() ?? "";
+  if (
+    normalized.includes("managed services") ||
+    normalized.includes("outsourcing")
+  ) {
+    return "managed_service";
+  }
+  if (normalized.includes("software")) return "software";
+  if (normalized.includes("cloud")) return "cloud_infrastructure";
+  if (normalized.includes("data")) return "data_platform";
+  return "other";
+}
+
+export async function ensurePersistedSourceEventForClient(
+  eventId: string,
+  clientKey: string,
+  createdByUserId?: string | null,
+): Promise<SourceEventRow | null> {
+  const persisted = await getPersistedSourceEventRow(eventId, clientKey);
+  if (persisted) return persisted;
+
+  const seedEvent = getSourceEventSeed(eventId);
+  if (!seedEvent) return null;
+
+  const supabase = getAzureWriteFluentClient();
+  const nowIso = new Date().toISOString();
+  const payload = {
+    client_key: clientKey,
+    event_code: seedEvent.code,
+    event_name: seedEvent.name,
+    event_type: inferSeedEventType(seedEvent.archetype),
+    current_stage_key:
+      normalizeSourceStageKey(seedEvent.currentStageKey) ?? "strategy",
+    current_stage_entered_at: nowIso,
+    lifecycle_state: isSourceLifecycleStatus(seedEvent.status)
+      ? seedEvent.status
+      : "active",
+    linked_program_id: null,
+    estimated_value_usd: seedEvent.valueAtStakeUsd ?? null,
+    trigger_description: seedEvent.problemStatement ?? null,
+    scope_description: seedEvent.synopsis ?? null,
+    decision_owner: seedEvent.owner ?? null,
+    created_by_user_id: createdByUserId ?? null,
+    updated_at: nowIso,
+  };
+
+  const { data, error } = await supabase
+    .from("source_events")
+    .upsert(payload, {
+      onConflict: "client_key,event_code",
+      ignoreDuplicates: false,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  const row = data as SourceEventRow;
+
+  try {
+    await scaffoldNewEventSubstrate(row.id, row.client_key);
+  } catch (scaffoldError) {
+    console.warn(
+      "source scaffold failure:",
+      row.id,
+      scaffoldError instanceof Error ? scaffoldError.message : scaffoldError,
+    );
+  }
+
+  return row;
+}
+
 async function getCanonicalAdminClientFallback(): Promise<{
   key: ClientKey;
   name: string;
