@@ -62,8 +62,9 @@ test.describe('CXO Bible acceptance — Source surface', () => {
   // ── 1. Trust Gate — navigation lands on Decisions (IA v2) ──────────────────
 
   test('Trust Gate P1: /source lands on the Decision Queue (Decisions tab)', async ({ page }) => {
-    const res = await page.goto(`${BASE}/source`, { waitUntil: 'domcontentloaded' });
-    expect(res?.status()).toBeLessThan(400);
+    // page.goto() returns null after a server-side redirect() chain in Next.js —
+    // assert the final URL instead of the response status.
+    await page.goto(`${BASE}/source`, { waitUntil: 'domcontentloaded' });
     // After redirect, should be on /source/queue (Decisions)
     await expect(page).toHaveURL(/\/source\/queue/);
     // The page should show some decisions or an empty-queue state — not the Events
@@ -116,8 +117,8 @@ test.describe('CXO Bible acceptance — Source surface', () => {
   });
 
   test('IA v2: /source/events redirects into /source/portfolio', async ({ page }) => {
-    const res = await page.goto(`${BASE}/source/events`, { waitUntil: 'domcontentloaded' });
-    expect(res?.status()).toBeLessThan(400);
+    // page.goto() returns null after Next.js server-side redirect() — assert URL.
+    await page.goto(`${BASE}/source/events`, { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/source\/portfolio/);
   });
 
