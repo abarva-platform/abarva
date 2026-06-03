@@ -7,6 +7,18 @@ import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from '@/lib/source/constants'
 import type { SourceStageKey } from '@/lib/source/types';
 import { CANVAS } from './canvas-tokens';
 
+/**
+ * Stages to show when the rail is collapsed (audit M2).
+ * We show: all done stages + current + the next one gate (if any).
+ * Everything else hides behind "All stages" toggle.
+ */
+function getVisibleStageIndices(currentIdx: number, total: number): Set<number> {
+  const visible = new Set<number>();
+  for (let i = 0; i <= currentIdx; i++) visible.add(i); // done + current
+  if (currentIdx + 1 < total) visible.add(currentIdx + 1); // next
+  return visible;
+}
+
 interface EventStepRailProps {
   eventId: string;
   currentStage: SourceStageKey;
@@ -31,6 +43,13 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
   const selectedKey = viewStage ?? currentStage;
   const selectedIdx = SOURCE_STAGE_ORDER.indexOf(selectedKey);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  // Audit M2: collapsed by default — show done + current + next only.
+  // "All stages" toggle reveals the full 11-node rail.
+  const hasFutureStages = currentIdx < SOURCE_STAGE_ORDER.length - 2;
+  const [showAll, setShowAll] = useState(false);
+  const visibleIndices = showAll
+    ? null // null = show all
+    : getVisibleStageIndices(currentIdx, SOURCE_STAGE_ORDER.length);
 
   return (
     <nav
@@ -38,6 +57,18 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
       aria-label="Sourcing lifecycle steps"
       style={RAIL_STYLE}
     >
+      {hasFutureStages && (
+        <div style={TOGGLE_ROW_STYLE}>
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            style={TOGGLE_BTN_STYLE}
+            aria-expanded={showAll}
+          >
+            {showAll ? 'Collapse stages' : 'All stages'}
+          </button>
+        </div>
+      )}
       <div style={TRACK_STYLE}>
         <div style={LINE_STYLE} />
         <div
@@ -47,6 +78,8 @@ export function EventStepRail({ eventId, currentStage, viewStage }: EventStepRai
           }}
         />
         {SOURCE_STAGE_ORDER.map((stage, i) => {
+          // Hide stages outside the visible set (collapsed view).
+          if (visibleIndices && !visibleIndices.has(i)) return null;
           const isDone = i < currentIdx;
           const isCurrent = i === currentIdx;
           const isFuture = i > currentIdx;
@@ -222,4 +255,24 @@ const NUMBER_STYLE: CSSProperties = {
 const NAME_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 11,
+};
+
+// Audit M2 additions
+const TOGGLE_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  marginBottom: 4,
+};
+
+const TOGGLE_BTN_STYLE: CSSProperties = {
+  background: 'transparent',
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 5,
+  padding: '2px 8px',
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: '0.07em',
+  textTransform: 'uppercase',
+  color: CANVAS.INK_MUTED,
+  cursor: 'pointer',
 };

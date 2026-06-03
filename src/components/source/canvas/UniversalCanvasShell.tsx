@@ -709,15 +709,21 @@ export function UniversalCanvasShell({
             thread={thread}
             onMessage={handleAgentMessage}
             workspace={
-              <CanvasContextStrip
-                stageKey={viewStage}
-                contextBundle={contextBundle}
+              // Audit M2: CanvasContextStrip removed — it restated Readiness,
+              // Artifacts, and Evidence counts already shown in the tab badges
+              // (Gate N/M, Document N, Evidence N/M). One status conveyor.
+              // The wrapper div keeps data-testid for E2E probes.
+              <div
+                data-testid="source-canvas-context-strip"
+                style={WORKSPACE_WRAPPER_STYLE}
               >
-                <EventWorkspace tabs={tabs} defaultTab={initialTab} />
-              </CanvasContextStrip>
+                <div style={WORKSPACE_INNER_STYLE}>
+                  <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+                </div>
+              </div>
             }
-            defaultLeftPercent={45}
-            minLeftPx={320}
+            defaultLeftPercent={30}
+            minLeftPx={280}
           />
         </div>
         <CanvasTour />
