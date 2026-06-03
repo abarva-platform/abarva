@@ -23,6 +23,8 @@ const testPath = "src/lib/compliance/__tests__/ofac-screening.test.ts";
 const configPath = "src/lib/admin/compliance-config.ts";
 const brokerPath = "src/lib/admin/broker/compliance-posture-broker.ts";
 const brokerTestPath = "src/lib/admin/broker/__tests__/compliance-posture-broker.test.ts";
+const gridPath = "src/components/admin/CompliancePostureGrid.tsx";
+const gridTestPath = "src/components/admin/__tests__/CompliancePostureGrid.test.tsx";
 const runbookPath = "docs/runbooks/ofac-screening.md";
 const buildPath = "docs/build/OFAC_SCREENING_2026-06-03.md";
 const releasePath = "docs/releases/records/2026-06-03-ofac-screening.md";
@@ -32,6 +34,8 @@ const test = read(testPath);
 const config = read(configPath);
 const broker = read(brokerPath);
 const brokerTest = read(brokerTestPath);
+const grid = read(gridPath);
+const gridTest = read(gridTestPath);
 const runbook = read(runbookPath);
 const build = read(buildPath);
 const release = read(releasePath);
@@ -59,6 +63,10 @@ const release = read(releasePath);
 
 requireSnippet(brokerPath, broker, "ofacScreening");
 requireSnippet(brokerTestPath, brokerTest, "commits to sanctions screening before customer onboarding");
+requireSnippet(gridPath, grid, "Customer sanctions screening");
+requireSnippet(gridPath, grid, "ofacScreening.evidenceRequired");
+requireSnippet(gridTestPath, gridTest, "renders all five posture card titles");
+requireSnippet(gridTestPath, gridTest, "manual_review_disposition");
 
 [
   "T121",

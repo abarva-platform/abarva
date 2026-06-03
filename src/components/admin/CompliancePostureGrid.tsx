@@ -1,7 +1,7 @@
 /**
  * CompliancePostureGrid · Wave 3 PR-4
  *
- * Renders the four posture cards on `/admin/compliance` in a 2×2
+ * Renders the five posture cards on `/admin/compliance` in a responsive
  * grid. Card shape per
  * `docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md` §7 Wave 3 PR-4:
  *
@@ -9,6 +9,7 @@
  *   - GDPR data residency · regions, DPA status, sub-processor list
  *   - DPA template      · href, last-updated, owner
  *   - Breach SLA        · hours, incident playbook
+ *   - OFAC screening    · provider, owner, cadence, evidence
  *
  * Honesty doctrine: status pills use the canon palette but never
  * claim "ready/certified" without an actual certification. The
@@ -189,7 +190,7 @@ export function CompliancePostureGrid({
   posture,
   asOfLabel,
 }: CompliancePostureGridProps) {
-  const { soc2, gdpr, dpa, breachSla } = posture;
+  const { soc2, gdpr, dpa, breachSla, ofacScreening } = posture;
   return (
     <section
       data-compliance-grid
@@ -335,6 +336,34 @@ export function CompliancePostureGrid({
             }}
           >
             {breachSla.notes}
+          </p>
+        </CardShell>
+
+        <CardShell
+          eyebrow="05 · OFAC"
+          title="Customer sanctions screening"
+          status={ofacScreening.status}
+          statusLabel={ofacScreening.statusLabel}
+          dataSource={ofacScreening.dataSource}
+        >
+          <FieldRow
+            label="Provider"
+            value={ofacScreening.screeningProvider}
+          />
+          <FieldRow label="Owner" value={ofacScreening.reviewOwner} />
+          <FieldRow label="Cadence" value={ofacScreening.cadence} />
+          <FieldRow
+            label="Evidence"
+            value={ofacScreening.evidenceRequired.join(' · ')}
+          />
+          <p
+            style={{
+              margin: '4px 0 0',
+              color: SETUP.inkMuted,
+              fontStyle: 'italic',
+            }}
+          >
+            {ofacScreening.notes}
           </p>
         </CardShell>
       </div>

@@ -38,6 +38,8 @@ disposition.
 - `src/lib/admin/compliance-config.ts`
 - `src/lib/admin/broker/compliance-posture-broker.ts`
 - `src/lib/admin/broker/__tests__/compliance-posture-broker.test.ts`
+- `src/components/admin/CompliancePostureGrid.tsx`
+- `src/components/admin/__tests__/CompliancePostureGrid.test.tsx`
 - `scripts/compliance/verify-ofac-screening.mjs`
 - `docs/runbooks/ofac-screening.md`
 - `docs/build/OFAC_SCREENING_2026-06-03.md`
@@ -45,8 +47,13 @@ disposition.
 ## QA / Validation
 
 - Pass: `node scripts/compliance/verify-ofac-screening.mjs`
-- Pass: `npx jest src/lib/compliance/__tests__/ofac-screening.test.ts src/lib/admin/broker/__tests__/compliance-posture-broker.test.ts --runInBand`
-- Pass: focused ESLint for evaluator, tests, verifier, config, and broker.
+- Pass: `npx jest src/lib/compliance/__tests__/ofac-screening.test.ts src/lib/admin/broker/__tests__/compliance-posture-broker.test.ts src/components/admin/__tests__/CompliancePostureGrid.test.tsx --runInBand`
+- Pass: focused ESLint for evaluator, tests, verifier, config, broker, and
+  compliance UI grid.
+- Blocked: `npx tsc --noEmit --pretty false` stops on pre-existing
+  `tests/accessibility/public-axe.spec.ts` missing `@axe-core/playwright`
+  types in this local worktree; PR CI typecheck is the authoritative gate for
+  this branch.
 - Pass: `git diff --check`
 - Pass: `npm run release:check -- --base origin/main --head HEAD`
 - Blocked/not run: live OFAC API integration or manual screening evidence store

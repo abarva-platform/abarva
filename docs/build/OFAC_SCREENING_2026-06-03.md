@@ -18,6 +18,8 @@ onboarding.
   `src/lib/admin/compliance-config.ts`
 - Broker pass-through:
   `src/lib/admin/broker/compliance-posture-broker.ts`
+- Admin compliance UI card:
+  `src/components/admin/CompliancePostureGrid.tsx`
 - Unit tests and verifier.
 - Runbook and release record.
 

@@ -1,7 +1,7 @@
 /**
  * CompliancePostureGrid · Wave 3 PR-4 · tests
  *
- * Asserts the four cards render with their headings and that the
+ * Asserts the five cards render with their headings and that the
  * pilot-stage honesty doctrine holds — no "Certified" pill is
  * rendered for SOC 2 from the stub data. Stubs the posture shape
  * inline so the test is independent of `compliance-config.ts` edits.
@@ -53,12 +53,26 @@ function fixturePosture(): CompliancePosture {
       dataSource: 'config',
       notes: 'GDPR Art. 33 aligned.',
     },
+    ofacScreening: {
+      status: 'committed',
+      statusLabel: 'Screen before customer onboarding',
+      screeningProvider: 'OFAC Sanctions List Search',
+      reviewOwner: 'Test Owner',
+      cadence: 'Before onboarding and quarterly',
+      evidenceRequired: [
+        'customer_name',
+        'screened_at',
+        'manual_review_disposition',
+      ],
+      dataSource: 'config',
+      notes: 'Possible matches fail closed until reviewed.',
+    },
     lastReviewedAt: '2026-05-30',
   };
 }
 
 describe('CompliancePostureGrid', () => {
-  it('renders all four posture card titles', () => {
+  it('renders all five posture card titles', () => {
     const html = renderToStaticMarkup(
       <CompliancePostureGrid
         posture={fixturePosture()}
@@ -69,6 +83,7 @@ describe('CompliancePostureGrid', () => {
     expect(html).toContain('Data residency &amp; DPA');
     expect(html).toContain('Data Processing Addendum');
     expect(html).toContain('Breach-notification SLA');
+    expect(html).toContain('Customer sanctions screening');
   });
 
   it('renders the as-of stamp', () => {
@@ -104,6 +119,17 @@ describe('CompliancePostureGrid', () => {
     expect(html).toContain('72h notification');
   });
 
+  it('surfaces OFAC screening cadence and evidence requirements', () => {
+    const html = renderToStaticMarkup(
+      <CompliancePostureGrid
+        posture={fixturePosture()}
+        asOfLabel="Reviewed 2026-05-30"
+      />,
+    );
+    expect(html).toContain('Before onboarding and quarterly');
+    expect(html).toContain('manual_review_disposition');
+  });
+
   it('marks every card with its dataSource', () => {
     const html = renderToStaticMarkup(
       <CompliancePostureGrid
@@ -111,8 +137,8 @@ describe('CompliancePostureGrid', () => {
         asOfLabel="Reviewed 2026-05-30"
       />,
     );
-    // Four cards × one "Source · config" footer each.
+    // Five cards × one "Source · config" footer each.
     const matches = html.match(/Source · config/g) ?? [];
-    expect(matches.length).toBe(4);
+    expect(matches.length).toBe(5);
   });
 });
