@@ -9,6 +9,8 @@ defensive publication while the repository is private.
 | Draft | Status | Purpose |
 | --- | --- | --- |
 | [2026-06-02-agent-context-broker-boundary-contract.md](2026-06-02-agent-context-broker-boundary-contract.md) | Ready for external publication review | Documents the AgentContextBroker boundary contract as a timestamped disclosure packet for counsel, founder review, or a public defensive-publication channel. |
+| [2026-06-03-workflow-anchored-agent-pattern.md](2026-06-03-workflow-anchored-agent-pattern.md) | Ready for external publication review | Documents the workflow-anchored agent pattern where agents front product workflows but controls bind to workflow objects. |
+| [2026-06-03-pattern-to-move-funnel.md](2026-06-03-pattern-to-move-funnel.md) | Ready for external publication review | Documents the pattern-to-Move funnel that converts grounded pattern detections into human-approved Moves. |
 
 ## External Publication Checklist
 
