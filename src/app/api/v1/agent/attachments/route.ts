@@ -28,6 +28,7 @@ import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
   AGENT_ATTACHMENT_BUCKET,
   AGENT_ATTACHMENT_MAX_BYTES,
+  type AgentAttachmentParseResult,
   extractAgentAttachmentParseResult,
   isAllowedAgentAttachmentMime,
   safeStorageFileName,
@@ -154,6 +155,7 @@ export async function POST(req: NextRequest) {
     cacheScope: activeClient.id,
   });
   const extractedText = parseResult.text;
+  const parseMetadata = buildParseMetadataResponse(parseResult, file);
 
   // Persist metadata row. The DB-write half is routed through the data-plane
   // write seam (Slice 3c); the blob upload above and the rollback below stay
@@ -171,6 +173,7 @@ export async function POST(req: NextRequest) {
       storage_path: storagePath,
       extracted_text: extractedText || null,
       linked_move_id: linkedMoveId,
+      parse_metadata: parseMetadata,
     });
   } catch (insertError) {
     // Roll back the blob — orphan storage objects are toxic to ops.
@@ -194,59 +197,63 @@ export async function POST(req: NextRequest) {
       bytes: file.size,
       storage_path: storagePath,
       extracted_text_preview: snipExtractedTextPreview(extractedText),
-      parse_metadata: {
-        page_count: parseResult.metadata.pageCount,
-        table_count: parseResult.metadata.tableCount,
-        parser_id: parseResult.metadata.parserId,
-        document_key: parseResult.metadata.economics?.documentKey ?? null,
-        document_hash: parseResult.metadata.economics?.documentHash ?? null,
-        document_label: parseResult.metadata.economics?.documentLabel ?? null,
-        original_filename:
-          parseResult.metadata.economics?.originalFilename ?? file.name,
-        parse_provider: parseResult.metadata.economics?.parseProvider ?? null,
-        parse_cost_usd: parseResult.metadata.economics?.parseCostUsd ?? null,
-        parse_cost_basis:
-          parseResult.metadata.economics?.parseCostBasis ?? null,
-        parse_unit_count:
-          parseResult.metadata.economics?.parseUnitCount ?? null,
-        parse_unit: parseResult.metadata.economics?.parseUnit ?? null,
-        byte_size: parseResult.metadata.economics?.byteSize ?? file.size,
-        small_doc_shortcut: parseResult.metadata.smallDocumentShortcut
-          ? {
-              eligible: parseResult.metadata.smallDocumentShortcut.eligible,
-              route: parseResult.metadata.smallDocumentShortcut.route,
-              reason: parseResult.metadata.smallDocumentShortcut.reason,
-              byte_size: parseResult.metadata.smallDocumentShortcut.byteSize,
-              page_count: parseResult.metadata.smallDocumentShortcut.pageCount,
-              thresholds: {
-                max_bytes:
-                  parseResult.metadata.smallDocumentShortcut.thresholds
-                    .maxBytes,
-                max_pages_exclusive:
-                  parseResult.metadata.smallDocumentShortcut.thresholds
-                    .maxPagesExclusive,
-              },
-            }
-          : null,
-        raw_mode_escape: parseResult.metadata.rawModeEscape
-          ? {
-              eligible: parseResult.metadata.rawModeEscape.eligible,
-              requires_user_approval:
-                parseResult.metadata.rawModeEscape.requiresUserApproval,
-              route: parseResult.metadata.rawModeEscape.route,
-              reason: parseResult.metadata.rawModeEscape.reason,
-              estimated_tokens_per_turn:
-                parseResult.metadata.rawModeEscape.estimatedTokensPerTurn,
-              parser_bug_ticket_id:
-                parseResult.metadata.rawModeEscape.parserBugTicketId,
-              cost_warning: parseResult.metadata.rawModeEscape.costWarning,
-            }
-          : null,
-      },
+      parse_metadata: parseMetadata,
       dataProtection,
     },
     { status: 200 },
   );
+}
+
+function buildParseMetadataResponse(
+  parseResult: AgentAttachmentParseResult,
+  file: File,
+): Record<string, unknown> {
+  return {
+    page_count: parseResult.metadata.pageCount,
+    table_count: parseResult.metadata.tableCount,
+    parser_id: parseResult.metadata.parserId,
+    document_key: parseResult.metadata.economics?.documentKey ?? null,
+    document_hash: parseResult.metadata.economics?.documentHash ?? null,
+    document_label: parseResult.metadata.economics?.documentLabel ?? null,
+    original_filename:
+      parseResult.metadata.economics?.originalFilename ?? file.name,
+    parse_provider: parseResult.metadata.economics?.parseProvider ?? null,
+    parse_cost_usd: parseResult.metadata.economics?.parseCostUsd ?? null,
+    parse_cost_basis: parseResult.metadata.economics?.parseCostBasis ?? null,
+    parse_unit_count: parseResult.metadata.economics?.parseUnitCount ?? null,
+    parse_unit: parseResult.metadata.economics?.parseUnit ?? null,
+    byte_size: parseResult.metadata.economics?.byteSize ?? file.size,
+    small_doc_shortcut: parseResult.metadata.smallDocumentShortcut
+      ? {
+          eligible: parseResult.metadata.smallDocumentShortcut.eligible,
+          route: parseResult.metadata.smallDocumentShortcut.route,
+          reason: parseResult.metadata.smallDocumentShortcut.reason,
+          byte_size: parseResult.metadata.smallDocumentShortcut.byteSize,
+          page_count: parseResult.metadata.smallDocumentShortcut.pageCount,
+          thresholds: {
+            max_bytes:
+              parseResult.metadata.smallDocumentShortcut.thresholds.maxBytes,
+            max_pages_exclusive:
+              parseResult.metadata.smallDocumentShortcut.thresholds
+                .maxPagesExclusive,
+          },
+        }
+      : null,
+    raw_mode_escape: parseResult.metadata.rawModeEscape
+      ? {
+          eligible: parseResult.metadata.rawModeEscape.eligible,
+          requires_user_approval:
+            parseResult.metadata.rawModeEscape.requiresUserApproval,
+          route: parseResult.metadata.rawModeEscape.route,
+          reason: parseResult.metadata.rawModeEscape.reason,
+          estimated_tokens_per_turn:
+            parseResult.metadata.rawModeEscape.estimatedTokensPerTurn,
+          parser_bug_ticket_id:
+            parseResult.metadata.rawModeEscape.parserBugTicketId,
+          cost_warning: parseResult.metadata.rawModeEscape.costWarning,
+        }
+      : null,
+  };
 }
 
 // Defensive: surfaceContext is client-supplied JSON. Pull the named
