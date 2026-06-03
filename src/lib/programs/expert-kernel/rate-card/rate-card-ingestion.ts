@@ -149,6 +149,10 @@ function hasIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
+function isFiniteNumber(value: number): boolean {
+  return Number.isFinite(value);
+}
+
 function confidenceRank(confidence: Confidence): number {
   return confidence === "high" ? 3 : confidence === "medium" ? 2 : 1;
 }
@@ -249,24 +253,24 @@ export function validateInternalRateRows(
         "Unknown role level.",
       );
     }
-    if (row.baseAnnualLowUsd <= 0) {
+    if (!isFiniteNumber(row.baseAnnualLowUsd) || row.baseAnnualLowUsd <= 0) {
       pushMessage(
         errors,
         "error",
         "internal",
         index,
         "baseAnnualLowUsd",
-        "Low annual rate must be positive.",
+        "Low annual rate must be a positive number.",
       );
     }
-    if (row.baseAnnualHighUsd <= 0) {
+    if (!isFiniteNumber(row.baseAnnualHighUsd) || row.baseAnnualHighUsd <= 0) {
       pushMessage(
         errors,
         "error",
         "internal",
         index,
         "baseAnnualHighUsd",
-        "High annual rate must be positive.",
+        "High annual rate must be a positive number.",
       );
     }
     if (row.baseAnnualLowUsd > row.baseAnnualHighUsd) {
@@ -279,7 +283,11 @@ export function validateInternalRateRows(
         "High annual rate must be >= low.",
       );
     }
-    if (row.benefitsOverheadPct < 0 || row.benefitsOverheadPct > 1) {
+    if (
+      !isFiniteNumber(row.benefitsOverheadPct) ||
+      row.benefitsOverheadPct < 0 ||
+      row.benefitsOverheadPct > 1
+    ) {
       pushMessage(
         errors,
         "error",
@@ -342,24 +350,24 @@ export function validateVendorRateRows(
         "Unknown sourcing location.",
       );
     }
-    if (row.hourlyLowUsd <= 0) {
+    if (!isFiniteNumber(row.hourlyLowUsd) || row.hourlyLowUsd <= 0) {
       pushMessage(
         errors,
         "error",
         "vendor",
         index,
         "hourlyLowUsd",
-        "Low hourly rate must be positive.",
+        "Low hourly rate must be a positive number.",
       );
     }
-    if (row.hourlyHighUsd <= 0) {
+    if (!isFiniteNumber(row.hourlyHighUsd) || row.hourlyHighUsd <= 0) {
       pushMessage(
         errors,
         "error",
         "vendor",
         index,
         "hourlyHighUsd",
-        "High hourly rate must be positive.",
+        "High hourly rate must be a positive number.",
       );
     }
     if (row.hourlyLowUsd > row.hourlyHighUsd) {
@@ -395,14 +403,14 @@ export function validateGeoModifierRows(
         "Region is required.",
       );
     }
-    if (row.geoIndex <= 0) {
+    if (!isFiniteNumber(row.geoIndex) || row.geoIndex <= 0) {
       pushMessage(
         errors,
         "error",
         "geo_modifier",
         index,
         "geoIndex",
-        "Geo index must be positive.",
+        "Geo index must be a positive number.",
       );
     }
   });
