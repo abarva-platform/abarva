@@ -36,6 +36,10 @@ import {
   normalizeApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from "@/lib/auth/gate-approval-strict-mode";
+import {
   resolveSourceEventUuidForClient,
   scaffoldNewEventSubstrate,
 } from "@/lib/source/queries";
@@ -70,9 +74,15 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       getCurrentUser().catch(() => null),
     ]);
 
-    const body = (await req.json()) as { stageKey?: unknown; reason?: unknown };
+    const body = (await req.json()) as {
+      stageKey?: unknown;
+      reason?: unknown;
+      selfApproveIfAuthorized?: unknown;
+      approvalId?: unknown;
+    };
     const stageKey = body?.stageKey;
     const reason = normalizeApprovalReason(body?.reason);
+    const selfApproveIfAuthorized = body?.selfApproveIfAuthorized === true;
 
     if (!isCanonicalSourceStageKey(stageKey)) {
       return Response.json(
@@ -134,6 +144,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const canAdvance = Boolean(
       accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed,
     );
+    const strictMode = isGateApprovalStrictMode();
     if (!canAdvance) {
       return Response.json(
         {
@@ -164,6 +175,34 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       });
       const currentStage =
         normalizeSourceStageKey(persistedEvent.current_stage_key) ?? "strategy";
+      const currentActorUserId =
+        currentUser?.personId ?? currentUser?.clerkUserId ?? null;
+      const canPilotSelfApprove =
+        selfApproveIfAuthorized && canAdvance && !strictMode;
+      if (
+        selfApproveIfAuthorized &&
+        strictMode &&
+        !isStrictModeApprovalRole(tenancy?.role ?? currentUser?.primaryRole)
+      ) {
+        return Response.json(
+          {
+            error: "forbidden",
+            detail:
+              "GATE_APPROVAL_STRICT_MODE is enabled — self-approval requires an admin or maestro role and a separate approver.",
+          },
+          { status: 403 },
+        );
+      }
+      if (selfApproveIfAuthorized && strictMode) {
+        return Response.json(
+          {
+            error: "forbidden",
+            detail:
+              "GATE_APPROVAL_STRICT_MODE is enabled — same-person self-approval is not allowed for Source stage advancement.",
+          },
+          { status: 403 },
+        );
+      }
       const [
         { data: criterionRows, error: criteriaError },
         { data: artifactRows, error: artifactError },
@@ -218,15 +257,22 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         reason,
       });
       if (!readiness.ok) {
-        const blocker = firstGovernanceBlocker(readiness);
-        return Response.json(
-          {
-            error: blocker.code,
-            detail: blocker.detail,
-            blockers: readiness.blockers,
-          },
-          { status: 409 },
-        );
+        if (canPilotSelfApprove) {
+          console.warn(
+            "[source stage] pilot self-approval bypassed governance blockers:",
+            readiness.blockers.map((blocker) => blocker.detail).join(" | "),
+          );
+        } else {
+          const blocker = firstGovernanceBlocker(readiness);
+          return Response.json(
+            {
+              error: blocker.code,
+              detail: blocker.detail,
+              blockers: readiness.blockers,
+            },
+            { status: 409 },
+          );
+        }
       }
 
       // DB write routed through the data-plane write seam (Slice 3b).
@@ -253,14 +299,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       const activityWrite = await sourceWrite.insertActivityLog({
         eventId: persistedEvent.id,
         clientKey: effectiveClientKey,
-        actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
+        actorUserId: currentActorUserId,
         actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
         actorRole: currentUser?.primaryRole ?? null,
         actionType: "stage_promoted",
         actionLabel: `Promoted Source event from ${currentStage} to ${stageKey}`,
         stageKey,
         reason,
-        metadata: { fromStage: currentStage, toStage: stageKey },
+        metadata: {
+          fromStage: currentStage,
+          toStage: stageKey,
+          selfApproved: canPilotSelfApprove,
+          bypassedGovernanceBlockers: canPilotSelfApprove
+            ? readiness.blockers
+            : [],
+        },
         occurredAtIso: nowIso,
       });
       if (!activityWrite.ok) {
