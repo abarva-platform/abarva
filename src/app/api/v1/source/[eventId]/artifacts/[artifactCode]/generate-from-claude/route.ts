@@ -116,6 +116,13 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (!tenancy) {
     return tenancyErrorResponse(tenancyError);
   }
+  const tenantClientKey = tenancy.clientKey;
+  if (!tenantClientKey) {
+    return Response.json(
+      { error: "no_client", detail: "No active client for this user" },
+      { status: 403 },
+    );
+  }
 
   const currentUser = await getCurrentUser().catch(() => null);
 
@@ -125,7 +132,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // stored-document registry all have a real event row to bind to.
   await ensurePersistedSourceEventForClient(
     eventId,
-    tenancy.clientKey,
+    tenantClientKey,
     currentUser?.clerkUserId ?? tenancy.userId,
   ).catch((error) => {
     console.error(
