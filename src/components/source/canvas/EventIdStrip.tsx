@@ -9,9 +9,17 @@ interface EventIdStripProps {
     SourcingEventSummary,
     'id' | 'code' | 'name' | 'accountName' | 'status' | 'statusLabel' | 'archetype' | 'rigor' | 'owner'
   >;
+  exportItems?: ReadonlyArray<{
+    key: string;
+    label: string;
+    href: string;
+    testId: string;
+    download?: boolean;
+    external?: boolean;
+  }>;
 }
 
-export function EventIdStrip({ event }: EventIdStripProps) {
+export function EventIdStrip({ event, exportItems = [] }: EventIdStripProps) {
   const tenant = tenantAbbreviationForAccount(event.accountName);
   const bucket = portfolioStatusOf(event as SourcingEventSummary);
   const dotColor =
@@ -45,33 +53,29 @@ export function EventIdStrip({ event }: EventIdStripProps) {
         </div>
       </div>
       <div style={RIGHT_STYLE}>
-        <a
-          data-testid="source-canvas-cxo-report-html"
-          href={`/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=html`}
-          style={REPORT_LINK_STYLE}
-          title="Open the governed CXO narrative report in the browser"
-          target="_blank"
-          rel="noreferrer"
-        >
-          CXO Report
-        </a>
-        <a
-          data-testid="source-canvas-cxo-report-pptx"
-          href={`/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=pptx`}
-          style={REPORT_LINK_STYLE}
-          title="Download an editable PowerPoint CXO narrative deck"
-          download
-        >
-          PPTX
-        </a>
-        <a
-          data-testid="source-canvas-deal-pack-download"
-          href={`/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`}
-          style={DEAL_PACK_LINK_STYLE}
-          title="Download a single-file HTML Deal Pack bundling every artifact across stages 0–7"
-        >
-          Download Deal Pack
-        </a>
+        {exportItems.length > 0 ? (
+          <details
+            data-testid="source-canvas-export-menu"
+            style={EXPORT_MENU_STYLE}
+          >
+            <summary style={EXPORT_SUMMARY_STYLE}>Export ▾</summary>
+            <div style={EXPORT_LIST_STYLE}>
+              {exportItems.map((item) => (
+                <a
+                  key={item.key}
+                  data-testid={item.testId}
+                  href={item.href}
+                  style={EXPORT_ITEM_STYLE}
+                  download={item.download}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noreferrer' : undefined}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </details>
+        ) : null}
         <span style={STATUS_STYLE}>
           <span aria-hidden style={{ ...STATUS_DOT_STYLE, background: dotColor }} />
           <span style={STATUS_LABEL_STYLE}>{event.statusLabel}</span>
@@ -186,24 +190,50 @@ const RIGHT_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
-const DEAL_PACK_LINK_STYLE: CSSProperties = {
+const EXPORT_MENU_STYLE: CSSProperties = {
+  position: 'relative',
+};
+
+const EXPORT_SUMMARY_STYLE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   padding: '6px 12px',
   border: `1px solid ${CANVAS.HAIRLINE}`,
   borderRadius: 4,
-  background: CANVAS.INK,
-  color: '#F4F2EC',
+  background: '#F4F2EC',
+  color: CANVAS.INK,
   fontFamily: CANVAS.MONO,
   fontSize: CANVAS.T_MICRO,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  textDecoration: 'none',
   fontWeight: 600,
+  cursor: 'pointer',
+  listStyle: 'none',
 };
 
-const REPORT_LINK_STYLE: CSSProperties = {
-  ...DEAL_PACK_LINK_STYLE,
-  background: '#F4F2EC',
+const EXPORT_LIST_STYLE: CSSProperties = {
+  position: 'absolute',
+  right: 0,
+  top: 'calc(100% + 8px)',
+  minWidth: 220,
+  display: 'grid',
+  gap: 4,
+  padding: 8,
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: '#fff',
+  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+  zIndex: 10,
+};
+
+const EXPORT_ITEM_STYLE: CSSProperties = {
+  display: 'block',
+  padding: '8px 10px',
+  borderRadius: 6,
   color: CANVAS.INK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  fontWeight: 600,
+  textDecoration: 'none',
+  background: '#fff',
 };

@@ -1,7 +1,6 @@
 // SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with tier indicator (rich/outline/stub).
 // T09: Added section-tier border-left, seeded version history, sign-offs panel.
 // No upload, parsing, workflow automation, or approval runtime.
-import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactDetail, SourceArtifactTier } from '@/lib/source/types';
 
@@ -13,14 +12,20 @@ interface ArtifactProvenance {
 }
 
 const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; borderLeft: string }> = {
-  rich:    { label: 'Rich',    color: SHELL.MINT_TEXT,  bg: SHELL.MINT_BG,   borderLeft: SHELL.MINT_TEXT  },
-  outline: { label: 'Outline', color: SHELL.INK_MID,   bg: SHELL.PAPER_SOFT, borderLeft: SHELL.INK_SOFT  },
-  stub:    { label: 'Stub',    color: SHELL.PEACH_TEXT, bg: SHELL.PEACH_BG,   borderLeft: SHELL.PEACH_TEXT },
+  rich:    { label: 'Final',       color: SHELL.MINT_TEXT,  bg: SHELL.MINT_BG,   borderLeft: SHELL.MINT_TEXT  },
+  outline: { label: 'In Progress', color: SHELL.INK_MID,    bg: SHELL.PAPER_SOFT, borderLeft: SHELL.INK_SOFT  },
+  stub:    { label: 'Draft',       color: SHELL.PEACH_TEXT, bg: SHELL.PEACH_BG,   borderLeft: SHELL.PEACH_TEXT },
 };
 
 function tierBorderColor(tier: SourceArtifactTier | undefined): string {
   const cfg = TIER_CONFIG[tier ?? 'stub'];
   return cfg?.borderLeft ?? SHELL.CARD_LINE;
+}
+
+function formatProvenanceLabel(value: string): string {
+  if (value === 'deterministic_seed') return 'Seed-backed scenario';
+  if (value === 'source_artifacts registry') return 'Source artifact registry';
+  return value.replaceAll('_', ' ');
 }
 
 // ─── Seeded sign-off data ─────────────────────────────────────────────────────
@@ -331,7 +336,7 @@ export function SourceArtifactDrawer({
           <span style={CHIP}>Evidence entries: {artifact.sections.length}</span>
           <span style={CHIP}>Sections: {sectionCount}</span>
           <span style={CHIP}>
-            {isRegistryBacked ? 'Source: live persisted registry' : 'Confidence: seeded deterministic'}
+            {isRegistryBacked ? 'Source: live persisted registry' : 'Confidence: seed-backed scenario'}
           </span>
         </div>
       </div>
@@ -343,7 +348,7 @@ export function SourceArtifactDrawer({
         <div style={sourceInsetCard} data-testid="provenance-panel">
           <div style={sourceSectionLabel}>Visible provenance</div>
           <div style={{ display: 'grid', gap: 8, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: SHELL.INK }}>
-            <div><strong>Created from:</strong> {provenance.createdFrom}</div>
+            <div><strong>Created from:</strong> {formatProvenanceLabel(provenance.createdFrom)}</div>
             <div><strong>Store key:</strong> {provenance.storeKey}</div>
             <div><strong>Freshness:</strong> {provenance.freshness}</div>
             {provenance.evidenceLedgerEntryId ? (
@@ -433,7 +438,7 @@ export function SourceArtifactDrawer({
       <div style={{ ...CHIP, marginTop: 10, background: SHELL.CARD_WHITE, borderColor: SHELL.INK_MUTED }}>
         {isRegistryBacked
           ? 'Registered Source artifact. Parser, vector, graph, evidence, and approval states are shown above; no completion is implied unless those states say complete.'
-          : 'Deterministic seeded artifact shell only. This page does not include upload, parsing, workflow automation, or approval runtime.'}
+          : 'Seed-backed artifact shell only. This page does not include upload, parsing, workflow automation, or approval runtime.'}
       </div>
     </section>
   );

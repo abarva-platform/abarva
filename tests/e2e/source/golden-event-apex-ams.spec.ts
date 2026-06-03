@@ -67,10 +67,6 @@ const AUDIT = {
     'AUDIT-2026-05-30 §Source-P1-15 · Value Ledger does not link projected/realized to decision id',
 } as const;
 
-// ─── URL helpers ───────────────────────────────────────────────────────────
-const stageUrl = (stage: string): string =>
-  `/source/events/${APEX_AMS_EVENT_ID}?stage=${stage}`;
-
 // ─── Selectors (mirror tests/e2e source canvas conventions) ────────────────
 const SEL = {
   stageRail: '[data-testid="source-canvas-step-rail"]',
@@ -84,13 +80,32 @@ const SEL = {
   stageCanvasPanel: '[data-testid="source-stage-canvas-panel"]',
 } as const;
 
+async function openGoldenEventStage(
+  page: import('@playwright/test').Page,
+  stage: string,
+): Promise<void> {
+  await page.waitForURL(/\/source\/queue/, { timeout: 15000 }).catch(() => null);
+  await page.waitForLoadState('networkidle').catch(() => null);
+  await page
+    .locator('nav[aria-label="Source sections"]')
+    .getByRole('link', { name: /^Portfolio$/ })
+    .click();
+  await expect(page).toHaveURL(/\/source\/portfolio/);
+  await page.waitForLoadState('networkidle').catch(() => null);
+  await page.locator(`a[href="/source/events/${APEX_AMS_EVENT_ID}"]`).first().click();
+  await expect(page).toHaveURL(new RegExp(`/source/events/${APEX_AMS_EVENT_ID}`));
+  await expect(page.locator(SEL.stageRail)).toBeVisible();
+  await page.locator(SEL.stageStep(stage)).first().click();
+  await expect(page).toHaveURL(new RegExp(`stage=${stage}`));
+}
+
 // ─── Suite ─────────────────────────────────────────────────────────────────
 test.describe('Apex AMS Sourcing — Golden Event', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
     await signInAs(page, 'apex-vp-sourcing');
-    await page.goto(stageUrl('strategy'));
+    await openGoldenEventStage(page, 'strategy');
   });
 
   // ────────────────────────────────────────────────────────────────────────
@@ -167,7 +182,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 2 · Scope — AI Draft labeling + commit-without-edit blocked', async ({ page }) => {
     test.fail(true, AUDIT.AI_DRAFT_MISSING);
 
-    await page.goto(stageUrl('scope'));
+    await openGoldenEventStage(page, 'scope');
 
     await step(page, 'Scope canvas loads', async () => {
       await expect(page.locator(SEL.stageCanvasPanel)).toBeVisible();
@@ -199,7 +214,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 3 · RFP — AI Draft on RFP body, artifact download is real', async ({ page }) => {
     test.fail(true, AUDIT.PHANTOM_ARTIFACT);
 
-    await page.goto(stageUrl('rfp'));
+    await openGoldenEventStage(page, 'rfp');
 
     await step(page, 'RFP body is labeled AI Draft prior to issuance', async () => {
       await expect(page.locator(SEL.aiDraftLabel).first()).toBeVisible();
@@ -239,7 +254,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   }) => {
     test.fail(true, AUDIT.GATE_NOT_ENFORCED);
 
-    await page.goto(stageUrl('responses'));
+    await openGoldenEventStage(page, 'responses');
 
     await step(page, 'Responses canvas shows seeded vendor list', async () => {
       // AMS seed: Northstar + ArcVault invited; BlueMaster + DataPeak excluded.
@@ -260,7 +275,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 5 · Evaluation — scorecards persisted, dissent captured', async ({ page }) => {
     test.fail(true, AUDIT.GATE_NOT_ENFORCED);
 
-    await page.goto(stageUrl('evaluation'));
+    await openGoldenEventStage(page, 'evaluation');
 
     await step(page, 'Evaluation canvas renders rubric', async () => {
       await expect(page.getByText(/rubric|scorecard|evaluation criteria/i)).toBeVisible();
@@ -286,7 +301,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   }) => {
     test.fail(true, AUDIT.AI_DRAFT_MISSING);
 
-    await page.goto(stageUrl('pricing'));
+    await openGoldenEventStage(page, 'pricing');
 
     await step(page, 'Pricing canvas shows normalized bands (low/medium/high)', async () => {
       await expect(page.getByText(/low|medium|high/i).first()).toBeVisible();
@@ -303,7 +318,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 7 · BAFO — committee panel, vendor cards, risk flags', async ({ page }) => {
     test.fail(true, AUDIT.PHANTOM_ARTIFACT);
 
-    await page.goto(stageUrl('bafo'));
+    await openGoldenEventStage(page, 'bafo');
 
     await step(page, 'BAFO canvas shows committee and shortlist (Northstar, ArcVault)', async () => {
       await expect(page.getByText(/Northstar/i)).toBeVisible();
@@ -340,7 +355,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   }) => {
     test.fail(true, AUDIT.BRIEF_TRUNCATION);
 
-    await page.goto(stageUrl('executive_decision'));
+    await openGoldenEventStage(page, 'executive_decision');
 
     await step(page, 'Decision Brief canvas renders with required sections', async () => {
       for (const section of [
@@ -435,7 +450,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   }) => {
     test.fail(true, AUDIT.PHANTOM_ARTIFACT);
 
-    await page.goto(stageUrl('selection'));
+    await openGoldenEventStage(page, 'selection');
 
     await step(page, 'Selection canvas shows the awarded vendor', async () => {
       await expect(
@@ -464,7 +479,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   }) => {
     test.fail(true, AUDIT.GATE_NOT_ENFORCED);
 
-    await page.goto(stageUrl('transition'));
+    await openGoldenEventStage(page, 'transition');
 
     await step(page, 'Transition canvas shows 8-week onboarding plan', async () => {
       await expect(page.getByText(/8.?week|onboarding|transition plan/i).first()).toBeVisible();
@@ -481,7 +496,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Value Ledger ties decision to projected and realized outcomes', async ({ page }) => {
     test.fail(true, AUDIT.VALUE_LEDGER_LINKBACK);
 
-    await page.goto(stageUrl('value'));
+    await openGoldenEventStage(page, 'value');
 
     await step(page, 'Value Ledger canvas shows baseline / projected / realized columns', async () => {
       for (const col of [/baseline/i, /projected/i, /realized/i]) {
