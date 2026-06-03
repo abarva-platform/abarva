@@ -1,5 +1,6 @@
 import { clearContentHashParseCacheForTests } from "../../ingestion/content-hash-parse-cache";
 import {
+  classifySmallPdfNativeShortcut,
   extractAgentAttachmentParseResult,
   extractAgentAttachmentText,
 } from "../attachments";
@@ -105,6 +106,17 @@ describe("agent attachment parsing", () => {
         pageCount: 1,
         tableCount: 1,
         parserId: "azure-document-intelligence-layout",
+        smallDocumentShortcut: {
+          eligible: true,
+          route: "claude-native-pdf",
+          reason: "small_pdf_under_configured_thresholds",
+          byteSize: Buffer.from("%PDF-1.7").byteLength,
+          pageCount: 1,
+          thresholds: {
+            maxBytes: 500 * 1024,
+            maxPagesExclusive: 4,
+          },
+        },
       },
     });
     expect(mockDocumentIntelligencePost).toHaveBeenCalledTimes(1);
@@ -145,6 +157,77 @@ describe("agent attachment parsing", () => {
         pageCount: 5,
         tableCount: 3,
         parserId: "pdf-parse",
+        smallDocumentShortcut: {
+          eligible: false,
+          route: "parser",
+          reason: "over_page_threshold",
+          byteSize: Buffer.from("%PDF-1.7").byteLength,
+          pageCount: 5,
+          thresholds: {
+            maxBytes: 500 * 1024,
+            maxPagesExclusive: 4,
+          },
+        },
+      },
+    });
+  });
+
+  it("classifies PDFs under the configured size and page thresholds as native-ready", () => {
+    expect(
+      classifySmallPdfNativeShortcut({
+        mimeType: "application/pdf",
+        byteSize: 499 * 1024,
+        pageCount: 3,
+      }),
+    ).toEqual({
+      eligible: true,
+      route: "claude-native-pdf",
+      reason: "small_pdf_under_configured_thresholds",
+      byteSize: 499 * 1024,
+      pageCount: 3,
+      thresholds: {
+        maxBytes: 500 * 1024,
+        maxPagesExclusive: 4,
+      },
+    });
+  });
+
+  it("keeps the default PDF shortcut strict at under 4 pages and under 500KB", () => {
+    expect(
+      classifySmallPdfNativeShortcut({
+        mimeType: "application/pdf",
+        byteSize: 500 * 1024,
+        pageCount: 3,
+      }).reason,
+    ).toBe("over_size_threshold");
+
+    expect(
+      classifySmallPdfNativeShortcut({
+        mimeType: "application/pdf",
+        byteSize: 499 * 1024,
+        pageCount: 4,
+      }).reason,
+    ).toBe("over_page_threshold");
+  });
+
+  it("lets operators tune PDF shortcut thresholds without code changes", () => {
+    expect(
+      classifySmallPdfNativeShortcut({
+        mimeType: "application/pdf",
+        byteSize: 700 * 1024,
+        pageCount: 5,
+        env: {
+          ...process.env,
+          AGENT_SMALL_DOC_NATIVE_PDF_MAX_BYTES: String(750 * 1024),
+          AGENT_SMALL_DOC_NATIVE_PDF_MAX_PAGES: "6",
+        },
+      }),
+    ).toMatchObject({
+      eligible: true,
+      route: "claude-native-pdf",
+      thresholds: {
+        maxBytes: 750 * 1024,
+        maxPagesExclusive: 6,
       },
     });
   });

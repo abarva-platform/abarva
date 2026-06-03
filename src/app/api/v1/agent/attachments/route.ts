@@ -198,6 +198,23 @@ export async function POST(req: NextRequest) {
         page_count: parseResult.metadata.pageCount,
         table_count: parseResult.metadata.tableCount,
         parser_id: parseResult.metadata.parserId,
+        small_doc_shortcut: parseResult.metadata.smallDocumentShortcut
+          ? {
+              eligible: parseResult.metadata.smallDocumentShortcut.eligible,
+              route: parseResult.metadata.smallDocumentShortcut.route,
+              reason: parseResult.metadata.smallDocumentShortcut.reason,
+              byte_size: parseResult.metadata.smallDocumentShortcut.byteSize,
+              page_count: parseResult.metadata.smallDocumentShortcut.pageCount,
+              thresholds: {
+                max_bytes:
+                  parseResult.metadata.smallDocumentShortcut.thresholds
+                    .maxBytes,
+                max_pages_exclusive:
+                  parseResult.metadata.smallDocumentShortcut.thresholds
+                    .maxPagesExclusive,
+              },
+            }
+          : null,
       },
       dataProtection,
     },
