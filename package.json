@@ -51,6 +51,7 @@
     "verify:northstar-context-layer": "node scripts/verify/northstar-context-layer-scaffold.mjs",
     "verify:pilot-data-plane": "node scripts/pilot-env/verify-data-plane.mjs",
     "auth:clerk-sso:verify": "node scripts/auth/verify-clerk-sso-readiness.mjs",
+    "auth:fakeclient-sso:verify": "node scripts/auth/verify-fakeclient-sso-rehearsal.mjs",
     "generate:skyharbor-substrate": "node scripts/skyharbor/generate-skyharbor-substrate.mjs",
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
     "corpus:release-manifest": "node scripts/corpus/release-manifest.mjs",
