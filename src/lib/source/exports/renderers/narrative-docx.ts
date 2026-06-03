@@ -147,11 +147,11 @@ function buildCoverBlock(
   if (!payload.bodyIsAuthored) {
     blocks.push(
       bodyParagraph([
-        boldRun("TEMPLATE SCAFFOLD — body has not been authored yet. ", {
+        boldRun("Awaiting authoring — body has not been authored yet. ", {
           color: SOURCE_DOCX.WARNING_COLOR,
         }),
         bodyRun(
-          `The content below is the canonical ${config.headerLabel} scaffold; replace with the actual authored content before circulating.`,
+          `The content below is the canonical ${config.headerLabel} outline; replace with the actual authored content before circulating.`,
           { color: SOURCE_DOCX.MUTED_COLOR },
         ),
       ]),

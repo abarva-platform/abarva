@@ -1,22 +1,25 @@
-import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
-import { SourceEventsAgentDockView } from '@/components/source/SourceEventsAgentDockView';
-import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
-import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
-import { SourceEmptyState } from '@/components/source/SourceEmptyState';
-import { AdminSourceEventApprovalQueue } from '@/components/source/AdminSourceEventApprovalQueue';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
-import { listSourcingEvents, getPendingSourceEvents } from '@/lib/source/queries';
-import type { SourcingEventSummary } from '@/lib/source/types';
-import { getActiveClientRow } from '@/lib/active-client';
-import { requireTenancy } from '@/lib/auth/tenancy';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { formatSourceFinancialValue } from '@/lib/source/financial-display';
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import Link from "next/link";
+import { AppShell } from "@/components/shell/AppShell";
+import { SourceSubNav } from "@/components/source/SourceSubNav";
+import { SourceEventsAgentDockView } from "@/components/source/SourceEventsAgentDockView";
+import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
+import { SourceEventsPortfolio } from "@/components/source/SourceEventsPortfolio";
+import { SourceEmptyState } from "@/components/source/SourceEmptyState";
+import { AdminSourceEventApprovalQueue } from "@/components/source/AdminSourceEventApprovalQueue";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { buildLinkedProgramBadgeView } from "@/lib/source/linked-program-badge-view";
+import {
+  listSourcingEvents,
+  getPendingSourceEvents,
+} from "@/lib/source/queries";
+import type { SourcingEventSummary } from "@/lib/source/types";
+import { getActiveClientRow } from "@/lib/active-client";
+import { requireTenancy } from "@/lib/auth/tenancy";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { formatSourceFinancialValue } from "@/lib/source/financial-display";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function SourceEventsPage({
   searchParams,
@@ -30,15 +33,21 @@ export default async function SourceEventsPage({
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
   ]);
-  const sourceAccessPolicy = activeClient && tenancy
-    ? await loadUserSourceAccessPolicy(tenancy, { activeClientKey: activeClient.key }).catch(() => null)
-    : null;
-  const pendingEvents = sourceAccessPolicy?.canApproveSourceStages && activeClient
-    ? await getPendingSourceEvents(activeClient.key)
-    : [];
+  const sourceAccessPolicy =
+    activeClient && tenancy
+      ? await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: activeClient.key,
+        }).catch(() => null)
+      : null;
+  const pendingEvents =
+    sourceAccessPolicy?.canApproveSourceStages && activeClient
+      ? await getPendingSourceEvents(activeClient.key)
+      : [];
   const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'AbarVa Client';
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? "AbarVa Client";
 
   return (
     <AppShell
@@ -46,7 +55,7 @@ export default async function SourceEventsPage({
       topBarProps={{
         tenantName: activeClientDisplayName,
         showLocked: true,
-        context: 'Source · Events portfolio',
+        context: "Source · Events portfolio",
       }}
       subNav={<SourceSubNav />}
     >
@@ -66,13 +75,17 @@ export default async function SourceEventsPage({
               )}
               <SourceEventsEntryHeader
                 events={events}
-                canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+                canViewFinancialValues={
+                  sourceAccessPolicy?.canViewFinancialData === true
+                }
               />
               <SourceEventsPortfolio
                 events={events}
                 activeStage={stage ?? null}
                 activeStatus={status ?? null}
-                canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+                canViewFinancialValues={
+                  sourceAccessPolicy?.canViewFinancialData === true
+                }
               />
             </SourceWorkingPane>
           }
@@ -89,37 +102,48 @@ function SourceEventsEntryHeader({
   events: SourcingEventSummary[];
   canViewFinancialValues?: boolean;
 }) {
-  const activeEvents = events.filter((event) => event.status === 'active').length;
-  const waitingEvents = events.filter((event) => event.status.startsWith('waiting_on')).length;
-  const blockedEvents = events.filter((event) => event.isAtRisk || event.blocker).length;
-  const linkedEvents = events.filter((event) => buildLinkedProgramBadgeView(event.id)).length;
-  const valueAtStake = events.reduce((sum, event) => sum + event.valueAtStakeUsd, 0);
+  const activeEvents = events.filter(
+    (event) => event.status === "active",
+  ).length;
+  const waitingEvents = events.filter((event) =>
+    event.status.startsWith("waiting_on"),
+  ).length;
+  const blockedEvents = events.filter(
+    (event) => event.isAtRisk || event.blocker,
+  ).length;
+  const linkedEvents = events.filter((event) =>
+    buildLinkedProgramBadgeView(event.id),
+  ).length;
+  const valueAtStake = events.reduce(
+    (sum, event) => sum + event.valueAtStakeUsd,
+    0,
+  );
 
   return (
     <section
       aria-label="Source events portfolio command surface"
       data-testid="source-events-entry-header"
       style={{
-        display: 'grid',
+        display: "grid",
         gap: 14,
         marginBottom: 16,
       }}
     >
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
           gap: 16,
-          alignItems: 'end',
+          alignItems: "end",
         }}
       >
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div style={{ display: "grid", gap: 6 }}>
           <div
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
               color: SHELL.INK_MUTED,
               fontWeight: 800,
             }}
@@ -148,29 +172,30 @@ function SourceEventsEntryHeader({
               color: SHELL.INK_SOFT,
             }}
           >
-            Nexus leads the IT sourcing queue by naming the next sourcing move, the evidence behind it, and the gate
-            that could block it. The table is supporting evidence: lifecycle, owner, linked program, value exposure,
-            blocker, aging, and next action.
+            Nexus leads the IT sourcing queue by naming the next sourcing move,
+            the evidence behind it, and the gate that could block it. The table
+            is supporting evidence: lifecycle, owner, linked program, value
+            exposure, blocker, aging, and next action.
           </p>
         </div>
         <Link
           href="/source/new"
           data-testid="source-events-start-it-sourcing"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
             borderRadius: 999,
             background: SHELL.INK,
             color: SHELL.PAPER,
-            padding: '10px 15px',
+            padding: "10px 15px",
             fontFamily: SHELL.MONO,
             fontSize: 10.5,
             fontWeight: 800,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
           }}
         >
           Start IT sourcing event
@@ -180,19 +205,38 @@ function SourceEventsEntryHeader({
       <div
         aria-label="Source events portfolio summary"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
           gap: 10,
         }}
       >
-        <PortfolioMetric label="Events" value={String(events.length)} detail={`${activeEvents} active`} />
-        <PortfolioMetric label="Waiting" value={String(waitingEvents)} detail="client, vendor, or owner hold" />
-        <PortfolioMetric label="Blocked" value={String(blockedEvents)} detail="gate or evidence pressure visible" />
-        <PortfolioMetric label="Linked programs" value={String(linkedEvents)} detail="deterministic program hints" />
+        <PortfolioMetric
+          label="Events"
+          value={String(events.length)}
+          detail={`${activeEvents} active`}
+        />
+        <PortfolioMetric
+          label="Waiting"
+          value={String(waitingEvents)}
+          detail="client, vendor, or owner hold"
+        />
+        <PortfolioMetric
+          label="Blocked"
+          value={String(blockedEvents)}
+          detail="gate or evidence pressure visible"
+        />
+        <PortfolioMetric
+          label="Linked programs"
+          value={String(linkedEvents)}
+          detail="deterministic program hints"
+        />
         <PortfolioMetric
           label="Value at stake"
-          value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)}
-          detail="seeded projected exposure"
+          value={formatSourceFinancialValue(
+            valueAtStake,
+            canViewFinancialValues,
+          )}
+          detail="system-projected"
         />
       </div>
     </section>
@@ -214,8 +258,8 @@ function PortfolioMetric({
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 12,
         background: SHELL.CARD_WHITE,
-        padding: '11px 13px',
-        display: 'grid',
+        padding: "11px 13px",
+        display: "grid",
         gap: 5,
       }}
     >
@@ -223,18 +267,33 @@ function PortfolioMetric({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 8.5,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           fontWeight: 800,
         }}
       >
         {label}
       </div>
-      <div style={{ fontFamily: SHELL.SERIF, fontSize: 23, color: SHELL.INK, fontWeight: 800, lineHeight: 1 }}>
+      <div
+        style={{
+          fontFamily: SHELL.SERIF,
+          fontSize: 23,
+          color: SHELL.INK,
+          fontWeight: 800,
+          lineHeight: 1,
+        }}
+      >
         {value}
       </div>
-      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_MUTED, lineHeight: 1.35 }}>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          color: SHELL.INK_MUTED,
+          lineHeight: 1.35,
+        }}
+      >
         {detail}
       </div>
     </div>

@@ -8,8 +8,8 @@
  * Sans/Inter. Anchor wrapper preserves the chip surface as a link target.
  */
 
-import Link from 'next/link';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import Link from "next/link";
+import { SHELL } from "@/lib/shell/shell-tokens";
 
 interface PatternDoctrineLinkProps {
   patternId: string;
@@ -23,41 +23,53 @@ export function PatternDoctrineLink({
   title,
   hoverTitle,
 }: PatternDoctrineLinkProps) {
-  const tooltip = hoverTitle ?? (title ? `${patternId} · ${title}` : patternId);
+  const tooltip = hoverTitle ?? (title ? `${title} (${patternId})` : patternId);
   return (
     <Link
       href={`/source/patterns/${encodeURIComponent(patternId)}`}
       title={tooltip}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
+        display: "inline-flex",
+        alignItems: "center",
         gap: 6,
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 999,
         background: SHELL.CARD_WHITE,
-        padding: '3px 9px',
-        fontFamily: SHELL.MONO,
-        fontSize: 9.5,
+        padding: "3px 9px",
+        fontFamily: SHELL.SANS,
+        fontSize: 10.5,
         fontWeight: 600,
         color: SHELL.INK,
-        letterSpacing: '0.04em',
-        textDecoration: 'none',
+        letterSpacing: 0,
+        textDecoration: "none",
       }}
     >
-      <span>{patternId}</span>
       {title ? (
+        <>
+          <span>{title}</span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontWeight: 400,
+              color: SHELL.INK_MUTED,
+              fontSize: 9.5,
+              letterSpacing: "0.04em",
+            }}
+          >
+            ({patternId})
+          </span>
+        </>
+      ) : (
         <span
           style={{
-            fontFamily: SHELL.SANS,
-            fontWeight: 400,
-            color: SHELL.INK_MUTED,
-            fontSize: 10.5,
-            letterSpacing: 0,
+            fontFamily: SHELL.MONO,
+            fontSize: 9.5,
+            letterSpacing: "0.04em",
           }}
         >
-          {title}
+          {patternId}
         </span>
-      ) : null}
+      )}
     </Link>
   );
 }
