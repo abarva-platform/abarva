@@ -12,12 +12,25 @@ Your job is to run a **strict end-to-end confirmatory retest** of the live produ
 
 - URL: `https://app.abarva.ai`
 - Primary tenant/persona: **Apex Retail**
-- Primary user: `cio@apex-retail.example.com` / Carlos Rivera / CIO Office
+- Preferred session: **an already-authenticated Apex Retail browser session**
+- If login is needed, use a real working Apex Retail account that is already provisioned in the current Clerk environment
+- Seeded fallback persona only if provisioned by ops: `cio@apex-retail.example.com` / Carlos Rivera / CIO Office
 - Primary event slug: `apex-retail-ams-outsourcing-2026`
 - Primary event name: **Apex Retail AMS Sourcing Event**
 - Secondary seeded event: **AMS Outsourcing 2026** / `SRC-004`
 - Browser: Chrome with extension automation
 - Capture screenshots, console, network, DOM observations, and download behavior
+
+## Authentication rule
+
+Do **not** fail the test just because the seeded Apex persona email is not provisioned in this Clerk environment.
+
+Use this order:
+
+1. If an authenticated Apex Retail session is already open, reuse it.
+2. If you have a known working Apex Retail login for this environment, use that.
+3. Only use `cio@apex-retail.example.com` if it is already provisioned and known to work.
+4. If none of the above are available, stop and report **ENVIRONMENT BLOCKER: Apex Retail test persona not provisioned in Clerk for this environment**.
 
 ## Critical instruction
 
