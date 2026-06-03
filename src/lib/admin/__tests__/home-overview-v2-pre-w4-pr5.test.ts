@@ -76,6 +76,7 @@ describe('composeHomeV2Extras · PRE-W4-PR-5 fix #2 · AI Initiatives panel reti
     expect(nums.has('06')).toBe(true);
     expect(nums.has('07')).toBe(true);
     expect(nums.has('08')).toBe(true);
+    expect(nums.has('09')).toBe(true);
   });
 
   it('keeps all admin action panel hrefs out of /home/* aliases', () => {

@@ -82,6 +82,15 @@ export function buildAdminPanelInventory(): AdminPanel[] {
         'Read-only roles-and-counts surface for all 7 canonical roles; no real person names; invite/edit/revoke disabled as future pills.',
     },
     {
+      panelId: 'ops-console',
+      label: 'Ops Console',
+      status: 'implemented',
+      componentPath: 'src/app/(maestro)/admin/ops/page.tsx',
+      sliceId: 'T035',
+      notes:
+        'Admin-only governed operations surface for re-index, migration dry-run, backfill, quarantine replay, audit export, and secret rotation; no raw production execution.',
+    },
+    {
       panelId: 'live-ci-dashboard',
       label: 'Live CI Dashboard',
       status: 'planned',
