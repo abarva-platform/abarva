@@ -1,9 +1,22 @@
 import type { CorpusPatternRecord } from './types';
 
 export const CORPUS_GLOBAL_INDEX = 'corpus-global';
+export const LAKESHORE_CORPUS_INDEX = 'lakeshore-patterns-v1';
 
 export function corpusClientIndex(clientId: string): string {
   return `corpus-client-${clientId}`;
+}
+
+function lakeshoreCorpusIndex(): string {
+  return process.env.LAKESHORE_CORPUS_SEARCH_INDEX?.trim() || LAKESHORE_CORPUS_INDEX;
+}
+
+function isLakeshoreClient(value: string | null | undefined): boolean {
+  return /^(lakeshore|lakeshore-holdings)$/i.test(value?.trim() ?? '');
+}
+
+function appendFilter(base: string | undefined, extra: string): string {
+  return base ? `(${base}) and (${extra})` : extra;
 }
 
 function endpointBase(): string {
@@ -100,24 +113,33 @@ export interface AzureCorpusSearchHit {
 export async function queryCorpusSearch(args: {
   query: string;
   clientId: string;
+  clientKey?: string | null;
   includePrivate?: boolean;
   vector?: number[];
   filter?: string;
   top?: number;
 }): Promise<AzureCorpusSearchHit[]> {
-  const indexes = args.includePrivate
+  const indexes = new Set(args.includePrivate
     ? [CORPUS_GLOBAL_INDEX, corpusClientIndex(args.clientId)]
-    : [CORPUS_GLOBAL_INDEX];
+    : [CORPUS_GLOBAL_INDEX]);
+  const lakeshoreIndex = lakeshoreCorpusIndex();
+  if (isLakeshoreClient(args.clientKey) || isLakeshoreClient(args.clientId)) {
+    indexes.add(lakeshoreIndex);
+  }
   const top = args.top ?? 10;
   const hits: AzureCorpusSearchHit[] = [];
 
   for (const indexName of indexes) {
+    const filter = indexName === lakeshoreIndex
+      ? appendFilter(args.filter, "tenant_scope eq 'lakeshore'")
+      : args.filter;
     const body: Record<string, unknown> = {
       search: args.query || '*',
       queryType: 'semantic',
       top,
       select: 'id,slug,version',
-      ...(args.filter ? { filter: args.filter } : {}),
+      ...(indexName === lakeshoreIndex ? { semanticConfiguration: 'lakeshore-pattern-semantic' } : {}),
+      ...(filter ? { filter } : {}),
     };
     if (args.vector && args.vector.length > 0) {
       body.vectorQueries = [{
