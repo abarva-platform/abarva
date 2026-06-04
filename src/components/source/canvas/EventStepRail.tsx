@@ -74,7 +74,7 @@ export function EventStepRail({
 
           const nodeStyle = {
             ...NODE_STYLE,
-            left: `calc(${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}% - 16px)`,
+            left: `${(i / (SOURCE_STAGE_ORDER.length - 1)) * 100}%`,
             cursor: "pointer",
           };
           const nodeBody = (
@@ -144,7 +144,7 @@ const RAIL_STYLE: CSSProperties = {
 
 const TRACK_STYLE: CSSProperties = {
   position: "relative",
-  height: 52,
+  height: 62,
 };
 
 const LINE_STYLE: CSSProperties = {
@@ -169,12 +169,17 @@ const LINE_DONE_STYLE: CSSProperties = {
 const NODE_STYLE: CSSProperties = {
   position: "absolute",
   top: 0,
-  width: 32,
+  width: 104,
+  minHeight: 62,
   display: "grid",
   gap: 8,
   justifyItems: "center",
+  alignContent: "start",
   textDecoration: "none",
   color: CANVAS.INK,
+  transform: "translateX(-50%)",
+  padding: "0 6px",
+  borderRadius: 10,
 };
 
 const DOT_WRAPPER_STYLE: CSSProperties = {

@@ -159,6 +159,15 @@ export function canonicalClientDisplayName(args: {
   }
 
   if (
+    key === "apexretail" ||
+    key === "apex-retail" ||
+    normalizedName === "apex retail" ||
+    normalizedName === "apex retail group"
+  ) {
+    return "Apex Retail Group";
+  }
+
+  if (
     key === "northstar" ||
     key === "northstar-clinical" ||
     normalizedName === "northstar clinical technologies" ||
