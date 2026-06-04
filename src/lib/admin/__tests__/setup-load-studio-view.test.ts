@@ -206,6 +206,68 @@ describe("buildLoadStudioView", () => {
     });
   });
 
+  it("exposes a registry-backed template guide with honest format paths", () => {
+    const view = buildLoadStudioView({
+      tenantName: "SkyHarbor Air",
+      vertical: "Airline",
+      snapshot: null,
+    });
+
+    expect(view.templateGuide.headline).toBe("Load a new client file");
+    expect(view.templateGuide.allTemplatesAction.href).toBe(
+      "/admin/context-layer/templates",
+    );
+    expect(view.templateGuide.uploadAction.href).toBe(
+      "/admin/context-layer/uploads",
+    );
+    expect(view.templateGuide.formatSupport).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          format: "CSV",
+          path: "live",
+          note: expect.stringContaining("loaded from this workflow today"),
+        }),
+        expect.objectContaining({
+          format: "XLSX",
+          path: "controlled",
+          note: expect.stringContaining("controlled intake"),
+        }),
+        expect.objectContaining({
+          format: "PDF",
+          path: "controlled",
+          note: expect.stringContaining("evidence or exception intake"),
+        }),
+        expect.objectContaining({
+          format: "PPTX",
+          path: "controlled",
+        }),
+        expect.objectContaining({
+          format: "DOCX",
+          path: "controlled",
+        }),
+      ]),
+    );
+
+    expect(view.templateGuide.starterTemplates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "org-roles",
+          label: "Org, roles, and teams",
+          formats: expect.arrayContaining(["CSV", "XLSX", "JSON"]),
+          action: { label: "Load CSV", href: "/admin/context-layer/uploads" },
+        }),
+        expect.objectContaining({
+          id: "annual-quarterly-reports",
+          formats: expect.arrayContaining(["PDF", "PPTX", "DOCX"]),
+          action: {
+            label: "View intake details",
+            href: "/admin/context-layer/templates",
+          },
+        }),
+      ]),
+    );
+  });
+
   it("surfaces AI setup approval and anomaly triage guardrails", () => {
     const view = buildLoadStudioView({
       tenantName: "SkyHarbor Air",

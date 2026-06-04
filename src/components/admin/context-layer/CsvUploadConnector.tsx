@@ -200,7 +200,7 @@ export function CsvUploadConnector({
   return (
     <section
       style={{
-        background: "#fffdf8",
+        background: "#fff",
         border: "1px solid #d8d2c4",
         borderRadius: 8,
         padding: 18,
@@ -211,11 +211,12 @@ export function CsvUploadConnector({
     >
       <div>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, margin: 0 }}>
-          CSV connector
+          Upload structured data
         </h2>
         <p style={{ color: "#514c43", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Load CSV rows into {tenantName} as tenant context chunks. New chunks
-          stay pending until the embedding worker runs.
+          Load a template-mapped CSV file into {tenantName}. The upload is
+          tenant-checked, attested, scanned, validated, and written as context
+          only after the gates pass.
         </p>
       </div>
 
@@ -509,14 +510,14 @@ export function CsvUploadConnector({
             {pending
               ? rateCardTemplate
                 ? "Validating rate card..."
-                : "Loading CSV..."
+                : "Loading structured data..."
               : requiredFieldsBlocked
                 ? "Resolve required fields"
                 : !attestationAccepted
                   ? "Accept attestation"
                   : rateCardTemplate
                     ? "Validate rate card"
-                    : "Load CSV"}
+                    : "Load structured data"}
           </button>
         </div>
       </form>

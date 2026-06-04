@@ -48,8 +48,13 @@ describe("/admin/setup data loads page source", () => {
   });
 
   it("renders the v2 operator workflow: identity, status strip, workflow rail, readiness table, controls, audit trail", () => {
-    expect(componentSource).not.toContain("CsvUploadConnector");
+    expect(componentSource).toContain("CsvUploadConnector");
     expect(componentSource).toContain("Load data for {tenant.name}");
+    expect(componentSource).toContain("Load data here");
+    expect(componentSource).toContain("view.templateGuide.formatSupport.map");
+    expect(componentSource).toContain(
+      "view.templateGuide.starterTemplates.map",
+    );
     expect(componentSource).toContain("Governed load workflow");
     expect(componentSource).toContain("view.workflow.map");
     expect(componentSource).toContain("Loaded data by dimension");
@@ -98,10 +103,16 @@ describe("/admin/setup data loads page source", () => {
   it("uses the locked calm palette and routes actions to real product surfaces", () => {
     expect(componentSource).not.toContain("background: COLORS.navy");
     // every off-page link target is a real route, never an in-page anchor
-    expect(viewSource).toContain("/admin/templates");
+    expect(viewSource).toContain("/admin/context-layer/templates");
     expect(viewSource).toContain("/admin/context-layer/uploads");
     expect(viewSource).toContain("/admin/data-trust");
     expect(viewSource).not.toContain('"#template-library"');
+  });
+
+  it("keeps the live upload control tenant-scoped from the server page", () => {
+    expect(source).toContain("clientId={tenant.clientId}");
+    expect(componentSource).toContain("clientId={clientId}");
+    expect(componentSource).toContain("tenantName={tenant.name}");
   });
 
   it("states that data loading is scoped to the active client only", () => {

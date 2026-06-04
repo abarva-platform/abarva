@@ -1,8 +1,11 @@
 import { COLORS, RADIUS, TYPOGRAPHY } from "@/lib/design/design-tokens";
+import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import type {
   LoadStudioControl,
+  LoadStudioFormatSupport,
   LoadStudioReadinessRow,
   LoadStudioStep,
+  LoadStudioTemplateCard,
   LoadStudioView,
   MetricTone,
   StatusTone,
@@ -11,6 +14,7 @@ import type {
 
 interface SetupDataLoadCenterProps {
   view: LoadStudioView;
+  clientId: string;
 }
 
 /**
@@ -260,7 +264,9 @@ function readinessRow(row: LoadStudioReadinessRow, isLast: boolean) {
         {row.completePercent === null ? (
           <span style={{ color: `${COLORS.ink}66` }}>—</span>
         ) : (
-          <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+          <span
+            style={{ display: "inline-flex", gap: 8, alignItems: "center" }}
+          >
             {progressBar(row.completePercent)}
             <span style={{ fontSize: 11, color: `${COLORS.ink}99` }}>
               {row.completePercent}%
@@ -297,7 +303,9 @@ function controlCard(control: LoadStudioControl, isLast: boolean) {
       >
         {control.headline}
       </strong>
-      <p style={{ margin: "5px 0 10px", color: `${COLORS.ink}99`, fontSize: 12 }}>
+      <p
+        style={{ margin: "5px 0 10px", color: `${COLORS.ink}99`, fontSize: 12 }}
+      >
         {control.detail}
       </p>
       {actionLink(control.action.href, control.action.label)}
@@ -305,7 +313,96 @@ function controlCard(control: LoadStudioControl, isLast: boolean) {
   );
 }
 
-export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
+function formatBadge(format: string, active = false) {
+  return (
+    <span
+      key={format}
+      style={{
+        display: "inline-flex",
+        width: "fit-content",
+        borderRadius: RADIUS.pill,
+        padding: "3px 8px",
+        border: `1px solid ${active ? COLORS.mintInk : COLORS.ink}33`,
+        color: active ? COLORS.mintInk : `${COLORS.ink}99`,
+        fontFamily: TYPOGRAPHY.mono,
+        fontSize: 10,
+        fontWeight: 800,
+      }}
+    >
+      {format}
+    </span>
+  );
+}
+
+function formatSupportCard(item: LoadStudioFormatSupport) {
+  const live = item.path === "live";
+  return (
+    <div
+      key={item.format}
+      style={{
+        padding: "10px 12px",
+        border: `1px solid ${COLORS.ink}12`,
+        borderRadius: RADIUS.sm,
+        background: live ? COLORS.mintSoft : COLORS.white,
+        minHeight: 86,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+        <strong style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 12 }}>
+          {item.format}
+        </strong>
+        <span style={{ color: `${COLORS.ink}88`, fontSize: 11 }}>
+          {item.templates} templates
+        </span>
+      </div>
+      <p style={{ margin: "8px 0 0", color: `${COLORS.ink}99`, fontSize: 11 }}>
+        {item.note}
+      </p>
+    </div>
+  );
+}
+
+function templateCard(template: LoadStudioTemplateCard) {
+  return (
+    <article
+      key={template.id}
+      style={{
+        padding: 14,
+        border: `1px solid ${COLORS.ink}12`,
+        borderRadius: RADIUS.sm,
+        background: COLORS.white,
+        display: "grid",
+        gap: 9,
+      }}
+    >
+      <div>
+        <h3 style={{ margin: 0, fontSize: 14 }}>{template.label}</h3>
+        <p
+          style={{ margin: "4px 0 0", color: `${COLORS.ink}88`, fontSize: 11 }}
+        >
+          Owner: {template.owner}
+        </p>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {template.formats.map((format) =>
+          formatBadge(format, format === "CSV"),
+        )}
+      </div>
+      <p style={{ margin: 0, color: `${COLORS.ink}99`, fontSize: 11 }}>
+        Required: {template.requiredFields}
+      </p>
+      <p style={{ margin: 0, color: COLORS.amberInk, fontSize: 11 }}>
+        {template.primaryPath}
+      </p>
+      {actionLink(template.action.href, template.action.label)}
+    </article>
+  );
+}
+
+export function SetupDataLoadCenter({
+  view,
+  clientId,
+}: SetupDataLoadCenterProps) {
   const { tenant } = view;
 
   return (
@@ -328,6 +425,9 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
         @media (max-width: 760px) {
           [data-load-grid="metrics"] { grid-template-columns: 1fr 1fr !important; }
           [data-load-grid="steps"] { grid-template-columns: 1fr 1fr !important; }
+          [data-load-grid="format-support"] { grid-template-columns: 1fr 1fr !important; }
+          [data-load-grid="starter-templates"] { grid-template-columns: 1fr !important; }
+          [data-load-grid="load-panel"] { grid-template-columns: minmax(0, 1fr) !important; }
           [data-load-grid="identity"] { flex-wrap: wrap !important; }
           [data-load-grid="table-scroll"] { overflow-x: auto !important; }
         }
@@ -431,7 +531,9 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
             >
               {m.value}
             </div>
-            <div style={{ marginTop: 5, color: `${COLORS.ink}99`, fontSize: 12 }}>
+            <div
+              style={{ marginTop: 5, color: `${COLORS.ink}99`, fontSize: 12 }}
+            >
               {m.note}
             </div>
           </div>
@@ -470,6 +572,96 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
             : null}
         </section>
       ) : null}
+
+      {/* ── Load launcher — template-aware and honest on format support ─ */}
+      <section
+        aria-label="Load a new client file"
+        style={{
+          ...cardStyle,
+          padding: 18,
+          display: "grid",
+          gap: 18,
+        }}
+      >
+        <div
+          data-load-grid="load-panel"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 0.95fr) minmax(360px, 1.05fr)",
+            gap: 18,
+            alignItems: "start",
+          }}
+        >
+          <div style={{ display: "grid", gap: 16 }}>
+            <div>
+              <div style={{ ...labelStyle(COLORS.mintInk) }}>
+                Load data here
+              </div>
+              <h2 style={{ margin: "5px 0 6px", fontSize: 21 }}>
+                {view.templateGuide.headline}
+              </h2>
+              <p style={{ margin: 0, color: `${COLORS.ink}99`, fontSize: 13 }}>
+                {view.templateGuide.detail}
+              </p>
+            </div>
+            <div
+              style={{
+                border: `1px solid ${COLORS.amberInk}30`,
+                borderRadius: RADIUS.sm,
+                background: COLORS.amberSoft,
+                padding: 12,
+                color: COLORS.amberInk,
+                fontSize: 12,
+                lineHeight: 1.45,
+              }}
+            >
+              {view.templateGuide.liveUploadLabel}
+            </div>
+            <div>
+              <div style={{ ...labelStyle(), marginBottom: 8 }}>
+                Formats by governed path
+              </div>
+              <div
+                data-load-grid="format-support"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  gap: 8,
+                }}
+              >
+                {view.templateGuide.formatSupport.map(formatSupportCard)}
+              </div>
+            </div>
+            <div>
+              <div style={{ ...labelStyle(), marginBottom: 8 }}>
+                Starter dimensions
+              </div>
+              <div
+                data-load-grid="starter-templates"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 10,
+                }}
+              >
+                {view.templateGuide.starterTemplates.map(templateCard)}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {ghostButton(
+                view.templateGuide.allTemplatesAction.href,
+                view.templateGuide.allTemplatesAction.label,
+              )}
+              {primaryButton(
+                view.templateGuide.uploadAction.href,
+                view.templateGuide.uploadAction.label,
+              )}
+            </div>
+          </div>
+
+          <CsvUploadConnector clientId={clientId} tenantName={tenant.name} />
+        </div>
+      </section>
 
       {/* ── Workflow rail — the governed-load sequence ────────────── */}
       <section aria-label="Governed load workflow">
@@ -523,39 +715,63 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Loaded data by dimension</h2>
-              <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>
+                Loaded data by dimension
+              </h2>
+              <p
+                style={{
+                  margin: "3px 0 0",
+                  color: `${COLORS.ink}99`,
+                  fontSize: 12,
+                }}
+              >
                 What is loaded, what needs attention, and the next action.
               </p>
             </div>
             {ghostButton(view.templatesHref, "All templates")}
           </div>
           {view.readiness.length === 0 ? (
-            <div style={{ padding: "28px 18px", color: `${COLORS.ink}99`, fontSize: 13 }}>
+            <div
+              style={{
+                padding: "28px 18px",
+                color: `${COLORS.ink}99`,
+                fontSize: 13,
+              }}
+            >
               No data has been loaded for {tenant.name} yet. Start a governed
               load to ground this client&rsquo;s assistants.
             </div>
           ) : (
             <div data-load-grid="table-scroll">
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 13,
+                }}
+              >
                 <thead>
                   <tr>
-                    {["Dimension", "Status", "Complete", "Last loaded", "Next action"].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          style={{
-                            ...labelStyle(),
-                            padding: "12px 14px",
-                            textAlign: "left",
-                            background: COLORS.cream,
-                            borderBottom: `1px solid ${COLORS.ink}14`,
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ),
-                    )}
+                    {[
+                      "Dimension",
+                      "Status",
+                      "Complete",
+                      "Last loaded",
+                      "Next action",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          ...labelStyle(),
+                          padding: "12px 14px",
+                          textAlign: "left",
+                          background: COLORS.cream,
+                          borderBottom: `1px solid ${COLORS.ink}14`,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -569,9 +785,20 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
         </section>
 
         <aside style={cardStyle} aria-label="Governance controls">
-          <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.ink}14` }}>
+          <div
+            style={{
+              padding: "16px 18px",
+              borderBottom: `1px solid ${COLORS.ink}14`,
+            }}
+          >
             <h2 style={{ margin: 0, fontSize: 18 }}>Controls</h2>
-            <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+            <p
+              style={{
+                margin: "3px 0 0",
+                color: `${COLORS.ink}99`,
+                fontSize: 12,
+              }}
+            >
               Visible actions only — no developer checklist.
             </p>
           </div>
@@ -595,7 +822,13 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 18 }}>Audit trail</h2>
-            <p style={{ margin: "3px 0 0", color: `${COLORS.ink}99`, fontSize: 12 }}>
+            <p
+              style={{
+                margin: "3px 0 0",
+                color: `${COLORS.ink}99`,
+                fontSize: 12,
+              }}
+            >
               Recent load events for {tenant.name}. The full ledger opens in
               Data Trust.
             </p>
@@ -603,7 +836,13 @@ export function SetupDataLoadCenter({ view }: SetupDataLoadCenterProps) {
           {ghostButton(view.verifierHref, "Production readiness")}
         </div>
         {view.ledger.length === 0 ? (
-          <div style={{ padding: "22px 18px", color: `${COLORS.ink}99`, fontSize: 13 }}>
+          <div
+            style={{
+              padding: "22px 18px",
+              color: `${COLORS.ink}99`,
+              fontSize: 13,
+            }}
+          >
             No load events recorded yet for {tenant.name}.
           </div>
         ) : (

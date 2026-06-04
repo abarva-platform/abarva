@@ -27,6 +27,12 @@ import type {
   InventorySegmentRollup,
   SetupInventorySnapshot,
 } from "@/lib/admin/setup-acts-registry";
+import {
+  type ContextTemplateDefinition,
+  NORTHSTAR_CONTEXT_TEMPLATES,
+  SUPPORTED_CONTEXT_UPLOAD_FORMATS,
+} from "@/lib/context-ingestion/template-registry";
+import type { UploadedFileFormat } from "@/lib/context-ingestion/types";
 
 // ── Real, existing route targets (verified to resolve) ───────────────
 const HREF = {
@@ -34,7 +40,7 @@ const HREF = {
   approvals: "/admin/context-layer/approval-queue",
   quarantine: "/platform/admin/quarantine",
   ledger: "/admin/data-trust",
-  templates: "/admin/templates",
+  templates: "/admin/context-layer/templates",
   verifier: "/admin/production-readiness",
 } as const;
 
@@ -93,6 +99,33 @@ export interface LoadStudioNextAction {
   action: LoadStudioLink | null;
 }
 
+export interface LoadStudioFormatSupport {
+  format: string;
+  templates: number;
+  path: "live" | "controlled";
+  note: string;
+}
+
+export interface LoadStudioTemplateCard {
+  id: string;
+  label: string;
+  owner: string;
+  formats: string[];
+  requiredFields: string;
+  primaryPath: string;
+  action: LoadStudioLink;
+}
+
+export interface LoadStudioTemplateGuide {
+  headline: string;
+  detail: string;
+  liveUploadLabel: string;
+  formatSupport: LoadStudioFormatSupport[];
+  starterTemplates: LoadStudioTemplateCard[];
+  allTemplatesAction: LoadStudioLink;
+  uploadAction: LoadStudioLink;
+}
+
 export interface LoadStudioView {
   tenant: {
     name: string;
@@ -103,6 +136,7 @@ export interface LoadStudioView {
   hasData: boolean;
   metrics: LoadStudioMetric[];
   nextAction: LoadStudioNextAction | null;
+  templateGuide: LoadStudioTemplateGuide;
   workflow: LoadStudioStep[];
   readiness: LoadStudioReadinessRow[];
   controls: LoadStudioControl[];
@@ -189,6 +223,100 @@ function actionForStatus(tone: StatusTone): LoadStudioLink {
     default:
       return { label: "Start load", href: HREF.upload };
   }
+}
+
+const STARTER_TEMPLATE_IDS = [
+  "org-roles",
+  "financial-kpi-workbook",
+  "application-portfolio",
+  "vendor-contracts",
+  "annual-quarterly-reports",
+  "integration-topology",
+] as const;
+
+function formatLabel(format: UploadedFileFormat): string {
+  return format.toUpperCase();
+}
+
+function formatSupportNote(format: UploadedFileFormat): {
+  path: LoadStudioFormatSupport["path"];
+  note: string;
+} {
+  if (format === "csv") {
+    return {
+      path: "live",
+      note: "Can be loaded from this workflow today",
+    };
+  }
+  if (format === "xlsx" || format === "json" || format === "jsonl") {
+    return {
+      path: "controlled",
+      note: "Template-supported; use controlled intake until parser commit",
+    };
+  }
+  return {
+    path: "controlled",
+    note: "Accepted as evidence or exception intake with review",
+  };
+}
+
+function buildTemplateGuide(): LoadStudioTemplateGuide {
+  const formatSupport = SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) => {
+    const acceptedCount = NORTHSTAR_CONTEXT_TEMPLATES.filter((template) =>
+      template.acceptedFormats.includes(format),
+    ).length;
+    const support = formatSupportNote(format);
+    return {
+      format: formatLabel(format),
+      templates: acceptedCount,
+      path: support.path,
+      note: support.note,
+    };
+  });
+
+  const starterTemplates = STARTER_TEMPLATE_IDS.map((id) =>
+    NORTHSTAR_CONTEXT_TEMPLATES.find((template) => template.id === id),
+  )
+    .filter(
+      (template): template is ContextTemplateDefinition =>
+        template !== undefined,
+    )
+    .map((template) => {
+      const canLoadCsvNow = template.acceptedFormats.includes("csv");
+      return {
+        id: template.id,
+        label: template.label,
+        owner: template.ownerRole,
+        formats: template.acceptedFormats.map(formatLabel),
+        requiredFields:
+          template.requiredFields.slice(0, 5).join(", ") +
+          (template.requiredFields.length > 5 ? "..." : ""),
+        primaryPath: canLoadCsvNow
+          ? "CSV upload is live now"
+          : "Template-supported; controlled intake",
+        action: canLoadCsvNow
+          ? { label: "Load CSV", href: HREF.upload }
+          : { label: "View intake details", href: HREF.templates },
+      };
+    });
+
+  return {
+    headline: "Load a new client file",
+    detail:
+      "Choose the business dimension first. The studio shows the template, accepted formats, required fields, and the governed path before anything is processed.",
+    liveUploadLabel:
+      "CSV is the live structured upload path today. Office, PDF, slide, JSON, and archive formats are template-supported and enter controlled intake until their parser/commit path is complete.",
+    formatSupport,
+    starterTemplates,
+    allTemplatesAction: {
+      label: "View every template and format",
+      href: HREF.templates,
+    },
+    uploadAction: {
+      label: "Open upload workspace",
+      href: HREF.upload,
+    },
+  };
 }
 
 // ── Composer ─────────────────────────────────────────────────────────
@@ -278,6 +406,8 @@ export function buildLoadStudioView(
       tone: "default",
     },
   ];
+
+  const templateGuide = buildTemplateGuide();
 
   // ── Next action — the single most-urgent thing, routing into the
   //    owning workflow (Home/Setup never approves inline). ───────────
@@ -402,6 +532,7 @@ export function buildLoadStudioView(
     hasData,
     metrics,
     nextAction,
+    templateGuide,
     workflow,
     readiness,
     controls,
