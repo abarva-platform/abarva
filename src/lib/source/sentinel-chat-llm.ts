@@ -58,9 +58,8 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
   const systemPrompt = buildSourceSentinelChatSystemPrompt({
     event: input.event,
     tenantName:
-      input.fallbackResponse.context.eventName ??
-      input.fallbackResponse.sourceIntelligence?.evidenceBasis[0] ??
-      input.event.accountName,
+      input.event.accountName ??
+      input.fallbackResponse.sourceIntelligence?.evidenceBasis[0],
     liveTenantContext: input.liveTenantContext,
     promptEvidence,
     fallbackResponse: input.fallbackResponse,
