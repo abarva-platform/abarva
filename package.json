@@ -45,6 +45,7 @@
     "scaffold:smoke": "node scripts/scaffold/smoke.mjs",
     "metrics:dora": "node scripts/metrics/dora-dashboard.mjs --output audit-artifacts/metrics/dora-dashboard.md --json-output audit-artifacts/metrics/dora-dashboard.json",
     "metrics:dora:smoke": "node scripts/metrics/dora-dashboard-smoke.mjs",
+    "legal:client-paper:verify": "node scripts/legal/verify-client-paper-playbook.mjs",
     "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
