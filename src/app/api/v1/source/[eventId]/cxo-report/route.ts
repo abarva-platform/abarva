@@ -115,15 +115,24 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
           "[GET /api/v1/source/:eventId/cxo-report] pptx renderer unavailable",
           loadErr,
         );
-        return Response.json(
+        const fallbackUrl = `${url.pathname}?format=html`;
+        return new Response(
+          Buffer.from(
+            renderPptxUnavailableHtml({
+              eventName: ctx.event.name,
+              fallbackUrl,
+            }),
+            "utf8",
+          ) as unknown as ArrayBuffer,
           {
-            error: "pptx_unavailable",
-            detail:
-              "PPTX export is not available in this environment. Use format=html for the CXO narrative report.",
-            ops: "Verify pptxgenjs is installed and bundled for the Node.js runtime; check Vercel function logs for the underlying require error.",
-            fallback: { format: "html", url: `${url.pathname}?format=html` },
+            status: 200,
+            headers: {
+              "content-type": SOURCE_CXO_HTML_CONTENT_TYPE,
+              "cache-control": "no-store",
+              "x-source-event-code": ctx.event.code,
+              "x-source-cxo-report-format": "pptx-fallback",
+            },
           },
-          { status: 503 },
         );
       }
       const buffer = await renderSourceCxoNarrativePptx(report);
@@ -172,4 +181,44 @@ function filenameFor(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return `abarva-source-cxo-report-${safeEvent}-${generatedAt.slice(0, 10)}.${ext}`;
+}
+
+function renderPptxUnavailableHtml(args: {
+  eventName: string;
+  fallbackUrl: string;
+}): string {
+  const eventName = escapeHtml(args.eventName);
+  const fallbackUrl = escapeHtml(args.fallbackUrl);
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PPTX Export Unavailable · AbarVa Source</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f8f6f1; color: #10182f; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { width: min(640px, calc(100vw - 40px)); background: #fff; border: 1px solid rgba(16, 24, 47, 0.14); border-radius: 12px; padding: 32px; box-shadow: 0 18px 48px rgba(16, 24, 47, 0.08); }
+    .eyebrow { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7d8798; font-weight: 700; }
+    h1 { margin: 10px 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: 30px; line-height: 1.15; }
+    p { margin: 0 0 18px; color: #536072; line-height: 1.55; }
+    a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 18px; border-radius: 999px; background: #111a33; color: #fff; text-decoration: none; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Source CXO report</div>
+    <h1>PPTX export is not available for ${eventName} yet.</h1>
+    <p>The executive report is ready in browser format. Use the HTML version for review, print, or PDF export while the slide-download renderer is unavailable.</p>
+    <a href="${fallbackUrl}">Open CXO report</a>
+  </main>
+</body>
+</html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

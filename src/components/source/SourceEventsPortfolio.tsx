@@ -278,7 +278,7 @@ export function SourceEventsPortfolio({
             detail={
               activeStage || activeStatus
                 ? "Filtered portfolio posture"
-                : "All seeded sourcing events"
+                : "Client-scoped sourcing events"
             }
           />
           <ContextTile
@@ -351,9 +351,9 @@ export function SourceEventsPortfolio({
           >
             <div style={FILTER_LABEL}>Context used</div>
             <div style={{ ...SOURCE_MUTED, fontSize: "13px" }}>
-              Seeded event list, stage labels, alert counts, value-at-stake, and
-              linked-program hints. Vendor counts and live bid timelines are not
-              surfaced at the portfolio layer yet.
+              Source event list, stage labels, alert counts, value-at-stake, and
+              linked-program hints. Vendor counts and live bid timelines appear
+              when the client data layer has loaded them.
             </div>
             <div style={{ ...SOURCE_MUTED, fontSize: "12px", marginTop: 4 }}>
               Ask Sentinel Source directly in the chat lane on the left of this
@@ -537,7 +537,7 @@ export function SourceEventsPortfolio({
           <div style={{ display: "grid", gap: 10 }}>
             <MetricLine
               label="Where am I?"
-              detail="You are in the Source Events Portfolio command surface for seeded sourcing work."
+              detail="You are in the Source Events Portfolio command surface for this client."
             />
             <MetricLine
               label="What matters?"

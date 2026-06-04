@@ -48,15 +48,23 @@ export async function POST(
       clientId: tenancy.clientId,
       clientKey: activeClient?.key,
     });
-    const apexLiveEventDetail = apexContext?.liveContext.sourceEvent
+    const fallbackLiveEventDetail = eventId
+      ? await getSourcingEvent(eventId).catch(() => null)
+      : null;
+    const apexLiveEventDetailCandidate = apexContext?.liveContext.sourceEvent
       ? sourceEventRowToDetail(apexContext.liveContext.sourceEvent, 'Apex Retail Group')
       : undefined;
-    const apexLiveTenantContext = apexContext
+    const apexLiveEventMatches = sourceEventMatchesRequestedEvent({
+      requestedEventId: eventId,
+      candidate: apexLiveEventDetailCandidate,
+      fallback: fallbackLiveEventDetail,
+    });
+    const apexLiveEventDetail = apexLiveEventMatches
+      ? apexLiveEventDetailCandidate
+      : undefined;
+    const apexLiveTenantContext = apexContext && apexLiveEventMatches
       ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
       : undefined;
-    const fallbackLiveEventDetail = apexLiveEventDetail || !eventId
-      ? undefined
-      : await getSourcingEvent(eventId).catch(() => null);
     const liveEventDetail = apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
     const liveTenantContext = apexLiveTenantContext
       ?? (fallbackLiveEventDetail
@@ -117,6 +125,29 @@ export async function POST(
       );
     }
   }
+}
+
+function sourceEventMatchesRequestedEvent(args: {
+  requestedEventId?: string;
+  candidate?: SourcingEventDetail;
+  fallback: SourcingEventDetail | null;
+}): boolean {
+  if (!args.candidate) return false;
+  if (!args.requestedEventId) return true;
+
+  const requestedAliases = new Set(
+    [
+      args.requestedEventId,
+      args.fallback?.id,
+      args.fallback?.code,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.trim().toLowerCase()),
+  );
+  const candidateIds = [args.candidate.id, args.candidate.code].map((value) =>
+    value.trim().toLowerCase(),
+  );
+  return candidateIds.some((candidateId) => requestedAliases.has(candidateId));
 }
 
 function buildEventIntakeTenantContextSnapshot(args: {

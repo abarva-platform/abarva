@@ -11,7 +11,7 @@
  * that set moves to a single shared module this helper should re-export
  * from there.
  *
- * The 5 canonical tenant options come from the canonical alias table
+ * The canonical tenant options come from the canonical alias table
  * (`src/lib/tenant/aliases.ts`) — the switcher hard-validates against
  * this exact list and never accepts free-form keys.
  *
@@ -56,10 +56,9 @@ export interface TenantSwitchOption {
 }
 
 /**
- * Returns the 5 canonical tenant options the switcher renders.
+ * Returns the canonical tenant options the switcher renders.
  *
- * The order matches `ALL_CLIENTS` (apex-retail, meridian-health,
- * first-capital, northstar-clinical, skyharbor-air) so the dropdown
+ * The order matches `ALL_CLIENTS` so the dropdown
  * stays stable across renders. Each option carries the canonical key
  * (NOT the legacy app-client-key) — POST payloads echo this exact
  * value back, and the server re-validates membership in
@@ -129,7 +128,7 @@ export async function canSwitchActiveTenant(): Promise<boolean> {
 
 /**
  * Hard-validate a requested canonical tenant key against the locked
- * 5-tenant list. Free-form keys, legacy aliases, and unknown values
+ * canonical tenant list. Free-form keys, legacy aliases, and unknown values
  * all return false.
  */
 export function isCanonicalTenantKey(value: unknown): value is string {
