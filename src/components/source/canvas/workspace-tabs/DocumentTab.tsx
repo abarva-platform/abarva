@@ -12,6 +12,7 @@ import type { SourceStageKey } from "@/lib/source/types";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { CANVAS } from "../canvas-tokens";
 import { VendorPricingSubmissionsPanel } from "./VendorPricingSubmissionsPanel";
+import { VendorResponsePackPanel } from "./VendorResponsePackPanel";
 
 // Codes that surface the vendor-pricing-submissions panel below the
 // body editor. Today only d19 (pricing); future variants would extend.
@@ -107,6 +108,8 @@ interface DocumentTabProps {
   pdfDownloadHref?: (code: string) => string;
   /** Optional stage-specific panel shown below the active artifact. */
   supplementalPanel?: ReactNode;
+  /** Called after a registry-backed upload so the canvas can refresh shelves/logs. */
+  onRegistryUploaded?: () => void;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -150,6 +153,7 @@ export function DocumentTab({
   pdfGeneratableCodes,
   pdfDownloadHref,
   supplementalPanel,
+  onRegistryUploaded,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -300,6 +304,12 @@ export function DocumentTab({
                 <VendorPricingSubmissionsPanel
                   eventId={eventId}
                   artifactCode={active.artifactCode}
+                />
+              ) : null}
+              {eventId && active.artifactCode === "d11_response_checklist" ? (
+                <VendorResponsePackPanel
+                  eventId={eventId}
+                  onUploaded={onRegistryUploaded}
                 />
               ) : null}
               {supplementalPanel}
