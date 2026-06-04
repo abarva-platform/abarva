@@ -44,6 +44,8 @@ export const CANONICAL_AUTH_EMAILS = [
   "ciso@skyharbor-air.example.com", // Nadia Sethi · CISO
   "maestro@skyharbor-air.example.com", // Rina Patel · AbarVa Maestro / Pilot Lead
   "admin@skyharbor-air.example.com", // Owen Mercer · Tenant Admin / Context Layer Steward
+  "cio@lakeshore-holdings.example.com", // Meera Rao · Global CIO
+  "cfo@lakeshore-holdings.example.com", // Daniel Whitaker · CFO / Treasury Sponsor
   "admin@lakeshore-holdings.example.com", // admin · Lakeshore Holdings
 ] as const;
 
@@ -55,6 +57,8 @@ export const CANONICAL_CLIENT_ADMIN_EMAILS = [
   "cio@firstcapital.example.com",
   "maestro@skyharbor-air.example.com",
   "admin@skyharbor-air.example.com",
+  "cio@lakeshore-holdings.example.com",
+  "cfo@lakeshore-holdings.example.com",
   "admin@lakeshore-holdings.example.com",
 ] as const;
 

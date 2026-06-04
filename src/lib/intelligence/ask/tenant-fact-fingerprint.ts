@@ -1,9 +1,9 @@
-import 'server-only';
+import "server-only";
 
 import {
   createDefaultSession,
   type SqlRunner,
-} from '@/lib/data-plane/read-adapters/azureSession';
+} from "@/lib/data-plane/read-adapters/azureSession";
 
 export interface TenantFactFingerprint {
   hasExecutiveBios: boolean;
@@ -27,58 +27,100 @@ export async function getTenantFactFingerprint(args: {
       const [
         executiveChunks,
         applicationCount,
+        applicationChunks,
         vendorCount,
+        vendorChunks,
         initiativeCount,
+        initiativeChunks,
         financialProfile,
         financialChunks,
         boardChunks,
       ] = await Promise.all([
-        countContextChunks(run, clientId, ['org_structure'], 'cfo|ceo|cio|chief|executive|Maya|Daniel|Priya|Elena|Marcus|Amala'),
-        countRows(run, 'applications', clientId),
-        countRows(run, 'vendor_contracts', clientId),
-        countRows(run, 'ai_initiatives', clientId),
+        countContextChunks(
+          run,
+          clientId,
+          ["org_structure"],
+          "cfo|ceo|cio|chief|executive|Maya|Daniel|Priya|Elena|Marcus|Amala",
+        ),
+        countRows(run, "applications", clientId),
+        countContextChunks(
+          run,
+          clientId,
+          ["it_landscape"],
+          "application|app_id|system|criticality|portfolio|Kyriba|SAP|Snowflake|Databricks",
+        ),
+        countRows(run, "vendor_contracts", clientId),
+        countContextChunks(
+          run,
+          clientId,
+          ["it_landscape"],
+          "vendor|contract|supplier|renewal|annual_contract|Kyriba|Deloitte|Microsoft|ServiceNow",
+        ),
+        countRows(run, "ai_initiatives", clientId),
+        countContextChunks(
+          run,
+          clientId,
+          ["program_inventory"],
+          "initiative|program|roadmap|Kyriba|treasury|rollout|modernization",
+        ),
         readClientFinancialPresence(run, clientId),
-        countContextChunks(run, clientId, ['it_financials'], '\\$|budget|spend|financial|FY26|FY2026|value|realized|disputed'),
-        countContextChunks(run, clientId, ['enterprise_profile'], 'board|activist|capital markets|earnings|margin target|modernization'),
+        countContextChunks(
+          run,
+          clientId,
+          ["it_financials"],
+          "\\$|budget|spend|financial|FY26|FY2026|value|realized|disputed",
+        ),
+        countContextChunks(
+          run,
+          clientId,
+          ["enterprise_profile"],
+          "board|activist|capital markets|earnings|margin target|modernization",
+        ),
       ]);
 
       return {
         hasExecutiveBios: executiveChunks > 0,
-        hasApplicationPortfolio: applicationCount > 0,
-        hasVendorContracts: vendorCount > 0,
-        hasInitiatives: initiativeCount > 0,
+        hasApplicationPortfolio: applicationCount > 0 || applicationChunks > 0,
+        hasVendorContracts: vendorCount > 0 || vendorChunks > 0,
+        hasInitiatives: initiativeCount > 0 || initiativeChunks > 0,
         hasFinancials: financialProfile || financialChunks > 0,
         hasBoardMinutes: boardChunks > 0,
         namedEntityClasses: [] as string[],
       } satisfies TenantFactFingerprint;
     });
-    if (fingerprint.hasExecutiveBios) fingerprint.namedEntityClasses.push('executives');
-    if (fingerprint.hasApplicationPortfolio) fingerprint.namedEntityClasses.push('apps');
-    if (fingerprint.hasVendorContracts) fingerprint.namedEntityClasses.push('vendors');
-    if (fingerprint.hasInitiatives) fingerprint.namedEntityClasses.push('initiatives');
-    if (fingerprint.hasFinancials) fingerprint.namedEntityClasses.push('financials');
-    if (fingerprint.hasBoardMinutes) fingerprint.namedEntityClasses.push('board');
+    if (fingerprint.hasExecutiveBios)
+      fingerprint.namedEntityClasses.push("executives");
+    if (fingerprint.hasApplicationPortfolio)
+      fingerprint.namedEntityClasses.push("apps");
+    if (fingerprint.hasVendorContracts)
+      fingerprint.namedEntityClasses.push("vendors");
+    if (fingerprint.hasInitiatives)
+      fingerprint.namedEntityClasses.push("initiatives");
+    if (fingerprint.hasFinancials)
+      fingerprint.namedEntityClasses.push("financials");
+    if (fingerprint.hasBoardMinutes)
+      fingerprint.namedEntityClasses.push("board");
     return fingerprint;
   } catch {
     return null;
   }
 }
 
-const fingerprintSession = createDefaultSession('tenant-fact-fingerprint');
+const fingerprintSession = createDefaultSession("tenant-fact-fingerprint");
 
 const TENANT_KEY_ALIASES: Record<string, string[]> = {
-  apex: ['apex-retail', 'apexretail'],
-  'apex-retail': ['apex-retail', 'apexretail'],
-  meridian: ['meridian-health', 'meridian'],
-  'meridian-health': ['meridian-health', 'meridian'],
-  northstar: ['northstar-clinical', 'northstar'],
-  'northstar-clinical': ['northstar-clinical', 'northstar'],
-  firstcapital: ['first-capital', 'firstcapital'],
-  'first-capital': ['first-capital', 'firstcapital'],
-  'first-capital-financial': ['first-capital', 'firstcapital'],
-  arcturus: ['first-capital', 'firstcapital'],
-  skyharbor: ['skyharbor-air', 'skyharbor'],
-  'skyharbor-air': ['skyharbor-air', 'skyharbor'],
+  apex: ["apex-retail", "apexretail"],
+  "apex-retail": ["apex-retail", "apexretail"],
+  meridian: ["meridian-health", "meridian"],
+  "meridian-health": ["meridian-health", "meridian"],
+  northstar: ["northstar-clinical", "northstar"],
+  "northstar-clinical": ["northstar-clinical", "northstar"],
+  firstcapital: ["first-capital", "firstcapital"],
+  "first-capital": ["first-capital", "firstcapital"],
+  "first-capital-financial": ["first-capital", "firstcapital"],
+  arcturus: ["first-capital", "firstcapital"],
+  skyharbor: ["skyharbor-air", "skyharbor"],
+  "skyharbor-air": ["skyharbor-air", "skyharbor"],
 };
 
 async function resolveFingerprintClientId(args: {
@@ -107,23 +149,25 @@ async function resolveFingerprintClientId(args: {
   }
 }
 
-export function formatTenantFactAvailabilityBlock(fingerprint: TenantFactFingerprint | null): string {
-  if (!fingerprint) return '';
+export function formatTenantFactAvailabilityBlock(
+  fingerprint: TenantFactFingerprint | null,
+): string {
+  if (!fingerprint) return "";
 
   return [
-    'FACT AVAILABILITY (current session):',
+    "FACT AVAILABILITY (current session):",
     `- Executive bios:        ${String(fingerprint.hasExecutiveBios)}`,
     `- Application portfolio: ${String(fingerprint.hasApplicationPortfolio)}`,
     `- Vendor contracts:      ${String(fingerprint.hasVendorContracts)}`,
     `- Initiatives:           ${String(fingerprint.hasInitiatives)}`,
     `- Financial figures:     ${String(fingerprint.hasFinancials)}`,
     `- Board / investor facts: ${String(fingerprint.hasBoardMinutes)}`,
-    `- Named entity classes:  ${fingerprint.namedEntityClasses.length > 0 ? fingerprint.namedEntityClasses.join(', ') : 'none'}`,
-    '',
+    `- Named entity classes:  ${fingerprint.namedEntityClasses.length > 0 ? fingerprint.namedEntityClasses.join(", ") : "none"}`,
+    "",
     'When the user asks for a fact in a class marked false, you MUST refuse the specific named-entity request and offer either a pattern-based answer with an explicit "this is a pattern, not your data" caveat or explain which data needs to be ingested first.',
-    'Never fabricate names, dollars, dates, vendors, systems, executives, renewals, initiatives, or other named entities for classes marked false.',
-    'When a class is true, prefer TENANT structured sources and tenant chunks over industry-pattern sources.',
-  ].join('\n');
+    "Never fabricate names, dollars, dates, vendors, systems, executives, renewals, initiatives, or other named entities for classes marked false.",
+    "When a class is true, prefer TENANT structured sources and tenant chunks over industry-pattern sources.",
+  ].join("\n");
 }
 
 async function countRows(
@@ -157,8 +201,8 @@ async function countContextChunks(
         LIMIT 180`,
       [tenantId, segments],
     );
-    const re = new RegExp(queryRegex, 'i');
-    return rows.filter((row) => re.test(row.chunk_text ?? '')).length;
+    const re = new RegExp(queryRegex, "i");
+    return rows.filter((row) => re.test(row.chunk_text ?? "")).length;
   } catch {
     return 0;
   }
@@ -181,7 +225,12 @@ async function readClientFinancialPresence(
       [tenantId],
     );
     const row = rows[0];
-    return Boolean(row && (row.annual_revenue_usd != null || row.it_budget_usd != null || row.ai_budget_usd != null));
+    return Boolean(
+      row &&
+      (row.annual_revenue_usd != null ||
+        row.it_budget_usd != null ||
+        row.ai_budget_usd != null),
+    );
   } catch {
     return false;
   }

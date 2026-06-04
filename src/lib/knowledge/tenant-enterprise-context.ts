@@ -1,23 +1,20 @@
-import 'server-only';
+import "server-only";
 
 import {
   getTenantDataAdapter,
   type ContextChunk,
   type GraphNode,
   type SegmentId,
-} from '@/lib/knowledge/tenant-data';
+} from "@/lib/knowledge/tenant-data";
 import {
   createDefaultSession,
   type SqlRunner,
-} from '@/lib/data-plane/read-adapters/azureSession';
-import {
-  canonicalTenantKey,
-  tenantAliasesFor,
-} from '@/lib/tenant/aliases';
-import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
+} from "@/lib/data-plane/read-adapters/azureSession";
+import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
+import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
 
 export interface TenantEnterpriseSource {
-  type: 'TENANT';
+  type: "TENANT";
   name: string;
   id: string;
   detail: string;
@@ -37,11 +34,11 @@ const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
 
 const SEGMENT_LABELS: Record<string, string> = {
-  enterprise_profile: 'Enterprise profile',
-  org_structure: 'Org structure and leadership',
-  it_financials: 'IT financials and funding authority',
-  it_landscape: 'IT landscape',
-  program_inventory: 'Program inventory',
+  enterprise_profile: "Enterprise profile",
+  org_structure: "Org structure and leadership",
+  it_financials: "IT financials and funding authority",
+  it_landscape: "IT landscape",
+  program_inventory: "Program inventory",
 };
 
 const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
@@ -52,37 +49,39 @@ const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
   program_inventory: 12,
 };
 
-const structuredFactSession = createDefaultSession('tenant-enterprise-structured-facts');
+const structuredFactSession = createDefaultSession(
+  "tenant-enterprise-structured-facts",
+);
 
 const STOPWORDS = new Set([
-  'about',
-  'across',
-  'after',
-  'again',
-  'also',
-  'and',
-  'any',
-  'are',
-  'budget',
-  'can',
-  'current',
-  'does',
-  'for',
-  'from',
-  'have',
-  'how',
-  'into',
-  'know',
-  'our',
-  'tell',
-  'team',
-  'that',
-  'the',
-  'their',
-  'this',
-  'what',
-  'with',
-  'you',
+  "about",
+  "across",
+  "after",
+  "again",
+  "also",
+  "and",
+  "any",
+  "are",
+  "budget",
+  "can",
+  "current",
+  "does",
+  "for",
+  "from",
+  "have",
+  "how",
+  "into",
+  "know",
+  "our",
+  "tell",
+  "team",
+  "that",
+  "the",
+  "their",
+  "this",
+  "what",
+  "with",
+  "you",
 ]);
 
 export function isTenantEnterpriseQuestion(query: string): boolean {
@@ -95,24 +94,44 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   const normalized = query.toLowerCase();
   const segments: SegmentId[] = [];
 
-  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure|operating\s+model|target\s+operating\s+model|\btom\b|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized)) {
-    segments.push('enterprise_profile');
+  if (
+    /\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure|operating\s+model|target\s+operating\s+model|\btom\b|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("enterprise_profile");
   }
-  if (/\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who|amala|cio\s+challenge|pressure)\b/.test(normalized)) {
-    segments.push('org_structure');
+  if (
+    /\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who|amala|cio\s+challenge|pressure)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("org_structure");
   }
-  if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform|value\s+ledger|promised|realized|disputed|projected|value\s+stuck|ibm|mips|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|edp|true[-\s]?up)\b/.test(normalized)) {
-    segments.push('it_financials');
+  if (
+    /\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform|value\s+ledger|promised|realized|disputed|projected|value\s+stuck|ibm|mips|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|edp|true[-\s]?up)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("it_financials");
   }
-  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|sdlc|cobol|edp|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized)) {
-    segments.push('it_landscape');
+  if (
+    /\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|sdlc|cobol|edp|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("it_landscape");
   }
-  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave|modernization|dependency|dependencies|blocks?|blocked|blockers?|ibm|mainframe|aws|value\s+ledger|through-line|pressure|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/.test(normalized)) {
-    segments.push('program_inventory');
+  if (
+    /\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave|modernization|dependency|dependencies|blocks?|blocked|blockers?|ibm|mainframe|aws|value\s+ledger|through-line|pressure|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("program_inventory");
   }
 
   if (segments.length === 0 && isTenantEnterpriseQuestion(query)) {
-    segments.push('enterprise_profile', 'org_structure', 'it_financials');
+    segments.push("enterprise_profile", "org_structure", "it_financials");
   }
 
   return [...new Set(segments)];
@@ -137,38 +156,62 @@ export async function retrieveTenantEnterpriseSources(
 
   try {
     const adapter = getTenantDataAdapter();
-    const [directReportSource, cLevelSource, structuredSources, grouped] = await Promise.all([
-      retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(() => null),
-      retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(() => null),
-      retrieveStructuredTenantSources(canonicalTenantKey, query).catch(() => []),
-      Promise.all(segments.map(async (segmentId) => {
-        const chunks = await adapter.listContextChunks(canonicalTenantKey, {
-          segmentIds: [segmentId],
-          limit: SEGMENT_LIMITS[segmentId] ?? 24,
-        }).catch(() => []);
-        return {
-          segmentId,
-          chunks: rankChunks(chunks, query, segmentId).slice(0, opts.perSegment ?? 4),
-        };
-      })),
-    ]);
+    const tenantQueryKeys = tenantAliasesFor(canonicalTenantKey);
+    const [directReportSource, cLevelSource, structuredSources, grouped] =
+      await Promise.all([
+        retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(
+          () => null,
+        ),
+        retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(() => null),
+        retrieveStructuredTenantSources(canonicalTenantKey, query).catch(
+          () => [],
+        ),
+        Promise.all(
+          segments.map(async (segmentId) => {
+            const chunksById = new Map<string, ContextChunk>();
+            for (const tenantQueryKey of tenantQueryKeys) {
+              const chunks = await adapter
+                .listContextChunks(tenantQueryKey, {
+                  segmentIds: [segmentId],
+                  limit: SEGMENT_LIMITS[segmentId] ?? 24,
+                })
+                .catch(() => []);
+              for (const chunk of chunks) {
+                chunksById.set(chunk.chunkId, chunk);
+              }
+            }
+            return {
+              segmentId,
+              chunks: rankChunks(
+                Array.from(chunksById.values()),
+                query,
+                segmentId,
+              ).slice(0, opts.perSegment ?? 4),
+            };
+          }),
+        ),
+      ]);
 
     const segmentSources = grouped
       .filter((group) => group.chunks.length > 0)
       .map((group) => ({
-        type: 'TENANT' as const,
+        type: "TENANT" as const,
         name: `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} (${canonicalTenantKey})`,
         id: `${canonicalTenantKey}:${group.segmentId}`,
         detail: [
           `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} records for ${canonicalTenantKey}.`,
-          'Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.',
+          "Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.",
           ...group.chunks.map(formatChunk),
-        ].join('\n- '),
+        ].join("\n- "),
         confidence: 0.94,
       }));
 
-    return [directReportSource, cLevelSource, ...structuredSources, ...segmentSources]
-      .filter((source): source is TenantEnterpriseSource => Boolean(source));
+    return [
+      directReportSource,
+      cLevelSource,
+      ...structuredSources,
+      ...segmentSources,
+    ].filter((source): source is TenantEnterpriseSource => Boolean(source));
   } catch {
     return [];
   }
@@ -230,9 +273,11 @@ interface EnterpriseContextChunkRow {
   source_doc: string | null;
 }
 
-function normalizeTenantEnterpriseKey(tenant: TenantLookupInput): string | null {
+function normalizeTenantEnterpriseKey(
+  tenant: TenantLookupInput,
+): string | null {
   if (!tenant) return null;
-  if (typeof tenant === 'object') return tenant.canonicalKey;
+  if (typeof tenant === "object") return tenant.canonicalKey;
   return canonicalTenantKey(tenant.trim().toLowerCase());
 }
 
@@ -241,25 +286,60 @@ async function retrieveStructuredTenantSources(
   query: string,
 ): Promise<TenantEnterpriseSource[]> {
   const normalized = query.toLowerCase();
-  const wantsProfile = /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?|five\s+years?|progress|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity)\b/.test(normalized);
-  const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(normalized);
-  const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized);
-  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(normalized);
-  const wantsEngineeringProductivity = /\b(dora|mttr|lead\s+time|deploy\s+frequency|deployment\s+frequency|change\s+failure|engineering\s+productivity|modernization\s+correlation|factory\s+throughput)\b/.test(normalized);
-  if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives && !wantsEngineeringProductivity) return [];
+  const wantsProfile =
+    /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?|five\s+years?|progress|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity)\b/.test(
+      normalized,
+    );
+  const wantsApps =
+    /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(
+      normalized,
+    );
+  const wantsVendors =
+    /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+      normalized,
+    );
+  const wantsInitiatives =
+    /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(
+      normalized,
+    );
+  const wantsEngineeringProductivity =
+    /\b(dora|mttr|lead\s+time|deploy\s+frequency|deployment\s+frequency|change\s+failure|engineering\s+productivity|modernization\s+correlation|factory\s+throughput)\b/.test(
+      normalized,
+    );
+  if (
+    !wantsProfile &&
+    !wantsApps &&
+    !wantsVendors &&
+    !wantsInitiatives &&
+    !wantsEngineeringProductivity
+  )
+    return [];
 
   try {
     return await structuredFactSession(async (run) => {
       const clientId = await resolveClientIdForTenantKey(run, tenantKey);
       if (!clientId) return [];
       const results = await Promise.all([
-        wantsProfile ? readClientProfileSource(run, tenantKey, clientId) : Promise.resolve(null),
-        wantsApps ? readApplicationPortfolioSource(run, tenantKey, clientId) : Promise.resolve(null),
-        wantsVendors ? readVendorContractsSource(run, tenantKey, clientId) : Promise.resolve(null),
-        wantsInitiatives ? readInitiativesSource(run, tenantKey, clientId) : Promise.resolve(null),
-        wantsEngineeringProductivity ? readEngineeringProductivitySource(run, tenantKey, clientId) : Promise.resolve(null),
+        wantsProfile
+          ? readClientProfileSource(run, tenantKey, clientId)
+          : Promise.resolve(null),
+        wantsApps
+          ? readApplicationPortfolioSource(run, tenantKey, clientId)
+          : Promise.resolve(null),
+        wantsVendors
+          ? readVendorContractsSource(run, tenantKey, clientId)
+          : Promise.resolve(null),
+        wantsInitiatives
+          ? readInitiativesSource(run, tenantKey, clientId)
+          : Promise.resolve(null),
+        wantsEngineeringProductivity
+          ? readEngineeringProductivitySource(run, tenantKey, clientId)
+          : Promise.resolve(null),
+        readKeywordContextChunkSource(run, tenantKey, clientId, query),
       ]);
-      return results.filter((source): source is TenantEnterpriseSource => Boolean(source));
+      return results.filter((source): source is TenantEnterpriseSource =>
+        Boolean(source),
+      );
     });
   } catch {
     return [];
@@ -267,24 +347,24 @@ async function retrieveStructuredTenantSources(
 }
 
 const SKYHARBOR_DORA_DOMAINS = [
-  'Mobile Digital',
-  'Web Booking',
-  'Mainframe Core',
-  'Crew Systems',
-  'Airport Ops',
-  'Baggage',
-  'Loyalty',
-  'Revenue Accounting',
-  'AWS Platform',
-  'Data Platform',
-  'Security Engineering',
-  'Contact Center',
-  'MRO Tech',
-  'Cargo',
-  'Finance IT',
-  'GCC Delivery',
-  'Modernization Factory',
-  'DevEx Tooling',
+  "Mobile Digital",
+  "Web Booking",
+  "Mainframe Core",
+  "Crew Systems",
+  "Airport Ops",
+  "Baggage",
+  "Loyalty",
+  "Revenue Accounting",
+  "AWS Platform",
+  "Data Platform",
+  "Security Engineering",
+  "Contact Center",
+  "MRO Tech",
+  "Cargo",
+  "Finance IT",
+  "GCC Delivery",
+  "Modernization Factory",
+  "DevEx Tooling",
 ];
 
 async function readEngineeringProductivitySource(
@@ -302,25 +382,95 @@ async function readEngineeringProductivitySource(
     [clientId],
   );
   const scorecards = rows
-    .map((row) => parseDoraScorecard(row.chunk_text ?? ''))
+    .map((row) => parseDoraScorecard(row.chunk_text ?? ""))
     .filter((row): row is DoraScorecard => Boolean(row))
-    .filter((row) => row.scorecardId.startsWith(`${tenantRecordPrefix(tenantKey)}-DORA-`))
+    .filter((row) =>
+      row.scorecardId.startsWith(`${tenantRecordPrefix(tenantKey)}-DORA-`),
+    )
     .slice(0, 18);
   if (scorecards.length === 0) return null;
 
-  const fast = scorecards.filter((row) => row.deployFrequencyPerWeek >= 8 && row.leadTimeHours <= 36);
-  const constrained = scorecards.filter((row) => row.deployFrequencyPerWeek <= 3 || row.leadTimeHours >= 72);
+  const fast = scorecards.filter(
+    (row) => row.deployFrequencyPerWeek >= 8 && row.leadTimeHours <= 36,
+  );
+  const constrained = scorecards.filter(
+    (row) => row.deployFrequencyPerWeek <= 3 || row.leadTimeHours >= 72,
+  );
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured engineering productivity / DORA baseline (${tenantKey})`,
     id: `${tenantKey}:structured:engineering_productivity`,
     detail: [
       `DORA scorecards from S09_ENGINEERING_PRODUCTIVITY for ${tenantKey}.`,
-      'Use these exact scorecard IDs and metrics before saying DORA, lead time, deployment frequency, MTTR, change failure, or modernization correlation is unavailable.',
-      `Modernization correlation: cloud-native/customer domains are faster (${fast.map((row) => row.domain).slice(0, 4).join(', ') || 'none surfaced'}); mainframe-adjacent or operations domains are constrained (${constrained.map((row) => row.domain).slice(0, 6).join(', ') || 'none surfaced'}).`,
-      ...scorecards.map((row) => `${row.scorecardId} · ${row.domain} · lead_time ${row.leadTimeHours}h · deploy_frequency ${row.deployFrequencyPerWeek}/week · MTTR ${row.mttrHours}h · change_failure ${row.changeFailurePct}%`),
-    ].join('\n- '),
+      "Use these exact scorecard IDs and metrics before saying DORA, lead time, deployment frequency, MTTR, change failure, or modernization correlation is unavailable.",
+      `Modernization correlation: cloud-native/customer domains are faster (${
+        fast
+          .map((row) => row.domain)
+          .slice(0, 4)
+          .join(", ") || "none surfaced"
+      }); mainframe-adjacent or operations domains are constrained (${
+        constrained
+          .map((row) => row.domain)
+          .slice(0, 6)
+          .join(", ") || "none surfaced"
+      }).`,
+      ...scorecards.map(
+        (row) =>
+          `${row.scorecardId} · ${row.domain} · lead_time ${row.leadTimeHours}h · deploy_frequency ${row.deployFrequencyPerWeek}/week · MTTR ${row.mttrHours}h · change_failure ${row.changeFailurePct}%`,
+      ),
+    ].join("\n- "),
     confidence: 0.98,
+  };
+}
+
+async function readKeywordContextChunkSource(
+  run: SqlRunner,
+  tenantKey: string,
+  clientId: string,
+  query: string,
+): Promise<TenantEnterpriseSource | null> {
+  const patterns = tokenize(query)
+    .filter((term) => term.length >= 5)
+    .slice(0, 8)
+    .map((term) => `%${term}%`);
+  if (patterns.length === 0) return null;
+
+  const rows = await run<EnterpriseContextChunkRow>(
+    `SELECT chunk_id, chunk_text, source_segment_id, source_doc
+       FROM enterprise_context_chunks
+      WHERE client_id = $1
+        AND (
+          chunk_text ILIKE ANY($2::text[])
+          OR source_doc ILIKE ANY($2::text[])
+        )
+      ORDER BY
+        CASE WHEN source_doc ILIKE ANY($2::text[]) THEN 0 ELSE 1 END,
+        chunk_id ASC
+      LIMIT 18`,
+    [clientId, patterns],
+  );
+  const chunks: ContextChunk[] = rows.map((row) => ({
+    tenantKey,
+    chunkId:
+      row.chunk_id ?? `${tenantKey}:keyword:${row.source_doc ?? "chunk"}`,
+    sourceSegmentId: row.source_segment_id ?? undefined,
+    sourceDoc: row.source_doc ?? undefined,
+    text: row.chunk_text ?? "",
+    embeddingStatus: "embedded",
+  }));
+  const ranked = rankChunks(chunks, query, "it_landscape").slice(0, 8);
+  if (ranked.length === 0) return null;
+
+  return {
+    type: "TENANT",
+    name: `Loaded context chunks matching the question (${tenantKey})`,
+    id: `${tenantKey}:context:keyword:${tokenize(query).slice(0, 3).join("-") || "query"}`,
+    detail: [
+      `Question-matched chunks from public.enterprise_context_chunks for ${tenantKey}.`,
+      "Use these loaded tenant chunks before saying application, vendor, initiative, or finance evidence has not been ingested.",
+      ...ranked.map(formatChunk),
+    ].join("\n- "),
+    confidence: 0.96,
   };
 }
 
@@ -336,11 +486,24 @@ interface DoraScorecard {
 function parseDoraScorecard(text: string): DoraScorecard | null {
   const scorecardId = text.match(/scorecard_id=([A-Z]+-DORA-\d{3})/)?.[1];
   const index = Number(scorecardId?.match(/(\d{3})$/)?.[1] ?? 0);
-  const leadTimeHours = Number(text.match(/lead_time_for_change_hours=([0-9.]+)/)?.[1]);
-  const deployFrequencyPerWeek = Number(text.match(/deploy_frequency_per_week=([0-9.]+)/)?.[1]);
+  const leadTimeHours = Number(
+    text.match(/lead_time_for_change_hours=([0-9.]+)/)?.[1],
+  );
+  const deployFrequencyPerWeek = Number(
+    text.match(/deploy_frequency_per_week=([0-9.]+)/)?.[1],
+  );
   const mttrHours = Number(text.match(/MTTR_hours=([0-9.]+)/)?.[1]);
-  const changeFailurePct = Number(text.match(/change_failure_rate_pct=([0-9.]+)/)?.[1]);
-  if (!scorecardId || !index || !Number.isFinite(leadTimeHours) || !Number.isFinite(deployFrequencyPerWeek) || !Number.isFinite(mttrHours) || !Number.isFinite(changeFailurePct)) {
+  const changeFailurePct = Number(
+    text.match(/change_failure_rate_pct=([0-9.]+)/)?.[1],
+  );
+  if (
+    !scorecardId ||
+    !index ||
+    !Number.isFinite(leadTimeHours) ||
+    !Number.isFinite(deployFrequencyPerWeek) ||
+    !Number.isFinite(mttrHours) ||
+    !Number.isFinite(changeFailurePct)
+  ) {
     return null;
   }
   return {
@@ -361,44 +524,100 @@ export async function retrieveTenantStructuredFacts(
   const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
   if (!canonicalTenantKey) return [];
   const normalized = query.toLowerCase();
-  const wantsTopApps = /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(normalized);
-  const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
-  const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(normalized);
-  const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)|sourcing\s+events?|restructure\s+window|contract\s+restructure|edp|true[-\s]?up/.test(normalized);
-  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(normalized);
-  const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(normalized);
-  const wantsKillInitiatives = /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(normalized);
+  const wantsTopApps =
+    /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(
+      normalized,
+    );
+  const wantsRetiringApps =
+    /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(
+      normalized,
+    );
+  const wantsTopVendors =
+    /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(
+      normalized,
+    );
+  const wantsVendorRenewals =
+    /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)|sourcing\s+events?|restructure\s+window|contract\s+restructure|edp|true[-\s]?up/.test(
+      normalized,
+    );
+  const wantsActiveInitiatives =
+    /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(
+      normalized,
+    );
+  const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(
+    normalized,
+  );
+  const wantsKillInitiatives =
+    /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(
+      normalized,
+    );
 
-  if (!wantsTopApps && !wantsRetiringApps && !wantsTopVendors && !wantsVendorRenewals && !wantsActiveInitiatives && !wantsInitiativesByStage && !wantsKillInitiatives) {
+  if (
+    !wantsTopApps &&
+    !wantsRetiringApps &&
+    !wantsTopVendors &&
+    !wantsVendorRenewals &&
+    !wantsActiveInitiatives &&
+    !wantsInitiativesByStage &&
+    !wantsKillInitiatives
+  ) {
     return [];
   }
 
   try {
     return await structuredFactSession(async (run) => {
-      const clientId = await resolveClientIdForTenantKey(run, canonicalTenantKey);
+      const clientId = await resolveClientIdForTenantKey(
+        run,
+        canonicalTenantKey,
+      );
       if (!clientId) return [];
       const sources: TenantStructuredSource[] = [];
       if (wantsTopApps) {
-        const source = await readStructuredTopApplicationsSource(run, canonicalTenantKey, clientId);
+        const source = await readStructuredTopApplicationsSource(
+          run,
+          canonicalTenantKey,
+          clientId,
+        );
         if (source) sources.push(source);
       }
       if (wantsRetiringApps) {
-        const source = await readStructuredRetiringApplicationsSource(run, canonicalTenantKey, clientId);
+        const source = await readStructuredRetiringApplicationsSource(
+          run,
+          canonicalTenantKey,
+          clientId,
+        );
         if (source) sources.push(source);
       }
       if (wantsTopVendors) {
-        const source = await readStructuredTopVendorsSource(run, canonicalTenantKey, clientId);
+        const source = await readStructuredTopVendorsSource(
+          run,
+          canonicalTenantKey,
+          clientId,
+        );
         if (source) sources.push(source);
       }
       if (wantsVendorRenewals) {
-        const source = await readStructuredVendorRenewalsSource(run, canonicalTenantKey, clientId);
+        const source = await readStructuredVendorRenewalsSource(
+          run,
+          canonicalTenantKey,
+          clientId,
+        );
         if (source) sources.push(source);
       }
-      if (wantsActiveInitiatives || wantsInitiativesByStage || wantsKillInitiatives) {
-        const source = await readStructuredInitiativesSource(run, canonicalTenantKey, clientId, {
-          byStage: wantsInitiativesByStage,
-          killOnly: wantsKillInitiatives,
-        });
+      if (
+        wantsActiveInitiatives ||
+        wantsInitiativesByStage ||
+        wantsKillInitiatives
+      ) {
+        const source = await readStructuredInitiativesSource(
+          run,
+          canonicalTenantKey,
+          clientId,
+          {
+            byStage: wantsInitiativesByStage,
+            killOnly: wantsKillInitiatives,
+          },
+        );
         if (source) sources.push(source);
       }
       return sources;
@@ -423,20 +642,24 @@ async function readStructuredTopApplicationsSource(
   );
   if (data.length === 0) return null;
   const prefix = tenantRecordPrefix(tenantKey);
-  const rows = data.filter((row) => ['tier1', 'tier2', 'tier3'].includes(String(row.criticality ?? '').toLowerCase()));
+  const rows = data.filter((row) =>
+    ["tier1", "tier2", "tier3"].includes(
+      String(row.criticality ?? "").toLowerCase(),
+    ),
+  );
   if (rows.length === 0) return null;
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured fact · top applications by criticality (${tenantKey})`,
     id: `${tenantKey}:structured-fact:top-applications`,
     detail: [
       `Top ${rows.length} applications by criticality from public.applications for ${tenantKey}.`,
       ...rows.map((row) => {
         const appRef = deriveAppRef(prefix, row.name, row.id);
-        return `${appRef} · ${row.name} · ${row.criticality ?? 'unknown'} · ${formatUsd(row.annual_cost_usd) ?? 'unknown'}/yr · ${row.vendor ?? 'unknown'} · ${row.deployment_model ?? 'unknown'} · ${row.business_function ?? 'unknown'}-owned`;
+        return `${appRef} · ${row.name} · ${row.criticality ?? "unknown"} · ${formatUsd(row.annual_cost_usd) ?? "unknown"}/yr · ${row.vendor ?? "unknown"} · ${row.deployment_model ?? "unknown"} · ${row.business_function ?? "unknown"}-owned`;
       }),
-      'Do not substitute industry-typical provider EHR or interoperability systems unless they appear in these tenant rows.',
-    ].join('\n- '),
+      "Do not substitute industry-typical provider EHR or interoperability systems unless they appear in these tenant rows.",
+    ].join("\n- "),
     confidence: 0.99,
   };
 }
@@ -455,16 +678,23 @@ async function readStructuredRetiringApplicationsSource(
     [clientId],
   );
   const prefix = tenantRecordPrefix(tenantKey);
-  const rows = data.filter((row) => /retir|sunset|decommission/i.test(String(row.status ?? ''))).slice(0, 12);
+  const rows = data
+    .filter((row) =>
+      /retir|sunset|decommission/i.test(String(row.status ?? "")),
+    )
+    .slice(0, 12);
   if (rows.length === 0) return null;
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured fact · retiring applications (${tenantKey})`,
     id: `${tenantKey}:structured-fact:retiring-applications`,
     detail: [
       `Applications marked retiring/sunset/decommission from public.applications for ${tenantKey}.`,
-      ...rows.map((row) => `${deriveAppRef(prefix, row.name, row.id)} · ${row.name} · status ${row.status ?? 'unknown'} · criticality ${row.criticality ?? 'unknown'} · ${formatUsd(row.annual_cost_usd) ?? 'unknown'}/yr`),
-    ].join('\n- '),
+      ...rows.map(
+        (row) =>
+          `${deriveAppRef(prefix, row.name, row.id)} · ${row.name} · status ${row.status ?? "unknown"} · criticality ${row.criticality ?? "unknown"} · ${formatUsd(row.annual_cost_usd) ?? "unknown"}/yr`,
+      ),
+    ].join("\n- "),
     confidence: 0.99,
   };
 }
@@ -485,13 +715,16 @@ async function readStructuredTopVendorsSource(
   );
   if (rows.length === 0) return null;
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured fact · top vendors by annual spend (${tenantKey})`,
     id: `${tenantKey}:structured-fact:top-vendors`,
     detail: [
       `Top ${rows.length} vendors by annual contract value from public.vendor_contracts for ${tenantKey}.`,
-      ...rows.map((row) => `${row.vendor_id ?? 'vendor_contract'} · ${row.vendor_name} · ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}/yr · renewal ${formatDate(row.renewal_date) ?? 'unknown'} · category ${row.contract_category ?? 'unknown'} · concentration ${formatPct(row.concentration_pct) ?? 'unknown'}`),
-    ].join('\n- '),
+      ...rows.map(
+        (row) =>
+          `${row.vendor_id ?? "vendor_contract"} · ${row.vendor_name} · ${formatUsd(row.annual_contract_value_usd) ?? "unknown"}/yr · renewal ${formatDate(row.renewal_date) ?? "unknown"} · category ${row.contract_category ?? "unknown"} · concentration ${formatPct(row.concentration_pct) ?? "unknown"}`,
+      ),
+    ].join("\n- "),
     confidence: 0.99,
   };
 }
@@ -521,16 +754,19 @@ async function readStructuredVendorRenewalsSource(
     .slice(0, 10);
   if (rows.length === 0) return null;
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured fact · vendor renewals next 6 months (${tenantKey})`,
     id: `${tenantKey}:structured-fact:vendor-renewals-6mo`,
     detail: [
       `Vendor renewals in the next six months from public.vendor_contracts for ${tenantKey}.`,
       ...rows.map((row) => {
-        const exitTerms = typeof row.exit_terms_jsonb?.summary === 'string' ? row.exit_terms_jsonb.summary : 'not specified';
-        return `${row.vendor_id ?? 'vendor_contract'} · ${row.vendor_name} · renewal ${formatDate(row.renewal_date) ?? 'unknown'} · ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}/yr · exit terms ${exitTerms} · AI clauses ${row.ai_usage_clauses ? 'yes' : 'no'} · indemnity ${row.indemnity_provided ? 'yes' : 'no'}`;
+        const exitTerms =
+          typeof row.exit_terms_jsonb?.summary === "string"
+            ? row.exit_terms_jsonb.summary
+            : "not specified";
+        return `${row.vendor_id ?? "vendor_contract"} · ${row.vendor_name} · renewal ${formatDate(row.renewal_date) ?? "unknown"} · ${formatUsd(row.annual_contract_value_usd) ?? "unknown"}/yr · exit terms ${exitTerms} · AI clauses ${row.ai_usage_clauses ? "yes" : "no"} · indemnity ${row.indemnity_provided ? "yes" : "no"}`;
       }),
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.99,
   };
 }
@@ -550,36 +786,46 @@ async function readStructuredInitiativesSource(
       LIMIT 80`,
     [clientId],
   );
-  const activeRows = data
-    .filter((row) => !/closed|sunset|archived/i.test(`${row.initiative_id ?? ''} ${row.status_flag ?? ''} ${row.stage ?? ''}`));
-  const rows = (opts.killOnly ? activeRows.filter((row) => initiativePriority(row) === 0) : activeRows)
+  const activeRows = data.filter(
+    (row) =>
+      !/closed|sunset|archived/i.test(
+        `${row.initiative_id ?? ""} ${row.status_flag ?? ""} ${row.stage ?? ""}`,
+      ),
+  );
+  const rows = (
+    opts.killOnly
+      ? activeRows.filter((row) => initiativePriority(row) === 0)
+      : activeRows
+  )
     .sort((a, b) => {
       const priorityDelta = initiativePriority(a) - initiativePriority(b);
       if (priorityDelta !== 0) return priorityDelta;
-      return Number(b.committed_total_usd ?? 0) - Number(a.committed_total_usd ?? 0);
+      return (
+        Number(b.committed_total_usd ?? 0) - Number(a.committed_total_usd ?? 0)
+      );
     })
     .slice(0, 12);
   if (rows.length === 0) return null;
   if (opts.byStage) {
     const counts = rows.reduce<Record<string, number>>((acc, row) => {
-      const stage = row.stage ?? 'unknown';
+      const stage = row.stage ?? "unknown";
       acc[stage] = (acc[stage] ?? 0) + 1;
       return acc;
     }, {});
     return {
-      type: 'TENANT',
+      type: "TENANT",
       name: `Structured fact · active initiatives by stage (${tenantKey})`,
       id: `${tenantKey}:structured-fact:initiatives-by-stage`,
       detail: [
         `Active initiatives by stage from public.ai_initiatives for ${tenantKey}.`,
         ...Object.entries(counts).map(([stage, count]) => `${stage}: ${count}`),
         ...rows.map((row) => formatInitiativeStructuredLine(row)),
-      ].join('\n- '),
+      ].join("\n- "),
       confidence: 0.99,
     };
   }
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: opts.killOnly
       ? `Structured fact · kill-candidate initiatives (${tenantKey})`
       : `Structured fact · active initiatives (${tenantKey})`,
@@ -591,14 +837,17 @@ async function readStructuredInitiativesSource(
         ? `Active kill/stalled initiative candidates from public.ai_initiatives for ${tenantKey}.`
         : `Active initiatives from public.ai_initiatives for ${tenantKey}.`,
       ...rows.map(formatInitiativeStructuredLine),
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.99,
   };
 }
 
 function formatInitiativeStructuredLine(row: InitiativeRow): string {
-  const posture = typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : row.status_summary;
-  return `${row.initiative_id} · ${row.name} · stage ${row.stage ?? 'unknown'} · status ${row.status_flag ?? 'unknown'} · posture ${posture ?? 'unknown'} · committed ${formatUsd(row.committed_total_usd) ?? 'unknown'} · value ${formatUsd(row.measured_value_usd) ?? 'unknown'}`;
+  const posture =
+    typeof row.metadata?.sentinel_posture === "string"
+      ? row.metadata.sentinel_posture
+      : row.status_summary;
+  return `${row.initiative_id} · ${row.name} · stage ${row.stage ?? "unknown"} · status ${row.status_flag ?? "unknown"} · posture ${posture ?? "unknown"} · committed ${formatUsd(row.committed_total_usd) ?? "unknown"} · value ${formatUsd(row.measured_value_usd) ?? "unknown"}`;
 }
 
 async function resolveClientIdForTenantKey(
@@ -635,7 +884,7 @@ async function readClientProfileSource(
   const itBudget = formatUsd(row.it_budget_usd);
   const aiBudget = formatUsd(row.ai_budget_usd);
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured client profile (${tenantKey})`,
     id: `${tenantKey}:structured:client_profile:${clientId}`,
     detail: [
@@ -645,11 +894,19 @@ async function readClientProfileSource(
       revenue ? `Annual revenue: ${revenue}.` : null,
       itBudget ? `IT budget: ${itBudget}.` : null,
       aiBudget ? `AI budget: ${aiBudget}.` : null,
-      row.employee_count != null ? `Employees: ${Number(row.employee_count).toLocaleString('en-US')}.` : null,
-      row.operational_units != null ? `Operational units/plants/stores: ${Number(row.operational_units).toLocaleString('en-US')}.` : null,
-      row.business_description ? `Business description: ${row.business_description}.` : null,
-      'Use this row before saying tenant scale, annual IT spend, or company profile is unavailable.',
-    ].filter(Boolean).join('\n- '),
+      row.employee_count != null
+        ? `Employees: ${Number(row.employee_count).toLocaleString("en-US")}.`
+        : null,
+      row.operational_units != null
+        ? `Operational units/plants/stores: ${Number(row.operational_units).toLocaleString("en-US")}.`
+        : null,
+      row.business_description
+        ? `Business description: ${row.business_description}.`
+        : null,
+      "Use this row before saying tenant scale, annual IT spend, or company profile is unavailable.",
+    ]
+      .filter(Boolean)
+      .join("\n- "),
     confidence: 0.98,
   };
 }
@@ -670,17 +927,17 @@ async function readApplicationPortfolioSource(
   if (rows.length === 0) return null;
   const prefix = tenantRecordPrefix(tenantKey);
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured application portfolio (${tenantKey})`,
     id: `${tenantKey}:structured:applications`,
     detail: [
       `Top critical applications from public.applications for ${tenantKey}.`,
-      'Answer app-portfolio and criticality questions from these rows before using generic industry systems.',
+      "Answer app-portfolio and criticality questions from these rows before using generic industry systems.",
       ...rows.map((row) => {
         const appRef = deriveAppRef(prefix, row.name, row.id);
-        return `${appRef} ${row.name} — criticality ${row.criticality ?? 'unknown'}, status ${row.status ?? 'unknown'}, vendor/AMS ${row.vendor ?? 'unknown'}, business_unit ${row.business_function ?? 'unknown'}, deployment ${row.deployment_model ?? 'unknown'}, annual_run_cost ${formatUsd(row.annual_cost_usd) ?? 'unknown'}`;
+        return `${appRef} ${row.name} — criticality ${row.criticality ?? "unknown"}, status ${row.status ?? "unknown"}, vendor/AMS ${row.vendor ?? "unknown"}, business_unit ${row.business_function ?? "unknown"}, deployment ${row.deployment_model ?? "unknown"}, annual_run_cost ${formatUsd(row.annual_cost_usd) ?? "unknown"}`;
       }),
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.97,
   };
 }
@@ -701,17 +958,20 @@ async function readVendorContractsSource(
   );
   if (rows.length === 0) return null;
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured vendor contracts (${tenantKey})`,
     id: `${tenantKey}:structured:vendor_contracts`,
     detail: [
       `Largest vendor contracts from public.vendor_contracts for ${tenantKey}.`,
-      'Use these exact vendor_id, annual value, renewal, exit terms, and AI-clause fields for vendor concentration and sourcing questions.',
+      "Use these exact vendor_id, annual value, renewal, exit terms, and AI-clause fields for vendor concentration and sourcing questions.",
       ...rows.map((row) => {
-        const exitTerms = typeof row.exit_terms_jsonb?.summary === 'string' ? row.exit_terms_jsonb.summary : 'not specified';
-        return `${row.vendor_id ?? 'vendor_contract'} ${row.vendor_name} — ${row.contract_category ?? 'contract'}, annual_value ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}, renewal ${formatDate(row.renewal_date) ?? 'unknown'}, exit_terms "${exitTerms}", AI clauses ${row.ai_usage_clauses ? 'yes' : 'no'}, indemnity ${row.indemnity_provided ? 'yes' : 'no'}, concentration ${formatPct(row.concentration_pct) ?? 'unknown'}`;
+        const exitTerms =
+          typeof row.exit_terms_jsonb?.summary === "string"
+            ? row.exit_terms_jsonb.summary
+            : "not specified";
+        return `${row.vendor_id ?? "vendor_contract"} ${row.vendor_name} — ${row.contract_category ?? "contract"}, annual_value ${formatUsd(row.annual_contract_value_usd) ?? "unknown"}, renewal ${formatDate(row.renewal_date) ?? "unknown"}, exit_terms "${exitTerms}", AI clauses ${row.ai_usage_clauses ? "yes" : "no"}, indemnity ${row.indemnity_provided ? "yes" : "no"}, concentration ${formatPct(row.concentration_pct) ?? "unknown"}`;
       }),
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.97,
   };
 }
@@ -735,36 +995,44 @@ async function readInitiativesSource(
     .sort((a, b) => initiativePriority(a) - initiativePriority(b))
     .slice(0, 18);
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Structured initiatives (${tenantKey})`,
     id: `${tenantKey}:structured:ai_initiatives`,
     detail: [
       `Active initiative portfolio from public.ai_initiatives for ${tenantKey}.`,
-      'Use initiative_id/status_flag/status_summary for kill, restructure, accelerate, and funding questions.',
+      "Use initiative_id/status_flag/status_summary for kill, restructure, accelerate, and funding questions.",
       ...rows.map((row) => {
-        const posture = typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : row.status_summary;
-        return `${row.initiative_id} (${row.display_id ?? row.initiative_id}) ${row.name} — stage ${row.stage ?? 'unknown'}, status_flag ${row.status_flag ?? 'unknown'}, Sentinel posture ${posture ?? 'unknown'}, committed ${formatUsd(row.committed_total_usd) ?? 'unknown'}, measured/projected value ${formatUsd(row.measured_value_usd) ?? 'unknown'}`;
+        const posture =
+          typeof row.metadata?.sentinel_posture === "string"
+            ? row.metadata.sentinel_posture
+            : row.status_summary;
+        return `${row.initiative_id} (${row.display_id ?? row.initiative_id}) ${row.name} — stage ${row.stage ?? "unknown"}, status_flag ${row.status_flag ?? "unknown"}, Sentinel posture ${posture ?? "unknown"}, committed ${formatUsd(row.committed_total_usd) ?? "unknown"}, measured/projected value ${formatUsd(row.measured_value_usd) ?? "unknown"}`;
       }),
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.97,
   };
 }
 
 function initiativePriority(row: InitiativeRow): number {
-  const posture = `${row.status_summary ?? ''} ${typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : ''} ${row.status_flag ?? ''}`.toLowerCase();
-  if (posture.includes('kill') || posture.includes('stalled')) return 0;
-  if (posture.includes('restructure')) return 1;
-  if (posture.includes('hold') || posture.includes('value_lag')) return 2;
-  if (posture.includes('warning')) return 3;
+  const posture =
+    `${row.status_summary ?? ""} ${typeof row.metadata?.sentinel_posture === "string" ? row.metadata.sentinel_posture : ""} ${row.status_flag ?? ""}`.toLowerCase();
+  if (posture.includes("kill") || posture.includes("stalled")) return 0;
+  if (posture.includes("restructure")) return 1;
+  if (posture.includes("hold") || posture.includes("value_lag")) return 2;
+  if (posture.includes("warning")) return 3;
   return 4;
 }
 
 function isDirectReportsQuestion(query: string): boolean {
-  return /\b(my\s+)?direct\s+reports?\b|\bwho\s+reports?\s+to\s+(?:me|my|the|[a-z])|\breports?\s+to\s+me\b/i.test(query);
+  return /\b(my\s+)?direct\s+reports?\b|\bwho\s+reports?\s+to\s+(?:me|my|the|[a-z])|\breports?\s+to\s+me\b/i.test(
+    query,
+  );
 }
 
 function isCLevelLeaderQuestion(query: string): boolean {
-  return /\b(c[-\s]?level|c-suite|executive\s+bench|executives?|business\s+leaders?|business\s+leadership|ceo|cfo|coo|cmo|cno|cmio|chief)\b/i.test(query);
+  return /\b(c[-\s]?level|c-suite|executive\s+bench|executives?|business\s+leaders?|business\s+leadership|ceo|cfo|coo|cmo|cno|cmio|chief)\b/i.test(
+    query,
+  );
 }
 
 async function retrieveCLevelLeaderSource(
@@ -775,7 +1043,7 @@ async function retrieveCLevelLeaderSource(
 
   const adapter = getTenantDataAdapter();
   const chunks = await adapter.listContextChunks(tenantKey, {
-    segmentIds: ['org_structure'],
+    segmentIds: ["org_structure"],
     limit: 180,
   });
   const businessOnly = /\bbusiness\b/i.test(query);
@@ -790,16 +1058,16 @@ async function retrieveCLevelLeaderSource(
   if (lines.length === 0) return null;
 
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `C-level and business leaders (${tenantKey})`,
     id: `${tenantKey}:c_level_business_leaders`,
     detail: [
       businessOnly
         ? `Business-side C-level and executive leaders visible in ${tenantKey}'s persisted org structure.`
         : `C-level and executive leaders visible in ${tenantKey}'s persisted org structure.`,
-      'This is an in-domain tenant org-structure lookup. Answer it directly; do not say the executive bench is unavailable.',
+      "This is an in-domain tenant org-structure lookup. Answer it directly; do not say the executive bench is unavailable.",
       ...lines,
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: 0.96,
   };
 }
@@ -814,33 +1082,53 @@ interface PersonRecord {
 }
 
 function parsePersonRecordFromChunk(chunk: ContextChunk): PersonRecord | null {
-  const normalized = normalizeLegacyClientAliases(chunk.text).replace(/\s+/g, ' ').trim();
-  const id = readFlattenedField(normalized, 'id') ?? readJsonLikeField(normalized, 'id');
-  const name = readFlattenedField(normalized, 'full_name')
-    ?? readFlattenedField(normalized, 'name')
-    ?? readJsonLikeField(normalized, 'full_name')
-    ?? readJsonLikeField(normalized, 'name');
-  const title = readFlattenedField(normalized, 'title')
-    ?? readFlattenedField(normalized, 'role')
-    ?? readJsonLikeField(normalized, 'title')
-    ?? readJsonLikeField(normalized, 'role');
-  const scope = readFlattenedField(normalized, 'scope')
-    ?? readFlattenedField(normalized, 'role_scope')
-    ?? readJsonLikeField(normalized, 'scope')
-    ?? readJsonLikeField(normalized, 'role_scope');
-  const reportsTo = readFlattenedField(normalized, 'reports_to') ?? readJsonLikeField(normalized, 'reports_to');
+  const normalized = normalizeLegacyClientAliases(chunk.text)
+    .replace(/\s+/g, " ")
+    .trim();
+  const id =
+    readFlattenedField(normalized, "id") ?? readJsonLikeField(normalized, "id");
+  const name =
+    readFlattenedField(normalized, "full_name") ??
+    readFlattenedField(normalized, "name") ??
+    readJsonLikeField(normalized, "full_name") ??
+    readJsonLikeField(normalized, "name");
+  const title =
+    readFlattenedField(normalized, "title") ??
+    readFlattenedField(normalized, "role") ??
+    readJsonLikeField(normalized, "title") ??
+    readJsonLikeField(normalized, "role");
+  const scope =
+    readFlattenedField(normalized, "scope") ??
+    readFlattenedField(normalized, "role_scope") ??
+    readJsonLikeField(normalized, "scope") ??
+    readJsonLikeField(normalized, "role_scope");
+  const reportsTo =
+    readFlattenedField(normalized, "reports_to") ??
+    readJsonLikeField(normalized, "reports_to");
   if (!name && !title) return null;
-  return { id, name, title, scope, reportsTo, sourceDoc: chunk.sourceDoc ?? null };
+  return {
+    id,
+    name,
+    title,
+    scope,
+    reportsTo,
+    sourceDoc: chunk.sourceDoc ?? null,
+  };
 }
 
 function isCLevelRecord(record: PersonRecord, businessOnly: boolean): boolean {
-  const title = record.title ?? '';
-  const isExecutive = /\b(chief|ceo|cfo|coo|cmo|cno|cmio|president|general counsel|board chair)\b/i.test(title);
+  const title = record.title ?? "";
+  const isExecutive =
+    /\b(chief|ceo|cfo|coo|cmo|cno|cmio|president|general counsel|board chair)\b/i.test(
+      title,
+    );
   if (!isExecutive) return false;
   if (/\b(associate|assistant|deputy)\b/i.test(title)) return false;
   if (!businessOnly) return true;
   if (/\bboard chair\b/i.test(title)) return false;
-  return !/\b(digital|information|technology|cio|cdio|cto|ciso|data|analytics|security)\b/i.test(title);
+  return !/\b(digital|information|technology|cio|cdio|cto|ciso|data|analytics|security)\b/i.test(
+    title,
+  );
 }
 
 function formatPersonRecord(record: PersonRecord): string {
@@ -849,7 +1137,9 @@ function formatPersonRecord(record: PersonRecord): string {
     record.title,
     record.scope ? `scope: ${record.scope}` : null,
     record.reportsTo ? `reports_to: ${record.reportsTo}` : null,
-  ].filter(Boolean).join(' — ');
+  ]
+    .filter(Boolean)
+    .join(" — ");
 }
 
 async function retrieveDirectReportsSource(
@@ -864,15 +1154,20 @@ async function retrieveDirectReportsSource(
   if (!isDirectReportsQuestion(query)) return null;
 
   const adapter = getTenantDataAdapter();
-  const people = await adapter.listGraphNodes(tenantKey, 'person');
+  const people = await adapter.listGraphNodes(tenantKey, "person");
   const activePerson = findActivePersonNode(people, opts);
-  const activeNodeId = activePerson?.nodeId ?? opts.activePersonGraphNodeId?.trim() ?? null;
+  const activeNodeId =
+    activePerson?.nodeId ?? opts.activePersonGraphNodeId?.trim() ?? null;
 
   if (activePerson) {
-    const incoming = await adapter.listGraphEdgesForNode(tenantKey, activePerson.nodeId, 'incoming');
+    const incoming = await adapter.listGraphEdgesForNode(
+      tenantKey,
+      activePerson.nodeId,
+      "incoming",
+    );
     const reportIds = new Set(
       incoming
-        .filter((edge) => edge.kind === 'REPORTS_TO')
+        .filter((edge) => edge.kind === "REPORTS_TO")
         .map((edge) => edge.fromNodeId),
     );
     const reports = people
@@ -893,7 +1188,7 @@ async function retrieveDirectReportsSource(
   if (!activeNodeId) return null;
 
   const chunks = await adapter.listContextChunks(tenantKey, {
-    segmentIds: ['org_structure'],
+    segmentIds: ["org_structure"],
     limit: 160,
   });
   const reportLines = chunks
@@ -907,7 +1202,10 @@ async function retrieveDirectReportsSource(
 
   return buildDirectReportsSource({
     tenantKey,
-    activePersonLabel: opts.activePersonDisplayName ?? extractUserDisplayName(opts.userContextBlock) ?? activeNodeId,
+    activePersonLabel:
+      opts.activePersonDisplayName ??
+      extractUserDisplayName(opts.userContextBlock) ??
+      activeNodeId,
     activePersonNodeId: activeNodeId,
     reportLines,
     confidence: 0.95,
@@ -922,14 +1220,14 @@ function buildDirectReportsSource(args: {
   confidence: number;
 }): TenantEnterpriseSource {
   return {
-    type: 'TENANT',
+    type: "TENANT",
     name: `Direct reports (${args.tenantKey})`,
     id: `${args.tenantKey}:direct_reports:${args.activePersonNodeId}`,
     detail: [
       `Direct reports view for ${args.activePersonLabel}.`,
-      'This is an in-domain tenant org-structure lookup. Answer it directly; do not redirect as HR/admin.',
+      "This is an in-domain tenant org-structure lookup. Answer it directly; do not redirect as HR/admin.",
       ...args.reportLines,
-    ].join('\n- '),
+    ].join("\n- "),
     confidence: args.confidence,
   };
 }
@@ -937,20 +1235,34 @@ function buildDirectReportsSource(args: {
 function chunkReportsTo(chunk: ContextChunk, activeNodeId: string): boolean {
   const text = chunk.text.toLowerCase();
   const target = activeNodeId.toLowerCase();
-  return text.includes(`reports_to: ${target}`)
-    || text.includes(`"reports_to": "${target}"`)
-    || text.includes(`reports_to ${target}`);
+  return (
+    text.includes(`reports_to: ${target}`) ||
+    text.includes(`"reports_to": "${target}"`) ||
+    text.includes(`reports_to ${target}`)
+  );
 }
 
 function parsePersonLineFromChunk(chunk: ContextChunk): string | null {
   const record = parsePersonRecordFromChunk(chunk);
-  if (record) return [record.name, record.title, record.scope ? `scope: ${record.scope}` : null].filter(Boolean).join(' — ');
-  return normalizeLegacyClientAliases(chunk.text).replace(/\s+/g, ' ').trim().slice(0, 220);
+  if (record)
+    return [
+      record.name,
+      record.title,
+      record.scope ? `scope: ${record.scope}` : null,
+    ]
+      .filter(Boolean)
+      .join(" — ");
+  return normalizeLegacyClientAliases(chunk.text)
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220);
 }
 
 function readFlattenedField(text: string, field: string): string | null {
-  const match = text.match(new RegExp(`(?:^| )${field}: ([^:]+?)(?= [a-zA-Z_]+: |$)`));
-  return match?.[1]?.trim().replace(/^"|"$/g, '') ?? null;
+  const match = text.match(
+    new RegExp(`(?:^| )${field}: ([^:]+?)(?= [a-zA-Z_]+: |$)`),
+  );
+  return match?.[1]?.trim().replace(/^"|"$/g, "") ?? null;
 }
 
 function readJsonLikeField(text: string, field: string): string | null {
@@ -972,69 +1284,100 @@ function findActivePersonNode(
     if (exact) return exact;
   }
 
-  const displayName = opts.activePersonDisplayName?.trim() || extractUserDisplayName(opts.userContextBlock);
+  const displayName =
+    opts.activePersonDisplayName?.trim() ||
+    extractUserDisplayName(opts.userContextBlock);
   if (!displayName) return null;
   const normalizedDisplayName = normalizeName(displayName);
-  return people.find((person) => normalizeName(person.title) === normalizedDisplayName)
-    ?? people.find((person) => normalizeName(person.title).includes(normalizedDisplayName))
-    ?? null;
+  return (
+    people.find(
+      (person) => normalizeName(person.title) === normalizedDisplayName,
+    ) ??
+    people.find((person) =>
+      normalizeName(person.title).includes(normalizedDisplayName),
+    ) ??
+    null
+  );
 }
 
-function extractUserDisplayName(userContextBlock: string | null | undefined): string | null {
+function extractUserDisplayName(
+  userContextBlock: string | null | undefined,
+): string | null {
   if (!userContextBlock) return null;
-  const firstLine = userContextBlock.split('\n').find((line) => line.startsWith('USER CONTEXT · '));
+  const firstLine = userContextBlock
+    .split("\n")
+    .find((line) => line.startsWith("USER CONTEXT · "));
   const match = firstLine?.match(/^USER CONTEXT · ([^·]+?) · /);
   return match?.[1]?.trim() ?? null;
 }
 
 function formatPersonNode(person: GraphNode): string {
-  const title = readStringPayload(person, 'title')
-    ?? readStringPayload(person, 'role')
-    ?? readStringPayload(person, 'job_title');
-  const functionName = readStringPayload(person, 'function')
-    ?? readStringPayload(person, 'domain')
-    ?? readStringPayload(person, 'cxo_function');
-  return [person.title, title, functionName].filter(Boolean).join(' — ');
+  const title =
+    readStringPayload(person, "title") ??
+    readStringPayload(person, "role") ??
+    readStringPayload(person, "job_title");
+  const functionName =
+    readStringPayload(person, "function") ??
+    readStringPayload(person, "domain") ??
+    readStringPayload(person, "cxo_function");
+  return [person.title, title, functionName].filter(Boolean).join(" — ");
 }
 
 function readStringPayload(node: GraphNode, key: string): string | null {
   const value = node.payload[key];
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function normalizeName(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function tenantRecordPrefix(tenantKey: string): string {
   const normalized = tenantKey.toLowerCase();
-  if (normalized.includes('northstar')) return 'NST';
-  if (normalized.includes('apex')) return 'APX';
-  if (normalized.includes('meridian')) return 'MR';
-  if (normalized.includes('first') || normalized.includes('arcturus')) return 'FCF';
-  if (normalized.includes('skyharbor')) return 'SHA';
-  return normalized.replace(/[^a-z0-9]/g, '').slice(0, 3).toUpperCase() || 'TEN';
+  if (normalized.includes("northstar")) return "NST";
+  if (normalized.includes("apex")) return "APX";
+  if (normalized.includes("meridian")) return "MR";
+  if (normalized.includes("first") || normalized.includes("arcturus"))
+    return "FCF";
+  if (normalized.includes("skyharbor")) return "SHA";
+  return (
+    normalized
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 3)
+      .toUpperCase() || "TEN"
+  );
 }
 
-function deriveAppRef(prefix: string, name: string, fallbackId: string): string {
+function deriveAppRef(
+  prefix: string,
+  name: string,
+  fallbackId: string,
+): string {
   const match = name.match(/\bCapability\s+(\d+)\b/i);
-  if (match) return `${prefix}-APP-${match[1].padStart(3, '0')}`;
+  if (match) return `${prefix}-APP-${match[1].padStart(3, "0")}`;
   return `${prefix}-APP-${fallbackId.slice(0, 8)}`;
 }
 
 function formatUsd(value: number | string | null | undefined): string | null {
   if (value == null) return null;
-  const numeric = typeof value === 'number' ? value : Number(value);
+  const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return null;
-  if (Math.abs(numeric) >= 1_000_000_000) return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
-  if (Math.abs(numeric) >= 1_000_000) return `$${(numeric / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(numeric) >= 1_000_000_000)
+    return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(numeric) >= 1_000_000)
+    return `$${(numeric / 1_000_000).toFixed(1)}M`;
   if (Math.abs(numeric) >= 1_000) return `$${(numeric / 1_000).toFixed(1)}K`;
-  return `$${numeric.toLocaleString('en-US')}`;
+  return `$${numeric.toLocaleString("en-US")}`;
 }
 
 function formatPct(value: number | string | null | undefined): string | null {
   if (value == null) return null;
-  const numeric = typeof value === 'number' ? value : Number(value);
+  const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return null;
   return `${numeric.toFixed(2)}%`;
 }
@@ -1046,7 +1389,11 @@ function formatDate(value: string | null | undefined): string | null {
   return date.toISOString().slice(0, 10);
 }
 
-function rankChunks(chunks: ContextChunk[], query: string, segmentId: SegmentId): ContextChunk[] {
+function rankChunks(
+  chunks: ContextChunk[],
+  query: string,
+  segmentId: SegmentId,
+): ContextChunk[] {
   return chunks
     .map((chunk, index) => ({
       chunk,
@@ -1057,9 +1404,14 @@ function rankChunks(chunks: ContextChunk[], query: string, segmentId: SegmentId)
     .map((item) => item.chunk);
 }
 
-function scoreChunk(chunk: ContextChunk, query: string, segmentId: SegmentId): number {
+function scoreChunk(
+  chunk: ContextChunk,
+  query: string,
+  segmentId: SegmentId,
+): number {
   const normalizedQuery = query.toLowerCase();
-  const haystack = `${chunk.sourceDoc ?? ''} ${chunk.recordId ?? ''} ${chunk.text}`.toLowerCase();
+  const haystack =
+    `${chunk.sourceDoc ?? ""} ${chunk.recordId ?? ""} ${chunk.text}`.toLowerCase();
   const terms = tokenize(normalizedQuery);
   let score = 0;
 
@@ -1067,16 +1419,36 @@ function scoreChunk(chunk: ContextChunk, query: string, segmentId: SegmentId): n
     if (haystack.includes(term)) score += term.length > 5 ? 3 : 2;
   }
 
-  if (segmentId === 'org_structure' && /\b(leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|owner|sponsor|who)\b/.test(normalizedQuery)) {
+  if (
+    segmentId === "org_structure" &&
+    /\b(leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|owner|sponsor|who)\b/.test(
+      normalizedQuery,
+    )
+  ) {
     score += 8;
   }
-  if (segmentId === 'it_financials' && /\b(budget|spend|financial|capex|opex|capital|funding|approval|authority|fy\s*26|fy2026)\b/.test(normalizedQuery)) {
+  if (
+    segmentId === "it_financials" &&
+    /\b(budget|spend|financial|capex|opex|capital|funding|approval|authority|fy\s*26|fy2026)\b/.test(
+      normalizedQuery,
+    )
+  ) {
     score += 8;
   }
-  if (segmentId === 'enterprise_profile' && /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know)\b/.test(normalizedQuery)) {
+  if (
+    segmentId === "enterprise_profile" &&
+    /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know)\b/.test(
+      normalizedQuery,
+    )
+  ) {
     score += 5;
   }
-  if (segmentId === 'it_landscape' && /\b(data|analytics|technology|system|platform|cloud|vendor)\b/.test(normalizedQuery)) {
+  if (
+    segmentId === "it_landscape" &&
+    /\b(data|analytics|technology|system|platform|cloud|vendor)\b/.test(
+      normalizedQuery,
+    )
+  ) {
     score += 6;
   }
 
@@ -1087,27 +1459,32 @@ function scoreChunk(chunk: ContextChunk, query: string, segmentId: SegmentId): n
 }
 
 function formatChunk(chunk: ContextChunk): string {
-  const doc = chunk.sourceDoc ? `${chunk.sourceDoc}: ` : '';
-  const text = normalizeLegacyClientAliases(chunk.text).replace(/\s+/g, ' ').trim();
-  const clipped = text.length > 460 ? `${text.slice(0, 457).replace(/\s+\S*$/, '')}...` : text;
+  const doc = chunk.sourceDoc ? `${chunk.sourceDoc}: ` : "";
+  const text = normalizeLegacyClientAliases(chunk.text)
+    .replace(/\s+/g, " ")
+    .trim();
+  const clipped =
+    text.length > 460
+      ? `${text.slice(0, 457).replace(/\s+\S*$/, "")}...`
+      : text;
   return `${doc}${clipped}`;
 }
 
 function normalizeLegacyClientAliases(text: string): string {
   return text
-    .replace(/\bAsterline Retail Group\b/g, 'Apex Retail Group')
-    .replace(/\bAsterline Retail\b/g, 'Apex Retail')
-    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health')
-    .replace(/\bHeliara Health\b/g, 'Meridian Health')
-    .replace(/\bHeliara\b/g, 'Meridian')
-    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark\b/g, 'First Capital');
+    .replace(/\bAsterline Retail Group\b/g, "Apex Retail Group")
+    .replace(/\bAsterline Retail\b/g, "Apex Retail")
+    .replace(/\bHeliara Health Alliance\b/g, "Meridian Health")
+    .replace(/\bHeliara Health\b/g, "Meridian Health")
+    .replace(/\bHeliara\b/g, "Meridian")
+    .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
+    .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
+    .replace(/\bBrindlemark\b/g, "First Capital");
 }
 
 function tokenize(value: string): string[] {
   return value
-    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/[^a-z0-9\s-]/g, " ")
     .split(/\s+/)
     .map((token) => token.trim())
     .filter((token) => token.length > 2 && !STOPWORDS.has(token));
