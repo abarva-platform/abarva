@@ -830,8 +830,8 @@ function tierStyle(tier: SourceEventArtifactState["tier"]): CSSProperties {
 
 function tierLabel(tier: SourceEventArtifactState["tier"]): string {
   if (tier === "rich") return "Authored";
-  if (tier === "outline") return "In progress";
-  return "Draft";
+  if (tier === "outline") return "Prepared";
+  return "Template";
 }
 
 const DOCUMENT_TAB_STYLE: CSSProperties = {

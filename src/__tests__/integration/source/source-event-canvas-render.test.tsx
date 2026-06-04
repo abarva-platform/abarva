@@ -497,11 +497,14 @@ describe("UniversalCanvasShell · SSR render", () => {
         makeArtifactState({
           artifactCode: "d05_scope_memo",
           status: "approved",
+          tier: "outline",
         }),
       ],
     });
     expect(html).toContain("source-canvas-artifact-status-approved");
     expect(html).toContain("Approved");
+    expect(html).toContain("Prepared");
+    expect(html).not.toContain("In progress");
     expect(html).toContain("source-canvas-artifact-reopen-d05_scope_memo");
     expect(html).not.toContain(
       "source-canvas-artifact-mark-complete-d05_scope_memo",

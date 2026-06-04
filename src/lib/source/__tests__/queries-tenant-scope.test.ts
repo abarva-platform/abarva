@@ -1,10 +1,20 @@
-import { getSourcingEvent, listSourcingEvents } from "../queries";
+import {
+  getSourcingEvent,
+  getSourcingEventArtifact,
+  listSourcingEvents,
+} from "../queries";
 
 const mockSourceEventsAdapter = {
   getPendingEventsForClient: jest.fn(),
   getActiveEventsForClient: jest.fn(),
   getEventByIdForClient: jest.fn(),
   getEventByCodeForClient: jest.fn(),
+};
+
+const mockSourceCanvasAdapter = {
+  listArtifactStateRows: jest.fn(),
+  listGateCriterionStateRows: jest.fn(),
+  listEvidenceStateRows: jest.fn(),
 };
 
 jest.mock("@/lib/active-client", () => ({
@@ -26,6 +36,14 @@ jest.mock("@/lib/auth/current-user", () => ({
 
 jest.mock("@/lib/data-plane/read-adapters/sourceEventsReadAdapter", () => ({
   selectSourceEventsReadAdapter: jest.fn(() => mockSourceEventsAdapter),
+}));
+
+jest.mock("@/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter", () => ({
+  selectSourceCanvasSubstrateReadAdapter: jest.fn(() => mockSourceCanvasAdapter),
+}));
+
+jest.mock("../artifact-registry", () => ({
+  getSourceArtifactRegistryRecord: jest.fn(),
 }));
 
 jest.mock("@/lib/supabase-server", () => ({
@@ -63,6 +81,33 @@ function mockEmptySourceEventsTable() {
   getServerSupabase.mockReturnValue({ from: jest.fn(() => ({ select })) });
 }
 
+function mockApexPersistedGoldenEvent() {
+  mockSourceEventsAdapter.getEventByCodeForClient.mockImplementation(
+    async (eventCode: string) => {
+      if (eventCode === "SRC-004") {
+        return {
+          id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+          client_key: "apexretail",
+          event_code: "SRC-004",
+          event_name: "AMS Outsourcing 2026",
+          event_type: "managed_service",
+          current_stage_key: "bafo",
+          lifecycle_state: "active",
+          linked_program_id: null,
+          estimated_value_usd: 35000000,
+          trigger_description: "Renewal and run-cost pressure.",
+          scope_description: "SAP, OMS, WMS, POS, finance legacy support.",
+          decision_owner: "Carlos Rivera",
+          created_by_user_id: "user-apex",
+          created_at: "2026-06-01T00:00:00.000Z",
+          updated_at: "2026-06-02T00:00:00.000Z",
+        };
+      }
+      return null;
+    },
+  );
+}
+
 describe("listSourcingEvents tenant scoping", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -70,6 +115,9 @@ describe("listSourcingEvents tenant scoping", () => {
       new Error("no request tenancy in unit test"),
     );
     mockEmptySourceEventsTable();
+    mockSourceCanvasAdapter.listArtifactStateRows.mockResolvedValue([]);
+    mockSourceCanvasAdapter.listGateCriterionStateRows.mockResolvedValue([]);
+    mockSourceCanvasAdapter.listEvidenceStateRows.mockResolvedValue([]);
   });
 
   it("only returns Apex seed events for an Apex active client", async () => {
@@ -264,30 +312,7 @@ describe("getSourcingEvent tenant scoping", () => {
       role: "client_admin",
       email: "cio@apex-retail.example.com",
     });
-    mockSourceEventsAdapter.getEventByCodeForClient.mockImplementation(
-      async (eventCode: string) => {
-        if (eventCode === "SRC-004") {
-          return {
-            id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
-            client_key: "apexretail",
-            event_code: "SRC-004",
-            event_name: "AMS Outsourcing 2026",
-            event_type: "managed_service",
-            current_stage_key: "bafo",
-            lifecycle_state: "active",
-            linked_program_id: null,
-            estimated_value_usd: 35000000,
-            trigger_description: "Renewal and run-cost pressure.",
-            scope_description: "SAP, OMS, WMS, POS, finance legacy support.",
-            decision_owner: "Carlos Rivera",
-            created_by_user_id: "user-apex",
-            created_at: "2026-06-01T00:00:00.000Z",
-            updated_at: "2026-06-02T00:00:00.000Z",
-          };
-        }
-        return null;
-      },
-    );
+    mockApexPersistedGoldenEvent();
 
     const event = await getSourcingEvent("apex-retail-ams-outsourcing-2026");
 
@@ -308,5 +333,32 @@ describe("getSourcingEvent tenant scoping", () => {
     await expect(
       getSourcingEvent("apex-retail-ams-outsourcing-2026"),
     ).resolves.toBeNull();
+  });
+
+  it("resolves canonical artifact-code document links for event-code URLs", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-apex",
+      name: "Apex Retail Group",
+      industry_code: "RETAIL",
+      key: "apexretail",
+    });
+    requireTenancy.mockResolvedValue({
+      clientId: "client-apex",
+      clientKey: "apexretail",
+      userId: "clerk:apex-cio",
+      role: "client_admin",
+      email: "cio@apex-retail.example.com",
+    });
+    mockApexPersistedGoldenEvent();
+
+    const artifact = await getSourcingEventArtifact(
+      "apex-retail-ams-outsourcing-2026",
+      "d01_strategy_memo",
+    );
+
+    expect(artifact?.eventId).toBe("522eedf2-ff6b-4307-b312-3e0903c6fd42");
+    expect(artifact?.title).toBe("Sourcing Strategy Memo");
+    expect(artifact?.sections.length).toBeGreaterThan(0);
+    expect(artifact?.governanceNotes.join(" ")).toContain("d01_strategy_memo");
   });
 });
