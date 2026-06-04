@@ -108,6 +108,33 @@ export interface CustomerAdminUsagePanel {
   costBasis: 'provider_metadata' | 'not_metered';
 }
 
+export type CustomerAdminWeeklyUsageReportStatus =
+  | 'ready'
+  | 'needs_metering'
+  | 'needs_cap_configuration'
+  | 'cap_alert'
+  | 'cap_blocked';
+
+export interface CustomerAdminWeeklyUsageReport {
+  period: 'recent_audit_window';
+  calls: number;
+  totalTokens: number | null;
+  estimatedCostUsd: number | null;
+  includedMonthlyTokenAllowance: number;
+  overageRateUsdPerMillionTokens: number;
+  tokenCap: number | null;
+  tokenPercentOfCap: number | null;
+  capDecision: string | null;
+  capReason: string | null;
+  alertAtPercent: number | null;
+  blockAtPercent: number | null;
+  reportReady: boolean;
+  status: CustomerAdminWeeklyUsageReportStatus;
+  customerNotice: string;
+  lastSeenAt: string | null;
+  evidenceBasis: 'usage_cap_audit_metadata' | 'provider_metadata_only' | 'not_metered';
+}
+
 export interface CustomerAdminDocumentCostRow {
   documentKey: string;
   label: string;
@@ -153,6 +180,7 @@ export interface CustomerAdminPageView {
   users: CustomerAdminUsersPanel;
   aiEgress: CustomerAdminAiEgressPanel;
   usage: CustomerAdminUsagePanel;
+  weeklyUsageReport: CustomerAdminWeeklyUsageReport;
   documentEconomics: CustomerAdminDocumentEconomicsPanel;
   substrate: CustomerAdminSubstratePanel;
   banners: ReadonlyArray<string>;
@@ -230,6 +258,20 @@ function booleanFromMetadata(
 
 function roundCurrency(value: number): number {
   return Number(value.toFixed(6));
+}
+
+function nestedRecordFromMetadata(
+  metadata: Record<string, unknown> | null,
+  keys: ReadonlyArray<string>,
+): Record<string, unknown> | null {
+  if (!metadata) return null;
+  for (const key of keys) {
+    const value = metadata[key];
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+  }
+  return null;
 }
 
 export function scopeAiEgressRowsToClient(
@@ -498,6 +540,80 @@ export function summarizeUsageFromAiEgressRows(
   };
 }
 
+export function summarizeWeeklyUsageReportFromAiEgressRows(
+  rows: ReadonlyArray<AiEgressAuditRow>,
+  clientId: string | null,
+): CustomerAdminWeeklyUsageReport {
+  const scoped = scopeAiEgressRowsToClient(rows, clientId);
+  const usage = summarizeUsageFromAiEgressRows(rows, clientId);
+  const totalTokens =
+    usage.inputTokens === null && usage.outputTokens === null
+      ? null
+      : (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
+  const latestCapMetadata = scoped
+    .map((row) => ({
+      row,
+      cap: nestedRecordFromMetadata(row.request_metadata, ['usageCap', 'usage_cap']),
+    }))
+    .find((item) => item.cap);
+  const cap = latestCapMetadata?.cap ?? null;
+  const tokenCap = numberFromMetadata(cap, ['usage_cap_token_cap', 'tokenCap', 'token_cap']);
+  const tokenPercentOfCap =
+    numberFromMetadata(cap, ['usage_cap_token_percent_after', 'tokenPercentAfter', 'token_percent_after']) ??
+    (tokenCap && totalTokens !== null ? Math.round((totalTokens / tokenCap) * 10000) / 100 : null);
+  const capDecision = stringFromMetadata(cap, ['usage_cap_decision', 'decision']);
+  const capReason = stringFromMetadata(cap, ['usage_cap_reason', 'reason']);
+  const alertAtPercent = numberFromMetadata(cap, ['usage_cap_alert_at_percent', 'alertAtPercent', 'alert_at_percent']);
+  const blockAtPercent = numberFromMetadata(cap, ['usage_cap_block_at_percent', 'blockAtPercent', 'block_at_percent']);
+
+  let status: CustomerAdminWeeklyUsageReportStatus = 'ready';
+  if (totalTokens === null) {
+    status = 'needs_metering';
+  } else if (!tokenCap) {
+    status = 'needs_cap_configuration';
+  } else if (capDecision === 'block') {
+    status = 'cap_blocked';
+  } else if (capDecision === 'alert') {
+    status = 'cap_alert';
+  }
+
+  const customerNotice = (() => {
+    if (status === 'needs_metering') {
+      return 'Usage report is not ready: provider token and cost metadata are not present in this audit window.';
+    }
+    if (status === 'needs_cap_configuration') {
+      return 'Usage report is not ready: usage is metered, but no tenant usage-cap audit metadata is present yet.';
+    }
+    if (status === 'cap_blocked') {
+      return 'Usage cap is blocking new model calls. Review approved overage or rate-limit treatment before notifying the client.';
+    }
+    if (status === 'cap_alert') {
+      return 'Usage is inside the alert band. Notify the client admin before material overage is incurred.';
+    }
+    return 'Usage report is ready for client review, subject to account-owner approval.';
+  })();
+
+  return {
+    period: 'recent_audit_window',
+    calls: scoped.length,
+    totalTokens,
+    estimatedCostUsd: usage.estimatedCostUsd,
+    includedMonthlyTokenAllowance: 50_000_000,
+    overageRateUsdPerMillionTokens: 18,
+    tokenCap,
+    tokenPercentOfCap,
+    capDecision,
+    capReason,
+    alertAtPercent,
+    blockAtPercent,
+    reportReady: status === 'ready' || status === 'cap_alert',
+    status,
+    customerNotice,
+    lastSeenAt: scoped[0]?.created_at ?? null,
+    evidenceBasis: cap ? 'usage_cap_audit_metadata' : usage.costBasis === 'provider_metadata' ? 'provider_metadata_only' : 'not_metered',
+  };
+}
+
 async function loadAiEgressRows(clientId: string | null): Promise<{
   rows: ReadonlyArray<AiEgressAuditRow>;
   banner?: string;
@@ -606,6 +722,7 @@ function emptyCustomerAdminPageView(args: {
     },
     aiEgress: summarizeAiEgressRows([], args.clientId),
     usage: summarizeUsageFromAiEgressRows([], args.clientId),
+    weeklyUsageReport: summarizeWeeklyUsageReportFromAiEgressRows([], args.clientId),
     documentEconomics: summarizeDocumentEconomicsFromAiEgressRows([], args.clientId),
     substrate: {
       segments: [],
@@ -698,6 +815,7 @@ export async function buildCustomerAdminPageView(): Promise<CustomerAdminPageVie
     },
     aiEgress,
     usage: summarizeUsageFromAiEgressRows(aiEgressResult.rows, tenancy.clientId),
+    weeklyUsageReport: summarizeWeeklyUsageReportFromAiEgressRows(aiEgressResult.rows, tenancy.clientId),
     documentEconomics: summarizeDocumentEconomicsFromAiEgressRows(aiEgressResult.rows, tenancy.clientId),
     substrate,
     banners,

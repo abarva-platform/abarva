@@ -10,6 +10,7 @@ import {
   type CustomerAdminDocumentEconomicsPanel,
   type CustomerAdminSubstratePanel,
   type CustomerAdminUsagePanel,
+  type CustomerAdminWeeklyUsageReport,
   type CustomerAdminUsersPanel,
 } from '@/lib/admin/customer-admin-read-model';
 
@@ -261,12 +262,18 @@ function formatUsd(value: number | null, digits = 4): string {
   return value === null ? 'Not metered' : `$${value.toFixed(digits)}`;
 }
 
+function formatPercent(value: number | null): string {
+  return value === null ? 'Not configured' : `${value.toFixed(value % 1 === 0 ? 0 : 2)}%`;
+}
+
 function UsagePanel({
   usage,
   documentEconomics,
+  weeklyUsageReport,
 }: {
   usage: CustomerAdminUsagePanel;
   documentEconomics: CustomerAdminDocumentEconomicsPanel;
+  weeklyUsageReport: CustomerAdminWeeklyUsageReport;
 }) {
   const tokens =
     usage.inputTokens === null && usage.outputTokens === null
@@ -283,6 +290,45 @@ function UsagePanel({
         <MetricTile label="Tokens" value={tokens} detail="Only when provider metadata records tokens" />
         <MetricTile label="Cost" value={cost} detail={usage.costBasis === 'provider_metadata' ? 'Provider metadata' : 'No first-class billing column yet'} />
         <MetricTile label="Cache hit rate" value={cacheHitRate} detail="Document/prompt cache telemetry when present" />
+      </div>
+      <div
+        style={{
+          border: `1px solid ${COLORS.navy}20`,
+          borderRadius: RADIUS.md,
+          background: `${COLORS.navy}08`,
+          padding: SPACING.md,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: SPACING.md,
+          alignItems: 'start',
+        }}
+      >
+        <MetricTile
+          label="Weekly report"
+          value={weeklyUsageReport.reportReady ? 'Ready' : 'Not ready'}
+          detail={weeklyUsageReport.status.replaceAll('_', ' ')}
+        />
+        <MetricTile
+          label="Cap used"
+          value={formatPercent(weeklyUsageReport.tokenPercentOfCap)}
+          detail={weeklyUsageReport.tokenCap === null ? 'No cap audit metadata' : `${weeklyUsageReport.tokenCap.toLocaleString()} token cap`}
+        />
+        <MetricTile
+          label="Overage"
+          value={`$${weeklyUsageReport.overageRateUsdPerMillionTokens}/M`}
+          detail={`${weeklyUsageReport.includedMonthlyTokenAllowance.toLocaleString()} included monthly tokens`}
+        />
+        <div
+          style={{
+            gridColumn: '1 / -1',
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: COLORS.ink,
+          }}
+        >
+          {weeklyUsageReport.customerNotice}
+        </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: SPACING.md }}>
         <MetricTile label="Documents" value={documentEconomics.totalDocuments} detail={`${documentEconomics.meteredDocuments} with cost metadata`} />
@@ -462,7 +508,11 @@ export default async function CustomerAdminPage() {
           <AuditPanel audit={view.audit} />
           <UsersPanel users={view.users} />
           <AiEgressPanel aiEgress={view.aiEgress} />
-          <UsagePanel usage={view.usage} documentEconomics={view.documentEconomics} />
+          <UsagePanel
+            usage={view.usage}
+            weeklyUsageReport={view.weeklyUsageReport}
+            documentEconomics={view.documentEconomics}
+          />
         </div>
         <SubstratePanel substrate={view.substrate} />
       </main>
