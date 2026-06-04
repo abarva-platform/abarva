@@ -4,6 +4,7 @@ export const CORPUS_INDUSTRY_SCOPE_ALIASES = {
   healthcare_medtech: ['healthcare_medtech'],
   financial_services_banking: ['financial_services_banking'],
   airline: ['airline', 'global_network_airline', 'aviation'],
+  private_holdings: ['lakeshore-capital', 'private-holdings'],
 } as const;
 
 type CorpusIndustry = keyof typeof CORPUS_INDUSTRY_SCOPE_ALIASES;
@@ -35,6 +36,7 @@ export function inferCorpusIndustry(input: CorpusIndustryScopeInput): CorpusIndu
   if (/\b(meridian|health|healthcare|clinical|hospital|patient|payer|provider|epic|ehr|phs)\b/.test(haystack)) return 'healthcare_provider';
   if (/\b(first[- ]?capital|firstcapital|financial|bank|wealth|aml|kyc|underwriting|fraud)\b/.test(haystack)) return 'financial_services_banking';
   if (/\b(skyharbor|airline|aviation|air)\b/.test(haystack)) return 'airline';
+  if (/\b(lakeshore|lakeshore[- ]?holdings|holdco|holding\s+company|private[- ]?holdings|family[- ]?office|permanent[- ]?capital)\b/.test(haystack)) return 'private_holdings';
   return null;
 }
 
