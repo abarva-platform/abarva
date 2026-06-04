@@ -424,6 +424,8 @@ export async function captureGateBlock(
   const stage = options.stage ?? "(unspecified)";
 
   const reasonSelectors = options.reasonSelectors ?? [
+    '[data-testid="source-canvas-gate-blockers"]',
+    '[data-testid="source-canvas-gate-tab"] [role="status"]',
     '[role="alert"]',
     '[data-testid$="-error"]',
     '[data-testid*="toast"]',
@@ -447,6 +449,7 @@ export async function captureGateBlock(
   }
 
   const criteriaSelectors = options.criteriaSelectors ?? [
+    '[data-testid="source-canvas-gate-blockers"] li',
     '[data-testid="source-canvas-gate-criteria"] li',
     '[data-testid="source-canvas-gate-current"] li',
   ];

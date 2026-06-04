@@ -81,6 +81,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, type Page, type Response } from '@playwright/test';
+import { RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION } from '@/lib/ai-liability/responsible-ai-acknowledgment-copy';
 
 import {
   BASE_URL,
@@ -173,6 +174,7 @@ const PERSONAS: Record<SourcePersonaKey, PersonaConfig> = {
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const AUTH_DIR = path.join(REPO_ROOT, '.auth');
 const STORAGE_MAX_AGE_MS = 1000 * 60 * 60 * 8; // 8 hours
+const RESPONSIBLE_AI_ACK_ROUTE = '/responsible-ai/acknowledgment';
 
 /** Absolute path to the storageState JSON for a given persona. */
 export function sourcePersonaStorageState(personaKey: SourcePersonaKey): string {
@@ -221,6 +223,21 @@ function ensureAuthDir(): void {
   }
 }
 
+function decodeJwtExp(jwt: string): number | null {
+  const parts = jwt.split('.');
+  if (parts.length < 2) return null;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString(
+        'utf8',
+      ),
+    ) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
 function storageStateIsFresh(filePath: string, maxAgeMs = STORAGE_MAX_AGE_MS): boolean {
   if (!fs.existsSync(filePath)) return false;
   try {
@@ -232,6 +249,10 @@ function storageStateIsFresh(filePath: string, maxAgeMs = STORAGE_MAX_AGE_MS): b
     const session = parsed.cookies?.find((c) => c.name === '__session');
     if (!session?.value) return false;
     if (session.expires && session.expires > 0 && session.expires * 1000 < Date.now()) {
+      return false;
+    }
+    const jwtExp = decodeJwtExp(session.value);
+    if (jwtExp && jwtExp * 1000 < Date.now()) {
       return false;
     }
     return true;
@@ -275,6 +296,8 @@ async function primeStorageState(personaKey: SourcePersonaKey): Promise<string> 
           `CLERK_SESSION_TOKEN, and no fallback demo account configured.`,
       );
     }
+
+    await ensureResponsibleAiAcknowledged(page);
 
     // Verify /source/ is reachable.
     const probe = await gotoSourceProbe(page, persona.postLoginProbe);
@@ -332,6 +355,8 @@ export async function signInAs(
 
   await injectStorageStateIntoPage(page, storagePath);
 
+  await ensureResponsibleAiAcknowledged(page);
+
   // Verify /source/ is reachable from this page.
   let response = await gotoSourceProbe(page, persona.postLoginProbe);
   if (page.url().includes('/sign-in') || (response && response.status() >= 400)) {
@@ -339,6 +364,7 @@ export async function signInAs(
     fs.rmSync(storagePath, { force: true });
     await primeStorageState(key);
     await injectStorageStateIntoPage(page, storagePath);
+    await ensureResponsibleAiAcknowledged(page);
     response = await gotoSourceProbe(page, persona.postLoginProbe);
     if (page.url().includes('/sign-in') || (response && response.status() >= 400)) {
       throw new Error(
@@ -346,6 +372,59 @@ export async function signInAs(
       );
     }
   }
+}
+
+async function ensureResponsibleAiAcknowledged(page: Page): Promise<void> {
+  try {
+    await page.goto(RESPONSIBLE_AI_ACK_ROUTE, { waitUntil: 'domcontentloaded' });
+  } catch (error) {
+    if (
+      !(error instanceof Error) ||
+      !error.message.includes('net::ERR_ABORTED')
+    ) {
+      throw error;
+    }
+  }
+  await page
+    .waitForURL(/\/responsible-ai\/acknowledgment|\/home|\/source(\/queue|\/portfolio|\/events)?/, {
+      timeout: 15000,
+    })
+    .catch(() => null);
+
+  if (!page.url().includes(RESPONSIBLE_AI_ACK_ROUTE)) {
+    return;
+  }
+
+  const response = await page.request.post(
+    '/api/ai-liability/responsible-ai-acknowledgment',
+    {
+      data: {
+        accepted: true,
+        textVersion: RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
+      },
+    },
+  );
+  if (response.status() !== 200) {
+    throw new Error(
+      `Responsible AI acknowledgment API returned ${response.status()}.`,
+    );
+  }
+
+  try {
+    await page.goto('/source', { waitUntil: 'domcontentloaded' });
+  } catch (error) {
+    if (
+      !(error instanceof Error) ||
+      !error.message.includes('net::ERR_ABORTED')
+    ) {
+      throw error;
+    }
+  }
+  await page
+    .waitForURL(/\/source(\/queue|\/portfolio|\/events)?|\/home/, {
+      timeout: 15000,
+    })
+    .catch(() => null);
 }
 
 async function gotoSourceProbe(
