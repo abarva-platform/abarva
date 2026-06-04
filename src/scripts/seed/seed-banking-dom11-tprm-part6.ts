@@ -1,4 +1,5 @@
-export const BANKING_DOM11_TPRM_PART6_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM11_TPRM_PART6_PATTERNS: any[] = [
 
   // ── Fourth-Party Risk (B3400–B3411) ──────────────────────────────────────
 

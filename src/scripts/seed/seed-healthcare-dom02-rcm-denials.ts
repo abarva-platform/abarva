@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — RCM: Claims, Denials Management & Appeals
 // Domain: Revenue Cycle — Claims Processing, Denials Management & Appeals
 // Code range: H600–H899 (300 patterns)

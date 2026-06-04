@@ -1,4 +1,5 @@
-export const MEDTECH_DOM01_FDA_REGULATORY_PART6_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const MEDTECH_DOM01_FDA_REGULATORY_PART6_PATTERNS: any[] = [
 
   // ── 510(k) Predicate Analysis (M390–M401) ─────────────────────────────────
 

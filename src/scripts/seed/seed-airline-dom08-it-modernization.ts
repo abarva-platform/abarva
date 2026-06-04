@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - IT Modernisation & Data Platform
 // Code range: A2400-A2699
 // Run: npx tsx src/scripts/seed/seed-airline-dom08-it-modernization.ts

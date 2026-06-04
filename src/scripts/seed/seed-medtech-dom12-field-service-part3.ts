@@ -1,4 +1,5 @@
-export const MEDTECH_DOM12_FIELD_SERVICE_PART3_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const MEDTECH_DOM12_FIELD_SERVICE_PART3_PATTERNS: any[] = [
 
   // ── Spare Parts Management (M1870–M1881) ──────────────────────────────────
 

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Revenue Management & Pricing
 // Code range: A300-A599
 // Run: npx tsx src/scripts/seed/seed-airline-dom01-revenue-mgmt.ts

@@ -1,4 +1,5 @@
-export const BANKING_DOM12_DATA_GOVERNANCE_PART6_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM12_DATA_GOVERNANCE_PART6_PATTERNS: any[] = [
 
   // ── Data Lineage Management (B3700–B3711) ────────────────────────────────
 

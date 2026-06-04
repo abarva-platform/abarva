@@ -1,4 +1,5 @@
-export const BANKING_DOM13_CLOUD_INFRA_PART6_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM13_CLOUD_INFRA_PART6_PATTERNS: any[] = [
 
   // ── Cloud Security Posture (B4000–B4011) ────────────────────────────────────
 

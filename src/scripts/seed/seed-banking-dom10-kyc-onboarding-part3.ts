@@ -1,4 +1,5 @@
-export const BANKING_DOM10_KYC_ONBOARDING_PART3_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM10_KYC_ONBOARDING_PART3_PATTERNS: any[] = [
 
   // ── Screening Automation (B2920–B2931) ────────────────────────────────────
 

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — Finance, Managed Care Contracting & Physician Enterprise
 // AbarVa corpus — Domain 17: Healthcare Finance, Managed Care Contracting & Physician Enterprise Management
 // Code range: H5100–H5399 (300 patterns)

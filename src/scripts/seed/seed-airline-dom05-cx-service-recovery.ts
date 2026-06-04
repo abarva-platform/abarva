@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — Customer Experience, Contact Centre & Service Recovery
 
 type OfficeCategory = 'front_office' | 'middle_office' | 'back_office';

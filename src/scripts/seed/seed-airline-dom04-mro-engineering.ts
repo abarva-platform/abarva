@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns — MRO Engineering, Airworthiness & Technical Operations
 // Domain: MRO Engineering, Airworthiness Management & Technical Operations
 // Code range: A1200–A1499 (300 patterns)

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Healthcare Provider patterns — Emergency Department Throughput & Capacity Management
 // Code range: H3600–H3899 (300 patterns)
 // Run: npx tsx src/scripts/seed/seed-healthcare-dom12-ed-throughput.ts

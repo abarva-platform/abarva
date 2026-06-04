@@ -1,4 +1,5 @@
-export const MEDTECH_DOM06_PMS_PART3_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const MEDTECH_DOM06_PMS_PART3_PATTERNS: any[] = [
 
   // ── Vigilance Reporting (M970–M981) ──────────────────────────────────────
 

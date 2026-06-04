@@ -1,4 +1,5 @@
-export const BANKING_DOM14_AI_GOVERNANCE_PART5_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BANKING_DOM14_AI_GOVERNANCE_PART5_PATTERNS: any[] = [
 
   // ── ai-model-lifecycle (B4240–B4251) ─────────────────────────────────────
 

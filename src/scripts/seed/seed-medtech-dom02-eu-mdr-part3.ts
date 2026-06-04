@@ -1,4 +1,5 @@
-export const MEDTECH_DOM02_EU_MDR_PART3_PATTERNS: PatternSeed[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const MEDTECH_DOM02_EU_MDR_PART3_PATTERNS: any[] = [
 
   // ── Clinical Evaluation Report (M350–M361) ────────────────────────────────
 

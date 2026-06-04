@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Airline genome patterns - Workforce & Labour Relations
 // Code range: A4200-A4499
 // Run: npx tsx src/scripts/seed/seed-airline-dom14-workforce.ts
