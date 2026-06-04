@@ -244,6 +244,8 @@
     "reasoning:report": "npx tsx scripts/reasoning-report.ts",
     "parallel-run:diff": "npx tsx scripts/parallel-run-diff.ts",
     "embed:pending-chunks": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/embed-pending-chunks.ts",
+    "lakeshore:corpus-map": "node scripts/lakeshore/generate-corpus-coverage-map.mjs",
+    "lakeshore:corpus-map:check": "node scripts/lakeshore/generate-corpus-coverage-map.mjs --check",
     "lakeshore:live-activation:verify": "node scripts/lakeshore/verify-live-activation-readiness.mjs",
     "ingest:worldview": "npx tsx src/scripts/ingest-worldview-chunks.ts",
     "db:seed:tenant-metrics:dry": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-tenant-metric-fixtures.ts",
