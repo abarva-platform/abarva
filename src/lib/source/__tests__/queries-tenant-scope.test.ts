@@ -67,6 +67,11 @@ const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
 const { getServerSupabase } = jest.requireMock("@/lib/supabase-server") as {
   getServerSupabase: jest.Mock;
 };
+const { getSourceArtifactRegistryRecord } = jest.requireMock(
+  "../artifact-registry",
+) as {
+  getSourceArtifactRegistryRecord: jest.Mock;
+};
 
 function mockEmptySourceEventsTable() {
   mockSourceEventsAdapter.getPendingEventsForClient.mockResolvedValue([]);
@@ -360,5 +365,8 @@ describe("getSourcingEvent tenant scoping", () => {
     expect(artifact?.title).toBe("Sourcing Strategy Memo");
     expect(artifact?.sections.length).toBeGreaterThan(0);
     expect(artifact?.governanceNotes.join(" ")).toContain("d01_strategy_memo");
+    expect(getSourceArtifactRegistryRecord).not.toHaveBeenCalledWith(
+      "d01_strategy_memo",
+    );
   });
 });

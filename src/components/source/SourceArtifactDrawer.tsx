@@ -1,4 +1,4 @@
-// SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with tier indicator (rich/outline/stub).
+// SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with buyer-safe maturity indicator.
 // T09: Added section-tier border-left, seeded version history, sign-offs panel.
 // No upload, parsing, workflow automation, or approval runtime.
 import { SHELL } from "@/lib/shell/shell-tokens";
@@ -19,19 +19,19 @@ const TIER_CONFIG: Record<
   { label: string; color: string; bg: string; borderLeft: string }
 > = {
   rich: {
-    label: "Final",
+    label: "Authored",
     color: SHELL.MINT_TEXT,
     bg: SHELL.MINT_BG,
     borderLeft: SHELL.MINT_TEXT,
   },
   outline: {
-    label: "In Progress",
+    label: "Prepared",
     color: SHELL.INK_MID,
     bg: SHELL.PAPER_SOFT,
     borderLeft: SHELL.INK_SOFT,
   },
   stub: {
-    label: "Draft",
+    label: "Template",
     color: SHELL.PEACH_TEXT,
     bg: SHELL.PEACH_BG,
     borderLeft: SHELL.PEACH_TEXT,

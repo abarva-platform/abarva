@@ -1272,7 +1272,9 @@ export async function getSourcingEventArtifact(
     [eventId, event?.id, event?.code].filter(Boolean) as string[],
   );
 
-  const registryRecord = await getSourceArtifactRegistryRecord(artifactIdOrCode);
+  const registryRecord = isUuid(artifactIdOrCode)
+    ? await getSourceArtifactRegistryRecord(artifactIdOrCode)
+    : null;
   if (
     registryRecord &&
     allowedEventIds.has(registryRecord.sourceEventId) &&
@@ -1308,9 +1310,9 @@ export async function getSourcingEventArtifact(
     state.linkedArtifactId &&
     state.linkedArtifactId !== artifactIdOrCode
   ) {
-    const linkedRecord = await getSourceArtifactRegistryRecord(
-      state.linkedArtifactId,
-    );
+    const linkedRecord = isUuid(state.linkedArtifactId)
+      ? await getSourceArtifactRegistryRecord(state.linkedArtifactId)
+      : null;
     if (
       linkedRecord &&
       allowedEventIds.has(linkedRecord.sourceEventId) &&
