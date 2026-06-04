@@ -30,6 +30,7 @@ describe("Home/Admin boundary contract", () => {
     const proxySource = readRepoFile("src/proxy.ts");
 
     for (const [legacyPath, canonicalPath] of [
+      ['"/home/admin"', '"/admin"'],
       ['"/home/data-loads"', '"/admin/setup"'],
       ['"/home/data-trust"', '"/admin/data-trust"'],
       ['"/home/agent-readiness"', '"/admin/agent-readiness"'],
@@ -40,6 +41,10 @@ describe("Home/Admin boundary contract", () => {
       expect(proxySource).toContain(`${legacyPath}: ${canonicalPath}`);
     }
 
+    expect(proxySource).toContain(
+      'request.nextUrl.pathname.startsWith("/home/admin/")',
+    );
+    expect(proxySource).toContain('"/admin/" + sub + request.nextUrl.search');
     expect(proxySource).toContain(
       'request.nextUrl.pathname.startsWith("/home/connectors/")',
     );
