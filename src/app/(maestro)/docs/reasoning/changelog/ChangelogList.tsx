@@ -189,7 +189,7 @@ export function ChangelogList({ entries, counts }: ChangelogListProps) {
                 <span>{entry.author}</span>
                 {entry.prNumber !== null ? (
                   <a
-                    href={`https://github.com/anandsundaram-hash/abarva/pull/${entry.prNumber}`}
+                    href={`https://github.com/abarva-platform/abarva/pull/${entry.prNumber}`}
                     style={LINK_STYLE}
                     target="_blank"
                     rel="noreferrer"

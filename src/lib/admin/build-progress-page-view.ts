@@ -368,7 +368,7 @@ function buildSliceDetail(
 ): BuildSliceDetail {
   const isMerged = row.status === 'merged' || row.status === 'code_complete';
   const prHref = isMerged
-    ? `https://github.com/anthropic/nexus/pull/${deterministicPrNumber(row.id)}`
+    ? `https://github.com/abarva-platform/abarva/pull/${deterministicPrNumber(row.id)}`
     : null;
   return {
     id: row.id,

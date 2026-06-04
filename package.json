@@ -2,6 +2,13 @@
   "name": "abarva",
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abarva-platform/abarva.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abarva-platform/abarva/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -57,6 +64,7 @@
     "gtm:sales-execution-proof:verify": "node scripts/gtm/verify-sales-execution-proof-kit.mjs",
     "ops:founder-operating-system:verify": "node scripts/ops/verify-founder-operating-system.mjs",
     "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
+    "repo:alignment:verify": "node scripts/governance/verify-repository-alignment.mjs",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
     "verify:meridian-context-showcase": "node scripts/verify/meridian-context-showcase.mjs",
