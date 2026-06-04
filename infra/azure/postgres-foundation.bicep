@@ -160,6 +160,9 @@ module privateToDatabasePeering './vnet-peering.bicep' = {
 module databaseToPrivatePeering './vnet-peering.bicep' = {
   name: 'azfound-database-to-private-peering'
   scope: databaseRg
+  dependsOn: [
+    postgresPrivate
+  ]
   params: {
     localVnetName: databaseVnetName
     remoteVnetResourceId: privateDataplaneVnet.id

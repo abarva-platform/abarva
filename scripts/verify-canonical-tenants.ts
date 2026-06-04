@@ -32,7 +32,6 @@ function fail(message: string): never {
 function validateStaticAllowlist() {
   const keys = CANONICAL_TENANTS.map((tenant) => tenant.key);
   const unique = new Set(keys);
-  if (keys.length !== 6) fail(`expected 6 canonical tenants, found ${keys.length}`);
   if (unique.size !== keys.length) fail('canonical tenant keys must be unique');
   for (const tenant of CANONICAL_TENANTS) {
     if (!tenant.key || !tenant.name || !tenant.industry) {

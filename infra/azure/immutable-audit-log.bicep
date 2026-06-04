@@ -83,7 +83,6 @@ resource lifecycle 'Microsoft.Storage/storageAccounts/managementPolicies@2023-05
             filters: {
               blobTypes: [
                 'blockBlob'
-                'appendBlob'
               ]
               prefixMatch: [
                 '${auditLogContainerName}/'

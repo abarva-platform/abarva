@@ -1,0 +1,577 @@
+{
+  "generatedAt": "2026-06-04T14:50:44.535Z",
+  "mode": "commit",
+  "tenantKey": "lakeshore",
+  "brokerKey": "lakeshore-holdings",
+  "clientId": "f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61",
+  "displayName": "Lakeshore Holdings",
+  "syntheticNotice": "SYNTHETIC / ILLUSTRATIVE. Not a real company disclosure.",
+  "totals": {
+    "csvFiles": 18,
+    "csvRowsExpected": 1329,
+    "csvRowsParsed": 1329,
+    "csvChunksQueued": 1329,
+    "documents": 21,
+    "documentTextChars": 11098
+  },
+  "csv": [
+    {
+      "templateId": "enterprise-profile",
+      "dimension": "enterprise_profile",
+      "label": "Enterprise profile",
+      "sourcePath": "data/enterprise-profile.csv",
+      "rowsExpected": 5,
+      "rowsParsed": 5,
+      "chunksQueued": 5,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "financial-kpi-workbook",
+      "dimension": "financial_kpis",
+      "label": "Financial KPI workbook",
+      "sourcePath": "data/financial-kpi-workbook.csv",
+      "rowsExpected": 240,
+      "rowsParsed": 240,
+      "chunksQueued": 240,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "annual-quarterly-reports",
+      "dimension": "annual_quarterly_reports",
+      "label": "Annual and quarterly reports",
+      "sourcePath": "data/annual-quarterly-reports.csv",
+      "rowsExpected": 8,
+      "rowsParsed": 8,
+      "chunksQueued": 8,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "market-signals",
+      "dimension": "market_competitor_intel",
+      "label": "Market and competitor intel",
+      "sourcePath": "data/market-signals.csv",
+      "rowsExpected": 40,
+      "rowsParsed": 40,
+      "chunksQueued": 40,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "strategy-memo",
+      "dimension": "c_suite_strategy",
+      "label": "C-suite strategy memo",
+      "sourcePath": "data/strategy-memo.csv",
+      "rowsExpected": 30,
+      "rowsParsed": 30,
+      "chunksQueued": 30,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "segment-pnl",
+      "dimension": "business_units_segment_pnl",
+      "label": "Business unit segment P&L",
+      "sourcePath": "data/segment-pnl.csv",
+      "rowsExpected": 40,
+      "rowsParsed": 40,
+      "chunksQueued": 40,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "product-portfolio",
+      "dimension": "product_portfolio",
+      "label": "Product portfolio",
+      "sourcePath": "data/product-portfolio.csv",
+      "rowsExpected": 48,
+      "rowsParsed": 48,
+      "chunksQueued": 48,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "site-and-plant-inventory",
+      "dimension": "manufacturing_sites",
+      "label": "Site and plant inventory",
+      "sourcePath": "data/site-and-plant-inventory.csv",
+      "rowsExpected": 56,
+      "rowsParsed": 56,
+      "chunksQueued": 56,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "erp-landscape-workbook",
+      "dimension": "erp_landscape",
+      "label": "ERP landscape workbook",
+      "sourcePath": "data/erp-landscape-workbook.csv",
+      "rowsExpected": 65,
+      "rowsParsed": 65,
+      "chunksQueued": 65,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "application-portfolio",
+      "dimension": "application_portfolio",
+      "label": "CMDB / application portfolio",
+      "sourcePath": "data/application-portfolio.csv",
+      "rowsExpected": 228,
+      "rowsParsed": 228,
+      "chunksQueued": 228,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "integration-topology",
+      "dimension": "integration_topology",
+      "label": "Integration topology",
+      "sourcePath": "data/integration-topology.csv",
+      "rowsExpected": 96,
+      "rowsParsed": 96,
+      "chunksQueued": 96,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "vendor-contracts",
+      "dimension": "vendor_contracts",
+      "label": "Vendor contracts",
+      "sourcePath": "data/vendor-contracts.csv",
+      "rowsExpected": 82,
+      "rowsParsed": 82,
+      "chunksQueued": 82,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "initiative-portfolio",
+      "dimension": "transformation_initiatives",
+      "label": "Transformation initiatives",
+      "sourcePath": "data/initiative-portfolio.csv",
+      "rowsExpected": 40,
+      "rowsParsed": 40,
+      "chunksQueued": 40,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "org-roles",
+      "dimension": "org_roles_teams",
+      "label": "Org, roles, and teams",
+      "sourcePath": "data/org-roles.csv",
+      "rowsExpected": 67,
+      "rowsParsed": 67,
+      "chunksQueued": 67,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "dora-baseline",
+      "dimension": "delivery_dora_devex",
+      "label": "Delivery / DORA / DevEx",
+      "sourcePath": "data/dora-baseline.csv",
+      "rowsExpected": 84,
+      "rowsParsed": 84,
+      "chunksQueued": 84,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "qms-events",
+      "dimension": "regulatory_qms_risk",
+      "label": "Regulatory / QMS / risk",
+      "sourcePath": "data/qms-events.csv",
+      "rowsExpected": 62,
+      "rowsParsed": 62,
+      "chunksQueued": 62,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "ai-tool-footprint",
+      "dimension": "ai_tooling_model_inventory",
+      "label": "AI tooling and model inventory",
+      "sourcePath": "data/ai-tool-footprint.csv",
+      "rowsExpected": 42,
+      "rowsParsed": 42,
+      "chunksQueued": 42,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    },
+    {
+      "templateId": "incidents-change-history",
+      "dimension": "incidents_ops_telemetry",
+      "label": "Incidents and ops telemetry",
+      "sourcePath": "data/incidents-change-history.csv",
+      "rowsExpected": 96,
+      "rowsParsed": 96,
+      "chunksQueued": 96,
+      "persistenceStatus": "inserted",
+      "ingestionRunRecorded": true,
+      "detail": "CSV rows were written as pending tenant context chunks."
+    }
+  ],
+  "documents": [
+    {
+      "fileName": "con-lsh-001-kyriba-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-001-kyriba-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 662,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1619,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-002-deloitte-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-002-deloitte-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 673,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1630,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-003-microsoft-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-003-microsoft-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 672,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1629,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-004-servicenow-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-004-servicenow-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 664,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1621,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-005-okta-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-005-okta-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 658,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1615,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-006-crowdstrike-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-006-crowdstrike-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 670,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1627,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-007-snowflake-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-007-snowflake-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 670,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1627,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-lsh-008-databricks-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-lsh-008-databricks-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 669,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1626,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-nls-009-sap-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-nls-009-sap-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 655,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1612,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-nls-010-manhattan-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-nls-010-manhattan-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 671,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1628,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-nls-011-blueyonder-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-nls-011-blueyonder-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 668,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1625,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "con-nls-012-fourkites-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "sourcePath": "documents/con-nls-012-fourkites-contract.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 674,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1631,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-fy2026-board-it-update.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "sourcePath": "documents/lakeshore-fy2026-board-it-update.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 329,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1036,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-target-state-data-architecture.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "sourcePath": "documents/lakeshore-target-state-data-architecture.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 308,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 1015,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-integration-topology-overview.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "sourcePath": "documents/lakeshore-integration-topology-overview.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 320,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 996,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-quarterly-segment-performance.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "sourcePath": "documents/lakeshore-quarterly-segment-performance.pdf",
+      "parseMethod": "pdf-parse",
+      "textChars": 299,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/pdf",
+        "extension": "pdf",
+        "bytesParsed": 975,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-ai-usage-policy.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "sourcePath": "documents/lakeshore-ai-usage-policy.docx",
+      "parseMethod": "docx-mammoth",
+      "textChars": 305,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "extension": "docx",
+        "bytesParsed": 8744,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-data-governance-policy.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "sourcePath": "documents/lakeshore-data-governance-policy.docx",
+      "parseMethod": "docx-mammoth",
+      "textChars": 270,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "extension": "docx",
+        "bytesParsed": 8735,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-security-classification-standard.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "sourcePath": "documents/lakeshore-security-classification-standard.docx",
+      "parseMethod": "docx-mammoth",
+      "textChars": 279,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "extension": "docx",
+        "bytesParsed": 8728,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-vendor-risk-standard.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "sourcePath": "documents/lakeshore-vendor-risk-standard.docx",
+      "parseMethod": "docx-mammoth",
+      "textChars": 265,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "extension": "docx",
+        "bytesParsed": 8716,
+        "truncated": false
+      }
+    },
+    {
+      "fileName": "lakeshore-board-it-update.pptx",
+      "kind": "pptx_board_update",
+      "mappedTemplate": "annual-quarterly-reports",
+      "sourcePath": "documents/lakeshore-board-it-update.pptx",
+      "parseMethod": "pptx-jszip",
+      "textChars": 717,
+      "warnings": [],
+      "metadata": {
+        "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "extension": "pptx",
+        "bytesParsed": 65619,
+        "truncated": false,
+        "slideCount": 4
+      }
+    }
+  ],
+  "quarantineProbe": {
+    "declaredClassification": "confidential_business",
+    "decision": "quarantine",
+    "storageAllowed": false,
+    "indexingAllowed": false,
+    "evidenceExtractionAllowed": false,
+    "suspectedPhi": false,
+    "suspectedPii": true,
+    "suspectedFinancialIdentifiers": false,
+    "matchedRules": [
+      {
+        "ruleId": "pii.ssn",
+        "label": "US Social Security number pattern",
+        "severity": "high",
+        "count": 1
+      }
+    ],
+    "message": "Upload quarantined before storage/indexing because regulated PHI/PII or high-risk identifiers were declared or detected. Remove direct identifiers or route through the private data-lane approval process."
+  },
+  "operatorNextSteps": [
+    "Run `npm run embed:pending-chunks -- --tenant lakeshore` after commit so parsed chunks become retrievable.",
+    "Review /admin/data-trust for Lakeshore after commit; record counts and last-loaded dates must match this ledger.",
+    "Upload the offline review bundle to the client only once, then use governed updates through Data Loads."
+  ]
+}
