@@ -34,6 +34,15 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/contact(.*)",
   "/status(.*)",
   "/subprocessors(.*)",
+  // Public marketing and trust surfaces are reachable before sign-in. Keeping
+  // them in the public matcher prevents app-shell prefetches from becoming
+  // hosted-Clerk redirects and noisy browser console failures.
+  "/product(.*)",
+  "/how-it-works(.*)",
+  // Model card is a public trust artifact linked from the public footer and
+  // AI trust page. Keep it out of Clerk so RSC prefetches never turn into
+  // cross-origin hosted-Clerk redirects inside authenticated shells.
+  "/model-card(.*)",
   // Responsible AI pages live in the public route tree. The acknowledgment
   // and training pages still self-gate with server-side subject checks, but
   // keeping the path public at proxy level prevents Clerk HTML redirects from
@@ -156,12 +165,10 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   "/demo(.*)",
   "/digest(.*)",
   "/editorial(.*)",
-  "/how-it-works(.*)",
   "/intelligence(.*)",
   "/investor(.*)",
   "/investors(.*)",
   "/patterns(.*)",
-  "/product(.*)",
   "/solutions(.*)",
   "/training(.*)",
 ] as const;
