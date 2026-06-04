@@ -33,6 +33,12 @@ function readJson(...segments) {
   return JSON.parse(readFileSync(rel(...segments), 'utf8'));
 }
 
+function fileContains(segments, tokens) {
+  if (!fileExists(...segments)) return false;
+  const content = readFileSync(rel(...segments), 'utf8');
+  return tokens.every((token) => content.includes(token));
+}
+
 function checkFile(area, name, segments, { blocking = true, detail, missingDetail } = {}) {
   const ok = fileExists(...segments);
   addCheck(area, name, ok ? 'ready' : 'missing', ok ? (detail ?? segments.join('/')) : (missingDetail ?? `Missing ${segments.join('/')}`), blocking);
@@ -104,10 +110,13 @@ checkFile('pr-dependent', 'CXO corpus activation plan', ['docs', 'build', 'lakes
   blocking: false,
   missingDetail: 'Expected after PR #2998 lands',
 });
-checkFile('pr-dependent', 'CXO persona provisioner', ['scripts', 'provision-cxo-personas.ts'], {
-  blocking: false,
-  missingDetail: 'Expected after PR #2998 lands',
-});
+addCheck(
+  'pr-dependent',
+  'Lakeshore CXO persona provisioner',
+  fileContains(['scripts', 'provision-cxo-personas.ts'], ['--client', '--plan-only', 'lakeshore']) ? 'ready' : 'missing',
+  'Expected after PR #2998 lands with --client lakeshore --plan-only support',
+  false,
+);
 
 checkEnv('environment', 'Clerk API', ['CLERK_SECRET_KEY'], { blocking: false, detail: 'Required to create Lakeshore CXO users in Clerk' });
 checkEnv('environment', 'Postgres app data plane', ['DATABASE_URL'], { blocking: false, detail: 'Required for live data-backed app verification and governed commits' });
