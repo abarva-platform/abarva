@@ -46,7 +46,14 @@ import {
   type SourceArtifactApprovalState,
   type SourceArtifactRegistryRecord,
 } from "./artifact-registry";
-import { buildEventScaffold } from "./canvas-substrate";
+import {
+  buildEventScaffold,
+  buildVirtualEventScaffold,
+  listArtifactStatesForEvent,
+  loadArtifactTemplate,
+  type SourceEventArtifactState,
+} from "./canvas-substrate";
+import { specByCode } from "./canonical-specs";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
 import { coerceUsdAmountOrZero } from "./usd-amount";
 
@@ -1052,6 +1059,48 @@ function sourceArtifactKindFromRegistry(
   return "artifact_packet";
 }
 
+function sourceArtifactKindFromFamily(
+  family: string,
+): SourceArtifactSummary["kind"] {
+  if (family === "scorecard" || family === "evaluation_scorecard") {
+    return "scorecard";
+  }
+  if (
+    family === "decision_brief" ||
+    family === "selection_decision" ||
+    family === "executive_decision"
+  ) {
+    return "decision_memo";
+  }
+  if (family === "sourcing_strategy" || family === "charter") {
+    return "charter";
+  }
+  if (family === "value_ledger") {
+    return "value_ledger";
+  }
+  return "artifact_packet";
+}
+
+function sourceArtifactStatusFromEventState(
+  status: SourceEventArtifactState["status"],
+): SourceArtifactSummary["status"] {
+  switch (status) {
+    case "not_started":
+      return "not_started";
+    case "needs_review":
+      return "needs_review";
+    case "approved":
+      return "approved";
+    case "locked":
+      return "locked";
+    case "superseded":
+      return "superseded";
+    case "drafting":
+    default:
+      return "draft";
+  }
+}
+
 function readableSourceArtifactTitle(
   record: SourceArtifactRegistryRecord,
 ): string {
@@ -1062,23 +1111,9 @@ function readableSourceArtifactTitle(
   );
 }
 
-function splitSourceArtifactMarkdownSections(
-  content: string | null,
-  record: SourceArtifactRegistryRecord,
+function splitSourceArtifactContentSections(
+  content: string,
 ): SourceArtifactDetail["sections"] {
-  if (!content?.trim()) {
-    return [
-      {
-        label: "Registry receipt",
-        body: [
-          `Original file: ${record.originalName}`,
-          `Blob URI: ${record.blobUri}`,
-          `SHA-256: ${record.sha256}`,
-        ].join("\n"),
-      },
-    ];
-  }
-
   const cleaned = content.trim();
   const headingChunks = cleaned
     .split(/\n(?=#{1,3}\s+)/)
@@ -1099,6 +1134,26 @@ function splitSourceArtifactMarkdownSections(
       body: (hasHeading ? rest.join("\n") : chunk).trim() || chunk,
     };
   });
+}
+
+function splitSourceArtifactMarkdownSections(
+  content: string | null,
+  record: SourceArtifactRegistryRecord,
+): SourceArtifactDetail["sections"] {
+  if (!content?.trim()) {
+    return [
+      {
+        label: "Registry receipt",
+        body: [
+          `Original file: ${record.originalName}`,
+          `Blob URI: ${record.blobUri}`,
+          `SHA-256: ${record.sha256}`,
+        ].join("\n"),
+      },
+    ];
+  }
+
+  return splitSourceArtifactContentSections(content);
 }
 
 async function readSourceArtifactBlobText(
@@ -1160,22 +1215,112 @@ async function sourceArtifactRegistryRecordToDetail(
   };
 }
 
+async function sourceArtifactStateToDetail(
+  event: SourcingEventDetail,
+  state: SourceEventArtifactState,
+): Promise<SourceArtifactDetail> {
+  const spec = specByCode(state.artifactCode);
+  const template = loadArtifactTemplate(state.artifactCode);
+  const content =
+    state.body?.trim() ||
+    template?.body?.trim() ||
+    [
+      `# ${spec?.name ?? state.artifactCode}`,
+      "",
+      spec?.description ??
+        "This Source artifact has a registered document type but no authored body yet.",
+    ].join("\n");
+  const sections = splitSourceArtifactContentSections(content);
+  const updatedAt =
+    state.bodyUpdatedAt ?? state.updatedAt ?? new Date().toISOString();
+
+  return {
+    id: state.id,
+    eventId: event.id,
+    title: spec?.name ?? state.artifactCode,
+    kind: sourceArtifactKindFromFamily(state.family),
+    status: sourceArtifactStatusFromEventState(state.status),
+    tier: state.tier,
+    summary:
+      state.body?.trim().slice(0, 600) ||
+      spec?.description ||
+      `${state.artifactCode} is ready for client inputs and review.`,
+    sourceCount: sections.length,
+    updatedAt,
+    sections,
+    governanceNotes: [
+      `Document type: ${state.artifactCode}; stage: ${SOURCE_STAGE_LABELS[state.stage] ?? state.stage}.`,
+      `Workflow state: ${state.status}; requirement: ${state.requirementLevel}; gate-defining: ${state.gateDefining ? "yes" : "no"}.`,
+      state.linkedArtifactId
+        ? "A persisted uploaded artifact is linked to this document type."
+        : "No uploaded file is linked yet; this view is rendering the canonical document workspace/template.",
+      "Client review and approval remain required before external use.",
+    ],
+    patternLinks: [],
+  };
+}
+
 export async function getSourcingEventArtifact(
   eventId: string,
-  artifactId: string,
+  artifactIdOrCode: string,
 ): Promise<SourceArtifactDetail | null> {
-  const seededArtifact = getSourceArtifactSeed(eventId, artifactId);
+  const seededArtifact = getSourceArtifactSeed(eventId, artifactIdOrCode);
   if (seededArtifact) return seededArtifact;
 
-  const registryRecord = await getSourceArtifactRegistryRecord(artifactId);
-  if (
-    !registryRecord ||
-    registryRecord.sourceEventId !== eventId ||
-    registryRecord.deletedAt
-  )
-    return null;
+  const event = await getSourcingEvent(eventId);
+  const allowedEventIds = new Set(
+    [eventId, event?.id, event?.code].filter(Boolean) as string[],
+  );
 
-  return sourceArtifactRegistryRecordToDetail(registryRecord);
+  const registryRecord = await getSourceArtifactRegistryRecord(artifactIdOrCode);
+  if (
+    registryRecord &&
+    allowedEventIds.has(registryRecord.sourceEventId) &&
+    !registryRecord.deletedAt
+  ) {
+    return sourceArtifactRegistryRecordToDetail(registryRecord);
+  }
+
+  if (!event) {
+    return null;
+  }
+
+  const artifactStates = await listArtifactStatesForEvent(event.id);
+  const states =
+    artifactStates.length > 0
+      ? artifactStates
+      : buildVirtualEventScaffold({
+          sourceEventId: event.id,
+          tenantKey: "unknown",
+        }).artifactStates;
+  const state = states.find(
+    (row) =>
+      row.id === artifactIdOrCode ||
+      row.artifactCode === artifactIdOrCode ||
+      row.linkedArtifactId === artifactIdOrCode,
+  );
+
+  if (!state) {
+    return null;
+  }
+
+  if (
+    state.linkedArtifactId &&
+    state.linkedArtifactId !== artifactIdOrCode
+  ) {
+    const linkedRecord = await getSourceArtifactRegistryRecord(
+      state.linkedArtifactId,
+    );
+    if (
+      linkedRecord &&
+      allowedEventIds.has(linkedRecord.sourceEventId) &&
+      !linkedRecord.deletedAt
+    ) {
+      return sourceArtifactRegistryRecordToDetail(linkedRecord);
+    }
+  }
+
+  return sourceArtifactStateToDetail(event, state);
 }
 
 export async function getSourceValueLedger(): Promise<SourceValueLedgerSnapshot> {
