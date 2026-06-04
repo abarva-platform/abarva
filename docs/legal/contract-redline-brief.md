@@ -80,6 +80,7 @@ The NDA often arrives before the MSA, so treat it as a real negotiation:
 
 Attach or reference these artifacts during review:
 
+- `docs/legal/client-paper-review-playbook.md`
 - `docs/legal/ai-sow-clause-playbook.md`
 - `docs/legal/AI_DECISION_SUPPORT_CONTROLS.md`
 - `docs/legal/PILOT_PRIVATE_DATA_USE_POLICY_PACK_2026-06-01.md`
