@@ -131,6 +131,7 @@
     "load:pressure-matrix": "node scripts/load/pressure-test-matrix.mjs",
     "load:pressure-matrix:check": "node scripts/load/verify-pressure-test-harness.mjs",
     "load:hot-path-optimization:verify": "node scripts/load/verify-hot-path-optimization.mjs",
+    "architecture:closure-control:verify": "node scripts/architecture/verify-architecture-closure-control.mjs",
     "architecture:software-delivery-corpus-decision:verify": "node scripts/architecture/verify-software-delivery-corpus-decision.mjs",
     "architecture:claude-pdf-fallback:verify": "node scripts/architecture/verify-claude-pdf-fallback-policy.mjs",
     "azure:blob-upload-pattern:verify": "node scripts/azure/verify-blob-upload-pattern.mjs",
