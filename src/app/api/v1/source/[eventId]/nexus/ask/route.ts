@@ -1,25 +1,26 @@
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
 
-import { requireTenancy, tenancyErrorResponse } from '../../../../_intel-auth';
+import { requireTenancy, tenancyErrorResponse } from "../../../../_intel-auth";
 import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
-} from '@/lib/source/nexus-api';
-import { getActiveClientRow } from '@/lib/active-client';
+} from "@/lib/source/nexus-api";
+import { maybeCreateSourceSentinelChatLlmResponse } from "@/lib/source/sentinel-chat-llm";
+import { getActiveClientRow } from "@/lib/active-client";
 import {
   APEX_RETAIL_BROKER_TENANT_KEY,
   APEX_RETAIL_CLIENT_KEY,
   buildApexRetailSourceContextAssemblyInput,
   toApexRetailLiveTenantContextSnapshot,
   type ApexRetailAdapterResult,
-} from '@/lib/source/adapters/apex-retail-adapter';
-import type { SourceLiveTenantContextSnapshot } from '@/lib/source/agent-context';
-import type { SourcingEventDetail } from '@/lib/source/types';
-import { getSourcingEvent, sourceEventRowToDetail } from '@/lib/source/queries';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+} from "@/lib/source/adapters/apex-retail-adapter";
+import type { SourceLiveTenantContextSnapshot } from "@/lib/source/agent-context";
+import type { SourcingEventDetail } from "@/lib/source/types";
+import { getSourcingEvent, sourceEventRowToDetail } from "@/lib/source/queries";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type SourceNexusRouteContext = {
   params: Promise<{ eventId?: string }>;
@@ -52,7 +53,10 @@ export async function POST(
       ? await getSourcingEvent(eventId).catch(() => null)
       : null;
     const apexLiveEventDetailCandidate = apexContext?.liveContext.sourceEvent
-      ? sourceEventRowToDetail(apexContext.liveContext.sourceEvent, 'Apex Retail Group')
+      ? sourceEventRowToDetail(
+          apexContext.liveContext.sourceEvent,
+          "Apex Retail Group",
+        )
       : undefined;
     const apexLiveEventMatches = sourceEventMatchesRequestedEvent({
       requestedEventId: eventId,
@@ -62,12 +66,15 @@ export async function POST(
     const apexLiveEventDetail = apexLiveEventMatches
       ? apexLiveEventDetailCandidate
       : undefined;
-    const apexLiveTenantContext = apexContext && apexLiveEventMatches
-      ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
-      : undefined;
-    const liveEventDetail = apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
-    const liveTenantContext = apexLiveTenantContext
-      ?? (fallbackLiveEventDetail
+    const apexLiveTenantContext =
+      apexContext && apexLiveEventMatches
+        ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
+        : undefined;
+    const liveEventDetail =
+      apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
+    const liveTenantContext =
+      apexLiveTenantContext ??
+      (fallbackLiveEventDetail
         ? buildEventIntakeTenantContextSnapshot({
             activeClientKey: activeClient?.key,
             activeClientName: activeClient?.name,
@@ -92,7 +99,7 @@ export async function POST(
       });
     }
 
-    const response = createSourceNexusApiStubResponse({
+    const deterministicResponse = createSourceNexusApiStubResponse({
       ...normalizedBody,
       eventId,
       tenant: apexContext?.input.tenant ?? {
@@ -108,6 +115,15 @@ export async function POST(
       liveEventDetail,
       liveTenantContext,
     });
+    const response = await maybeCreateSourceSentinelChatLlmResponse({
+      fallbackResponse: deterministicResponse,
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      prompt:
+        normalizedBody.prompt ?? "Provide the current Source command read.",
+      event: liveEventDetail,
+      liveTenantContext,
+    });
 
     return Response.json(response, { status: response.httpStatus });
   } catch (error) {
@@ -117,8 +133,11 @@ export async function POST(
       return Response.json(
         {
           ok: false,
-          error: 'internal_error',
-          detail: error instanceof Error ? error.message : 'Unknown Source Nexus API stub error',
+          error: "internal_error",
+          detail:
+            error instanceof Error
+              ? error.message
+              : "Unknown Source Nexus API stub error",
           noModel: true,
         },
         { status: 500 },
@@ -136,11 +155,7 @@ function sourceEventMatchesRequestedEvent(args: {
   if (!args.requestedEventId) return true;
 
   const requestedAliases = new Set(
-    [
-      args.requestedEventId,
-      args.fallback?.id,
-      args.fallback?.code,
-    ]
+    [args.requestedEventId, args.fallback?.id, args.fallback?.code]
       .filter((value): value is string => Boolean(value))
       .map((value) => value.trim().toLowerCase()),
   );
@@ -155,26 +170,27 @@ function buildEventIntakeTenantContextSnapshot(args: {
   activeClientName?: string;
   event: SourcingEventDetail;
 }): SourceLiveTenantContextSnapshot {
-  const clientKey = args.activeClientKey ?? 'unknown';
-  const brokerTenantKey = clientKey === APEX_RETAIL_BROKER_TENANT_KEY
-    ? APEX_RETAIL_BROKER_TENANT_KEY
-    : clientKey;
+  const clientKey = args.activeClientKey ?? "unknown";
+  const brokerTenantKey =
+    clientKey === APEX_RETAIL_BROKER_TENANT_KEY
+      ? APEX_RETAIL_BROKER_TENANT_KEY
+      : clientKey;
   const evidence = [
     {
-      recordId: 'trigger',
-      title: 'Source intake trigger',
+      recordId: "trigger",
+      title: "Source intake trigger",
       excerpt: `Trigger: ${args.event.problemStatement}`,
       score: 16,
     },
     {
-      recordId: 'scope',
-      title: 'Source intake scope and value basis',
+      recordId: "scope",
+      title: "Source intake scope and value basis",
       excerpt: `Scope and value basis: ${args.event.synopsis}`,
       score: 15,
     },
     {
-      recordId: 'decision-owner',
-      title: 'Source intake decision owner',
+      recordId: "decision-owner",
+      title: "Source intake decision owner",
       excerpt: `Decision owner: ${args.event.scorecard.decisionOwner || args.event.owner}`,
       score: 14,
     },
@@ -195,29 +211,29 @@ function buildEventIntakeTenantContextSnapshot(args: {
     sourceEventFound: true,
     segments: [
       {
-        segmentId: 'sourcing_artifacts',
+        segmentId: "sourcing_artifacts",
         inventoryRecords: 0,
         contextChunks: evidence.length,
         embeddedChunks: 0,
       },
     ],
-    currentStateAreas: ['Sourcing Artifacts'],
+    currentStateAreas: ["Sourcing Artifacts"],
     evidenceBasis: [
       `${args.activeClientName ?? clientKey} persisted Source event: trigger, scope, value basis, decision owner and gate criteria from source_events.`,
     ],
     retrievedEvidence: evidence.map((item) => ({
       id: `source-event:${args.event.id}:${item.recordId}`,
-      segmentId: 'sourcing_artifacts',
+      segmentId: "sourcing_artifacts",
       recordId: item.recordId,
       title: item.title,
-      sourceType: 'contextChunk',
-      sourceDoc: 'source_events',
+      sourceType: "contextChunk",
+      sourceDoc: "source_events",
       excerpt: item.excerpt,
-      confidence: 'high',
+      confidence: "high",
       score: item.score,
     })),
     warnings: [
-      'Using persisted Source intake facts for this newly-created event; deeper tenant corpus retrieval is not required to answer event-gate questions.',
+      "Using persisted Source intake facts for this newly-created event; deeper tenant corpus retrieval is not required to answer event-gate questions.",
     ],
   };
 }
@@ -237,13 +253,13 @@ async function loadApexRetailSourceIntelligence(args: {
     return await buildApexRetailSourceContextAssemblyInput({
       eventId,
       user: { id: args.userId },
-      userPrompt: args.prompt ?? 'Provide the current Source command read.',
-      surface: 'nexusPanel',
+      userPrompt: args.prompt ?? "Provide the current Source command read.",
+      surface: "nexusPanel",
       selectedAttachmentIds: args.selectedAttachmentIds ?? [],
     });
   } catch (error) {
     console.error(
-      '[source-nexus-ask] Apex Retail source intelligence load failed',
+      "[source-nexus-ask] Apex Retail source intelligence load failed",
       error instanceof Error ? error.message : error,
     );
     return null;
@@ -265,8 +281,11 @@ function shouldUseApexRetailAdapter(
   ) {
     return true;
   }
-  const normalizedEventId = eventId?.trim().toUpperCase() ?? '';
-  return normalizedEventId.startsWith('APX-') || normalizedEventId.startsWith('SRC-APX-');
+  const normalizedEventId = eventId?.trim().toUpperCase() ?? "";
+  return (
+    normalizedEventId.startsWith("APX-") ||
+    normalizedEventId.startsWith("SRC-APX-")
+  );
 }
 
 /**
@@ -300,7 +319,11 @@ async function parseSourceNexusRequestBody(
   request: NextRequest,
 ): Promise<
   | { ok: true; body: unknown }
-  | { ok: false; status: number; body: { ok: false; error: string; detail: string; noModel: true } }
+  | {
+      ok: false;
+      status: number;
+      body: { ok: false; error: string; detail: string; noModel: true };
+    }
 > {
   const raw = await request.text();
   if (!raw.trim()) {
@@ -315,8 +338,8 @@ async function parseSourceNexusRequestBody(
       status: 400,
       body: {
         ok: false,
-        error: 'bad_request',
-        detail: 'Malformed JSON request body.',
+        error: "bad_request",
+        detail: "Malformed JSON request body.",
         noModel: true,
       },
     };

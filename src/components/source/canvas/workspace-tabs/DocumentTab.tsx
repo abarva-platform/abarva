@@ -454,7 +454,7 @@ function ArtifactBodyEditor({
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  // Seed the textarea: real authored content > template scaffold.
+  // Seed the editor: real authored content > template starter.
   const seed = authoredBody ?? templateBody ?? "";
   const [draft, setDraft] = useState(seed);
 
@@ -599,7 +599,7 @@ function ArtifactBodyEditor({
               data-testid={`source-canvas-document-body-download-docx-${artifact.artifactCode}`}
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
               download
-              title="Download as Word document — uses the authored body when present, canonical scaffold otherwise."
+              title="Download as Word document."
             >
               Download docx
             </a>
@@ -638,13 +638,23 @@ function ArtifactBodyEditor({
           Generation failed — {generationError}
         </div>
       ) : null}
-      {(authoredBody ?? templateBody) ? (
+      {authoredBody ? (
         <pre
           style={MARKDOWN_BODY_STYLE}
           data-testid="source-canvas-document-body"
         >
-          {authoredBody ?? templateBody}
+          {authoredBody}
         </pre>
+      ) : templateBody ? (
+        <div
+          style={UNAUTHORED_BODY_STYLE}
+          data-testid="source-canvas-document-body"
+        >
+          <strong>No client-authored body yet.</strong> Use Generate with
+          Sentinel, Author content, or upload evidence before this document is
+          treated as review-ready. The starter template is kept out of the main
+          workspace so it is not mistaken for approved event content.
+        </div>
       ) : null}
     </div>
   );
@@ -980,6 +990,18 @@ const GATE_TAG_STYLE: CSSProperties = {
   color: CANVAS.WAITING,
   letterSpacing: "0.10em",
   textTransform: "uppercase",
+};
+
+const UNAUTHORED_BODY_STYLE: CSSProperties = {
+  margin: 0,
+  padding: "18px 20px",
+  border: `1px dashed ${CANVAS.RULE_STRONG}`,
+  borderRadius: 8,
+  background: "#fbfaf7",
+  fontFamily: CANVAS.SANS,
+  fontSize: 14,
+  lineHeight: 1.55,
+  color: CANVAS.INK_SOFT,
 };
 
 const BODY_STYLE: CSSProperties = {
