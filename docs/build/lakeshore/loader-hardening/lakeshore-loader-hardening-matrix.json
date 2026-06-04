@@ -1,0 +1,115 @@
+{
+  "version": "2026-06-04.v1",
+  "tenantKey": "lakeshore",
+  "brokerKey": "lakeshore-holdings",
+  "purpose": "Loader hardening acceptance matrix for the Lakeshore package. This proves what controls must exist before live commit; it does not claim the files are already live-loaded.",
+  "requiredControls": [
+    "tenant_scope",
+    "sensitive_upload_guard",
+    "malware_scan_or_fail_closed",
+    "parser_or_declared_fallback",
+    "template_validation",
+    "preview_before_commit",
+    "attestation",
+    "approval",
+    "commit_audit",
+    "rollback_or_unload_plan",
+    "data_trust_snapshot",
+    "embedding_after_commit"
+  ],
+  "formatMatrix": {
+    "csv": {
+      "parser": "csv-upload-connector",
+      "status": "live_tabular",
+      "mustProve": [
+        "header validation",
+        "template mapping",
+        "row-level synthetic label",
+        "tenant-scoped commit"
+      ]
+    },
+    "xlsx": {
+      "parser": "document-upload-parser workbook path",
+      "status": "controlled_tabular",
+      "mustProve": [
+        "worksheet selection",
+        "preview before commit",
+        "template mapping",
+        "formula values are computed server-side or treated as uploaded values with provenance"
+      ]
+    },
+    "json": {
+      "parser": "document-upload-parser json path",
+      "status": "controlled_structured",
+      "mustProve": [
+        "schema validation",
+        "field mapping",
+        "unknown-field handling",
+        "tenant-scoped commit"
+      ]
+    },
+    "jsonl": {
+      "parser": "document-upload-parser jsonl path",
+      "status": "controlled_structured",
+      "mustProve": [
+        "line-level validation",
+        "bad-line quarantine",
+        "field mapping",
+        "tenant-scoped commit"
+      ]
+    },
+    "markdown": {
+      "parser": "document-upload-parser text path",
+      "status": "evidence_document",
+      "mustProve": [
+        "text extraction",
+        "chunk provenance",
+        "template attachment",
+        "evidence citations"
+      ]
+    },
+    "pdf": {
+      "parser": "azure-document-intelligence-layout with pdf-parse fallback",
+      "status": "evidence_document",
+      "mustProve": [
+        "Document Intelligence configured or fallback warning recorded",
+        "page-level provenance",
+        "table/header preservation where available",
+        "contract/report field extraction"
+      ]
+    },
+    "docx": {
+      "parser": "document-upload-parser docx path",
+      "status": "evidence_document",
+      "mustProve": [
+        "text extraction",
+        "section provenance",
+        "policy/control extraction",
+        "evidence citations"
+      ]
+    },
+    "pptx": {
+      "parser": "document-upload-parser pptx path",
+      "status": "evidence_document",
+      "mustProve": [
+        "slide text extraction",
+        "slide-level provenance",
+        "board evidence attachment",
+        "evidence citations"
+      ]
+    }
+  },
+  "liveProofSequence": [
+    "Run synthetic package verifier.",
+    "Run live activation readiness verifier.",
+    "Upload one intentionally bad PHI/PII row and prove quarantine.",
+    "Upload all Lakeshore CSV/XLSX/JSON/JSONL/Markdown/PDF/DOCX/PPTX files through governed Data Loads.",
+    "Capture parser method and fallback warnings per file.",
+    "Preview mapped rows and document chunks before commit.",
+    "Record attestation and approval events.",
+    "Commit accepted rows and chunks to Lakeshore only.",
+    "Run embeddings for tenant lakeshore.",
+    "Verify Data Trust counts and last-loaded timestamps.",
+    "Run agent-grounding prompt pack and tenant-isolation browser tests."
+  ]
+}
