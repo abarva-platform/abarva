@@ -62,6 +62,14 @@ describe('proxy public route patterns', () => {
     expect(isAuthRequiredRoute(request)).toBe(false);
   });
 
+  it('exposes /model-card as a public trust artifact without Clerk protection', () => {
+    for (const path of ['/model-card', '/model-card/']) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(true);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
   it('keeps Responsible AI pages public at proxy level to avoid Clerk redirects in RSC fetches', () => {
     for (const path of [
       '/responsible-ai',
