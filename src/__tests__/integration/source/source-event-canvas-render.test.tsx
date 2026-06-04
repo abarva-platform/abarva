@@ -238,6 +238,19 @@ describe("UniversalCanvasShell · SSR render", () => {
     }
   });
 
+  it("renders late-stage rail links with a full clickable hit area", () => {
+    const html = render();
+    for (const stage of ["executive_decision", "selection", "transition", "value"]) {
+      const anchor = html.match(
+        new RegExp(`<a[^>]+data-testid="source-canvas-step-${stage}"[^>]*>`),
+      )?.[0];
+      expect(anchor).toBeTruthy();
+      expect(anchor).toContain("width:104px");
+      expect(anchor).toContain("min-height:62px");
+      expect(anchor).toContain("translateX(-50%)");
+    }
+  });
+
   it("renders the AgentDock side-rail with stage-appropriate agent and 3 suggestions", () => {
     const html = render();
     // AgentDock panel replaces the legacy EventChatLane testid.
