@@ -118,6 +118,7 @@ import { GateTab } from "./workspace-tabs/GateTab";
 import { EvidenceTab } from "./workspace-tabs/EvidenceTab";
 import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
 import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel";
+import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
 import { threeChoicesForStage } from "./canvas-three-choices";
 
 interface UniversalCanvasShellProps {
@@ -618,7 +619,13 @@ export function UniversalCanvasShell({
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
           }
           eventId={event.id}
-          supplementalPanel={<StageDecisionLensPanel stage={viewStage} />}
+          onRegistryUploaded={() => router.refresh()}
+          supplementalPanel={
+            <>
+              <CommunicationDraftsPanel eventId={event.id} stage={viewStage} />
+              <StageDecisionLensPanel stage={viewStage} />
+            </>
+          }
         />
       ),
     },

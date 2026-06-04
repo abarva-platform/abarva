@@ -11,6 +11,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
 import type { SourceStageKey } from '@/lib/source/types';
@@ -277,6 +278,36 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
           message: parseWarnings[0],
         });
       }
+    }
+
+    const activityWrite = await selectSourceWriteAdapter(undefined, client.key).insertActivityLog({
+      eventId: scope.sourceEventRowId ?? scope.eventId,
+      clientKey: client.key,
+      actorUserId: tenancy.userId,
+      actorDisplayName: null,
+      actorRole: null,
+      actionType: 'artifact_uploaded',
+      actionLabel: `Uploaded Source document: ${filename}`,
+      stageKey: scope.stageKey,
+      artifactCode: parseOptionalString(formData.get('artifactCode')) ?? null,
+      reason: parseOptionalString(formData.get('vendorName'))
+        ? `Vendor response received from ${parseOptionalString(formData.get('vendorName'))}`
+        : null,
+      metadata: {
+        artifactId: artifact.id,
+        artifactFamily: artifact.artifactFamily,
+        artifactKind: artifact.artifactKind,
+        sourceFormat: artifact.sourceFormat,
+        originalName: artifact.originalName,
+        sizeBytes: artifact.sizeBytes,
+        parseStatus: artifact.parseStatus,
+        parseWarnings,
+        externalSend: false,
+      },
+      occurredAtIso: new Date().toISOString(),
+    });
+    if (!activityWrite.ok) {
+      console.error('[POST /api/v1/source/:eventId/artifacts/upload] activity_insert_failed', activityWrite.error);
     }
 
     return Response.json(
