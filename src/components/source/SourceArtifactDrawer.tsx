@@ -10,7 +10,7 @@ import type {
 interface ArtifactProvenance {
   createdFrom: string;
   storeKey: string;
-  freshness: string;
+  freshness: unknown;
   evidenceLedgerEntryId?: string;
 }
 
@@ -47,6 +47,13 @@ function formatProvenanceLabel(value: string): string {
   if (value === "deterministic_seed") return "Curated source workspace";
   if (value === "source_artifacts registry") return "Source artifact registry";
   return value.replaceAll("_", " ");
+}
+
+function formatFreshness(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "not recorded";
+  return String(value);
 }
 
 // ─── Seeded sign-off data ─────────────────────────────────────────────────────
@@ -471,7 +478,8 @@ export function SourceArtifactDrawer({
               <strong>Store key:</strong> {provenance.storeKey}
             </div>
             <div>
-              <strong>Freshness:</strong> {provenance.freshness}
+              <strong>Freshness:</strong>{" "}
+              {formatFreshness(provenance.freshness)}
             </div>
             {provenance.evidenceLedgerEntryId ? (
               <div>

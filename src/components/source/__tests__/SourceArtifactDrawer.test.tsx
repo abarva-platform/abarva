@@ -50,9 +50,9 @@ const PROVENANCE = {
 describe("SourceArtifactDrawer · tier indicator", () => {
   const TIERS: SourceArtifactTier[] = ["rich", "outline", "stub"];
   const TIER_LABELS: Record<SourceArtifactTier, string> = {
-    rich: "Final",
-    outline: "In Progress",
-    stub: "Draft",
+    rich: "Authored",
+    outline: "Prepared",
+    stub: "Template",
   };
 
   for (const tier of TIERS) {
@@ -94,6 +94,20 @@ describe("SourceArtifactDrawer · provenance panel", () => {
     expect(html).toContain("Visible provenance");
     expect(html).toContain("Curated source workspace");
     expect(html).toContain("Evidence ledger entry");
+  });
+
+  it("formats Date provenance freshness before rendering", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceArtifactDrawer, {
+        artifact: { ...BASE_ARTIFACT, tier: "rich" },
+        provenance: {
+          ...PROVENANCE,
+          freshness: new Date("2026-04-28T12:30:00.000Z"),
+        },
+      }),
+    );
+    expect(html).toContain("2026-04-28T12:30:00.000Z");
+    expect(html).not.toContain("[object Date]");
   });
 
   it("does not render provenance panel when prop omitted", () => {
