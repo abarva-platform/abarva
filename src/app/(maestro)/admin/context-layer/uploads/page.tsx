@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CorpusJsonlImportConnector } from '@/components/admin/context-layer/CorpusJsonlImportConnector';
 import { CsvUploadConnector } from '@/components/admin/context-layer/CsvUploadConnector';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-read-model';
@@ -40,6 +41,7 @@ export default async function ContextUploadsPage() {
         ) : (
           <>
             <CsvUploadConnector clientId={activeClient.id} tenantName={activeClient.name} />
+            <CorpusJsonlImportConnector clientId={activeClient.id} tenantName={activeClient.name} />
 
             {sourceFiles.length === 0 ? (
               <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
