@@ -379,7 +379,7 @@ export function SourceEventsPortfolio({
               />
               <MissingItem
                 title="Live procurement telemetry"
-                detail="The portfolio is seed-backed today. Live bid ingestion, approvals, and workflow automation are not implied here."
+                detail="The portfolio is summary-backed today. Live bid ingestion, approvals, and workflow automation are not implied here."
               />
             </div>
           </aside>
@@ -402,9 +402,9 @@ export function SourceEventsPortfolio({
                 Filter posture
               </div>
               <div style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760 }}>
-                Narrow the seeded queue by sourcing stage or lifecycle posture.
-                Filters update the portfolio in place
-                through route query params.
+                Narrow the client event queue by sourcing stage or lifecycle
+                posture. Filters update the portfolio in place through route
+                query params.
               </div>
             </div>
             <div
@@ -508,7 +508,7 @@ export function SourceEventsPortfolio({
             No events match the current filter posture.
           </div>
           <div style={SOURCE_MUTED}>
-            Reset the portfolio filters to return to the seeded Source queue.
+            Reset the portfolio filters to return to the client Source queue.
             Vendor and BAFO detail remain available inside each event canvas
             rather than this portfolio surface.
           </div>
@@ -524,7 +524,7 @@ export function SourceEventsPortfolio({
         <SourceAlertPanel
           alerts={attentionItems}
           title="Sentinel mission strip"
-          emptyLabel="No seeded attention items are open in the current filter view."
+          emptyLabel="No attention items are open in the current filter view."
           eventContextById={eventContextById}
           variant="light"
           canViewFinancialValues={canViewFinancialValues}
@@ -558,7 +558,7 @@ export function SourceEventsPortfolio({
               label="What is blocked?"
               detail={redactSourceFinancialText(
                 topEvent?.blocker ??
-                  "Portfolio-level blockers are limited to seeded event summaries in this wave.",
+                  "Portfolio-level blockers are limited to event summaries in this view.",
                 canViewFinancialValues,
               )}
             />
@@ -567,7 +567,7 @@ export function SourceEventsPortfolio({
               detail={redactSourceFinancialText(
                 topEvent
                   ? topEvent.nextAction
-                  : "Reset filters or return to the seeded queue to inspect an event.",
+                  : "Reset filters or return to the client queue to inspect an event.",
                 canViewFinancialValues,
               )}
             />
@@ -576,7 +576,7 @@ export function SourceEventsPortfolio({
               detail={
                 topEvent
                   ? `Open ${topEvent.code} for stage-level commercial, risk, BAFO, and readiness detail.`
-                  : "Review another Source route with seeded events."
+                  : "Review another Source route with client events."
               }
             />
           </div>
@@ -590,8 +590,7 @@ function buildBriefHeadline(
   events: SourcingEventSummary[],
   topEvent: SourcingEventSummary | null,
 ): string {
-  if (events.length === 0)
-    return "No seeded source events match this portfolio view.";
+  if (events.length === 0) return "No Source events match this portfolio view.";
   if (!topEvent) return `${events.length} sourcing events are in view.`;
   return `${events.length} sourcing event${events.length === 1 ? "" : "s"} need attention. ${topEvent.name} leads the queue.`;
 }
@@ -602,7 +601,7 @@ function buildBriefBody(
   activeStatus: string | null,
 ): string {
   if (events.length === 0) {
-    return "No Source events match the current filter posture. Reset filters to return to the seeded portfolio queue.";
+    return "No Source events match the current filter posture. Reset filters to return to the client portfolio queue.";
   }
 
   const riskCount = events.reduce((sum, event) => sum + event.openAlerts, 0);
@@ -615,7 +614,7 @@ function buildBriefBody(
       activeStatus)
     : "all lifecycle states";
 
-  return `Sentinel is using the seeded Source portfolio to compare ${events.length} event${events.length === 1 ? "" : "s"} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? "" : "s"} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
+  return `Sentinel is using the client Source portfolio to compare ${events.length} event${events.length === 1 ? "" : "s"} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? "" : "s"} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
 }
 
 function buildChoiceHref({
