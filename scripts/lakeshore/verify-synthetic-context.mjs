@@ -1,6 +1,6 @@
 import { readFileSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import JSZip from 'jszip';
 
 const repoRoot = process.cwd();
 const outRoot = path.join(repoRoot, 'docs/build/lakeshore/loaded');
@@ -72,9 +72,11 @@ for (const doc of manifest.documents) {
   if (doc.fileName.endsWith('.docx') || doc.fileName.endsWith('.pptx')) assertSignature(doc.path, 'PK');
 }
 
-const zipBuffer = readRelative('review-bundle/lakeshore-offline-review-bundle.zip', null);
-const zip = await JSZip.loadAsync(zipBuffer);
-const zipEntries = Object.keys(zip.files);
+const zipEntries = execFileSync('unzip', ['-Z1', path.join(outRoot, 'review-bundle/lakeshore-offline-review-bundle.zip')], {
+  encoding: 'utf8',
+})
+  .split('\n')
+  .filter(Boolean);
 for (const required of ['README.md', 'manifest.json', 'data/application-portfolio.csv', 'data/vendor-contracts.csv', 'workbooks/lakeshore-context-data-bundle.xlsx']) {
   assert(zipEntries.includes(required), `offline ZIP missing ${required}`);
 }
