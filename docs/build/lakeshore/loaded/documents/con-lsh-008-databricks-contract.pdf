@@ -1,0 +1,41 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1120 >>
+stream
+BT /F1 18 Tf 54 738 Td (DATABRICKS Agreement) Tj ET
+BT /F1 13 Tf 54 704 Td (Synthetic notice) Tj ET
+BT /F1 10 Tf 54 680 Td (This document is SYNTHETIC / ILLUSTRATIVE and exists only for Lakeshore Holdings) Tj ET
+BT /F1 10 Tf 54 665 Td (data-load rehearsal.) Tj ET
+BT /F1 13 Tf 54 642 Td (Parties and scope) Tj ET
+BT /F1 10 Tf 54 618 Td (Lakeshore Holdings or the named operating company contracts with DATABRICKS for) Tj ET
+BT /F1 10 Tf 54 603 Td (Lakehouse Platform. The agreement supports Shared Services Procurement.) Tj ET
+BT /F1 13 Tf 54 580 Td (Commercial terms) Tj ET
+BT /F1 10 Tf 54 556 Td (Annual value is USD 2,700,000. Term is 36 months. Contract id is CON-LSH-008.) Tj ET
+BT /F1 13 Tf 54 533 Td (Data and AI use) Tj ET
+BT /F1 10 Tf 54 509 Td (Customer data remains owned by Lakeshore. Vendor may not use operational data for model) Tj ET
+BT /F1 10 Tf 54 494 Td (training without written approval.) Tj ET
+BT /F1 13 Tf 54 471 Td (Service levels) Tj ET
+BT /F1 10 Tf 54 447 Td (Criticality is Tier 2. Monthly service review, security attestation, and exit plan are) Tj ET
+BT /F1 10 Tf 54 432 Td (required.) Tj ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000290 00000 n 
+trailer << /Size 5 /Root 1 0 R >>
+startxref
+1462
+%%EOF
