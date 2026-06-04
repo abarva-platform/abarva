@@ -143,6 +143,7 @@
     "azure:immutable-audit-log:verify": "node scripts/azure/verify-immutable-audit-log.mjs",
     "azure:defender-storage-malware:verify": "node scripts/azure/verify-defender-storage-malware.mjs",
     "data-plane:tenant-connection:verify": "node scripts/data-plane/verify-tenant-connection-resolution.mjs",
+    "lakeshore:synthetic-context:verify": "node scripts/lakeshore/verify-synthetic-context.mjs",
     "azure:security:audit": "node scripts/azure/audit-lab-security.mjs",
     "azure:observability:audit": "node scripts/azure/audit-observability.mjs",
     "azure:agent-quality:telemetry-smoke": "npx tsx src/scripts/agent-quality-telemetry-smoke.ts",
