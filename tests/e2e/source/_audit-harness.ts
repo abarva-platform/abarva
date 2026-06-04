@@ -101,6 +101,7 @@ export interface ArtifactEvidence {
   contentType?: string | null;
   byteSize?: number | null;
   aiDraftLabelPresent?: boolean | null;
+  navigationTrace?: string[];
 }
 
 export interface NetworkRecord {
