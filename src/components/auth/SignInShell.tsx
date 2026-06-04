@@ -35,6 +35,29 @@ export function SignInShell({ redirectUrl }: Props) {
         <DemoCodeSignIn redirectUrl={redirectUrl} />
         <div
           style={{
+            width: '100%',
+            maxWidth: 460,
+            border: '1px solid rgba(38, 51, 77, 0.12)',
+            background: '#F3F1EC',
+            borderRadius: 12,
+            padding: '12px 14px',
+            color: '#4B5563',
+            fontSize: 12,
+            lineHeight: 1.55,
+            textAlign: 'left',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            letterSpacing: '-0.005em',
+          }}
+        >
+          <strong style={{ color: '#1F2937' }}>Responsible AI</strong>
+          <div>
+            AI output may contain errors. Human approval is required before any
+            write, submission, vendor communication, or decision based on this
+            workspace.
+          </div>
+        </div>
+        <div
+          style={{
             maxWidth: 460,
             color: '#5D6572',
             fontSize: 11.5,
