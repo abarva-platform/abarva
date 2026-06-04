@@ -34,7 +34,7 @@ export default async function AdminSetupDataLoadCenterPage() {
   // calm header rather than doubling the title.
   return (
     <AdminCanonShellV2 tenantName={tenant.tenantName}>
-      <SetupDataLoadCenter view={view} />
+      <SetupDataLoadCenter view={view} clientId={tenant.clientId} />
     </AdminCanonShellV2>
   );
 }
