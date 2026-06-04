@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { EvidenceTab } from "../canvas/workspace-tabs/EvidenceTab";
 import type { SourceEventEvidence } from "@/lib/source/canvas-substrate";
@@ -28,15 +28,67 @@ function evidenceRow(
 }
 
 describe("EvidenceTab", () => {
-  it("shows a request CTA for evidence that has not been requested", () => {
-    render(<EvidenceTab stage="strategy" states={[evidenceRow()]} />);
+  const originalFetch = global.fetch;
 
-    const request = screen.getByRole("link", { name: /request evidence/i });
-    expect(request).toHaveAttribute("href", expect.stringContaining("mailto:"));
-    expect(request).toHaveAttribute(
-      "href",
-      expect.stringContaining("Source%20evidence%20request"),
+  afterEach(() => {
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  it("opens a governed request panel and logs the request", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const onRequestSaved = jest.fn();
+
+    render(
+      <EvidenceTab
+        stage="strategy"
+        states={[evidenceRow()]}
+        eventId="source-event-1"
+        onRequestSaved={onRequestSaved}
+      />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /request evidence/i }));
+    expect(
+      screen.getByTestId("source-canvas-evidence-request-panel"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/No email is sent from AbarVa/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/owner or source/i), {
+      target: { value: "Procurement lead" },
+    });
+    fireEvent.change(screen.getByLabelText(/due date/i), {
+      target: { value: "2026-06-12" },
+    });
+    fireEvent.change(screen.getByLabelText(/request note/i), {
+      target: { value: "Please attach the signed incumbent contract." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /log request/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/source/source-event-1/evidence-requests",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: expect.stringContaining("EVID-SRC-STR-INCUMBENT"),
+      }),
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(
+      expect.objectContaining({
+        owner: "Procurement lead",
+        dueDate: "2026-06-12",
+        note: "Please attach the signed incumbent contract.",
+        stage: "strategy",
+      }),
+    );
+    await waitFor(() => expect(onRequestSaved).toHaveBeenCalledTimes(1));
   });
 
   it("does not show the request CTA once evidence is in progress", () => {
@@ -48,7 +100,7 @@ describe("EvidenceTab", () => {
     );
 
     expect(
-      screen.queryByRole("link", { name: /request evidence/i }),
+      screen.queryByRole("button", { name: /request evidence/i }),
     ).not.toBeInTheDocument();
   });
 });
