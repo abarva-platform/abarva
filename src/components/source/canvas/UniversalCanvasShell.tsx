@@ -641,7 +641,14 @@ export function UniversalCanvasShell({
       key: "evidence" as WorkspaceTabKey,
       label: "Evidence",
       badge: contextBundle.readiness,
-      content: <EvidenceTab stage={viewStage} states={stageEvidence} />,
+      content: (
+        <EvidenceTab
+          stage={viewStage}
+          states={stageEvidence}
+          eventId={event.id}
+          onRequestSaved={() => router.refresh()}
+        />
+      ),
     },
     {
       key: "log" as WorkspaceTabKey,
