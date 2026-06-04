@@ -80,6 +80,9 @@ const nextConfig: NextConfig = {
       // CLEAN1-2 · Redirect stubs replaced with config-level redirects.
       { source: '/maestro', destination: '/home', permanent: true },
       { source: '/investor', destination: '/investors', permanent: true },
+      // /admin is canonical; legacy /home/admin* paths (stale bookmarks) 404'd.
+      { source: '/home/admin', destination: '/admin', permanent: true },
+      { source: '/home/admin/:path*', destination: '/admin/:path*', permanent: true },
     ];
   },
 };

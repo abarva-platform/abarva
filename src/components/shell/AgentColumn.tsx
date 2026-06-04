@@ -78,6 +78,7 @@ export function AgentColumn({
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}…`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
+  const threadScrollRef = useRef<HTMLDivElement>(null);
 
   // Prefer shared AtlasPageState (§6); fall back to local stream for components
   // not yet wrapped in AtlasPageStateProvider (backward compat during migration).
@@ -99,10 +100,16 @@ export function AgentColumn({
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
 
-  // Auto-scroll to bottom whenever a new turn arrives or streaming updates.
+  // Auto-scroll the THREAD CONTAINER (not the page) to the latest turn.
+  // Guard on hasThread so an empty mount never scrolls — and scroll the
+  // internal scroller via scrollTop rather than threadEndRef.scrollIntoView(),
+  // because DOM-level scrollIntoView pulls the whole page down on load
+  // (same fix AtlasDrawer uses).
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation.length, response]);
+    if (!hasThread) return;
+    const scroller = threadScrollRef.current;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+  }, [conversation.length, response, hasThread]);
 
   function handleSubmit() {
     const el = textareaRef.current;
@@ -317,6 +324,7 @@ export function AgentColumn({
 
       {/* ── Conversation thread (scrollable, fills remaining height) ── */}
       <div
+        ref={threadScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
