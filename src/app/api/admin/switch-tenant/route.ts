@@ -9,9 +9,10 @@
  *             { error: 'invalid_tenant' | 'unauthenticated' | 'forbidden' }
  *
  * Posture:
- *   - 5 canonical tenants ONLY (apex-retail, meridian-health,
- *     first-capital, northstar-clinical, skyharbor-air). Free-form
- *     keys are rejected with 400. The list is validated against
+ *   - Canonical tenants ONLY (apex-retail, meridian-health,
+ *     first-capital, northstar-clinical, skyharbor-air,
+ *     lakeshore-holdings). Free-form keys are rejected with 400.
+ *     The list is validated against
  *     `isCanonicalTenantKey` from the authority module — the same
  *     source the component reads, so server and client cannot drift.
  *   - Authority: `canSwitchActiveTenant` — founder + Clerk
@@ -101,7 +102,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // Parse + validate. Body must be JSON; tenantKey must be a canonical
-  // key (one of the 5 from `aliases.ts`). Legacy app-client-keys and
+  // key (one of the canonical keys from `aliases.ts`). Legacy app-client-keys and
   // arbitrary strings are rejected.
   let body: SwitchTenantRequest;
   try {

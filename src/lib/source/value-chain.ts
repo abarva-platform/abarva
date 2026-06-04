@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { recordEvidence } from "@/lib/evidence/ledger";
+import { getSourceEventSeed } from "./mock-seed";
 import { coerceUsdAmount, coerceUsdAmountOrZero } from "./usd-amount";
 import { formatUsd } from "./value-ledger";
 
@@ -154,16 +155,25 @@ async function resolveSourceEventIdForValue(
   sourceEventIdOrCode: string,
 ): Promise<string> {
   if (isUuid(sourceEventIdOrCode)) return sourceEventIdOrCode;
-  const { data, error } = await getAzureWriteFluentClient()
-    .from("source_events")
-    .select("id")
-    .ilike("event_code", sourceEventIdOrCode)
-    .order("updated_at", { ascending: false })
-    .limit(1);
-  if (error)
-    throw new Error(`source event value lookup failed: ${error.message}`);
-  const row = ((data ?? []) as Array<{ id?: string | null }>)[0];
-  return row?.id ?? sourceEventIdOrCode;
+  const candidates = [
+    sourceEventIdOrCode,
+    getSourceEventSeed(sourceEventIdOrCode)?.code,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    const { data, error } = await getAzureWriteFluentClient()
+      .from("source_events")
+      .select("id")
+      .ilike("event_code", candidate)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (error)
+      throw new Error(`source event value lookup failed: ${error.message}`);
+    const row = ((data ?? []) as Array<{ id?: string | null }>)[0];
+    if (row?.id) return row.id;
+  }
+
+  return sourceEventIdOrCode;
 }
 
 function isUuid(value: string): boolean {
@@ -289,7 +299,7 @@ export async function computeBaseline(
   sourceEventId: string,
 ): Promise<SourceValueStateRow> {
   const event = await loadSourceEvent(sourceEventId);
-  const existing = await latestState(sourceEventId, "baseline");
+  const existing = await latestState(event.id, "baseline");
   if (existing) return existing;
 
   const now = new Date().toISOString();
@@ -298,7 +308,7 @@ export async function computeBaseline(
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
-    artifactRef: sourceEventId,
+    artifactRef: event.id,
     claimText: `Baseline commercial exposure is ${formatUsd(amount)} for ${event.event_name}.`,
     sourceType: "tenant_record",
     sourceRef: {
@@ -316,7 +326,7 @@ export async function computeBaseline(
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
-    artifactRef: sourceEventId,
+    artifactRef: event.id,
     claimText: `Baseline methodology uses Source event scope for ${event.event_code}.`,
     sourceType: event.scope_description ? "tenant_record" : "no_evidence",
     sourceRef: {
@@ -340,7 +350,7 @@ export async function computeBaseline(
 
   return recordState({
     clientId: event.client_key,
-    sourceEventId,
+    sourceEventId: event.id,
     stateLayer: "baseline",
     stateSubtype: "cost",
     amountUsd: amount,
@@ -362,7 +372,7 @@ export async function recordIntervention(
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
-    artifactRef: sourceEventId,
+    artifactRef: event.id,
     claimText: `AbarVa intervention recorded: ${interventions.join("; ") || "Source intervention logged"}.`,
     sourceType: "derived",
     sourceRef: {
@@ -376,10 +386,10 @@ export async function recordIntervention(
     ownerRole: event.decision_owner ?? "VP Procurement",
     createdBy: "source-value-chain",
   });
-  const baseline = await computeBaseline(sourceEventId);
+  const baseline = await computeBaseline(event.id);
   return recordState({
     clientId: event.client_key,
-    sourceEventId,
+    sourceEventId: event.id,
     stateLayer: "intervention",
     stateSubtype: "risk_avoided",
     amountUsd: baseline.amount_usd,
@@ -402,7 +412,7 @@ export async function recordNegotiatedOutcome(
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
-    artifactRef: sourceEventId,
+    artifactRef: event.id,
     claimText: `Negotiated outcome is ${formatUsd(negotiatedAmount)} with terms: ${terms.join("; ") || "terms pending"}.`,
     sourceType: terms.length > 0 ? "document_extract" : "no_evidence",
     sourceRef: {
@@ -426,7 +436,7 @@ export async function recordNegotiatedOutcome(
   });
   return recordState({
     clientId: event.client_key,
-    sourceEventId,
+    sourceEventId: event.id,
     stateLayer: "negotiated",
     stateSubtype: "commercial_terms",
     amountUsd: negotiatedAmount,
@@ -452,7 +462,7 @@ export async function attestRealized(
     clientId: event.client_key,
     surface: "source",
     artifactType: "value_state",
-    artifactRef: sourceEventId,
+    artifactRef: event.id,
     claimText: `Realized Source value for ${period} is ${formatUsd(realizedAmount)}, attested by ${attestor}.`,
     sourceType: "tenant_record",
     sourceRef: {
@@ -469,7 +479,7 @@ export async function attestRealized(
   });
   return recordState({
     clientId: event.client_key,
-    sourceEventId,
+    sourceEventId: event.id,
     stateLayer: "realized",
     stateSubtype: "value_delivered",
     amountUsd: realizedAmount,

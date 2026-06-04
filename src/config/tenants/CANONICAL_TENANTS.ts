@@ -117,6 +117,13 @@ export const CANONICAL_TENANTS = [
     mimics: "Delta-shape global airline",
     patternOverlays: ["core", "airline-industry-v1"],
   },
+  {
+    key: "lakeshore-holdings",
+    name: "Lakeshore Holdings",
+    industry: "diversified",
+    mimics: "Morgan Street Holdings-shape diversified holding company",
+    patternOverlays: ["core"],
+  },
 ] as const satisfies readonly CanonicalTenant[];
 
 export type CanonicalTenantKey = (typeof CANONICAL_TENANTS)[number]["key"];
