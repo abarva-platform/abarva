@@ -98,4 +98,45 @@ describe("post-deploy crawl guard", () => {
       ),
     ).toBe(false);
   });
+
+  it("does not require hard-question citations on the Source events portfolio", () => {
+    const findings = comparePage(
+      observation({
+        tenantKey: "apexretail",
+        expectedTenantName: "Apex Retail Group",
+        personaKey: "apex-cio",
+        surfaceId: "source-events",
+        path: "/source/events",
+        visibleText:
+          "Apex Retail Group Source sourcing portfolio with two active events",
+        hardQuestionExactFieldCitations: 0,
+      }),
+    );
+
+    expect(
+      findings.some(
+        (finding) => finding.dimension === "hard-question-citation-depth",
+      ),
+    ).toBe(false);
+  });
+
+  it("still requires hard-question citations on real agent ask surfaces", () => {
+    const findings = comparePage(
+      observation({
+        surfaceId: "intelligence-ask",
+        path: "/intelligence/ask",
+        visibleText: "SkyHarbor Air ask Sentinel",
+        hardQuestionExactFieldCitations: 0,
+      }),
+    );
+
+    expect(findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "P1",
+          dimension: "hard-question-citation-depth",
+        }),
+      ]),
+    );
+  });
 });

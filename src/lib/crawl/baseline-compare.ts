@@ -285,7 +285,7 @@ export function comparePage(
   }
 
   if (
-    /ask|source.*event|agent|sentinel/i.test(observation.surfaceId) &&
+    requiresHardQuestionCitationDepth(observation.surfaceId) &&
     observation.hardQuestionExactFieldCitations < 2
   ) {
     add(
@@ -296,6 +296,12 @@ export function comparePage(
   }
 
   return findings;
+}
+
+function requiresHardQuestionCitationDepth(surfaceId: string): boolean {
+  return /(?:^|[-_])(ask|agent|sentinel)(?:$|[-_])|source-event-detail/i.test(
+    surfaceId,
+  );
 }
 
 export function hasP0(comparison: CrawlComparison): boolean {
