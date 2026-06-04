@@ -417,6 +417,13 @@ export function isUuid(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
+function formatSourceTimestamp(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return new Date().toISOString();
+  return String(value);
+}
+
 async function getPersistedSourceEventRow(
   eventId: string,
   clientKey: string,
@@ -779,7 +786,7 @@ export function sourceEventRowToDetail(
       ],
     },
     valueLedger: {
-      updatedAt: row.updated_at,
+      updatedAt: formatSourceTimestamp(row.updated_at),
       projected: buildValueLedgerForRow(row, "projected"),
       realized: buildValueLedgerForRow(row, "realized"),
     },
@@ -940,7 +947,7 @@ function buildArtifactsForRow(row: SourceEventRow): SourceArtifactSummary[] {
         row.scope_description,
         row.decision_owner,
       ].filter(Boolean).length,
-      updatedAt: row.updated_at,
+      updatedAt: formatSourceTimestamp(row.updated_at),
     },
     {
       id: `${row.id}:${stageKey}:packet`,
@@ -951,7 +958,7 @@ function buildArtifactsForRow(row: SourceEventRow): SourceArtifactSummary[] {
       summary:
         "Generated from the persisted Source event spine; richer content appears as evidence and uploads are attached.",
       sourceCount: 1,
-      updatedAt: row.updated_at,
+      updatedAt: formatSourceTimestamp(row.updated_at),
     },
   ];
 }
@@ -1017,7 +1024,7 @@ function buildDataReadinessForRow(
         : "not_available",
       owner: row.decision_owner || "Sourcing lead",
       sourceSystemOrFile: "Source intake",
-      lastUpdated: row.updated_at,
+      lastUpdated: formatSourceTimestamp(row.updated_at),
       confidence: row.scope_description ? "medium" : "low",
       workflowImpact:
         "Baseline evidence determines whether Scope and RFP work can proceed with auditability.",
@@ -1203,7 +1210,7 @@ async function sourceArtifactRegistryRecordToDetail(
       content?.trim().slice(0, 600) ??
       `${record.originalName} is registered in the Source artifact registry. Content preview is unavailable for this mime type.`,
     sourceCount: sections.length,
-    updatedAt: record.updatedAt,
+    updatedAt: formatSourceTimestamp(record.updatedAt),
     sections,
     governanceNotes: [
       `Origin: ${record.sourceOrigin}; format: ${record.sourceFormat}; classification: ${record.dataClassification}.`,
@@ -1231,8 +1238,9 @@ async function sourceArtifactStateToDetail(
         "This Source artifact has a registered document type but no authored body yet.",
     ].join("\n");
   const sections = splitSourceArtifactContentSections(content);
-  const updatedAt =
-    state.bodyUpdatedAt ?? state.updatedAt ?? new Date().toISOString();
+  const updatedAt = formatSourceTimestamp(
+    state.bodyUpdatedAt ?? state.updatedAt ?? new Date().toISOString(),
+  );
 
   return {
     id: state.id,

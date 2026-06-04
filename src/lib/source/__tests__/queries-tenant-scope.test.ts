@@ -105,7 +105,7 @@ function mockApexPersistedGoldenEvent() {
           decision_owner: "Carlos Rivera",
           created_by_user_id: "user-apex",
           created_at: "2026-06-01T00:00:00.000Z",
-          updated_at: "2026-06-02T00:00:00.000Z",
+          updated_at: new Date("2026-06-02T00:00:00.000Z"),
         };
       }
       return null;
@@ -324,6 +324,10 @@ describe("getSourcingEvent tenant scoping", () => {
     expect(event?.id).toBe("522eedf2-ff6b-4307-b312-3e0903c6fd42");
     expect(event?.code).toBe("SRC-004");
     expect(event?.currentStageKey).toBe("bafo");
+    expect(event?.valueLedger.updatedAt).toBe("2026-06-02T00:00:00.000Z");
+    expect(event?.artifacts[0]?.updatedAt).toBe(
+      "2026-06-02T00:00:00.000Z",
+    );
     expect(canReadSourceEvent).toHaveBeenCalledWith(
       expect.objectContaining({ clientKey: "apexretail" }),
       "apexretail",
