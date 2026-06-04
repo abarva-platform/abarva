@@ -260,6 +260,7 @@ const clerkProtectedProxy = clerkMiddleware(
     // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
     // was demoted to a tab inside /admin Overview — see AdminTenantTab).
     const homeToAdminMap: Record<string, string> = {
+      "/home/admin": "/admin",
       "/home/data-loads": "/admin/setup",
       "/home/data-trust": "/admin/data-trust",
       "/home/agent-readiness": "/admin/agent-readiness",
@@ -281,6 +282,18 @@ const clerkProtectedProxy = clerkMiddleware(
           if (!url.searchParams.has(key)) url.searchParams.set(key, value);
         });
       }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    // /home/admin/<path> → /admin/<path> (preserve stale admin bookmarks).
+    if (request.nextUrl.pathname.startsWith("/home/admin/")) {
+      const sub = request.nextUrl.pathname.slice("/home/admin/".length);
+      const url = new URL(
+        "/admin/" + sub + request.nextUrl.search,
+        request.url,
+      );
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(url, 301),
