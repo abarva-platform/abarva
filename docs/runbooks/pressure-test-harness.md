@@ -13,6 +13,7 @@ Use with:
 - `docs/runbooks/load-profile-and-slo-plan.md`
 - `docs/runbooks/backend-load-regression-gate.md`
 - `docs/runbooks/top-user-journey-load-tests.md`
+- `docs/runbooks/hot-path-optimization.md`
 - `scripts/load/pressure-test-matrix.mjs`
 - `npm run load:pressure-matrix`
 
@@ -89,3 +90,4 @@ The summary should include:
 - Use authenticated sessions for meaningful pilot evidence.
 - Do not run destructive profiles against production without founder approval and a rollback owner.
 - Attach evidence to the tracker note before marking any pressure-test row Done.
+- T158 remains blocked until the live runs identify the top three hot paths to optimize.
