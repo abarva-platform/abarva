@@ -260,6 +260,7 @@ const clerkProtectedProxy = clerkMiddleware(
     // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
     // was demoted to a tab inside /admin Overview — see AdminTenantTab).
     const homeToAdminMap: Record<string, string> = {
+      "/home/data-loads": "/admin/setup",
       "/home/data-trust": "/admin/data-trust",
       "/home/agent-readiness": "/admin/agent-readiness",
       "/home/connectors": "/admin/connectors",
@@ -305,6 +306,8 @@ const clerkProtectedProxy = clerkMiddleware(
     // route to modal launched from Users & Access. Atlas-named
     // routes either deprecated or relocated.
     const adminRouteConsolidationMap: Record<string, string> = {
+      "/admin/data-load": "/admin/setup",
+      "/admin/data-loads": "/admin/setup",
       "/admin/users": "/admin/users-access",
       "/admin/invite": "/admin/users-access?invite=open",
       "/admin/agents/atlas": "/admin/cross-program-signals",
