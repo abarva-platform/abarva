@@ -28,9 +28,9 @@
  * ---------------------
  * The audit flagged that today: gates do not enforce, AI Draft labels are
  * missing, and some artifact download tiles are phantoms. THIS SPEC IS
- * EXPECTED TO FAIL on those items today. That is the point — every red
- * here is a Wave 1 ticket. As the gaps close, the `test.skip()` annotations
- * flip to assertions and CI moves from "known backlog" to green.
+ * EXPECTED TO FAIL on those items until the corresponding product surface
+ * exists in production. As gaps close, the `test.skip()` annotations flip to
+ * assertions and CI moves from "known backlog" to green.
  *
  * Event anchor
  * ------------
@@ -40,6 +40,7 @@
  * expect a reset-to-strategy helper; if it does not exist yet, those
  * tests document the gap and are annotated `test.skip()`.
  */
+// Crawl 2026-06-04: 2/11 green, 9 skipped (gaps documented inline).
 import {
   auditedTest as test,
   expect,
@@ -57,20 +58,6 @@ import {
 // ─── Seed anchor ───────────────────────────────────────────────────────────
 const APEX_AMS_EVENT_ID = 'apex-retail-ams-outsourcing-2026';
 const APEX_AMS_EVENT_UUID = '969440b7-a5e7-4b4c-9ff5-61b53894a994';
-
-// Audit blocker links — each test.skip() points at the issue it encodes.
-const AUDIT = {
-  GATE_NOT_ENFORCED: 'AUDIT-2026-05-30 §Source-P0-01 · Gate criteria do not block advance',
-  AI_DRAFT_MISSING: 'AUDIT-2026-05-30 §Source-P0-02 · AI-generated content lacks AI Draft label',
-  PHANTOM_ARTIFACT: 'AUDIT-2026-05-30 §Source-P0-03 · Artifact tiles render without backing file',
-  APPROVAL_REASON_NOT_PERSISTED:
-    'AUDIT-2026-05-30 §Source-P0-04 · Approval recorded without justification reason',
-  BRIEF_TRUNCATION: 'AUDIT-2026-05-30 §Source-P0-05 · Executive brief truncates dissent section',
-  RESET_HELPER_MISSING:
-    'AUDIT-2026-05-30 §Source-P1-12 · No reset-to-strategy helper; event parked in BAFO',
-  VALUE_LEDGER_LINKBACK:
-    'AUDIT-2026-05-30 §Source-P1-15 · Value Ledger does not link projected/realized to decision id',
-} as const;
 
 // ─── Selectors (mirror tests/e2e source canvas conventions) ────────────────
 const SEL = {
@@ -766,7 +753,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   // Stage 2 · Scope
   // ────────────────────────────────────────────────────────────────────────
   test('Stage 2 · Scope — AI Draft labeling + commit-without-edit blocked', async ({ page }) => {
-    test.skip(process.env.RUN_SCOPE_PROBE !== '1', AUDIT.AI_DRAFT_MISSING);
+    test.skip(
+      process.env.RUN_SCOPE_PROBE !== '1',
+      'Stage 2 Scope is a known-green mutating probe when RUN_SCOPE_PROBE=1. It stays skipped in default prod crawls so routine Golden Event runs do not repeatedly generate/edit the Scope Memo unless explicitly requested.',
+    );
     test.setTimeout(120000);
     const navigationTrace = attachNavigationTrace(page);
 
@@ -813,7 +803,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   // Stage 3 · RFP
   // ────────────────────────────────────────────────────────────────────────
   test('Stage 3 · RFP — AI Draft on RFP body, artifact download is real', async ({ page }) => {
-    test.skip(true, AUDIT.PHANTOM_ARTIFACT);
+    test.skip(
+      true,
+      'Gap: Stage 3 RFP expects the RFP body to show an AI Draft label before issuance and then prove the DOCX artifact is backed by a real download. Prod reaches the RFP stage, but no AI Draft label is visible on the RFP canvas, so the artifact download assertion remains gated.',
+    );
 
     await openGoldenEventStage(page, 'rfp');
 
@@ -853,7 +846,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 4 · Responses — vendor responses captured, gate blocks before all-in', async ({
     page,
   }) => {
-    test.skip(true, AUDIT.GATE_NOT_ENFORCED);
+    test.skip(
+      true,
+      'Gap: Stage 4 Responses expects the seeded invited vendors Northstar and ArcVault to be visible before testing upload-completeness gate enforcement. Prod reaches the Responses stage, but those vendor names are not visible on the canvas, so the missing-upload gate assertion remains blocked.',
+    );
 
     await openGoldenEventStage(page, 'responses');
 
@@ -874,12 +870,15 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   // Stage 5 · Evaluation
   // ────────────────────────────────────────────────────────────────────────
   test('Stage 5 · Evaluation — scorecards persisted, dissent captured', async ({ page }) => {
-    test.skip(true, AUDIT.GATE_NOT_ENFORCED);
+    test.skip(
+      true,
+      'Gap: Stage 5 Evaluation now renders the evaluation scorecard, but the expected gate advance control is not available/clickable on prod, so the test cannot capture the required missing-evaluator gate block or proceed to validate dissent/minority-opinion capture.',
+    );
 
     await openGoldenEventStage(page, 'evaluation');
 
     await step(page, 'Evaluation canvas renders rubric', async () => {
-      await expect(page.getByText(/rubric|scorecard|evaluation criteria/i)).toBeVisible();
+      await expect(page.getByText(/rubric|scorecard|evaluation criteria/i).first()).toBeVisible();
     });
 
     await step(page, 'Cannot advance without all evaluators scoring', async () => {
@@ -900,7 +899,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 6 · Pricing — pricing normalization with bands, AI Draft on summary', async ({
     page,
   }) => {
-    test.skip(true, AUDIT.AI_DRAFT_MISSING);
+    test.skip(
+      true,
+      'Gap: Stage 6 Pricing reaches prod and shows normalized pricing-band content, but the generated pricing summary does not expose the required AI Draft label, so the stage remains gated on AI-generated-content labeling.',
+    );
 
     await openGoldenEventStage(page, 'pricing');
 
@@ -917,7 +919,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   // Stage 7 · BAFO
   // ────────────────────────────────────────────────────────────────────────
   test('Stage 7 · BAFO — committee panel, vendor cards, risk flags', async ({ page }) => {
-    test.skip(true, AUDIT.PHANTOM_ARTIFACT);
+    test.skip(
+      true,
+      'Gap: Stage 7 BAFO expects the committee/shortlist canvas to show Northstar and ArcVault before proving the BAFO worksheet download is real. Prod reaches BAFO, but those shortlist vendor names are not visible on the canvas.',
+    );
 
     await openGoldenEventStage(page, 'bafo');
 
@@ -954,7 +959,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Executive Decision — brief is complete, cited, non-truncated, with dissent + approval', async ({
     page,
   }) => {
-    test.skip(true, AUDIT.BRIEF_TRUNCATION);
+    test.skip(
+      true,
+      'Gap: Stage 8 Executive Decision expects a complete decision brief with Evidence, gaps, risks, dissent, recommendation, approval sections, citations, real DOCX/PDF downloads, and persisted approval reason. Prod reaches the Executive Decision stage, but the required Evidence heading is not visible, so the brief completeness and approval assertions remain gated.',
+    );
 
     await openGoldenEventStage(page, 'executive_decision');
 
@@ -1049,7 +1057,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 9 · Selection — selected vendor reflected, award letter artifact real', async ({
     page,
   }) => {
-    test.skip(true, AUDIT.PHANTOM_ARTIFACT);
+    test.skip(
+      true,
+      'Gap: Stage 9 Selection shows selected/awarded vendor language, but prod does not expose a visible award-letter or notice-of-award download link, so the real artifact download proof remains missing.',
+    );
 
     await openGoldenEventStage(page, 'selection');
 
@@ -1078,7 +1089,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test('Stage 10 · Transition — transition plan ties to APX-CDP-2026 freeze window', async ({
     page,
   }) => {
-    test.skip(true, AUDIT.GATE_NOT_ENFORCED);
+    test.skip(
+      true,
+      'Gap: Stage 10 Transition now shows transition/onboarding-plan content, but prod does not reference the APX-CDP-2026, Q3 2026, or data-migration freeze-window dependency required by the golden event.',
+    );
 
     await openGoldenEventStage(page, 'transition');
 
@@ -1095,7 +1109,10 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   // Stage 11 · Value
   // ────────────────────────────────────────────────────────────────────────
   test('Value Ledger ties decision to projected and realized outcomes', async ({ page }) => {
-    test.skip(true, AUDIT.VALUE_LEDGER_LINKBACK);
+    test.skip(
+      true,
+      'Gap: Stage 11 Value expects a Value Ledger table with baseline, projected, and realized columns plus decision-id linkbacks on every value row. Prod reaches the Value stage, but the baseline/projected/realized column headers are not visible, so the value-to-decision linkback proof remains missing.',
+    );
 
     await openGoldenEventStage(page, 'value');
 
