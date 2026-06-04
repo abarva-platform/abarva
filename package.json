@@ -51,6 +51,7 @@
     "gtm:universal-sales:verify": "node scripts/gtm/verify-universal-sales-playbook.mjs",
     "gtm:account-research:verify": "node scripts/gtm/verify-account-research-pack.mjs",
     "gtm:sales-assets:verify": "node scripts/gtm/verify-sales-asset-conversion-pack.mjs",
+    "gtm:pilot-command-center:verify": "node scripts/gtm/verify-pilot-candidate-command-center.mjs",
     "ops:founder-operating-system:verify": "node scripts/ops/verify-founder-operating-system.mjs",
     "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
