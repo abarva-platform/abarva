@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AbarVa Source — Current State Wireframes · 2026-06-04</title>
+<style>
+  :root {
+    --ink: #111827;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --tint: #f3f4f6;
+    --tint-2: #e5e7eb;
+    --accent: #1d4ed8;
+    --warn: #b45309;
+    --bad: #b91c1c;
+    --bg: #fafafa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    margin: 0;
+    padding: 32px 48px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 {
+    font-size: 20px;
+    margin: 48px 0 10px;
+    padding: 14px 16px;
+    background: #111827;
+    color: #fff;
+    border-radius: 4px;
+  }
+  h3 { font-size: 15px; color: var(--muted); margin: 6px 0 16px; font-weight: 500; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .toc {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 22px;
+    background: #fff;
+    margin: 20px 0 32px;
+    font-size: 14px;
+  }
+  .toc ol { margin: 6px 0 0; padding-left: 22px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* WIREFRAME PRIMITIVES */
+  .wire {
+    background: #fff;
+    border: 1.5px solid #1f2937;
+    border-radius: 4px;
+    margin: 0 0 28px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .wire .frame-label {
+    background: #1f2937;
+    color: #fff;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.04em;
+  }
+  .wire .frame-body { padding: 0; }
+
+  .topnav {
+    background: #111827;
+    color: #fff;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .topnav .logo { font-weight: 700; font-style: italic; letter-spacing: 0.02em; }
+  .topnav .center { display: flex; gap: 20px; opacity: 0.9; }
+  .topnav .center .active { border-bottom: 2px solid #fff; padding-bottom: 2px; }
+  .topnav .right { display: flex; gap: 14px; align-items: center; }
+  .topnav .user-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #374151; padding: 4px 10px; border-radius: 999px; font-size: 11px;
+  }
+  .topnav .signout {
+    background: transparent; border: 1px solid #6b7280; padding: 4px 12px; border-radius: 999px; color: #fff; font-size: 11px;
+  }
+  .subnav {
+    background: #fff;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .subnav .tabs { display: flex; gap: 18px; letter-spacing: 0; }
+  .subnav .tabs .tab { color: var(--muted); }
+  .subnav .tabs .tab.active { color: var(--ink); background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 4px; }
+  .canvas {
+    padding: 24px 28px;
+    background: #fff;
+  }
+  .canvas-tint {
+    padding: 24px 28px;
+    background: #faf8f3;
+  }
+
+  /* Region boxes */
+  .region {
+    border: 1.5px dashed #6b7280;
+    border-radius: 4px;
+    padding: 14px 16px;
+    background: #fafafa;
+    color: #374151;
+    position: relative;
+  }
+  .region.solid { border-style: solid; background: #fff; }
+  .region .region-tag {
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    background: #1f2937;
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .region .region-note {
+    color: var(--muted);
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 6px;
+  }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: 40% 60%; gap: 14px; }
+  .grid-2-bal { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+  .grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; }
+
+  /* Metric tiles */
+  .metric {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    background: #fff;
+    font-size: 11px;
+  }
+  .metric .label { color: var(--muted); font-size: 9px; letter-spacing: 0.08em; }
+  .metric .val { font-size: 18px; font-weight: 700; margin: 4px 0 2px; }
+  .metric .sub { color: var(--muted); font-size: 10px; }
+
+  /* Stage rail */
+  .stage-rail {
+    display: flex;
+    align-items: center;
+    padding: 14px 8px;
+    background: #faf8f3;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-bottom: 18px;
+  }
+  .stage-rail .node {
+    flex: 1;
+    text-align: center;
+    font-size: 9px;
+    color: var(--muted);
+  }
+  .stage-rail .node .dot {
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border-radius: 50%;
+    margin: 0 auto 4px;
+    color: #fff;
+    font-size: 8px;
+    line-height: 18px;
+    font-family: ui-monospace, monospace;
+  }
+  .stage-rail .node.locked .dot { background: var(--tint-2); color: var(--muted); }
+  .stage-rail .node.current .dot { background: #1d4ed8; }
+  .stage-rail .line { flex: 0 0 4px; height: 1px; background: var(--border); margin: 0 -2px; }
+
+  /* Kanban column */
+  .kanban-col {
+    border: 1px solid var(--border);
+    background: #fff;
+    padding: 10px;
+    font-size: 11px;
+    min-height: 120px;
+  }
+  .kanban-col .col-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; margin-bottom: 10px; font-size: 10px;
+  }
+  .kanban-col .col-head .count { background: var(--tint); padding: 1px 6px; border-radius: 3px; font-size: 9px; }
+  .kanban-card {
+    border: 1px solid var(--border);
+    border-left: 3px solid #1d4ed8;
+    padding: 8px;
+    background: #fafafa;
+    margin-bottom: 8px;
+    font-size: 10px;
+  }
+  .kanban-card strong { display: block; margin-bottom: 4px; }
+  .kanban-card .meta { color: var(--muted); font-size: 9px; }
+
+  /* Artifact tile */
+  .artifact {
+    border: 1px solid var(--border);
+    padding: 8px;
+    background: #fff;
+    font-size: 10px;
+    min-height: 60px;
+  }
+  .artifact .id { font-family: ui-monospace, monospace; color: var(--bad); font-size: 9px; }
+  .artifact .name { font-weight: 600; margin: 3px 0; }
+  .artifact .badge { display: inline-block; font-size: 8px; background: var(--tint); padding: 1px 5px; border-radius: 2px; color: var(--muted); }
+
+  /* Chat panel */
+  .chat-panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 14px;
+    font-size: 11px;
+  }
+  .chat-panel .chat-head { font-weight: 700; margin-bottom: 4px; }
+  .chat-panel .chat-sub { color: var(--muted); font-size: 10px; margin-bottom: 12px; }
+  .chat-panel .prompt-input {
+    border: 1px solid var(--border);
+    background: #fafafa;
+    padding: 8px;
+    border-radius: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 8px;
+  }
+  .chat-panel .suggestion {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    background: #fafafa;
+    font-size: 10px;
+  }
+
+  /* Friction callout */
+  .friction {
+    background: #fee2e2;
+    border-left: 4px solid var(--bad);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .friction strong { color: var(--bad); }
+  .friction-amber {
+    background: #fef3c7;
+    border-left: 4px solid var(--warn);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .friction-amber strong { color: var(--warn); }
+  .good {
+    background: #d1fae5;
+    border-left: 4px solid #047857;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .good strong { color: #047857; }
+
+  /* Decision queue card */
+  .queue-card {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .queue-card .left .tags { display: flex; gap: 4px; margin-bottom: 4px; }
+  .queue-card .left .tags .tag {
+    font-size: 8px; background: var(--tint); padding: 1px 5px; border-radius: 2px; color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .queue-card .left strong { display: block; margin-bottom: 2px; }
+  .queue-card .left .desc { color: var(--muted); font-size: 10px; }
+  .queue-card .right .btn {
+    background: #1f2937; color: #fff; font-size: 10px; padding: 6px 12px; border-radius: 4px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 28px;
+    font-size: 11px;
+  }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 16px; height: 16px; border-radius: 3px; }
+  .swatch.region-d { border: 1.5px dashed #6b7280; background: #fafafa; }
+  .swatch.region-s { border: 1.5px solid #1f2937; background: #fff; }
+  .swatch.friction-r { background: #fee2e2; border-left: 3px solid var(--bad); }
+  .swatch.friction-a { background: #fef3c7; border-left: 3px solid var(--warn); }
+  .swatch.good-g { background: #d1fae5; border-left: 3px solid #047857; }
+
+  /* Section divider */
+  .url {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: #eff6ff;
+    padding: 6px 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 4px 0 14px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<h1>AbarVa Source — Current-State Wireframes</h1>
+<p class="meta"><strong>Captured:</strong> 2026-06-04 from production crawl · <strong>Target:</strong> nexus-vert-kappa.vercel.app (alias app.abarva.ai) · <strong>Personas:</strong> CIO / CPO walking a real sourcing event end-to-end.</p>
+
+<div class="legend">
+  <div class="item"><div class="swatch region-d"></div> Dashed region = layout zone</div>
+  <div class="item"><div class="swatch region-s"></div> Solid frame = full page</div>
+  <div class="item"><div class="swatch friction-r"></div> P1 friction</div>
+  <div class="item"><div class="swatch friction-a"></div> P2 friction</div>
+  <div class="item"><div class="swatch good-g"></div> Works well</div>
+</div>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#chrome">Global chrome (every page)</a></li>
+    <li><a href="#queue">/source — Decision queue (root redirects here)</a></li>
+    <li><a href="#portfolio">/source/events — Portfolio + Kanban (the clean one)</a></li>
+    <li><a href="#new">/source/new — Event intake</a></li>
+    <li><a href="#canvas">Event canvas template (the workhorse view)</a></li>
+    <li><a href="#strategy">Stage 1 · Strategy</a></li>
+    <li><a href="#pricing">Stage 6 · Pricing</a></li>
+    <li><a href="#bafo">Stage 7 · BAFO</a></li>
+    <li><a href="#exec">Stage 8 · Executive Decision</a></li>
+    <li><a href="#value">Stage 11 · Value Proof</a></li>
+    <li><a href="#setup">/source/setup</a></li>
+    <li><a href="#cxo-report">CXO Report (rendered export)</a></li>
+    <li><a href="#deal-pack">Deal Pack (rendered export)</a></li>
+    <li><a href="#patterns">Cross-cutting patterns observed</a></li>
+  </ol>
+</div>
+
+<!-- ====================== 1. GLOBAL CHROME ====================== -->
+<h2 id="chrome">1 · Global chrome (every Source page)</h2>
+<h3>The frame the user is always in.</h3>
+
+<div class="wire">
+  <div class="frame-label">CHROME · all pages</div>
+  <div class="frame-body">
+    <div class="topnav">
+      <div class="logo">AbarVa &nbsp;|&nbsp; <em>Apex Retail</em></div>
+      <div class="center">
+        <span>Home</span>
+        <span>Intelligence</span>
+        <span>Moves</span>
+        <span class="active">Source</span>
+        <span>Tower</span>
+      </div>
+      <div class="right">
+        <span>Learn</span>
+        <span>Product</span>
+        <span class="user-chip">CR · Carlos Rivera</span>
+        <span class="signout">Sign out</span>
+      </div>
+    </div>
+    <div class="subnav">
+      <span>SOURCE</span>
+      <div class="tabs">
+        <span class="tab">Decisions</span>
+        <span class="tab active">Portfolio</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="friction-amber"><strong>P2 ·</strong> Sub-nav has two tabs (Decisions / Portfolio) but the live system also exposes /source/queue and /source/events as separately named routes. Naming inconsistency: page titles say "Sourcing events," sub-nav tab says "Portfolio." Same surface, two vocabularies.</div>
+
+<!-- ====================== 2. /source/queue ====================== -->
+<h2 id="queue">2 · /source · Decision queue (root redirects here)</h2>
+<p class="url">https://app.abarva.ai/source → /source/queue</p>
+<h3>"24 decisions need your attention" — a wall of identical cards.</h3>
+
+<div class="wire">
+  <div class="frame-label">PAGE · /source/queue</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="margin-bottom: 10px; font-size: 13px; font-weight: 700;">24 decisions need your attention</div>
+      <div style="color: var(--muted); font-size: 11px; margin-bottom: 16px;">Vendor contracts, renewal triggers, sourcing opportunities flagged by Sentinel.</div>
+
+      <div class="queue-card">
+        <div class="left">
+          <div class="tags"><span class="tag">VENDOR</span><span class="tag">RENEWAL</span><span class="tag">$1.4M</span></div>
+          <strong>Splunk · Telemetry renewal · Q3 2026</strong>
+          <div class="desc">Renewal trigger: 90 days. Last benchmark: 2024-Q1. Coverage overlap with Datadog (60%).</div>
+        </div>
+        <div class="right"><span class="btn">Open decision</span></div>
+      </div>
+
+      <div class="queue-card">
+        <div class="left">
+          <div class="tags"><span class="tag">VENDOR</span><span class="tag">RENEWAL</span><span class="tag">$2.1M</span></div>
+          <strong>Databricks · Lakehouse platform · 2026-09</strong>
+          <div class="desc">Renewal trigger: 120 days. Usage growth +47% YoY. Eval Snowflake counter-quote.</div>
+        </div>
+        <div class="right"><span class="btn">Open decision</span></div>
+      </div>
+
+      <div class="queue-card">
+        <div class="left">
+          <div class="tags"><span class="tag">VENDOR</span><span class="tag">RENEWAL</span><span class="tag">$0.4M</span></div>
+          <strong>Klaviyo · Marketing automation · 2026-08</strong>
+          <div class="desc">Renewal trigger: 60 days. Tier upgrade pressure. Auto-renew clause in effect.</div>
+        </div>
+        <div class="right"><span class="btn">Open decision</span></div>
+      </div>
+
+      <div style="text-align: center; color: var(--muted); font-size: 11px; margin: 16px 0;">… 21 more decision cards, visually identical, stacked vertically</div>
+    </div>
+  </div>
+</div>
+
+<div class="friction"><strong>P1 ·</strong> 24 nearly-identical cards stacked vertically. No grouping by value tier, deadline, category, or owner. No filtering, no sort. A CPO scanning this sees "wall of work" and bounces.</div>
+<div class="friction-amber"><strong>P2 ·</strong> Each card opens "Open decision" — the CTA implies a binary; but most cards lead to a multi-week sourcing event. CTA promises more than it can deliver in one click.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No "what's overdue" / "what's blocked" visual hierarchy. Every card is equally weighted.</div>
+
+<!-- ====================== 3. /source/events ====================== -->
+<h2 id="portfolio">3 · /source/events · Portfolio + Kanban (the clean one)</h2>
+<p class="url">https://app.abarva.ai/source/events</p>
+<h3>Executive-grade. This is the anchor.</h3>
+
+<div class="wire">
+  <div class="frame-label">PAGE · /source/events</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
+        <div>
+          <div style="color: var(--muted); font-size: 10px; letter-spacing: 0.08em;">SOURCE · SOURCING PORTFOLIO</div>
+          <div style="font-size: 26px; font-family: Georgia, serif;">Sourcing events</div>
+          <div style="color: var(--muted); font-size: 12px;">2 events across 1 tenant. Nothing needs your attention today.</div>
+        </div>
+        <div style="background: #1f2937; color: #fff; padding: 8px 14px; border-radius: 4px; font-size: 11px;">+ New sourcing event</div>
+      </div>
+
+      <div class="region" style="margin-bottom: 18px;">
+        <div class="region-tag">METRIC STRIP</div>
+        <div class="grid-6" style="margin-top: 8px;">
+          <div class="metric"><div class="label">TOTAL VALUE</div><div class="val">$39.0M</div><div class="sub">2 sourcing events</div></div>
+          <div class="metric"><div class="label">OPEN PIPELINE</div><div class="val">$39.0M</div><div class="sub">2 active / waiting</div></div>
+          <div class="metric"><div class="label">ACTIVE EVENTS</div><div class="val">2</div><div class="sub">moving through gates</div></div>
+          <div class="metric"><div class="label">WAITING</div><div class="val">0</div><div class="sub">client / vendor / exec hold</div></div>
+          <div class="metric"><div class="label">AT-RISK EXPOSURE</div><div class="val">—</div><div class="sub">0 need attention</div></div>
+          <div class="metric"><div class="label">OLDEST STAGE AGE</div><div class="val">2d</div><div class="sub">0 waiting · 0 completed</div></div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-size: 11px; color: var(--muted); letter-spacing: 0.08em;">2 EVENTS</div>
+        <div style="display: flex; gap: 8px;">
+          <span style="border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-size: 11px;">≡ Table</span>
+          <span style="background: #1f2937; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px;">▦ Kanban</span>
+          <span style="border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-size: 11px;">⋮ Value chart</span>
+        </div>
+      </div>
+
+      <div class="region">
+        <div class="region-tag">KANBAN · 5 columns</div>
+        <div class="grid-5" style="margin-top: 8px;">
+          <div class="kanban-col">
+            <div class="col-head"><span>01 Discovery &amp; Scope</span><span class="count">1</span></div>
+            <div class="kanban-card">
+              <strong>Apex Retail AMS Sourcing Event</strong>
+              <div class="meta">APEX-AMS-SOURCING-EVENT-2026 · Apex Retail<br/>Strategy · Active · 2d<br/><strong style="color: var(--ink);">$4.0M</strong></div>
+            </div>
+          </div>
+          <div class="kanban-col">
+            <div class="col-head"><span>02 Evaluation &amp; Pricing</span><span class="count">0</span></div>
+            <div style="text-align: center; color: var(--muted); margin-top: 40px;">—</div>
+          </div>
+          <div class="kanban-col">
+            <div class="col-head"><span>03 BAFO &amp; Decision</span><span class="count">1</span></div>
+            <div class="kanban-card">
+              <strong>AMS Outsourcing 2026</strong>
+              <div class="meta">SRC-004 · Apex Retail<br/>Executive Decision · Active · 1d<br/><strong style="color: var(--ink);">$35.0M</strong></div>
+            </div>
+          </div>
+          <div class="kanban-col">
+            <div class="col-head"><span>04 Transition &amp; Closeout</span><span class="count">0</span></div>
+            <div style="text-align: center; color: var(--muted); margin-top: 40px;">—</div>
+          </div>
+          <div class="kanban-col">
+            <div class="col-head"><span>✓ Awarded / Completed</span><span class="count">0</span></div>
+            <div style="text-align: center; color: var(--muted); margin-top: 40px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> Clear hierarchy. Metrics strip tells the portfolio story in 3 seconds. Kanban gives shape immediately. Cards are scannable. Reads like Stripe/Linear. <strong>This is the anchor for the redesign.</strong></div>
+<div class="friction-amber"><strong>P2 ·</strong> Sub-nav says "Portfolio" but page H1 says "Sourcing events." Pick one term.</div>
+<div class="friction-amber"><strong>P2 ·</strong> 5-column kanban collapses 11 lifecycle stages into 5 buckets. Useful for portfolio scan but creates a mental mismatch with the 11-stage rail inside the event canvas.</div>
+
+<!-- ====================== 4. /source/new ====================== -->
+<h2 id="new">4 · /source/new · Event intake</h2>
+<p class="url">https://app.abarva.ai/source/new</p>
+<h3>Progressive capture: 5 fields, one at a time.</h3>
+
+<div class="wire">
+  <div class="frame-label">PAGE · /source/new</div>
+  <div class="frame-body">
+    <div class="canvas-tint">
+      <div style="font-family: Georgia, serif; font-size: 22px; margin-bottom: 6px;">Open a sourcing event</div>
+      <div style="color: var(--muted); font-size: 12px; margin-bottom: 24px;">Capture 5 facts. We'll route to the right canvas.</div>
+
+      <div class="grid-2">
+        <div>
+          <div class="region" style="margin-bottom: 14px;">
+            <div class="region-tag">STEP 1 · TRIGGER (required)</div>
+            <div style="margin-top: 6px;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">Why now?</div>
+              <div style="color: var(--muted); font-size: 11px; margin-bottom: 8px;">STEWARD NEEDS the trigger event. SENTINEL NEEDS the deadline/renewal date if there is one.</div>
+              <div style="border: 1px solid var(--border); background: #fff; padding: 30px 10px; color: var(--muted); font-size: 11px;">Free-text input — "What is forcing the decision now?"</div>
+            </div>
+          </div>
+
+          <div class="region" style="opacity: 0.5;">
+            <div class="region-tag">STEP 2 · DECISION OWNER</div>
+            <div style="margin-top: 6px; font-size: 11px; color: var(--muted);">Locked until Step 1 captured.</div>
+          </div>
+          <div class="region" style="opacity: 0.3; margin-top: 14px;">
+            <div class="region-tag">STEP 3 · SCOPE BOUNDARY</div>
+            <div style="margin-top: 6px; font-size: 11px; color: var(--muted);">Locked.</div>
+          </div>
+          <div class="region" style="opacity: 0.3; margin-top: 14px;">
+            <div class="region-tag">STEP 4 · VALUE TARGET</div>
+            <div style="margin-top: 6px; font-size: 11px; color: var(--muted);">Locked.</div>
+          </div>
+          <div class="region" style="opacity: 0.3; margin-top: 14px;">
+            <div class="region-tag">STEP 5 · BASELINE / DATA OWNER</div>
+            <div style="margin-top: 6px; font-size: 11px; color: var(--muted);">Locked.</div>
+          </div>
+        </div>
+        <div>
+          <div class="region">
+            <div class="region-tag">PROGRESS SIDEBAR</div>
+            <div style="font-size: 12px; margin-top: 6px;">
+              <div style="margin-bottom: 8px;">0/5 facts captured</div>
+              <div style="background: var(--tint); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 18px;">
+                <div style="width: 0%; height: 100%; background: #1d4ed8;"></div>
+              </div>
+              <div style="color: var(--muted); font-size: 11px;">Next best capture: <strong style="color: var(--ink);">Trigger</strong></div>
+            </div>
+          </div>
+          <div class="region" style="margin-top: 14px;">
+            <div class="region-tag">FILE INPUT (only place in Source!)</div>
+            <div style="margin-top: 6px; font-size: 11px; color: var(--muted);">⌘ paperclip · "Attach trigger document"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> Progressive disclosure is excellent. Locking later fields until earlier ones are captured is the right pattern. Reduces cognitive load.</div>
+<div class="friction"><strong>P1 ·</strong> Field labels say "STEWARD NEEDS" / "SENTINEL NEEDS" — internal product taxonomy. A CPO sees this as system jargon.</div>
+<div class="friction-amber"><strong>P2 ·</strong> File input only exists here. Per L6 audit: all other event surfaces lack governed artifact upload — Evidence tab has no upload, stage canvases have no upload.</div>
+
+<!-- ====================== 5. EVENT CANVAS TEMPLATE ====================== -->
+<h2 id="canvas">5 · Event canvas template (the workhorse view)</h2>
+<p class="url">https://app.abarva.ai/source/events/[eventId]?stage=[stage]</p>
+<h3>11-stage rail · Left chat (~40%) · Right tabs (~60%) · stage content below the artifact shelf.</h3>
+
+<div class="wire">
+  <div class="frame-label">PAGE TEMPLATE · /source/events/[id]?stage=*</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <!-- Event header -->
+      <div style="margin-bottom: 14px;">
+        <div style="color: var(--muted); font-size: 10px; letter-spacing: 0.08em;">SOURCE · APEX · SRC-004</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-family: Georgia, serif; font-size: 26px;">AMS Outsourcing 2026</div>
+            <div style="color: var(--muted); font-size: 12px;">Managed Service · Strategic · Owner: CIO Office</div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <span style="border: 1px solid var(--border); padding: 5px 12px; border-radius: 4px; font-size: 11px;">VALUE PROOF</span>
+            <span style="border: 1px solid var(--border); padding: 5px 12px; border-radius: 4px; font-size: 11px;">VIEW IN DOSSIER</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage rail -->
+      <div class="stage-rail">
+        <div class="node"><div class="dot">01</div>Strategy</div>
+        <div class="line"></div>
+        <div class="node"><div class="dot">02</div>Scope</div>
+        <div class="line"></div>
+        <div class="node"><div class="dot">03</div>RFP</div>
+        <div class="line"></div>
+        <div class="node"><div class="dot">04</div>Responses</div>
+        <div class="line"></div>
+        <div class="node"><div class="dot">05</div>Evaluation</div>
+        <div class="line"></div>
+        <div class="node"><div class="dot">06</div>Pricing</div>
+        <div class="line"></div>
+        <div class="node current"><div class="dot">07</div>BAFO</div>
+        <div class="line"></div>
+        <div class="node locked"><div class="dot">08</div>Exec Dec</div>
+        <div class="line"></div>
+        <div class="node locked"><div class="dot">09</div>Select</div>
+        <div class="line"></div>
+        <div class="node locked"><div class="dot">10</div>Transition</div>
+        <div class="line"></div>
+        <div class="node locked"><div class="dot">11</div>Value</div>
+      </div>
+
+      <!-- Two-pane workspace -->
+      <div class="grid-2">
+        <!-- LEFT: SENTINEL CHAT -->
+        <div class="region" style="background: #fff;">
+          <div class="region-tag">SENTINEL CHAT (~40% width, every stage)</div>
+          <div class="chat-panel" style="border: none; padding: 0;">
+            <div class="chat-head">Sentinel Source</div>
+            <div class="chat-sub">Drafts artifacts, surfaces evidence, flags gaps before they cost you.</div>
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 6px;">Ask Sentinel Source anything.</div>
+            <div style="color: var(--muted); font-size: 10px; margin-bottom: 10px;">Source Portfolio Conductor</div>
+
+            <div style="color: var(--muted); font-size: 10px; letter-spacing: 0.06em; margin: 8px 0;">SUGGESTED QUESTIONS</div>
+            <div class="suggestion">Help me draft the strategy memo from the event facts</div>
+            <div class="suggestion">Summarize concessions accepted by each finalist</div>
+            <div class="suggestion">Draft round 2 questions for the open P0 traps</div>
+
+            <div class="prompt-input">⌘ Ask Sentinel Source… &nbsp;&nbsp; (paperclip · send arrow)</div>
+
+            <div style="background: #d1fae5; padding: 6px 8px; font-size: 9px; margin-top: 10px; color: #047857;">HUMAN APPROVAL REQUIRED: AGENT-SUGGESTED ACTIONS ARE PROPOSALS ONLY.</div>
+            <div style="color: var(--muted); font-size: 9px; margin-top: 6px;">AI may produce errors. You are responsible for decisions taken based on this output.</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: WORKSPACE TABS -->
+        <div class="region">
+          <div class="region-tag">WORKSPACE (~60% width)</div>
+          <div style="display: flex; gap: 16px; margin: 8px 0 14px; font-size: 11px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+            <span style="font-weight: 700; border-bottom: 2px solid var(--ink); padding-bottom: 4px;">Document <span style="background: var(--tint); padding: 1px 6px; border-radius: 2px; margin-left: 4px;">6</span></span>
+            <span style="color: var(--muted);">Gate <span style="background: var(--tint); padding: 1px 6px; border-radius: 2px; margin-left: 4px;">0/3</span></span>
+            <span style="color: var(--muted);">Evidence <span style="background: var(--tint); padding: 1px 6px; border-radius: 2px; margin-left: 4px;">0/1</span></span>
+            <span style="color: var(--muted);">Log</span>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; margin-bottom: 6px;">6 DB-backed documents <span style="color: var(--muted); font-weight: 400; font-size: 10px;">source_artifacts</span></div>
+
+          <div class="grid-3" style="margin-bottom: 16px;">
+            <div class="artifact"><div class="id">d01_strategy_memo</div><div class="name">Sourcing Strategy Memo</div><span class="badge">approved</span></div>
+            <div class="artifact"><div class="id">d05_scope_memo</div><div class="name">Scope Memo</div><span class="badge">approved</span></div>
+            <div class="artifact"><div class="id">d09_rfp_pack</div><div class="name">RFP Package</div><span class="badge">approved</span></div>
+            <div class="artifact"><div class="id">d16_scorecard</div><div class="name">Scorecard</div><span class="badge">approved</span></div>
+            <div class="artifact"><div class="id">d19_pricing_workbook</div><div class="name">Pricing Normalization Workbook</div><span class="badge">approved</span></div>
+            <div class="artifact"><div class="id">d22_bafo_question_pack</div><div class="name">BAFO Question Pack</div><span class="badge">approved</span></div>
+          </div>
+
+          <div style="border-top: 1px dashed var(--border); padding-top: 14px;">
+            <div style="color: var(--muted); font-size: 10px; letter-spacing: 0.08em; margin-bottom: 4px;">IN PROGRESS</div>
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px;">Sourcing Strategy Memo <span style="background: #fef3c7; color: var(--warn); padding: 2px 6px; border-radius: 2px; font-size: 9px; margin-left: 4px;">Draft</span></div>
+            <div style="color: var(--muted); font-size: 11px; margin-bottom: 12px;">Why we are sourcing now, who the deciding sponsor is, value target, archetype, rigor tier.</div>
+            <div style="display: flex; gap: 8px;">
+              <span style="background: #1f2937; color: #fff; padding: 6px 14px; border-radius: 4px; font-size: 11px;">GENERATE WITH SENTINEL</span>
+              <span style="border: 1px solid var(--border); padding: 6px 14px; border-radius: 4px; font-size: 11px;">EDIT BODY</span>
+              <span style="border: 1px solid var(--border); padding: 6px 14px; border-radius: 4px; font-size: 11px; color: var(--muted);">MARK COMPLETE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> 11-stage rail gives clear lifecycle orientation. Locked stages (greyed) signal what's gated. The two-pane workspace pattern is a reasonable mental model.</div>
+<div class="friction"><strong>P1 ·</strong> Sentinel chat panel takes ~40% width on EVERY stage. Strategy work and Executive Decision need different proportions — drafting wants chat, deciding wants document focus.</div>
+<div class="friction"><strong>P1 ·</strong> Artifact codes (d01_strategy_memo, d05_scope_memo) visible in tile labels. The L6 audit caught this; humanization PR didn't cover this surface.</div>
+<div class="friction"><strong>P1 ·</strong> Header "6 DB-backed documents" + the "source_artifacts" tag visible — internal-product language in CXO-facing view.</div>
+<div class="friction-amber"><strong>P2 ·</strong> The actual stage work (Strategy Memo, Pricing Workbook, etc.) sits BELOW the artifact shelf. Below the fold. The shelf shows the same 6 docs on every stage; only the bottom changes.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No page-1 executive summary. On Executive Decision stage you should land on the recommendation, not the artifact shelf.</div>
+<div class="friction-amber"><strong>P2 ·</strong> Two AI disclaimers stack permanently in the chat panel ("HUMAN APPROVAL REQUIRED" + "AI may produce errors"). After 50 views they're wallpaper.</div>
+
+<!-- ====================== 6. STAGE 1 STRATEGY ====================== -->
+<h2 id="strategy">6 · Stage 1 · Strategy (event canvas variant)</h2>
+<p class="url">?stage=strategy</p>
+
+<div class="wire">
+  <div class="frame-label">EVENT CANVAS · Stage 1 Strategy</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">[Same chrome as template above — stage rail with node 01 highlighted]</div>
+      <div class="grid-2">
+        <div class="region">
+          <div class="region-tag">SENTINEL CHAT — Strategy-stage suggestions</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            <div style="margin-bottom: 4px;">• Help me draft the strategy memo from the event facts</div>
+            <div style="margin-bottom: 4px;">• Reconcile the trigger statement with the value target</div>
+            <div style="margin-bottom: 4px;">• What evidence is missing to advance to Scope?</div>
+          </div>
+        </div>
+        <div class="region">
+          <div class="region-tag">WORKSPACE → SOURCING STRATEGY MEMO</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            <strong>Content:</strong> Why-now / sponsor / value target / archetype / rigor tier · Markdown editor · Generate-with-Sentinel + Edit + Mark Complete.<br/>
+            <strong>Sidebar:</strong> Value Target Brief (d02) + Archetype Decision Record (d03) stubs.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== 7. STAGE 6 PRICING ====================== -->
+<h2 id="pricing">7 · Stage 6 · Pricing (event canvas variant)</h2>
+<p class="url">?stage=pricing</p>
+
+<div class="wire">
+  <div class="frame-label">EVENT CANVAS · Stage 6 Pricing</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div class="grid-2">
+        <div class="region">
+          <div class="region-tag">SENTINEL CHAT — Pricing-stage suggestions</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            • Show the pricing trap log<br/>
+            • Normalize this BAFO at 4 year horizon<br/>
+            • Baseline TCO at 5 year horizon
+          </div>
+        </div>
+        <div class="region">
+          <div class="region-tag">WORKSPACE → PRICING NORMALIZATION WORKBOOK</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            <strong>Three artifact tiles:</strong> Pricing Normalization Workbook · Pricing Trap Log · Locked Assumption Set.<br/>
+            <strong>Content:</strong> Vendor-by-vendor TCO normalized matrix, assumption deltas, hidden cost iceberg.<br/>
+            <strong>Status today:</strong> Stage shows tiles but content was scaffold-only until PR #2867 per-stage virtual scaffold fix.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> Pricing stage uniquely shows TCO Iceberg — the load-bearing artifact the CXO brief called out as exceed-bar.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No vendor-by-vendor TCO comparison in the primary view — that's the literal job of this stage. Buried in artifact download.</div>
+
+<!-- ====================== 8. STAGE 7 BAFO ====================== -->
+<h2 id="bafo">8 · Stage 7 · BAFO (event canvas variant)</h2>
+<p class="url">?stage=bafo</p>
+
+<div class="wire">
+  <div class="frame-label">EVENT CANVAS · Stage 7 BAFO</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div class="grid-2">
+        <div class="region">
+          <div class="region-tag">SENTINEL CHAT — BAFO suggestions</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            • Draft round 2 questions for the open P0 traps<br/>
+            • Summarize concessions accepted by each finalist<br/>
+            • Compare BAFO deltas across vendors
+          </div>
+        </div>
+        <div class="region">
+          <div class="region-tag">WORKSPACE → BAFO QUESTION PACK + ROUND LOG</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            <strong>Artifacts:</strong> BAFO Question Pack (d22) + BAFO Round Log (d23)<br/>
+            <strong>Header copy:</strong> "Per-vendor questions targeting open traps and lever opportunities."<br/>
+            <strong>Buttons:</strong> Mark Complete · Download XLSX/DOCX/PDF
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="friction-amber"><strong>P2 ·</strong> No leverage envelope visualization (walk-away / target / opening). Per CXO brief exceed-bar, BAFO should show the negotiation envelope quantitatively — current UI is question-pack-centric.</div>
+
+<!-- ====================== 9. STAGE 8 EXEC DECISION ====================== -->
+<h2 id="exec">9 · Stage 8 · Executive Decision (the most load-bearing screen)</h2>
+<p class="url">?stage=executive_decision</p>
+
+<div class="wire">
+  <div class="frame-label">EVENT CANVAS · Stage 8 Executive Decision</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div class="grid-2">
+        <div class="region">
+          <div class="region-tag">SENTINEL CHAT — Decision suggestions</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            • Make me the Atlas decision brief<br/>
+            • Sentinel risk attestation<br/>
+            • Surface the 3 open risks needing attention
+          </div>
+        </div>
+        <div class="region">
+          <div class="region-tag">WORKSPACE → ATLAS DECISION BRIEF</div>
+          <div style="font-size: 11px; margin-top: 8px;">
+            <strong>Heading:</strong> "Atlas Decision Brief"<br/>
+            <strong>Sections shown today (per deal-pack render):</strong> §1 Recommendation · §2 Why this vendor · §3 Tradeoff card · §4 Finalist comparison · §5 Counter-recommendation · §6 Required sign-offs<br/>
+            <strong>Status:</strong> Template scaffolding, example text visible ("Example: Recommend Northstar at $13.21M…")
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="friction"><strong>P1 ·</strong> This is the most load-bearing screen of the entire product — the CXO opens it on a phone with 30 seconds to absorb a recommendation. <strong>It currently leads with the artifact shelf, not the decision.</strong> Should lead with a one-page executive summary: Decision · Number · Trade-off · Dissent · Risk · Approval record.</div>
+<div class="friction"><strong>P1 ·</strong> No "dissent" section in the brief structure. Counter-recommendation ≠ dissent — different question (alternative vs contrarian view we overrode).</div>
+<div class="friction-amber"><strong>P2 ·</strong> Template example text ("Recommend Northstar at $13.21M…") renders inline as if it were content. Should be hidden in author mode only.</div>
+
+<!-- ====================== 10. STAGE 11 VALUE ====================== -->
+<h2 id="value">10 · Stage 11 · Value Proof</h2>
+<p class="url">https://app.abarva.ai/source/events/[id]/value</p>
+
+<div class="wire">
+  <div class="frame-label">PAGE · /value</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="font-family: Georgia, serif; font-size: 22px; margin-bottom: 4px;">Value Proof — AMS Outsourcing 2026</div>
+      <div style="color: var(--muted); font-size: 11px; margin-bottom: 18px;">$35.0M baseline · 0 linked states · 0 savings recorded · 4-step proof chain</div>
+
+      <div class="grid-4">
+        <div class="region">
+          <div class="region-tag">1 · BASELINE</div>
+          <div style="font-size: 18px; font-weight: 700; margin-top: 6px;">$35.0M</div>
+          <div style="color: var(--muted); font-size: 10px;">Locked baseline (system-projected; not CFO-attested yet)</div>
+        </div>
+        <div class="region">
+          <div class="region-tag">2 · INTERVENTION</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Not yet recorded — pending Executive Decision close</div>
+        </div>
+        <div class="region">
+          <div class="region-tag">3 · NEGOTIATED</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Not yet recorded — requires BAFO closure</div>
+        </div>
+        <div class="region">
+          <div class="region-tag">4 · REALIZED</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">Not yet recorded — post-go-live ledger entries needed</div>
+        </div>
+      </div>
+
+      <div style="background: #fef3c7; border-left: 4px solid var(--warn); padding: 10px 14px; margin-top: 18px; font-size: 11px; color: var(--warn);">
+        <strong>HOLD ·</strong> Substrate too thin to attest. Do not use this page as savings proof until evidence ledger + finance attestation are populated.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> 4-step proof chain (Baseline → Intervention → Negotiated → Realized) is exactly right per CXO brief. Honest about gaps ("Substrate too thin to attest"). CFO-defensible posture.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No CFO-attestation UI surface. No signature capture, no variance investigation trigger, no Board-pack auto-generation.</div>
+
+<!-- ====================== 11. /source/setup ====================== -->
+<h2 id="setup">11 · /source/setup</h2>
+<p class="url">https://app.abarva.ai/source/setup</p>
+
+<div class="wire">
+  <div class="frame-label">PAGE · /source/setup (legacy surface, PR #3019 not deployed)</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="font-family: Georgia, serif; font-size: 22px;">SOURCE SETUP</div>
+      <div style="color: var(--muted); font-size: 12px; margin-bottom: 18px;">Prepare a sourcing event before the working room opens.</div>
+      <div class="region">
+        <div class="region-tag">OPERATOR CHECKLIST CARDS (lightweight)</div>
+        <div style="font-size: 11px; margin-top: 6px;">Cards for: event setup · evidence load · sponsor sign-off · gate criteria review</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="friction"><strong>P1 ·</strong> Per crawl: PR #3019 (artifact-operations matrix — the intended setup page) was scoped + spec'd but not deployed. Current surface is the older lightweight checklist.</div>
+
+<!-- ====================== 12. CXO REPORT ====================== -->
+<h2 id="cxo-report">12 · CXO Report (rendered HTML export)</h2>
+<p class="url">/api/v1/source/[id]/cxo-report?format=html</p>
+
+<div class="wire">
+  <div class="frame-label">EXPORT · CXO Report HTML</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="font-family: Georgia, serif; font-size: 20px;">ABARVA · SOURCE CXO Narrative Report</div>
+      <div style="color: var(--muted); font-size: 11px; margin-bottom: 18px;">Apex Retail · SRC-004 · AMS Outsourcing 2026 · Deterministic event report</div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="region"><div class="region-tag">Slide 1 · Cover</div></div>
+        <div class="region"><div class="region-tag">Slide 2 · Executive Answer</div><div class="region-note">"Final selection statement with rationale" — sometimes shows "Award / proceed" verdict even pre-decision (PR #2867 stage-gate fix needed)</div></div>
+        <div class="region"><div class="region-tag">Slide 3 · Source Substrate</div></div>
+        <div class="region"><div class="region-tag">Slide 4 · Lifecycle Coverage</div></div>
+        <div class="region"><div class="region-tag">Slide 5 · Commercial Evidence Check (TCO + Pricing + Savings)</div></div>
+        <div class="region"><div class="region-tag">Slide 6 · Vendor Comparison</div></div>
+        <div class="region"><div class="region-tag">Slide 7 · Risk Posture</div></div>
+        <div class="region"><div class="region-tag">Slide 8 · Approval &amp; Sign-off</div></div>
+        <div class="region"><div class="region-tag">Slide 9 · Governance / Evidence Ledger</div><div class="region-note">Honest: "0 evidence rows · 0 gate decisions · 7 scaffold" — auditor-grade transparency</div></div>
+        <div class="region"><div class="region-tag">Slide 10 · Next Asks</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> 10-slide structure is conceptually right. Slide 9 honesty about evidence gaps is auditor-grade.</div>
+<div class="friction-amber"><strong>P2 ·</strong> Title says "Deterministic event report" — developer term. Should say "System-generated CXO report" or similar.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No PPTX render — returns HTML fallback ("PPTX export not available yet, use HTML"). Per CXO brief, the editable deck is the canonical share-out format.</div>
+
+<!-- ====================== 13. DEAL PACK ====================== -->
+<h2 id="deal-pack">13 · Deal Pack (rendered HTML export)</h2>
+<p class="url">/api/v1/source/[id]/deal-pack?format=html</p>
+
+<div class="wire">
+  <div class="frame-label">EXPORT · Deal Pack HTML</div>
+  <div class="frame-body">
+    <div class="canvas">
+      <div style="font-family: Georgia, serif; font-size: 20px;">AMS Outsourcing 2026</div>
+      <div style="color: var(--muted); font-size: 11px; margin-bottom: 14px;">Sourcing Deal Pack · SRC-004 · 2026-06-04</div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div class="region"><div class="region-tag">Section · Demand Challenge (Stage 0)</div><div class="region-note"><strong style="color: var(--bad);">[Scaffold]</strong> badge visible · Verdict block with 1-7 sub-sections</div></div>
+        <div class="region"><div class="region-tag">Section · Sourcing Strategy (Stage 1)</div><div class="region-note"><strong style="color: var(--bad);">[Scaffold]</strong> badge · Recommendation + 5 sub-sections</div></div>
+        <div class="region"><div class="region-tag">Section · Market Intelligence</div></div>
+        <div class="region"><div class="region-tag">Section · Scope &amp; RFP</div><div class="region-note">Scope Memo (§1-§8) + RFP Package (§1-§8) + Application Inventory + Response Checklist · <strong style="color: var(--bad);">[Scaffold]</strong> on Scope Memo &amp; RFP Pack</div></div>
+        <div class="region"><div class="region-tag">Section · Pricing &amp; TCO</div><div class="region-note">Pricing Template + Pricing Comparison + TCO Iceberg</div></div>
+        <div class="region"><div class="region-tag">Section · Evaluation, BAFO &amp; Decision</div><div class="region-note">Scorecard + Trap Log + BAFO Question Pack + Decision Brief (§1-§6) · <strong style="color: var(--bad);">[Scaffold]</strong> on Decision Brief</div></div>
+        <div class="region"><div class="region-tag">Section · Selection Memo (§1-§6)</div></div>
+        <div class="region"><div class="region-tag">Section · Risk &amp; Clauses</div><div class="region-note">AI Clause Gap + Vendor Risk Pack (6 sub-sections)</div></div>
+        <div class="region"><div class="region-tag">Section · SRM &amp; Renewal</div><div class="region-note">Renewal Decision</div></div>
+        <div class="region"><div class="region-tag">Section · Evidence Ledger + Decision History + Glossary</div></div>
+        <div class="region" style="background: #fee2e2;"><div class="region-tag">⚠ MISSING · Stage 10 Transition</div></div>
+        <div class="region" style="background: #fee2e2;"><div class="region-tag">⚠ MISSING · Stage 11 Value Ledger</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="good"><strong>Works well ·</strong> Conceptually solid 11-section structure. Section sub-headings (§1-§8 etc.) suggest sourcing-grade thinking. Evidence Ledger + Decision History + Glossary give audit posture.</div>
+<div class="friction"><strong>P1 ·</strong> <strong>7 visible "Scaffold" badges</strong> on artifact section headers — internal status leaking to a CXO-facing export.</div>
+<div class="friction"><strong>P1 ·</strong> <strong>Transition + Value sections are MISSING.</strong> Lifecycle stops at Selection. The Board's "did we save what you promised?" question has no answer.</div>
+<div class="friction"><strong>P1 ·</strong> Template example prose renders as content (e.g., "Example: Recommend Northstar at $13.21M…") — instructions shown to the CXO instead of authored output.</div>
+<div class="friction-amber"><strong>P2 ·</strong> No Page-1 Executive Summary above the section sequence. CXO scrolls through scaffold before reaching the recommendation.</div>
+<div class="friction-amber"><strong>P2 ·</strong> Filename "abarva-source-deal-pack-…" — internal product naming. Should be branded for the tenant + event.</div>
+
+<!-- ====================== 14. PATTERNS ====================== -->
+<h2 id="patterns">14 · Cross-cutting patterns observed</h2>
+
+<div class="region solid" style="background: #fff;">
+  <div class="region-tag">PATTERN 1 · The bones are right; execution is loud</div>
+  <p style="font-size: 13px; margin-top: 8px;">Every page has the right concept (lifecycle rail, artifact shelf, agent rail, value metrics, evidence ledger). But each element is rendered at full strength with no hierarchy. Apple-style would dim 3 of 4 so the eye knows where to look.</p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 2 · Sentinel chat is undifferentiated by stage</div>
+  <p style="font-size: 13px; margin-top: 8px;">~40% of every event canvas is the chat panel. Strategy stage needs chat (drafting). Executive Decision stage needs document focus (deciding). Same UI footprint, different mental task.</p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 3 · Internal taxonomy leaks across surfaces</div>
+  <p style="font-size: 13px; margin-top: 8px;"><code>d01_strategy_memo</code> · "DB-backed documents" · "STEWARD NEEDS" · "Deterministic event report" · "source_artifacts" tag · [Scaffold] badges · "Substrate signal: 0 vendor_contracts rows on file." PR #2868 humanized labels on artifact tiles but didn't sweep deal-pack, CXO report, intake form, or event-canvas chrome.</p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 4 · Lead with the workings, not the answer</div>
+  <p style="font-size: 13px; margin-top: 8px;">Executive Decision stage opens to the artifact shelf. Deal Pack opens to Demand Challenge (Stage 0). CXO Report opens to a cover slide. None of them lead with: <em>"Northstar selected. $13.21M TCO. Trade-off: gave up incumbent stability, gained 3-yr benchmark right. Two dissents tracked. Approved by Carlos Rivera on 2026-06-04."</em></p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 5 · Lifecycle stops at Selection in deliverables</div>
+  <p style="font-size: 13px; margin-top: 8px;">Stages 10 (Transition) and 11 (Value) exist in the event canvas rail and at /value, but they're absent from the Deal Pack and largely absent from the CXO Report. The Board's most important question — "did we save what you promised?" — has no surface that answers it well.</p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 6 · /source/events is qualitatively better than every other page</div>
+  <p style="font-size: 13px; margin-top: 8px;">The portfolio view reads like a Stripe dashboard. The decision queue reads like a wall of work. The event canvas reads like an internal admin tool. The contrast tells us the team knows how to design at executive grade — they just haven't applied that lens to every surface yet.</p>
+</div>
+
+<div class="region solid" style="background: #fff; margin-top: 12px;">
+  <div class="region-tag">PATTERN 7 · Disclaimers and safety language compound to wallpaper</div>
+  <p style="font-size: 13px; margin-top: 8px;">"HUMAN APPROVAL REQUIRED" + "AI may produce errors" + "CITATION GAP" + "Awaiting authoring" + "Self-approval notice" — each correct in isolation; stacked, they're chrome that the user learns to ignore. Trust is built by withholding most banners until they actually fire on a specific risk.</p>
+</div>
+
+<p class="footer">Wireframes captured 2026-06-04. Source: production crawl screenshots + rendered HTML deliverables (Deal Pack + CXO Report) + route handler review. Friction calls graded against the bar in <code>docs/build/cxo-primers/APEX_RETAIL_SOURCE_E2E_CXO_TESTING_BRIEF_2026-06-02.md</code>.</p>
+
+</body>
+</html>

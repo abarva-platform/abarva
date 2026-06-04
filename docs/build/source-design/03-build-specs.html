@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AbarVa Source — Redesign Build Specs · 2026-06-04</title>
+<style>
+:root {
+  --ink: #111827;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --tint: #f3f4f6;
+  --tint-2: #e5e7eb;
+  --accent: #1d4ed8;
+  --warn: #b45309;
+  --bad: #b91c1c;
+  --good: #047857;
+  --bg: #fafafa;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  margin: 0;
+  padding: 32px 56px 80px;
+  line-height: 1.55;
+  font-size: 14px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 {
+  font-size: 22px;
+  margin: 48px 0 12px;
+  padding: 14px 18px;
+  background: #111827;
+  color: #fff;
+  border-radius: 4px;
+}
+h2 .step { color: #9ca3af; font-size: 13px; letter-spacing: 0.08em; font-weight: 400; margin-right: 12px; }
+h3 {
+  font-size: 18px;
+  color: var(--ink);
+  margin: 28px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+h4 {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 4px 0 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+.toc {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px 24px;
+  background: #fff;
+  margin: 16px 0 32px;
+  font-size: 13px;
+  column-count: 2;
+  column-gap: 32px;
+}
+.toc ol { margin: 4px 0 0; padding-left: 22px; }
+.toc a { color: var(--accent); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+code, .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  background: var(--tint);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+pre {
+  background: #1f2937;
+  color: #f3f4f6;
+  padding: 14px 18px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+/* SPEC BLOCK */
+.spec {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin: 14px 0 26px;
+}
+.spec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.spec-header .title {
+  font-size: 17px;
+  font-weight: 700;
+}
+.spec-header .subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.spec-header .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 3px;
+}
+.pill-new { background: #1d4ed8; color: #fff; }
+.pill-edit { background: #b45309; color: #fff; }
+.pill-extend { background: #047857; color: #fff; }
+.pill-fix { background: #b91c1c; color: #fff; }
+.pill-effort-s { background: #d1fae5; color: var(--good); }
+.pill-effort-m { background: #fef3c7; color: var(--warn); }
+.pill-effort-l { background: #fee2e2; color: var(--bad); }
+.pill-risk-l { background: #f3f4f6; color: var(--muted); }
+.pill-risk-m { background: #fef3c7; color: var(--warn); }
+.pill-risk-h { background: #fee2e2; color: var(--bad); }
+
+.spec-section {
+  margin-bottom: 16px;
+}
+.spec-section h5 {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+.spec-section ul { margin: 4px 0; padding-left: 22px; font-size: 13px; }
+.spec-section li { margin-bottom: 4px; }
+
+.file-path {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--accent);
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+}
+.file-path.new::before { content: "✦ "; color: var(--good); }
+.file-path.edit::before { content: "✎ "; color: var(--warn); }
+
+.copy-block {
+  background: var(--tint);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  font-style: italic;
+  color: var(--ink);
+  font-size: 13px;
+  margin: 6px 0;
+}
+.copy-block .label {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.question-block {
+  background: #fef3c7;
+  border-left: 4px solid var(--warn);
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.question-block strong { color: var(--warn); }
+
+table.props {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 6px 0;
+}
+table.props th, table.props td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+table.props th { background: var(--tint); font-size: 11px; }
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+.token {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #fff;
+}
+.token .swatch { width: 100%; height: 28px; border-radius: 2px; margin-bottom: 4px; border: 1px solid #d1d5db; }
+.token .name { font-family: ui-monospace, monospace; font-size: 10px; color: var(--muted); }
+.token .val { font-weight: 700; font-size: 12px; }
+
+.legend {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+  font-size: 12px;
+}
+
+.callout {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 3px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.callout strong { color: var(--accent); }
+
+.footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.priority-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
+.priority-table th, .priority-table td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+.priority-table th { background: var(--tint); font-size: 11px; letter-spacing: 0.04em; }
+.priority-table .wave-1 { background: #fee2e2; }
+.priority-table .wave-2 { background: #fef3c7; }
+.priority-table .wave-3 { background: #d1fae5; }
+</style>
+</head>
+<body>
+
+<h1>AbarVa Source — Redesign Build Specs</h1>
+<p class="meta">
+<strong>Date:</strong> 2026-06-04 ·
+<strong>Companion to:</strong> <code>abarva-source-end-to-end-wireframes-2026-06-04.html</code> ·
+<strong>For:</strong> Claude design module (review + refine) → Codex (implement) ·
+<strong>Pattern:</strong> Every TARGET wireframe surface specced with file paths, props, copy, behavior, acceptance criteria, and open design questions.
+</p>
+
+<div class="legend">
+  <div><span class="pill pill-new">NEW</span> Surface doesn't exist · greenfield</div>
+  <div><span class="pill pill-edit">EDIT</span> Surface exists · refactor</div>
+  <div><span class="pill pill-extend">EXTEND</span> Surface exists · additive</div>
+  <div><span class="pill pill-fix">FIX</span> Surface exists · bug class</div>
+  <div><span class="pill pill-effort-s">S</span><span class="pill pill-effort-m">M</span><span class="pill pill-effort-l">L</span> Effort</div>
+  <div><span class="pill pill-risk-l">low</span><span class="pill pill-risk-m">med</span><span class="pill pill-risk-h">hi</span> Risk</div>
+</div>
+
+<div class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#how-to-use">How to use this document</a></li>
+  <li><a href="#bar">The bar · design principles</a></li>
+  <li><a href="#tokens">Design tokens (color · type · space)</a></li>
+  <li><a href="#component-arch">Component architecture</a></li>
+  <li><a href="#spec-queue">Spec · Decision queue triage bands</a></li>
+  <li><a href="#spec-intake">Spec · Intake completion footer</a></li>
+  <li><a href="#spec-approval">Spec · Approval page (NEW)</a></li>
+  <li><a href="#spec-routing">Spec · Lifecycle-state routing guard</a></li>
+  <li><a href="#spec-stage-shell">Spec · Stage canvas "Next Move" pattern</a></li>
+  <li><a href="#spec-chat-sizing">Spec · Sentinel chat sizing per stage</a></li>
+  <li><a href="#spec-artifact-tile">Spec · Artifact tile humanization</a></li>
+  <li><a href="#spec-strategy">Spec · Stage 1 Strategy refit</a></li>
+  <li><a href="#spec-scope-rfp">Spec · Stages 2-3 (Scope + RFP)</a></li>
+  <li><a href="#spec-responses-eval">Spec · Stages 4-5 (Responses + Evaluation)</a></li>
+  <li><a href="#spec-pricing-bafo">Spec · Stages 6-7 (Pricing + BAFO)</a></li>
+  <li><a href="#spec-exec-decision">Spec · Stage 8 Executive Decision page-1 summary</a></li>
+  <li><a href="#spec-transition">Spec · Stage 10 Transition (NEW)</a></li>
+  <li><a href="#spec-value">Spec · Stage 11 Value Ledger extension</a></li>
+  <li><a href="#spec-exports">Spec · CXO Report + Deal Pack rewrites</a></li>
+  <li><a href="#spec-evidence">Spec · Evidence drawer (NEW)</a></li>
+  <li><a href="#spec-audit">Spec · Audit log surface</a></li>
+  <li><a href="#spec-notifications">Spec · Cross-event attention surface</a></li>
+  <li><a href="#spec-renewal">Spec · Renewal auto-event</a></li>
+  <li><a href="#sequence">Wave sequencing · what ships when</a></li>
+  <li><a href="#open-questions">Open questions for the design module</a></li>
+</ol>
+</div>
+
+<!-- =================== HOW TO USE =================== -->
+<h2 id="how-to-use"><span class="step">PART 1</span>How to use this document</h2>
+
+<div class="callout">
+<strong>For Claude design module:</strong> Each spec has an "OPEN FOR DESIGN REVIEW" block at the bottom. Refine copy, propose alternative layouts, push back on flows, surface design system inconsistencies. The structured format makes inline review easy — comment per section.
+</div>
+
+<div class="callout">
+<strong>For Codex:</strong> Each spec has FILES (real repo paths), COMPONENTS (real exports), PROPS (typed), BEHAVIOR (events + routing), and ACCEPTANCE (definition of done). Pick any spec, the work is bounded and PR-shaped.
+</div>
+
+<h3>Convention legend used throughout</h3>
+<ul style="font-size: 13px;">
+  <li><span class="file-path new">src/components/source/NewComponent.tsx</span> — new file</li>
+  <li><span class="file-path edit">src/components/source/Existing.tsx</span> — modify existing file</li>
+  <li><em>"copy in italics"</em> — exact user-facing string · review for tone</li>
+  <li><span class="pill pill-new">NEW</span> <span class="pill pill-effort-s">S</span> <span class="pill pill-risk-l">low</span> — type · effort · risk pills per spec</li>
+</ul>
+
+<!-- =================== THE BAR =================== -->
+<h2 id="bar"><span class="step">PART 2</span>The bar · design principles</h2>
+
+<h3>Five principles. Every spec must clear all five.</h3>
+
+<div class="spec">
+  <ol style="font-size: 14px;">
+    <li><strong>Lead with the answer, not the workings.</strong> Page 1 of every surface tells the CXO the decision/state. The reasoning is below the fold.</li>
+    <li><strong>Subtract before adding.</strong> Every visible element earns its place by changing what the user does next. If it doesn't, demote or delete.</li>
+    <li><strong>Match chrome to mental task.</strong> Drafting stages need chat; deciding stages need document focus; reviewing stages need evidence proximity.</li>
+    <li><strong>Internal taxonomy never leaks.</strong> Artifact codes, table names, scaffold tier labels — all hidden in production. Author-mode only.</li>
+    <li><strong>Honesty without paper cuts.</strong> Disclaimers and gap-flags appear when load-bearing, not as wallpaper. One persistent banner max.</li>
+  </ol>
+</div>
+
+<h3>The Apple test</h3>
+<div class="callout">
+For every page, blur the screenshot 50%. Can you still tell where the primary action is? If no, hierarchy is broken. If yes, ship it.
+</div>
+
+<!-- =================== DESIGN TOKENS =================== -->
+<h2 id="tokens"><span class="step">PART 3</span>Design tokens</h2>
+
+<h3>Color palette (locked per project memory · do not change)</h3>
+<div class="token-grid">
+  <div class="token"><div class="swatch" style="background: #F8F7F4;"></div><div class="name">--bg-paper</div><div class="val">#F8F7F4</div></div>
+  <div class="token"><div class="swatch" style="background: #111827;"></div><div class="name">--ink</div><div class="val">#111827</div></div>
+  <div class="token"><div class="swatch" style="background: #6b7280;"></div><div class="name">--muted</div><div class="val">#6b7280</div></div>
+  <div class="token"><div class="swatch" style="background: #1d4ed8;"></div><div class="name">--accent</div><div class="val">#1d4ed8</div></div>
+  <div class="token"><div class="swatch" style="background: #047857;"></div><div class="name">--good</div><div class="val">#047857</div></div>
+  <div class="token"><div class="swatch" style="background: #b45309;"></div><div class="name">--warn</div><div class="val">#b45309</div></div>
+  <div class="token"><div class="swatch" style="background: #b91c1c;"></div><div class="name">--bad</div><div class="val">#b91c1c</div></div>
+  <div class="token"><div class="swatch" style="background: #f3f4f6;"></div><div class="name">--tint</div><div class="val">#f3f4f6</div></div>
+</div>
+
+<h3>Typography (locked)</h3>
+<table class="props">
+  <tr><th>Use</th><th>Family</th><th>Weight</th><th>Size</th></tr>
+  <tr><td>Page H1 · event titles</td><td>Georgia, serif</td><td>400 (normal)</td><td>26-28px</td></tr>
+  <tr><td>Section H2</td><td>Georgia, serif</td><td>400</td><td>20-22px</td></tr>
+  <tr><td>Body</td><td>DM Sans / system sans</td><td>400</td><td>13-14px</td></tr>
+  <tr><td>UI labels / meta</td><td>System sans</td><td>500</td><td>10-11px · letter-spacing 0.04-0.08em</td></tr>
+  <tr><td>Mono / IDs (author mode only)</td><td>ui-monospace</td><td>400</td><td>11-12px</td></tr>
+</table>
+
+<div class="callout">
+<strong>Locked per project memory:</strong> User confirmed the design system on 2026-04-16 (per <code>feedback_design_locked.md</code>). Do not propose color/font changes without explicit approval.
+</div>
+
+<h3>Spacing scale</h3>
+<table class="props">
+  <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+  <tr><td>xs</td><td>4px</td><td>Tight stack within a card</td></tr>
+  <tr><td>s</td><td>8px</td><td>Within-region spacing</td></tr>
+  <tr><td>m</td><td>14px</td><td>Between regions</td></tr>
+  <tr><td>l</td><td>24px</td><td>Section breaks</td></tr>
+  <tr><td>xl</td><td>40px</td><td>Page-level separation</td></tr>
+</table>
+
+<!-- =================== COMPONENT ARCH =================== -->
+<h2 id="component-arch"><span class="step">PART 4</span>Component architecture</h2>
+
+<h3>Existing primary components (must be aware of)</h3>
+<table class="props">
+  <tr><th>Component</th><th>File</th><th>Role</th></tr>
+  <tr><td><code>SourceEventsPortfolio</code></td><td><code>src/components/source/SourceEventsPortfolio.tsx</code></td><td>Portfolio page · kanban + metric strip · <strong>design anchor</strong></td></tr>
+  <tr><td><code>SourceEventsAgentDockView</code></td><td><code>src/components/source/SourceEventsAgentDockView.tsx</code></td><td>Events page agent-dock layout</td></tr>
+  <tr><td><code>UniversalCanvasShell</code></td><td><code>src/components/source/canvas/UniversalCanvasShell.tsx</code></td><td>Event canvas root · stage rail + tabs</td></tr>
+  <tr><td><code>DocumentTab</code></td><td><code>src/components/source/canvas/workspace-tabs/DocumentTab.tsx</code></td><td>Document tab on canvas</td></tr>
+  <tr><td><code>EvidenceTab</code></td><td><code>src/components/source/canvas/workspace-tabs/EvidenceTab.tsx</code></td><td>Evidence tab</td></tr>
+  <tr><td><code>LogTab</code></td><td><code>src/components/source/canvas/workspace-tabs/LogTab.tsx</code></td><td>Activity log tab</td></tr>
+  <tr><td><code>EventLifecycleStatusBadge</code></td><td><code>src/components/source/EventLifecycleStatusBadge.tsx</code></td><td>WAITING ON CLIENT etc. badge</td></tr>
+  <tr><td><code>ApprovalDecisionPanel</code></td><td><code>src/components/admin/programs/ApprovalDecisionPanel.tsx</code></td><td>Existing approval panel · reuse for new flow</td></tr>
+  <tr><td><code>SourceSubNav</code></td><td><code>src/components/source/SourceSubNav.tsx</code></td><td>Source sub-nav (Decisions / Portfolio / Setup)</td></tr>
+</table>
+
+<h3>New components to create</h3>
+<table class="props">
+  <tr><th>Component</th><th>File</th><th>Spec</th></tr>
+  <tr><td><code>SourceEventApprovalPage</code></td><td><code>src/app/(maestro)/source/events/[eventId]/approval/page.tsx</code></td><td><a href="#spec-approval">Spec · Approval page</a></td></tr>
+  <tr><td><code>SourceLifecycleRoutingGuard</code></td><td><code>src/lib/source/lifecycle-routing-guard.ts</code></td><td><a href="#spec-routing">Spec · Routing guard</a></td></tr>
+  <tr><td><code>StageNextMoveCard</code></td><td><code>src/components/source/canvas/StageNextMoveCard.tsx</code></td><td><a href="#spec-stage-shell">Spec · Next Move card</a></td></tr>
+  <tr><td><code>SentinelChatProportional</code></td><td><code>src/components/source/canvas/SentinelChatProportional.tsx</code></td><td><a href="#spec-chat-sizing">Spec · Chat sizing</a></td></tr>
+  <tr><td><code>ExecutiveSummaryHeader</code></td><td><code>src/components/source/canvas/ExecutiveSummaryHeader.tsx</code></td><td><a href="#spec-exec-decision">Spec · Page-1 exec summary</a></td></tr>
+  <tr><td><code>TransitionReadinessScorecard</code></td><td><code>src/components/source/transition/TransitionReadinessScorecard.tsx</code></td><td><a href="#spec-transition">Spec · Transition</a></td></tr>
+  <tr><td><code>ValueLedgerChain</code></td><td><code>src/components/source/value/ValueLedgerChain.tsx</code></td><td><a href="#spec-value">Spec · Value</a></td></tr>
+  <tr><td><code>EvidenceDrawer</code></td><td><code>src/components/source/EvidenceDrawer.tsx</code></td><td><a href="#spec-evidence">Spec · Evidence drawer</a></td></tr>
+  <tr><td><code>SourceAttentionSurface</code></td><td><code>src/components/source/SourceAttentionSurface.tsx</code></td><td><a href="#spec-notifications">Spec · Attention</a></td></tr>
+</table>
+
+<!-- =================== SPEC: QUEUE TRIAGE =================== -->
+<h2 id="spec-queue"><span class="step">SPEC 1</span>Decision queue · triage bands</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Replace flat queue with urgency-banded triage view</div>
+    <div class="subtitle">Refs Wireframe Part 2B (target queue) · Closes L6 finding "24 cards visually identical"</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/app/(maestro)/source/queue/page.tsx</span>
+  <span class="file-path edit">src/components/source/SourceDecisionQueue.tsx</span>
+  <span class="file-path new">src/components/source/SourceTriageBands.tsx</span>
+  <span class="file-path new">src/lib/source/queue/triage-banding.ts</span>
+</div>
+
+<div class="spec-section">
+  <h5>Layout</h5>
+  <ul>
+    <li>Header: title + count + "$X.XM at stake this quarter" headline metric</li>
+    <li>Filter/sort/+New event toolbar (right-aligned)</li>
+    <li><strong>3 urgency band cards (grid-cols-3):</strong> OVERDUE-ACT-NOW · DUE-THIS-QUARTER · PIPELINE</li>
+    <li>Per-band card: count · aggregate value · 1-line context</li>
+    <li>Vertical list of decision cards below, sorted by deadline within band</li>
+    <li>Per-card: urgency tag chip · value chip · vendor name chip · title · 1-line context · primary CTA + 1-2 secondary</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Triage banding logic (<code>triage-banding.ts</code>)</h5>
+  <pre>function bandFor(decision: SourceDecision): TriageBand {
+  const daysToTrigger = differenceInDays(decision.triggerDate, now);
+  if (daysToTrigger &lt; 0) return 'OVERDUE';
+  if (daysToTrigger &lt;= 90) return 'DUE_THIS_QUARTER';
+  return 'PIPELINE';
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Copy</h5>
+  <div class="copy-block"><span class="label">Header</span>Source · Attention</div>
+  <div class="copy-block"><span class="label">Sub-line</span>{count} decisions in queue · {overdueCount} overdue · ${aggregateValue} at stake this quarter</div>
+  <div class="copy-block"><span class="label">OVERDUE band</span>OVERDUE — ACT NOW · {count} renewals past trigger window · ${value} aggregate value</div>
+  <div class="copy-block"><span class="label">DUE THIS QUARTER band</span>DUE THIS QUARTER · {count} events · ${value} · {n} need scope clarity</div>
+  <div class="copy-block"><span class="label">PIPELINE band</span>PIPELINE · {count} events · ${value} · Triggers 6+ months out</div>
+  <div class="copy-block"><span class="label">Card CTA · OVERDUE</span>Open event   ·   Defer to Q4</div>
+  <div class="copy-block"><span class="label">Card CTA · DUE</span>Open event   ·   Schedule scoping</div>
+  <div class="copy-block"><span class="label">Card CTA · PIPELINE</span>Open event   ·   Snooze 30 days</div>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>3 urgency bands render with correct counts based on triggerDate field</li>
+    <li>Decision cards within each band sort by deadline ascending</li>
+    <li>Primary CTA matches band (Open event for all; secondary varies)</li>
+    <li>Filter dropdown (All / OVERDUE / DUE / PIPELINE) updates band visibility</li>
+    <li>Sort dropdown (Deadline / Value / Vendor) updates within-band sort</li>
+    <li>Zero state: "No decisions need your attention. {N} active events in /portfolio"</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should DUE-THIS-QUARTER subsplit by month (Jul / Aug / Sep) for granular triage, or stay aggregated?</li>
+    <li>Secondary CTAs ("Defer to Q4", "Snooze 30 days") — are these actually safe actions, or do they need approval-flow guards?</li>
+    <li>"$X.XM at stake this quarter" — should we surface NPV of action vs delay, not just absolute value?</li>
+    <li>Should the band cards be clickable (filter the list), or pure summary?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: INTAKE FOOTER =================== -->
+<h2 id="spec-intake"><span class="step">SPEC 2</span>Intake · 5/5 completion footer</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Add "Next: Approval" panel that appears at 5/5 captured</div>
+    <div class="subtitle">Refs Wireframe Part 3B · Closes Anand finding "no terminal state, where does this go?"</div>
+  </div>
+  <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/app/(maestro)/source/new/page.tsx</span>
+  <span class="file-path new">src/components/source/intake/IntakeCompletionFooter.tsx</span>
+</div>
+
+<div class="spec-section">
+  <h5>Behavior</h5>
+  <ul>
+    <li>Component conditionally renders when <code>capturedFactsCount === 5</code></li>
+    <li>Shows: facts checklist (collapsed) · approval routing preview · primary "Open event" CTA · secondary "Save draft" CTA</li>
+    <li>"Open event" submits via existing POST <code>/api/v1/source/events</code></li>
+    <li>On 200 response: <code>router.push('/source/events/{eventId}/approval')</code> — NOT the canvas</li>
+    <li>Approval routing preview pulls from <code>decisionOwner</code> + <code>coDecisionRequested</code> fact fields</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Component signature</h5>
+  <pre>interface IntakeCompletionFooterProps {
+  capturedFacts: CapturedFacts;
+  decisionOwner: { name: string; role: string; userId?: string };
+  coApprover?: { name: string; role: string; userId?: string };
+  pilotModeSelfApprove: boolean;
+  onOpenEvent: () =&gt; Promise&lt;{ eventId: string }&gt;;
+  onSaveDraft: () =&gt; void;
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Copy</h5>
+  <div class="copy-block"><span class="label">Section label</span>▼ NEXT · APPROVAL</div>
+  <div class="copy-block"><span class="label">Title</span>Open event for approval</div>
+  <div class="copy-block"><span class="label">Routing line</span>Routes to: <strong>{decisionOwner.name}</strong> (you) {if coApprover}+ <strong>{coApprover.name}</strong> (co-decision){/if}</div>
+  <div class="copy-block"><span class="label">Pilot note</span>Pilot mode: self-approval allowed with rationale.</div>
+  <div class="copy-block"><span class="label">Primary CTA</span>▶ Open event</div>
+  <div class="copy-block"><span class="label">Secondary CTA</span>Save draft</div>
+  <div class="copy-block"><span class="label">Post-submit tooltip</span>After submit: you'll land on the approval page, not the canvas. The canvas unlocks after approval.</div>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Footer appears only when 5/5 facts captured (no early reveal)</li>
+    <li>"Open event" triggers POST and routes to <code>/approval</code> on success</li>
+    <li>Save draft persists facts but doesn't trigger lifecycle</li>
+    <li>Field labels in the rest of the form drop "STEWARD NEEDS" / "SENTINEL NEEDS" — replace with plain-English prompts</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should the captured facts collapse into a checklist at 5/5, or stay expanded as a "review your facts" affordance?</li>
+    <li>"Pilot mode: self-approval allowed" — surface this here, or only on the approval page?</li>
+    <li>Should there be a "What if I want a 6th fact?" escape hatch, or is 5 a hard schema?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: APPROVAL PAGE =================== -->
+<h2 id="spec-approval"><span class="step">SPEC 3</span>Approval page · /source/events/[id]/approval (NEW)</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Dedicated approval page · blocks canvas access until resolved</div>
+    <div class="subtitle">Refs Wireframe Part 4 · Closes "approval flow is invisible" finding · LOAD-BEARING</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/app/(maestro)/source/events/[eventId]/approval/page.tsx</span>
+  <span class="file-path new">src/components/source/approval/EventApprovalCard.tsx</span>
+  <span class="file-path new">src/components/source/approval/ApprovalRoutingPanel.tsx</span>
+  <span class="file-path new">src/components/source/approval/IntakeFactsReview.tsx</span>
+  <span class="file-path new">src/components/source/approval/IntakeChatTrail.tsx</span>
+  <span class="file-path new">src/app/api/v1/source/events/[eventId]/approve/route.ts</span>
+  <span class="file-path new">src/app/api/v1/source/events/[eventId]/route-to-co-approver/route.ts</span>
+  <span class="file-path new">src/app/api/v1/source/events/[eventId]/request-changes/route.ts</span>
+  <span class="file-path edit">src/lib/data-plane/write-adapters/sourceWriteAdapter.ts</span> (add lifecycle transition methods)
+</div>
+
+<div class="spec-section">
+  <h5>Page layout (top to bottom)</h5>
+  <ol>
+    <li>Pending banner (amber bg) with status, age, opened-by line, status badge</li>
+    <li>2-column split:
+      <ul>
+        <li>LEFT: Captured Facts (5 fields, read mode) + Intake Chat Trail (collapsed by default, expandable)</li>
+        <li>RIGHT: Approval Routing Panel (sponsor + co-approver) + Rationale textarea + Action buttons + What-happens-next preview</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="spec-section">
+  <h5>Actions + handlers</h5>
+  <table class="props">
+    <tr><th>Action</th><th>Endpoint</th><th>Lifecycle transition</th><th>Redirect after</th></tr>
+    <tr><td>Approve (self)</td><td>POST <code>/approve</code></td><td>waiting_on_client → active</td><td><code>/events/{id}?stage=strategy</code></td></tr>
+    <tr><td>Send to co-approver</td><td>POST <code>/route-to-co-approver</code></td><td>waiting_on_client → waiting_on_co_approver</td><td><code>/events/{id}/approval</code> (with confirmation toast)</td></tr>
+    <tr><td>Request changes</td><td>POST <code>/request-changes</code></td><td>waiting_on_client → draft_revision</td><td><code>/source/new?eventId={id}</code> (loads intake with current facts)</td></tr>
+    <tr><td>Reject</td><td>POST <code>/reject</code></td><td>waiting_on_client → closed_rejected</td><td><code>/source/queue</code></td></tr>
+  </table>
+</div>
+
+<div class="spec-section">
+  <h5>Component props</h5>
+  <pre>interface EventApprovalCardProps {
+  eventId: string;
+  eventName: string;
+  lifecycleState: 'waiting_on_client' | 'waiting_on_co_approver' | 'draft_revision';
+  createdBy: { userId: string; displayName: string; role: string };
+  createdAt: string;  // ISO timestamp
+  capturedFacts: CapturedFacts;
+  intakeChatTurns: ChatTurn[];
+  sponsor: { userId: string; displayName: string; role: string };
+  coApprover?: { userId: string; displayName: string; role: string; notified?: boolean };
+  pilotMode: boolean;
+  currentUserId: string;
+  currentUserCanApprove: boolean;
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Copy</h5>
+  <div class="copy-block"><span class="label">Status banner</span>PENDING APPROVAL · WAITING ON CLIENT · {ageMinutes} minutes aged</div>
+  <div class="copy-block"><span class="label">Sub-line</span>{archetype} · {rigorTier} · Opened by {createdBy.displayName}, {createdBy.role} · {timeAgo}</div>
+  <div class="copy-block"><span class="label">Self-approval notice (when current user = creator)</span>⚠ Self-approval notice: you are the recorded event creator. Audit log will flag.</div>
+  <div class="copy-block"><span class="label">Co-approver routing CTA</span>Send to {coApprover.displayName} for co-approval</div>
+  <div class="copy-block"><span class="label">Rationale required</span>Why are you approving / requesting changes / sending to co-approver? Required for audit log.</div>
+  <div class="copy-block"><span class="label">Confirmation checkbox</span>I confirm this is my accountable human approval decision</div>
+  <div class="copy-block"><span class="label">What happens next</span>→ On approve: event unlocks at Stage 1 Strategy. You can draft the strategy memo.<br>→ On co-approve: {coApprover.displayName} gets a notification + this page link. Both must approve.<br>→ On request changes: chat reopens at /source/new with current facts loaded.<br>→ On reject: event closed, audit log retains the record.</div>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Page renders only when <code>lifecycleState IN ('waiting_on_client', 'waiting_on_co_approver', 'draft_revision')</code></li>
+    <li>If lifecycleState = 'active' → redirect to canvas (handled by routing guard, Spec 4)</li>
+    <li>Rationale textarea + confirmation checkbox both required before any action button enables</li>
+    <li>Self-approval notice appears when <code>currentUserId === createdBy.userId</code></li>
+    <li>Audit log entry written per action with: actor, action, rationale, evidence_refs (event id)</li>
+    <li>RLS: only sponsor, co-approver, or maestro role can access this page</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should the intake chat trail expand inline, or open in a modal? (Modal preserves approval-page focus; inline gives evidence at hand.)</li>
+    <li>"Request changes" — should it always route back to <code>/source/new</code>, or should there be a lighter "annotate this fact" inline edit affordance?</li>
+    <li>Co-approver notification delivery — email? in-app only? both? Specs need product call.</li>
+    <li>Reject button visual prominence — should it be hidden behind a "more actions" menu to prevent misclicks on a high-stakes action?</li>
+    <li>When current user is NOT an approver (e.g., a viewer), should they see a "Read only · pending {sponsor}" version of this page, or be 403'd?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: ROUTING GUARD =================== -->
+<h2 id="spec-routing"><span class="step">SPEC 4</span>Lifecycle-state routing guard</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Route by lifecycle_state · canvas physically blocked until approved</div>
+    <div class="subtitle">Refs Wireframe state machine · Closes Anand finding "canvas opens even when not approved"</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-h">hi</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/lib/source/lifecycle-routing-guard.ts</span>
+  <span class="file-path edit">src/app/(maestro)/source/events/[eventId]/page.tsx</span> (add guard call at top)
+  <span class="file-path edit">src/app/(maestro)/source/events/[eventId]/value/page.tsx</span> (add guard call)
+  <span class="file-path edit">src/proxy.ts</span> (optional: middleware-level redirect for performance)
+</div>
+
+<div class="spec-section">
+  <h5>Routing rules</h5>
+  <pre>function resolveEventRoute(
+  eventId: string,
+  lifecycleState: SourceLifecycleState,
+  requestedPath: string  // e.g. "?stage=strategy" or "/value" or "/approval"
+): RouteAction {
+  switch (lifecycleState) {
+    case 'waiting_on_client':
+    case 'waiting_on_co_approver':
+    case 'draft_revision':
+      // Block canvas. Allow only /approval.
+      if (requestedPath.includes('/approval')) return { allow: true };
+      return { redirect: `/source/events/${eventId}/approval` };
+
+    case 'active':
+      // Block /approval. Allow canvas + stages.
+      if (requestedPath.includes('/approval')) {
+        return { redirect: `/source/events/${eventId}?stage=current` };
+      }
+      return { allow: true };
+
+    case 'closed':
+    case 'closed_rejected':
+      // Read-only summary view.
+      return { redirect: `/source/events/${eventId}/summary` };
+
+    case 'archived':
+      return { redirect: `/source/queue` };
+  }
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Typing canvas URL directly when event is waiting_on_client → 302 to /approval</li>
+    <li>Typing /approval URL when event is active → 302 to canvas at current stage</li>
+    <li>Typing canvas URL when event is closed → 302 to /summary read-only view</li>
+    <li>Approval page redirect happens server-side (no flash of canvas)</li>
+    <li>Audit log entry on every redirect (route-attempt logging)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should the guard run in middleware (faster, no flash) or in the page component (cleaner, but brief flash possible)?</li>
+    <li>For closed events: separate <code>/summary</code> page (NEW) or read-only canvas view (modify existing)?</li>
+    <li>If user is mid-action when an event transitions (e.g., approver clicks Approve while another tab has canvas open) — invalidate the stale tab how? Toast + reload? Silent reload?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: STAGE NEXT MOVE =================== -->
+<h2 id="spec-stage-shell"><span class="step">SPEC 5</span>Stage canvas · "Next Move" pattern</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Replace artifact-shelf-first layout with Next-Move-led layout on every stage</div>
+    <div class="subtitle">Refs Wireframe Parts 5B-15 · Universal pattern across stages</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/StageNextMoveCard.tsx</span>
+  <span class="file-path edit">src/components/source/canvas/UniversalCanvasShell.tsx</span>
+  <span class="file-path edit">src/components/source/canvas/workspace-tabs/DocumentTab.tsx</span>
+  <span class="file-path new">src/lib/source/stage-next-move.ts</span> (deterministic resolver per stage + state)
+</div>
+
+<div class="spec-section">
+  <h5>Layout (above existing artifact shelf)</h5>
+  <ul>
+    <li>Card with accent border (blue), region tag "▼ NEXT MOVE"</li>
+    <li>Bold title (12-14px): the next action in plain English</li>
+    <li>Body (10-11px): 1-2 sentences of context (what Sentinel will do, time estimate)</li>
+    <li>Primary CTA (filled dark): single highest-leverage action</li>
+    <li>Secondary CTA (outlined): alternative path</li>
+    <li>Gates blocking next stage (compact list with checkboxes)</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Stage-specific Next Move strings (resolved deterministically by state)</h5>
+  <table class="props">
+    <tr><th>Stage</th><th>State</th><th>Next Move title</th><th>Primary CTA</th></tr>
+    <tr><td>Strategy</td><td>memo not drafted</td><td>Draft your Strategy Memo</td><td>Draft with Sentinel</td></tr>
+    <tr><td>Strategy</td><td>memo drafted, gates open</td><td>Clear gates: sponsor sign-off, value target, archetype</td><td>Open gate checklist</td></tr>
+    <tr><td>Scope</td><td>inventory empty</td><td>Build the application inventory</td><td>Pull inventory from CMDB</td></tr>
+    <tr><td>RFP</td><td>package not authored</td><td>Draft the RFP package</td><td>Draft with Sentinel</td></tr>
+    <tr><td>RFP</td><td>package drafted, awaiting sign-off</td><td>Sponsor sign-off required before release</td><td>Send for sign-off</td></tr>
+    <tr><td>Responses</td><td>vendors active</td><td>Review completeness · {n} vendors</td><td>Open completeness matrix</td></tr>
+    <tr><td>Evaluation</td><td>scoring in progress</td><td>Complete scoring · {n} criteria remaining</td><td>Continue scoring</td></tr>
+    <tr><td>Pricing</td><td>BAFO not received</td><td>Normalize current pricing</td><td>Open TCO workbook</td></tr>
+    <tr><td>BAFO</td><td>round 1 awaiting</td><td>Draft Round 2 questions for open P0 traps</td><td>Draft with Sentinel</td></tr>
+    <tr><td>Executive Decision</td><td>brief not drafted</td><td>Draft the decision brief</td><td>Draft with Sentinel</td></tr>
+    <tr><td>Executive Decision</td><td>brief authored, awaiting sign-off</td><td>Approval required: Carlos + Lynne co-sign</td><td>Route to co-approvers</td></tr>
+    <tr><td>Selection</td><td>contract not aligned</td><td>Diff BAFO commitments vs contract draft</td><td>Run alignment check</td></tr>
+    <tr><td>Transition</td><td>KT plan not started</td><td>Build the KT plan with vendor PM</td><td>Schedule kickoff</td></tr>
+    <tr><td>Transition</td><td>readiness gate pending</td><td>Go-live readiness sign-off pending</td><td>Schedule readiness review</td></tr>
+    <tr><td>Value</td><td>baseline not locked</td><td>Lock baseline with CFO attestation</td><td>Request CFO attestation</td></tr>
+    <tr><td>Value</td><td>variance &gt; 8%</td><td>Variance investigation required</td><td>Open variance brief</td></tr>
+  </table>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Next Move card renders above the artifact shelf on every stage</li>
+    <li>Title + CTA resolved from <code>stage-next-move.ts</code> based on stage key + artifact/gate state</li>
+    <li>Gates list pulls from <code>getGateCriteriaForStage(stageKey)</code> with met/unmet states</li>
+    <li>When all gates met: Next Move becomes "Advance to {next stage}" with confirmation</li>
+    <li>Card disappears when stage is fully complete (or shows "Stage complete — advance" terminal state)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Is the Next Move card persistent (sticky on scroll) or scrolls with content?</li>
+    <li>Should there be a "Skip / I'll do it manually" secondary CTA on every stage, or only some?</li>
+    <li>For stages with multiple parallel sub-tasks (e.g., Evaluation has scoring + dissent capture + BATNA identification) — single Next Move or list of 3?</li>
+    <li>Tone of strings — currently directive ("Draft your Strategy Memo"). Should they be more passive ("Strategy Memo awaits drafting") or task-list-y ("☐ Draft Strategy Memo")?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: CHAT SIZING =================== -->
+<h2 id="spec-chat-sizing"><span class="step">SPEC 6</span>Sentinel chat · sizing per stage</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Chat width matches mental task; collapses on decision-focused stages</div>
+    <div class="subtitle">Refs Wireframe Part 17A</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/SentinelChatProportional.tsx</span>
+  <span class="file-path edit">src/components/source/canvas/UniversalCanvasShell.tsx</span>
+  <span class="file-path new">src/lib/source/chat-sizing-policy.ts</span>
+</div>
+
+<div class="spec-section">
+  <h5>Sizing policy</h5>
+  <pre>function chatWidthForStage(stageKey: SourceStageKey): { widthPct: number; collapsed: boolean } {
+  const map = {
+    intake:              { widthPct: 50, collapsed: false },
+    strategy:            { widthPct: 40, collapsed: false },
+    scope:               { widthPct: 40, collapsed: false },
+    rfp:                 { widthPct: 40, collapsed: false },
+    responses:           { widthPct: 30, collapsed: false },
+    evaluation:          { widthPct: 30, collapsed: false },
+    pricing:             { widthPct: 35, collapsed: false },
+    bafo:                { widthPct: 35, collapsed: false },
+    executive_decision:  { widthPct: 15, collapsed: true },   // load-bearing
+    selection:           { widthPct: 25, collapsed: false },
+    transition:          { widthPct: 30, collapsed: false },
+    value:               { widthPct: 25, collapsed: false },
+  };
+  return map[stageKey] ?? { widthPct: 40, collapsed: false };
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Chat panel CSS width matches policy on stage mount</li>
+    <li>"collapsed" state shows compact stub: "Sentinel · Click to expand · 3 stage-specific suggestions"</li>
+    <li>User can override (toggle expand/collapse) but does NOT persist across stages (each stage opens at its policy default)</li>
+    <li>Suggestions are stage-aware (different prompts on Strategy vs BAFO)</li>
+    <li>Disclaimers compress to ONE line on collapsed state (not two stacked)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should user's manual collapse/expand preference persist per-stage or globally?</li>
+    <li>On Executive Decision (collapsed by default): should it auto-expand if the user asks a question, or stay collapsed and overlay?</li>
+    <li>Animation between widths — instant snap or smooth transition? Smooth feels nice but might lag.</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: ARTIFACT TILE HUMANIZATION =================== -->
+<h2 id="spec-artifact-tile"><span class="step">SPEC 7</span>Artifact tile · humanization sweep</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Hide artifact codes, "Template", "GATE", "NOT STARTED" jargon from production UI</div>
+    <div class="subtitle">Closes L6 finding "internal taxonomy leaks" — extends PR #2868 to canvas tiles</div>
+  </div>
+  <div class="pills"><span class="pill pill-fix">FIX</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/components/source/canvas/workspace-tabs/DocumentTab.tsx</span>
+  <span class="file-path edit">src/components/source/canvas/ArtifactTile.tsx</span>
+  <span class="file-path edit">src/components/source/canvas/ArtifactStatusStrip.tsx</span>
+  <span class="file-path edit">src/lib/source/artifact-display-names.ts</span> (already exists per humanization PR)
+</div>
+
+<div class="spec-section">
+  <h5>Mapping</h5>
+  <table class="props">
+    <tr><th>Today</th><th>Production</th><th>Author mode (visible in tooltip)</th></tr>
+    <tr><td><code>d01_strategy_memo</code></td><td>Sourcing Strategy Memo</td><td>tooltip: d01_strategy_memo</td></tr>
+    <tr><td>"Template" badge</td><td>(hidden)</td><td>—</td></tr>
+    <tr><td>"NOT STARTED"</td><td>"Awaiting draft" (when no body) · "Draft" (when body exists, not approved)</td><td>—</td></tr>
+    <tr><td>"GATE" red badge</td><td>"Required to advance" tag (muted)</td><td>—</td></tr>
+    <tr><td>"6 DB-backed documents"</td><td>"Stored documents" or omit header when artifact shelf is empty</td><td>—</td></tr>
+    <tr><td>"source_artifacts" tag</td><td>(hidden)</td><td>tooltip on shelf header in author mode</td></tr>
+  </table>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>No artifact code visible as primary label in production UI</li>
+    <li>Tooltip on hover shows internal ID (for support/dev use)</li>
+    <li>No badge with internal taxonomy strings ("Template", "GATE", "Scaffold")</li>
+    <li>Empty shelf hides "No DB-backed documents yet" headline; shows nothing or contextual tip</li>
+    <li>Visual regression: existing humanization on shelf header from PR #2868 still passes</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should "Required to advance" tag be replaced with a colored dot (red = unmet gate) for less verbal clutter?</li>
+    <li>Author mode toggle — env-flag based (NODE_ENV !== 'production') or user-role based (maestro sees codes)?</li>
+    <li>Replace tile shelf entirely with a single "Stage progress" widget showing completion %, or keep tile shelf as the primary view?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: STRATEGY =================== -->
+<h2 id="spec-strategy"><span class="step">SPEC 8</span>Stage 1 · Strategy refit</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Strategy canvas inherits Next Move pattern + cleaned artifact shelf + gates checklist</div>
+    <div class="subtitle">Refs Wireframe Part 5B · Composes Specs 5, 6, 7</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/components/source/canvas/UniversalCanvasShell.tsx</span> (when <code>stageKey === 'strategy'</code>)
+  <span class="file-path new">src/components/source/canvas/strategy/StrategyStageView.tsx</span>
+</div>
+
+<div class="spec-section">
+  <h5>Composition</h5>
+  <ul>
+    <li>Inherits Stage canvas template (Spec 5) with Next Move card resolved to "Draft your Strategy Memo"</li>
+    <li>Inherits Sentinel chat at 40% (Spec 6)</li>
+    <li>Inherits humanized artifact tiles (Spec 7) — "Sourcing Strategy Memo" + "Value Target Brief" required; "Archetype Decision Record" optional</li>
+    <li>Gates checklist (3 hard gates) tied to Scope unlock</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Strategy-specific Sentinel suggestions</h5>
+  <ul>
+    <li>"Help me write the strategy memo from the event facts"</li>
+    <li>"Show me the value-target levers for this archetype"</li>
+    <li>"Recommend the rigor level based on deal size"</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Next Move card resolves correctly across all artifact states (drafted/not, gates met/not)</li>
+    <li>3 gates show with met/unmet checkboxes + names</li>
+    <li>"Advance to Scope" CTA appears when all 3 gates met</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong> Should the gate names be paraphrased for the CIO ("Memo signed" vs "Sourcing strategy memo signed by sponsor")?
+</div>
+</div>
+
+<!-- =================== SPEC: SCOPE + RFP =================== -->
+<h2 id="spec-scope-rfp"><span class="step">SPEC 9</span>Stages 2-3 · Scope + RFP</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Scope = inventory + dependency map · RFP = pack + rubric + shortlist + sponsor sign-off</div>
+    <div class="subtitle">Refs Wireframe Parts 6-7 · Stage views</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/scope/ScopeStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/rfp/RfpStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/scope/ApplicationInventoryTable.tsx</span>
+  <span class="file-path new">src/components/source/canvas/rfp/VendorShortlistPanel.tsx</span>
+  <span class="file-path new">src/components/source/canvas/rfp/EvalRubricTable.tsx</span>
+</div>
+
+<div class="spec-section">
+  <h5>Scope specifics</h5>
+  <ul>
+    <li>Application Inventory table: app name · criticality · current vendor · cost · SLA · volume · in/out scope toggle</li>
+    <li>"Pull inventory from CMDB" CTA triggers <code>POST /api/v1/source/{eventId}/scope/inventory-import</code></li>
+    <li>Dependency map (collapsed section): graph of apps + their upstream/downstream</li>
+    <li>Retained-org assumptions section: editable list with named owner</li>
+    <li>Gates: inclusions/exclusions sponsor-confirmed · retained-org documented · dependency map reviewed</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>RFP specifics</h5>
+  <ul>
+    <li>Evaluation rubric table: criterion · weight (sums to 100) · scoring scale · evidence requirements</li>
+    <li>Vendor shortlist panel: candidate list + invite/decline + check Q&A protocol</li>
+    <li>Sponsor sign-off gate before "Release RFP" CTA enables</li>
+    <li>Release triggers email/notification to all shortlisted vendors with RFP link + Q&A window</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Should inventory ingestion be silent (auto on stage entry) or explicit (user-triggered)?</li>
+    <li>Dependency map — d3 visualization or simple list with hover? D3 adds complexity but is more decision-useful.</li>
+    <li>Eval rubric — strict weight enforcement (must total 100) or soft warning?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: RESPONSES + EVALUATION =================== -->
+<h2 id="spec-responses-eval"><span class="step">SPEC 10</span>Stages 4-5 · Responses + Evaluation</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Per-vendor completeness · symmetric Q&amp;A · weighted scorecard · dissent capture · BATNA</div>
+    <div class="subtitle">Refs Wireframe Parts 8-9</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/responses/ResponsesStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/responses/CompletenessMatrix.tsx</span>
+  <span class="file-path new">src/components/source/canvas/responses/QnaSymmetryLog.tsx</span>
+  <span class="file-path new">src/components/source/canvas/evaluation/EvaluationStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/evaluation/WeightedScorecardTable.tsx</span>
+  <span class="file-path new">src/components/source/canvas/evaluation/DissentPanel.tsx</span>
+  <span class="file-path new">src/components/source/canvas/evaluation/BatnaPanel.tsx</span>
+</div>
+
+<div class="spec-section">
+  <h5>Responses specifics</h5>
+  <ul>
+    <li>Per-vendor status card row: Complete / Partial / Non-compliant / Late</li>
+    <li>Completeness matrix: vendor × RFP section grid; red = missing, amber = clarification, green = complete</li>
+    <li>Q&amp;A symmetry log: every Q with timestamp, all-vendor distribution status, response collation</li>
+    <li>Disqualification decision points: when MSA non-compliance detected, surface as decision card with rationale required</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Evaluation specifics</h5>
+  <ul>
+    <li>Weighted scorecard table: criterion (weight) × vendor (score, reviewer rationale)</li>
+    <li>Per-score reviewer attribution + evidence link</li>
+    <li>Dissent panel: minority-view capture as first-class artifact (NOT a footnote)</li>
+    <li>BATNA identification: second-place vendor with credibility assessment</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Dissent capture — should it allow attachments (memo from dissenting reviewer)?</li>
+    <li>BATNA — auto-derived from scorecard or explicitly named by sourcing lead?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: PRICING + BAFO =================== -->
+<h2 id="spec-pricing-bafo"><span class="step">SPEC 11</span>Stages 6-7 · Pricing + BAFO</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">TCO bridge · iceberg · sensitivity ribbon · trap log · BAFO lever envelope · concession ledger</div>
+    <div class="subtitle">Refs Wireframe Parts 10-11 · LOAD-BEARING (CXO bar exceed-bar)</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/pricing/PricingStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/pricing/TcoBridge.tsx</span>
+  <span class="file-path new">src/components/source/canvas/pricing/TcoIcebergViz.tsx</span>
+  <span class="file-path new">src/components/source/canvas/pricing/SensitivityRibbon.tsx</span>
+  <span class="file-path new">src/components/source/canvas/pricing/TrapLog.tsx</span>
+  <span class="file-path new">src/components/source/canvas/bafo/BafoStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/bafo/LeverEnvelopeTable.tsx</span>
+  <span class="file-path new">src/components/source/canvas/bafo/ConcessionLedger.tsx</span>
+  <span class="file-path edit">src/lib/source/pricing-normalization-model.ts</span> (existing — extend with sensitivity output)
+</div>
+
+<div class="spec-section">
+  <h5>Pricing specifics</h5>
+  <ul>
+    <li>TCO Bridge: baseline → per-vendor normalized → year-1/year-3/year-5 run-rate with confidence bands</li>
+    <li>Iceberg visualization: literal 30/70 split rendering (visible vs hidden costs)</li>
+    <li>Sensitivity ribbon: volume ±20%, scope ±10%, FX ±5% — outcome shifts per vendor</li>
+    <li>Trap log: list of active commercial traps with per-vendor flag + recommended action</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>BAFO specifics</h5>
+  <ul>
+    <li>Per-lever envelope table (vendor × lever × opening/target/walk-away)</li>
+    <li>Concession ledger: per-round trade record ("we asked X, vendor gave Y, we offered Z, net NPV swing")</li>
+    <li>BAFO question pack with anti-pattern flagging from trap log</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Iceberg viz — actual iceberg shape (skeuomorphic) or stacked bars (information-dense)?</li>
+    <li>Sensitivity ribbon — interactive slider or pre-rendered scenarios?</li>
+    <li>BAFO lever envelope — single grand table or per-vendor cards?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: EXEC DECISION =================== -->
+<h2 id="spec-exec-decision"><span class="step">SPEC 12</span>Stage 8 · Executive Decision page-1 summary</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Page-1 dark-header executive summary leads · 30-second read</div>
+    <div class="subtitle">Refs Wireframe Part 12 · LOAD-BEARING · The CXO trust make-or-break</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-h">hi</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/executive-decision/ExecutiveSummaryHeader.tsx</span>
+  <span class="file-path new">src/components/source/canvas/executive-decision/ExecutiveDecisionStageView.tsx</span>
+  <span class="file-path edit">src/lib/source/exports/cxo-report/source-cxo-narrative-report.ts</span> (synthesizeDecision already gated — reuse logic here)
+</div>
+
+<div class="spec-section">
+  <h5>Layout</h5>
+  <ol>
+    <li>Dark header card (full width, charcoal #1f2937): 4-cell grid showing Recommendation + Savings + Trade-off + Dissent + Approval state</li>
+    <li>Below the header: standard event canvas with stage-specific content (Sentinel chat at 15% / collapsed)</li>
+    <li>Decision Brief content sections below: § Evidence summary · § Missing data · § Risks · § Dissent (full panel) · § Approval record</li>
+    <li>Action footer: Approve · Route to co-approver · Send back · Download brief</li>
+  </ol>
+</div>
+
+<div class="spec-section">
+  <h5>Component signature</h5>
+  <pre>interface ExecutiveSummaryHeaderProps {
+  recommendation: {
+    vendor: string;
+    tco: string;          // pre-formatted "$13.21M TCO"
+    decidingAxis: string; // "technical depth + transition realism"
+  };
+  savings: {
+    npv3yr: string;       // "$21.8M"
+    baselineLabel: string; // "3-yr vs locked $35M baseline"
+  };
+  tradeoff: {
+    gaveUp: string;       // "$1.81M cheaper bid"
+    gained: string;       // "Transition rigor + benchmark right"
+  };
+  dissent: Array&lt;{ reviewerName: string; reviewerRole: string; oneLine: string }&gt;;
+  approval: {
+    requiredSignoffs: Array&lt;{ name: string; role: string; status: 'pending' | 'signed' | 'overridden' }&gt;;
+  };
+}</pre>
+</div>
+
+<div class="spec-section">
+  <h5>Copy templates</h5>
+  <div class="copy-block"><span class="label">Header label</span>EXECUTIVE DECISION · {eventName}</div>
+  <div class="copy-block"><span class="label">Recommendation H1</span>Recommend {vendor} at {tco}</div>
+  <div class="copy-block"><span class="label">Deciding axis line</span>Deciding axis: {decidingAxis}. {runnerUp} cheaper by {delta} but {whyNot}.</div>
+  <div class="copy-block"><span class="label">Savings cell</span>SAVINGS · {npv3yr} · 3-yr vs locked baseline</div>
+  <div class="copy-block"><span class="label">Trade-off cell</span>TRADE-OFF · Gave up: {gaveUp} · Gained: {gained}</div>
+  <div class="copy-block"><span class="label">Dissent cell</span>DISSENT · {reviewerName} ({reviewerRole}) · {oneLine} · ▼ Open dissent panel</div>
+  <div class="copy-block"><span class="label">Approval cell</span>APPROVAL · {primarySignoff.name} ({primarySignoff.role}) · {n} co-sign{s} required</div>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Header renders ONLY when stage is executive_decision AND a recommendation has been authored</li>
+    <li>When no recommendation: replace header with Next Move card ("Draft the decision brief")</li>
+    <li>Squint test: blur 50%, recommendation + savings number must still be readable</li>
+    <li>Dissent cell links to full dissent panel below (anchor link)</li>
+    <li>Approval state reflects real audit log (no scaffold/static data)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Dark header — is the charcoal background right, or should it use the accent blue?</li>
+    <li>Layout — 4-cell horizontal grid, 2x2 grid, or 1+3 (recommendation huge, rest stacked right)?</li>
+    <li>When there's no dissent — show empty "DISSENT · None recorded" cell, or replace with another KPI (e.g., risk count)?</li>
+    <li>"Deciding axis" sentence — is this auto-extracted from the brief or human-authored?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: TRANSITION =================== -->
+<h2 id="spec-transition"><span class="step">SPEC 13</span>Stage 10 · Transition (NEW)</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">KT plan + go-live readiness scorecard + risk register · stage canvas + dedicated /transition route</div>
+    <div class="subtitle">Refs Wireframe Part 14 · NEW · Closes lifecycle gap (Stage 10 missing from deal pack)</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/canvas/transition/TransitionStageView.tsx</span>
+  <span class="file-path new">src/components/source/canvas/transition/KtPlanTracker.tsx</span>
+  <span class="file-path new">src/components/source/canvas/transition/TransitionReadinessScorecard.tsx</span>
+  <span class="file-path new">src/components/source/canvas/transition/RiskRegister.tsx</span>
+  <span class="file-path new">src/lib/source/transition/readiness-scoring.ts</span>
+  <span class="file-path new">src/lib/source/exports/deal-pack/transition-section.ts</span>
+  <span class="file-path edit">src/lib/source/exports/deal-pack/dispatch.ts</span> (wire transition section)
+</div>
+
+<div class="spec-section">
+  <h5>Specifics</h5>
+  <ul>
+    <li>KT plan tracker: phased milestones (Discovery / Shadow / Reverse Shadow / Cutover / Hypercare) with status</li>
+    <li>Readiness scorecard: 4 workstreams (Infrastructure / KT / Vendor staffing / Incumbent exit) with R/A/G status</li>
+    <li>Risk register: rated risks with owner, mitigation, burn-down trend</li>
+    <li>Go-live readiness gate: CIO + CDO + Vendor PM sign-off REQUIRED before cutover</li>
+    <li>Surface in deal pack as a real section (currently missing)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>KT plan visualization — Gantt-style, milestone list, or both?</li>
+    <li>Readiness gate signers — should the list be configurable per event, or fixed schema (CIO + CDO + Vendor PM always)?</li>
+    <li>Risk register — same UI as Stage 5 evaluation dissent panel, or distinct pattern?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: VALUE =================== -->
+<h2 id="spec-value"><span class="step">SPEC 14</span>Stage 11 · Value Ledger extension</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Extend /value page from 4-step proof chain to attestation + variance + quarterly board pack</div>
+    <div class="subtitle">Refs Wireframe Part 15 · Extends existing /events/[id]/value page</div>
+  </div>
+  <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/app/(maestro)/source/events/[eventId]/value/page.tsx</span>
+  <span class="file-path new">src/components/source/value/ValueLedgerChain.tsx</span>
+  <span class="file-path new">src/components/source/value/CfoAttestationPanel.tsx</span>
+  <span class="file-path new">src/components/source/value/VarianceInvestigationCard.tsx</span>
+  <span class="file-path new">src/components/source/value/QuarterlyBoardPackGenerator.tsx</span>
+  <span class="file-path edit">src/lib/source/value-chain.ts</span> (existing — extend with attestation + variance fields)
+  <span class="file-path new">src/lib/source/exports/board-pack/board-pack-renderer.tsx</span>
+</div>
+
+<div class="spec-section">
+  <h5>Specifics</h5>
+  <ul>
+    <li>4-step chain renders as today: Baseline · Projected · Realized · Variance</li>
+    <li>Baseline: requires CFO attestation (signature, date, scope) to "lock" — otherwise shows "system-projected"</li>
+    <li>Realized: rolling actuals with per-month/quarter break-down + trend (R/A/G)</li>
+    <li>Variance investigation card: appears when variance &gt; 8%, requires attribution and CFO sign-off</li>
+    <li>Quarterly board pack auto-generation: includes Year-over-year trend, attribution to BAFO commitments, CFO sign-off, auditor-grade chain</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Acceptance</h5>
+  <ul>
+    <li>Baseline cell shows "system-projected" tag until CFO attestation; toggles to "locked" with signature trail</li>
+    <li>Realized cell pulls from event-linked finance system (or manual entry with attestation)</li>
+    <li>Variance card appears AT &gt;8% and disappears when resolved (rationale + CFO sign-off captured)</li>
+    <li>"Generate Q3 board pack" produces HTML + PDF with auditor-grade evidence chain</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>CFO attestation flow — same as approval page pattern, or distinct lighter-weight modal?</li>
+    <li>"Locked baseline" visual treatment — padlock icon, "locked" badge, or just text difference?</li>
+    <li>Variance threshold (8%) — configurable per event or fixed?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: EXPORTS =================== -->
+<h2 id="spec-exports"><span class="step">SPEC 15</span>CXO Report + Deal Pack rewrites</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Page-1 exec summary leads · stages 10+11 included · no scaffold badges · branded filenames</div>
+    <div class="subtitle">Refs Wireframe Part 16</div>
+  </div>
+  <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/lib/source/exports/cxo-report/source-cxo-narrative-report.ts</span>
+  <span class="file-path edit">src/lib/source/exports/deal-pack/dispatch.ts</span>
+  <span class="file-path new">src/lib/source/exports/deal-pack/sections/page-1-exec-summary.ts</span>
+  <span class="file-path new">src/lib/source/exports/deal-pack/sections/transition-section.ts</span>
+  <span class="file-path new">src/lib/source/exports/deal-pack/sections/value-section.ts</span>
+  <span class="file-path edit">src/lib/source/exports/dispatch.ts</span> (filename helper)
+</div>
+
+<div class="spec-section">
+  <h5>Specifics</h5>
+  <ul>
+    <li>CXO Report Slide 1 already exists; reorder so Recommendation + Number + Trade-off lead</li>
+    <li>Deal Pack: add Page-1 Executive Summary section BEFORE Stage 0 Demand Challenge</li>
+    <li>Deal Pack: add Stage 10 Transition + Stage 11 Value sections (currently missing)</li>
+    <li>Hide "Scaffold" badge from production rendering (env or render-mode flag)</li>
+    <li>Filename: <code>{tenant-name}-{event-name}-deal-pack-{date}.html</code> (no "abarva-" prefix)</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Filename example</h5>
+  <pre>// Today:
+abarva-source-deal-pack-apex-retail-src-004-2026-06-04.html
+
+// Target:
+apex-retail-ams-outsourcing-2026-deal-pack-2026-06-04.html</pre>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Page-1 Executive Summary in Deal Pack — visual treatment (dark card vs light), how much detail?</li>
+    <li>Should the deal pack auto-generate or require explicit "freeze" action by the CIO?</li>
+    <li>For events not yet at Stage 8 — should deal pack render at all, or be gated until decision authored?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: EVIDENCE DRAWER =================== -->
+<h2 id="spec-evidence"><span class="step">SPEC 16</span>Evidence drawer (NEW pattern)</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Persistent right-edge drawer · click any inline citation in an artifact → drawer opens to that record</div>
+    <div class="subtitle">Refs Wireframe Part 17B</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/EvidenceDrawer.tsx</span>
+  <span class="file-path new">src/components/source/EvidenceRecordCard.tsx</span>
+  <span class="file-path new">src/components/source/EvidenceCitationLink.tsx</span> (rendered inline in artifacts)
+  <span class="file-path edit">src/components/source/canvas/UniversalCanvasShell.tsx</span> (add drawer slot)
+</div>
+
+<div class="spec-section">
+  <h5>Specifics</h5>
+  <ul>
+    <li>Drawer mounted at canvas-root level, slides in from right (~28% width)</li>
+    <li>Triggered by clicking any inline citation chip ([E-001], [E-014], etc.)</li>
+    <li>Search bar at top, filter by source type, sort by relevance/recency</li>
+    <li>Each record card: ID + title + excerpt + source doc + confidence + citation count</li>
+    <li>"Pin to current artifact" action → adds reference to current authoring context</li>
+    <li>Persistent toggle (gear icon top-right of canvas): always-open vs on-demand</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Drawer or modal? Drawer keeps evidence at hand; modal forces focus.</li>
+    <li>Citation chip visual — bracket-id ([E-001]) or superscript link?</li>
+    <li>Should the evidence drawer be available outside the canvas (e.g., on portfolio for spend-evidence)?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: AUDIT LOG =================== -->
+<h2 id="spec-audit"><span class="step">SPEC 17</span>Audit log surface</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Activity Log tab on every event canvas · per-stage filter · timestamp + actor + action + rationale + evidence_refs</div>
+    <div class="subtitle">Refs Wireframe Part 17C · Already partially shipped (PR #2862)</div>
+  </div>
+  <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path edit">src/components/source/canvas/workspace-tabs/LogTab.tsx</span>
+  <span class="file-path edit">src/lib/source/activity-log.ts</span>
+</div>
+
+<div class="spec-section">
+  <h5>Display</h5>
+  <ul>
+    <li>Table rows: timestamp (UTC) · actor (display name + role) · action (humanized) · stage · reason · evidence_refs</li>
+    <li>Filters: stage · actor · action type</li>
+    <li>Search by keyword across rationale text</li>
+    <li>"Download audit packet" CTA → JSON + PDF export for auditor</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Action names — keep raw enum (<code>ai_generated</code>, <code>gate_met</code>) or humanize ("AI draft generated", "Gate criterion met")?</li>
+    <li>Timestamp display — UTC, browser local, or both?</li>
+    <li>Should AI-action rows visually differ from human-action rows (different background)?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: NOTIFICATIONS =================== -->
+<h2 id="spec-notifications"><span class="step">SPEC 18</span>Cross-event attention surface (NEW)</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Source Attention surface · global notifications for current user across all events</div>
+    <div class="subtitle">Refs Wireframe Part 17D</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/components/source/SourceAttentionSurface.tsx</span>
+  <span class="file-path new">src/lib/source/notifications/attention-resolver.ts</span>
+  <span class="file-path edit">src/components/source/SourceSubNav.tsx</span> (add notification bell with count)
+</div>
+
+<div class="spec-section">
+  <h5>Notification types</h5>
+  <ul>
+    <li>Approval requested / awaiting your action</li>
+    <li>Co-approver not yet responded (you're the routing source)</li>
+    <li>Renewal trigger past due (overdue Decision Queue items)</li>
+    <li>BAFO round closing soon (3 days)</li>
+    <li>Variance investigation opened on Value stage</li>
+    <li>Mention/assignment (future)</li>
+  </ul>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>Surface placement — top-nav bell, sidebar, or full /attention page?</li>
+    <li>Notification persistence — read/unread state? auto-dismiss after action?</li>
+    <li>Email/push notification scope — which events trigger out-of-app comms?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SPEC: RENEWAL =================== -->
+<h2 id="spec-renewal"><span class="step">SPEC 19</span>Renewal auto-event</h2>
+
+<div class="spec">
+<div class="spec-header">
+  <div>
+    <div class="title">Contract clock auto-creates renewal event 180 days before term end · lands in Decision Queue</div>
+    <div class="subtitle">Refs Wireframe Part 18 · Closes the lifecycle loop</div>
+  </div>
+  <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-h">hi</span></div>
+</div>
+
+<div class="spec-section">
+  <h5>Files</h5>
+  <span class="file-path new">src/lib/source/renewal/contract-clock.ts</span>
+  <span class="file-path new">src/lib/source/renewal/renewal-event-creator.ts</span>
+  <span class="file-path new">src/lib/source/renewal/srm-scorecard.ts</span>
+  <span class="file-path new">src/app/(maestro)/source/events/[eventId]/srm/page.tsx</span>
+  <span class="file-path new">vercel.ts</span> (cron job for daily contract-clock sweep) <em>or</em> Postgres trigger
+</div>
+
+<div class="spec-section">
+  <h5>Specifics</h5>
+  <ul>
+    <li>Daily cron sweep over closed events with contract end-dates</li>
+    <li>180 days before end: auto-create renewal event in <code>waiting_on_client</code> with pre-loaded facts (SRM scorecard, contract terms, benchmark refresh, lever envelope)</li>
+    <li>Renewal event appears in Decision Queue in OVERDUE band</li>
+    <li>SRM scorecard view: performance / commercial / innovation / relationship dimensions</li>
+  </ul>
+</div>
+
+<div class="spec-section">
+  <h5>Vercel cron config (per Vercel knowledge updates 2026-02-27)</h5>
+  <pre>// vercel.ts
+import { type VercelConfig } from '@vercel/config/v1';
+
+export const config: VercelConfig = {
+  // ...
+  crons: [
+    { path: '/api/cron/source/contract-clock-sweep', schedule: '0 6 * * *' }
+  ],
+};</pre>
+</div>
+
+<div class="question-block">
+  <strong>OPEN FOR DESIGN REVIEW:</strong>
+  <ul>
+    <li>180-day trigger — configurable per contract or hard-coded?</li>
+    <li>Auto-loaded facts — should the system pre-fill the 5 intake facts from contract data, or surface them as suggestions?</li>
+    <li>SRM scorecard cadence — quarterly auto-refresh, or surfaced on-demand?</li>
+  </ul>
+</div>
+</div>
+
+<!-- =================== SEQUENCING =================== -->
+<h2 id="sequence"><span class="step">PART 5</span>Wave sequencing · what ships when</h2>
+
+<h3>Wave 1 · Load-bearing fixes (week 1)</h3>
+<table class="priority-table">
+  <tr class="wave-1">
+    <th>Spec</th><th>Why first</th><th>Effort</th><th>Risk</th>
+  </tr>
+  <tr><td><a href="#spec-routing">Spec 4 · Lifecycle routing guard</a></td><td>Closes "canvas opens unapproved" — the most user-jarring bug</td><td>S</td><td>hi</td></tr>
+  <tr><td><a href="#spec-approval">Spec 3 · Approval page</a></td><td>Required by routing guard. The missing surface.</td><td>M</td><td>med</td></tr>
+  <tr><td><a href="#spec-intake">Spec 2 · Intake completion footer</a></td><td>Closes "where does this go?" — pairs with approval</td><td>S</td><td>low</td></tr>
+  <tr><td><a href="#spec-artifact-tile">Spec 7 · Artifact tile humanization</a></td><td>Fast trust win across all stages</td><td>S</td><td>low</td></tr>
+</table>
+
+<h3>Wave 2 · Canvas redesign (week 2-3)</h3>
+<table class="priority-table">
+  <tr class="wave-2">
+    <th>Spec</th><th>Why</th><th>Effort</th><th>Risk</th>
+  </tr>
+  <tr><td><a href="#spec-stage-shell">Spec 5 · Stage Next-Move pattern</a></td><td>Universal pattern · sets bar for stage views</td><td>M</td><td>med</td></tr>
+  <tr><td><a href="#spec-chat-sizing">Spec 6 · Chat sizing per stage</a></td><td>Pairs with Next-Move · removes 40% chat domination</td><td>S</td><td>low</td></tr>
+  <tr><td><a href="#spec-strategy">Spec 8 · Strategy refit</a></td><td>First stage to land the new pattern</td><td>S</td><td>low</td></tr>
+  <tr><td><a href="#spec-queue">Spec 1 · Queue triage bands</a></td><td>Major queue UX upgrade</td><td>M</td><td>low</td></tr>
+</table>
+
+<h3>Wave 3 · Stage depth (week 4-5)</h3>
+<table class="priority-table">
+  <tr class="wave-3">
+    <th>Spec</th><th>Why</th><th>Effort</th><th>Risk</th>
+  </tr>
+  <tr><td><a href="#spec-exec-decision">Spec 12 · Executive Decision page-1 summary</a></td><td>LOAD-BEARING · CXO trust make-or-break</td><td>M</td><td>hi</td></tr>
+  <tr><td><a href="#spec-pricing-bafo">Spec 11 · Pricing + BAFO</a></td><td>LOAD-BEARING per CXO bar exceed-bar</td><td>L</td><td>med</td></tr>
+  <tr><td><a href="#spec-responses-eval">Spec 10 · Responses + Evaluation</a></td><td>Required for full lifecycle coverage</td><td>L</td><td>med</td></tr>
+  <tr><td><a href="#spec-scope-rfp">Spec 9 · Scope + RFP</a></td><td>Standard stage flow</td><td>M</td><td>low</td></tr>
+</table>
+
+<h3>Wave 4 · Lifecycle completion (week 6+)</h3>
+<table class="priority-table">
+  <tr class="wave-3">
+    <th>Spec</th><th>Why</th><th>Effort</th><th>Risk</th>
+  </tr>
+  <tr><td><a href="#spec-transition">Spec 13 · Stage 10 Transition</a></td><td>Closes "Transition missing from deal pack" gap</td><td>L</td><td>med</td></tr>
+  <tr><td><a href="#spec-value">Spec 14 · Stage 11 Value extension</a></td><td>Board-grade value chain</td><td>L</td><td>med</td></tr>
+  <tr><td><a href="#spec-exports">Spec 15 · Exports rewrites</a></td><td>Picks up new Stage 10+11 content</td><td>M</td><td>low</td></tr>
+  <tr><td><a href="#spec-evidence">Spec 16 · Evidence drawer</a></td><td>Cross-cutting · improves citation UX everywhere</td><td>M</td><td>low</td></tr>
+  <tr><td><a href="#spec-audit">Spec 17 · Audit log extension</a></td><td>Already partially shipped; finish hardening</td><td>S</td><td>low</td></tr>
+  <tr><td><a href="#spec-notifications">Spec 18 · Attention surface</a></td><td>Cross-event UX · lower priority</td><td>M</td><td>med</td></tr>
+  <tr><td><a href="#spec-renewal">Spec 19 · Renewal auto-event</a></td><td>Closes the lifecycle loop · ops-sensitive</td><td>L</td><td>hi</td></tr>
+</table>
+
+<!-- =================== OPEN QUESTIONS =================== -->
+<h2 id="open-questions"><span class="step">PART 6</span>Open questions for the design module</h2>
+
+<h3>Cross-spec questions</h3>
+<div class="question-block">
+<strong>Q1 · Voice and tone:</strong> The current product uses second-person directive ("Draft your strategy memo"). Should the redesigned product hold that voice across all surfaces, or shift to passive/system-narrator at decision points ("Strategy memo awaiting draft")?
+</div>
+
+<div class="question-block">
+<strong>Q2 · Density philosophy:</strong> The portfolio view (Spec anchor) is high-density and reads executive-grade. The intake / canvas pages have been lower-density. Should we lift density uniformly to portfolio level, or vary density by mental task?
+</div>
+
+<div class="question-block">
+<strong>Q3 · Sentinel chat positioning:</strong> Spec 6 makes chat proportional to stage. Is this the right axis, or should chat instead be modal (always-on overlay) with the canvas reflowing per stage?
+</div>
+
+<div class="question-block">
+<strong>Q4 · Approval routing UX:</strong> Spec 3 has Approve / Send to co-approver / Request changes / Reject as 4 separate buttons. Is this too much choice? Should it collapse to "Make a decision" with secondary modal?
+</div>
+
+<div class="question-block">
+<strong>Q5 · "Required to advance" vs "Gate" terminology:</strong> Spec 5 + 7 propose softening "GATE" to "Required to advance." Does the term "gate" have real signal in sourcing vocabulary that we'd be losing?
+</div>
+
+<div class="question-block">
+<strong>Q6 · Dark header on Executive Decision (Spec 12):</strong> The dark charcoal header is a strong visual moment but breaks the otherwise warm cream palette. Right call or jarring?
+</div>
+
+<div class="question-block">
+<strong>Q7 · Mobile responsiveness:</strong> Current product is desktop-first. The wireframes don't address mobile. CXOs increasingly review on phones. Should mobile be a Wave 5 separate exercise, or built into every spec from start?
+</div>
+
+<div class="question-block">
+<strong>Q8 · Empty states:</strong> Specs reference "zero state" copy but don't spec them in detail. Should we author empty-state designs for every surface as part of this redesign?
+</div>
+
+<h3>Design module workflow ask</h3>
+<div class="callout">
+For each spec, leave a comment block at the bottom:
+<pre>// DESIGN MODULE REVIEW
+// Approved as-is: [Y/N]
+// Revisions:
+//   - [bullet]
+// Open with Codex before ship: [yes/no]</pre>
+That structure makes the handoff to Codex deterministic.
+</div>
+
+<p class="footer">
+End-to-end build specs · 2026-06-04. Companion to <code>abarva-source-end-to-end-wireframes-2026-06-04.html</code>. Every spec is PR-shaped, design-review-ready, and Codex-actionable. Refine in this file; the wireframes are the visual baseline; the code is the destination.
+</p>
+
+</body>
+</html>
