@@ -42,6 +42,9 @@ code, schema, or data change.
   tenant wiring, ~50-dimension synthetic data into prebuilt templates, automated loads, corpus reuse,
   How-To pages, metadata-driven future, loader-hardening track).
 - `docs/build/LAKESHORE_HOLDINGS_TENANT_SETUP_PLAN_2026-06-03.md` — the loader-first setup plan.
+- `docs/build/LAKESHORE_SYNTHETIC_DATA_GENERATION_SPEC_2026-06-03.md` — detailed per-dimension data
+  generation (tabular + documents incl. contract PDFs) for top-notch corpus; document parsing
+  (Azure Document Intelligence) is in-scope so contracts/policies/reports become searchable corpus.
 
 ## QA / Validation
 

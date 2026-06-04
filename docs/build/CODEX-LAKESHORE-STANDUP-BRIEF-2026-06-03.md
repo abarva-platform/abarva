@@ -143,6 +143,10 @@ success-platform scorecard.
   with an honest empty state, reading from the **new isolated server**.
 
 ## PHASE C — Synthetic context templates (the full dimension map, real-world-rich)
+> **Follow `LAKESHORE_SYNTHETIC_DATA_GENERATION_SPEC_2026-06-03.md`** — the detailed per-dimension
+> generation instructions (fields, volume targets, internal-consistency rules) + the **document
+> generation** (contract PDFs, policies, reports). Top-notch corpus = every dimension to volume +
+> documents ingested as searchable corpus.
 7. Author synthetic data **into the prebuilt templates** (context-ingestion template registry +
    enterprise-context workbooks), mapped to the `csv-upload-connector.ts` schema, labeled SYNTHETIC.
    Cover the **complete ~50+ dimension map above** (CMDB / app portfolio per opco, infra, integration,
@@ -199,9 +203,11 @@ success-platform scorecard.
 Sequenced after PR #2977's honest UX:
 18. **XLSX parser + preview-before-commit** for the tabular dimensions (financials, org roles,
     application portfolio, vendor contracts) — promote XLSX from "controlled intake" to live.
-19. **Document parsing (Wave 5 / Azure Document Intelligence)** for PDF/DOCX/PPTX → structured
-    context — needed for **vendor contracts, policies, annual/quarterly reports** (the PDF-heavy,
-    high-value content). Mark as new capability, not assumed.
+19. **Document parsing (Azure Document Intelligence) — IN SCOPE (required for top-notch corpus).**
+    PDF/DOCX/PPTX → structured facts + context chunks + evidence ledger with page-level provenance.
+    Required because the corpus must include the generated **contract PDFs, policies, and annual/
+    quarterly reports** (per the generation spec) — not just tabular metadata. New capability, build
+    it; don't fake it.
 20. **Fix loader bugs** found during the automated Lakeshore loads (Phase D) — each as a PR; loader
     hardening is a primary outcome of this whole exercise.
 
