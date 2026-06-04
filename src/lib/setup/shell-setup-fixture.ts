@@ -159,7 +159,7 @@ const SETUP_CONNECTOR_DETAILS: ConnectorDetail[] = [
     vendor: 'GitHub, Inc.',
     authType: 'GitHub App',
     authMethod: 'app_install',
-    endpoint: 'https://api.github.com/repos/abarva/nexus',
+    endpoint: 'https://api.github.com/repos/abarva-platform/abarva',
     connectorType: 'Engineering',
     description: 'Engineering-signal integration for pull requests, checks, issue links, and release evidence.',
     lastSuccessfulSync: 'Apr 27 · 13:10 UTC',
