@@ -11,6 +11,7 @@ export * from "./agent-mission-report";
 export * from "./agent-mission-types";
 export * from "./agent-missions";
 export * from "./attachments";
+export * from "./artifact-operations";
 export type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,

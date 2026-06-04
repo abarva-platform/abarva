@@ -5,6 +5,7 @@ import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
 } from "@/lib/source/nexus-api";
+import { maybeCreateSourceSentinelChatLlmResponse } from "@/lib/source/sentinel-chat-llm";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
   APEX_RETAIL_BROKER_TENANT_KEY,
@@ -110,7 +111,7 @@ export async function POST(
       });
     }
 
-    const response = createSourceNexusApiStubResponse({
+    const deterministicResponse = createSourceNexusApiStubResponse({
       ...normalizedBody,
       eventId,
       tenant: apexContext?.input.tenant ?? {
@@ -124,6 +125,15 @@ export async function POST(
         id: tenancy.userId,
       },
       liveEventDetail,
+      liveTenantContext,
+    });
+    const response = await maybeCreateSourceSentinelChatLlmResponse({
+      fallbackResponse: deterministicResponse,
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      prompt:
+        normalizedBody.prompt ?? "Provide the current Source command read.",
+      event: liveEventDetail,
       liveTenantContext,
     });
 
@@ -319,9 +329,7 @@ async function linkAttachmentsToEvent(args: {
   });
 }
 
-async function parseSourceNexusRequestBody(
-  request: NextRequest,
-): Promise<
+async function parseSourceNexusRequestBody(request: NextRequest): Promise<
   | { ok: true; body: unknown }
   | {
       ok: false;

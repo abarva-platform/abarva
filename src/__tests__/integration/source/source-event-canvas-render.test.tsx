@@ -277,14 +277,18 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-canvas-tab-log");
   });
 
-  it("document tab is active by default + renders artifact + template body", () => {
+  it("document tab is active by default and hides starter templates until authored", () => {
     const html = render();
     expect(html).toContain('data-active-tab="document"');
     expect(html).toContain("source-canvas-document-tab");
     expect(html).toContain("No DB-backed documents yet");
     expect(html).toContain("source-canvas-artifact-d05_scope_memo");
     expect(html).toContain("Scope Memo with Boundaries"); // canonical name
-    expect(html).toContain("§1 In scope"); // template body content
+    expect(html).toContain("No client-authored body yet");
+    expect(html).toContain(
+      "starter template is kept out of the main workspace",
+    );
+    expect(html).not.toContain("§1 In scope");
   });
 
   it("renders persisted source_artifacts documents with browse links", () => {
@@ -326,13 +330,14 @@ describe("UniversalCanvasShell · SSR render", () => {
         makeEvidence({ requirementId: "EVID-2", currentState: "Loaded" }),
       ],
     });
-    // The context strip moved from the chat lane header to the workspace
-    // pane after the AgentDock migration; same data, new home.
+    // The counts live in the workspace tab badges.
     expect(html).toContain("source-canvas-context-strip");
-    // 1 of 2 evidence sources usable → readiness "1 / 2"
-    expect(html).toContain("Readiness 1 / 2");
-    // 0 promoted artifacts of 2 total → artifacts "0 / 2"
-    expect(html).toContain("Artifacts 0 / 2");
+    expect(html).toContain("source-canvas-tab-document");
+    expect(html).toContain(">2</span>");
+    expect(html).toContain("source-canvas-tab-gate");
+    expect(html).toContain(">1/2</span>");
+    expect(html).toContain("source-canvas-tab-evidence");
+    expect(html).toContain(">1 / 2</span>");
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
@@ -517,8 +522,9 @@ describe("UniversalCanvasShell · SSR render", () => {
       }),
     );
     expect(html).toContain("source-canvas-document-tab");
-    expect(html).toContain("No artifacts scaffolded");
-    expect(html).toContain("Contact your AbarVa lead");
+    expect(html).toContain("No documents yet for RFP.");
+    expect(html).toContain("Documents appear here as Sentinel drafts");
+    expect(html).toContain("contact your AbarVa lead");
     expect(html).not.toContain("npm run db:backfill:source-canvas");
   });
 });

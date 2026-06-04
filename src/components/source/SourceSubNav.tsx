@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { SubNavStrip } from '@/components/shell/SubNavStrip';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { isSourceIaV2 } from '@/lib/source/source-ia-v2';
+import { usePathname } from "next/navigation";
+import { SubNavStrip } from "@/components/shell/SubNavStrip";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { isSourceIaV2 } from "@/lib/source/source-ia-v2";
 
 /**
  * Source surface secondary navigation — a Snowflake-style sticky strip that
@@ -32,9 +32,9 @@ interface SourceSubNavTab {
  * set — the overlap the audit flagged.
  */
 export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
-  { key: 'queue', label: 'Queue', href: '/source/queue' },
-  { key: 'events', label: 'Events', href: '/source/events' },
-  { key: 'portfolio', label: 'Portfolio', href: '/source/portfolio' },
+  { key: "queue", label: "Queue", href: "/source/queue" },
+  { key: "events", label: "Events", href: "/source/events" },
+  { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
 ] as const;
 
 /**
@@ -43,8 +43,9 @@ export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
  * (which absorbs the retired Events surface). Default tab set.
  */
 export const SOURCE_SUBNAV_TABS_V2: readonly SourceSubNavTab[] = [
-  { key: 'queue', label: 'Decisions', href: '/source/queue' },
-  { key: 'portfolio', label: 'Portfolio', href: '/source/portfolio' },
+  { key: "queue", label: "Decisions", href: "/source/queue" },
+  { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
+  { key: "setup", label: "Setup", href: "/source/setup" },
 ] as const;
 
 /** The tab set in effect for the current IA flag state. */
@@ -66,17 +67,25 @@ export function activeSourceSubNavTabs(): readonly SourceSubNavTab[] {
  *
  * Exported for unit testing.
  */
-export function resolveActiveSourceTab(pathname: string | null | undefined): string {
-  const path = pathname ?? '';
+export function resolveActiveSourceTab(
+  pathname: string | null | undefined,
+): string {
+  const path = pathname ?? "";
   // IA v2: event-detail pages (/source/events/[eventId]) belong to the
   // Portfolio surface, since the standalone Events index folded into it.
-  if (isSourceIaV2() && (path === '/source/events' || path.startsWith('/source/events/'))) {
-    return 'portfolio';
+  if (
+    isSourceIaV2() &&
+    (path === "/source/events" || path.startsWith("/source/events/"))
+  ) {
+    return "portfolio";
   }
-  let bestKey = 'queue';
+  let bestKey = "queue";
   let bestLen = -1;
   for (const tab of activeSourceSubNavTabs()) {
-    if ((path === tab.href || path.startsWith(tab.href + '/')) && tab.href.length > bestLen) {
+    if (
+      (path === tab.href || path.startsWith(tab.href + "/")) &&
+      tab.href.length > bestLen
+    ) {
       bestKey = tab.key;
       bestLen = tab.href.length;
     }
@@ -102,10 +111,10 @@ export function SourceSubNav() {
         minHeight: 44,
         background: SHELL.PAPER_SOFT,
         borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: '0 24px',
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        padding: "0 24px",
         gap: 18,
         flexShrink: 0,
       }}
@@ -115,8 +124,8 @@ export function SourceSubNav() {
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: SHELL.INK_MUTED,
           lineHeight: 1,
           flexShrink: 0,
@@ -126,7 +135,7 @@ export function SourceSubNav() {
       </span>
 
       {/* Tab links, right */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
         <SubNavStrip items={items} />
       </div>
     </nav>

@@ -2,9 +2,10 @@
  * Unit tests for the Source sub-nav active-tab resolver and tab catalogue,
  * across both information-architecture states.
  *
- * IA v2 (audit 2026-06-03, Tier 1, default ON) consolidates Source to two
- * surfaces — Decisions (the Queue) + Portfolio — folding the standalone Events
- * surface into Portfolio. `NEXT_PUBLIC_SOURCE_IA_V2=0` restores the legacy
+ * IA v2 (audit 2026-06-03, Tier 1, default ON) consolidates Source around
+ * Decisions (the Queue) + Portfolio + Setup — folding the standalone Events
+ * surface into Portfolio while keeping artifact operations discoverable.
+ * `NEXT_PUBLIC_SOURCE_IA_V2=0` restores the legacy
  * three-tab IA (Queue / Events / Portfolio). These pure-function tests lock
  * both states. `resolveActiveSourceTab` and `activeSourceSubNavTabs` read the
  * flag at call time, so each block sets the env explicitly.
@@ -26,14 +27,14 @@ afterAll(() => {
 
 // ── IA v2 (default — flag unset or on) ───────────────────────────────────────
 
-describe('IA v2 (default) — two surfaces', () => {
+describe('IA v2 (default) — operating surfaces', () => {
   beforeEach(() => {
     delete process.env[FLAG]; // unset ⇒ default ON
   });
 
-  test('catalogue is exactly Decisions + Portfolio, in order', () => {
-    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual(['queue', 'portfolio']);
-    expect(activeSourceSubNavTabs().map((t) => t.label)).toEqual(['Decisions', 'Portfolio']);
+  test('catalogue is exactly Decisions + Portfolio + Setup, in order', () => {
+    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual(['queue', 'portfolio', 'setup']);
+    expect(activeSourceSubNavTabs().map((t) => t.label)).toEqual(['Decisions', 'Portfolio', 'Setup']);
   });
 
   test('the Queue tab is labelled "Decisions"', () => {
@@ -46,6 +47,10 @@ describe('IA v2 (default) — two surfaces', () => {
 
   test('/source/portfolio → portfolio', () => {
     expect(resolveActiveSourceTab('/source/portfolio')).toBe('portfolio');
+  });
+
+  test('/source/setup → setup', () => {
+    expect(resolveActiveSourceTab('/source/setup')).toBe('setup');
   });
 
   test('Events paths fold into Portfolio', () => {
