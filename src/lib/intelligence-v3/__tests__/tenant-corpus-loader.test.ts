@@ -1,5 +1,20 @@
 jest.mock('server-only', () => ({}));
 
+jest.mock('@/lib/intelligence-v3/lakeshore-live', () => ({
+  loadLakeshoreIntelligenceData: jest.fn(async (client) => ({
+    briefData: {
+      tenantName: client.name,
+      bets: [{ useCase: { name: 'Kyriba global treasury rollout' } }],
+      patternsTriggered: [{ pattern: { name: 'Daily cash position before market open' } }],
+      totals: { totalUseCases: 1, totalPatterns: 350 },
+    },
+    mapData: {
+      tenantName: client.name,
+      totalUseCases: 1,
+    },
+  })),
+}));
+
 import { loadTenantIntelligenceCorpusData } from '../tenant-corpus-loader';
 
 describe('loadTenantIntelligenceCorpusData', () => {
@@ -48,6 +63,23 @@ describe('loadTenantIntelligenceCorpusData', () => {
 
     expect(corpus?.briefData.tenantName).toBe('SkyHarbor Air');
     expect(corpus?.briefData.bets[0]?.useCase.name).toContain('IROPs Recovery');
+    expect(corpus?.mapData.totalUseCases).toBeGreaterThan(0);
+  });
+
+  it('loads Lakeshore live corpus data', async () => {
+    const corpus = await loadTenantIntelligenceCorpusData(
+      {
+        id: 'client_lakeshore',
+        key: 'lakeshore',
+        name: 'Lakeshore Holdings',
+        industry_code: 'diversified',
+      },
+      'lakeshore',
+    );
+
+    expect(corpus?.briefData.tenantName).toBe('Lakeshore Holdings');
+    expect(corpus?.briefData.bets[0]?.useCase.name).toContain('Kyriba');
+    expect(corpus?.briefData.patternsTriggered[0]?.pattern.name).toContain('cash');
     expect(corpus?.mapData.totalUseCases).toBeGreaterThan(0);
   });
 });

@@ -17,6 +17,7 @@ import {
   getSkyHarborBriefData,
   getSkyHarborMapData,
 } from '@/lib/knowledge-corpus/fixtures/skyharbor-airline';
+import { loadLakeshoreIntelligenceData } from '@/lib/intelligence-v3/lakeshore-live';
 
 interface ClientRow {
   id: string;
@@ -38,6 +39,7 @@ function resolveCorpusKey(client: ClientRow | null, requestedClientKey: string |
   if (name.includes('meridian')) return 'meridian';
   if (name.includes('first capital') || name.includes('arcturus')) return 'firstcapital';
   if (name.includes('skyharbor')) return 'skyharbor';
+  if (name.includes('lakeshore')) return 'lakeshore';
   if (name.includes('apex')) return 'apexretail';
   return null;
 }
@@ -77,6 +79,10 @@ export async function loadTenantIntelligenceCorpusData(
       briefData: getSkyHarborBriefData(),
       mapData: getSkyHarborMapData(),
     };
+  }
+
+  if (key === 'lakeshore' || key === 'lakeshoreholdings') {
+    return client ? loadLakeshoreIntelligenceData(client) : null;
   }
 
   return null;
