@@ -49,6 +49,7 @@
     "legal:client-paper:verify": "node scripts/legal/verify-client-paper-playbook.mjs",
     "ip:brand-readiness:verify": "node scripts/ip/verify-brand-ip-readiness.mjs",
     "gtm:universal-sales:verify": "node scripts/gtm/verify-universal-sales-playbook.mjs",
+    "ops:founder-operating-system:verify": "node scripts/ops/verify-founder-operating-system.mjs",
     "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
