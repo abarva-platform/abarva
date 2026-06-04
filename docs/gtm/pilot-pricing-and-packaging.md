@@ -2,7 +2,7 @@
 
 Status: founder pricing posture
 Owner: founder
-Backlog tasks: T056, T059, T060, T259
+Backlog tasks: T056, T057, T058, T059, T060, T270, T271, T283, T259
 
 ## Source of Truth
 
@@ -28,6 +28,84 @@ unless the founder explicitly reopens pricing.
 | Founder-time value | Approximately `10%` of contract value included as founder-led pilot support and executive shaping. |
 | Annual prepay discount | 7.5% target discount where appropriate. |
 | Annual escalator | 5% target escalator. |
+
+## User Tier Packaging
+
+Backlog task: T057.
+
+AbarVa should use tiered access packaging, not per-user pricing. Per-user
+pricing makes the product feel like a seat tool, creates friction for broad
+executive and operator participation, and slows F500 adoption. The commercial
+anchor is the operating layer and decision portfolio.
+
+| Tier | Included users | Commercial posture |
+| --- | --- | --- |
+| Pilot base | Up to 25 named users | Included in the `$300,000` 90-day pilot. |
+| Expansion tier | 26-100 named users | `$15,000/month` flat add-on tier. |
+| Enterprise tier | 100+ named users | Custom enterprise tier tied to client scope, support model, and private data-plane needs. |
+
+Do not quote `$X/user/month`. If the buyer asks for a per-user equivalent,
+describe it only as an internal procurement comparison, not as the pricing
+model.
+
+## Source Pricing And Wedge Strategy
+
+Backlog tasks: T058 and T270.
+
+Source is the primary wedge for non-AI-leader prospects because procurement,
+vendor, renewal, BAFO, and sourcing-event workflows create visible business
+urgency even when the executive AI agenda is still forming.
+
+| Offer shape | Use when | Pricing posture |
+| --- | --- | --- |
+| Source standalone | Procurement or vendor-management buyer wants a sourcing-only sale. | `$50,000/month` target. Do not go below `$40,000/month` without reducing scope. |
+| Source add-on | Core AbarVa pilot is already in scope. | `$40,000/month` add-on line item. |
+| Source bundled | First pilot needs Source as a conversion lever. | Bundle only with explicit discount notation and preserve the standalone value anchor. |
+
+Source should stay visible as a separate value line even when bundled. Do not
+hide it inside generic platform pricing; procurement buyers need to see the
+commercial logic for vendor-event savings, renewal leverage, and decision
+cycle-time reduction.
+
+## Smaller-Deal CTO Tier
+
+Backlog task: T271.
+
+For CTO-led or platform-readiness opportunities where enterprise AI value is
+real but executive sponsorship is not yet large enough for the flagship offer,
+AbarVa can use a smaller-deal entry tier:
+
+| Item | Smaller-deal posture |
+| --- | --- |
+| Pilot | `$200,000` for a 90-day focused pilot. |
+| Year-1 target | `$500,000` ACV. |
+| Scope | One buyer domain, limited number of active workflows, no broad enterprise operating-layer claim. |
+| Users | Up to 15 named users; expansion moves to the standard user tiers. |
+| Source | Separately priced unless it is the primary wedge. |
+| Conversion path | Upgrade to flagship pricing when the pilot expands beyond the initial CTO domain. |
+
+Use this tier to avoid losing valid smaller opportunities, not to discount the
+flagship offer. If the buyer wants the flagship scope, keep the flagship price.
+
+## New-Leader Foundation Positioning
+
+Backlog task: T283.
+
+New CIO, CTO, CDAO, procurement, or transformation leaders often need a
+foundation budget narrative rather than a software-line-item narrative. Frame
+AbarVa as the governed operating foundation for decisions, context, and
+accountability.
+
+| Leader moment | Positioning | What to avoid |
+| --- | --- | --- |
+| New CIO / CTO | "Build the decision and context foundation before tool sprawl compounds." | Do not lead with chatbot productivity. |
+| New CDAO / AI leader | "Stand up governed AI decision support with corpus depth, audit, and human accountability." | Do not sell generic AI readiness workshops. |
+| New procurement leader | "Use Source to create visible vendor leverage while the broader AI operating layer matures." | Do not force a full platform sale before urgency is proven. |
+| Transformation leader | "Tie modernization, sourcing, and portfolio choices to one evidence-backed decision layer." | Do not price as staff augmentation. |
+
+This position competes against transformation budget, advisory spend, platform
+modernization, and operating-model investment. It should not be compared to a
+departmental SaaS license.
 
 ## Pricing Rationale
 
@@ -133,9 +211,9 @@ Do not describe founder time as a discount. It is a packaged value component.
 
 ## Open Commercial Decisions
 
-- Whether to make Source always separate or bundle it for the first pilot.
 - Whether the first client receives a founder-reference concession.
 - Whether any year-1 production conversion discount applies if signed before
   pilot day 75.
 - Whether the first private data-plane customer receives a setup fee separate
   from platform ACV.
+- Whether the smaller-deal CTO tier requires a named module limit in every SOW.
