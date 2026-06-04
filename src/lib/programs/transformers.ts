@@ -71,6 +71,9 @@ const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
   ['arcturus financial group', 'First Capital Financial'],
   ['apex retail', 'Apex Retail Group'],
   ['apex retail group', 'Apex Retail Group'],
+  ['lakeshore', 'Lakeshore Holdings'],
+  ['lakeshore holdings', 'Lakeshore Holdings'],
+  ['lakeshore-holdings', 'Lakeshore Holdings'],
 ]);
 
 function canonicalProgramClientName(args: {
@@ -88,6 +91,7 @@ function canonicalProgramClientName(args: {
   if (canonical === 'Meridian Health') return 'Meridian Health System';
   if (canonical === 'First Capital Financial') return 'First Capital Financial';
   if (canonical === 'Apex Retail Group') return 'Apex Retail Group';
+  if (canonical === 'Lakeshore Holdings') return 'Lakeshore Holdings';
   return 'Apex Retail Group';
 }
 
