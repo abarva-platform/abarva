@@ -2,7 +2,7 @@
 
 Status: founder pricing posture
 Owner: founder
-Backlog tasks: T056, T057, T058, T059, T060, T270, T271, T283, T259
+Backlog tasks: T056, T057, T058, T059, T060, T061, T062, T270, T271, T283, T259
 
 ## Source of Truth
 
@@ -27,6 +27,7 @@ unless the founder explicitly reopens pricing.
 | Founder hourly anchor | `$425/hour` for premium founder time and change-order anchoring. |
 | Founder-time value | Approximately `10%` of contract value included as founder-led pilot support and executive shaping. |
 | Annual prepay discount | 7.5% target discount where appropriate. |
+| Multi-year discount | Up to 10% for a 2-year commitment and up to 15% for a 3-year commitment, only with expansion or risk-reduction terms. |
 | Annual escalator | 5% target escalator. |
 
 ## User Tier Packaging
@@ -86,6 +87,53 @@ AbarVa can use a smaller-deal entry tier:
 
 Use this tier to avoid losing valid smaller opportunities, not to discount the
 flagship offer. If the buyer wants the flagship scope, keep the flagship price.
+
+## Prepay And Multi-Year Discount Policy
+
+Backlog tasks: T061 and T062.
+
+Discounting is a commercial control, not a reflex. Use discounts to trade for
+cash timing, term certainty, reference value, reduced scope, or lower delivery
+risk. Do not use discounts to make the platform feel cheaper than the value it
+is meant to create.
+
+| Offer | Maximum posture | Required trade |
+| --- | --- | --- |
+| Annual prepay | 5-10% range; 7.5% default target. | Cash paid up front or materially accelerated payment terms. |
+| 2-year term | Up to 10% off year-1 production subscription. | Signed 2-year commitment, clear expansion path, and no uncapped services. |
+| 3-year term | Up to 15% off year-1 production subscription. | Signed 3-year commitment, annual escalator or volume expansion, and executive reference rights where possible. |
+| Pilot concession | Prefer scope reduction over price discount. | Named scope reduction, reduced support, narrower module set, or explicit founder-reference rationale. |
+| Source wedge bundle | Preserve standalone Source value anchor. | Source must remain visible as a separate value line even when bundled. |
+
+Founder approval is required before quoting any discount above the default
+annual-prepay posture or before combining multiple concessions. Every approved
+discount must identify the give/get: what AbarVa gives, what the client gives
+back, the term, the modules in scope, the payment timing, and the expiration
+date of the offer.
+
+The preferred buyer-facing language is:
+
+> AbarVa can consider commercial flexibility when it is tied to commitment,
+> payment timing, or narrower scope. We do not discount by simply lowering the
+> value anchor; if the investment needs to move, we will tune the scope, term,
+> payment structure, or expansion path so the commercial model stays aligned
+> with the operating impact.
+
+## Discount Approval Evidence
+
+| Evidence item | Required content |
+| --- | --- |
+| Approval owner | Founder or delegated commercial owner. |
+| Discount type | Annual prepay, multi-year, pilot concession, Source bundle, or account-specific exception. |
+| Give/get | Explicit client concession in exchange for the discount. |
+| Scope guardrail | Modules, users, data-plane posture, support level, and custom-corpus work included. |
+| Expiration | Date after which the quoted discount must be re-approved. |
+| SOW treatment | Discount shown as a line item or commercial note; never hidden as an untraceable price change. |
+
+Do not stack annual prepay, multi-year, first-client, and Source-bundle
+concessions without a written founder exception. If a buyer asks for a larger
+discount, the default move is to narrow scope, delay optional add-ons, or make
+the concession contingent on signature timing and reference value.
 
 ## New-Leader Foundation Positioning
 
@@ -187,7 +235,7 @@ Do not describe founder time as a discount. It is a packaged value component.
 | --- | --- |
 | Pilot price pressure | Reduce scope or modules before discounting price. |
 | Annual prepay | Offer up to 7.5% when cash timing matters. |
-| Multi-year year-1 production | Consider discount only for signed expansion or prepay. |
+| Multi-year year-1 production | Use up to 10% for 2 years or up to 15% for 3 years only with signed term commitment and explicit give/get. |
 | Source as wedge | Keep Source as a separately visible line item when procurement/sourcing is the economic buyer. |
 | Extra users | Use tiered add-ons, not per-seat negotiation. |
 
