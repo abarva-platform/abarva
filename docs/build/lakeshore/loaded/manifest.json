@@ -1,0 +1,463 @@
+{
+  "tenantKey": "lakeshore",
+  "brokerKey": "lakeshore-holdings",
+  "displayName": "Lakeshore Holdings",
+  "generatedAt": "2026-06-04T00:00:00.000Z",
+  "syntheticNotice": "SYNTHETIC / ILLUSTRATIVE. Not a real company disclosure.",
+  "researchModel": {
+    "basis": "Morgan Street / HAVI-style diversified holding company",
+    "sources": [
+      "https://morganstreet.com/",
+      "https://morganstreet.com/who-we-are/",
+      "https://havi.com/about",
+      "https://www.tmsw.com/",
+      "https://www.tmsw.com/services/"
+    ]
+  },
+  "opcos": [
+    {
+      "id": "LSH-HOLDCO",
+      "name": "Lakeshore Holdings",
+      "shortName": "Holdco",
+      "revenueUsd": 3560000000,
+      "ebitdaUsd": 382000000,
+      "employees": 610,
+      "countries": 50,
+      "sector": "Private investment group and shared services",
+      "hq": "Chicago, IL",
+      "cio": "Meera Rao",
+      "cfo": "Daniel Whitaker",
+      "platforms": [
+        "Kyriba",
+        "Workday",
+        "ServiceNow",
+        "Microsoft 365",
+        "Okta",
+        "Power BI"
+      ],
+      "primaryCapabilities": [
+        "Treasury",
+        "Shared IT",
+        "Finance",
+        "Cybersecurity",
+        "Enterprise Architecture"
+      ]
+    },
+    {
+      "id": "NLS",
+      "name": "Northline Supply Chain",
+      "shortName": "Northline",
+      "revenueUsd": 1500000000,
+      "ebitdaUsd": 172000000,
+      "employees": 6000,
+      "countries": 34,
+      "sector": "Foodservice supply chain, freight, cold chain, distribution",
+      "hq": "Rosemont, IL",
+      "cio": "Alicia Moreno",
+      "cfo": "Graham Keller",
+      "platforms": [
+        "SAP S/4HANA",
+        "Manhattan WMS",
+        "Blue Yonder",
+        "FourKites",
+        "MuleSoft",
+        "Snowflake"
+      ],
+      "primaryCapabilities": [
+        "Warehousing",
+        "Freight",
+        "Demand Planning",
+        "Cold Chain",
+        "EDI"
+      ]
+    },
+    {
+      "id": "BMS",
+      "name": "Brightmark Marketing Services",
+      "shortName": "Brightmark",
+      "revenueUsd": 720000000,
+      "ebitdaUsd": 86000000,
+      "employees": 2450,
+      "countries": 26,
+      "sector": "Marketing technology, sourcing, promotions, loyalty operations",
+      "hq": "Chicago, IL",
+      "cio": "Nadia Bell",
+      "cfo": "Priya Deshpande",
+      "platforms": [
+        "Salesforce Marketing Cloud",
+        "Adobe Experience Manager",
+        "Brandfolder DAM",
+        "Coupa",
+        "Snowflake",
+        "Braze"
+      ],
+      "primaryCapabilities": [
+        "Promotion Sourcing",
+        "Loyalty",
+        "Campaign Ops",
+        "Packaging",
+        "Brand Experience"
+      ]
+    },
+    {
+      "id": "FFF",
+      "name": "Forge & Field Consumer Products",
+      "shortName": "Forge & Field",
+      "revenueUsd": 800000000,
+      "ebitdaUsd": 94000000,
+      "employees": 1530,
+      "countries": 18,
+      "sector": "Premium consumer products, DTC commerce, retail channels",
+      "hq": "Seattle, WA",
+      "cio": "Ethan Brooks",
+      "cfo": "Marisol Chen",
+      "platforms": [
+        "Shopify Plus",
+        "Salesforce Commerce Cloud",
+        "NetSuite",
+        "PIM Akeneo",
+        "Klaviyo",
+        "ShipBob"
+      ],
+      "primaryCapabilities": [
+        "Direct Commerce",
+        "Retail Wholesale",
+        "Product Lifecycle",
+        "3PL",
+        "Customer Data"
+      ]
+    },
+    {
+      "id": "GLP",
+      "name": "Great Lakes Pantry Services",
+      "shortName": "Great Lakes Pantry",
+      "revenueUsd": 540000000,
+      "ebitdaUsd": 58000000,
+      "employees": 1210,
+      "countries": 5,
+      "sector": "Workplace foodservice, micro-markets, vending, onsite dining",
+      "hq": "Troy, MI",
+      "cio": "Monica Ellis",
+      "cfo": "Rafael Stone",
+      "platforms": [
+        "Cantaloupe Seed",
+        "365 Retail Markets",
+        "Toast",
+        "NetSuite",
+        "Salesforce Field Service",
+        "Power BI"
+      ],
+      "primaryCapabilities": [
+        "Micro-markets",
+        "Office Coffee",
+        "Onsite Dining",
+        "Vending",
+        "Meal Delivery"
+      ]
+    }
+  ],
+  "totals": {
+    "structuredRecords": 1329,
+    "csvFiles": 18,
+    "generatedDocuments": 21,
+    "workbook": "workbooks/lakeshore-context-data-bundle.xlsx"
+  },
+  "dataFiles": [
+    {
+      "templateId": "enterprise-profile",
+      "dimension": "enterprise_profile",
+      "label": "Enterprise profile",
+      "rows": 5,
+      "path": "data/enterprise-profile.csv",
+      "acceptedFormats": ["markdown", "json", "pdf"],
+      "ownerRole": "Chief Strategy Officer"
+    },
+    {
+      "templateId": "financial-kpi-workbook",
+      "dimension": "financial_kpis",
+      "label": "Financial KPI workbook",
+      "rows": 240,
+      "path": "data/financial-kpi-workbook.csv",
+      "acceptedFormats": ["xlsx", "csv"],
+      "ownerRole": "CFO"
+    },
+    {
+      "templateId": "annual-quarterly-reports",
+      "dimension": "annual_quarterly_reports",
+      "label": "Annual and quarterly reports",
+      "rows": 8,
+      "path": "data/annual-quarterly-reports.csv",
+      "acceptedFormats": ["pdf", "pptx", "docx"],
+      "ownerRole": "Investor Relations"
+    },
+    {
+      "templateId": "market-signals",
+      "dimension": "market_competitor_intel",
+      "label": "Market and competitor intel",
+      "rows": 40,
+      "path": "data/market-signals.csv",
+      "acceptedFormats": ["csv", "markdown", "pdf"],
+      "ownerRole": "Chief Commercial Officer"
+    },
+    {
+      "templateId": "strategy-memo",
+      "dimension": "c_suite_strategy",
+      "label": "C-suite strategy memo",
+      "rows": 30,
+      "path": "data/strategy-memo.csv",
+      "acceptedFormats": ["docx", "pdf", "markdown"],
+      "ownerRole": "CEO Chief of Staff"
+    },
+    {
+      "templateId": "segment-pnl",
+      "dimension": "business_units_segment_pnl",
+      "label": "Business unit segment P&L",
+      "rows": 40,
+      "path": "data/segment-pnl.csv",
+      "acceptedFormats": ["xlsx", "csv"],
+      "ownerRole": "CFO FP&A"
+    },
+    {
+      "templateId": "product-portfolio",
+      "dimension": "product_portfolio",
+      "label": "Product portfolio",
+      "rows": 48,
+      "path": "data/product-portfolio.csv",
+      "acceptedFormats": ["csv", "xlsx"],
+      "ownerRole": "Chief Product Officer"
+    },
+    {
+      "templateId": "site-and-plant-inventory",
+      "dimension": "manufacturing_sites",
+      "label": "Site and plant inventory",
+      "rows": 56,
+      "path": "data/site-and-plant-inventory.csv",
+      "acceptedFormats": ["csv", "xlsx"],
+      "ownerRole": "COO"
+    },
+    {
+      "templateId": "erp-landscape-workbook",
+      "dimension": "erp_landscape",
+      "label": "ERP landscape workbook",
+      "rows": 65,
+      "path": "data/erp-landscape-workbook.csv",
+      "acceptedFormats": ["xlsx", "csv"],
+      "ownerRole": "CIO ERP Transformation"
+    },
+    {
+      "templateId": "application-portfolio",
+      "dimension": "application_portfolio",
+      "label": "CMDB / application portfolio",
+      "rows": 228,
+      "path": "data/application-portfolio.csv",
+      "acceptedFormats": ["csv", "xlsx"],
+      "ownerRole": "VP Enterprise Architecture"
+    },
+    {
+      "templateId": "integration-topology",
+      "dimension": "integration_topology",
+      "label": "Integration topology",
+      "rows": 96,
+      "path": "data/integration-topology.csv",
+      "acceptedFormats": ["json", "jsonl", "csv"],
+      "ownerRole": "VP Enterprise Architecture"
+    },
+    {
+      "templateId": "vendor-contracts",
+      "dimension": "vendor_contracts",
+      "label": "Vendor contracts",
+      "rows": 82,
+      "path": "data/vendor-contracts.csv",
+      "acceptedFormats": ["csv", "xlsx", "pdf"],
+      "ownerRole": "VP Procurement"
+    },
+    {
+      "templateId": "initiative-portfolio",
+      "dimension": "transformation_initiatives",
+      "label": "Transformation initiatives",
+      "rows": 40,
+      "path": "data/initiative-portfolio.csv",
+      "acceptedFormats": ["xlsx", "csv", "json"],
+      "ownerRole": "Transformation PMO"
+    },
+    {
+      "templateId": "org-roles",
+      "dimension": "org_roles_teams",
+      "label": "Org, roles, and teams",
+      "rows": 67,
+      "path": "data/org-roles.csv",
+      "acceptedFormats": ["csv", "xlsx", "json"],
+      "ownerRole": "CHRO"
+    },
+    {
+      "templateId": "dora-baseline",
+      "dimension": "delivery_dora_devex",
+      "label": "Delivery / DORA / DevEx",
+      "rows": 84,
+      "path": "data/dora-baseline.csv",
+      "acceptedFormats": ["csv", "xlsx", "json"],
+      "ownerRole": "VP Engineering"
+    },
+    {
+      "templateId": "qms-events",
+      "dimension": "regulatory_qms_risk",
+      "label": "Regulatory / QMS / risk",
+      "rows": 62,
+      "path": "data/qms-events.csv",
+      "acceptedFormats": ["csv", "xlsx", "pdf"],
+      "ownerRole": "Chief Quality Officer"
+    },
+    {
+      "templateId": "ai-tool-footprint",
+      "dimension": "ai_tooling_model_inventory",
+      "label": "AI tooling and model inventory",
+      "rows": 42,
+      "path": "data/ai-tool-footprint.csv",
+      "acceptedFormats": ["csv", "xlsx", "json"],
+      "ownerRole": "AI Governance Lead"
+    },
+    {
+      "templateId": "incidents-change-history",
+      "dimension": "incidents_ops_telemetry",
+      "label": "Incidents and ops telemetry",
+      "rows": 96,
+      "path": "data/incidents-change-history.csv",
+      "acceptedFormats": ["csv", "json", "jsonl"],
+      "ownerRole": "VP IT Operations"
+    }
+  ],
+  "documents": [
+    {
+      "fileName": "con-lsh-001-kyriba-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-001-kyriba-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-002-deloitte-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-002-deloitte-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-003-microsoft-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-003-microsoft-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-004-servicenow-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-004-servicenow-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-005-okta-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-005-okta-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-006-crowdstrike-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-006-crowdstrike-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-007-snowflake-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-007-snowflake-contract.pdf"
+    },
+    {
+      "fileName": "con-lsh-008-databricks-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-lsh-008-databricks-contract.pdf"
+    },
+    {
+      "fileName": "con-nls-009-sap-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-nls-009-sap-contract.pdf"
+    },
+    {
+      "fileName": "con-nls-010-manhattan-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-nls-010-manhattan-contract.pdf"
+    },
+    {
+      "fileName": "con-nls-011-blueyonder-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-nls-011-blueyonder-contract.pdf"
+    },
+    {
+      "fileName": "con-nls-012-fourkites-contract.pdf",
+      "kind": "pdf_contract",
+      "mappedTemplate": "vendor-contracts",
+      "path": "documents/con-nls-012-fourkites-contract.pdf"
+    },
+    {
+      "fileName": "lakeshore-fy2026-board-it-update.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "path": "documents/lakeshore-fy2026-board-it-update.pdf"
+    },
+    {
+      "fileName": "lakeshore-target-state-data-architecture.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "path": "documents/lakeshore-target-state-data-architecture.pdf"
+    },
+    {
+      "fileName": "lakeshore-integration-topology-overview.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "path": "documents/lakeshore-integration-topology-overview.pdf"
+    },
+    {
+      "fileName": "lakeshore-quarterly-segment-performance.pdf",
+      "kind": "pdf_report",
+      "mappedTemplate": "annual-quarterly-reports",
+      "path": "documents/lakeshore-quarterly-segment-performance.pdf"
+    },
+    {
+      "fileName": "lakeshore-ai-usage-policy.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "path": "documents/lakeshore-ai-usage-policy.docx"
+    },
+    {
+      "fileName": "lakeshore-data-governance-policy.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "path": "documents/lakeshore-data-governance-policy.docx"
+    },
+    {
+      "fileName": "lakeshore-security-classification-standard.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "path": "documents/lakeshore-security-classification-standard.docx"
+    },
+    {
+      "fileName": "lakeshore-vendor-risk-standard.docx",
+      "kind": "docx_policy",
+      "mappedTemplate": "qms-events",
+      "path": "documents/lakeshore-vendor-risk-standard.docx"
+    },
+    {
+      "fileName": "lakeshore-board-it-update.pptx",
+      "kind": "pptx_board_update",
+      "mappedTemplate": "annual-quarterly-reports",
+      "path": "documents/lakeshore-board-it-update.pptx"
+    }
+  ],
+  "crossChecks": [
+    "Kyriba contract CON-LSH-001 ties to PGM-KYRIBA and treasury KPIs.",
+    "Vendor annual spend reconciles to contract rows and spend/KPI narratives.",
+    "Each opco has its own CIO, CFO, org roles, application estate, vendors, risks, and initiatives.",
+    "Holdco owns shared treasury, identity, ITSM, security, and enterprise architecture controls."
+  ]
+}
