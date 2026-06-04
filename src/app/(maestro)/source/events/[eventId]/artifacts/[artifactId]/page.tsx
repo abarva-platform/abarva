@@ -34,10 +34,10 @@ export default async function SourceArtifactPage({
     : "Curated source workspace";
   const artifactState =
     artifact.tier === "rich"
-      ? "Final"
+      ? "Authored"
       : artifact.tier === "outline"
-        ? "In progress"
-        : "Draft";
+        ? "Prepared"
+        : "Template";
   const eventStageLabels = event.stages.map((stage) => stage.label);
   const journeyStages = eventStageLabels.includes(event.currentStageLabel)
     ? eventStageLabels
