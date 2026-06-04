@@ -104,13 +104,24 @@ describe("listSourcingEvents tenant scoping", () => {
     expect(events).toEqual([]);
   });
 
+  it("returns no shared Apex seed events for a Lakeshore active client", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-lakeshore",
+      name: "Lakeshore Holdings",
+      industry_code: "DIVERSIFIED",
+      key: "lakeshore",
+    });
+
+    const events = await listSourcingEvents();
+
+    expect(events).toEqual([]);
+  });
+
   it("uses the same tenant-scoped seed fallback if the persisted overlay query fails", async () => {
-    const order = jest
-      .fn()
-      .mockResolvedValue({
-        data: null,
-        error: { message: "relation does not exist" },
-      });
+    const order = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: "relation does not exist" },
+    });
     const neq = jest.fn(() => ({ order }));
     const eq = jest.fn(() => ({ neq }));
     const select = jest.fn(() => ({ eq }));
@@ -156,10 +167,60 @@ describe("getSourcingEvent tenant scoping", () => {
     await expect(
       getSourcingEvent("apex-retail-ams-outsourcing-2026"),
     ).resolves.toBeNull();
+    expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+
+  it("returns a persisted Lakeshore Source row only for the Lakeshore active client", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-lakeshore",
+      name: "Lakeshore Holdings",
+      industry_code: "DIVERSIFIED",
+      key: "lakeshore",
+    });
+    requireTenancy.mockResolvedValue({
+      clientId: "client-lakeshore",
+      clientKey: "lakeshore",
+      userId: "clerk:lakeshore-cio",
+      role: "client_admin",
+      email: "cio@lakeshore-holdings.example.com",
+    });
+    mockSourceEventsAdapter.getEventByCodeForClient.mockImplementation(
+      async (eventCode: string, clientKey: string) => {
+        if (
+          eventCode === "LSH-KYRIBA-TREASURY-2026" &&
+          clientKey === "lakeshore"
+        ) {
+          return {
+            id: "5f42db55-ed01-4cb5-8c95-5ca0ddaa02aa",
+            client_key: "lakeshore",
+            event_code: "LSH-KYRIBA-TREASURY-2026",
+            event_name: "Kyriba Treasury Rollout Commercial Readiness",
+            event_type: "software",
+            current_stage_key: "executive_decision",
+            lifecycle_state: "active",
+            linked_program_id: null,
+            estimated_value_usd: 42000000,
+            trigger_description: "Treasury controls and cash visibility.",
+            scope_description: "Kyriba treasury rollout and ERP integration.",
+            decision_owner: "Daniel Whitaker / Meera Rao",
+            created_by_user_id: "lakeshore-product-substrate-v1",
+            created_at: "2026-06-04T00:00:00.000Z",
+            updated_at: "2026-06-04T00:00:00.000Z",
+          };
+        }
+        return null;
+      },
+    );
+
+    const event = await getSourcingEvent("LSH-KYRIBA-TREASURY-2026");
+
+    expect(event?.accountName).toBe("Lakeshore Holdings");
+    expect(event?.code).toBe("LSH-KYRIBA-TREASURY-2026");
+    expect(event?.currentStageKey).toBe("executive_decision");
     expect(canReadSourceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ clientKey: "meridian" }),
-      "meridian",
-      "apex-retail-ams-outsourcing-2026",
+      expect.objectContaining({ clientKey: "lakeshore" }),
+      "lakeshore",
+      "5f42db55-ed01-4cb5-8c95-5ca0ddaa02aa",
     );
   });
 
