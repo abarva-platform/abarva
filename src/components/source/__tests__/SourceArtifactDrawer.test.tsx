@@ -9,47 +9,50 @@
  *   - No forbidden imports
  */
 
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { SourceArtifactDrawer } from '@/components/source/SourceArtifactDrawer';
-import type { SourceArtifactDetail, SourceArtifactTier } from '@/lib/source/types';
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { SourceArtifactDrawer } from "@/components/source/SourceArtifactDrawer";
+import type {
+  SourceArtifactDetail,
+  SourceArtifactTier,
+} from "@/lib/source/types";
 
 const BASE_ARTIFACT: SourceArtifactDetail = {
-  id: 'test-artifact-001',
-  eventId: 'test-event',
-  title: 'Test Artifact',
-  kind: 'charter',
-  status: 'draft',
-  summary: 'A test artifact for tier indicator verification.',
+  id: "test-artifact-001",
+  eventId: "test-event",
+  title: "Test Artifact",
+  kind: "charter",
+  status: "draft",
+  summary: "A test artifact for tier indicator verification.",
   sourceCount: 2,
-  updatedAt: '2026-04-28',
+  updatedAt: "2026-04-28",
   sections: [
-    { label: 'Section A', body: 'Body text for section A.' },
-    { label: 'Section B', body: 'Body text for section B.' },
+    { label: "Section A", body: "Body text for section A." },
+    { label: "Section B", body: "Body text for section B." },
   ],
-  governanceNotes: ['Note one.', 'Note two.'],
+  governanceNotes: ["Note one.", "Note two."],
   patternLinks: [],
 };
 
 const PROVENANCE = {
-  createdFrom: 'deterministic_seed',
-  storeKey: 'source-artifact:test-event:test-artifact-001',
-  freshness: '2026-04-28',
-  evidenceLedgerEntryId: 'test-artifact-001',
+  createdFrom: "deterministic_seed",
+  storeKey: "source-artifact:test-event:test-artifact-001",
+  freshness: "2026-04-28",
+  evidenceLedgerEntryId: "test-artifact-001",
 };
 
 // ---------------------------------------------------------------------------
 // Tier variants
 // ---------------------------------------------------------------------------
 
-describe('SourceArtifactDrawer · tier indicator', () => {
-  const TIERS: SourceArtifactTier[] = ['rich', 'outline', 'stub'];
+describe("SourceArtifactDrawer · tier indicator", () => {
+  const TIERS: SourceArtifactTier[] = ["rich", "outline", "stub"];
   const TIER_LABELS: Record<SourceArtifactTier, string> = {
-    rich: 'Final',
-    outline: 'In Progress',
-    stub: 'Draft',
+    rich: "Final",
+    outline: "In Progress",
+    stub: "Draft",
   };
 
   for (const tier of TIERS) {
@@ -65,7 +68,7 @@ describe('SourceArtifactDrawer · tier indicator', () => {
     });
   }
 
-  it('renders undefined tier as stub fallback', () => {
+  it("renders undefined tier as stub fallback", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, {
         artifact: { ...BASE_ARTIFACT, tier: undefined },
@@ -79,28 +82,28 @@ describe('SourceArtifactDrawer · tier indicator', () => {
 // Provenance panel
 // ---------------------------------------------------------------------------
 
-describe('SourceArtifactDrawer · provenance panel', () => {
-  it('renders provenance panel when prop provided', () => {
+describe("SourceArtifactDrawer · provenance panel", () => {
+  it("renders provenance panel when prop provided", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, {
-        artifact: { ...BASE_ARTIFACT, tier: 'rich' },
+        artifact: { ...BASE_ARTIFACT, tier: "rich" },
         provenance: PROVENANCE,
       }),
     );
     expect(html).toContain('data-testid="provenance-panel"');
-    expect(html).toContain('Visible provenance');
-    expect(html).toContain('Seed-backed scenario');
-    expect(html).toContain('Evidence ledger entry');
+    expect(html).toContain("Visible provenance");
+    expect(html).toContain("Curated source workspace");
+    expect(html).toContain("Evidence ledger entry");
   });
 
-  it('does not render provenance panel when prop omitted', () => {
+  it("does not render provenance panel when prop omitted", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, {
-        artifact: { ...BASE_ARTIFACT, tier: 'outline' },
+        artifact: { ...BASE_ARTIFACT, tier: "outline" },
       }),
     );
     expect(html).not.toContain('data-testid="provenance-panel"');
-    expect(html).not.toContain('Visible provenance');
+    expect(html).not.toContain("Visible provenance");
   });
 });
 
@@ -108,36 +111,40 @@ describe('SourceArtifactDrawer · provenance panel', () => {
 // Drawer shell
 // ---------------------------------------------------------------------------
 
-describe('SourceArtifactDrawer · shell', () => {
-  it('renders sections from artifact', () => {
+describe("SourceArtifactDrawer · shell", () => {
+  it("renders sections from artifact", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
-    expect(html).toContain('Section A');
-    expect(html).toContain('Section B');
+    expect(html).toContain("Section A");
+    expect(html).toContain("Section B");
+    expect(html).toContain("Source: curated workspace");
+    expect(html).not.toMatch(/seed-backed/i);
   });
 
-  it('renders governance notes', () => {
+  it("renders governance notes", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
-    expect(html).toContain('Note one');
-    expect(html).toContain('Note two');
+    expect(html).toContain("Note one");
+    expect(html).toContain("Note two");
   });
 
-  it('renders seed-backed disclaimer', () => {
+  it("renders draft artifact disclaimer", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
-    expect(html).toContain('Seed-backed artifact shell only');
+    expect(html).toContain("Draft artifact shell only");
   });
 
-  it('uses Nexus language for the disabled artifact prompt', () => {
+  it("uses Nexus language for the disabled artifact prompt", () => {
     const html = renderToStaticMarkup(
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
-    expect(html).toContain('Ask Nexus about this artifact, evidence chain, or source version');
-    expect(html).not.toContain('Ask Sentinel about this artifact');
+    expect(html).toContain(
+      "Ask Nexus about this artifact, evidence chain, or source version",
+    );
+    expect(html).not.toContain("Ask Sentinel about this artifact");
   });
 });
 
@@ -145,20 +152,30 @@ describe('SourceArtifactDrawer · shell', () => {
 // Module hygiene
 // ---------------------------------------------------------------------------
 
-describe('SourceArtifactDrawer · hygiene', () => {
-  it('does not import from model/upload/workflow packages', () => {
-    const src = readFileSync(join(process.cwd(), 'src/components/source/SourceArtifactDrawer.tsx'), 'utf8');
+describe("SourceArtifactDrawer · hygiene", () => {
+  it("does not import from model/upload/workflow packages", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/source/SourceArtifactDrawer.tsx"),
+      "utf8",
+    );
     expect(src).not.toMatch(/from ['"][^'"]*(openai|anthropic|@ai-sdk)['"]/);
-    expect(src).not.toMatch(/from ['"][^'"]*(upload|parser|approval-engine|workflow-engine)['"]/);
+    expect(src).not.toMatch(
+      /from ['"][^'"]*(upload|parser|approval-engine|workflow-engine)['"]/,
+    );
   });
 
-  it('artifact route has updated Sentinel voice format', () => {
+  it("artifact route has updated Sentinel voice format", () => {
     const src = readFileSync(
-      join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx'),
-      'utf8',
+      join(
+        process.cwd(),
+        "src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx",
+      ),
+      "utf8",
     );
-    expect(src).toContain('Artifact tier:');
-    expect(src).toContain('Provenance:');
-    expect(src).toContain('Evidence chain:');
+    expect(src).toContain("Artifact state:");
+    expect(src).toContain("Source:");
+    expect(src).toContain("Evidence chain:");
+    expect(src).not.toContain("Artifact tier:");
+    expect(src).not.toContain("Provenance:");
   });
 });

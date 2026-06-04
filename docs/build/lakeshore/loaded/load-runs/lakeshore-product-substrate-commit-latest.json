@@ -1,0 +1,20 @@
+{
+  "status": "committed",
+  "clientId": "f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61",
+  "inventorySegments": 9,
+  "inventoryRecords": 1329,
+  "sourceEvents": 2,
+  "sourceArtifactStates": 66,
+  "sourceGateCriterionStates": 78,
+  "sourceEvidenceStates": 42,
+  "engagements": 6,
+  "aiInitiatives": 40,
+  "towerVendorSpend": 82,
+  "towerProgramFinancials": 40,
+  "towerCloudCost": 24,
+  "vendorContracts": 82,
+  "aiInitiativeKpis": 80,
+  "aiInitiativeDecisions": 40,
+  "warnings": [],
+  "generatedAt": "2026-06-04T16:38:36.392Z"
+}

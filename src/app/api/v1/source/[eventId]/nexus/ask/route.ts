@@ -82,6 +82,18 @@ export async function POST(
           })
         : undefined);
 
+    if (eventId && !liveEventDetail) {
+      return Response.json(
+        {
+          ok: false,
+          error: "not_found",
+          detail: "No Source event found for the active client.",
+          noModel: true,
+        },
+        { status: 404 },
+      );
+    }
+
     // Source canvas migration · before invoking the (unchanged) deterministic
     // runtime, link any attachments from this turn to the source event so the
     // canvas owns them across turns and a future Atlas read can join on
@@ -266,21 +278,23 @@ async function loadApexRetailSourceIntelligence(args: {
   }
 }
 
-function shouldUseApexRetailAdapter(
+export function shouldUseApexRetailAdapter(
   eventId: string | undefined,
   clientId: string | undefined,
   clientKey: string | undefined,
 ): boolean {
   const normalizedClientId = clientId?.trim().toLowerCase();
   const normalizedClientKey = clientKey?.trim().toLowerCase();
-  if (
+  const hasKnownClientBoundary = Boolean(
+    normalizedClientId || normalizedClientKey,
+  );
+  const isApexClient =
     normalizedClientId === APEX_RETAIL_CLIENT_KEY ||
     normalizedClientId === APEX_RETAIL_BROKER_TENANT_KEY ||
     normalizedClientKey === APEX_RETAIL_CLIENT_KEY ||
-    normalizedClientKey === APEX_RETAIL_BROKER_TENANT_KEY
-  ) {
-    return true;
-  }
+    normalizedClientKey === APEX_RETAIL_BROKER_TENANT_KEY;
+  if (hasKnownClientBoundary) return isApexClient;
+
   const normalizedEventId = eventId?.trim().toUpperCase() ?? "";
   return (
     normalizedEventId.startsWith("APX-") ||
@@ -315,9 +329,7 @@ async function linkAttachmentsToEvent(args: {
   });
 }
 
-async function parseSourceNexusRequestBody(
-  request: NextRequest,
-): Promise<
+async function parseSourceNexusRequestBody(request: NextRequest): Promise<
   | { ok: true; body: unknown }
   | {
       ok: false;
