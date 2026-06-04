@@ -1,0 +1,313 @@
+{
+  "version": "2026-06-04.v1",
+  "tenantKey": "lakeshore",
+  "brokerKey": "lakeshore-holdings",
+  "syntheticNoticeRequired": true,
+  "purpose": "Offline acceptance prompt pack for proving Lakeshore answers are grounded after governed load, commit, embeddings, and Data Trust verification.",
+  "forbiddenTenantTokens": [
+    "Apex Retail",
+    "Meridian Health",
+    "SkyHarbor Air",
+    "First Capital",
+    "NorthStar Clinical"
+  ],
+  "forbiddenRealCompanyTokens": [
+    "Morgan Street Holdings",
+    "HAVI",
+    "tms",
+    "Stanley"
+  ],
+  "globalAnswerRules": [
+    "Every answer must cite Lakeshore file, row, or document evidence.",
+    "Every answer must clearly label the corpus as synthetic / illustrative.",
+    "If an answer cannot find evidence in Lakeshore corpus, it must say the fact is not available instead of guessing.",
+    "Shared pattern or benchmark corpus may be used only as a clearly labeled fallback, separate from Lakeshore tenant facts.",
+    "Cross-tenant references to Apex, Meridian, SkyHarbor, First Capital, or NorthStar are failures unless the user explicitly asks for a cross-client platform-admin comparison."
+  ],
+  "requiredSurfaceCoverage": [
+    "home",
+    "sentinel",
+    "moves",
+    "source",
+    "tower"
+  ],
+  "prompts": [
+    {
+      "id": "lsh-home-001",
+      "surface": "home",
+      "persona": "Global CIO",
+      "prompt": "What is the one Lakeshore decision I should review first today, and what evidence says it matters?",
+      "requiredTemplates": [
+        "enterprise-profile",
+        "initiative-portfolio",
+        "financial-kpi-workbook",
+        "annual-quarterly-reports"
+      ],
+      "requiredDocuments": [
+        "lakeshore-fy2026-board-it-update.pdf"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO"
+      ],
+      "requiredEvidenceKeywords": [
+        "Kyriba",
+        "committed_usd",
+        "projected_value_usd"
+      ],
+      "expectedBehavior": "Prioritize a single decision, cite initiative/value evidence, and route action to the owning workspace rather than approving inline."
+    },
+    {
+      "id": "lsh-home-002",
+      "surface": "home",
+      "persona": "CFO / Treasury sponsor",
+      "prompt": "Summarize the Lakeshore value at stake for treasury modernization without using any other tenant's data.",
+      "requiredTemplates": [
+        "financial-kpi-workbook",
+        "segment-pnl",
+        "vendor-contracts"
+      ],
+      "requiredDocuments": [
+        "con-lsh-001-kyriba-contract.pdf",
+        "lakeshore-quarterly-segment-performance.pdf"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO",
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "forecast",
+        "working capital",
+        "Kyriba"
+      ],
+      "expectedBehavior": "Use Lakeshore finance, P&L, and Kyriba evidence only; label any benchmark fallback separately."
+    },
+    {
+      "id": "lsh-sentinel-001",
+      "surface": "sentinel",
+      "persona": "VP Innovation and Delivery",
+      "prompt": "Which Lakeshore operating company has the highest modernization dependency risk, and which systems or integrations prove it?",
+      "requiredTemplates": [
+        "application-portfolio",
+        "integration-topology",
+        "erp-landscape-workbook",
+        "incidents-change-history",
+        "strategy-memo"
+      ],
+      "requiredDocuments": [
+        "lakeshore-integration-topology-overview.pdf",
+        "lakeshore-target-state-data-architecture.pdf"
+      ],
+      "requiredOpcoIds": [
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "criticality",
+        "kill_blocker_flag",
+        "root_cause"
+      ],
+      "expectedBehavior": "Rank risk by tenant evidence, cite dependency rows/documents, and avoid generic modernization advice."
+    },
+    {
+      "id": "lsh-sentinel-002",
+      "surface": "sentinel",
+      "persona": "Global CIO",
+      "prompt": "Where are Lakeshore's AI tool governance gaps, and what should I ask before approving broader agent use?",
+      "requiredTemplates": [
+        "ai-tool-footprint",
+        "org-roles",
+        "qms-events"
+      ],
+      "requiredDocuments": [
+        "lakeshore-ai-usage-policy.docx",
+        "lakeshore-security-classification-standard.docx"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO",
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "risk_classification",
+        "regulated_workflow_flag",
+        "owner_role"
+      ],
+      "expectedBehavior": "Identify gaps with evidence and state when policy or ownership evidence is missing."
+    },
+    {
+      "id": "lsh-moves-001",
+      "surface": "moves",
+      "persona": "VP Innovation and Delivery",
+      "prompt": "Build the first modernization move Lakeshore should prioritize and explain the cost/value drivers.",
+      "requiredTemplates": [
+        "application-portfolio",
+        "initiative-portfolio",
+        "financial-kpi-workbook",
+        "dora-baseline",
+        "market-signals"
+      ],
+      "requiredDocuments": [
+        "lakeshore-target-state-data-architecture.pdf",
+        "lakeshore-fy2026-board-it-update.pdf"
+      ],
+      "requiredOpcoIds": [
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "modernization",
+        "change_failure_rate_pct",
+        "projected_value_usd"
+      ],
+      "expectedBehavior": "Separate Lakeshore-specific facts from any shared rate-card or modernization pattern fallback."
+    },
+    {
+      "id": "lsh-moves-002",
+      "surface": "moves",
+      "persona": "CFO / Treasury sponsor",
+      "prompt": "Create a governed move for the Kyriba rollout, including gates, risks, and the evidence pack I should review.",
+      "requiredTemplates": [
+        "initiative-portfolio",
+        "vendor-contracts",
+        "org-roles",
+        "financial-kpi-workbook"
+      ],
+      "requiredDocuments": [
+        "con-lsh-001-kyriba-contract.pdf",
+        "con-lsh-002-deloitte-contract.pdf"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO"
+      ],
+      "requiredEvidenceKeywords": [
+        "Kyriba",
+        "sponsor_role",
+        "renewal_date",
+        "owner_role"
+      ],
+      "expectedBehavior": "Produce a move with evidence-linked gates, not a generic project plan."
+    },
+    {
+      "id": "lsh-source-001",
+      "surface": "source",
+      "persona": "Procurement / Sourcing lead",
+      "prompt": "Prepare sourcing questions for the WMS modernization renewal and call out contract or integration evidence.",
+      "requiredTemplates": [
+        "vendor-contracts",
+        "application-portfolio",
+        "integration-topology",
+        "org-roles",
+        "site-and-plant-inventory"
+      ],
+      "requiredDocuments": [
+        "con-nls-010-manhattan-contract.pdf",
+        "con-nls-011-blueyonder-contract.pdf"
+      ],
+      "requiredOpcoIds": [
+        "NLS"
+      ],
+      "requiredEvidenceKeywords": [
+        "Manhattan",
+        "Blue Yonder",
+        "renewal_date",
+        "integration_type"
+      ],
+      "expectedBehavior": "Use contract and dependency evidence to shape questions; do not invent vendor terms."
+    },
+    {
+      "id": "lsh-source-002",
+      "surface": "source",
+      "persona": "Legal / Vendor-risk reviewer",
+      "prompt": "Which Lakeshore vendor agreements need AI, data-rights, or exit-term review before renewal?",
+      "requiredTemplates": [
+        "vendor-contracts",
+        "ai-tool-footprint",
+        "qms-events",
+        "product-portfolio"
+      ],
+      "requiredDocuments": [
+        "lakeshore-vendor-risk-standard.docx",
+        "lakeshore-ai-usage-policy.docx"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO",
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "ai_clauses",
+        "data_rights",
+        "exit_terms"
+      ],
+      "expectedBehavior": "Return a review queue with evidence and unknowns, not legal conclusions."
+    },
+    {
+      "id": "lsh-tower-001",
+      "surface": "tower",
+      "persona": "Global CIO",
+      "prompt": "Show the top Lakeshore operational risks that could block the next two transformation gates.",
+      "requiredTemplates": [
+        "incidents-change-history",
+        "dora-baseline",
+        "qms-events",
+        "integration-topology"
+      ],
+      "requiredDocuments": [
+        "lakeshore-security-classification-standard.docx"
+      ],
+      "requiredOpcoIds": [
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "severity",
+        "mttr_hours",
+        "change_failure_rate_pct"
+      ],
+      "expectedBehavior": "Tie risks to operational evidence and identify the impacted gate or program."
+    },
+    {
+      "id": "lsh-tower-002",
+      "surface": "tower",
+      "persona": "Board / operating committee",
+      "prompt": "What evidence says Lakeshore's cross-opco data foundation is ready or not ready for AI-enabled decisions?",
+      "requiredTemplates": [
+        "enterprise-profile",
+        "ai-tool-footprint",
+        "dora-baseline",
+        "financial-kpi-workbook",
+        "application-portfolio"
+      ],
+      "requiredDocuments": [
+        "lakeshore-data-governance-policy.docx",
+        "lakeshore-board-it-update.pptx"
+      ],
+      "requiredOpcoIds": [
+        "LSH-HOLDCO",
+        "NLS",
+        "BMS",
+        "FFF",
+        "GLP"
+      ],
+      "requiredEvidenceKeywords": [
+        "data",
+        "risk_classification",
+        "platform"
+      ],
+      "expectedBehavior": "Provide readiness stance with evidence gaps and avoid overclaiming AI maturity."
+    }
+  ]
+}
