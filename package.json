@@ -120,6 +120,8 @@
     "load:backend-regression:check": "node scripts/load/azure-primary-surfaces.mjs --base-url https://example.com --duration-seconds 1 --concurrency 1 --think-time-ms 0 --p95-target-ms 8000 --dry-run",
     "load:top-journeys": "node scripts/load/top-user-journeys.mjs",
     "load:top-journeys:check": "node scripts/load/verify-top-user-journeys.mjs",
+    "load:pressure-matrix": "node scripts/load/pressure-test-matrix.mjs",
+    "load:pressure-matrix:check": "node scripts/load/verify-pressure-test-harness.mjs",
     "architecture:software-delivery-corpus-decision:verify": "node scripts/architecture/verify-software-delivery-corpus-decision.mjs",
     "architecture:claude-pdf-fallback:verify": "node scripts/architecture/verify-claude-pdf-fallback-policy.mjs",
     "azure:blob-upload-pattern:verify": "node scripts/azure/verify-blob-upload-pattern.mjs",
