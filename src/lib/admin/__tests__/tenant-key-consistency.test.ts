@@ -29,28 +29,29 @@
  * This test is the regression guard for that drift.
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from "@jest/globals";
 import {
   clientKeyToInventorySubstrateKey,
   clientKeyToBrokerTenantKey,
-} from '@/lib/agent/tools/intelligence/_shared';
+} from "@/lib/agent/tools/intelligence/_shared";
 
-describe('clientKeyToInventorySubstrateKey · data_inventory_* substrate contract', () => {
+describe("clientKeyToInventorySubstrateKey · data_inventory_* substrate contract", () => {
   // Single source of truth for the expected substrate `tenant_key`
   // value for each canonical tenant. Verified against migration
   // `20260515120000_tenant_key_canonicalization.sql` (Apex /
   // Meridian / First Capital alias map) and the seed scripts for
   // Northstar / SkyHarbor.
   const SUBSTRATE_TENANT_KEY_BY_APP_CLIENT_KEY: Record<string, string> = {
-    apexretail: 'apex-retail',
-    meridian: 'meridian-health',
-    arcturus: 'first-capital',
-    northstar: 'northstar-clinical',
-    skyharbor: 'skyharbor-air',
+    apexretail: "apex-retail",
+    meridian: "meridian-health",
+    arcturus: "first-capital",
+    northstar: "northstar-clinical",
+    skyharbor: "skyharbor-air",
+    lakeshore: "lakeshore-holdings",
   };
 
   it.each(Object.entries(SUBSTRATE_TENANT_KEY_BY_APP_CLIENT_KEY))(
-    'app ClientKey %s → substrate tenant_key %s',
+    "app ClientKey %s → substrate tenant_key %s",
     (appClientKey, expectedSubstrateKey) => {
       expect(clientKeyToInventorySubstrateKey(appClientKey)).toBe(
         expectedSubstrateKey,
@@ -58,47 +59,54 @@ describe('clientKeyToInventorySubstrateKey · data_inventory_* substrate contrac
     },
   );
 
-  it('returns the same key for legacy aliases of the same tenant', () => {
+  it("returns the same key for legacy aliases of the same tenant", () => {
     // The page receives whatever the active-client row holds; legacy
     // alias rows (`firstcapital`, `first-capital`) must resolve to
     // the same substrate key as the canonical app key (`arcturus`).
-    expect(clientKeyToInventorySubstrateKey('firstcapital')).toBe(
-      'first-capital',
+    expect(clientKeyToInventorySubstrateKey("firstcapital")).toBe(
+      "first-capital",
     );
-    expect(clientKeyToInventorySubstrateKey('first-capital')).toBe(
-      'first-capital',
+    expect(clientKeyToInventorySubstrateKey("first-capital")).toBe(
+      "first-capital",
     );
-    expect(clientKeyToInventorySubstrateKey('northstar-clinical')).toBe(
-      'northstar-clinical',
+    expect(clientKeyToInventorySubstrateKey("northstar-clinical")).toBe(
+      "northstar-clinical",
     );
-    expect(clientKeyToInventorySubstrateKey('skyharbor-air')).toBe(
-      'skyharbor-air',
+    expect(clientKeyToInventorySubstrateKey("skyharbor-air")).toBe(
+      "skyharbor-air",
     );
   });
 });
 
-describe('clientKeyToBrokerTenantKey · EnterpriseDataRoom (Sentinel) contract', () => {
+describe("clientKeyToBrokerTenantKey · EnterpriseDataRoom (Sentinel) contract", () => {
   // The Sentinel-side broker uses a DIFFERENT key for Meridian +
   // Northstar than the substrate side. Both keys must remain
   // distinct so the two contracts can evolve independently — the
   // substrate side was canonicalized in 2026-05, the EnterpriseDataRoom
   // key was left alone.
-  it('returns the broker-side tenant key (not the canonical substrate key)', () => {
-    expect(clientKeyToBrokerTenantKey('apexretail')).toBe('apex-retail');
-    expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
-    expect(clientKeyToBrokerTenantKey('arcturus')).toBe('first-capital');
-    expect(clientKeyToBrokerTenantKey('northstar')).toBe('northstar-clinical');
-    expect(clientKeyToBrokerTenantKey('skyharbor')).toBe('skyharbor-air');
+  it("returns the broker-side tenant key (not the canonical substrate key)", () => {
+    expect(clientKeyToBrokerTenantKey("apexretail")).toBe("apex-retail");
+    expect(clientKeyToBrokerTenantKey("meridian")).toBe("meridian");
+    expect(clientKeyToBrokerTenantKey("arcturus")).toBe("first-capital");
+    expect(clientKeyToBrokerTenantKey("northstar")).toBe("northstar-clinical");
+    expect(clientKeyToBrokerTenantKey("skyharbor")).toBe("skyharbor-air");
+    expect(clientKeyToBrokerTenantKey("lakeshore")).toBe("lakeshore-holdings");
   });
 
-  it('substrate and broker keys differ ONLY for Meridian (the two contracts share for the others)', () => {
+  it("substrate and broker keys differ ONLY for Meridian (the two contracts share for the others)", () => {
     // This is the one tenant where the two contracts pick different
     // strings, so any code touching both contracts has to make a
     // conscious choice rather than assuming they're equal.
-    expect(clientKeyToInventorySubstrateKey('meridian')).not.toBe(
-      clientKeyToBrokerTenantKey('meridian'),
+    expect(clientKeyToInventorySubstrateKey("meridian")).not.toBe(
+      clientKeyToBrokerTenantKey("meridian"),
     );
-    for (const k of ['apexretail', 'arcturus', 'northstar', 'skyharbor']) {
+    for (const k of [
+      "apexretail",
+      "arcturus",
+      "northstar",
+      "skyharbor",
+      "lakeshore",
+    ]) {
       expect(clientKeyToInventorySubstrateKey(k)).toBe(
         clientKeyToBrokerTenantKey(k),
       );

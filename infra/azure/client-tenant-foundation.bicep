@@ -172,7 +172,7 @@ module postgres './postgres-foundation.bicep' = {
       'abarva_context'
       'abarva_audit'
     ]
-    postgresAllowedExtensions: 'PGCRYPTO,UUID-OSSP'
+    postgresAllowedExtensions: 'PGCRYPTO,UUID-OSSP,VECTOR'
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     postgresAdminLoginSecretName: 'postgres-${normalizedClientKey}-admin-login'
     postgresAdminPasswordSecretName: 'postgres-${normalizedClientKey}-admin-password'

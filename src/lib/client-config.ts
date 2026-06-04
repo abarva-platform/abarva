@@ -8,67 +8,89 @@ export interface ClientOption {
 
 export const ALL_CLIENTS: ClientOption[] = [
   {
-    id: 'apexretail',
-    name: 'Apex Retail Group',
-    shortName: 'Apex Retail',
-    color: '#F59E0B',
-    vertical: 'Retail',
+    id: "apexretail",
+    name: "Apex Retail Group",
+    shortName: "Apex Retail",
+    color: "#F59E0B",
+    vertical: "Retail",
   },
   {
-    id: 'meridian',
-    name: 'Meridian Health System',
-    shortName: 'Meridian Health',
-    color: '#14B8A6',
-    vertical: 'Healthcare',
+    id: "meridian",
+    name: "Meridian Health System",
+    shortName: "Meridian Health",
+    color: "#14B8A6",
+    vertical: "Healthcare",
   },
   {
-    id: 'arcturus',
-    name: 'First Capital Financial',
-    shortName: 'First Capital',
-    color: '#818CF8',
-    vertical: 'Financial Services',
+    id: "arcturus",
+    name: "First Capital Financial",
+    shortName: "First Capital",
+    color: "#818CF8",
+    vertical: "Financial Services",
   },
   {
-    id: 'northstar',
-    name: 'Northstar Clinical Technologies',
-    shortName: 'Northstar',
-    color: '#0F766E',
-    vertical: 'Clinical Technology',
+    id: "northstar",
+    name: "Northstar Clinical Technologies",
+    shortName: "Northstar",
+    color: "#0F766E",
+    vertical: "Clinical Technology",
   },
   {
-    id: 'skyharbor',
-    name: 'SkyHarbor Air',
-    shortName: 'SkyHarbor',
-    color: '#075985',
-    vertical: 'Global Airline',
+    id: "skyharbor",
+    name: "SkyHarbor Air",
+    shortName: "SkyHarbor",
+    color: "#075985",
+    vertical: "Global Airline",
+  },
+  {
+    id: "lakeshore",
+    name: "Lakeshore Holdings",
+    shortName: "Lakeshore",
+    color: "#2563EB",
+    vertical: "Diversified Holdco",
   },
 ] as const;
 
-export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
+export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
 
-export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
+export const DEFAULT_CLIENT_KEY: ClientKey = "apexretail";
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
   // Meridian — they should never surface to a logged-in user but are kept
   // as recognized aliases so the DB-lookup fallback in active-client.ts
   // and canonicalClientDisplayName below resolve them to 'Meridian Health'.
-  meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance', 'Heliara'],
-  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
-  apexretail: ['Apex Retail', 'Apex Retail Group'],
-  northstar: ['Northstar Clinical Technologies', 'Northstar'],
-  skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  meridian: [
+    "Meridian Health",
+    "Meridian Health System",
+    "Heliara Health",
+    "Heliara Health Alliance",
+    "Heliara",
+  ],
+  arcturus: [
+    "Arcturus Financial",
+    "Arcturus Financial Group",
+    "First Capital Financial",
+    "First Capital",
+  ],
+  apexretail: ["Apex Retail", "Apex Retail Group"],
+  northstar: ["Northstar Clinical Technologies", "Northstar"],
+  skyharbor: ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
+  lakeshore: ["Lakeshore Holdings"],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
-  meridian: 'HEALTHCARE_IDN',
-  arcturus: 'FINSERV',
-  apexretail: 'RETAIL',
-  northstar: 'MEDTECH',
-  skyharbor: 'AIRLINE',
+  meridian: "HEALTHCARE_IDN",
+  arcturus: "FINSERV",
+  apexretail: "RETAIL",
+  northstar: "MEDTECH",
+  skyharbor: "AIRLINE",
+  lakeshore: "DIVERSIFIED",
 };
 
-export function industryCodeForClientName(name: string | null | undefined): string | null {
+export function industryCodeForClientName(
+  name: string | null | undefined,
+): string | null {
   const normalized = name?.trim().toLowerCase();
   if (!normalized) return null;
 
@@ -84,7 +106,9 @@ export function industryCodeForClientName(name: string | null | undefined): stri
   return null;
 }
 
-export function isClientKey(value: string | null | undefined): value is ClientKey {
+export function isClientKey(
+  value: string | null | undefined,
+): value is ClientKey {
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }
 
@@ -105,52 +129,61 @@ export function canonicalClientDisplayName(args: {
   const normalizedName = name?.toLowerCase();
 
   if (
-    key === 'meridian' ||
-    normalizedName === 'meridian health' ||
-    normalizedName === 'meridian health system' ||
+    key === "meridian" ||
+    normalizedName === "meridian health" ||
+    normalizedName === "meridian health system" ||
     // D-021 fix (2026-05-13): "Heliara Health" / "Heliara Health Alliance"
     // are retired demo names for Meridian. The 2026-05-13 audit found the
     // Sentinel agent opening "I composed this brief for Heliara Health from
     // the corpus" because a DB row still carried the old name. Map every
     // "Heliara*" alias to the canonical 'Meridian Health' so no user ever
     // sees the retired codename, regardless of where the row originated.
-    normalizedName === 'heliara' ||
-    normalizedName === 'heliara health' ||
-    normalizedName === 'heliara health alliance' ||
-    (normalizedName?.startsWith('heliara ') ?? false)
+    normalizedName === "heliara" ||
+    normalizedName === "heliara health" ||
+    normalizedName === "heliara health alliance" ||
+    (normalizedName?.startsWith("heliara ") ?? false)
   ) {
-    return 'Meridian Health';
+    return "Meridian Health";
   }
 
   if (
-    key === 'arcturus' ||
-    key === 'firstcapital' ||
-    key === 'first-capital' ||
-    normalizedName === 'arcturus financial group' ||
-    normalizedName === 'arcturus financial' ||
-    normalizedName === 'first capital financial' ||
-    normalizedName === 'first capital'
+    key === "arcturus" ||
+    key === "firstcapital" ||
+    key === "first-capital" ||
+    normalizedName === "arcturus financial group" ||
+    normalizedName === "arcturus financial" ||
+    normalizedName === "first capital financial" ||
+    normalizedName === "first capital"
   ) {
-    return 'First Capital Financial';
+    return "First Capital Financial";
   }
 
   if (
-    key === 'northstar' ||
-    key === 'northstar-clinical' ||
-    normalizedName === 'northstar clinical technologies' ||
-    normalizedName === 'northstar'
+    key === "northstar" ||
+    key === "northstar-clinical" ||
+    normalizedName === "northstar clinical technologies" ||
+    normalizedName === "northstar"
   ) {
-    return 'Northstar Clinical Technologies';
+    return "Northstar Clinical Technologies";
   }
 
   if (
-    key === 'skyharbor' ||
-    key === 'skyharbor-air' ||
-    normalizedName === 'skyharbor air' ||
-    normalizedName === 'skyharbor airlines' ||
-    normalizedName === 'skyharbor'
+    key === "skyharbor" ||
+    key === "skyharbor-air" ||
+    normalizedName === "skyharbor air" ||
+    normalizedName === "skyharbor airlines" ||
+    normalizedName === "skyharbor"
   ) {
-    return 'SkyHarbor Air';
+    return "SkyHarbor Air";
+  }
+
+  if (
+    key === "lakeshore" ||
+    key === "lakeshore-holdings" ||
+    normalizedName === "lakeshore holdings" ||
+    normalizedName === "lakeshore"
+  ) {
+    return "Lakeshore Holdings";
   }
 
   if (name) return name;
@@ -170,19 +203,21 @@ export function canonicalClientDisplayName(args: {
  * been removed; if a real customer email needs routing, do it through
  * Clerk metadata, not substring inference.
  */
-const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
-  // Canonical demo accounts (role-based emails, founder direction 2026-05-08)
-  ['apex-retail.example.com', 'apexretail'],
-  ['meridian-health.example.com', 'meridian'],
-  ['firstcapital.example.com', 'arcturus'],
-  ['northstar-clinical.example.com', 'northstar'],
-  ['skyharbor-air.example.com', 'skyharbor'],
-  // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
-  // by inference. Documented in demo_accounts memory. Anyone uncomfortable
-  // with this should remove the entry and add the email to Clerk metadata
-  // pinning instead.
-  ['thesundaram.com', 'meridian'],
-];
+const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> =
+  [
+    // Canonical demo accounts (role-based emails, founder direction 2026-05-08)
+    ["apex-retail.example.com", "apexretail"],
+    ["meridian-health.example.com", "meridian"],
+    ["firstcapital.example.com", "arcturus"],
+    ["northstar-clinical.example.com", "northstar"],
+    ["skyharbor-air.example.com", "skyharbor"],
+    // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
+    // by inference. Documented in demo_accounts memory. Anyone uncomfortable
+    // with this should remove the entry and add the email to Clerk metadata
+    // pinning instead.
+    ["thesundaram.com", "meridian"],
+    ["lakeshore-holdings.example.com", "lakeshore"],
+  ];
 
 /**
  * Legacy `<prefix>+<role>@abarva.com` local-part-suffix routes. These
@@ -191,42 +226,49 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
  * sub-addresses. Suffix matching is anchored to the `@abarva.com`
  * domain — never substring search on the full email.
  */
-const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
+  readonly [string, ClientKey]
+> = [
   // Founder sub-address pattern: anand+apex@abarva.com → apexretail
-  ['+apex', 'apexretail'],
-  ['+meridian', 'meridian'],
-  ['+firstcapital', 'arcturus'],
-  ['+northstar', 'northstar'],
-  ['+skyharbor', 'skyharbor'],
+  ["+apex", "apexretail"],
+  ["+meridian", "meridian"],
+  ["+firstcapital", "arcturus"],
+  ["+northstar", "northstar"],
+  ["+skyharbor", "skyharbor"],
+  ["+lakeshore", "lakeshore"],
   // Demo-prefix pattern: demo-apexretail+clerk_test@abarva.com (retired)
-  ['demo-apexretail+', 'apexretail'],
-  ['demo-meridian+', 'meridian'],
-  ['demo-firstcapital+', 'arcturus'],
-  ['demo-northstar+', 'northstar'],
-  ['demo-skyharbor+', 'skyharbor'],
+  ["demo-apexretail+", "apexretail"],
+  ["demo-meridian+", "meridian"],
+  ["demo-firstcapital+", "arcturus"],
+  ["demo-northstar+", "northstar"],
+  ["demo-skyharbor+", "skyharbor"],
+  ["demo-lakeshore+", "lakeshore"],
   // Legacy short prefixes
-  ['apex+', 'apexretail'],
-  ['mh+', 'meridian'],
-  ['af+', 'arcturus'],
-  ['ns+', 'northstar'],
-  ['sh+', 'skyharbor'],
+  ["apex+", "apexretail"],
+  ["mh+", "meridian"],
+  ["af+", "arcturus"],
+  ["ns+", "northstar"],
+  ["sh+", "skyharbor"],
+  ["lh+", "lakeshore"],
 ];
 
-export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
-  const normalized = email?.toLowerCase().trim() ?? '';
-  if (!normalized || !normalized.includes('@')) return null;
-  const [localPart, domain] = normalized.split('@', 2);
+export function inferClientKeyFromEmail(
+  email: string | null | undefined,
+): ClientKey | null {
+  const normalized = email?.toLowerCase().trim() ?? "";
+  if (!normalized || !normalized.includes("@")) return null;
+  const [localPart, domain] = normalized.split("@", 2);
   if (!localPart || !domain) return null;
 
   for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
     if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;
   }
 
-  if (domain === 'abarva.com') {
+  if (domain === "abarva.com") {
     for (const [token, key] of LEGACY_LOCALPART_TO_CLIENT_KEY) {
       // Tokens starting with `+` match anywhere in the local part (sub-address);
       // tokens ending with `+` match only at the start (demo-prefix pattern).
-      if (token.startsWith('+')) {
+      if (token.startsWith("+")) {
         if (localPart.includes(token)) return key;
       } else if (localPart.startsWith(token)) {
         return key;

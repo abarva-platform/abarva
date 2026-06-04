@@ -7,7 +7,9 @@ const ROOT = process.cwd();
 const REQUIRED_FILES = [
   'infra/azure/client-tenant-foundation.bicep',
   'infra/azure/parameters/client-tenant.preview.example.bicepparam',
+  'infra/azure/parameters/lakeshore.pilot.bicepparam',
   'docs/runbooks/client-tenant-iac.md',
+  'docs/runbooks/lakeshore-private-data-plane.md',
   'docs/build/CLIENT_TENANT_IAC_MANIFEST_2026-06-03.md',
 ];
 
@@ -22,6 +24,7 @@ const REQUIRED_BICEP_SNIPPETS = [
   "module immutableAuditLog './immutable-audit-log.bicep'",
   "module defenderStorageMalware './defender-storage-malware.bicep'",
   "module appRuntime './app-runtime-foundation.bicep'",
+  "postgresAllowedExtensions: 'PGCRYPTO,UUID-OSSP,VECTOR'",
   "clientIsolation: 'single-client'",
 ];
 
@@ -33,6 +36,16 @@ const REQUIRED_PARAM_SNIPPETS = [
   "ABARVA_DATA_PLANE_MODE",
   "param auditLogRetentionDays = 365",
   "param enableDefenderStorageMalwareScanning = true",
+];
+
+const REQUIRED_LAKESHORE_PARAM_SNIPPETS = [
+  "using '../client-tenant-foundation.bicep'",
+  "param clientKey = 'lakeshore'",
+  "param environmentName = 'pilot'",
+  "readEnvironmentVariable('POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD')",
+  "param deployAppRuntime = false",
+  "ABARVA_CLIENT_KEY",
+  "Lakeshore Holdings",
 ];
 
 function read(relativePath) {
@@ -58,6 +71,7 @@ const checks = [
   ...REQUIRED_FILES.map(checkFile),
   ...checkSnippets('infra/azure/client-tenant-foundation.bicep', REQUIRED_BICEP_SNIPPETS),
   ...checkSnippets('infra/azure/parameters/client-tenant.preview.example.bicepparam', REQUIRED_PARAM_SNIPPETS),
+  ...checkSnippets('infra/azure/parameters/lakeshore.pilot.bicepparam', REQUIRED_LAKESHORE_PARAM_SNIPPETS),
 ];
 
 const summary = checks.reduce((acc, check) => {
