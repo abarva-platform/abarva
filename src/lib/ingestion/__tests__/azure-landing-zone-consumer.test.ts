@@ -165,6 +165,107 @@ describe('A2b · consumeOneMessage', () => {
     expect(calls.audit).toBe(1);
   });
 
+  it('parses supported documents and passes extracted text to the downstream pipeline', async () => {
+    const pipelineArgs: unknown[] = [];
+    const parseDocument = jest.fn(async () => ({
+      text: 'Agreement term: vendor may not train models on customer data.',
+      parseMethod: 'azure-document-intelligence-layout',
+      warnings: ['Azure AI Document Intelligence prebuilt-layout parser used.'],
+      metadata: {
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+        bytesParsed: 17,
+        truncated: false,
+        pageCount: 2,
+        tableCount: 1,
+      },
+    })) as unknown as ConsumeContext['parseDocument'];
+    const { ctx, calls } = makeCtx({
+      download: jest.fn(async () => {
+        calls.download++;
+        return {
+          bytes: new TextEncoder().encode('%PDF-1.4 contract'),
+          filename: 'kyriba-contract.pdf',
+        };
+      }) as unknown as ConsumeContext['download'],
+      parseDocument,
+      runPipeline: jest.fn(async (args) => {
+        calls.pipeline++;
+        pipelineArgs.push(args);
+        return { chunksWritten: 3 };
+      }) as unknown as ConsumeContext['runPipeline'],
+    });
+
+    const outcome = await consumeOneMessage(
+      {
+        ...validMessage,
+        segmentKey: 'vendor_contracts',
+        storage: {
+          ...validMessage.storage,
+          blobPath: 'contracts/kyriba-contract.pdf',
+          contentType: 'application/pdf',
+        },
+      },
+      ctx,
+    );
+
+    expect(outcome).toMatchObject({
+      status: 'accepted',
+      chunksWritten: 3,
+      auditRowId: 'audit-1',
+    });
+    expect(parseDocument).toHaveBeenCalledWith({
+      message: expect.objectContaining({ segmentKey: 'vendor_contracts' }),
+      bytes: expect.any(Uint8Array),
+      filename: 'kyriba-contract.pdf',
+    });
+    expect(pipelineArgs[0]).toMatchObject({
+      filename: 'kyriba-contract.pdf',
+      document: {
+        text: 'Agreement term: vendor may not train models on customer data.',
+        parseMethod: 'azure-document-intelligence-layout',
+      },
+    });
+    expect(calls.audit).toBe(1);
+  });
+
+  it('returns transient_failure when document parsing fails and does not run the pipeline', async () => {
+    const { ctx, calls } = makeCtx({
+      download: jest.fn(async () => {
+        calls.download++;
+        return {
+          bytes: new TextEncoder().encode('%PDF-1.4 contract'),
+          filename: 'broken-contract.pdf',
+        };
+      }) as unknown as ConsumeContext['download'],
+      parseDocument: jest.fn(async () => {
+        throw new Error('document_parse_empty:azure-document-intelligence-layout');
+      }) as unknown as ConsumeContext['parseDocument'],
+    });
+
+    const outcome = await consumeOneMessage(
+      {
+        ...validMessage,
+        segmentKey: 'vendor_contracts',
+        storage: {
+          ...validMessage.storage,
+          blobPath: 'contracts/broken-contract.pdf',
+          contentType: 'application/pdf',
+        },
+      },
+      ctx,
+    );
+
+    expect(outcome).toMatchObject({
+      status: 'transient_failure',
+      reason:
+        'document_parse_failed:document_parse_empty:azure-document-intelligence-layout',
+      auditRowId: null,
+    });
+    expect(calls.pipeline).toBe(0);
+    expect(calls.audit).toBe(1);
+  });
+
   it('returns transient_failure when download throws and writes an audit row', async () => {
     const { ctx, calls } = makeCtx({
       download: jest.fn(async () => {

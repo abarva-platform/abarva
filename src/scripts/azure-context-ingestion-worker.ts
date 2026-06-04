@@ -189,7 +189,7 @@ function createAuditWriter(): AuditWriter {
 }
 
 function createPipeline(): IngestionPipeline {
-  return async ({ message, bytes }) => {
+  return async ({ message, bytes, document }) => {
     const mode = process.env.INGESTION_PIPELINE_MODE?.trim() || 'audit_only';
     if (mode === 'broker_command') {
       const command = readEnv('INGESTION_BROKER_REBUILD_COMMAND');
@@ -206,9 +206,21 @@ function createPipeline(): IngestionPipeline {
       return { chunksWritten: 0 };
     }
 
-    // Lab default: prove Service Bus -> Blob -> guard -> audit without
-    // pretending the broker/indexer has been rebuilt. The real broker
-    // command can be enabled once the data-access adapter boundary lands.
+    // Lab default: prove Service Bus -> Blob -> guard -> parse -> audit without
+    // pretending the broker/indexer has been rebuilt. Document payloads
+    // estimate chunks from extracted text; tabular/binary fallback uses bytes.
+    if (document) {
+      console.log(JSON.stringify({
+        event: 'ingestion_document_parsed',
+        tenantClientKey: message.tenantClientKey,
+        segmentKey: message.segmentKey,
+        parseMethod: document.parseMethod,
+        textChars: document.text.length,
+        warnings: document.warnings,
+        metadata: document.metadata,
+      }));
+      return { chunksWritten: Math.max(1, Math.ceil(document.text.length / 800)) };
+    }
     return { chunksWritten: Math.max(1, Math.ceil(bytes.byteLength / 800)) };
   };
 }

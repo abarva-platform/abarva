@@ -41,6 +41,10 @@ import {
   hasDefenderScanMetadata,
   type DefenderStorageScanGateResult,
 } from '@/lib/ingestion/defender-storage-scan-gate';
+import {
+  parseIngestionDocument,
+  type ParsedIngestionDocument,
+} from '@/lib/ingestion/document-upload-parser';
 
 /**
  * Downloads the bytes for an inbound message. The caller passes in a
@@ -78,7 +82,14 @@ export type IngestionPipeline = (args: {
   message: AzureLandingZoneMessage;
   bytes: Uint8Array;
   filename: string;
+  document: ParsedIngestionDocument | null;
 }) => Promise<{ chunksWritten: number }>;
+
+export type IngestionDocumentParser = (args: {
+  message: AzureLandingZoneMessage;
+  bytes: Uint8Array;
+  filename: string;
+}) => Promise<ParsedIngestionDocument | null>;
 
 export interface ConsumeContext {
   readonly download: BlobDownloader;
@@ -86,6 +97,7 @@ export interface ConsumeContext {
   readonly runPipeline: IngestionPipeline;
   readonly writePilotLedger?: PilotLedgerWriter;
   readonly checkDefenderScan?: DefenderStorageScanGate;
+  readonly parseDocument?: IngestionDocumentParser;
 }
 
 function metadataString(
@@ -265,10 +277,39 @@ export async function consumeOneMessage(
     })) ?? outcomeWithAudit;
   }
 
-  // ── 4. Run the downstream pipeline ───────────────────────────────
+  // ── 4. Parse document payloads before the downstream pipeline ─────
+  const parseDocument =
+    ctx.parseDocument ??
+    ((args) =>
+      parseIngestionDocument({
+        filename: args.filename,
+        mimeType: msg.storage.contentType,
+        bytes: args.bytes,
+        cacheScope: `${msg.tenantClientKey}:${msg.storage.sha256}`,
+      }));
+  let document: ParsedIngestionDocument | null;
+  try {
+    document = await parseDocument({ message: msg, bytes, filename });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'document_parse_failed';
+    const outcome: IngestionOutcome = {
+      status: 'transient_failure',
+      auditRowId: null,
+      reason: `document_parse_failed:${reason}`,
+      durationMs: Date.now() - t0,
+    };
+    try {
+      await ctx.writeAudit({ message: msg, outcome, protectionResult: protection });
+    } catch {
+      // see comment above
+    }
+    return outcome;
+  }
+
+  // ── 5. Run the downstream pipeline ───────────────────────────────
   let chunksWritten: number;
   try {
-    const result = await ctx.runPipeline({ message: msg, bytes, filename });
+    const result = await ctx.runPipeline({ message: msg, bytes, filename, document });
     chunksWritten = result.chunksWritten;
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'pipeline_failed';
