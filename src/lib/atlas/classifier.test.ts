@@ -30,6 +30,13 @@ describe('Atlas classifier', () => {
     });
   });
 
+  it('routes federated L0 visibility-boundary asks to a deterministic Tower path', () => {
+    expect(classifyAtlasIntent('As the Lakeshore L0 sponsor, what can I see across Morgan Street and sibling HoldCos in Tower, and what can I not see without an explicit grant?')).toEqual({
+      intent: 'federated_visibility_boundary',
+      routeType: 'scripted',
+    });
+  });
+
   it('does not mistake board-language context asks for strategy refusal', () => {
     expect(classifyAtlasIntent('Explain Workday AI agents in board language: what is real, what is early, and what should we watch?')).toEqual({
       intent: 'llm',

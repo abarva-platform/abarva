@@ -46,7 +46,9 @@ export type AtlasIntent =
   | 'vendor_drilldown'
   // ---- Compare / hypothetical (audit §3.7)
   | 'cut_program_impact'
-  | 'fund_x_vs_y';
+  | 'fund_x_vs_y'
+  // ---- Federated Tower governance
+  | 'federated_visibility_boundary';
 
 export interface AtlasMetricExplanationRequest {
   source: 'tower_metric_provenance';
