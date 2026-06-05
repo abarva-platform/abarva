@@ -30,6 +30,7 @@ jobs:
     env:
       CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
       CRAWL_ENABLE_AUTO_ROLLBACK: ${{ vars.CRAWL_ENABLE_AUTO_ROLLBACK || 'false' }}
       CRAWL_PERSONA: ${{ inputs.persona || '' }}
       CRAWL_SURFACE: ${{ inputs.surface || '' }}
