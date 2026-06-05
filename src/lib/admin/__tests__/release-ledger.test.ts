@@ -101,8 +101,8 @@ Retired tenant references still exist in archived docs.
     ].join('\n');
 
     expect(renderedText).toContain('Removes retired tenant copy');
-    expect(renderedText).toContain('legacy financial-services demo tenant');
-    expect(renderedText).toContain('legacy healthcare demo tenant');
+    expect(renderedText).toContain('legacy financial-services sample tenant');
+    expect(renderedText).toContain('legacy healthcare sample tenant');
   });
 
   it('redacts canonical tenant names and aliases from tenant-visible release fields', () => {
