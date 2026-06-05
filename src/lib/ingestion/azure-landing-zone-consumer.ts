@@ -66,7 +66,12 @@ export type AuditWriter = (args: {
   protectionResult?: UploadProtectionResult;
 }) => Promise<string>; // returns the audit-row id
 
-export type PilotLedgerWriter = (plan: PilotIngestionAuditOnlyWritePlan) => Promise<void>;
+export interface PilotLedgerWriterInput {
+  readonly plan: PilotIngestionAuditOnlyWritePlan;
+  readonly message: AzureLandingZoneMessage;
+}
+
+export type PilotLedgerWriter = (input: PilotLedgerWriterInput) => Promise<void>;
 
 export type DefenderStorageScanGate = (
   message: AzureLandingZoneMessage,
@@ -117,24 +122,23 @@ async function writePilotLedgerOrTransient(args: {
   if (!args.ctx.writePilotLedger) return null;
 
   try {
-    await args.ctx.writePilotLedger(
-      buildPilotIngestionAuditOnlyWritePlan({
-        tenantKey: args.message.tenantClientKey,
-        segmentKey: args.message.segmentKey,
-        storage: args.message.storage,
-        producedAt: args.message.producedAt,
-        sourceSystem: metadataString(args.message.metadata, 'sourceSystem'),
-        templateVersion: metadataString(args.message.metadata, 'templateVersion'),
-        mappingProfileKey: metadataString(args.message.metadata, 'mappingProfileKey'),
-        mappingProfileVersion: metadataString(args.message.metadata, 'mappingProfileVersion'),
-        auditRowId: args.outcome.auditRowId,
-        outcome:
-          args.outcome.status === 'accepted'
-            ? { status: 'accepted', chunksWritten: args.outcome.chunksWritten }
-            : { status: 'quarantined', reasonCodes: args.outcome.reasonCodes },
-        protectionDecision: args.protectionResult.decision,
-      }),
-    );
+    const plan = buildPilotIngestionAuditOnlyWritePlan({
+      tenantKey: args.message.tenantClientKey,
+      segmentKey: args.message.segmentKey,
+      storage: args.message.storage,
+      producedAt: args.message.producedAt,
+      sourceSystem: metadataString(args.message.metadata, 'sourceSystem'),
+      templateVersion: metadataString(args.message.metadata, 'templateVersion'),
+      mappingProfileKey: metadataString(args.message.metadata, 'mappingProfileKey'),
+      mappingProfileVersion: metadataString(args.message.metadata, 'mappingProfileVersion'),
+      auditRowId: args.outcome.auditRowId,
+      outcome:
+        args.outcome.status === 'accepted'
+          ? { status: 'accepted', chunksWritten: args.outcome.chunksWritten }
+          : { status: 'quarantined', reasonCodes: args.outcome.reasonCodes },
+      protectionDecision: args.protectionResult.decision,
+    });
+    await args.ctx.writePilotLedger({ plan, message: args.message });
     return null;
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'pilot_ledger_write_failed';
