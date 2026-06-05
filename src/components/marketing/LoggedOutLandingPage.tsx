@@ -922,7 +922,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               style={{ height: 22, width: 'auto', display: 'block' }}
             />
           </Link>
-          <MarketingNav ctaHref="/contact/" ctaLabel="Request access" />
+          <MarketingNav ctaHref="/sign-in" ctaLabel="Request access" />
         </header>
 
         <div className="hero-content">
@@ -934,7 +934,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               shape execution-ready Moves, source with leverage, and prove whether value actually landed.
             </p>
             <div className="actions">
-              <Link href="/contact/" className="button button-primary">Request access</Link>
+              <Link href="/sign-in" className="button button-primary">Request access</Link>
               <Link href="/sign-in" className="button button-secondary">Sign in</Link>
             </div>
             {signedOut && (

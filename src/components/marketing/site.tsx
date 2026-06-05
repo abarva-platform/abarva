@@ -433,7 +433,7 @@ export function MarketingStyles() {
 }
 
 export function MarketingHeader({
-  ctaHref = '/contact/',
+  ctaHref = '/sign-in',
   ctaLabel = 'Request access',
 }: {
   ctaHref?: string

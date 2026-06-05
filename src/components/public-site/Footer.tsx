@@ -1,16 +1,8 @@
 import Link from 'next/link';
 
 const PRODUCT_LINKS = [
-  { label: 'Request access', href: '/contact/' },
+  { label: 'Request access', href: '/sign-in' },
   { label: 'Sign in', href: '/sign-in' },
-] as const;
-
-const TRUST_LINKS = [
-  { label: 'Responsible AI', href: '/responsible-ai/' },
-  { label: 'Model card', href: '/model-card/' },
-  { label: 'Known limitations', href: '/known-limitations/' },
-  { label: 'Subprocessors', href: '/subprocessors/' },
-  { label: 'Contact', href: '/contact/' },
 ] as const;
 
 export function Footer() {
@@ -54,15 +46,10 @@ export function Footer() {
 
         <nav aria-label="Trust navigation">
           <p className="pub-footer__col-label">Trust</p>
-          <ul className="pub-footer__links" role="list">
-            {TRUST_LINKS.map(({ label, href }) => (
-              <li key={href}>
-                <Link href={href} className="pub-footer__link">
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <p className="pub-footer__access-copy">
+            Responsible AI, model-card, subprocessors, and detailed product
+            material are available inside authenticated workspaces.
+          </p>
         </nav>
       </div>
 

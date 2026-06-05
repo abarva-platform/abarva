@@ -47,11 +47,11 @@ describe('TopNav', () => {
     expect(screen.queryByText('Architecture')).toBeNull();
   });
 
-  it('renders the Request access CTA linking to /contact/', () => {
+  it('renders the Request access CTA linking to sign-in', () => {
     render(React.createElement(TopNav));
     const cta = screen.getByText('Request access');
     expect(cta).toBeTruthy();
-    expect((cta as HTMLAnchorElement).getAttribute('href')).toBe('/contact/');
+    expect((cta as HTMLAnchorElement).getAttribute('href')).toBe('/sign-in');
   });
 
   it('has an accessible navigation landmark', () => {
@@ -73,6 +73,11 @@ describe('Footer', () => {
   it('renders the product column', () => {
     render(React.createElement(Footer));
     expect(screen.getAllByText('Request access').length).toBeGreaterThan(0);
+    expect(
+      screen
+        .getAllByText('Request access')
+        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/sign-in')
+    ).toBe(true);
     expect(screen.queryByText('Product')).toBeNull();
   });
 
@@ -81,40 +86,12 @@ describe('Footer', () => {
     expect(screen.getByText(/Training, client primers, corpus detail/)).toBeTruthy();
   });
 
-  it('renders the trust column', () => {
+  it('renders the private trust posture instead of public trust links', () => {
     render(React.createElement(Footer));
     expect(screen.getByText('Trust')).toBeTruthy();
-    expect(screen.getAllByText('Contact').length).toBeGreaterThan(0);
-  });
-
-  it('renders public AI trust links', () => {
-    render(React.createElement(Footer));
-    expect(
-      screen
-        .getAllByText('Responsible AI')
-        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/responsible-ai/')
-    ).toBe(true);
-    expect(
-      screen
-        .getAllByText('Model card')
-        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/model-card/')
-    ).toBe(true);
-    expect(
-      screen
-        .getAllByText('Known limitations')
-        .some(
-          (node) => (node as HTMLAnchorElement).getAttribute('href') === '/known-limitations/'
-        )
-    ).toBe(true);
-  });
-
-  it('renders a Contact link', () => {
-    render(React.createElement(Footer));
-    expect(
-      screen
-        .getAllByText('Contact')
-        .some((node) => (node as HTMLAnchorElement).getAttribute('href') === '/contact/')
-    ).toBe(true);
+    expect(screen.getByText(/Responsible AI, model-card, subprocessors/)).toBeTruthy();
+    expect(screen.queryByText('Contact')).toBeNull();
+    expect(screen.queryByText('Model card')).toBeNull();
   });
 
   it('renders invite-only workspace copy', () => {
