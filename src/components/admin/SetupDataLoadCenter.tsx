@@ -51,6 +51,15 @@ function toneAccent(tone: StatusTone | MetricTone): string {
   }
 }
 
+function tenantKeyFromName(name: string): string {
+  const normalized = name.trim().toLowerCase();
+  if (normalized.includes("meridian") || normalized.includes("phs"))
+    return "meridian-health";
+  return (
+    normalized.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "unknown"
+  );
+}
+
 function labelStyle(color = `${COLORS.ink}99`) {
   return {
     color,
@@ -404,6 +413,7 @@ export function SetupDataLoadCenter({
   clientId,
 }: SetupDataLoadCenterProps) {
   const { tenant } = view;
+  const tenantKey = tenantKeyFromName(tenant.name);
 
   return (
     <div
@@ -659,7 +669,11 @@ export function SetupDataLoadCenter({
             </div>
           </div>
 
-          <CsvUploadConnector clientId={clientId} tenantName={tenant.name} />
+          <CsvUploadConnector
+            clientId={clientId}
+            tenantKey={tenantKey}
+            tenantName={tenant.name}
+          />
         </div>
       </section>
 

@@ -1,16 +1,18 @@
-import 'server-only';
+import "server-only";
 
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import type { BoardPackRenderInput, BoardPackRenderResult } from './types';
-import { renderBoardPack } from './render-engine';
+import { createHash, randomUUID } from "node:crypto";
+
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import type { BoardPackRenderInput, BoardPackRenderResult } from "./types";
+import { renderBoardPack } from "./render-engine";
 
 export interface GeneratedArtifactRecord {
   id: string;
   clientId: string;
-  artifactType: BoardPackRenderResult['artifactType'];
+  artifactType: BoardPackRenderResult["artifactType"];
   sourceArtifactRef: string;
-  renderEngine: BoardPackRenderResult['renderEngine'];
-  outputFormat: BoardPackRenderResult['outputFormat'];
+  renderEngine: BoardPackRenderResult["renderEngine"];
+  outputFormat: BoardPackRenderResult["outputFormat"];
   blobUrl: string;
   blobSha256: string;
   qualityScore: number | null;
@@ -19,40 +21,70 @@ export interface GeneratedArtifactRecord {
   renderedAt: string;
   renderedBy: string;
   quarantineReason: string | null;
+  metadata: Record<string, unknown>;
 }
 
 function rowToRecord(row: Record<string, unknown>): GeneratedArtifactRecord {
   return {
     id: String(row.id),
     clientId: String(row.client_id),
-    artifactType: row.artifact_type as GeneratedArtifactRecord['artifactType'],
+    artifactType: row.artifact_type as GeneratedArtifactRecord["artifactType"],
     sourceArtifactRef: String(row.source_artifact_ref),
-    renderEngine: row.render_engine as GeneratedArtifactRecord['renderEngine'],
-    outputFormat: row.output_format as GeneratedArtifactRecord['outputFormat'],
+    renderEngine: row.render_engine as GeneratedArtifactRecord["renderEngine"],
+    outputFormat: row.output_format as GeneratedArtifactRecord["outputFormat"],
     blobUrl: String(row.blob_url),
     blobSha256: String(row.blob_sha256),
     qualityScore: row.quality_score === null ? null : Number(row.quality_score),
-    evidenceLedgerIds: Array.isArray(row.evidence_ledger_ids) ? row.evidence_ledger_ids.map(String) : [],
-    generationEgressAudit: typeof row.generation_egress_audit === 'string' ? row.generation_egress_audit : null,
+    evidenceLedgerIds: Array.isArray(row.evidence_ledger_ids)
+      ? row.evidence_ledger_ids.map(String)
+      : [],
+    generationEgressAudit:
+      typeof row.generation_egress_audit === "string"
+        ? row.generation_egress_audit
+        : null,
     renderedAt: String(row.rendered_at),
     renderedBy: String(row.rendered_by),
-    quarantineReason: typeof row.quarantine_reason === 'string' ? row.quarantine_reason : null,
+    quarantineReason:
+      typeof row.quarantine_reason === "string" ? row.quarantine_reason : null,
+    metadata:
+      row.metadata &&
+      typeof row.metadata === "object" &&
+      !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : {},
   };
+}
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function generatedArtifactUrl(id: string): string {
+  return `/api/v1/artifacts/${encodeURIComponent(id)}`;
+}
+
+export function renderedHtmlFromGeneratedArtifact(
+  record: GeneratedArtifactRecord,
+): string | null {
+  const html = record.metadata.renderedHtml;
+  return typeof html === "string" && html.length > 0 ? html : null;
 }
 
 export async function saveGeneratedArtifact(
   input: BoardPackRenderInput,
   rendered: BoardPackRenderResult,
 ): Promise<GeneratedArtifactRecord> {
+  const id = randomUUID();
   const { data, error } = await getAzureWriteFluentClient()
-    .from('generated_artifacts')
+    .from("generated_artifacts")
     .insert({
+      id,
       client_id: input.clientId,
       artifact_type: rendered.artifactType,
       source_artifact_ref: rendered.sourceArtifactRef,
       render_engine: rendered.renderEngine,
       output_format: rendered.outputFormat,
-      blob_url: rendered.blobUrl,
+      blob_url: generatedArtifactUrl(id),
       blob_sha256: rendered.blobSha256,
       quality_score: rendered.qualityScore,
       evidence_ledger_ids: rendered.evidenceLedgerIds,
@@ -63,16 +95,21 @@ export async function saveGeneratedArtifact(
         title: input.title,
         factCount: input.facts.length,
         sectionCount: input.sections.length,
+        renderedHtml: rendered.html,
+        originalBlobUrl: rendered.blobUrl,
       },
     })
-    .select('*')
+    .select("*")
     .single();
 
-  if (error) throw new Error(`generated_artifacts insert failed: ${error.message}`);
+  if (error)
+    throw new Error(`generated_artifacts insert failed: ${error.message}`);
   return rowToRecord(data as Record<string, unknown>);
 }
 
-export async function generateAndSaveBoardPack(input: BoardPackRenderInput): Promise<{
+export async function generateAndSaveBoardPack(
+  input: BoardPackRenderInput,
+): Promise<{
   rendered: BoardPackRenderResult;
   record: GeneratedArtifactRecord;
 }> {
@@ -81,3 +118,88 @@ export async function generateAndSaveBoardPack(input: BoardPackRenderInput): Pro
   return { rendered, record };
 }
 
+export async function getGeneratedArtifactById(
+  artifactId: string,
+  options: { clientId?: string | null } = {},
+): Promise<GeneratedArtifactRecord | null> {
+  const query = getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .select("*")
+    .eq("id", artifactId);
+  if (options.clientId) query.eq("client_id", options.clientId);
+
+  const { data, error } = await query.maybeSingle();
+  if (error)
+    throw new Error(`generated_artifacts lookup failed: ${error.message}`);
+  return data ? rowToRecord(data as Record<string, unknown>) : null;
+}
+
+export async function getLatestGeneratedArtifact(args: {
+  clientId: string;
+  artifactType: BoardPackRenderResult["artifactType"];
+  sourceArtifactRef: string;
+  outputFormat?: BoardPackRenderResult["outputFormat"];
+}): Promise<GeneratedArtifactRecord | null> {
+  const query = getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .select("*")
+    .eq("client_id", args.clientId)
+    .eq("artifact_type", args.artifactType)
+    .eq("source_artifact_ref", args.sourceArtifactRef);
+  if (args.outputFormat) query.eq("output_format", args.outputFormat);
+
+  const { data, error } = await query
+    .order("rendered_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error)
+    throw new Error(
+      `generated_artifacts latest lookup failed: ${error.message}`,
+    );
+  return data ? rowToRecord(data as Record<string, unknown>) : null;
+}
+
+export async function saveRenderedBoardGradeMoveArtifact(input: {
+  clientId: string;
+  moveId: string;
+  artifactId: string;
+  title: string;
+  html: string;
+  renderedBy: string;
+  routePath: string;
+  generatedOn: string;
+}): Promise<GeneratedArtifactRecord> {
+  const id = randomUUID();
+  const sourceArtifactRef = `move:${input.moveId}:${input.artifactId}`;
+  const { data, error } = await getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .insert({
+      id,
+      client_id: input.clientId,
+      artifact_type: "move_board_pack",
+      source_artifact_ref: sourceArtifactRef,
+      render_engine: "internal",
+      output_format: "html",
+      blob_url: generatedArtifactUrl(id),
+      blob_sha256: sha256(input.html),
+      quality_score: null,
+      evidence_ledger_ids: [],
+      generation_egress_audit: null,
+      rendered_by: input.renderedBy,
+      quarantine_reason: null,
+      metadata: {
+        title: input.title,
+        moveId: input.moveId,
+        artifactId: input.artifactId,
+        routePath: input.routePath,
+        generatedOn: input.generatedOn,
+        renderedHtml: input.html,
+      },
+    })
+    .select("*")
+    .single();
+
+  if (error)
+    throw new Error(`generated_artifacts insert failed: ${error.message}`);
+  return rowToRecord(data as Record<string, unknown>);
+}
