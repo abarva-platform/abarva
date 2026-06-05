@@ -2,8 +2,20 @@
 
 **For:** Codex (full-privilege autonomous run)
 **Mission:** Generate, QA, load, and evaluate a 10,000-pattern Chicago-private-holdings corpus end-to-end, with no human-in-loop except on explicit escalation gates.
-**Budget envelope:** ~$75 in model spend (Sonnet primary, Opus on high-ground waves), ~6-12 hours wall-clock.
+**Budget envelope:** ~$75 in model spend (OpenAI primary, higher-reasoning OpenAI model on high-ground waves), ~6-12 hours wall-clock.
 **Output:** Corpus loaded into Azure AI Search + Postgres + graph, evaluated against 100-question harness, with a final readiness report.
+
+> 2026-06-05 execution override: use **OpenAI only** for corpus generation, critique, retry, gap audit, embeddings, and eval grading. Do not call Anthropic for this build lane. Production runtime may later use Claude for dry-run demos, but this corpus-completion execution must remain OpenAI-only.
+
+## Current Continuation State — 2026-06-05
+
+The non-corpus Lakeshore demo lane is complete and live-proven. Corpus work resumes last from the current live substrate:
+
+- Postgres `corpus_patterns`: `8,987` published Lakeshore patterns.
+- All `8,987` published patterns have `search_doc_id`.
+- Vector store: native Azure AI Search index `lakeshore-patterns-v1`, not Pinecone.
+- Remaining target gap: approximately `1,013` patterns to reach 10,000.
+- Before loading any new batch, refresh the Azure AI Search count if `AZURE_SEARCH_ENDPOINT` / `AZURE_SEARCH_SERVICE_NAME` and `AZURE_SEARCH_ADMIN_KEY` / `AZURE_SEARCH_QUERY_KEY` are available. If those env vars are absent, use Postgres as the source-of-truth baseline and mark Azure count refresh as blocked.
 
 ---
 
@@ -22,9 +34,9 @@ Before generating, confirm all of these exist. If any is missing, halt and surfa
 | # | Item | How to verify |
 |---|---|---|
 | 1 | Master prompt | `docs/build/codex-handoff/2026-06-04-LAKESHORE_CORPUS_MASTER_PROMPT.md` — paste this content from the prior chat into that file if not present |
-| 2 | Anthropic API key | `process.env.ANTHROPIC_API_KEY` set; test call returns 200 |
-| 3 | Postgres connection | Existing genome corpus loader works against `pattern_corpus` table; confirm `lakeshore` tenant_scope is permitted |
-| 4 | Azure AI Search index | `lakeshore-patterns-v1` index exists OR create via Azure CLI before wave 1 |
+| 2 | OpenAI API key | `process.env.OPENAI_API_KEY` set; test `GET https://api.openai.com/v1/models` returns 200 |
+| 3 | Postgres connection | Existing genome corpus loader works against `corpus_patterns` / `corpus_pattern_content`; confirm Lakeshore rows can be read and upserted |
+| 4 | Azure AI Search index | `lakeshore-patterns-v1` index exists OR create via `scripts/load-genome-wave.ts --ensure-index-only`; if Azure Search env is missing, stop before load and surface `BLOCKED_PRECONDITION` |
 | 5 | Graph store | Postgres `pattern_nodes` + `pattern_edges` tables exist (or Neo4j connection healthy) |
 | 6 | Loader script | `scripts/load-genome-wave.ts` (reuse the existing pattern from Waves 18-24) — confirm it handles JSONL input |
 | 7 | Working tree | Clean checkout off `main` at `/private/tmp/lakeshore-corpus-build/` (fresh worktree pattern Codex used for the surge) |
@@ -38,9 +50,9 @@ For each wave `n` in [1..9], execute the following steps. Do not skip any. Do no
 ### Step 1 — GENERATE
 
 ```
-Anthropic call:
-  model: claude-sonnet-4-5 (waves 1-4, 8, 9)
-         claude-opus-4-1   (waves 5, 6, 7 — high-ground domains)
+OpenAI call:
+  model: gpt-4o (waves 1-4, 8, 9)
+         o3 / strongest available OpenAI reasoning model (waves 5, 6, 7 — high-ground domains)
   system: <full content of MASTER_PROMPT.md>
   user:   "MODE=GENERATE WAVE=<n> DOMAINS=<per the wave plan>"
   max_tokens: 32000
@@ -54,7 +66,7 @@ Stream the response. As JSONL pattern lines arrive, append to `reports/lakeshore
 ### Step 2 — CRITIQUE (first pass, same model)
 
 ```
-Anthropic call:
+OpenAI call:
   model: same as Step 1
   system: <MASTER_PROMPT.md>
   user:   "MODE=CRITIQUE WAVE=<n>\n\n<paste contents of wave-<n>/raw.jsonl>"
@@ -73,7 +85,7 @@ Capture verdicts. Append to `wave-<n>/critique-pass-1.jsonl`. Extract:
 For high-ground waves, run a second critique with a **fresh chat session** (new conversation, no Step 2 context):
 
 ```
-Same call shape as Step 2 but a brand-new Anthropic conversation.
+Same call shape as Step 2 but a brand-new OpenAI conversation with no prior messages beyond the master prompt and critique payload.
 ```
 
 Compare the two critiques. Any pattern flagged KILL by the fresh critic that the same-model critic APPROVED → override to KILL. Disagreements on REFINE → take the stricter verdict. Write reconciled verdicts to `wave-<n>/critique-final.jsonl`.
@@ -83,7 +95,7 @@ Compare the two critiques. Any pattern flagged KILL by the fresh critic that the
 For every pattern in `refine_ids` and `kill_ids`, run:
 
 ```
-Anthropic call:
+OpenAI call:
   model: same as Step 1
   system: <MASTER_PROMPT.md>
   user:   "MODE=GENERATE WAVE=<n> RETRY=<comma-separated ids>\n\nFailing patterns with critic remedies:\n<inline the failing pattern JSON + remedy text per pattern>"
@@ -98,7 +110,7 @@ Append regenerated patterns to `wave-<n>/raw.jsonl`, replacing the originals at 
 Re-critique only the regenerated patterns (efficient):
 
 ```
-Anthropic call:
+OpenAI call:
   user: "MODE=CRITIQUE WAVE=<n> RETRY=<retry_ids>\n\n<paste regenerated patterns>"
 ```
 
@@ -110,7 +122,7 @@ Apply the same verdict logic. After this pass:
 ### Step 6 — GAP AUDIT
 
 ```
-Anthropic call:
+OpenAI call:
   user: "MODE=GAPS WAVE=<n>"
   (provide the finalized wave output as context)
 ```
@@ -246,7 +258,7 @@ For each question:
 
 ```
 Grader call:
-  model: claude-opus-4-1  (judgment task — Opus is worth it)
+  model: o3 / strongest available OpenAI reasoning model  (judgment task — use the strongest OpenAI critic available)
   system: "You are grading a Lakeshore agent's answer against a known-good rubric. Score 0-10 on: factual accuracy, citation presence, doctrine alignment, vernacular fit, anti-hallucination. Return JSON."
   user:   <question + agent response + expected pattern_ids + rubric>
 ```
@@ -312,10 +324,10 @@ feat(corpus): Lakeshore Capital — initial 10K-pattern build + eval (<eval_scor
 2. **Streaming + checkpoint every 100 patterns.** For long generations, don't wait for `WAVE_COMPLETE` to flush. Stream and checkpoint to JSONL every 100 patterns. If the connection dies, you can resume with `RETRY=<next_id_after_last_checkpoint>`.
 
 3. **Model selection by wave:**
-   - Sonnet for waves 1-4, 8, 9 (most of the volume — Sonnet's voice is sharp enough)
-   - **Opus for waves 5, 6, 7** (high-ground; judgment + voice quality matters more than throughput)
-   - Opus for the critic on high-ground waves
-   - Opus for the eval grader
+   - OpenAI `gpt-4o` for waves 1-4, 8, 9 unless a newer approved OpenAI production model is configured in `OPENAI_MODEL`.
+   - **OpenAI `o3` or the strongest available OpenAI reasoning model for waves 5, 6, 7** (high-ground; judgment + voice quality matters more than throughput).
+   - Use the same OpenAI high-ground critic twice for waves 5, 6, 7: one same-context critique and one fresh-context critique.
+   - Use the strongest available OpenAI reasoning model for the eval grader.
 
 4. **Embedding pipeline:** every approved pattern's `embedding_text` gets embedded BEFORE pushing to Azure AI Search. Batch embeddings in groups of 100 for throughput.
 
@@ -323,7 +335,7 @@ feat(corpus): Lakeshore Capital — initial 10K-pattern build + eval (<eval_scor
 
 6. **Telemetry:** log model spend after every API call. Update the running total in `state.json`. The $150 gate (G3) fires if this exceeds threshold.
 
-7. **Vault credentials:** Anthropic key, Azure Search admin key, Postgres connection string — all from environment variables. Do not log them.
+7. **Vault credentials:** OpenAI key, Azure Search admin/query key, Postgres connection string — all from environment variables. Do not log them.
 
 8. **No-prompt-bleed:** the master prompt is the single source of truth. Do NOT add your own prompt augmentations between waves — that drifts the voice. If the model is drifting, it's because the seeds aren't strong enough; fix the seeds, not the prompt.
 
