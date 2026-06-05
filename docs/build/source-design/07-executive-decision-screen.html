@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Source · Executive Decision — page-1 redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-paper:#F8F7F4; --ink:#111827; --muted:#6b7280; --accent:#1d4ed8;
+    --good:#047857; --warn:#b45309; --bad:#b91c1c; --tint:#f3f4f6;
+    --line:#e7e5e0; --line-strong:#d9d6cf; --card:#ffffff;
+    --charcoal:#1f2937; --charcoal-2:#374151;
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',-apple-system,system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg-paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* top nav */
+  .topnav{background:#0b0d12;color:#fff;height:64px;display:flex;align-items:center;padding:0 36px;gap:40px}
+  .brand{font-family:var(--serif);font-size:22px;font-weight:700}
+  .brand .va{color:#5b9dff}
+  .tenant{font-family:var(--serif);font-style:italic;font-size:17px;color:rgba(255,255,255,.82)}
+  .nav-items{display:flex;gap:28px;margin-left:8px}
+  .nav-items a{font-size:14px;font-weight:500;color:rgba(255,255,255,.62)}
+  .nav-items a.active{color:#fff;font-weight:600}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:20px}
+  .who{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500}
+  .who .ava{width:30px;height:30px;border-radius:50%;background:#26303f;color:#cfe0ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .signout{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:600;color:#fff}
+
+  .subnav{background:#fff;border-bottom:1px solid var(--line);height:52px;display:flex;align-items:center;padding:0 36px}
+  .subnav .lbl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .subnav .tabs{margin-left:auto;display:flex;gap:6px}
+  .subnav .tabs a{font-size:13px;font-weight:600;color:var(--muted);padding:7px 16px;border-radius:8px}
+  .subnav .tabs a.active{background:#0b0d12;color:#fff}
+
+  .wrap{max-width:1380px;margin:0 auto;padding:30px 36px 70px}
+  .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  .crumb .sep{margin:0 8px;opacity:.4}
+
+  /* compact phase rail — Exec Decision = stage 08 */
+  .rail{display:flex;align-items:center;gap:0;margin-bottom:28px}
+  .rseg{flex:1;height:3px;background:var(--line-strong);position:relative}
+  .rseg.done{background:var(--accent)}
+  .rseg.active::after{content:'';position:absolute;left:0;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(29,78,216,.16)}
+  .rlabel{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:14px;white-space:nowrap}
+  .rlabel b{color:var(--accent)}
+
+  /* ── THE DARK HEADER — the one dark moment in the lifecycle ─────── */
+  .verdict{background:var(--charcoal);color:#fff;border-radius:18px;padding:38px 42px;display:grid;grid-template-columns:1.55fr 1fr;gap:40px;position:relative;overflow:hidden}
+  .verdict::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+  .v-eyebrow{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:18px}
+  .v-rec{font-family:var(--serif);font-size:42px;font-weight:400;line-height:1.08;letter-spacing:-.01em;margin-bottom:16px}
+  .v-rec .vendor{color:#fff}
+  .v-rec .tco{color:#8fb8ff}
+  .v-axis{font-size:15px;line-height:1.6;color:rgba(255,255,255,.78);max-width:46ch}
+  .v-axis b{color:#fff;font-weight:600}
+
+  /* right 3 supports — stacked, smaller (1+3 layout) */
+  .v-supports{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
+  .vs{background:var(--charcoal);padding:16px 20px}
+  .vs .l{font-family:var(--sans);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:7px}
+  .vs .big{font-family:var(--serif);font-size:26px;font-weight:400;color:#fff;line-height:1}
+  .vs .sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:5px;line-height:1.4}
+  .vs.dissent .l{color:#f0b86e}
+  .vs .open{color:#8fb8ff;font-size:12px;font-weight:600;margin-top:6px;display:inline-block}
+
+  /* approval strip under the header */
+  .appbar{background:var(--card);border:1px solid var(--line);border-top:none;border-radius:0 0 18px 18px;margin:0 12px;padding:16px 30px;display:flex;align-items:center;gap:24px;box-shadow:0 8px 24px rgba(17,24,39,.06)}
+  .appbar .ar{display:flex;align-items:center;gap:10px}
+  .appbar .lbl{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .signer{display:flex;align-items:center;gap:8px;font-size:13px}
+  .signer .st{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .signer.pending .st{background:var(--warn)}
+  .signer.signed .st{background:var(--good)}
+  .signer .nm{font-weight:600}
+  .signer .role{color:var(--muted)}
+  .appbar .actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:600;font-size:14px;border-radius:10px;padding:12px 22px;cursor:pointer;border:1px solid transparent;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#1842b8}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-more{background:transparent;color:var(--muted);border:none;padding:12px 10px;font-weight:600;cursor:pointer}
+  .btn-more:hover{color:var(--ink)}
+
+  /* below the fold: the brief */
+  .brief{display:grid;grid-template-columns:1fr 300px;gap:24px;margin-top:34px;align-items:start}
+  .sect{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:24px 28px;margin-bottom:16px}
+  .sect h3{font-family:var(--serif);font-size:19px;font-weight:400;margin-bottom:4px}
+  .sect .se{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .ev{display:flex;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
+  .ev:first-of-type{border-top:none}
+  .ev .cite{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;flex-shrink:0;padding-top:1px}
+  .ev .et{font-size:13.5px;line-height:1.55;color:var(--ink)}
+  .ev .et b{font-weight:600}
+
+  .risk{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+  .risk:first-of-type{border-top:none}
+  .risk .rd{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+  .risk.hi .rd{background:var(--bad)} .risk.med .rd{background:var(--warn)} .risk.lo .rd{background:var(--good)}
+  .risk .rt{font-size:13.5px;line-height:1.5}
+  .risk .rt .rh{font-weight:600}
+  .risk .rt .rm{color:var(--muted)}
+
+  .dissent-card{border-left:3px solid var(--warn);background:#fdf8f1;border-radius:0 10px 10px 0;padding:16px 20px;margin-top:4px}
+  .dissent-card .dh{font-size:13px;font-weight:600;margin-bottom:4px}
+  .dissent-card .dr{font-size:11px;color:var(--muted);margin-bottom:8px}
+  .dissent-card .dq{font-family:var(--serif);font-size:16px;line-height:1.45;color:var(--ink)}
+
+  /* missing data callout */
+  .missing{background:#fdf8f1;border:1px solid #f0e2cd;border-radius:13px;padding:18px 24px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start}
+  .missing .mi{color:var(--warn);font-size:18px;flex-shrink:0}
+  .missing .mt{font-size:13.5px;line-height:1.55}
+  .missing .mt b{font-weight:600}
+
+  /* sentinel — collapsed to a stub on this decision stage (Spec 6: 15%) */
+  .sentinel-stub{position:sticky;top:24px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+  .sentinel-stub .sh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sentinel-stub .sa{width:30px;height:30px;border-radius:50%;background:#0b0d12;color:#5b9dff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .sentinel-stub .sn{font-size:13px;font-weight:700}
+  .sentinel-stub .sd{font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+  .sentinel-stub .exp{font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
+  .meta-card{background:var(--tint);border-radius:11px;padding:16px 18px;margin-top:16px}
+  .meta-card .ml{font-family:var(--sans);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .meta-row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0}
+  .meta-row .k{color:var(--muted)} .meta-row .v{font-weight:600}
+
+  .note{position:relative}
+  .note::after{content:attr(data-note);position:absolute;right:-6px;top:-11px;background:var(--good);color:#fff;font-family:var(--mono);font-size:9px;letter-spacing:.03em;padding:3px 8px;border-radius:999px;white-space:nowrap;font-weight:500;z-index:5}
+
+  @media(max-width:1080px){.verdict{grid-template-columns:1fr;gap:26px}.brief{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-screen-label="Source · Executive Decision (target)">
+
+  <nav class="topnav">
+    <span class="brand">Abar<span class="va">Va</span></span>
+    <span class="tenant">Apex Retail Group</span>
+    <span class="nav-items"><a>Home</a><a>Intelligence</a><a>Moves</a><a class="active">Source</a><a>Tower</a></span>
+    <span class="nav-right"><span class="who"><span class="ava">CR</span>Carlos Rivera</span><a class="signout">Sign out</a></span>
+  </nav>
+  <div class="subnav">
+    <span class="lbl">Source</span>
+    <span class="tabs"><a>Decisions</a><a class="active">Portfolio</a><a>Setup</a></span>
+  </div>
+
+  <div class="wrap">
+    <div class="crumb">Source<span class="sep">›</span>Apex<span class="sep">›</span>Data Analytics Operations 2026<span class="sep">›</span>Executive Decision</div>
+
+    <div class="rail">
+      <div class="rseg done"></div><div class="rseg done"></div><div class="rseg done"></div>
+      <div class="rseg done"></div><div class="rseg done"></div><div class="rseg done"></div>
+      <div class="rseg done"></div><div class="rseg active"></div><div class="rseg"></div>
+      <div class="rseg"></div><div class="rseg"></div>
+      <span class="rlabel">Stage <b>08 · Executive Decision</b> &nbsp;of 11</span>
+    </div>
+
+    <!-- THE VERDICT — dark header · 1 + 3 layout -->
+    <div class="note" data-note="SPEC 12 · the one dark moment · squint-test first">
+      <div class="verdict">
+        <div>
+          <div class="v-eyebrow">Executive Decision · Data Analytics Operations 2026</div>
+          <div class="v-rec">Recommend <span class="vendor">Cognizant</span><br>at <span class="tco">$13.21M TCO</span></div>
+          <div class="v-axis">Deciding axis: <b>transition realism + technical depth</b>. Infosys bid <b>$1.81M cheaper</b> but its transition plan failed the readiness benchmark and carried no reverse-shadow phase.</div>
+        </div>
+        <div class="v-supports">
+          <div class="vs">
+            <div class="l">Savings</div>
+            <div class="big">$21.8M</div>
+            <div class="sub">3-yr NPV vs locked $35M baseline</div>
+          </div>
+          <div class="vs">
+            <div class="l">Trade-off</div>
+            <div class="big" style="font-size:17px;line-height:1.3">Gave up $1.81M cheaper bid</div>
+            <div class="sub">Gained transition rigor + benchmark-right pricing</div>
+          </div>
+          <div class="vs dissent">
+            <div class="l">Dissent</div>
+            <div class="big" style="font-size:17px;line-height:1.3">1 reviewer · S. Okafor</div>
+            <div class="sub">"Infosys delivery record under-weighted."</div>
+            <a class="open">Open dissent panel ↓</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- approval strip -->
+    <div class="note" data-note="Q4 · one primary, rest demoted">
+      <div class="appbar">
+        <div class="ar">
+          <span class="lbl">Approval</span>
+          <span class="signer pending"><span class="st"></span><span class="nm">Carlos Rivera</span><span class="role">CIO</span></span>
+          <span class="signer pending"><span class="st"></span><span class="nm">Lynne Stratham</span><span class="role">CDO · co-sign</span></span>
+        </div>
+        <div class="actions">
+          <button class="btn-more">Other decisions ▾</button>
+          <button class="btn btn-ghost">Send to co-approver</button>
+          <button class="btn btn-primary">Approve recommendation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- below the fold: the brief -->
+    <div class="brief">
+      <div>
+        <div class="note" data-note="Q8 · load-bearing gaps shown, not buried">
+          <div class="missing">
+            <span class="mi">▲</span>
+            <div class="mt"><b>One input still open:</b> Cognizant's year-3 run-rate assumes a 4% volume taper that Finance hasn't confirmed. Sensitivity holds the recommendation under ±20% volume — see Pricing. Not blocking, flagged for the record.</div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="se">Why this recommendation</div>
+          <h3>Three findings carried the decision</h3>
+          <div style="margin-top:14px">
+            <div class="ev"><span class="cite">E-014</span><span class="et"><b>Transition readiness:</b> Cognizant scored 8.6/10 on the readiness benchmark with a full reverse-shadow phase; Infosys scored 5.9 with no reverse-shadow. Weighted 25% of the rubric.</span></div>
+            <div class="ev"><span class="cite">E-022</span><span class="et"><b>Normalized TCO:</b> after the iceberg adjustment, the $1.81M headline gap narrows to $0.74M on a like-for-like 3-yr basis. Pricing E-022.</span></div>
+            <div class="ev"><span class="cite">E-031</span><span class="et"><b>Reference checks:</b> two of Cognizant's three references ran comparable global delivery migrations on time; Infosys's strongest reference cited a 4-month cutover slip.</span></div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="se">Risks on the recommendation</div>
+          <h3>Three, with mitigations</h3>
+          <div style="margin-top:12px">
+            <div class="risk hi"><span class="rd"></span><span class="rt"><span class="rh">Volume taper unconfirmed.</span> <span class="rm">Year-3 run-rate depends on a 4% taper. Mitigation: CFO confirmation gated into Selection; sensitivity band published.</span></span></div>
+            <div class="risk med"><span class="rd"></span><span class="rt"><span class="rh">Key-person dependency.</span> <span class="rm">Cognizant's named transition lead is non-contractual. Mitigation: name lock written into BAFO commitments.</span></span></div>
+            <div class="risk lo"><span class="rd"></span><span class="rt"><span class="rh">Incumbent exit friction.</span> <span class="rm">90-day parallel run overlaps incumbent wind-down. Mitigation: Transition stage KT plan sequences the exit.</span></span></div>
+          </div>
+        </div>
+
+        <div class="sect" id="dissent">
+          <div class="se">Recorded dissent · first-class</div>
+          <h3>One reviewer disagreed</h3>
+          <div class="dissent-card">
+            <div class="dh">S. Okafor · Sourcing Lead</div>
+            <div class="dr">Recorded 2026-06-03 · attached 2-page memo</div>
+            <div class="dq">"We're under-weighting Infosys's delivery record on three comparable accounts. The readiness benchmark penalizes a methodology difference, not a capability gap. I'd want a Round-3 BAFO before committing $0.74M of premium."</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- right rail: sentinel stub + decision meta -->
+      <div class="note" data-note="SPEC 6 · collapsed on a decision stage">
+        <div>
+          <aside class="sentinel-stub">
+            <div class="sh"><span class="sa">SS</span><span class="sn">Sentinel</span></div>
+            <div class="sd">Quiet on this stage — the decision is yours. I can re-run the sensitivity or draft the approval rationale if you want it.</div>
+            <span class="exp">Expand Sentinel →</span>
+          </aside>
+          <div class="meta-card">
+            <div class="ml">Decision record</div>
+            <div class="meta-row"><span class="k">Vendors evaluated</span><span class="v">4</span></div>
+            <div class="meta-row"><span class="k">Rubric criteria</span><span class="v">11</span></div>
+            <div class="meta-row"><span class="k">Evidence cited</span><span class="v">31 records</span></div>
+            <div class="meta-row"><span class="k">Brief authored by</span><span class="v">C. Rivera</span></div>
+            <div class="meta-row"><span class="k">Co-sign required</span><span class="v">L. Stratham</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

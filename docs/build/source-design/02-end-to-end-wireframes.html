@@ -1,0 +1,1687 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AbarVa Source — End-to-End Wireframes · 2026-06-04</title>
+<style>
+:root {
+  --ink: #111827;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --tint: #f3f4f6;
+  --tint-2: #e5e7eb;
+  --accent: #1d4ed8;
+  --warn: #b45309;
+  --bad: #b91c1c;
+  --good: #047857;
+  --bg: #fafafa;
+  --paper: #fff;
+  --tinted: #faf8f3;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  margin: 0;
+  padding: 32px 48px 80px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 {
+  font-size: 22px;
+  margin: 56px 0 12px;
+  padding: 14px 18px;
+  background: #111827;
+  color: #fff;
+  border-radius: 4px;
+}
+h2 .step { color: #9ca3af; font-size: 13px; letter-spacing: 0.08em; font-weight: 400; margin-right: 12px; }
+h3 {
+  font-size: 17px;
+  color: var(--ink);
+  margin: 28px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+h4 { font-size: 14px; color: var(--muted); margin: 4px 0 14px; font-weight: 500; }
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.toc {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px 24px;
+  background: #fff;
+  margin: 20px 0 32px;
+  font-size: 13px;
+  column-count: 2;
+  column-gap: 32px;
+}
+.toc ol { margin: 4px 0 0; padding-left: 22px; }
+.toc a { color: var(--accent); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* Lifecycle ribbon at top of every section */
+.lifecycle {
+  display: flex;
+  background: #1f2937;
+  color: #d1d5db;
+  font-size: 9px;
+  margin: 0 0 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+.lifecycle .step-pill {
+  flex: 1;
+  padding: 6px 4px;
+  text-align: center;
+  border-right: 1px solid #374151;
+}
+.lifecycle .step-pill:last-child { border-right: none; }
+.lifecycle .step-pill.active {
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 700;
+}
+.lifecycle .step-pill.passed { background: #064e3b; color: #d1fae5; }
+.lifecycle .step-pill.locked { color: #6b7280; }
+
+/* Wireframe primitives */
+.wire {
+  background: #fff;
+  border: 1.5px solid #1f2937;
+  border-radius: 4px;
+  margin: 0 0 24px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.wire .frame-label {
+  background: #1f2937;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.04em;
+  display: flex;
+  justify-content: space-between;
+}
+.wire .frame-label .state-tag {
+  background: #374151;
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-size: 9px;
+}
+.wire .frame-label .state-tag.current { background: #b45309; }
+.wire .frame-label .state-tag.target { background: #047857; }
+.wire .frame-label .state-tag.new { background: #1d4ed8; }
+.wire .frame-body { padding: 0; }
+
+.canvas { padding: 20px 24px; background: #fff; }
+.canvas-tint { padding: 20px 24px; background: var(--tinted); }
+.canvas-pending { padding: 20px 24px; background: #fef3c7; }
+
+/* Region boxes */
+.region {
+  border: 1.5px dashed #6b7280;
+  border-radius: 4px;
+  padding: 12px 14px;
+  background: #fafafa;
+  color: #374151;
+  position: relative;
+  font-size: 11px;
+}
+.region.solid { border-style: solid; background: #fff; }
+.region .region-tag {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  background: #1f2937;
+  color: #fff;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+}
+.region .region-note {
+  color: var(--muted);
+  font-size: 10px;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-2-asym { display: grid; grid-template-columns: 40% 60%; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+.grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; }
+
+/* Top nav stub */
+.topnav {
+  background: #111827;
+  color: #fff;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.topnav .center { display: flex; gap: 14px; opacity: 0.9; }
+.topnav .center .a { border-bottom: 1.5px solid #fff; padding-bottom: 1px; }
+.subnav {
+  background: #fff;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.subnav .tabs { display: flex; gap: 14px; letter-spacing: 0; }
+.subnav .tabs .tab.active { color: #fff; background: var(--ink); padding: 2px 8px; border-radius: 3px; }
+
+/* Metric tiles */
+.metric {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  background: #fff;
+  font-size: 10px;
+}
+.metric .label { color: var(--muted); font-size: 8px; letter-spacing: 0.08em; }
+.metric .val { font-size: 16px; font-weight: 700; margin: 3px 0 1px; }
+.metric .sub { color: var(--muted); font-size: 9px; }
+
+/* Stage rail */
+.stage-rail {
+  display: flex;
+  align-items: center;
+  padding: 10px 6px;
+  background: var(--tinted);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+  font-size: 8px;
+}
+.stage-rail .node {
+  flex: 1;
+  text-align: center;
+  font-size: 8px;
+  color: var(--muted);
+}
+.stage-rail .node .dot {
+  width: 16px; height: 16px;
+  background: var(--tint-2);
+  border-radius: 50%;
+  margin: 0 auto 3px;
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 16px;
+  font-family: ui-monospace, monospace;
+}
+.stage-rail .node.done .dot { background: #047857; color: #fff; }
+.stage-rail .node.current .dot { background: #1d4ed8; color: #fff; }
+.stage-rail .node.locked .dot { background: var(--tint-2); color: var(--muted); }
+.stage-rail .line { flex: 0 0 4px; height: 1px; background: var(--border); margin: 0 -1px; }
+
+/* Kanban */
+.kanban-col {
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 8px;
+  font-size: 10px;
+  min-height: 100px;
+}
+.kanban-col .col-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; margin-bottom: 8px; font-size: 9px;
+}
+.kanban-col .col-head .count { background: var(--tint); padding: 1px 5px; border-radius: 2px; font-size: 8px; }
+.kanban-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid #1d4ed8;
+  padding: 6px;
+  background: #fafafa;
+  margin-bottom: 6px;
+  font-size: 9px;
+}
+.kanban-card.waiting { border-left-color: #b45309; }
+.kanban-card.active { border-left-color: #1d4ed8; }
+.kanban-card.done { border-left-color: #047857; }
+.kanban-card strong { display: block; margin-bottom: 3px; font-size: 10px; }
+.kanban-card .meta { color: var(--muted); font-size: 8px; }
+
+/* Artifact tile */
+.artifact {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  background: #fff;
+  font-size: 10px;
+  min-height: 50px;
+}
+.artifact .id { font-family: ui-monospace, monospace; color: var(--bad); font-size: 8px; }
+.artifact .name { font-weight: 600; margin: 2px 0; font-size: 11px; }
+.artifact .badge { display: inline-block; font-size: 8px; background: var(--tint); padding: 1px 5px; border-radius: 2px; color: var(--muted); }
+.artifact.target .id { color: #047857; font-size: 8px; }
+
+/* Buttons */
+.btn { display: inline-block; padding: 5px 12px; border-radius: 4px; font-size: 10px; }
+.btn.primary { background: #1f2937; color: #fff; }
+.btn.outline { border: 1px solid var(--border); color: var(--ink); }
+.btn.warn { background: #b45309; color: #fff; }
+.btn.good { background: #047857; color: #fff; }
+.btn.muted { background: var(--tint); color: var(--muted); }
+
+/* Chat panel mini */
+.chat-mini {
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 8px;
+  font-size: 10px;
+}
+.chat-mini .head { font-weight: 700; margin-bottom: 3px; }
+.chat-mini .sub { color: var(--muted); font-size: 9px; margin-bottom: 8px; }
+.chat-mini .suggestion {
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  background: #fafafa;
+  font-size: 9px;
+}
+.chat-mini .prompt {
+  border: 1px solid var(--border);
+  background: #fafafa;
+  padding: 5px;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 6px;
+}
+
+/* Friction callouts */
+.friction {
+  background: #fee2e2;
+  border-left: 4px solid var(--bad);
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.friction strong { color: var(--bad); }
+.friction-amber {
+  background: #fef3c7;
+  border-left: 4px solid var(--warn);
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.friction-amber strong { color: var(--warn); }
+.good-note {
+  background: #d1fae5;
+  border-left: 4px solid var(--good);
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.good-note strong { color: var(--good); }
+.target-note {
+  background: #dbeafe;
+  border-left: 4px solid var(--accent);
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.target-note strong { color: var(--accent); }
+
+/* Transition arrows */
+.transition-arrow {
+  text-align: center;
+  margin: 8px 0;
+  font-size: 22px;
+  color: var(--muted);
+}
+.transition-arrow .label {
+  display: inline-block;
+  background: #1f2937;
+  color: #fff;
+  font-size: 10px;
+  padding: 3px 12px;
+  border-radius: 3px;
+  margin: 0 8px;
+  vertical-align: middle;
+}
+
+/* State machine diagram */
+.state-machine {
+  background: #1f2937;
+  color: #fff;
+  padding: 18px;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 18px 0;
+  overflow-x: auto;
+}
+.state-machine .state { color: #fbbf24; }
+.state-machine .arrow { color: #6b7280; }
+.state-machine .terminal { color: #34d399; }
+.state-machine .blocked { color: #f87171; }
+
+/* URL */
+.url {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 4px 0 12px;
+}
+
+.split-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.split-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+
+/* Legend */
+.legend {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+  font-size: 11px;
+}
+.legend .item { display: flex; align-items: center; gap: 6px; }
+.legend .swatch { width: 14px; height: 14px; border-radius: 3px; }
+.swatch.current-c { background: #b45309; }
+.swatch.target-c { background: #047857; }
+.swatch.new-c { background: #1d4ed8; }
+.swatch.friction-r { background: #fee2e2; border-left: 3px solid var(--bad); }
+.swatch.friction-a { background: #fef3c7; border-left: 3px solid var(--warn); }
+.swatch.good-g { background: #d1fae5; border-left: 3px solid var(--good); }
+
+.footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<h1>AbarVa Source — End-to-End Process Wireframes</h1>
+<p class="meta"><strong>Date:</strong> 2026-06-04 · <strong>Scope:</strong> Every screen from sourcing trigger to value realization · <strong>Pattern:</strong> Current state next to target state where they differ · <strong>Use:</strong> Redesign baseline.</p>
+
+<div class="legend">
+  <div class="item"><div class="swatch current-c"></div> CURRENT — what's live today</div>
+  <div class="item"><div class="swatch target-c"></div> TARGET — proposed redesign</div>
+  <div class="item"><div class="swatch new-c"></div> NEW — surface that doesn't exist yet</div>
+  <div class="item"><div class="swatch friction-r"></div> P1 friction</div>
+  <div class="item"><div class="swatch friction-a"></div> P2 friction</div>
+  <div class="item"><div class="swatch good-g"></div> Works well</div>
+</div>
+
+<div class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#bigpicture">The big picture — full state machine</a></li>
+  <li><a href="#entry">Entry · Decision queue + portfolio</a></li>
+  <li><a href="#intake">Intake · /source/new (current + target)</a></li>
+  <li><a href="#approval">Approval · NEW page (target only)</a></li>
+  <li><a href="#stage1">Stage 1 · Strategy (current + target)</a></li>
+  <li><a href="#stage2">Stage 2 · Scope</a></li>
+  <li><a href="#stage3">Stage 3 · RFP</a></li>
+  <li><a href="#stage4">Stage 4 · Responses</a></li>
+  <li><a href="#stage5">Stage 5 · Evaluation</a></li>
+  <li><a href="#stage6">Stage 6 · Pricing + TCO</a></li>
+  <li><a href="#stage7">Stage 7 · BAFO</a></li>
+  <li><a href="#stage8">Stage 8 · Executive Decision (load-bearing)</a></li>
+  <li><a href="#stage9">Stage 9 · Selection &amp; Award</a></li>
+  <li><a href="#stage10">Stage 10 · Transition</a></li>
+  <li><a href="#stage11">Stage 11 · Value Realization</a></li>
+  <li><a href="#exports">Exports · CXO Report + Deal Pack</a></li>
+  <li><a href="#crosscutting">Cross-cutting · Chat / Evidence / Audit / Notifications</a></li>
+  <li><a href="#renewal">Renewal · SRM loop back to entry</a></li>
+</ol>
+</div>
+
+<!-- ====================== 1. BIG PICTURE STATE MACHINE ====================== -->
+<h2 id="bigpicture"><span class="step">PART 1</span>The big picture — full state machine</h2>
+<h4>One diagram. Every state. Every transition. Every approval gate.</h4>
+
+<div class="state-machine">
+                                                            ┌────────────────────────────┐
+  <span class="state">[ Decision Queue ]</span>                                      │   <span class="state">[ Renewal Trigger ]</span>     │
+        │                                                   │   contract clock fires     │
+        │  user clicks "Open decision"                      │   90 / 60 / 30 day notice  │
+        ▼                                                   └──────────────┬─────────────┘
+  <span class="state">[ /source/new — INTAKE ]</span>                                              │
+        │                                                                  │
+        │  5 facts captured                                                ▼
+        │  POST /api/v1/source/events                            <span class="state">[ Renewal event opens ]</span>
+        │  lifecycle_state = waiting_on_client                              │
+        ▼                                                                  │
+  <span class="state">[ /source/events/[id]/approval ]</span>  ← <span class="blocked">NEW PAGE — currently missing</span>      │
+        │                                                                  │
+        │  approver reviews 5 facts + chat trail                           │
+        │  options: APPROVE / REQUEST CHANGES / SEND TO CO-APPROVER        │
+        │                                                                  │
+        ├─ <span class="arrow">→</span> co-approver path  <span class="arrow">→</span> back here when ready                        │
+        │                                                                  │
+        │  POST approve · lifecycle_state = active                         │
+        ▼                                                                  │
+  <span class="state">[ /source/events/[id]?stage=strategy ]</span>  ← <span class="terminal">stage 1 unlocked</span>             │
+        │                                                                  │
+        │  draft memo · clear gate 1 (3 hard criteria)                     │
+        ▼                                                                  │
+  <span class="state">[ stage=scope ]</span>       ← gate 2 (boundary, exclusions, sponsor sign-off)   │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=rfp ]</span>         ← gate 3 (RFP locked, vendor list, comms protocol) │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=responses ]</span>   ← compliance + completeness                        │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=evaluation ]</span> ← scorecard authored + dissent captured             │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=pricing ]</span>     ← TCO normalized + iceberg verified               │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=bafo ]</span>        ← question pack + round log + concession ledger    │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=executive_decision ]</span>  ← <span class="blocked">approval gate · co-signers required</span> │
+        │                                                                  │
+        │  approver(s) sign decision brief                                 │
+        ▼                                                                  │
+  <span class="state">[ stage=selection ]</span>   ← award record + contract handoff                  │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=transition ]</span>  ← KT plan + go-live readiness                      │
+        │                                                                  │
+        ▼                                                                  │
+  <span class="state">[ stage=value ]</span>       ← baseline locked → realized savings rolling       │
+        │                                                                  │
+        │  CFO attestation captured                                        │
+        ▼                                                                  │
+  <span class="terminal">[ lifecycle_state = closed ]</span>                                                 │
+        │                                                                  │
+        │  contract clock starts                                           │
+        └──────────────────────────────────────────────────────────────────┘
+                              (renewal cycle every 12-36 months)
+</div>
+
+<div class="target-note"><strong>Architectural insight ·</strong> The current product has 4 missing transitions: (1) intake → approval is silent (no dedicated page), (2) executive_decision → selection has no enforced co-sign moment, (3) transition has no go-live readiness gate, (4) value has no CFO attestation moment. All four are required by the CXO testing bar.</div>
+
+<!-- ====================== 2. ENTRY ====================== -->
+<h2 id="entry"><span class="step">PART 2</span>Entry · Decision queue + portfolio</h2>
+<h4>Where the sourcing journey begins. Two surfaces today: /source/queue (decisions) and /source/events (portfolio).</h4>
+
+<div class="lifecycle">
+  <div class="step-pill active">ENTRY</div>
+  <div class="step-pill locked">INTAKE</div>
+  <div class="step-pill locked">APPROVAL</div>
+  <div class="step-pill locked">STG 1-3</div>
+  <div class="step-pill locked">STG 4-6</div>
+  <div class="step-pill locked">STG 7</div>
+  <div class="step-pill locked">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<h3>2A · Decision queue (current)</h3>
+<p class="url">/source/queue · 24 cards stacked vertically</p>
+
+<div class="wire">
+<div class="frame-label"><span>PAGE · /source/queue</span><span class="state-tag current">CURRENT</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">24 decisions need your attention</div>
+    <div style="color: var(--muted); font-size: 10px; margin-bottom: 12px;">Vendor renewals, sourcing opportunities, contracts flagged by Sentinel.</div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <div class="region solid">[CARD] Splunk · Telemetry renewal Q3 2026 · $1.4M · &nbsp;[Open decision]</div>
+      <div class="region solid">[CARD] Databricks · Lakehouse renewal 2026-09 · $2.1M · &nbsp;[Open decision]</div>
+      <div class="region solid">[CARD] Klaviyo · Marketing automation · $0.4M · &nbsp;[Open decision]</div>
+      <div style="text-align: center; color: var(--muted); font-size: 10px;">… 21 more, visually identical</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<h3>2B · Decision queue (target)</h3>
+
+<div class="wire">
+<div class="frame-label"><span>PAGE · /source/queue</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+      <div>
+        <div style="font-size: 14px; font-weight: 700;">Source · Attention</div>
+        <div style="color: var(--muted); font-size: 10px;">24 decisions in queue · 3 overdue · $8.4M at stake this quarter</div>
+      </div>
+      <div style="display: flex; gap: 6px; font-size: 10px;">
+        <span class="btn outline">Filter: All</span>
+        <span class="btn outline">Sort: Deadline</span>
+        <span class="btn primary">+ New event</span>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-bottom: 14px;">
+      <div class="region solid" style="border-left: 4px solid #b91c1c;">
+        <strong style="color: #b91c1c; font-size: 10px;">OVERDUE — ACT NOW</strong><br/>
+        <span style="font-size: 11px;">3 renewals past trigger window<br/>$4.2M aggregate value</span>
+      </div>
+      <div class="region solid" style="border-left: 4px solid #b45309;">
+        <strong style="color: #b45309; font-size: 10px;">DUE THIS QUARTER</strong><br/>
+        <span style="font-size: 11px;">8 events · $11.8M<br/>5 need scope clarity</span>
+      </div>
+      <div class="region solid" style="border-left: 4px solid #1d4ed8;">
+        <strong style="color: #1d4ed8; font-size: 10px;">PIPELINE</strong><br/>
+        <span style="font-size: 11px;">13 events · $24.6M<br/>Triggers 6+ months out</span>
+      </div>
+    </div>
+    <div class="region solid" style="margin-bottom: 6px;">
+      <div style="display: flex; gap: 6px; font-size: 8px; margin-bottom: 4px;">
+        <span style="background: #fee2e2; color: #b91c1c; padding: 1px 5px; border-radius: 2px;">OVERDUE</span>
+        <span style="background: var(--tint); padding: 1px 5px; border-radius: 2px;">$1.4M</span>
+        <span style="background: var(--tint); padding: 1px 5px; border-radius: 2px;">SPLUNK</span>
+      </div>
+      <strong style="font-size: 12px;">Splunk telemetry renewal · 14 days overdue trigger window</strong>
+      <div style="color: var(--muted); font-size: 10px;">Auto-renew clause active. 60% overlap with Datadog. Last benchmarked 2024-Q1.</div>
+      <div style="margin-top: 6px;"><span class="btn primary">Open event</span> <span class="btn outline">Defer to Q4</span></div>
+    </div>
+    <div class="region solid" style="margin-bottom: 6px;">
+      <div style="display: flex; gap: 6px; font-size: 8px; margin-bottom: 4px;">
+        <span style="background: #fef3c7; color: #b45309; padding: 1px 5px; border-radius: 2px;">DUE Q3</span>
+        <span style="background: var(--tint); padding: 1px 5px; border-radius: 2px;">$2.1M</span>
+        <span style="background: var(--tint); padding: 1px 5px; border-radius: 2px;">DATABRICKS</span>
+      </div>
+      <strong style="font-size: 12px;">Databricks Lakehouse renewal · 47 days to trigger window</strong>
+      <div style="color: var(--muted); font-size: 10px;">Usage +47% YoY. Snowflake counter-quote available. Modernization wave interlocks.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="good-note"><strong>Target moves ·</strong> Triage bands at the top (OVERDUE / DUE THIS QUARTER / PIPELINE) replace the flat wall. Each card has color-coded urgency, primary CTA matched to action, and contextual hint about leverage or interlock. Same 24 cards become scannable in 5 seconds.</div>
+
+<h3>2C · Portfolio kanban (anchor — already strong)</h3>
+<p class="url">/source/events</p>
+
+<div class="wire">
+<div class="frame-label"><span>PAGE · /source/events</span><span class="state-tag" style="background: #047857">ANCHOR — keep as-is</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 18px; margin-bottom: 4px;">Sourcing events</div>
+    <div style="color: var(--muted); font-size: 10px; margin-bottom: 12px;">2 events · $39M total value · Nothing needs attention today</div>
+    <div class="grid-6" style="margin-bottom: 12px;">
+      <div class="metric"><div class="label">TOTAL VALUE</div><div class="val">$39M</div></div>
+      <div class="metric"><div class="label">OPEN PIPELINE</div><div class="val">$39M</div></div>
+      <div class="metric"><div class="label">ACTIVE</div><div class="val">2</div></div>
+      <div class="metric"><div class="label">WAITING</div><div class="val">0</div></div>
+      <div class="metric"><div class="label">AT-RISK</div><div class="val">—</div></div>
+      <div class="metric"><div class="label">OLDEST</div><div class="val">2d</div></div>
+    </div>
+    <div class="grid-5">
+      <div class="kanban-col">
+        <div class="col-head"><span>Discovery</span><span class="count">1</span></div>
+        <div class="kanban-card active"><strong>Apex AMS Sourcing</strong><div class="meta">Strategy · 2d · $4M</div></div>
+      </div>
+      <div class="kanban-col"><div class="col-head"><span>Eval/Pricing</span><span class="count">0</span></div></div>
+      <div class="kanban-col">
+        <div class="col-head"><span>BAFO/Decision</span><span class="count">1</span></div>
+        <div class="kanban-card active"><strong>AMS Outsourcing 2026</strong><div class="meta">Exec Decision · 1d · $35M</div></div>
+      </div>
+      <div class="kanban-col"><div class="col-head"><span>Transition</span><span class="count">0</span></div></div>
+      <div class="kanban-col"><div class="col-head"><span>✓ Awarded</span><span class="count">0</span></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="good-note"><strong>Works ·</strong> This is the design anchor — executive-grade. Every other Source surface should aspire to this quality of hierarchy and density.</div>
+
+<div class="transition-arrow">▼<span class="label">User clicks "+ New event" OR "Open decision" on a queue card</span>▼</div>
+
+<!-- ====================== 3. INTAKE ====================== -->
+<h2 id="intake"><span class="step">PART 3</span>Intake · /source/new (current next to target)</h2>
+
+<div class="lifecycle">
+  <div class="step-pill passed">ENTRY</div>
+  <div class="step-pill active">INTAKE</div>
+  <div class="step-pill locked">APPROVAL</div>
+  <div class="step-pill locked">STG 1-3</div>
+  <div class="step-pill locked">STG 4-6</div>
+  <div class="step-pill locked">STG 7</div>
+  <div class="step-pill locked">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<div class="split-2">
+  <!-- CURRENT INTAKE -->
+  <div>
+    <h3>3A · Intake (current)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>/source/new</span><span class="state-tag current">CURRENT</span></div>
+      <div class="frame-body">
+        <div class="canvas-tint">
+          <div style="font-family: Georgia, serif; font-size: 16px;">Sourcing event intake</div>
+          <div style="color: var(--muted); font-size: 9px; margin-bottom: 10px;">Tell Sentinel your sourcing situation in plain language…</div>
+          <div class="grid-2-asym" style="gap: 10px;">
+            <div class="chat-mini" style="font-size: 9px;">
+              <div class="head">Sentinel Source</div>
+              <div class="sub">Source Orchestrator</div>
+              <div style="font-size: 9px; margin-bottom: 4px;">In reply to: "Ready to stand up a new IT sourcing event…"</div>
+              <div style="font-size: 9px; background: #fef3c7; padding: 4px; margin: 6px 0; color: var(--warn);">AI DRAFT · REVIEW BEFORE ACTING</div>
+              <div class="prompt">⌘ yes VP</div>
+              <div style="font-size: 8px; background: #d1fae5; padding: 3px; margin-top: 5px; color: var(--good);">HUMAN APPROVAL REQUIRED…</div>
+            </div>
+            <div>
+              <div class="region solid" style="margin-bottom: 6px;">
+                <div style="font-size: 8px; color: var(--muted);">EVENT FACTS</div>
+                <div style="font-size: 9px; font-weight: 600;">WHY NOW · TRIGGER *</div>
+                <div style="border: 1px solid var(--border); background: #fff; padding: 4px; font-size: 9px;">Cost reduction (25% target) by adopting global delivery model…</div>
+              </div>
+              <div class="region solid" style="margin-bottom: 6px;">
+                <div style="font-size: 9px; font-weight: 600;">DECISION OWNER</div>
+                <div style="border: 1px solid var(--border); background: #fff; padding: 4px; font-size: 9px;">Carlos Rivera (CIO)…</div>
+              </div>
+              <div class="region solid" style="margin-bottom: 6px;">
+                <div style="font-size: 9px; font-weight: 600;">SCOPE BOUNDARY · VALUE TARGET · BASELINE OWNER</div>
+                <div style="color: var(--muted); font-size: 8px;">3 more fields populating via chat…</div>
+              </div>
+              <div style="margin-top: 8px; padding: 8px; background: var(--tint); border-radius: 3px; font-size: 9px; color: var(--muted); text-align: center;">⚠ No submit / submit-for-approval CTA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="friction"><strong>P1 ·</strong> No terminal state. No "Open Event" button. No "Where does this go?" indicator. User keeps chatting forever.</div>
+    <div class="friction"><strong>P1 ·</strong> Field labels include "STEWARD NEEDS" / "SENTINEL NEEDS" / "ATLAS NEEDS" — internal taxonomy.</div>
+    <div class="friction-amber"><strong>P2 ·</strong> 5 fields fill silently via chat; no visible progress meter signals "ready to submit."</div>
+  </div>
+
+  <!-- TARGET INTAKE -->
+  <div>
+    <h3>3B · Intake (target)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>/source/new</span><span class="state-tag target">TARGET</span></div>
+      <div class="frame-body">
+        <div class="canvas-tint">
+          <div style="font-family: Georgia, serif; font-size: 16px;">Open a sourcing event</div>
+          <div style="color: var(--muted); font-size: 9px; margin-bottom: 10px;">Capture 5 facts. Sentinel helps. You can override anything.</div>
+          <div class="grid-2-asym" style="gap: 10px;">
+            <div class="chat-mini" style="font-size: 9px;">
+              <div class="head">Sentinel</div>
+              <div class="sub">Helps you capture the 5 facts</div>
+              <div style="font-size: 9px; margin: 4px 0;">"yes VP" → confirmed. Last field captured.</div>
+              <div style="background: #d1fae5; padding: 4px; font-size: 9px; color: var(--good); margin: 5px 0;">✓ 5/5 facts captured — ready to open</div>
+              <div class="prompt">⌘ Anything else? (optional)</div>
+            </div>
+            <div>
+              <div class="region solid">
+                <div style="font-size: 8px; color: var(--muted); margin-bottom: 5px;">EVENT FACTS · 5/5 ✓</div>
+                <div style="font-size: 9px; line-height: 1.6;">
+                  <div>✓ Why now: <em>cost reduction 25% via global delivery</em></div>
+                  <div>✓ Decision owner: <em>Carlos Rivera (CIO)</em></div>
+                  <div>✓ Co-decision: <em>Lynne Stratham (CDO)</em></div>
+                  <div>✓ Scope: <em>Data analytics ops · Snowflake / Databricks / dbt / Looker</em></div>
+                  <div>✓ Value target: <em>25% cost reduction</em></div>
+                  <div>✓ Baseline owner: <em>VP Data Analytics (TBC)</em></div>
+                </div>
+              </div>
+              <div class="region solid" style="margin-top: 10px; border-color: var(--accent); border-style: solid; background: #dbeafe;">
+                <div style="font-size: 8px; color: var(--accent); margin-bottom: 4px;">▼ NEXT · APPROVAL</div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 4px;">Open event for approval</div>
+                <div style="font-size: 9px; color: var(--ink); margin-bottom: 4px;">Routes to: <strong>Carlos Rivera</strong> (you) + <strong>Lynne Stratham</strong> (co-decision)</div>
+                <div style="font-size: 9px; color: var(--muted); margin-bottom: 6px;">Pilot mode: self-approval allowed with rationale.</div>
+                <span class="btn primary">▶ Open event</span>
+                <span class="btn outline">Save draft</span>
+              </div>
+              <div style="font-size: 9px; color: var(--muted); margin-top: 8px; text-align: center;">After submit: redirect to /approval — not the canvas.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="good-note"><strong>Target moves ·</strong> (1) Captured facts collapse to a checklist when complete. (2) "Next: Approval" panel appears at 5/5 with explicit routing. (3) Submit reveals what happens next. (4) Field labels are buyer-facing. (5) Disclaimers compress to one line at bottom.</div>
+  </div>
+</div>
+
+<div class="transition-arrow">▼<span class="label">POST /api/v1/source/events · lifecycle_state = waiting_on_client</span>▼</div>
+
+<!-- ====================== 4. APPROVAL ====================== -->
+<h2 id="approval"><span class="step">PART 4</span>Approval · /source/events/[id]/approval (NEW page)</h2>
+<h4>The missing piece. Current flow drops the user on the canvas with a tiny WAITING ON CLIENT badge. Target: a dedicated approval page that blocks canvas access until resolved.</h4>
+
+<div class="lifecycle">
+  <div class="step-pill passed">ENTRY</div>
+  <div class="step-pill passed">INTAKE</div>
+  <div class="step-pill active">APPROVAL</div>
+  <div class="step-pill locked">STG 1-3</div>
+  <div class="step-pill locked">STG 4-6</div>
+  <div class="step-pill locked">STG 7</div>
+  <div class="step-pill locked">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<div class="wire">
+<div class="frame-label"><span>PAGE · /source/events/[id]/approval</span><span class="state-tag new">NEW</span></div>
+<div class="frame-body">
+  <div class="canvas-pending">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 14px;">
+      <div>
+        <div style="font-size: 10px; color: var(--warn); letter-spacing: 0.06em;">PENDING APPROVAL · WAITING ON CLIENT · 2 minutes aged</div>
+        <div style="font-family: Georgia, serif; font-size: 22px;">Data Analytics Operations — Global Delivery Model 2026</div>
+        <div style="color: var(--muted); font-size: 11px;">Managed Service · Strategic · Opened by Carlos Rivera, CIO · 2 min ago</div>
+      </div>
+      <div style="background: #b45309; color: #fff; padding: 6px 14px; border-radius: 4px; font-size: 11px;">● WAITING ON CLIENT</div>
+    </div>
+
+    <div class="grid-2" style="gap: 16px;">
+      <!-- LEFT: Facts + chat trail -->
+      <div>
+        <div class="region solid" style="margin-bottom: 12px;">
+          <div class="region-tag">CAPTURED FACTS · 5/5</div>
+          <div style="font-size: 11px; line-height: 1.7; margin-top: 4px;">
+            <div><strong>Trigger</strong></div>
+            <div style="color: var(--muted); margin-bottom: 6px;">Cost reduction (25% target) by adopting a global delivery model for analytics operations.</div>
+            <div><strong>Decision owner</strong></div>
+            <div style="color: var(--muted); margin-bottom: 6px;">Carlos Rivera (CIO). Lynne Stratham (CDO) requested as co-decision authority.</div>
+            <div><strong>Scope</strong></div>
+            <div style="color: var(--muted); margin-bottom: 6px;">Data analytics operations — Snowflake, Databricks, dbt, Looker, Fivetran. Support, maintenance, and new development.</div>
+            <div><strong>Value target</strong></div>
+            <div style="color: var(--muted); margin-bottom: 6px;">25% cost reduction via global resource model.</div>
+            <div><strong>Baseline owner</strong></div>
+            <div style="color: var(--muted);">VP of Data Analytics (reports to Lynne Stratham / CDO) — name to be confirmed.</div>
+          </div>
+          <div style="margin-top: 8px;">
+            <span class="btn outline">Request changes</span>
+          </div>
+        </div>
+        <div class="region solid">
+          <div class="region-tag">INTAKE CONVERSATION · 12 turns</div>
+          <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">Sentinel ↔ Carlos · "yes VP" → confirmed last field</div>
+          <div style="margin-top: 6px;"><span class="btn outline">▾ Expand chat trail</span></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Approval routing -->
+      <div>
+        <div class="region solid" style="margin-bottom: 12px; border-color: var(--accent);">
+          <div class="region-tag" style="background: var(--accent);">APPROVAL ROUTING</div>
+          <div style="font-size: 11px; margin-top: 6px;">
+            <div style="margin-bottom: 12px;">
+              <div style="font-weight: 700;">Carlos Rivera (CIO)</div>
+              <div style="color: var(--muted); font-size: 10px;">You — sponsor + creator. Pilot self-approval available.</div>
+              <div style="background: #fef3c7; padding: 6px; margin-top: 4px; font-size: 10px; color: var(--warn);">⚠ Self-approval notice: you are the recorded event creator. Audit log will flag.</div>
+            </div>
+            <div style="margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+              <div style="font-weight: 700;">Lynne Stratham (CDO)</div>
+              <div style="color: var(--muted); font-size: 10px;">Requested co-decision authority. Has not been notified yet.</div>
+              <div style="margin-top: 4px;"><span class="btn outline">Send to Lynne for co-approval</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="region solid" style="margin-bottom: 12px;">
+          <div class="region-tag">RATIONALE · required</div>
+          <div style="border: 1px solid var(--border); background: #fff; padding: 8px; font-size: 10px; color: var(--muted); min-height: 60px; margin-top: 5px;">Why are you approving / requesting changes / sending to co-approver? Required for audit log.</div>
+          <div style="font-size: 9px; color: var(--muted); margin-top: 4px;"><label><input type="checkbox" /> I confirm this is my accountable human approval decision</label></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span class="btn good" style="text-align: center; padding: 10px;">✓ APPROVE (self-approve · pilot mode)</span>
+          <span class="btn outline" style="text-align: center; padding: 10px;">→ SEND TO LYNNE STRATHAM</span>
+          <span class="btn outline" style="text-align: center; padding: 10px;">⟲ REQUEST CHANGES (back to intake)</span>
+          <span class="btn outline" style="text-align: center; padding: 10px; color: var(--bad); border-color: var(--bad);">✕ REJECT (close event)</span>
+        </div>
+
+        <div style="margin-top: 14px; padding: 10px; background: #fff; border-left: 3px solid var(--muted); font-size: 9px; color: var(--muted);">
+          <strong>What happens next:</strong><br/>
+          → On approve: event unlocks at Stage 1 Strategy. You can draft the strategy memo.<br/>
+          → On co-approve: Lynne gets a notification + this page link. Both must approve.<br/>
+          → On request changes: chat reopens at /source/new with current facts loaded.<br/>
+          → On reject: event closed, audit log retains the record.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="target-note"><strong>Design notes ·</strong> Approval is a real page with its own URL. Approver sees all 5 facts + can expand the chat trail. Co-approver routing is a first-class action. Rationale is required (no silent approvals). What-happens-next preview prevents confusion. Page blocks the canvas — typing the canvas URL redirects here.</div>
+
+<div class="transition-arrow">▼<span class="label">POST approve · lifecycle_state = active · redirect to /events/[id]?stage=strategy</span>▼</div>
+
+<!-- ====================== 5. STAGE 1 STRATEGY ====================== -->
+<h2 id="stage1"><span class="step">PART 5</span>Stage 1 · Strategy (current next to target)</h2>
+
+<div class="lifecycle">
+  <div class="step-pill passed">ENTRY</div>
+  <div class="step-pill passed">INTAKE</div>
+  <div class="step-pill passed">APPROVAL</div>
+  <div class="step-pill active">STG 1-3</div>
+  <div class="step-pill locked">STG 4-6</div>
+  <div class="step-pill locked">STG 7</div>
+  <div class="step-pill locked">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<div class="split-2">
+  <div>
+    <h3>5A · Strategy canvas (current)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>?stage=strategy</span><span class="state-tag current">CURRENT</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <div style="font-family: Georgia, serif; font-size: 14px;">Data Analytics Ops — Global Delivery Model 2026</div>
+          <div style="color: var(--muted); font-size: 9px; margin-bottom: 6px;">Managed Service · Strategic · Owner: CIO + CDO co-owner</div>
+          <div class="stage-rail" style="margin-bottom: 8px;">
+            <div class="node current"><div class="dot">01</div>Strat</div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">02</div>Scope</div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">03</div>RFP</div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">…</div></div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">11</div>Val</div>
+          </div>
+          <div class="grid-2-asym">
+            <div class="chat-mini">
+              <div class="head">Sentinel Source</div>
+              <div class="sub">~50% width</div>
+              <div class="suggestion">Help me write the strategy memo from the event facts</div>
+              <div class="suggestion">Show me the value-target levers</div>
+              <div class="suggestion">Recommend the rigor level</div>
+              <div class="prompt">⌘ Ask…</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: 700;">No DB-backed documents yet</div>
+              <div style="color: var(--muted); font-size: 9px; margin-bottom: 8px;">Uploaded files and generated packets will appear here…</div>
+              <div style="font-size: 9px; color: var(--muted);">REQUIRED</div>
+              <div class="artifact"><div class="id">d01_strategy_memo</div><div class="name">Sourcing Strategy Memo</div><span class="badge">Template</span> <span class="badge" style="background: #fee2e2; color: var(--bad);">NOT STARTED · GATE</span></div>
+              <div class="artifact" style="margin-top: 4px;"><div class="id">d02_value_target</div><div class="name">Value Target Brief</div><span class="badge">Template</span> <span class="badge" style="background: #fee2e2; color: var(--bad);">NOT STARTED · GATE</span></div>
+              <div style="margin-top: 8px; font-size: 9px; color: var(--muted);">OPTIONAL</div>
+              <div class="artifact"><div class="id">d03_archetype</div><div class="name">Archetype Decision Record</div></div>
+              <div style="margin-top: 8px; display: flex; gap: 4px;">
+                <span class="btn primary">Generate with Sentinel</span>
+                <span class="btn outline">Author content</span>
+                <span class="btn outline">Download DOCX</span>
+                <span class="btn outline">View HTML</span>
+                <span class="btn outline">Download PDF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="friction"><strong>P1 ·</strong> 5 CTAs visible on an empty memo. Download/View buttons before content exists.</div>
+    <div class="friction"><strong>P1 ·</strong> Artifact codes (d01_strategy_memo, etc.) visible; "Template", "GATE", "NOT STARTED" status proliferation.</div>
+    <div class="friction"><strong>P1 ·</strong> "No DB-backed documents yet" headline — internal language taking prime real estate.</div>
+    <div class="friction-amber"><strong>P2 ·</strong> Sentinel chat ~50% width on a stage where user just landed and has nothing to chat about.</div>
+  </div>
+
+  <div>
+    <h3>5B · Strategy canvas (target)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>?stage=strategy</span><span class="state-tag target">TARGET</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <div style="font-family: Georgia, serif; font-size: 14px;">Data Analytics Ops — Global Delivery Model 2026</div>
+          <div style="color: var(--muted); font-size: 9px; margin-bottom: 6px;">Managed Service · Strategic · CIO + CDO co-decision · ✓ Approved 2 min ago</div>
+          <div class="stage-rail" style="margin-bottom: 8px;">
+            <div class="node current"><div class="dot">01</div>Strat<br/><span style="font-size: 7px;">0/3 gates</span></div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">02</div>Scope<br/><span style="font-size: 7px;">locked</span></div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">03</div>RFP<br/><span style="font-size: 7px;">locked</span></div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">…</div></div>
+            <div class="line"></div>
+            <div class="node locked"><div class="dot">11</div>Value</div>
+          </div>
+
+          <div class="region solid" style="border-color: var(--accent); margin-bottom: 12px; background: #dbeafe;">
+            <div class="region-tag" style="background: var(--accent);">NEXT MOVE</div>
+            <div style="margin-top: 6px;">
+              <strong style="font-size: 12px;">Draft your Strategy Memo</strong>
+              <div style="color: var(--ink); font-size: 10px; margin: 4px 0;">Sentinel can write a first draft from your 5 captured facts. You review + approve. ~2 min.</div>
+              <span class="btn primary">▶ Draft with Sentinel</span> <span class="btn outline">Write it myself</span>
+            </div>
+          </div>
+
+          <div class="grid-2-asym" style="gap: 10px;">
+            <div class="chat-mini" style="opacity: 0.7;">
+              <div class="head">Sentinel</div>
+              <div class="sub">Compact when stage is fresh</div>
+              <div style="font-size: 9px; color: var(--muted); margin-top: 6px;">Ask anything · 3 stage-specific suggestions available</div>
+              <div class="prompt">⌘ ▼ Expand</div>
+            </div>
+            <div>
+              <div style="font-size: 10px; color: var(--muted); margin-bottom: 4px;">STAGE 1 · STRATEGY · REQUIRED ARTIFACTS</div>
+              <div class="artifact target"><div class="id">Required to advance</div><div class="name">Strategy Memo</div><span class="badge" style="background: var(--tint); color: var(--muted);">Awaiting draft</span></div>
+              <div class="artifact target" style="margin-top: 4px;"><div class="id">Required to advance</div><div class="name">Value Target Brief</div><span class="badge" style="background: var(--tint); color: var(--muted);">Awaiting draft</span></div>
+              <div style="margin-top: 8px; font-size: 9px; color: var(--muted);">OPTIONAL · authored on-demand</div>
+              <div class="artifact target"><div class="name">Archetype Decision Record</div></div>
+
+              <div style="margin-top: 10px; padding: 8px; background: var(--tint); border-radius: 3px; font-size: 9px;">
+                <strong>Gates blocking Stage 2 (Scope):</strong>
+                <div style="margin-top: 4px; color: var(--muted);">
+                  ☐ Strategy memo signed by sponsor<br/>
+                  ☐ Value target set with range and confidence<br/>
+                  ☐ Archetype + rigor level chosen
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="good-note"><strong>Target moves ·</strong> Page leads with the next move, not options. Sentinel chat compacts when not active. Artifact tiles drop internal codes. Gates surface as a checklist tied to the next stage. Single primary CTA ("Draft with Sentinel") replaces the 5-button cluster.</div>
+  </div>
+</div>
+
+<div class="transition-arrow">▼<span class="label">Gate cleared · advance to Stage 2 Scope (auto-route)</span>▼</div>
+
+<!-- ====================== 6. STAGE 2 SCOPE ====================== -->
+<h2 id="stage2"><span class="step">PART 6</span>Stage 2 · Scope</h2>
+
+<div class="lifecycle">
+  <div class="step-pill passed">ENTRY</div>
+  <div class="step-pill passed">INTAKE</div>
+  <div class="step-pill passed">APPROVAL</div>
+  <div class="step-pill active">STG 1-3</div>
+  <div class="step-pill locked">STG 4-6</div>
+  <div class="step-pill locked">STG 7</div>
+  <div class="step-pill locked">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=scope</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 2 · Scope</div>
+    <div style="color: var(--muted); font-size: 10px;">Define what's in, what's out, and what assumptions Lakeshore's RFP will be built on.</div>
+    <div class="grid-2-asym" style="margin-top: 12px; gap: 14px;">
+      <div class="chat-mini" style="opacity: 0.7;">
+        <div class="head">Sentinel · stage-aware</div>
+        <div class="suggestion">Build the application inventory from CMDB</div>
+        <div class="suggestion">List exclusions to challenge</div>
+        <div class="suggestion">Surface scope dependencies</div>
+      </div>
+      <div>
+        <div class="region solid" style="margin-bottom: 8px; background: #dbeafe; border-color: var(--accent);">
+          <div class="region-tag" style="background: var(--accent);">NEXT MOVE</div>
+          <strong style="font-size: 11px;">Build the application inventory</strong>
+          <div style="font-size: 10px; color: var(--ink); margin: 4px 0;">Sentinel pulls from CMDB + your trigger statement. You confirm in/out per app. ~10 min.</div>
+          <span class="btn primary">Pull inventory</span>
+        </div>
+        <div class="grid-2" style="gap: 8px;">
+          <div class="artifact target"><div class="name">Scope Memo</div><span class="badge" style="background: var(--tint); color: var(--muted);">Awaiting</span></div>
+          <div class="artifact target"><div class="name">Application Inventory</div><span class="badge" style="background: var(--tint); color: var(--muted);">Awaiting</span></div>
+        </div>
+        <div style="margin-top: 10px; padding: 8px; background: var(--tint); border-radius: 3px; font-size: 9px;">
+          <strong>Gates blocking Stage 3 (RFP):</strong><br/>
+          <span style="color: var(--muted);">☐ Inclusions/exclusions confirmed with sponsor<br/>☐ Retained-org assumptions documented<br/>☐ Dependency map reviewed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 7. STAGE 3 RFP ====================== -->
+<h2 id="stage3"><span class="step">PART 7</span>Stage 3 · RFP</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=rfp</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 3 · RFP</div>
+    <div style="color: var(--muted); font-size: 10px;">Package, vendor list, eval rubric, Q&amp;A protocol. Release once gate clears.</div>
+    <div class="grid-2-asym" style="margin-top: 12px; gap: 14px;">
+      <div class="chat-mini" style="opacity: 0.7;">
+        <div class="head">Sentinel</div>
+        <div class="suggestion">Draft the RFP pack from scope memo</div>
+        <div class="suggestion">Recommend evaluation weights</div>
+        <div class="suggestion">Suggest vendor shortlist (5 candidates)</div>
+      </div>
+      <div>
+        <div class="grid-2" style="gap: 8px;">
+          <div class="artifact target"><div class="name">RFP Package</div><span class="badge" style="background: #d1fae5; color: var(--good);">Draft v2</span></div>
+          <div class="artifact target"><div class="name">Eval Rubric (weighted)</div><span class="badge" style="background: #d1fae5; color: var(--good);">Locked</span></div>
+          <div class="artifact target"><div class="name">Vendor Shortlist</div><span class="badge" style="background: #fef3c7; color: var(--warn);">5 candidates</span></div>
+          <div class="artifact target"><div class="name">Q&amp;A Protocol</div><span class="badge" style="background: #d1fae5; color: var(--good);">Authored</span></div>
+        </div>
+        <div class="region solid" style="margin-top: 12px; border-color: var(--warn); background: #fef3c7;">
+          <div class="region-tag" style="background: var(--warn);">GATE · 1 OF 3</div>
+          <strong style="font-size: 11px;">Sponsor sign-off required before release</strong>
+          <div style="font-size: 10px; color: var(--ink); margin: 4px 0;">RFP pack v2 includes legal-cleared MSA terms. Send to Carlos Rivera for signature.</div>
+          <span class="btn primary">Send for sign-off</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="transition-arrow">▼<span class="label">RFP released to 5 vendors · Q&amp;A window opens · 3 weeks to responses</span>▼</div>
+
+<!-- ====================== 8. STAGE 4 RESPONSES ====================== -->
+<h2 id="stage4"><span class="step">PART 8</span>Stage 4 · Vendor Responses</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=responses</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 4 · Responses</div>
+    <div style="color: var(--muted); font-size: 10px;">Completeness check, compliance flag, Q&amp;A symmetry.</div>
+
+    <div class="grid-5" style="margin: 12px 0;">
+      <div class="region solid"><strong>Northstar</strong><div style="font-size: 9px; color: var(--good);">Complete</div></div>
+      <div class="region solid"><strong>Atlas SI</strong><div style="font-size: 9px; color: var(--good);">Complete</div></div>
+      <div class="region solid"><strong>ArcVault</strong><div style="font-size: 9px; color: var(--warn);">Partial · 2 gaps</div></div>
+      <div class="region solid"><strong>BluRidge</strong><div style="font-size: 9px; color: var(--bad);">Non-compliant · MSA</div></div>
+      <div class="region solid"><strong>Vorta</strong><div style="font-size: 9px; color: var(--muted);">Late · day 3</div></div>
+    </div>
+
+    <div class="grid-2" style="gap: 10px;">
+      <div class="region solid">
+        <div class="region-tag">COMPLETENESS MATRIX</div>
+        <div style="font-size: 10px; margin-top: 5px;">Per vendor × per RFP section. Red = missing. Amber = clarification requested.</div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">Q&amp;A LOG · 14 questions · symmetric</div>
+        <div style="font-size: 10px; margin-top: 5px;">All Q's distributed to all bidders. Search + filter by vendor/section.</div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 10px; background: #fef3c7; border-color: var(--warn);">
+      <div class="region-tag" style="background: var(--warn);">DECISION POINT</div>
+      <strong style="font-size: 11px;">Disqualify BluRidge for MSA non-compliance?</strong>
+      <div style="font-size: 10px; color: var(--ink); margin: 4px 0;">MSA Section 8.3 unconditional. They've not signed. Two options:</div>
+      <span class="btn primary">Disqualify (recorded)</span> <span class="btn outline">Allow conditional response</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 9. STAGE 5 EVALUATION ====================== -->
+<h2 id="stage5"><span class="step">PART 9</span>Stage 5 · Evaluation</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=evaluation</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 5 · Evaluation</div>
+    <div style="color: var(--muted); font-size: 10px;">Score against locked criteria. Capture rationale + dissent.</div>
+
+    <table style="width: 100%; font-size: 10px; margin-top: 12px; border-collapse: collapse;">
+      <thead>
+        <tr style="background: var(--tint);">
+          <th style="border: 1px solid var(--border); padding: 6px; text-align: left;">Criterion (weight)</th>
+          <th style="border: 1px solid var(--border); padding: 6px;">Northstar</th>
+          <th style="border: 1px solid var(--border); padding: 6px;">Atlas SI</th>
+          <th style="border: 1px solid var(--border); padding: 6px;">ArcVault</th>
+          <th style="border: 1px solid var(--border); padding: 6px;">Reviewer rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="border: 1px solid var(--border); padding: 6px;">Technical depth (30%)</td><td style="border: 1px solid var(--border); text-align: center;"><strong>8.5</strong></td><td style="border: 1px solid var(--border); text-align: center;">7.8</td><td style="border: 1px solid var(--border); text-align: center;">6.5</td><td style="border: 1px solid var(--border); font-size: 9px;">Northstar's data engineering depth proven; cites 3 client refs at scale.</td></tr>
+        <tr><td style="border: 1px solid var(--border); padding: 6px;">Commercial fit (25%)</td><td style="border: 1px solid var(--border); text-align: center;">7.2</td><td style="border: 1px solid var(--border); text-align: center;"><strong>8.8</strong></td><td style="border: 1px solid var(--border); text-align: center;">7.0</td><td style="border: 1px solid var(--border); font-size: 9px;">Atlas SI's pricing 14% below median; outcome-based proposed.</td></tr>
+        <tr><td style="border: 1px solid var(--border); padding: 6px;">Transition risk (20%)</td><td style="border: 1px solid var(--border); text-align: center;">7.5</td><td style="border: 1px solid var(--border); text-align: center;">6.8</td><td style="border: 1px solid var(--border); text-align: center;">7.5</td><td style="border: 1px solid var(--border); font-size: 9px;">Northstar &amp; ArcVault tied on transition plan rigor.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="grid-2" style="gap: 10px; margin-top: 12px;">
+      <div class="region solid" style="background: #fef3c7; border-color: var(--warn);">
+        <div class="region-tag" style="background: var(--warn);">DISSENT CAPTURED</div>
+        <div style="font-size: 10px; margin-top: 5px;"><strong>Reviewer Sarah Chen (CTO Office)</strong> argued Atlas SI's commercial fit doesn't compensate for technical depth gap. Tracked at decision brief §3.</div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">BATNA</div>
+        <div style="font-size: 10px; margin-top: 5px;">If Northstar walks: Atlas SI (-0.7 weighted points). Credible alternative.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 10. STAGE 6 PRICING ====================== -->
+<h2 id="stage6"><span class="step">PART 10</span>Stage 6 · Pricing &amp; TCO</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=pricing</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 6 · Pricing Normalization</div>
+    <div style="color: var(--muted); font-size: 10px;">Apples-to-apples TCO. Surface hidden costs. Sensitivity test.</div>
+
+    <div class="grid-3" style="margin-top: 12px; gap: 12px;">
+      <div class="region solid">
+        <div class="region-tag">TCO BRIDGE</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          Baseline (Wipro): $35.0M<br/>
+          → Northstar normalized: $13.21M<br/>
+          → Atlas SI normalized: $11.40M<br/>
+          → ArcVault normalized: $14.60M<br/>
+          <strong>3-yr savings range: $20M-29M</strong>
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">TCO ICEBERG · 30/70</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          Visible (30%): rates · per-FTE costs<br/>
+          Hidden (70%): governance · change control · transition · exit · retained-org<br/>
+          <strong style="color: var(--warn);">⚠ Northstar's hidden costs +18% over peer median</strong>
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">SENSITIVITY</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          Volume -20%: Northstar wins<br/>
+          Volume +30%: Atlas SI wins (scale flexibility)<br/>
+          FX shift ±5%: stable across all
+        </div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px; background: #fef3c7; border-color: var(--warn);">
+      <div class="region-tag" style="background: var(--warn);">TRAP LOG · 4 ACTIVE</div>
+      <div style="font-size: 10px; margin-top: 5px;">
+        T-001: Northstar Year-1 rate 8% below market — likely escalator trap at Year-2<br/>
+        T-002: Atlas SI T&amp;M scope unbounded — needs cap before BAFO<br/>
+        T-003: ArcVault transition cost rolled into Year-1 — surface separately<br/>
+        T-004: All vendors quoted FX-neutral — Lakeshore-style hedging not addressed
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 11. STAGE 7 BAFO ====================== -->
+<h2 id="stage7"><span class="step">PART 11</span>Stage 7 · BAFO</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=bafo</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 7 · BAFO Negotiation</div>
+    <div style="color: var(--muted); font-size: 10px;">Move every lever. Document every concession. Walk-away envelope locked.</div>
+
+    <div class="grid-2" style="margin-top: 12px; gap: 12px;">
+      <div class="region solid">
+        <div class="region-tag">LEVER ENVELOPE — NORTHSTAR</div>
+        <table style="width: 100%; font-size: 9px; margin-top: 5px;">
+          <tr style="background: var(--tint);"><th>Lever</th><th>Opening</th><th>Target</th><th>Walk-away</th></tr>
+          <tr><td>Price</td><td>$13.21M</td><td>$11.50M</td><td>$12.50M</td></tr>
+          <tr><td>Term</td><td>3yr</td><td>3+2 option</td><td>2+2</td></tr>
+          <tr><td>Exit notice</td><td>180d</td><td>120d</td><td>180d</td></tr>
+          <tr><td>Benchmark right</td><td>none</td><td>2yr active</td><td>3yr passive</td></tr>
+          <tr><td>Audit rights</td><td>6mo</td><td>12mo</td><td>9mo</td></tr>
+        </table>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">CONCESSION LEDGER · Round 1</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          <strong>We asked:</strong> 11% price reduction<br/>
+          <strong>Vendor gave:</strong> 7% with volume floor<br/>
+          <strong>We offered:</strong> 3-yr commit (was 2-yr)<br/>
+          <strong>Net NPV swing:</strong> +$2.8M to us<br/>
+          <span style="color: var(--warn);">⚠ Round 2 target: governance + exit improvements</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px;">
+      <div class="region-tag">BAFO QUESTION PACK · 18 questions · per-vendor</div>
+      <div style="font-size: 10px; margin-top: 5px;">
+        Each question targets an open trap or lever. Vendor responses → concession ledger → renormalized TCO → decide.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 12. STAGE 8 EXECUTIVE DECISION ====================== -->
+<h2 id="stage8"><span class="step">PART 12</span>Stage 8 · Executive Decision (load-bearing)</h2>
+<h4>The CXO opens this on a phone in 30 seconds. Lead with the answer.</h4>
+
+<div class="lifecycle">
+  <div class="step-pill passed">ENTRY</div>
+  <div class="step-pill passed">INTAKE</div>
+  <div class="step-pill passed">APPROVAL</div>
+  <div class="step-pill passed">STG 1-3</div>
+  <div class="step-pill passed">STG 4-6</div>
+  <div class="step-pill passed">STG 7</div>
+  <div class="step-pill active">STG 8</div>
+  <div class="step-pill locked">STG 9</div>
+  <div class="step-pill locked">STG 10</div>
+  <div class="step-pill locked">STG 11</div>
+</div>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=executive_decision</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <!-- PAGE-1 EXEC SUMMARY -->
+    <div style="background: #1f2937; color: #fff; padding: 18px 20px; border-radius: 4px; margin-bottom: 18px;">
+      <div style="font-size: 10px; color: #9ca3af; letter-spacing: 0.1em; margin-bottom: 6px;">EXECUTIVE DECISION · AMS OUTSOURCING 2026</div>
+      <div style="font-family: Georgia, serif; font-size: 22px; margin-bottom: 4px;">Recommend Northstar at $13.21M TCO</div>
+      <div style="font-size: 11px; color: #d1d5db; margin-bottom: 16px;">Deciding axis: technical depth + transition realism. Atlas SI cheaper by $1.81M but transition rigor below floor.</div>
+
+      <div class="grid-4" style="gap: 12px;">
+        <div style="background: #374151; padding: 10px; border-radius: 3px;">
+          <div style="font-size: 9px; color: #9ca3af; letter-spacing: 0.08em;">SAVINGS</div>
+          <div style="font-size: 18px; font-weight: 700;">$21.8M</div>
+          <div style="font-size: 9px; color: #d1d5db;">3-yr vs locked $35M baseline</div>
+        </div>
+        <div style="background: #374151; padding: 10px; border-radius: 3px;">
+          <div style="font-size: 9px; color: #9ca3af; letter-spacing: 0.08em;">TRADE-OFF</div>
+          <div style="font-size: 11px; font-weight: 700; margin-top: 4px;">Gave up:</div>
+          <div style="font-size: 9px;">$1.81M cheaper bid</div>
+          <div style="font-size: 11px; font-weight: 700; margin-top: 4px;">Gained:</div>
+          <div style="font-size: 9px;">Transition rigor + benchmark right</div>
+        </div>
+        <div style="background: #374151; padding: 10px; border-radius: 3px;">
+          <div style="font-size: 9px; color: #9ca3af; letter-spacing: 0.08em;">DISSENT</div>
+          <div style="font-size: 10px; margin-top: 4px;"><strong>Sarah Chen (CTO Office)</strong></div>
+          <div style="font-size: 9px;">Argued Atlas SI commercial fit overweighted</div>
+          <div style="font-size: 9px; color: #fbbf24;">▼ Open dissent panel</div>
+        </div>
+        <div style="background: #374151; padding: 10px; border-radius: 3px;">
+          <div style="font-size: 9px; color: #9ca3af; letter-spacing: 0.08em;">APPROVAL</div>
+          <div style="font-size: 11px; font-weight: 700; margin-top: 4px;">Carlos Rivera</div>
+          <div style="font-size: 9px;">CIO · sponsor · approval pending</div>
+          <div style="font-size: 9px;"><strong>Lynne Stratham</strong> · co-sign required</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECISION CONTENT BELOW -->
+    <div class="grid-2-asym" style="gap: 14px;">
+      <div class="chat-mini" style="opacity: 0.5;">
+        <div class="head">Sentinel · context-only</div>
+        <div style="font-size: 9px; color: var(--muted); margin-top: 6px;">Chat collapsed on Decision stage. Click to expand if needed.</div>
+      </div>
+      <div>
+        <div class="region solid"><div class="region-tag">§ EVIDENCE SUMMARY</div><div style="font-size: 10px; margin-top: 4px;">Scorecard rows cited inline. Each material claim links to evidence record.</div></div>
+        <div class="region solid" style="margin-top: 6px;"><div class="region-tag">§ MISSING DATA</div><div style="font-size: 10px; margin-top: 4px;">Northstar 4th-party subprocessor list incomplete. Vendor risk pack §3.2.</div></div>
+        <div class="region solid" style="margin-top: 6px;"><div class="region-tag">§ RISKS · TOP 3</div><div style="font-size: 10px; margin-top: 4px;">1. Key-person retention (Northstar lead architect)<br/>2. Offshore ratio drift (committed 22%, history 14%)<br/>3. Modernization wave interlock (CDAO Databricks migration Q3)</div></div>
+        <div class="region solid" style="margin-top: 6px; border-color: var(--warn); background: #fef3c7;"><div class="region-tag" style="background: var(--warn);">§ DISSENT · 1 captured</div><div style="font-size: 10px; margin-top: 4px;"><strong>Sarah Chen, Director CTO Office:</strong> "Atlas SI's commercial discount of $1.81M represents 14% TCO swing — should outweigh transition rigor delta. Recommend Atlas SI conditional on transition uplift."</div></div>
+        <div class="region solid" style="margin-top: 6px;"><div class="region-tag">§ APPROVAL RECORD</div><div style="font-size: 10px; margin-top: 4px;">Required sign-offs: Carlos Rivera (CIO) · Lynne Stratham (CDO) · CFO (value attestation).</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; display: flex; gap: 6px;">
+      <span class="btn good">✓ Approve recommendation</span>
+      <span class="btn outline">→ Route to co-approver</span>
+      <span class="btn outline">⟲ Send back for revision</span>
+      <span class="btn outline">Download brief (DOCX)</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="target-note"><strong>Critical design move ·</strong> Page 1 IS the decision. 30-second read covers: recommendation · trade-off · savings · dissent · approval state. Everything else is supporting evidence below. The CXO never has to scroll to find the answer.</div>
+
+<!-- ====================== 13. STAGE 9 SELECTION ====================== -->
+<h2 id="stage9"><span class="step">PART 13</span>Stage 9 · Selection &amp; Award</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=selection</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 9 · Selection</div>
+    <div style="color: var(--muted); font-size: 10px;">Lock the award. SoW alignment. Award notification + contract handoff.</div>
+
+    <div class="grid-2" style="margin-top: 12px; gap: 12px;">
+      <div class="region solid">
+        <div class="region-tag">SELECTION MEMO</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          <strong>Selected: Northstar</strong> · effective 2026-08-01<br/>
+          Contract ref: <code>d28_contract_record</code><br/>
+          Conditions: 4th-party disclosure within 30d · benchmark right active Y2<br/>
+          Transition kickoff: 2026-07-15
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">BAFO ↔ CONTRACT DIFF</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          ✓ Commercial terms match BAFO Round 2<br/>
+          ⚠ Audit rights tightened 12mo → 9mo (legal redline)<br/>
+          ✓ All other BAFO commitments → contract clauses
+        </div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px;">
+      <div class="region-tag">AWARD NOTIFICATIONS · 5 vendors</div>
+      <div style="font-size: 10px; margin-top: 5px;">
+        Northstar → Award letter sent · accepted<br/>
+        Atlas SI, ArcVault, Vorta → Decline letters sent<br/>
+        BluRidge → Disqualification letter (recorded)
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 14. STAGE 10 TRANSITION ====================== -->
+<h2 id="stage10"><span class="step">PART 14</span>Stage 10 · Transition</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=transition</span><span class="state-tag new">NEW — missing from current deal pack</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 10 · Transition</div>
+    <div style="color: var(--muted); font-size: 10px;">KT plan tracker · go-live readiness gates · incumbent wind-down · risk burn-down.</div>
+
+    <div class="grid-3" style="margin-top: 12px; gap: 12px;">
+      <div class="region solid">
+        <div class="region-tag">KT PLAN · 28 milestones</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          ✓ Discovery (wk 1-2)<br/>
+          ✓ Shadow (wk 3-6)<br/>
+          ⏵ Reverse shadow (wk 7-10) <strong>← current</strong><br/>
+          ☐ Cutover (wk 11)<br/>
+          ☐ Hypercare (wk 12-16)
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">GO-LIVE READINESS</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          ● Infrastructure: green<br/>
+          ● Knowledge transfer: amber (4 apps lagging)<br/>
+          ● Vendor staffing: amber (47 of committed 53)<br/>
+          ● Incumbent exit: green
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">RISK REGISTER · 3 amber</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          R-01 Offshore ratio drift (Northstar)<br/>
+          R-02 SAP ECC handover docs incomplete<br/>
+          R-03 Incumbent goodwill window (90d) closing
+        </div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px; background: #fef3c7; border-color: var(--warn);">
+      <div class="region-tag" style="background: var(--warn);">GO-LIVE READINESS GATE · approval required</div>
+      <div style="font-size: 10px; margin-top: 5px;">CIO + CDO + Vendor PM sign-off before cutover. Currently 2 of 4 amber.</div>
+      <span class="btn outline" style="margin-top: 6px;">Schedule readiness review</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 15. STAGE 11 VALUE ====================== -->
+<h2 id="stage11"><span class="step">PART 15</span>Stage 11 · Value Realization</h2>
+
+<div class="wire">
+<div class="frame-label"><span>?stage=value</span><span class="state-tag target">TARGET — extends current /value page</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-family: Georgia, serif; font-size: 15px;">Stage 11 · Value Ledger</div>
+    <div style="color: var(--muted); font-size: 10px;">Baseline → Projected → Realized. CFO-attested chain. The Board's question: "did we save what we promised?"</div>
+
+    <div class="grid-4" style="margin-top: 12px; gap: 10px;">
+      <div class="region solid">
+        <div class="region-tag">1 · BASELINE · locked</div>
+        <div style="font-size: 14px; font-weight: 700; margin-top: 4px;">$35.0M</div>
+        <div style="font-size: 9px; color: var(--muted);">CFO attested 2026-07-30 · scope: in-flight AMS run cost · 12-mo rolling</div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">2 · PROJECTED · BAFO-anchored</div>
+        <div style="font-size: 14px; font-weight: 700; margin-top: 4px;">$13.21M</div>
+        <div style="font-size: 9px; color: var(--muted);">Year-3 run rate · NPV $21.8M · P80 case</div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">3 · REALIZED · rolling</div>
+        <div style="font-size: 14px; font-weight: 700; margin-top: 4px;">$14.4M</div>
+        <div style="font-size: 9px; color: var(--muted);">Month 6 actual · +8.9% vs projected · trend amber</div>
+      </div>
+      <div class="region solid" style="background: #fef3c7; border-color: var(--warn);">
+        <div class="region-tag" style="background: var(--warn);">4 · VARIANCE INVESTIGATION</div>
+        <div style="font-size: 10px; margin-top: 4px;">Offshore ratio 14% vs committed 22%. Sourced to Q3 scope change. CFO attestation requested.</div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px;">
+      <div class="region-tag">QUARTERLY BOARD PACK · auto-generated</div>
+      <div style="font-size: 10px; margin-top: 5px;">
+        Quarter-over-quarter realization vs projection. Attribution to specific BAFO commitments. CFO sign-off captured. Auditor-grade chain.
+      </div>
+      <div style="margin-top: 6px;"><span class="btn primary">Generate Q3 board pack</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="transition-arrow">▼<span class="label">Contract runs · renewal clock starts · 12-36 months later → /source/queue</span>▼</div>
+
+<!-- ====================== 16. EXPORTS ====================== -->
+<h2 id="exports"><span class="step">PART 16</span>Exports · CXO Report + Deal Pack (target)</h2>
+
+<div class="grid-2">
+  <div>
+    <h3>16A · CXO Report (target)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>cxo-report?format=html</span><span class="state-tag target">TARGET</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <div style="font-family: Georgia, serif; font-size: 16px;">Apex Retail · AMS Outsourcing 2026</div>
+          <div style="color: var(--muted); font-size: 10px; margin-bottom: 12px;">CXO Sourcing Report · 2026-08-15</div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="region solid"><strong>Slide 1 · Recommendation + Number + Trade-off</strong></div>
+            <div class="region solid">Slide 2 · Decision context (why now, archetype)</div>
+            <div class="region solid">Slide 3 · Evidence chain · evidence ledger snapshot</div>
+            <div class="region solid">Slide 4 · Finalist comparison (scorecard + TCO)</div>
+            <div class="region solid">Slide 5 · TCO Iceberg + sensitivity ribbon</div>
+            <div class="region solid">Slide 6 · BAFO concessions + lever envelope</div>
+            <div class="region solid">Slide 7 · Risks + missing data + dissent</div>
+            <div class="region solid">Slide 8 · Transition + go-live readiness</div>
+            <div class="region solid">Slide 9 · Value chain (baseline → projected → realized)</div>
+            <div class="region solid">Slide 10 · Approval record + next asks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3>16B · Deal Pack (target)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>deal-pack?format=html</span><span class="state-tag target">TARGET</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <div style="font-family: Georgia, serif; font-size: 16px;">Apex Retail · AMS Outsourcing 2026</div>
+          <div style="color: var(--muted); font-size: 10px; margin-bottom: 12px;">Sourcing Deal Pack · 2026-08-15 · 47 pages</div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="region solid" style="background: #dbeafe;"><strong>Page 1 · Executive Summary (one page)</strong></div>
+            <div class="region solid">Stage 0 · Demand Challenge</div>
+            <div class="region solid">Stage 1 · Sourcing Strategy + Value Target</div>
+            <div class="region solid">Stage 2 · Scope Memo + App Inventory</div>
+            <div class="region solid">Stage 3 · RFP Package (released)</div>
+            <div class="region solid">Stage 4 · Response Completeness Matrix</div>
+            <div class="region solid">Stage 5 · Evaluation Scorecard + Dissent</div>
+            <div class="region solid">Stage 6 · Pricing Normalization + TCO Iceberg + Trap Log</div>
+            <div class="region solid">Stage 7 · BAFO Round Log + Concession Ledger</div>
+            <div class="region solid">Stage 8 · Decision Brief (with dissent panel)</div>
+            <div class="region solid">Stage 9 · Selection Memo + Award Record</div>
+            <div class="region solid" style="background: #d1fae5;"><strong>Stage 10 · Transition Plan + Go-Live Readiness</strong></div>
+            <div class="region solid" style="background: #d1fae5;"><strong>Stage 11 · Value Ledger + CFO Attestation</strong></div>
+            <div class="region solid">Appendix · Evidence Ledger + Audit Log + Glossary</div>
+          </div>
+          <div style="margin-top: 10px; font-size: 10px; color: var(--good);">
+            ✓ No scaffold badges in CXO-facing export<br/>
+            ✓ Stages 10 + 11 included (today missing)<br/>
+            ✓ Page-1 exec summary leads<br/>
+            ✓ Branded filename
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== 17. CROSS-CUTTING ====================== -->
+<h2 id="crosscutting"><span class="step">PART 17</span>Cross-cutting · Chat / Evidence / Audit / Notifications</h2>
+
+<div class="grid-2">
+  <div>
+    <h3>17A · Sentinel chat (proportions by stage)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>Chat sizing rules</span><span class="state-tag target">TARGET</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <table style="width: 100%; font-size: 10px;">
+            <tr style="background: var(--tint);"><th style="text-align: left; padding: 4px;">Stage</th><th>Chat width</th><th>Default state</th></tr>
+            <tr><td style="padding: 4px;">Intake</td><td>50%</td><td>Active · conversation-led</td></tr>
+            <tr><td style="padding: 4px;">Strategy</td><td>40%</td><td>Active · drafting</td></tr>
+            <tr><td style="padding: 4px;">Scope</td><td>40%</td><td>Active · scoping</td></tr>
+            <tr><td style="padding: 4px;">RFP</td><td>40%</td><td>Active · authoring</td></tr>
+            <tr><td style="padding: 4px;">Responses</td><td>30%</td><td>Compact · clarification only</td></tr>
+            <tr><td style="padding: 4px;">Evaluation</td><td>30%</td><td>Compact · score support</td></tr>
+            <tr><td style="padding: 4px;">Pricing</td><td>35%</td><td>Active · TCO modeling</td></tr>
+            <tr><td style="padding: 4px;">BAFO</td><td>35%</td><td>Active · question pack drafting</td></tr>
+            <tr style="background: #fef3c7;"><td style="padding: 4px;"><strong>Executive Decision</strong></td><td><strong>15%</strong></td><td><strong>Collapsed · human decides</strong></td></tr>
+            <tr><td style="padding: 4px;">Selection</td><td>25%</td><td>Compact · contract diff support</td></tr>
+            <tr><td style="padding: 4px;">Transition</td><td>30%</td><td>Compact · tracking support</td></tr>
+            <tr><td style="padding: 4px;">Value</td><td>25%</td><td>Compact · variance investigation</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="target-note"><strong>Pattern ·</strong> Chat width reflects mental task. Drafting stages need chat; deciding stages need document focus.</div>
+  </div>
+
+  <div>
+    <h3>17B · Evidence ledger (always-on side rail)</h3>
+    <div class="wire">
+      <div class="frame-label"><span>Persistent evidence drawer</span><span class="state-tag new">NEW pattern</span></div>
+      <div class="frame-body">
+        <div class="canvas">
+          <div style="font-size: 11px; font-weight: 700;">Evidence ledger · 47 records · 12 cited</div>
+          <div style="font-size: 10px; color: var(--muted); margin-bottom: 8px;">Click any inline citation in artifacts to jump here.</div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="region solid" style="font-size: 10px;"><strong>E-001</strong> Vendor contract · Wipro AMS · 2024-03 ($32M)</div>
+            <div class="region solid" style="font-size: 10px;"><strong>E-014</strong> Application portfolio · 47 apps × criticality tier</div>
+            <div class="region solid" style="font-size: 10px;"><strong>E-022</strong> Northstar response · §3.4 transition rigor</div>
+            <div class="region solid" style="font-size: 10px;"><strong>E-031</strong> Initiative financials · CDP program ($4M)</div>
+            <div class="region solid" style="font-size: 10px;"><strong>E-038</strong> Sarah Chen dissent memo · 2026-08-14</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>17C · Audit log (always-on)</h3>
+<div class="wire">
+<div class="frame-label"><span>Stage Log tab + per-event audit</span><span class="state-tag target">TARGET — fixed by PR #2862</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <table style="width: 100%; font-size: 10px;">
+      <tr style="background: var(--tint);"><th style="text-align: left; padding: 4px;">Timestamp (UTC)</th><th style="text-align: left;">Actor</th><th style="text-align: left;">Action</th><th style="text-align: left;">Stage</th><th style="text-align: left;">Reason / evidence</th></tr>
+      <tr><td style="padding: 4px;">2026-06-04 14:32</td><td>Carlos Rivera (CIO)</td><td>Event opened</td><td>Intake</td><td>5 facts captured</td></tr>
+      <tr><td style="padding: 4px;">2026-06-04 14:33</td><td>Carlos Rivera (CIO)</td><td>Approval requested</td><td>Approval</td><td>Self-approval, pilot mode</td></tr>
+      <tr><td style="padding: 4px;">2026-06-04 14:34</td><td>Carlos Rivera (CIO)</td><td>Event approved</td><td>Approval</td><td>"Strategic fit confirmed."</td></tr>
+      <tr><td style="padding: 4px;">2026-06-04 14:42</td><td>Sentinel (system)</td><td>Generated d01 strategy memo</td><td>Strategy</td><td>Tokens: 2.4k · model: claude-sonnet-4-5</td></tr>
+      <tr><td style="padding: 4px;">2026-06-04 14:51</td><td>Carlos Rivera (CIO)</td><td>Reviewed + edited strategy memo</td><td>Strategy</td><td>Diff: +312 / -184 chars</td></tr>
+      <tr><td style="padding: 4px;">2026-06-04 15:04</td><td>Carlos Rivera (CIO)</td><td>Gate G1 marked met</td><td>Strategy</td><td>"Memo signed by sponsor (self)"</td></tr>
+    </table>
+  </div>
+</div>
+</div>
+
+<h3>17D · Notifications</h3>
+<div class="wire">
+<div class="frame-label"><span>Cross-event attention surface</span><span class="state-tag new">NEW pattern</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div style="font-size: 11px; font-weight: 700;">Source · Attention</div>
+    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+      <div class="region solid" style="font-size: 10px; border-left: 3px solid var(--warn);"><strong>🔔 Lynne Stratham (CDO)</strong> has not responded to co-approval request · Data Analytics Ops · 4h ago</div>
+      <div class="region solid" style="font-size: 10px; border-left: 3px solid var(--bad);"><strong>⚠ Splunk renewal trigger window past due</strong> · 14 days overdue</div>
+      <div class="region solid" style="font-size: 10px; border-left: 3px solid var(--accent);"><strong>📅 BAFO Round 2 closes in 3 days</strong> · AMS Outsourcing 2026 · 2 vendors still drafting</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ====================== 18. RENEWAL ====================== -->
+<h2 id="renewal"><span class="step">PART 18</span>Renewal · SRM loop back to entry</h2>
+<h4>Closed events don't stay closed. The contract clock starts a new cycle.</h4>
+
+<div class="wire">
+<div class="frame-label"><span>Renewal trigger detection + SRM</span><span class="state-tag target">TARGET</span></div>
+<div class="frame-body">
+  <div class="canvas">
+    <div class="grid-3">
+      <div class="region solid">
+        <div class="region-tag">SRM SCORECARD · Northstar AMS</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          Performance: green (SLA 99.2%)<br/>
+          Commercial: amber (8.9% over projected)<br/>
+          Innovation: amber (2 of 4 commitments behind)<br/>
+          Relationship: green
+        </div>
+      </div>
+      <div class="region solid">
+        <div class="region-tag">CONTRACT CLOCK</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          Effective: 2026-08-01<br/>
+          Term: 3yr + 2yr option<br/>
+          Renewal trigger: 2028-12-01 (180d notice)<br/>
+          Benchmark right active: 2027-08-01
+        </div>
+      </div>
+      <div class="region solid" style="background: #fef3c7; border-color: var(--warn);">
+        <div class="region-tag" style="background: var(--warn);">RENEWAL EVENT WILL OPEN</div>
+        <div style="font-size: 10px; margin-top: 5px;">
+          On 2028-12-01: automatic renewal event opens in queue. Pre-loaded with SRM scorecard, contract terms, market benchmark refresh, and re-negotiation lever envelope.
+        </div>
+      </div>
+    </div>
+
+    <div class="region solid" style="margin-top: 12px;">
+      <div class="region-tag">CYCLES TO LIFE</div>
+      <div style="font-size: 10px; margin-top: 5px;">
+        Cycle 1 (2026-2029): initial competitive sourcing — savings $21.8M · realized $19.4M (89%)<br/>
+        Cycle 2 (2029-2032): renewal renegotiation — projected $4M further compression (re-benchmark)<br/>
+        Cycle 3 (2032+): re-compete or extend — decision per SRM scorecard at month 30
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="transition-arrow">▼<span class="label">Back to Part 2 · /source/queue · Renewal event in OVERDUE band</span>▼</div>
+
+<p class="footer">End-to-end wireframes captured 2026-06-04. Anchored against the CXO Testing Brief at <code>docs/build/cxo-primers/APEX_RETAIL_SOURCE_E2E_CXO_TESTING_BRIEF_2026-06-02.md</code> and the L6 audit findings. Use as the redesign baseline — current state (orange tags) and target state (green tags) live side by side throughout. The 4 new pages (approval, transition gate, value chain, renewal loop) close the lifecycle gaps the bar requires.</p>
+
+</body>
+</html>
