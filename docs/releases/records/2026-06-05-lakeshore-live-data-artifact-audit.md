@@ -40,6 +40,10 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - Loaded six synthetic Markdown deliverables for the Shared Data Platform Move into `program-attachments` and linked them to `deliverables_v2`, `deliverable_versions`, `program_attachments`, and `program_evidence_items`.
   - Loaded six synthetic Markdown rollout-gate evidence artifacts for the Kyriba Move into `program-attachments` and linked them to `program_attachments` and `program_evidence_items`.
   - Normalized 44 Lakeshore Source artifact/chunk `embedding_status` values from `pending` to `not_applicable` after verifying those generated artifacts are parsed/cited through Blob/Postgres evidence rather than a Source-specific vector index.
+- Production runtime configuration performed outside the repo diff:
+  - Added Vercel production env `DATA_PLANE_OBJECT_STORE_ACCOUNT=stlakeshorepilotlsh001`.
+  - Added Vercel production env `DATA_PLANE_OBJECT_STORE_ACCOUNT_KEY` from the Lakeshore pilot storage account key.
+  - Redeployed `origin/main` from a clean worktree; Vercel deployment `dpl_CqLm94rGT8ppCS5f2jHXvLYo6fti` is ready and aliased to `https://app.abarva.ai`.
 
 ## QA / Validation
 
@@ -69,6 +73,8 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` returns 200 for the Kyriba Move detail.
   - `/moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` returns 200 and aliases to the modern Kyriba Move detail.
   - `/strategic-moves/6a4c7fc4-0a2d-4479-b807-7350fb727527` returns 200 for the Data Spine Move detail.
+  - `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4?tab=documents` renders all six Kyriba rollout-gate filenames and twelve total Kyriba attachments.
+  - Downloading `kyriba-rollout-gate-01-bank-connectivity-matrix.md` through `/api/programs/:id/attachments/:attachmentId` returns a 302 to `stlakeshorepilotlsh001.blob.core.windows.net`; following the redirect returns 200 with the synthetic Markdown artifact.
 
 ## Rollout Plan
 
@@ -80,10 +86,13 @@ Repo rollback: revert the audit packet and this release record.
 
 Live data rollback, if required: delete the six Kyriba Move `deliverables_v2` rows and cascading `deliverable_versions`, soft-delete or delete the twelve Kyriba `program_attachments` rows, delete the twelve Kyriba `program_evidence_items` rows, and remove the twelve matching blobs under the Kyriba Move prefix in `program-attachments`. Repeat the same rollback for the six Shared Data Platform Move deliverables/attachments/evidence rows under prefix `lakeshore-holdings/6a4c7fc4-0a2d-4479-b807-7350fb727527/`. Source artifact rollback would require deleting the 26 Kyriba Source artifact rows/chunks/facts/edges, the 18 AMS Source artifact rows/chunks/facts/edges, and removing the matching blobs from `source-artifacts`.
 
+Runtime rollback, if required: remove Vercel production env `DATA_PLANE_OBJECT_STORE_ACCOUNT` and `DATA_PLANE_OBJECT_STORE_ACCOUNT_KEY`, then redeploy the previous production build. This would intentionally break program attachment downloads for Azure-backed program attachments until an alternate object-store runtime is configured.
+
 ## Audit Evidence
 
 - Audit packet: `docs/build/lakeshore/LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md`.
 - Storage account: `stlakeshorepilotlsh001`.
+- Production deployment: `dpl_CqLm94rGT8ppCS5f2jHXvLYo6fti`, aliased to `https://app.abarva.ai`.
 - Source event: `LSH-KYRIBA-TREASURY-2026`.
 - Source event row id: `bd8d173f-6600-48a3-b155-9fa74d024ce8`.
 - Source event: `LSH-AMS-MODERNIZATION-2026`.

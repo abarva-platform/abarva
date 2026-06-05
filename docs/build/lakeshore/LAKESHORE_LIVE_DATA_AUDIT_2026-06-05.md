@@ -313,8 +313,12 @@ Live product route proof captured with a fresh Clerk ticket for `cfo@lakeshore-h
 | `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` | 200 | Modern Kyriba Move detail renders. |
 | `/moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` | 200 | Alias redirects to the modern Kyriba Move detail. |
 | `/strategic-moves/6a4c7fc4-0a2d-4479-b807-7350fb727527` | 200 | Modern Data Spine Move detail renders. |
+| `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4?tab=documents` | 200 | Documents tab renders all six Kyriba Move 0 gate artifacts plus the original six Move attachments. |
+| `/api/programs/1196dac0-715c-45ce-8eeb-5e70792d9aa4/attachments/11ae8962-ed94-48d8-afa7-fcf6178efca0` | 302 -> 200 | Attachment route redirects to `stlakeshorepilotlsh001.blob.core.windows.net`; Blob fetch returns the synthetic Bank Connectivity Matrix Markdown. |
 
 Route caveat: `/engagements/:id` is the legacy engagement console and is not the canonical Moves demo path. The demo should use `/strategic-moves/:id` or the `/moves/:id` alias.
+
+Production runtime note: attachment downloads required Vercel production object-store env. On 2026-06-05, `DATA_PLANE_OBJECT_STORE_ACCOUNT` and `DATA_PLANE_OBJECT_STORE_ACCOUNT_KEY` were added for `stlakeshorepilotlsh001`, then clean `origin/main` was redeployed as `dpl_CqLm94rGT8ppCS5f2jHXvLYo6fti` and aliased to `https://app.abarva.ai`.
 
 ## Kyriba Move 0 Design Implication
 
