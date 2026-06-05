@@ -5,19 +5,19 @@
 // the event's lifecycle_state advances to 'active'; on rejection it moves
 // to 'archived'. An approval record is written to source_event_approvals.
 
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { getActiveClientRow } from '@/lib/active-client';
-import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
   validateApprovalReason,
-} from '@/lib/source/source-governance-enforcement';
+} from "@/lib/source/source-governance-enforcement";
 
 interface ApproveBody {
-  action: 'approve' | 'reject';
+  action: "approve" | "reject";
   notes?: string;
   confirmed?: boolean;
 }
@@ -37,7 +37,10 @@ export async function POST(
 
   const activeClient = await getActiveClientRow();
   if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for Source approval' }, { status: 403 });
+    return Response.json(
+      { error: "no_client", detail: "No active client for Source approval" },
+      { status: 403 },
+    );
   }
 
   const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
@@ -46,27 +49,38 @@ export async function POST(
   }).catch(() => null);
 
   if (!accessPolicy?.canApproveSourceStages) {
-    return Response.json({
-      error: 'forbidden_source_admin_required',
-      detail: 'Client admin or explicit Source stage approval rights are required to approve sourcing events.',
-    }, { status: 403 });
+    return Response.json(
+      {
+        error: "forbidden_source_admin_required",
+        detail:
+          "Client admin or explicit Source stage approval rights are required to approve sourcing events.",
+      },
+      { status: 403 },
+    );
   }
 
   let body: ApproveBody;
   try {
     body = (await request.json()) as ApproveBody;
   } catch {
-    return Response.json({ error: 'invalid_json' }, { status: 400 });
+    return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  if (body.action !== 'approve' && body.action !== 'reject') {
-    return Response.json({ error: 'invalid_action', detail: 'action must be "approve" or "reject"' }, { status: 400 });
+  if (body.action !== "approve" && body.action !== "reject") {
+    return Response.json(
+      {
+        error: "invalid_action",
+        detail: 'action must be "approve" or "reject"',
+      },
+      { status: 400 },
+    );
   }
   if (body.confirmed !== true) {
     return Response.json(
       {
-        error: 'confirmation_required',
-        detail: 'A confirmation step is required before approving or rejecting a Source event.',
+        error: "confirmation_required",
+        detail:
+          "A confirmation step is required before approving or rejecting a Source event.",
       },
       { status: 409 },
     );
@@ -89,49 +103,74 @@ export async function POST(
 
   // Fetch the event to check it exists and get current state
   const { data: event, error: fetchError } = await supabase
-    .from('source_events')
-    .select('id, lifecycle_state, event_name, event_code, client_key, created_by_user_id')
-    .eq('id', eventId)
-    .eq('client_key', activeClient.key)
+    .from("source_events")
+    .select(
+      "id, lifecycle_state, event_name, event_code, client_key, created_by_user_id",
+    )
+    .eq("id", eventId)
+    .eq("client_key", activeClient.key)
     .single();
 
   if (fetchError || !event) {
-    return Response.json({ error: 'not_found' }, { status: 404 });
+    return Response.json({ error: "not_found" }, { status: 404 });
   }
 
   const fromState = event.lifecycle_state as string;
-  const toState = body.action === 'approve' ? 'active' : 'archived';
+  const toState = body.action === "approve" ? "active" : "closed_rejected";
   const isSelfApproval = event.created_by_user_id === tenancy.userId;
   const approvalNotes = [
     reason,
-    isSelfApproval ? 'Self-approval notice: approver is also the recorded event creator.' : null,
+    isSelfApproval
+      ? "Self-approval notice: approver is also the recorded event creator."
+      : null,
   ]
     .filter(Boolean)
-    .join('\n\n');
+    .join("\n\n");
 
   // DB write routed through the data-plane write seam (Slice 3b): the
   // lifecycle update + the append-only approval record. On Azure the two
   // run in one transaction; on Supabase they apply individually as before.
   // A failed approval insert stays non-fatal (logged inside the adapter).
-  const approvalWrite = await selectSourceWriteAdapter(
-    undefined,
-    activeClient.key,
-  ).applyApproval({
+  const sourceWrite = selectSourceWriteAdapter(undefined, activeClient.key);
+  const approvalWrite = await sourceWrite.applyApproval({
     eventId,
     clientKey: activeClient.key,
     fromState,
     toState,
-    approvalAction: body.action === 'approve' ? 'admin_review' : 'rejected',
+    approvalAction: body.action === "approve" ? "admin_review" : "rejected",
     approvedByUserId: tenancy.userId,
     notes: approvalNotes,
   });
 
   if (!approvalWrite.ok) {
     return Response.json(
-      { error: 'update_failed', detail: approvalWrite.error },
+      { error: "update_failed", detail: approvalWrite.error },
       { status: 500 },
     );
   }
+
+  await sourceWrite.insertActivityLog({
+    eventId,
+    clientKey: activeClient.key,
+    actorUserId: tenancy.userId,
+    actorDisplayName: tenancy.email ?? tenancy.userId,
+    actorRole: tenancy.role ?? accessPolicy.accessLevel ?? "Source approver",
+    actionType:
+      body.action === "approve"
+        ? "source_event_approved"
+        : "source_event_rejected",
+    actionLabel:
+      body.action === "approve"
+        ? "Source event approved"
+        : "Source event rejected",
+    reason,
+    metadata: {
+      fromState,
+      toState,
+      selfApproval: isSelfApproval,
+    },
+    occurredAtIso: new Date().toISOString(),
+  });
 
   return Response.json({
     ok: true,

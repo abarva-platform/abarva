@@ -185,6 +185,23 @@ describe("supabase source write adapter", () => {
     });
   });
 
+  it("transitionLifecycle updates only source_events lifecycle metadata", async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.transitionLifecycle({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      lifecycleState: "waiting_on_co_approver",
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].table).toBe("source_events");
+    expect(calls[0].payload).toEqual({
+      lifecycle_state: "waiting_on_co_approver",
+      updated_at: "2026-05-15T00:00:00.000Z",
+    });
+  });
+
   it("updateGateCriterion returns the updated row", async () => {
     const { client, calls } = fakeSupabase({ id: "crit-1", state: "met" });
     const adapter = createSupabaseSourceWriteAdapter(() => client);
@@ -307,6 +324,20 @@ describe("azure source write adapter", () => {
     expect(result.ok).toBe(true);
     expect(statements[0]).toContain("UPDATE source_events");
     expect(statements[1]).toContain("INSERT INTO source_event_approvals");
+  });
+
+  it("transitionLifecycle updates lifecycle state inside the Azure session", async () => {
+    const { session, statements } = fakeTxSession(() => []);
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.transitionLifecycle({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      lifecycleState: "draft_revision",
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("UPDATE source_events");
+    expect(statements[0]).toContain("SET lifecycle_state = $1");
   });
 
   it("updateGateCriterion issues an UPDATE ... RETURNING * and returns the row", async () => {
