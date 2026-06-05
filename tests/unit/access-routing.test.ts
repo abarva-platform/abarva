@@ -26,6 +26,7 @@ describe('access-routing', () => {
     expect(resolveSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
     expect(resolveSessionClientKey({ email: 'lena.ortiz@firstcapital.example.com' })).toBe('arcturus');
     expect(resolveSessionClientKey({ email: 'elena.rivera@meridian-health.example.com' })).toBe('meridian');
+    expect(resolveSessionClientKey({ email: 'cfo@lakeshore-holdings.example.com' })).toBe('lakeshore');
   });
 
   test('falls back to global default for invalid values', () => {
@@ -43,6 +44,7 @@ describe('access-routing', () => {
     expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('cfo@lakeshore-holdings.example.com')).toBe('client');
     expect(resolveSessionRole(undefined, 'noah.patel@apex-retail.example.com')).toBe('client');
   });
 
@@ -67,6 +69,7 @@ describe('access-routing', () => {
   test('recognizes locked tenant roles from role or canonical email domain', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
     expect(isLockedTenantRole(undefined, 'ethan.brooks@firstcapital.example.com')).toBe(true);
+    expect(isLockedTenantRole(undefined, 'cfo@lakeshore-holdings.example.com')).toBe(true);
     expect(isLockedTenantRole(undefined, 'retired-energy-demo@example.com')).toBe(false);
     expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
   });
@@ -106,6 +109,7 @@ describe('access-routing', () => {
     expect(inferSourceEventClientKeyFromSlug('apex-retail-ams-outsourcing-2026')).toBe('apexretail');
     expect(inferSourceEventClientKeyFromSlug('SRC-MER-046')).toBe('meridian');
     expect(inferSourceEventClientKeyFromSlug('skyharbor-air-renewal-2026')).toBe('skyharbor');
+    expect(inferSourceEventClientKeyFromSlug('lakeshore-kyriba-rollout-2026')).toBe('lakeshore');
     expect(inferSourceEventClientKeyFromSlug('unknown-source-event')).toBeNull();
   });
 
@@ -133,11 +137,29 @@ describe('access-routing', () => {
         'apex-retail-ams-outsourcing-2026',
       ),
     ).toBe(false);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cfo@lakeshore-holdings.example.com' },
+        'apex-retail-ams-outsourcing-2026',
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldDenySourceEventSlugForPinnedClient(
+        undefined,
+        { email: 'cfo@lakeshore-holdings.example.com' },
+        'lakeshore-kyriba-rollout-2026',
+      ),
+    ).toBe(false);
   });
 
   test('denies Source event slugs that conflict with the active client cookie', () => {
     expect(shouldDenySourceEventSlugForActiveClient('meridian', 'apex-retail-ams-outsourcing-2026')).toBe(true);
     expect(shouldDenySourceEventSlugForActiveClient('apexretail', 'apex-retail-ams-outsourcing-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('lakeshore', 'lakeshore-kyriba-rollout-2026')).toBe(false);
+    expect(shouldDenySourceEventSlugForActiveClient('meridian', 'lakeshore-kyriba-rollout-2026')).toBe(true);
     expect(shouldDenySourceEventSlugForActiveClient('unknown', 'apex-retail-ams-outsourcing-2026')).toBe(false);
     expect(shouldDenySourceEventSlugForActiveClient('meridian', 'source-event-without-tenant-hint')).toBe(false);
   });

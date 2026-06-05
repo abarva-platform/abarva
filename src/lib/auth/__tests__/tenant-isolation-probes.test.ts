@@ -87,6 +87,12 @@ const CANONICAL_TENANTS: ReadonlyArray<{
     programCodePrefix: "SKY",
     exampleProgramCode: "",
   },
+  {
+    tenantKey: "lakeshore",
+    routeSlug: "lakeshore-holdings",
+    programCodePrefix: "LSH",
+    exampleProgramCode: "",
+  },
 ];
 
 // =====================================================================
@@ -119,6 +125,7 @@ describe("Probe 1 · canAccessTenantClient · cross-tenant access denial", () =>
       "arcturus",
       "northstar",
       "skyharbor",
+      "lakeshore",
     ];
     for (const userTenant of tenants) {
       const user = snapshot({
@@ -177,6 +184,7 @@ describe("Probe 1 · canAccessTenantClient · cross-tenant access denial", () =>
       "arcturus",
       "northstar",
       "skyharbor",
+      "lakeshore",
     ] as ClientKey[]) {
       expect(canAccessTenantClient(orphanUser, tenant)).toBe(false);
     }
@@ -200,6 +208,7 @@ describe("Probe 2 · canAccessTenantClient · admin role behavior", () => {
       "arcturus",
       "northstar",
       "skyharbor",
+      "lakeshore",
     ] as ClientKey[]) {
       expect(canAccessTenantClient(adminUser, tenant)).toBe(true);
     }
@@ -353,6 +362,18 @@ describe("Probe 5 · inferClientKeyFromEmail", () => {
     );
   });
 
+  it("infers lakeshore from canonical Lakeshore client emails", () => {
+    expect(inferClientKeyFromEmail("cfo@lakeshore-holdings.example.com")).toBe(
+      "lakeshore",
+    );
+    expect(inferClientKeyFromEmail("admin@lakeshore-holdings.example.com")).toBe(
+      "lakeshore",
+    );
+    expect(inferClientKeyFromEmail("anand+lakeshore@abarva.com")).toBe(
+      "lakeshore",
+    );
+  });
+
   it("does not infer retired energy demo emails", () => {
     expect(
       inferClientKeyFromEmail("retired-energy-demo@example.com"),
@@ -472,6 +493,9 @@ describe("Probe 6 · session role inference", () => {
       inferSessionRoleFromEmail("noah.patel@apex-retail.example.com"),
     ).toBe("client");
     expect(inferSessionRoleFromEmail("anand+apex@abarva.com")).toBe("client");
+    expect(
+      inferSessionRoleFromEmail("cfo@lakeshore-holdings.example.com"),
+    ).toBe("client");
   });
 
   it("returns null for unknown emails", () => {
@@ -538,6 +562,16 @@ describe("Probe 7 · resolvePinnedSessionClientKey", () => {
     ).toBe("apexretail");
   });
 
+  it("Lakeshore tenant emails override stale conflicting metadata", () => {
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "apexretail",
+        defaultClientId: "meridian",
+        email: "cfo@lakeshore-holdings.example.com",
+      }),
+    ).toBe("lakeshore");
+  });
+
   it("returns null when no signal resolves to a ClientKey", () => {
     expect(
       resolvePinnedSessionClientKey({ email: "unknown@example.com" }),
@@ -575,6 +609,16 @@ describe("Probe 8 · shouldStripUnauthorizedClientParam", () => {
         "meridian",
       ),
     ).toBe(false);
+  });
+
+  it("strips when a locked Lakeshore client requests another tenant via ?client=", () => {
+    expect(
+      shouldStripUnauthorizedClientParam(
+        "client",
+        { email: "cfo@lakeshore-holdings.example.com" },
+        "apexretail",
+      ),
+    ).toBe(true);
   });
 
   it("strips for the pinned founder account when a different tenant is requested", () => {

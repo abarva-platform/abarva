@@ -113,6 +113,12 @@ const DEMO_ROUTE_STUB_TENANTS: readonly TenantSeedPlan[] = Object.freeze([
     displayName: 'SkyHarbor Air',
     programs: [],
   },
+  {
+    tenantKey: 'lakeshore',
+    routeSlug: 'lakeshore-holdings',
+    displayName: getClientOption('lakeshore').name,
+    programs: [],
+  },
 ]);
 
 const ARCHETYPE_TO_APP_ARCHETYPE: Record<SpecArchetypeCode, ArchetypeKey> = {
