@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Move 0 · Kyriba De-Risk · Platform Rollout Pattern Setter</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --paper-2: #f3f0e8;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-mute: #6b7280;
+    --rule: #e5e1d8;
+    --rule-soft: #efeae0;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --accent-deep: #1e3a8a;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --neutral-soft: #e5e7eb;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 28px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  h5 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); font-weight: 600; }
+  h6 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  p, li { font-size: 15px; }
+  code { background: var(--rule-soft); padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+
+  /* ---------- Status atoms ---------- */
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .status-good { background: var(--good-soft); color: var(--good); }
+  .status-good .dot { background: var(--good); }
+  .status-warn { background: var(--warn-soft); color: var(--warn); }
+  .status-warn .dot { background: var(--warn); }
+  .status-bad { background: var(--bad-soft); color: var(--bad); }
+  .status-bad .dot { background: var(--bad); }
+  .status-neutral { background: var(--neutral-soft); color: var(--ink-soft); }
+  .status-neutral .dot { background: var(--ink-mute); }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-source { background: var(--warn-soft); color: var(--warn); }
+  .tag-evidence { background: #ede9fe; color: #6d28d9; }
+  .tag-corpus { background: var(--good-soft); color: var(--good); }
+
+  /* ---------- Wireframe shell ---------- */
+  .wireframe { background: white; border: 1px solid var(--rule); border-radius: 6px; margin: 24px 0; overflow: hidden; box-shadow: 0 1px 0 rgba(31,41,55,0.02); }
+  .wf-bar { background: var(--paper-2); border-bottom: 1px dashed var(--rule); padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+
+  /* ---------- Move 0 header (paper, NOT charcoal — locked rule) ---------- */
+  .move-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--rule); background: var(--paper); }
+  .move-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+  .move-title { font-family: var(--serif); font-size: 30px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .move-sub { color: var(--ink-soft); font-size: 14px; margin: 0; }
+  .move-meta { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; }
+  .meta-block { font-size: 12px; }
+  .meta-block .lbl { display: block; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); font-size: 10px; margin-bottom: 4px; }
+  .meta-block .val { color: var(--ink); font-weight: 600; font-size: 13px; }
+  .approver-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px 4px 4px; font-size: 12px; margin: 2px 4px 2px 0; }
+  .approver-chip .avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; font-family: var(--serif); }
+  .approver-chip .role { color: var(--ink-mute); font-size: 11px; }
+
+  /* ---------- Phase bar ---------- */
+  .phase-bar { display: flex; align-items: stretch; border-bottom: 1px solid var(--rule); background: white; }
+  .phase-step { flex: 1; padding: 12px 16px; border-right: 1px solid var(--rule); position: relative; font-size: 12px; }
+  .phase-step:last-child { border-right: none; }
+  .phase-step .phase-n { font-family: var(--serif); font-size: 16px; color: var(--ink-mute); }
+  .phase-step .phase-name { display: block; font-weight: 600; color: var(--ink); margin-top: 2px; }
+  .phase-step .phase-state { display: block; color: var(--ink-mute); font-size: 11px; margin-top: 2px; }
+  .phase-step.done { background: var(--good-soft); }
+  .phase-step.done .phase-n { color: var(--good); }
+  .phase-step.current { background: var(--accent-soft); border-bottom: 2px solid var(--accent); }
+  .phase-step.current .phase-n { color: var(--accent); }
+  .phase-step.next { background: white; }
+  .phase-step.locked { background: var(--rule-soft); color: var(--ink-mute); }
+  .phase-step.locked .phase-name { color: var(--ink-mute); }
+
+  /* ---------- Two-column body (canvas + Sentinel rail) ---------- */
+  .body-2col { display: grid; grid-template-columns: 1fr 360px; gap: 0; }
+  .canvas { padding: 24px 28px; border-right: 1px solid var(--rule); }
+  .rail { background: var(--paper-2); border-left: 1px solid var(--rule); padding: 20px 20px 24px; min-height: 600px; position: relative; }
+
+  /* ---------- 6-gate cards ---------- */
+  .gate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .gate-card { background: white; border: 1px solid var(--rule); border-radius: 5px; padding: 14px 16px; position: relative; border-left-width: 4px; }
+  .gate-card.gate-good { border-left-color: var(--good); }
+  .gate-card.gate-warn { border-left-color: var(--warn); }
+  .gate-card.gate-bad { border-left-color: var(--bad); }
+  .gate-card.gate-empty { border-left-color: var(--ink-mute); border-style: dashed; background: var(--paper); }
+  .gate-card .gate-hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .gate-card .gate-id { font-family: var(--serif); font-size: 14px; color: var(--ink-mute); letter-spacing: 0.02em; }
+  .gate-card .gate-name { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .gate-card .gate-metric { font-size: 12px; color: var(--ink-soft); margin: 0 0 8px; }
+  .gate-card .gate-metric strong { color: var(--ink); font-weight: 600; }
+  .gate-card .gate-rec { font-size: 12px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 8px; margin-top: 8px; }
+  .gate-card .gate-rec .lbl { display: block; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); font-size: 10px; margin-bottom: 2px; }
+  .gate-card .gate-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--rule); }
+  .gate-card .gate-foot .owner { font-size: 11px; color: var(--ink-mute); }
+  .gate-card .gate-foot .owner strong { color: var(--ink); font-weight: 600; }
+  .gate-card .gate-cta { font-size: 12px; color: var(--accent); font-weight: 600; text-decoration: none; cursor: pointer; }
+  .gate-card .gate-cta::after { content: ' \2192'; }
+
+  /* ---------- Sentinel rail ---------- */
+  .rail h5 { color: var(--ink-mute); margin-bottom: 12px; }
+  .rail-stage { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
+  .rail-stage .stage-lbl { display: block; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); font-size: 10px; margin-bottom: 4px; }
+  .rail-msg { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  .rail-msg.from-sentinel { background: var(--accent-soft); border-color: #c7d5f9; }
+  .rail-msg .speaker { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-mute); margin-bottom: 4px; font-weight: 600; }
+  .rail-msg.from-sentinel .speaker { color: var(--accent-deep); }
+  .rail-suggest { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
+  .rail-suggest button { text-align: left; background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--ink); cursor: pointer; }
+  .rail-suggest button:hover { border-color: var(--accent); }
+  .ask-bar { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; font-size: 13px; color: var(--ink-mute); position: sticky; bottom: 0; }
+  .ask-bar .ask-input { display: block; font-size: 13px; color: var(--ink); margin-bottom: 6px; min-height: 36px; }
+  .ask-bar .ask-foot { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-mute); }
+
+  /* ---------- Section detail tables ---------- */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ---------- Detail surface (per-gate) ---------- */
+  .gate-detail { background: white; border: 1px solid var(--rule); border-radius: 6px; margin: 18px 0 28px; overflow: hidden; }
+  .gate-detail-hd { padding: 16px 22px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .gate-detail-hd.bad { border-left: 4px solid var(--bad); }
+  .gate-detail-hd.warn { border-left: 4px solid var(--warn); }
+  .gate-detail-hd.good { border-left: 4px solid var(--good); }
+  .gate-detail-hd h3 { margin: 0; font-size: 20px; }
+  .gate-detail-body { padding: 20px 22px; }
+  .gate-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .gate-block { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; }
+  .gate-block h5 { margin-bottom: 6px; }
+  .gate-block p { margin: 0 0 6px; font-size: 13px; color: var(--ink); }
+  .gate-block ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+  .narration { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: 0 4px 4px 0; font-size: 14px; font-style: italic; color: var(--ink); margin: 14px 0; }
+  .narration::before { content: 'Sentinel narration \2014  '; font-style: normal; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-deep); display: block; margin-bottom: 4px; }
+
+  /* ---------- Approval ladder ---------- */
+  .ladder { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 8px 0; }
+  .ladder-step { background: white; border: 1px solid var(--rule); border-radius: 3px; padding: 8px 12px; font-size: 12px; }
+  .ladder-step .lbl { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-mute); margin-bottom: 2px; }
+  .ladder-step.acked { background: var(--good-soft); border-color: #a7e3c5; }
+  .ladder-step.pending { background: var(--warn-soft); border-color: #f5dcaa; }
+  .ladder-step.upcoming { background: white; color: var(--ink-mute); }
+  .ladder-arrow { padding: 0 8px; color: var(--ink-mute); font-size: 14px; }
+
+  /* ---------- Evidence chain ---------- */
+  .evidence { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; font-size: 12px; }
+  .evidence h5 { margin-bottom: 6px; }
+  .evidence ul { margin: 0; padding-left: 18px; }
+  .evidence li { margin: 3px 0; font-size: 12px; color: var(--ink); }
+  .evidence li code { font-size: 11px; }
+
+  /* ---------- Lakefront reference ---------- */
+  .lakefront { background: white; border: 1px solid var(--rule); border-radius: 6px; margin: 18px 0; overflow: hidden; }
+  .lakefront-hd { background: var(--good-soft); padding: 12px 18px; border-bottom: 1px solid #a7e3c5; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+  .lakefront-hd strong { font-size: 14px; }
+  .lakefront-body { padding: 16px 18px; }
+  .lakefront-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+  .lf-col { padding: 12px 14px; }
+  .lf-col.morgan { background: var(--paper); border-right: 1px solid var(--rule); }
+  .lf-col.lakefront-col { background: white; }
+  .lf-col h6 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin: 0 0 6px; }
+
+  /* ---------- Phase advance affordance ---------- */
+  .advance { background: var(--paper-2); border: 1px dashed var(--rule); border-radius: 5px; padding: 14px 18px; margin: 18px 0; font-size: 13px; }
+  .advance h5 { color: var(--ink); margin-bottom: 8px; }
+  .advance .crit { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; }
+  .advance .crit .mark { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .advance .crit.met .mark { background: var(--good-soft); color: var(--good); }
+  .advance .crit.met .mark::before { content: '\2713'; }
+  .advance .crit.unmet .mark { background: var(--bad-soft); color: var(--bad); }
+  .advance .crit.unmet .mark::before { content: '\2716'; }
+  .advance .crit.partial .mark { background: var(--warn-soft); color: var(--warn); }
+  .advance .crit.partial .mark::before { content: '\2022'; }
+
+  /* ---------- Move 1 transition gate (bottom) ---------- */
+  .transition { background: white; border: 2px dashed var(--accent); border-radius: 6px; padding: 18px 22px; margin: 32px 0; }
+  .transition h3 { color: var(--accent-deep); margin-top: 0; }
+  .transition-bar { display: flex; align-items: center; gap: 0; margin: 12px 0; }
+  .transition-cell { flex: 1; padding: 10px 12px; border: 1px solid var(--rule); background: var(--paper); font-size: 12px; text-align: center; }
+  .transition-cell.green { background: var(--good-soft); border-color: #a7e3c5; }
+  .transition-cell.amber { background: var(--warn-soft); border-color: #f5dcaa; }
+  .transition-cell.red { background: var(--bad-soft); border-color: #f5b8b8; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state { background: var(--paper); border: 1px dashed var(--rule); border-radius: 4px; padding: 18px 20px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+  .empty-state .empty-title { font-family: var(--serif); font-size: 18px; color: var(--ink); display: block; margin-bottom: 6px; }
+  .empty-state .empty-cta { display: inline-block; margin-top: 10px; padding: 6px 14px; background: white; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  /* ---------- Squint test legend ---------- */
+  .squint-legend { display: flex; gap: 12px; flex-wrap: wrap; background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; margin: 12px 0; }
+  .squint-legend .sw { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); }
+  .squint-legend .sw .bar { width: 14px; height: 22px; border-radius: 2px; }
+
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+
+  /* ---------- Generalization grid ---------- */
+  .gen-grid { display: grid; grid-template-columns: 160px repeat(3, 1fr); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; background: white; margin: 12px 0; }
+  .gen-grid > div { padding: 10px 12px; border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule); font-size: 12px; }
+  .gen-grid > div:nth-child(4n) { border-right: none; }
+  .gen-grid > div.head { background: var(--rule-soft); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; color: var(--ink-soft); }
+  .gen-grid > div.row-lbl { background: var(--paper); font-weight: 600; color: var(--ink); font-size: 12px; }
+
+  /* ---------- Build mapping ---------- */
+  .build-block { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; margin: 10px 0; }
+  .build-block code { font-size: 12px; }
+  .build-block h5 { color: var(--ink); }
+  .build-block ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+
+  /* ---------- Inline note ---------- */
+  .note { background: var(--paper-2); border-left: 3px solid var(--ink-mute); padding: 10px 14px; font-size: 13px; color: var(--ink-soft); margin: 12px 0; }
+  .note strong { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Move 0 · Kyriba De-Risk · Platform Rollout Pattern Setter</h1>
+<p class="sub">Full-fidelity surface for the canonical <strong>Platform Rollout De-Risk</strong> Move category. Anchored on Morgan Street Holdings Chicago + Kyriba. Reusable for any future platform rollout de-risk Move (Workday rollout, NetSuite consolidation, Salesforce deployment).</p>
+<p class="meta">Companion to <code>02-demo-spine-architecture.html</code> &middot; references entity vocabulary from <code>01-lakeshore-federated-structure-brief.md</code> &middot; the 6-gate scaffold is invariant; gate labels, value spine, and Source spawns vary per platform.</p>
+
+<h2>Section 1 · Overview — what Move 0 is, why it earns its own Move category</h2>
+
+<p>Move 0 is the answer to a question no other Move category answers cleanly: <strong>"my platform rollout is in flight and I don't know if I'm on track."</strong> It is not Strategy (the platform is already chosen, the bet is placed). It is not Source (the contract is already signed, the vendor is engaged). It is not pure Mobilization (the rollout has gates that are technical, not just delivery milestones).</p>
+
+<p>The recurring shape is this: an enterprise platform — Kyriba, Workday, NetSuite OneWorld, Salesforce, Coupa, Anaplan — is partially deployed. Some component is live; some is not. The customer's executive sponsor (Treasurer, CFO, CHRO, CIO) cannot quickly answer "where does the rollout stand, what is blocked, what is the next decision I need to make, and is the AI use case I bought this platform for actually unblocked?" AbarVa's Move 0 surface answers all four in one view.</p>
+
+<p>The <strong>6-gate model</strong> is the invariant. Every platform rollout de-risk has exactly six gates because every enterprise platform rollout has exactly six classes of failure mode:</p>
+
+<table>
+  <tr><th>Gate class</th><th>What it measures</th><th>Why it is invariant</th></tr>
+  <tr><td>G1 — Source-system connectivity</td><td>External system feeds into the platform (banks, payroll providers, customer master, vendor master)</td><td>Every platform sits downstream of source systems; broken connectivity caps everything else</td></tr>
+  <tr><td>G2 — Feed quality / reconciliation</td><td>Variance between source-of-record and platform-of-truth</td><td>If the platform's numbers don't reconcile, no downstream decision is trustworthy</td></tr>
+  <tr><td>G3 — Master data / hierarchy</td><td>Entity registry, chart of accounts, org hierarchy, or product master loaded correctly</td><td>Without canonical master data, cross-entity rollups and intercompany flows fail silently</td></tr>
+  <tr><td>G4 — Historical / training data depth</td><td>Cleansed history sufficient for the analytical capability the platform was bought for</td><td>AI/predictive use cases require depth; without it the headline capability is parked</td></tr>
+  <tr><td>G5 — User adoption</td><td>The intended users are actually using the platform as primary, not falling back to spreadsheets</td><td>A platform with 50% adoption is a platform with 0% ROI</td></tr>
+  <tr><td>G6 — Process automation</td><td>The end-state automated workflow the platform enables is actually wired up</td><td>Without process automation, the platform is a more expensive version of the prior tool</td></tr>
+</table>
+
+<p>For Kyriba the gates instantiate as: bank H2H connectivity, ERP feed variance, entity + IC hierarchy, historical position reconstruction, treasury team adoption, intercompany auto-reconciliation. For Workday, the same six map to: HRIS feed connectivity, payroll reconciliation, position hierarchy + cost-center master, historical comp data depth, manager + employee adoption, talent + comp process automation. Section 7 walks the full generalization.</p>
+
+<p>The surface this document specifies is what Aisha Vargas — Morgan Street's Group Treasurer, hired one year ago specifically to land Kyriba — opens every morning. In three seconds she sees all six gate statuses. Without reading prose she knows which gate to attack next. With one click she takes the next action. With one more click she understands why Sentinel-Treasury (the specialist agent for this Move) recommends what it recommends.</p>
+
+<h2>Section 2 · Page composition wireframe — the full Move 0 surface</h2>
+
+<p class="sub">Full-page composition: header + phase bar + 6-gate canvas + Sentinel-Treasury chat rail + Move 0 → Move 1 transition gate. This is the pattern setter that L03 (Wave 1) ships and L05 (Wave 2) layers detail onto.</p>
+
+<div class="wireframe">
+  <div class="wf-bar">Wireframe &middot; <code>/moves/M0-kyriba-derisk</code> &middot; HoldCo scope: Morgan Street &middot; viewer: Aisha Vargas (Group Treasurer)</div>
+
+  <div class="move-header">
+    <div class="move-header-row">
+      <div>
+        <h2 class="move-title" style="border: none; padding: 0; margin: 0;">Move 0 &middot; Kyriba Rollout De-Risk</h2>
+        <p class="move-sub">Morgan Street Holdings Chicago &middot; HoldCo + 8 PortCos &middot; Wave 1 live, Wave 2 planned Q3 2026</p>
+      </div>
+      <div style="text-align: right;">
+        <span class="status-pill status-warn"><span class="dot"></span>4 gates need attention</span>
+        <div class="meta" style="margin-top: 6px;">Last refresh: 06:14 CT &middot; next scheduled refresh in 4h</div>
+      </div>
+    </div>
+
+    <div class="move-meta">
+      <div class="meta-block">
+        <span class="lbl">Sponsor</span>
+        <span class="approver-chip"><span class="avatar">SL</span>Sarah Lindqvist <span class="role">CFO</span></span>
+      </div>
+      <div class="meta-block">
+        <span class="lbl">Owner</span>
+        <span class="approver-chip"><span class="avatar">AV</span>Aisha Vargas <span class="role">Group Treasurer</span></span>
+      </div>
+      <div class="meta-block">
+        <span class="lbl">Tech accountable</span>
+        <span class="approver-chip"><span class="avatar">DO</span>Daniel Okonkwo <span class="role">CIO</span></span>
+      </div>
+      <div class="meta-block">
+        <span class="lbl">Reference HoldCo</span>
+        <span class="approver-chip"><span class="avatar">LF</span>Lakefront <span class="role">mature</span></span>
+      </div>
+      <div class="meta-block">
+        <span class="lbl">L0 visibility</span>
+        <span class="val">Aggregate only</span>
+      </div>
+      <div class="meta-block">
+        <span class="lbl">Value at stake</span>
+        <span class="val">$5.8M annual (close + WC + fraud + fees)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-bar">
+    <div class="phase-step done">
+      <span class="phase-n">0</span>
+      <span class="phase-name">Setup</span>
+      <span class="phase-state">Loaded 2026-05-22</span>
+    </div>
+    <div class="phase-step done">
+      <span class="phase-n">1</span>
+      <span class="phase-name">Discovery</span>
+      <span class="phase-state">6 gates diagnosed</span>
+    </div>
+    <div class="phase-step done">
+      <span class="phase-n">2</span>
+      <span class="phase-name">Strategy</span>
+      <span class="phase-state">Roadmap acked 05-29</span>
+    </div>
+    <div class="phase-step current">
+      <span class="phase-n">3</span>
+      <span class="phase-name">Architecture</span>
+      <span class="phase-state">In flight — 3 of 6 gates</span>
+    </div>
+    <div class="phase-step next">
+      <span class="phase-n">4</span>
+      <span class="phase-name">Business case</span>
+      <span class="phase-state">Drafting</span>
+    </div>
+    <div class="phase-step locked">
+      <span class="phase-n">5</span>
+      <span class="phase-name">Mobilization</span>
+      <span class="phase-state">Blocked on Phase 4</span>
+    </div>
+  </div>
+
+  <div class="body-2col">
+    <div class="canvas">
+      <h4 style="margin-top: 0;">The 6-gate canvas</h4>
+      <p class="sub" style="margin-bottom: 12px;">Each card: gate name &middot; current vs target metric &middot; Sentinel-Treasury recommendation &middot; current owner &middot; advance action. Squint at 50% blur — the four red/amber edges are unmistakable.</p>
+
+      <div class="gate-grid">
+
+        <div class="gate-card gate-bad">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G1</span>
+              <h6 class="gate-name">Bank H2H connectivity</h6>
+            </div>
+            <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+          </div>
+          <p class="gate-metric"><strong>4 of 14 banks H2H-ready</strong> &middot; target 6 of 6 strategic</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            Spawn Source event <strong>L-S01 Banking RFP</strong> to consolidate 14 incumbents to 6 strategic, all H2H. Pre-filled with rubric, incumbents, target panel.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>A. Vargas</strong></span>
+            <span class="gate-cta">Open G1 detail</span>
+          </div>
+        </div>
+
+        <div class="gate-card gate-bad">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G2</span>
+              <h6 class="gate-name">ERP feed quality</h6>
+            </div>
+            <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+          </div>
+          <p class="gate-metric">NetSuite &rarr; Kyriba variance <strong>0.41% daily</strong> &middot; target &lt; 0.05%</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            Feed audit per source system; cleanup of 7 mapping errors identified; automated daily recon job. Acceptance: 30-day rolling variance &lt; 0.05%.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>M. Reyes (Controller)</strong></span>
+            <span class="gate-cta">Open G2 detail</span>
+          </div>
+        </div>
+
+        <div class="gate-card gate-warn">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G3</span>
+              <h6 class="gate-name">Entity hierarchy + IC mapping</h6>
+            </div>
+            <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+          </div>
+          <p class="gate-metric"><strong>6 of 8 PortCos</strong> IC-mapped &middot; 2 in reconciliation</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            Canonical entity registry load from corp sec + tax records; IC matrix rebuild; one-shot reload to Kyriba. Targeted close: 2026-06-22.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>M. Reyes + Tax</strong></span>
+            <span class="gate-cta">Open G3 detail</span>
+          </div>
+        </div>
+
+        <div class="gate-card gate-bad">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G4</span>
+              <h6 class="gate-name">Historical position data</h6>
+            </div>
+            <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+          </div>
+          <p class="gate-metric"><strong>84 days</strong> clean position data &middot; need &gt; 540 days to train forecast</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            24-month bank statement reconstruction (8 of 14 banks already exported, 6 outstanding). Silver-layer normalize by entity-currency-day. Backfill forecast training set.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>Treasury Analytics</strong></span>
+            <span class="gate-cta">Open G4 detail</span>
+          </div>
+        </div>
+
+        <div class="gate-card gate-warn">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G5</span>
+              <h6 class="gate-name">User adoption</h6>
+            </div>
+            <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+          </div>
+          <p class="gate-metric"><strong>32 of 48</strong> users weekly-active &middot; target 90% sustained 60 days</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            Role-based dashboards per persona (3 personas identified); 30-day Excel-elimination sprint; weekly office hours. Drives Treasury team off shadow spreadsheets.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>Treasury PM + Change</strong></span>
+            <span class="gate-cta">Open G5 detail</span>
+          </div>
+        </div>
+
+        <div class="gate-card gate-warn">
+          <div class="gate-hd">
+            <div>
+              <span class="gate-id">G6</span>
+              <h6 class="gate-name">IC auto-reconciliation</h6>
+            </div>
+            <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+          </div>
+          <p class="gate-metric">Manual <strong>4-day IC cycle</strong> at month-end &middot; target same-day, T+1 close</p>
+          <div class="gate-rec">
+            <span class="lbl">Sentinel recommends</span>
+            Transformer-based matching across PortCo books (Move 1 Capability 4 pulled forward to unblock Move 0 G6). Confidence threshold + human-in-loop for &lt; 95% matches.
+          </div>
+          <div class="gate-foot">
+            <span class="owner">Owner: <strong>M. Reyes (Controller)</strong></span>
+            <span class="gate-cta">Open G6 detail</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="advance">
+        <h5>Advance to Phase 4 (Business case)</h5>
+        <p style="margin: 0 0 8px; font-size: 13px; color: var(--ink-soft);">Phase 4 entry requires the strategy memo acked, architecture artifacts named per gate, and a committed remediation owner per gate. No fake completion — gates without remediation artifacts cannot count toward advance.</p>
+        <div class="crit met"><span class="mark"></span><div><strong>Strategy memo acked</strong> by CFO + Treasurer on 2026-05-29</div></div>
+        <div class="crit met"><span class="mark"></span><div><strong>All 6 gates have a named remediation owner</strong></div></div>
+        <div class="crit partial"><span class="mark"></span><div><strong>Architecture artifacts named:</strong> 4 of 6 gates (G3 + G5 pending)</div></div>
+        <div class="crit unmet"><span class="mark"></span><div><strong>Source event L-S01 spawned + Stage 0 ack:</strong> not yet spawned (G1 prerequisite)</div></div>
+        <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);">Estimated readiness to advance: <strong>~2026-06-12</strong> assuming L-S01 spawned this week and G3 + G5 architecture named by next Friday.</p>
+      </div>
+
+    </div>
+
+    <div class="rail">
+      <h5>Sentinel-Treasury</h5>
+      <div class="rail-stage">
+        <span class="stage-lbl">Stage &middot; Drafting</span>
+        Rail occupies ~30% width per locked Source pattern. Sized per stage: Intake 50% &middot; Drafting 30-40% (current) &middot; Decision 15% / collapsed.
+      </div>
+
+      <div class="rail-msg from-sentinel">
+        <span class="speaker">Sentinel-Treasury</span>
+        Aisha — the two highest-leverage moves this week are G1 and G4. G1 unlocks every downstream gate; G4 is the prerequisite for the forecasting capability that is the headline reason the rollout exists. Want me to draft the L-S01 banking RFP brief (15 min) so you can preview before sending to Procurement?
+      </div>
+
+      <div class="rail-suggest">
+        <button>Draft L-S01 brief now</button>
+        <button>Show me Lakefront's G1 timeline</button>
+        <button>Why G4 is the long pole, in one paragraph</button>
+        <button>What changes if we delay G3 to Q3?</button>
+      </div>
+
+      <div class="rail-msg">
+        <span class="speaker">A. Vargas &middot; 06:32</span>
+        Walk me through what L-S01 looks like before we spawn it. I want to see the rubric and the incumbent panel.
+      </div>
+
+      <div class="rail-msg from-sentinel">
+        <span class="speaker">Sentinel-Treasury &middot; 06:32</span>
+        Opening L-S01 preview in the right pane. Five pre-filled facts: 14 incumbents from your CFO bundle &middot; target panel of 6 strategic &middot; rubric weights H2H + fees + depth + FX + geography &middot; estimated $2.8M annual fee compression cited from finserv file 08 benchmarks &middot; suggested owners Treasurer + Procurement Lead. I have not spawned it yet.
+      </div>
+
+      <div class="ask-bar">
+        <div class="ask-input" contenteditable="false">Ask Sentinel-Treasury anything &mdash; "compare gate G1 to Lakefront", "what unblocks Move 1 fastest"...</div>
+        <div class="ask-foot">
+          <span>Enter to send &middot; Shift+Enter for newline</span>
+          <span>Provenance: <span class="tag tag-corpus">finserv 08, 13, 20</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="transition">
+  <h3>Move 0 &rarr; Move 1 transition gate</h3>
+  <p style="margin: 0 0 12px; font-size: 13px;">Move 1 (AI on top of Kyriba) entry requires G1 through G4 minimum green. G5 and G6 may be in flight at Move 1 entry. This is the foundation-before-AI sequencing rule from the package's five locked rules.</p>
+  <div class="transition-bar">
+    <div class="transition-cell red">G1 &middot; Required &middot; Red</div>
+    <div class="transition-cell red">G2 &middot; Required &middot; Red</div>
+    <div class="transition-cell amber">G3 &middot; Required &middot; Amber</div>
+    <div class="transition-cell red">G4 &middot; Required &middot; Red</div>
+    <div class="transition-cell amber">G5 &middot; In-flight OK</div>
+    <div class="transition-cell amber">G6 &middot; In-flight OK</div>
+  </div>
+  <p style="margin: 0; font-size: 12px; color: var(--ink-soft);"><strong>Move 1 entry: blocked.</strong> Estimated unblock date based on current remediation pace: 2026-09-08 (Sentinel-Treasury projection; bounded by G4 historical reconstruction critical path).</p>
+</div>
+
+<h2>Section 3 · Per-gate detail surfaces (G1 through G6)</h2>
+
+<p class="sub">One section per gate. Each gate detail layers: status detail &middot; remediation artifacts &middot; Source-event spawn (if applicable) &middot; Sentinel narration &middot; approval ladder &middot; evidence chain. Sections 3.1 through 3.6 follow.</p>
+
+<h3>3.1 · Gate G1 — Bank H2H connectivity</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd bad">
+    <div>
+      <h3>G1 &middot; Bank H2H connectivity</h3>
+      <p class="meta" style="margin: 4px 0 0;">Source-system connectivity class &middot; remediation spawns Source event L-S01</p>
+    </div>
+    <div>
+      <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: A. Vargas</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>4 of 14 banks H2H-ready (JPMorgan, Citi, BofA, PNC). 10 banks rely on bank-portal scraping or manual file upload, capping Kyriba's forecast refresh latency and operating-day cash position accuracy.</p>
+        <ul>
+          <li>H2H banks: 4 &middot; portal-scraped: 7 &middot; manual: 3</li>
+          <li>Average daily lag: 11 hours (H2H: same-day; manual: 1-2 day)</li>
+          <li>Estimated forecast accuracy ceiling at current state: 68% (vs target 92%)</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <p>Three artifacts contemplated:</p>
+        <ul>
+          <li><strong>Banking inventory normalize</strong> &middot; <em>generated 2026-05-25</em> &middot; per-bank fee + services + H2H status</li>
+          <li><strong>Strategic bank target panel</strong> &middot; <em>generated 2026-05-28</em> &middot; 6 banks with rubric scoring</li>
+          <li><strong>L-S01 Source event brief</strong> &middot; <em>pending spawn</em> &middot; rubric, incumbents, target, owners pre-filled</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p><strong>L-S01 &middot; Banking consolidation RFP.</strong> Spawn trigger: when Aisha clicks "Spawn L-S01" the Source module receives a pre-filled event payload and routes to Stage 0 (intake). The event carries five pre-filled facts:</p>
+        <ul>
+          <li>14 incumbent banks (from CFO bundle)</li>
+          <li>Target panel of 6 strategic banks</li>
+          <li>Rubric: H2H + fees + treasury depth + FX + geography</li>
+          <li>Estimated $2.8M annual fee compression</li>
+          <li>Stakeholders: Treasurer (owner) + Procurement Lead + CFO (approver)</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step acked"><span class="lbl">2. Owner ack</span>A. Vargas &middot; 05-26</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">3. Strategy ack</span>CFO &middot; pending</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. Spawn L-S01</span>Triggers Source</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. RFP award</span>via Source flow</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      Morgan Street is paying for Kyriba forecast accuracy that 10 of 14 banks cannot deliver because their feeds arrive too late or by hand. Lakefront ran the same path: consolidated from 9 banks to 5, all H2H, in two RFP cycles over five months. Replicating that pattern at Morgan Street is the single highest-leverage move because it unblocks G4 (historical position reconstruction needs clean recent feeds first) and G2 (variance has a connectivity component, not just a mapping component). Recommend spawning L-S01 this week — Procurement has bandwidth and CFO is sponsor-aligned.
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> CFO bundle &middot; banking inventory rows 1-14 &middot; loaded 2026-05-22 by S. Lindqvist</li>
+        <li><span class="tag tag-evidence">Loaded</span> Kyriba H2H status table &middot; loaded 2026-05-22 by Treasury Ops</li>
+        <li><span class="tag tag-corpus">Corpus</span> finserv knowledge file 08 &middot; banking cost-to-income benchmarks &middot; fee compression range 8-15% on rationalized panels</li>
+        <li><span class="tag tag-corpus">Corpus</span> finserv knowledge file 13 &middot; mid-market treasury benchmarks &middot; H2H connectivity at strategic banks = 100% for "mature" cohort</li>
+        <li><span class="tag tag-corpus">Corpus</span> Lakefront reference &middot; 2024 RFP outcome &middot; 9 to 5 consolidation, $1.6M annual realized</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h3>3.2 · Gate G2 — ERP feed quality</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd bad">
+    <div>
+      <h3>G2 &middot; ERP feed quality</h3>
+      <p class="meta" style="margin: 4px 0 0;">Feed quality / reconciliation class &middot; remediation is internal data plane work, no Source spawn</p>
+    </div>
+    <div>
+      <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: M. Reyes</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>NetSuite OneWorld &rarr; Kyriba feed runs nightly. Reconciliation variance averages <strong>0.41%</strong> over the trailing 30 days. Target: &lt; 0.05% sustained. Variance composition: 62% mapping errors (chart-of-account drift after Q1 reorg), 28% timing (intraday vs end-of-day capture mismatch), 10% true source-system noise.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <ul>
+          <li><strong>Feed audit dossier</strong> &middot; <em>generated 2026-05-30</em> &middot; per-feed drift quantified by 7 known mapping errors</li>
+          <li><strong>COA drift remediation plan</strong> &middot; <em>generated 2026-06-01</em> &middot; 7 mapping fixes prioritized</li>
+          <li><strong>Daily auto-reconciliation job spec</strong> &middot; <em>drafting</em> &middot; runs at 06:00 CT, flags variance &gt; 0.05% to Controller</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p>None. G2 remediation is internal data-plane work owned by Controller + Treasury Ops. No procurement event spawned.</p>
+        <p class="meta" style="margin-top: 8px;"><em>Locked rule applied: "no export of nothing" — if a gate's remediation has no procurement artifact, the Source spawn affordance does not appear.</em></p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step acked"><span class="lbl">2. Owner ack</span>M. Reyes &middot; 05-31</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">3. Fix sign-off</span>Controller team &middot; in flight</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. 30d variance check</span>Sentinel auto-monitor</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. Gate flip</span>CFO ack &middot; auto on green</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      The variance is mostly a one-off remediation, not a structural problem. After the Q1 reorg the chart-of-account changes were applied in NetSuite but not in Kyriba's intermediate mapping table. Seven mapping rows fix the bulk of it. The remaining timing-based variance is solved by an auto-recon job, not by a feed redesign. Realistic gate-flip date: 2026-07-15 (45 days to fix + 30 days observation).
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> Kyriba reconciliation log &middot; trailing 60 days of variance</li>
+        <li><span class="tag tag-evidence">Loaded</span> NetSuite COA &middot; pre and post Q1 reorg</li>
+        <li><span class="tag tag-corpus">Corpus</span> finserv file 17 &middot; treasury close acceleration patterns &middot; T+1 close requires variance &lt; 0.05%</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h3>3.3 · Gate G3 — Entity hierarchy + IC mapping</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd warn">
+    <div>
+      <h3>G3 &middot; Entity hierarchy + IC mapping</h3>
+      <p class="meta" style="margin: 4px 0 0;">Master data class &middot; remediation is internal cleanup, no Source spawn</p>
+    </div>
+    <div>
+      <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: M. Reyes + Tax</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>6 of 8 PortCos have canonical entity registration + IC mapping loaded. Two PortCos (specialty manufacturing &middot; facility services Northeast) are still under reconciliation because their corporate secretary records disagree with the tax department's entity registry. Until resolved, IC eliminations for those two PortCos run manually at month-end (4-day cycle).</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <ul>
+          <li><strong>Canonical entity registry draft</strong> &middot; <em>generated 2026-05-28</em> &middot; from corp sec + tax records joined</li>
+          <li><strong>IC matrix v2</strong> &middot; <em>drafting</em> &middot; pending corp sec sign-off on 2 disputed entities</li>
+          <li><strong>Kyriba one-shot reload</strong> &middot; <em>scheduled 2026-06-22</em> &middot; conditional on registry sign-off</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p>None. Internal master data remediation. No procurement artifact, no Source spawn affordance shown (per locked rule).</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step acked"><span class="lbl">2. Owner ack</span>M. Reyes &middot; 05-29</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">3. Corp sec sign-off</span>Pending &middot; 2 entities</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. Tax sign-off</span>R. Mei + Tax</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. Reload + gate flip</span>CFO ack</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      The two disputed entities are governance cleanup, not technical work. Once corp sec and tax align (Sentinel surfaced the conflict by joining the two registries side by side; it could not have invented the conflict), the reload is mechanical. Gate flips green when month-end IC eliminations resolve automatically without manual journal entries. Target close: 2026-06-22.
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> GC bundle &middot; entity registry &middot; loaded 2026-05-24 by R. Mei</li>
+        <li><span class="tag tag-evidence">Loaded</span> Tax entity master &middot; loaded 2026-05-25 by Tax Director</li>
+        <li><span class="tag tag-evidence">Loaded</span> Kyriba current entity load &middot; mismatch report generated by Sentinel</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h3>3.4 · Gate G4 — Historical position reconstruction</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd bad">
+    <div>
+      <h3>G4 &middot; Historical position data</h3>
+      <p class="meta" style="margin: 4px 0 0;">Training-data depth class &middot; gates the Move 1 forecasting capability directly</p>
+    </div>
+    <div>
+      <span class="status-pill status-bad"><span class="dot"></span>Red</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: Treasury Analytics</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>Only 84 days of clean position data available. The Move 1 forecasting model requires &gt; 540 days (18 months) of normalized position data to train a 12-week forward prediction at the accuracy threshold Lakefront achieved. This gate is the long pole on the entire Move 0 &rarr; Move 1 transition.</p>
+        <ul>
+          <li>Sources available for reconstruction: bank statements from 8 of 14 banks</li>
+          <li>Outstanding: 6 banks need export request (legal + procurement)</li>
+          <li>Estimated normalization effort: 6-8 weeks once all sources land</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <ul>
+          <li><strong>Bank statement inventory</strong> &middot; <em>generated 2026-05-29</em> &middot; per-bank availability + format</li>
+          <li><strong>Export request packet</strong> &middot; <em>generated 2026-06-02</em> &middot; for 6 outstanding banks</li>
+          <li><strong>Silver-layer normalization spec</strong> &middot; <em>drafting</em> &middot; entity-currency-day grain</li>
+          <li><strong>Backfilled training set</strong> &middot; <em>scheduled Q3 2026</em> &middot; conditional on G1 strategic bank panel</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p>None directly. G4 has a strong dependency on G1's L-S01 — the strategic bank panel will produce ongoing clean H2H data, which compounds the historical reconstruction. Sentinel surfaces this dependency in the narration below.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step acked"><span class="lbl">2. Owner ack</span>Treasury Analytics &middot; 05-30</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">3. Export requests sent</span>6 banks &middot; in flight</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. Silver layer complete</span>Treasury Analytics</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. Model training ready</span>CFO + Treasurer</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      G4 is the gate that decides when Morgan Street earns Move 1's headline forecasting capability. Eighteen months of clean position data is not a luxury — it is the minimum window that captures one full annual seasonality cycle plus a quarter for validation. Sentinel projects the gate flips green no earlier than 2026-09-08, bounded by bank export turnaround (4-6 weeks for the 6 outstanding banks) plus normalization. Sequencing matters: if G1's L-S01 lands in parallel, the strategic bank panel will deliver ongoing clean H2H data, compounding the historical reconstruction rather than replacing it.
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> Kyriba position history &middot; trailing 84 days</li>
+        <li><span class="tag tag-evidence">Loaded</span> Bank statement archive &middot; 8 of 14 banks &middot; trailing 24 months</li>
+        <li><span class="tag tag-corpus">Corpus</span> Lakefront forecast model training spec &middot; 540-day minimum window</li>
+        <li><span class="tag tag-corpus">Corpus</span> finserv file 13 &middot; cash forecasting accuracy benchmarks &middot; 92% target at 12-week horizon</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h3>3.5 · Gate G5 — User adoption</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd warn">
+    <div>
+      <h3>G5 &middot; User adoption</h3>
+      <p class="meta" style="margin: 4px 0 0;">Adoption class &middot; remediation is design + change, no Source spawn</p>
+    </div>
+    <div>
+      <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: Treasury PM + Change Lead</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>32 of 48 expected users are logging in weekly (67%). Sentinel decomposes the 16 non-active users into three personas: (a) Treasury analysts who still operate in Excel for forecasting because Kyriba's forecast is not trained yet, (b) PortCo finance leads who use bank portals directly for tactical cash decisions, (c) AP/AR managers who only need monthly dashboards and forget the URL.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <ul>
+          <li><strong>Persona-by-persona adoption diagnosis</strong> &middot; <em>generated 2026-06-01</em></li>
+          <li><strong>Role-based dashboard spec &middot; 3 personas</strong> &middot; <em>drafting</em></li>
+          <li><strong>30-day Excel-elimination sprint plan</strong> &middot; <em>drafting</em> &middot; named KPI per persona</li>
+          <li><strong>Weekly office hours schedule</strong> &middot; <em>not yet generated</em></li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p>None. Adoption is design + change management work, owned by Treasury PM + Change Lead.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">2. Owner ack</span>Treasury PM &middot; pending</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">3. Sprint kickoff</span>Treasurer + PM</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. 60-day check</span>WAU &gt; 90% sustained</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. Gate flip</span>CFO ack</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      Persona (a) is real and structural — analysts will stay in Excel until G4 unblocks the forecast they actually need. Persona (b) is a process design problem solvable with one Kyriba quick-win dashboard. Persona (c) is a habit problem solvable with email and one weekly office hour. Recommend ordering: design the persona (b) and (c) dashboards first; G5 will trail G4 because persona (a) cannot fully transition off Excel until forecasting earns its place. Realistic gate-flip date: 30 days after G4 flips green.
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> Kyriba weekly active user metric &middot; trailing 8 weeks</li>
+        <li><span class="tag tag-evidence">Loaded</span> Treasury org chart &middot; 48 expected users by role</li>
+        <li><span class="tag tag-corpus">Corpus</span> Lakefront adoption playbook &middot; persona-based dashboards reached 94% WAU in 90 days</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h3>3.6 · Gate G6 — IC auto-reconciliation</h3>
+
+<div class="gate-detail">
+  <div class="gate-detail-hd warn">
+    <div>
+      <h3>G6 &middot; IC auto-reconciliation</h3>
+      <p class="meta" style="margin: 4px 0 0;">Process automation class &middot; remediation pulls Move 1 Capability 4 forward; no Source spawn</p>
+    </div>
+    <div>
+      <span class="status-pill status-warn"><span class="dot"></span>Amber</span>
+      <span class="status-pill status-neutral" style="margin-left: 4px;"><span class="dot"></span>Owner: M. Reyes (Controller)</span>
+    </div>
+  </div>
+  <div class="gate-detail-body">
+
+    <div class="gate-detail-grid">
+      <div class="gate-block">
+        <h5>Status detail</h5>
+        <p>Month-end IC posting is a manual 4-day cycle. HoldCo close is currently T+9. Target end state: same-day IC posting, T+1 close at HoldCo level. The capability to deliver this exists in Move 1 (Capability 4 &middot; transformer-based IC matching across PortCo books) and is being pulled forward to unblock Move 0 G6 — a deliberate exception to foundation-before-AI sequencing, justified because the matching model trains on G3 master data, not G4 historical position data.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Remediation artifacts</h5>
+        <ul>
+          <li><strong>IC volume + frequency analysis</strong> &middot; <em>generated 2026-05-30</em></li>
+          <li><strong>Matching rule baseline</strong> &middot; <em>generated 2026-06-01</em> &middot; deterministic rules covering 78% of pairs</li>
+          <li><strong>Transformer matching pilot spec</strong> &middot; <em>drafting</em> &middot; conditional on G3 entity registry close</li>
+          <li><strong>Human-in-loop policy</strong> &middot; <em>drafting</em> &middot; auto-post above 95% confidence, queue below</li>
+        </ul>
+      </div>
+
+      <div class="gate-block">
+        <h5>Source event spawn</h5>
+        <p>None. Process automation owned by Controller + Treasury Analytics.</p>
+      </div>
+
+      <div class="gate-block">
+        <h5>Approval ladder</h5>
+        <div class="ladder">
+          <div class="ladder-step acked"><span class="lbl">1. Diagnose</span>Sentinel auto</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step acked"><span class="lbl">2. Owner ack</span>M. Reyes &middot; 06-01</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step pending"><span class="lbl">3. G3 close</span>Prerequisite</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">4. Pilot at next month-end</span>2026-07</div>
+          <span class="ladder-arrow">&rarr;</span>
+          <div class="ladder-step upcoming"><span class="lbl">5. Gate flip</span>CFO + Audit Cmte</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narration">
+      Pulling Capability 4 forward into Move 0 is the right call even though it bends foundation-before-AI. The transformer matching model depends on G3 master data (entity registry), not G4 historical position depth, so the dependency chain is clean. The deterministic rule baseline already handles 78% of IC pairs; the transformer covers the long tail. Realistic gate-flip path: G3 closes 2026-06-22, pilot runs at 2026-07 month-end close, gate flips green at 2026-08 month-end if pilot holds.
+    </div>
+
+    <div class="evidence">
+      <h5>Evidence chain</h5>
+      <ul>
+        <li><span class="tag tag-evidence">Loaded</span> Close calendar &middot; trailing 6 months &middot; IC posting day-by-day</li>
+        <li><span class="tag tag-evidence">Loaded</span> IC transaction sample &middot; 3 months of inter-PortCo pairs</li>
+        <li><span class="tag tag-corpus">Corpus</span> Lakefront IC matching deployment &middot; production rules + transformer hybrid</li>
+        <li><span class="tag tag-corpus">Corpus</span> finserv file 17 &middot; close acceleration via IC automation &middot; 3-5 day compression typical</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<h2>Section 4 · The Lakefront reference affordance</h2>
+
+<p class="sub">Aisha can open any gate's <em>Reference HoldCo</em> drawer to compare Morgan Street's status against Lakefront — the mature reference HoldCo whose Kyriba deployment went live in 2024. Side-by-side disclosure with explicit "completed in X months using approach Y; estimated Z months for Morgan Street given parallel work" framing.</p>
+
+<div class="lakefront">
+  <div class="lakefront-hd">
+    <div><strong>Reference HoldCo &middot; Lakefront Capital Boston</strong> &middot; Kyriba live since 2024 &middot; mature operating model</div>
+    <span class="status-pill status-good"><span class="dot"></span>Reference proof point</span>
+  </div>
+  <div class="lakefront-body">
+    <p style="margin-top: 0; font-size: 13px;">Drawer pattern: opens inline next to a gate detail. Shows Lakefront's status at the same gate, the approach Lakefront used, the elapsed time, and a Sentinel-generated translation for Morgan Street that accounts for parallel work, scale differences, and any sequencing dependencies.</p>
+
+    <h4>Example &middot; G1 Bank H2H connectivity</h4>
+
+    <div class="lakefront-compare">
+      <div class="lf-col morgan">
+        <h6>Morgan Street &middot; current</h6>
+        <p style="margin: 0; font-size: 13px;"><strong>14 banks &middot; 4 H2H-ready (29%)</strong></p>
+        <p style="margin: 6px 0 0; font-size: 12px; color: var(--ink-soft);">Started Kyriba rollout 14 months ago. H2H buildout deferred while focus stayed on entity load + ERP feeds.</p>
+      </div>
+      <div class="lf-col lakefront-col">
+        <h6>Lakefront &middot; mature state</h6>
+        <p style="margin: 0; font-size: 13px;"><strong>5 banks &middot; 5 H2H-ready (100%)</strong></p>
+        <p style="margin: 6px 0 0; font-size: 12px; color: var(--ink-soft);">Consolidated from 9 to 5 banks in two RFP cycles over 5 months in 2024. $1.6M annual fee compression realized.</p>
+      </div>
+    </div>
+
+    <div class="narration">
+      Lakefront completed G1 in approximately 6 months using a single banking RFP that combined H2H + fees + treasury depth into one scoring rubric. Replicating that pattern for Morgan Street is estimated at 4 months given (a) the L-S01 brief Sentinel has pre-drafted, (b) Morgan Street's Procurement bandwidth, and (c) the ability to run G4's historical reconstruction in parallel with the RFP. Disclosure: Morgan Street's panel will be 6 banks (not 5) because of one specialty-manufacturing PortCo's regional banking dependency that Lakefront did not face.
+    </div>
+
+    <h4>The drawer interaction model</h4>
+    <ul>
+      <li>Each gate detail surface has a "compare to Lakefront" link in the header</li>
+      <li>The drawer slides in from the right, pushing the Sentinel rail down (not over) so the user does not lose chat context</li>
+      <li>The comparison always includes: current state &middot; mature state &middot; approach used &middot; elapsed time &middot; Sentinel translation for Morgan Street with explicit accounting of differences</li>
+      <li>If Lakefront does not have a comparable gate state (rare), the drawer shows the designed empty state: <em>"Lakefront did not face this gate at the same stage — here is the closest analog from finserv corpus instead."</em></li>
+    </ul>
+
+  </div>
+</div>
+
+<h2>Section 5 · Phase progression affordances</h2>
+
+<p class="sub">How a HoldCo advances from Phase 1 &rarr; 2 &rarr; 3 &rarr; 4 &rarr; 5 within the Move. Acceptance criteria are explicit; no "click to mark complete" without artifact existence. The "no fake completion" rule from the README is enforced at the affordance level.</p>
+
+<h3>5.1 · Phase 1 (Discovery) &rarr; Phase 2 (Strategy)</h3>
+
+<div class="advance">
+  <h5>Acceptance criteria</h5>
+  <div class="crit met"><span class="mark"></span><div><strong>All 6 gates diagnosed</strong> &mdash; status + metric + risk class &mdash; with evidence chain resolving</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>Owner named per gate</strong> &mdash; not "TBD"; a real person with explicit ack</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>Risk-ranked findings memo</strong> &mdash; artifact exists, not stubbed</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>HoldCo sponsor (CFO) ack</strong> &mdash; on diagnostic, not on advance click</div></div>
+  <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);"><strong>Morgan Street status: complete 2026-05-26.</strong></p>
+</div>
+
+<h3>5.2 · Phase 2 (Strategy) &rarr; Phase 3 (Architecture)</h3>
+
+<div class="advance">
+  <h5>Acceptance criteria</h5>
+  <div class="crit met"><span class="mark"></span><div><strong>6-gate remediation roadmap</strong> &mdash; gate-by-gate remediation approach + sequencing</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>Strategy memo acked</strong> &mdash; CFO + Treasurer + Controller signatures captured</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>Lakefront reference comparison drawn</strong> &mdash; for at least 3 of 6 gates with explicit Sentinel translation</div></div>
+  <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);"><strong>Morgan Street status: complete 2026-05-29.</strong></p>
+</div>
+
+<h3>5.3 · Phase 3 (Architecture) &rarr; Phase 4 (Business case)</h3>
+
+<div class="advance">
+  <h5>Acceptance criteria</h5>
+  <div class="crit partial"><span class="mark"></span><div><strong>Architecture artifacts per gate</strong> &mdash; 4 of 6 generated; G3 + G5 in drafting</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>Source event L-S01 spawned</strong> &mdash; prerequisite because G1 remediation depends on RFP outcome timeline</div></div>
+  <div class="crit met"><span class="mark"></span><div><strong>Data plane gap analysis</strong> &mdash; complete; informs Move 1 entry conditions</div></div>
+  <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);"><strong>Morgan Street status: not yet complete.</strong> Estimated readiness: 2026-06-12.</p>
+</div>
+
+<h3>5.4 · Phase 4 (Business case) &rarr; Phase 5 (Mobilization)</h3>
+
+<div class="advance">
+  <h5>Acceptance criteria</h5>
+  <div class="crit unmet"><span class="mark"></span><div><strong>Investment + benefits model</strong> &mdash; per gate cost + close acceleration + WC unlock + fraud avoidance + fee compression</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>CFO + Audit Committee ack</strong> &mdash; required if investment &gt; $5M (Move 0 estimated ~$3.2M, below threshold, so CFO ack only)</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>NPV / payback with confidence bands</strong> &mdash; bands cite finserv corpus benchmarks; no point estimates without disclosed range</div></div>
+  <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);"><strong>Morgan Street status: blocked on Phase 3.</strong></p>
+</div>
+
+<h3>5.5 · Phase 5 (Mobilization) &rarr; Move 1 entry</h3>
+
+<div class="advance">
+  <h5>Acceptance criteria &middot; mobilization done means Move 0 done</h5>
+  <div class="crit unmet"><span class="mark"></span><div><strong>30/60/90 plan with RACI</strong> &mdash; per gate, per milestone, with named owners and dates</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>Adoption sprint launched</strong> &mdash; G5 remediation in flight by Day 30</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>G1-G4 minimum green</strong> &mdash; the Move 1 entry rule</div></div>
+  <div class="crit unmet"><span class="mark"></span><div><strong>Move 1 Phase 0 (Setup) loaded</strong> &mdash; payment policy + covenant texts available</div></div>
+  <p style="margin: 10px 0 0; font-size: 12px; color: var(--ink-soft);"><strong>Morgan Street status: not yet in scope.</strong> Sentinel estimate based on current pace: Move 1 entry possible 2026-09-08.</p>
+</div>
+
+<div class="note">
+  <strong>Empty state design.</strong> If a HoldCo has not yet entered Phase 1 (e.g., Roosevelt has loaded CFO + CIO bundles but has not triggered Move 0), the canvas does not show "no data." It shows a designed empty state with: phase bar all greyed, gate cards in dashed-empty style ("ready to begin — diagnose triggers when Treasury workflow inventory + Kyriba status are loaded"), and a Sentinel-Treasury rail message offering to walk through what Move 0 requires. The empty state is itself a designed state, per the locked rule.
+</div>
+
+<div class="empty-state">
+  <span class="empty-title">Ready to begin Move 0 &middot; Roosevelt Holdings Atlanta</span>
+  Move 0 triggers when CFO bundle, banking inventory, treasury workflow inventory, and Kyriba rollout status are all loaded. Currently: 2 of 4 loaded. Sentinel-Treasury can walk through what the remaining 2 require.
+  <br><span class="empty-cta">Show me what to load next</span>
+</div>
+
+<h2>Section 6 · Squint test &middot; the visual pattern that makes status unmistakable</h2>
+
+<p class="sub">At 50% blur the user must see the count of red, amber, green gates without parsing any text. The pattern that achieves this is the <strong>4-pixel left border on each gate card</strong>, colored by status, combined with the colored status pill in the top-right corner. The combination is the visual scaffold that holds the squint test.</p>
+
+<div class="squint-legend">
+  <div class="sw"><div class="bar" style="background: var(--bad);"></div>Red &middot; needs remediation now &middot; ceiling on downstream gates</div>
+  <div class="sw"><div class="bar" style="background: var(--warn);"></div>Amber &middot; in remediation &middot; on track</div>
+  <div class="sw"><div class="bar" style="background: var(--good);"></div>Green &middot; gate flipped &middot; passes Move 1 entry test</div>
+  <div class="sw"><div class="bar" style="background: var(--ink-mute);"></div>Empty / dashed &middot; designed empty state &middot; ready to begin</div>
+</div>
+
+<h4>Squint pattern composition</h4>
+<ul>
+  <li><strong>Two visual carriers per card.</strong> Status is encoded twice: (1) the 4px left border, (2) the colored pill top-right. At 50% blur the left borders form a vertical strip of color across the 2&times;3 grid; the user can count the reds without reading.</li>
+  <li><strong>Sentinel rail does not carry status.</strong> The rail's accent-soft background is deliberately neutral so the user's eye does not get pulled away from the canvas grid when scanning status.</li>
+  <li><strong>Phase bar carries phase, not gate status.</strong> The colored phase background (done = green-soft, current = accent-soft, locked = grey) is independent from gate status. This keeps the squint signal clean: gate status lives on the gate cards only.</li>
+  <li><strong>Move 1 transition bar carries Move 1 entry status.</strong> The colored cells at the bottom of the page (red/amber/green per gate) reproduce the canvas signal in a horizontal strip so the user can confirm Move 1 entry status at a glance.</li>
+  <li><strong>No status icons, no badges, no decorative chrome.</strong> The squint pattern is paper + colored edge + colored pill. No emojis (locked rule). No iconography that requires reading.</li>
+</ul>
+
+<p>The deliberate choice is to reserve the dark charcoal (#1f2937) for the Executive Decision header in Source ONLY (per the locked "one dark moment" rule). Move 0 stays on paper + accent throughout — the gate status colors carry the urgency signal without the page itself feeling alarming.</p>
+
+<h2>Section 7 · The Platform Rollout De-Risk template — what changes per platform</h2>
+
+<p class="sub">The 6-gate scaffold is invariant. Gate names, value spine, and Source event spawns vary per platform. Below: explicit generalization for Workday, NetSuite, Salesforce. Future platform rollout Moves layer onto the same surface with these substitutions.</p>
+
+<div class="gen-grid">
+  <div class="head">Gate class</div>
+  <div class="head">Workday HRIS rollout</div>
+  <div class="head">NetSuite OneWorld consolidation</div>
+  <div class="head">Salesforce deployment</div>
+
+  <div class="row-lbl">G1 &middot; Source-system connectivity</div>
+  <div>Inbound HRIS connectors (ATS, benefits broker, payroll provider, time tracking)</div>
+  <div>Subsidiary ERP feeds into NetSuite (per-PortCo Sage/QuickBooks/legacy)</div>
+  <div>CRM source feeds (marketing automation, web, partner portals, support)</div>
+
+  <div class="row-lbl">G2 &middot; Feed quality / reconciliation</div>
+  <div>Headcount + payroll reconciliation between Workday and source-of-record</div>
+  <div>Subsidiary trial balance &rarr; consolidation variance</div>
+  <div>Customer + opportunity record dedupe + survivorship variance</div>
+
+  <div class="row-lbl">G3 &middot; Master data / hierarchy</div>
+  <div>Position hierarchy + cost-center master + supervisory org</div>
+  <div>Chart of accounts + entity hierarchy + IC mapping</div>
+  <div>Account hierarchy + territory model + product master</div>
+
+  <div class="row-lbl">G4 &middot; Historical / training data depth</div>
+  <div>Historical comp + performance data for talent analytics</div>
+  <div>Multi-period restated financials for AI-driven anomaly + forecast</div>
+  <div>Historical pipeline + win/loss data for forecast model</div>
+
+  <div class="row-lbl">G5 &middot; User adoption</div>
+  <div>Manager + employee weekly active vs target persona ratios</div>
+  <div>Controller + AP team off prior ERP UI; analyst dashboards adopted</div>
+  <div>Sales rep weekly active + CRM update rate vs target</div>
+
+  <div class="row-lbl">G6 &middot; Process automation</div>
+  <div>Talent + comp processes (hire, promo, comp cycle) wired end-to-end</div>
+  <div>Close cycle automation (T+1 close, auto-eliminations, auto-allocations)</div>
+  <div>Quote-to-cash + forecast review cadence automated</div>
+
+  <div class="row-lbl">Source spawn (G1)</div>
+  <div>Workday SI partner RFP (if not already engaged); benefits broker consolidation</div>
+  <div>Subsidiary ERP migration partner; cloud infra contracts</div>
+  <div>Salesforce SI + CRM data quality partner</div>
+
+  <div class="row-lbl">Sentinel agent name</div>
+  <div>Sentinel-People</div>
+  <div>Sentinel-Finance</div>
+  <div>Sentinel-Revenue</div>
+
+  <div class="row-lbl">Reference HoldCo</div>
+  <div>Lakefront (Workday mature across HoldCo + all PortCos)</div>
+  <div>Lakefront (NetSuite OneWorld mature)</div>
+  <div>varies by HoldCo &middot; surface to Tower for L0 to set reference</div>
+
+  <div class="row-lbl">Value spine</div>
+  <div>Close-to-hire compression + comp cycle accuracy + talent retention</div>
+  <div>Close acceleration + auto-eliminations + restatement risk reduction</div>
+  <div>Pipeline accuracy + forecast accuracy + rep productivity</div>
+</div>
+
+<p>What the surface specification keeps invariant when reused: header structure, phase bar, 6-gate canvas (2 wide &times; 3 tall), Sentinel rail (renamed per platform), Lakefront reference drawer pattern, phase progression acceptance affordance, Move 1 transition gate. What gets substituted: gate labels, gate metrics, Sentinel agent name, Source spawn IDs, value spine numbers, evidence chain corpus citations.</p>
+
+<h2>Section 8 · Build mapping &middot; React + data hooks + API</h2>
+
+<p class="sub">Spec L03 (Wave 1) ships the canvas + phase bar + transition gate. Spec L05 (Wave 2) layers per-gate detail surfaces and the Lakefront drawer. The route structure, components, hooks, and API contracts are listed below; Codex picks this up directly.</p>
+
+<div class="build-block">
+  <h5>Route &middot; Next.js App Router</h5>
+  <ul>
+    <li><code>src/app/(moves)/[moveCode]/page.tsx</code> &mdash; the Move 0 page; receives <code>moveCode</code> param, resolves to <code>M0-kyriba-derisk</code> instance for the current HoldCo</li>
+    <li><code>src/app/(moves)/[moveCode]/gates/[gateId]/page.tsx</code> &mdash; per-gate detail surface (G1-G6); deep-linkable</li>
+    <li><code>src/app/(moves)/[moveCode]/advance/[fromPhase]/page.tsx</code> &mdash; phase advance review modal route</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>Components &middot; <code>src/components/moves/platform-rollout-derisk/</code></h5>
+  <ul>
+    <li><code>MoveHeader.tsx</code> &mdash; title + status pill + approver chips + value-at-stake</li>
+    <li><code>PhaseBar.tsx</code> &mdash; 6-cell phase bar with done / current / next / locked states</li>
+    <li><code>GateCanvas.tsx</code> &mdash; the 2&times;3 grid wrapper</li>
+    <li><code>GateCard.tsx</code> &mdash; single gate card with status, metric, recommendation, owner, CTA</li>
+    <li><code>GateDetailSurface.tsx</code> &mdash; per-gate detail composed of status + remediation + Source spawn + ladder + narration + evidence</li>
+    <li><code>ApprovalLadder.tsx</code> &mdash; 5-step ladder with acked / pending / upcoming states</li>
+    <li><code>EvidenceChain.tsx</code> &mdash; loaded + corpus + human-input citations with provenance tags</li>
+    <li><code>LakefrontReferenceDrawer.tsx</code> &mdash; side-by-side comparison drawer; receives <code>gateId</code> + <code>referenceHoldCoId</code></li>
+    <li><code>PhaseAdvanceAffordance.tsx</code> &mdash; acceptance criteria checklist with met / partial / unmet states</li>
+    <li><code>MoveTransitionGate.tsx</code> &mdash; the Move 0 &rarr; Move 1 entry bar at bottom</li>
+    <li><code>SentinelRail.tsx</code> &mdash; ~30% width chat rail with stage-sized sizing per locked Source pattern</li>
+    <li><code>AskAnythingBar.tsx</code> &mdash; sticky bottom; auto-grow textarea; Enter to send, Shift+Enter newline (reuse from Source / Tower)</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>Data hooks &middot; <code>src/lib/moves/platform-rollout-derisk/hooks/</code></h5>
+  <ul>
+    <li><code>useMoveInstance(moveCode, holdCoId)</code> &mdash; returns header + phase + gates + transition state</li>
+    <li><code>useGateDetail(moveCode, gateId, holdCoId)</code> &mdash; returns status detail + artifacts + Source spawn state + ladder + evidence</li>
+    <li><code>useLakefrontReference(gateId, referenceHoldCoId)</code> &mdash; reference HoldCo's state at the same gate + Sentinel translation</li>
+    <li><code>usePhaseAdvance(moveCode, fromPhase, holdCoId)</code> &mdash; acceptance criteria evaluation + estimated readiness date</li>
+    <li><code>useSentinelTreasury(moveCode, holdCoId)</code> &mdash; chat stream + suggested actions + provenance footer</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>API routes &middot; <code>src/app/api/moves/</code></h5>
+  <ul>
+    <li><code>GET /api/moves/[moveCode]/instance</code> &mdash; returns header + phase + 6 gates summary &middot; UI view-model contract (per Programs Phase 3 transformer rule)</li>
+    <li><code>GET /api/moves/[moveCode]/gates/[gateId]</code> &mdash; returns full gate detail surface payload</li>
+    <li><code>POST /api/moves/[moveCode]/gates/[gateId]/ack</code> &mdash; records owner ack on gate diagnosis</li>
+    <li><code>POST /api/moves/[moveCode]/gates/[gateId]/spawn-source</code> &mdash; spawns a Source event (G1 &rarr; L-S01); validates G1 prerequisite, calls <code>SourceEventService.create()</code></li>
+    <li><code>POST /api/moves/[moveCode]/advance</code> &mdash; requests phase advance; validates acceptance criteria server-side (no client-trust); records transition</li>
+    <li><code>GET /api/moves/[moveCode]/transition/[targetMoveCode]</code> &mdash; Move 1 entry readiness check</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>Substrate &middot; data model additions</h5>
+  <ul>
+    <li><code>move_instances</code> table &mdash; per-HoldCo Move instance (<code>tenant_id</code>, <code>move_code</code>, <code>current_phase</code>, <code>status</code>)</li>
+    <li><code>gate_states</code> table &mdash; per-Move-instance gate state (<code>move_instance_id</code>, <code>gate_id</code>, <code>status</code>, <code>metric_value</code>, <code>metric_target</code>, <code>owner_user_id</code>, <code>last_diagnosed_at</code>)</li>
+    <li><code>gate_artifacts</code> table &mdash; per-gate remediation artifacts (<code>gate_state_id</code>, <code>artifact_type</code>, <code>artifact_body_ref</code>, <code>status</code>); body-null artifacts trigger "no export of nothing" UI rule</li>
+    <li><code>gate_acks</code> table &mdash; approval ladder events (<code>gate_state_id</code>, <code>step</code>, <code>user_id</code>, <code>acked_at</code>)</li>
+    <li><code>holding_group_id</code> column on tenants (per L01) &mdash; enables L0 aggregate reads via existing source-access-policy</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>RLS posture</h5>
+  <ul>
+    <li>HoldCo CXO users: full read on own HoldCo's <code>move_instances</code>, <code>gate_states</code>, <code>gate_artifacts</code>; write scoped to their role's gate ownership</li>
+    <li>L0 sponsor users: aggregate-read only via <code>holding_group_id</code> join &mdash; sees gate-status counts, not gate detail; drill-down requires HoldCo grant</li>
+    <li>Sibling HoldCo users: no read access (data sovereignty rule)</li>
+    <li>Lakefront reference data: opted-in by Lakefront CXO bench at intel-bundle load time; reference comparison is one-way (Morgan Street can see Lakefront's gate states; Lakefront does not see Morgan Street's)</li>
+  </ul>
+</div>
+
+<div class="build-block">
+  <h5>Sentinel-Treasury integration</h5>
+  <ul>
+    <li>Agent surface: <code>src/lib/agents/sentinel-treasury/</code> &mdash; renamed Source's <code>SentinelSourceBriefing</code> contract pattern; specialist agent in catalog at <code>docs/architecture/specialist-catalog.md</code></li>
+    <li>Provenance enforcement: per locked rule, every generated sentence cites loaded records or corpus pattern IDs; ungrounded output rejected at orchestrator layer</li>
+    <li>Stage-sized rail: rail width is responsive to chat stage &mdash; Intake 50%, Drafting 30-40%, Decision 15% / collapsed (matches Source chat principles)</li>
+    <li>Suggested actions: surfaced from gate state + Lakefront reference + evidence chain &mdash; no free-form "smart" suggestions; suggestions resolve to deterministic Move 0 actions</li>
+  </ul>
+</div>
+
+<h2>Section 9 · Test plan &middot; acceptance for Aisha's daily-use bar</h2>
+
+<p class="sub">The quality bar from the brief: (a) all 6 gate statuses visible in 3 seconds &middot; (b) next gate to attack visible without reading prose &middot; (c) next action taken with one click &middot; (d) Sentinel's reasoning resolved with one click. The test plan below codifies these.</p>
+
+<table>
+  <tr><th>Acceptance test</th><th>Method</th><th>Pass criterion</th></tr>
+  <tr><td>3-second status read</td><td>5 second timed-read with eye-tracking on canvas grid</td><td>User correctly counts R/A/G in &lt; 3 seconds; squint test at 50% blur passes</td></tr>
+  <tr><td>Next-gate-to-attack without prose</td><td>5 users asked "which gate should you work on next?" after 10 seconds on page</td><td>4 of 5 identify G1 or G4 &middot; identify based on red status, not by reading Sentinel narration</td></tr>
+  <tr><td>One-click next action</td><td>From Move 0 page, time to "spawn L-S01" action</td><td>&le; 2 clicks: gate card &rarr; spawn CTA &middot; or 1 click from Sentinel suggested action</td></tr>
+  <tr><td>Sentinel reasoning depth</td><td>From any Sentinel recommendation, click to evidence chain</td><td>1 click reveals loaded-record + corpus + human-input citations; user can verify recommendation grounding</td></tr>
+  <tr><td>No fake completion enforcement</td><td>Attempt to advance a phase with unmet criteria</td><td>UI shows unmet criteria; server rejects with structured error; no phase state mutation</td></tr>
+  <tr><td>Empty state quality</td><td>Render Move 0 for a HoldCo that has not loaded prerequisites</td><td>Designed empty state appears; Sentinel rail offers next-step guidance; no broken layout, no blank canvas</td></tr>
+  <tr><td>"No export of nothing" enforcement</td><td>Render a gate whose remediation artifact body is null</td><td>Export CTA hidden; placeholder shows "artifact not yet generated"</td></tr>
+  <tr><td>Move 1 transition gate accuracy</td><td>Set gate states programmatically to all green for G1-G4</td><td>Transition bar shows all green; Move 1 entry CTA appears and is enabled</td></tr>
+  <tr><td>Lakefront reference disclosure</td><td>Open Lakefront drawer for any gate</td><td>Side-by-side shows current + mature + approach + elapsed; Sentinel translation explicit about parallel-work assumptions</td></tr>
+  <tr><td>L0 visibility scope</td><td>Log in as Lakeshore L0 user; navigate to Move 0 for Morgan Street</td><td>Sees aggregate gate status; cannot drill into gate detail without HoldCo grant; aggregate rolls up to Tower</td></tr>
+</table>
+
+<h2>Section 10 · Open questions for design module + Codex pickup</h2>
+
+<ol>
+  <li><strong>Per-PortCo gate status rollup.</strong> Currently the 6 gates are HoldCo-level. For PortCos that have their own platform rollout sub-instance (e.g., Wave 2 of Kyriba rolls to 5 more PortCos), is the surface (a) a child Move 0 per PortCo, or (b) per-gate PortCo drill-down? Recommendation: child Move 0 per PortCo; Move 0 rolls up to HoldCo by max-severity. Pending design module verdict.</li>
+  <li><strong>Cross-gate dependency visualization.</strong> G1 unlocks G4; G3 unlocks G6. The current canvas does not surface these dependencies visually. Options: (a) connector lines on the grid (low chrome cost), (b) dependency badges on each gate card listing upstream gates, (c) keep narration-only. Recommendation: (b). Pending design module verdict.</li>
+  <li><strong>Sentinel-Treasury vs Sentinel-Source coordination.</strong> When G1 spawns L-S01, Sentinel-Source picks up. Should the Move 0 rail continue showing Sentinel-Treasury context, or should it hand off mid-conversation to Sentinel-Source for the L-S01 thread? Recommendation: stay on Sentinel-Treasury for the Move 0 surface; the L-S01 Source page has its own Sentinel-Source rail with the L-S01 thread. Pending design module verdict.</li>
+  <li><strong>L0 aggregate view fidelity.</strong> When the L0 sponsor opens Move 0 for Morgan Street, the locked rule is aggregate-only. But what does "aggregate" mean exactly &mdash; count of gates by status only, or also count of artifacts generated, count of acks captured? Recommendation: gates by status + count of acks captured + spawn count; no detail. Pending design module verdict.</li>
+  <li><strong>Re-diagnosis cadence.</strong> Gate states are diagnosed at load time and on demand. Should there be an automatic re-diagnosis cadence (daily? on any underlying data change?)? Recommendation: on any underlying data change + daily scheduled. Pending design module verdict.</li>
+</ol>
+
+<div class="rule"></div>
+
+<p class="meta">End of Move 0 pattern setter spec. Next: <code>08-cross-holdco-vendor-rationalization.html</code> (Move 2 full-fidelity), <code>09-business-case-pattern-setter.html</code> (Phase 4 full-fidelity), <code>10-mobilization-pattern-setter.html</code> (Phase 5 full-fidelity). The Codex pickup for this spec is Wave 1 L03 (canvas + transition) and Wave 2 L05 (per-gate detail + Lakefront drawer); both build against this surface as the visual + fidelity bar.</p>
+
+</div>
+</body>
+</html>

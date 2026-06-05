@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lakeshore Federated · Mobilization Pattern Setter (Phase 5)</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-faint: #6b7280;
+    --rule: #e5e1d8;
+    --rule-soft: #efeae0;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 32px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  p, li { font-size: 15px; }
+  code { background: var(--rule-soft); padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 20px; }
+  .card h5 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-move { background: var(--good-soft); color: var(--good); }
+  .tag-phase { background: var(--accent); color: white; }
+  .tag-foundation { background: #ede9fe; color: #6d28d9; }
+  .tag-ai { background: #fce7f3; color: #be185d; }
+  .tag-source { background: var(--warn-soft); color: var(--warn); }
+
+  /* Status pills */
+  .status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .status-shipped { background: var(--good-soft); color: var(--good); }
+  .status-inflight { background: var(--accent-soft); color: var(--accent); }
+  .status-notstarted { background: #f3f4f6; color: var(--ink-soft); }
+  .status-blocked { background: var(--bad-soft); color: var(--bad); }
+  .status-atrisk { background: var(--warn-soft); color: var(--warn); }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; background: white; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; background: var(--rule-soft); }
+
+  /* Page header band (Aisha's status surface) */
+  .page-hdr {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0 16px;
+  }
+  .page-hdr-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .page-hdr-title { font-family: var(--serif); font-size: 26px; font-weight: normal; margin: 0; letter-spacing: -0.01em; }
+  .page-hdr-sub { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
+  .owner-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .owner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .owner-chip .role { color: var(--ink-soft); }
+  .owner-chip .name { font-weight: 600; }
+  .phase-progress {
+    display: flex;
+    gap: 6px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .phase-cell {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--rule-soft);
+    color: var(--ink-soft);
+    border-radius: 3px;
+  }
+  .phase-cell.done { background: var(--good-soft); color: var(--good); }
+  .phase-cell.now { background: var(--accent); color: white; font-weight: 600; }
+  .phase-cell.next { background: var(--paper); color: var(--ink-soft); border: 1px dashed var(--rule); }
+
+  /* Scorecard row */
+  .scorecard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .score {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .score-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 4px; }
+  .score-value { font-family: var(--serif); font-size: 26px; line-height: 1.1; }
+  .score-detail { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .score-good { color: var(--good); }
+  .score-bad { color: var(--bad); }
+  .score-warn { color: var(--warn); }
+
+  /* 30/60/90 swimlane */
+  .lanes {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 0.8fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .lane-col {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .lane-col-hd {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--rule-soft);
+  }
+  .lane-col-hd .lc-title { font-family: var(--serif); font-size: 20px; margin: 0; }
+  .lane-col-hd .lc-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-top: 2px; }
+  .lane-col-hd .lc-count { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .lane-col-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* Milestone card */
+  .milestone {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--ink-faint);
+    border-radius: 3px;
+    padding: 11px 13px 12px;
+    font-size: 12.5px;
+  }
+  .milestone.is-shipped { border-left-color: var(--good); }
+  .milestone.is-inflight { border-left-color: var(--accent); }
+  .milestone.is-blocked { border-left-color: var(--bad); }
+  .milestone.is-atrisk { border-left-color: var(--warn); }
+  .ms-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .ms-id { font-family: var(--serif); font-size: 13px; color: var(--ink-soft); }
+  .ms-title { font-weight: 600; font-size: 13px; line-height: 1.35; margin-bottom: 6px; }
+  .ms-row { display: flex; gap: 6px; font-size: 11px; color: var(--ink-soft); margin: 3px 0; align-items: baseline; }
+  .ms-row .lbl { text-transform: uppercase; letter-spacing: 0.05em; min-width: 60px; }
+  .ms-row .val { color: var(--ink); }
+  .ms-eoc {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--rule);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .ms-eoc strong { color: var(--ink); font-style: normal; }
+  .ms-blocked-by {
+    margin-top: 6px;
+    background: var(--bad-soft);
+    color: var(--bad);
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+  .ms-tags { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+  .ms-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: white;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  .ms-tag.tag-found { background: #ede9fe; color: #6d28d9; border-color: #ddd6fe; }
+  .ms-tag.tag-aicap { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+  .ms-tag.tag-gov { background: var(--warn-soft); color: var(--warn); border-color: #fde68a; }
+
+  /* Dependency arrow markers in cards */
+  .dep-marker {
+    display: inline-block;
+    background: white;
+    border: 1px solid var(--bad);
+    color: var(--bad);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-family: var(--serif);
+    letter-spacing: 0.04em;
+  }
+
+  /* RACI table */
+  .raci th, .raci td { text-align: center; padding: 7px 8px; font-size: 13px; }
+  .raci td.ws { text-align: left; font-weight: 600; }
+  .raci .r-r { background: #fee2e2; color: #991b1b; }
+  .raci .r-a { background: #fef3c7; color: #92400e; }
+  .raci .r-c { background: #dbeafe; color: #1e40af; }
+  .raci .r-i { background: #f3f4f6; color: var(--ink-soft); }
+  .raci .r-cell { font-weight: 600; border-radius: 2px; }
+
+  /* Dependency graph */
+  .depgraph {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px 22px;
+    margin: 16px 0;
+  }
+  .dep-tier {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    margin: 12px 0;
+    align-items: stretch;
+  }
+  .dep-tier-label {
+    background: var(--rule-soft);
+    border-radius: 3px;
+    padding: 14px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .dep-tier-label strong { font-size: 13px; color: var(--ink); font-family: var(--serif); display: block; }
+  .dep-tier-nodes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dep-node {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 160px;
+    position: relative;
+  }
+  .dep-node.is-found { border-color: #c4b5fd; background: #f5f3ff; }
+  .dep-node.is-ai { border-color: #f9a8d4; background: #fdf2f8; }
+  .dep-node.is-gov { border-color: #fbbf24; background: #fffbeb; }
+  .dep-node.is-blocked { border-style: dashed; opacity: 0.8; }
+  .dep-node .dn-id { font-family: var(--serif); font-size: 11px; color: var(--ink-soft); }
+  .dep-node .dn-title { font-weight: 600; font-size: 12px; margin-top: 2px; }
+  .dep-node .dn-block { font-size: 10px; color: var(--bad); margin-top: 4px; }
+
+  /* Sentinel chat rail */
+  .chat-rail {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .chat-hd {
+    padding: 12px 16px;
+    background: var(--ink);
+    color: white;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    justify-content: space-between;
+  }
+  .chat-body { padding: 18px 20px; }
+  .chat-q, .chat-a {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .chat-q .speaker, .chat-a .speaker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    min-width: 80px;
+    padding-top: 3px;
+  }
+  .chat-q .msg { background: var(--accent-soft); color: var(--accent); padding: 8px 12px; border-radius: 3px; font-size: 13px; flex: 1; }
+  .chat-a .msg { background: var(--paper); border: 1px solid var(--rule); padding: 10px 14px; border-radius: 3px; font-size: 13px; flex: 1; }
+  .chat-a .msg ul { margin: 6px 0; padding-left: 18px; }
+  .chat-a .msg .cite { font-size: 11px; color: var(--ink-soft); margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--rule); }
+  .chat-input {
+    padding: 12px 16px;
+    background: var(--rule-soft);
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  /* Readiness scorecard at bottom */
+  .readiness {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .readiness-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 200px 80px;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .readiness-row:last-child { border-bottom: none; }
+  .readiness-id { font-family: var(--serif); font-size: 14px; color: var(--ink-soft); }
+  .readiness-criterion { font-size: 13px; }
+  .readiness-evidence { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+
+  /* Flex utility */
+  .flex { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .flex-between { display: flex; justify-content: space-between; align-items: baseline; }
+  .pill {
+    display: inline-block;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+  .callout {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 3px 3px 0;
+  }
+  .callout.bad { border-left-color: var(--bad); }
+  .callout.good { border-left-color: var(--good); }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout h6 { margin: 0 0 4px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .callout p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* Move flex grid */
+  .move-flex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .move-flex-card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; }
+  .move-flex-card h5 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .move-flex-card .meta { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .move-flex-card .timeline { display: flex; margin: 14px 0 10px; height: 28px; border-radius: 2px; overflow: hidden; border: 1px solid var(--rule); }
+  .move-flex-card .timeline > div { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: white; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .tl-30 { background: #6d28d9; }
+  .tl-60 { background: var(--accent); }
+  .tl-90 { background: #0891b2; }
+  .tl-90plus { background: var(--ink-soft); }
+  .tl-found { background: #6d28d9; }
+  .tl-aicap { background: #be185d; }
+
+  /* EOC examples */
+  .eoc-example {
+    display: grid;
+    grid-template-columns: 240px 1fr 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+    align-items: start;
+  }
+  .eoc-example:last-child { border-bottom: none; }
+  .eoc-milestone { font-weight: 600; }
+  .eoc-bad { color: var(--bad); font-style: italic; font-size: 12px; }
+  .eoc-good { color: var(--good); font-size: 12px; }
+  .eoc-bad::before { content: "Aspirational: "; font-weight: 600; }
+  .eoc-good::before { content: "Measurable: "; font-weight: 600; }
+
+  /* Owner workflow */
+  .ownerflow {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .ownerflow-step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    padding: 14px 16px;
+    gap: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ownerflow-step:last-child { border-bottom: none; }
+  .ownerflow-num { font-family: var(--serif); font-size: 22px; color: var(--accent); }
+  .ownerflow-step h6 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .ownerflow-step p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* Squint test diagram */
+  .squint {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .squint-lanes {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 0.8fr;
+    gap: 12px;
+    height: 220px;
+  }
+  .squint-col {
+    background: var(--rule-soft);
+    border-radius: 3px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .squint-blob { background: var(--ink-faint); border-radius: 2px; opacity: 0.7; }
+  .squint-blob.purple { background: #a78bfa; }
+  .squint-blob.pink { background: #f472b6; }
+  .squint-blob.amber { background: #fbbf24; }
+  .squint-blob.blue { background: #60a5fa; }
+  .squint-blob.h-sm { height: 16px; }
+  .squint-blob.h-md { height: 28px; }
+  .squint-blob.h-lg { height: 44px; }
+  .squint-col-label { font-family: var(--serif); font-size: 22px; color: var(--ink); text-align: center; margin-bottom: 4px; }
+
+  /* Mapping rows */
+  .build-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 1fr;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .build-row:last-child { border-bottom: none; }
+  .build-row .surface { font-weight: 600; }
+  .build-row code { font-size: 11.5px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Mobilization · Phase 5 Pattern Setter</h1>
+<p class="sub">The canonical 30/60/90 delivery plan + RACI + dependency graph that turns an approved strategy and business case into actual execution. Applies to every Move. Worked example: <strong>Move 0 — Kyriba De-Risk at Morgan Street</strong>. Owner: Aisha Vargas (Group Treasurer).</p>
+<p class="meta">Companion to <code>02-demo-spine-architecture.html §4</code> (Move 0 lifecycle), <code>04-artifact-contracts.html</code> (per-artifact specs), <code>09-business-case-pattern-setter.html</code> (the Phase 4 output mobilization consumes). Reuses CSS from <code>02</code> (paper · ink · accent · serif Georgia · sans DM Sans).</p>
+
+<h2>Section 1 · What a mobilization plan is — and isn't</h2>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>What it is</h5>
+    <p>A <strong>live delivery contract</strong>. Every milestone has a named owner, a measurable evidence-of-completion, an explicit prerequisite chain, and a real-time status. It ships when the prior phase's artifacts (strategy memo + architecture + business case) are approved. It is consumed weekly by the workstream owners and monthly by the L0 sponsor and the audit committee.</p>
+  </div>
+  <div class="card">
+    <h5>What it isn't</h5>
+    <p>A Gantt chart with pretty bars and aspirational "complete training" milestones. A static MS Project file emailed quarterly. A self-reported RAG status with no evidence. A "we'll figure out who owns Cap 3 later" plan. Sentinel will not generate this plan unless every milestone has an owner and an evidence-of-completion that resolves to something measurable in substrate.</p>
+  </div>
+</div>
+
+<div class="grid cols-2" style="margin-top: 16px;">
+  <div class="callout">
+    <h6>Operational rule 1 — Foundation before AI</h6>
+    <p>From the package's five locked rules. No AI use case milestone can be <em>not-blocked</em> until its foundation milestone is shipped. The plan UI enforces this: AI capability cards display the foundation milestone they're blocked on; you cannot mark them in-flight without an override that threads to the substrate as an audit event.</p>
+  </div>
+  <div class="callout bad">
+    <h6>Operational rule 2 — No fake completion</h6>
+    <p>A milestone ticks to "shipped" only when its evidence-of-completion criterion resolves true against substrate. "All 48 Kyriba users have logged in ≥ 3 times in past 14 days" resolves against the loaded auth log. "Variance &lt; 0.05%" resolves against the ERP feed reconciliation table. Aspirational checkboxes are rejected at draft time.</p>
+  </div>
+</div>
+
+<h2>Section 2 · Page composition — Move 0 worked example</h2>
+
+<p class="meta">This is the canonical layout. Every Move's Phase 5 page renders against this template, swapping in the Move's milestones, owners, and dependency graph.</p>
+
+<div class="page-hdr">
+  <div class="page-hdr-top">
+    <div>
+      <h2 class="page-hdr-title" style="margin: 0; padding: 0; border: none;">Move 0 · Kyriba De-Risk · Mobilization Plan</h2>
+      <p class="page-hdr-sub">Morgan Street Holdings Chicago &middot; Wave 1 active &middot; 90-day window: 2026-06-15 → 2026-09-13 &middot; Plan v3 (drafted by Sentinel 2026-06-09 · accepted by A. Vargas 2026-06-12)</p>
+    </div>
+    <div style="text-align: right;">
+      <span class="status status-inflight">In flight · day 7 of 90</span>
+      <div style="font-size: 11px; color: var(--ink-soft); margin-top: 6px;">Last substrate refresh 12 min ago</div>
+    </div>
+  </div>
+  <div class="owner-chips">
+    <span class="owner-chip"><span class="role">Plan Accountable</span><span class="name">A. Vargas · Group Treasurer</span></span>
+    <span class="owner-chip"><span class="role">CFO Sponsor</span><span class="name">S. Lindqvist</span></span>
+    <span class="owner-chip"><span class="role">CIO Partner</span><span class="name">D. Okonkwo</span></span>
+    <span class="owner-chip"><span class="role">L0 Visibility</span><span class="name">D. Sterling · OP-Finance</span></span>
+    <span class="owner-chip"><span class="role">Audit Cmte</span><span class="name">Informed · monthly readout</span></span>
+  </div>
+  <div class="phase-progress">
+    <div class="phase-cell done">P0 · Setup</div>
+    <div class="phase-cell done">P1 · Discovery</div>
+    <div class="phase-cell done">P2 · Strategy</div>
+    <div class="phase-cell done">P3 · Architecture</div>
+    <div class="phase-cell done">P4 · Business case</div>
+    <div class="phase-cell now">P5 · Mobilization</div>
+    <div class="phase-cell next">Execution · per gate</div>
+  </div>
+</div>
+
+<div class="scorecard">
+  <div class="score">
+    <div class="score-label">Milestones shipped</div>
+    <div class="score-value">3 / 17</div>
+    <div class="score-detail">on track vs day-7 baseline (3)</div>
+  </div>
+  <div class="score">
+    <div class="score-label">In flight</div>
+    <div class="score-value score-good">6</div>
+    <div class="score-detail">5 within window · 1 trending late</div>
+  </div>
+  <div class="score">
+    <div class="score-label">Blocked</div>
+    <div class="score-value score-bad">2</div>
+    <div class="score-detail">G6-M3 (waits G2-M2) · G4-M2 (waits G2-M1)</div>
+  </div>
+  <div class="score">
+    <div class="score-label">RACI assignment</div>
+    <div class="score-value score-good">100%</div>
+    <div class="score-detail">no TBD · Sentinel-enforced</div>
+  </div>
+</div>
+
+<h3>The 30 / 60 / 90 swimlane</h3>
+<p class="meta">Column dominance: 30-day rich detail, 60-day secondary, 90-day tertiary. Beyond 90 deferred to next mobilization refresh. Visual hierarchy is the rule — see Section 10 squint test.</p>
+
+<div class="lanes">
+
+  <!-- 30 DAY COLUMN -->
+  <div class="lane-col">
+    <div class="lane-col-hd">
+      <div class="lc-title">Day 1–30</div>
+      <div class="lc-sub">Foundation lock-down</div>
+      <div class="lc-count">9 milestones · 3 shipped · 5 in flight · 1 not started</div>
+    </div>
+    <div class="lane-col-body">
+
+      <div class="milestone is-shipped">
+        <div class="ms-head"><span class="ms-id">G1-M1</span><span class="status status-shipped">Shipped</span></div>
+        <div class="ms-title">Banking inventory complete · 14 incumbents reconciled</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">A. Vargas (Treasurer)</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 7 · 2026-06-21</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 14 bank records loaded with services, fees, H2H state, renewal date · variance vs GL bank ledger &lt; $0</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G1 · Banking</span></div>
+      </div>
+
+      <div class="milestone is-shipped">
+        <div class="ms-head"><span class="ms-id">G3-M1</span><span class="status status-shipped">Shipped</span></div>
+        <div class="ms-title">Entity registry loaded from corporate secretary + tax</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">R. Mei (GC) + Tax Director</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 10 · 2026-06-24</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> all 8 PortCos + HoldCo + IC pairs published to entity registry table · cross-checked against corporate-secretary roster</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G3 · Entity</span></div>
+      </div>
+
+      <div class="milestone is-shipped">
+        <div class="ms-head"><span class="ms-id">G2-M1</span><span class="status status-shipped">Shipped</span></div>
+        <div class="ms-title">NetSuite → Kyriba feed audit complete · variance root-cause identified</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Controller</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 12 · 2026-06-26</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 12 mapping defects logged + ranked · acceptance from CFO · root cause = 8 of 12 are FX-rate sourcing</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G2 · ERP feed</span></div>
+      </div>
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G2-M2</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">Mapping defects remediated · variance &lt; 0.05% sustained 14 days</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Controller + NetSuite admin</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 28 · 2026-07-12</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> daily variance &lt; 0.05% on rolling 14-day window in feed_recon table</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G2 · ERP feed</span></div>
+      </div>
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G4-M1</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">24-month bank statement reconstruction · Bronze layer load</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasury Analytics (J. Kim)</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 25 · 2026-07-09</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 24 months of statements ingested for all 14 banks · &lt;1% rows in error queue · checksum vs portal totals = exact</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G4 · Historical</span></div>
+      </div>
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G1-M2</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">Banking consolidation RFP — Source event L-S01 spawned + scope locked</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">A. Vargas + Procurement Lead</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 21 · 2026-07-05</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> L-S01 in Source Stage 03 (rubric approved) · 6 strategic banks target locked · rubric signed by CFO</div>
+        <div class="ms-tags"><span class="ms-tag">G1 · Banking</span><span class="ms-tag">Source spawn</span></div>
+      </div>
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G3-M2</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">IC mapping rebuilt for 2 unresolved PortCos · published</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Controller + Tax</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 28 · 2026-07-12</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> IC pairs matrix complete · 100% of expected IC counterparties reconciled in entity_ic_matrix table</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G3 · Entity</span></div>
+      </div>
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G5-M1</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">Role-based dashboards published · 4 personas (Treasurer · TM Analyst · Controller · CFO)</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasury PM (M. Cole)</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 24 · 2026-07-08</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 4 dashboards live in Kyriba · pinned per persona · acceptance ack from each persona group lead</div>
+        <div class="ms-tags"><span class="ms-tag">G5 · Adoption</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G6-M1</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">IC auto-recon scope locked · transformer architecture approved</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Controller + AbarVa Architect</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 30 · 2026-07-14</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> design doc approved · matching rules documented per IC pair · confidence threshold proposal signed</div>
+        <div class="ms-tags"><span class="ms-tag tag-aicap">AI Cap</span><span class="ms-tag">G6 · IC recon</span><span class="dep-marker">waits G3-M2</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 60 DAY COLUMN -->
+  <div class="lane-col">
+    <div class="lane-col-hd">
+      <div class="lc-title">Day 31–60</div>
+      <div class="lc-sub">Connectivity + adoption sprint</div>
+      <div class="lc-count">5 milestones · 0 shipped · 1 in flight · 4 not started</div>
+    </div>
+    <div class="lane-col-body">
+
+      <div class="milestone is-inflight">
+        <div class="ms-head"><span class="ms-id">G1-M3</span><span class="status status-inflight">In flight</span></div>
+        <div class="ms-title">Banking RFP Source event L-S01 — proposals received + scored</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Procurement Lead</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 52 · 2026-08-05</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> L-S01 in Source Stage 07 · ≥ 4 proposals scored · winner shortlist of 6 named for finalist round</div>
+        <div class="ms-tags"><span class="ms-tag">G1 · Banking</span><span class="ms-tag">Source link</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G4-M2</span><span class="status status-blocked">Blocked</span></div>
+        <div class="ms-title">Silver-layer normalization · entity-currency-day grain</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasury Analytics + Data Eng</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 45 · 2026-07-29</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> Silver table populated · 18+ months continuous · row-level checksum vs Bronze = 100%</div>
+        <div class="ms-blocked-by">Blocked until G2-M1 + G4-M1 ship (FX feed clean + Bronze layer landed)</div>
+        <div class="ms-tags"><span class="ms-tag tag-found">Foundation</span><span class="ms-tag">G4 · Historical</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G5-M2</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">Excel-elimination sprint · 90% weekly active across 48 expected users</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasury PM + Change Lead</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 60 · 2026-08-13</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 43 of 48 users logged in ≥ 3 times in trailing 14 days · 4-week sustained · Excel "shadow workflow" inventory closed</div>
+        <div class="ms-tags"><span class="ms-tag">G5 · Adoption</span><span class="dep-marker">waits G5-M1</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G6-M2</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">IC auto-recon model trained · &gt; 95% match confidence on Q1 backtest</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">AbarVa Model Ops</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 58 · 2026-08-11</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> backtest accuracy ≥ 95% on Q1 2026 IC posting history · model registry entry · monitoring config live</div>
+        <div class="ms-tags"><span class="ms-tag tag-aicap">AI Cap</span><span class="ms-tag">G6 · IC recon</span><span class="dep-marker">waits G6-M1 · G3-M2</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">GOV-M1</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">Treasury policy refresh · Kyriba-as-system-of-record signed by Audit Cmte</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">CFO + Audit Cmte chair</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 55 · 2026-08-08</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> policy doc v2 ratified · published in policy registry · effective-date set</div>
+        <div class="ms-tags"><span class="ms-tag tag-gov">Governance</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 90 DAY COLUMN -->
+  <div class="lane-col">
+    <div class="lane-col-hd">
+      <div class="lc-title">Day 61–90</div>
+      <div class="lc-sub">Cutover + steady-state proof</div>
+      <div class="lc-count">3 milestones · all not started</div>
+    </div>
+    <div class="lane-col-body">
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G1-M4</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">Banking award + H2H cutover wave 1 · 4 banks live</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasurer + Operations</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 85 · 2026-09-08</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> 4 newly-strategic banks H2H-live · file delivery checksum = 100% · 7-day production run incident-free</div>
+        <div class="ms-tags"><span class="ms-tag">G1 · Banking</span><span class="dep-marker">waits G1-M3</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">G6-M3</span><span class="status status-blocked">Blocked</span></div>
+        <div class="ms-title">IC auto-recon HIL gate live · month-end T+1 close demonstrated</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Controller + AbarVa Model Ops</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 88 · 2026-09-11</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> first month-end with auto-IC live · HoldCo close lands T+1 · variance posted IC = manual baseline ± $5K</div>
+        <div class="ms-blocked-by">Blocked until G2-M2 + G6-M2 ship</div>
+        <div class="ms-tags"><span class="ms-tag tag-aicap">AI Cap</span><span class="ms-tag">G6 · IC recon</span></div>
+      </div>
+
+      <div class="milestone">
+        <div class="ms-head"><span class="ms-id">PHASE-EXIT</span><span class="status status-notstarted">Not started</span></div>
+        <div class="ms-title">Move 0 phase exit · G1–G4 green · enter Move 1 conditions met</div>
+        <div class="ms-row"><span class="lbl">Owner</span><span class="val">Treasurer + CFO + L0 OP-Finance</span></div>
+        <div class="ms-row"><span class="lbl">Due</span><span class="val">Day 90 · 2026-09-13</span></div>
+        <div class="ms-eoc"><strong>EoC:</strong> readiness scorecard at bottom of page resolves all green · L0 sign-off recorded · Move 1 mobilization auto-drafted</div>
+        <div class="ms-tags"><span class="ms-tag tag-gov">Gate exit</span></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<h2>Section 3 · RACI matrix · Move 0 worked example</h2>
+
+<p class="meta">Every workstream has exactly one Accountable. Responsible can be plural. Consulted includes PortCo CFOs where their data is touched. Informed includes Audit Cmte and L0 sponsor. Sentinel rejects the plan at draft time if any cell is TBD.</p>
+
+<table class="raci">
+  <thead>
+    <tr>
+      <th style="text-align: left;">Workstream</th>
+      <th>Group Treasurer</th>
+      <th>HoldCo CFO</th>
+      <th>HoldCo CIO</th>
+      <th>Controller</th>
+      <th>Treasury Analytics</th>
+      <th>Procurement</th>
+      <th>PortCo CFOs</th>
+      <th>L0 OP-Finance</th>
+      <th>Audit Cmte</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="ws">G1 · Banking connectivity</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+    <tr>
+      <td class="ws">G2 · ERP feed quality</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+    <tr>
+      <td class="ws">G3 · Entity hierarchy + IC mapping</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+    <tr>
+      <td class="ws">G4 · Historical reconstruction</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+    <tr>
+      <td class="ws">G5 · User adoption sprint</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+    <tr>
+      <td class="ws">G6 · IC auto-reconciliation (AI cap)</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-c">C</td>
+    </tr>
+    <tr>
+      <td class="ws">Treasury policy + audit governance</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-r">R</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+    </tr>
+    <tr>
+      <td class="ws">Phase 5 plan stewardship (this page)</td>
+      <td class="r-cell r-a">A</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-c">C</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+      <td class="r-cell r-i">I</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="flex" style="margin-top: 12px;">
+  <span class="pill"><span class="r-cell r-r" style="padding: 1px 6px;">R</span> Responsible · does the work</span>
+  <span class="pill"><span class="r-cell r-a" style="padding: 1px 6px;">A</span> Accountable · single owner</span>
+  <span class="pill"><span class="r-cell r-c" style="padding: 1px 6px;">C</span> Consulted · two-way input</span>
+  <span class="pill"><span class="r-cell r-i" style="padding: 1px 6px;">I</span> Informed · one-way readout</span>
+</div>
+
+<h2>Section 4 · Dependency graph · foundation before AI made visual</h2>
+
+<p class="meta">Tiers cascade. Nothing in a downstream tier can move to "in flight" until every upstream prerequisite is shipped. This is the foundation-before-AI rule rendered as a graph the eye can parse in five seconds.</p>
+
+<div class="depgraph">
+
+  <div class="dep-tier">
+    <div class="dep-tier-label">
+      <strong>Tier 1</strong>
+      <span>Data plane &amp; governance foundation</span>
+    </div>
+    <div class="dep-tier-nodes">
+      <div class="dep-node is-found">
+        <div class="dn-id">G1-M1</div>
+        <div class="dn-title">Banking inventory loaded</div>
+      </div>
+      <div class="dep-node is-found">
+        <div class="dn-id">G2-M1</div>
+        <div class="dn-title">ERP feed audit complete</div>
+      </div>
+      <div class="dep-node is-found">
+        <div class="dn-id">G3-M1</div>
+        <div class="dn-title">Entity registry loaded</div>
+      </div>
+      <div class="dep-node is-found">
+        <div class="dn-id">G4-M1</div>
+        <div class="dn-title">Bronze layer · 24mo bank history</div>
+      </div>
+      <div class="dep-node is-gov">
+        <div class="dn-id">GOV-M1</div>
+        <div class="dn-title">Treasury policy refresh</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dep-tier">
+    <div class="dep-tier-label">
+      <strong>Tier 2</strong>
+      <span>Quality &amp; normalization</span>
+    </div>
+    <div class="dep-tier-nodes">
+      <div class="dep-node is-found">
+        <div class="dn-id">G2-M2</div>
+        <div class="dn-title">Variance &lt; 0.05% sustained</div>
+        <div class="dn-block">prereq: G2-M1</div>
+      </div>
+      <div class="dep-node is-found">
+        <div class="dn-id">G3-M2</div>
+        <div class="dn-title">IC mapping rebuilt + published</div>
+        <div class="dn-block">prereq: G3-M1</div>
+      </div>
+      <div class="dep-node is-found is-blocked">
+        <div class="dn-id">G4-M2</div>
+        <div class="dn-title">Silver layer normalized</div>
+        <div class="dn-block">prereq: G2-M1 · G4-M1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dep-tier">
+    <div class="dep-tier-label">
+      <strong>Tier 3</strong>
+      <span>Connectivity + adoption</span>
+    </div>
+    <div class="dep-tier-nodes">
+      <div class="dep-node">
+        <div class="dn-id">G1-M2</div>
+        <div class="dn-title">Banking RFP scope locked</div>
+        <div class="dn-block">prereq: G1-M1</div>
+      </div>
+      <div class="dep-node">
+        <div class="dn-id">G1-M3</div>
+        <div class="dn-title">RFP proposals scored</div>
+        <div class="dn-block">prereq: G1-M2</div>
+      </div>
+      <div class="dep-node">
+        <div class="dn-id">G1-M4</div>
+        <div class="dn-title">H2H cutover wave 1 · 4 banks</div>
+        <div class="dn-block">prereq: G1-M3</div>
+      </div>
+      <div class="dep-node">
+        <div class="dn-id">G5-M1</div>
+        <div class="dn-title">Role-based dashboards live</div>
+        <div class="dn-block">prereq: G2-M2</div>
+      </div>
+      <div class="dep-node">
+        <div class="dn-id">G5-M2</div>
+        <div class="dn-title">90% weekly-active sustained</div>
+        <div class="dn-block">prereq: G5-M1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dep-tier">
+    <div class="dep-tier-label">
+      <strong>Tier 4</strong>
+      <span>AI capability layer</span>
+    </div>
+    <div class="dep-tier-nodes">
+      <div class="dep-node is-ai">
+        <div class="dn-id">G6-M1</div>
+        <div class="dn-title">IC auto-recon design approved</div>
+        <div class="dn-block">prereq: G3-M2</div>
+      </div>
+      <div class="dep-node is-ai is-blocked">
+        <div class="dn-id">G6-M2</div>
+        <div class="dn-title">Model trained · backtest &gt; 95%</div>
+        <div class="dn-block">prereq: G6-M1 · G4-M2</div>
+      </div>
+      <div class="dep-node is-ai is-blocked">
+        <div class="dn-id">G6-M3</div>
+        <div class="dn-title">HIL gate live · T+1 close demo'd</div>
+        <div class="dn-block">prereq: G6-M2 · G2-M2</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dep-tier">
+    <div class="dep-tier-label">
+      <strong>Tier 5</strong>
+      <span>Phase exit</span>
+    </div>
+    <div class="dep-tier-nodes">
+      <div class="dep-node is-gov">
+        <div class="dn-id">PHASE-EXIT</div>
+        <div class="dn-title">Move 0 G1–G4 green · enter Move 1 conditions met</div>
+        <div class="dn-block">prereq: G1-M4 · G2-M2 · G3-M2 · G4-M2</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="callout">
+  <h6>How to read this graph</h6>
+  <p>Tier 1 (purple) is the data + governance foundation. Tier 4 (pink) is the AI capability layer (G6 IC auto-recon for Move 0; for Move 1 it'd be all 4 capabilities). Pink nodes <em>cannot</em> move to in-flight until every prereq in their <code>prereq</code> line is shipped. Sentinel enforces this in substrate; the UI greys the card and shows the blocking ID. Phase exit (Tier 5) gates the next-Move transition.</p>
+</div>
+
+<h2>Section 5 · Sentinel chat rail · ask anything about the plan</h2>
+
+<p class="meta">Sticky right-rail on the page. Anchors the operational rule "no claim without provenance" — every Sentinel answer cites the milestone ID, substrate table, or corpus pattern that backs the claim.</p>
+
+<div class="chat-rail">
+  <div class="chat-hd">
+    <span>Sentinel · Move 0 mobilization context</span>
+    <span style="font-weight: normal; text-transform: none; opacity: 0.7;">Context: Plan v3 · 17 milestones loaded · status live</span>
+  </div>
+  <div class="chat-body">
+
+    <div class="chat-q">
+      <div class="speaker">A. Vargas</div>
+      <div class="msg">What's blocking Cap 3 launch?</div>
+    </div>
+    <div class="chat-a">
+      <div class="speaker">Sentinel</div>
+      <div class="msg">
+        Cap 3 in this Move is G6 IC auto-reconciliation. Three blockers, in dependency order:
+        <ul>
+          <li><strong>G6-M1</strong> · design doc — status: not started · prereq G3-M2 (IC mapping rebuild) is in flight, due day 28. Controller is accountable.</li>
+          <li><strong>G6-M2</strong> · model train + backtest — blocked until G6-M1 ships AND G4-M2 (Silver layer) ships. G4-M2 is blocked on G2-M2 (variance &lt; 0.05% sustained 14 days).</li>
+          <li><strong>G6-M3</strong> · HIL gate live — blocked until G6-M2 + G2-M2 both ship.</li>
+        </ul>
+        Critical path: G2-M2 → G4-M2 → G6-M2 → G6-M3. If G2-M2 slips past day 28, G6-M3 cannot land in the 90-day window.
+        <div class="cite">Sources: milestone records G6-M1/M2/M3, G2-M2, G3-M2, G4-M2 · dependency graph Tier 4 → Tier 1 path · live substrate status as of 12 min ago.</div>
+      </div>
+    </div>
+
+    <div class="chat-q">
+      <div class="speaker">A. Vargas</div>
+      <div class="msg">Who owns G5 adoption and is the 90% target realistic given current trajectory?</div>
+    </div>
+    <div class="chat-a">
+      <div class="speaker">Sentinel</div>
+      <div class="msg">
+        Accountable: A. Vargas (you). Responsible: Treasury PM Maxine Cole + Change Lead. Current weekly-active = 67% (32 of 48 expected). Target = 90% by day 60 = 43 of 48. Lakefront's adoption sprint took 47 days to reach the same 90% threshold from a similar 70% baseline (corpus pattern ROLLOUT-ADOPTION-SPRINT-001). At your current week-1 trajectory, you'll hit ~85% by day 60 unless G5-M1 (role-based dashboards) ships by day 24 — currently in flight, on track. Suggest pre-booking weekly office hours starting day 25.
+        <div class="cite">Sources: G5-M1 / G5-M2 records · loaded Kyriba auth log (rolling 14-day login per user_id) · Lakefront ref-case corpus pattern ROLLOUT-ADOPTION-SPRINT-001.</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="chat-input">Ask Sentinel about milestones, owners, blockers, or trajectory…</div>
+</div>
+
+<h2>Section 6 · Evidence-of-completion · the pattern</h2>
+
+<p>Every milestone has a measurable test of done. "Aspirational" descriptions ("complete training", "drive adoption", "improve quality") are rejected at draft time. Sentinel forces a translation to a substrate query, a checksum, or a human attestation backed by artifact.</p>
+
+<h4>Five concrete EoC examples</h4>
+
+<div class="card">
+  <div class="eoc-example">
+    <div class="eoc-milestone">G1-M1<br><span class="meta">Banking inventory complete</span></div>
+    <div class="eoc-bad">Banking team has reviewed all bank relationships</div>
+    <div class="eoc-good">14 bank records loaded with services, fees, H2H state, renewal date · variance vs GL bank ledger = $0 · timestamp ≤ 7 days ago in banking_inventory table</div>
+  </div>
+  <div class="eoc-example">
+    <div class="eoc-milestone">G2-M2<br><span class="meta">ERP feed variance reduced</span></div>
+    <div class="eoc-bad">Feed quality improved · acceptance from CFO</div>
+    <div class="eoc-good">Daily variance on feed_recon table &lt; 0.05% (computed as |gl_cash − kyriba_cash| / gl_cash) on rolling 14-day window · zero days of breach</div>
+  </div>
+  <div class="eoc-example">
+    <div class="eoc-milestone">G5-M2<br><span class="meta">User adoption sprint</span></div>
+    <div class="eoc-bad">All 48 expected users have completed training</div>
+    <div class="eoc-good">43 of 48 expected users logged in to Kyriba ≥ 3 times in trailing 14 days · 4-week sustained · per kyriba_auth_log scoped to wave-1 user_ids</div>
+  </div>
+  <div class="eoc-example">
+    <div class="eoc-milestone">G6-M2<br><span class="meta">IC auto-recon model trained</span></div>
+    <div class="eoc-bad">Model is performing well in testing</div>
+    <div class="eoc-good">Backtest match accuracy ≥ 95% across Q1 2026 IC postings · false-positive rate &lt; 2% · monitoring config + drift alerts active · model registry entry approved by Controller</div>
+  </div>
+  <div class="eoc-example">
+    <div class="eoc-milestone">G1-M4<br><span class="meta">H2H cutover wave 1</span></div>
+    <div class="eoc-bad">First 4 banks are now connected via H2H</div>
+    <div class="eoc-good">4 banks' file delivery checksum = 100% over 7 consecutive production runs · zero P1 incidents in tracker for those 4 BICs · sign-off from Treasury Ops + Bank Relations</div>
+  </div>
+</div>
+
+<h2>Section 7 · Owner assignment workflow</h2>
+
+<p>Sentinel pre-drafts owners from prior phase outputs. Aisha can reassign with rationale; reassignment threads to substrate as an audit event. No milestone can ship without a named owner; "TBD" is rejected.</p>
+
+<div class="ownerflow">
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">1</div>
+    <div>
+      <h6>Sentinel drafts owner from prior phase artifact</h6>
+      <p>Example: "Move 0 G1 owner = Group Treasurer (A. Vargas), per architecture artifact <code>arch.kyriba-banking-connectivity.md</code> §Owners. Procurement Lead = R for RFP execution per business case §Investment Plan."</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">2</div>
+    <div>
+      <h6>Aisha reviews + accepts or reassigns with rationale</h6>
+      <p>Reassign click opens "name + rationale" mini-form. Rationale is required (Sentinel rejects empty). Reassignment writes <code>owner_change</code> event with before/after, rationale, timestamp, actor.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">3</div>
+    <div>
+      <h6>Owner gets named + notified through their primary channel</h6>
+      <p>Substrate-side: writes to <code>milestone_owner</code> (current) and <code>milestone_owner_history</code> (audit). UI-side: notification to the named owner; their personal "things I own this week" rail picks it up.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">4</div>
+    <div>
+      <h6>Sentinel validates RACI completeness before plan accept</h6>
+      <p>Plan cannot move from Draft → Accepted while any milestone has no Accountable or any workstream has no Consulted on a PortCo-touching gate. Acceptance is the one-click action that triggers the page going live + Sentinel beginning its weekly trajectory checks.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">5</div>
+    <div>
+      <h6>Owner change mid-flight</h6>
+      <p>Any time after Accepted. Same rationale-required UX. Posts to substrate as an audit event with <code>reason_code</code> (departure · reassignment · escalation · scope-shift). L0 sponsor sees ownership-change rate in Tower as a soft signal.</p>
+    </div>
+  </div>
+</div>
+
+<h2>Section 8 · Live status · how milestones tick</h2>
+
+<p>Milestones tick to "shipped" automatically when their EoC resolves true against substrate. Aisha doesn't update RAG status — she watches it.</p>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>What "shipped" means</h5>
+    <p>The substrate query, checksum, or attestation defined by the EoC resolves true. For example, G1-M1 ticks to shipped when the <code>banking_inventory</code> table has 14 rows for Morgan Street tenant with required columns non-null AND the variance check vs GL bank ledger is zero. The transition writes <code>milestone_shipped_at</code>. No self-report.</p>
+  </div>
+  <div class="card">
+    <h5>What "blocked" means</h5>
+    <p>An in-flight or not-started milestone has at least one prereq that is not yet shipped past its declared transition deadline. Computed each refresh cycle. Surfaces in red. Sentinel's "what's blocking X" chat answer pulls from this same computed state — one source of truth.</p>
+  </div>
+  <div class="card">
+    <h5>What "at-risk" means</h5>
+    <p>Trajectory-based. Sentinel projects to the due date using current rate (e.g., login-rate growth for adoption) and flags if projected ship-date &gt; due-date by &gt; 5 working days. Forecast must cite the substrate signal — no vibes-based "at risk" calls.</p>
+  </div>
+  <div class="card">
+    <h5>How blockers surface</h5>
+    <p>EoC fails → milestone stays in flight past due → block ripples downstream (any milestone with this as a prereq surfaces blocked-by) → Sentinel's daily summary names them in priority order → owner gets a notification → blocker incident lands on the L0 Tower under "concentration risk · execution".</p>
+  </div>
+</div>
+
+<h2>Section 9 · The 30/60/90 cadence rule</h2>
+
+<p class="meta">Why 30/60/90 and not a different window? Three reasons. (1) PE-style cadence: portfolio companies and operating partners are wired to think in 90-day execution sprints anchored to board cycles. (2) Forecast decay: detail beyond 90 days is mostly guesswork; rather than fake it, defer it. (3) Re-plan cycle: every 30 days the plan is re-baselined as one column ticks off and a new one is drafted in.</p>
+
+<div class="grid cols-3">
+  <div class="card">
+    <h5>Day 1–30 · dominant column</h5>
+    <p>Most milestone cards. Daily-resolution detail. Owners assigned with no slack. EoC criteria fully specified. This is where the work happens this month — the page reader's primary focus.</p>
+  </div>
+  <div class="card">
+    <h5>Day 31–60 · secondary</h5>
+    <p>Mid-detail. Owners assigned. EoC drafted. Acknowledged that some of these will re-baseline based on day 1–30 learnings. Sentinel will refresh the milestones on day 30 with the actual day-1–30 outcomes.</p>
+  </div>
+  <div class="card">
+    <h5>Day 61–90 · tertiary</h5>
+    <p>Headline milestones only. Owner-named but slim on detail. Functions as the "what does done look like" anchor. Detail-resolution comes when the day-60 refresh promotes it into the 30-day column.</p>
+  </div>
+</div>
+
+<div class="callout warn">
+  <h6>Beyond day 90 — deferred to next mobilization refresh</h6>
+  <p>If the Move spans &gt; 90 days (Move 2 vendor consolidation is the obvious case — typical RFP-to-cutover is 120–180 days), Phase 5 emits a "90+ tail" companion artifact that flags the headline gates after day 90. Detailed planning for that tail is a fresh mobilization cycle, drafted on day 75 of the current cycle so it lands accepted before day 90.</p>
+</div>
+
+<h2>Section 10 · Squint test · the 50% blur</h2>
+
+<p class="meta">At 50% blur, the three lanes must be unmistakable, the dependency arrows obvious, the column dominance hierarchy preserved.</p>
+
+<div class="squint">
+  <div class="squint-lanes">
+    <div class="squint-col">
+      <div class="squint-col-label">30</div>
+      <div class="squint-blob purple h-md"></div>
+      <div class="squint-blob purple h-md"></div>
+      <div class="squint-blob purple h-sm"></div>
+      <div class="squint-blob amber h-sm"></div>
+      <div class="squint-blob blue h-md"></div>
+      <div class="squint-blob blue h-sm"></div>
+      <div class="squint-blob purple h-sm"></div>
+      <div class="squint-blob h-sm"></div>
+      <div class="squint-blob h-sm"></div>
+    </div>
+    <div class="squint-col">
+      <div class="squint-col-label">60</div>
+      <div class="squint-blob blue h-md"></div>
+      <div class="squint-blob purple h-sm"></div>
+      <div class="squint-blob h-md"></div>
+      <div class="squint-blob pink h-sm"></div>
+      <div class="squint-blob amber h-sm"></div>
+    </div>
+    <div class="squint-col">
+      <div class="squint-col-label">90</div>
+      <div class="squint-blob blue h-sm"></div>
+      <div class="squint-blob pink h-sm"></div>
+      <div class="squint-blob amber h-md"></div>
+    </div>
+  </div>
+  <p class="meta" style="margin-top: 16px; text-align: center;">Purple = foundation · Blue = connectivity/adoption · Pink = AI capability (always last) · Amber = governance/gate exit. Column widths compress left-to-right because detail density drops with time horizon.</p>
+</div>
+
+<h2>Section 11 · Phase exit · readiness scorecard</h2>
+
+<p>The bottom of the page. Every Phase 5 ends with a single, computed, evidence-backed scorecard that answers: <strong>are we ready to enter the next phase / next Move?</strong> For Move 0 → Move 1, the rule per the demo spine is "Move 0 G1–G4 minimum green" (from <code>02-demo-spine-architecture.html §12</code>).</p>
+
+<div class="readiness">
+  <div class="readiness-row" style="border-bottom: 2px solid var(--ink); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft);">
+    <span>Gate</span>
+    <span>Readiness criterion</span>
+    <span>Evidence</span>
+    <span>Status</span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G1</span>
+    <span class="readiness-criterion">Banking connectivity wave 1 complete · 4 strategic banks H2H-live · zero P1 incidents in 7-day window</span>
+    <span class="readiness-evidence">G1-M1 · G1-M4 shipped + bank_h2h_incidents table</span>
+    <span><span class="status status-inflight">Track</span></span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G2</span>
+    <span class="readiness-criterion">ERP feed daily variance &lt; 0.05% sustained over rolling 30-day window</span>
+    <span class="readiness-evidence">G2-M2 shipped + feed_recon table 30-day query</span>
+    <span><span class="status status-inflight">Track</span></span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G3</span>
+    <span class="readiness-criterion">Entity registry + IC matrix complete · all PortCos · zero unresolved IC pairs</span>
+    <span class="readiness-evidence">G3-M1 + G3-M2 shipped + entity_ic_matrix unresolved-count = 0</span>
+    <span><span class="status status-inflight">Track</span></span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G4</span>
+    <span class="readiness-criterion">Silver layer normalized · 18+ months continuous clean data available for model training</span>
+    <span class="readiness-evidence">G4-M1 + G4-M2 shipped + silver_position_eccd row-count + checksum</span>
+    <span><span class="status status-atrisk">Risk</span></span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G5</span>
+    <span class="readiness-criterion">90% weekly-active sustained 60 days · acknowledged as soft for Move 1 entry</span>
+    <span class="readiness-evidence">G5-M2 shipped + auth log 60-day query</span>
+    <span><span class="status status-notstarted">Pending</span></span>
+  </div>
+  <div class="readiness-row">
+    <span class="readiness-id">G6</span>
+    <span class="readiness-criterion">IC auto-recon delivers T+1 month-end close · not required for Move 1 entry but unlocks Cap 4</span>
+    <span class="readiness-evidence">G6-M3 shipped + close_cycle_days table</span>
+    <span><span class="status status-notstarted">Pending</span></span>
+  </div>
+</div>
+
+<div class="callout good" style="margin-top: 8px;">
+  <h6>Move 1 entry condition (canonical)</h6>
+  <p>Move 1 mobilization auto-drafts only when G1, G2, G3, G4 all show <em>green</em> in this scorecard. G5/G6 are not blockers (G5 is adoption, can run in parallel · G6 is an AI capability itself). This is the foundation-before-AI rule made operational for the Move 0 → Move 1 transition. Sentinel will not let Move 1 Phase 5 begin drafting until these four go green; attempting to start it returns a substrate-level "phase entry condition not met" error with the failing gate named.</p>
+</div>
+
+<h2>Section 12 · How this template flexes per Move</h2>
+
+<p class="meta">Same skeleton (page header · 30/60/90 swimlane · RACI · dependency graph · chat rail · readiness scorecard). The shape of the milestones and the ratio of foundation-to-AI varies. This section sketches each Move's flex.</p>
+
+<div class="move-flex-grid">
+
+  <div class="move-flex-card">
+    <h5>Move 0 · Kyriba De-Risk (this page)</h5>
+    <span class="meta">Per HoldCo · 90 days · 6 gates × ~3 milestones each + governance</span>
+    <div class="timeline">
+      <div class="tl-found" style="flex: 0 0 40%">Foundation 30d</div>
+      <div class="tl-60" style="flex: 0 0 30%">Connectivity 60d</div>
+      <div class="tl-90" style="flex: 0 0 30%">Cutover 90d</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">~17 milestones. Foundation dominates day 1–30 (5 of 9). Adoption sprint anchors day 31–60 (G5-M2 + GOV-M1). Cutover + first month-end with auto-IC anchor day 61–90.</p>
+  </div>
+
+  <div class="move-flex-card">
+    <h5>Move 1 · AI on top of Kyriba</h5>
+    <span class="meta">Per HoldCo · 90 days · 4 AI caps with foundation-first sequencing</span>
+    <div class="timeline">
+      <div class="tl-found" style="flex: 0 0 33%">Lakehouse + Unity 30d</div>
+      <div class="tl-aicap" style="flex: 0 0 33%">Cap 1 + Cap 4 30–60</div>
+      <div class="tl-aicap" style="flex: 0 0 34%">Cap 2 + Cap 3 60–90</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">Day 1–30 is <strong>all foundation</strong> — Databricks lakehouse target, Unity Catalog for financial data, model registry, HIL gate config. Every Cap 1–4 card has <code>blocked_until: foundation_milestone_X</code>. Caps 1 + 4 (data dependency lower) go 30–60; Caps 2 + 3 (covenant + BEC fraud) go 60–90 because they need 2 months of clean Silver-layer data.</p>
+  </div>
+
+  <div class="move-flex-card">
+    <h5>Move 2 · Vendor Consolidation</h5>
+    <span class="meta">L0 federated · 90+ days · extends beyond window</span>
+    <div class="timeline">
+      <div class="tl-30" style="flex: 0 0 25%">Discovery 30d</div>
+      <div class="tl-60" style="flex: 0 0 25%">Slate + spawns 60d</div>
+      <div class="tl-90" style="flex: 0 0 25%">Negotiation 90d</div>
+      <div class="tl-90plus" style="flex: 0 0 25%">Transition 120d+</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">90-day window covers discovery + slate finalization + Source spawns + initial negotiation. The "90+ tail" companion artifact carries vendor-by-vendor transition into days 91–180. Refresh cadence flips to quarterly with per-category PortCo CFO socialization.</p>
+  </div>
+
+  <div class="move-flex-card">
+    <h5>Move 3 · Federated IT Strategy</h5>
+    <span class="meta">L0 cross-HoldCo · 90 days · sets standing operating cadence</span>
+    <div class="timeline">
+      <div class="tl-30" style="flex: 0 0 33%">Operating review setup 30d</div>
+      <div class="tl-60" style="flex: 0 0 33%">Marketplace catalog 30–60</div>
+      <div class="tl-90" style="flex: 0 0 34%">Wave coordinator standup 60–90</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">Day 1–30 stands up the L0 OP-Tech federated operating review (charter, cadence, agenda template). Day 31–60 publishes Lakefront's AI capability marketplace + cloud landing-zone standards. Day 61–90 names the Workday/Snowflake wave coordinator + first wave standup. After day 90 the operating review runs steady-state.</p>
+  </div>
+
+  <div class="move-flex-card">
+    <h5>Move 4 · Federated Risk + Governance</h5>
+    <span class="meta">L0 continuous · ad-hoc spawns when concentration thresholds cross</span>
+    <div class="timeline">
+      <div class="tl-30" style="flex: 0 0 50%">Baseline + threshold setup 30–60d</div>
+      <div class="tl-90plus" style="flex: 0 0 50%">Continuous + ad-hoc spawns</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">Initial 30-day window establishes concentration risk thresholds + signs them off with L0 CCO. After day 30 Move 4 runs continuous; mobilization cards are spawned ad-hoc when a threshold is crossed (e.g., "cyber carrier concentration &gt; 67% triggers Move 4 ad-hoc event · spawns its own 30/60/90 mini-plan").</p>
+  </div>
+
+  <div class="move-flex-card">
+    <h5>Move 0 · Kyriba multi-HoldCo (when Roosevelt rolls out)</h5>
+    <span class="meta">Federated playbook reuse · timeline compresses 40%</span>
+    <div class="timeline">
+      <div class="tl-found" style="flex: 0 0 30%">Foundation 18d</div>
+      <div class="tl-60" style="flex: 0 0 27%">Connectivity 36d</div>
+      <div class="tl-90" style="flex: 0 0 27%">Cutover 54d</div>
+      <div class="tl-90plus" style="flex: 0 0 16%">Buffer</div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: var(--ink-soft);">When Roosevelt picks up Kyriba using Morgan Street + Lakefront's shared playbook, the same 17-milestone skeleton compresses 40% (per Gartner platform-rollout standardization patterns). The dependency graph is identical; the EoC criteria are reused; ownership changes (Roosevelt's open Treasurer role gets filled). Sentinel pre-drafts from the prior HoldCo's accepted plan as the seed.</p>
+  </div>
+
+</div>
+
+<h2>Section 13 · Build mapping · component paths + data hooks</h2>
+
+<p class="meta">For Codex pickup. Each surface element on this page maps to a component, a data hook, and an API route. RLS is honored by the existing source-access-policy + holding_group_id substrate work (see <code>02 §2</code>).</p>
+
+<div class="card">
+  <div class="build-row" style="border-bottom: 2px solid var(--ink); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft);">
+    <span>Surface</span>
+    <span>Component path</span>
+    <span>Data hook · API route</span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Page header band</span>
+    <span><code>src/components/moves/phase5/MobilizationHeader.tsx</code></span>
+    <span><code>useMovePhaseState(moveId)</code> · <code>GET /api/moves/[id]/phase</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Scorecard row</span>
+    <span><code>src/components/moves/phase5/MobilizationScorecard.tsx</code></span>
+    <span><code>useMobilizationStats(moveId)</code> · <code>GET /api/moves/[id]/mobilization/stats</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">30/60/90 swimlane</span>
+    <span><code>src/components/moves/phase5/MilestoneSwimlane.tsx</code><br><code>src/components/moves/phase5/MilestoneCard.tsx</code></span>
+    <span><code>useMilestones(moveId, { window: '30|60|90' })</code> · <code>GET /api/moves/[id]/milestones</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">RACI matrix</span>
+    <span><code>src/components/moves/phase5/RaciMatrix.tsx</code></span>
+    <span><code>useRaci(moveId)</code> · <code>GET /api/moves/[id]/raci</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Dependency graph</span>
+    <span><code>src/components/moves/phase5/DependencyGraph.tsx</code></span>
+    <span><code>useMilestoneGraph(moveId)</code> · <code>GET /api/moves/[id]/milestone-graph</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Sentinel chat rail</span>
+    <span><code>src/components/agents/sentinel/MobilizationChatRail.tsx</code></span>
+    <span><code>useSentinelAsk('mobilization', moveId)</code> · <code>POST /api/agents/sentinel/ask</code> (context = mobilization plan)</span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Readiness scorecard</span>
+    <span><code>src/components/moves/phase5/PhaseExitReadiness.tsx</code></span>
+    <span><code>usePhaseExit(moveId)</code> · <code>GET /api/moves/[id]/phase-exit</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Owner reassign drawer</span>
+    <span><code>src/components/moves/phase5/OwnerReassignDrawer.tsx</code></span>
+    <span><code>useReassignOwner()</code> · <code>POST /api/moves/[id]/milestones/[mid]/owner</code> (writes <code>owner_change</code> audit event)</span>
+  </div>
+  <div class="build-row">
+    <span class="surface">EoC live status engine</span>
+    <span>backend: <code>src/lib/mobilization/eoc-evaluator.ts</code></span>
+    <span>queries substrate per EoC spec · writes <code>milestone_shipped_at</code> when true · cron 5min</span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Substrate tables</span>
+    <span>migration: <code>supabase/migrations/L13_mobilization_substrate.sql</code></span>
+    <span><code>milestone</code> · <code>milestone_dependency</code> · <code>milestone_owner_history</code> · <code>raci_assignment</code> · <code>plan_acceptance</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">RLS posture</span>
+    <span><code>src/lib/auth/move-access-policy.ts</code></span>
+    <span>L0 sponsor sees aggregate · HoldCo owner sees own · cross-HoldCo blocked at row level via <code>holding_group_id</code></span>
+  </div>
+  <div class="build-row">
+    <span class="surface">Source event spawn link</span>
+    <span><code>src/components/moves/phase5/SourceSpawnLink.tsx</code></span>
+    <span>milestone with <code>source_event_id</code> deep-links to Source module (per <code>docs/build/source-design/</code>)</span>
+  </div>
+</div>
+
+<h2>Section 14 · Audit + telemetry posture</h2>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>What gets written to the substrate audit log</h5>
+    <ul style="padding-left: 18px; margin: 0;">
+      <li>Plan drafted by Sentinel (with input artifact IDs)</li>
+      <li>Plan accepted by named owner</li>
+      <li>Each milestone ship transition (auto from EoC) with substrate query that resolved true</li>
+      <li>Each blocker incident (which prereq failed, when, downstream impact)</li>
+      <li>Each owner change with before/after, rationale, actor</li>
+      <li>Each RACI change post-acceptance</li>
+      <li>Each phase exit signoff with full readiness scorecard snapshot</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h5>What telemetry surfaces in Tower (L0 view)</h5>
+    <ul style="padding-left: 18px; margin: 0;">
+      <li>Per-Move per-HoldCo plan health (shipped / in flight / blocked counts)</li>
+      <li>Cross-HoldCo blocker concentration (e.g., "all 3 HoldCos blocked on ERP feed quality this month — federated SI consideration")</li>
+      <li>Owner-change rate as a soft execution-risk signal</li>
+      <li>Plan acceptance latency (draft → accepted)</li>
+      <li>EoC failure rate (blockers that never resolve in window) as a planning-quality signal — high rate means EoCs were drawn too aggressively at draft time</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Section 15 · What Aisha Vargas does in this page · a day-in-the-life</h2>
+
+<div class="ownerflow">
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">M</div>
+    <div>
+      <h6>Monday 8:00 · two-minute scan</h6>
+      <p>Opens the page. Scorecard tells her: 3 shipped (G1-M1, G3-M1, G2-M1), 6 in flight, 2 blocked. Bottom readiness scorecard: G1/G2/G3 Track, G4 Risk, G5/G6 Pending. She knows the week's focus is G4 (the at-risk gate).</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">M</div>
+    <div>
+      <h6>Monday 8:02 · ask Sentinel</h6>
+      <p>Types in chat rail: "why is G4 at risk?" Sentinel: G4-M2 blocked on G2-M2 (FX feed) + G4-M1 (Bronze layer). G2-M2 is in flight, due day 28 (21 days from now). If G2-M2 slips, G4-M2 slips, G6-M3 can't land. Owner = Controller for G2-M2.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">T</div>
+    <div>
+      <h6>Tuesday · check-in with Controller</h6>
+      <p>Aisha pings Controller via the owner-chip click → opens a side panel with current state of G2-M2 + the FX-rate sourcing root cause from the audit artifact. Controller acks they're on track.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">W</div>
+    <div>
+      <h6>Wednesday · L0 Tower monthly readout</h6>
+      <p>D. Sterling (L0 OP-Finance) opens his Tower view; sees Move 0 Morgan Street health rolled into "Wave 1 active · 3 of 17 shipped · 2 blocked · readiness G1/G2/G3 Track · G4 Risk". No surprise to him — same state Aisha sees. No status meeting needed; readout = the page.</p>
+    </div>
+  </div>
+  <div class="ownerflow-step">
+    <div class="ownerflow-num">F</div>
+    <div>
+      <h6>Friday · auto-update</h6>
+      <p>Treasury Analytics ships G4-M1 (Bronze layer load). EoC resolves true: 24 months × 14 banks × checksum exact. Substrate marks <code>milestone_shipped_at</code>. The page auto-updates: 4 of 17 shipped, G4 readiness updates Track → still Risk because G2-M2 not done. Aisha gets a notification. No human update needed.</p>
+    </div>
+  </div>
+</div>
+
+<h2>Section 16 · Anti-patterns this page rejects</h2>
+
+<div class="grid cols-2">
+  <div class="callout bad">
+    <h6>Aspirational milestones</h6>
+    <p>"Complete training." "Improve adoption." "Drive quality." Rejected at draft. Sentinel returns: "this milestone has no measurable EoC — translate to a substrate query, a checksum, or a named-artifact attestation."</p>
+  </div>
+  <div class="callout bad">
+    <h6>TBD ownership</h6>
+    <p>"Owner: TBD." "We'll figure out later who owns this." Rejected at draft. Sentinel returns: "name an Accountable or this milestone cannot be in the accepted plan."</p>
+  </div>
+  <div class="callout bad">
+    <h6>Self-reported RAG</h6>
+    <p>"Treasury thinks G5 is green." Status is not aspirational — it's substrate-evaluated. The owner cannot manually flip a milestone to "shipped"; only the EoC evaluator can.</p>
+  </div>
+  <div class="callout bad">
+    <h6>AI before foundation</h6>
+    <p>"Let's pilot Cap 3 in parallel with the lakehouse build." Rejected at the dependency graph. The Cap 3 card stays blocked until the foundation milestones it depends on ship. Override requires a substrate-logged exception with named approver.</p>
+  </div>
+  <div class="callout bad">
+    <h6>The 6-month Gantt</h6>
+    <p>"Plan goes out 6 months." Rejected at the 90-day window. Beyond 90 is the "90+ tail" companion artifact (Move 2 typical case) — headline milestones only, with the expectation of a fresh mobilization cycle drafted on day 75.</p>
+  </div>
+  <div class="callout bad">
+    <h6>Single-owner Accountable + Responsible</h6>
+    <p>"Same person owns and does it." Allowed but flagged. Sentinel notes "single point of execution risk" in the page header. The plan ships; the risk is visible to L0.</p>
+  </div>
+</div>
+
+<h2>Section 17 · Quality bar · the four tests Aisha runs</h2>
+
+<table>
+  <tr>
+    <th style="width: 50px;">Test</th>
+    <th>What Aisha can do in &lt; 10 seconds</th>
+    <th>Why it matters</th>
+  </tr>
+  <tr>
+    <td><strong>1</strong></td>
+    <td>See what's happening this week, next month, next quarter at a glance.</td>
+    <td>30/60/90 columns + scorecard row carry the whole story. No drill-down required for the at-a-glance.</td>
+  </tr>
+  <tr>
+    <td><strong>2</strong></td>
+    <td>Know exactly who owns what without asking.</td>
+    <td>Owner chip on every milestone + RACI matrix beneath. No "let me check" lookup.</td>
+  </tr>
+  <tr>
+    <td><strong>3</strong></td>
+    <td>Identify blockers in 5 seconds.</td>
+    <td>Red left-border, scorecard count, dependency graph with dashed nodes, Sentinel chat one prompt away.</td>
+  </tr>
+  <tr>
+    <td><strong>4</strong></td>
+    <td>Trust the plan because every milestone has a measurable "done" definition.</td>
+    <td>EoC line on every card. Status is evaluated from substrate, not self-reported. No fake completion possible.</td>
+  </tr>
+</table>
+
+<div class="rule"></div>
+
+<h2>Section 18 · How this Pattern Setter relates to the rest of the package</h2>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>Consumes (upstream)</h5>
+    <ul style="padding-left: 18px; margin: 0;">
+      <li><code>02-demo-spine-architecture.html</code> §4 + §12 — the canonical 6-gate Move 0 lifecycle + state machine</li>
+      <li><code>04-artifact-contracts.html</code> — the per-artifact EoC criteria source</li>
+      <li><code>09-business-case-pattern-setter.html</code> — the approved investment plan + benefits realization schedule that anchors RACI</li>
+      <li><code>03-cxo-intel-loader-spec.html</code> — the loaded data that powers EoC evaluation</li>
+      <li>Move's Phase 3 architecture artifact — owner names + foundation dependency chain</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h5>Produces (downstream)</h5>
+    <ul style="padding-left: 18px; margin: 0;">
+      <li>Accepted plan artifact written to substrate (drives every Move 0 execution surface)</li>
+      <li>Tower L0 federated rollup data (<code>06-tower-federated-command-center.html</code>'s "active Moves" strip)</li>
+      <li>Phase exit signoff (gates Move 0 → Move 1 transition)</li>
+      <li>Source event spawn deep-links (Move 0 G1-M2 → L-S01 in <code>docs/build/source-design/</code>)</li>
+      <li>Audit committee monthly readout (rendered from this page + scorecard snapshot)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<p class="meta">End of Phase 5 mobilization pattern setter. Codex pickup: spec L13 in the wave plan (see <code>02-demo-spine-architecture.html §13</code>). Implementation matches the build map in Section 13 + reuses the substrate posture from L01 (holding-group tenancy) + the audit-event pattern from existing Move infrastructure.</p>
+
+</div>
+</body>
+</html>
