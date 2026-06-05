@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BulkContextUploadConnector } from "@/components/admin/context-layer/BulkContextUploadConnector";
 import { CorpusJsonlImportConnector } from "@/components/admin/context-layer/CorpusJsonlImportConnector";
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -57,6 +58,10 @@ export default async function ContextUploadsPage() {
             <CsvUploadConnector
               clientId={activeClient.id}
               tenantKey={activeClient.key}
+              tenantName={activeClient.name}
+            />
+            <BulkContextUploadConnector
+              clientId={activeClient.id}
               tenantName={activeClient.name}
             />
             <CorpusJsonlImportConnector
