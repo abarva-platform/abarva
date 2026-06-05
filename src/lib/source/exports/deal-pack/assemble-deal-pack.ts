@@ -27,6 +27,7 @@
 //   Stage 5 — Evaluation / BAFO         d16, d20, d22, d24, d27
 //   Stage 6 — Risk / Clauses            dx6a, dx6b
 //   Stage 7 — SRM / Renewal             dx7
+//   Stage 10 — Transition               KT plan + readiness + risk register
 
 import 'server-only';
 
@@ -48,6 +49,7 @@ import { buildMarketScanPayloadFromContext } from '../payloads/market-scan-paylo
 import { buildTcoIcebergPayloadFromContext } from '../payloads/tco-iceberg-payload';
 import { buildAiClauseGapPayloadFromContext } from '../payloads/ai-clause-gap-payload';
 import { buildRenewalDecisionPayloadFromContext } from '../payloads/renewal-decision-payload';
+import { buildSourceTransitionReadinessModel } from '../../transition/readiness-scoring';
 
 import { DEAL_PACK_STYLES } from './styles';
 import { assembleDealPackHtml, type DealPackInput, type DealPackArtifact } from './stage-sections';
@@ -159,6 +161,11 @@ export async function assembleDealPack(
   // ── Stage 7 — SRM / Renewal ────────────────────────────────────────────
   const dx7 = await tryBuild('dx7 renewal decision', () =>
     buildRenewalDecisionPayloadFromContext(ctx, generatedAt),
+  );
+
+  // ── Stage 10 — Transition ──────────────────────────────────────────────
+  const stage10Transition = await tryBuild('stage 10 transition readiness', () =>
+    buildSourceTransitionReadinessModel(),
   );
 
   // The aggregator passes raw markdown bodies through `markdownToHtml`
@@ -285,6 +292,20 @@ export async function assembleDealPack(
         artifacts: dx7.ok
           ? [structuredArtifact('dx7_renewal_decision', 'Renewal Decision', { kind: 'renewal-decision', payload: dx7.value })]
           : missingArtifact('dx7_renewal_decision', 'Renewal Decision', dx7.reason),
+      },
+      {
+        stage: 10,
+        slug: 'stage-10',
+        title: 'Transition',
+        intent: 'Track knowledge transfer, go-live readiness, cutover sign-offs, and transition risks before value measurement begins.',
+        artifacts: stage10Transition.ok
+          ? [
+              structuredArtifact('stage10_transition_readiness', 'Transition Readiness', {
+                kind: 'transition-readiness',
+                payload: stage10Transition.value,
+              }),
+            ]
+          : missingArtifact('stage10_transition_readiness', 'Transition Readiness', stage10Transition.reason),
       },
     ],
     artifactStates: ctx.artifactStates,
