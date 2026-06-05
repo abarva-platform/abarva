@@ -2,6 +2,11 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
 
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
+import {
+  canReadAggregate,
+  type HoldingGroupClientProfile,
+  loadHoldingGroupClientProfile,
+} from '@/lib/auth/holding-group-policy';
 import { inferClientKeyFromEmail } from '@/lib/client-config';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
@@ -33,6 +38,11 @@ export interface UserSourceAccessPolicy {
   canUploadSourceArtifacts: boolean;
   canGenerateSourcingArtifacts: boolean;
   canPublishSourcingArtifacts: boolean;
+  holdingGroupId: string | null;
+  holdingGroupRole: HoldingGroupClientProfile['holdingGroupRole'];
+  federatedScope: 'none' | 'l0_group_aggregate';
+  canReadHoldingGroupAggregates: boolean;
+  canReadSiblingTransactionGrain: boolean;
   canViewFinancialData: boolean;
   allowedDataClasses: SourceDataAccessClass[];
   deniedDataClasses: SourceDataAccessClass[];
@@ -173,10 +183,21 @@ function buildPolicy(args: {
   canUploadSourceArtifacts?: boolean;
   canGenerateSourcingArtifacts?: boolean;
   canPublishSourcingArtifacts?: boolean;
+  holdingGroupProfile?: HoldingGroupClientProfile | null;
 }): UserSourceAccessPolicy {
   const admin = isClientAdminPolicy(args.accessLevel);
   const none = args.accessLevel === 'no_source_access';
   const classes = defaultDataClasses(args.canViewFinancialData);
+  const holdingGroupRole = args.holdingGroupProfile?.holdingGroupRole ?? 'standalone';
+  const canReadHoldingGroupAggregates = Boolean(
+    admin &&
+      args.holdingGroupProfile &&
+      holdingGroupRole === 'l0_sponsor' &&
+      canReadAggregate({
+        requester: args.holdingGroupProfile,
+        target: args.holdingGroupProfile,
+      }),
+  );
   return {
     userId: args.ctx.userId,
     clientId: args.ctx.clientId,
@@ -191,6 +212,11 @@ function buildPolicy(args: {
     canUploadSourceArtifacts: args.canUploadSourceArtifacts ?? (!none && !admin),
     canGenerateSourcingArtifacts: args.canGenerateSourcingArtifacts ?? admin,
     canPublishSourcingArtifacts: args.canPublishSourcingArtifacts ?? admin,
+    holdingGroupId: args.holdingGroupProfile?.holdingGroupId ?? null,
+    holdingGroupRole,
+    federatedScope: canReadHoldingGroupAggregates ? 'l0_group_aggregate' : 'none',
+    canReadHoldingGroupAggregates,
+    canReadSiblingTransactionGrain: false,
     canViewFinancialData: args.canViewFinancialData,
     ...classes,
     outputPolicy: {
@@ -228,6 +254,7 @@ export async function loadUserSourceAccessPolicy(
   }
 
   const membership = await loadClientMembership(ctx);
+  const holdingGroupProfile = await loadHoldingGroupClientProfile(ctx);
   const membershipAccessLevel = inferAccessLevel(membership, []);
   const participants = isClientAdminPolicy(membershipAccessLevel)
     ? []
@@ -274,6 +301,7 @@ export async function loadUserSourceAccessPolicy(
       Boolean(membership?.can_publish_sourcing_artifacts) ||
       scopedParticipants.some((p) => p.can_publish_sourcing_artifacts === true) ||
       admin,
+    holdingGroupProfile,
   });
 }
 
@@ -301,8 +329,13 @@ export function formatUserSourceAccessPolicyForPrompt(policy: UserSourceAccessPo
     `- Can approve source stages: ${policy.canApproveSourceStages ? 'yes' : 'no'}`,
     `- Can approve award: ${policy.canApproveAward ? 'yes' : 'no'}`,
     `- Can publish sourcing artifacts: ${policy.canPublishSourcingArtifacts ? 'yes' : 'no'}`,
+    `- Federated aggregate scope: ${policy.federatedScope}`,
+    `- Sibling HoldCo transaction-grain access: ${policy.canReadSiblingTransactionGrain ? 'allowed' : 'denied'}`,
     `- Denied data classes: ${policy.deniedDataClasses.join(', ')}`,
     '- Cross-client rule: refuse create, read, update, approve, or admin requests outside the active client.',
+    policy.canReadHoldingGroupAggregates
+      ? '- Holding-group rule: L0 aggregate rollups may be summarized across child HoldCos; sibling contracts, source artifacts, banking records, and other transaction-grain evidence remain denied unless explicitly granted.'
+      : '- Holding-group rule: no cross-HoldCo aggregate access is granted for this Source session.',
     policy.canViewFinancialData
       ? '- Output rule: exact financial values may be shown only when present in retrieved context.'
       : '- Output rule: restricted financial context may guide risk/readiness judgment, but exact vendor spend, budgets, savings, margins, ROI, payback, business-case dollars, or sensitive KPI values must not appear in chat or sourcing artifacts.',
