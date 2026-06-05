@@ -22,6 +22,7 @@ context-loader or corpus-remediation task.
 | Layer | What changed |
 |---|---|
 | Curriculum | `tests/agent-grounding/curriculum/core-cxo.jsonl` defines CXO-grade cases across Apex Retail, Meridian Health, and SkyHarbor Air. |
+| Databricks modernization golden deck | `tests/agent-grounding/curriculum/databricks-modernization-golden.jsonl` adds 100 Meridian-specific healthcare modernization questions for Epic, ERP, external datasets, medallion modeling, metadata-driven ETL, and Source SI bid discipline. |
 | Scoring | `src/lib/agent-grounding/scorer.ts` grades each captured or live answer against tenant truth, corpus context, evidence, refusal discipline, data gaps, and output hygiene. |
 | Reporting | `src/lib/agent-grounding/report.ts` creates machine-readable JSON and an HTML report with every prompt, answer, issue, and severity. |
 | Runner | `src/scripts/qa/agent-grounding-runner.ts` runs dry, score-file, live app-session, and OpenAI-direct modes. |
@@ -80,6 +81,24 @@ a model-only grounding simulation: it proves whether the agent instructions and
 tenant profile/corpus guardrails produce understandable, scoped answers from
 OpenAI, but it does not prove production retrieval or live tenant data wiring.
 Use live app-session mode or browser crawl evidence for that separate proof.
+
+Run the Databricks modernization deck through dry scoring:
+
+```bash
+npm run qa:agent-grounding:dry -- --tenant meridian-health
+```
+
+Run a focused OpenAI-only modernization sample:
+
+```bash
+OPENAI_API_KEY="sk-..." \
+  npm run qa:agent-grounding:openai -- --openai-model gpt-4.1 --tenant meridian-health --agent sentinel --limit 20 --out reports/agent-grounding/openai-meridian-databricks
+```
+
+The modernization cases intentionally force the agents to distinguish loaded
+Meridian evidence from planning-range doctrine. They should never invent exact
+Epic table counts, ERP integration counts, report counts, or Databricks migration
+automation percentages unless a governed loader inventory is present.
 
 ## Severity Rules
 
