@@ -122,4 +122,39 @@ describe('csv upload connector', () => {
       }),
     ]);
   });
+
+  it('blocks PHS phase 0 uploads with missing required evidence fields before persistence', async () => {
+    const calls: Array<{ table: string; operation: string; payload: unknown }> = [];
+    const db = {
+      from(table: string) {
+        return {
+          insert(payload: unknown) {
+            calls.push({ table, operation: 'insert', payload });
+            return {
+              select() {
+                return Promise.resolve({ data: [], error: null, count: 0 });
+              },
+            };
+          },
+        };
+      },
+    };
+
+    await expect(
+      loadCsvUploadToTenantContext({
+        clientId: 'client-meridian',
+        tenantKey: 'meridian-health',
+        uploadedBy: 'user-3',
+        fileName: 'phs-evidence-register.csv',
+        csvText: [
+          'title,source_type,owner,evidence_date,sensitivity,confidence,summary,usable_by_surface',
+          'Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin"',
+        ].join('\n'),
+        mapping: { templateId: 'phs-evidence-register' },
+        db: db as never,
+      }),
+    ).rejects.toThrow('csv_missing_required_fields:citation_key');
+
+    expect(calls).toHaveLength(0);
+  });
 });

@@ -1,5 +1,7 @@
 import {
+  CONTEXT_TEMPLATE_REGISTRY,
   NORTHSTAR_CONTEXT_TEMPLATES,
+  PHS_CONTEXT_TEMPLATES,
   SUPPORTED_CONTEXT_UPLOAD_FORMATS,
   getTemplateById,
   getTemplateFormatCoverage,
@@ -30,6 +32,21 @@ describe('context template library exception coverage', () => {
         'authoritative_sections',
         'metric_dictionary',
       ]),
+    );
+  });
+
+  it('registers PHS phase 0 templates in the shared resolver without shrinking the general template set', () => {
+    const template = getTemplateById('phs-evidence-register');
+
+    expect(template).toMatchObject({
+      id: 'phs-evidence-register',
+      label: 'PHS evidence register',
+      dimension: 'c_suite_strategy',
+      ownerRole: 'Data steward',
+    });
+    expect(PHS_CONTEXT_TEMPLATES).toHaveLength(6);
+    expect(CONTEXT_TEMPLATE_REGISTRY.length).toBe(
+      NORTHSTAR_CONTEXT_TEMPLATES.length + PHS_CONTEXT_TEMPLATES.length,
     );
   });
 
