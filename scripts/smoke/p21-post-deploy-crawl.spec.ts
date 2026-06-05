@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   compareCrawlToBaseline,
   summarizeComparison,
@@ -20,6 +21,9 @@ assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
 assert.equal(resolveCrawlQuestions('phs-meridian').length, 50);
 assert.equal(resolveCrawlQuestions('unknown').length, 10);
 assert.deepEqual(resolveCrawlPersonas('apex-cio').map((persona) => persona.key), ['apex-cio']);
+const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
+assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
+assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
 
 const run: CrawlRun = {
   runId: 'smoke',
