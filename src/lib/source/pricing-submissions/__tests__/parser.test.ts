@@ -180,6 +180,30 @@ describe('parseVendorPricingSubmission', () => {
     expect(altPricingDev?.severity).toBe('medium');
   });
 
+  it('does not turn explicit no-deviation notes into assumption deviations', async () => {
+    const bytes = await fillAndSerialize((wb) => {
+      wb.getWorksheet('Cover')!.getCell('B16').value = 'Delta';
+      const detail = wb.getWorksheet('Pricing Detail')!;
+      detail.getCell('F2').value = 500;
+      detail.getCell('F3').value = 110;
+      detail.getCell('F4').value = 22000;
+      const notes = wb.getWorksheet('Pricing Notes')!;
+      notes.getCell('B2').value =
+        'Conforms to the locked term horizon; no assumption deviation.';
+      notes.getCell('B3').value = 'No alternative pricing model requested.';
+      notes.getCell('B6').value = 'N/A';
+    });
+    const result = await parseVendorPricingSubmission({
+      bytes,
+      filename: 'delta.xlsx',
+      sourceEventId: 'event-1',
+      tenantKey: 'meridian',
+    });
+
+    expect(result.status).toBe('parsed');
+    expect(result.insert.assumptionDeviations).toEqual([]);
+  });
+
   it('returns failed status when bytes are not a valid xlsx', async () => {
     const bogus = new TextEncoder().encode('not an xlsx file');
     const result = await parseVendorPricingSubmission({

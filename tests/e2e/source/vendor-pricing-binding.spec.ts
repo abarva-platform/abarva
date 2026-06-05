@@ -47,10 +47,18 @@ test.describe("Source d19 vendor pricing binding", () => {
     await workbook.xlsx.readFile(templatePath);
     workbook.getWorksheet("Cover")!.getCell("B16").value = vendorName;
     const detail = workbook.getWorksheet("Pricing Detail")!;
-    detail.getCell("F2").value = 380;
-    detail.getCell("F3").value = 95;
-    detail.getCell("F4").value = 18_000;
-    detail.getCell("H3").value = "Codex QA upload binding proof.";
+    let pricedLineCount = 0;
+    detail.eachRow({ includeEmpty: false }, (row, rowNum) => {
+      if (rowNum === 1) return;
+      const lineId = String(row.getCell(1).value ?? "");
+      if (!/^L[0-9A-Z-]+/i.test(lineId)) return;
+      pricedLineCount += 1;
+      row.getCell(6).value = 95 + pricedLineCount * 25;
+      if (pricedLineCount === 1) {
+        row.getCell(8).value = "Codex QA upload binding proof.";
+      }
+    });
+    expect(pricedLineCount).toBeGreaterThan(0);
     const notes = workbook.getWorksheet("Pricing Notes")!;
     notes.getCell("B2").value =
       "Conforms to three-year horizon; no assumption deviation.";
@@ -76,7 +84,7 @@ test.describe("Source d19 vendor pricing binding", () => {
     ).toContainText(vendorName);
     await expect(
       page.getByTestId("vendor-pricing-submissions-list"),
-    ).toContainText("3 priced");
+    ).toContainText(`${pricedLineCount} priced`);
 
     const comparisonHref = await page
       .getByTestId(
