@@ -252,9 +252,9 @@ export function CsvUploadConnector({
           Upload structured data
         </h2>
         <p style={{ color: "#514c43", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Load a template-mapped CSV file into {tenantName}. The upload is
-          tenant-checked, attested, scanned, validated, and written as context
-          only after the gates pass.
+          Load a template-mapped CSV, JSON, JSONL, or YAML file into{" "}
+          {tenantName}. The upload is tenant-checked, attested, scanned,
+          validated, and written as context only after the gates pass.
         </p>
       </div>
 
@@ -267,7 +267,18 @@ export function CsvUploadConnector({
             <input
               style={inputStyle}
               type="file"
-              accept=".csv,text/csv"
+              accept={[
+                ".csv",
+                ".json",
+                ".jsonl",
+                ".yaml",
+                ".yml",
+                "text/csv",
+                "application/json",
+                "application/x-ndjson",
+                "application/yaml",
+                "text/yaml",
+              ].join(",")}
               onChange={onFileChange}
             />
           </label>

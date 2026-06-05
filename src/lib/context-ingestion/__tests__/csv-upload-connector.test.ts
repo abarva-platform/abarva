@@ -5,6 +5,7 @@ import {
   inferCsvSchemaMapping,
   loadCsvUploadToTenantContext,
   parseCsvUpload,
+  parseStructuredUpload,
   prepareCsvUploadForTenantContext,
 } from "../csv-upload-connector";
 import {
@@ -52,6 +53,69 @@ describe("csv upload connector", () => {
         notes: "Tier 1, regulated",
       },
     ]);
+  });
+
+  it("parses Meridian enterprise profile YAML into template rows", () => {
+    const yamlText = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "datasets/meridian-health-synthetic-v1/17-upload-templates/enterprise-profile.yaml",
+      ),
+      "utf8",
+    );
+    const parsed = parseStructuredUpload(yamlText, "enterprise-profile.yaml");
+
+    expect(parsed.headers).toEqual(["metric", "value", "period", "source"]);
+    expect(parsed.rows).toEqual(
+      expect.arrayContaining([
+        {
+          metric: "headquarters",
+          value: "Sacramento, California",
+          period: "FY2026",
+          source: "enterprise-profile",
+        },
+        {
+          metric: "hospitals",
+          value: "30",
+          period: "FY2026",
+          source: "enterprise-profile",
+        },
+      ]),
+    );
+  });
+
+  it("parses Meridian HL7/FHIR topology JSON into template rows", () => {
+    const jsonText = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "datasets/meridian-health-synthetic-v1/17-upload-templates/hl7-fhir-integration-topology.json",
+      ),
+      "utf8",
+    );
+    const parsed = parseStructuredUpload(
+      jsonText,
+      "hl7-fhir-integration-topology.json",
+    );
+
+    expect(parsed.headers).toEqual(
+      expect.arrayContaining([
+        "edge_id",
+        "source",
+        "target",
+        "standard",
+        "data_class",
+      ]),
+    );
+    expect(parsed.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          edge_id: "MR-INT-001",
+          source: "MR-APP-EPIC",
+          standard: "HL7 v2 ORU",
+          data_class: "PHI",
+        }),
+      ]),
+    );
   });
 
   it("infers schema mapping from the selected context template and headers", () => {
@@ -212,6 +276,63 @@ describe("csv upload connector", () => {
     expect(prepared.chunks[0]?.provenance).not.toHaveProperty(
       "human_approved_at",
     );
+  });
+
+  it("prepares Meridian YAML and JSON uploads through the same governed connector", () => {
+    const yamlText = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "datasets/meridian-health-synthetic-v1/17-upload-templates/enterprise-profile.yaml",
+      ),
+      "utf8",
+    );
+    const enterpriseProfile = prepareCsvUploadForTenantContext({
+      clientId: "client-meridian",
+      tenantKey: "meridian-health",
+      uploadedBy: "user-phs",
+      fileName: "enterprise-profile.yaml",
+      uploadedAt: "2026-06-05T12:00:00.000Z",
+      csvText: yamlText,
+      mapping: { templateId: "enterprise-profile" },
+    });
+
+    expect(enterpriseProfile.rowsParsed).toBeGreaterThanOrEqual(10);
+    expect(enterpriseProfile.chunks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source_doc: "enterprise-profile.yaml",
+          chunk_text: expect.stringContaining("Sacramento, California"),
+          provenance: expect.objectContaining({
+            loader: "c5-csv-upload-connector",
+            tenant_key: "meridian-health",
+          }),
+        }),
+      ]),
+    );
+
+    const jsonText = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "datasets/meridian-health-synthetic-v1/17-upload-templates/hl7-fhir-integration-topology.json",
+      ),
+      "utf8",
+    );
+    const topology = prepareCsvUploadForTenantContext({
+      clientId: "client-meridian",
+      tenantKey: "meridian-health",
+      uploadedBy: "user-phs",
+      fileName: "hl7-fhir-integration-topology.json",
+      uploadedAt: "2026-06-05T12:00:00.000Z",
+      csvText: jsonText,
+      mapping: { templateId: "hl7-fhir-integration-topology" },
+    });
+
+    expect(topology.rowsParsed).toBe(2);
+    expect(topology.chunks[0]).toMatchObject({
+      source_doc: "hl7-fhir-integration-topology.json",
+      source_record_id: "MR-INT-001",
+      source_segment_id: "it_landscape",
+    });
   });
 
   it("batch inserts prepared chunks without delete or cross-tenant writes", async () => {
