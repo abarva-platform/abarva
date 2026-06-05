@@ -302,8 +302,20 @@ async function askHardQuestions(page: Page, safeName: string, out: string): Prom
     const input = page.getByRole('textbox').first();
     if (!(await input.isVisible().catch(() => false))) break;
     await input.fill(question);
-    await input.press('Enter');
-    await page.waitForTimeout(2500);
+    const submit = page.getByRole('button', { name: /^Ask Sentinel$/i }).first();
+    if (!(await submit.isVisible().catch(() => false))) break;
+    await submit.click();
+    await page
+      .getByRole('button', { name: /reasoning/i })
+      .first()
+      .waitFor({ state: 'visible', timeout: 10_000 })
+      .catch(() => undefined);
+    await page
+      .getByRole('button', { name: /^Ask Sentinel$/i })
+      .first()
+      .waitFor({ state: 'visible', timeout: 90_000 })
+      .catch(() => undefined);
+    await page.waitForTimeout(500);
     const answer = (await page.locator('body').innerText().catch(() => '')).slice(-5000);
     exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
     transcript.push({ question, answer });
