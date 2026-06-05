@@ -1,14 +1,23 @@
-import { getAuditedAnthropicClient } from '@/lib/agent/stream';
-import type { AskSource, AskIntent } from './types';
-import { applyPartialEvidencePolicy, chunkAskText, sanitizeAskSynthesis } from './response-policy';
+import type { AskSource, AskIntent } from "./types";
+import {
+  applyPartialEvidencePolicy,
+  chunkAskText,
+  sanitizeAskSynthesis,
+} from "./response-policy";
 import {
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
-} from './tenant-identity-pin';
-import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
+} from "./tenant-identity-pin";
+import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
+import {
+  createIntelligenceAskOpenAIText,
+  INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
+  INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL,
+  isIntelligenceAskOpenAIConfigured,
+} from "./openai-runtime";
 
-export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
+export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
 // SYSTEM_PROMPT · Sentinel Ask Intelligence · INT-VOICE.STRAT-2026-05-10d
 //
@@ -239,17 +248,23 @@ For explicit concise requests:
 - Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
 
 export function isExplicitConciseAsk(query: string): boolean {
-  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(query.toLowerCase());
+  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(
+    query.toLowerCase(),
+  );
 }
 
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
-    return 'claude-haiku-4-5-20251001';
+    return INTELLIGENCE_ASK_OPENAI_SMALL_MODEL;
   }
-  if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
-    return 'claude-opus-4-7';
+  if (
+    intent === "vendor_comparison" ||
+    intent === "topic_synthesis" ||
+    intent === "general_synthesis"
+  ) {
+    return INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL;
   }
-  return 'claude-sonnet-4-6';
+  return INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL;
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
@@ -262,11 +277,11 @@ function formatSourcesBlock(sources: AskSource[]): string {
     // "answer from domain expertise + tenant context" instruction, NOT a
     // signal to refuse. The system prompt makes this contract explicit; this
     // block keeps the model from inventing a missing-data narrative.
-    return '[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]';
+    return "[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]";
   }
   return sources
     .map((s, i) => `[SOURCE ${i + 1} · ${s.type} · ${s.name}]\n${s.detail}`)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 export async function* synthesizeStream(args: {
@@ -290,15 +305,15 @@ export async function* synthesizeStream(args: {
    */
   averageConfidence?: number;
 }): AsyncGenerator<string> {
-  if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
-    yield 'Sentinel synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
+  if (!isIntelligenceAskOpenAIConfigured() || !args.tenantId) {
+    yield "Sentinel synthesis is not configured in this environment. Set OPENAI_API_KEY to enable advisor-quality answers.";
     return;
   }
 
   const confidenceHint =
-    typeof args.averageConfidence === 'number'
+    typeof args.averageConfidence === "number"
       ? `\nRETRIEVAL CONFIDENCE (informational, never to be quoted to the user): average source confidence is ${args.averageConfidence.toFixed(2)} on a 0-1 scale. Treat this as private context for calibrating your prose, the same way a senior consultant calibrates against how solid her own evidence base is. Do not narrate this number. Do not say "average confidence is moderate" or anything like it. Use it to decide how confident your verbal framing should be ("high confidence on this," "less sure on the timing," "this is judgment, not benchmark data") — calibration belongs in how you phrase claims, not in a preamble or a footer.`
-      : '';
+      : "";
 
   // STRESS-P0-001 fix (2026-05-24): authoritative tenant-identity pin built
   // dynamically from args.tenantClientKey. Replaces the prior hardcoded
@@ -306,58 +321,48 @@ export async function* synthesizeStream(args: {
   // Meridian-authenticated CDIO sessions to receive responses asserting
   // "you're Apex Retail." The pin block is prepended FIRST (above any other
   // context block) so the model treats it as highest-priority.
-  const tenantIdentityPin = buildTenantIdentityPin(args.tenantClientKey ?? args.tenantId ?? null);
+  const tenantIdentityPin = buildTenantIdentityPin(
+    args.tenantClientKey ?? args.tenantId ?? null,
+  );
   const contextContractBlock = buildAgentContextContractBlock({
-    agent: 'sentinel',
-    module: 'intelligence',
+    agent: "sentinel",
+    module: "intelligence",
     sources: args.sources,
   });
 
   const contextBlocks = [
     tenantIdentityPin,
     contextContractBlock,
-    args.factAvailabilityBlock?.trim() ?? '',
-    args.coverageReportBlock?.trim() ?? '',
-    args.userContextBlock?.trim() ?? '',
-    args.conversationContextBlock?.trim() ?? '',
+    args.factAvailabilityBlock?.trim() ?? "",
+    args.coverageReportBlock?.trim() ?? "",
+    args.userContextBlock?.trim() ?? "",
+    args.conversationContextBlock?.trim() ?? "",
   ].filter(Boolean);
-  const rolePrompt = isExplicitConciseAsk(args.query) ? CONCISE_SYSTEM_PROMPT : SYSTEM_PROMPT;
-  const system = contextBlocks.length > 0
-    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}`
-    : `${rolePrompt}${confidenceHint}`;
+  const rolePrompt = isExplicitConciseAsk(args.query)
+    ? CONCISE_SYSTEM_PROMPT
+    : SYSTEM_PROMPT;
+  const system =
+    contextBlocks.length > 0
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}${confidenceHint}`
+      : `${rolePrompt}${confidenceHint}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
-    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'
-    : '';
+    ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
+    : "";
 
   try {
     const model = chooseModel(args.intent, args.query);
-    const { client } = await getAuditedAnthropicClient({
+    const text = await createIntelligenceAskOpenAIText({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
-      workflow: 'intelligence-ask-synthesis',
+      workflow: "intelligence-ask-synthesis",
       model,
-      prompt: [system, prompt].join('\n\n'),
-      dataClass: 'confidential',
+      instructions: `${system}${continuityInstruction}`,
+      input: prompt,
+      dataClass: "confidential",
+      maxOutputTokens: chooseSynthesisTokenBudget(args.query),
       metadata: { intent: args.intent },
     });
-    const stream = await client.messages.create({
-      model,
-      // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
-      // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
-      // mid-list on the new MANDATORY ANSWER SHAPES.
-      max_tokens: chooseSynthesisTokenBudget(args.query),
-      system: `${system}${continuityInstruction}`,
-      messages: [{ role: 'user', content: prompt }],
-      stream: true,
-    });
-
-    let text = '';
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        text += event.delta.text;
-      }
-    }
 
     // STRESS-P0-001 fix (2026-05-24): post-response cross-tenant identity
     // guard. If despite the dynamic tenant pin the model still asserts a
@@ -372,11 +377,11 @@ export async function* synthesizeStream(args: {
     if (leakCheck.leaked) {
       const safeRefusal = [
         `I almost generated a response that misattributed your organization. The retrieved context and/or session memory referenced "${leakCheck.assertedTenant}" but your authenticated session is for a different organization.`,
-        '',
-        'I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.',
-        '',
-        '[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]',
-      ].join('\n');
+        "",
+        "I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.",
+        "",
+        "[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]",
+      ].join("\n");
       yield safeRefusal;
       return;
     }
@@ -388,10 +393,10 @@ export async function* synthesizeStream(args: {
     });
     if (offTenantMention.detected) {
       yield [
-        'I detected mixed-tenant language in the draft answer, so I am not going to surface it.',
-        'Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.',
-        '[tenant-isolation guard fired: off-tenant mention blocked]',
-      ].join('\n');
+        "I detected mixed-tenant language in the draft answer, so I am not going to surface it.",
+        "Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.",
+        "[tenant-isolation guard fired: off-tenant mention blocked]",
+      ].join("\n");
       return;
     }
 
@@ -405,11 +410,14 @@ export async function* synthesizeStream(args: {
     // and still fences off true runaway responses. The prompt remains the
     // primary length lever; this is a safety net.
     const sanitized = sanitizeAskSynthesis(text, 240);
-    const evidenceDisciplined = applyPartialEvidencePolicy(sanitized, args.sources);
+    const evidenceDisciplined = applyPartialEvidencePolicy(
+      sanitized,
+      args.sources,
+    );
     for (const chunk of chunkAskText(evidenceDisciplined)) {
       yield chunk;
     }
   } catch (err) {
-    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : 'unknown'}]`;
+    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
   }
 }
