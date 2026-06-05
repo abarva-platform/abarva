@@ -259,6 +259,14 @@ describe("UniversalCanvasShell · SSR render", () => {
     }
   });
 
+  it("collapses Sentinel by default on the Executive Decision stage", () => {
+    const html = render({ viewStage: "executive_decision" });
+    expect(html).toContain("agent-dock-collapsed-chip");
+    expect(html).toContain("Sentinel Source");
+    expect(html).toContain("Click to expand · 3 stage-specific suggestions");
+    expect(html).toContain("source-canvas-next-move-card");
+  });
+
   it("renders the AgentDock side-rail with stage-appropriate agent and 3 suggestions", () => {
     const html = render();
     // AgentDock panel replaces the legacy EventChatLane testid.

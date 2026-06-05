@@ -105,11 +105,11 @@ import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registr
 import { canvasDockAgentForStage } from "@/lib/source/portfolio-derivations";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
-  AgentDock,
   type AttachmentRef,
   type ChatMessage,
   type SuggestedAction,
 } from "@/components/agent/AgentDock";
+import { SentinelChatProportional } from "./SentinelChatProportional";
 import { EventIdStrip } from "./EventIdStrip";
 import { EventStepRail } from "./EventStepRail";
 import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
@@ -754,14 +754,15 @@ export function UniversalCanvasShell({
           />
         </div>
         <div style={SPLITTER_WRAPPER_STYLE}>
-          <AgentDock
+          <SentinelChatProportional
             agent={{
               initials: displayAgentInitials(dockAgent),
               name: displayAgentName(dockAgent),
               role: AGENT_DOCK_ROLE_COPY[dockAgent],
             }}
+            stage={viewStage}
+            artifacts={stageArtifacts}
             surface="source/events/canvas"
-            defaultMode="side-rail"
             surfaceContext={{
               sourceEventId: event.id,
               sourceEventCode: event.code,
@@ -789,7 +790,6 @@ export function UniversalCanvasShell({
                 </div>
               </div>
             }
-            defaultLeftPercent={30}
             minLeftPx={280}
           />
         </div>

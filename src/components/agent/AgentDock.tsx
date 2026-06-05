@@ -251,6 +251,11 @@ export interface AgentDockProps {
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /** Optional copy for the collapsed chip. Defaults to the legacy "Ask {agent}". */
+  collapsedSummary?: {
+    label: string;
+    detail?: string;
+  };
   /**
    * Optional override: when true, AgentDock shows a throbber turn at the
    * end of the thread even if no agent message is in flight via
@@ -439,6 +444,7 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
 
@@ -462,10 +468,19 @@ export function AgentDock(props: AgentDockProps) {
   const [mode, setModeState] = useState<DockMode>(() => {
     return readStoredMode(surface) ?? defaultMode;
   });
+  const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
     mode === "collapsed" ? defaultMode : mode,
   );
+
+  useEffect(() => {
+    if (previousSurfaceRef.current === surface) return;
+    previousSurfaceRef.current = surface;
+    const nextMode = readStoredMode(surface) ?? defaultMode;
+    setModeState(nextMode);
+    setLastRichMode(nextMode === "collapsed" ? defaultMode : nextMode);
+  }, [defaultMode, surface]);
 
   const setMode = useCallback(
     (next: DockMode) => {
@@ -700,6 +715,8 @@ export function AgentDock(props: AgentDockProps) {
     },
     [submit],
   );
+  const collapsedSummaryLabel = collapsedSummary?.label;
+  const collapsedSummaryDetail = collapsedSummary?.detail;
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,
   // expand). The collapsed mode renders the floating chip instead.
@@ -989,7 +1006,16 @@ export function AgentDock(props: AgentDockProps) {
           style={COLLAPSED_CHIP_STYLE}
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
-          <span style={COLLAPSED_CHIP_LABEL_STYLE}>Ask {agent.name}</span>
+          <span style={COLLAPSED_CHIP_TEXT_STYLE}>
+            <span style={COLLAPSED_CHIP_LABEL_STYLE}>
+              {collapsedSummaryLabel ?? `Ask ${agent.name}`}
+            </span>
+            {collapsedSummaryDetail ? (
+              <span style={COLLAPSED_CHIP_DETAIL_STYLE}>
+                {collapsedSummaryDetail}
+              </span>
+            ) : null}
+          </span>
         </button>
       </>
     );
@@ -1985,6 +2011,22 @@ const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {
   fontWeight: 700,
   letterSpacing: 0,
   whiteSpace: "nowrap",
+};
+
+const COLLAPSED_CHIP_TEXT_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 2,
+  textAlign: "left",
+  lineHeight: 1.1,
+};
+
+const COLLAPSED_CHIP_DETAIL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: 0,
+  whiteSpace: "nowrap",
+  opacity: 0.78,
 };
 
 // ── Agent busy throbber ───────────────────────────────────────────────────
