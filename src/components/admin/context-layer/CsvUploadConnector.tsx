@@ -89,6 +89,9 @@ export function CsvUploadConnector({
 }: CsvUploadConnectorProps) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [fileFormat, setFileFormat] = useState<
+    "csv" | "json" | "jsonl" | "yaml" | "unknown"
+  >("unknown");
   const [templateId, setTemplateId] = useState("application-portfolio");
   const [sourceRecordIdColumn, setSourceRecordIdColumn] = useState("");
   const [titleColumn, setTitleColumn] = useState("");
@@ -139,10 +142,10 @@ export function CsvUploadConnector({
   const contextTemplate = rateCardTemplate ? null : template;
   const schemaPreflight = useMemo(
     () =>
-      headers.length > 0 && !rateCardTemplate
+      fileFormat === "csv" && headers.length > 0 && !rateCardTemplate
         ? buildTemplateSchemaPreflight({ templateId, headers })
         : null,
-    [headers, rateCardTemplate, templateId],
+    [fileFormat, headers, rateCardTemplate, templateId],
   );
   const requiredFieldsBlocked =
     !rateCardTemplate &&
@@ -154,9 +157,28 @@ export function CsvUploadConnector({
     setResult(null);
     if (!nextFile) {
       setHeaders([]);
+      setFileFormat("unknown");
       return;
     }
+    const lowerName = nextFile.name.toLowerCase();
+    const nextFormat = lowerName.endsWith(".csv")
+      ? "csv"
+      : lowerName.endsWith(".json")
+        ? "json"
+        : lowerName.endsWith(".jsonl")
+          ? "jsonl"
+          : lowerName.endsWith(".yaml") || lowerName.endsWith(".yml")
+            ? "yaml"
+            : "unknown";
+    setFileFormat(nextFormat);
     const text = await nextFile.slice(0, 64 * 1024).text();
+    if (nextFormat !== "csv") {
+      setHeaders([]);
+      setSourceRecordIdColumn("");
+      setTitleColumn("");
+      setSelectedTextColumns([]);
+      return;
+    }
     const firstLine =
       text.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
     const parsedHeaders = splitHeaderLine(firstLine);
@@ -263,7 +285,7 @@ export function CsvUploadConnector({
           style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}
         >
           <label style={{ display: "grid", gap: 6 }}>
-            <span>CSV file</span>
+            <span>Structured file</span>
             <input
               style={inputStyle}
               type="file"
@@ -362,6 +384,24 @@ export function CsvUploadConnector({
               </select>
             </label>
           </div>
+        )}
+
+        {file && fileFormat !== "csv" && !rateCardTemplate && (
+          <section
+            aria-label="Structured file preflight"
+            style={{
+              border: "1px solid #e3decf",
+              borderRadius: 6,
+              padding: 12,
+              background: "#F8F7F4",
+              color: "#514c43",
+              lineHeight: 1.5,
+            }}
+          >
+            JSON, JSONL, and YAML files are parsed on the server with the
+            selected template. Submit stays available after attestation; schema
+            errors, if any, return in the upload result.
+          </section>
         )}
 
         {headers.length > 0 && !rateCardTemplate && (
