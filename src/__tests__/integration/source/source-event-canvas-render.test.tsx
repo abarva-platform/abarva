@@ -211,6 +211,9 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("renders id strip with breadcrumb + title + status", () => {
     const html = render();
     expect(html).toContain("source-canvas-id-strip");
+    expect(html).toContain("source-canvas-next-move-card");
+    expect(html).toContain("Next move");
+    expect(html).toContain("Build the application inventory");
     expect(html).toContain("Source");
     expect(html).toContain("SRC-APX-001");
     expect(html).toContain("AMS Outsourcing 2026");

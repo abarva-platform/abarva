@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
+import { resolveStageNextMove } from "@/lib/source/stage-next-move";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -207,9 +208,8 @@ export function UniversalCanvasShell({
   // also writes to the source_artifacts registry and returns the new row.
   // Keeping this in state lets the shelf reflect the persisted document
   // without a full page revalidate.
-  const [registryArtifactsState, setRegistryArtifactsState] = useState<
-    SourceArtifactRegistryRecord[]
-  >(registryArtifacts);
+  const [registryArtifactsState, setRegistryArtifactsState] =
+    useState<SourceArtifactRegistryRecord[]>(registryArtifacts);
   const generatableCodes = useMemo(
     () => new Set(listSupportedGenerationCodes()),
     [],
@@ -243,6 +243,15 @@ export function UniversalCanvasShell({
   const stageEvidence = useMemo(
     () => evidenceStates.filter((e) => e.stage === viewStage),
     [evidenceStates, viewStage],
+  );
+  const nextMove = useMemo(
+    () =>
+      resolveStageNextMove({
+        stage: viewStage,
+        artifacts: stageArtifacts,
+        criteria: stageCriteria,
+      }),
+    [stageArtifacts, stageCriteria, viewStage],
   );
 
   // Context-bundle counts for the chat header.
@@ -289,6 +298,22 @@ export function UniversalCanvasShell({
     } finally {
       setPromotePending(false);
     }
+  };
+
+  const handleNextMoveAdvance = () => {
+    const nextStage = nextMove.nextStage;
+    if (!nextStage) return;
+    const confirmed =
+      typeof window === "undefined"
+        ? false
+        : window.confirm(
+            `Advance this event to ${nextMove.primaryLabel.replace(/^Advance to /, "")}?`,
+          );
+    if (!confirmed) return;
+    void handlePromoteStage(
+      nextStage,
+      `Advanced from Next Move card: ${nextMove.title}`,
+    );
   };
 
   const handleCriterionStateChange = async (
@@ -721,10 +746,7 @@ export function UniversalCanvasShell({
     >
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
-          <EventIdStrip
-            event={event}
-            exportItems={exportItems}
-          />
+          <EventIdStrip event={event} exportItems={exportItems} />
           <EventStepRail
             eventId={event.id}
             currentStage={event.currentStageKey}
@@ -758,7 +780,12 @@ export function UniversalCanvasShell({
                 style={WORKSPACE_WRAPPER_STYLE}
               >
                 <div style={WORKSPACE_INNER_STYLE}>
-                  <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+                  <EventWorkspace
+                    tabs={tabs}
+                    defaultTab={initialTab}
+                    nextMove={nextMove}
+                    onNextMoveAdvance={handleNextMoveAdvance}
+                  />
                 </div>
               </div>
             }
