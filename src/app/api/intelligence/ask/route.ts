@@ -215,6 +215,12 @@ async function handleAsk(payload: AskPayload) {
             type: 'done',
             telemetryEventId: event.id,
           }) + '\n'));
+        } else if (!sawStreamError) {
+          sawStreamError = true;
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'error',
+            error: 'ask_synthesis_empty',
+          }) + '\n'));
         }
       } catch (err) {
         controller.enqueue(

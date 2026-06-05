@@ -2,7 +2,12 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
-import { chunkAskText, chooseSynthesisTokenBudget, sanitizeAskSynthesis } from '../synthesizer';
+import {
+  chunkAskText,
+  chooseSynthesisTokenBudget,
+  formatMandatorySurfaceEvidenceBlock,
+  sanitizeAskSynthesis,
+} from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -229,5 +234,51 @@ describe('Ask Intelligence guardrails', () => {
       id: 'apexretail',
     });
     expect(sources[2].detail).toContain('integration-hub adjacency');
+  });
+
+  it('formats authenticated surface facts as mandatory synthesis evidence', () => {
+    const block = formatMandatorySurfaceEvidenceBlock([
+      {
+        type: 'TENANT',
+        name: 'Lakeshore Holdings 360 Intelligence substrate',
+        id: 'lakeshore',
+        detail: [
+          'Tenant 360: Lakeshore Holdings.',
+          'Move 0 de-risk gates include bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption, and intercompany reconciliation.',
+        ].join('\n- '),
+        confidence: 0.96,
+      },
+      {
+        type: 'SURFACE',
+        name: 'Lakeshore live Intelligence surface',
+        id: 'intelligence',
+        detail: [
+          'Active Intelligence surface: intelligence.',
+          'Vector store truth: Lakeshore uses native Azure AI Search for vector retrieval, not Pinecone.',
+        ].join('\n- '),
+        confidence: 0.99,
+      },
+      {
+        type: 'WORLDVIEW',
+        name: 'General treasury doctrine',
+        id: 'worldview',
+        detail: 'This lower-priority block should not be copied into the mandatory surface evidence block.',
+        confidence: 0.75,
+      },
+    ]);
+
+    expect(block).toContain('CURRENT TENANT / SURFACE FACTS TO USE');
+    expect(block).toContain('ERP feed quality');
+    expect(block).toContain('Azure AI Search');
+    expect(block).not.toContain('General treasury doctrine');
+  });
+
+  it('emits an error event instead of silently closing an empty Ask stream', () => {
+    const routeCode = readFileSync(
+      join(__dirname, '..', '..', '..', '..', 'app', 'api', 'intelligence', 'ask', 'route.ts'),
+      'utf8',
+    );
+
+    expect(routeCode).toContain("error: 'ask_synthesis_empty'");
   });
 });
