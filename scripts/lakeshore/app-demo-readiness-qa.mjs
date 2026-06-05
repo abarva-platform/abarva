@@ -12,6 +12,10 @@ const outputRoot = process.env.LAKESHORE_DEMO_QA_OUT ?? 'audit-artifacts/lakesho
 const runId = `lakeshore-app-demo-readiness-${new Date().toISOString().replace(/[:.]/g, '-')}-${gitSha()}`;
 const outputDir = path.join(outputRoot, runId);
 const screenshotDir = path.join(outputDir, 'screenshots');
+const responsibleAiAcknowledgmentRoute = '/responsible-ai/acknowledgment';
+const responsibleAiAcknowledgmentVersion = '2026-06-02.responsible-ai-clickwrap-v1';
+const responsibleAiTrainingRoute = '/responsible-ai/training';
+const responsibleAiTrainingVersion = 'responsible-ai-training-v1-2026-06-02';
 
 const kyribaMoveId = '1196dac0-715c-45ce-8eeb-5e70792d9aa4';
 const dataSpineMoveId = '6a4c7fc4-0a2d-4479-b807-7350fb727527';
@@ -298,6 +302,78 @@ async function signIn(context, page) {
   ]);
 }
 
+async function ensureResponsibleAiAcknowledged(page) {
+  try {
+    await page.goto(`${baseUrl}${responsibleAiAcknowledgmentRoute}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 45_000,
+    });
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('net::ERR_ABORTED')) {
+      throw error;
+    }
+  }
+
+  await page
+    .waitForURL(/\/responsible-ai\/acknowledgment|\/home|\/source(\/queue|\/portfolio|\/events)?/, {
+      timeout: 15_000,
+    })
+    .catch(() => null);
+
+  if (!page.url().includes(responsibleAiAcknowledgmentRoute)) {
+    return;
+  }
+
+  const response = await page.request.post(
+    `${baseUrl}/api/ai-liability/responsible-ai-acknowledgment`,
+    {
+      data: {
+        accepted: true,
+        textVersion: responsibleAiAcknowledgmentVersion,
+      },
+    },
+  );
+  if (response.status() !== 200) {
+    throw new Error(`Responsible AI acknowledgment API returned ${response.status()}.`);
+  }
+}
+
+async function ensureResponsibleAiTrainingComplete(page) {
+  try {
+    await page.goto(`${baseUrl}${responsibleAiTrainingRoute}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 45_000,
+    });
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('net::ERR_ABORTED')) {
+      throw error;
+    }
+  }
+
+  await page
+    .waitForURL(/\/responsible-ai\/training|\/home|\/source(\/queue|\/portfolio|\/events)?/, {
+      timeout: 15_000,
+    })
+    .catch(() => null);
+
+  if (!page.url().includes(responsibleAiTrainingRoute)) {
+    return;
+  }
+
+  const response = await page.request.post(
+    `${baseUrl}/api/ai-liability/responsible-ai-training`,
+    {
+      data: {
+        completed: true,
+        trainingVersion: responsibleAiTrainingVersion,
+      },
+    },
+  );
+  if (response.status() !== 200) {
+    throw new Error(`Responsible AI training API returned ${response.status()}.`);
+  }
+}
+
 async function captureScreenshot(page, check, index) {
   const filename = `${String(index + 1).padStart(2, '0')}-${slugify(check.area)}-${slugify(check.id)}.png`;
   const absolutePath = path.join(screenshotDir, filename);
@@ -483,6 +559,8 @@ async function main() {
     const context = await browser.newContext();
     const page = await context.newPage();
     await signIn(context, page);
+    await ensureResponsibleAiAcknowledged(page);
+    await ensureResponsibleAiTrainingComplete(page);
 
     for (const [index, check] of checks.entries()) {
       try {
