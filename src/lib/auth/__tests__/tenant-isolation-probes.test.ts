@@ -408,6 +408,24 @@ describe("Probe 5b · industryCodeForClientName", () => {
 // =====================================================================
 
 describe("Probe 5c · canonicalClientDisplayName", () => {
+  it("renders Meridian aliases as the full integrated system name", () => {
+    expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
+      "Meridian Health System",
+    );
+    expect(
+      canonicalClientDisplayName({
+        key: "meridian",
+        name: "Meridian Health",
+      }),
+    ).toBe("Meridian Health System");
+    expect(
+      canonicalClientDisplayName({
+        key: "meridian-health",
+        name: "Heliara Health Alliance",
+      }),
+    ).toBe("Meridian Health System");
+  });
+
   it("keeps the internal arcturus key compatible while rendering First Capital to users", () => {
     expect(getClientOption("arcturus").name).toBe("First Capital Financial");
     expect(canonicalClientDisplayName({ key: "arcturus" })).toBe(

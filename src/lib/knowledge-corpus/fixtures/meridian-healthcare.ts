@@ -792,7 +792,7 @@ export function getMeridianMapData(): MapData {
     initiativeDisplayId: pos.initiativeId,
   }));
   return {
-    tenantName: 'Meridian Health',
+    tenantName: 'Meridian Health System',
     tenantBrandColor: TENANT_BRAND_TEAL,
     industry: 'healthcare',
     totalUseCases: nodes.length,
@@ -819,7 +819,7 @@ export function getMeridianMapData(): MapData {
 
 export function getMeridianBriefData(): BriefData {
   return {
-    tenantName: 'Meridian Health',
+    tenantName: 'Meridian Health System',
     tenantBrandColor: TENANT_BRAND_TEAL,
     industry: 'healthcare',
     composedAt: '2026-05-08T16:14:00Z',

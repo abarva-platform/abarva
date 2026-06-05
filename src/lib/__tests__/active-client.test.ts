@@ -2,7 +2,7 @@ import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
 
 const currentUserMock = jest.fn();
 const cookiesMock = jest.fn();
-const getServerSupabaseMock = jest.fn();
+const mockAzureMaybeSingle = jest.fn();
 
 jest.mock('@clerk/nextjs/server', () => ({
   currentUser: () => currentUserMock(),
@@ -12,15 +12,17 @@ jest.mock('next/headers', () => ({
   cookies: () => cookiesMock(),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => getServerSupabaseMock(),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    maybeSingle: (...args: unknown[]) => mockAzureMaybeSingle(...args),
+  },
 }));
 
 describe('getActiveClientKey', () => {
   beforeEach(() => {
     currentUserMock.mockReset();
     cookiesMock.mockReset();
-    getServerSupabaseMock.mockReset();
+    mockAzureMaybeSingle.mockReset();
   });
 
   it('pins explicit client-domain personas before stale active-client cookies', async () => {
@@ -72,31 +74,26 @@ describe('getActiveClientKey', () => {
       get: () => null,
     });
 
-    const maybeSingle = jest.fn(async () => ({
-      data: {
-        id: 'client-apex-uuid',
-        name: 'Apex Retail Group LLC',
-        industry_code: 'RETAIL',
-      },
-    }));
-    const limit = jest.fn(() => ({ maybeSingle }));
-    const eq = jest.fn(() => ({ limit }));
-    const ilike = jest.fn(() => ({ maybeSingle: jest.fn(async () => ({ data: null })) }));
-    const select = jest.fn(() => ({ eq, ilike }));
-    const from = jest.fn(() => ({ select }));
-    getServerSupabaseMock.mockReturnValue({ from });
-
-    await expect(getActiveClientRow()).resolves.toEqual({
+    mockAzureMaybeSingle.mockResolvedValueOnce({
       id: 'client-apex-uuid',
       name: 'Apex Retail Group LLC',
       industry_code: 'RETAIL',
+    });
+
+    await expect(getActiveClientRow()).resolves.toEqual({
+      id: 'client-apex-uuid',
+      name: 'Apex Retail Group',
+      industry_code: 'RETAIL',
       key: 'apexretail',
     });
-    expect(from).toHaveBeenCalledWith('clients');
-    expect(eq).toHaveBeenCalledWith('tenant_key', 'apexretail');
+    expect(mockAzureMaybeSingle).toHaveBeenCalledWith({
+      table: 'clients',
+      columns: ['id', 'name', 'industry_code'],
+      where: { tenant_key: 'apexretail' },
+    });
   });
 
-  it('canonicalizes Meridian database rows to Meridian Health', async () => {
+  it('canonicalizes Meridian database rows to Meridian Health System', async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: 'client' },
       primaryEmailAddress: { emailAddress: 'anita.krishnamurthy@meridian-health.example.com' },
@@ -106,23 +103,15 @@ describe('getActiveClientKey', () => {
       get: () => null,
     });
 
-    const maybeSingle = jest.fn(async () => ({
-      data: {
-        id: 'client-meridian-uuid',
-        name: 'Meridian Health',
-        industry_code: 'HEALTHCARE_IDN',
-      },
-    }));
-    const limit = jest.fn(() => ({ maybeSingle }));
-    const eq = jest.fn(() => ({ limit }));
-    const ilike = jest.fn(() => ({ maybeSingle: jest.fn(async () => ({ data: null })) }));
-    const select = jest.fn(() => ({ eq, ilike }));
-    const from = jest.fn(() => ({ select }));
-    getServerSupabaseMock.mockReturnValue({ from });
+    mockAzureMaybeSingle.mockResolvedValueOnce({
+      id: 'client-meridian-uuid',
+      name: 'Meridian Health',
+      industry_code: 'HEALTHCARE_IDN',
+    });
 
     await expect(getActiveClientRow()).resolves.toEqual({
       id: 'client-meridian-uuid',
-      name: 'Meridian Health',
+      name: 'Meridian Health System',
       industry_code: 'HEALTHCARE_IDN',
       key: 'meridian',
     });

@@ -90,9 +90,9 @@ export const CANONICAL_TENANTS = [
   },
   {
     key: "meridian-health",
-    name: "Meridian Health",
+    name: "Meridian Health System",
     industry: "healthcare_provider",
-    mimics: "PHS-shape hospital system",
+    mimics: "Sacramento-based integrated delivery network plus health plan",
     patternOverlays: ["core"],
     compliance: MERIDIAN_PHS_COMPLIANCE_METADATA,
   },

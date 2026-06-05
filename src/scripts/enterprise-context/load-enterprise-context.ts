@@ -36,7 +36,7 @@ const CLIENT_PROFILES: Record<string, ClientProfile> = {
   'meridian-health': {
     tenantKey: 'meridian-health',
     sourceRoot: 'docs/enterprise-context/generated/meridian-vnext',
-    name: 'Meridian Health',
+    name: 'Meridian Health System',
     legalName: 'Meridian Health System',
     industryCode: 'healthcare_provider',
     slugs: ['meridian-health', 'meridian'],
@@ -45,7 +45,7 @@ const CLIENT_PROFILES: Record<string, ClientProfile> = {
   meridian: {
     tenantKey: 'meridian',
     sourceRoot: 'docs/enterprise-context/synthetic/meridian',
-    name: 'Meridian Health',
+    name: 'Meridian Health System',
     legalName: 'Meridian Health System',
     industryCode: 'healthcare',
     slugs: ['meridian'],
@@ -123,19 +123,45 @@ async function findClientIdByColumn(client: SupabaseClient, column: string, valu
   return null;
 }
 
+async function normalizeClientProfile(client: SupabaseClient, clientId: string, profile: ClientProfile): Promise<void> {
+  const normalized = await client
+    .from('clients')
+    .update({
+      name: profile.name,
+      legal_name: profile.legalName,
+      industry_code: profile.industryCode,
+      slug: profile.slugs[0],
+      tenant_key: profile.tenantKey,
+    })
+    .eq('id', clientId);
+  if (normalized.error) throw new Error(`Client profile normalize failed for ${profile.tenantKey}: ${normalized.error.message}`);
+}
+
 async function ensureClientId(client: SupabaseClient, tenantKey: string): Promise<string> {
   const profile = profileForTenant(tenantKey);
   const byTenant = await findClientIdByColumn(client, 'tenant_key', [profile.tenantKey]);
-  if (byTenant) return byTenant;
+  if (byTenant) {
+    await normalizeClientProfile(client, byTenant, profile);
+    return byTenant;
+  }
 
   const bySlug = await findClientIdByColumn(client, 'slug', profile.slugs);
-  if (bySlug) return bySlug;
+  if (bySlug) {
+    await normalizeClientProfile(client, bySlug, profile);
+    return bySlug;
+  }
 
   const byName = await findClientIdByColumn(client, 'name', profile.aliases);
-  if (byName) return byName;
+  if (byName) {
+    await normalizeClientProfile(client, byName, profile);
+    return byName;
+  }
 
   const byLegalName = await findClientIdByColumn(client, 'legal_name', profile.aliases);
-  if (byLegalName) return byLegalName;
+  if (byLegalName) {
+    await normalizeClientProfile(client, byLegalName, profile);
+    return byLegalName;
+  }
 
   const inserted = await client
     .from('clients')

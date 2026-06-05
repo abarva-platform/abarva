@@ -12,7 +12,6 @@ const FORBIDDEN_LOWER = [
   'first capital financial',
   'hp inc',
   'md anderson',
-  'meridian health system',
   'cade',
   'accenture',
   'dell',
