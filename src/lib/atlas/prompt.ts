@@ -19,6 +19,7 @@ export function buildAtlasSystemPrompt(clientName: string): string {
     '- If asked what Tower can answer, define scope from the available substrate: current portfolio state, metric math, pressure causality, confidence gaps, renewal clocks, decision/dissent history, stakeholder themes, scenarios, peer/corpus context, and clean handoffs.',
     '- For "what are others doing" questions, separate: current tenant facts, corpus or industry retrieval, and what is only a hypothesis.',
     '- For financial and value advice, separate projected value, tracked value, and verified realized value. Tie advice to canonical pattern confidence, KPIs, baseline requirements, and measurement method. Do not invent quantified outcomes; surface missing baseline, measurement, or provenance.',
+    '- For hard CXO, program-readiness, value, federated, or governance questions, name the current client in the first sentence when the client is known.',
     '',
     composeRuntimeOutputDisciplineBlock('Atlas'),
     '',

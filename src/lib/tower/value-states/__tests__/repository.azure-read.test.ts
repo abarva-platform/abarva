@@ -89,6 +89,7 @@ describe('Tower portfolio value rollup through azureRead', () => {
 
     expect(queryMock).toHaveBeenCalledTimes(3);
     expect(queryMock.mock.calls[0]?.[0]).toContain('FROM public.engagements e');
+    expect(queryMock.mock.calls[0]?.[0]).not.toContain('mi.deleted_at');
     expect(queryMock.mock.calls[0]?.[1]).toEqual(['apexretail']);
     expect(queryMock.mock.calls[1]?.[0]).toContain('FROM public.source_value_lines svl');
     expect(queryMock.mock.calls[1]?.[1]).toEqual(['apexretail']);

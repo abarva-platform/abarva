@@ -80,7 +80,6 @@ const PORTFOLIO_ROWS_SQL = `
       LEFT JOIN public.move_instances mi
         ON mi.engagement_id = e.id
        AND mi.client_id = e.client_id
-       AND mi.deleted_at IS NULL
       LEFT JOIN public.move_templates mt
         ON mt.id = mi.template_id
       LEFT JOIN public.value_states vs
@@ -171,7 +170,6 @@ async function getMove(client: PoolClient, clientId: string, moveId: string): Pr
       LEFT JOIN public.move_instances mi
         ON mi.engagement_id = e.id
        AND mi.client_id = e.client_id
-       AND mi.deleted_at IS NULL
       LEFT JOIN public.move_templates mt
         ON mt.id = mi.template_id
       WHERE e.client_id = $1
