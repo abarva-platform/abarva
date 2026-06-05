@@ -25,7 +25,7 @@ Scope: infrastructure, Azure private data plane, secure ingestion, Blob landing,
 
 | Area | Current truth |
 |---|---|
-| Blob-first Admin bulk flow | Not proved. The current Admin route persists through the direct loader path. It does not yet stage every file to Blob and hand processing to the async worker as the canonical path. |
+| Blob-first Admin bulk flow | Implemented in code through Admin bulk upload `stage_and_enqueue` mode. It stages files to Blob and queues canonical worker messages, but Azure private-network smoke is still required before calling it live. |
 | Async chunk persistence | Not live by default. The worker default `INGESTION_PIPELINE_MODE` is `audit_only`; it estimates chunk count but does not write `enterprise_context_chunks` or embeddings. |
 | Embedding handoff from async worker | Not proved. Direct Admin loader returns `pending_embed_job`, but Blob worker-to-embedding orchestration is not complete. |
 | Full document upload through Admin route | Not live. The template registry advertises PDF, DOCX, XLSX, PPTX, Markdown, and ZIP exception paths, and the worker parser supports many document formats, but the Admin context route currently allows only CSV, JSON, JSONL, YAML, and YML. |
@@ -139,6 +139,13 @@ Commands below check presence only. They must not print values.
 | `SERVICE_BUS_QUEUE_NAME` | Ingestion queue name, default `q-context-ingestion-events` | No | No | Optional | `node -e "console.log(Boolean(process.env.SERVICE_BUS_QUEUE_NAME))"` |
 | `INGESTION_PIPELINE_MODE` | Worker pipeline mode; default is `audit_only` | Optional | No | Yes for cutover | `node -e "console.log(Boolean(process.env.INGESTION_PIPELINE_MODE))"` |
 | `INGESTION_BROKER_REBUILD_COMMAND` | Optional command used when mode is `broker_command` | Optional | No | Required only for `broker_command` | `node -e "console.log(Boolean(process.env.INGESTION_BROKER_REBUILD_COMMAND))"` |
+| `INGESTION_PILOT_LEDGER_ENABLED` | Enables durable pilot-ledger writes from the worker | Optional | No | Yes for pilot-ledger smoke | `node -e "console.log(Boolean(process.env.INGESTION_PILOT_LEDGER_ENABLED))"` |
+| `INGESTION_SMOKE_RUN_ID` | Unique run id for the private worker smoke | Optional | No | Yes for smoke only | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_RUN_ID))"` |
+| `INGESTION_SMOKE_TENANT_CLIENT_KEY` | Tenant key used by smoke messages | Optional | No | Yes for smoke only | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_TENANT_CLIENT_KEY))"` |
+| `INGESTION_SMOKE_CLIENT_ID` | Client UUID/id used for pilot-ledger rows | Optional | No | Yes when ledger smoke is enabled | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_CLIENT_ID))"` |
+| `INGESTION_SMOKE_UPLOADED_BY` | Synthetic/system uploader id for smoke ledger evidence | Optional | No | Yes when ledger smoke is enabled | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_UPLOADED_BY))"` |
+| `INGESTION_SMOKE_STORAGE_ACCOUNT_NAME` | Blob storage account for smoke files | Optional | No | Yes for smoke only | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_STORAGE_ACCOUNT_NAME))"` |
+| `INGESTION_SMOKE_CONTAINER_NAME` | Blob container for smoke files, default `context-drops` | Optional | No | Optional for smoke | `node -e "console.log(Boolean(process.env.INGESTION_SMOKE_CONTAINER_NAME))"` |
 
 Observed local `.env.local` presence on 2026-06-05 without printing values:
 
@@ -238,6 +245,46 @@ Plain-English unblock plan for Anand:
 6. Add commit pipeline for approved loads into `enterprise_context_chunks`.
 7. Add pending chunk embedding job.
 8. Run retrieval smoke as Meridian persona.
+
+### Private worker smoke sequence
+
+Run these commands from the Azure private runner, not from the local Mac. The runner must have private DNS/network access to Postgres/Blob/Service Bus and the managed identity/RBAC listed above.
+
+1. Produce two synthetic blobs and queue two canonical worker messages:
+
+```bash
+export INGESTION_SMOKE_RUN_ID="phs-$(date +%Y%m%d%H%M%S)"
+export INGESTION_SMOKE_TENANT_CLIENT_KEY="meridian-health"
+export INGESTION_SMOKE_STORAGE_ACCOUNT_NAME="<storage-account-name>"
+export INGESTION_SMOKE_CONTAINER_NAME="context-drops"
+export INGESTION_SMOKE_CLIENT_ID="<meridian-client-id-from-clients-table>"
+export INGESTION_SMOKE_UPLOADED_BY="azure-ingestion-smoke"
+export INGESTION_SMOKE_VERIFY_PILOT_LEDGER="true"
+export INGESTION_PILOT_LEDGER_ENABLED="true"
+export INGESTION_PIPELINE_MODE="audit_only"
+INGESTION_SMOKE_MODE="produce" npm run azure:ingestion:e2e-smoke
+```
+
+2. Run the worker once against the queue:
+
+```bash
+npx tsx src/scripts/azure-context-ingestion-worker.ts
+```
+
+3. Verify both the sensitive-upload audit and pilot-ingestion ledger rows:
+
+```bash
+INGESTION_SMOKE_MODE="verify" npm run azure:ingestion:e2e-smoke
+```
+
+Expected proof:
+
+| Table/lane | Expected result |
+|---|---|
+| `sensitive_upload_audit` | One `allow` row for the safe file and one `quarantine` row for the sensitive file. |
+| `pilot_ingestion_upload_runs` | Two audit-only upload runs, both commit-blocked. |
+| `pilot_ingestion_file_manifests` | Two raw file manifests with `azure://.../smoke/<run-id>/...` blob URIs. |
+| `pilot_ingestion_quarantine_cases` | One open quarantine case for the sensitive file. |
 
 ## 10. Production Cutover Checklist
 
