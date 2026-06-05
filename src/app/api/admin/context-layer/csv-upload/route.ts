@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
+  detectStructuredUploadFormat,
   loadCsvUploadToTenantContext,
   parseCsvUpload,
   parseFieldMappings,
@@ -65,11 +66,13 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file required" }, { status: 400 });
   }
-  if (!file.name.toLowerCase().endsWith(".csv")) {
+  const uploadFormat = detectStructuredUploadFormat(file.name);
+  if (!uploadFormat) {
     return NextResponse.json(
       {
         error: "unsupported_file_type",
-        detail: "CSV uploads require a .csv file.",
+        detail:
+          "Structured context uploads require .csv, .json, .jsonl, .yaml, or .yml.",
       },
       { status: 400 },
     );
@@ -111,6 +114,15 @@ export async function POST(request: NextRequest) {
       ? getRateCardTemplateById(templateId)
       : null;
     if (rateCardTemplate) {
+      if (uploadFormat !== "csv") {
+        return NextResponse.json(
+          {
+            error: "unsupported_file_type",
+            detail: "Rate-card validation currently requires a .csv file.",
+          },
+          { status: 400 },
+        );
+      }
       const parsed = parseCsvUpload(csvText);
       const preview =
         rateCardTemplate.objectType === "rate_card_internal"

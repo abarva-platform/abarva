@@ -53,6 +53,8 @@ export interface CsvParseResult {
   rows: CsvRow[];
 }
 
+export type StructuredUploadFormat = "csv" | "json" | "jsonl" | "yaml";
+
 export interface CsvMappingSuggestion {
   templateId: string;
   dimension: ContextDimension;
@@ -266,6 +268,130 @@ export function parseCsvUpload(csvText: string): CsvParseResult {
   return { headers, rows };
 }
 
+function normalizeScalar(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  return JSON.stringify(value);
+}
+
+function rowsFromJsonValue(value: unknown): CsvRow[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      )
+      .map((item) =>
+        Object.fromEntries(
+          Object.entries(item).map(([key, cell]) => [
+            key,
+            normalizeScalar(cell),
+          ]),
+        ),
+      );
+  }
+  if (!value || typeof value !== "object") return [];
+  const object = value as Record<string, unknown>;
+  const arrayEntries = Object.entries(object).filter(([, cell]) =>
+    Array.isArray(cell),
+  );
+  if (arrayEntries.length === 1) return rowsFromJsonValue(arrayEntries[0]![1]);
+  if (arrayEntries.length > 1) {
+    return arrayEntries.flatMap(([path, cell]) =>
+      rowsFromJsonValue(cell).map((row) => ({ _record_path: path, ...row })),
+    );
+  }
+  return [
+    Object.fromEntries(
+      Object.entries(object).map(([key, cell]) => [key, normalizeScalar(cell)]),
+    ),
+  ];
+}
+
+function parseJsonUpload(jsonText: string): CsvParseResult {
+  const rows = rowsFromJsonValue(JSON.parse(jsonText) as unknown);
+  if (rows.length === 0) throw new Error("csv_missing_rows");
+  const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  if (headers.length === 0) throw new Error("csv_missing_headers");
+  return { headers, rows };
+}
+
+function parseJsonlUpload(jsonlText: string): CsvParseResult {
+  const rows = jsonlText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as unknown)
+    .flatMap(rowsFromJsonValue);
+  if (rows.length === 0) throw new Error("csv_missing_rows");
+  const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  if (headers.length === 0) throw new Error("csv_missing_headers");
+  return { headers, rows };
+}
+
+function parseYamlScalar(raw: string): string {
+  const trimmed = raw.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+function parseYamlUpload(yamlText: string): CsvParseResult {
+  const rows: CsvRow[] = [];
+  let current: CsvRow | null = null;
+  for (const rawLine of yamlText.split(/\r?\n/)) {
+    const withoutComment = rawLine.replace(/\s+#.*$/, "");
+    if (
+      withoutComment.trim() === "" ||
+      /^[A-Za-z0-9_-]+:\s*$/.test(withoutComment.trim())
+    )
+      continue;
+    const itemMatch = withoutComment.match(/^\s*-\s+([^:]+):\s*(.*)$/);
+    if (itemMatch) {
+      if (current) rows.push(current);
+      current = { [itemMatch[1]!.trim()]: parseYamlScalar(itemMatch[2] ?? "") };
+      continue;
+    }
+    const fieldMatch = withoutComment.match(/^\s+([^:]+):\s*(.*)$/);
+    if (fieldMatch && current) {
+      current[fieldMatch[1]!.trim()] = parseYamlScalar(fieldMatch[2] ?? "");
+    }
+  }
+  if (current) rows.push(current);
+  if (rows.length === 0) throw new Error("csv_missing_rows");
+  const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  if (headers.length === 0) throw new Error("csv_missing_headers");
+  return { headers, rows };
+}
+
+export function detectStructuredUploadFormat(
+  fileName: string,
+): StructuredUploadFormat | null {
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith(".csv")) return "csv";
+  if (lower.endsWith(".json")) return "json";
+  if (lower.endsWith(".jsonl")) return "jsonl";
+  if (lower.endsWith(".yaml") || lower.endsWith(".yml")) return "yaml";
+  return null;
+}
+
+export function parseStructuredUpload(
+  text: string,
+  fileName: string,
+): CsvParseResult {
+  const format = detectStructuredUploadFormat(fileName);
+  if (format === "csv") return parseCsvUpload(text);
+  if (format === "json") return parseJsonUpload(text);
+  if (format === "jsonl") return parseJsonlUpload(text);
+  if (format === "yaml") return parseYamlUpload(text);
+  throw new Error("csv_unsupported_file_type");
+}
+
 export function inferCsvSchemaMapping(args: {
   headers: string[];
   fileName: string;
@@ -371,7 +497,7 @@ function buildChunkText(args: {
 export function prepareCsvUploadForTenantContext(
   input: CsvUploadInput,
 ): CsvUploadPreparedBatch {
-  const parsed = parseCsvUpload(input.csvText);
+  const parsed = parseStructuredUpload(input.csvText, input.fileName);
   const template = resolveTemplate(
     input.fileName,
     input.mapping?.templateId,

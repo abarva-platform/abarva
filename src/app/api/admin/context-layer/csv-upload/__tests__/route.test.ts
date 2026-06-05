@@ -227,6 +227,62 @@ describe("/api/admin/context-layer/csv-upload", () => {
     expect(mockDbCalls.some((call) => call.operation === "delete")).toBe(false);
   });
 
+  it("loads JSON context rows through the same tenant-scoped upload route", async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: "client-meridian",
+      clientKey: "meridian-health",
+      userId: "user-meridian",
+    });
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("templateId", "hl7-fhir-integration-topology");
+    addUploadAttestation(formData);
+    formData.set(
+      "file",
+      new File(
+        [
+          JSON.stringify({
+            edges: [
+              {
+                edge_id: "MR-INT-001",
+                source: "MR-APP-EPIC",
+                target: "MR-APP-LIS",
+                standard: "HL7 v2 ORU",
+                data_class: "PHI",
+              },
+            ],
+          }),
+        ],
+        "hl7-fhir-integration-topology.json",
+        { type: "application/json" },
+      ),
+    );
+
+    const response = await POST(csvRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      rowsParsed: 1,
+      chunksQueued: 1,
+      embeddingHandoff: {
+        command: "npm run embed:pending-chunks -- --tenant meridian-health",
+      },
+    });
+    const chunkInsert = mockDbCalls.find(
+      (call) => call.table === "enterprise_context_chunks",
+    );
+    expect(chunkInsert?.payload).toEqual([
+      expect.objectContaining({
+        tenant_key: "meridian-health",
+        source_doc: "hl7-fhir-integration-topology.json",
+        source_record_id: "MR-INT-001",
+        embedding_status: "pending",
+      }),
+    ]);
+  });
+
   it("validates Moves rate-card uploads without writing context chunks", async () => {
     const formData = new FormData();
     formData.set("clientId", "client-apex");
@@ -266,6 +322,29 @@ describe("/api/admin/context-layer/csv-upload", () => {
       persistence: {
         status: "validation_only",
       },
+    });
+    expect(mockDbCalls).toHaveLength(0);
+  });
+
+  it("keeps rate-card validation CSV-only", async () => {
+    const formData = new FormData();
+    formData.set("clientId", "client-apex");
+    formData.set("templateId", "moves-rate-card-internal");
+    addUploadAttestation(formData);
+    formData.set(
+      "file",
+      new File([JSON.stringify({ rows: [] })], "moves-rate-card.json", {
+        type: "application/json",
+      }),
+    );
+
+    const response = await POST(csvRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: "unsupported_file_type",
+      detail: "Rate-card validation currently requires a .csv file.",
     });
     expect(mockDbCalls).toHaveLength(0);
   });
