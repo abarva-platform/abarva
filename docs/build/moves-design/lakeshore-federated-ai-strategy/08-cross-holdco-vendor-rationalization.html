@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Move 2 · Cross-HoldCo Vendor Rationalization · Full-Fidelity Surface</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --paper-2: #f1ede3;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-faint: #6b7280;
+    --rule: #e5e1d8;
+    --rule-2: #d8d3c5;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --accent-deep: #1e3a8a;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --purple: #6d28d9;
+    --purple-soft: #ede9fe;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 56px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1320px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 40px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 26px; margin: 56px 0 14px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 20px; margin: 28px 0 10px; }
+  h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 22px 0 8px; }
+  h5 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); font-weight: 600; }
+  p, li { font-size: 14.5px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 12.5px; font-family: var(--mono); }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 4px; }
+  .grid { display: grid; gap: 14px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; }
+  .card-tight { padding: 12px 14px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-move { background: var(--good-soft); color: var(--good); }
+  .tag-source { background: var(--warn-soft); color: var(--warn); }
+  .tag-quarter { background: var(--purple-soft); color: var(--purple); }
+  .tag-soft { background: var(--paper-2); color: var(--ink-soft); }
+  .tag-good { background: var(--good-soft); color: var(--good); }
+  .tag-warn { background: var(--warn-soft); color: var(--warn); }
+  .tag-bad { background: var(--bad-soft); color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; background: var(--paper-2); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .approver-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 999px; font-size: 12px; margin-right: 6px; }
+  .approver-chip .avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: white; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+  .approver-chip .avatar.b { background: var(--purple); }
+
+  /* Page mock — the actual surface */
+  .page-mock { background: white; border: 1px solid var(--rule-2); border-radius: 6px; overflow: hidden; margin: 16px 0 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+  .page-hd { background: white; padding: 18px 24px 14px; border-bottom: 1px solid var(--rule); }
+  .page-hd .crumbs { font-size: 12px; color: var(--ink-faint); margin-bottom: 6px; }
+  .page-hd h2.title { font-family: var(--serif); font-size: 24px; margin: 0 0 2px; border: 0; padding: 0; letter-spacing: -0.01em; font-weight: normal; }
+  .page-hd .sub-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+  .page-hd .sub-row .divider { width: 1px; height: 14px; background: var(--rule); }
+  .phase-bar { display: flex; background: var(--paper-2); border-bottom: 1px solid var(--rule); padding: 0; }
+  .phase-step { flex: 1; padding: 10px 14px; font-size: 12px; border-right: 1px solid var(--rule); position: relative; }
+  .phase-step:last-child { border-right: none; }
+  .phase-step .step-n { font-family: var(--serif); font-size: 13px; color: var(--ink-faint); display: block; }
+  .phase-step .step-name { font-weight: 600; font-size: 12.5px; }
+  .phase-step .step-detail { font-size: 11.5px; color: var(--ink-faint); }
+  .phase-step.done { background: var(--good-soft); }
+  .phase-step.done .step-n { color: var(--good); }
+  .phase-step.current { background: white; box-shadow: inset 0 -3px 0 var(--accent); }
+  .phase-step.current .step-n { color: var(--accent); font-weight: 600; }
+  .phase-step.future .step-name { color: var(--ink-faint); }
+  .page-body { display: grid; grid-template-columns: 1fr 360px; gap: 0; }
+  .canvas { padding: 18px 22px; border-right: 1px solid var(--rule); min-width: 0; }
+  .canvas-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+  .canvas-tools .filters { display: flex; gap: 6px; align-items: center; }
+  .filter-pill { padding: 5px 11px; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 999px; font-size: 12px; cursor: default; }
+  .filter-pill.active { background: var(--ink); color: white; border-color: var(--ink); }
+  .canvas-tools .search { flex: 1; max-width: 240px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper-2); font-size: 12.5px; color: var(--ink-faint); }
+  .btn { padding: 6px 12px; background: var(--ink); color: white; border: 0; border-radius: 3px; font-size: 12.5px; font-family: var(--sans); font-weight: 500; cursor: pointer; }
+  .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule-2); }
+  .btn-accent { background: var(--accent); color: white; }
+  .btn-sm { padding: 4px 9px; font-size: 11.5px; }
+
+  /* The rationalization slate table */
+  .slate { font-size: 13px; }
+  .slate th { background: var(--paper-2); position: sticky; top: 0; }
+  .slate td { padding: 9px 10px; }
+  .slate tr.row-hover { background: var(--paper); }
+  .slate .rank { font-family: var(--serif); font-size: 16px; color: var(--accent); width: 30px; }
+  .slate .vendor { font-weight: 600; font-size: 13.5px; }
+  .slate .vendor-cat { font-size: 11.5px; color: var(--ink-faint); display: block; margin-top: 1px; }
+  .slate .holdcos { display: flex; flex-wrap: wrap; gap: 3px; }
+  .slate .holdcos .hc { padding: 1px 6px; background: var(--paper-2); border-radius: 2px; font-size: 11px; }
+  .slate .holdcos .hc.no { background: #eee; color: #999; text-decoration: line-through; }
+  .slate .spend { font-variant-numeric: tabular-nums; }
+  .slate .savings { color: var(--good); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .slate .score-bar { height: 6px; background: var(--paper-2); border-radius: 2px; position: relative; min-width: 80px; }
+  .slate .score-bar .fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--accent); border-radius: 2px; }
+  .slate .score-num { font-size: 11.5px; color: var(--ink-soft); display: block; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .slate .disrupt { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 11px; font-weight: 600; }
+  .slate .disrupt.l { background: var(--good-soft); color: var(--good); }
+  .slate .disrupt.m { background: var(--warn-soft); color: var(--warn); }
+  .slate .disrupt.h { background: var(--bad-soft); color: var(--bad); }
+  .slate .ttr { font-size: 12px; color: var(--ink-soft); }
+  .slate .action { font-size: 12px; }
+  .slate .action.negotiate { color: var(--accent); font-weight: 600; }
+  .slate .action.consolidate { color: var(--purple); font-weight: 600; }
+  .slate .action.split { color: var(--warn); font-weight: 600; }
+  .slate .action.hold { color: var(--ink-faint); }
+  .slate .src-status { font-size: 11.5px; }
+  .slate .src-status.spawned { color: var(--accent); font-weight: 600; }
+  .slate .src-status.draft { color: var(--ink-faint); }
+
+  /* Sentinel chat rail */
+  .chat-rail { background: var(--paper); padding: 16px 16px 0; display: flex; flex-direction: column; }
+  .chat-rail h5 { display: flex; align-items: center; gap: 6px; }
+  .chat-rail h5 .sentinel-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .chat-rail .chat-scroll { flex: 1; overflow-y: auto; margin-top: 8px; min-height: 320px; }
+  .chat-msg { margin: 10px 0; font-size: 13px; }
+  .chat-msg.user { background: white; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 4px; }
+  .chat-msg.user .who { font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; font-weight: 600; }
+  .chat-msg.sentinel .who { font-size: 11px; color: var(--accent); margin-bottom: 4px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .chat-msg.sentinel p { margin: 4px 0; font-size: 13px; line-height: 1.5; }
+  .chat-msg.sentinel .cite { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 6px; }
+  .chat-msg.sentinel .formula { background: white; border: 1px solid var(--rule); border-radius: 3px; padding: 8px 10px; font-family: var(--mono); font-size: 12px; margin: 6px 0; }
+  .chat-input { background: white; border-top: 1px solid var(--rule); padding: 10px 12px; margin: 12px -16px 0; display: flex; align-items: center; gap: 8px; }
+  .chat-input .field { flex: 1; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 3px; font-size: 13px; color: var(--ink-faint); background: var(--paper); }
+  .chat-input .send { padding: 6px 12px; background: var(--accent); color: white; border-radius: 3px; font-size: 12px; font-weight: 600; }
+
+  /* Drill-into vendor detail */
+  .drill { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 22px; margin: 16px 0; }
+  .drill-hd { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid var(--rule); margin-bottom: 14px; }
+  .drill-hd h3 { font-family: var(--serif); font-size: 22px; margin: 0; font-weight: normal; }
+  .drill-hd .sub { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .drill-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+  .contract-rows { font-size: 13px; }
+  .contract-rows .contract-row { padding: 10px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: center; }
+  .contract-rows .contract-row:last-child { border-bottom: 0; }
+  .contract-rows .hc-name { font-weight: 600; font-size: 13.5px; }
+  .contract-rows .hc-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .renewal-cal { background: var(--paper); border: 1px solid var(--rule); padding: 10px 12px; border-radius: 3px; font-size: 12.5px; }
+  .renewal-cal .month-strip { display: flex; gap: 4px; margin-top: 6px; }
+  .renewal-cal .mo { flex: 1; height: 22px; background: white; border: 1px solid var(--rule); border-radius: 2px; font-size: 10px; display: flex; align-items: center; justify-content: center; color: var(--ink-faint); }
+  .renewal-cal .mo.hit { background: var(--accent); color: white; border-color: var(--accent); font-weight: 600; }
+  .renewal-cal .mo.near { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+  .perf-signals { font-size: 12.5px; }
+  .perf-signals .sig { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--rule); }
+  .perf-signals .sig:last-child { border-bottom: 0; }
+  .perf-signals .sig .name { color: var(--ink-soft); }
+  .perf-signals .sig .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .why-panel { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 4px; padding: 14px 16px; font-size: 13.5px; margin-top: 10px; }
+  .why-panel h6 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-deep); }
+  .why-panel p { margin: 0; line-height: 1.55; }
+  .why-panel .cite { font-size: 11.5px; color: var(--accent-deep); font-style: italic; margin-top: 8px; display: block; }
+  .savings-band { background: var(--good-soft); border-left: 3px solid var(--good); padding: 10px 14px; border-radius: 0 3px 3px 0; margin: 12px 0; }
+  .savings-band .band-amount { font-family: var(--serif); font-size: 22px; color: var(--good); }
+  .savings-band .band-detail { font-size: 12px; color: var(--ink-soft); }
+  .spawn-btn-big { width: 100%; padding: 12px 16px; background: var(--accent); color: white; border-radius: 4px; font-size: 14px; font-weight: 600; text-align: center; margin-top: 14px; border: 0; cursor: pointer; }
+  .spawn-btn-big:hover { background: var(--accent-deep); }
+  .recommendation-card { background: var(--paper); border: 1px solid var(--rule); padding: 12px 14px; border-radius: 3px; margin-top: 12px; }
+  .recommendation-card h6 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .recommendation-card .path { font-size: 13px; }
+  .recommendation-card .path .step { padding: 4px 0; border-bottom: 1px dashed var(--rule); }
+  .recommendation-card .path .step:last-child { border-bottom: 0; }
+  .recommendation-card .path .step .num { font-family: var(--serif); font-size: 14px; color: var(--accent); margin-right: 6px; }
+
+  /* Normalization view */
+  .norm-cluster { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; margin: 12px 0; }
+  .norm-cluster h6 { margin: 0 0 8px; font-family: var(--serif); font-size: 16px; font-weight: normal; }
+  .norm-cluster .raw-list { font-size: 12.5px; }
+  .norm-cluster .raw-row { display: grid; grid-template-columns: 1.5fr 1fr 0.7fr 0.7fr 0.8fr; padding: 5px 0; border-bottom: 1px dashed var(--rule); align-items: center; gap: 8px; }
+  .norm-cluster .raw-row.head { font-weight: 600; color: var(--ink-soft); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; border-bottom-style: solid; }
+  .norm-cluster .raw-row .src { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+  .norm-cluster .raw-row .conf { display: inline-flex; align-items: center; gap: 5px; }
+  .norm-cluster .raw-row .conf-bar { width: 50px; height: 4px; background: var(--paper-2); border-radius: 2px; position: relative; }
+  .norm-cluster .raw-row .conf-bar .fill { height: 100%; background: var(--good); border-radius: 2px; }
+  .norm-cluster .raw-row .conf-bar .fill.warn { background: var(--warn); }
+  .norm-cluster .raw-row .conf-bar .fill.bad { background: var(--bad); }
+  .norm-cluster .raw-row .verdict { font-size: 11.5px; font-weight: 600; }
+  .norm-cluster .raw-row .verdict.auto { color: var(--good); }
+  .norm-cluster .raw-row .verdict.review { color: var(--warn); }
+  .norm-cluster .raw-row .verdict.split { color: var(--bad); }
+  .review-queue { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 4px; padding: 12px 14px; margin: 14px 0; font-size: 13px; }
+  .review-queue h6 { margin: 0 0 6px; color: var(--warn); }
+
+  /* Scoring rubric */
+  .rubric { background: white; border: 1px solid var(--rule); padding: 16px 18px; border-radius: 4px; margin: 14px 0; }
+  .rubric .formula-box { background: var(--ink); color: white; padding: 16px 18px; border-radius: 4px; font-family: var(--mono); font-size: 14px; margin: 12px 0; text-align: center; }
+  .rubric .formula-box .weight { color: #93c5fd; }
+  .rubric .factor { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .rubric .factor:last-child { border-bottom: 0; }
+  .rubric .factor h6 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; }
+  .rubric .factor .desc { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0; }
+  .rubric .factor .scale { display: flex; gap: 6px; margin-top: 6px; }
+  .rubric .factor .scale .step { flex: 1; padding: 4px 6px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; font-size: 11px; text-align: center; }
+  .rubric .factor .scale .step.low { background: var(--good-soft); color: var(--good); }
+  .rubric .factor .scale .step.med { background: var(--warn-soft); color: var(--warn); }
+  .rubric .factor .scale .step.high { background: var(--bad-soft); color: var(--bad); }
+
+  /* Per-category surfaces */
+  .cat-surface { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; margin: 10px 0; }
+  .cat-surface h6 { margin: 0 0 4px; font-family: var(--serif); font-size: 17px; font-weight: normal; }
+  .cat-surface .approach { font-size: 13px; color: var(--ink-soft); margin: 4px 0; }
+  .cat-surface .play { font-size: 12.5px; padding: 6px 0; border-top: 1px dashed var(--rule); margin-top: 8px; }
+  .cat-surface .play .label { color: var(--ink-faint); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* PortCo socialization workflow */
+  .comm-flow { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin: 14px 0; }
+  .comm-step { display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--rule); align-items: flex-start; }
+  .comm-step:last-child { border-bottom: 0; }
+  .comm-step .num { font-family: var(--serif); font-size: 20px; color: var(--accent); }
+  .comm-step h6 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .comm-step .detail { font-size: 12.5px; color: var(--ink-soft); }
+  .comm-step .ack-state { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; }
+
+  /* Source hand-off envelope */
+  .envelope { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; margin: 14px 0; }
+  .envelope-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .envelope-hd h6 { margin: 0; font-family: var(--serif); font-size: 16px; font-weight: normal; }
+  .envelope-hd .id { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+  .envelope-fields { font-size: 12.5px; }
+  .envelope-fields .ef-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; padding: 5px 0; border-bottom: 1px dashed var(--rule); }
+  .envelope-fields .ef-row:last-child { border-bottom: 0; }
+  .envelope-fields .key { color: var(--ink-faint); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; padding-top: 2px; }
+  .envelope-fields .val { font-size: 13px; }
+  .envelope-fields .val .pill { display: inline-block; background: var(--paper-2); padding: 1px 7px; border-radius: 2px; font-size: 11.5px; margin: 1px 2px 1px 0; }
+
+  /* Empty states */
+  .empty-state { background: white; border: 1px dashed var(--rule-2); border-radius: 4px; padding: 22px 26px; margin: 12px 0; text-align: center; }
+  .empty-state h6 { font-family: var(--serif); font-size: 18px; margin: 0 0 6px; font-weight: normal; }
+  .empty-state .empty-detail { font-size: 13px; color: var(--ink-soft); margin: 4px auto; max-width: 540px; }
+  .empty-state .empty-action { margin-top: 12px; }
+
+  /* Ledger */
+  .ledger { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; margin: 14px 0; font-size: 13.5px; }
+  .ledger-flow { display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr 30px 1fr; gap: 8px; align-items: stretch; margin: 14px 0; }
+  .ledger-flow .stage { background: var(--paper); border: 1px solid var(--rule); padding: 12px 12px; border-radius: 3px; font-size: 12.5px; }
+  .ledger-flow .stage h6 { margin: 0 0 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); }
+  .ledger-flow .stage .body { font-size: 12px; color: var(--ink-soft); }
+  .ledger-flow .arrow { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 18px; }
+
+  /* Build mapping */
+  .build-map { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; margin: 14px 0; }
+  .build-map table { font-family: var(--mono); font-size: 12.5px; }
+  .build-map th { font-family: var(--sans); }
+  .build-map td:first-child { color: var(--ink-soft); }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 12px; background: white; border: 1px solid var(--rule); border-radius: 4px; }
+  .one-dark-note { font-size: 11.5px; color: var(--ink-faint); font-style: italic; margin-top: 6px; }
+  .rule-break { height: 1px; background: var(--rule); margin: 28px 0; }
+  .callout { background: var(--paper-2); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: 0 3px 3px 0; margin: 14px 0; font-size: 13.5px; }
+  .callout .callout-hd { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+  .checklist { font-size: 13.5px; padding-left: 22px; }
+  .checklist li { padding: 3px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Move 2 · Cross-HoldCo Vendor Rationalization</h1>
+<p class="sub">L0 Operating Partner — Finance (Devon Sterling) and Operating Partner — Technology (Marcus Rhee) primary surface. Quarterly slate. $3.3-5.0M annual savings range across Morgan Street + Roosevelt + Lakefront vendor stacks. Source events L-S02 through L-S05 spawn from this canvas.</p>
+<p class="meta">Companion to <code>02-demo-spine-architecture.html</code> §6 (Move 2 lifecycle), <code>01-lakeshore-federated-structure-brief.md</code> Cross-HoldCo opportunity surface (the live demo data), and <code>docs/build/source-design/</code> (Source 11-stage lifecycle owner). Wave 2 spec L06.</p>
+
+<div class="legend">
+  <span><span class="tag tag-l0">L0</span> Lakeshore sponsor owns slate</span>
+  <span><span class="tag tag-l1">L1</span> HoldCo CXOs consulted</span>
+  <span><span class="tag tag-quarter">Q3 2026</span> Slate cadence</span>
+  <span><span class="tag tag-source">Source</span> L-S02 / L-S03 / L-S04 / L-S05 spawn from this canvas</span>
+</div>
+
+<h2>1 &middot; Overview</h2>
+
+<h3>Move 2's scope</h3>
+<p>Move 2 is the <strong>only L0-led Move with continuous cadence</strong> in the Lakeshore demo. While Move 0 and Move 1 are per-HoldCo and event-driven, Move 2 runs as a <strong>quarterly rationalization slate</strong>: AbarVa refreshes the cross-HoldCo vendor view every 90 days, ranks the top 10-20 consolidation opportunities, and presents the slate to Devon Sterling (OP-Finance) and Marcus Rhee (OP-Technology) for ranking, approval, and Source event spawn.</p>
+
+<div class="grid cols-3">
+  <div class="card card-tight">
+    <h5>Cadence</h5>
+    <p style="margin: 0; font-size: 13px;">Quarterly slate refresh. Mid-quarter delta surfaces when a renewal hits or a new spend baseline lands.</p>
+  </div>
+  <div class="card card-tight">
+    <h5>Ownership</h5>
+    <p style="margin: 0; font-size: 13px;">L0 OP-Finance (Devon) co-owns with OP-Technology (Marcus). HoldCo CFOs/CIOs consulted, never bypassed.</p>
+  </div>
+  <div class="card card-tight">
+    <h5>Output</h5>
+    <p style="margin: 0; font-size: 13px;">Ranked slate &middot; per-row action &middot; pre-drafted Source RFP envelope &middot; PortCo socialization comm pack.</p>
+  </div>
+</div>
+
+<h3>Threading Setup → Source spawn</h3>
+<p>Move 2 phases follow the 5-Move canonical lifecycle (Setup · Discovery · Strategy · Architecture · Business Case · Mobilization · Source) but the <em>artifacts</em> at each phase are vendor-rationalization-specific:</p>
+
+<table>
+  <tr><th style="width:18%">Phase</th><th>Artifact</th><th>Entry condition</th><th>Exit / hand-off</th></tr>
+  <tr><td>Setup</td><td>CIO + CFO + GC bundles landed for &ge; 2 HoldCos. Loader-shipped vendor inventory ingested into <code>vendor_raw</code>.</td><td>Loader bundles validated &middot; HoldCo CFO signed schema</td><td>Bundle visible in Tower Federated · Move 2 entry enabled</td></tr>
+  <tr><td>Discovery</td><td>Cross-HoldCo spend baseline · top 20 categories · data quality scorecard per HoldCo.</td><td>&ge; 2 bundles per CXO loaded</td><td>Baseline approved by Devon · category prioritization signed</td></tr>
+  <tr><td>Strategy</td><td>5-year addressable spend bucket · LLM normalization approach · slate-scoring rubric locked.</td><td>Discovery exit signed</td><td>Scoring rubric memorialized · OP-Finance and OP-Tech sign</td></tr>
+  <tr><td>Architecture</td><td>Databricks Bronze (PortCo APs) → Silver (normalized vendors) → Gold (slate ranker). Human review queue substrate for low-confidence matches.</td><td>Strategy memo locked</td><td>Pipeline live · slate ranker producing weekly draft</td></tr>
+  <tr><td>Business Case</td><td>Per-category investment + benefits, 3-year NPV with bands · finserv files 08/13/20 benchmarks · estimation engine for impl cost.</td><td>Architecture deployed</td><td>L0 IC presentation deck · audit committee read-in</td></tr>
+  <tr><td>Mobilization</td><td>Quarterly slate cadence calendar · PortCo CFO socialization comm pack · Source spawn affordances live per row.</td><td>Business case signed</td><td>Slate is operational · Source spawn enabled per row</td></tr>
+  <tr><td>Source spawn</td><td>Per-row "spawn RFP" action pre-fills the Source 11-stage envelope. L-S02 (MS EA), L-S03 (Workday), L-S04 (KPMG audit), L-S05 (cyber).</td><td>Slate row approved by Devon or Marcus</td><td>Source event live in Source module · Move 2 walks away</td></tr>
+</table>
+
+<div class="callout">
+  <div class="callout-hd">Devon's mental model</div>
+  <p style="margin: 0;">Devon opens AbarVa Federated Tower → Move 2 every Monday morning at 7:45 AM CT before the L0 ops standup. He sees this quarter's slate, what's moved since last week, what's been approved, what's still draft. He spends 15 minutes ranking unfamiliar rows with Sentinel as his analyst, approves three to four for Source spawn, and forwards the PortCo socialization pack to Kenji (Portfolio Ops). The Source events execute under their own lifecycle; Devon's view in Tower shows the projected → realized rollup on his federated savings ledger.</p>
+</div>
+
+<h2>2 &middot; Page composition — full-fidelity wireframe</h2>
+<p class="sub">The Move 2 primary canvas. Read top to bottom: page header → phase bar → main canvas (the slate) → Sentinel rail (right ~30%) → Source spawn affordances. Drill panel opens below the slate when a row is selected. No dark moment — the dark header is reserved for the Source Executive Decision per the one-dark-moment rule.</p>
+
+<div class="page-mock">
+
+  <div class="page-hd">
+    <div class="crumbs">Tower &middot; Federated &middot; Moves &middot; Move 2 — Cross-HoldCo Vendor Rationalization</div>
+    <h2 class="title">Cross-HoldCo Vendor Rationalization · Q3 2026 Slate</h2>
+    <div class="sub-row">
+      <span class="tag tag-l0">L0 scope</span>
+      <span class="tag tag-quarter">Slate · Q3 2026 (refreshes Jul 1)</span>
+      <span class="divider"></span>
+      <span>$32.9M consolidated addressable &middot; <strong style="color: var(--good);">$3.3-5.0M projected savings band</strong></span>
+      <span class="divider"></span>
+      <span>Approvers:</span>
+      <span class="approver-chip"><span class="avatar">DS</span>Devon Sterling · OP-Finance</span>
+      <span class="approver-chip"><span class="avatar b">MR</span>Marcus Rhee · OP-Tech</span>
+    </div>
+  </div>
+
+  <div class="phase-bar">
+    <div class="phase-step done"><span class="step-n">0</span><span class="step-name">Setup</span><span class="step-detail">All 3 HoldCos · CIO+CFO+GC</span></div>
+    <div class="phase-step done"><span class="step-n">1</span><span class="step-name">Discovery</span><span class="step-detail">Spend baseline &middot; 20 categories</span></div>
+    <div class="phase-step done"><span class="step-n">2</span><span class="step-name">Strategy</span><span class="step-detail">Rubric locked</span></div>
+    <div class="phase-step done"><span class="step-n">3</span><span class="step-name">Architecture</span><span class="step-detail">Slate ranker live</span></div>
+    <div class="phase-step current"><span class="step-n">4</span><span class="step-name">Business Case</span><span class="step-detail">Slate approval &middot; in flight</span></div>
+    <div class="phase-step future"><span class="step-n">5</span><span class="step-name">Mobilization</span><span class="step-detail">Per-row Source spawn</span></div>
+    <div class="phase-step future"><span class="step-n">→</span><span class="step-name">Source</span><span class="step-detail">L-S02 &middot; L-S03 &middot; L-S04 &middot; L-S05</span></div>
+  </div>
+
+  <div class="page-body">
+    <div class="canvas">
+
+      <div class="canvas-tools">
+        <div class="filters">
+          <span class="filter-pill active">All categories</span>
+          <span class="filter-pill">Software</span>
+          <span class="filter-pill">Audit</span>
+          <span class="filter-pill">Banking</span>
+          <span class="filter-pill">Insurance</span>
+          <span class="filter-pill">Cyber</span>
+        </div>
+        <input class="search" placeholder="Search vendor or PortCo..." />
+        <button class="btn">Export slate</button>
+        <button class="btn btn-ghost">Diff vs Q2</button>
+      </div>
+
+      <table class="slate">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vendor &middot; category</th>
+            <th>HoldCos &middot; spend</th>
+            <th class="num">Total</th>
+            <th class="num">Savings band</th>
+            <th>Disruption</th>
+            <th>TTR</th>
+            <th>Action</th>
+            <th>Score</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-hover">
+            <td class="rank">1</td>
+            <td>
+              <span class="vendor">Microsoft EA</span>
+              <span class="vendor-cat">Software · Productivity + cloud</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $4.2M</span>
+                <span class="hc">RH $2.1M</span>
+                <span class="hc">LF $2.8M</span>
+              </div>
+            </td>
+            <td class="num spend">$9.1M</td>
+            <td class="num savings">$1.0–1.4M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">11–15%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">6 mo</td>
+            <td><span class="action consolidate">Consolidate &middot; single EA</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 92%;"></div></div>
+              <span class="score-num">9.2 / 10</span>
+            </td>
+            <td><span class="src-status draft">Draft L-S02</span></td>
+          </tr>
+          <tr>
+            <td class="rank">2</td>
+            <td>
+              <span class="vendor">KPMG (audit)</span>
+              <span class="vendor-cat">Audit &middot; advisory</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $2.4M</span>
+                <span class="hc">RH $1.8M</span>
+                <span class="hc">LF $1.2M</span>
+              </div>
+            </td>
+            <td class="num spend">$5.4M</td>
+            <td class="num savings">$0.5–0.8M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–15%</span></td>
+            <td><span class="disrupt m">Med</span></td>
+            <td class="ttr">9 mo</td>
+            <td><span class="action negotiate">Federated RFP</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 84%;"></div></div>
+              <span class="score-num">8.4 / 10</span>
+            </td>
+            <td><span class="src-status draft">Draft L-S04</span></td>
+          </tr>
+          <tr class="row-hover">
+            <td class="rank">3</td>
+            <td>
+              <span class="vendor">Workday</span>
+              <span class="vendor-cat">Software · HCM</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $3.1M</span>
+                <span class="hc">RH $1.4M</span>
+                <span class="hc">LF $1.6M</span>
+              </div>
+            </td>
+            <td class="num spend">$6.1M</td>
+            <td class="num savings">$0.6–0.9M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–15%</span></td>
+            <td><span class="disrupt m">Med</span></td>
+            <td class="ttr">12 mo</td>
+            <td><span class="action consolidate">Single MSA</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 78%;"></div></div>
+              <span class="score-num">7.8 / 10</span>
+            </td>
+            <td><span class="src-status draft">Draft L-S03</span></td>
+          </tr>
+          <tr>
+            <td class="rank">4</td>
+            <td>
+              <span class="vendor">Snowflake</span>
+              <span class="vendor-cat">Software &middot; data plane</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $2.4M</span>
+                <span class="hc no">RH —</span>
+                <span class="hc">LF $1.9M</span>
+              </div>
+            </td>
+            <td class="num spend">$4.3M</td>
+            <td class="num savings">$0.4–0.6M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–14%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">4 mo</td>
+            <td><span class="action negotiate">Joint negotiation &middot; lock RH-in path</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 75%;"></div></div>
+              <span class="score-num">7.5 / 10</span>
+            </td>
+            <td><span class="src-status draft">Slated</span></td>
+          </tr>
+          <tr class="row-hover">
+            <td class="rank">5</td>
+            <td>
+              <span class="vendor">CrowdStrike</span>
+              <span class="vendor-cat">Cyber · EDR</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $1.4M</span>
+                <span class="hc">RH $0.9M</span>
+                <span class="hc">LF $0.7M</span>
+              </div>
+            </td>
+            <td class="num spend">$3.0M</td>
+            <td class="num savings">$0.3–0.5M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–17%</span></td>
+            <td><span class="disrupt h">High</span></td>
+            <td class="ttr">12 mo</td>
+            <td><span class="action split">Split &middot; concentration risk</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 71%;"></div></div>
+              <span class="score-num">7.1 / 10</span>
+            </td>
+            <td><span class="src-status draft">Slated · risk-blocked</span></td>
+          </tr>
+          <tr>
+            <td class="rank">6</td>
+            <td>
+              <span class="vendor">Cyber insurance (carrier)</span>
+              <span class="vendor-cat">Insurance · D&amp;O cyber</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS Beazley</span>
+                <span class="hc">RH Beazley</span>
+                <span class="hc">LF AIG</span>
+              </div>
+            </td>
+            <td class="num spend">$2.4M</td>
+            <td class="num savings">$0.3–0.5M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">+ risk split</span></td>
+            <td><span class="disrupt m">Med</span></td>
+            <td class="ttr">8 mo</td>
+            <td><span class="action split">Two-carrier program</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 68%;"></div></div>
+              <span class="score-num">6.8 / 10</span>
+            </td>
+            <td><span class="src-status draft">Draft L-S05</span></td>
+          </tr>
+          <tr class="row-hover">
+            <td class="rank">7</td>
+            <td>
+              <span class="vendor">Salesforce</span>
+              <span class="vendor-cat">Software &middot; CRM</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $1.9M</span>
+                <span class="hc">RH $0.8M</span>
+                <span class="hc">LF $0.4M</span>
+              </div>
+            </td>
+            <td class="num spend">$3.1M</td>
+            <td class="num savings">$0.3–0.5M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–16%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">5 mo</td>
+            <td><span class="action negotiate">Renegotiate at federated tier</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 64%;"></div></div>
+              <span class="score-num">6.4 / 10</span>
+            </td>
+            <td><span class="src-status draft">Slated</span></td>
+          </tr>
+          <tr>
+            <td class="rank">8</td>
+            <td>
+              <span class="vendor">Okta</span>
+              <span class="vendor-cat">Software · IAM</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $0.8M</span>
+                <span class="hc">RH $0.5M</span>
+                <span class="hc">LF $0.6M</span>
+              </div>
+            </td>
+            <td class="num spend">$1.9M</td>
+            <td class="num savings">$0.2–0.3M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">10–16%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">3 mo</td>
+            <td><span class="action negotiate">Renegotiate &middot; modest band</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 58%;"></div></div>
+              <span class="score-num">5.8 / 10</span>
+            </td>
+            <td><span class="src-status draft">Slated</span></td>
+          </tr>
+          <tr class="row-hover">
+            <td class="rank">9</td>
+            <td>
+              <span class="vendor">ServiceNow</span>
+              <span class="vendor-cat">Software · ITSM</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $1.8M</span>
+                <span class="hc no">RH —</span>
+                <span class="hc">LF $0.6M</span>
+              </div>
+            </td>
+            <td class="num spend">$2.4M</td>
+            <td class="num savings">$0.2–0.3M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">9–13%</span></td>
+            <td><span class="disrupt m">Med</span></td>
+            <td class="ttr">7 mo</td>
+            <td><span class="action hold">Hold &middot; LF small footprint</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 49%;"></div></div>
+              <span class="score-num">4.9 / 10</span>
+            </td>
+            <td><span class="src-status draft">Park</span></td>
+          </tr>
+          <tr>
+            <td class="rank">10</td>
+            <td>
+              <span class="vendor">NetSuite</span>
+              <span class="vendor-cat">Software · ERP</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $1.6M</span>
+                <span class="hc no">RH —</span>
+                <span class="hc">LF $0.9M</span>
+              </div>
+            </td>
+            <td class="num spend">$2.5M</td>
+            <td class="num savings">$0.2–0.3M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">9–13%</span></td>
+            <td><span class="disrupt h">High</span></td>
+            <td class="ttr">18 mo</td>
+            <td><span class="action hold">Hold &middot; ERP switching cost high</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 41%;"></div></div>
+              <span class="score-num">4.1 / 10</span>
+            </td>
+            <td><span class="src-status draft">Park</span></td>
+          </tr>
+          <tr class="row-hover">
+            <td class="rank">11</td>
+            <td>
+              <span class="vendor">Diligent (board)</span>
+              <span class="vendor-cat">Software · governance</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $0.4M</span>
+                <span class="hc">RH $0.3M</span>
+                <span class="hc">LF $0.2M</span>
+              </div>
+            </td>
+            <td class="num spend">$0.9M</td>
+            <td class="num savings">$0.1–0.15M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">11–17%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">4 mo</td>
+            <td><span class="action negotiate">Bundle as L0 contract</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 38%;"></div></div>
+              <span class="score-num">3.8 / 10</span>
+            </td>
+            <td><span class="src-status draft">Slated · low value</span></td>
+          </tr>
+          <tr>
+            <td class="rank">12</td>
+            <td>
+              <span class="vendor">Ironclad (CLM)</span>
+              <span class="vendor-cat">Software · legal</span>
+            </td>
+            <td>
+              <div class="holdcos">
+                <span class="hc">MS $0.3M</span>
+                <span class="hc no">RH —</span>
+                <span class="hc">LF $0.15M</span>
+              </div>
+            </td>
+            <td class="num spend">$0.45M</td>
+            <td class="num savings">$0.04–0.07M<br><span style="font-weight: normal; color: var(--ink-faint); font-size: 11px;">9–15%</span></td>
+            <td><span class="disrupt l">Low</span></td>
+            <td class="ttr">3 mo</td>
+            <td><span class="action hold">Hold &middot; tiny band</span></td>
+            <td>
+              <div class="score-bar"><div class="fill" style="width: 22%;"></div></div>
+              <span class="score-num">2.2 / 10</span>
+            </td>
+            <td><span class="src-status draft">Park</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="meta" style="margin-top: 16px;">Top 12 of 47 vendors above $250K consolidated spend. Rows 13–47 collapsed by default. Click "Show all" or filter by category to expand.</p>
+
+      <div class="one-dark-note">No dark moment on this canvas. The Q3 slate-approval modal (Devon's "approve all top 6 for Source spawn") opens as a centered light card; the dark moment is reserved for the Source Executive Decision per the one-dark-moment rule.</div>
+
+    </div>
+
+    <div class="chat-rail">
+      <h5><span class="sentinel-dot"></span>Sentinel · Move 2 rail</h5>
+      <p class="meta" style="margin: 4px 0;">Ask anything about the slate, the scoring, or any vendor row.</p>
+
+      <div class="chat-scroll">
+
+        <div class="chat-msg user">
+          <div class="who">Devon Sterling</div>
+          <div>Why is Workday consolidation ranked 3rd? It's our 3rd-largest line — feels like it should be higher.</div>
+        </div>
+
+        <div class="chat-msg sentinel">
+          <div class="who">Sentinel</div>
+          <p>Workday lands at rank 3 (score 7.8) because the scoring rubric trades raw savings against disruption and time-to-realize. Three factors pulled it below MS EA and KPMG:</p>
+          <div class="formula">score = 0.45 × net_savings_normalized<br>     − 0.30 × disruption<br>     − 0.25 × ttr_months / 18</div>
+          <p>1. <strong>Net savings band</strong> ($0.6–0.9M, 10–15%) is real but smaller in absolute terms than MS EA's $1.0–1.4M.</p>
+          <p>2. <strong>Disruption is Medium</strong>, not Low — Roosevelt is mid-rollout and consolidating MSA mid-flight risks Wave 1 stability.</p>
+          <p>3. <strong>TTR is 12 months</strong> because Roosevelt's contract doesn't co-term with Morgan Street and Lakefront until Sep 2027.</p>
+          <p>If Roosevelt's Workday Wave 2 lands ahead of schedule, score recomputes to ~8.4 and Workday jumps to rank 2. I will alert you on the next refresh.</p>
+          <span class="cite">Cited: scoring_rubric_v3.json &middot; loaded vendor_contracts.csv &middot; finserv file 13 IT-spend benchmarks.</span>
+        </div>
+
+        <div class="chat-msg user">
+          <div class="who">Devon Sterling</div>
+          <div>What's the disruption score made of for CrowdStrike?</div>
+        </div>
+
+        <div class="chat-msg sentinel">
+          <div class="who">Sentinel</div>
+          <p>CrowdStrike's disruption score (High = 8.5/10) loads on two factors. <strong>(1) Concentration risk:</strong> all three HoldCos on a single cyber EDR vendor — Move 4 has a standing concentration flag and the 2025 outage exposure made the audit committee skittish. <strong>(2) Operational footprint:</strong> CrowdStrike is wired into 17 PortCo endpoints and 4 SIEM integrations; swapping is a 6–9 month re-architecture, not a procurement event.</p>
+          <p>That's why the rubric pushes CrowdStrike to a "split" action rather than "consolidate" — keep CrowdStrike on 2 HoldCos, dual-vendor the 3rd. The savings band ($0.3–0.5M) is paid for by the split, not by single-vendor leverage.</p>
+          <span class="cite">Cited: Move 4 concentration_risk_flag &middot; CIO_bundle.cyber_stack &middot; corpus pattern CYBER-DUAL-VENDOR-2025-Q4.</span>
+        </div>
+
+      </div>
+
+      <div class="chat-input">
+        <div class="field">Ask Sentinel about the slate...</div>
+        <span class="send">Send</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Drill-into-vendor detail panel</h3>
+<p class="sub">When Devon clicks a row, the drill panel expands inline beneath the slate. The full picture for one vendor: all HoldCo contracts, renewal calendar, vendor performance signals, recommended consolidation path, why-this-rank, savings band with citations, and the spawn-RFP action.</p>
+
+<div class="drill">
+  <div class="drill-hd">
+    <div>
+      <h3>Microsoft EA &middot; rank 1 &middot; consolidation candidate</h3>
+      <div class="sub">Software · Productivity + cloud · $9.1M consolidated · score 9.2 / 10</div>
+    </div>
+    <div>
+      <button class="btn btn-ghost btn-sm">Close drill</button>
+    </div>
+  </div>
+
+  <div class="why-panel">
+    <h6>Why rank 1</h6>
+    <p>MS EA is the largest single line on the slate ($9.1M) and Microsoft offers an enterprise rate at $9M+ committed spend that none of the three HoldCos qualifies for solo. Disruption is Low — Microsoft contract restructure is a paperwork exercise, not a re-architecture. TTR is 6 months because Morgan Street's EA renews in Oct 2026, giving a natural co-term anchor. The savings band (11–15%, $1.0–1.4M annual) is conservative — Gartner enterprise-rate negotiation patterns and the 2024 Vista-portfolio MS EA federation case (cited corpus) cleared 14% on similar spend.</p>
+    <span class="cite">Cited: finserv file 13 (IT-spend benchmarks) &middot; finserv file 20 (vendor landscape) &middot; corpus pattern PE-MSA-FEDERATION-2024 &middot; loaded Morgan_Street_CIO_bundle.contracts row 14 &middot; Roosevelt_CIO_bundle.contracts row 9 &middot; Lakefront_CIO_bundle.contracts row 12.</span>
+  </div>
+
+  <div class="savings-band">
+    <div class="band-amount">$1.0M – $1.4M annual</div>
+    <div class="band-detail">Conservative scenario: $1.0M (11% off $9.1M). Aggressive: $1.4M (15%). Range honest — actual depends on competitive pressure, scope changes, Azure consumption commitments. The rubric uses the midpoint ($1.2M) for slate ranking.</div>
+  </div>
+
+  <div class="drill-grid">
+    <div>
+      <h4>Incumbent contracts across HoldCos</h4>
+      <div class="contract-rows">
+        <div class="contract-row">
+          <div>
+            <span class="hc-name">Morgan Street Holdings Chicago</span>
+            <div class="hc-meta">EA &middot; signed 2024-10-15 &middot; 3-yr term &middot; primary contact: Daniel Okonkwo (CIO)</div>
+          </div>
+          <div class="spend">$4.2M / yr</div>
+          <div><span class="tag tag-warn">Renews Oct 2026</span></div>
+          <div><span class="tag tag-soft">Co-term anchor</span></div>
+        </div>
+        <div class="contract-row">
+          <div>
+            <span class="hc-name">Roosevelt Holdings Atlanta</span>
+            <div class="hc-meta">EA &middot; signed 2025-03-01 &middot; 3-yr term &middot; primary contact: Edward Park (CIO)</div>
+          </div>
+          <div class="spend">$2.1M / yr</div>
+          <div><span class="tag tag-good">Renews Mar 2028</span></div>
+          <div><span class="tag tag-soft">Early-term penalty $0.3M</span></div>
+        </div>
+        <div class="contract-row">
+          <div>
+            <span class="hc-name">Lakefront Capital Boston</span>
+            <div class="hc-meta">EA &middot; signed 2024-07-10 &middot; 3-yr term &middot; primary contact: Yuki Ono (CIO)</div>
+          </div>
+          <div class="spend">$2.8M / yr</div>
+          <div><span class="tag tag-warn">Renews Jul 2027</span></div>
+          <div><span class="tag tag-soft">Co-term path: bridge 9 mo</span></div>
+        </div>
+      </div>
+
+      <div class="recommendation-card">
+        <h6>Recommended consolidation path</h6>
+        <div class="path">
+          <div class="step"><span class="num">1</span>Negotiate Morgan Street renewal Oct 2026 as the anchor — single federated EA covering all 3 HoldCos.</div>
+          <div class="step"><span class="num">2</span>Bridge Lakefront's Jul 2027 expiration onto the new EA via 9-month co-term extension (Microsoft will offer; their standard play).</div>
+          <div class="step"><span class="num">3</span>Buy out Roosevelt's $0.3M early-term penalty &mdash; ROI clears in year 1 against $1.0M+ annual savings.</div>
+          <div class="step"><span class="num">4</span>Spawn Source event L-S02 with 6-month execution window; Procurement leads, OP-Tech (Marcus) signs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>Renewal calendar (next 18 months)</h4>
+      <div class="renewal-cal">
+        <div style="font-weight: 600;">2026 → 2027</div>
+        <div class="month-strip">
+          <div class="mo">Jun</div>
+          <div class="mo">Jul</div>
+          <div class="mo">Aug</div>
+          <div class="mo">Sep</div>
+          <div class="mo hit">Oct<br><span style="font-size:8px">MS</span></div>
+          <div class="mo">Nov</div>
+          <div class="mo">Dec</div>
+          <div class="mo">Jan</div>
+          <div class="mo">Feb</div>
+          <div class="mo">Mar</div>
+          <div class="mo">Apr</div>
+          <div class="mo">May</div>
+        </div>
+        <div class="month-strip" style="margin-top: 4px;">
+          <div class="mo">Jun</div>
+          <div class="mo near">Jul<br><span style="font-size:8px">LF</span></div>
+          <div class="mo">Aug</div>
+          <div class="mo">Sep</div>
+          <div class="mo">Oct</div>
+          <div class="mo">Nov</div>
+          <div class="mo">Dec</div>
+          <div class="mo">Jan</div>
+          <div class="mo">Feb</div>
+          <div class="mo">Mar</div>
+          <div class="mo">Apr</div>
+          <div class="mo">May</div>
+        </div>
+        <p style="margin: 8px 0 0; font-size: 11.5px;"><span style="color: var(--accent); font-weight: 600;">●</span> Anchor renewal &middot; <span style="color: var(--accent); opacity: 0.5;">●</span> Bridge-in candidate</p>
+      </div>
+
+      <h4>Vendor performance signals</h4>
+      <div class="perf-signals">
+        <div class="sig"><span class="name">Microsoft NPS (last 12mo)</span><span class="val">42</span></div>
+        <div class="sig"><span class="name">Tier-1 incident count</span><span class="val">3 (FY25)</span></div>
+        <div class="sig"><span class="name">Avg support resolution (P1)</span><span class="val">4.2 hr</span></div>
+        <div class="sig"><span class="name">Account team continuity</span><span class="val">Stable 18mo</span></div>
+        <div class="sig"><span class="name">Public negotiation posture</span><span class="val">Aggressive on Azure commit</span></div>
+        <div class="sig"><span class="name">Corpus reference deals (2024-26)</span><span class="val">4 federations seen</span></div>
+      </div>
+
+      <button class="spawn-btn-big">Spawn Source RFP &middot; L-S02</button>
+      <p style="font-size: 11px; color: var(--ink-faint); text-align: center; margin: 6px 0 0;">Pre-fills 11-stage envelope. Devon signs.</p>
+    </div>
+  </div>
+</div>
+
+<h2>3 &middot; The vendor normalization view</h2>
+<p class="sub">Before any slate exists, AbarVa de-dupes raw vendor strings across HoldCo APs. Show the matching confidence + human-review queue for low-confidence matches. This is the substrate on which every slate row depends.</p>
+
+<p>Each HoldCo's CIO + CFO bundle includes a vendor inventory. The same legal entity often appears under different strings: "Microsoft Corporation", "MSFT", "Microsoft Online", "Microsoft USA, Inc.". The Move 2 Architecture phase pipeline runs Bronze (raw <code>vendor_raw</code>) → Silver (normalized <code>vendor_entity</code>) → Gold (the slate). The normalization step uses a combination of (a) Dun &amp; Bradstreet DUNS lookups, (b) Tax ID match, and (c) an LLM-judged string similarity over <code>vendor_name + address + last4_tax_id</code> with a confidence threshold of 0.92 for auto-merge.</p>
+
+<div class="norm-cluster">
+  <h6>Cluster · Microsoft Corporation (entity_id: norm_001284)</h6>
+  <div class="raw-list">
+    <div class="raw-row head">
+      <div>Raw vendor string (source)</div>
+      <div>HoldCo · last 4 tax ID</div>
+      <div>Spend (FY25)</div>
+      <div>Match basis</div>
+      <div>Confidence · verdict</div>
+    </div>
+    <div class="raw-row">
+      <div class="src">Microsoft Corporation</div>
+      <div>MS &middot; tax …5871</div>
+      <div>$4.2M</div>
+      <div>DUNS exact</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">MSFT</div>
+      <div>RH &middot; tax …5871</div>
+      <div>$2.1M</div>
+      <div>Tax ID exact</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">Microsoft Online Inc</div>
+      <div>LF &middot; tax …8492</div>
+      <div>$2.8M</div>
+      <div>LLM similarity &middot; subsidiary</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 94%;"></div></div>
+        <span class="verdict auto">0.94 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">Microsoft USA, Inc.</div>
+      <div>LF &middot; tax …8492</div>
+      <div>$0.4M (Azure)</div>
+      <div>LLM &middot; sub-entity rollup</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill warn" style="width: 87%;"></div></div>
+        <span class="verdict review">0.87 review</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="norm-cluster">
+  <h6>Cluster · KPMG (entity_id: norm_002041)</h6>
+  <div class="raw-list">
+    <div class="raw-row head">
+      <div>Raw vendor string (source)</div>
+      <div>HoldCo · last 4 tax ID</div>
+      <div>Spend (FY25)</div>
+      <div>Match basis</div>
+      <div>Confidence · verdict</div>
+    </div>
+    <div class="raw-row">
+      <div class="src">KPMG LLP</div>
+      <div>MS &middot; tax …3344</div>
+      <div>$2.4M</div>
+      <div>DUNS exact</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">KPMG LLP (Chicago)</div>
+      <div>RH &middot; tax …3344</div>
+      <div>$1.8M</div>
+      <div>Tax ID exact</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">KPMG Advisory Services</div>
+      <div>LF &middot; tax …3344</div>
+      <div>$1.2M</div>
+      <div>Tax ID exact &middot; advisory line</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="norm-cluster">
+  <h6>Cluster · ambiguous &middot; "Beazley" insurance</h6>
+  <div class="raw-list">
+    <div class="raw-row head">
+      <div>Raw vendor string (source)</div>
+      <div>HoldCo · last 4 tax ID</div>
+      <div>Spend (FY25)</div>
+      <div>Match basis</div>
+      <div>Confidence · verdict</div>
+    </div>
+    <div class="raw-row">
+      <div class="src">Beazley Insurance Co</div>
+      <div>MS &middot; tax …7712</div>
+      <div>$0.9M</div>
+      <div>DUNS exact</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill" style="width: 100%;"></div></div>
+        <span class="verdict auto">1.00 auto</span>
+      </div>
+    </div>
+    <div class="raw-row">
+      <div class="src">Beazley Group plc</div>
+      <div>RH &middot; tax …4408</div>
+      <div>$0.7M</div>
+      <div>LLM &middot; parent vs US sub ambiguous</div>
+      <div class="conf">
+        <div class="conf-bar"><div class="fill bad" style="width: 68%;"></div></div>
+        <span class="verdict split">0.68 split &middot; manual</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="review-queue">
+  <h6>Human-review queue · 7 clusters open</h6>
+  <p style="margin: 6px 0;">Low-confidence matches route to the Move 2 review queue. Default reviewer: Procurement Ops &middot; SLA 5 business days. Reviewer sees raw strings, side-by-side metadata, suggested verdict, and an "approve / split / merge with different cluster" affordance. Devon's view shows the open count; Marcus's view shows the same. Resolved entries flow back into the slate ranker on next refresh.</p>
+  <ul class="checklist" style="margin: 4px 0 0;">
+    <li>Microsoft USA Inc &middot; sub-entity rollup decision (0.87)</li>
+    <li>Beazley parent vs US sub (0.68)</li>
+    <li>Accenture vs Accenture Federal Services (0.74)</li>
+    <li>4 others &middot; <span class="tag tag-soft">all software</span></li>
+  </ul>
+</div>
+
+<h2>4 &middot; The opportunity scoring rubric</h2>
+<p class="sub">CFO must understand why the rank order is what it is. The formula is transparent and locked in the Strategy phase memo; changes go through Devon + Marcus sign-off.</p>
+
+<div class="rubric">
+  <div class="formula-box">
+    score = <span class="weight">0.45</span> · net_savings<sub>norm</sub> &nbsp;−&nbsp; <span class="weight">0.30</span> · disruption &nbsp;−&nbsp; <span class="weight">0.25</span> · ttr<sub>months</sub> / 18
+  </div>
+  <p class="meta" style="margin-top: 0;">All three factors normalized to a 0–10 scale. Final score is a 0–10 number, sorted descending for slate rank.</p>
+
+  <div class="factor">
+    <h6>Factor 1 · Net savings (weight 0.45)</h6>
+    <p class="desc">Midpoint of the savings band, normalized by the highest band on the current slate. MS EA's $1.2M midpoint becomes 10/10; CrowdStrike's $0.4M becomes 3.3/10. <em>Why 0.45 weight:</em> this is what the L0 IC cares about most; CFO must see savings drive rank.</p>
+  </div>
+  <div class="factor">
+    <h6>Factor 2 · Disruption (weight 0.30)</h6>
+    <p class="desc">Composite of (a) operational footprint (how wired-in the vendor is), (b) concentration-risk delta (does consolidation make a flagged risk worse), (c) PortCo blast radius. Scored 1–10, higher = worse.</p>
+    <div class="scale">
+      <div class="step low">1–3 Low &middot; paperwork only</div>
+      <div class="step med">4–6 Med &middot; mid-cycle switch</div>
+      <div class="step high">7–10 High &middot; re-architecture</div>
+    </div>
+  </div>
+  <div class="factor">
+    <h6>Factor 3 · Time-to-realize (weight 0.25)</h6>
+    <p class="desc">Months from approval to realized first-year savings. Capped at 18 months (anything beyond gets max penalty). Anchored on the latest renewal date among incumbent contracts unless an early-term penalty buy-out is cheaper than wait-time NPV.</p>
+    <div class="scale">
+      <div class="step low">0–6 mo &middot; fast</div>
+      <div class="step med">7–12 mo &middot; quarterly cycle</div>
+      <div class="step high">13–18 mo &middot; slow</div>
+    </div>
+  </div>
+  <p class="meta" style="margin-top: 12px;"><strong>Worked example &middot; MS EA:</strong> net_savings_norm = 10.0 (top of slate) · disruption = 2 (Low) · ttr = 6 mo. score = 0.45 × 10 − 0.30 × 2 − 0.25 × (6/18) = 4.5 − 0.6 − 0.083 = 3.82 raw → rescaled to 0–10 across slate → 9.2.</p>
+  <p class="meta"><strong>Worked example &middot; CrowdStrike:</strong> net_savings_norm = 3.3 · disruption = 8.5 (concentration + footprint) · ttr = 12 mo. score = 0.45 × 3.3 − 0.30 × 8.5 − 0.25 × (12/18) = 1.485 − 2.55 − 0.167 = −1.23 raw → rescaled → 7.1 (still slatable because the action is split, not consolidate, which separately defers the disruption penalty).</p>
+</div>
+
+<h2>5 &middot; Per-category surfaces</h2>
+<p class="sub">Different vendor categories deserve different rationalization approaches. Software (volume + commodity) plays differently than audit (relationship + judgment) than banking (treasury + risk). The slate filters into category views; each view has its own embedded playbook.</p>
+
+<div class="cat-surface">
+  <h6>Software</h6>
+  <p class="approach">Approach: <strong>federation + volume leverage</strong>. The pure-play is single MSA across HoldCos with tiered commits.</p>
+  <div class="play"><span class="label">Default action</span> &middot; consolidate to single contract; negotiate enterprise rate at committed spend &gt; vendor's published threshold.</div>
+  <div class="play"><span class="label">Lever</span> &middot; co-term anchor &middot; bridge offers &middot; competitor stalking-horse RFP.</div>
+  <div class="play"><span class="label">Benchmark</span> &middot; 10–15% savings on consolidated &gt;$5M spend (finserv file 13, file 20).</div>
+  <div class="play"><span class="label">Slate rows</span> &middot; MS EA, Workday, Salesforce, Okta, ServiceNow, NetSuite.</div>
+</div>
+
+<div class="cat-surface">
+  <h6>Audit + advisory</h6>
+  <p class="approach">Approach: <strong>federated RFP with scope standardization</strong>. Audit firms compete hard on PE-portfolio mandates; relationship + judgment carry weight.</p>
+  <div class="play"><span class="label">Default action</span> &middot; federated RFP with co-term anchor across all 3 HoldCos. Single firm option + alternates (Deloitte, EY, PwC) as competitive pressure.</div>
+  <div class="play"><span class="label">Lever</span> &middot; scope harmonization &middot; staffing-tier negotiation &middot; advisory-fee bundle.</div>
+  <div class="play"><span class="label">Benchmark</span> &middot; 10–15% fee compression on federated audit at &gt;$5M consolidated (corpus pattern AUDIT-FED-2024).</div>
+  <div class="play"><span class="label">Slate rows</span> &middot; KPMG.</div>
+</div>
+
+<div class="cat-surface">
+  <h6>Banking</h6>
+  <p class="approach">Approach: <strong>rationalize + H2H concentration</strong>. Banking is partly Move 0 territory (Morgan Street's L-S01 Banking Consolidation event); Move 2's role is L0-level federation where 2+ HoldCos share banks.</p>
+  <div class="play"><span class="label">Default action</span> &middot; per-HoldCo Treasurer leads; L0 Move 2 surfaces the federation play (e.g., JPMorgan primary across all HoldCos).</div>
+  <div class="play"><span class="label">Lever</span> &middot; treasury wallet share &middot; FX volume bundling &middot; H2H-ready selection.</div>
+  <div class="play"><span class="label">Benchmark</span> &middot; 15–25% fee compression at rationalized concentration (finserv file 08).</div>
+  <div class="play"><span class="label">Slate rows</span> &middot; (banking is on a separate slate — see L-S01 in Move 0). Move 2 banking work is L0 federation only.</div>
+</div>
+
+<div class="cat-surface">
+  <h6>Insurance</h6>
+  <p class="approach">Approach: <strong>broker consolidation + dual-carrier program</strong>. Insurance is the one category where consolidation can <em>increase</em> risk (concentration on a single carrier) — actions skew toward "split" not "consolidate".</p>
+  <div class="play"><span class="label">Default action</span> &middot; single broker, two-carrier program. Renegotiate broker fee at consolidated premium volume.</div>
+  <div class="play"><span class="label">Lever</span> &middot; premium-volume tier &middot; broker commission &middot; carrier mix.</div>
+  <div class="play"><span class="label">Benchmark</span> &middot; 8–12% on D&amp;O / cyber premium federation (corpus INS-PE-FED-2025).</div>
+  <div class="play"><span class="label">Slate rows</span> &middot; Cyber insurance (Beazley + AIG).</div>
+</div>
+
+<div class="cat-surface">
+  <h6>Cyber</h6>
+  <p class="approach">Approach: <strong>concentration-risk-managed federation</strong>. Move 2 + Move 4 jointly own cyber category; concentration risk veto applies.</p>
+  <div class="play"><span class="label">Default action</span> &middot; if concentration flag green, federate (single EDR vendor at volume rate). If flag amber/red, split or dual-vendor.</div>
+  <div class="play"><span class="label">Lever</span> &middot; license-tier negotiation &middot; managed-services bundle &middot; threat-intel federation.</div>
+  <div class="play"><span class="label">Benchmark</span> &middot; 10–17% on EDR + SIEM stack (corpus pattern CYBER-PE-FED-2025).</div>
+  <div class="play"><span class="label">Slate rows</span> &middot; CrowdStrike (split action recommended due to concentration).</div>
+</div>
+
+<h2>6 &middot; PortCo socialization workflow</h2>
+<p class="sub">Move 2 changes affect PortCos. The L0-led plan must be socialized to PortCo CFOs (not bypassed). The comm + ack flow runs in parallel with Source event execution.</p>
+
+<div class="comm-flow">
+  <div class="comm-step">
+    <div class="num">1</div>
+    <div>
+      <h6>Slate approval at L0</h6>
+      <div class="detail">Devon + Marcus approve the slate row. AbarVa generates a per-PortCo brief: "your vendor X is part of the federated Q3 slate, action: consolidate. Estimated impact to your P&amp;L: $Y allocated savings. Timeline: see attached."</div>
+    </div>
+    <span class="ack-state tag-good">Trigger</span>
+  </div>
+  <div class="comm-step">
+    <div class="num">2</div>
+    <div>
+      <h6>HoldCo CFO + CIO read-in</h6>
+      <div class="detail">L1 CXOs (Sarah Lindqvist · Daniel Okonkwo at Morgan Street; Priya Naidu · Edward Park at Roosevelt; Marcus Andersen · Yuki Ono at Lakefront) get the brief 48hr before PortCo cascade. They can ack, request edits, or veto with rationale.</div>
+    </div>
+    <span class="ack-state tag-warn">Ack required &middot; 48hr</span>
+  </div>
+  <div class="comm-step">
+    <div class="num">3</div>
+    <div>
+      <h6>PortCo CFO cascade</h6>
+      <div class="detail">For each affected PortCo (24 across the portfolio), Kenji Brooks (L0 Portfolio Ops) sends the brief through the HoldCo CFO. Email + AbarVa portal link. PortCo CFO acks or flags operational concerns through the portal.</div>
+    </div>
+    <span class="ack-state tag-soft">Cascade &middot; 5 business days</span>
+  </div>
+  <div class="comm-step">
+    <div class="num">4</div>
+    <div>
+      <h6>Concerns triage</h6>
+      <div class="detail">Any PortCo CFO concern routes back to the slate row owner (Devon or Marcus). Two-day SLA to respond; if no acceptable resolution, the row is moved to "Hold" pending re-scoping.</div>
+    </div>
+    <span class="ack-state tag-bad">Veto path</span>
+  </div>
+  <div class="comm-step">
+    <div class="num">5</div>
+    <div>
+      <h6>Source event spawn proceeds</h6>
+      <div class="detail">Once all required acks are in (or veto window closed), the Source event spawns. PortCo CFO concerns are attached as context in the Source envelope so the Procurement team can manage operational fit during execution.</div>
+    </div>
+    <span class="ack-state tag-good">Spawn unlocked</span>
+  </div>
+</div>
+
+<p class="meta"><strong>Ack telemetry:</strong> Devon's Tower view shows per-row ack state — green when all required acks in, amber when waiting, red when a veto is open. The slate row is locked from Source spawn until the ack state clears.</p>
+
+<h2>7 &middot; Federated savings ledger contribution</h2>
+<p class="sub">Move 2 outcomes feed Tower Federated's savings ledger (projected → realized). The flow ensures no double-counting and gives the L0 IC a defensible projected-vs-realized view.</p>
+
+<div class="ledger">
+  <h4>Data flow: slate row → Source event → realized savings → ledger</h4>
+  <div class="ledger-flow">
+    <div class="stage">
+      <h6>1. Slate approval</h6>
+      <div class="body">Row approved → <code>move_2.slate_row.projected_savings_band</code> writes to <code>federated_ledger.projected</code> with midpoint as the headline number.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <h6>2. Source spawn</h6>
+      <div class="body">Source event ID stamped on the ledger row. Status moves to "in execution" — Source module owns the variance from here.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <h6>3. Contract award</h6>
+      <div class="body">Source event closes with awarded contract. Realized savings calculated from awarded fee vs. baseline incumbent fee. Ledger writes <code>realized_y1</code>.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <h6>4. Quarterly true-up</h6>
+      <div class="body">Quarterly invoice data reconciles realized against projected. Variance surfaces in L0 IC quarterly review. No fake-realized claims.</div>
+    </div>
+  </div>
+
+  <table style="margin-top: 18px;">
+    <tr><th>Slate row</th><th>Projected band</th><th>Midpoint to ledger</th><th>Source event</th><th>Status</th><th>Realized to date</th></tr>
+    <tr><td>MS EA</td><td>$1.0M – $1.4M</td><td>$1.2M</td><td>L-S02</td><td class="tag tag-good">Approved · spawning</td><td>—</td></tr>
+    <tr><td>KPMG audit</td><td>$0.5M – $0.8M</td><td>$0.65M</td><td>L-S04</td><td class="tag tag-warn">PortCo cascade</td><td>—</td></tr>
+    <tr><td>Workday</td><td>$0.6M – $0.9M</td><td>$0.75M</td><td>L-S03</td><td class="tag tag-soft">Awaiting Roosevelt Wave 2</td><td>—</td></tr>
+    <tr><td>Cyber insurance</td><td>$0.3M – $0.5M</td><td>$0.40M</td><td>L-S05</td><td class="tag tag-good">Approved · spawning</td><td>—</td></tr>
+    <tr><td><strong>Total projected (this slate)</strong></td><td><strong>$2.4M – $3.6M</strong></td><td><strong>$3.0M</strong></td><td>—</td><td>—</td><td>—</td></tr>
+  </table>
+  <p class="meta">The total projected matches the slate band ($3.3-5.0M) less the rows that did not make Q3 cut (Snowflake, Salesforce, Okta, Diligent — deferred to Q4). Variance from realized writes back to <code>federated_ledger.variance</code>; quarterly review surfaces any &gt;10% gap.</p>
+</div>
+
+<h2>8 &middot; Source event hand-off</h2>
+<p class="sub">For each row Devon approves, the Source 11-stage lifecycle is owned by the Source module (<code>docs/build/source-design/</code>). Move 2 hands Source a clean envelope and walks away.</p>
+
+<p>The "Spawn Source RFP" action on a slate row opens the Source envelope pre-fill modal. Below: the exact pre-filled envelopes for L-S02 (MS EA), L-S03 (Workday), L-S04 (KPMG audit), L-S05 (cyber insurance). These become the seeds of Source events; Source owns stages 1–11 from there.</p>
+
+<div class="envelope">
+  <div class="envelope-hd">
+    <div>
+      <h6>Envelope &middot; Microsoft EA federation</h6>
+      <div class="sub" style="font-size: 12px;">Source pre-fill from Move 2 slate row 1 &middot; auto-generated 2026-06-05 14:22 CT</div>
+    </div>
+    <div class="id">L-S02</div>
+  </div>
+  <div class="envelope-fields">
+    <div class="ef-row">
+      <div class="key">Source stage</div>
+      <div class="val">Stage 1 &middot; <span class="pill">Need definition</span> — pre-filled. Devon approves → moves to Stage 2 &middot; Strategy.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Scope</div>
+      <div class="val">Federated Microsoft EA covering Morgan Street, Roosevelt, Lakefront. License families: M365 E5 · Azure consumption · Dynamics 365 · Power Platform.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Incumbents (3)</div>
+      <div class="val"><span class="pill">Morgan Street · $4.2M · renews Oct 2026</span><span class="pill">Roosevelt · $2.1M · renews Mar 2028</span><span class="pill">Lakefront · $2.8M · renews Jul 2027</span></div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Target outcome</div>
+      <div class="val">Single federated EA, anchor Oct 2026 (Morgan Street renewal). Co-term Lakefront in 9-mo bridge. Buy out Roosevelt $0.3M early-term penalty.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Savings target</div>
+      <div class="val"><strong style="color: var(--good);">$1.0M – $1.4M annual</strong> (11–15% off $9.1M consolidated). Conservative scenario at IC.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Approvers</div>
+      <div class="val">Source signer: Marcus Rhee (OP-Tech). HoldCo CIOs consulted: Daniel Okonkwo · Edward Park · Yuki Ono. Procurement lead: TBD by Source module.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Competitive set</div>
+      <div class="val">Microsoft (incumbent). Stalking-horse: Google Workspace + GCP migration analysis (signal only, not viable for full Azure stack).</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Timeline</div>
+      <div class="val">Source events 6-month execution window: Jul 2026 RFP &middot; Aug-Sep negotiation &middot; Oct 2026 award &middot; Nov contract effective.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Evidence chain</div>
+      <div class="val"><span class="pill">Move 2 slate row #1 (Q3 2026)</span> <span class="pill">vendor_normalization cluster norm_001284</span> <span class="pill">finserv file 13 · 20</span> <span class="pill">corpus PE-MSA-FEDERATION-2024</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="envelope">
+  <div class="envelope-hd">
+    <div>
+      <h6>Envelope &middot; Workday consolidation</h6>
+      <div class="sub" style="font-size: 12px;">Source pre-fill from Move 2 slate row 3 &middot; conditional spawn</div>
+    </div>
+    <div class="id">L-S03</div>
+  </div>
+  <div class="envelope-fields">
+    <div class="ef-row">
+      <div class="key">Source stage</div>
+      <div class="val">Stage 0 &middot; <span class="pill">Held</span> — awaiting Roosevelt Wave 2 Workday stability ack.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Scope</div>
+      <div class="val">Federated Workday MSA: HCM Core, Talent, Payroll. Excludes Roosevelt's BambooHR legacy at 2 PortCos (separate migration track).</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Incumbents (3)</div>
+      <div class="val"><span class="pill">Morgan Street · $3.1M · 2 PortCos live</span><span class="pill">Roosevelt · $1.4M · Wave 1 live, Wave 2 in flight</span><span class="pill">Lakefront · $1.6M · all PortCos live</span></div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Target outcome</div>
+      <div class="val">Single MSA at $6.1M committed; tier discount + free implementation services for Roosevelt Wave 2.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Savings target</div>
+      <div class="val"><strong style="color: var(--good);">$0.6M – $0.9M annual</strong> + ~$0.5M Roosevelt implementation services (one-time).</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Approvers</div>
+      <div class="val">Source signer: Marcus Rhee (OP-Tech). HoldCo CHROs consulted: Jonathan Reese · Rachel Donovan · Sophia Mendel.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Risk note</div>
+      <div class="val">Roosevelt Wave 2 must stabilize before consolidation move. Sentinel will reopen this envelope when Roosevelt's adoption metric crosses 85% sustained.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Evidence chain</div>
+      <div class="val"><span class="pill">Move 2 slate row #3</span> <span class="pill">CHRO bundles for 3 HoldCos</span> <span class="pill">Roosevelt Workday Wave 1 KPI dashboard</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="envelope">
+  <div class="envelope-hd">
+    <div>
+      <h6>Envelope &middot; KPMG federated audit RFP</h6>
+      <div class="sub" style="font-size: 12px;">Source pre-fill from Move 2 slate row 2 &middot; PortCo cascade pending</div>
+    </div>
+    <div class="id">L-S04</div>
+  </div>
+  <div class="envelope-fields">
+    <div class="ef-row">
+      <div class="key">Source stage</div>
+      <div class="val">Stage 1 &middot; <span class="pill">Need definition</span> — pre-filled. Spawn unlocks when PortCo cascade clears.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Scope</div>
+      <div class="val">Federated Big-4 audit RFP. Statutory audit + advisory services for all 3 HoldCos + 24 PortCos. KPMG (incumbent) + Deloitte + EY + PwC competitive set.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Incumbents</div>
+      <div class="val"><span class="pill">KPMG @ all 3 HoldCos · $5.4M federated</span> &middot; engagement scopes harmonized</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Target outcome</div>
+      <div class="val">Single federated MSA with tiered statutory audit + à la carte advisory. Co-term across 3 HoldCos for FY2027 audit year.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Savings target</div>
+      <div class="val"><strong style="color: var(--good);">$0.5M – $0.8M annual</strong> (10–15%). Audit committee read-in scheduled.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Approvers</div>
+      <div class="val">Source signer: Devon Sterling (OP-Finance). HoldCo CFOs + audit committees consulted: Sarah Lindqvist · Priya Naidu · Marcus Andersen.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Risk note</div>
+      <div class="val">Auditor change carries quality-of-earnings risk in year 1. Audit committee veto power explicit. If KPMG retains, fee compression target shifts to 8–12%.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Evidence chain</div>
+      <div class="val"><span class="pill">Move 2 slate row #2</span> <span class="pill">GC bundles &middot; engagement letters</span> <span class="pill">corpus AUDIT-FED-2024</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="envelope">
+  <div class="envelope-hd">
+    <div>
+      <h6>Envelope &middot; cyber insurance two-carrier program</h6>
+      <div class="sub" style="font-size: 12px;">Source pre-fill from Move 2 slate row 6 &middot; cross-flag with Move 4</div>
+    </div>
+    <div class="id">L-S05</div>
+  </div>
+  <div class="envelope-fields">
+    <div class="ef-row">
+      <div class="key">Source stage</div>
+      <div class="val">Stage 1 &middot; <span class="pill">Need definition</span> — pre-filled.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Scope</div>
+      <div class="val">Federated cyber + D&amp;O insurance program. Two-carrier structure (split concentration risk) with single broker.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Incumbents (mixed)</div>
+      <div class="val"><span class="pill">Morgan Street · Beazley · $0.9M</span><span class="pill">Roosevelt · Beazley · $0.7M</span><span class="pill">Lakefront · AIG · $0.8M</span> &middot; broker: Aon (all 3 HoldCos)</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Target outcome</div>
+      <div class="val">Aon retains broker role at federated commission. Carriers split: Beazley primary on HoldCos 1+2, AIG primary on HoldCo 3; cross-coverage tower above $50M.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Savings target</div>
+      <div class="val"><strong style="color: var(--good);">$0.3M – $0.5M annual</strong> + carrier concentration risk reduced (Move 4 flag clears).</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Approvers</div>
+      <div class="val">Source signer: Priya Anand (L0 CCO). HoldCo CISOs consulted: Lena Hoffman + 2 others.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Cross-flag</div>
+      <div class="val">Move 4 concentration risk thread &middot; Devon notified when L-S05 closes that the Move 4 amber flag should clear.</div>
+    </div>
+    <div class="ef-row">
+      <div class="key">Evidence chain</div>
+      <div class="val"><span class="pill">Move 2 slate row #6</span> <span class="pill">Move 4 concentration_risk_flag.cyber_insurance</span> <span class="pill">GC bundles · policy schedules</span> <span class="pill">corpus INS-PE-FED-2025</span></div>
+    </div>
+  </div>
+</div>
+
+<p class="callout"><strong>Source module owns the lifecycle.</strong> Once spawned, the Source 11-stage lifecycle (Need → Strategy → Market → RFx → Evaluation → Negotiation → Selection → Award → Contract → Onboard → Realized) runs in the Source module. Move 2 is the originator and the realized-vs-projected reporter in the federated savings ledger, but Devon does not log into Source to manage execution unless he is the explicit signer at the Selection or Award gate.</p>
+
+<h2>9 &middot; Empty states</h2>
+<p class="sub">Each pre-bundle state is a designed surface, not blank. The empty states walk Devon from "I just landed in this tenant" to "I have a slate."</p>
+
+<div class="grid cols-2">
+  <div class="empty-state">
+    <h6>State 1 &middot; Pre-bundle-load</h6>
+    <p class="empty-detail">No CXO bundles ingested yet for any HoldCo. Move 2 cannot run. Direct Devon to the loader.</p>
+    <p class="empty-detail"><em>"Move 2 needs at least two HoldCos' CIO + CFO + GC bundles to find cross-HoldCo opportunities. Today: zero bundles loaded. Start with Morgan Street — its CFO bundle anchors Move 0 too."</em></p>
+    <div class="empty-action"><button class="btn btn-accent">Open CXO loader</button></div>
+  </div>
+
+  <div class="empty-state">
+    <h6>State 2 &middot; One HoldCo loaded · waiting for second</h6>
+    <p class="empty-detail">Morgan Street bundles in. Roosevelt and Lakefront pending. Move 2 still cannot rank cross-HoldCo because there is no "cross" yet.</p>
+    <p class="empty-detail"><em>"Morgan Street vendor inventory: 47 vendors, $52M IT spend baseline. Add a second HoldCo to start finding overlaps. Roosevelt CFO bundle takes 4–6 hrs; Lakefront is mature and fastest."</em></p>
+    <div class="empty-action"><button class="btn">Continue loading Roosevelt</button> <button class="btn btn-ghost">Show single-HoldCo vendor view</button></div>
+  </div>
+
+  <div class="empty-state">
+    <h6>State 3 &middot; Two HoldCos loaded · pre-normalization</h6>
+    <p class="empty-detail">Bundles ingested; vendor normalization running. The slate ranker needs normalized vendors before it can score.</p>
+    <p class="empty-detail"><em>"Vendor normalization in progress: 142 raw strings → ~104 normalized entities estimated. Auto-merge running on DUNS + Tax ID; 7 low-confidence matches will route to the review queue. ETA: 18 minutes. Sentinel will notify when ready."</em></p>
+    <div class="empty-action"><button class="btn btn-ghost">View normalization progress</button></div>
+  </div>
+
+  <div class="empty-state">
+    <h6>State 4 &middot; Normalization complete · pre-strategy</h6>
+    <p class="empty-detail">Vendors normalized but scoring rubric not yet approved. Devon must sign the rubric (Strategy phase) before slate ranks.</p>
+    <p class="empty-detail"><em>"Vendor normalization complete: 104 entities across 2 HoldCos · $42M consolidated spend &gt; $250K threshold. Next: review the scoring rubric draft (Sentinel prepared a default 0.45 / 0.30 / 0.25 weighting; edit and approve to enable slate)."</em></p>
+    <div class="empty-action"><button class="btn btn-accent">Review scoring rubric</button></div>
+  </div>
+
+  <div class="empty-state">
+    <h6>State 5 &middot; Slate built · awaiting Devon's first ranking session</h6>
+    <p class="empty-detail">All 3 HoldCos loaded, normalization clean, rubric approved, slate computed. Default rank order is Sentinel-suggested; Devon can adjust and override.</p>
+    <p class="empty-detail"><em>"Q3 slate ready: 12 rows above scoring threshold. Top 3 by score: MS EA · KPMG · Workday. Suggested approval action: approve top 4 for Source spawn, defer rows 5–6 to PortCo cascade, park rows 7+ to Q4."</em></p>
+    <div class="empty-action"><button class="btn btn-accent">Open slate</button> <button class="btn btn-ghost">Walk Sentinel through top 3 first</button></div>
+  </div>
+
+  <div class="empty-state">
+    <h6>State 6 &middot; Mid-quarter delta</h6>
+    <p class="empty-detail">Slate was approved at start of quarter; a new signal has arrived (renewal date moved, new vendor spend baseline, M&amp;A added a HoldCo). Show the delta, not a fresh slate.</p>
+    <p class="empty-detail"><em>"Since Jul 1: Workday Roosevelt Wave 2 adoption hit 92% sustained — Workday row score recomputes from 7.8 to 8.4 and now ranks #2. Sentinel suggests reopening the L-S03 envelope. Also: 2 new vendors crossed the $250K threshold (Datadog, Anthropic) and will appear on Q4 slate."</em></p>
+    <div class="empty-action"><button class="btn btn-accent">Approve Workday rank update</button> <button class="btn btn-ghost">Defer to Q4</button></div>
+  </div>
+</div>
+
+<h2>10 &middot; Build mapping</h2>
+<p class="sub">Component paths, data hooks, API routes. Codex picks up this section for Wave 2 spec L06.</p>
+
+<div class="build-map">
+  <h4>Component paths</h4>
+  <table>
+    <tr><th>Component</th><th>Path</th><th>Notes</th></tr>
+    <tr><td>Page route</td><td>src/app/(app)/tower/federated/moves/move-2/page.tsx</td><td>Server component &middot; auth-gated to L0 sponsor role</td></tr>
+    <tr><td>Slate canvas</td><td>src/components/moves/move-2/RationalizationSlate.tsx</td><td>Table-forward &middot; sortable headers &middot; row drill toggle</td></tr>
+    <tr><td>Slate row</td><td>src/components/moves/move-2/SlateRow.tsx</td><td>One row &middot; embeds drill panel state</td></tr>
+    <tr><td>Drill panel</td><td>src/components/moves/move-2/VendorDrillPanel.tsx</td><td>Lazy-loaded on row click</td></tr>
+    <tr><td>Sentinel rail</td><td>src/components/agents/SentinelRail.tsx</td><td>Shared with other Move surfaces &middot; <code>mode=&quot;move-2&quot;</code> for context</td></tr>
+    <tr><td>Scoring rubric editor</td><td>src/components/moves/move-2/RubricEditor.tsx</td><td>Strategy phase only &middot; OP-Finance + OP-Tech gated</td></tr>
+    <tr><td>Normalization view</td><td>src/components/moves/move-2/NormalizationClusters.tsx</td><td>Architecture phase &middot; review queue inline</td></tr>
+    <tr><td>Source envelope modal</td><td>src/components/moves/move-2/SpawnSourceModal.tsx</td><td>Reuses Source module's <code>EnvelopePreFillForm</code></td></tr>
+    <tr><td>PortCo cascade flow</td><td>src/components/moves/move-2/CascadeFlowPanel.tsx</td><td>Steps + ack state per row</td></tr>
+    <tr><td>Empty states</td><td>src/components/moves/move-2/EmptyStates.tsx</td><td>State 1-6 components keyed off <code>useMove2State()</code></td></tr>
+  </table>
+
+  <h4>Data hooks</h4>
+  <table>
+    <tr><th>Hook</th><th>Returns</th><th>Source</th></tr>
+    <tr><td>useMove2Slate(quarterId)</td><td>{ rows[], rubric, lastRefresh, totalProjected }</td><td>API: GET /api/moves/2/slate?q=2026Q3</td></tr>
+    <tr><td>useVendorDrill(vendorEntityId)</td><td>{ contracts[], renewalCal, perfSignals, recommendedPath, why }</td><td>API: GET /api/moves/2/vendor/:id</td></tr>
+    <tr><td>useNormalizationClusters()</td><td>{ clusters[], reviewQueue[] }</td><td>API: GET /api/moves/2/normalization</td></tr>
+    <tr><td>useScoringRubric()</td><td>{ weights, version, lockedAt, signers[] }</td><td>API: GET /api/moves/2/rubric</td></tr>
+    <tr><td>useSentinelRail({ mode: 'move-2', context })</td><td>{ messages[], send }</td><td>Shared agent broker &middot; context carries selected slate row id</td></tr>
+    <tr><td>useFederatedLedger({ moveId: 2 })</td><td>{ projected, realized, variance, perRow[] }</td><td>API: GET /api/tower/federated/ledger?move=2</td></tr>
+    <tr><td>usePortCoCascade(slateRowId)</td><td>{ acks[], openVetos[], allowSpawn }</td><td>API: GET /api/moves/2/cascade/:rowId</td></tr>
+    <tr><td>useMove2State()</td><td>One of: pre-bundle · one-hc · pre-norm · pre-strategy · slate-ready · mid-quarter-delta</td><td>Computed client-side from bundle/rubric/slate hooks</td></tr>
+  </table>
+
+  <h4>API routes</h4>
+  <table>
+    <tr><th>Method &middot; path</th><th>Purpose</th><th>Auth</th></tr>
+    <tr><td>GET /api/moves/2/slate</td><td>Compute / fetch current quarter slate</td><td>L0 sponsor or OP-Finance / OP-Tech</td></tr>
+    <tr><td>POST /api/moves/2/slate/refresh</td><td>Force re-compute (admin / mid-quarter trigger)</td><td>OP-Finance + OP-Tech</td></tr>
+    <tr><td>GET /api/moves/2/vendor/:id</td><td>Vendor drill bundle</td><td>L0 sponsor</td></tr>
+    <tr><td>GET /api/moves/2/normalization</td><td>Clusters + review queue</td><td>L0 sponsor + Procurement Ops (review)</td></tr>
+    <tr><td>POST /api/moves/2/normalization/:clusterId/resolve</td><td>Reviewer ack / split / re-merge</td><td>Procurement Ops</td></tr>
+    <tr><td>GET /api/moves/2/rubric</td><td>Current scoring rubric</td><td>L0 sponsor read</td></tr>
+    <tr><td>POST /api/moves/2/rubric</td><td>Update rubric (versioned)</td><td>OP-Finance + OP-Tech co-sign</td></tr>
+    <tr><td>POST /api/moves/2/slate/:rowId/approve</td><td>Approve row for Source spawn</td><td>OP-Finance or OP-Tech (per category)</td></tr>
+    <tr><td>POST /api/moves/2/slate/:rowId/spawn-source</td><td>Trigger Source envelope pre-fill + create Source event</td><td>Approver of the row &middot; cascade ack required</td></tr>
+    <tr><td>GET /api/moves/2/cascade/:rowId</td><td>PortCo cascade ack state</td><td>L0 sponsor + HoldCo CFOs</td></tr>
+    <tr><td>POST /api/moves/2/cascade/:rowId/ack</td><td>HoldCo CXO or PortCo CFO ack</td><td>Authenticated CXO of affected entity</td></tr>
+    <tr><td>POST /api/moves/2/cascade/:rowId/veto</td><td>Open veto with rationale</td><td>HoldCo CFO or PortCo CFO</td></tr>
+  </table>
+
+  <h4>Substrate notes</h4>
+  <ul>
+    <li><strong>Tenancy:</strong> all Move 2 reads require <code>holding_group_id</code> match on the user. L0 sponsor role unlocks aggregate-read across child tenants per the demo shortcut substrate. PortCo writes (ack/veto) scoped to that PortCo's <code>tenant_id</code>.</li>
+    <li><strong>Data plane:</strong> Bronze tables <code>vendor_raw</code> populated by loader; Silver table <code>vendor_entity</code> + <code>vendor_normalization_review</code>; Gold view <code>move_2_slate_v3</code> recomputed nightly + on rubric change.</li>
+    <li><strong>Agent broker boundary:</strong> Sentinel rail goes through <code>AgentContextBroker</code> contract — no direct EnterpriseDataRoom or broker / vector / graph imports from the page. Context payload includes selected row id + slate id; broker resolves the vendor + scoring evidence chain.</li>
+    <li><strong>Audit trail:</strong> every slate approval, rubric change, veto, and Source spawn writes to <code>move_2_audit_log</code> with actor, timestamp, payload diff. Tower Federated has a per-Move audit view.</li>
+    <li><strong>Source hand-off:</strong> spawn API calls <code>/api/source/events/create</code> with envelope payload; Source module is canonical owner from there. Move 2 listens on a Source webhook to write <code>realized_y1</code> into the federated ledger.</li>
+  </ul>
+
+  <h4>Test coverage targets (Wave 2 spec L06)</h4>
+  <ul class="checklist">
+    <li>Unit: scoring rubric math (worked examples for MS EA, CrowdStrike, Workday)</li>
+    <li>Unit: vendor normalization confidence thresholds (auto / review / split boundaries)</li>
+    <li>Behavior: slate row approve → cascade kick-off → Source spawn happy path</li>
+    <li>Behavior: PortCo veto blocks Source spawn until resolution</li>
+    <li>Behavior: mid-quarter delta surfaces but does not auto-recompute approved rows</li>
+    <li>Integration: L0 sponsor sees aggregate, HoldCo CXO sees only own data (RLS)</li>
+    <li>Integration: Sentinel rail responds with cited evidence chain on "why is X ranked Y"</li>
+    <li>E2E: Devon happy-path — open page, drill MS EA, approve, spawn L-S02, see ledger update</li>
+  </ul>
+</div>
+
+<div class="rule-break"></div>
+
+<h2>11 &middot; Quality bar &middot; the Devon test</h2>
+<div class="callout">
+  <div class="callout-hd">Quality bar checklist</div>
+  <p style="margin: 0 0 6px;">Devon opens this page and within 3 minutes:</p>
+  <ul class="checklist" style="margin: 4px 0;">
+    <li>Sees this quarter's top 10 consolidation opportunities ranked &middot; <em>top of canvas, slate is the first thing he sees</em></li>
+    <li>Understands the scoring at a glance &middot; <em>score bar per row + Sentinel can explain on hover or ask</em></li>
+    <li>Drills into the top opportunity and reads a one-paragraph "why" &middot; <em>why-panel inside the drill</em></li>
+    <li>Sees the projected savings range with corpus-cited benchmarks &middot; <em>savings band callout with citations</em></li>
+    <li>Spawns a Source event with one click &middot; <em>"Spawn Source RFP" big button at the bottom of the drill</em></li>
+  </ul>
+  <p style="margin: 8px 0 0;">If a procurement analyst at any mid-market PE fund opens this page and feels "this is my command center" — that's the target. Datadog-style table density, finserv-style precision, no demo-only handwaving.</p>
+</div>
+
+<p class="meta">End of Move 2 full-fidelity surface. Next in package: <code>09-business-case-pattern-setter.html</code> (Phase 4 full-fidelity, works for all 5 Moves), <code>10-mobilization-pattern-setter.html</code> (Phase 5 full-fidelity).</p>
+
+</div>
+</body>
+</html>

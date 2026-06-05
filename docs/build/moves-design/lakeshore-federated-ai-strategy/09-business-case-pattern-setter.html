@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lakeshore Federated · Phase 4 Business Case · Pattern Setter</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --paper-2: #f1ede2;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --ink-faint: #6b7280;
+    --rule: #e5e1d8;
+    --rule-strong: #d1cbbb;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --accent-deep: #1e3a8a;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --proj: #6d28d9;
+    --proj-soft: #ede9fe;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 56px 96px;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 32px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  h5 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); font-weight: 600; }
+  p, li { font-size: 15px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', Menlo, Consolas, monospace; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 20px; }
+  .card-hd { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-move { background: var(--good-soft); color: var(--good); }
+  .tag-proj { background: var(--proj-soft); color: var(--proj); }
+  .tag-real { background: var(--good-soft); color: var(--good); }
+  .tag-warn { background: var(--warn-soft); color: var(--warn); }
+  .tag-bad  { background: var(--bad-soft); color: var(--bad); }
+  .tag-neutral { background: #e5e7eb; color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; background: var(--paper-2); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+  .pill { display: inline-block; background: var(--paper); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 2px; }
+  .pill-accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 12px; background: white; border: 1px solid var(--rule); border-radius: 4px; }
+
+  /* Page composition wireframe */
+  .page {
+    background: white;
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    margin: 24px 0 32px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .page-hd {
+    padding: 18px 24px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .page-hd-left { display: flex; flex-direction: column; gap: 4px; }
+  .page-hd-title { font-family: var(--serif); font-size: 22px; }
+  .page-hd-sub { font-size: 12px; color: var(--ink-soft); }
+  .approver-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .approver-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; border: 1px solid var(--rule); border-radius: 999px;
+    padding: 4px 10px; font-size: 12px;
+  }
+  .approver-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); display: inline-block; }
+  .approver-chip.signed .dot { background: var(--good); }
+  .approver-chip.pending .dot { background: var(--warn); }
+  .page-body { padding: 0; }
+
+  /* Headline strip */
+  .headline {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.4fr; gap: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .headline-cell {
+    padding: 22px 24px;
+    border-right: 1px solid var(--rule);
+  }
+  .headline-cell:last-child { border-right: none; }
+  .headline-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 6px; font-weight: 600; }
+  .headline-figure {
+    font-family: var(--serif);
+    font-size: 36px;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .headline-figure .unit { font-size: 18px; color: var(--ink-soft); margin-left: 2px; }
+  .headline-band {
+    font-size: 12px; color: var(--ink-soft); margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .headline-callout { font-size: 13px; line-height: 1.4; }
+  .headline-callout strong { color: var(--accent-deep); }
+
+  /* Investment / benefits two-column body */
+  .ib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .ib-col { padding: 20px 24px; border-right: 1px solid var(--rule); }
+  .ib-col:last-child { border-right: none; }
+  .ib-col-hd { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .ib-col-hd h3 { margin: 0; font-size: 20px; }
+  .ib-col-total {
+    font-family: var(--serif); font-size: 22px; color: var(--ink);
+  }
+  .ib-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ib-table th, .ib-table td { padding: 6px 8px; }
+  .ib-table th { font-size: 11px; }
+  .ib-table tr.cat-hd td {
+    background: var(--paper-2);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+  }
+  .ib-table tr.cat-hd:first-child td { border-top: none; }
+  .ib-table tr.total-row td {
+    border-top: 1px solid var(--rule-strong);
+    font-weight: 600;
+  }
+  .ib-table td.line { font-size: 13px; }
+  .ib-table td.prov { font-size: 11px; color: var(--ink-soft); }
+  .ib-table td.num { font-variant-numeric: tabular-nums; }
+  .conf {
+    display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600;
+  }
+  .conf-h { background: var(--good-soft); color: var(--good); }
+  .conf-m { background: var(--warn-soft); color: var(--warn); }
+  .conf-l { background: var(--bad-soft); color: var(--bad); }
+
+  /* Assumption panel */
+  .assump-panel {
+    border-top: 1px solid var(--rule);
+    background: var(--paper-2);
+    padding: 20px 24px;
+  }
+  .assump-row {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; gap: 0;
+    align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .assump-row:last-child { border-bottom: none; }
+  .assump-row.hd { font-weight: 600; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .slider-mock {
+    background: white; border: 1px solid var(--rule); border-radius: 3px;
+    padding: 6px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px;
+    width: 100%;
+  }
+  .slider-bar { flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px; position: relative; }
+  .slider-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 2px; }
+  .slider-knob { position: absolute; top: -4px; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px var(--rule); }
+
+  /* Tornado chart */
+  .tornado {
+    padding: 20px 24px;
+    border-top: 1px solid var(--rule);
+  }
+  .tornado-row { display: grid; grid-template-columns: 220px 1fr 80px; align-items: center; gap: 12px; margin: 8px 0; font-size: 13px; }
+  .tornado-bar-wrap {
+    display: flex; align-items: center; position: relative; height: 20px;
+    border-left: 1px dashed var(--rule-strong);
+    margin-left: 50%;
+  }
+  .tornado-axis {
+    position: relative; height: 1px; background: var(--rule);
+  }
+  .tornado-bar {
+    height: 16px; background: var(--accent); border-radius: 0;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 6px; color: white; font-size: 11px; font-weight: 600;
+  }
+  .tornado-bar.neg { background: var(--bad); margin-right: auto; justify-content: flex-start; }
+  .tornado-bar.pos { background: var(--good); margin-left: auto; }
+  .tornado-track {
+    position: relative; height: 16px; width: 100%;
+  }
+  .tornado-track .neg, .tornado-track .pos {
+    position: absolute; top: 0; height: 100%;
+    display: flex; align-items: center; padding: 0 6px; color: white; font-size: 11px; font-weight: 600;
+  }
+  .tornado-track .neg { right: 50%; background: var(--bad); justify-content: flex-end; }
+  .tornado-track .pos { left: 50%; background: var(--good); justify-content: flex-start; }
+
+  /* Sentinel rail */
+  .sentinel-rail {
+    border-top: 1px solid var(--rule);
+    padding: 16px 24px;
+    background: white;
+  }
+  .sentinel-msg {
+    display: flex; gap: 12px; margin: 8px 0;
+    font-size: 13px;
+  }
+  .sentinel-avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white;
+    font-family: var(--serif); display: flex; align-items: center; justify-content: center; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .sentinel-msg.user .sentinel-avatar { background: var(--ink); }
+  .sentinel-body {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 8px 12px; flex: 1;
+  }
+  .sentinel-msg.user .sentinel-body { background: var(--accent-soft); border-color: transparent; }
+  .sentinel-cite {
+    display: inline-block; font-size: 11px; color: var(--ink-soft);
+    background: var(--paper-2); padding: 1px 6px; border-radius: 3px; margin: 2px 4px 0 0;
+  }
+
+  /* Provenance evidence panel */
+  .evidence-panel {
+    background: white; border: 1px solid var(--rule); border-radius: 4px;
+    margin: 12px 0; padding: 14px 16px;
+  }
+  .evidence-chain { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0; font-size: 12px; }
+  .evidence-step {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 6px 10px; font-family: var(--sans); font-size: 12px;
+    min-width: 0;
+  }
+  .evidence-step .src { color: var(--ink-soft); display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .evidence-step .val { color: var(--ink); font-weight: 600; }
+  .evidence-arrow { color: var(--ink-soft); font-size: 14px; }
+
+  /* Projected vs realized treatment */
+  .projvr {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    padding: 16px 0;
+  }
+  .projvr-card { padding: 14px; border-radius: 4px; }
+  .projvr-card.proj { background: var(--proj-soft); border: 1px dashed var(--proj); }
+  .projvr-card.real { background: var(--good-soft); border: 1px solid var(--good); }
+  .projvr-card h6 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .projvr-card.proj h6 { color: var(--proj); }
+  .projvr-card.real h6 { color: var(--good); }
+  .projvr-card .figure { font-family: var(--serif); font-size: 22px; color: var(--ink); }
+  .projvr-card .meta { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+
+  /* Approval flow */
+  .approval-strip {
+    display: flex; gap: 0; margin: 12px 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden;
+  }
+  .approval-step {
+    flex: 1; padding: 12px 14px; background: white; border-right: 1px solid var(--rule);
+    font-size: 12px;
+  }
+  .approval-step:last-child { border-right: none; }
+  .approval-step .who { font-weight: 600; font-size: 13px; }
+  .approval-step .state { color: var(--ink-soft); margin-top: 2px; }
+  .approval-step.complete { background: var(--good-soft); }
+  .approval-step.complete .state { color: var(--good); font-weight: 600; }
+  .approval-step.active { background: var(--warn-soft); }
+  .approval-step.active .state { color: var(--warn); font-weight: 600; }
+
+  /* Export tiles */
+  .export-tile {
+    background: white; border: 1px solid var(--rule); border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .export-tile.locked { border-style: dashed; color: var(--ink-soft); background: var(--paper-2); }
+  .export-tile .name { font-weight: 600; font-size: 14px; }
+  .export-tile .desc { font-size: 12px; color: var(--ink-soft); margin: 4px 0 8px; }
+  .export-tile .gate { font-size: 11px; color: var(--ink-soft); }
+  .export-tile .gate.ok { color: var(--good); }
+  .export-tile .gate.no { color: var(--bad); }
+
+  /* Move-flex table */
+  .flex-row { border-bottom: 1px solid var(--rule); padding: 16px 0; }
+  .flex-row h4 { margin: 0 0 6px; }
+  .flex-row .body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .flex-row .body .invest, .flex-row .body .benefit { padding: 10px 12px; background: var(--paper-2); border-radius: 3px; font-size: 13px; }
+  .flex-row .body .invest strong { color: var(--bad); }
+  .flex-row .body .benefit strong { color: var(--good); }
+
+  /* Squint test */
+  .squint {
+    filter: blur(6px);
+    background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 24px;
+    margin: 16px 0;
+  }
+  .squint-cap { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+
+  /* Build mapping */
+  .build-table th, .build-table td { font-size: 12px; }
+  .build-table code { font-size: 11px; }
+
+  .footnote { font-size: 12px; color: var(--ink-soft); margin-top: 12px; font-style: italic; }
+  .anchor-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .anchor {
+    background: var(--accent); color: white; padding: 3px 8px; border-radius: 3px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .anchor.alt { background: var(--proj); }
+  .anchor.warn { background: var(--warn); }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Phase 4 Business Case &middot; Pattern Setter</h1>
+<p class="sub">One canonical Phase 4 surface that applies to all five Moves (Move 0 Kyriba de-risk, Move 1 AI on top, Move 2 vendor consolidation, Move 3 federated IT, Move 4 federated risk). Worked example: <strong>Move 1 &middot; Morgan Street &middot; four AI capabilities post-Kyriba</strong>. CFO Sarah Lindqvist is the primary reader.</p>
+<p class="meta">Companion to <code>02-demo-spine-architecture.html</code> &sect;5 (Move 1 lifecycle) and <code>01-lakeshore-federated-structure-brief.md</code> (Morgan Street CXO bench, Kyriba status, finserv benchmarks). Visual + fidelity bar for Wave 3 spec L12.</p>
+
+<div class="legend">
+  <span><span class="tag-proj tag">Projected</span> Modeled · pre-mobilization</span>
+  <span><span class="tag-real tag">Realized</span> Actuals from Move 5 mobilization tracking</span>
+  <span><span class="conf conf-h">H</span> High confidence (corpus-cited + rate-card bound)</span>
+  <span><span class="conf conf-m">M</span> Medium (benchmark-anchored but estimated)</span>
+  <span><span class="conf conf-l">L</span> Low (assumption-heavy)</span>
+</div>
+
+<h2>Section 1 &middot; What makes a CFO-grade business case</h2>
+
+<p>The pattern this page sets is the antithesis of a deck with hopeful numbers. A CFO-grade business case is a model the CFO can stress-test, edit, sign, and defend in front of an audit committee. Five locked rules from the package README apply here:</p>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h5>1 &middot; No claim without provenance</h5>
+    <p>Every dollar on this page traces to either (a) a rate card line item, (b) the estimation engine&rsquo;s P50/P80/P95 envelope on a specific scope, (c) a Lakefront-realized benchmark from the operating sibling HoldCo, or (d) a finserv knowledge file with the page/range cited. Hover any number to see the chain. If a chain doesn&rsquo;t resolve, the cell renders as <code>needs-input</code>, not as a plausible-sounding guess.</p>
+  </div>
+  <div class="card">
+    <h5>2 &middot; Foundation-before-AI made financial</h5>
+    <p>Move 1&rsquo;s business case can only show <strong>realized</strong> benefits for AI capabilities whose Move 0 dependency gates are green. Capability lines render <em>projected</em> until the gate clears, then transition to <em>realized</em> as Move 5 mobilization posts actuals. The page literally refuses to model a $ benefit for Cap 1 (12-week forecast) while G4 (historical position reconstruction) is red.</p>
+  </div>
+  <div class="card">
+    <h5>3 &middot; No fake completion</h5>
+    <p>Realized figures only exist once Move 5 tracking has actuals to point at. Until then, the realized column is dashes. There is no aspirational state and no &ldquo;assumed to be tracking to plan&rdquo; bleed-through. Projected and realized are visually distinct (purple-dashed vs green-solid) so an audit committee can never confuse them.</p>
+  </div>
+  <div class="card">
+    <h5>4 &middot; HoldCo sovereignty in the numbers</h5>
+    <p>Morgan Street&rsquo;s business case shows Morgan Street&rsquo;s numbers. Lakefront&rsquo;s realized comparables are cited as <em>benchmark evidence</em> but never co-mingled into Morgan Street&rsquo;s totals. L0 sees the headline NPV and approval status; L0 does not see Morgan Street&rsquo;s raw rate-card line items unless granted. The <code>holding_group_id</code> substrate enforces this.</p>
+  </div>
+  <div class="card">
+    <h5>5 &middot; No demo-only assumption</h5>
+    <p>Every assumption (forecast accuracy lift, fraud detection precision, working capital unlock %, FTE redeployment rate) is either anchored in Lakefront-realized data, in a finserv knowledge file with citation, or in a corpus pattern with a confidence rating. The assumption panel lets the CFO override any of these with their own number, but the default cannot be a made-up figure.</p>
+  </div>
+  <div class="card">
+    <h5>What this page is not</h5>
+    <p>Not a forecast tool. Not an FP&amp;A model. Not a procurement RFP scorecard (Source handles that). It is a <strong>decision-grade business case</strong>: NPV + payback + sensitivities + provenance, sized for an audit committee to approve once and revisit each phase gate.</p>
+  </div>
+</div>
+
+<h2>Section 2 &middot; Page composition wireframe (full-fidelity)</h2>
+
+<p>The complete Phase 4 surface, parameterized for Move 1 Morgan Street. Every element below is what ships in spec L12. Read top to bottom: headline &rarr; investment + benefits side-by-side &rarr; editable assumptions &rarr; sensitivity &rarr; Sentinel rail &rarr; approval &rarr; export.</p>
+
+<div class="page">
+
+  <div class="page-hd">
+    <div class="page-hd-left">
+      <div class="page-hd-title">Move 1 &middot; AI on Top of Kyriba &middot; Business Case</div>
+      <div class="page-hd-sub">
+        Morgan Street Holdings Chicago &middot; Phase 4 of 5 &middot; v1.3 &middot; assumption-set snapshot <code>as-2026-06-05-1730</code>
+      </div>
+    </div>
+    <div class="approver-row">
+      <span class="approver-chip signed"><span class="dot"></span> CFO &middot; Sarah Lindqvist &middot; signed</span>
+      <span class="approver-chip pending"><span class="dot"></span> Audit Cmte Chair &middot; pending</span>
+      <span class="approver-chip pending"><span class="dot"></span> Group Treasurer &middot; reviewed, not signed</span>
+      <span class="tag tag-move">Phase 4 active</span>
+    </div>
+  </div>
+
+  <!-- Headline strip -->
+  <div class="headline">
+    <div class="headline-cell">
+      <div class="headline-label">3-year NPV &middot; P50</div>
+      <div class="headline-figure">$11.4<span class="unit">M</span></div>
+      <div class="headline-band">P80 $8.1M &middot; P95 $4.6M &middot; 12% discount &middot; <span class="tag-proj tag">projected</span></div>
+    </div>
+    <div class="headline-cell">
+      <div class="headline-label">Payback period</div>
+      <div class="headline-figure">14<span class="unit">mo</span></div>
+      <div class="headline-band">P80 19mo &middot; P95 27mo</div>
+    </div>
+    <div class="headline-cell">
+      <div class="headline-label">Investment (build + Y1 run)</div>
+      <div class="headline-figure">$3.8<span class="unit">M</span></div>
+      <div class="headline-band">P50 &middot; band $3.2M-$4.6M</div>
+    </div>
+    <div class="headline-cell">
+      <div class="headline-label">Key sensitivity</div>
+      <div class="headline-callout">
+        NPV swings <strong>$4.2M</strong> on the 12-week forecast accuracy assumption (85% &rarr; 75%). This is the dominant driver. Confidence rated <span class="conf conf-m">M</span> &mdash; anchored to Lakefront-realized 87%, but Morgan Street&rsquo;s data plane is less mature.
+      </div>
+    </div>
+  </div>
+
+  <!-- Investment + Benefits side by side -->
+  <div class="ib-grid">
+
+    <!-- INVESTMENT -->
+    <div class="ib-col">
+      <div class="ib-col-hd">
+        <h3>Investment</h3>
+        <div class="ib-col-total">P50 $3.8M &middot; P80 $4.6M &middot; P95 $5.8M</div>
+      </div>
+
+      <table class="ib-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th class="num">P50</th>
+            <th class="num">P80</th>
+            <th class="num">P95</th>
+            <th>Conf</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cat-hd"><td colspan="6">Build &middot; one-time &middot; Y1</td></tr>
+          <tr>
+            <td class="line">Lakehouse foundation &middot; Unity Catalog + Bronze/Silver/Gold tables for treasury data
+              <div class="prov">Sr Data Engineer $185/hr &times; 480hr + Cloud Architect $215/hr &times; 120hr</div>
+            </td>
+            <td class="num">$114K</td>
+            <td class="num">$138K</td>
+            <td class="num">$172K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Rate card RC-DE-01 &middot; estimation engine S-LAK-FND-v2</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 1 &middot; 12-week forecast model &middot; build
+              <div class="prov">ML Engineer $235/hr &times; 640hr + MLOps $195/hr &times; 240hr + Quant Treasury SME $310/hr &times; 160hr</div>
+            </td>
+            <td class="num">$249K</td>
+            <td class="num">$315K</td>
+            <td class="num">$408K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-ML-02 &middot; pattern CP-FCST-12W &middot; Lakefront effort 612hr realized</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 2 &middot; Payment anomaly + BEC fraud &middot; build
+              <div class="prov">ML Engineer $235/hr &times; 520hr + Security SME $290/hr &times; 200hr + HIL workflow eng $185/hr &times; 280hr</div>
+            </td>
+            <td class="num">$232K</td>
+            <td class="num">$285K</td>
+            <td class="num">$361K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-ML-02 &middot; pattern CP-ANO-WIRE &middot; Lakefront effort 540hr realized</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 3 &middot; Covenant headroom forecasting &middot; build
+              <div class="prov">ML Engineer $235/hr &times; 380hr + Capital Markets SME $340/hr &times; 200hr + Legal review (covenant clauses) $415/hr &times; 80hr</div>
+            </td>
+            <td class="num">$190K</td>
+            <td class="num">$246K</td>
+            <td class="num">$328K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">RC-ML-02 &middot; pattern CP-COV-FCST &middot; no direct Lakefront comparable, finserv file 14</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 4 &middot; Intercompany auto-reconciliation &middot; build
+              <div class="prov">ML Engineer $235/hr &times; 320hr + Controller-side SME $295/hr &times; 240hr + NetSuite integration $215/hr &times; 200hr</div>
+            </td>
+            <td class="num">$190K</td>
+            <td class="num">$232K</td>
+            <td class="num">$292K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-ML-02 &middot; pattern CP-IC-RECON &middot; Lakefront effort 720hr realized</td>
+          </tr>
+          <tr>
+            <td class="line">Model governance + HIL gating + monitoring scaffold
+              <div class="prov">MLOps $195/hr &times; 320hr + Risk SME $260/hr &times; 80hr + Audit-evidence pipeline $185/hr &times; 120hr</div>
+            </td>
+            <td class="num">$104K</td>
+            <td class="num">$128K</td>
+            <td class="num">$162K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-MLOPS-01 &middot; corpus pattern CP-MLGOV-FINSERV</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Run &middot; Y1 annual recurring</td></tr>
+          <tr>
+            <td class="line">Databricks lakehouse compute + storage (production)
+              <div class="prov">$8.4K/mo &times; 12mo &middot; sized to 4-cap workload + 24mo training data</div>
+            </td>
+            <td class="num">$101K</td>
+            <td class="num">$118K</td>
+            <td class="num">$148K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Databricks calc &middot; Lakefront actual benchmark $11.2K/mo at higher AUM</td>
+          </tr>
+          <tr>
+            <td class="line">Model monitoring + drift detection (SaaS)
+              <div class="prov">$2.4K/mo &times; 12mo &middot; per-model line item</div>
+            </td>
+            <td class="num">$29K</td>
+            <td class="num">$34K</td>
+            <td class="num">$42K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Vendor list price &middot; Lakefront contracted equivalent</td>
+          </tr>
+          <tr>
+            <td class="line">MLOps + on-call &middot; 0.5 FTE blended
+              <div class="prov">$215K loaded &times; 0.5</div>
+            </td>
+            <td class="num">$108K</td>
+            <td class="num">$118K</td>
+            <td class="num">$134K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-MLOPS-01 &middot; loaded-cost methodology</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Change &middot; training, comms, adoption</td></tr>
+          <tr>
+            <td class="line">Treasury team training (4-week cohort &times; 12 users)
+              <div class="prov">Training lead $165/hr &times; 80hr + materials + LMS</div>
+            </td>
+            <td class="num">$22K</td>
+            <td class="num">$26K</td>
+            <td class="num">$33K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-CHG-01 &middot; pattern CP-CHG-TRESY-COHORT</td>
+          </tr>
+          <tr>
+            <td class="line">CFO + Audit Cmte readout pack (build + quarterly)
+              <div class="prov">Sr PM $245/hr &times; 60hr + Comms $135/hr &times; 80hr</div>
+            </td>
+            <td class="num">$25K</td>
+            <td class="num">$30K</td>
+            <td class="num">$38K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">RC-PM-01 &middot; pattern CP-CHG-EXEC-PACK</td>
+          </tr>
+          <tr>
+            <td class="line">Adoption sprint (per Capability go-live)
+              <div class="prov">Change lead $185/hr &times; 80hr &times; 4 caps + materials</div>
+            </td>
+            <td class="num">$66K</td>
+            <td class="num">$78K</td>
+            <td class="num">$95K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">RC-CHG-01 &middot; pattern CP-CHG-ADOPTION-SPRINT &middot; Morgan Street user base unfamiliar with HIL workflows</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Contingency</td></tr>
+          <tr>
+            <td class="line">Estimation engine contingency &middot; P50 holds 0%, applied at P80/P95
+              <div class="prov">Engine adds 15% to P80, 30% to P95 per modernization pattern pack</div>
+            </td>
+            <td class="num">&mdash;</td>
+            <td class="num">$612K</td>
+            <td class="num">$1.51M</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Estimation engine v2 &middot; modernization pattern pack §3</td>
+          </tr>
+
+          <tr class="total-row">
+            <td class="line">Total investment Y1 (build + run + change)</td>
+            <td class="num">$1.43M</td>
+            <td class="num">$2.36M</td>
+            <td class="num">$3.72M</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td class="line">Y2 + Y3 run-rate (recurring)</td>
+            <td class="num">$238K/yr</td>
+            <td class="num">$270K/yr</td>
+            <td class="num">$324K/yr</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td class="line"><strong>3-year cost of program</strong></td>
+            <td class="num"><strong>$1.91M</strong></td>
+            <td class="num"><strong>$2.90M</strong></td>
+            <td class="num"><strong>$4.37M</strong></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="footnote">Headline figure ($3.8M) is the loaded total (build + change + Y1 run + Y1 contingency at P80 visibility); table breakdown reads cleaner per category. CFO sees both.</p>
+
+    </div>
+
+    <!-- BENEFITS -->
+    <div class="ib-col">
+      <div class="ib-col-hd">
+        <h3>Benefits (annual)</h3>
+        <div class="ib-col-total">P50 $6.1M &middot; P80 $4.4M &middot; P95 $2.7M</div>
+      </div>
+
+      <table class="ib-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th class="num">P50</th>
+            <th class="num">P80</th>
+            <th class="num">P95</th>
+            <th>Conf</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cat-hd"><td colspan="6">Hard savings &middot; cash</td></tr>
+          <tr>
+            <td class="line">Cap 2 &middot; BEC fraud avoidance &middot; expected loss avoided
+              <div class="prov">Annualized wire volume $1.4B &times; baseline BEC loss-rate 4.8bp &times; detection lift 72%</div>
+            </td>
+            <td class="num">$485K</td>
+            <td class="num">$340K</td>
+            <td class="num">$195K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">finserv file 07 BEC loss-rate range 3.2-6.4bp &middot; Lakefront detection lift 78% realized</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 3 &middot; Covenant breach avoidance &middot; expected penalty + repricing
+              <div class="prov">Breach probability without 8-wk lead 18% &middot; avoided once over 3yr horizon &middot; penalty + repricing exposure $1.2M per event</div>
+            </td>
+            <td class="num">$216K</td>
+            <td class="num">$144K</td>
+            <td class="num">$72K</td>
+            <td><span class="conf conf-l">L</span></td>
+            <td class="prov">finserv file 14 covenant breach incidence in $2-3B HoldCo cohort &middot; assumption-heavy</td>
+          </tr>
+          <tr>
+            <td class="line">Cap 4 &middot; IC auto-recon &middot; analyst-day cost compression
+              <div class="prov">Close cycle compressed 4 days &middot; 6 analysts &times; $385K loaded &middot; 12 closes/yr &middot; redeployment value 60%</div>
+            </td>
+            <td class="num">$222K</td>
+            <td class="num">$178K</td>
+            <td class="num">$133K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Loaded-cost methodology &middot; pattern CP-CLOSE-ACCEL &middot; Lakefront realized 3.8 days</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Efficiency &middot; FTE redeployment</td></tr>
+          <tr>
+            <td class="line">Treasury analyst time redeployed (reconciliation, manual position rolls)
+              <div class="prov">2.2 FTE redeployed to higher-leverage analytics &middot; $295K loaded</div>
+            </td>
+            <td class="num">$649K</td>
+            <td class="num">$519K</td>
+            <td class="num">$390K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Treasury workflow inventory loaded via CFO bundle &middot; pattern CP-FTE-REDEPLOY</td>
+          </tr>
+          <tr>
+            <td class="line">Controller-side time (IC reconciliation manual queries)
+              <div class="prov">0.6 FTE redeployed &middot; $265K loaded</div>
+            </td>
+            <td class="num">$159K</td>
+            <td class="num">$127K</td>
+            <td class="num">$95K</td>
+            <td><span class="conf conf-h">H</span></td>
+            <td class="prov">Controller workflow inventory &middot; pattern CP-FTE-REDEPLOY</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Working capital &middot; balance sheet</td></tr>
+          <tr>
+            <td class="line">Cap 1 &middot; 12-wk forecast accuracy 85% &rarr; WC unlock
+              <div class="prov">Current cash buffer $48M &middot; with 85% accuracy, buffer reducible to $36M &middot; $12M deployed at cost of capital 11%</div>
+            </td>
+            <td class="num">$1.32M</td>
+            <td class="num">$924K</td>
+            <td class="num">$528K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">Cost-of-capital from CFO bundle &middot; Lakefront-realized buffer reduction 28% &middot; finserv file 03</td>
+          </tr>
+          <tr>
+            <td class="line">DSO compression from improved AR visibility (downstream of Cap 1)
+              <div class="prov">Receivables $186M &middot; 1.4 day DSO compression &middot; cost of capital 11%</div>
+            </td>
+            <td class="num">$79K</td>
+            <td class="num">$56K</td>
+            <td class="num">$28K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">Pattern CP-DSO-FCST &middot; Lakefront DSO compression 1.7 days</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Risk reduction &middot; probability-weighted</td></tr>
+          <tr>
+            <td class="line">Banking fragmentation risk &middot; manual feed error losses
+              <div class="prov">Probability 12% of $400K-class error per year &middot; reduced 65% by automated recon</div>
+            </td>
+            <td class="num">$31K</td>
+            <td class="num">$21K</td>
+            <td class="num">$12K</td>
+            <td><span class="conf conf-l">L</span></td>
+            <td class="prov">Historical Morgan Street var-reports &middot; assumption-heavy</td>
+          </tr>
+          <tr>
+            <td class="line">FX exposure intra-day visibility (Cap 1 byproduct)
+              <div class="prov">FX P&amp;L volatility tightened &middot; 11bp on $84M offshore exposure</div>
+            </td>
+            <td class="num">$92K</td>
+            <td class="num">$64K</td>
+            <td class="num">$36K</td>
+            <td><span class="conf conf-m">M</span></td>
+            <td class="prov">Treasury policy doc loaded &middot; finserv file 16</td>
+          </tr>
+
+          <tr class="cat-hd"><td colspan="6">Cross-Move uplift</td></tr>
+          <tr>
+            <td class="line">Cap 4 unlocks Move 2 vendor consolidation reporting (IC clean &rarr; per-PortCo spend visible)
+              <div class="prov">Modest acceleration in Move 2 timeline &middot; 0.15 of Move 2 benefits attributable</div>
+            </td>
+            <td class="num">$135K</td>
+            <td class="num">$95K</td>
+            <td class="num">$55K</td>
+            <td><span class="conf conf-l">L</span></td>
+            <td class="prov">Attribution methodology &middot; corpus pattern CP-XMOVE-ATTRIB &middot; conservative</td>
+          </tr>
+
+          <tr class="total-row">
+            <td class="line"><strong>Total annual benefits (steady state, Y2+)</strong></td>
+            <td class="num"><strong>$3.40M</strong></td>
+            <td class="num"><strong>$2.47M</strong></td>
+            <td class="num"><strong>$1.54M</strong></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td class="line">Y1 benefits (ramp &middot; 45% of steady state)</td>
+            <td class="num">$1.53M</td>
+            <td class="num">$1.11M</td>
+            <td class="num">$0.69M</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td class="line"><strong>3-year cumulative benefits</strong></td>
+            <td class="num"><strong>$8.34M</strong></td>
+            <td class="num"><strong>$6.05M</strong></td>
+            <td class="num"><strong>$3.77M</strong></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="footnote">Y2/Y3 inflation +2% on operating benefits; cost-of-capital held constant at 11% (Lindqvist&rsquo;s decision). All categories carry independent confidence ratings; aggregating across confidences is a known statistical sin but CFOs read it; we render with caveat.</p>
+
+    </div>
+  </div>
+
+  <!-- ASSUMPTION PANEL -->
+  <div class="assump-panel">
+    <h4>Editable assumption panel &mdash; CFO can override; NPV recomputes live</h4>
+    <p class="meta" style="margin: 0 0 12px;">Defaults are from Lakefront-realized or finserv knowledge files (cited). Override sliders carry a yellow flag in the export so audit cmte sees where the CFO diverged from the modeled baseline.</p>
+
+    <div class="assump-row hd">
+      <span>Assumption</span><span>Default (source)</span><span>Override</span><span>NPV impact</span><span>Snapshot status</span>
+    </div>
+    <div class="assump-row">
+      <span>12-wk forecast accuracy %</span>
+      <span>85% <span class="sentinel-cite">Lakefront realized 87%</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 70%;"></div><div class="slider-knob" style="left: 70%;"></div></div><span>85%</span></div></span>
+      <span>&Delta; &plusmn;$4.2M per 10pp</span>
+      <span><span class="tag-neutral tag">baseline</span></span>
+    </div>
+    <div class="assump-row">
+      <span>Working capital buffer reduction %</span>
+      <span>25% <span class="sentinel-cite">Lakefront 28%</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 50%;"></div><div class="slider-knob" style="left: 50%;"></div></div><span>25%</span></div></span>
+      <span>&Delta; &plusmn;$1.6M per 5pp</span>
+      <span><span class="tag-neutral tag">baseline</span></span>
+    </div>
+    <div class="assump-row">
+      <span>BEC fraud detection lift %</span>
+      <span>72% <span class="sentinel-cite">finserv 07</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 60%;"></div><div class="slider-knob" style="left: 60%;"></div></div><span>60%</span></div></span>
+      <span>&Delta; &minus;$98K</span>
+      <span><span class="tag-warn tag">CFO override</span></span>
+    </div>
+    <div class="assump-row">
+      <span>Covenant breach probability without warning</span>
+      <span>18% <span class="sentinel-cite">finserv 14</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 40%;"></div><div class="slider-knob" style="left: 40%;"></div></div><span>12%</span></div></span>
+      <span>&Delta; &minus;$72K</span>
+      <span><span class="tag-warn tag">CFO override</span></span>
+    </div>
+    <div class="assump-row">
+      <span>Treasury FTE redeployed (vs reduced)</span>
+      <span>2.2 FTE &middot; 100% redeployed <span class="sentinel-cite">policy</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 100%;"></div><div class="slider-knob" style="left: 100%;"></div></div><span>100%</span></div></span>
+      <span>&Delta; $0 (HoldCo policy: redeploy not RIF)</span>
+      <span><span class="tag-neutral tag">baseline</span></span>
+    </div>
+    <div class="assump-row">
+      <span>Cost of capital (discount rate)</span>
+      <span>11% <span class="sentinel-cite">CFO bundle</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 55%;"></div><div class="slider-knob" style="left: 55%;"></div></div><span>11%</span></div></span>
+      <span>&Delta; &plusmn;$540K per 1pp</span>
+      <span><span class="tag-neutral tag">baseline</span></span>
+    </div>
+    <div class="assump-row">
+      <span>Ramp curve Y1 vs steady state</span>
+      <span>45% Y1 &middot; 100% Y2+ <span class="sentinel-cite">CP-ML-RAMP</span></span>
+      <span><div class="slider-mock"><div class="slider-bar"><div class="slider-fill" style="width: 35%;"></div><div class="slider-knob" style="left: 35%;"></div></div><span>35%</span></div></span>
+      <span>&Delta; &minus;$210K Y1</span>
+      <span><span class="tag-warn tag">CFO override</span></span>
+    </div>
+  </div>
+
+  <!-- TORNADO -->
+  <div class="tornado">
+    <h4>Sensitivity &middot; top 5 drivers of NPV variance (tornado, NPV at P50)</h4>
+    <p class="meta" style="margin: 0 0 12px;">Each bar shows NPV swing when that single assumption moves to its P95 (left, red) or P15 (right, green) value, holding everything else constant. The forecast accuracy bar dominates; this is the load-bearing assumption to defend.</p>
+
+    <div class="tornado-row">
+      <span>Forecast accuracy 75% &harr; 90%</span>
+      <span class="tornado-track"><span class="neg" style="width: 40%; right: 50%;">&minus;$4.2M</span><span class="pos" style="width: 38%; left: 50%;">+$3.8M</span></span>
+      <span>&Delta; $8.0M</span>
+    </div>
+    <div class="tornado-row">
+      <span>WC buffer reduction 18% &harr; 32%</span>
+      <span class="tornado-track"><span class="neg" style="width: 24%; right: 50%;">&minus;$2.1M</span><span class="pos" style="width: 24%; left: 50%;">+$2.1M</span></span>
+      <span>&Delta; $4.2M</span>
+    </div>
+    <div class="tornado-row">
+      <span>Build effort variance (P80 vs P50)</span>
+      <span class="tornado-track"><span class="neg" style="width: 16%; right: 50%;">&minus;$1.4M</span><span class="pos" style="width: 6%; left: 50%;">+$0.5M</span></span>
+      <span>&Delta; $1.9M</span>
+    </div>
+    <div class="tornado-row">
+      <span>Cost of capital 9% &harr; 13%</span>
+      <span class="tornado-track"><span class="neg" style="width: 12%; right: 50%;">&minus;$1.1M</span><span class="pos" style="width: 12%; left: 50%;">+$1.1M</span></span>
+      <span>&Delta; $2.2M</span>
+    </div>
+    <div class="tornado-row">
+      <span>Cap 3 covenant breach prob 8% &harr; 24%</span>
+      <span class="tornado-track"><span class="neg" style="width: 8%; right: 50%;">&minus;$0.7M</span><span class="pos" style="width: 8%; left: 50%;">+$0.7M</span></span>
+      <span>&Delta; $1.4M</span>
+    </div>
+  </div>
+
+  <!-- SENTINEL RAIL -->
+  <div class="sentinel-rail">
+    <h4>Sentinel chat &middot; CFO interrogates assumptions</h4>
+
+    <div class="sentinel-msg user">
+      <div class="sentinel-avatar">SL</div>
+      <div class="sentinel-body">
+        Why is forecast accuracy assumed at 85%? Our analysts say Lakefront has 5x our position-data clean-history. We&rsquo;re going to look ridiculous defending 85% to the audit cmte.
+      </div>
+    </div>
+    <div class="sentinel-msg">
+      <div class="sentinel-avatar">S</div>
+      <div class="sentinel-body">
+        Honest answer: you&rsquo;re right to push on this. The 85% default sits between two anchors:
+        <ul style="margin: 6px 0 6px 18px; padding: 0;">
+          <li>Lakefront-realized accuracy at month 12 post-go-live: 87% <span class="sentinel-cite">CP-FCST-12W-LAKEFRONT-2024</span></li>
+          <li>Cohort floor for HoldCos with <24 months clean position data: 73-78% <span class="sentinel-cite">finserv file 03 p.18</span></li>
+        </ul>
+        Morgan Street currently has &lt;90 days clean data (Move 0 G4 is red). The 85% assumption is contingent on G4 hitting amber by month 6 of Move 1 mobilization. If G4 stays red, the right model default is 75% &mdash; which swings NPV from $11.4M to $7.2M. I can re-lock with 78% if you want the more conservative audit posture and re-flag G4 as the hard prerequisite.
+      </div>
+    </div>
+    <div class="sentinel-msg user">
+      <div class="sentinel-avatar">SL</div>
+      <div class="sentinel-body">
+        Re-lock at 78%. Flag G4 as hard prerequisite in mobilization. Recompute and snapshot.
+      </div>
+    </div>
+    <div class="sentinel-msg">
+      <div class="sentinel-avatar">S</div>
+      <div class="sentinel-body">
+        Done. New snapshot <code>as-2026-06-05-1748</code> with forecast accuracy 78%. NPV (P50) now <strong>$8.6M</strong>, payback <strong>17mo</strong>. G4 marked hard prerequisite in Move 5 mobilization. CFO&rsquo;s override is recorded; baseline stays viewable for audit comparison.
+      </div>
+    </div>
+  </div>
+
+</div> <!-- /page -->
+
+<h2>Section 3 &middot; The per-line provenance discipline</h2>
+
+<p>Every $ figure on the page is clickable; clicking opens an evidence chain panel that resolves the number back to its source artifacts. Three worked examples below.</p>
+
+<h3>Example 1 &middot; A rate-card-bound build cost (high confidence)</h3>
+<div class="evidence-panel">
+  <div style="font-weight: 600; font-size: 14px;">Cap 1 &middot; 12-week forecast model &middot; build &middot; P50 $249K</div>
+  <div class="evidence-chain">
+    <div class="evidence-step">
+      <span class="src">Rate card</span>
+      <span class="val">RC-ML-02 &middot; ML Eng $235/hr</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Effort estimate</span>
+      <span class="val">640hr ML + 240hr MLOps + 160hr SME</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Engine</span>
+      <span class="val">S-LAK-FCST-v2 P50 envelope</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Benchmark</span>
+      <span class="val">Lakefront actual 612hr</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Result</span>
+      <span class="val">$249K P50</span>
+    </div>
+  </div>
+  <p class="footnote" style="margin: 8px 0 0;">Confidence H: every step resolves to a citable artifact. Edits to effort estimate propagate; rate card is immutable until renegotiated. Audit cmte can drill all the way to the rate card line item.</p>
+</div>
+
+<h3>Example 2 &middot; A benchmark-anchored benefit (medium confidence)</h3>
+<div class="evidence-panel">
+  <div style="font-weight: 600; font-size: 14px;">Cap 1 &middot; 12-wk forecast accuracy 85% &rarr; WC unlock &middot; P50 $1.32M</div>
+  <div class="evidence-chain">
+    <div class="evidence-step">
+      <span class="src">Loaded</span>
+      <span class="val">Current cash buffer $48M (CFO bundle)</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Assumption</span>
+      <span class="val">85% forecast accuracy</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Benchmark</span>
+      <span class="val">Lakefront WC reduction 28%</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Engine</span>
+      <span class="val">$48M &times; 25% = $12M unlocked</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Cost of capital</span>
+      <span class="val">11% (CFO loaded)</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Result</span>
+      <span class="val">$1.32M annual</span>
+    </div>
+  </div>
+  <p class="footnote" style="margin: 8px 0 0;">Confidence M: two steps are anchored to Lakefront-realized (concrete) but the 25% WC reduction default is conservatively below Lakefront&rsquo;s 28%; the CFO can override either input. Provenance still resolves end to end.</p>
+</div>
+
+<h3>Example 3 &middot; A probability-weighted risk-reduction benefit (low confidence)</h3>
+<div class="evidence-panel">
+  <div style="font-weight: 600; font-size: 14px;">Cap 3 &middot; Covenant breach avoidance &middot; P50 $216K</div>
+  <div class="evidence-chain">
+    <div class="evidence-step">
+      <span class="src">Benchmark</span>
+      <span class="val">finserv file 14 &middot; 18% breach prob w/o 8wk lead</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Exposure</span>
+      <span class="val">Penalty + repricing $1.2M per event (loaded covenant docs)</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Horizon</span>
+      <span class="val">Avoided once over 3yr</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Annualization</span>
+      <span class="val">$1.2M / 3 &times; 0.54 lift factor</span>
+    </div>
+    <span class="evidence-arrow">&rarr;</span>
+    <div class="evidence-step">
+      <span class="src">Result</span>
+      <span class="val">$216K annual</span>
+    </div>
+  </div>
+  <p class="footnote" style="margin: 8px 0 0;">Confidence L: the 18% probability is from a cohort, not Morgan Street-specific; no Lakefront comparable. Surface tags as <span class="conf conf-l">L</span>; CFO routinely overrides to 8-12% in their sign-off snapshot. Page records the override and the rationale.</p>
+</div>
+
+<p>Well-formed provenance means: every step has a named source, every step is a hop the audit cmte can follow, and the engine can recompute end-to-end if any node is edited. Mal-formed provenance (a $ figure with no chain, or a step labelled &ldquo;industry standard&rdquo; with no citation) is refused at write time; the cell renders as <code>needs-input</code> and is flagged in the export.</p>
+
+<h2>Section 4 &middot; The &ldquo;no realized-savings&rdquo; rule made visual</h2>
+
+<p>Phase 4 is projected only. Realized fills in once Move 5 mobilization tracks actuals. The surface distinguishes them with deliberately incompatible visual treatments &mdash; an audit cmte cannot conflate the two even glancing.</p>
+
+<div class="projvr">
+  <div class="projvr-card proj">
+    <h6>Projected (Phase 4 output)</h6>
+    <div class="figure">$3.40M / yr</div>
+    <div class="meta">Purple dashed border &middot; P50/P80/P95 band visible &middot; assumption snapshot attached &middot; sourced from this page&rsquo;s model</div>
+  </div>
+  <div class="projvr-card real">
+    <h6>Realized (Phase 5 actuals)</h6>
+    <div class="figure">&mdash; not yet</div>
+    <div class="meta">Green solid border &middot; only populates from Move 5 mobilization tracking &middot; no projected values may &ldquo;promote&rdquo; into this column without an actual measurement</div>
+  </div>
+</div>
+
+<p>Once Move 5 lands actuals (e.g., Cap 1 has 8 weeks of operation in production), the realized column populates per-capability. Variance vs projected is then visible. The federated savings ledger on Tower (per <code>02</code> &sect;9) reads from the realized column only; L0 sponsor never sees projected as if it were achieved.</p>
+
+<h3>Variance treatment at Phase 5 hand-off</h3>
+<table>
+  <tr><th>State</th><th>Projected column</th><th>Realized column</th><th>What audit cmte sees</th></tr>
+  <tr><td>Pre-mobilization</td><td>P50/P80/P95 visible</td><td>Dashes</td><td>Decision-grade business case &middot; no actuals claimed</td></tr>
+  <tr><td>Mid-mobilization (Cap 1 live, Cap 2-4 in flight)</td><td>Projected total stays visible</td><td>Per-Cap actuals where measured</td><td>Mixed: projected for in-flight caps, realized for live caps &middot; variance per capability</td></tr>
+  <tr><td>Post-go-live all caps (steady state Y2)</td><td>Frozen as baseline assumption-set</td><td>Live actuals, refreshed monthly</td><td>Variance vs baseline &middot; assumption-set diff if CFO updates</td></tr>
+</table>
+
+<h2>Section 5 &middot; P50 / P80 / P95 bands &mdash; what they mean financially</h2>
+
+<p>The estimation engine emits three points per line item, not a single point. They are calibrated against Lakefront-realized + finserv corpus + modernization pattern pack benchmarks.</p>
+
+<div class="grid cols-3">
+  <div class="card">
+    <h5>P50 &middot; modal estimate</h5>
+    <p>The most likely outcome. 50% probability of overrun, 50% of under. Use this for the headline number when presenting to IC. Treat as the operating plan target.</p>
+  </div>
+  <div class="card">
+    <h5>P80 &middot; commit-plan estimate</h5>
+    <p>80% confidence the true cost will be at or below this. Use this for budget commits and cash reserves. Most CFOs sign cash commitments to P80.</p>
+  </div>
+  <div class="card">
+    <h5>P95 &middot; risk-reserve estimate</h5>
+    <p>95% confidence ceiling. Use this for audit cmte tail-risk discussion and for setting risk reserves. Crossing P95 is the trigger to re-baseline the case.</p>
+  </div>
+</div>
+
+<h3>How the engine produces the bands</h3>
+<ol>
+  <li><strong>Base effort</strong> from scope decomposition (artifact contracts &sect;3 estimation engine).</li>
+  <li><strong>Comparable lookup</strong> against Lakefront-realized (where available) and finserv corpus patterns. Comparables tighten the variance interval.</li>
+  <li><strong>Risk multipliers</strong> for unknowns: data plane maturity, SME availability, SI familiarity, integration novelty. Each multiplies P80 and P95 independently of P50.</li>
+  <li><strong>Modernization pattern pack contingency</strong> applied at P80 (15%) and P95 (30%) as the residual.</li>
+</ol>
+
+<h3>How the CFO reads them</h3>
+<p>A wide band (P50 vs P95 &gt; 2.5x) means assumption-heavy &mdash; expect to revisit at the next phase gate. A tight band (P50 vs P95 &lt; 1.5x) means well-anchored (typically by Lakefront-realized comparables). Sarah Lindqvist&rsquo;s default posture for Move 1: <em>sign to P50 on benefits, commit to P80 on investment, hold P95 in reserve, re-baseline at Move 5 mid-mobilization checkpoint.</em></p>
+
+<h2>Section 6 &middot; Approval flow</h2>
+
+<p>Approval threads through the substrate with a snapshot of the assumption set, not just the headline. Later re-runs show diff vs the signed baseline.</p>
+
+<div class="approval-strip">
+  <div class="approval-step complete">
+    <div class="who">Group Treasurer</div>
+    <div class="state">Reviewed &middot; 2026-06-04 14:12</div>
+  </div>
+  <div class="approval-step complete">
+    <div class="who">CFO Sarah Lindqvist</div>
+    <div class="state">Signed &middot; 2026-06-05 17:48 &middot; assumption snapshot <code>as-2026-06-05-1748</code></div>
+  </div>
+  <div class="approval-step active">
+    <div class="who">Audit Cmte Chair</div>
+    <div class="state">Pending &middot; routed 2026-06-05 17:48</div>
+  </div>
+  <div class="approval-step">
+    <div class="who">L0 visibility</div>
+    <div class="state">Aggregate only &middot; investment &gt; $5M? No &middot; L0 sign-off not required</div>
+  </div>
+</div>
+
+<h3>What the snapshot captures</h3>
+<ul>
+  <li>Every assumption value (baseline or overridden), with the source citation if baseline and the CFO rationale string if overridden</li>
+  <li>Every line item P50/P80/P95 at sign-off time</li>
+  <li>Every linked rate card version (rate cards are immutable per version)</li>
+  <li>Provenance chain hashes &mdash; if a source document changes after sign-off, the chain shows a delta on next view</li>
+  <li>Headline NPV/payback/headline investment</li>
+</ul>
+
+<h3>Re-run after sign-off</h3>
+<p>When Phase 5 mobilization lands actuals or scope shifts, the CFO can re-run the case. The new snapshot shows: <em>this is what changed from your signed baseline &middot; here is the new headline &middot; here is the diff per assumption &middot; do you want to re-sign the baseline or annotate the variance?</em> The approval chain handles re-routing automatically; if scope crosses a threshold (e.g., investment moves from &lt;$5M to &gt;$5M), L0 sponsor approval is added to the chain.</p>
+
+<h2>Section 7 &middot; Export &mdash; DOCX, XLSX, PDF</h2>
+
+<p>Three exports for three audiences. All three gated on artifact completeness per the &ldquo;no export of nothing&rdquo; rule from Source design.</p>
+
+<div class="grid cols-3">
+  <div class="export-tile">
+    <div class="name">DOCX &middot; Board pack narrative</div>
+    <div class="desc">Headline NPV, executive summary, per-Capability narrative (1 page each), investment + benefit summary tables, sensitivity narrative, assumptions appendix.</div>
+    <div class="gate ok">All sections present &middot; export available</div>
+  </div>
+  <div class="export-tile">
+    <div class="name">XLSX &middot; Full finance model</div>
+    <div class="desc">Every line item with formulas, every assumption as named ranges, NPV cell live to assumption overrides, P50/P80/P95 columns per line, three-year projection tab, sensitivity tab driving tornado.</div>
+    <div class="gate ok">All sources resolved &middot; export available</div>
+  </div>
+  <div class="export-tile">
+    <div class="name">PDF &middot; IC decision page</div>
+    <div class="desc">Single page. Headline NPV. Payback. Investment. Top 5 sensitivity drivers. Approver chips with snapshot ID. CFO sign-off ledger. Designed for a 90-second IC read.</div>
+    <div class="gate ok">All approver chips populated &middot; export available</div>
+  </div>
+  <div class="export-tile locked">
+    <div class="name">DOCX &middot; Realized-vs-projected variance memo</div>
+    <div class="desc">Quarterly variance narrative after go-live. Locked until Move 5 actuals exist.</div>
+    <div class="gate no">Locked &middot; Phase 5 actuals required</div>
+  </div>
+  <div class="export-tile locked">
+    <div class="name">XLSX &middot; Realized-vs-projected variance model</div>
+    <div class="desc">Live variance per capability, model recalibration suggestions, assumption-set re-baseline recommendations.</div>
+    <div class="gate no">Locked &middot; Phase 5 actuals required</div>
+  </div>
+  <div class="export-tile">
+    <div class="name">JSON &middot; Audit evidence bundle</div>
+    <div class="desc">Machine-readable evidence chains for every line, snapshot ID, all provenance hashes, approver signatures. For audit cmte&rsquo;s GRC system ingestion.</div>
+    <div class="gate ok">All evidence chains resolved &middot; export available</div>
+  </div>
+</div>
+
+<h3>The &ldquo;no export of nothing&rdquo; gating</h3>
+<p>Each export checks artifact completeness before generating. A DOCX board pack with a missing capability narrative or unresolved provenance chain refuses to export and surfaces what to fix. This prevents the failure mode of exporting a polished-looking deck that hides red cells inside. Pattern inherited from the Source module&rsquo;s export discipline.</p>
+
+<h2>Section 8 &middot; How this template flexes per Move</h2>
+
+<p>The page composition (headline strip &middot; investment + benefits side-by-side &middot; editable assumptions &middot; sensitivity &middot; Sentinel rail &middot; approval &middot; export) is one template. The line items, assumption defaults, and benefit categories parameterize per Move. Below: how each Move&rsquo;s Phase 4 instance differs.</p>
+
+<div class="flex-row">
+  <h4>Move 0 &middot; Kyriba De-risk</h4>
+  <div class="body">
+    <div class="invest"><strong>Investment</strong> = per-gate remediation across G1-G6. Build = banking H2H integration ($/bank &times; 10), ERP feed audit (per-source engineer days), entity registry load (legal + tax SME hrs), historical position reconstruction (analyst-weeks), adoption sprint (change lead-weeks), IC auto-recon (built once, becomes Cap 4 in Move 1 &mdash; rolled forward as enabler not double-counted).</div>
+    <div class="benefit"><strong>Benefits</strong> = close acceleration ($/day &times; analyst loaded cost &times; closes/yr), WC unlock (buffer reduction once positions are clean), fraud avoidance baseline (pre-AI), covenant breach avoidance baseline. Realized benefits start as Wave 1 banks go H2H and ERP variance closes; the realized column fills in chronologically per gate.</div>
+  </div>
+  <p class="meta">Confidence posture: Move 0 is high-confidence on investment (rate cards bound), medium on benefits (benchmark-anchored to Lakefront mature deployment). NPV/payback typically tighter band than Move 1 because no AI model risk.</p>
+</div>
+
+<div class="flex-row">
+  <h4>Move 1 &middot; AI on top of Kyriba (worked example above)</h4>
+  <div class="body">
+    <div class="invest"><strong>Investment</strong> = build (4 capabilities) + run (lakehouse + monitoring + MLOps FTE) + change (training, comms, adoption per capability). Contingency 15%/30% at P80/P95.</div>
+    <div class="benefit"><strong>Benefits</strong> = Cap 1 WC unlock + DSO; Cap 2 BEC fraud avoidance + FTE redeploy; Cap 3 covenant breach avoidance; Cap 4 close acceleration + controller FTE redeploy + cross-Move uplift to Move 2.</div>
+  </div>
+</div>
+
+<div class="flex-row">
+  <h4>Move 2 &middot; Cross-HoldCo vendor consolidation</h4>
+  <div class="body">
+    <div class="invest"><strong>Investment</strong> = sourcing program cost (procurement-led; Source events L-S02/S03/S04/S05 cost-to-execute aggregated), transition cost per consolidation (legal MSA work, contract notifications, transition SI fees if any), change management for switching HoldCos to consolidated agreement.</div>
+    <div class="benefit"><strong>Benefits</strong> = consolidated-rate negotiated discount &times; renewal-date-weighted (multi-year horizon means some savings don&rsquo;t hit until contract turn), category-by-category. Per-category benefits cited to <code>01</code> structure brief table (Microsoft EA $1.0-1.4M, Workday $0.6-0.9M, etc.) plus finserv file 13 + 20 benchmarks.</div>
+  </div>
+  <p class="meta">Distinguishing features vs Move 1: confidence on benefit side often higher than Move 1 (vendor concessions are well-benchmarked); confidence on investment side often lower (sourcing program effort variable). Approver = L0 OP-Finance Devon Sterling; HoldCo CFOs consulted not signing.</p>
+</div>
+
+<div class="flex-row">
+  <h4>Move 3 &middot; Federated IT strategy + AI marketplace</h4>
+  <div class="body">
+    <div class="invest"><strong>Investment</strong> = federated rollout cost (one shared SI engagement vs three solo); shared architecture standardization (Lakefront landing zone fork-and-customize for 2 HoldCos); federated AI governance setup; marketplace operating cost.</div>
+    <div class="benefit"><strong>Benefits</strong> = implementation cost compression (Gartner-cited 20-30% per platform); ongoing license consolidation (rolls into Move 2 if vendor-overlapping); accelerated AI capability deployment (Lakefront&rsquo;s 3 production workloads forked to siblings &mdash; saves 60-80% of POC cost per).</div>
+  </div>
+  <p class="meta">Per-HoldCo benefit attribution is touchier here; the model surfaces per-HoldCo allocation as an editable assumption (default: equal split or proportional-to-revenue). L0 OP-Tech Marcus Rhee approves; HoldCo CIOs consulted.</p>
+</div>
+
+<div class="flex-row">
+  <h4>Move 4 &middot; Federated risk + governance</h4>
+  <div class="body">
+    <div class="invest"><strong>Investment</strong> = federated risk dashboard build + ongoing operating cadence (quarterly review SME time + L0 CCO time + HoldCo GC time); concentration mitigation actions (e.g., splitting cyber carriers = legal + broker fees).</div>
+    <div class="benefit"><strong>Benefits</strong> = expected-loss reduction on concentration risks (cyber carrier failure &middot; audit firm conflict &middot; banking single-counterparty), probability-weighted; compliance audit cost reduction (federated approach saves repeated audit prep across HoldCos); avoided regulatory penalty (probability-weighted).</div>
+  </div>
+  <p class="meta">Almost all benefits low-confidence (assumption-heavy) here. Move 4 case is presented more as <em>risk-reduction insurance</em> than as NPV-positive. Headline often shows NPV barely positive but tail-risk reduction substantial; CFO and L0 sponsor read both columns together.</p>
+</div>
+
+<h2>Section 9 &middot; The squint test</h2>
+
+<p>At 50% blur, the headline NPV figure, payback, and a single recommendation must survive. Sarah Lindqvist walks past the page on her way to the airport, glances, and either gets the answer or she doesn&rsquo;t. Below is the blur preview of the headline strip + the top of the approval row.</p>
+
+<div class="squint">
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 24px;">
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--ink-soft);">3-year NPV &middot; P50</div>
+      <div style="font-family: var(--serif); font-size: 48px;">$11.4M</div>
+      <div style="font-size: 12px; color: var(--ink-soft);">Band $4.6M-$11.4M</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--ink-soft);">Payback</div>
+      <div style="font-family: var(--serif); font-size: 48px;">14mo</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--ink-soft);">Investment</div>
+      <div style="font-family: var(--serif); font-size: 48px;">$3.8M</div>
+      <div style="font-size: 12px; color: var(--ink-soft);">CFO signed &middot; Audit pending</div>
+    </div>
+  </div>
+</div>
+<div class="squint-cap">
+  <strong>Squint result:</strong> NPV $11M, payback ~14mo, investment $3.8M, CFO signed, audit pending. The decision shape survives.
+</div>
+
+<h2>Section 10 &middot; Build mapping (Codex pickup)</h2>
+
+<table class="build-table">
+  <tr><th>Page region</th><th>Component path</th><th>Data hook</th><th>API route</th></tr>
+  <tr>
+    <td>Page shell + tabs</td>
+    <td><code>src/app/(workspace)/moves/[moveId]/phase-4/page.tsx</code></td>
+    <td><code>useBusinessCase(moveId)</code></td>
+    <td><code>GET /api/moves/[moveId]/business-case</code></td>
+  </tr>
+  <tr>
+    <td>Approver row</td>
+    <td><code>src/components/moves/business-case/ApproverRow.tsx</code></td>
+    <td><code>useApprovers(caseId)</code></td>
+    <td><code>GET /api/business-case/[id]/approvers</code> &middot; <code>POST .../sign</code></td>
+  </tr>
+  <tr>
+    <td>Headline strip</td>
+    <td><code>src/components/moves/business-case/HeadlineStrip.tsx</code></td>
+    <td><code>useCaseHeadline(caseId, snapshotId)</code></td>
+    <td><code>GET /api/business-case/[id]/headline?snapshot=...</code></td>
+  </tr>
+  <tr>
+    <td>Investment table</td>
+    <td><code>src/components/moves/business-case/InvestmentTable.tsx</code></td>
+    <td><code>useInvestmentLines(caseId)</code></td>
+    <td><code>GET /api/business-case/[id]/investment</code></td>
+  </tr>
+  <tr>
+    <td>Benefits table</td>
+    <td><code>src/components/moves/business-case/BenefitsTable.tsx</code></td>
+    <td><code>useBenefitLines(caseId)</code></td>
+    <td><code>GET /api/business-case/[id]/benefits</code></td>
+  </tr>
+  <tr>
+    <td>Provenance evidence panel</td>
+    <td><code>src/components/moves/business-case/EvidenceChainPopover.tsx</code></td>
+    <td><code>useEvidenceChain(lineId)</code></td>
+    <td><code>GET /api/business-case/line/[lineId]/evidence</code></td>
+  </tr>
+  <tr>
+    <td>Assumption panel</td>
+    <td><code>src/components/moves/business-case/AssumptionPanel.tsx</code></td>
+    <td><code>useAssumptions(caseId)</code> + <code>useNpvRecompute()</code></td>
+    <td><code>GET /api/business-case/[id]/assumptions</code> &middot; <code>POST .../recompute</code></td>
+  </tr>
+  <tr>
+    <td>Tornado sensitivity</td>
+    <td><code>src/components/moves/business-case/Tornado.tsx</code></td>
+    <td><code>useSensitivity(caseId, snapshotId)</code></td>
+    <td><code>GET /api/business-case/[id]/sensitivity</code></td>
+  </tr>
+  <tr>
+    <td>Sentinel rail</td>
+    <td><code>src/components/agents/sentinel/SentinelRail.tsx</code></td>
+    <td><code>useAgentChat(&apos;sentinel.business-case&apos;, caseId)</code></td>
+    <td><code>POST /api/agents/sentinel/business-case</code> (streams)</td>
+  </tr>
+  <tr>
+    <td>Projected vs realized strip</td>
+    <td><code>src/components/moves/business-case/ProjVsRealized.tsx</code></td>
+    <td><code>useRealized(caseId)</code></td>
+    <td><code>GET /api/business-case/[id]/realized</code> (Phase 5 hook)</td>
+  </tr>
+  <tr>
+    <td>Approval strip</td>
+    <td><code>src/components/moves/business-case/ApprovalStrip.tsx</code></td>
+    <td><code>useApprovalFlow(caseId)</code></td>
+    <td><code>GET /api/business-case/[id]/approval-chain</code></td>
+  </tr>
+  <tr>
+    <td>Export tiles</td>
+    <td><code>src/components/moves/business-case/ExportTiles.tsx</code></td>
+    <td><code>useExportReadiness(caseId)</code></td>
+    <td><code>POST /api/business-case/[id]/export/{docx|xlsx|pdf|json}</code></td>
+  </tr>
+</table>
+
+<h3>Data substrate</h3>
+<table class="build-table">
+  <tr><th>Concept</th><th>Table</th><th>Notes</th></tr>
+  <tr><td>Business case header</td><td><code>business_case</code></td><td>One per Move per HoldCo &middot; <code>holding_group_id</code> scoped per locked rule 4</td></tr>
+  <tr><td>Line item</td><td><code>business_case_line</code></td><td>Investment + benefit unified; <code>line_kind</code> enum; P50/P80/P95 columns; confidence enum H/M/L</td></tr>
+  <tr><td>Provenance step</td><td><code>business_case_evidence</code></td><td>Per line, ordered, with source-type enum (rate_card, engine, corpus, loaded_doc, lakefront_realized, assumption_override)</td></tr>
+  <tr><td>Rate card</td><td><code>rate_card</code> &middot; <code>rate_card_version</code></td><td>Versioned; lines reference a specific version; sign-off pins the version</td></tr>
+  <tr><td>Assumption</td><td><code>business_case_assumption</code></td><td>Key, default value, source citation, current value, CFO override rationale (nullable)</td></tr>
+  <tr><td>Snapshot</td><td><code>business_case_snapshot</code></td><td>Immutable; captures all line P50/P80/P95 + all assumption values + headline; created on every sign-off + on demand</td></tr>
+  <tr><td>Approval signature</td><td><code>business_case_signature</code></td><td>Approver, role, snapshot_id, signed_at; chained per role required</td></tr>
+  <tr><td>Realized actual</td><td><code>business_case_realized</code></td><td>Populated by Move 5 mobilization; per line per period; pinned to snapshot baseline</td></tr>
+</table>
+
+<h3>Open implementation questions for Codex</h3>
+<ul>
+  <li>NPV recompute live-edit budget: target sub-300ms for 12-row recompute; if engine round-trip exceeds, ship with client-side cache of base coefficients + server confirm.</li>
+  <li>Provenance hash strategy: SHA-256 of normalized source content; on view, re-hash source and flag if drifted (rate card version change, loaded doc replaced, corpus pattern updated).</li>
+  <li>Audit cmte chair role mapping: does Morgan Street audit cmte chair have an AbarVa identity, or is sign-off email-only with countersigned PDF? L02 loader spec needs the answer.</li>
+  <li>Cross-Move attribution (e.g., Cap 4 uplift to Move 2): currently modelled as a single-line conservative attribution; longer-term move to a proper attribution model with named factors.</li>
+</ul>
+
+<div class="rule"></div>
+
+<p class="meta">End of pattern setter. This page is the visual + fidelity bar for Wave 3 spec L12. Per-Move Phase 4 instances (Move 0 L05 &middot; Move 1 L09 &middot; Move 2 L06 &middot; Move 3 L10 &middot; Move 4 L11) consume this template via parameterization. Companion: <code>10-mobilization-pattern-setter.html</code> &mdash; Phase 5 takes the signed snapshot from this page and operationalizes it into 30/60/90 with realized-actual feedback into this surface.</p>
+
+</div>
+</body>
+</html>

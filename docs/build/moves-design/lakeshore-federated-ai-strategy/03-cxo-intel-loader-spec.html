@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lakeshore Federated · CXO Intel Loader Spec</title>
+<style>
+  :root {
+    --paper: #F8F7F4;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --rule: #e5e1d8;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    margin: 0;
+    padding: 48px 64px 96px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-weight: normal; font-size: 42px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-family: var(--serif); font-weight: normal; font-size: 28px; margin: 56px 0 16px; letter-spacing: -0.01em; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  h3 { font-family: var(--serif); font-weight: normal; font-size: 21px; margin: 32px 0 12px; letter-spacing: -0.005em; }
+  h4 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 24px 0 8px; }
+  h5 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+  p, li { font-size: 15px; }
+  code { background: #efeae0; padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', Menlo, Consolas, monospace; }
+  .meta { color: var(--ink-soft); font-size: 13px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 0; }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 18px 20px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tag-l0 { background: #1f2937; color: white; }
+  .tag-l1 { background: var(--accent-soft); color: var(--accent); }
+  .tag-wave1 { background: var(--good-soft); color: var(--good); }
+  .tag-wave2 { background: #ede9fe; color: #6d28d9; }
+  .tag-req { background: var(--bad-soft); color: var(--bad); }
+  .tag-opt { background: #e5e7eb; color: var(--ink-soft); }
+  .tag-red { background: var(--bad-soft); color: var(--bad); }
+  .tag-amber { background: var(--warn-soft); color: var(--warn); }
+  .tag-green { background: var(--good-soft); color: var(--good); }
+  .tag-loader { background: #ede9fe; color: #6d28d9; }
+  .tag-sub { background: #efeae0; color: var(--ink-soft); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; background: #efeae0; }
+  td.col-name { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; white-space: nowrap; }
+  td.col-type { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; color: var(--accent); white-space: nowrap; }
+  td.col-ex { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; color: var(--ink-soft); }
+  .lane { background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 0; margin: 16px 0; overflow: hidden; }
+  .lane-hd { padding: 14px 20px; background: #efeae0; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: baseline; }
+  .lane-hd h3 { margin: 0; font-size: 18px; }
+  .lane-hd .meta { font-size: 12px; }
+  .lane-body { padding: 16px 20px; }
+  .step-row { display: flex; gap: 8px; align-items: stretch; margin: 16px 0; flex-wrap: wrap; }
+  .step { flex: 1; min-width: 150px; background: var(--paper); border: 1px solid var(--rule); padding: 12px 14px; border-radius: 3px; font-size: 13px; }
+  .step .step-num { font-family: var(--serif); font-size: 18px; color: var(--accent); display: block; margin-bottom: 4px; }
+  .step .step-title { font-weight: 600; display: block; margin-bottom: 4px; }
+  .step .step-detail { color: var(--ink-soft); font-size: 12px; }
+  .arrow { display: flex; align-items: center; color: var(--ink-soft); font-size: 18px; padding: 0 4px; }
+  .pill { display: inline-block; background: var(--paper); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 999px; font-size: 12px; margin: 2px; }
+  .rule { height: 1px; background: var(--rule); margin: 32px 0; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 12px; background: white; border: 1px solid var(--rule); border-radius: 4px; }
+  .approval { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 13px; }
+  .wire {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin: 12px 0;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  .wire-title {
+    font-family: var(--sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  details { margin: 8px 0; border: 1px solid var(--rule); border-radius: 4px; background: white; }
+  summary { padding: 10px 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+  details[open] summary { border-bottom: 1px solid var(--rule); }
+  details > div { padding: 12px 16px; font-size: 13px; }
+  .validation-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .validation-row:last-child { border-bottom: none; }
+  .v-status { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .row-red { color: var(--bad); }
+  .row-amber { color: var(--warn); }
+  .row-green { color: var(--good); }
+  .schema-block {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .schema-hd {
+    padding: 12px 16px;
+    background: #efeae0;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .schema-hd h4 { margin: 0; font-size: 13px; }
+  .schema-hd .file { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; color: var(--ink); }
+  .schema-hd .purpose { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+  .swimlane { display: grid; grid-template-columns: 140px 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin: 12px 0; background: white; }
+  .swimlane-label { background: #efeae0; padding: 14px 16px; font-weight: 600; font-size: 13px; border-right: 1px solid var(--rule); }
+  .swimlane-content { padding: 12px 16px; font-size: 13px; }
+  .toc {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .toc ol { margin: 0; padding-left: 22px; font-size: 14px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .key-anchor { background: var(--accent); color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>CXO Intel Loader · Specification</h1>
+<p class="sub">Per-HoldCo CXO bundle loaders (CIO · CFO · COO · CHRO · GC) · CSV schemas · validation rules · approval routing · substrate landing</p>
+<p class="meta">Doc 3 of 10 · Companion to <code>01-lakeshore-federated-structure-brief.md</code> (canonical entities + Morgan Street seed values) and <code>02-demo-spine-architecture.html §3</code> (loader as gate into the demo). Codex picks this up to ship Spec L02 (Wave 1: CIO + CFO) and Spec L08 (Wave 2: COO + CHRO + GC).</p>
+
+<div class="legend">
+  <span><span class="tag tag-wave1">Wave 1</span> CIO + CFO ship first (Spec L02)</span>
+  <span><span class="tag tag-wave2">Wave 2</span> COO + CHRO + GC follow (Spec L08)</span>
+  <span><span class="tag tag-req">Required</span> column must be present and non-null</span>
+  <span><span class="tag tag-opt">Optional</span> nullable; loader allows blank</span>
+  <span><span class="tag tag-red">Red</span> blocks row · loader rejects row, surfaces to user</span>
+  <span><span class="tag tag-amber">Amber</span> row lands but flagged for human review</span>
+  <span><span class="tag tag-green">Green</span> row validates clean</span>
+</div>
+
+<div class="toc">
+  <h4 style="margin-top: 0;">Contents</h4>
+  <ol>
+    <li><a href="#s1">Overview — what the loader is, where it lives, how it scopes</a></li>
+    <li><a href="#s2">Common loader UX pattern — 6 steps every bundle uses</a></li>
+    <li><a href="#s3">CIO bundle — application inventory, contracts, cloud, AI, risk, org</a></li>
+    <li><a href="#s4">CFO bundle — finance systems, banking, audit, insurance, close, tax</a></li>
+    <li><a href="#s5">COO bundle — operations stack, workforce, outsourcing, KPIs, 3PL</a></li>
+    <li><a href="#s6">CHRO bundle — HCM, benefits, L&amp;D, ATS, workforce demographics</a></li>
+    <li><a href="#s7">GC / CCO bundle — contracts, regulatory, litigation, entities, insurance</a></li>
+    <li><a href="#s8">Common validation patterns — currencies, dates, dollars, vendors, contracts</a></li>
+    <li><a href="#s9">Substrate landing — table names, tenant scoping, upload event linkage</a></li>
+    <li><a href="#s10">Edge cases — re-upload, multi-currency, vendor fuzzy match across HoldCos</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">Section 1 · Overview</h2>
+
+<p>The <strong>CXO Intel Loader</strong> is the single, gate-keeping entry point that converts a HoldCo's CXO bench into structured tenant data inside AbarVa. No Move ships against a HoldCo until at least the Wave 1 bundles (CIO + CFO) are loaded, validated, and acknowledged by the responsible CXO. The loader is the substrate proof point for the five locked rules in <code>README.md</code>: <em>no claim without provenance</em>, <em>foundation-before-AI</em>, <em>no fake completion</em>, <em>HoldCo data sovereignty</em>, and <em>no demo-only data</em>.</p>
+
+<h3>Where the loader lives in the UI</h3>
+
+<p>The loader is a sub-route of the Setup / Admin module. The route shape is:</p>
+
+<table>
+  <tr><th>Route</th><th>Who reaches it</th><th>Purpose</th></tr>
+  <tr><td><code>/setup/cxo-intel</code></td><td>HoldCo admin · HoldCo CXO · L0 admin (read-only across all HoldCos in group)</td><td>Bundle index · per-bundle status · load history · approval queue</td></tr>
+  <tr><td><code>/setup/cxo-intel/[bundle]</code></td><td>Same</td><td>One of: <code>cio</code> · <code>cfo</code> · <code>coo</code> · <code>chro</code> · <code>gc</code></td></tr>
+  <tr><td><code>/setup/cxo-intel/[bundle]/upload</code></td><td>Same</td><td>The 6-step loader UX flow (intro → template → upload → preview → validate → approve)</td></tr>
+  <tr><td><code>/setup/cxo-intel/[bundle]/history</code></td><td>Same</td><td>Past loads · who ran · what was approved · diff vs current</td></tr>
+  <tr><td><code>/setup/cxo-intel/loads/[upload_id]</code></td><td>Same</td><td>Specific load event · all rows · validation results · approval status</td></tr>
+</table>
+
+<p>The loader is reachable from the Setup home page's onboarding card ("Load CXO Intel — 0 of 5 bundles loaded for Morgan Street"). It is also reachable from the Tower Federated tab's L0 view ("Morgan Street is at 2 of 5 bundles — review onboarding").</p>
+
+<h3>How the loader scopes data</h3>
+
+<p>Every loaded row is scoped to <strong>one HoldCo's tenant</strong> under that HoldCo's <code>holding_group_id</code>. The substrate enforces this via RLS on <code>cxo_intel_*</code> tables (see §9). L0 sponsor visibility is aggregate-only by default; transaction-grain access to a sibling HoldCo's data requires explicit grant from that HoldCo's admin (per the locked rule <em>HoldCo data sovereignty</em> in README §3).</p>
+
+<p>The loader infers HoldCo scope from the active tenant context. The acting user must hold one of: <code>tenant_admin</code>, <code>cxo_role:cio|cfo|coo|chro|gc</code>, or <code>data_steward</code>. L0 users acting on behalf of a HoldCo must impersonate via the documented L0 ops shim (<code>/admin/tenant/impersonate</code>), with full audit trail.</p>
+
+<h3>How the loader fits into Wave 1 sequencing</h3>
+
+<p>Spec L02 (Wave 1) ships CIO + CFO loaders. Spec L08 (Wave 2) ships COO + CHRO + GC. The Wave 1 / Wave 2 split is driven by Move dependency: Move 0 (Kyriba de-risk) needs the CFO bundle; Move 1 (AI on top of Kyriba) needs CFO + CIO; Move 2 (cross-HoldCo cost reduction) needs CIO + CFO + GC across at least 2 HoldCos. Move 3 (federated IT) needs CIO; Move 4 (federated risk) needs CHRO + GC. By shipping Wave 1 first, Moves 0, 1, and Move 2 partial all become reachable.</p>
+
+<h3>The five bundles and their Move dependencies</h3>
+
+<table>
+  <tr><th>Bundle</th><th>Wave</th><th>Moves that depend on it</th><th>Owning CXO</th><th>Data steward</th></tr>
+  <tr><td>CIO</td><td><span class="tag tag-wave1">Wave 1</span></td><td>Move 1 · Move 2 · Move 3 · Move 4</td><td>HoldCo CIO</td><td>IT PMO lead</td></tr>
+  <tr><td>CFO</td><td><span class="tag tag-wave1">Wave 1</span></td><td>Move 0 · Move 1 · Move 2 · Move 4</td><td>HoldCo CFO</td><td>Controller</td></tr>
+  <tr><td>COO</td><td><span class="tag tag-wave2">Wave 2</span></td><td>Move 2 (PortCo ops vendors) · Move 3 (operations capability sharing)</td><td>HoldCo COO</td><td>Ops PMO</td></tr>
+  <tr><td>CHRO</td><td><span class="tag tag-wave2">Wave 2</span></td><td>Move 2 (Workday consolidation) · Move 4 (talent benchmarks)</td><td>HoldCo CHRO</td><td>People ops lead</td></tr>
+  <tr><td>GC / CCO</td><td><span class="tag tag-wave2">Wave 2</span></td><td>Move 2 (contract renewal calendar) · Move 4 (federated risk + concentration)</td><td>HoldCo GC</td><td>Legal ops</td></tr>
+</table>
+
+<p>For Morgan Street Holdings Chicago, the owning CXOs and stewards are: CIO = Daniel Okonkwo · CFO = Sarah Lindqvist · COO = Maya Patel · CHRO = Jonathan Reese · GC = Robert Mei. Group Treasurer Aisha Vargas is co-approver on banking-relationship rows inside the CFO bundle.</p>
+
+<h2 id="s2">Section 2 · Common loader UX pattern</h2>
+
+<p>Every CXO bundle uses the same six-step UX flow. Codex implements it once as <code>&lt;LoaderFlow bundle={...} schema={...} /&gt;</code> and the per-bundle pages plug in their schema descriptor. This keeps the UX legible, audit-traceable, and reusable across all five bundles plus future bundle types (e.g., CISO bundle in Wave 3).</p>
+
+<div class="step-row">
+  <div class="step"><span class="step-num">1</span><span class="step-title">Intro</span><span class="step-detail">Bundle purpose · what Moves it powers · who approves · estimated load time</span></div>
+  <div class="arrow">→</div>
+  <div class="step"><span class="step-num">2</span><span class="step-title">Template</span><span class="step-detail">Download CSV template(s) · pre-filled example row · schema doc link</span></div>
+  <div class="arrow">→</div>
+  <div class="step"><span class="step-num">3</span><span class="step-title">Upload &amp; parse</span><span class="step-detail">Drop file(s) · client-side CSV parse · column auto-detect · header preview</span></div>
+  <div class="arrow">→</div>
+  <div class="step"><span class="step-num">4</span><span class="step-title">Validate &amp; preview</span><span class="step-detail">Row-level red/amber/green · failure reasons inline · accept or fix</span></div>
+  <div class="arrow">→</div>
+  <div class="step"><span class="step-num">5</span><span class="step-title">Human ack</span><span class="step-detail">CXO sees summary · explicit "approve this load" with attribution</span></div>
+  <div class="arrow">→</div>
+  <div class="step"><span class="step-num">6</span><span class="step-title">Land</span><span class="step-detail">Substrate write · upload event recorded · downstream Moves notified</span></div>
+</div>
+
+<h3>Step 1 · Intro screen</h3>
+
+<p>Single-screen overview that orients the CXO before they hand the work to their steward. Pulls the bundle definition from the schema descriptor.</p>
+
+<div class="wire"><div class="wire-title">Wireframe — Intro</div>+----------------------------------------------------------------------------------+
+|  Setup / CXO Intel / CFO bundle                                                  |
+|  ----------------------------------------------------------------------------    |
+|                                                                                  |
+|  CFO Intel Bundle                                                                |
+|  Tenant: Morgan Street Holdings Chicago                                          |
+|                                                                                  |
+|  This bundle loads your finance system inventory, banking relationships,         |
+|  audit + advisory engagements, insurance program, close-cycle metrics,           |
+|  IT-spend ratios, and tax engagements. AbarVa uses it to power Move 0            |
+|  (Kyriba de-risk), Move 1 (AI on top of Kyriba), Move 2 (cross-HoldCo cost       |
+|  reduction), and Move 4 (federated risk).                                        |
+|                                                                                  |
+|  Approver:        Sarah Lindqvist (CFO)                                          |
+|  Data steward:    Controller (acks load)                                         |
+|  Co-approver:     Aisha Vargas (Group Treasurer) on banking rows                 |
+|  Estimated time:  60-90 minutes to assemble · 5 minutes to load                  |
+|                                                                                  |
+|  Files in this bundle (7):                                                       |
+|    - finance_system_inventory.csv                                                |
+|    - banking_relationships.csv                                                   |
+|    - audit_advisory_engagements.csv                                              |
+|    - insurance_program.csv                                                       |
+|    - close_cycle_metrics.csv                                                     |
+|    - it_spend_ratios.csv                                                         |
+|    - tax_engagements.csv                                                         |
+|                                                                                  |
+|  [ Continue to template download ]   [ Read schema documentation ]               |
++----------------------------------------------------------------------------------+</div>
+
+<h3>Step 2 · Template download</h3>
+
+<p>The loader hosts canonical CSV templates per bundle file. Each template has:</p>
+
+<ul>
+  <li>Exact column headers in the documented order</li>
+  <li>One <em>example row</em> drawn from Morgan Street's fictional seed (so the CXO sees a plausible filled-in row)</li>
+  <li>An <em>instructions row</em> as the second row, prefixed with <code>#</code>, that explains required vs optional + validation rule per column</li>
+  <li>A footer link to this spec for the full schema documentation</li>
+</ul>
+
+<p>The example row is generated server-side from the Morgan Street seed when the user is in Morgan Street tenant context; from Roosevelt seed when in Roosevelt; etc. This makes the template self-teaching.</p>
+
+<div class="wire"><div class="wire-title">Wireframe — Template download</div>+----------------------------------------------------------------------------------+
+|  CFO bundle / Templates                                                          |
+|                                                                                  |
+|  Download all 7 templates as a single zip, or individually:                      |
+|                                                                                  |
+|  [ Download all (cfo-bundle-templates.zip) ]                                     |
+|                                                                                  |
+|  File                                  Rows   Required cols   Optional cols      |
+|  -------------------------------------------------------------------------------|
+|  finance_system_inventory.csv          8       8               4   [ Download ]  |
+|  banking_relationships.csv             14      9               5   [ Download ]  |
+|  audit_advisory_engagements.csv        6       7               4   [ Download ]  |
+|  insurance_program.csv                 8       8               3   [ Download ]  |
+|  close_cycle_metrics.csv               12      5               2   [ Download ]  |
+|  it_spend_ratios.csv                   1       6               2   [ Download ]  |
+|  tax_engagements.csv                   4       6               3   [ Download ]  |
+|                                                                                  |
+|  Note: every template includes one example row pre-filled with seed data.        |
+|  Replace the example row with your data; keep header row exactly as shipped.     |
+|                                                                                  |
+|  [ Back ]                                              [ Continue to upload ]    |
++----------------------------------------------------------------------------------+</div>
+
+<h3>Step 3 · Upload &amp; parse</h3>
+
+<p>Drag-and-drop area accepts multi-file selection (the bundle's full file set in one go) <em>or</em> per-file uploads (incremental fill-in over multiple sessions). Client-side parsing uses <code>papaparse</code> (already in repo) with header-row detection, type coercion deferred to validation step. The parser auto-detects encoding (UTF-8 default, falls back to Windows-1252 if CSV came from Excel on Windows).</p>
+
+<p>If a file's headers don't match the expected schema headers, the loader surfaces a "header mismatch" preview with a per-column mapping dialog (user maps "Vendor Name" → <code>vendor_name</code>, etc.). The mapping is saved per-user-per-bundle so subsequent loads auto-apply.</p>
+
+<div class="wire"><div class="wire-title">Wireframe — Upload area</div>+----------------------------------------------------------------------------------+
+|  CFO bundle / Upload                                                             |
+|                                                                                  |
+|  +----------------------------------------------------------------------------+ |
+|  |                                                                            | |
+|  |              Drop CSV files here, or click to browse                        | |
+|  |                                                                            | |
+|  |   Accepts: .csv .tsv .xlsx (parsed sheet 1)                                 | |
+|  |   Up to 7 files in one upload · 50 MB total                                 | |
+|  |                                                                            | |
+|  +----------------------------------------------------------------------------+ |
+|                                                                                  |
+|  Files staged:                                                                   |
+|    - finance_system_inventory.csv      8 rows · 12 cols · headers OK             |
+|    - banking_relationships.csv         14 rows · 14 cols · headers OK            |
+|    - audit_advisory_engagements.csv    6 rows · 11 cols · headers OK             |
+|    - insurance_program.csv             ----  (not yet uploaded)                  |
+|    - close_cycle_metrics.csv           ----  (not yet uploaded)                  |
+|    - it_spend_ratios.csv               ----  (not yet uploaded)                  |
+|    - tax_engagements.csv               ----  (not yet uploaded)                  |
+|                                                                                  |
+|  You may load partial bundles. Moves that depend on a missing file will          |
+|  show "blocked: pending CFO bundle / insurance_program.csv".                     |
+|                                                                                  |
+|  [ Back ]                                       [ Continue to validate (3/7) ]   |
++----------------------------------------------------------------------------------+</div>
+
+<h3>Step 4 · Validate &amp; preview</h3>
+
+<p>Each row is validated against the schema's validation rules (see §8 for the common rule set; per-bundle specifics in §3–§7). Three outcomes per row:</p>
+
+<div class="validation-row">
+  <span class="v-status row-red">Red · blocks</span>
+  <span>A required column is missing, a controlled-vocabulary value is invalid (e.g., currency code <code>USDD</code>), a foreign-key reference fails (e.g., bank reference doesn't match any row in the banking_relationships file), or a sanity-check fails so badly the row would corrupt downstream Moves (e.g., contract renewal date 50 years from now). Row is <strong>rejected from the load</strong> until fixed. User can edit inline and re-validate.</span>
+</div>
+<div class="validation-row">
+  <span class="v-status row-amber">Amber · review</span>
+  <span>Row passes structural validation but a soft rule fires (e.g., contract renewal date in the past, vendor name has no fuzzy match against the global vendor index, annual cost is outside the 99th-percentile band for its category). Row <strong>lands in the substrate</strong> with a flag for human review. CXO acknowledges amber rows individually or in bulk during step 5.</span>
+</div>
+<div class="validation-row">
+  <span class="v-status row-green">Green · clean</span>
+  <span>Row passes all validation. Lands in the substrate with status <code>validated</code>.</span>
+</div>
+
+<p>The validation step is interactive: the user can fix red rows in place, paste corrected data, or drop the row entirely. Amber rows can be downgraded to green by the user attesting "I confirm this is correct" with an optional note.</p>
+
+<div class="wire"><div class="wire-title">Wireframe — Validation preview</div>+----------------------------------------------------------------------------------+
+|  CFO bundle / Validate / banking_relationships.csv                               |
+|                                                                                  |
+|  14 rows total.   [11 green]  [2 amber]  [1 red]                                 |
+|                                                                                  |
+|  Filter: [ all v ]   Sort: [ status v ]   [ Re-run validation ]   [ Export ]     |
+|                                                                                  |
+|  +----+---------+--------+----------+----------+----------+---------+-----------+|
+|  | #  | Bank    | Role   | Currency | Protocol | Annual $ | Renewal | Status    ||
+|  +----+---------+--------+----------+----------+----------+---------+-----------+|
+|  | 1  | JPMorgan| primary| USD      | H2H      | 480,000  | 2027-03 | green     ||
+|  | 2  | Citi    | concentr| USD     | H2H      | 220,000  | 2026-09 | green     ||
+|  | 3  | BofA    | cashmgmt| USD     | H2H      | 310,000  | 2027-01 | green     ||
+|  | 4  | PNC     | concentr| USD     | H2H      | 160,000  | 2026-12 | green     ||
+|  | 5  | Wintrust| operat | USD      | bank_portal| 80,000 | 2025-09 | amber     ||
+|  |    | RENEWAL DATE IN THE PAST · confirm or update                              ||
+|  | 6  | BMO Har | concentr| USD     | bank_portal| 95,000 | 2026-08 | green     ||
+|  | 7  | (blank) | operat | USD      | bank_portal| 45,000 | 2027-02 | RED       ||
+|  |    | BANK NAME REQUIRED                                                       ||
+|  |    | [ Edit row ]   [ Drop row ]                                              ||
+|  | 8  | Fifth Th| operat | USD      | manual   | 28,000   | 2026-11 | green     ||
+|  | 9  | Huntington| oper | USD      | manual   | 22,000   | 2027-04 | green     ||
+|  | 10 | KeyBank | operat | USD      | manual   | 19,000   | 2026-06 | green     ||
+|  | 11 | TD Bank | trade_fin| EUR    | manual   | 32,000   | 2026-10 | amber     ||
+|  |    | CURRENCY EUR · row is trade-finance · confirm correct                    ||
+|  | 12 | Comerica| operat | USD      | manual   | 17,000   | 2026-12 | green     ||
+|  | 13 | Old Natl| operat | USD      | manual   | 14,000   | 2027-01 | green     ||
+|  | 14 | First M | operat | USD      | manual   | 11,000   | 2026-07 | green     ||
+|  +----+---------+--------+----------+----------+----------+---------+-----------+|
+|                                                                                  |
+|  [ Back ]                  [ Fix the 1 red row before continuing ]   [ Continue ]|
++----------------------------------------------------------------------------------+</div>
+
+<h3>Step 5 · Human ack + approval</h3>
+
+<p>The CXO (or delegated steward) sees a per-file summary plus a global summary across the bundle. Approval is a single explicit affirmative action with attribution. Approvals are immutable; subsequent re-approvals create new load events with diff.</p>
+
+<div class="wire"><div class="wire-title">Wireframe — Approval</div>+----------------------------------------------------------------------------------+
+|  CFO bundle / Approve load                                                       |
+|                                                                                  |
+|  Tenant: Morgan Street Holdings Chicago                                          |
+|  Loaded by: jane.steward@morganst.com (delegate of Sarah Lindqvist, CFO)         |
+|                                                                                  |
+|  Summary:                                                                        |
+|    finance_system_inventory.csv      8 rows  · 8 green · 0 amber · 0 red         |
+|    banking_relationships.csv         13 rows · 11 green · 2 amber · 0 red        |
+|                                       (1 red dropped after user fix)             |
+|    audit_advisory_engagements.csv    6 rows  · 6 green · 0 amber · 0 red         |
+|    insurance_program.csv             8 rows  · 7 green · 1 amber · 0 red         |
+|    close_cycle_metrics.csv           12 rows · 12 green                          |
+|    it_spend_ratios.csv               1 row   · 1 green                           |
+|    tax_engagements.csv               4 rows  · 4 green                           |
+|                                                                                  |
+|  Amber rows for review (3):                                                      |
+|    banking_relationships.csv row 5    Wintrust · renewal date in past            |
+|    banking_relationships.csv row 11   TD Bank · trade-finance EUR                |
+|    insurance_program.csv row 4        Chubb D&O · premium up 32% YoY             |
+|    [ acknowledge all amber and proceed ]   [ review each individually ]          |
+|                                                                                  |
+|  By approving, I attest the loaded data accurately represents Morgan Street's    |
+|  finance posture as of today (2026-06-05). I am authorized to load this bundle.  |
+|                                                                                  |
+|  Approver name: Sarah Lindqvist                                                  |
+|  Approver role: CFO                                                              |
+|  Approval method:  [x] CXO direct          [ ] Delegate on file (steward)        |
+|                                                                                  |
+|  Banking rows require co-approval from Group Treasurer: Aisha Vargas             |
+|    Co-approval status: [ Request co-approval ]                                   |
+|                                                                                  |
+|  [ Back ]                                                  [ Approve and load ]  |
++----------------------------------------------------------------------------------+</div>
+
+<p>Approval routing per bundle is documented in each section below (§3–§7). For the CFO bundle, the banking-relationships file additionally routes to the Group Treasurer for co-approval — this is enforced server-side, not just UI-side. The substrate write does not happen until both signatures are in.</p>
+
+<h3>Step 6 · Land in substrate</h3>
+
+<p>On approval, the loader runs a single transactional write:</p>
+
+<ol>
+  <li>Create one <code>cxo_intel_upload</code> record (the upload event) — captures user, role, tenant, holding_group_id, bundle, files, approver, co-approver if any, ack timestamp, source IP, integrity hash of uploaded files.</li>
+  <li>Insert all green + acknowledged-amber rows into the bundle's substrate tables (e.g., <code>cxo_intel_banking_relationships</code>, <code>cxo_intel_app_inventory</code>). Each row has FK <code>upload_id</code> linking back to the upload event.</li>
+  <li>Mark the bundle's loader status as <code>loaded · version N</code> in the per-tenant bundle ledger.</li>
+  <li>Emit a domain event (<code>cxo_intel.bundle.loaded</code>) so downstream Moves can recompute readiness.</li>
+</ol>
+
+<p>On failure mid-write, the transaction rolls back; the user sees the failure reason and can re-approve once fixed. Partial bundles (e.g., 4 of 7 CFO files loaded) are valid intermediate states; Moves that depend on the missing file remain blocked with explicit messaging.</p>
+
+<h3>Attribution + audit trail</h3>
+
+<p>Every loaded row carries:</p>
+
+<ul>
+  <li><code>upload_id</code> — FK to the upload event</li>
+  <li><code>loaded_by</code> — user ID of person who hit upload</li>
+  <li><code>approved_by</code> — user ID of CXO (or delegate) who approved</li>
+  <li><code>approved_at</code> — timestamp</li>
+  <li><code>validation_status</code> — <code>green</code>, <code>amber_acknowledged</code>, with optional <code>amber_note</code></li>
+  <li><code>source_file</code> — original filename (preserved for audit)</li>
+  <li><code>source_row_num</code> — original CSV row number (for traceback)</li>
+</ul>
+
+<p>This is what powers the "no claim without provenance" rule downstream: every sentence Sentinel generates that references a vendor, contract, bank, or comp data point can trace back to a specific loaded row, a specific upload event, a specific CXO approval. Sentinel's evidence chain links resolve via these IDs.</p>
+
+<h2 id="s3">Section 3 · CIO bundle <span class="tag tag-wave1">Wave 1</span></h2>
+
+<p><strong>Purpose.</strong> Capture the HoldCo's IT estate end-to-end: the applications running the business, the cloud footprint, major vendor contracts, AI maturity + roadmap, IT spend allocation, the risk register, and the IT organization. This bundle is the source of truth for every downstream claim about a HoldCo's technology posture.</p>
+
+<p><strong>Moves that depend on it.</strong> Move 1 (architecture decisions about the lakehouse target reference cloud footprint + data plane state), Move 2 (vendor consolidation needs the app inventory + contract catalog), Move 3 (federated IT strategy + AI marketplace needs the AI roadmap + cloud posture), Move 4 (federated risk needs the risk register + IT org).</p>
+
+<p><strong>Owner.</strong> HoldCo CIO. For Morgan Street that is Daniel Okonkwo. Data steward is the IT PMO lead. CISO (Lena Hoffman at Morgan Street) is a co-approver on the cyber-relevant rows inside the risk register file.</p>
+
+<p><strong>Files (7).</strong></p>
+
+<table>
+  <tr><th>File</th><th>Required cols</th><th>Optional cols</th><th>Expected row count</th></tr>
+  <tr><td><code>app_inventory.csv</code></td><td>10</td><td>4</td><td>50–500</td></tr>
+  <tr><td><code>cloud_footprint.csv</code></td><td>6</td><td>2</td><td>1–10</td></tr>
+  <tr><td><code>vendor_contracts.csv</code></td><td>9</td><td>4</td><td>15–80</td></tr>
+  <tr><td><code>ai_roadmap.csv</code></td><td>8</td><td>3</td><td>5–40</td></tr>
+  <tr><td><code>it_spend_allocation.csv</code></td><td>4</td><td>2</td><td>3 (run/grow/transform)</td></tr>
+  <tr><td><code>risk_register.csv</code></td><td>8</td><td>3</td><td>10–60</td></tr>
+  <tr><td><code>it_org.csv</code></td><td>6</td><td>2</td><td>5–25</td></tr>
+</table>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>app_inventory.csv</h4>
+    <span class="file">CIO / app_inventory</span>
+    <span class="purpose">One row per business application in production at the HoldCo or any PortCo.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">app_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars · trimmed · titleized for fuzzy match</td><td class="col-ex">Workday HCM</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized against global vendor index (§8 vendor matching); amber if no match</td><td class="col-ex">Workday Inc</td></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td>one of: <code>erp</code> · <code>hcm</code> · <code>crm</code> · <code>finance</code> · <code>treasury</code> · <code>collab</code> · <code>data_platform</code> · <code>analytics</code> · <code>security</code> · <code>iam</code> · <code>devops</code> · <code>mes</code> · <code>scm</code> · <code>plm</code> · <code>service_mgmt</code> · <code>clm</code> · <code>grc</code> · <code>other</code></td><td class="col-ex">hcm</td></tr>
+      <tr><td class="col-name">criticality</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>tier_1</code> (business-stopping if down) · <code>tier_2</code> (significant impact) · <code>tier_3</code> (limited impact)</td><td class="col-ex">tier_1</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">portco_ids</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>comma-separated PortCo IDs from the entity registry. Required if scope is single_portco or multi_portco.</td><td class="col-ex">MSH-MFG-01,MSH-MFG-02</td></tr>
+      <tr><td class="col-name">owner_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named human owner (RACI: R role)</td><td class="col-ex">Daniel Okonkwo</td></tr>
+      <tr><td class="col-name">owner_email</td><td class="col-type">email</td><td><span class="tag tag-req">req</span></td><td>RFC 5322; corp domain expected (amber if free-mail)</td><td class="col-ex">daniel.okonkwo@morganst.com</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive number or 0; in source currency normalized to USD via §8 FX table; amber if exceeds 99th pct for category</td><td class="col-ex">3100000</td></tr>
+      <tr><td class="col-name">cost_currency</td><td class="col-type">iso4217</td><td><span class="tag tag-req">req</span></td><td>3-letter ISO 4217 currency code · controlled vocab (§8)</td><td class="col-ex">USD</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601 (YYYY-MM-DD); amber if in past (must confirm); red if &gt; 10 yrs out</td><td class="col-ex">2027-04-30</td></tr>
+      <tr><td class="col-name">deployment_model</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>saas</code> · <code>paas</code> · <code>self_hosted_cloud</code> · <code>on_prem</code></td><td class="col-ex">saas</td></tr>
+      <tr><td class="col-name">data_classification</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>public</code> · <code>internal</code> · <code>confidential</code> · <code>restricted_pii</code> · <code>restricted_phi</code> · <code>restricted_pci</code></td><td class="col-ex">confidential</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text, &lt; 500 chars</td><td class="col-ex">HoldCo level + 2 PortCos integrated</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>cloud_footprint.csv</h4>
+    <span class="file">CIO / cloud_footprint</span>
+    <span class="purpose">One row per cloud provider or on-prem environment with annual run cost and posture.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">provider</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>azure</code> · <code>aws</code> · <code>gcp</code> · <code>oci</code> · <code>on_prem</code> · <code>colo</code> · <code>other</code></td><td class="col-ex">azure</td></tr>
+      <tr><td class="col-name">environment_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Free string &lt; 100 chars · how this footprint is named internally</td><td class="col-ex">Morgan Street Primary Azure</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">share_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–100 · all rows must sum to 100 within ±2pp (red if violated)</td><td class="col-ex">70</td></tr>
+      <tr><td class="col-name">annual_run_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · normalized to USD</td><td class="col-ex">14500000</td></tr>
+      <tr><td class="col-name">primary_workloads</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Comma-separated short descriptors</td><td class="col-ex">collab,erp,data_warehouse,iam</td></tr>
+      <tr><td class="col-name">landing_zone_maturity</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>none</code> · <code>basic</code> · <code>standardized</code> · <code>mature_caf</code></td><td class="col-ex">standardized</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · annotate inheritance from PortCos, anomalies</td><td class="col-ex">Acquired one PortCo on AWS, hasn't migrated</td></tr>
+    </table>
+    <p class="meta"><strong>Validation cross-check.</strong> Sum of <code>share_pct</code> must equal 100 (±2pp); sum of <code>annual_run_cost_usd</code> should approximate the IT spend allocation file's "cloud + infrastructure" subtotal (amber if &gt; 15% variance).</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>vendor_contracts.csv</h4>
+    <span class="file">CIO / vendor_contracts</span>
+    <span class="purpose">One row per vendor contract over $250K annual. Smaller contracts may be included; large ones must be.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized against global vendor index (§8); fuzzy-match across HoldCos for cross-HoldCo opportunity detection</td><td class="col-ex">Microsoft Corporation</td></tr>
+      <tr><td class="col-name">contract_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Internal contract designation</td><td class="col-ex">Microsoft EA 2025-2028</td></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td>Same enum as app_inventory.category, plus <code>professional_services</code> · <code>infra_compute</code> · <code>infra_network</code> · <code>licensing</code></td><td class="col-ex">licensing</td></tr>
+      <tr><td class="col-name">annual_value_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · normalized to USD; amber if &lt; $250K (smaller than spec scope but allowed)</td><td class="col-ex">4200000</td></tr>
+      <tr><td class="col-name">currency</td><td class="col-type">iso4217</td><td><span class="tag tag-req">req</span></td><td>ISO 4217</td><td class="col-ex">USD</td></tr>
+      <tr><td class="col-name">contract_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; amber if &gt; 5 yrs old (likely stale)</td><td class="col-ex">2025-07-01</td></tr>
+      <tr><td class="col-name">contract_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; must be &gt; contract_start (red); amber if already past today</td><td class="col-ex">2028-06-30</td></tr>
+      <tr><td class="col-name">renewal_notice_days</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Days notice required to terminate or renegotiate; 0–365</td><td class="col-ex">90</td></tr>
+      <tr><td class="col-name">auto_renew</td><td class="col-type">boolean</td><td><span class="tag tag-req">req</span></td><td><code>true</code> / <code>false</code></td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">exit_clause_present</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>True if termination-for-convenience exists; amber if blank on contracts &gt; $1M</td><td class="col-ex">false</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">linked_app_names</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated; foreign-key against app_inventory.app_name (red if any unmatched)</td><td class="col-ex">Microsoft 365,Azure,Power BI</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Single EA covers HoldCo + all 8 PortCos</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>ai_roadmap.csv</h4>
+    <span class="file">CIO / ai_roadmap</span>
+    <span class="purpose">One row per AI use case: active POCs, planned use cases, production workloads. Drives Move 1 (capabilities), Move 3 (marketplace).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">use_case_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Internal ID; must be unique within file</td><td class="col-ex">MSH-AI-001</td></tr>
+      <tr><td class="col-name">use_case_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Short name &lt; 100 chars</td><td class="col-ex">Procurement spend analytics</td></tr>
+      <tr><td class="col-name">stage</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>idea</code> · <code>poc</code> · <code>pilot</code> · <code>production</code> · <code>sunset</code></td><td class="col-ex">poc</td></tr>
+      <tr><td class="col-name">business_function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>finance</code> · <code>treasury</code> · <code>procurement</code> · <code>operations</code> · <code>hr</code> · <code>legal</code> · <code>customer_service</code> · <code>sales</code> · <code>marketing</code> · <code>it</code> · <code>security</code> · <code>other</code></td><td class="col-ex">procurement</td></tr>
+      <tr><td class="col-name">model_family</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>classical_ml</code> · <code>nlp_classical</code> · <code>llm_foundation</code> · <code>llm_fine_tuned</code> · <code>cv</code> · <code>forecasting</code> · <code>graph</code> · <code>other</code></td><td class="col-ex">classical_ml</td></tr>
+      <tr><td class="col-name">data_dependency</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Data sources required; comma-separated</td><td class="col-ex">NetSuite AP,Concur,vendor master</td></tr>
+      <tr><td class="col-name">owner_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named owner</td><td class="col-ex">Daniel Okonkwo</td></tr>
+      <tr><td class="col-name">governance_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>none</code> · <code>informal</code> · <code>formal_review</code> · <code>committee_approved</code></td><td class="col-ex">informal</td></tr>
+      <tr><td class="col-name">target_production_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601; amber if &gt; 18 mo out and stage = idea</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">realized_impact_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · what's been measured; required if stage = production</td><td class="col-ex">N/A (POC stage)</td></tr>
+      <tr><td class="col-name">reusability_rating</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>low</code> · <code>medium</code> · <code>high</code> · used by Move 3 capability marketplace</td><td class="col-ex">medium</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>it_spend_allocation.csv</h4>
+    <span class="file">CIO / it_spend_allocation</span>
+    <span class="purpose">Three rows: run, grow, transform allocation of annual IT spend.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td>exactly one of <code>run</code> · <code>grow</code> · <code>transform</code>; all three must be present (red if missing)</td><td class="col-ex">run</td></tr>
+      <tr><td class="col-name">share_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–100; three rows must sum to 100 (±2pp)</td><td class="col-ex">68</td></tr>
+      <tr><td class="col-name">annual_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; sum of three rows = total IT spend (compared to it_spend_ratios.csv total)</td><td class="col-ex">35360000</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Short description of what's in this bucket · 1–300 chars</td><td class="col-ex">Existing-stack maintenance and licensing</td></tr>
+      <tr><td class="col-name">benchmark_band</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>If known, P50/P90 range from corpus; AbarVa fills if blank</td><td class="col-ex">P50: 60-65 (mid-mkt diversified)</td></tr>
+      <tr><td class="col-name">variance_to_benchmark_pp</td><td class="col-type">number</td><td><span class="tag tag-opt">opt</span></td><td>If user provides; otherwise AbarVa computes</td><td class="col-ex">+5</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>risk_register.csv</h4>
+    <span class="file">CIO / risk_register</span>
+    <span class="purpose">One row per active IT/cyber/modernization-debt risk. Drives Move 4 (federated risk + concentration).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">risk_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Internal ID; unique within file</td><td class="col-ex">MSH-RR-014</td></tr>
+      <tr><td class="col-name">risk_title</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>&lt; 140 chars · imperative phrasing preferred</td><td class="col-ex">Single-vendor cyber EDR dependency (CrowdStrike)</td></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>cyber</code> · <code>compliance</code> · <code>modernization_debt</code> · <code>vendor_concentration</code> · <code>talent</code> · <code>data_quality</code> · <code>other</code></td><td class="col-ex">vendor_concentration</td></tr>
+      <tr><td class="col-name">inherent_likelihood</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>low</code> · <code>medium</code> · <code>high</code> · <code>critical</code></td><td class="col-ex">medium</td></tr>
+      <tr><td class="col-name">inherent_impact</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>low</code> · <code>medium</code> · <code>high</code> · <code>critical</code></td><td class="col-ex">high</td></tr>
+      <tr><td class="col-name">mitigation_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>none</code> · <code>partial</code> · <code>full</code> · <code>accepted</code></td><td class="col-ex">partial</td></tr>
+      <tr><td class="col-name">owner_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named owner</td><td class="col-ex">Lena Hoffman</td></tr>
+      <tr><td class="col-name">last_reviewed_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; amber if &gt; 6 months stale</td><td class="col-ex">2026-04-22</td></tr>
+      <tr><td class="col-name">cyber_relevant</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>If true, row routes to CISO for co-approval</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Single-vendor EDR; reviewing post 2025 incident</td></tr>
+      <tr><td class="col-name">target_remediation_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601; required if mitigation_state in (none, partial)</td><td class="col-ex">2027-06-30</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>it_org.csv</h4>
+    <span class="file">CIO / it_org</span>
+    <span class="purpose">One row per IT function (team/capability). Drives Move 4 (talent benchmark) and Move 3 (capability sharing).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>leadership</code> · <code>infra</code> · <code>apps</code> · <code>data</code> · <code>analytics</code> · <code>ai_ml</code> · <code>security</code> · <code>service_mgmt</code> · <code>pmo</code> · <code>architecture</code> · <code>other</code></td><td class="col-ex">infra</td></tr>
+      <tr><td class="col-name">fte_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative integer</td><td class="col-ex">14</td></tr>
+      <tr><td class="col-name">contractor_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">8</td></tr>
+      <tr><td class="col-name">offshore_share_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–100</td><td class="col-ex">30</td></tr>
+      <tr><td class="col-name">leader_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named human</td><td class="col-ex">Daniel Okonkwo (delegate: Priya Iyer)</td></tr>
+      <tr><td class="col-name">annual_loaded_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · loaded cost incl. benefits, tools, overhead</td><td class="col-ex">3300000</td></tr>
+      <tr><td class="col-name">capability_tags</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated · used by Move 3 marketplace</td><td class="col-ex">azure_landing_zone,m365,iam</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">No dedicated ML team — 2 POCs run by data eng</td></tr>
+    </table>
+  </div>
+</div>
+
+<h4>CIO bundle · validation rules summary</h4>
+<ul>
+  <li><strong>FK integrity.</strong> <code>vendor_contracts.linked_app_names</code> must resolve against <code>app_inventory.app_name</code> within this load. Unresolved → red.</li>
+  <li><strong>Sum-to-100 invariants.</strong> <code>cloud_footprint.share_pct</code> and <code>it_spend_allocation.share_pct</code> must sum to 100 ± 2pp.</li>
+  <li><strong>Spend reconciliation.</strong> Sum of <code>annual_value_usd</code> in vendor_contracts should not exceed <code>it_spend_allocation</code> total (amber if it does — likely double-counting or untracked spend).</li>
+  <li><strong>Cyber routing.</strong> Risk-register rows with <code>cyber_relevant = true</code> route to CISO co-approval.</li>
+  <li><strong>Stale data.</strong> <code>risk_register.last_reviewed_date</code> older than 6 months → amber.</li>
+</ul>
+
+<h4>CIO bundle · approval routing</h4>
+<table>
+  <tr><th>Row class</th><th>Primary approver</th><th>Co-approver</th><th>Data steward</th></tr>
+  <tr><td>app_inventory</td><td>CIO</td><td>—</td><td>IT PMO lead</td></tr>
+  <tr><td>cloud_footprint</td><td>CIO</td><td>—</td><td>IT PMO lead</td></tr>
+  <tr><td>vendor_contracts (&gt; $1M)</td><td>CIO</td><td>CFO sign-off via comment</td><td>IT PMO lead + procurement</td></tr>
+  <tr><td>ai_roadmap</td><td>CIO</td><td>—</td><td>AI / data eng lead</td></tr>
+  <tr><td>it_spend_allocation</td><td>CIO</td><td>CFO sign-off via comment</td><td>IT controller</td></tr>
+  <tr><td>risk_register (cyber)</td><td>CIO</td><td>CISO required</td><td>IT PMO + GRC</td></tr>
+  <tr><td>it_org</td><td>CIO</td><td>—</td><td>IT PMO + HR business partner</td></tr>
+</table>
+
+<h4>CIO bundle · failure mode (partial upload)</h4>
+<p>The CIO bundle permits partial loads — e.g., CIO uploads app_inventory + cloud_footprint + vendor_contracts but defers ai_roadmap + risk_register + it_org + it_spend_allocation pending data collection. Each missing file is tracked at the per-tenant ledger:</p>
+<ul>
+  <li>Move 2 (cross-HoldCo vendor) — needs <code>vendor_contracts</code>; works partial as long as that file is present.</li>
+  <li>Move 3 (federated IT) — needs <code>ai_roadmap</code> + <code>cloud_footprint</code> + <code>it_org</code>; blocked until all three present.</li>
+  <li>Move 4 (federated risk) — needs <code>risk_register</code>; blocked until present.</li>
+</ul>
+<p>The Setup home shows: "CIO bundle 3 of 7 files loaded. <strong>Move 3 blocked</strong> pending ai_roadmap.csv, it_org.csv. Move 4 blocked pending risk_register.csv."</p>
+
+<h2 id="s4">Section 4 · CFO bundle <span class="tag tag-wave1">Wave 1</span></h2>
+
+<p><strong>Purpose.</strong> Capture the HoldCo's finance posture end-to-end: finance system inventory (ERP/treasury/EPM/AP/AR), banking relationships, audit + advisory firm engagements, insurance program, close-cycle metrics, IT spend ratios, tax engagements. This is the load-bearing bundle for Move 0 (Kyriba de-risk) and Move 1 (AI on top of Kyriba).</p>
+
+<p><strong>Moves that depend on it.</strong> Move 0 (the entire 6-gate de-risk diagnosis), Move 1 (capability portfolio + business case), Move 2 (vendor consolidation joins on audit + insurance), Move 4 (federated risk + concentration).</p>
+
+<p><strong>Owner.</strong> HoldCo CFO. For Morgan Street that is Sarah Lindqvist. Data steward is the Controller. Banking rows additionally route to Group Treasurer (Aisha Vargas at Morgan Street) for co-approval.</p>
+
+<p><strong>Files (7).</strong></p>
+
+<table>
+  <tr><th>File</th><th>Required cols</th><th>Optional cols</th><th>Expected row count</th></tr>
+  <tr><td><code>finance_system_inventory.csv</code></td><td>8</td><td>4</td><td>6–20</td></tr>
+  <tr><td><code>banking_relationships.csv</code></td><td>9</td><td>5</td><td>3–25</td></tr>
+  <tr><td><code>audit_advisory_engagements.csv</code></td><td>7</td><td>4</td><td>3–15</td></tr>
+  <tr><td><code>insurance_program.csv</code></td><td>8</td><td>3</td><td>6–20</td></tr>
+  <tr><td><code>close_cycle_metrics.csv</code></td><td>5</td><td>2</td><td>12 (one per month of last fiscal year)</td></tr>
+  <tr><td><code>it_spend_ratios.csv</code></td><td>6</td><td>2</td><td>1 (current fiscal year)</td></tr>
+  <tr><td><code>tax_engagements.csv</code></td><td>6</td><td>3</td><td>2–10</td></tr>
+</table>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>finance_system_inventory.csv</h4>
+    <span class="file">CFO / finance_system_inventory</span>
+    <span class="purpose">One row per finance system in use at HoldCo or PortCo level. ERP, treasury, AP/AR, EPM, expense, tax, close mgmt.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">system_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars</td><td class="col-ex">NetSuite OneWorld</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized via §8 vendor matching</td><td class="col-ex">Oracle NetSuite</td></tr>
+      <tr><td class="col-name">function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>erp</code> · <code>treasury</code> · <code>epm</code> · <code>ap_automation</code> · <code>ar_collections</code> · <code>expense</code> · <code>tax</code> · <code>close_mgmt</code> · <code>tax_provision</code> · <code>cap_planning</code> · <code>other</code></td><td class="col-ex">erp</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">deployment_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>live</code> · <code>in_rollout</code> · <code>planned</code> · <code>sunset</code></td><td class="col-ex">live</td></tr>
+      <tr><td class="col-name">rollout_wave_status</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text; required if deployment_state = in_rollout (e.g., "Wave 1 live, Wave 2 planned Q3 2026")</td><td class="col-ex">N/A</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · USD-normalized</td><td class="col-ex">1600000</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2027-06-30</td></tr>
+      <tr><td class="col-name">portco_coverage</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated PortCo IDs</td><td class="col-ex">MSH-MFG-01,MSH-MFG-02,MSH-FAC-01,MSH-FAC-02</td></tr>
+      <tr><td class="col-name">criticality</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>tier_1</code> · <code>tier_2</code> · <code>tier_3</code></td><td class="col-ex">tier_1</td></tr>
+      <tr><td class="col-name">integration_state</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>fully_integrated</code> · <code>partial</code> · <code>islanded</code></td><td class="col-ex">partial</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">HoldCo level + 3 of 8 PortCos integrated; 5 in flight</td></tr>
+    </table>
+    <p class="meta"><strong>Move 0 sanity check.</strong> Loader verifies a row exists where <code>function = treasury</code> AND <code>vendor_name</code> normalizes to "Kyriba" (or equivalent treasury platform). If <code>deployment_state = in_rollout</code> or <code>live</code>, Move 0 entry is unlocked for this HoldCo and the Kyriba rollout-status file (see banking_relationships + close_cycle_metrics cross-refs) is requested.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>banking_relationships.csv</h4>
+    <span class="file">CFO / banking_relationships</span>
+    <span class="purpose">One row per bank relationship. Drives Move 0 G1 (bank connectivity gap) and L-S01 (banking consolidation RFP spawn).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">bank_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Validated against controlled bank-name index (§8); fuzzy match resolves "JPM" → "JPMorgan Chase"; red if no match accepted</td><td class="col-ex">JPMorgan Chase</td></tr>
+      <tr><td class="col-name">bank_role</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>primary</code> · <code>concentration</code> · <code>cash_mgmt</code> · <code>operating</code> · <code>trade_finance</code> · <code>fx</code> · <code>credit</code> · <code>investment</code> · <code>specialty</code></td><td class="col-ex">primary</td></tr>
+      <tr><td class="col-name">entity_scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">portco_ids</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Required if entity_scope ≠ holdco; resolves against entity registry (loaded via GC bundle); amber if entity registry not yet loaded</td><td class="col-ex">—</td></tr>
+      <tr><td class="col-name">currency</td><td class="col-type">iso4217</td><td><span class="tag tag-req">req</span></td><td>ISO 4217; amber if non-USD on a US-domestic role</td><td class="col-ex">USD</td></tr>
+      <tr><td class="col-name">connectivity_protocol</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>h2h</code> · <code>swift</code> · <code>api</code> · <code>bank_portal</code> · <code>manual</code></td><td class="col-ex">h2h</td></tr>
+      <tr><td class="col-name">h2h_ready</td><td class="col-type">boolean</td><td><span class="tag tag-req">req</span></td><td>true if direct H2H connectivity live · drives Move 0 G1 readiness count</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">annual_fees_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · USD-normalized · amber if exceeds 99th pct for bank-role (likely data error)</td><td class="col-ex">480000</td></tr>
+      <tr><td class="col-name">services</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated short tags: cash_concentration, wire, ach, fx, lc, lockbox, escrow, etc.</td><td class="col-ex">cash_concentration,wire,ach,fx,lc</td></tr>
+      <tr><td class="col-name">contract_renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; amber if in past</td><td class="col-ex">2027-03-31</td></tr>
+      <tr><td class="col-name">credit_facility_present</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>True if bank holds debt facility · routes via GC bundle for covenant data</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">credit_facility_size_usd</td><td class="col-type">money</td><td><span class="tag tag-opt">opt</span></td><td>Required if credit_facility_present = true · positive</td><td class="col-ex">75000000</td></tr>
+      <tr><td class="col-name">relationship_age_years</td><td class="col-type">integer</td><td><span class="tag tag-opt">opt</span></td><td>0–80; amber if &gt; 50 (likely data error)</td><td class="col-ex">12</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Anchor relationship; primary cash concentration for HoldCo + 4 PortCos</td></tr>
+    </table>
+    <p class="meta"><strong>Move 0 G1 calculation.</strong> Loader computes <code>h2h_ready_count = sum(h2h_ready = true)</code> and <code>total_bank_count = count(*)</code>. Morgan Street's expected values from the seed: 14 banks, 4 H2H-ready. If H2H ratio &lt; 50%, Move 0 G1 flags as P0 risk and L-S01 banking consolidation RFP becomes a recommended Source spawn.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>audit_advisory_engagements.csv</h4>
+    <span class="file">CFO / audit_advisory_engagements</span>
+    <span class="purpose">One row per active engagement: external audit, tax advisory, M&A advisory, transaction services, consulting retainers.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">firm_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized via §8 vendor matching; Big-4 names canonicalized</td><td class="col-ex">KPMG LLP</td></tr>
+      <tr><td class="col-name">engagement_type</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>external_audit</code> · <code>tax_compliance</code> · <code>tax_advisory</code> · <code>ma_advisory</code> · <code>transaction_services</code> · <code>actuarial</code> · <code>strategy_consulting</code> · <code>tech_consulting</code> · <code>internal_audit</code> · <code>other</code></td><td class="col-ex">external_audit</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">portco_ids</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Required if scope ≠ holdco</td><td class="col-ex">MSH-MFG-01,MSH-MFG-02,MSH-MFG-03,MSH-DIST-01,MSH-DIST-02,MSH-FAC-01,MSH-FAC-02,MSH-FAC-03</td></tr>
+      <tr><td class="col-name">annual_fees_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · USD-normalized</td><td class="col-ex">2400000</td></tr>
+      <tr><td class="col-name">engagement_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2020-01-01</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; amber if in past</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">lead_partner_name</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Named human</td><td class="col-ex">Robert Chen (KPMG Chicago)</td></tr>
+      <tr><td class="col-name">rotation_required_year</td><td class="col-type">integer</td><td><span class="tag tag-opt">opt</span></td><td>Year (YYYY); for audit rotation regulations</td><td class="col-ex">2030</td></tr>
+      <tr><td class="col-name">scope_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · what's in the engagement</td><td class="col-ex">Consolidated audit + 8 PortCo statutory audits</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Same auditor across all 3 HoldCos (federated RFP opportunity)</td></tr>
+    </table>
+    <p class="meta"><strong>Move 2 / Move 4 cross-HoldCo join.</strong> When all three HoldCos load this file, AbarVa fuzzy-joins on canonicalized <code>firm_name</code>. Morgan Street KPMG = Roosevelt KPMG = Lakefront KPMG fires Move 4 auditor-concentration flag and L-S04 federated audit RFP as a Move 2 Source spawn.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>insurance_program.csv</h4>
+    <span class="file">CFO / insurance_program</span>
+    <span class="purpose">One row per insurance line: D&O, E&O, cyber, GL, property, WC, umbrella, fiduciary, EPL, etc.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">line</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>do</code> · <code>eo</code> · <code>cyber</code> · <code>gl</code> · <code>property</code> · <code>workers_comp</code> · <code>umbrella</code> · <code>fiduciary</code> · <code>epl</code> · <code>auto</code> · <code>marine</code> · <code>environmental</code> · <code>kidnap_ransom</code> · <code>other</code></td><td class="col-ex">cyber</td></tr>
+      <tr><td class="col-name">broker_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized via §8 vendor matching (Marsh, Aon, WTW, Lockton, etc.)</td><td class="col-ex">Marsh McLennan</td></tr>
+      <tr><td class="col-name">carrier_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized; Chubb / AIG / Travelers / Beazley etc.</td><td class="col-ex">Chubb</td></tr>
+      <tr><td class="col-name">limit_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · USD-normalized; amber if &lt; $5M for cyber/DO at &gt; $1B revenue HoldCo</td><td class="col-ex">25000000</td></tr>
+      <tr><td class="col-name">retention_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Non-negative · retention (SIR/deductible) USD</td><td class="col-ex">1000000</td></tr>
+      <tr><td class="col-name">premium_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">920000</td></tr>
+      <tr><td class="col-name">policy_period_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2026-01-01</td></tr>
+      <tr><td class="col-name">policy_period_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; must be after start; amber if &lt; 90 days from today (renewal urgency)</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">prior_year_premium_usd</td><td class="col-type">money</td><td><span class="tag tag-opt">opt</span></td><td>If provided, loader computes YoY change; amber if increase &gt; 25% (market hard / claim-driven)</td><td class="col-ex">700000</td></tr>
+      <tr><td class="col-name">scope_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · what's covered / exclusions of note</td><td class="col-ex">HoldCo + all 8 PortCos · BIPA exclusion noted</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Renewal cycle: October. Reviewing two-carrier program for 2027.</td></tr>
+    </table>
+    <p class="meta"><strong>Move 4 concentration check.</strong> When 2+ HoldCos load cyber line with same canonicalized <code>carrier_name</code>, Move 4 carrier-concentration flag fires; L-S05 federated cyber program with split-carrier becomes a Move 2 Source spawn candidate.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>close_cycle_metrics.csv</h4>
+    <span class="file">CFO / close_cycle_metrics</span>
+    <span class="purpose">One row per month for the last fiscal year (typically 12 rows). Days to close, variance, late adjustments. Drives Move 0 G2 + G3 + G6.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">period_yyyymm</td><td class="col-type">yyyymm</td><td><span class="tag tag-req">req</span></td><td>6-digit yearmonth (e.g., <code>202604</code>); unique within file; ordered ascending; red if &gt; 24 months stale</td><td class="col-ex">202604</td></tr>
+      <tr><td class="col-name">days_to_close</td><td class="col-type">number</td><td><span class="tag tag-req">req</span></td><td>0–60; positive; amber if &gt; 10 (lengthy close)</td><td class="col-ex">8</td></tr>
+      <tr><td class="col-name">gl_cash_variance_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–10; amber if &gt; 0.1% (high variance); red if &gt; 5% (very high)</td><td class="col-ex">0.42</td></tr>
+      <tr><td class="col-name">ic_posting_days</td><td class="col-type">number</td><td><span class="tag tag-req">req</span></td><td>0–20; days from close-trigger to IC posting complete; amber if &gt; 3</td><td class="col-ex">4</td></tr>
+      <tr><td class="col-name">late_adjustments_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>0+; adjustments posted after initial close</td><td class="col-ex">7</td></tr>
+      <tr><td class="col-name">close_owner</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Named human</td><td class="col-ex">Daria Wells (Asst Controller)</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · anomalies, special events</td><td class="col-ex">Q1 close: PortCo onboarding delayed IC postings</td></tr>
+    </table>
+    <p class="meta"><strong>Move 0 G2 / G6 calculation.</strong> Average <code>gl_cash_variance_pct</code> over last 6 months drives Move 0 G2 risk grade (Morgan Street seed: ~0.4% → P1 risk). Average <code>ic_posting_days</code> drives G6 risk grade (Morgan Street seed: ~4 days → P1 risk).</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>it_spend_ratios.csv</h4>
+    <span class="file">CFO / it_spend_ratios</span>
+    <span class="purpose">Single row, current fiscal year. IT spend as % of revenue, per FTE, run/grow/transform mix at the CFO's view.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">fiscal_year</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>4-digit year (e.g., 2026); unique row per FY</td><td class="col-ex">2026</td></tr>
+      <tr><td class="col-name">total_it_spend_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; must approximate sum of CIO it_spend_allocation (amber if &gt; 15% variance)</td><td class="col-ex">52000000</td></tr>
+      <tr><td class="col-name">consolidated_revenue_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">2100000000</td></tr>
+      <tr><td class="col-name">it_pct_revenue</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–20; auto-computed if blank from total_it_spend / consolidated_revenue; amber if outside benchmark band (corpus finserv file 13: 1.8–3.2% mid-market diversified)</td><td class="col-ex">2.48</td></tr>
+      <tr><td class="col-name">employees_fte</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Positive integer</td><td class="col-ex">4800</td></tr>
+      <tr><td class="col-name">it_spend_per_fte_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; auto-computed if blank</td><td class="col-ex">10833</td></tr>
+      <tr><td class="col-name">benchmark_source</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · where the CFO's expected band came from (Gartner, peer benchmark, etc.)</td><td class="col-ex">Gartner mid-market diversified P50</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">In-range vs benchmark; trending up due to Kyriba rollout investment</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>tax_engagements.csv</h4>
+    <span class="file">CFO / tax_engagements</span>
+    <span class="purpose">One row per active tax engagement: tax compliance, tax advisory, transfer pricing, tax provision, indirect tax.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street)</th></tr>
+      <tr><td class="col-name">firm_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8 vendor matching</td><td class="col-ex">KPMG LLP</td></tr>
+      <tr><td class="col-name">engagement_type</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>compliance_federal</code> · <code>compliance_state</code> · <code>compliance_international</code> · <code>advisory</code> · <code>transfer_pricing</code> · <code>provision</code> · <code>indirect_sales_use</code> · <code>property</code> · <code>credit_incentive</code> · <code>other</code></td><td class="col-ex">compliance_federal</td></tr>
+      <tr><td class="col-name">scope_summary</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Free text · jurisdictions or topics covered</td><td class="col-ex">Federal consolidated + 18 state filings</td></tr>
+      <tr><td class="col-name">annual_fees_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">680000</td></tr>
+      <tr><td class="col-name">engagement_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2022-01-01</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">overlap_with_audit_firm</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>True if firm_name matches an entry in audit_advisory_engagements; amber for independence considerations</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">lead_partner_name</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Named human</td><td class="col-ex">Janet Miyamoto (KPMG)</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Same firm as audit · independence reviewed quarterly</td></tr>
+    </table>
+  </div>
+</div>
+
+<h4>CFO bundle · validation rules summary</h4>
+<ul>
+  <li><strong>Banking H2H ratio</strong> — drives Move 0 G1 risk grade. Must be present.</li>
+  <li><strong>Close variance</strong> — close_cycle_metrics.gl_cash_variance_pct trailing-6-month avg drives Move 0 G2 grade.</li>
+  <li><strong>IC posting cycle</strong> — close_cycle_metrics.ic_posting_days trailing-6-month avg drives Move 0 G6 grade.</li>
+  <li><strong>IT spend reconciliation</strong> — it_spend_ratios.total_it_spend_usd must match (±15%) CIO bundle it_spend_allocation.annual_usd sum.</li>
+  <li><strong>Auditor cross-HoldCo</strong> — fires Move 4 concentration once 2+ HoldCos load same firm_name.</li>
+  <li><strong>Insurance carrier cross-HoldCo</strong> — fires Move 4 concentration once 2+ HoldCos load same carrier for cyber line.</li>
+  <li><strong>Tax-audit independence</strong> — amber where firm_name in tax_engagements matches firm in audit_advisory_engagements (regulatory flag).</li>
+</ul>
+
+<h4>CFO bundle · approval routing</h4>
+<table>
+  <tr><th>Row class</th><th>Primary approver</th><th>Co-approver</th><th>Data steward</th></tr>
+  <tr><td>finance_system_inventory</td><td>CFO</td><td>CIO sign-off via comment</td><td>Controller</td></tr>
+  <tr><td>banking_relationships</td><td>CFO</td><td>Group Treasurer required</td><td>Controller + Treasury ops</td></tr>
+  <tr><td>audit_advisory_engagements</td><td>CFO</td><td>Audit Cmte chair informed</td><td>Controller</td></tr>
+  <tr><td>insurance_program</td><td>CFO</td><td>Risk Officer informed</td><td>Controller + risk mgmt</td></tr>
+  <tr><td>close_cycle_metrics</td><td>CFO</td><td>—</td><td>Controller</td></tr>
+  <tr><td>it_spend_ratios</td><td>CFO</td><td>CIO sign-off via comment</td><td>FP&amp;A lead</td></tr>
+  <tr><td>tax_engagements</td><td>CFO</td><td>Tax Director sign-off via comment</td><td>Tax ops</td></tr>
+</table>
+
+<h4>CFO bundle · failure mode (partial upload)</h4>
+<ul>
+  <li><strong>Move 0 unblocks</strong> when finance_system_inventory + banking_relationships + close_cycle_metrics are all loaded. Three of seven files is enough to begin Move 0 diagnosis.</li>
+  <li>Move 1 entry waits on Move 0 minimum (G1-G4 green or in-flight).</li>
+  <li>Move 2 vendor consolidation joins on audit_advisory_engagements; without it the audit-concentration thesis cannot fire (other vendor consolidation opportunities still proceed from the CIO bundle).</li>
+  <li>Move 4 concentration thesis fires partial; without insurance_program the carrier-concentration check is deferred.</li>
+</ul>
+
+<h2 id="s5">Section 5 · COO bundle <span class="tag tag-wave2">Wave 2</span></h2>
+
+<p><strong>Purpose.</strong> Capture the HoldCo's operations posture: per-PortCo operations stack (ERP, MES, supply chain, CRM), workforce comp by function, outsourced vs insourced split, operating KPIs (cycle times, throughput, quality), 3PL/vendor relationships beyond the corporate vendor catalog.</p>
+
+<p><strong>Moves that depend on it.</strong> Move 2 (cross-HoldCo PortCo-ops vendor consolidation), Move 3 (operations capability sharing across PortCos), Move 4 (operating risk + supply-chain concentration).</p>
+
+<p><strong>Owner.</strong> HoldCo COO. For Morgan Street that is Maya Patel. Data steward is the Ops PMO lead.</p>
+
+<p><strong>Files (5).</strong></p>
+
+<table>
+  <tr><th>File</th><th>Required cols</th><th>Optional cols</th><th>Expected row count</th></tr>
+  <tr><td><code>portco_ops_stack.csv</code></td><td>9</td><td>3</td><td>1–4 per PortCo · 10–60 total</td></tr>
+  <tr><td><code>workforce_by_function.csv</code></td><td>7</td><td>2</td><td>10–40</td></tr>
+  <tr><td><code>outsourcing_split.csv</code></td><td>6</td><td>2</td><td>5–20</td></tr>
+  <tr><td><code>operating_kpis.csv</code></td><td>7</td><td>3</td><td>10–60</td></tr>
+  <tr><td><code>tpl_vendor_relationships.csv</code></td><td>8</td><td>4</td><td>5–30</td></tr>
+</table>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>portco_ops_stack.csv</h4>
+    <span class="file">COO / portco_ops_stack</span>
+    <span class="purpose">One row per PortCo per operational system (ERP, MES, WMS, SCM, CRM, field service). Granular per PortCo because operating model varies.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example (Morgan Street MSH-MFG-01)</th></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK against entity registry (GC bundle); amber if registry not yet loaded</td><td class="col-ex">MSH-MFG-01</td></tr>
+      <tr><td class="col-name">portco_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars · should match GC entity registry name</td><td class="col-ex">Lakeshore Industrial Coatings</td></tr>
+      <tr><td class="col-name">system_function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>erp</code> · <code>mes</code> · <code>wms</code> · <code>scm</code> · <code>crm</code> · <code>field_service</code> · <code>quality_mgmt</code> · <code>plm</code> · <code>shop_floor</code> · <code>other</code></td><td class="col-ex">erp</td></tr>
+      <tr><td class="col-name">system_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars</td><td class="col-ex">NetSuite</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized via §8</td><td class="col-ex">Oracle NetSuite</td></tr>
+      <tr><td class="col-name">deployment_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>live</code> · <code>in_rollout</code> · <code>planned</code> · <code>sunset</code></td><td class="col-ex">live</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">320000</td></tr>
+      <tr><td class="col-name">criticality</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>tier_1</code> · <code>tier_2</code> · <code>tier_3</code></td><td class="col-ex">tier_1</td></tr>
+      <tr><td class="col-name">integration_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>fully_integrated</code> · <code>partial</code> · <code>islanded</code></td><td class="col-ex">partial</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601</td><td class="col-ex">2027-09-30</td></tr>
+      <tr><td class="col-name">modernization_state</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>current</code> · <code>aging</code> · <code>eol</code> · <code>migration_in_flight</code></td><td class="col-ex">current</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Integrated to HoldCo Snowflake; supply chain module not yet adopted</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>workforce_by_function.csv</h4>
+    <span class="file">COO / workforce_by_function</span>
+    <span class="purpose">One row per function-by-PortCo combination. Headcount, comp band, vacancy.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK against entity registry; or <code>holdco</code> for shared services</td><td class="col-ex">MSH-MFG-01</td></tr>
+      <tr><td class="col-name">function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>operations</code> · <code>sales</code> · <code>customer_service</code> · <code>field_service</code> · <code>logistics</code> · <code>quality</code> · <code>procurement</code> · <code>manufacturing</code> · <code>engineering</code> · <code>shared_services</code> · <code>other</code></td><td class="col-ex">manufacturing</td></tr>
+      <tr><td class="col-name">fte_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">340</td></tr>
+      <tr><td class="col-name">contractor_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">42</td></tr>
+      <tr><td class="col-name">avg_loaded_cost_per_fte_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">82000</td></tr>
+      <tr><td class="col-name">open_reqs_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative; amber if &gt; 15% of fte_count (vacancy stress)</td><td class="col-ex">14</td></tr>
+      <tr><td class="col-name">leader_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named human</td><td class="col-ex">Carlos Mendez (VP Mfg)</td></tr>
+      <tr><td class="col-name">primary_location</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · city, state</td><td class="col-ex">Joliet, IL</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Labor market tightness on coatings chemists</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>outsourcing_split.csv</h4>
+    <span class="file">COO / outsourcing_split</span>
+    <span class="purpose">One row per outsourced capability with provider, annual spend, term, in-house alternative.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">capability</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>logistics</code> · <code>customer_service_bpo</code> · <code>field_service_bpo</code> · <code>manufacturing_co_pack</code> · <code>warehousing</code> · <code>maintenance</code> · <code>data_entry</code> · <code>collections</code> · <code>other</code></td><td class="col-ex">customer_service_bpo</td></tr>
+      <tr><td class="col-name">provider_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Concentrix</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">multi_portco</td></tr>
+      <tr><td class="col-name">annual_spend_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">1800000</td></tr>
+      <tr><td class="col-name">contract_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2027-12-31</td></tr>
+      <tr><td class="col-name">in_house_alt_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>none</code> · <code>partial</code> · <code>full</code></td><td class="col-ex">partial</td></tr>
+      <tr><td class="col-name">scope_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Tier-1 CS for 2 distribution PortCos</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Renewal cycle approaching; reviewing AI-augmented CS as in-house alt</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>operating_kpis.csv</h4>
+    <span class="file">COO / operating_kpis</span>
+    <span class="purpose">One row per KPI per PortCo per period. Throughput, cycle time, quality, OTIF, fill rate, NPS.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK against entity registry</td><td class="col-ex">MSH-MFG-01</td></tr>
+      <tr><td class="col-name">kpi_name</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>otif</code> · <code>cycle_time_days</code> · <code>first_pass_yield_pct</code> · <code>fill_rate_pct</code> · <code>nps</code> · <code>ticket_resolution_hrs</code> · <code>scrap_pct</code> · <code>downtime_hrs</code> · <code>safety_trir</code> · <code>throughput_units_day</code> · <code>other</code></td><td class="col-ex">first_pass_yield_pct</td></tr>
+      <tr><td class="col-name">period_yyyymm</td><td class="col-type">yyyymm</td><td><span class="tag tag-req">req</span></td><td>6-digit yearmonth; red if &gt; 24 mo stale</td><td class="col-ex">202605</td></tr>
+      <tr><td class="col-name">value</td><td class="col-type">number</td><td><span class="tag tag-req">req</span></td><td>Numeric; sanity-checked vs KPI type (e.g., percent ≤ 100)</td><td class="col-ex">94.2</td></tr>
+      <tr><td class="col-name">unit</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td><code>pct</code> · <code>days</code> · <code>hrs</code> · <code>units_per_day</code> · <code>score_0_100</code> · etc.</td><td class="col-ex">pct</td></tr>
+      <tr><td class="col-name">target_value</td><td class="col-type">number</td><td><span class="tag tag-opt">opt</span></td><td>If provided, loader computes variance</td><td class="col-ex">96.0</td></tr>
+      <tr><td class="col-name">owner_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named human</td><td class="col-ex">Carlos Mendez</td></tr>
+      <tr><td class="col-name">data_source</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>System or report of record</td><td class="col-ex">MES daily yield report</td></tr>
+      <tr><td class="col-name">benchmark_band</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>If provided</td><td class="col-ex">Industry P50 92-94%</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">New SKU ramp depressed yield this month</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>tpl_vendor_relationships.csv</h4>
+    <span class="file">COO / tpl_vendor_relationships</span>
+    <span class="purpose">One row per 3PL or critical operational vendor not captured in CIO vendor_contracts (suppliers, co-packers, freight carriers, MRO).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">XPO Logistics</td></tr>
+      <tr><td class="col-name">vendor_category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>3pl_freight</code> · <code>3pl_warehouse</code> · <code>co_packer</code> · <code>raw_materials</code> · <code>mro</code> · <code>field_service_partner</code> · <code>contract_mfg</code> · <code>other</code></td><td class="col-ex">3pl_freight</td></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string[]</td><td><span class="tag tag-req">req</span></td><td>One or more PortCo IDs; comma-separated</td><td class="col-ex">MSH-DIST-01,MSH-DIST-02</td></tr>
+      <tr><td class="col-name">annual_spend_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; amber if &gt; $5M and not in vendor_contracts file</td><td class="col-ex">3200000</td></tr>
+      <tr><td class="col-name">contract_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2024-04-01</td></tr>
+      <tr><td class="col-name">contract_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2027-03-31</td></tr>
+      <tr><td class="col-name">sole_source</td><td class="col-type">boolean</td><td><span class="tag tag-req">req</span></td><td>True if no alternative provider available; amber on tier-1 capability</td><td class="col-ex">false</td></tr>
+      <tr><td class="col-name">criticality</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>tier_1</code> · <code>tier_2</code> · <code>tier_3</code></td><td class="col-ex">tier_1</td></tr>
+      <tr><td class="col-name">geography</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Country code(s)</td><td class="col-ex">US</td></tr>
+      <tr><td class="col-name">backup_vendor_present</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>True if redundancy in place</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">last_qbr_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601; amber if &gt; 6 mo stale for tier-1</td><td class="col-ex">2026-03-15</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Multi-PortCo carrier rate consolidation candidate</td></tr>
+    </table>
+  </div>
+</div>
+
+<h4>COO bundle · approval routing</h4>
+<table>
+  <tr><th>Row class</th><th>Primary approver</th><th>Co-approver</th><th>Data steward</th></tr>
+  <tr><td>portco_ops_stack</td><td>COO</td><td>CIO sign-off via comment</td><td>Ops PMO</td></tr>
+  <tr><td>workforce_by_function</td><td>COO</td><td>CHRO sign-off via comment</td><td>Ops PMO + HR business partner</td></tr>
+  <tr><td>outsourcing_split</td><td>COO</td><td>CFO informed</td><td>Ops PMO + procurement</td></tr>
+  <tr><td>operating_kpis</td><td>COO</td><td>—</td><td>Ops PMO</td></tr>
+  <tr><td>tpl_vendor_relationships</td><td>COO</td><td>CFO informed for &gt; $5M</td><td>Ops PMO + procurement</td></tr>
+</table>
+
+<h4>COO bundle · failure mode (partial upload)</h4>
+<p>COO bundle is permissive on partial loads. <code>portco_ops_stack</code> and <code>tpl_vendor_relationships</code> drive most cross-HoldCo opportunity scans; the other three files improve depth. Move 2 PortCo-ops vendor consolidation requires <code>tpl_vendor_relationships</code> from at least 2 HoldCos to fire.</p>
+
+<h2 id="s6">Section 6 · CHRO bundle <span class="tag tag-wave2">Wave 2</span></h2>
+
+<p><strong>Purpose.</strong> Capture the HoldCo's human capital posture: HCM stack (Workday, ADP, SuccessFactors, BambooHR), benefits broker + carriers, L&amp;D stack, talent acquisition stack (ATS, sourcing), workforce demographics (FTE/contractor split, geography, function).</p>
+
+<p><strong>Moves that depend on it.</strong> Move 2 (Workday consolidation across HoldCos · L-S03), Move 3 (federated SI partner for Workday rollouts · L-S06), Move 4 (talent benchmark · IT FTE ratio, comp benchmarking).</p>
+
+<p><strong>Owner.</strong> HoldCo CHRO. For Morgan Street that is Jonathan Reese. Data steward is the People Ops lead.</p>
+
+<p><strong>Files (5).</strong></p>
+
+<table>
+  <tr><th>File</th><th>Required cols</th><th>Optional cols</th><th>Expected row count</th></tr>
+  <tr><td><code>hcm_stack.csv</code></td><td>8</td><td>3</td><td>3–12</td></tr>
+  <tr><td><code>benefits_stack.csv</code></td><td>8</td><td>2</td><td>5–15</td></tr>
+  <tr><td><code>ld_stack.csv</code></td><td>6</td><td>2</td><td>2–10</td></tr>
+  <tr><td><code>ta_stack.csv</code></td><td>6</td><td>2</td><td>2–10</td></tr>
+  <tr><td><code>workforce_demographics.csv</code></td><td>7</td><td>3</td><td>5–30</td></tr>
+</table>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>hcm_stack.csv</h4>
+    <span class="file">CHRO / hcm_stack</span>
+    <span class="purpose">One row per HCM system in use. Workday, ADP, SuccessFactors, UKG, BambooHR, etc.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">system_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars</td><td class="col-ex">Workday</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Workday Inc</td></tr>
+      <tr><td class="col-name">module_set</td><td class="col-type">string[]</td><td><span class="tag tag-req">req</span></td><td>Comma-separated: <code>core_hcm</code> · <code>payroll</code> · <code>benefits</code> · <code>talent</code> · <code>recruiting</code> · <code>learning</code> · <code>comp</code> · <code>time_attendance</code> · <code>other</code></td><td class="col-ex">core_hcm,benefits,talent,recruiting</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">multi_portco</td></tr>
+      <tr><td class="col-name">portco_coverage</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated PortCo IDs</td><td class="col-ex">MSH-HOLDCO,MSH-MFG-01,MSH-MFG-02,MSH-FAC-01</td></tr>
+      <tr><td class="col-name">deployment_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>live</code> · <code>in_rollout</code> · <code>planned</code> · <code>sunset</code></td><td class="col-ex">live</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; should reconcile to vendor_contracts entry in CIO bundle</td><td class="col-ex">3100000</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2027-12-31</td></tr>
+      <tr><td class="col-name">fte_covered</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative; reconciles to workforce_demographics totals</td><td class="col-ex">3200</td></tr>
+      <tr><td class="col-name">rollout_wave_notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · required if deployment_state = in_rollout</td><td class="col-ex">HoldCo + 2 PortCos live; 6 PortCos on legacy ADP, migration planned 2027</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Workday Financials evaluated and parked</td></tr>
+    </table>
+    <p class="meta"><strong>Move 2 / L-S03 trigger.</strong> When 2+ HoldCos load <code>hcm_stack</code> rows with canonicalized vendor_name = "Workday Inc", the Workday consolidation opportunity surfaces with consolidated annual_cost_usd sum. Roosevelt's in_rollout state additionally triggers L-S06 federated SI candidate.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>benefits_stack.csv</h4>
+    <span class="file">CHRO / benefits_stack</span>
+    <span class="purpose">One row per benefits line (medical, dental, vision, life, disability, 401k, FSA, HSA, COBRA admin).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">line</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>medical</code> · <code>dental</code> · <code>vision</code> · <code>life</code> · <code>ad_d</code> · <code>std</code> · <code>ltd</code> · <code>401k</code> · <code>fsa</code> · <code>hsa</code> · <code>cobra_admin</code> · <code>eap</code> · <code>wellness</code> · <code>other</code></td><td class="col-ex">medical</td></tr>
+      <tr><td class="col-name">broker_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Marsh McLennan Agency</td></tr>
+      <tr><td class="col-name">carrier_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Blue Cross Blue Shield IL</td></tr>
+      <tr><td class="col-name">funding_model</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>fully_insured</code> · <code>self_insured</code> · <code>level_funded</code> · <code>captive</code> · <code>na</code></td><td class="col-ex">self_insured</td></tr>
+      <tr><td class="col-name">annual_premium_or_claims_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; for self-insured this is claims + admin fees</td><td class="col-ex">28500000</td></tr>
+      <tr><td class="col-name">policy_period_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2026-01-01</td></tr>
+      <tr><td class="col-name">policy_period_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">fte_covered</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">3950</td></tr>
+      <tr><td class="col-name">prior_year_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-opt">opt</span></td><td>If provided, loader computes YoY change; amber if &gt; 15%</td><td class="col-ex">25800000</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Self-insured with stop-loss at $300K; PBM under separate broker</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>ld_stack.csv</h4>
+    <span class="file">CHRO / ld_stack</span>
+    <span class="purpose">L&amp;D systems and providers: LMS, content libraries, leadership programs, compliance training.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">system_or_program_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars</td><td class="col-ex">Cornerstone OnDemand</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Cornerstone OnDemand Inc</td></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>lms</code> · <code>content_library</code> · <code>leadership_dev</code> · <code>compliance_training</code> · <code>technical_skills</code> · <code>coaching</code> · <code>other</code></td><td class="col-ex">lms</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">420000</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">fte_covered</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">4800</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601</td><td class="col-ex">2027-03-31</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Compliance training only; leadership dev on separate platform</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>ta_stack.csv</h4>
+    <span class="file">CHRO / ta_stack</span>
+    <span class="purpose">Talent acquisition: ATS, sourcing tools, assessment, RPO partners.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">system_or_service_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>1–120 chars</td><td class="col-ex">Lever</td></tr>
+      <tr><td class="col-name">vendor_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Lever Inc</td></tr>
+      <tr><td class="col-name">category</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>ats</code> · <code>sourcing</code> · <code>assessment</code> · <code>video_interview</code> · <code>background_check</code> · <code>rpo</code> · <code>job_boards</code> · <code>other</code></td><td class="col-ex">ats</td></tr>
+      <tr><td class="col-name">annual_cost_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD</td><td class="col-ex">180000</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">annual_req_volume</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative · open reqs run through this tool annually</td><td class="col-ex">320</td></tr>
+      <tr><td class="col-name">renewal_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601</td><td class="col-ex">2026-11-30</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">PortCos largely on Workday Recruiting; Lever covers exec search workflow</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>workforce_demographics.csv</h4>
+    <span class="file">CHRO / workforce_demographics</span>
+    <span class="purpose">One row per PortCo per function. FTE, contractor, geography. Drives Move 4 talent benchmark.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK against entity registry; or <code>holdco</code></td><td class="col-ex">MSH-MFG-01</td></tr>
+      <tr><td class="col-name">function</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td>Same enum as COO workforce_by_function.function + adds <code>it</code>, <code>finance</code>, <code>hr</code>, <code>legal</code></td><td class="col-ex">manufacturing</td></tr>
+      <tr><td class="col-name">fte_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">340</td></tr>
+      <tr><td class="col-name">contractor_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">42</td></tr>
+      <tr><td class="col-name">offshore_share_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–100</td><td class="col-ex">0</td></tr>
+      <tr><td class="col-name">primary_geography</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Country / state code</td><td class="col-ex">US-IL</td></tr>
+      <tr><td class="col-name">avg_tenure_years</td><td class="col-type">number</td><td><span class="tag tag-req">req</span></td><td>0–50</td><td class="col-ex">7.4</td></tr>
+      <tr><td class="col-name">voluntary_attrition_pct_ytd</td><td class="col-type">percent</td><td><span class="tag tag-opt">opt</span></td><td>0–100; amber if &gt; 25%</td><td class="col-ex">9.2</td></tr>
+      <tr><td class="col-name">avg_loaded_cost_per_fte_usd</td><td class="col-type">money</td><td><span class="tag tag-opt">opt</span></td><td>Positive USD; should approximate COO bundle's same field for reconciliation</td><td class="col-ex">82000</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Coatings chemist labor market tight; sourcing in TX added 2025</td></tr>
+    </table>
+  </div>
+</div>
+
+<h4>CHRO bundle · approval routing</h4>
+<table>
+  <tr><th>Row class</th><th>Primary approver</th><th>Co-approver</th><th>Data steward</th></tr>
+  <tr><td>hcm_stack</td><td>CHRO</td><td>CIO sign-off via comment</td><td>People Ops lead</td></tr>
+  <tr><td>benefits_stack</td><td>CHRO</td><td>CFO informed</td><td>Benefits manager</td></tr>
+  <tr><td>ld_stack</td><td>CHRO</td><td>—</td><td>L&amp;D lead</td></tr>
+  <tr><td>ta_stack</td><td>CHRO</td><td>—</td><td>Talent Acquisition lead</td></tr>
+  <tr><td>workforce_demographics</td><td>CHRO</td><td>COO informed for ops functions</td><td>People Ops lead + HRIS</td></tr>
+</table>
+
+<h4>CHRO bundle · failure mode (partial upload)</h4>
+<p>Move 2 Workday consolidation requires <code>hcm_stack</code> from at least 2 HoldCos. Move 4 talent benchmark requires <code>workforce_demographics</code>. Other files are nice-to-have. Note: when CHRO bundle is missing but CIO bundle is present, Move 4 IT FTE ratio still computes from CIO it_org but the cross-function talent picture is incomplete.</p>
+
+<h2 id="s7">Section 7 · GC / CCO bundle <span class="tag tag-wave2">Wave 2</span></h2>
+
+<p><strong>Purpose.</strong> Capture the HoldCo's legal + regulatory + entity posture: master contract index (cross-functional, beyond IT/finance/HR captured in those bundles), regulatory inventory (jurisdictions, frameworks, audit schedule), litigation pipeline, entity registry (legal structure, board composition, ownership stack), D&amp;O/E&amp;O/cyber-insurance program (overlaps with CFO insurance_program; both files reconcile).</p>
+
+<p><strong>Moves that depend on it.</strong> Move 2 (contract renewal calendar — the federated renewal cadence), Move 4 (federated risk, regulatory concentration, entity-registry-driven IC mapping for Move 0 G3 also reads from here).</p>
+
+<p><strong>Owner.</strong> HoldCo GC. For Morgan Street that is Robert Mei. Data steward is Legal Ops. CCO (Priya Anand at L0 level; HoldCo-level compliance lead varies) consulted on regulatory rows.</p>
+
+<p><strong>Files (5).</strong></p>
+
+<table>
+  <tr><th>File</th><th>Required cols</th><th>Optional cols</th><th>Expected row count</th></tr>
+  <tr><td><code>contract_index.csv</code></td><td>9</td><td>3</td><td>30–300</td></tr>
+  <tr><td><code>regulatory_inventory.csv</code></td><td>7</td><td>3</td><td>5–30</td></tr>
+  <tr><td><code>litigation_pipeline.csv</code></td><td>8</td><td>3</td><td>0–50</td></tr>
+  <tr><td><code>entity_registry.csv</code></td><td>10</td><td>3</td><td>5–60 (one per legal entity)</td></tr>
+  <tr><td><code>do_eo_cyber_insurance.csv</code></td><td>8</td><td>3</td><td>3–10 (matches subset of CFO insurance_program)</td></tr>
+</table>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>contract_index.csv</h4>
+    <span class="file">GC / contract_index</span>
+    <span class="purpose">Master cross-functional contract index. Captures contracts beyond what's in CIO vendor_contracts (e.g., commercial customer contracts, NDAs, JV/strategic agreements, leases, IP licenses, employment agreements above a threshold).</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">contract_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Internal ID; unique within file; should match Ironclad/CLM record if available</td><td class="col-ex">MSH-K-2024-0287</td></tr>
+      <tr><td class="col-name">counterparty_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Microsoft Corporation</td></tr>
+      <tr><td class="col-name">contract_type</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>vendor</code> · <code>customer</code> · <code>nda</code> · <code>jv</code> · <code>strategic</code> · <code>lease</code> · <code>employment</code> · <code>ip_license</code> · <code>service_provider</code> · <code>credit_facility</code> · <code>other</code></td><td class="col-ex">vendor</td></tr>
+      <tr><td class="col-name">scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">annual_value_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; 0 allowed for non-monetary (NDA etc.); amber if blank on contract_type = vendor or customer</td><td class="col-ex">4200000</td></tr>
+      <tr><td class="col-name">contract_start</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2025-07-01</td></tr>
+      <tr><td class="col-name">contract_end</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; must be after start</td><td class="col-ex">2028-06-30</td></tr>
+      <tr><td class="col-name">renewal_notice_days</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>0–365</td><td class="col-ex">90</td></tr>
+      <tr><td class="col-name">auto_renew</td><td class="col-type">boolean</td><td><span class="tag tag-req">req</span></td><td>true/false</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">governing_law</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Jurisdiction tag</td><td class="col-ex">Delaware</td></tr>
+      <tr><td class="col-name">exit_clause_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · termination-for-convenience, change-of-control, etc.</td><td class="col-ex">TFC w/ 90 day notice; CoC requires consent</td></tr>
+      <tr><td class="col-name">linked_clm_record</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>External CLM URL or ID</td><td class="col-ex">ironclad://contracts/0287</td></tr>
+    </table>
+    <p class="meta"><strong>Move 2 renewal-calendar join.</strong> All vendor-type rows surface into the federated renewal calendar; renewals within 180 days are flagged as actionable.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>regulatory_inventory.csv</h4>
+    <span class="file">GC / regulatory_inventory</span>
+    <span class="purpose">One row per regulatory framework or jurisdiction the HoldCo operates under. SOX, HIPAA, PCI-DSS, GDPR, CCPA, OSHA, EPA, etc.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">framework</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>sox</code> · <code>hipaa</code> · <code>pci_dss</code> · <code>gdpr</code> · <code>ccpa_cpra</code> · <code>osha</code> · <code>epa</code> · <code>iso_27001</code> · <code>soc2</code> · <code>nist_csf</code> · <code>bipa</code> · <code>cmmc</code> · <code>nydfs</code> · <code>state_privacy_other</code> · <code>other</code></td><td class="col-ex">sox</td></tr>
+      <tr><td class="col-name">applicability_scope</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>multi_portco</code> · <code>single_portco</code></td><td class="col-ex">holdco</td></tr>
+      <tr><td class="col-name">portco_ids</td><td class="col-type">string[]</td><td><span class="tag tag-opt">opt</span></td><td>Required if applicability_scope ≠ holdco</td><td class="col-ex">—</td></tr>
+      <tr><td class="col-name">compliance_state</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>compliant</code> · <code>partial</code> · <code>gap</code> · <code>na</code></td><td class="col-ex">compliant</td></tr>
+      <tr><td class="col-name">next_audit_date</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601; amber if &lt; 60 days (urgency) or in past</td><td class="col-ex">2026-11-15</td></tr>
+      <tr><td class="col-name">primary_owner_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Named human</td><td class="col-ex">Robert Mei</td></tr>
+      <tr><td class="col-name">control_framework_link</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>URL or internal reference</td><td class="col-ex">logicgate://frameworks/sox</td></tr>
+      <tr><td class="col-name">last_finding_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · open findings from last audit</td><td class="col-ex">Zero material weaknesses in 2025 audit</td></tr>
+      <tr><td class="col-name">jurisdictions</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Comma-separated country/state codes</td><td class="col-ex">US-Federal,US-IL,US-CA</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Free text · 1–500 chars</td><td class="col-ex">Annual external audit; ICFR controls testing in flight</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>litigation_pipeline.csv</h4>
+    <span class="file">GC / litigation_pipeline</span>
+    <span class="purpose">One row per active matter. Status, exposure band, counsel, accrual.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">matter_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Internal ID; unique within file</td><td class="col-ex">MSH-LIT-2024-008</td></tr>
+      <tr><td class="col-name">matter_type</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>employment</code> · <code>commercial</code> · <code>product_liability</code> · <code>ip</code> · <code>environmental</code> · <code>regulatory_enforcement</code> · <code>tax</code> · <code>shareholder</code> · <code>other</code></td><td class="col-ex">employment</td></tr>
+      <tr><td class="col-name">status</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>pre_filing</code> · <code>filed</code> · <code>discovery</code> · <code>trial_set</code> · <code>settlement_discussion</code> · <code>resolved</code> · <code>appeal</code></td><td class="col-ex">discovery</td></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK against entity registry; or <code>holdco</code></td><td class="col-ex">MSH-FAC-02</td></tr>
+      <tr><td class="col-name">exposure_band_usd</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>lt_100k</code> · <code>100k_500k</code> · <code>500k_2m</code> · <code>2m_10m</code> · <code>gt_10m</code> · <code>not_estimable</code></td><td class="col-ex">500k_2m</td></tr>
+      <tr><td class="col-name">accrual_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Non-negative USD; can be 0</td><td class="col-ex">650000</td></tr>
+      <tr><td class="col-name">external_counsel_firm</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8</td><td class="col-ex">Jackson Lewis P.C.</td></tr>
+      <tr><td class="col-name">date_opened</td><td class="col-type">date</td><td><span class="tag tag-req">req</span></td><td>ISO 8601</td><td class="col-ex">2024-08-12</td></tr>
+      <tr><td class="col-name">trial_date</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601; required if status = trial_set</td><td class="col-ex">—</td></tr>
+      <tr><td class="col-name">privilege_classification</td><td class="col-type">enum</td><td><span class="tag tag-opt">opt</span></td><td><code>privileged_attorney_work_product</code> · <code>standard</code> · used by substrate to restrict access</td><td class="col-ex">privileged_attorney_work_product</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · short, non-privileged summary</td><td class="col-ex">Wage-and-hour class action; mediation set Q3</td></tr>
+    </table>
+    <p class="meta"><strong>Substrate access note.</strong> Rows with <code>privilege_classification = privileged_attorney_work_product</code> are scoped to GC + outside counsel only; not visible to Sentinel general retrieval or L0 aggregate reads. Loader confirms this with explicit checkbox during approval.</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>entity_registry.csv</h4>
+    <span class="file">GC / entity_registry</span>
+    <span class="purpose">One row per legal entity (HoldCo, each PortCo, intermediate holdings). Ownership %, board composition, jurisdiction. <strong>This file is the foreign-key root for portco_ids across all bundles.</strong></span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">portco_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Stable identifier; unique within file; convention: <code>MSH-{INDUSTRY}-{NN}</code></td><td class="col-ex">MSH-MFG-01</td></tr>
+      <tr><td class="col-name">legal_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Registered legal name</td><td class="col-ex">Lakeshore Industrial Coatings LLC</td></tr>
+      <tr><td class="col-name">entity_type</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>holdco</code> · <code>portco</code> · <code>intermediate</code> · <code>jv</code> · <code>dormant</code></td><td class="col-ex">portco</td></tr>
+      <tr><td class="col-name">parent_id</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>FK to portco_id of parent within file (red if unresolved); HoldCo row's parent is blank or <code>EXTERNAL</code></td><td class="col-ex">MSH-HOLDCO</td></tr>
+      <tr><td class="col-name">ownership_pct</td><td class="col-type">percent</td><td><span class="tag tag-req">req</span></td><td>0–100; amber if &lt; 100 (minority ownership has IC implications)</td><td class="col-ex">100</td></tr>
+      <tr><td class="col-name">jurisdiction</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Country/state of incorporation</td><td class="col-ex">US-DE</td></tr>
+      <tr><td class="col-name">industry</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>mfg_specialty</code> · <code>industrial_dist</code> · <code>facility_services</code> · <code>healthcare_pt</code> · <code>healthcare_dental</code> · <code>healthcare_urgent</code> · <code>healthcare_home</code> · <code>saas_legal</code> · <code>saas_martech</code> · <code>saas_fintech_infra</code> · <code>holdco</code> · <code>other</code></td><td class="col-ex">mfg_specialty</td></tr>
+      <tr><td class="col-name">annual_revenue_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive USD; 0 for HoldCo if pure holding</td><td class="col-ex">285000000</td></tr>
+      <tr><td class="col-name">employees_fte</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">540</td></tr>
+      <tr><td class="col-name">board_size</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative</td><td class="col-ex">5</td></tr>
+      <tr><td class="col-name">independent_directors</td><td class="col-type">integer</td><td><span class="tag tag-opt">opt</span></td><td>0 ≤ value ≤ board_size</td><td class="col-ex">2</td></tr>
+      <tr><td class="col-name">audit_cmte_present</td><td class="col-type">boolean</td><td><span class="tag tag-opt">opt</span></td><td>true/false; amber if false for entity with annual_revenue_usd &gt; $250M</td><td class="col-ex">false</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · special purpose, dormant status, M&A pending</td><td class="col-ex">Anchor PortCo · acquired 2018</td></tr>
+    </table>
+    <p class="meta"><strong>Move 0 G3 (IC mapping) dependency.</strong> Kyriba entity hierarchy load reads from this file. Each row produces one entity in the IC matrix. <code>parent_id</code> chain must be acyclic (red on cycle detection). Sum of <code>annual_revenue_usd</code> for all PortCo rows under a HoldCo should approximate the it_spend_ratios.consolidated_revenue_usd from the CFO bundle (amber if &gt; 10% variance — likely IC double-counting).</p>
+  </div>
+</div>
+
+<div class="schema-block">
+  <div class="schema-hd">
+    <h4>do_eo_cyber_insurance.csv</h4>
+    <span class="file">GC / do_eo_cyber_insurance</span>
+    <span class="purpose">D&amp;O, E&amp;O, cyber-insurance overlap with CFO insurance_program. GC view captures legal-relevant detail (defense costs, exclusions, claims history). Both files reconcile.</span>
+  </div>
+  <div style="padding: 0 16px 12px;">
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Req</th><th>Validation rule</th><th>Example</th></tr>
+      <tr><td class="col-name">line</td><td class="col-type">enum</td><td><span class="tag tag-req">req</span></td><td><code>do</code> · <code>eo</code> · <code>cyber</code> · <code>employment_practices</code> · <code>fiduciary</code> · <code>crime</code></td><td class="col-ex">cyber</td></tr>
+      <tr><td class="col-name">carrier_name</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Normalized · §8; should match CFO insurance_program carrier (red on mismatch)</td><td class="col-ex">Chubb</td></tr>
+      <tr><td class="col-name">limit_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Positive · must match CFO file (red on mismatch &gt; 5%)</td><td class="col-ex">25000000</td></tr>
+      <tr><td class="col-name">retention_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Non-negative · must match CFO file</td><td class="col-ex">1000000</td></tr>
+      <tr><td class="col-name">defense_within_limits</td><td class="col-type">boolean</td><td><span class="tag tag-req">req</span></td><td>true if defense erodes limit</td><td class="col-ex">true</td></tr>
+      <tr><td class="col-name">key_exclusions_summary</td><td class="col-type">string</td><td><span class="tag tag-req">req</span></td><td>Free text · BIPA, war, prior-acts, etc.</td><td class="col-ex">BIPA excluded; war/cyber-war exclusion 2024 endorsement</td></tr>
+      <tr><td class="col-name">claims_in_period_count</td><td class="col-type">integer</td><td><span class="tag tag-req">req</span></td><td>Non-negative · claims in current policy period</td><td class="col-ex">0</td></tr>
+      <tr><td class="col-name">aggregate_paid_losses_usd</td><td class="col-type">money</td><td><span class="tag tag-req">req</span></td><td>Non-negative · paid losses prior 3 yrs</td><td class="col-ex">0</td></tr>
+      <tr><td class="col-name">policy_period_end</td><td class="col-type">date</td><td><span class="tag tag-opt">opt</span></td><td>ISO 8601; must match CFO file</td><td class="col-ex">2026-12-31</td></tr>
+      <tr><td class="col-name">tower_structure_summary</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text · primary + excess layers</td><td class="col-ex">$10M primary + $15M excess</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">string</td><td><span class="tag tag-opt">opt</span></td><td>Free text</td><td class="col-ex">Single carrier · two-carrier program under evaluation for 2027</td></tr>
+    </table>
+  </div>
+</div>
+
+<h4>GC bundle · approval routing</h4>
+<table>
+  <tr><th>Row class</th><th>Primary approver</th><th>Co-approver</th><th>Data steward</th></tr>
+  <tr><td>contract_index</td><td>GC</td><td>CFO sign-off for &gt; $5M; CIO for IT contracts</td><td>Legal Ops</td></tr>
+  <tr><td>regulatory_inventory</td><td>GC</td><td>CCO informed; CISO for cyber frameworks</td><td>Legal Ops + GRC</td></tr>
+  <tr><td>litigation_pipeline</td><td>GC</td><td>—</td><td>Legal Ops (privileged rows restricted)</td></tr>
+  <tr><td>entity_registry</td><td>GC</td><td>CFO sign-off (load is IC-mapping load-bearing)</td><td>Corporate Secretary + Tax</td></tr>
+  <tr><td>do_eo_cyber_insurance</td><td>GC</td><td>CFO required (must reconcile to CFO insurance_program)</td><td>Risk mgmt + Legal Ops</td></tr>
+</table>
+
+<h4>GC bundle · failure mode (partial upload)</h4>
+<p>Entity_registry is the FK root for all other bundles' portco_id references. Until it loads, all rows referencing portco_id surface as amber across CIO, CFO, COO, CHRO bundles. <strong>Recommend loading entity_registry first.</strong> The Setup home shows: "GC bundle entity_registry.csv not loaded — 14 amber rows across other bundles waiting on FK resolution."</p>
+
+<p>Litigation_pipeline is fully optional; HoldCo may have zero open matters and load an empty file with header row only. Other files all have at least minimum content expected at any operating HoldCo.</p>
+
+<h2 id="s8">Section 8 · Common validation patterns</h2>
+
+<p>Every bundle uses the same primitive validators. Codex implements them once in <code>src/lib/cxo-intel/validators/*</code> and the per-bundle schemas reference them by name.</p>
+
+<h3>Currency codes (ISO 4217)</h3>
+<p>Accepted: any 3-letter uppercase code present in the ISO 4217 active list (USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, INR, MXN, BRL, ZAR, plus all other active codes — checked against a static reference table in <code>src/lib/cxo-intel/reference/iso4217.json</code>). Rejected: lowercase, 4-letter, retired codes (e.g., DEM). Red on rejection. Implementation: the validator coerces to uppercase before checking; case-mismatch alone is auto-corrected with a comment, not blocked.</p>
+
+<h3>Dates (ISO 8601)</h3>
+<p>Accepted: <code>YYYY-MM-DD</code> only. Auto-coerce: <code>YYYY-M-D</code>, <code>YYYY/MM/DD</code>, <code>MM/DD/YYYY</code> (US-style) with a "best-guess" amber flag. Rejected: ambiguous formats (e.g., <code>02/03/2026</code> where it could be Feb 3 or Mar 2 depending on locale — red; user clarifies). Future-date sanity: more than 30 years out is red; more than 10 years out is amber. Past-date sanity: depends on column semantics — for "renewal_date", past is amber (likely stale or auto-renewed); for "engagement_start", past is normal.</p>
+
+<h3>Yearmonth (YYYYMM)</h3>
+<p>Accepted: 6-digit integer string, e.g., <code>202604</code>. Red on: non-6-digit, month &lt; 01 or &gt; 12, year &lt; 1980 or &gt; (current year + 5). Amber on: &gt; 24 months in past (stale series).</p>
+
+<h3>Dollar amounts (money)</h3>
+<p>Accepted: numeric. Parser strips commas, currency symbols, parentheses-for-negative (with negative interpretation), spaces. Decimal precision: 0–2 decimal places. Rejected (red): negative values where column semantics require positive; non-numeric chars beyond the cleanup list. Amber: values &gt; 99th percentile of category-band benchmark (likely data error or genuine outlier — user confirms).</p>
+
+<p>Multi-currency normalization: every money field has an implicit or explicit currency. The loader stores both raw value + raw currency + USD-normalized value using the FX rate as of the load date (sourced from a static FX table refreshed daily; for fictional Lakeshore data, FX rates as of 2026-06-05 are the anchor). Downstream Move calculations use USD-normalized values; reports can render in raw or USD per user preference.</p>
+
+<h3>Percent</h3>
+<p>Accepted: numeric, 0–100 (or 0.0–100.0). Parser strips trailing <code>%</code>. Amber if outside expected band per column semantics (e.g., <code>share_pct</code> in cloud_footprint summing to 100 ± 2pp).</p>
+
+<h3>Boolean</h3>
+<p>Accepted: <code>true</code>, <code>false</code>, <code>True</code>, <code>False</code>, <code>TRUE</code>, <code>FALSE</code>, <code>1</code>, <code>0</code>, <code>yes</code>, <code>no</code>, <code>Y</code>, <code>N</code>. Coerced to canonical <code>true</code>/<code>false</code>. Red on any other value.</p>
+
+<h3>Enum (controlled vocabulary)</h3>
+<p>Accepted: exact match against the documented enum list (case-insensitive; coerced to lowercase canonical form). Red on no match. The loader shows a dropdown of valid values in the validation preview to help the user fix.</p>
+
+<h3>Email</h3>
+<p>RFC 5322 syntactic check. Amber if domain is a free-mail provider (gmail.com, yahoo.com, hotmail.com, outlook.com) on a corporate-context column.</p>
+
+<h3>Vendor name normalization</h3>
+<p>Vendor names are the load-bearing cross-HoldCo join key. The loader runs each <code>vendor_name</code>, <code>firm_name</code>, <code>broker_name</code>, <code>carrier_name</code>, <code>provider_name</code>, <code>counterparty_name</code>, <code>external_counsel_firm</code> through the global vendor index. Steps:</p>
+
+<ol>
+  <li>Exact match against canonicalized index (e.g., "Microsoft Corporation"). If match: green, use canonical form.</li>
+  <li>If no exact match, fuzzy match using Levenshtein + token-Jaccard hybrid (threshold 0.85). E.g., "Microsoft Corp" → "Microsoft Corporation" (auto-link with amber). "MSFT" → "Microsoft Corporation" (alias table catches abbreviations).</li>
+  <li>If still no match, the loader proposes the row's value as a new canonical entry pending the user's confirmation. Confirmed entries are added to the index. Amber until confirmed.</li>
+</ol>
+
+<p>The global vendor index lives at <code>cxo_intel_vendor_index</code> (substrate; see §9). It is shared across all HoldCos within the holding_group so that fuzzy joins on Move 2 cross-HoldCo opportunities resolve correctly. An entry has: <code>canonical_name</code>, <code>aliases[]</code>, <code>vendor_type</code> (software, services, audit, insurance, etc.), <code>parent_company</code> (for M&amp;A consolidation — e.g., "Concur" → parent "SAP SE"), <code>cui_url</code> (vendor's homepage, used to disambiguate).</p>
+
+<p>Initial seed of the index includes the top ~500 vendors expected in mid-market PE-style portfolios: all major software (MS, Oracle, SAP, Workday, Salesforce, ServiceNow, NetSuite, etc.), all Big-4 and tier-2 audit/advisory firms, top 50 insurance carriers and brokers, top 30 banks. Seed lives at <code>src/lib/cxo-intel/reference/vendor-seed.json</code>.</p>
+
+<h3>Bank name normalization</h3>
+<p>Same pattern as vendor index but with a curated bank-specific index. Seed includes US top-100 banks plus all G-SIBs internationally. Aliases catch common abbreviations ("JPM", "JPMC", "Chase" all → "JPMorgan Chase"). Bank-name red is rare in practice (banks are well-known); amber appears mostly for small regional/specialty banks not in seed.</p>
+
+<h3>Contract renewal date sanity</h3>
+<p>Composite check across contract_start, contract_end, renewal_notice_days, and "today":</p>
+<ul>
+  <li>contract_end &lt; contract_start → red (impossible)</li>
+  <li>contract_end &lt; today and auto_renew = false → amber (contract expired without renewal?)</li>
+  <li>contract_end - today &lt; renewal_notice_days → amber (renewal action overdue)</li>
+  <li>contract_end &gt; today + 30 years → red (likely typo; e.g., 2207 instead of 2027)</li>
+</ul>
+
+<h3>FK integrity</h3>
+<p>References that span files (e.g., <code>portco_ids</code> in CIO bundle pointing to <code>portco_id</code> in GC entity_registry) are validated at load time and re-validated whenever a related file is loaded later. If the referenced file hasn't been loaded yet, the row is amber with "pending FK resolution"; once the referenced file lands, the loader re-evaluates and either resolves to green or surfaces red on unresolved.</p>
+
+<h3>Sum-to-100 invariants</h3>
+<p>For columns where rows must aggregate to 100% (cloud_footprint.share_pct, it_spend_allocation.share_pct), the validator computes the sum across all rows in the file and checks against 100 ± 2pp. Red on violation; the loader shows the actual sum so the user can identify the rounding/missing-row issue.</p>
+
+<h3>Cross-file reconciliation</h3>
+<p>Some checks span bundles:</p>
+<ul>
+  <li>CFO it_spend_ratios.total_it_spend_usd ≈ sum(CIO it_spend_allocation.annual_usd) within ±15%</li>
+  <li>GC entity_registry.annual_revenue_usd (sum across PortCos under HoldCo) ≈ CFO it_spend_ratios.consolidated_revenue_usd within ±10%</li>
+  <li>CFO insurance_program (cyber line) carrier_name/limit/retention = GC do_eo_cyber_insurance carrier_name/limit/retention</li>
+  <li>CIO vendor_contracts annual_value_usd for HCM vendor = CHRO hcm_stack annual_cost_usd ± 5% (allows for fiscal-year-vs-calendar-year timing)</li>
+</ul>
+<p>Cross-file reconciliation runs after every bundle load and surfaces deltas as amber bundle-level flags on the Setup home. Reconciliation doesn't block loads; it surfaces discrepancies for human review.</p>
+
+<h2 id="s9">Section 9 · Substrate landing</h2>
+
+<h3>Table naming convention</h3>
+<p>All loader-written tables use the <code>cxo_intel_*</code> prefix. One table per CSV file (denormalized; mirrors the schema). Plus a small set of orchestration tables.</p>
+
+<table>
+  <tr><th>Table</th><th>Bundle</th><th>Purpose</th></tr>
+  <tr><td><code>cxo_intel_upload</code></td><td>all</td><td>One row per upload event (the approval-bearing entity)</td></tr>
+  <tr><td><code>cxo_intel_bundle_status</code></td><td>all</td><td>Per-tenant per-bundle current state (loaded version, files present, blocked Moves)</td></tr>
+  <tr><td><code>cxo_intel_vendor_index</code></td><td>all (shared)</td><td>Canonical vendor index with aliases; cross-HoldCo join key</td></tr>
+  <tr><td><code>cxo_intel_bank_index</code></td><td>all (shared)</td><td>Canonical bank index with aliases</td></tr>
+  <tr><td><code>cxo_intel_app_inventory</code></td><td>CIO</td><td>Application inventory rows</td></tr>
+  <tr><td><code>cxo_intel_cloud_footprint</code></td><td>CIO</td><td>Cloud/on-prem footprint rows</td></tr>
+  <tr><td><code>cxo_intel_vendor_contracts</code></td><td>CIO</td><td>Vendor contract rows</td></tr>
+  <tr><td><code>cxo_intel_ai_roadmap</code></td><td>CIO</td><td>AI use case rows</td></tr>
+  <tr><td><code>cxo_intel_it_spend_allocation</code></td><td>CIO</td><td>Run/grow/transform allocation</td></tr>
+  <tr><td><code>cxo_intel_risk_register</code></td><td>CIO</td><td>IT risk rows</td></tr>
+  <tr><td><code>cxo_intel_it_org</code></td><td>CIO</td><td>IT function rows</td></tr>
+  <tr><td><code>cxo_intel_finance_systems</code></td><td>CFO</td><td>Finance system inventory</td></tr>
+  <tr><td><code>cxo_intel_banking_relationships</code></td><td>CFO</td><td>Per-bank relationship rows</td></tr>
+  <tr><td><code>cxo_intel_audit_advisory</code></td><td>CFO</td><td>Audit + advisory engagements</td></tr>
+  <tr><td><code>cxo_intel_insurance_program</code></td><td>CFO</td><td>Insurance lines</td></tr>
+  <tr><td><code>cxo_intel_close_cycle</code></td><td>CFO</td><td>Close-cycle metric rows</td></tr>
+  <tr><td><code>cxo_intel_it_spend_ratios</code></td><td>CFO</td><td>Single-row FY IT spend ratios</td></tr>
+  <tr><td><code>cxo_intel_tax_engagements</code></td><td>CFO</td><td>Tax engagement rows</td></tr>
+  <tr><td><code>cxo_intel_portco_ops_stack</code></td><td>COO</td><td>Per-PortCo operating system rows</td></tr>
+  <tr><td><code>cxo_intel_workforce_by_function</code></td><td>COO</td><td>Operations workforce rows</td></tr>
+  <tr><td><code>cxo_intel_outsourcing</code></td><td>COO</td><td>Outsourcing split rows</td></tr>
+  <tr><td><code>cxo_intel_operating_kpis</code></td><td>COO</td><td>Operating KPI time-series</td></tr>
+  <tr><td><code>cxo_intel_tpl_vendors</code></td><td>COO</td><td>3PL + operational vendor rows</td></tr>
+  <tr><td><code>cxo_intel_hcm_stack</code></td><td>CHRO</td><td>HCM system rows</td></tr>
+  <tr><td><code>cxo_intel_benefits_stack</code></td><td>CHRO</td><td>Benefits line rows</td></tr>
+  <tr><td><code>cxo_intel_ld_stack</code></td><td>CHRO</td><td>L&amp;D program rows</td></tr>
+  <tr><td><code>cxo_intel_ta_stack</code></td><td>CHRO</td><td>Talent acquisition rows</td></tr>
+  <tr><td><code>cxo_intel_workforce_demographics</code></td><td>CHRO</td><td>Workforce demographic rows</td></tr>
+  <tr><td><code>cxo_intel_contract_index</code></td><td>GC</td><td>Cross-functional contract index</td></tr>
+  <tr><td><code>cxo_intel_regulatory_inventory</code></td><td>GC</td><td>Regulatory framework rows</td></tr>
+  <tr><td><code>cxo_intel_litigation_pipeline</code></td><td>GC</td><td>Litigation matter rows</td></tr>
+  <tr><td><code>cxo_intel_entity_registry</code></td><td>GC</td><td>Legal entity rows (FK root)</td></tr>
+  <tr><td><code>cxo_intel_do_eo_cyber_insurance</code></td><td>GC</td><td>GC view of D&amp;O / E&amp;O / cyber lines</td></tr>
+</table>
+
+<h3>Common columns across every <code>cxo_intel_*</code> row table</h3>
+
+<p>Every per-bundle data table carries this common header set so RLS, attribution, and provenance are uniform:</p>
+
+<table>
+  <tr><th>Column</th><th>Type</th><th>Purpose</th></tr>
+  <tr><td><code>id</code></td><td>uuid</td><td>Row primary key</td></tr>
+  <tr><td><code>tenant_id</code></td><td>uuid</td><td>HoldCo tenant; RLS join</td></tr>
+  <tr><td><code>holding_group_id</code></td><td>uuid</td><td>L0 sponsor's group; aggregate-read RLS join</td></tr>
+  <tr><td><code>upload_id</code></td><td>uuid</td><td>FK to <code>cxo_intel_upload</code></td></tr>
+  <tr><td><code>bundle</code></td><td>enum</td><td>cio · cfo · coo · chro · gc</td></tr>
+  <tr><td><code>source_file</code></td><td>string</td><td>Original CSV filename</td></tr>
+  <tr><td><code>source_row_num</code></td><td>integer</td><td>Original CSV row number for traceback</td></tr>
+  <tr><td><code>validation_status</code></td><td>enum</td><td>green · amber_acknowledged · amber_open</td></tr>
+  <tr><td><code>amber_note</code></td><td>string</td><td>Optional reviewer note on amber rows</td></tr>
+  <tr><td><code>loaded_by</code></td><td>uuid</td><td>User who hit upload</td></tr>
+  <tr><td><code>approved_by</code></td><td>uuid</td><td>CXO who approved load</td></tr>
+  <tr><td><code>co_approved_by</code></td><td>uuid</td><td>Co-approver (e.g., Group Treasurer on banking rows)</td></tr>
+  <tr><td><code>created_at</code></td><td>timestamptz</td><td>Insert time</td></tr>
+  <tr><td><code>superseded_by</code></td><td>uuid</td><td>If non-null, points to a newer upload that replaced this row (re-upload model; see §10)</td></tr>
+  <tr><td><code>superseded_at</code></td><td>timestamptz</td><td>When superseded</td></tr>
+</table>
+
+<h3>Upload event table</h3>
+
+<table>
+  <tr><th>Column</th><th>Type</th><th>Purpose</th></tr>
+  <tr><td><code>id</code></td><td>uuid</td><td>Upload event ID</td></tr>
+  <tr><td><code>tenant_id</code></td><td>uuid</td><td>HoldCo</td></tr>
+  <tr><td><code>holding_group_id</code></td><td>uuid</td><td>Group</td></tr>
+  <tr><td><code>bundle</code></td><td>enum</td><td>cio · cfo · coo · chro · gc</td></tr>
+  <tr><td><code>files</code></td><td>jsonb</td><td>Array of {filename, size_bytes, row_count, sha256}</td></tr>
+  <tr><td><code>row_counts</code></td><td>jsonb</td><td>{green, amber, red, dropped}</td></tr>
+  <tr><td><code>loaded_by</code></td><td>uuid</td><td>User who hit upload</td></tr>
+  <tr><td><code>loaded_by_role</code></td><td>string</td><td>Role at time of load (cxo · steward · admin)</td></tr>
+  <tr><td><code>approved_by</code></td><td>uuid</td><td>CXO approver</td></tr>
+  <tr><td><code>approved_by_role</code></td><td>string</td><td>e.g., cfo</td></tr>
+  <tr><td><code>co_approved_by</code></td><td>uuid</td><td>Co-approver if any</td></tr>
+  <tr><td><code>co_approved_by_role</code></td><td>string</td><td>e.g., group_treasurer</td></tr>
+  <tr><td><code>approval_attestation</code></td><td>string</td><td>The exact attestation text the approver agreed to</td></tr>
+  <tr><td><code>approval_ip</code></td><td>inet</td><td>Source IP at approval time</td></tr>
+  <tr><td><code>approval_user_agent</code></td><td>string</td><td>Browser/client at approval time</td></tr>
+  <tr><td><code>approved_at</code></td><td>timestamptz</td><td>Approval timestamp</td></tr>
+  <tr><td><code>load_mode</code></td><td>enum</td><td><code>full_replace</code> · <code>incremental</code> · <code>partial</code> · see §10</td></tr>
+  <tr><td><code>supersedes_upload_id</code></td><td>uuid</td><td>If full_replace, the prior upload this replaces</td></tr>
+  <tr><td><code>created_at</code></td><td>timestamptz</td><td>Upload create time</td></tr>
+</table>
+
+<h3>RLS posture</h3>
+
+<p>Every <code>cxo_intel_*</code> data table has two policies:</p>
+
+<ol>
+  <li><strong>Tenant-scoped read/write</strong> — standard tenant_id = current_setting('app.tenant_id') match, identical to other tenant-scoped tables in the substrate. HoldCo users see their own data fully.</li>
+  <li><strong>L0 aggregate read</strong> — users with role <code>l0_sponsor</code> or <code>l0_op_partner</code> and matching holding_group_id can read rows but only via aggregate views (<code>cxo_intel_agg_*</code>). Transaction-grain reads require explicit grant from the HoldCo's tenant_admin (logged at <code>cxo_intel_grant</code>).</li>
+</ol>
+
+<p>Litigation_pipeline rows with <code>privilege_classification = privileged_attorney_work_product</code> have an additional restriction: only users with role <code>gc</code>, <code>legal_ops</code>, or <code>outside_counsel</code> for the same tenant can read. L0 aggregate read is blocked entirely for those rows.</p>
+
+<h3>Upload-event linkage</h3>
+
+<p>Every loaded row's <code>upload_id</code> FK resolves to one approval event. When Sentinel generates a sentence like "Morgan Street's Microsoft EA renewal is 2028-06-30 with auto-renew enabled," it cites the source row in <code>cxo_intel_vendor_contracts</code>, which traces through <code>upload_id</code> to "approved by Daniel Okonkwo (CIO) on 2026-06-05 via CSV file vendor_contracts.csv row 3, with co-sign by Sarah Lindqvist (CFO) for &gt; $1M contracts." That citation chain is what makes the "no claim without provenance" rule operational.</p>
+
+<h2 id="s10">Section 10 · Edge cases</h2>
+
+<h3>Re-upload — full replace vs incremental</h3>
+
+<p>The loader supports three re-upload modes; the user picks at step 5 (approval):</p>
+
+<table>
+  <tr><th>Mode</th><th>Semantics</th><th>Use case</th></tr>
+  <tr><td><code>full_replace</code></td><td>All prior rows in the bundle's tables for this tenant are marked <code>superseded_by = new_upload_id</code> and excluded from default reads. New upload's rows are the canonical truth.</td><td>Annual refresh; CXO recompiles from scratch.</td></tr>
+  <tr><td><code>incremental</code></td><td>New rows are inserted alongside prior rows. Prior rows remain canonical. Conflicts on natural keys (e.g., contract_id, risk_id) supersede the prior row at row-level granularity.</td><td>Quarterly add-ons; only delta has changed.</td></tr>
+  <tr><td><code>partial</code></td><td>Same as incremental, but the user explicitly flags that this upload is only a subset of the bundle (e.g., only banking_relationships, not the rest of CFO). System tracks bundle completeness at file level.</td><td>Wave-by-wave fill-in over multiple sessions.</td></tr>
+</table>
+
+<p>The default mode for the first upload is <code>full_replace</code> (since there's nothing to supersede). Subsequent loads default to <code>partial</code> with the user opting up to <code>full_replace</code> for an annual refresh. The loader shows a diff preview between current state and incoming upload before approval so the CXO sees exactly what's changing.</p>
+
+<h3>Diff preview UX</h3>
+
+<div class="wire"><div class="wire-title">Wireframe — Diff preview on re-upload</div>+----------------------------------------------------------------------------------+
+|  CFO bundle / banking_relationships.csv / Diff vs current                        |
+|                                                                                  |
+|  Current loaded: 14 rows (uploaded 2026-04-12 by Sarah Lindqvist)                |
+|  Incoming:       16 rows (this upload)                                           |
+|                                                                                  |
+|  Changes:                                                                        |
+|    [+] 2 new banks:    Comerica (operating), Old Natl Bank (operating)           |
+|    [~] 3 updated:      JPMorgan (annual_fees_usd 460,000 -> 480,000)             |
+|                        Citi (renewal_date 2026-04-30 -> 2026-09-30)              |
+|                        Wintrust (h2h_ready false -> true)                        |
+|    [-] 0 removed                                                                 |
+|                                                                                  |
+|  Move impact:                                                                    |
+|    Move 0 G1 risk grade:  P0 -> P0 (still 5 of 16 H2H, ratio 31%)                |
+|    Move 0 banking thesis: unchanged (consolidation opportunity preserved)        |
+|                                                                                  |
+|  [ Continue as incremental ]   [ Switch to full replace ]   [ Cancel ]           |
++----------------------------------------------------------------------------------+</div>
+
+<h3>Multi-currency normalization</h3>
+
+<p>Every money field stores three values: raw_value, raw_currency, usd_normalized_value. Normalization uses the FX rate at the row's relevant date (contract_start for contract rows, period_yyyymm for close metric rows, the upload date as default). FX table lives at <code>cxo_intel_fx_rates</code> with daily rates for major currencies. For Lakeshore fictional data, all rows are USD; multi-currency support is required for real customer data (e.g., a HoldCo with European PortCos has EUR-denominated banking and contract data).</p>
+
+<p>Reports default to USD-normalized but a user toggle on any Move surface re-renders in source currency. Cross-HoldCo aggregations always use USD-normalized so the math is consistent.</p>
+
+<h3>Vendor name fuzzy match across HoldCos</h3>
+
+<p>The cross-HoldCo opportunity surface depends on accurate vendor matching. Morgan Street's "Microsoft Corporation" must join Roosevelt's "Microsoft Corp." must join Lakefront's "MSFT" — all three resolve to canonical "Microsoft Corporation" via the vendor index's alias table.</p>
+
+<p>When a HoldCo loads a new vendor not in the index, the loader proposes it as a candidate canonical entry. If a sibling HoldCo has previously loaded a similar name (fuzzy match across the holding_group's vendor proposals), the loader suggests "this looks similar to 'Concentrix' loaded by Roosevelt on 2026-03-14 — same canonical?" The L0 admin or any HoldCo's admin can confirm the merge.</p>
+
+<p>Merges are tracked at <code>cxo_intel_vendor_merge</code> with the merging user, both source proposals, and the resulting canonical. Sentinel-generated claims about consolidated spend cite both source rows + the merge event.</p>
+
+<h3>Same vendor different category across HoldCos</h3>
+
+<p>Microsoft sells software (M365, Azure) but also services (Premier Support, Industry Solutions). Two HoldCos might both have "Microsoft Corporation" contracts but in different categories (one in <code>licensing</code>, one in <code>professional_services</code>). The Move 2 consolidation opportunity rolls these together at the parent-vendor level for negotiation leverage but distinguishes the categories in the rationalization view. Loader stores category at the contract row; cross-HoldCo opportunity ranker aggregates by canonical_name and separately by canonical_name + category.</p>
+
+<h3>Privileged data handling</h3>
+
+<p>Litigation_pipeline rows flagged privileged_attorney_work_product never enter Sentinel general-retrieval embeddings. The loader confirms with the approver: "These N rows are marked attorney-work-product privileged. They will not be indexed for general AI retrieval. Confirm." On confirm, the rows land in the standard table with RLS narrowing reads to GC + outside counsel only and a separate restricted-embedding index used only for GC-scoped queries.</p>
+
+<h3>Empty file handling</h3>
+
+<p>Some bundles permit empty files (header row only). Examples: GC litigation_pipeline (HoldCo may have no open matters), CIO ai_roadmap (HoldCo may have zero AI activity). The loader accepts an empty file and lands an empty result. The approval flow asks: "You are loading an empty litigation_pipeline.csv. Confirm there are zero open matters at this time?" — explicit attestation prevents accidental empty loads.</p>
+
+<h3>Partial bundle blocking</h3>
+
+<p>If a downstream Move requires a file that hasn't been loaded, the Move's surface in the app shows: "Blocked — pending CIO ai_roadmap.csv (load via /setup/cxo-intel/cio)." with a deep link. The Setup home shows a per-bundle file checklist with green/grey indicators per file. Tower's "Federated" tab shows L0 view of completeness across all 3 HoldCos.</p>
+
+<h3>Re-upload approval propagation</h3>
+
+<p>When a row is superseded by a re-upload, prior Sentinel-generated claims that cited that row are flagged as "evidence updated" rather than auto-rewritten. The user (or scheduled refresh job) re-runs the analysis if the underlying data has materially changed. This preserves audit chain — old PDFs/memos that cited the prior row still resolve, but new generation uses the latest.</p>
+
+<h3>Load failure recovery</h3>
+
+<p>If the substrate write fails mid-transaction (DB unavailable, transient error), the upload event is marked <code>failed</code> in <code>cxo_intel_upload</code> with the error reason. The user sees the failure and a "retry approval" button; the staged CSV files are preserved server-side for 7 days so re-validation isn't required. Approval re-runs the full validation suite (in case data has changed) and writes again. After 7 days, the staged files are purged and the user must re-upload.</p>
+
+<h3>Conflicting concurrent loads</h3>
+
+<p>Two CXOs (or steward + CXO) attempting to load the same bundle concurrently is rare but possible. The loader uses optimistic concurrency at the bundle-status level: each load attempts to advance the bundle's version number; on conflict, the second loader sees "Sarah Lindqvist (CFO) approved a CFO bundle load 4 minutes ago. Review the load and either resume your draft or discard." This prevents accidental overwrite.</p>
+
+<h3>Tenant impersonation by L0 ops</h3>
+
+<p>L0 ops users can act on behalf of a HoldCo via the documented impersonation shim. Loader writes include the impersonating user in <code>loaded_by</code> with a flag <code>loaded_via_impersonation = true</code> and the impersonator's identity in <code>impersonator_id</code>. The approval still requires HoldCo CXO sign-off — L0 cannot self-approve a load against a HoldCo's tenant.</p>
+
+<h3>Data sovereignty drill-down request</h3>
+
+<p>L0 sponsor wants transaction-grain access to a sibling HoldCo's data (e.g., to validate a Move 2 opportunity ranker output). The Tower UI surfaces a "request drill-down" action that emails the target HoldCo's tenant_admin with the rationale; the admin approves or denies in their inbox-style approval queue. Grants are time-bounded (default 30 days) and logged at <code>cxo_intel_grant</code>. Without grant, L0 sees aggregates only.</p>
+
+<div class="rule"></div>
+
+<h2>End of spec</h2>
+
+<p>This spec is the canonical input for Codex Spec L02 (Wave 1: CIO + CFO loaders) and Spec L08 (Wave 2: COO + CHRO + GC loaders). The schemas, validation rules, approval routing, substrate tables, and edge cases here override any earlier brief. Cross-references:</p>
+
+<ul>
+  <li><code>01-lakeshore-federated-structure-brief.md</code> — Morgan Street / Roosevelt / Lakefront canonical seed values; CXO names; vendor matrix; banking posture</li>
+  <li><code>02-demo-spine-architecture.html §3</code> — loader as gate into the demo, in-context</li>
+  <li><code>04-artifact-contracts.html</code> — per-Move artifact specs that consume loaded data</li>
+  <li><code>06-tower-federated-command-center.html</code> — L0 surface that reads aggregates from loaded bundles</li>
+  <li><code>07-kyriba-derisk-pattern-setter.html</code> — Move 0 surface that reads CFO bundle in detail</li>
+  <li><code>08-cross-holdco-vendor-rationalization.html</code> — Move 2 surface that joins CIO + CFO + GC bundles across HoldCos</li>
+</ul>
+
+<p class="meta">Authored 2026-06-05 · Lakeshore Federated AI Strategy design package · Doc 3 of 10.</p>
+
+</div>
+</body>
+</html>
