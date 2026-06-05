@@ -60,7 +60,7 @@ describe("VendorResponsePackPanel", () => {
     );
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get("stageKey")).toBe("responses");
-    expect(body.get("artifactCode")).toBe("d11_response_checklist");
+    expect(body.get("artifactCode")).toBe("d13_vendor_responses");
     expect(body.get("artifactFamily")).toBe("proposal");
     expect(body.get("artifactKind")).toBe("vendor_response_pack");
     expect(body.get("vendorName")).toBe("Northstar Managed Services");

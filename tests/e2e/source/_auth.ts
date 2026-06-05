@@ -87,6 +87,7 @@ import {
   BASE_URL,
   CLERK_SECRET_KEY,
   DEMO_ACCOUNTS,
+  addActiveClientCookie,
   clerkUserExists,
   signInWithDemoAccount,
   withClerkAuth,
@@ -290,6 +291,7 @@ async function primeStorageState(personaKey: SourcePersonaKey): Promise<string> 
     } else if (persona.fallbackDemoAccount) {
       // Live UI sign-in using DEMO_ACCOUNTS password (Demo2026!).
       await signInWithDemoAccount(page, persona.fallbackDemoAccount);
+      await addActiveClientCookie(page, persona.activeClient);
     } else {
       throw new Error(
         `Cannot sign in persona '${personaKey}': no CLERK_SECRET_KEY, no ` +

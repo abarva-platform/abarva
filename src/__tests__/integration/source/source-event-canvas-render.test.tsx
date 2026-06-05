@@ -899,7 +899,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   });
 
   // ── Slice 2 · xlsx download anchor ────────────────────────────────────────
-  it("hides workbook download until the pricing workbook has authored body", () => {
+  it("renders workbook template downloads before authored body for structured intake", () => {
     const html = render({
       viewStage: "pricing",
       artifactStates: [
@@ -909,11 +909,14 @@ describe("UniversalCanvasShell · SSR render", () => {
         }),
       ],
     });
-    expect(html).not.toContain(
+    expect(html).toContain(
       "source-canvas-document-body-download-xlsx-d19_pricing_workbook",
     );
-    expect(html).not.toContain("Download xlsx template");
-    expect(html).toContain("Nothing to export yet");
+    expect(html).toContain(
+      "source-canvas-document-body-download-xlsx-comparison-d19_pricing_workbook",
+    );
+    expect(html).toContain("Download workbook");
+    expect(html).toContain("Workbook templates stay available for governed intake.");
   });
 
   it("renders workbook download anchor on authored d19 pricing workbook", () => {
