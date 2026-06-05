@@ -111,13 +111,14 @@ export function scoreGroundingCase(
   const issues: AgentGroundingIssue[] = [];
   const mode = captured?.mode ?? 'unknown';
   const status = captured?.status ?? null;
-  const transportOk = !captured?.error && (status === null || (status >= 200 && status < 300));
+  const htmlFallback = isHtmlFallback(answer);
+  const transportOk = !captured?.error && !htmlFallback && (status === null || (status >= 200 && status < 300));
 
   if (!transportOk) {
     issues.push({
       severity: 'P0',
       code: 'transport_failure',
-      message: captured?.error ?? `HTTP ${status}`,
+      message: captured?.error ?? (htmlFallback ? 'HTML page returned instead of agent answer.' : `HTTP ${status}`),
     });
   }
   if (mode === 'fallback') {
@@ -133,6 +134,10 @@ export function scoreGroundingCase(
       code: 'missing_answer',
       message: 'Answer is empty.',
     });
+  }
+
+  if (!transportOk || !answer) {
+    return buildScore(testCase, captured, answer, issues);
   }
 
   for (const term of missingTerms(answer, testCase.expected.requiredTerms)) {
@@ -266,6 +271,15 @@ export function scoreGroundingCase(
     });
   }
 
+  return buildScore(testCase, captured, answer, issues);
+}
+
+function buildScore(
+  testCase: AgentGroundingCase,
+  captured: AgentGroundingCapturedAnswer | undefined,
+  answer: string,
+  issues: AgentGroundingIssue[],
+): AgentGroundingScore {
   const score = Math.max(0, 100 - issues.reduce((sum, issue) => sum + penalty(issue.severity), 0));
   return {
     id: testCase.id,
@@ -276,8 +290,8 @@ export function scoreGroundingCase(
     surface: testCase.surface,
     prompt: testCase.prompt,
     answer,
-    status,
-    mode,
+    status: captured?.status ?? null,
+    mode: captured?.mode ?? 'unknown',
     latencyMs: captured?.latencyMs ?? null,
     score,
     passed: score >= 85 && !issues.some((issue) => issue.severity === 'P0' || issue.severity === 'P1'),
@@ -301,6 +315,11 @@ function toCxoTenantKey(tenant: AgentGroundingTenant): CxoTenantKey | undefined 
 
 function normalize(text: string): string {
   return text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
+}
+
+function isHtmlFallback(text: string): boolean {
+  const trimmed = text.trimStart().slice(0, 200).toLocaleLowerCase();
+  return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html');
 }
 
 function lower(text: string): string {
