@@ -254,6 +254,16 @@ export function isExplicitConciseAsk(query: string): boolean {
   );
 }
 
+export function isEnumeratedCompletenessAsk(query: string): boolean {
+  const normalized = query.toLowerCase();
+  const countPattern =
+    /\b(?:three|four|five|six|seven|eight|nine|ten|3|4|5|6|7|8|9|10)\b/;
+  const listPattern =
+    /\b(?:failure modes?|risks?|reasons?|gates?|steps?|workstreams?|items?|controls?|dependencies|questions|findings|proof points?)\b/;
+
+  return countPattern.test(normalized) && listPattern.test(normalized);
+}
+
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
     return INTELLIGENCE_ASK_OPENAI_SMALL_MODEL;
@@ -269,7 +279,15 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  return isExplicitConciseAsk(query) ? 160 : 600;
+  if (isExplicitConciseAsk(query)) return 160;
+  if (isEnumeratedCompletenessAsk(query)) return 900;
+  return 600;
+}
+
+export function chooseSynthesisWordLimit(query: string): number {
+  if (isExplicitConciseAsk(query)) return 120;
+  if (isEnumeratedCompletenessAsk(query)) return 380;
+  return 240;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -366,6 +384,9 @@ export async function* synthesizeStream(args: {
     mandatorySurfaceEvidenceBlock,
     `USER QUESTION:\n${args.query}`,
     "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include a named active client, name that client in the first sentence. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
+    isEnumeratedCompletenessAsk(args.query)
+      ? "The user asked for a specific count of items. Answer every requested item before ending. Keep each item short, but do not stop after the first two or three."
+      : "",
   ].filter(Boolean).join("\n\n");
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
@@ -430,7 +451,10 @@ export async function* synthesizeStream(args: {
     // cap to 240 gives the model headroom to land at 195-220 without clipping
     // and still fences off true runaway responses. The prompt remains the
     // primary length lever; this is a safety net.
-    const sanitized = sanitizeAskSynthesis(text, 240);
+    const sanitized = sanitizeAskSynthesis(
+      text,
+      chooseSynthesisWordLimit(args.query),
+    );
     const evidenceDisciplined = applyPartialEvidencePolicy(
       sanitized,
       args.sources,
