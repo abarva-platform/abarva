@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   buildMeridianEnterpriseContextIngestionPlan,
   parseMeridianEnterpriseContextDataset,
+  retargetEnterpriseContextIngestionPlan,
   type EnterpriseContextIngestionPlan,
   type PlannedEnterpriseContextRecord,
 } from '../../lib/enterprise-context/ingestion/meridian-loader';
@@ -32,6 +33,15 @@ type ClientProfile = {
 };
 
 const CLIENT_PROFILES: Record<string, ClientProfile> = {
+  'meridian-health': {
+    tenantKey: 'meridian-health',
+    sourceRoot: 'docs/enterprise-context/generated/meridian-vnext',
+    name: 'Meridian Health',
+    legalName: 'Meridian Health System',
+    industryCode: 'healthcare_provider',
+    slugs: ['meridian-health', 'meridian'],
+    aliases: ['Meridian Health', 'Meridian Health System'],
+  },
   meridian: {
     tenantKey: 'meridian',
     sourceRoot: 'docs/enterprise-context/synthetic/meridian',
@@ -289,6 +299,24 @@ async function applyPlan(plan: EnterpriseContextIngestionPlan): Promise<Record<s
   const clientId = await ensureClientId(client, plan.tenantKey);
   const now = new Date().toISOString();
   const runKey = `${plan.tenantKey}:synthetic-day-one:${plan.summary.records}`;
+  const runStart = await client
+    .from('data_ingestion_runs')
+    .insert({
+      client_id: clientId,
+      tenant_key: plan.tenantKey,
+      source_label: `${profileForTenant(plan.tenantKey).legalName} enterprise context template load`,
+      source_root: plan.sourceRoot,
+      status: 'started',
+      summary: {
+        loader: 'enterprise-context-template-loader',
+        run_key: runKey,
+        planned: plan.summary,
+      },
+    })
+    .select('id')
+    .single();
+  if (runStart.error) throw new Error(`data_ingestion_runs insert failed: ${runStart.error.message}`);
+  const dataIngestionRunId = runStart.data.id as string;
 
   await upsertBatch(client, 'enterprise_context_template_runs', [{
     client_id: clientId,
@@ -520,6 +548,24 @@ async function applyPlan(plan: EnterpriseContextIngestionPlan): Promise<Record<s
       updated_at: new Date().toISOString(),
     }], 'tenant_key,run_key');
 
+    const runComplete = await client
+      .from('data_ingestion_runs')
+      .update({
+        status: 'completed',
+        records_loaded: recordCount,
+        chunks_loaded: 0,
+        nodes_loaded: 0,
+        edges_loaded: relationshipCount,
+        summary: {
+          loader: 'enterprise-context-template-loader',
+          run_key: runKey,
+          applied: appliedSummary,
+        },
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', dataIngestionRunId);
+    if (runComplete.error) throw new Error(`data_ingestion_runs update failed: ${runComplete.error.message}`);
+
     return appliedSummary;
   } catch (error) {
     await upsertBatch(client, 'enterprise_context_template_runs', [{
@@ -542,6 +588,14 @@ async function applyPlan(plan: EnterpriseContextIngestionPlan): Promise<Record<s
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }], 'tenant_key,run_key');
+    await client
+      .from('data_ingestion_runs')
+      .update({
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : String(error),
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', dataIngestionRunId);
     throw error;
   }
 }
@@ -549,7 +603,8 @@ async function applyPlan(plan: EnterpriseContextIngestionPlan): Promise<Record<s
 async function main() {
   const args = parseArgs();
   const parsed = parseMeridianEnterpriseContextDataset(args.sourceRoot);
-  const plan = buildMeridianEnterpriseContextIngestionPlan(parsed);
+  const builtPlan = buildMeridianEnterpriseContextIngestionPlan(parsed);
+  const plan = retargetEnterpriseContextIngestionPlan(builtPlan, args.tenantKey);
   const summary = {
     mode: args.apply ? 'apply' : 'dry-run',
     sourceRoot: args.sourceRoot,

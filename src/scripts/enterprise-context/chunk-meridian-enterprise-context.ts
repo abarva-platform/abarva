@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   buildMeridianEnterpriseContextIngestionPlan,
   parseMeridianEnterpriseContextDataset,
+  retargetEnterpriseContextIngestionPlan,
 } from '../../lib/enterprise-context/ingestion/meridian-loader';
 import {
   buildEnterpriseContextChunksFromPlan,
@@ -19,6 +20,8 @@ loadEnv();
 type Args = {
   apply: boolean;
   sourceRoot: string;
+  tenantKey: string;
+  schema: string | null;
 };
 
 type DbRow = Record<string, unknown>;
@@ -27,28 +30,34 @@ const DEFAULT_SOURCE_ROOT = path.resolve(process.cwd(), 'docs/enterprise-context
 
 function parseArgs(): Args {
   const sourceArg = process.argv.find((arg) => arg.startsWith('--source='));
+  const tenantArg = process.argv.find((arg) => arg.startsWith('--tenant='));
+  const schemaArg = process.argv.find((arg) => arg.startsWith('--schema='));
   return {
     apply: process.argv.includes('--apply'),
     sourceRoot: sourceArg ? path.resolve(sourceArg.split('=')[1] ?? '') : DEFAULT_SOURCE_ROOT,
+    tenantKey: tenantArg?.split('=')[1]?.trim() || 'meridian',
+    schema: schemaArg?.split('=')[1]?.trim() || null,
   };
 }
 
-function getClient(): SupabaseClient {
+function getClient(schemaName: string | null): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to apply enterprise context chunks.');
   }
-  return createClient(url.trim(), key.trim(), {
+  const client = createClient(url.trim(), key.trim(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  return schemaName ? client.schema(schemaName) as unknown as SupabaseClient : client;
 }
 
-async function ensureMeridianClientId(client: SupabaseClient): Promise<string> {
+async function ensureMeridianClientId(): Promise<string> {
+  const client = getClient(null);
   const existing = await client
     .from('clients')
     .select('id')
-    .or('name.eq.Meridian Health,name.eq.Meridian Health System,legal_name.eq.Meridian Health System')
+    .or('tenant_key.eq.meridian-health,tenant_key.eq.meridian,name.eq.Meridian Health,name.eq.Meridian Health System,legal_name.eq.Meridian Health System')
     .limit(1)
     .maybeSingle();
   if (existing.error) throw new Error(`Meridian client lookup failed: ${existing.error.message}`);
@@ -101,23 +110,79 @@ function chunkDbRows(chunks: EnterpriseContextChunkRow[], clientId: string): DbR
   }));
 }
 
-async function applyChunks(chunks: EnterpriseContextChunkRow[]): Promise<Record<string, number>> {
-  const client = getClient();
-  const clientId = await ensureMeridianClientId(client);
-  return {
-    chunks: await upsertBatch(client, 'enterprise_context_chunks', chunkDbRows(chunks, clientId), 'tenant_key,chunk_id'),
-  };
+async function applyChunks(
+  chunks: EnterpriseContextChunkRow[],
+  tenantKey: string,
+  sourceRoot: string,
+  schemaName: string | null,
+): Promise<Record<string, number | string | null>> {
+  const client = getClient(schemaName);
+  const clientId = await ensureMeridianClientId();
+  const runStart = await client
+    .from('data_ingestion_runs')
+    .insert({
+      client_id: clientId,
+      tenant_key: tenantKey,
+      source_label: 'Meridian Health enterprise context chunk load',
+      source_root: sourceRoot,
+      status: 'started',
+      summary: {
+        loader: 'enterprise-context-chunk-loader',
+        target_schema: schemaName ?? 'public',
+        chunks_planned: chunks.length,
+      },
+    })
+    .select('id')
+    .single();
+  if (runStart.error) throw new Error(`data_ingestion_runs insert failed: ${runStart.error.message}`);
+  const runId = runStart.data.id as string;
+
+  try {
+    const chunkCount = await upsertBatch(
+      client,
+      'enterprise_context_chunks',
+      chunkDbRows(chunks, clientId),
+      'tenant_key,chunk_id',
+    );
+    const runComplete = await client
+      .from('data_ingestion_runs')
+      .update({
+        status: 'completed',
+        chunks_loaded: chunkCount,
+        summary: {
+          loader: 'enterprise-context-chunk-loader',
+          target_schema: schemaName ?? 'public',
+          chunks_loaded: chunkCount,
+        },
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', runId);
+    if (runComplete.error) throw new Error(`data_ingestion_runs update failed: ${runComplete.error.message}`);
+    return { chunks: chunkCount, schema: schemaName ?? 'public' };
+  } catch (error) {
+    await client
+      .from('data_ingestion_runs')
+      .update({
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : String(error),
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', runId);
+    throw error;
+  }
 }
 
 async function main() {
   const args = parseArgs();
   const parsed = parseMeridianEnterpriseContextDataset(args.sourceRoot);
-  const plan = buildMeridianEnterpriseContextIngestionPlan(parsed);
+  const builtPlan = buildMeridianEnterpriseContextIngestionPlan(parsed);
+  const plan = retargetEnterpriseContextIngestionPlan(builtPlan, args.tenantKey);
   const chunks = buildEnterpriseContextChunksFromPlan(plan, args.sourceRoot);
   const summary = {
     mode: args.apply ? 'apply' : 'dry-run',
     tenantKey: plan.tenantKey,
     sourceRoot: args.sourceRoot,
+    targetSchema: args.schema ?? 'public',
     chunks: chunks.length,
     pendingEmbeddings: chunks.filter((chunk) => chunk.embeddingStatus === 'pending').length,
     recordTypes: [...new Set(chunks.map((chunk) => chunk.sourceSegmentId))].sort(),
@@ -128,7 +193,7 @@ async function main() {
     return;
   }
 
-  const applied = await applyChunks(chunks);
+  const applied = await applyChunks(chunks, plan.tenantKey, args.sourceRoot, args.schema);
   console.log(JSON.stringify({ ...summary, applied }, null, 2));
 }
 
