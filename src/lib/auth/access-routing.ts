@@ -31,11 +31,13 @@ export function hasExplicitTenantAlias(email: string | null | undefined): boolea
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-holdings.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com') ||
     normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com')
+    normalized.includes('+skyharbor@abarva.com') ||
+    normalized.includes('+lakeshore@abarva.com')
   );
 }
 
@@ -54,11 +56,13 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-holdings.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com') ||
     normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com')
+    normalized.includes('+skyharbor@abarva.com') ||
+    normalized.includes('+lakeshore@abarva.com')
   ) {
     return 'client';
   }
@@ -109,6 +113,7 @@ const SOURCE_EVENT_TENANT_HINTS: ReadonlyArray<readonly [RegExp, ClientKey]> = [
   [/\b(?:firstcapital|first-capital|arcturus|src-fc|fc-src|src-arc|arc-src)\b/i, 'arcturus'],
   [/\b(?:northstar-clinical|northstar|src-ns|ns-src)\b/i, 'northstar'],
   [/\b(?:skyharbor-air|skyharbor|src-sh|sh-src)\b/i, 'skyharbor'],
+  [/\b(?:lakeshore-holdings|lakeshore|src-lsh|lsh-src)\b/i, 'lakeshore'],
 ];
 
 export function inferSourceEventClientKeyFromSlug(eventSlug: string | null | undefined): ClientKey | null {

@@ -571,6 +571,28 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     workspaceTeaser:
       'Your workspace shows the Kyriba rollout, SI and vendor contracts, treasury KPI baselines, multi-entity cash and FX exposure, opco P&L trends, rate-card-informed delivery estimates, sourcing events, and value-realization evidence linked back to loaded documents and templates.',
   },
+  {
+    slug: 'admin-lakeshore',
+    email: 'admin@lakeshore-holdings.example.com',
+    shortLabel: 'admin@lakeshore',
+    firstName: 'Nora',
+    lastName: 'Fields',
+    personaName: 'Nora Fields',
+    monogram: 'NF',
+    titleShort: 'Admin',
+    titleFull: 'Tenant Admin / Context Layer Steward',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:nora-fields',
+    monogramBg: '#2563EB',
+    authRole: 'admin',
+    bioShort: 'Tenant admin. Owns Lakeshore user access, setup-data approval, and context-layer stewardship.',
+    bioLong:
+      'Nora Fields is the Lakeshore Holdings tenant-admin persona for setup and stewardship. She owns user access, upload approvals, ingestion history, rejected-fact review, template governance, and tenant-pinning proof for the Lakeshore demo.',
+    workspaceTeaser:
+      'Your workspace includes Setup/Admin, context-layer uploads, data trust, user access, Source artifact governance, and tenant-isolation evidence for the Lakeshore/Kyriba walkthrough.',
+  },
 ];
 
 export function findPersonaBySlug(slug: string): CxoPersona | undefined {
