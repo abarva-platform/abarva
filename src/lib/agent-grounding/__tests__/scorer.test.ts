@@ -100,4 +100,16 @@ describe('scoreGroundingCase', () => {
 
     expect(score.passed).toBe(true);
   });
+
+  it('treats an HTML page response as a transport failure, not an agent answer', () => {
+    const score = scoreGroundingCase(baseCase, {
+      id: baseCase.id,
+      mode: 'unknown',
+      status: 200,
+      answer: '<!DOCTYPE html><html><head><title>AbarVa</title></head><body>Sign in</body></html>',
+    });
+
+    expect(score.passed).toBe(false);
+    expect(score.issues.some((issue) => issue.severity === 'P0' && issue.code === 'transport_failure')).toBe(true);
+  });
 });

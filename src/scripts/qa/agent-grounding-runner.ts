@@ -179,6 +179,13 @@ async function readStreamText(response: Response): Promise<string> {
   return text;
 }
 
+function isHtmlFallback(contentType: string, answer: string): boolean {
+  const trimmed = answer.trimStart().slice(0, 200).toLocaleLowerCase();
+  return contentType.toLocaleLowerCase().includes('text/html')
+    || trimmed.startsWith('<!doctype html')
+    || trimmed.startsWith('<html');
+}
+
 async function runLiveCase(testCase: AgentGroundingCase, options: RunnerOptions): Promise<AgentGroundingCapturedAnswer> {
   const startedAt = Date.now();
   try {
@@ -203,13 +210,15 @@ async function runLiveCase(testCase: AgentGroundingCase, options: RunnerOptions)
       }),
     });
     const answer = await readStreamText(response);
+    const contentType = response.headers.get('content-type') ?? '';
+    const htmlFallback = isHtmlFallback(contentType, answer);
     return {
       id: testCase.id,
       answer,
       status: response.status,
       mode: normalizeMode(response.headers.get('x-atlas-mode') ?? response.headers.get('x-agent-mode')),
       latencyMs: Date.now() - startedAt,
-      error: response.ok ? undefined : `HTTP ${response.status}`,
+      error: response.ok && !htmlFallback ? undefined : `HTTP ${response.status}${htmlFallback ? ' HTML response' : ''}`,
     };
   } catch (error) {
     return {
