@@ -5,8 +5,10 @@ import crypto from 'node:crypto';
 import Papa from 'papaparse';
 
 import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+import { recordEvidence, type RecordEvidenceInput } from '@/lib/evidence/ledger';
 
 import { classifyUploadedFile } from './file-classifier';
+import { buildPHSEvidenceLedgerInputs } from './phs-evidence-ledger-binding';
 import { buildTemplateSchemaPreflight } from './schema-preflight';
 import {
   getTemplateById,
@@ -37,6 +39,7 @@ export interface CsvUploadInput {
   attestation?: PilotUploadAttestation;
   uploadedAt?: string;
   db?: PostgresCompatClient;
+  recordEvidenceFn?: (input: RecordEvidenceInput) => Promise<string>;
 }
 
 export interface CsvParseResult {
@@ -87,6 +90,12 @@ export interface CsvUploadPreparedBatch {
 
 export interface CsvUploadLoadResult extends Omit<CsvUploadPreparedBatch, 'chunks'> {
   chunksQueued: number;
+  evidenceLedger: {
+    status: 'not_applicable' | 'inserted';
+    rowsRecorded: number;
+    evidenceIds: string[];
+    detail: string;
+  };
   persistence: {
     status: 'inserted' | 'skipped_no_database_url';
     chunkRowsInserted: number;
@@ -367,6 +376,12 @@ export async function loadCsvUploadToTenantContext(input: CsvUploadInput): Promi
     return {
       ...publicPrepared,
       chunksQueued: chunks.length,
+      evidenceLedger: {
+        status: 'not_applicable',
+        rowsRecorded: 0,
+        evidenceIds: [],
+        detail: 'No database is configured; evidence ledger writes were not attempted.',
+      },
       persistence: {
         status: 'skipped_no_database_url',
         chunkRowsInserted: 0,
@@ -412,9 +427,38 @@ export async function loadCsvUploadToTenantContext(input: CsvUploadInput): Promi
     inserted += Array.isArray(data) ? data.length : count ?? batch.length;
   }
 
+  const evidenceIds: string[] = [];
+  if (prepared.template.id === 'phs-evidence-register') {
+    const parsed = parseCsvUpload(input.csvText);
+    const evidenceInputs = buildPHSEvidenceLedgerInputs({
+      clientId: input.clientId,
+      uploadedBy: input.uploadedBy,
+      uploadId: prepared.uploadId,
+      fileName: input.fileName,
+      rows: parsed.rows,
+    });
+    const writeEvidence = input.recordEvidenceFn ?? recordEvidence;
+    for (const evidenceInput of evidenceInputs) {
+      evidenceIds.push(await writeEvidence(evidenceInput));
+    }
+  }
+
   return {
     ...publicPrepared,
     chunksQueued: chunks.length,
+    evidenceLedger: evidenceIds.length > 0
+      ? {
+          status: 'inserted',
+          rowsRecorded: evidenceIds.length,
+          evidenceIds,
+          detail: 'PHS evidence register rows were appended to the evidence ledger.',
+        }
+      : {
+          status: 'not_applicable',
+          rowsRecorded: 0,
+          evidenceIds: [],
+          detail: 'Selected template does not create evidence ledger rows.',
+        },
     persistence: {
       status: 'inserted',
       chunkRowsInserted: inserted,
