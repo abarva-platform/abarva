@@ -316,7 +316,7 @@ export function DocumentTab({
                   artifactCode={active.artifactCode}
                 />
               ) : null}
-              {eventId && active.artifactCode === "d11_response_checklist" ? (
+              {eventId && active.artifactCode === "d13_vendor_responses" ? (
                 <VendorResponsePackPanel
                   eventId={eventId}
                   onUploaded={onRegistryUploaded}

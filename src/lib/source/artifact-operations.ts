@@ -29,7 +29,20 @@ export interface SourceArtifactOperation {
   currentCapability: string;
   nextGap: string;
   bestInClassOutcome: string;
+  goldStandard: SourceArtifactGoldStandard;
   status: SourceArtifactOperationStatus;
+}
+
+export interface SourceArtifactGoldStandard {
+  purpose: string;
+  outcome: string;
+  tableOfContents: string[];
+  evidenceInputs: string[];
+  bestInClassExpectations: string[];
+  approvalOwner: string;
+  supportedUploads: SourceArtifactFormat[];
+  supportedDownloads: SourceArtifactFormat[];
+  dataBindingChecks: string[];
 }
 
 type FamilyOperationDefaults = Pick<
@@ -49,6 +62,12 @@ type FamilyOperationDefaults = Pick<
 type ArtifactOperationOverride = Partial<
   FamilyOperationDefaults &
     Pick<SourceArtifactOperation, "contentStandard" | "responsibleAiControl">
+>;
+
+type ArtifactGoldStandardOverride = Partial<
+  Omit<SourceArtifactGoldStandard, "supportedUploads" | "supportedDownloads"> & {
+    supportedDownloads: SourceArtifactFormat[];
+  }
 >;
 
 const UPLOAD_REGISTRY =
@@ -542,11 +561,595 @@ const ARTIFACT_OVERRIDES: Record<string, ArtifactOperationOverride> = {
 export const SOURCE_ARTIFACT_OPERATION_VERSION =
   "source-artifact-operations/v1" as const;
 
+const FAMILY_DOWNLOAD_DEFAULTS: Record<SourceArtifactFamily, SourceArtifactFormat[]> = {
+  sourcing_strategy: ["html", "docx", "pdf"],
+  minimum_data_request: ["xlsx", "docx"],
+  scope_document: ["html", "docx", "pdf"],
+  workshop_output: ["html", "docx"],
+  rfp: ["html", "docx", "pdf"],
+  rfi: ["html", "docx", "pdf"],
+  response_checklist: ["xlsx", "docx"],
+  proposal: ["html"],
+  vendor_qa: ["xlsx", "docx"],
+  scorecard: ["xlsx", "docx", "pdf"],
+  pricing_workbook: ["xlsx", "docx", "pdf"],
+  bafo: ["docx", "pdf"],
+  decision_brief: ["html", "docx", "pdf"],
+  selection_memo: ["html", "docx", "pdf"],
+  transition_risk_register: ["docx", "pdf"],
+  value_ledger: ["xlsx", "docx", "pdf"],
+  meeting_notes: ["html", "docx"],
+  other: ["html"],
+};
+
+const FAMILY_EVIDENCE_DEFAULTS: Record<SourceArtifactFamily, string[]> = {
+  sourcing_strategy: [
+    "Approved event intake",
+    "Contract or spend baseline",
+    "Named sponsor and decision owner",
+  ],
+  minimum_data_request: [
+    "CMDB or application portfolio export",
+    "ITSM ticket extract",
+    "Data owner and freshness date",
+  ],
+  scope_document: [
+    "Application inventory",
+    "Support scope decisions",
+    "Named exclusions and retained-client assumptions",
+  ],
+  workshop_output: [
+    "Workshop attendee list",
+    "Facilitator notes",
+    "Owner-assigned risks or actions",
+  ],
+  rfp: [
+    "Approved strategy memo",
+    "Approved scope memo",
+    "Evaluation rubric and procurement timeline",
+  ],
+  rfi: [
+    "Market scan",
+    "Vendor qualification evidence",
+    "Inclusion and exclusion rationale",
+  ],
+  response_checklist: [
+    "Issued RFP requirements",
+    "Vendor response files",
+    "Parser completeness output",
+  ],
+  proposal: [
+    "Vendor response packet",
+    "Received timestamp and version",
+    "Procurement-system reference",
+  ],
+  vendor_qa: [
+    "Vendor question source",
+    "Official answer owner",
+    "Published addendum or manual-send evidence",
+  ],
+  scorecard: [
+    "Locked rubric weights",
+    "Evaluator scores and rationale",
+    "Proposal evidence citations",
+  ],
+  pricing_workbook: [
+    "Vendor pricing workbook",
+    "Baseline spend",
+    "Locked commercial assumptions",
+  ],
+  bafo: [
+    "Shortlisted vendor responses",
+    "Pricing trap log",
+    "Negotiation objectives and walk-away logic",
+  ],
+  decision_brief: [
+    "Scorecard",
+    "Pricing comparison",
+    "Risk attestation and dissent record",
+  ],
+  selection_memo: [
+    "Executive approval",
+    "Award decision",
+    "Contract or procurement award record",
+  ],
+  transition_risk_register: [
+    "Signed contract terms",
+    "Transition workplan",
+    "Checkpoint and KT evidence",
+  ],
+  value_ledger: [
+    "Baseline spend",
+    "Committed savings or value lines",
+    "Finance-attested measurement evidence",
+  ],
+  meeting_notes: [
+    "Meeting transcript or notes",
+    "Attendees",
+    "Follow-up owner list",
+  ],
+  other: [
+    "Uploader-provided source context",
+    "Classification and owner",
+    "Stage or artifact linkage",
+  ],
+};
+
+const FAMILY_BEST_IN_CLASS_DEFAULTS: Record<SourceArtifactFamily, string[]> = {
+  sourcing_strategy: [
+    "Answers why now before describing process.",
+    "States value at stake, decision owner, sourcing posture, and stop/go criteria.",
+    "Separates client facts from AI suggestions and names the human approver.",
+  ],
+  minimum_data_request: [
+    "Shows completeness, freshness, owner, and confidence for each data source.",
+    "Flags missing or stale fields before downstream drafting relies on them.",
+    "Makes scope and pricing implications explicit, not buried in raw extracts.",
+  ],
+  scope_document: [
+    "Vendors can price the same boundary without interpretation.",
+    "Retained-client work, exclusions, transition assumptions, and dependencies are explicit.",
+    "Every scope choice ties back to evidence and owner approval.",
+  ],
+  workshop_output: [
+    "Converts discussion into risks, decisions, owners, and dates.",
+    "Keeps unapproved opinions separate from governed decisions.",
+    "Highlights what would change the sourcing path.",
+  ],
+  rfp: [
+    "Vendor-ready without hidden assumptions or ambiguous response instructions.",
+    "Evaluation criteria and response requirements are visibly aligned.",
+    "No external release until procurement and sponsor approval are recorded.",
+  ],
+  rfi: [
+    "Explains why each vendor belongs or does not belong in the pool.",
+    "Calls out market wrappers, concentration risk, and capability gaps.",
+    "Gives the sponsor a defensible shortlist decision, not vendor boilerplate.",
+  ],
+  response_checklist: [
+    "Prevents scoring incomplete or non-comparable responses.",
+    "Maps each missing item to vendor, section, severity, owner, and action.",
+    "Keeps parser confidence visible so humans decide ambiguous gaps.",
+  ],
+  proposal: [
+    "Treats the procurement system as external source of record while preserving an evaluation snapshot.",
+    "Versions every response and maps sections to the RFP checklist.",
+    "Summaries cite uploaded response sections and never invent vendor commitments.",
+  ],
+  vendor_qa: [
+    "Every bidder receives the same official answer.",
+    "Draft answers are human-approved before publish or send.",
+    "Addenda are versioned and auditable.",
+  ],
+  scorecard: [
+    "Weights are locked before scoring starts.",
+    "Every score has rationale, evidence citation, and evaluator attribution.",
+    "Dissent and overrides are preserved instead of averaged away.",
+  ],
+  pricing_workbook: [
+    "Normalizes units, assumptions, retained costs, transition cost, and risk reserves.",
+    "Server-side calculations are authoritative over vendor workbook formulas.",
+    "Finance can explain the answer in one page.",
+  ],
+  bafo: [
+    "Each question targets a named value lever, risk closure, or trap.",
+    "Round deltas show what changed versus prior proposal.",
+    "Walk-away, give/get, and acceptance logic are explicit.",
+  ],
+  decision_brief: [
+    "Recommendation leads; machinery and supporting analysis follow.",
+    "Shows why the losing options lose, not just why the winner wins.",
+    "Names conditions, risks, dissent, and approval ask.",
+  ],
+  selection_memo: [
+    "Creates the auditable award record across procurement, legal, finance, and sponsor.",
+    "Captures contract metadata and transition conditions.",
+    "Makes external communications draft-only until client approval.",
+  ],
+  transition_risk_register: [
+    "Turns selection into mobilization evidence: owners, milestones, checkpoints, and go/no-go decisions.",
+    "Knowledge transfer is accepted by named receiving owners.",
+    "Risks are tracked through hypercare, not dropped at signature.",
+  ],
+  value_ledger: [
+    "Separates projected, committed, measuring, and realized value.",
+    "Every realized claim has finance or value-office attestation.",
+    "Re-baselines are explicit governance decisions.",
+  ],
+  meeting_notes: [
+    "Summarizes facts, decisions, open questions, and owners.",
+    "Does not promote notes into approved artifacts without human review.",
+    "Links each action to a stage or artifact.",
+  ],
+  other: [
+    "Classifies and links supporting material before it can influence AI answers.",
+    "Keeps lower-confidence context visibly separate from approved evidence.",
+    "Names owner, purpose, and allowed use.",
+  ],
+};
+
+const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverride> = {
+  d01_strategy_memo: gold({
+    tableOfContents: [
+      "Executive sourcing answer",
+      "Why now and trigger",
+      "Scope headline and exclusions",
+      "Value target and confidence band",
+      "Archetype and rigor level",
+      "Risks, assumptions, and next approval",
+    ],
+    approvalOwner: "Sponsor or CIO delegate",
+  }),
+  d02_value_target: gold({
+    tableOfContents: [
+      "Value answer",
+      "Baseline and value pool",
+      "Savings levers",
+      "Confidence band",
+      "Measurement owner",
+      "Risks and assumptions",
+    ],
+    approvalOwner: "Finance or value-office owner",
+  }),
+  d03_archetype_decision: gold({
+    tableOfContents: [
+      "Archetype recommendation",
+      "Deal characteristics",
+      "Rigor level rationale",
+      "Comparable precedent",
+      "Risks of wrong archetype",
+      "Approval note",
+    ],
+    approvalOwner: "Maestro and sponsor",
+  }),
+  d04_app_inv: gold({
+    tableOfContents: [
+      "Inventory completeness",
+      "Applications and tiers",
+      "Business ownership",
+      "Lifecycle and dependencies",
+      "Data freshness",
+      "Open data gaps",
+    ],
+    approvalOwner: "Application portfolio or CMDB owner",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d05_scope_memo: gold({
+    tableOfContents: [
+      "Scope answer",
+      "In-scope services",
+      "Out-of-scope exclusions",
+      "Retained-client responsibilities",
+      "Transition assumptions",
+      "Dependencies and approval",
+    ],
+    approvalOwner: "Scope owner and sponsor",
+  }),
+  d06_excl_log: gold({
+    tableOfContents: [
+      "Exclusion summary",
+      "Excluded applications or services",
+      "Reason for exclusion",
+      "Decision owner",
+      "Vendor instruction",
+      "Revisit trigger",
+    ],
+    approvalOwner: "Scope owner",
+  }),
+  d07_ticket_synth: gold({
+    tableOfContents: [
+      "Ticket-volume answer",
+      "Volume by service tier",
+      "Seasonality and time-of-day",
+      "Incident/problem split",
+      "Sizing implications",
+      "Data gaps",
+    ],
+    approvalOwner: "ITSM data owner",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d08_premortem: gold({
+    tableOfContents: [
+      "Top failure modes",
+      "Trigger or early warning",
+      "Likely cause",
+      "Mitigation owner",
+      "Decision impact",
+      "Follow-up cadence",
+    ],
+    approvalOwner: "Maestro",
+  }),
+  d09_rfp_pack: gold({
+    tableOfContents: [
+      "Executive summary",
+      "Sourcing background",
+      "In-scope services",
+      "Service levels and operating model",
+      "Response instructions",
+      "Pricing instructions",
+      "Evaluation criteria and timeline",
+      "Submission controls",
+    ],
+    approvalOwner: "Procurement owner and sponsor",
+  }),
+  d10_rfi_summary: gold({
+    tableOfContents: [
+      "Market answer",
+      "Vendor landscape",
+      "RFI response themes",
+      "Shortlist rationale",
+      "Disqualified vendors",
+      "Risks and next RFP path",
+    ],
+    approvalOwner: "Procurement owner",
+  }),
+  d11_response_checklist: gold({
+    tableOfContents: [
+      "Response-completeness rule",
+      "Required sections",
+      "Expected file or tab",
+      "Validation rule",
+      "Evaluator owner",
+      "Acceptance condition",
+    ],
+    approvalOwner: "Procurement owner",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d12_vendor_shortlist: gold({
+    tableOfContents: [
+      "Shortlist answer",
+      "Invited vendors",
+      "Fit rationale",
+      "Exclusions",
+      "Conflict or risk notes",
+      "Sponsor approval",
+    ],
+    approvalOwner: "Sponsor and procurement owner",
+  }),
+  d13_vendor_responses: gold({
+    tableOfContents: [
+      "Response intake summary",
+      "Vendor and version register",
+      "Submitted artifacts",
+      "Mapped response sections",
+      "Exceptions and assumptions",
+      "Parse/completeness status",
+    ],
+    approvalOwner: "Maestro or procurement owner",
+    supportedDownloads: ["html"],
+  }),
+  d14_qa_log: gold({
+    tableOfContents: [
+      "Official Q&A register",
+      "Vendor questions",
+      "Draft answers",
+      "Approved answers",
+      "Addendum version",
+      "Publish/send evidence",
+    ],
+    approvalOwner: "Procurement owner",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d15_response_completeness: gold({
+    tableOfContents: [
+      "Readiness answer",
+      "Vendor completeness matrix",
+      "Critical missing items",
+      "Parser confidence",
+      "Action owner",
+      "Evaluation go/no-go",
+    ],
+    approvalOwner: "Maestro",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d16_scorecard: gold({
+    tableOfContents: [
+      "Evaluation answer",
+      "Locked weights",
+      "Vendor scores",
+      "Evaluator rationale",
+      "Evidence citations",
+      "Dissent and final rank",
+    ],
+    approvalOwner: "Evaluation steward",
+    supportedDownloads: ["xlsx", "docx", "pdf"],
+  }),
+  d17_weight_log: gold({
+    tableOfContents: [
+      "Weight-set answer",
+      "Criteria definitions",
+      "Version history",
+      "Approver signatures",
+      "Change rationale",
+      "Lock status",
+    ],
+    approvalOwner: "Evaluation steward",
+    supportedDownloads: ["xlsx", "docx"],
+  }),
+  d18_disqualification_log: gold({
+    tableOfContents: [
+      "Disqualification answer",
+      "Vendor",
+      "Threshold or failure reason",
+      "Evidence",
+      "Reviewer decision",
+      "Appeal or revisit rule",
+    ],
+    approvalOwner: "Procurement owner and legal reviewer",
+  }),
+  d19_pricing_workbook: gold({
+    tableOfContents: [
+      "Commercial answer",
+      "Baseline and vendor totals",
+      "Normalized assumptions",
+      "Transition and retained costs",
+      "Scenario cases",
+      "Finance approval",
+    ],
+    approvalOwner: "Finance/commercial owner",
+    supportedDownloads: ["xlsx", "docx", "pdf"],
+  }),
+  d20_trap_log: gold({
+    tableOfContents: [
+      "Trap summary",
+      "Trap register",
+      "Dollar exposure",
+      "Affected vendor",
+      "BAFO or contract action",
+      "Resolution status",
+    ],
+    approvalOwner: "Commercial owner",
+  }),
+  d21_assumption_set: gold({
+    tableOfContents: [
+      "Assumption answer",
+      "Commercial horizon",
+      "FX/escalators/volume",
+      "Scope baseline",
+      "Excluded costs",
+      "Lock signature and version",
+    ],
+    approvalOwner: "Sponsor and finance owner",
+  }),
+  d22_bafo_question_pack: gold({
+    tableOfContents: [
+      "BAFO strategy",
+      "Per-vendor questions",
+      "Target concession",
+      "Walk-away condition",
+      "Risk closure",
+      "Response due date",
+    ],
+    approvalOwner: "Sourcing lead",
+  }),
+  d23_bafo_round_log: gold({
+    tableOfContents: [
+      "Round answer",
+      "Vendor response deltas",
+      "Commercial movement",
+      "Risk movement",
+      "Accepted concessions",
+      "Next-round ask",
+    ],
+    approvalOwner: "Sourcing lead",
+  }),
+  d24_decision_brief: gold({
+    tableOfContents: [
+      "Recommendation",
+      "Finalist comparison",
+      "Value/risk/transition tradeoff",
+      "Evidence table",
+      "Dissent or conditions",
+      "Explicit approval ask",
+    ],
+    approvalOwner: "Executive sponsor",
+  }),
+  d25_risk_attestation: gold({
+    tableOfContents: [
+      "Risk answer",
+      "Risk register",
+      "Mitigation plan",
+      "Residual risk",
+      "Accepted-by",
+      "Decision impact",
+    ],
+    approvalOwner: "Risk owner and sponsor",
+  }),
+  d26_steward_signoff: gold({
+    tableOfContents: [
+      "Signoff answer",
+      "Required artifacts complete",
+      "Weights locked",
+      "Evidence gaps",
+      "AI-use attestation",
+      "Approval conditions",
+    ],
+    approvalOwner: "Source steward",
+  }),
+  d27_selection_memo: gold({
+    tableOfContents: [
+      "Selection answer",
+      "Award rationale",
+      "Runner-up rationale",
+      "Conditions to contract",
+      "Transition next steps",
+      "Sponsor signoff",
+    ],
+    approvalOwner: "Sponsor and procurement owner",
+  }),
+  d28_contract_record: gold({
+    tableOfContents: [
+      "Contract answer",
+      "Signed contract reference",
+      "Commercial terms snapshot",
+      "Effective dates",
+      "Critical obligations",
+      "Owner and repository link",
+    ],
+    approvalOwner: "Legal/procurement owner",
+  }),
+  d29_transition_plan: gold({
+    tableOfContents: [
+      "Transition answer",
+      "Milestones",
+      "KT plan",
+      "Parallel-run gates",
+      "Owners",
+      "Cutover/hypercare criteria",
+    ],
+    approvalOwner: "Transition owner",
+  }),
+  d30_checkpoint_log: gold({
+    tableOfContents: [
+      "Checkpoint summary",
+      "Milestone status",
+      "Go/no-go decision",
+      "Deferred items",
+      "Owner action",
+      "Evidence link",
+    ],
+    approvalOwner: "Transition governance owner",
+  }),
+  d31_kt_evidence: gold({
+    tableOfContents: [
+      "KT acceptance answer",
+      "Sessions held",
+      "Attendees",
+      "Materials transferred",
+      "Receiving-team signoff",
+      "Open KT gaps",
+    ],
+    approvalOwner: "Receiving team owner",
+  }),
+  d32_value_ledger: gold({
+    tableOfContents: [
+      "Value answer",
+      "Baseline",
+      "Committed value",
+      "Measurement method",
+      "Realized evidence",
+      "Finance attestation",
+    ],
+    approvalOwner: "Finance/value-office owner",
+    supportedDownloads: ["xlsx", "docx", "pdf"],
+  }),
+  d33_governance_review: gold({
+    tableOfContents: [
+      "Governance answer",
+      "Quarterly value state",
+      "Variance explanation",
+      "Re-baseline decisions",
+      "Owner actions",
+      "Next review date",
+    ],
+    approvalOwner: "Value governance owner",
+  }),
+};
+
 function operationForSpec(spec: SourceArtifactSpec): SourceArtifactOperation {
   const defaults = FAMILY_DEFAULTS[spec.family];
   const override = ARTIFACT_OVERRIDES[spec.code] ?? {};
-
-  return {
+  const operationCore = {
     artifactCode: spec.code,
     artifactName: spec.name,
     stage: spec.stage,
@@ -558,6 +1161,52 @@ function operationForSpec(spec: SourceArtifactSpec): SourceArtifactOperation {
     ...defaults,
     ...override,
   };
+
+  return {
+    ...operationCore,
+    goldStandard: buildGoldStandard(spec, operationCore),
+  };
+}
+
+function buildGoldStandard(
+  spec: SourceArtifactSpec,
+  operation: Omit<SourceArtifactOperation, "goldStandard">,
+): SourceArtifactGoldStandard {
+  const override = ARTIFACT_GOLD_STANDARD_OVERRIDES[spec.code] ?? {};
+  return {
+    purpose:
+      override.purpose ??
+      `${spec.name} turns ${SOURCE_STAGE_LABELS[spec.stage]} work into a governed decision artifact, not a loose document.`,
+    outcome: override.outcome ?? operation.bestInClassOutcome,
+    tableOfContents:
+      override.tableOfContents ?? [
+        "Executive answer",
+        "Evidence basis",
+        "Analysis",
+        "Expert challenge",
+        "Decision or action owner",
+        "Approval and next step",
+      ],
+    evidenceInputs:
+      override.evidenceInputs ?? FAMILY_EVIDENCE_DEFAULTS[spec.family],
+    bestInClassExpectations:
+      override.bestInClassExpectations ?? FAMILY_BEST_IN_CLASS_DEFAULTS[spec.family],
+    approvalOwner: override.approvalOwner ?? "Named client owner",
+    supportedUploads: operation.acceptedFormats,
+    supportedDownloads:
+      override.supportedDownloads ?? FAMILY_DOWNLOAD_DEFAULTS[spec.family],
+    dataBindingChecks:
+      override.dataBindingChecks ?? [
+        "Tenant and event id are present on every upload, render, and export.",
+        "Artifact code matches a canonical Source artifact specification.",
+        "Parser, approval, and evidence states are visible before downstream use.",
+        "Exports render from the bound event context rather than static template text.",
+      ],
+  };
+}
+
+function gold(input: ArtifactGoldStandardOverride): ArtifactGoldStandardOverride {
+  return input;
 }
 
 export const SOURCE_ARTIFACT_OPERATIONS: readonly SourceArtifactOperation[] =

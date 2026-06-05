@@ -55,6 +55,62 @@ describe("Source artifact operations contract", () => {
     }
   });
 
+  it("exposes a gold-standard artifact contract for every canonical artifact", () => {
+    for (const operation of listSourceArtifactOperations()) {
+      expect(operation.goldStandard.purpose).toContain(operation.artifactName);
+      expect(operation.goldStandard.outcome.length).toBeGreaterThan(40);
+      expect(operation.goldStandard.tableOfContents.length).toBeGreaterThanOrEqual(6);
+      expect(operation.goldStandard.evidenceInputs.length).toBeGreaterThanOrEqual(3);
+      expect(operation.goldStandard.bestInClassExpectations.length).toBeGreaterThanOrEqual(3);
+      expect(operation.goldStandard.approvalOwner.length).toBeGreaterThan(4);
+      expect(operation.goldStandard.supportedUploads.length).toBeGreaterThan(0);
+      expect(operation.goldStandard.supportedDownloads.length).toBeGreaterThan(0);
+      expect(operation.goldStandard.dataBindingChecks).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining("Tenant and event id"),
+          expect.stringContaining("Artifact code"),
+          expect.stringContaining("Parser"),
+          expect.stringContaining("Exports render"),
+        ]),
+      );
+    }
+  });
+
+  it("defines real-world response-pack and RFP standards, not consulting boilerplate", () => {
+    const operationsByCode = new Map(
+      listSourceArtifactOperations().map((operation) => [
+        operation.artifactCode,
+        operation,
+      ]),
+    );
+    const responsePack = operationsByCode.get("d13_vendor_responses");
+    const rfpPack = operationsByCode.get("d09_rfp_pack");
+
+    expect(responsePack?.goldStandard.tableOfContents).toEqual(
+      expect.arrayContaining([
+        "Vendor and version register",
+        "Mapped response sections",
+        "Parse/completeness status",
+      ]),
+    );
+    expect(responsePack?.goldStandard.bestInClassExpectations.join(" ")).toContain(
+      "procurement system",
+    );
+    expect(responsePack?.goldStandard.supportedUploads).toEqual(
+      expect.arrayContaining(["pdf", "docx", "xlsx", "pptx"]),
+    );
+    expect(responsePack?.status).toBe("partial");
+
+    expect(rfpPack?.goldStandard.tableOfContents).toEqual(
+      expect.arrayContaining([
+        "Service levels and operating model",
+        "Response instructions",
+        "Evaluation criteria and timeline",
+      ]),
+    );
+    expect(rfpPack?.responsibleAiControl).toMatch(/approval is required/i);
+  });
+
   it("summarizes capability posture without claiming full readiness", () => {
     const summary = summarizeSourceArtifactOperations();
 

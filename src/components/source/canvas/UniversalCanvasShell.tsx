@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
@@ -122,6 +122,8 @@ import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel"
 import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
 import { threeChoicesForStage } from "./canvas-three-choices";
 import { StrategyStageView } from "./strategy/StrategyStageView";
+import { ScopeStageView } from "./scope/ScopeStageView";
+import { RfpStageView } from "./rfp/RfpStageView";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -149,6 +151,41 @@ interface UniversalCanvasShellProps {
   activityEntries: ActivityEntry[];
   tenantName: string;
   decisionThreadId?: string | null;
+}
+
+function renderStageDocumentContent({
+  viewStage,
+  stageArtifacts,
+  selectedDocCode,
+  onSelectCode,
+  documentTabContent,
+}: {
+  viewStage: SourceStageKey;
+  stageArtifacts: SourceEventArtifactState[];
+  selectedDocCode?: string;
+  onSelectCode: (code: string) => void;
+  documentTabContent: ReactNode;
+}) {
+  if (viewStage === "strategy") {
+    return (
+      <StrategyStageView
+        artifacts={stageArtifacts}
+        selectedCode={selectedDocCode}
+        onSelectCode={onSelectCode}
+        documentWorkspace={documentTabContent}
+      />
+    );
+  }
+
+  if (viewStage === "scope") {
+    return <ScopeStageView documentWorkspace={documentTabContent} />;
+  }
+
+  if (viewStage === "rfp" || viewStage === "rfp_rfi_package") {
+    return <RfpStageView documentWorkspace={documentTabContent} />;
+  }
+
+  return documentTabContent;
 }
 
 /**
@@ -654,17 +691,13 @@ export function UniversalCanvasShell({
       label: "Document",
       badge:
         stageArtifacts.length > 0 ? String(stageArtifacts.length) : undefined,
-      content:
-        viewStage === "strategy" ? (
-          <StrategyStageView
-            artifacts={stageArtifacts}
-            selectedCode={selectedDocCode}
-            onSelectCode={setSelectedDocCode}
-            documentWorkspace={documentTabContent}
-          />
-        ) : (
-          documentTabContent
-        ),
+      content: renderStageDocumentContent({
+        viewStage,
+        stageArtifacts,
+        selectedDocCode,
+        onSelectCode: setSelectedDocCode,
+        documentTabContent,
+      }),
     },
     {
       key: "gate" as WorkspaceTabKey,
