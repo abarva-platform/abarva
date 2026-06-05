@@ -10,7 +10,7 @@ Purpose: confirm what is truly loaded, which loader path was used, where depth i
 Lakeshore has a real tenant row, a loaded synthetic context bundle, an active corpus in Azure AI Search, two Source events, six Moves, and Tower/Intelligence rows. The strongest live demo spine is still the Kyriba treasury rollout because it has both:
 
 - Source stage documents through BAFO, with executive-decision artifacts in review.
-- Moves board-grade deliverables and Azure-backed attachments for the linked Kyriba Move.
+- Moves board-grade deliverables, Move 0 rollout-gate evidence, and Azure-backed attachments for the linked Kyriba Move.
 
 The AMS modernization Source event is now document-real through its current Evaluation stage. It can be used as a second Source-only demo story, but not as a Pricing/BAFO/Decision story. The Shared Data Platform and Evidence Spine Move is now document-real as a second Moves story with six Azure-backed deliverables. The remaining four Moves are still row-only.
 
@@ -256,7 +256,7 @@ Lakeshore has six active/draft Move rows:
 
 | Move | Phase | Status | Projected value range | Artifact state |
 |---|---:|---|---:|---|
-| Kyriba global treasury rollout | 2 | active | 31.5M to 42.0M | 6 deliverables + 6 Azure attachments + 6 evidence rows |
+| Kyriba global treasury rollout | 2 | active | 31.5M to 42.0M | 6 deliverables + 12 Azure attachments + 12 evidence rows |
 | Shared data platform and evidence spine | 2 | active | 23.25M to 31.0M | 6 deliverables + 6 Azure attachments + 6 evidence rows |
 | Northline WMS modernization | 1 | draft | 18.375M to 24.5M | no deliverables |
 | Freight visibility and exception AI | 1 | active | 13.5M to 18.0M | no deliverables |
@@ -274,6 +274,17 @@ Kyriba Move proof loaded on 2026-06-05:
 | `approval_packet` | Kyriba Executive Approval Packet | in_review |
 | `tower_handoff_plan` | Kyriba Tower Handoff Plan | in_review |
 
+Kyriba Move 0 rollout de-risk gate evidence loaded on 2026-06-05:
+
+| Gate evidence file | Step id |
+|---|---|
+| `kyriba-rollout-gate-01-bank-connectivity-matrix.md` | `rollout_gate_bank_connectivity` |
+| `kyriba-rollout-gate-02-erp-feed-quality-scorecard.md` | `rollout_gate_erp_feed_quality` |
+| `kyriba-rollout-gate-03-entity-hierarchy-registry.md` | `rollout_gate_entity_hierarchy` |
+| `kyriba-rollout-gate-04-historical-cash-reconstruction-plan.md` | `rollout_gate_historical_cash_reconstruction` |
+| `kyriba-rollout-gate-05-adoption-excel-elimination-plan.md` | `rollout_gate_adoption_excel_elimination` |
+| `kyriba-rollout-gate-06-intercompany-reconciliation-control.md` | `rollout_gate_intercompany_reconciliation` |
+
 Shared Data Platform Move proof loaded on 2026-06-05:
 
 | Deliverable type | Title | Status |
@@ -289,7 +300,7 @@ Azure proof:
 
 | Container | Prefix | Count |
 |---|---|---:|
-| `program-attachments` | `lakeshore-holdings/1196dac0-715c-45ce-8eeb-5e70792d9aa4/` | 6 |
+| `program-attachments` | `lakeshore-holdings/1196dac0-715c-45ce-8eeb-5e70792d9aa4/` | 12 |
 | `program-attachments` | `lakeshore-holdings/6a4c7fc4-0a2d-4479-b807-7350fb727527/` | 6 |
 | `source-artifacts` | `lakeshore/LSH-KYRIBA-TREASURY-2026/` | 26 |
 | `source-artifacts` | `lakeshore/LSH-AMS-MODERNIZATION-2026/` | 18 |
@@ -327,10 +338,11 @@ Use one complete flagship story rather than many shallow cards:
 1. Intelligence: ask what Lakeshore decision matters first; answer should land on Kyriba treasury rollout using finance/vendor/program evidence.
 2. Source: open `LSH-KYRIBA-TREASURY-2026`; show approved Strategy, Scope, RFP, Responses, Evaluation, Pricing, and BAFO artifacts; show Executive Decision as in review.
 3. Moves: open `Kyriba global treasury rollout`; show charter, baseline, scorecard, business case, approval packet, and Tower handoff as in-review deliverables.
-4. Moves: open `Shared data platform and evidence spine`; show the charter, baseline, target-state architecture, business case, operating model, and Tower handoff as the evidence-spine operating layer.
-5. Optional second Source story: open `LSH-AMS-MODERNIZATION-2026`; show Strategy, Scope, RFP, and Responses approved, with Evaluation in review.
-6. Tower: show vendor/program/cloud/financial rows as context and explain Tower is ready to monitor the Kyriba and evidence-spine promises after approval.
-7. Data Trust/Admin: show 1,329 context records and 9 complete inventory segments, while being clear that the full setup/admin approval ledger is not yet populated.
+4. Moves: show the six Kyriba Move 0 rollout-gate evidence files as the reason the implementation is being de-risked before AI-on-Kyriba claims.
+5. Moves: open `Shared data platform and evidence spine`; show the charter, baseline, target-state architecture, business case, operating model, and Tower handoff as the evidence-spine operating layer.
+6. Optional second Source story: open `LSH-AMS-MODERNIZATION-2026`; show Strategy, Scope, RFP, and Responses approved, with Evaluation in review.
+7. Tower: show vendor/program/cloud/financial rows as context and explain Tower is ready to monitor the Kyriba and evidence-spine promises after approval.
+8. Data Trust/Admin: show 1,329 context records and 9 complete inventory segments, while being clear that the full setup/admin approval ledger is not yet populated.
 
 ## Next Build Targets
 
@@ -352,6 +364,7 @@ Safe wording:
 - "AMS modernization is document-real through Evaluation only."
 - "Source artifacts are synthetic but real files in Azure Blob, linked to Source tables."
 - "Kyriba and Data Spine Move deliverables are synthetic but real deliverable versions and Azure-backed program attachments."
+- "Kyriba also has six synthetic but real Move 0 rollout-gate evidence attachments covering bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption, and intercompany reconciliation."
 - "Value ranges are planning values, not realized savings."
 - "Context data is CSV/context-loader backed; full setup/admin approval-ledger rows are not present yet."
 
