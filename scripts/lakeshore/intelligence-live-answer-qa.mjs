@@ -264,7 +264,11 @@ function scoreAnswer(question, status, answer, sources, events) {
   for (const term of forbiddenTerms) {
     if (!question.allowForbiddenInQuestion && lower.includes(term.toLowerCase())) flags.push(`tenant_bleed:${term}`);
   }
-  if (/pinecone/i.test(answer) && !/\b(not|no|without|instead of|rather than|does not|do not|isn't|is not)\b[^.]{0,120}\bpinecone\b/i.test(answer)) {
+  if (
+    /pinecone/i.test(answer) &&
+    !/\b(not|no|without|instead of|rather than|does not|do not|isn't|is not)\b[^.]{0,120}\bpinecone\b/i.test(answer) &&
+    !/\bpinecone\b[^.]{0,80}\b(not|no|without|isn't|is not|not in play|not used|is not used)\b/i.test(answer)
+  ) {
     flags.push('unsafe_pinecone_claim');
   }
   if (/realized savings (?:are|have been)|award is complete|cutover is complete|all modules are 100% production-ready/i.test(answer)) {

@@ -365,7 +365,7 @@ export async function* synthesizeStream(args: {
     `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}`,
     mandatorySurfaceEvidenceBlock,
     `USER QUESTION:\n${args.query}`,
-    "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
+    "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include a named active client, name that client in the first sentence. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
   ].filter(Boolean).join("\n\n");
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
