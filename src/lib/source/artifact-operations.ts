@@ -812,7 +812,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Open data gaps",
     ],
     approvalOwner: "Application portfolio or CMDB owner",
-    supportedDownloads: ["xlsx", "docx"],
+    supportedDownloads: ["xlsx", "docx", "pdf"],
   }),
   d05_scope_memo: gold({
     tableOfContents: [
@@ -893,7 +893,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Acceptance condition",
     ],
     approvalOwner: "Procurement owner",
-    supportedDownloads: ["xlsx", "docx"],
+    supportedDownloads: ["xlsx", "docx", "pdf"],
   }),
   d12_vendor_shortlist: gold({
     tableOfContents: [
@@ -1021,6 +1021,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Response due date",
     ],
     approvalOwner: "Sourcing lead",
+    supportedDownloads: ["xlsx", "docx", "pdf"],
   }),
   d23_bafo_round_log: gold({
     tableOfContents: [

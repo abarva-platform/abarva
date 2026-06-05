@@ -12,6 +12,7 @@ export * from "./agent-mission-types";
 export * from "./agent-missions";
 export * from "./attachments";
 export * from "./artifact-operations";
+export * from "./artifact-binding-matrix";
 export type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,
