@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
+import { Pool } from 'pg';
 
 import {
   buildMeridianEnterpriseContextIngestionPlan,
@@ -12,6 +13,7 @@ import {
   hashEnterpriseContextChunk,
   type EnterpriseContextChunkRow,
 } from '../../lib/enterprise-context/chunking';
+import { runtimePostgresPoolConfig } from '../../lib/data-plane/postgresCompat';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv({ path: '/Users/anand/Projects/nexus/.env.local' });
@@ -27,6 +29,7 @@ type Args = {
 type DbRow = Record<string, unknown>;
 
 const DEFAULT_SOURCE_ROOT = path.resolve(process.cwd(), 'docs/enterprise-context/synthetic/meridian');
+const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function parseArgs(): Args {
   const sourceArg = process.argv.find((arg) => arg.startsWith('--source='));
@@ -82,6 +85,118 @@ async function upsertBatch(client: SupabaseClient, table: string, rows: DbRow[],
   return rows.length;
 }
 
+function quoteIdent(identifier: string): string {
+  if (!IDENTIFIER_RE.test(identifier)) throw new Error(`unsafe_identifier:${identifier}`);
+  return `"${identifier}"`;
+}
+
+function getPostgresPool(): Pool {
+  const connectionString = process.env.DATABASE_URL?.trim();
+  if (!connectionString) throw new Error('DATABASE_URL is required for private schema chunk loads.');
+  return new Pool(runtimePostgresPoolConfig(connectionString, 'meridian-enterprise-context-private-loader'));
+}
+
+async function insertRunPostgres(
+  pool: Pool,
+  schemaName: string,
+  input: {
+    clientId: string;
+    tenantKey: string;
+    sourceRoot: string;
+    chunksPlanned: number;
+  },
+): Promise<string> {
+  const result = await pool.query<{ id: string }>(
+    `insert into ${quoteIdent(schemaName)}.data_ingestion_runs
+      (client_id, tenant_key, source_label, source_root, status, summary)
+     values ($1, $2, $3, $4, 'started', $5::jsonb)
+     returning id`,
+    [
+      input.clientId,
+      input.tenantKey,
+      'Meridian Health enterprise context chunk load',
+      input.sourceRoot,
+      JSON.stringify({
+        loader: 'enterprise-context-chunk-loader',
+        target_schema: schemaName,
+        chunks_planned: input.chunksPlanned,
+        connection: 'private-postgres-schema',
+      }),
+    ],
+  );
+  const id = result.rows[0]?.id;
+  if (!id) throw new Error('private_data_ingestion_run_missing_id');
+  return id;
+}
+
+async function updateRunPostgres(
+  pool: Pool,
+  schemaName: string,
+  runId: string,
+  patch: {
+    status: 'completed' | 'failed';
+    chunksLoaded?: number;
+    errorMessage?: string;
+  },
+): Promise<void> {
+  await pool.query(
+    `update ${quoteIdent(schemaName)}.data_ingestion_runs
+       set status = $1,
+           chunks_loaded = coalesce($2, chunks_loaded),
+           summary = summary || $3::jsonb,
+           completed_at = now(),
+           error_message = $4
+     where id = $5`,
+    [
+      patch.status,
+      patch.chunksLoaded ?? null,
+      JSON.stringify({
+        chunks_loaded: patch.chunksLoaded ?? null,
+        error_message: patch.errorMessage ?? null,
+      }),
+      patch.errorMessage ?? null,
+      runId,
+    ],
+  );
+}
+
+async function upsertBatchPostgres(
+  pool: Pool,
+  schemaName: string,
+  table: string,
+  rows: DbRow[],
+  conflictColumns: string[],
+): Promise<number> {
+  const batchSize = 250;
+  const columns = Object.keys(rows[0] ?? {});
+  if (columns.length === 0) return 0;
+  const columnSql = columns.map(quoteIdent).join(', ');
+  const conflictSql = conflictColumns.map(quoteIdent).join(', ');
+  const updateSql = columns
+    .filter((column) => !conflictColumns.includes(column))
+    .map((column) => `${quoteIdent(column)} = excluded.${quoteIdent(column)}`)
+    .join(', ');
+
+  for (let index = 0; index < rows.length; index += batchSize) {
+    const batch = rows.slice(index, index + batchSize);
+    const values: unknown[] = [];
+    const valueSql = batch.map((row) => {
+      const placeholders = columns.map((column) => {
+        values.push(row[column]);
+        return `$${values.length}`;
+      });
+      return `(${placeholders.join(', ')})`;
+    }).join(', ');
+    await pool.query(
+      `insert into ${quoteIdent(schemaName)}.${quoteIdent(table)} (${columnSql})
+       values ${valueSql}
+       on conflict (${conflictSql}) do update set ${updateSql}`,
+      values,
+    );
+  }
+  return rows.length;
+}
+
 function chunkDbRows(chunks: EnterpriseContextChunkRow[], clientId: string): DbRow[] {
   const now = new Date().toISOString();
   return chunks.map((chunk) => ({
@@ -116,6 +231,39 @@ async function applyChunks(
   sourceRoot: string,
   schemaName: string | null,
 ): Promise<Record<string, number | string | null>> {
+  if (schemaName) {
+    const pool = getPostgresPool();
+    const clientId = await ensureMeridianClientId();
+    const runId = await insertRunPostgres(pool, schemaName, {
+      clientId,
+      tenantKey,
+      sourceRoot,
+      chunksPlanned: chunks.length,
+    });
+    try {
+      const chunkCount = await upsertBatchPostgres(
+        pool,
+        schemaName,
+        'enterprise_context_chunks',
+        chunkDbRows(chunks, clientId),
+        ['tenant_key', 'chunk_id'],
+      );
+      await updateRunPostgres(pool, schemaName, runId, {
+        status: 'completed',
+        chunksLoaded: chunkCount,
+      });
+      await pool.end();
+      return { chunks: chunkCount, schema: schemaName };
+    } catch (error) {
+      await updateRunPostgres(pool, schemaName, runId, {
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      await pool.end();
+      throw error;
+    }
+  }
+
   const client = getClient(schemaName);
   const clientId = await ensureMeridianClientId();
   const runStart = await client
