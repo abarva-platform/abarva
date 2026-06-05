@@ -1071,6 +1071,8 @@ describe('Ask synthesizer prompt — Brief A expert posture (INT-VOICE.STRAT-202
     expect(synthesizerSource).toMatch(/chat\s+surface\s+renders\s+plain\s+text\s+only/i);
     expect(synthesizerSource).toMatch(/Apex\s+Retail/);
     expect(synthesizerSource).toMatch(/SURFACE\s+first,?\s+then\s+TENANT,?\s+then\s+GRAPH/);
+    expect(synthesizerSource).toMatch(/composeRuntimeOutputDisciplineBlock\("Sentinel"\)/);
+    expect(synthesizerSource).toMatch(/outputDisciplineBlock/);
   });
 });
 
