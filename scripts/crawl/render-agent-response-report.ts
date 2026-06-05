@@ -129,9 +129,10 @@ function flattenTranscripts(transcripts: TranscriptFile[]) {
 }
 
 function summarize(rows: ReturnType<typeof flattenTranscripts>, latest: CrawlLatest) {
-  const answered = rows.filter((row) => row.status !== 'error' && (row.answer ?? '').trim().length > 0);
-  const errors = rows.filter((row) => row.status === 'error' || !(row.answer ?? '').trim());
+  const answered = rows.filter((row) => row.status !== 'error' && (row.answer ?? '').trim().length > 0 && !looksLikeSynthesisError(row.answer ?? ''));
+  const errors = rows.filter((row) => row.status === 'error' || !(row.answer ?? '').trim() || looksLikeSynthesisError(row.answer ?? ''));
   const chromeOnly = rows.filter((row) => looksLikeChromeOnlyAnswer(row.answer ?? ''));
+  const synthesisErrors = rows.filter((row) => looksLikeSynthesisError(row.answer ?? ''));
   const exactFieldCitations = rows.reduce((sum, row) => {
     const matches = (row.answer ?? '').match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi);
     return sum + (matches?.length ?? 0);
@@ -141,6 +142,7 @@ function summarize(rows: ReturnType<typeof flattenTranscripts>, latest: CrawlLat
     totalTurns: rows.length,
     answeredTurns: answered.length,
     errorTurns: errors.length,
+    synthesisErrorTurns: synthesisErrors.length,
     chromeOnlyTurns: chromeOnly.length,
     exactFieldCitations,
     observations,
@@ -187,6 +189,7 @@ function renderHtml(
     ${metric('Turns Captured', String(summary.totalTurns))}
     ${metric('Answered Turns', String(summary.answeredTurns))}
     ${metric('Error / Empty Turns', String(summary.errorTurns))}
+    ${metric('Synthesis Error Turns', String(summary.synthesisErrorTurns))}
     ${metric('Chrome-only Turns', String(summary.chromeOnlyTurns))}
     ${metric('Exact Field Citations', String(summary.exactFieldCitations))}
     ${metric('P0 / P1 / P2', `${summary.p0} / ${summary.p1} / ${summary.p2}`)}
@@ -198,7 +201,7 @@ function renderHtml(
   <table>
     <thead><tr><th>Transcript</th><th>Persona</th><th>Surface</th><th>Turns</th><th>Answered</th><th>Errors</th><th>Chrome-only</th></tr></thead>
     <tbody>${transcripts.map((item) => {
-      const answered = item.turns.filter((turn) => turn.status !== 'error' && (turn.answer ?? '').trim()).length;
+      const answered = item.turns.filter((turn) => turn.status !== 'error' && (turn.answer ?? '').trim() && !looksLikeSynthesisError(turn.answer ?? '')).length;
       const errors = item.turns.length - answered;
       const chromeOnly = item.turns.filter((turn) => looksLikeChromeOnlyAnswer(turn.answer ?? '')).length;
       return `<tr><td><code>${escapeHtml(item.file)}</code></td><td>${escapeHtml(item.personaKey)}</td><td>${escapeHtml(item.surfaceId)}</td><td>${item.turns.length}</td><td>${answered}</td><td>${errors}</td><td>${chromeOnly}</td></tr>`;
@@ -209,7 +212,7 @@ function renderHtml(
   <h2>Question And Answer Transcript</h2>
   ${rows.map((row, i) => `<details ${i < 3 ? 'open' : ''}>
     <summary>${i + 1}. ${escapeHtml(row.personaKey)} / ${escapeHtml(row.surfaceId)} / Q${row.index}: ${escapeHtml(row.question ?? '')}</summary>
-    <p>Status: <span class="${row.status === 'error' || !(row.answer ?? '').trim() || looksLikeChromeOnlyAnswer(row.answer ?? '') ? 'fail' : 'pass'}">${escapeHtml(row.status ?? 'unknown')}</span>${row.error ? ` - ${escapeHtml(row.error)}` : ''} · Events: ${row.eventCount ?? 0}${looksLikeChromeOnlyAnswer(row.answer ?? '') ? ' · page-chrome-only capture' : ''}</p>
+    <p>Status: <span class="${row.status === 'error' || !(row.answer ?? '').trim() || looksLikeChromeOnlyAnswer(row.answer ?? '') || looksLikeSynthesisError(row.answer ?? '') ? 'fail' : 'pass'}">${escapeHtml(row.status ?? 'unknown')}</span>${row.error ? ` - ${escapeHtml(row.error)}` : ''} · Events: ${row.eventCount ?? 0}${looksLikeChromeOnlyAnswer(row.answer ?? '') ? ' · page-chrome-only capture' : ''}${looksLikeSynthesisError(row.answer ?? '') ? ' · synthesis/API error' : ''}</p>
     <h3>Answer</h3>
     <pre>${escapeHtml(row.answer ?? '')}</pre>
   </details>`).join('')}
@@ -227,6 +230,14 @@ function looksLikeChromeOnlyAnswer(answer: string): boolean {
   return normalized.includes('SENTINEL INTEL')
     && normalized.includes('ASK SENTINEL')
     && normalized.includes('Ask an IT-productivity question to stream');
+}
+
+function looksLikeSynthesisError(answer: string): boolean {
+  return /\[(?:synthesis|agent|model) error:/i.test(answer)
+    || /specified API usage limits/i.test(answer)
+    || /invalid_request_error/i.test(answer)
+    || /\bquota\b/i.test(answer)
+    || /\brate limit/i.test(answer);
 }
 
 function escapeHtml(value: string): string {
