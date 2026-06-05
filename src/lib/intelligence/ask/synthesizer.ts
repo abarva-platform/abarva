@@ -10,6 +10,7 @@ import {
   detectOffTenantMention,
 } from "./tenant-identity-pin";
 import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
+import { composeRuntimeOutputDisciplineBlock } from "@/lib/agent/output-discipline/prompt-contract";
 import {
   createIntelligenceAskOpenAIText,
   INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
@@ -341,10 +342,11 @@ export async function* synthesizeStream(args: {
   const rolePrompt = isExplicitConciseAsk(args.query)
     ? CONCISE_SYSTEM_PROMPT
     : SYSTEM_PROMPT;
+  const outputDisciplineBlock = composeRuntimeOutputDisciplineBlock("Sentinel");
   const system =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}${confidenceHint}`
-      : `${rolePrompt}${confidenceHint}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`
+      : `${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
