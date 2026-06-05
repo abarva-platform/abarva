@@ -128,6 +128,7 @@ import { ResponsesStageView } from "./responses/ResponsesStageView";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
+import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 interface UniversalCanvasShellProps {
@@ -143,6 +144,7 @@ interface UniversalCanvasShellProps {
     | "rigor"
     | "owner"
     | "currentStageKey"
+    | "valueAtStakeUsd"
   >;
   /** Stage being viewed in the workspace; defaults to event.currentStageKey. */
   viewStage: SourceStageKey;
@@ -167,10 +169,19 @@ function renderStageDocumentContent({
   onSelectCode,
   documentTabContent,
   vendorResponseReadiness,
+  criteria,
+  evidence,
+  activityEntries,
 }: {
   viewStage: SourceStageKey;
-  event: Pick<SourcingEventSummary, "id" | "name" | "currentStageKey">;
+  event: Pick<
+    SourcingEventSummary,
+    "id" | "name" | "currentStageKey" | "owner" | "valueAtStakeUsd"
+  >;
   stageArtifacts: SourceEventArtifactState[];
+  criteria: SourceEventGateCriterion[];
+  evidence: SourceEventEvidence[];
+  activityEntries: ActivityEntry[];
   selectedDocCode?: string;
   onSelectCode: (code: string) => void;
   documentTabContent: ReactNode;
@@ -216,6 +227,19 @@ function renderStageDocumentContent({
 
   if (viewStage === "bafo" || viewStage === "orals_bafo") {
     return <BafoStageView event={event} documentWorkspace={documentTabContent} />;
+  }
+
+  if (viewStage === "executive_decision") {
+    return (
+      <ExecutiveDecisionStageView
+        event={event}
+        artifacts={stageArtifacts}
+        criteria={criteria}
+        evidence={evidence}
+        activityEntries={activityEntries}
+        documentWorkspace={documentTabContent}
+      />
+    );
   }
 
   return documentTabContent;
@@ -733,6 +757,9 @@ export function UniversalCanvasShell({
         onSelectCode: setSelectedDocCode,
         documentTabContent,
         vendorResponseReadiness,
+        criteria: stageCriteria,
+        evidence: stageEvidence,
+        activityEntries,
       }),
     },
     {
