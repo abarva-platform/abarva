@@ -70,9 +70,10 @@ export async function POST(request: NextRequest) {
   }
 
   const tenantKey = canonicalTenantKey(tenancy.clientKey);
+  const rawMode = formString(formData, "mode");
   const mode =
-    formString(formData, "mode") === "stage_and_process"
-      ? "stage_and_process"
+    rawMode === "stage_and_process" || rawMode === "stage_and_enqueue"
+      ? rawMode
       : "validate_only";
 
   try {

@@ -23,6 +23,7 @@ import {
 } from "./template-registry";
 import type { ContextDimension } from "./types";
 import type { PilotUploadAttestation } from "./upload-attestation";
+import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
 
 type CsvRow = Record<string, string>;
 
@@ -118,7 +119,7 @@ export interface CsvUploadLoadResult extends Omit<
 const MAX_ROWS = 2_000;
 const MAX_TEXT_COLUMNS = 12;
 
-const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
+const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   enterprise_profile: "enterprise_profile",
   financial_kpis: "it_financials",
   annual_quarterly_reports: "enterprise_profile",
@@ -159,6 +160,12 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
   ai_tooling_model_inventory: "it_landscape",
   incidents_ops_telemetry: "it_landscape",
 };
+
+export function segmentKeyForContextDimension(
+  dimension: ContextDimension,
+): SegmentKey {
+  return SEGMENT_BY_DIMENSION[dimension];
+}
 
 function normalizeHeader(value: string): string {
   return value

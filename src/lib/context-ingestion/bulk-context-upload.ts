@@ -1,13 +1,24 @@
 import crypto from "node:crypto";
 import path from "node:path";
 
-import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
+import {
+  describeObjectStorageLocation,
+  getObjectStorageAdapter,
+} from "@/lib/data-plane/objectStorage";
 import { getTemplateById } from "@/lib/context-ingestion/template-registry";
 import type {
   CsvSchemaMapping,
   CsvUploadLoadResult,
 } from "@/lib/context-ingestion/csv-upload-connector";
-import { loadCsvUploadToTenantContext } from "@/lib/context-ingestion/csv-upload-connector";
+import {
+  loadCsvUploadToTenantContext,
+  segmentKeyForContextDimension,
+} from "@/lib/context-ingestion/csv-upload-connector";
+import { enqueueAzureLandingZoneMessage } from "@/lib/ingestion/service-bus-producer";
+import type {
+  AzureLandingZoneMessage,
+  SegmentKey,
+} from "@/lib/ingestion/azure-landing-zone-types";
 import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
@@ -43,8 +54,16 @@ export interface BulkContextUploadInput {
   manifest: BulkContextUploadManifest;
   files: BulkContextUploadFileInput[];
   attestation: PilotUploadAttestation;
-  mode: "validate_only" | "stage_and_process";
+  mode: "validate_only" | "stage_and_enqueue" | "stage_and_process";
   uploadedAt?: string;
+  enqueueMessageFn?: (
+    message: AzureLandingZoneMessage,
+  ) => Promise<BulkContextUploadQueueResult>;
+}
+
+export interface BulkContextUploadQueueResult {
+  queueName: string;
+  messageId: string;
 }
 
 export interface BulkContextUploadFileResult {
@@ -57,6 +76,7 @@ export interface BulkContextUploadFileResult {
     sha256: string;
     staged: boolean;
   };
+  queue: BulkContextUploadQueueResult | null;
   loadResult: CsvUploadLoadResult | null;
 }
 
@@ -71,7 +91,7 @@ export interface BulkContextUploadResult {
   blobBucket: string;
   results: BulkContextUploadFileResult[];
   persistence: {
-    status: "validation_only" | "staged_and_processed";
+    status: "validation_only" | "staged_and_enqueued" | "staged_and_processed";
     detail: string;
   };
 }
@@ -217,6 +237,37 @@ function metadataValue(value: unknown): string {
     .slice(0, 256);
 }
 
+function landingMessage(args: {
+  tenantKey: string;
+  segmentKey: SegmentKey;
+  location: ReturnType<typeof describeObjectStorageLocation>;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  classification: string | null | undefined;
+  producedAt: string;
+  metadata: Record<string, string | number | boolean>;
+}): AzureLandingZoneMessage {
+  return {
+    schema: "abarva.ingestion.v1",
+    tenantClientKey: args.tenantKey,
+    segmentKey: args.segmentKey,
+    storage: {
+      accountName: args.location.accountName,
+      containerName: args.location.containerName,
+      blobPath: args.location.blobPath,
+      sizeBytes: args.sizeBytes,
+      contentType: args.contentType,
+      sha256: args.sha256,
+    },
+    declaredClassification:
+      (args.classification as AzureLandingZoneMessage["declaredClassification"]) ??
+      "confidential_business",
+    producedAt: args.producedAt,
+    metadata: args.metadata,
+  };
+}
+
 export async function runBulkContextUpload(
   input: BulkContextUploadInput,
 ): Promise<BulkContextUploadResult> {
@@ -242,9 +293,17 @@ export async function runBulkContextUpload(
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
   const loadSlug = safeLoadSlug(input.manifest.loadName);
   const results: BulkContextUploadFileResult[] = [];
+  const enqueueMessage = input.enqueueMessageFn ?? enqueueAzureLandingZoneMessage;
 
   for (const manifestFile of input.manifest.files) {
     const uploadFile = filesByName.get(fileKey(manifestFile.path))!;
+    const template = getTemplateById(manifestFile.templateId, {
+      tenantKey: input.tenantKey,
+    });
+    if (!template) {
+      throw new Error(`bulk_manifest_unknown_template:${manifestFile.templateId}`);
+    }
+    const segmentKey = segmentKeyForContextDimension(template.dimension);
     const contentType = mimeType(uploadFile);
     const hash = sha256(uploadFile.bytes);
     const dataProtection = evaluateSensitiveUpload({
@@ -265,7 +324,8 @@ export async function runBulkContextUpload(
     ].join("/");
 
     let loadResult: CsvUploadLoadResult | null = null;
-    if (input.mode === "stage_and_process") {
+    let queue: BulkContextUploadQueueResult | null = null;
+    if (input.mode === "stage_and_process" || input.mode === "stage_and_enqueue") {
       await getObjectStorageAdapter().upload(
         BULK_CONTEXT_BUCKET,
         blobPath,
@@ -274,14 +334,44 @@ export async function runBulkContextUpload(
           contentType,
           upsert: false,
           metadata: {
+            tenantClientKey: metadataValue(input.tenantKey),
             tenantKey: metadataValue(input.tenantKey),
+            segmentKey: metadataValue(segmentKey),
             loadName: metadataValue(input.manifest.loadName),
             templateId: metadataValue(manifestFile.templateId),
+            declaredClassification: metadataValue(
+              manifestFile.dataClassification ?? "confidential_business",
+            ),
             sha256: hash,
             uploadedBy: metadataValue(input.uploadedBy),
           },
         },
       );
+    }
+
+    if (input.mode === "stage_and_enqueue") {
+      const location = describeObjectStorageLocation(BULK_CONTEXT_BUCKET, blobPath);
+      queue = await enqueueMessage(
+        landingMessage({
+          tenantKey: input.tenantKey,
+          segmentKey,
+          location,
+          contentType,
+          sizeBytes: uploadFile.bytes.byteLength,
+          sha256: hash,
+          classification: manifestFile.dataClassification,
+          producedAt: uploadedAt,
+          metadata: {
+            source: "admin_bulk_context_upload",
+            loadName: metadataValue(input.manifest.loadName),
+            templateId: metadataValue(manifestFile.templateId),
+            originalFileName: metadataValue(uploadFile.name),
+          },
+        }),
+      );
+    }
+
+    if (input.mode === "stage_and_process") {
       loadResult = await loadCsvUploadToTenantContext({
         clientId: input.clientId,
         tenantKey: input.tenantKey,
@@ -311,8 +401,9 @@ export async function runBulkContextUpload(
         bucket: BULK_CONTEXT_BUCKET,
         path: blobPath,
         sha256: hash,
-        staged: input.mode === "stage_and_process",
+        staged: input.mode === "stage_and_process" || input.mode === "stage_and_enqueue",
       },
+      queue,
       loadResult,
     });
   }
@@ -343,6 +434,12 @@ export async function runBulkContextUpload(
             detail:
               "Manifest, files, template mappings, and sensitive-data gate passed. No Blob or context rows were written.",
           }
+        : input.mode === "stage_and_enqueue"
+          ? {
+              status: "staged_and_enqueued",
+              detail:
+                "Files were staged to Azure Blob and queued for private Azure worker processing.",
+            }
         : {
             status: "staged_and_processed",
             detail:
