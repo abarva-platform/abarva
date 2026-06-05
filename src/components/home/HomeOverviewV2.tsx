@@ -89,7 +89,7 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     brandSoft: 'rgba(15,118,110,0.08)',
     brandLine: 'rgba(15,118,110,0.20)',
     industryLabel: 'Industry: Healthcare IDN',
-    tagline: 'Healthcare IDN · 8 hospitals · 142 clinics',
+    tagline: 'Healthcare IDN · 30 hospitals · 280 ambulatory sites',
   },
   apexretail: {
     initials: 'AR',

@@ -61,6 +61,26 @@ for (const template of catalog.templates) {
   }
 }
 
+const enterpriseProfilePath = path.join(templateRoot, 'enterprise-profile.yaml');
+const enterpriseProfileText = fs.readFileSync(enterpriseProfilePath, 'utf8');
+for (const phrase of [
+  'Sacramento, California',
+  'metric: hospitals',
+  'value: 30',
+  'metric: ambulatory_sites',
+  'value: 280',
+  'metric: employees',
+  'value: 58000',
+  'metric: covered_lives',
+  'value: 1400000',
+  'Azure Databricks lakehouse',
+]) {
+  if (!enterpriseProfileText.includes(phrase)) fail(`enterprise-profile.yaml missing canonical profile phrase: ${phrase}`);
+}
+for (const stalePhrase of ['value: 23', 'value: 187000', 'Charlotte, NC']) {
+  if (enterpriseProfileText.includes(stalePhrase)) fail(`enterprise-profile.yaml still contains stale profile phrase: ${stalePhrase}`);
+}
+
 const scenarioFiles = fs.readdirSync(scenarioRoot).filter((name) => name.endsWith('.md'));
 if (scenarioFiles.length < 8) fail(`Expected at least 8 upload scenarios, found ${scenarioFiles.length}`);
 for (const file of scenarioFiles) {

@@ -9,6 +9,10 @@ source files, and Sentinel verification targets.
 
 Tenant key: `meridian`
 Display name: Meridian Health System
+Canonical profile: Sacramento-based integrated delivery network with 30 hospitals,
+280 ambulatory sites, 58,000 employees, and 1.4M covered lives. This profile is
+the loader-facing source of truth for the PHS/Meridian pilot narrative; older
+23-hospital or non-California profiles are stale and should fail verification.
 
 ## Context Layer Showcase
 
