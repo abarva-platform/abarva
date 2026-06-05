@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { TenantIdentityStrip } from '@/components/tenant/TenantIdentityStrip';
+import { getActiveClientRow } from '@/lib/active-client';
 import { TOWER_DIMENSIONS } from '@/lib/tower/onboarding-catalog';
 
 export const dynamic = 'force-dynamic';
@@ -17,10 +19,13 @@ const SERIF = 'var(--font-fraunces), "Fraunces", Georgia, serif';
 const MONO = 'var(--font-body-mono), ui-monospace, SFMono-Regular, Menlo, monospace';
 const BODY = 'var(--font-body-sans), "Inter", -apple-system, system-ui, sans-serif';
 
-export default function TowerOnboardIndex() {
+export default async function TowerOnboardIndex() {
+  const activeClient = await getActiveClientRow().catch(() => null);
+
   return (
     <div style={{ background: PAGE_BG, minHeight: '100%' }}>
       <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', fontFamily: BODY }}>
+        <TenantIdentityStrip clientName={activeClient?.name} surface="Tower onboarding" />
         <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.16em', color: INK_SOFT, textTransform: 'uppercase', fontWeight: 700, marginBottom: 10 }}>
           Control Tower · Data setup
         </div>

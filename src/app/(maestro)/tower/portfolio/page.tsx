@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { TenantIdentityStrip } from '@/components/tenant/TenantIdentityStrip';
+import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import {
   getPortfolioValueRollup,
@@ -87,31 +89,38 @@ function emptyPortfolio(ctx: Pick<TenancyCtx, 'clientId'>): TowerPortfolioValueR
 async function loadPortfolioValueRollup(): Promise<{
   portfolio: TowerPortfolioValueRollup;
   isDegraded: boolean;
+  clientName: string | null;
 }> {
-  const ctx = await requireTenancy().catch(() => null);
+  const [ctx, activeClient] = await Promise.all([
+    requireTenancy().catch(() => null),
+    getActiveClientRow().catch(() => null),
+  ]);
   if (!ctx) {
     return {
       portfolio: emptyPortfolio({ clientId: 'unavailable' }),
       isDegraded: true,
+      clientName: activeClient?.name ?? null,
     };
   }
 
   return getPortfolioValueRollup(ctx)
-    .then((portfolio) => ({ portfolio, isDegraded: false }))
+    .then((portfolio) => ({ portfolio, isDegraded: false, clientName: activeClient?.name ?? null }))
     .catch(() => ({
       portfolio: emptyPortfolio(ctx),
       isDegraded: true,
+      clientName: activeClient?.name ?? null,
     }));
 }
 
 export default async function TowerPortfolioValuePage() {
-  const { portfolio, isDegraded } = await loadPortfolioValueRollup();
+  const { portfolio, isDegraded, clientName } = await loadPortfolioValueRollup();
 
   return (
     <main style={{ minHeight: '100vh', background: '#F8F7F4', color: '#111827', padding: '32px 28px 54px' }}>
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'flex-end', marginBottom: 22 }}>
           <div>
+            <TenantIdentityStrip clientName={clientName} surface="Tower portfolio value" />
             <Link href="/tower" style={{ color: '#4b5563', fontSize: 13, fontWeight: 720, textDecoration: 'none' }}>
               Control Tower
             </Link>
