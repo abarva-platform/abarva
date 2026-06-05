@@ -19,6 +19,7 @@ import type {
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
+import type { ActivityEntry } from "@/components/source/canvas/workspace-tabs/LogTab";
 
 // Shell uses next/navigation + Clerk hooks; mock so SSR doesn't blow up.
 jest.mock("next/navigation", () => ({
@@ -265,11 +266,13 @@ function render(
     templateByCode?: Record<string, string | null>;
     viewStage?: SourceEventArtifactState["stage"];
     vendorResponseReadiness?: SourceVendorResponseCompleteness;
+    activityEntries?: ActivityEntry[];
+    event?: Partial<SourcingEventSummary>;
   } = {},
 ): string {
   return renderToStaticMarkup(
     createElement(UniversalCanvasShell, {
-      event: makeEvent(),
+      event: makeEvent(options.event),
       viewStage: options.viewStage ?? "scope",
       artifactStates: options.artifactStates ?? [makeArtifactState()],
       gateCriterionStates: options.gateCriterionStates ?? [makeCriterion()],
@@ -278,7 +281,7 @@ function render(
       templateByCode: options.templateByCode ?? {
         d05_scope_memo: "# Scope Memo\n\n§1 In scope ...",
       },
-      activityEntries: [],
+      activityEntries: options.activityEntries ?? [],
       tenantName: "Apex Retail Group",
       vendorResponseReadiness: options.vendorResponseReadiness,
     }),
@@ -343,6 +346,160 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("Sentinel Source");
     expect(html).toContain("Click to expand · 3 stage-specific suggestions");
     expect(html).toContain("source-canvas-next-move-card");
+  });
+
+  it("renders the Executive Decision fallback until the decision brief is authored", () => {
+    const html = render({
+      viewStage: "executive_decision",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d24_decision_brief",
+          stage: "executive_decision",
+          family: "decision_brief",
+          body: null,
+        }),
+      ],
+      gateCriterionStates: [
+        makeCriterion({
+          criterionId: "GATE-DEC-01",
+          fromStage: "executive_decision",
+          toStage: "selection",
+        }),
+      ],
+      evidenceStates: [
+        makeEvidence({
+          requirementId: "EVID-SRC-DEC-FINALIST-PRICING",
+          stage: "executive_decision",
+        }),
+      ],
+    });
+
+    expect(html).toContain("source-executive-decision-stage-view");
+    expect(html).toContain("source-executive-decision-next-move");
+    expect(html).toContain("Draft the decision brief");
+    expect(html).toContain("stays hidden until the decision brief has a");
+    expect(html).not.toContain("source-executive-summary-header");
+  });
+
+  it("renders the authored Executive Decision page-1 with dark 1+3 summary, approval hierarchy, dissent, and d24 exports", () => {
+    const html = render({
+      viewStage: "executive_decision",
+      event: {
+        owner: "Carlos Rivera",
+        valueAtStakeUsd: 35_000_000,
+        currentStageKey: "executive_decision",
+      },
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d24_decision_brief",
+          stage: "executive_decision",
+          family: "decision_brief",
+          status: "approved",
+          body: "# Executive Decision Brief\n\nRecommend the preferred vendor.",
+        }),
+        makeArtifactState({
+          id: "decision-risk",
+          artifactCode: "d25_risk_attestation",
+          stage: "executive_decision",
+          family: "decision_brief",
+          status: "needs_review",
+        }),
+      ],
+      gateCriterionStates: [
+        makeCriterion({
+          criterionId: "GATE-DEC-01",
+          fromStage: "executive_decision",
+          toStage: "selection",
+          state: "pending",
+        }),
+        makeCriterion({
+          id: "decision-gate-2",
+          criterionId: "GATE-DEC-02",
+          fromStage: "executive_decision",
+          toStage: "selection",
+          state: "met",
+        }),
+      ],
+      evidenceStates: [
+        makeEvidence({
+          requirementId: "EVID-SRC-DEC-FINALIST-PRICING",
+          stage: "executive_decision",
+          currentState: "Usable Evidence",
+        }),
+        makeEvidence({
+          id: "decision-e2",
+          requirementId: "EVID-SRC-DEC-RISK-REGISTER",
+          stage: "executive_decision",
+          currentState: "Parsed",
+        }),
+      ],
+      activityEntries: [
+        {
+          id: "act-dissent",
+          at: "2026-06-05T06:00:00Z",
+          actor: "S. Okafor",
+          body: "Dissent: transition risk is under-weighted for the preferred vendor.",
+        },
+      ],
+      templateByCode: {
+        d24_decision_brief:
+          "# Executive Decision Brief\n\nRecommend the preferred vendor.",
+        d25_risk_attestation: "# Risk Attestation",
+      },
+    });
+
+    expect(html).toContain("source-executive-decision-stage-view");
+    expect(html).toContain("source-executive-summary-header");
+    expect(html).toContain("background:#1f2937");
+    expect(html).toContain("Recommend");
+    expect(html).toContain("Savings");
+    expect(html).toContain("Trade-off");
+    expect(html).toContain("Dissent");
+    expect(html).toContain("Open dissent panel");
+    expect(html).toContain("#dissent");
+    expect(html).toContain("Approve recommendation");
+    expect(html).toContain("Send to co-approver");
+    expect(html).toContain("Other decisions");
+    expect(html).toContain("source-executive-decision-missing-data");
+    expect(html).toContain("source-executive-decision-dissent");
+    expect(html).toContain("source-executive-decision-approval-record");
+    expect(html).toContain("source-executive-decision-document-workspace");
+    expect(html).toContain(
+      "source-canvas-document-body-download-docx-d24_decision_brief",
+    );
+    expect(html).toContain(
+      "source-canvas-document-body-download-pdf-d24_decision_brief",
+    );
+    expect(html).toContain(
+      "source-canvas-document-body-view-html-d24_decision_brief",
+    );
+  });
+
+  it("uses risk count instead of empty dissent copy when no dissent is logged", () => {
+    const html = render({
+      viewStage: "executive_decision",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d24_decision_brief",
+          stage: "executive_decision",
+          family: "decision_brief",
+          body: "# Executive Decision Brief\n\nRecommendation authored.",
+        }),
+      ],
+      gateCriterionStates: [
+        makeCriterion({
+          criterionId: "GATE-DEC-01",
+          fromStage: "executive_decision",
+          toStage: "selection",
+          state: "pending",
+        }),
+      ],
+    });
+
+    expect(html).toContain("source-executive-summary-header");
+    expect(html).toContain("Risks");
+    expect(html).toContain("open");
+    expect(html).toContain("No dissent recorded");
   });
 
   it("renders the AgentDock side-rail with stage-appropriate agent and 3 suggestions", () => {
