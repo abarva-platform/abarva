@@ -60,6 +60,11 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - 18 Source markdown files in `source-artifacts/lakeshore/LSH-AMS-MODERNIZATION-2026/`.
   - 6 Move markdown files in `program-attachments/lakeshore-holdings/1196dac0-715c-45ce-8eeb-5e70792d9aa4/`.
   - 6 Move markdown files in `program-attachments/lakeshore-holdings/6a4c7fc4-0a2d-4479-b807-7350fb727527/`.
+- Live product route verification with a fresh Clerk sign-in ticket for `cfo@lakeshore-holdings.example.com` and `abarva_active_client=lakeshore` confirmed:
+  - `/strategic-moves` returns 200 with Lakeshore, Kyriba, and Data Spine markers.
+  - `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` returns 200 for the Kyriba Move detail.
+  - `/moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` returns 200 and aliases to the modern Kyriba Move detail.
+  - `/strategic-moves/6a4c7fc4-0a2d-4479-b807-7350fb727527` returns 200 for the Data Spine Move detail.
 
 ## Rollout Plan
 
@@ -90,4 +95,5 @@ Live data rollback, if required: delete the six Kyriba Move `deliverables_v2` ro
 - `LSH-AMS-MODERNIZATION-2026` is document-real only through Evaluation; Pricing, BAFO, Executive Decision, Selection, Transition, and Value remain scaffold-only.
 - Four of six Lakeshore Moves still have no deliverables.
 - Kyriba Source Selection, Transition, and Value stages remain scaffold-only.
+- Kyriba should now be framed as `Move 0: Platform Rollout De-Risk`; the next artifact pass should make bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption, and intercompany reconciliation explicit gate artifacts before overclaiming AI-on-Kyriba value.
 - Lakeshore corpus is about 8,987 patterns in Azure AI Search, short of the 10,000 target.

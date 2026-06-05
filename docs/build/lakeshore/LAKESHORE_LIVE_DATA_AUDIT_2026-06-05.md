@@ -286,6 +286,32 @@ Azure proof:
 | `source-artifacts` | `lakeshore/LSH-KYRIBA-TREASURY-2026/` | 26 |
 | `source-artifacts` | `lakeshore/LSH-AMS-MODERNIZATION-2026/` | 18 |
 
+Live product route proof captured with a fresh Clerk ticket for `cfo@lakeshore-holdings.example.com` and `abarva_active_client=lakeshore`:
+
+| Route | Status | Proof |
+|---|---:|---|
+| `/strategic-moves` | 200 | Lakeshore shell, Kyriba, and Data Spine markers present. |
+| `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` | 200 | Modern Kyriba Move detail renders. |
+| `/moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4` | 200 | Alias redirects to the modern Kyriba Move detail. |
+| `/strategic-moves/6a4c7fc4-0a2d-4479-b807-7350fb727527` | 200 | Modern Data Spine Move detail renders. |
+
+Route caveat: `/engagements/:id` is the legacy engagement console and is not the canonical Moves demo path. The demo should use `/strategic-moves/:id` or the `/moves/:id` alias.
+
+## Kyriba Move 0 Design Implication
+
+Kyriba should be presented as `Move 0: Platform Rollout De-Risk`, not merely as an AI-on-treasury use case. The six rollout gates below should become first-class Move/Source artifacts before claiming downstream AI value:
+
+| Rollout gate | Artifact expected for demo fidelity |
+|---|---|
+| Bank connectivity | Bank inventory and H2H/SWIFT readiness matrix by bank/entity. |
+| ERP feed quality | GL/AP/AR feed audit and reconciliation defect register. |
+| Entity hierarchy | Canonical HoldCo/entity registry with intercompany and FX treatment notes. |
+| Historical cash data | 24-month position reconstruction plan and normalized entity-currency-day sample. |
+| Adoption / Excel elimination | Role-based dashboard activation plan and 30-day adoption KPI tracker. |
+| Intercompany reconciliation | Promissory-note discipline, AFR/arms-length control, and monthly true-up workflow. |
+
+This framing aligns the Source event with real Kyriba implementation failure modes: AbarVa de-risks the rollout first, then activates forecasting, anomaly, covenant, and intercompany AI once the substrate is clean enough to trust.
+
 ## Recommended Demo Spine
 
 Use one complete flagship story rather than many shallow cards:
