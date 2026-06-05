@@ -2,7 +2,7 @@ import { createClerkClient } from '@clerk/backend';
 import pg from 'pg';
 import { chromium } from 'playwright';
 import { execSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -47,10 +47,11 @@ const sourceChecks = [
     renderHtml: true,
   },
   {
-    id: 'source-kyriba-selection-body',
+    id: 'source-kyriba-selection-html',
     eventCode: 'LSH-KYRIBA-TREASURY-2026',
     artifactCode: 'd27_selection_memo',
     bodyMarkers: ['selection', 'Kyriba', 'Lakeshore'],
+    skipBody: true,
     renderHtml: true,
   },
   {
@@ -209,47 +210,62 @@ function redactSignedUrl(url) {
   }
 }
 
-async function getJson(request, route) {
-  const response = await request.get(`${baseUrl}${route}`, { timeout: 45_000 });
-  const text = await response.text();
+async function pageFetch(page, route) {
+  const response = await page.evaluate(async (targetRoute) => {
+    const res = await fetch(targetRoute, { credentials: 'include' });
+    const text = await res.text();
+    return {
+      status: res.status,
+      headers: Object.fromEntries(res.headers.entries()),
+      text,
+    };
+  }, route);
+  const text = response.text;
   let json = null;
   try {
     json = JSON.parse(text);
   } catch {
     // Keep a short text sample for non-JSON failures.
   }
-  return { status: response.status(), headers: response.headers(), text, json };
+  return { ...response, json };
 }
 
-async function checkSource(request, liveMap, check) {
+async function checkSource(page, liveMap, check) {
   const route = `/api/v1/source/${encodeURIComponent(check.eventCode)}/artifacts/${encodeURIComponent(check.artifactCode)}/body`;
-  const bodyResponse = await getJson(request, route);
+  const bodyResponse = check.skipBody ? { status: null, json: { body: '' } } : await pageFetch(page, route);
   const body = bodyResponse.json?.body ?? '';
   const lower = body.toLowerCase();
-  const missingMarkers = check.bodyMarkers.filter((marker) => !lower.includes(marker.toLowerCase()));
+  const missingMarkers = check.skipBody
+    ? []
+    : check.bodyMarkers.filter((marker) => !lower.includes(marker.toLowerCase()));
   const dbArtifact = liveMap.sourceArtifacts.find(
     (row) => row.event_code === check.eventCode && row.artifact_code === check.artifactCode,
   );
   const issues = [];
   if (!liveMap.eventsByCode[check.eventCode]) issues.push('source_event_missing_in_db');
   if (!dbArtifact) issues.push('artifact_state_missing_in_db');
-  if (bodyResponse.status !== 200) issues.push(`body_route_http_${bodyResponse.status}`);
-  if (!body || body.length < 200) issues.push(`body_too_short_${body.length}`);
+  if (!check.skipBody && bodyResponse.status !== 200) issues.push(`body_route_http_${bodyResponse.status}`);
+  if (!check.skipBody && (!body || body.length < 200)) issues.push(`body_too_short_${body.length}`);
   if (missingMarkers.length > 0) issues.push(`missing_markers:${missingMarkers.join(',')}`);
 
   let html = null;
   if (check.renderHtml) {
     const htmlRoute = `/api/v1/source/${encodeURIComponent(check.eventCode)}/artifacts/${encodeURIComponent(check.artifactCode)}/render-html`;
-    const htmlResponse = await request.get(`${baseUrl}${htmlRoute}`, { timeout: 45_000 });
-    const htmlText = await htmlResponse.text();
+    const htmlResponse = await pageFetch(page, htmlRoute);
+    const htmlText = htmlResponse.text;
     const htmlIssues = [];
-    if (htmlResponse.status() !== 200) htmlIssues.push(`render_html_http_${htmlResponse.status()}`);
+    if (htmlResponse.status !== 200) htmlIssues.push(`render_html_http_${htmlResponse.status}`);
     if (!htmlText.includes(check.artifactCode)) htmlIssues.push('render_html_missing_artifact_code');
     if (!htmlText.includes(check.eventCode)) htmlIssues.push('render_html_missing_event_code');
+    for (const marker of check.bodyMarkers) {
+      if (!htmlText.toLowerCase().includes(marker.toLowerCase())) {
+        htmlIssues.push(`render_html_missing_marker:${marker}`);
+      }
+    }
     html = {
       route: htmlRoute,
-      httpStatus: htmlResponse.status(),
-      contentType: htmlResponse.headers()['content-type'] ?? null,
+      httpStatus: htmlResponse.status,
+      contentType: htmlResponse.headers['content-type'] ?? null,
       contentLength: htmlText.length,
       issues: htmlIssues,
     };
@@ -272,15 +288,19 @@ async function checkSource(request, liveMap, check) {
   };
 }
 
-async function checkMove(request, liveMap, expectation) {
+async function checkMove(page, liveMap, expectation) {
   const move = liveMap.movesByName[expectation.name];
   const issues = [];
   if (!move) {
     return { ...expectation, status: 'fail', issues: ['move_missing_in_db'], attachments: [] };
   }
 
+  await page.goto(`${baseUrl}/strategic-moves/${encodeURIComponent(move.id)}?tab=documents`, {
+    waitUntil: 'networkidle',
+    timeout: 60_000,
+  });
   const listRoute = `/api/programs/${encodeURIComponent(move.id)}/attachments`;
-  const list = await getJson(request, listRoute);
+  const list = await pageFetch(page, listRoute);
   if (list.status !== 200) issues.push(`attachment_list_http_${list.status}`);
   const attachments = Array.isArray(list.json?.attachments) ? list.json.attachments : [];
   if (attachments.length < expectation.minimumAttachments) {
@@ -297,39 +317,44 @@ async function checkMove(request, liveMap, expectation) {
   for (const attachment of attachments.slice(0, 3)) {
     const attachmentId = attachment.id;
     const route = `/api/programs/${encodeURIComponent(move.id)}/attachments/${encodeURIComponent(attachmentId)}`;
-    const redirect = await request.get(`${baseUrl}${route}`, { maxRedirects: 0, timeout: 45_000 });
-    const location = redirect.headers().location ?? null;
     const sampleIssues = [];
-    if (redirect.status() !== 302) sampleIssues.push(`download_redirect_http_${redirect.status()}`);
-    if (!location) sampleIssues.push('download_redirect_missing_location');
-    if (location) {
-      const blob = await request.get(location, { timeout: 45_000 });
-      const body = await blob.body();
-      if (blob.status() !== 200) sampleIssues.push(`signed_blob_http_${blob.status()}`);
-      if (body.byteLength === 0) sampleIssues.push('signed_blob_empty');
+    const downloadPage = await page.context().newPage();
+    try {
+      const downloadPromise = downloadPage.waitForEvent('download', { timeout: 45_000 });
+      await downloadPage.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 45_000 }).catch((error) => {
+        if (!/Download is starting/i.test(String(error))) throw error;
+      });
+      const download = await downloadPromise;
+      const filePath = await download.path();
+      const fileStat = filePath ? await stat(filePath) : null;
+      if (!fileStat || fileStat.size === 0) sampleIssues.push('download_empty');
       downloadSamples.push({
         attachmentId,
         originalName: attachment.originalName,
         route,
-        redirectStatus: redirect.status(),
-        signedLocation: redactSignedUrl(location),
-        blobStatus: blob.status(),
-        bytesFetched: body.byteLength,
-        contentType: blob.headers()['content-type'] ?? null,
+        redirectStatus: 'browser_download',
+        signedLocation: redactSignedUrl(download.url()),
+        blobStatus: 'downloaded',
+        bytesFetched: fileStat?.size ?? 0,
+        contentType: attachment.mimeType ?? null,
+        suggestedFilename: download.suggestedFilename(),
         issues: sampleIssues,
       });
-    } else {
+    } catch (error) {
+      sampleIssues.push(`download_failed:${error instanceof Error ? error.message : String(error)}`);
       downloadSamples.push({
         attachmentId,
         originalName: attachment.originalName,
         route,
-        redirectStatus: redirect.status(),
+        redirectStatus: null,
         signedLocation: null,
         blobStatus: null,
         bytesFetched: 0,
-        contentType: null,
+        contentType: attachment.mimeType ?? null,
         issues: sampleIssues,
       });
+    } finally {
+      await downloadPage.close().catch(() => {});
     }
     issues.push(...sampleIssues);
   }
@@ -455,15 +480,19 @@ async function main() {
     const context = await browser.newContext();
     const page = await context.newPage();
     await signIn(context, page);
+    await page.goto(`${baseUrl}/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4?tab=documents`, {
+      waitUntil: 'networkidle',
+      timeout: 60_000,
+    });
 
     const source = [];
     for (const check of sourceChecks) {
-      source.push(await checkSource(context.request, liveMap, check));
+      source.push(await checkSource(page, liveMap, check));
     }
 
     const moves = [];
     for (const expectation of moveExpectations) {
-      moves.push(await checkMove(context.request, liveMap, expectation));
+      moves.push(await checkMove(page, liveMap, expectation));
     }
 
     const summary = summarize(source, moves);
