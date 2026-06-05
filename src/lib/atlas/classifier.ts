@@ -236,6 +236,23 @@ const INTENT_RULES: IntentRule[] = [
     terms: ['roi', 'value attainment', 'realized value', 'worth it'],
   },
 
+  // ---- Federated Tower governance
+  {
+    intent: 'federated_visibility_boundary',
+    routeType: 'scripted',
+    terms: [
+      'l0 sponsor',
+      'sibling holdcos',
+      'sibling holdco',
+      'explicit grant',
+      'visibility grant',
+      'what can i see across',
+      'what can we see across',
+      'federated visibility',
+    ],
+    requireAll: ['tower'],
+  },
+
   // ---- Peer / industry (Q7-Q10)
   {
     intent: 'industry_leaders',

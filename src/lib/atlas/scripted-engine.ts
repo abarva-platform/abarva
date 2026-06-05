@@ -271,6 +271,36 @@ function buildStrategyRefusal(): string {
   return "That crosses from portfolio state into strategy. I can show you the concentration facts, evidence chains, program load, and peer context, but the actual choice belongs in Sentinel or a Program charter.";
 }
 
+function buildFederatedVisibilityBoundary(
+  portfolio: AtlasPortfolioSummary,
+  tower: AtlasTowerCurrentState | undefined,
+): string {
+  const initiativeCount = tower?.initiatives?.length ?? portfolio.activeUseCaseCount;
+  const vendorCount = tower?.vendors?.length ?? null;
+  const pressureCount = tower?.pressuresView?.cards?.length ?? null;
+  const loadedEvidence = [
+    `${initiativeCount} Tower initiative${initiativeCount === 1 ? '' : 's'}`,
+    vendorCount != null ? `${vendorCount} vendor record${vendorCount === 1 ? '' : 's'}` : null,
+    pressureCount != null ? `${pressureCount} pressure card${pressureCount === 1 ? '' : 's'}` : null,
+  ].filter(Boolean).join(', ');
+
+  return [
+    'My read:',
+    `${portfolio.clientName}'s L0 Tower view should stay consolidated: the sponsor sees cross-HoldCo posture across Morgan Street and sibling HoldCos, but does not see raw HoldCo-private evidence unless the owning HoldCo grants access.`,
+    '',
+    'Why:',
+    `- The L0 view is for portfolio steering: consolidated initiative health, value posture, renewal clocks, pressure themes, and decision history. Current loaded Tower coverage includes ${loadedEvidence || 'the active Tower portfolio set'}.`,
+    '- Sibling HoldCos should not see each other\'s raw contracts, stakeholder notes, scenario drafts, workforce-level data, or private operating telemetry by default.',
+    '- The safe pattern is roll up the signal, keep the evidence owner visible, and require a named grant before exposing raw support material.',
+    '',
+    'What I would do next:',
+    'Approve an L0 visibility matrix with three lanes: consolidated by default, HoldCo-private by default, and grant-on-request with owner, purpose, and expiry.',
+    '',
+    'Evidence gap:',
+    'Tower has the operating rollup, but the formal L0/L1 visibility grant matrix is not yet loaded as a ratified governance artifact.',
+  ].join('\n');
+}
+
 // ---- Gold-standard response shape helpers (audit §4) -----------------------
 // Every CXO response is built from: Lead (1 sentence verdict, names the
 // tenant) + Evidence (2-4 short citations) + Honesty line (gap name when
@@ -751,6 +781,20 @@ export async function runScriptedAtlasIntent(
       suggestions: [
         { label: 'Lagging programs', value: 'Show me lagging programs by realized value', kind: 'message' },
         { label: 'Portfolio confidence', value: 'What is the portfolio confidence right now?', kind: 'message' },
+      ],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates'],
+      toolResults,
+    };
+  }
+
+  if (intent === 'federated_visibility_boundary') {
+    const portfolio = await query_portfolio_aggregates(ctx);
+    toolResults.portfolio = portfolio;
+    return {
+      response: buildFederatedVisibilityBoundary(portfolio, towerState),
+      suggestions: [
+        { label: 'Value posture', value: 'Separate projected, tracked, and verified value for Lakeshore', kind: 'message' },
+        { label: 'Governance gaps', value: 'Governance coverage gaps?', kind: 'message' },
       ],
       toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates'],
       toolResults,

@@ -11,6 +11,7 @@ const activeClient = process.env.LAKESHORE_DEMO_QA_CLIENT ?? 'lakeshore';
 const outputRoot = process.env.LAKESHORE_DEMO_QA_OUT ?? 'audit-artifacts/lakeshore-app-demo-readiness';
 const runId = `lakeshore-app-demo-readiness-${new Date().toISOString().replace(/[:.]/g, '-')}-${gitSha()}`;
 const outputDir = path.join(outputRoot, runId);
+const screenshotDir = path.join(outputDir, 'screenshots');
 
 const kyribaMoveId = '1196dac0-715c-45ce-8eeb-5e70792d9aa4';
 const dataSpineMoveId = '6a4c7fc4-0a2d-4479-b807-7350fb727527';
@@ -247,12 +248,20 @@ function gitSha() {
 }
 
 function deploymentIdFromText(text) {
-  const match = text.match(/\\?dpl=(dpl_[A-Za-z0-9]+)/);
+  const match = text.match(/[?&]dpl=(dpl_[A-Za-z0-9]+)/);
   return match?.[1] ?? null;
 }
 
 function summarizeText(text) {
-  return [...new Set(text.split('\\n').map((line) => line.trim()).filter(Boolean))].slice(0, 36);
+  return [...new Set(text.split('\n').map((line) => line.trim()).filter(Boolean))].slice(0, 36);
+}
+
+function slugify(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
 }
 
 async function signIn(context, page) {
@@ -289,13 +298,24 @@ async function signIn(context, page) {
   ]);
 }
 
-async function runCheck(page, check) {
+async function captureScreenshot(page, check, index) {
+  const filename = `${String(index + 1).padStart(2, '0')}-${slugify(check.area)}-${slugify(check.id)}.png`;
+  const absolutePath = path.join(screenshotDir, filename);
+  await page.screenshot({ path: absolutePath, fullPage: true });
+  return {
+    file: filename,
+    path: `screenshots/${filename}`,
+  };
+}
+
+async function runCheck(page, check, index) {
   const startedAt = Date.now();
   const response = await page.goto(`${baseUrl}${check.route}`, {
     waitUntil: 'networkidle',
     timeout: 60_000,
   });
   const text = await page.locator('body').innerText({ timeout: 20_000 });
+  const screenshot = await captureScreenshot(page, check, index);
   const missing = check.required.filter((marker) => !text.includes(marker));
   const forbiddenPresent = check.forbidden.filter((marker) => text.includes(marker));
   const status = response?.status() ?? null;
@@ -309,6 +329,7 @@ async function runCheck(page, check) {
     result: passed ? 'pass' : check.severity === 'blocker' ? 'fail' : 'watch',
     missing,
     forbiddenPresent,
+    screenshot,
     durationMs: Date.now() - startedAt,
     deploymentId: deploymentIdFromText(await page.content()),
     textSample: summarizeText(text),
@@ -376,11 +397,12 @@ function renderReport(summary, results) {
         <td>${escapeHtml(result.id)}</td>
         <td><code>${escapeHtml(result.route)}</code></td>
         <td>${escapeHtml(result.httpStatus ?? 'n/a')}</td>
+        <td>${result.screenshot ? `<a href="${escapeHtml(result.screenshot.path)}">${escapeHtml(result.screenshot.file)}</a>` : '-'}</td>
         <td>${escapeHtml(result.missing.join('; ') || '-')}</td>
         <td>${escapeHtml(result.forbiddenPresent.join('; ') || '-')}</td>
       </tr>`;
     })
-    .join('\\n');
+    .join('\n');
 
   const samples = results
     .map(
@@ -389,7 +411,17 @@ function renderReport(summary, results) {
         <ol>${result.textSample.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ol>
       </details>`,
     )
-    .join('\\n');
+    .join('\n');
+
+  const screenshots = results
+    .filter((result) => result.screenshot)
+    .map(
+      (result) => `<figure>
+        <a href="${escapeHtml(result.screenshot.path)}"><img src="${escapeHtml(result.screenshot.path)}" alt="${escapeHtml(result.id)} screenshot" loading="lazy" /></a>
+        <figcaption>${escapeHtml(result.area)} · ${escapeHtml(result.id)} · <code>${escapeHtml(result.route)}</code></figcaption>
+      </figure>`,
+    )
+    .join('\n');
 
   return `<!doctype html>
 <html lang="en">
@@ -411,6 +443,10 @@ function renderReport(summary, results) {
     tr.pass td:first-child { color: #146c43; font-weight: 800; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
     details { margin: 10px 0; background: #fff; border: 1px solid #d8ded8; border-radius: 8px; padding: 10px 12px; }
+    .screenshots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0; }
+    figure { margin: 0; background: #fff; border: 1px solid #d8ded8; border-radius: 8px; padding: 10px; }
+    img { width: 100%; max-height: 360px; object-fit: contain; background: #f3f3f0; border: 1px solid #e3e6e1; }
+    figcaption { margin-top: 8px; color: #52615b; font-size: 12px; }
     li { margin: 3px 0; }
   </style>
 </head>
@@ -426,9 +462,11 @@ function renderReport(summary, results) {
   </div>
   <h2>Checks</h2>
   <table>
-    <thead><tr><th>Result</th><th>Area</th><th>ID</th><th>Route</th><th>HTTP</th><th>Missing</th><th>Forbidden Present</th></tr></thead>
+    <thead><tr><th>Result</th><th>Area</th><th>ID</th><th>Route</th><th>HTTP</th><th>Screenshot</th><th>Missing</th><th>Forbidden Present</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
+  <h2>Demo Walkthrough Screenshots</h2>
+  <div class="screenshots">${screenshots}</div>
   <h2>Text Evidence Samples</h2>
   ${samples}
 </body>
@@ -437,6 +475,7 @@ function renderReport(summary, results) {
 
 async function main() {
   await mkdir(outputDir, { recursive: true });
+  await mkdir(screenshotDir, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const results = [];
 
@@ -445,9 +484,9 @@ async function main() {
     const page = await context.newPage();
     await signIn(context, page);
 
-    for (const check of checks) {
+    for (const [index, check] of checks.entries()) {
       try {
-        results.push(await runCheck(page, check));
+        results.push(await runCheck(page, check, index));
       } catch (error) {
         results.push({
           ...check,
@@ -457,6 +496,7 @@ async function main() {
           result: check.severity === 'blocker' ? 'fail' : 'watch',
           missing: check.required,
           forbiddenPresent: [],
+          screenshot: null,
           error: error instanceof Error ? error.message : String(error),
           durationMs: 0,
           deploymentId: null,
@@ -471,6 +511,17 @@ async function main() {
   const summary = summarize(results);
   await writeFile(path.join(outputDir, 'summary.json'), `${JSON.stringify(summary, null, 2)}\n`);
   await writeFile(path.join(outputDir, 'checks.json'), `${JSON.stringify(results, null, 2)}\n`);
+  await writeFile(
+    path.join(outputDir, 'screenshots.json'),
+    `${JSON.stringify(results.filter((result) => result.screenshot).map((result) => ({
+      id: result.id,
+      area: result.area,
+      route: result.route,
+      url: result.url,
+      result: result.result,
+      screenshot: result.screenshot,
+    })), null, 2)}\n`,
+  );
   await writeFile(path.join(outputDir, 'report.html'), renderReport(summary, results));
   await writeFile(
     path.join(outputDir, 'README.md'),
@@ -484,8 +535,10 @@ async function main() {
       `- Checks: ${summary.total}`,
       `- Pass / watch / fail: ${summary.passed} / ${summary.watch} / ${summary.failed}`,
       `- HTML report: report.html`,
+      `- Screenshots: screenshots/`,
+      `- Screenshot manifest: screenshots.json`,
       '',
-    ].join('\\n'),
+    ].join('\n'),
   );
 
   console.log(JSON.stringify(summary, null, 2));
