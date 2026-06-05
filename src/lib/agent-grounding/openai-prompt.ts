@@ -20,7 +20,7 @@ const TENANT_CONTEXT: Record<AgentGroundingTenant, string> = {
     'Do not borrow healthcare, airline, or banking facts when scoped to Apex.',
   ].join(' '),
   'meridian-health': [
-    'Meridian Health is a Sacramento-based integrated health system with 30+ hospitals.',
+    'Meridian Health System is a Sacramento-based integrated health system with 30+ hospitals.',
     'Known context includes clinical operations, ambient documentation, healthcare AI validation, audit rights, governed context-loader readiness, and healthcare corpus patterns.',
     'Guard this corrected profile fact. Never mention stale Meridian profile counts.',
     'Do not borrow retail, airline, or banking facts when scoped to Meridian.',
@@ -40,7 +40,7 @@ const TENANT_CONTEXT: Record<AgentGroundingTenant, string> = {
 
 const TENANT_DISPLAY: Record<AgentGroundingTenant, string> = {
   'apex-retail': 'Apex Retail Group',
-  'meridian-health': 'Meridian Health',
+  'meridian-health': 'Meridian Health System',
   'skyharbor-air': 'SkyHarbor Air',
   'first-capital': 'First Capital Financial',
 };
@@ -85,7 +85,7 @@ export function buildOpenAiGroundingMessages(testCase: AgentGroundingCase): Open
 function buildOutputChecklist(testCase: AgentGroundingCase): string[] {
   const checklist = [`Name the active tenant exactly as "${TENANT_DISPLAY[testCase.tenant]}".`];
   if (testCase.tenant === 'meridian-health' && testCase.expected.requiresTenantFacts) {
-    checklist.push('Start with "For Meridian Health, a Sacramento-based integrated health system with 30+ hospitals,".');
+    checklist.push('Start with "For Meridian Health System, a Sacramento-based integrated health system with 30+ hospitals,".');
   }
   if (/\bgate\b/i.test(testCase.prompt)) {
     checklist.push('Use a line that starts "First gate:".');

@@ -67,7 +67,7 @@ describe("post-deploy crawl guard", () => {
     const meridianFindings = comparePage(
       observation({
         tenantKey: "meridian",
-        expectedTenantName: "Meridian Health",
+        expectedTenantName: "Meridian Health System",
         personaKey: "meridian-cdio",
         visibleText:
           "Meridian Health uses Clinical care ambient AI with MH-07 and Innovaccer in revenue cycle planning",

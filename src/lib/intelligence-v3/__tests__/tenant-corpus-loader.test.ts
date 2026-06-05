@@ -18,18 +18,18 @@ jest.mock('@/lib/intelligence-v3/lakeshore-live', () => ({
 import { loadTenantIntelligenceCorpusData } from '../tenant-corpus-loader';
 
 describe('loadTenantIntelligenceCorpusData', () => {
-  it('loads Meridian Health seeded corpus data', async () => {
+  it('loads Meridian Health System seeded corpus data', async () => {
     const corpus = await loadTenantIntelligenceCorpusData(
       {
         id: 'client_meridian',
         key: 'meridian',
-        name: 'Meridian Health',
+        name: 'Meridian Health System',
         industry_code: 'healthcare',
       },
       'meridian',
     );
 
-    expect(corpus?.briefData.tenantName).toBe('Meridian Health');
+    expect(corpus?.briefData.tenantName).toBe('Meridian Health System');
     expect(corpus?.briefData.bets[0]?.useCase.name).toContain('Population Health AI');
     expect(corpus?.mapData.totalUseCases).toBeGreaterThan(0);
   });

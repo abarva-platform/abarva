@@ -64,11 +64,30 @@ async function ensureMeridianClientId(): Promise<string> {
     .limit(1)
     .maybeSingle();
   if (existing.error) throw new Error(`Meridian client lookup failed: ${existing.error.message}`);
-  if (existing.data?.id) return existing.data.id as string;
+  if (existing.data?.id) {
+    const normalized = await client
+      .from('clients')
+      .update({
+        name: 'Meridian Health System',
+        legal_name: 'Meridian Health System',
+        industry_code: 'healthcare_provider',
+        slug: 'meridian-health',
+        tenant_key: 'meridian-health',
+      })
+      .eq('id', existing.data.id as string);
+    if (normalized.error) throw new Error(`Meridian client normalize failed: ${normalized.error.message}`);
+    return existing.data.id as string;
+  }
 
   const inserted = await client
     .from('clients')
-    .insert({ name: 'Meridian Health', legal_name: 'Meridian Health System', industry_code: 'healthcare' })
+    .insert({
+      name: 'Meridian Health System',
+      legal_name: 'Meridian Health System',
+      industry_code: 'healthcare_provider',
+      slug: 'meridian-health',
+      tenant_key: 'meridian-health',
+    })
     .select('id')
     .single();
   if (inserted.error) throw new Error(`Meridian client insert failed: ${inserted.error.message}`);

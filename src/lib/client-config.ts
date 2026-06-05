@@ -59,7 +59,7 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
   // Meridian — they should never surface to a logged-in user but are kept
   // as recognized aliases so the DB-lookup fallback in active-client.ts
-  // and canonicalClientDisplayName below resolve them to 'Meridian Health'.
+  // and canonicalClientDisplayName below resolve them to the full system name.
   meridian: [
     "Meridian Health",
     "Meridian Health System",
@@ -136,14 +136,14 @@ export function canonicalClientDisplayName(args: {
     // are retired demo names for Meridian. The 2026-05-13 audit found the
     // Sentinel agent opening "I composed this brief for Heliara Health from
     // the corpus" because a DB row still carried the old name. Map every
-    // "Heliara*" alias to the canonical 'Meridian Health' so no user ever
+    // "Heliara*" alias to the canonical system name so no user ever
     // sees the retired codename, regardless of where the row originated.
     normalizedName === "heliara" ||
     normalizedName === "heliara health" ||
     normalizedName === "heliara health alliance" ||
     (normalizedName?.startsWith("heliara ") ?? false)
   ) {
-    return "Meridian Health";
+    return "Meridian Health System";
   }
 
   if (

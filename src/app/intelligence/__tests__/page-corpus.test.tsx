@@ -99,12 +99,12 @@ describe('/intelligence tenant corpus route binding', () => {
     const props = await propsFor('meridian', {
       id: 'client_meridian',
       key: 'meridian',
-      name: 'Meridian Health',
+      name: 'Meridian Health System',
       industry_code: 'healthcare',
     });
 
     expect(props.clientKey).toBe('meridian');
-    expect(props.intelligenceCorpusData?.briefData.tenantName).toBe('Meridian Health');
+    expect(props.intelligenceCorpusData?.briefData.tenantName).toBe('Meridian Health System');
     expect(props.intelligenceCorpusData?.briefData.bets[0]?.useCase.name).toContain('Population Health AI');
     expect(props.intelligenceCorpusData?.mapData.totalUseCases).toBeGreaterThan(0);
   });
