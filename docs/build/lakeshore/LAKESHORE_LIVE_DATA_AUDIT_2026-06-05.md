@@ -1,8 +1,8 @@
 # Lakeshore Live Data And Artifact Audit
 
-Date: 2026-06-05  
-Client row: `f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61` / `Lakeshore Holdings` / `lakeshore-holdings`  
-Source client key: `lakeshore`  
+Date: 2026-06-05
+Client row: `f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61` / `Lakeshore Holdings` / `lakeshore-holdings`
+Source client key: `lakeshore`
 Purpose: confirm what is truly loaded, which loader path was used, where depth is real versus scaffolded, and which Source/Moves opportunities are safe to demo.
 
 ## Executive Status
@@ -148,10 +148,10 @@ Important lane distinction:
 
 ### `LSH-KYRIBA-TREASURY-2026`
 
-Event id: `bd8d173f-6600-48a3-b155-9fa74d024ce8`  
-Linked Move id: `1196dac0-715c-45ce-8eeb-5e70792d9aa4`  
-Current Source stage: `executive_decision`  
-Value-at-stake: 31.5M to 48.3M planning range  
+Event id: `bd8d173f-6600-48a3-b155-9fa74d024ce8`
+Linked Move id: `1196dac0-715c-45ce-8eeb-5e70792d9aa4`
+Current Source stage: `executive_decision`
+Value-at-stake: 31.5M to 48.3M planning range
 Decision owner: Daniel Whitaker / Meera Rao
 
 Live Source artifact proof:
@@ -200,10 +200,10 @@ Demo guidance: safe to demo Strategy through BAFO and show Executive Decision as
 
 ### `LSH-AMS-MODERNIZATION-2026`
 
-Event id: `5602d576-2031-4ef9-a028-bb313286cc8d`  
-Linked Move id: `5366bbea-572f-4171-ac28-10bbc4d6dc96`  
-Current Source stage: `evaluation`  
-Value-at-stake: 12.0M to 26.0M planning range  
+Event id: `5602d576-2031-4ef9-a028-bb313286cc8d`
+Linked Move id: `5366bbea-572f-4171-ac28-10bbc4d6dc96`
+Current Source stage: `evaluation`
+Value-at-stake: 12.0M to 26.0M planning range
 Decision owner: Meera Rao
 
 Live Source artifact proof:
