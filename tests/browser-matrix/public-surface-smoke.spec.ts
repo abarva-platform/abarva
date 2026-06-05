@@ -2,8 +2,6 @@ import { expect, test } from '@playwright/test'
 
 const htmlRoutes = [
   '/',
-  '/contact',
-  '/subprocessors',
   '/sign-in',
   '/signed-out',
 ]

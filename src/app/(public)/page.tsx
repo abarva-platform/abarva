@@ -190,7 +190,7 @@ export default function HomePage() {
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
               <Link
-                href="/contact/"
+                href="/sign-in"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -675,7 +675,7 @@ export default function HomePage() {
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12 }}>
             <Link
-              href="/contact/"
+              href="/sign-in"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

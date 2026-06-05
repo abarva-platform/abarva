@@ -53,7 +53,7 @@ export function TopNav() {
           </Link>
         </li>
         <li className="pub-topnav__nav-item">
-          <Link href="/contact/" className="pub-topnav__cta">
+          <Link href="/sign-in" className="pub-topnav__cta">
             Request access
           </Link>
         </li>

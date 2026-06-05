@@ -7,7 +7,7 @@ module.exports = {
       startServerCommand: `ACCESSIBILITY_AXE_DISABLE_CLERK=1 npm run start -- -H localhost -p ${port}`,
       startServerReadyPattern: "Ready",
       startServerReadyTimeout: 30000,
-      url: ["/", "/contact", "/sign-in"].map((path) => `${baseUrl}${path}`),
+      url: ["/", "/sign-in"].map((path) => `${baseUrl}${path}`),
       numberOfRuns: 1,
       settings: {
         chromeFlags: "--headless=new --no-sandbox --disable-dev-shm-usage",

@@ -56,23 +56,25 @@ describe('proxy public route patterns', () => {
     }
   });
 
-  it('exposes /product as the public Product overview page', () => {
-    const request = new NextRequest('https://app.abarva.ai/product');
-    expect(isPublicRoute(request)).toBe(true);
-    expect(isAuthRequiredRoute(request)).toBe(false);
-  });
-
-  it('exposes /model-card as a public trust artifact without Clerk protection', () => {
-    for (const path of ['/model-card', '/model-card/']) {
+  it('keeps detailed marketing, trust, and training pages behind sign-in', () => {
+    for (const path of [
+      '/product',
+      '/how-it-works',
+      '/how-it-works/it-productivity-comparison',
+      '/model-card',
+      '/responsible-ai',
+      '/contact',
+      '/status',
+      '/subprocessors',
+    ]) {
       const request = new NextRequest(`https://app.abarva.ai${path}`);
-      expect(isPublicRoute(request)).toBe(true);
+      expect(isPublicRoute(request)).toBe(false);
       expect(isAuthRequiredRoute(request)).toBe(false);
     }
   });
 
-  it('keeps Responsible AI pages public at proxy level to avoid Clerk redirects in RSC fetches', () => {
+  it('keeps Responsible AI checkpoint pages public at proxy level to avoid Clerk redirects in RSC fetches', () => {
     for (const path of [
-      '/responsible-ai',
       '/responsible-ai/acknowledgment',
       '/responsible-ai/training',
     ]) {
@@ -82,13 +84,9 @@ describe('proxy public route patterns', () => {
     }
   });
 
-  it('exposes the public How it works demo pages without Clerk protection', () => {
-    for (const path of [
-      '/how-it-works',
-      '/how-it-works/it-productivity-comparison',
-      '/how-it-works/frameworks/ai-it-productivity',
-    ]) {
-      const request = new NextRequest(`https://www.abarva.ai${path}`);
+  it('keeps the signed-out entry surfaces public', () => {
+    for (const path of ['/', '/sign-in', '/signed-out', '/invite/start']) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
       expect(isPublicRoute(request)).toBe(true);
       expect(isAuthRequiredRoute(request)).toBe(false);
     }

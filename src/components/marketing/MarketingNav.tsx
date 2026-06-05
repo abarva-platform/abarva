@@ -239,7 +239,7 @@ export type MarketingNavProps = {
 }
 
 export function MarketingNav({
-  ctaHref = '/contact/',
+  ctaHref = '/sign-in',
   ctaLabel = 'Request access',
   signInHref = '/sign-in',
 }: MarketingNavProps) {

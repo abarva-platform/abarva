@@ -35,23 +35,15 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/invite(.*)",
   "/auth-redirect(.*)",
   "/",
-  "/contact(.*)",
-  "/status(.*)",
-  "/subprocessors(.*)",
-  // Public marketing and trust surfaces are reachable before sign-in. Keeping
-  // them in the public matcher prevents app-shell prefetches from becoming
-  // hosted-Clerk redirects and noisy browser console failures.
-  "/product(.*)",
-  "/how-it-works(.*)",
-  // Model card is a public trust artifact linked from the public footer and
-  // AI trust page. Keep it out of Clerk so RSC prefetches never turn into
-  // cross-origin hosted-Clerk redirects inside authenticated shells.
-  "/model-card(.*)",
-  // Responsible AI pages live in the public route tree. The acknowledgment
-  // and training pages still self-gate with server-side subject checks, but
-  // keeping the path public at proxy level prevents Clerk HTML redirects from
-  // leaking into same-origin RSC fetches as cross-origin preflight failures.
-  "/responsible-ai(.*)",
+  // Keep the signed-out surface intentionally lean. Product, architecture,
+  // training, model-card, contact, status, and other detail pages are private
+  // workspace material unless the user is signed in.
+  //
+  // These two Responsible AI checkpoints stay public at proxy level because
+  // signed-in users are redirected here before the app shell renders. The
+  // pages self-gate server-side and redirect anonymous visitors to sign-in.
+  "/responsible-ai/acknowledgment(.*)",
+  "/responsible-ai/training(.*)",
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
