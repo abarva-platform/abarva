@@ -135,20 +135,35 @@ function buildCohortPosition(portfolio: AtlasPortfolioSummary, adoptionBenchmark
     .join(' ');
 }
 
-function buildRoiSummary(portfolio: AtlasPortfolioSummary, grounding: AtlasValueGrounding) {
+function buildRoiSummary(
+  portfolio: AtlasPortfolioSummary,
+  grounding: AtlasValueGrounding,
+  message: string,
+) {
+  const topic = /kyriba/i.test(message) ? ' Kyriba rollout' : '';
+  const projected = grounding.valueSeparation.projected;
+  const verified = grounding.valueSeparation.verified;
+  const tracked = grounding.valueSeparation.tracked;
+  const trackedValueAttainment = tracked.find((item) => item.label === 'Tracked value attainment');
+  const trackedUsers = tracked.find((item) => item.label === 'Tracked active users');
+  const missingEvidence = grounding.missingEvidence.slice(0, 3).join('; ') || 'No missing evidence surfaced by the value-grounding layer.';
+
   return [
-    `Projected value is ${dollars(portfolio.estimatedValueUsd)} from the Atlas portfolio estimate.`,
-    portfolio.valueAttainmentPctAvg != null
-      ? `Tracked value attainment is ${percent(portfolio.valueAttainmentPctAvg)}.`
-      : 'Tracked value attainment is missing from the portfolio aggregate.',
-    portfolio.trackedActiveUsers != null
-      ? `Tracked active users are ${portfolio.trackedActiveUsers.toLocaleString()}.`
-      : 'Tracked active users are missing from the portfolio aggregate.',
-    `Verified realized value is ${dollars(portfolio.realizedValueUsd)}.`,
-    'Do not treat projected value as verified value.',
-    portfolio.averageTrustworthinessScore != null
-      ? `Trustworthiness is averaging ${Math.round(portfolio.averageTrustworthinessScore)} out of 100, so the value story is credible but not fully clean.`
-      : null,
+    `My read: ${portfolio.clientName}${topic} value is not ready to be spoken as realized savings. Tower is separating projected or modeled value, tracked value, and verified realized value, and the verified layer is still missing or zero.`,
+    '',
+    'Why:',
+    `- Projected or modeled value: ${projected.value} (${projected.status}); do not treat this as verified realized value.`,
+    `- Tracked value: ${trackedValueAttainment?.value ?? 'missing'} value attainment and ${trackedUsers?.value ?? 'missing'} tracked active users.`,
+    `- Verified realized value: ${verified.value} (${verified.status}); this is the number a CFO can defend today.`,
+    '',
+    'Decision fork:',
+    '- Option A: Use this as a planning-range read only. Lower risk; keeps the board story honest.',
+    '- Option B: Quote value externally only after Finance attaches baseline, measurement method, and attestation.',
+    '',
+    'What I would do next: Open the Tower value evidence for the highest-value initiative and assign Finance to close the baseline and measurement method before any savings claim is used in a board packet.',
+    '',
+    `Evidence gap: ${missingEvidence}`,
+    '',
     renderAtlasValueGrounding(grounding),
   ]
     .filter(Boolean)
@@ -952,7 +967,7 @@ export async function runScriptedAtlasIntent(
     toolResults.portfolio = portfolio;
     toolResults.valueGrounding = valueGrounding;
     return {
-      response: buildRoiSummary(portfolio, valueGrounding),
+      response: buildRoiSummary(portfolio, valueGrounding, message),
       suggestions: [
         { label: 'Peer value', value: 'How do we compare to peers on value attainment?', kind: 'message' },
         { label: 'Programs', value: 'Show active programs', kind: 'message' },
