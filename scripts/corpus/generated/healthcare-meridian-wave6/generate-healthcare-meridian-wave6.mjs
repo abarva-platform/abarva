@@ -6,7 +6,8 @@ const REPORT_DIR = path.resolve('reports/healthcare-harden/wave-6');
 const EVAL_DIR = path.resolve('reports/healthcare-harden/eval');
 const FINAL_REPORT = path.resolve('HEALTHCARE_MODERNIZATION_HARDEN_READINESS.md');
 const HARDENING_SUMMARY = path.resolve('reports/healthcare-harden/MODERNIZATION_HARDENING_SUMMARY.md');
-const MERIDIAN_PROFILE_PATH = path.resolve('intelligence/seeds/tenant-portfolios/meridian.json');
+const MERIDIAN_PROFILE_SOURCE = 'intelligence/seeds/tenant-portfolios/meridian.json';
+const MERIDIAN_PROFILE_PATH = path.resolve(MERIDIAN_PROFILE_SOURCE);
 
 const tenantProfile = JSON.parse(fs.readFileSync(MERIDIAN_PROFILE_PATH, 'utf8'));
 
@@ -25,7 +26,7 @@ const sourceEvidence = {
     source_url: 'reports/healthcare-harden/wave-1/SUMMARY.md',
     as_of: '2026-06-04',
     detail:
-      'Modernization archetypes, 7 Rs, Lakehouse pillars, RFP scorecards, effort heuristics, and anti-patterns.',
+      'Modernization archetypes, 7 Rs, Azure Databricks Lakehouse, Unity Catalog, medallion architecture, Lakebridge/BladeBridge analyzer intake, RFP scorecards, effort heuristics, and anti-patterns.',
   },
   wave2: {
     source_type: 'industry_practice',
@@ -198,8 +199,8 @@ function patternFor(domain, index) {
   const confidence = index % 5 === 0 ? 'medium' : 'high';
   const title = `${program.name} ${domain.label} control ${ordinal}`;
   const trigger = `Use this when ${situation.trigger} for ${program.code} (${program.name}) in Meridian's Sacramento-based 30+ hospital operating context.`;
-  const summary = `${trigger} The answer should connect tenant facts, healthcare modernization doctrine, sourcing leverage, and the next decision artifact without inventing exact facility, revenue, or savings figures.`;
-  const doctrine = `${domain.doctrine} For ${program.code}, require ${evidence} before treating the recommendation as decision-grade.`;
+  const summary = `${trigger} The answer should connect tenant facts, Azure Databricks modernization doctrine, healthcare sourcing leverage, and the next decision artifact without inventing exact facility, revenue, workload-count, table-count, or savings figures.`;
+  const doctrine = `${domain.doctrine} For ${program.code}, apply Azure Databricks Lakehouse doctrine explicitly: Unity Catalog for governed PHI access and lineage, medallion bronze/silver/gold modeling, Delta tables, Lakebridge or equivalent analyzer inventory before precise estimates, Databricks Asset Bundles or equivalent CI/CD, and DBU/TCO controls before scale funding. Require ${evidence} before treating the recommendation as decision-grade.`;
   const failure = `${situation.failure} for ${program.code}, causing Meridian leaders to approve a wave without the evidence needed for a 30+ hospital integrated system.`;
   const antiPattern = `${situation.anti} If exact Meridian facility counts, revenue, savings, or vendor commitments are not loaded through the governed context layer, say that plainly and work from the available profile.`;
   const artifacts = [...domain.artifacts, evidence];
@@ -210,6 +211,8 @@ function patternFor(domain, index) {
     `Tenant profile: ${tenantProfile.profile}`,
     `Program context: ${program.code} ${program.name}; phase ${program.phase}; role ${program.role}.`,
     `Decision owner: ${domain.owner}.`,
+    'Azure Databricks modernization terms: Unity Catalog, medallion architecture, bronze, silver, gold, Delta tables, Lakebridge analyzer inventory, Databricks Asset Bundles, DLT or Lakeflow-style pipeline orchestration, DBU/TCO controls, Lakehouse Federation, PHI lineage, and healthcare data product ownership.',
+    'Epic and ERP planning method: estimate source objects, inbound integrations, transformation jobs, reports, and gold data products by use case; label table/report/job counts as planning ranges unless the governed loader has loaded an Epic Clarity/Caboodle, FHIR, ERP, and BI inventory.',
     `Required evidence: ${evidence}.`,
     `Failure mode: ${failure}`,
     `Anti-pattern: ${antiPattern}`,
@@ -254,6 +257,17 @@ function patternFor(domain, index) {
       'PHI',
       'BAA',
       'Lakehouse',
+      'Azure Databricks',
+      'Unity Catalog',
+      'medallion',
+      'Delta tables',
+      'Lakebridge',
+      'Databricks Asset Bundles',
+      'DBU/TCO',
+      'FHIR',
+      'Epic Clarity',
+      'Caboodle',
+      'ERP',
       'P50/P80/P95',
     ],
     tags: [
@@ -265,6 +279,11 @@ function patternFor(domain, index) {
       slugify(domain.label),
       slugify(program.name),
       'governed-loader',
+      'azure-databricks',
+      'unity-catalog',
+      'medallion-architecture',
+      'lakebridge',
+      'dbu-tco',
     ],
     related_patterns: [target, ...domain.baseTargets.filter((item) => item !== target).slice(0, 2)],
     graph_relationships: [
@@ -311,7 +330,7 @@ function writeReports(patterns) {
       verdict: cp.tenantProfileCorrected ? 'PASS' : 'FAIL',
       notes:
         'Wave 6 uses the corrected Meridian profile: Sacramento-based integrated health system with a 30+ hospital footprint.',
-      source: MERIDIAN_PROFILE_PATH,
+      source: MERIDIAN_PROFILE_SOURCE,
     },
     {
       id: 'W6-AUDIT-GOVERNED-LOADER',
