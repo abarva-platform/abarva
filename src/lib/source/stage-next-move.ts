@@ -253,6 +253,16 @@ function toNextMoveGate(
 }
 
 function simplifyGateLabel(label: string): string {
+  if (/sourcing strategy memo signed by sponsor/i.test(label)) {
+    return "Sponsor sign-off";
+  }
+  if (/value target set/i.test(label)) {
+    return "Value target set";
+  }
+  if (/archetype \+ rigor level chosen/i.test(label)) {
+    return "Archetype confirmed";
+  }
+
   return label
     .replace(/\bsigned by sponsor\b/i, "sign-off")
     .replace(/\bwith range and confidence band\b/i, "")
