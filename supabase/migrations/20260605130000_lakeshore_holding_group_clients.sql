@@ -47,7 +47,37 @@ WITH lakeshore_parent AS (
   ORDER BY created_at NULLS LAST
   LIMIT 1
 ),
-upsert_l1 AS (
+seed_l1 AS (
+  SELECT *
+  FROM (
+    VALUES
+      (
+        '830de810-0011-4c9e-8f59-000000000101'::uuid,
+        'Morgan Street Holdings Chicago',
+        'Morgan Street Holdings Chicago LLC',
+        'DIVERSIFIED_HOLDCO',
+        'morgan-street-holdings',
+        'morgan-street-holdings'
+      ),
+      (
+        '830de810-0011-4c9e-8f59-000000000102'::uuid,
+        'Roosevelt Holdings Atlanta',
+        'Roosevelt Holdings Atlanta LLC',
+        'DIVERSIFIED_HOLDCO',
+        'roosevelt-holdings',
+        'roosevelt-holdings'
+      ),
+      (
+        '830de810-0011-4c9e-8f59-000000000103'::uuid,
+        'Lakefront Capital Boston',
+        'Lakefront Capital Boston LLC',
+        'DIVERSIFIED_HOLDCO',
+        'lakefront-capital',
+        'lakefront-capital'
+      )
+  ) AS rows(id, name, legal_name, industry_code, tenant_key, slug)
+),
+insert_l1 AS (
   INSERT INTO clients (
     id,
     name,
@@ -60,54 +90,45 @@ upsert_l1 AS (
     holding_group_role,
     aggregate_visibility_level
   )
-  VALUES
-    (
-      '830de810-0011-4c9e-8f59-000000000101',
-      'Morgan Street Holdings Chicago',
-      'Morgan Street Holdings Chicago LLC',
-      'DIVERSIFIED_HOLDCO',
-      'morgan-street-holdings',
-      'morgan-street-holdings',
-      '830de810-0000-4c9e-8f59-000000000000',
-      (SELECT id FROM lakeshore_parent),
-      'l1_holdco',
-      'group_aggregate'
-    ),
-    (
-      '830de810-0011-4c9e-8f59-000000000102',
-      'Roosevelt Holdings Atlanta',
-      'Roosevelt Holdings Atlanta LLC',
-      'DIVERSIFIED_HOLDCO',
-      'roosevelt-holdings',
-      'roosevelt-holdings',
-      '830de810-0000-4c9e-8f59-000000000000',
-      (SELECT id FROM lakeshore_parent),
-      'l1_holdco',
-      'group_aggregate'
-    ),
-    (
-      '830de810-0011-4c9e-8f59-000000000103',
-      'Lakefront Capital Boston',
-      'Lakefront Capital Boston LLC',
-      'DIVERSIFIED_HOLDCO',
-      'lakefront-capital',
-      'lakefront-capital',
-      '830de810-0000-4c9e-8f59-000000000000',
-      (SELECT id FROM lakeshore_parent),
-      'l1_holdco',
-      'group_aggregate'
-    )
-  ON CONFLICT (name) DO UPDATE
-    SET legal_name = EXCLUDED.legal_name,
-        industry_code = EXCLUDED.industry_code,
-        tenant_key = EXCLUDED.tenant_key,
-        slug = EXCLUDED.slug,
-        holding_group_id = EXCLUDED.holding_group_id,
-        parent_client_id = EXCLUDED.parent_client_id,
-        holding_group_role = EXCLUDED.holding_group_role,
-        aggregate_visibility_level = EXCLUDED.aggregate_visibility_level,
-        updated_at = now()
+  SELECT
+    seed_l1.id,
+    seed_l1.name,
+    seed_l1.legal_name,
+    seed_l1.industry_code,
+    seed_l1.tenant_key,
+    seed_l1.slug,
+    '830de810-0000-4c9e-8f59-000000000000',
+    (SELECT id FROM lakeshore_parent),
+    'l1_holdco',
+    'group_aggregate'
+  FROM seed_l1
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM clients existing
+    WHERE existing.id = seed_l1.id
+       OR existing.tenant_key = seed_l1.tenant_key
+       OR existing.slug = seed_l1.slug
+       OR existing.name = seed_l1.name
+  )
   RETURNING id
+),
+normalize_l1 AS (
+  UPDATE clients
+  SET legal_name = seed_l1.legal_name,
+      industry_code = seed_l1.industry_code,
+      tenant_key = seed_l1.tenant_key,
+      slug = seed_l1.slug,
+      holding_group_id = '830de810-0000-4c9e-8f59-000000000000',
+      parent_client_id = (SELECT id FROM lakeshore_parent),
+      holding_group_role = 'l1_holdco',
+      aggregate_visibility_level = 'group_aggregate',
+      updated_at = now()
+  FROM seed_l1
+  WHERE clients.id = seed_l1.id
+     OR clients.tenant_key = seed_l1.tenant_key
+     OR clients.slug = seed_l1.slug
+     OR clients.name = seed_l1.name
+  RETURNING clients.id
 )
 UPDATE clients
 SET holding_group_id = '830de810-0000-4c9e-8f59-000000000000',
