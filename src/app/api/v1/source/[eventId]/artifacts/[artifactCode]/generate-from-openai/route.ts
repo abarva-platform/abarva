@@ -1,8 +1,8 @@
-// POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude
+// POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai
 //
 // Body: {} (no inputs — context is bound server-side)
 //
-// Generates an artifact body via Claude using bound tenant + event +
+// Generates an artifact body via OpenAI using bound tenant + event +
 // upstream-artifact context. Persists the body to
 // source_event_artifact_states.body and an audit receipt to
 // body_generation_metadata.
@@ -16,7 +16,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -30,6 +30,7 @@ import {
   collectUpstreamBodies,
   findMissingUpstreamCodes,
   getPromptTemplate,
+  type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
 import {
@@ -87,19 +88,6 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
 
   const { eventId, artifactCode } = await params;
 
-  // Anthropic key check — fail fast with a clear error rather than
-  // letting the SDK throw deep in the call.
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return Response.json(
-      {
-        error: "agent_unavailable",
-        detail: "ANTHROPIC_API_KEY is not configured for this environment.",
-      },
-      { status: 503 },
-    );
-  }
-
   // Resolve template up front so unknown artifact codes 404 fast.
   const template = getPromptTemplate(artifactCode);
   if (!template) {
@@ -137,7 +125,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     currentUser?.clerkUserId ?? tenancy.userId,
   ).catch((error) => {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] seed materialization failed",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] seed materialization failed",
       error instanceof Error ? error.message : String(error),
     );
     throw error;
@@ -245,72 +233,81 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   ]);
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
 
-  // Call Claude. Use the streaming API so the function doesn't block
-  // waiting for the entire completion before responding — first byte
-  // arrives in 1–3s, full body in 30–60s, and we can detect mid-stream
-  // failures cleanly.
+  // Call OpenAI when configured. If OPENAI_API_KEY is absent, write a
+  // deterministic Source draft so the canvas remains useful in local/dev
+  // environments without silently routing to another provider.
   const startedAt = Date.now();
   let body = "";
   let stopReason: string | null = null;
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
+  let model = template.model;
   try {
     if (!tenancy) {
       return tenancyErrorResponse(tenancyError);
     }
-    const preflight = await preflightAnthropicDirectClient({
-      tenantId: tenancy.clientId,
-      userId: tenancy.userId,
-      workflow: "source-artifact-generate",
-      artifactId: artifactRow.id,
-      artifactType: artifactCode,
-      model: template.model,
-      prompt: [template.systemPrompt, userMessage].join("\n\n"),
-      dataClass: "confidential",
-      metadata: {
-        eventId: ctx.event.id,
-        sourceEventId: ctx.event.id,
+    if (!process.env.OPENAI_API_KEY) {
+      model = "source-deterministic-fallback";
+      stopReason = "missing_openai_api_key";
+      body = buildDeterministicFallbackBody({
         artifactCode,
-      },
-    });
-    if (!preflight.ok) {
-      return Response.json(
-        {
-          error: "ai_egress_denied",
-          detail: preflight.reason,
-          auditId: preflight.auditId,
+        ctx,
+        upstreamBound,
+      });
+    } else {
+      const preflight = await preflightOpenAIDirectClient({
+        tenantId: tenancy.clientId,
+        userId: tenancy.userId,
+        workflow: "source-artifact-generate",
+        artifactId: artifactRow.id,
+        artifactType: artifactCode,
+        model: template.model,
+        prompt: [template.systemPrompt, userMessage].join("\n\n"),
+        dataClass: "confidential",
+        metadata: {
+          eventId: ctx.event.id,
+          sourceEventId: ctx.event.id,
+          artifactCode,
         },
-        { status: 403 },
-      );
-    }
-    const client = preflight.client;
-    const stream = client.messages.stream({
-      model: template.model,
-      max_tokens: template.maxTokens,
-      system: template.systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-    });
-    for await (const chunk of stream) {
-      if (
-        chunk.type === "content_block_delta" &&
-        chunk.delta.type === "text_delta"
-      ) {
-        body += chunk.delta.text;
+      });
+      if (!preflight.ok) {
+        return Response.json(
+          {
+            error: "ai_egress_denied",
+            detail: preflight.reason,
+            auditId: preflight.auditId,
+          },
+          { status: 403 },
+        );
       }
+      const response = await preflight.client.responses.create({
+        model: template.model,
+        instructions: template.systemPrompt,
+        input: userMessage,
+        max_output_tokens: template.maxTokens,
+        store: false,
+        metadata: {
+          workflow: "source-artifact-generate",
+          eventId: ctx.event.id,
+          artifactCode,
+        },
+      });
+      body = response.output_text.trim();
+      model = response.model ?? template.model;
+      stopReason =
+        response.incomplete_details?.reason ?? response.status ?? null;
+      tokensIn = response.usage?.input_tokens ?? null;
+      tokensOut = response.usage?.output_tokens ?? null;
     }
-    const final = await stream.finalMessage();
-    stopReason = final.stop_reason ?? null;
-    tokensIn = final.usage?.input_tokens ?? null;
-    tokensOut = final.usage?.output_tokens ?? null;
   } catch (err) {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] Anthropic error",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] OpenAI error",
       err,
     );
     return Response.json(
       {
         error: "generation_failed",
-        detail: err instanceof Error ? err.message : "Anthropic call failed",
+        detail: err instanceof Error ? err.message : "OpenAI call failed",
       },
       { status: 502 },
     );
@@ -321,7 +318,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       {
         error: "empty_generation",
         detail:
-          "Anthropic returned an empty body. Retry, or surface a gap in the upstream context.",
+          "OpenAI returned an empty body. Retry, or surface a gap in the upstream context.",
       },
       { status: 502 },
     );
@@ -330,7 +327,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
   const generationMetadata: SourceArtifactBodyGenerationMetadata = {
-    model: template.model,
+    model,
     promptTemplateId: template.artifactCode,
     promptTemplateVersion: template.version,
     upstreamBoundCodes: Object.keys(upstreamBound),
@@ -355,7 +352,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (artifactRow.tier === "stub") update.tier = "outline";
 
   // DB write routed through the data-plane write seam (Slice 3b). The
-  // Claude call above stays route-side; the seam owns only the body persist.
+  // OpenAI call above stays route-side; the seam owns only the body persist.
   const sourceWrite = selectSourceWriteAdapter(undefined, ctx.tenantKey);
   const bodyWrite = await sourceWrite.updateArtifactBody({
     artifactRowId: artifactRow.id,
@@ -408,7 +405,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     });
   } catch (registryError) {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] registry persist failed",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] registry persist failed",
       registryError instanceof Error
         ? registryError.message
         : String(registryError),
@@ -427,7 +424,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     artifactCode,
     reason: null,
     metadata: {
-      model: template.model,
+      model,
       promptTemplateVersion: template.version,
       stopReason,
       tokensIn,
@@ -451,4 +448,40 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       latencyMs: Date.now() - startedAt,
     },
   });
+}
+
+function buildDeterministicFallbackBody(args: {
+  artifactCode: string;
+  ctx: SourceGenerationContext;
+  upstreamBound: Record<string, string>;
+}): string {
+  const event = args.ctx.event;
+  const upstreamCodes = Object.keys(args.upstreamBound);
+  return [
+    `# ${event.name} · ${args.artifactCode}`,
+    "",
+    "## §1 · Deterministic Source draft",
+    "OPENAI_API_KEY is not configured, so Source produced this deterministic draft from the tenant-scoped event substrate instead of calling a model.",
+    "",
+    "## §2 · Event facts",
+    `- Tenant: ${args.ctx.tenantName} (${args.ctx.tenantKey})`,
+    `- Event code: ${event.code}`,
+    `- Stage: ${event.currentStageKey}`,
+    event.owner ? `- Owner: ${event.owner}` : "- Owner: not recorded",
+    event.archetype
+      ? `- Archetype: ${event.archetype}`
+      : "- Archetype: not recorded",
+    event.rigor ? `- Rigor: ${event.rigor}` : "- Rigor: not recorded",
+    event.estimatedValueUsd
+      ? `- Estimated value: $${event.estimatedValueUsd.toLocaleString()}`
+      : "- Estimated value: not recorded",
+    "",
+    "## §3 · Bound context",
+    upstreamCodes.length
+      ? `Bound upstream artifacts: ${upstreamCodes.join(", ")}.`
+      : "No upstream artifact bodies were bound for this draft.",
+    "",
+    "## §4 · Human review required",
+    "This fallback is decision-support scaffolding only. Configure OPENAI_API_KEY and regenerate before treating the artifact as a model-authored Source draft.",
+  ].join("\n");
 }

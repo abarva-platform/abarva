@@ -227,7 +227,9 @@ function renderStageDocumentContent({
   }
 
   if (viewStage === "bafo" || viewStage === "orals_bafo") {
-    return <BafoStageView event={event} documentWorkspace={documentTabContent} />;
+    return (
+      <BafoStageView event={event} documentWorkspace={documentTabContent} />
+    );
   }
 
   if (viewStage === "executive_decision") {
@@ -310,7 +312,7 @@ export function UniversalCanvasShell({
     Record<string, boolean>
   >({});
   // Stored-documents shelf is server-seeded but mutates client-side when
-  // "Generate with Sentinel" succeeds — the generate-from-claude route now
+  // "Generate with Sentinel" succeeds — the generate-from-openai route now
   // also writes to the source_artifacts registry and returns the new row.
   // Keeping this in state lets the shelf reflect the persisted document
   // without a full page revalidate.
@@ -485,7 +487,7 @@ export function UniversalCanvasShell({
     setPendingGenerationByCode((prev) => ({ ...prev, [code]: true }));
     try {
       const res = await fetch(
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate-from-claude`,
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate-from-openai`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -720,7 +722,7 @@ export function UniversalCanvasShell({
       pendingByCode={pendingStatusByCode}
       onSaveBody={handleArtifactBodySave}
       bodyPendingByCode={pendingBodyByCode}
-      onGenerateFromClaude={handleArtifactGenerate}
+      onGenerateArtifact={handleArtifactGenerate}
       generatableCodes={generatableCodes}
       generationPendingByCode={pendingGenerationByCode}
       xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}

@@ -1,11 +1,11 @@
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
 import { SOURCE_STAGE_LABELS } from "./constants";
 import type { SourceLiveTenantContextSnapshot } from "./agent-context";
 import type { SourceNexusApiStubResponse } from "./nexus-api";
 import type { SourceAnswerEvidenceCitation } from "./source-answer-engine";
 import type { SourcingEventDetail } from "./types";
 
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+export const SOURCE_SENTINEL_CHAT_DEFAULT_MODEL = "gpt-5.1";
 const MAX_EVIDENCE_ITEMS = 12;
 const MAX_TOKENS = 900;
 const CITATION_RE = /\[E(\d{1,2})\]/gi;
@@ -41,10 +41,10 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
   if (!shouldUseSourceSentinelChatLlm(env)) {
     return input.fallbackResponse;
   }
-  if (!env.ANTHROPIC_API_KEY) {
+  if (!env.OPENAI_API_KEY) {
     return withLlmFallbackWarning(
       input.fallbackResponse,
-      "Sentinel chat LLM is enabled but ANTHROPIC_API_KEY is not configured; returned deterministic fallback.",
+      "Sentinel chat LLM is enabled but OPENAI_API_KEY is not configured; returned deterministic fallback.",
     );
   }
   if (!input.event || !input.liveTenantContext) {
@@ -64,10 +64,11 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
     promptEvidence,
     fallbackResponse: input.fallbackResponse,
   });
-  const model = env.SENTINEL_CHAT_MODEL?.trim() || DEFAULT_MODEL;
+  const model =
+    env.SENTINEL_CHAT_MODEL?.trim() || SOURCE_SENTINEL_CHAT_DEFAULT_MODEL;
 
   try {
-    const preflight = await preflightAnthropicDirectClient({
+    const preflight = await preflightOpenAIDirectClient({
       tenantId: input.tenantId,
       userId: input.userId,
       workflow: "source-sentinel-chat",
@@ -89,17 +90,19 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
       );
     }
 
-    const response = await preflight.client.messages.create({
+    const response = await preflight.client.responses.create({
       model,
-      max_tokens: MAX_TOKENS,
-      system: systemPrompt,
-      messages: [{ role: "user", content: input.prompt }],
+      instructions: systemPrompt,
+      input: input.prompt,
+      max_output_tokens: MAX_TOKENS,
+      store: false,
+      metadata: {
+        workflow: "source-sentinel-chat",
+        eventId: input.event.id,
+        eventCode: input.event.code,
+      },
     });
-    const answerText = response.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("\n")
-      .trim();
+    const answerText = response.output_text.trim();
 
     if (!answerText) {
       return withLlmFallbackWarning(
