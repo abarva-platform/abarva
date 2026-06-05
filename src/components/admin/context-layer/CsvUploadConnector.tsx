@@ -3,8 +3,9 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
 import {
-  CONTEXT_TEMPLATE_REGISTRY,
+  MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
   PHS_CONTEXT_TEMPLATES,
+  getTemplatesForTenant,
 } from "@/lib/context-ingestion/template-registry";
 import { buildTemplateSchemaPreflight } from "@/lib/context-ingestion/schema-preflight";
 import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
@@ -47,6 +48,7 @@ type UploadResult = {
 
 interface CsvUploadConnectorProps {
   clientId: string;
+  tenantKey: string;
   tenantName: string;
 }
 
@@ -82,6 +84,7 @@ function splitHeaderLine(line: string): string[] {
 
 export function CsvUploadConnector({
   clientId,
+  tenantKey,
   tenantName,
 }: CsvUploadConnectorProps) {
   const [headers, setHeaders] = useState<string[]>([]);
@@ -94,12 +97,38 @@ export function CsvUploadConnector({
   const [attestationNote, setAttestationNote] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const templates = useMemo(
+    () => getTemplatesForTenant(tenantKey),
+    [tenantKey],
+  );
+  const healthcareTemplateIds = useMemo(
+    () => new Set(MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES.map((item) => item.id)),
+    [],
+  );
+  const phsTemplateIds = useMemo(
+    () => new Set(PHS_CONTEXT_TEMPLATES.map((item) => item.id)),
+    [],
+  );
+  const generalTemplates = useMemo(
+    () =>
+      templates.filter(
+        (item) =>
+          !healthcareTemplateIds.has(item.id) && !phsTemplateIds.has(item.id),
+      ),
+    [healthcareTemplateIds, phsTemplateIds, templates],
+  );
+  const healthcareTemplates = useMemo(
+    () => templates.filter((item) => healthcareTemplateIds.has(item.id)),
+    [healthcareTemplateIds, templates],
+  );
+  const phsTemplates = useMemo(
+    () => templates.filter((item) => phsTemplateIds.has(item.id)),
+    [phsTemplateIds, templates],
+  );
 
   const template = useMemo(
-    () =>
-      CONTEXT_TEMPLATE_REGISTRY.find((item) => item.id === templateId) ??
-      CONTEXT_TEMPLATE_REGISTRY[0],
-    [templateId],
+    () => templates.find((item) => item.id === templateId) ?? templates[0],
+    [templateId, templates],
   );
   const rateCardTemplate = useMemo(
     () =>
@@ -250,21 +279,30 @@ export function CsvUploadConnector({
               onChange={(event) => setTemplateId(event.target.value)}
             >
               <optgroup label="Context templates">
-                {CONTEXT_TEMPLATE_REGISTRY.filter(
-                  (item) => !PHS_CONTEXT_TEMPLATES.some((template) => template.id === item.id),
-                ).map((item) => (
+                {generalTemplates.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="PHS command center phase 0">
-                {PHS_CONTEXT_TEMPLATES.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </optgroup>
+              {healthcareTemplates.length > 0 && (
+                <optgroup label="Meridian/PHS healthcare context">
+                  {healthcareTemplates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {phsTemplates.length > 0 && (
+                <optgroup label="PHS command center phase 0">
+                  {phsTemplates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
               <optgroup label="Moves rate cards">
                 {RATE_CARD_TEMPLATE_DEFINITIONS.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -561,8 +599,8 @@ export function CsvUploadConnector({
                 <span>
                   Evidence ledger:{" "}
                   {result.evidenceLedger.rowsRecorded.toLocaleString()} row
-                  {result.evidenceLedger.rowsRecorded === 1 ? "" : "s"}{" "}
-                  recorded ({result.evidenceLedger.evidenceIds.join(", ")}).
+                  {result.evidenceLedger.rowsRecorded === 1 ? "" : "s"} recorded
+                  ({result.evidenceLedger.evidenceIds.join(", ")}).
                 </span>
               ) : null}
               <code style={{ whiteSpace: "normal" }}>
