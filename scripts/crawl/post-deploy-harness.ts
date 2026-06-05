@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import {
-  POST_DEPLOY_HARD_QUESTIONS,
   createIsolatedPersonaContext,
+  resolveCrawlQuestions,
   resolveCrawlPersonas,
   resolveCrawlSurfaces,
   type CrawlSurface,
@@ -21,6 +21,7 @@ interface Args {
   outputDir: string;
   persona?: string;
   surface?: string;
+  questionSet?: string;
   baseline?: string;
   noAuth: boolean;
   rollbackOnP0: boolean;
@@ -38,6 +39,7 @@ async function main() {
   const observations: CrawlPageObservation[] = [];
   const personas = resolveCrawlPersonas(args.persona);
   const surfaces = resolveCrawlSurfaces(args.surface);
+  const questions = resolveCrawlQuestions(args.questionSet);
   const plannedObservationCount = personas.length * surfaces.length;
   const baseline = args.baseline ? await readBaseline(args.baseline) : null;
   const persistProgress = async (complete: boolean) => {
@@ -57,7 +59,7 @@ async function main() {
           : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
         personaContext = activeContext;
         for (const surface of surfaces) {
-          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out));
+          observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out, questions));
           await persistProgress(false);
         }
       } finally {
@@ -175,6 +177,7 @@ async function crawlSurface(
   surface: CrawlSurface,
   baseUrl: string,
   out: string,
+  questions: readonly string[],
 ): Promise<CrawlPageObservation> {
   const consoleErrors: string[] = [];
   const networkErrors: Array<{ url: string; status: number }> = [];
@@ -194,7 +197,7 @@ async function crawlSurface(
   await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
 
   const transcript = surface.requiresAgentProbe
-    ? await askHardQuestions(page, persona, surface, safeName, out)
+    ? await askHardQuestions(page, persona, surface, safeName, out, questions)
     : { exactFieldCitations: 0 };
 
   const html = await page.content();
@@ -301,6 +304,7 @@ async function askHardQuestions(
   surface: CrawlSurface,
   safeName: string,
   out: string,
+  questions: readonly string[],
 ): Promise<{ exactFieldCitations: number }> {
   const transcript: Array<{
     question: string;
@@ -310,7 +314,7 @@ async function askHardQuestions(
     eventCount?: number;
   }> = [];
   let exactFieldCitations = 0;
-  for (const question of POST_DEPLOY_HARD_QUESTIONS) {
+  for (const question of questions) {
     const response = await askIntelligenceApi(page, question, persona, surface);
     const answer = response.answer;
     exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
@@ -439,6 +443,7 @@ function parseArgs(argv: string[]): Args {
     if (arg === '--output-dir' && next) args.outputDir = next;
     if (arg === '--persona' && next) args.persona = next;
     if (arg === '--surface' && next) args.surface = next;
+    if (arg === '--question-set' && next) args.questionSet = next;
     if (arg === '--baseline' && next) args.baseline = next;
     if (arg === '--no-auth') args.noAuth = true;
     if (arg === '--rollback-on-p0') args.rollbackOnP0 = true;

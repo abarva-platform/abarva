@@ -71,6 +71,64 @@ export const POST_DEPLOY_HARD_QUESTIONS = [
   "What should I ask the vendor before signing?",
 ] as const;
 
+export const PHS_MERIDIAN_HARD_QUESTIONS = [
+  "What tenant profile facts are actually loaded for Meridian: headquarters, hospital count, payer-provider structure, revenue, headcount, and executive roles?",
+  "If Meridian is meant to be a Sacramento-based integrated health system with 30+ hospitals, which loaded evidence proves that and which fields are still missing?",
+  "Who are the CIO, CTO, and CDAO personas in the loaded Meridian context, and what decisions does each own?",
+  "What does the org structure show under the CDAO: VPs, directors, managers, domains, and total resource count?",
+  "Which CDAO teams should own data engineering, analytics product management, AI governance, MDM, BI, and clinical data science?",
+  "What Meridian facts should Sentinel refuse to state until the Setup loader provides evidence?",
+  "Which loaded Meridian data records are strongest, which are stale, and which are only synthetic assumptions?",
+  "What exact evidence fields support the current Meridian enterprise profile answer?",
+  "Where could Meridian tenant identity be confused with Apex, SkyHarbor, First Capital, Lakeshore, or PHS New Mexico?",
+  "What would you ask the data steward to upload next to make Meridian profile grounding decision-grade?",
+  "What Epic data assets should Meridian expect to ingest for clinical analytics: Clarity, Caboodle, Cogito, Chronicles extracts, HL7, FHIR, or other feeds?",
+  "How should Meridian estimate Epic table or extract scope by use case without pretending to know every table name up front?",
+  "Which Epic subject areas matter for population health: encounters, diagnoses, procedures, meds, labs, vitals, ADT, care gaps, referrals, claims, and provider attribution?",
+  "Which Epic subject areas matter for hospital operations: throughput, beds, OR, ED, discharge, quality, readmissions, staffing, and revenue cycle?",
+  "Which data is needed from ERP, HR, finance, supply chain, and ITSM to connect clinical performance to cost and operating capacity?",
+  "What inbound integrations should Meridian count separately from source tables, and how should that estimate be calculated?",
+  "What is the difference between an integration, a source extract, a table, a data product, a dashboard, and a governed metric?",
+  "How should Meridian estimate report rationalization: legacy reports, Tableau or Power BI workbooks, Epic dashboards, SQL jobs, and regulatory extracts?",
+  "What metadata should the Setup loader require for every Meridian dataset before it enters the context layer?",
+  "What evidence should prove that Meridian has moved legacy workloads into AWS by July rather than merely planned it?",
+  "What should a metadata-driven Databricks ingestion framework look like for Meridian at scale?",
+  "What belongs in Bronze for Epic, claims, ERP, ITSM, identity, vendor, and external benchmark data?",
+  "What belongs in Silver for patient, encounter, provider, member, claim, cost center, service line, and facility conformance?",
+  "What belongs in Gold for population health, quality, MLR, readmissions, access, capacity, productivity, revenue cycle, and executive scorecards?",
+  "How should Unity Catalog, PHI tagging, lineage, row-level security, and audit logging be designed for Meridian?",
+  "Where should FHIR R4, HL7 v2, X12 claims, and batch file ingestion fit in the Databricks architecture?",
+  "What Lakehouse medallion data products should be built before any AI use case is funded?",
+  "How should Meridian decide between lift-and-shift AWS hosting, replatforming, refactoring, retiring, and rebuilding analytics workloads?",
+  "What are the highest-risk modernization dependencies: Epic AMS, analytics AMS, cloud networking, IAM, data quality, or governance?",
+  "What should the architecture answer say if the corpus has Databricks patterns but Meridian-specific inventory is incomplete?",
+  "Which external datasets should Meridian consider for population health: HCUP, CMS quality, HEDIS, Stars, SDOH, ADI, census, provider NPI, and drug or formulary data?",
+  "Which external datasets should be treated carefully because they may be public, stale, sampled, or not directly comparable to Meridian?",
+  "How should plan-side analytics differ from provider and hospital analytics for the same patient population?",
+  "What are the key plan-side KPIs: MLR, PMPM cost, RAF, Stars or quality rating, HEDIS gaps, retention, utilization, avoidable ED, and risk adjustment?",
+  "What are the key provider-side KPIs: readmissions, LOS, throughput, access, leakage, referral completion, quality measures, productivity, and margin by service line?",
+  "What are the shared integrated-system KPIs that connect the health plan and delivery network?",
+  "How should Meridian prioritize use cases across population health command center, clinical performance, revenue cycle, access, workforce, and cloud cost?",
+  "What would make an AI-enabled Population Health and Clinical Performance Command Center fundable in the next 90 days?",
+  "Which use cases should not be funded until Epic, claims, and attribution data are reconciled?",
+  "What should the CFO refuse to count as realized value until finance attestation exists?",
+  "What value assumptions are projections only: MLR compression, utilization reduction, readmission reduction, Stars uplift, or clinician productivity?",
+  "How should Nexus explain the gap between projected value and verified value in plain English?",
+  "What questions should a board member ask before approving a Databricks modernization business case?",
+  "What would a 30-60-90 day mobilization plan look like for Meridian's data platform, governance, and first two analytics use cases?",
+  "Which roles should be named in the RACI for Epic data, claims data, ERP data, Databricks, Unity Catalog, AI governance, and finance value attestation?",
+  "What should Meridian ask its Epic AMS vendor and analytics AMS vendor before expanding scope?",
+  "When should Source be triggered for an SI or AMS event, and when should Moves continue without procurement?",
+  "What are the biggest tenant-safety risks in this answer, and did you avoid mentioning Apex or SkyHarbor data?",
+  "What exact corpus patterns or evidence records did you use, and which claims have no source?",
+  "Give a plain-English answer for a common CXO: what should Meridian do next, why, what evidence supports it, and what gap remains?",
+] as const;
+
+export function resolveCrawlQuestions(questionSet?: string): readonly string[] {
+  if (questionSet === "phs-meridian") return PHS_MERIDIAN_HARD_QUESTIONS;
+  return POST_DEPLOY_HARD_QUESTIONS;
+}
+
 export interface PersonaContextOptions {
   baseUrl: string;
   password?: string;
