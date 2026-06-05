@@ -68,6 +68,7 @@
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
     "verify:meridian-context-showcase": "node scripts/verify/meridian-context-showcase.mjs",
+    "generate:meridian-vnext-context": "python3 scripts/enterprise-context/generate-meridian-vnext.py",
     "verify:northstar-context-layer": "node scripts/verify/northstar-context-layer-scaffold.mjs",
     "verify:pilot-data-plane": "node scripts/pilot-env/verify-data-plane.mjs",
     "auth:clerk-sso:verify": "node scripts/auth/verify-clerk-sso-readiness.mjs",
