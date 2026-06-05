@@ -24,8 +24,8 @@ describe('Learn welcome CXO context switcher', () => {
     const primitives = read('src/components/home/learn/primitives.tsx');
 
     expect(welcome).toContain('InlineAbarvaLogo');
-    expect(primitives).toContain('/brand/abarva-logo-inverse.svg');
-    expect(primitives).toContain('/brand/abarva-wordmark-color.svg');
+    expect(primitives).toContain('/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg');
+    expect(primitives).toContain('/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg');
   });
 
   it('exposes Meridian as the healthcare client label while preserving legacy aliases', () => {

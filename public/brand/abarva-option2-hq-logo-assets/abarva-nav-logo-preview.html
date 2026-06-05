@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbarVa Option 2 Nav Preview</title>
+  <style>
+    :root {
+      --black: #000000;
+      --ink: #050505;
+      --navy: #071a44;
+      --blue: #22aeea;
+      --shell: #f4f7fb;
+      --line: #d7e0ed;
+      --muted: #5b667a;
+      --white72: rgba(255, 255, 255, 0.72);
+      --white88: rgba(255, 255, 255, 0.88);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--shell);
+      color: #111827;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 40px));
+      margin: 32px auto 48px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #0b1538;
+      font-size: 30px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subhead {
+      margin: 0 0 26px;
+      color: #475569;
+      font-size: 15px;
+    }
+
+    .preview-block {
+      margin: 22px 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .preview-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .quality {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: none;
+    }
+
+    .topbar {
+      height: 64px;
+      background: var(--black);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      min-width: 0;
+    }
+
+    .symbol {
+      display: block;
+      width: 34px;
+      height: auto;
+      flex: 0 0 auto;
+    }
+
+    .symbol-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .symbol-badge img {
+      width: 30px;
+      height: auto;
+      display: block;
+    }
+
+    .combined-logo {
+      display: block;
+      height: 32px;
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    .wordmark {
+      display: block;
+      height: 30px;
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    .client {
+      color: rgba(255, 255, 255, 0.82);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 190px;
+      padding-left: 8px;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .nav a {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 7px;
+      color: var(--white72);
+      font-size: 13.5px;
+      font-weight: 550;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .nav a:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-pill a[aria-current="page"] {
+      color: #050505;
+      background: #ffffff;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.95),
+        0 8px 22px rgba(34, 174, 234, 0.28);
+      font-weight: 750;
+    }
+
+    .nav-underline a {
+      border-radius: 0;
+      min-height: 64px;
+      padding: 0 13px;
+    }
+
+    .nav-underline a[aria-current="page"] {
+      color: #ffffff;
+      background: transparent;
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    .nav-underline a[aria-current="page"]::after {
+      content: "";
+      position: absolute;
+      left: 13px;
+      right: 13px;
+      bottom: 0;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--blue);
+    }
+
+    .right-rail {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--white88);
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--navy);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .asset-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 180px;
+    }
+
+    .asset-card.dark {
+      background: #000;
+      color: white;
+      border-color: #111827;
+    }
+
+    .asset-card h2 {
+      margin: 0 0 10px;
+      color: inherit;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .asset-card p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .asset-card.dark p {
+      color: rgba(255, 255, 255, 0.68);
+    }
+
+    .asset-card img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .logo-sample-row {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .notes {
+      margin: 22px 0 0;
+      padding: 18px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .size-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 16px;
+      background: #eef3f8;
+      border-top: 1px solid var(--line);
+    }
+
+    .size-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .size-card-title {
+      padding: 10px 12px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .size-card .topbar {
+      padding: 0 20px;
+      gap: 18px;
+    }
+
+    .logo-26 {
+      height: 26px;
+      width: auto;
+      display: block;
+    }
+
+    .logo-28 {
+      height: 28px;
+      width: auto;
+      display: block;
+    }
+
+    .notes strong {
+      color: #0f172a;
+    }
+
+    @media (max-width: 920px) {
+      .topbar {
+        gap: 14px;
+        padding: 0 16px;
+      }
+
+      .client,
+      .right-rail {
+        display: none;
+      }
+
+      .nav a {
+        padding: 0 9px;
+        font-size: 12.5px;
+      }
+
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      .size-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>AbarVa Option 2 navbar preview</h1>
+    <p class="subhead">Real local assets, black product toolbar, and selected-nav treatments.</p>
+
+    <section class="preview-block">
+      <div class="preview-label">
+        <span>Recommended if you want a separate symbol left of the wordmark</span>
+        <span class="quality">symbol SVG + transparent wordmark PNG + active white pill</span>
+      </div>
+      <div class="topbar">
+        <a class="brand-lockup" href="#" aria-label="AbarVa Home">
+          <img class="symbol" src="abarva-option2-hq-symbol-dark.svg" alt="">
+          <img class="wordmark" src="source-wordmark-dark-nav-exact-transparent.png" alt="AbarVa">
+        </a>
+        <span class="client">Apex Retail Group</span>
+        <nav class="nav nav-pill" aria-label="Product modules">
+          <a href="#">Home</a>
+          <a href="#">Intelligence</a>
+          <a href="#">Moves</a>
+          <a href="#" aria-current="page">Source</a>
+          <a href="#">Tower</a>
+        </nav>
+        <div class="right-rail">
+          <span>Learn</span>
+          <span>Product</span>
+          <span class="avatar">AS</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-block">
+      <div class="preview-label">
+        <span>Current-style active nav treatment</span>
+        <span class="quality">combined SVG logo + blue underline</span>
+      </div>
+      <div class="topbar">
+        <a class="brand-lockup" href="#" aria-label="AbarVa Home">
+          <img class="combined-logo" src="abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa">
+        </a>
+        <span class="client">Meridian Health</span>
+        <nav class="nav nav-underline" aria-label="Product modules">
+          <a href="#">Home</a>
+          <a href="#" aria-current="page">Intelligence</a>
+          <a href="#">Moves</a>
+          <a href="#">Source</a>
+          <a href="#">Tower</a>
+        </nav>
+        <div class="right-rail">
+          <span>Learn</span>
+          <span>Product</span>
+          <span class="avatar">AS</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-block">
+      <div class="preview-label">
+        <span>Logo size comparison</span>
+        <span class="quality">same combined compact SVG at 26px and 28px</span>
+      </div>
+      <div class="size-grid">
+        <div class="size-card">
+          <div class="size-card-title">26px - conservative enterprise scale</div>
+          <div class="topbar">
+            <a class="brand-lockup" href="#" aria-label="AbarVa Home">
+              <img class="logo-26" src="abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa">
+            </a>
+            <span class="client">Apex Retail Group</span>
+            <nav class="nav nav-pill" aria-label="Product modules">
+              <a href="#">Home</a>
+              <a href="#" aria-current="page">Intelligence</a>
+              <a href="#">Moves</a>
+              <a href="#">Source</a>
+            </nav>
+          </div>
+        </div>
+
+        <div class="size-card">
+          <div class="size-card-title">28px - balanced product scale</div>
+          <div class="topbar">
+            <a class="brand-lockup" href="#" aria-label="AbarVa Home">
+              <img class="logo-28" src="abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa">
+            </a>
+            <span class="client">Apex Retail Group</span>
+            <nav class="nav nav-pill" aria-label="Product modules">
+              <a href="#">Home</a>
+              <a href="#" aria-current="page">Intelligence</a>
+              <a href="#">Moves</a>
+              <a href="#">Source</a>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-block">
+      <div class="preview-label">
+        <span>Badge variant</span>
+        <span class="quality">symbol held in a quiet container + active white pill</span>
+      </div>
+      <div class="topbar">
+        <a class="brand-lockup" href="#" aria-label="AbarVa Home">
+          <span class="symbol-badge">
+            <img src="abarva-option2-hq-symbol-dark.svg" alt="">
+          </span>
+          <img class="wordmark" src="source-wordmark-dark-nav-exact-transparent.png" alt="AbarVa">
+        </a>
+        <span class="client">Lakeshore Holdings</span>
+        <nav class="nav nav-pill" aria-label="Product modules">
+          <a href="#">Home</a>
+          <a href="#">Intelligence</a>
+          <a href="#" aria-current="page">Moves</a>
+          <a href="#">Source</a>
+          <a href="#">Tower</a>
+        </nav>
+        <div class="right-rail">
+          <span>Learn</span>
+          <span>Product</span>
+          <span class="avatar">AS</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="comparison">
+      <article class="asset-card dark">
+        <h2>Best dark nav combined asset</h2>
+        <div class="logo-sample-row">
+          <img src="abarva-option2-hq-nav-dark-compact.svg" alt="AbarVa compact dark nav logo" style="height: 32px; width: auto;">
+        </div>
+        <p>Use this if you want one simple asset and no separate symbol slot.</p>
+      </article>
+
+      <article class="asset-card dark">
+        <h2>Best separate-symbol lockup</h2>
+        <div class="logo-sample-row">
+          <img src="abarva-option2-hq-symbol-dark.svg" alt="" style="height: 34px; width: auto;">
+          <img src="source-wordmark-dark-nav-exact-transparent.png" alt="AbarVa" style="height: 30px; width: auto;">
+        </div>
+        <p>Use this if the symbol should sit left of the wordmark as its own toolbar element.</p>
+      </article>
+
+      <article class="asset-card">
+        <h2>Light surface lockup</h2>
+        <div class="logo-sample-row">
+          <img src="abarva-option2-hq-symbol-light.svg" alt="" style="height: 42px; width: auto;">
+          <img src="source-wordmark-light-exact-transparent.png" alt="AbarVa" style="height: 38px; width: auto;">
+        </div>
+        <p>Good for documents, cards, and light marketing surfaces.</p>
+      </article>
+    </div>
+
+    <section class="notes">
+      <strong>Quality read:</strong> SVG masters are present for symbol, nav logo, and app icon; PNG exports have alpha; nav assets cover 24px through 40px at 1x to 4x. For the app top bar, I would use SVG for symbol/nav assets and keep PNG only for the uploaded exact wordmark if we choose the split-symbol lockup. The active white pill reads much more selected than the existing blue underline, but it is also louder; I would use it for primary module nav only, not every right-rail link.
+    </section>
+  </main>
+</body>
+</html>

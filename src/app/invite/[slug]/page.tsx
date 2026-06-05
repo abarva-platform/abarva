@@ -93,7 +93,7 @@ function InviteSurface({ persona }: { persona: CxoPersona }) {
           }}
         >
           <Image
-            src="/brand/abarva-logo-inverse.svg"
+            src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg"
             alt="AbarVa"
             width={92}
             height={24}

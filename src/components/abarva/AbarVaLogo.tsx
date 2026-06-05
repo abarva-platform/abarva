@@ -1,4 +1,4 @@
-// BRAND1 · canonical AbarVa wordmark + lockup component (ADMIN1 extends with variant prop).
+// BRAND1 · canonical AbarVa Option 2 compact nav lockup component.
 import type * as React from 'react';
 
 import { clsx } from 'clsx'
@@ -16,8 +16,8 @@ export type AbarVaLogoVariant = 'wordmark' | 'lockup'
 export type AbarVaLogoSize = 'sm' | 'md' | 'lg'
 
 interface AbarVaLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  /** Visual variant — 'wordmark' (default, canonical /brand/abarva-logo.svg)
-   *  or 'lockup' (orbital symbol + wordmark, lockup-v2 asset) */
+  /** Visual variant: compact Option 2 symbol + wordmark by default,
+   * or the slightly wider standard Option 2 lockup. */
   variant?: AbarVaLogoVariant
   /** Optional semantic size */
   size?: AbarVaLogoSize
@@ -43,11 +43,11 @@ const LOCKUP_SIZE_TO_HEIGHT: Record<AbarVaLogoSize, number> = {
 
 // Asset paths (string-only — no inline markup, NAV1B invariants forbid
 // raw markup tokens in this source file).
-const WORDMARK_ASSET = '/brand/abarva-logo.svg'
-const LOCKUP_ASSET = '/brand/abarva-logo-lockup-v2.svg'
+const WORDMARK_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'
+const LOCKUP_ASSET = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg'
 
-// Both assets use the same 1600x520 viewBox aspect ratio.
-const ASSET_ASPECT_RATIO = 1600 / 520
+const COMPACT_ASSET_ASPECT_RATIO = 142.198 / 32
+const STANDARD_ASSET_ASPECT_RATIO = 153.277 / 32
 
 export function AbarVaLogo({
   variant = 'wordmark',
@@ -60,8 +60,9 @@ export function AbarVaLogo({
 }: AbarVaLogoProps) {
   const heightTable = variant === 'lockup' ? LOCKUP_SIZE_TO_HEIGHT : SIZE_TO_HEIGHT
   const computedHeight = height ?? heightTable[size]
+  const aspectRatio = variant === 'lockup' ? STANDARD_ASSET_ASPECT_RATIO : COMPACT_ASSET_ASPECT_RATIO
   const computedWidth =
-    width ?? `calc(${typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight} * ${ASSET_ASPECT_RATIO})`
+    width ?? `calc(${typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight} * ${aspectRatio})`
 
   const src = variant === 'lockup' ? LOCKUP_ASSET : WORDMARK_ASSET
 

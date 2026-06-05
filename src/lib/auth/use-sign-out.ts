@@ -24,9 +24,9 @@ import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
  * does manually — and that workaround is the only thing that worked during
  * the 2026-05-13 audit.
  *
- * Every sign-out button in the shell (AppTopBar, AppRail, AppTopBarEditorial,
- * AppTopBarTwoBar, ClientChrome, AbarvaNav) should call this hook rather
- * than re-implement the cookie-clear + Clerk-call ordering.
+ * Every sign-out button in the shell (AppTopBar, AppRail, ClientChrome,
+ * AbarvaNav) should call this hook rather than re-implement the cookie-clear +
+ * Clerk-call ordering.
  */
 export function useSignOut(redirectUrl: string = "/signed-out") {
   const { signOut } = useClerk();

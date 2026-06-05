@@ -1,7 +1,7 @@
 // DES7 · Canonical AbarVa wordmark module.
 //
 // This module now resolves to the uploaded logo asset at:
-// `public/brand/abarva-logo.svg` through `AbarVaLogo`.
+// `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` through `AbarVaLogo`.
 // Legacy callers continue to use `AbarvaWordmark` and `AbarVaWordmark`
 // without any behavior change at import sites.
 

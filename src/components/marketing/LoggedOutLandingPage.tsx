@@ -875,7 +875,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           <div className="hero-product-head">
             <span>
               <Image
-                src="/brand/abarva-logo-inverse.svg"
+                src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg"
                 alt=""
                 width={82}
                 height={21}
@@ -914,7 +914,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         <header className="public-nav">
           <Link href="/" aria-label="AbarVa home">
             <Image
-              src="/brand/abarva-logo-inverse.svg"
+              src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg"
               alt="AbarVa"
               width={85}
               height={22}

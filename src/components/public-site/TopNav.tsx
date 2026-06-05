@@ -33,7 +33,7 @@ export function TopNav() {
       <Link href="/" className="pub-topnav__wordmark" aria-label="AbarVa home">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/abarva-logo.svg"
+          src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
           alt="AbarVa"
           className="pub-topnav__wordmark-logo"
         />

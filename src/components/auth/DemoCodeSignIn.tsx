@@ -198,7 +198,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         }}
       >
         <Image
-          src="/brand/abarva-logo.svg"
+          src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
           alt="AbarVa"
           width={92}
           height={24}

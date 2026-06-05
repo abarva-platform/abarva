@@ -22,7 +22,7 @@ export function Footer() {
         <div className="pub-footer__brand">
           <Link href="/" className="pub-footer__brand-link" aria-label="AbarVa home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/abarva-logo.svg" alt="AbarVa" className="pub-footer__logo" />
+            <img src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg" alt="AbarVa" className="pub-footer__logo" />
           </Link>
           <p className="pub-footer__tagline">
             Decision intelligence for enterprise AI outcomes.

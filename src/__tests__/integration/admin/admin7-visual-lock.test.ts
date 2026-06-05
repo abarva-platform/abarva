@@ -470,8 +470,8 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // -------------------------------------------------------------------------
 
   describe('AbarVaLogo is the only canonical logo path', () => {
-    it('public/brand/abarva-logo-lockup-v2.svg exists', () => {
-      expect(existsSync(resolve(root, 'public/brand/abarva-logo-lockup-v2.svg'))).toBe(true);
+    it('public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg exists', () => {
+      expect(existsSync(resolve(root, 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg'))).toBe(true);
     });
 
     it('AbarVaLogo component exists', () => {
