@@ -336,10 +336,24 @@ async function collect() {
   );
 
   const lifecycleBlobTypes = managementPolicy?.rules?.flatMap((rule) => rule.filters?.blobTypes ?? []) ?? [];
+  const lifecycleHasTieringAction = (managementPolicy?.rules ?? []).some((rule) => {
+    const actions = rule.actions ?? {};
+    return Boolean(
+      actions.baseBlob?.tierToCool ||
+        actions.baseBlob?.tierToCold ||
+        actions.baseBlob?.tierToArchive ||
+        actions.baseBlob?.tierToHot ||
+        actions.version?.tierToCool ||
+        actions.version?.tierToCold ||
+        actions.version?.tierToArchive ||
+        actions.version?.tierToHot,
+    );
+  });
+  const lifecycleAvoidsInvalidAppendBlobTiering = lifecycleHasTieringAction && !lifecycleBlobTypes.includes('appendBlob');
   checks.push(
-    lifecycleBlobTypes.includes('appendBlob')
-      ? pass('audit-lifecycle-append-blob-aware', 'Storage', 'Audit lifecycle policy includes append blobs.', { lifecycleBlobTypes })
-      : warn('audit-lifecycle-append-blob-aware', 'Storage', 'Audit lifecycle policy is deployment-safe but currently scoped to block blobs; confirm intended runtime blob type before pilot cutover.', { lifecycleBlobTypes }),
+    lifecycleAvoidsInvalidAppendBlobTiering
+      ? pass('audit-lifecycle-append-blob-safe', 'Storage', 'Audit lifecycle policy avoids invalid append-blob tiering actions.', { lifecycleBlobTypes })
+      : warn('audit-lifecycle-append-blob-safe', 'Storage', 'Audit lifecycle policy must avoid appendBlob tiering actions before pilot cutover.', { lifecycleBlobTypes, lifecycleHasTieringAction }),
   );
 
   checks.push(
