@@ -144,6 +144,16 @@ export function comparePage(
 
   const base = findBaselinePage(observation, baseline);
 
+  if (observation.surfaceId === "auth-bootstrap") {
+    add(
+      "P1",
+      "auth-bootstrap",
+      "A crawl persona could not establish an authenticated session; remaining personas should continue.",
+      { message: observation.visibleText },
+    );
+    return findings;
+  }
+
   if (!observation.visibleText.includes(observation.expectedTenantName)) {
     add(
       base ? "P0" : "P1",

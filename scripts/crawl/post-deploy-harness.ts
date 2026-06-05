@@ -58,9 +58,26 @@ async function main() {
       const browser = await launchCrawlBrowser();
       let personaContext: { context: BrowserContext; page: Page } | null = null;
       try {
-        const activeContext = args.noAuth
-          ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
-          : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
+        let activeContext: {
+          context: BrowserContext;
+          page: Page;
+          persona: unknown;
+        };
+        try {
+          activeContext = args.noAuth
+            ? await createNoAuthPersonaContext(browser, persona, args.baseUrl)
+            : await createIsolatedPersonaContext(browser, persona, {
+                baseUrl: args.baseUrl,
+              });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn(`crawl_auth_bootstrap_failed:${persona.key}:${message}`);
+          observations.push(
+            buildAuthBootstrapObservation(persona, args.baseUrl, message),
+          );
+          await persistProgress(false);
+          continue;
+        }
         personaContext = activeContext;
         for (const surface of surfaces) {
           console.log(`crawl_surface_start:${persona.key}:${surface.id}:${surface.path}`);
@@ -111,6 +128,35 @@ async function main() {
       console.error('P0 findings detected. Run scripts/crawl/auto-rollback.ts with --execute only from the controlled deploy workflow.');
     }
   }
+}
+
+function buildAuthBootstrapObservation(
+  persona: { key: string; tenantKey: string; tenantName: string },
+  baseUrl: string,
+  message: string,
+): CrawlPageObservation {
+  return {
+    tenantKey: persona.tenantKey,
+    expectedTenantName: persona.tenantName,
+    personaKey: persona.key,
+    surfaceId: 'auth-bootstrap',
+    path: '/sign-in',
+    url: new URL('/sign-in', baseUrl).toString(),
+    visibleText: `Auth bootstrap failed for ${persona.tenantName}: ${message}`,
+    consoleErrors: [],
+    networkErrors: [],
+    evidenceChipCount: 0,
+    proofPointCount: 0,
+    citationDensity: 0,
+    hardQuestionExactFieldCitations: 0,
+    watchlistTopEntries: [],
+    visualCanon: {
+      backgroundOk: true,
+      headersOk: true,
+      bodyOk: true,
+      buttonsOk: true,
+    },
+  };
 }
 
 function buildCrawlRun(baseUrl: string, runId: string, observations: CrawlPageObservation[]): CrawlRun {

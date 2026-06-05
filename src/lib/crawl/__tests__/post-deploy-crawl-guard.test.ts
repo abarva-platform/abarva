@@ -139,4 +139,22 @@ describe("post-deploy crawl guard", () => {
       ]),
     );
   });
+
+  it("classifies crawl auth bootstrap failures as P1 without tenant-leakage noise", () => {
+    const findings = comparePage(
+      observation({
+        surfaceId: "auth-bootstrap",
+        path: "/sign-in",
+        visibleText:
+          "Auth bootstrap failed for Apex Retail Group: You have been banned.",
+      }),
+    );
+
+    expect(findings).toEqual([
+      expect.objectContaining({
+        severity: "P1",
+        dimension: "auth-bootstrap",
+      }),
+    ]);
+  });
 });
