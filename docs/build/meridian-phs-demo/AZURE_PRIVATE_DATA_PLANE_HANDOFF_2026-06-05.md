@@ -276,8 +276,8 @@ No runtime code change is required to create this handoff. The changes needed fo
 
 | Slice | Change | Tests/smokes required |
 |---|---|---|
-| A | Add Blob-first Admin bulk upload endpoint that stages manifest/files and emits safe metadata. | Tenancy, attestation, sensitive guard, metadata no-PHI unit tests. |
-| B | Wire Event Grid/Service Bus producer or direct queue send after Blob staging. | Service Bus message shape tests and Azure smoke. |
+| A | Add Blob-first Admin bulk upload endpoint that stages manifest/files and emits safe metadata. | Tenancy, attestation, sensitive guard, metadata no-PHI unit tests. Implemented by PR #3139 for CSV/JSON/JSONL/YAML bulk files. |
+| B | Wire direct Service Bus queue send after Blob staging. | Service Bus message shape tests and Azure smoke. Implemented in code by the follow-on `stage_and_enqueue` mode; Azure private-network smoke is still required before calling it live. |
 | C | Pass `writePilotLedger` into worker wrapper. | Worker unit test proving upload run/file manifest/quarantine rows are written. |
 | D | Implement approved-load commit pipeline into tenant context chunks. | Template mapping tests, chunk persistence tests, rollback tests. |
 | E | Add embedding handoff from committed chunks. | Pending-to-embedded smoke and retrieval proof. |
@@ -290,4 +290,3 @@ Current state is strong enough to explain the architecture and prove the securit
 The honest pilot statement is:
 
 > AbarVa has the Azure Blob helper, tenant-gated Admin loader, required attestation, sensitive upload guard, template registry, and Azure Service Bus worker foundation in place. The remaining production cutover is to make Blob-first staging the canonical Admin path, run the worker inside the private Azure data plane, wire pilot ledger plus commit/embedding, and capture retrieval plus tenant-isolation evidence.
-

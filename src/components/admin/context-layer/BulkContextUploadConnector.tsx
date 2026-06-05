@@ -30,6 +30,10 @@ type BulkResult = {
       path: string;
       staged: boolean;
     };
+    queue?: {
+      queueName: string;
+      messageId: string;
+    } | null;
     loadResult?: {
       rowsParsed: number;
       chunksQueued: number;
@@ -72,7 +76,9 @@ export function BulkContextUploadConnector({
 }: BulkContextUploadConnectorProps) {
   const [manifestJson, setManifestJson] = useState(defaultManifest);
   const [files, setFiles] = useState<File[]>([]);
-  const [mode, setMode] = useState<"validate_only" | "stage_and_process">(
+  const [mode, setMode] = useState<
+    "validate_only" | "stage_and_enqueue" | "stage_and_process"
+  >(
     "validate_only",
   );
   const [attestationAccepted, setAttestationAccepted] = useState(false);
@@ -190,11 +196,19 @@ export function BulkContextUploadConnector({
           <select
             value={mode}
             onChange={(event) =>
-              setMode(event.target.value as "validate_only" | "stage_and_process")
+              setMode(
+                event.target.value as
+                  | "validate_only"
+                  | "stage_and_enqueue"
+                  | "stage_and_process",
+              )
             }
             style={inputStyle}
           >
             <option value="validate_only">Validate only</option>
+            <option value="stage_and_enqueue">
+              Stage to Azure Blob and queue worker
+            </option>
             <option value="stage_and_process">
               Stage to Azure Blob and process now
             </option>
@@ -284,7 +298,11 @@ export function BulkContextUploadConnector({
               {result.results.map((item) => (
                 <li key={item.fileName}>
                   {item.fileName} · {item.templateId} ·{" "}
-                  {item.blob.staged ? item.blob.path : "validated only"}
+                  {item.queue
+                    ? `queued ${item.queue.messageId}`
+                    : item.blob.staged
+                      ? item.blob.path
+                      : "validated only"}
                 </li>
               ))}
             </ul>

@@ -30,6 +30,12 @@ export interface ObjectStorageAdapter {
   createSignedUrl(bucket: string, path: string, expiresInSeconds: number, options?: ObjectStorageSignedUrlOptions): Promise<string>;
 }
 
+export interface ObjectStorageResolvedLocation {
+  accountName: string;
+  containerName: string;
+  blobPath: string;
+}
+
 type BodyInitLike = Buffer | Uint8Array | ArrayBuffer | Blob | string;
 
 interface AzureStorageConfig {
@@ -174,6 +180,19 @@ function containerClient(bucket: string, path: string): { container: ContainerCl
   return {
     container: service.getContainerClient(location.containerName),
     ...location,
+  };
+}
+
+export function describeObjectStorageLocation(
+  bucket: string,
+  path: string,
+): ObjectStorageResolvedLocation {
+  const { config } = bundle();
+  const location = resolveLocation(bucket, path);
+  return {
+    accountName: config.accountName,
+    containerName: location.containerName,
+    blobPath: location.blobName,
   };
 }
 

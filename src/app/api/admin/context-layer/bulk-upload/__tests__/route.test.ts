@@ -13,11 +13,24 @@ jest.mock("@/lib/auth/tenancy", () => ({
 }));
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
+  describeObjectStorageLocation: jest.fn(() => ({
+    accountName: "stcontextpilot001",
+    containerName: "context-drops",
+    blobPath:
+      "context-uploads/meridian-health/meridian-phase-0/abc123/enterprise-profile.yaml",
+  })),
   getObjectStorageAdapter: jest.fn(() => ({
     upload: jest.fn(),
     remove: jest.fn(),
     download: jest.fn(),
     createSignedUrl: jest.fn(),
+  })),
+}));
+
+jest.mock("@/lib/ingestion/service-bus-producer", () => ({
+  enqueueAzureLandingZoneMessage: jest.fn(async () => ({
+    queueName: "q-context-ingestion-events",
+    messageId: "msg-route-1",
   })),
 }));
 
@@ -119,6 +132,66 @@ describe("/api/admin/context-layer/bulk-upload", () => {
           blob: {
             bucket: "context-uploads",
             staged: false,
+          },
+        },
+      ],
+    });
+  });
+
+  it("stages and queues files for private worker processing", async () => {
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("mode", "stage_and_enqueue");
+    formData.set(
+      "manifestJson",
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "enterprise-profile.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+    );
+    addUploadAttestation(formData);
+    formData.append(
+      "files",
+      new File(
+        [
+          [
+            "enterprise_profile:",
+            "  - metric: headquarters",
+            "    value: Sacramento, California",
+            "    period: FY2026",
+            "    source: enterprise-profile",
+          ].join("\n"),
+        ],
+        "enterprise-profile.yaml",
+        { type: "application/x-yaml" },
+      ),
+    );
+
+    const response = await POST(bulkRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      mode: "stage_and_enqueue",
+      filesProcessed: 1,
+      rowsParsed: 0,
+      chunksQueued: 0,
+      persistence: {
+        status: "staged_and_enqueued",
+      },
+      results: [
+        {
+          fileName: "enterprise-profile.yaml",
+          templateId: "enterprise-profile",
+          queue: {
+            queueName: "q-context-ingestion-events",
+            messageId: "msg-route-1",
           },
         },
       ],
