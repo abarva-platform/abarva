@@ -43,7 +43,7 @@ The whole surface is a single `<main>` per view, rendered at the natural viewpor
 ### Top nav (`<nav class="top">`)
 
 - Height ~64px, full width, `#ffffff` background, 1px bottom border `--canon-border`.
-- Left: AbarVa wordmark (`assets/logos/abarva-wordmark-color.svg`) + breadcrumb `STRATEGIC MOVES`.
+- Left: Option 2 AbarVa compact nav logo (`public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg`) + breadcrumb `STRATEGIC MOVES`.
 - Right: env chip · "+ New Move" CTA button · back button (only visible on detail/originate).
 - The "+ New Move" CTA is **black on cream** (not blue) — `background: var(--ink); color: var(--cream)`.
 
@@ -216,8 +216,9 @@ The prototype stores section content as HTML strings (`<strong>` allowed) — pr
 
 ## Assets
 
-- `assets/logos/abarva-wordmark-color.svg` — top-nav wordmark.
-- `assets/logos/abarva-monogram-v-white.svg` — FAB glyph.
+- `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg` — light-background top-nav logo.
+- `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg` — dark-background top-nav logo.
+- `public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-symbol-dark.svg` — compact symbol / app-rail glyph.
 
 Both are already in the AbarVa repo. The prototype loads from a relative path; in production, import via the app's existing logo component.
 
