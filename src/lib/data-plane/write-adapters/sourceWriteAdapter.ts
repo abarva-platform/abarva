@@ -53,7 +53,11 @@ export interface SourceApprovalWrite {
   readonly clientKey: string;
   readonly fromState: string;
   readonly toState: string;
-  readonly approvalAction: "admin_review" | "rejected";
+  readonly approvalAction:
+    | "admin_review"
+    | "co_approval_requested"
+    | "changes_requested"
+    | "rejected";
   readonly approvedByUserId: string;
   readonly notes: string | null;
 }
@@ -80,6 +84,14 @@ export interface SourceStageUpdate {
   readonly eventId: string;
   readonly clientKey: string;
   readonly stageKey: string;
+  readonly lifecycleState: string;
+  readonly updatedAtIso: string;
+}
+
+/** Transition only the event lifecycle_state. */
+export interface SourceLifecycleTransition {
+  readonly eventId: string;
+  readonly clientKey: string;
   readonly lifecycleState: string;
   readonly updatedAtIso: string;
 }
@@ -145,6 +157,10 @@ export interface SourceWriteAdapter {
   applyApproval(input: SourceApprovalWrite): Promise<SourceWriteOutcome<void>>;
   /** Update the persisted event's stage + lifecycle. */
   updateStage(input: SourceStageUpdate): Promise<SourceWriteOutcome<void>>;
+  /** Update only the persisted event lifecycle. */
+  transitionLifecycle(
+    input: SourceLifecycleTransition,
+  ): Promise<SourceWriteOutcome<void>>;
   /** Update a gate-criterion row; returns the updated row. */
   updateGateCriterion(
     input: GateCriterionUpdate,
@@ -248,6 +264,19 @@ export function createSupabaseSourceWriteAdapter(
         .from("source_events")
         .update({
           current_stage_key: input.stageKey,
+          lifecycle_state: input.lifecycleState,
+          updated_at: input.updatedAtIso,
+        })
+        .eq("id", input.eventId)
+        .eq("client_key", input.clientKey);
+      if (error) return fail(error.message);
+      return ok();
+    },
+
+    async transitionLifecycle(input) {
+      const { error } = await getClient()
+        .from("source_events")
+        .update({
           lifecycle_state: input.lifecycleState,
           updated_at: input.updatedAtIso,
         })
@@ -435,6 +464,27 @@ export function createAzureSourceWriteAdapter(
              WHERE id = $4 AND client_key = $5`,
             [
               input.stageKey,
+              input.lifecycleState,
+              input.updatedAtIso,
+              input.eventId,
+              input.clientKey,
+            ],
+          ),
+        );
+        return ok();
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
+    async transitionLifecycle(input) {
+      try {
+        await session((run) =>
+          run(
+            `UPDATE source_events
+               SET lifecycle_state = $1, updated_at = $2
+             WHERE id = $3 AND client_key = $4`,
+            [
               input.lifecycleState,
               input.updatedAtIso,
               input.eventId,
