@@ -24,7 +24,7 @@ context-loader or corpus-remediation task.
 | Curriculum | `tests/agent-grounding/curriculum/core-cxo.jsonl` defines CXO-grade cases across Apex Retail, Meridian Health, and SkyHarbor Air. |
 | Scoring | `src/lib/agent-grounding/scorer.ts` grades each captured or live answer against tenant truth, corpus context, evidence, refusal discipline, data gaps, and output hygiene. |
 | Reporting | `src/lib/agent-grounding/report.ts` creates machine-readable JSON and an HTML report with every prompt, answer, issue, and severity. |
-| Runner | `src/scripts/qa/agent-grounding-runner.ts` runs dry, score-file, and live modes. |
+| Runner | `src/scripts/qa/agent-grounding-runner.ts` runs dry, score-file, live app-session, and OpenAI-direct modes. |
 
 ## Meridian Guardrail
 
@@ -66,6 +66,20 @@ AGENT_GROUNDING_SESSION_COOKIE="__session=..." \
 
 Live mode posts to `/api/chat/agent` with the case prompt, agent name, tenant
 name, surface, and `agentGroundingRun: true` context.
+
+Run the same curriculum through the OpenAI API only:
+
+```bash
+OPENAI_API_KEY="sk-..." \
+  npm run qa:agent-grounding:openai -- --openai-model gpt-4.1 --tenant meridian-health --out reports/agent-grounding/openai-meridian
+```
+
+OpenAI mode calls the OpenAI Chat Completions API directly. It does not call the
+AbarVa app route, Anthropic, Claude, Clerk, or any tenant data loader. Use it as
+a model-only grounding simulation: it proves whether the agent instructions and
+tenant profile/corpus guardrails produce understandable, scoped answers from
+OpenAI, but it does not prove production retrieval or live tenant data wiring.
+Use live app-session mode or browser crawl evidence for that separate proof.
 
 ## Severity Rules
 

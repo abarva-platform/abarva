@@ -327,17 +327,24 @@ function lower(text: string): string {
 }
 
 function missingTerms(answer: string, terms: string[]): string[] {
-  const answerLower = lower(answer);
-  return terms.filter((term) => !answerLower.includes(term.toLocaleLowerCase()));
+  return terms.filter((term) => !hasTerm(answer, term));
 }
 
 function foundTerms(answer: string, terms: string[]): string[] {
-  const answerLower = lower(answer);
-  return terms.filter((term) => answerLower.includes(term.toLocaleLowerCase()));
+  return terms.filter((term) => hasTerm(answer, term));
 }
 
 function hasAny(answer: string, terms: string[]): boolean {
   return foundTerms(answer, terms).length > 0;
+}
+
+function hasTerm(answer: string, term: string): boolean {
+  const normalizedAnswer = lower(answer);
+  const normalizedTerm = lower(term);
+  if (/^[a-z0-9_-]+$/i.test(normalizedTerm)) {
+    return new RegExp(`(^|[^a-z0-9])${escapeRegExp(normalizedTerm)}($|[^a-z0-9])`, 'i').test(normalizedAnswer);
+  }
+  return normalizedAnswer.includes(normalizedTerm);
 }
 
 function firstMatch(text: string, re: RegExp): string | null {
@@ -346,4 +353,8 @@ function firstMatch(text: string, re: RegExp): string | null {
 
 function countMatches(text: string, re: RegExp): number {
   return text.match(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))?.length ?? 0;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
