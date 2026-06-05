@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-06-04T00:00:00.000Z",
+  "profile": {
+    "tenantKey": "meridian",
+    "tenantSlug": "meridian",
+    "displayName": "Meridian Health System",
+    "headquarters": "Sacramento, California",
+    "businessModel": "Integrated delivery network plus health plan",
+    "annualRevenueUsd": 16800000000,
+    "workforce": 58000,
+    "hospitals": 31,
+    "clinics": 280,
+    "coveredLives": 1600000,
+    "clinicalCore": "Epic",
+    "cloudTarget": "100% workloads hosted in AWS by July 2026",
+    "modernizationReality": "Most workloads are lift-and-shift legacy VMs hosted in AWS, not cloud-native modernization."
+  },
+  "rowCounts": {
+    "org_decision_rights": 224,
+    "facilities_business_units": 329,
+    "vendors_contract_inventory": 110,
+    "cmdb_applications_services": 240,
+    "ci_relationships_dependencies": 820,
+    "renewal_calendar": 90,
+    "spend_baseline": 360,
+    "policies_procedures": 75,
+    "problems": 150,
+    "incidents": 320,
+    "changes": 220,
+    "slas": 150,
+    "initiative_portfolio": 95,
+    "data_domains_stewardship": 110,
+    "risk_compliance_register": 210
+  },
+  "assertions": {
+    "sacramentoProfile": true,
+    "hospitalCountAtLeast30": true,
+    "clinicCountAtLeast280": true,
+    "cdaoResourceRowsAtLeast120": true,
+    "awsHostedSignalsPresent": true,
+    "unresolvedReferences": 0
+  },
+  "unresolvedReferences": []
+}
