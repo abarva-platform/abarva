@@ -701,6 +701,26 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(valueHtml).toContain("agent-dock-panel");
   });
 
+  it("renders Stage 10 Transition with KT milestones, go-live readiness, risks, and human cutover approval", () => {
+    const html = render({ viewStage: "transition" });
+
+    expect(html).toContain("source-transition-stage-view");
+    expect(html).toContain("Prove go-live readiness before cutover");
+    expect(html).toContain("source-transition-kt-plan");
+    expect(html).toContain("8-week onboarding control window is active");
+    expect(html).toContain("Reverse Shadow");
+    expect(html).toContain("source-transition-readiness-scorecard");
+    expect(html).toContain("CIO + CDO + Vendor PM");
+    expect(html).toContain("source-transition-risk-register");
+    expect(html).toContain("Incumbent departure gap risk");
+    expect(html).toContain("APX-CDP-2026");
+    expect(html).toContain("Q3 2026 data-migration freeze window");
+    expect(html).toContain("source-transition-go-no-go");
+    expect(html).toContain("source-transition-governance");
+    expect(html).toContain("people approve cutover");
+    expect(html).toContain("source-transition-document-workspace");
+  });
+
   it("renders workspace with all four tabs", () => {
     const html = render();
     expect(html).toContain("source-canvas-workspace");

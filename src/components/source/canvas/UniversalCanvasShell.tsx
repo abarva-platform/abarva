@@ -129,6 +129,7 @@ import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
 import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
+import { TransitionStageView } from "./transition/TransitionStageView";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 interface UniversalCanvasShellProps {
@@ -237,6 +238,15 @@ function renderStageDocumentContent({
         criteria={criteria}
         evidence={evidence}
         activityEntries={activityEntries}
+        documentWorkspace={documentTabContent}
+      />
+    );
+  }
+
+  if (viewStage === "transition") {
+    return (
+      <TransitionStageView
+        event={event}
         documentWorkspace={documentTabContent}
       />
     );
