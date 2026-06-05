@@ -17,6 +17,7 @@ const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), 
 const DEFAULT_OUT_ROOT = path.join(REPO_ROOT, 'audit-artifacts/lakeshore-cxo-hard-question-qa');
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS ?? 120_000);
 
 const SOURCE_FILES = [
   'docs/build/lakeshore/LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md',
@@ -253,13 +254,29 @@ Non-negotiable truth:
 - AMS Source event is real only through Evaluation. Do not present AMS as BAFO/Decision/Value complete.
 - Be specific: owner, trigger, evidence, failure mode, and next action.
 - If an exact number or confidential term is not in evidence, say what is known and what evidence would be required.
+- Every answer must follow this CXO digestibility shape exactly:
+  My read:
+  One direct judgment or recommendation.
+
+  Why:
+  - Two or three evidence-backed reasons.
+
+  Decision owner:
+  Name the accountable role. Use the question persona when that is the right owner.
+
+  What I would do next:
+  One concrete action, artifact, gate, or owner-led next step.
+
+  Evidence gap:
+  One line naming what still needs proof or, if fully evidenced, what evidence supports the answer.
+- Keep each answer concise: 120-220 words, no markdown tables.
 
 Return one JSON object:
 {
   "answers": [
     {
       "id": "LSH-CXO-001",
-      "answer": "180-340 words max, executive-grade, no markdown table unless truly useful",
+      "answer": "CXO-shaped answer with My read, Why, Decision owner, What I would do next, Evidence gap",
       "evidence_refs": ["source ids used"],
       "agent_confidence": "high|medium|low"
     }
@@ -281,7 +298,11 @@ Score each dimension 1-5:
 - actionability: has owners, next actions, gates, or artifacts
 
 Flag issues from this controlled list when present:
-fabricated_fact, overclaims_completion, weak_finance_depth, generic_consulting_voice, missing_owner, missing_evidence_ref, tenant_bleed_risk, mentions_pinecone, wrong_source_stage, no_next_action
+fabricated_fact, overclaims_completion, weak_finance_depth, generic_consulting_voice, missing_answer_shape, missing_owner, missing_evidence_ref, missing_evidence_gap, tenant_bleed_risk, mentions_pinecone, wrong_source_stage, no_next_action
+
+Structural labels may appear on separate lines or inline. Do not flag
+missing_answer_shape when the answer contains all five labels: My read, Why,
+Decision owner, What I would do next, Evidence gap.
 
 Return one JSON object:
 {
@@ -306,29 +327,44 @@ ${JSON.stringify(items)}`;
 }
 
 async function callOpenAIJson({ apiKey, model, prompt, temperature = 0.2, maxTokens = 12000 }) {
-  const response = await fetch(OPENAI_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: 'Return valid JSON only. No markdown fences.' },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error(`OpenAI ${response.status}: ${text.slice(0, 1200)}`);
-  const parsed = JSON.parse(text);
-  const content = parsed.choices?.[0]?.message?.content;
-  if (!content) throw new Error(`OpenAI response missing content: ${text.slice(0, 1200)}`);
-  return JSON.parse(content);
+  let lastError;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+    try {
+      const response = await fetch(OPENAI_URL, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          temperature,
+          max_tokens: maxTokens,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: 'Return valid JSON only. No markdown fences.' },
+            { role: 'user', content: prompt },
+          ],
+        }),
+      });
+      const text = await response.text();
+      if (!response.ok) throw new Error(`OpenAI ${response.status}: ${text.slice(0, 1200)}`);
+      const parsed = JSON.parse(text);
+      const content = parsed.choices?.[0]?.message?.content;
+      if (!content) throw new Error(`OpenAI response missing content: ${text.slice(0, 1200)}`);
+      return JSON.parse(content);
+    } catch (error) {
+      lastError = error;
+      if (attempt === 2) break;
+      process.stdout.write(`openai-retry(${error instanceof Error ? error.name : 'error'}) ... `);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastError;
 }
 
 function deterministicIssues(answer, question) {
@@ -337,11 +373,24 @@ function deterministicIssues(answer, question) {
   const prompt = `${question?.question ?? ''}`;
   const refs = Array.isArray(answer.evidence_refs) ? answer.evidence_refs : [];
   if (!text.trim() || text.includes('[missing answer]')) {
-    issues.push('missing_evidence_ref', 'missing_owner', 'no_next_action');
+    issues.push('missing_answer_shape', 'missing_evidence_ref', 'missing_owner', 'missing_evidence_gap', 'no_next_action');
     return [...new Set(issues)];
   }
+  const requiredSections = [
+    /\bMy read\s*:/i,
+    /\bWhy\s*:/i,
+    /\bDecision owner\s*:/i,
+    /\bWhat I would do next\s*:/i,
+    /\bEvidence gap\s*:/i,
+  ];
+  if (!requiredSections.every((pattern) => pattern.test(text))) issues.push('missing_answer_shape');
   if (refs.length < 2) issues.push('missing_evidence_ref');
-  if (/pinecone/i.test(text) && !/\b(?:not|no|without|instead of|rather than|does not|do not|isn't|is not)\b[^.]{0,90}\bpinecone\b/i.test(text)) {
+  const pineconeMentionIsNegated =
+    /\b(?:not|no|without|instead of|rather than|does not|do not|isn't|is not)\b[^.]{0,90}\bpinecone\b/i.test(text) ||
+    /\bpinecone\b[^.]{0,90}\b(?:not|no|without|is not|isn't|does not|not used|not utilized)\b/i.test(text);
+  const pineconeUsageClaim = /\b(?:uses?|using|stored in|loaded to|upserted to|vector store is)\s+pinecone\b|\bpinecone\b[^.]{0,80}\b(?:is used|stores|indexes|retrieves|upserts)\b/i.test(text);
+  const pineconeQuestion = /\bpinecone\b/i.test(prompt);
+  if (/pinecone/i.test(text) && !pineconeMentionIsNegated && (!pineconeQuestion || pineconeUsageClaim)) {
     issues.push('mentions_pinecone');
   }
   if (/realized savings (?:are|have been)|award is complete|cutover is complete|transition is complete/i.test(text) && !/\b(?:not|without|avoid|does not|do not|isn't|is not|cannot|should not|don't)\b[^.]{0,120}\b(?:realized savings|award|cutover|transition|complete|finalized)\b/i.test(text)) {
@@ -350,10 +399,24 @@ function deterministicIssues(answer, question) {
   if (/AMS/i.test(text) && /BAFO complete|decision complete|value complete|selection complete/i.test(text)) issues.push('wrong_source_stage');
   if (!/\b(CFO|Treasurer|Controller|Counsel|Audit Committee|L0 Sponsor|CIO|owner|owns|owned|accountable|responsible|decision rights|decision owner|sponsor)\b/i.test(text)) issues.push('missing_owner');
   if (!/\b(next|gate|evidence|required|approve|pause|refuse|sequence|action|step|condition|before|until|must|should)\b/i.test(text)) issues.push('no_next_action');
+  if (!/\b(evidence gap|still needs proof|needs proof|not yet|missing evidence|loaded evidence|source evidence|proof)\b/i.test(text)) issues.push('missing_evidence_gap');
   if (/\bApex\b|\bMeridian\b|\bNorthstar\b|\bSkyHarbor\b/i.test(text) && !/\bApex\b|\bMeridian\b|\bNorthstar\b|\bSkyHarbor\b/i.test(prompt)) {
     issues.push('tenant_bleed_risk');
   }
   return issues;
+}
+
+function normalizeVerdict(score, issues) {
+  const severe = new Set([
+    'fabricated_fact',
+    'overclaims_completion',
+    'tenant_bleed_risk',
+    'mentions_pinecone',
+    'wrong_source_stage',
+  ]);
+  if (score.verdict === 'fail' || issues.some((issue) => severe.has(issue))) return 'fail';
+  if (issues.length > 0 || Number(score.overall ?? 0) < 3) return 'watch';
+  return 'pass';
 }
 
 function aggregateResults(results) {
@@ -580,13 +643,24 @@ async function main() {
           issues: ['missing_judge_score'],
           critic_note: 'No judge score returned.',
         };
-      const mergedIssues = [...new Set([...(score.issues ?? []), ...deterministicIssues(item.answer, item.question)])];
+      const deterministic = deterministicIssues(item.answer, item.question);
+      const structuralIssues = new Set([
+        'missing_answer_shape',
+        'missing_owner',
+        'missing_evidence_ref',
+        'missing_evidence_gap',
+        'no_next_action',
+        'mentions_pinecone',
+        'overclaims_completion',
+        'tenant_bleed_risk',
+        'wrong_source_stage',
+      ]);
+      const judgeIssues = (score.issues ?? []).filter((issue) => !structuralIssues.has(issue));
+      const mergedIssues = [...new Set([...judgeIssues, ...deterministic])];
       const normalizedScore = {
         ...score,
         issues: mergedIssues,
-        verdict: score.verdict === 'pass' && mergedIssues.some((issue) => issue === 'mentions_pinecone' || issue === 'tenant_bleed_risk' || issue === 'overclaims_completion' || issue === 'wrong_source_stage')
-          ? 'watch'
-          : score.verdict,
+        verdict: normalizeVerdict(score, mergedIssues),
       };
       scored.push({ ...item, score: normalizedScore });
     }
