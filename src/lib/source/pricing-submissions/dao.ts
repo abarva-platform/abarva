@@ -45,6 +45,10 @@ interface DbRow {
   updated_at: string;
 }
 
+function toJsonbParam(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
 function rowToView(row: DbRow): VendorPricingSubmissionRow {
   return {
     id: row.id,
@@ -154,12 +158,12 @@ export async function insertSubmission(
       vendor_name: insert.vendorName,
       uploaded_by_user_id: insert.uploadedByUserId,
       uploaded_filename: insert.uploadedFilename,
-      unit_prices_by_id: insert.unitPricesById,
-      vendor_notes_by_id: insert.vendorNotesById,
+      unit_prices_by_id: toJsonbParam(insert.unitPricesById),
+      vendor_notes_by_id: toJsonbParam(insert.vendorNotesById),
       pricing_notes: insert.pricingNotes,
-      assumption_deviations: insert.assumptionDeviations,
+      assumption_deviations: toJsonbParam(insert.assumptionDeviations),
       parse_status: insert.parseStatus,
-      parse_warnings: insert.parseWarnings,
+      parse_warnings: toJsonbParam(insert.parseWarnings),
     })
     .select('*')
     .single();
