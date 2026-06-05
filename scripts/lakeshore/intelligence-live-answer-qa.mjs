@@ -171,17 +171,20 @@ function buildSurfaceContext(question) {
     sourceFacts: [
       'LSH-KYRIBA-TREASURY-2026 is the document-real Kyriba Source event with a full artifact spine; Strategy through BAFO are approved, while Executive Decision, Selection, Transition, and Value remain review/needs-review demo states.',
       'LSH-AMS-MODERNIZATION-2026 is safe only through Evaluation and must not be presented as BAFO, Decision, Transition, or Value complete.',
+      'Kyriba full-spine demo boundary: say Kyriba by name and explain that its Source artifacts are stage-backed and retrievable; say AMS by name and explain that it is not demo-safe beyond Evaluation.',
     ],
     moveFacts: [
       'Kyriba Move 1196dac0-715c-45ce-8eeb-5e70792d9aa4 has 12 attachments covering the six rollout de-risk gates.',
       'Shared data platform Move 6a4c7fc4-0a2d-4479-b807-7350fb727527 has 6 evidence attachments.',
+      'Move 0 de-risk gates include bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption/Excel-elimination, and intercompany reconciliation.',
     ],
     towerFacts: [
       'Tower should separate value-at-stake, committed value, measuring value, and realized savings instead of collapsing them into one savings claim.',
+      'The AbarVa success loop for Lakeshore is CXO upload, Move gate, Source artifact, Tower value ledger, then evidence back into Intelligence.',
     ],
     facts: [
       `Current live proof question: ${question.label}.`,
-      'Vector store truth: Lakeshore uses native Azure AI Search for vector retrieval, not Pinecone.',
+      'Vector store truth: Lakeshore uses native Azure AI Search for vector retrieval, semantic retrieval, and tenant-scoped grounding. Pinecone is not used for Lakeshore vector retrieval.',
       'Azure private-plane health is pilot-substrate healthy with remaining cutover watches; do not claim private plane is fully cut over.',
     ],
   };
@@ -252,6 +255,7 @@ function scoreAnswer(question, status, answer, sources, events) {
   const flags = [];
   if (status !== 200) flags.push('http_not_200');
   if (!answer || answer.length < 120) flags.push('answer_too_short');
+  if (!events.some((event) => event.type === 'delta' || event.type === 'sentinel-stage')) flags.push('stream_error');
   if (events.some((event) => event.type === 'error' || event.type === 'parse_error')) flags.push('stream_error');
   const lower = answer.toLowerCase();
   for (const term of question.required) {
