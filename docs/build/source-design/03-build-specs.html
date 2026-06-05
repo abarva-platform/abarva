@@ -277,7 +277,6 @@ table.props th { background: var(--tint); font-size: 11px; }
 <strong>Contents</strong>
 <ol>
   <li><a href="#how-to-use">How to use this document</a></li>
-  <li><a href="#visual-refs">Visual references · wireframe atlas + pattern setters</a></li>
   <li><a href="#bar">The bar · design principles</a></li>
   <li><a href="#tokens">Design tokens (color · type · space)</a></li>
   <li><a href="#component-arch">Component architecture</a></li>
@@ -316,6 +315,19 @@ table.props th { background: var(--tint); font-size: 11px; }
 <strong>For Codex:</strong> Each spec has FILES (real repo paths), COMPONENTS (real exports), PROPS (typed), BEHAVIOR (events + routing), and ACCEPTANCE (definition of done). Pick any spec, the work is bounded and PR-shaped.
 </div>
 
+<div class="callout" style="border-left:4px solid #1d4ed8;background:#eef3fd">
+<strong>⌖ The wireframes are the visual target — build to them, not just to this prose.</strong><br><br>
+Every load-bearing and net-new surface has been wireframed at the agreed northstar (Apple-grade ease; the Moves module is the bar) using the Source module's locked tokens. <strong>Where a spec links a wireframe, the wireframe is the contract for layout, hierarchy, spacing, and copy tone.</strong> This prose defines the data, files, props, and acceptance; the wireframe defines what it looks like.
+
+<ul style="margin-top:12px">
+  <li><a href="05-wireframe-atlas.html"><strong>05-wireframe-atlas.html</strong></a> — the master reference. Cover, northstar, locked-token strip, a spec→surface→verdict index, and inline wireframes for Decision Queue (Spec 1), Intake footer (Spec 2), Approval page (Spec 3), Pricing/BAFO (Spec 11), Transition (Spec 13), Evidence drawer (Spec 16), Attention (Spec 18), plus schematic notes for the composed stages (Specs 9, 10, 14, 17). <strong>Start here.</strong></li>
+  <li><a href="06-strategy-screen.html"><strong>06-strategy-screen.html</strong></a> — full-fidelity Strategy stage. The <em>pattern-setter</em> for Specs 5, 6, 7, 8 (Next-Move card · proportional Sentinel rail · humanized shelf · export-gated). Every stage canvas matches this fidelity.</li>
+  <li><a href="07-executive-decision-screen.html"><strong>07-executive-decision-screen.html</strong></a> — full-fidelity Executive Decision page-1. The fidelity bar for Spec 12 (1+3 dark-header verdict · one primary action · dissent first-class · squint-test-first).</li>
+</ul>
+
+Each spec below carries a <strong>◧ WIREFRAME</strong> line pointing to its target. The design-module verdicts (approve / revise, and the 8 cross-spec answers) live in <a href="04-design-module-review.md"><strong>04-design-module-review.md</strong></a> — read a spec's verdict before you build it; several specs were revised (e.g. Spec 3 collapses four buttons to one primary, Spec 7's humanization scope was widened, Spec 11's iceberg is stacked-bars-not-skeuomorphic).
+</div>
+
 <h3>Convention legend used throughout</h3>
 <ul style="font-size: 13px;">
   <li><span class="file-path new">src/components/source/NewComponent.tsx</span> — new file</li>
@@ -323,52 +335,6 @@ table.props th { background: var(--tint); font-size: 11px; }
   <li><em>"copy in italics"</em> — exact user-facing string · review for tone</li>
   <li><span class="pill pill-new">NEW</span> <span class="pill pill-effort-s">S</span> <span class="pill pill-risk-l">low</span> — type · effort · risk pills per spec</li>
 </ul>
-
-<!-- =================== VISUAL REFERENCES =================== -->
-<h2 id="visual-refs"><span class="step">PART 1.5</span>Visual references · wireframe atlas + pattern setters</h2>
-
-<h3>The three visual artifacts Codex builds against</h3>
-
-<div class="callout">
-<strong>READ THESE BEFORE STARTING ANY SPEC.</strong> The prose in this document specifies <em>what</em> to build; the wireframe atlas and the two pattern-setter screens specify <em>how it looks and feels</em>. Build to both, not just the prose.
-</div>
-
-<table class="props">
-  <tr><th>File</th><th>What it is</th><th>When to look at it</th></tr>
-  <tr>
-    <td><span class="file-path edit">docs/build/source-design/05-wireframe-atlas.html</span></td>
-    <td>The single visual map of the whole module · all 19 specs at glance · cover + northstar + token strip + index table + inline wireframes for every load-bearing and net-new surface</td>
-    <td><strong>Always.</strong> Open in a tab and keep it next to the spec block you're implementing. Each spec's "Wireframe reference" line points to the atlas section illustrating it.</td>
-  </tr>
-  <tr>
-    <td><span class="file-path edit">docs/build/source-design/06-strategy-screen.html</span></td>
-    <td>Full-fidelity Strategy stage redesign · the canonical drafting-stage canvas · Sentinel rail at 30%, Next Move card leading, humanized labels, export-gated</td>
-    <td>Implementing <strong>any drafting stage canvas</strong> (Spec 5, 6, 8, 9 strategy/scope/rfp/bafo question pack). This is the pattern setter — match its discipline.</td>
-  </tr>
-  <tr>
-    <td><span class="file-path edit">docs/build/source-design/07-executive-decision-screen.html</span></td>
-    <td>Full-fidelity Executive Decision page-1 summary · dark charcoal header · 1+3 layout · the ONLY dark moment in the lifecycle</td>
-    <td>Implementing <strong>any decision-rendering surface</strong> (Spec 12 canvas, Spec 15 CXO Report Slide 1, Spec 15 Deal Pack Page 1). This is the second pattern setter.</td>
-  </tr>
-</table>
-
-<h3>How specs cross-reference the visual artifacts</h3>
-
-<p>Every spec block has a <strong>Wireframe reference</strong> line at the bottom pointing to the atlas section that illustrates it. Two pattern-setter specs (Strategy and Executive Decision) point to their full-fidelity screens — Codex builds those to <strong>fidelity</strong>, not just to prose.</p>
-
-<div class="callout">
-<strong>Per the design module review (2026-06-04):</strong> the Strategy and Executive Decision screens are the <em>fidelity bar</em>. Every other surface in the redesign matches their discipline. Composed-stage surfaces (Scope/RFP, Responses/Eval, Value, Audit) inherit the Strategy pattern; decision-rendering surfaces inherit the Executive Decision pattern.
-</div>
-
-<h3>Reading order when picking up a spec</h3>
-
-<ol style="font-size: 14px;">
-  <li>Read the spec block in this document (file paths, props, copy, behavior, acceptance)</li>
-  <li>Open <code>05-wireframe-atlas.html</code> and jump to the referenced section</li>
-  <li>If the spec implements a drafting canvas: open <code>06-strategy-screen.html</code> in a second tab; match its discipline</li>
-  <li>If the spec implements a decision rendering: open <code>07-executive-decision-screen.html</code>; match its discipline</li>
-  <li>Cross-check against <code>04-design-module-review.md</code> for the review verdict + revisions on that spec</li>
-</ol>
 
 <!-- =================== THE BAR =================== -->
 <h2 id="bar"><span class="step">PART 2</span>The bar · design principles</h2>
@@ -417,20 +383,6 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
 
 <div class="callout">
 <strong>Locked per project memory:</strong> User confirmed the design system on 2026-04-16 (per <code>feedback_design_locked.md</code>). Do not propose color/font changes without explicit approval.
-</div>
-
-<h3>Usage constraints (per design module review · 2026-06-04)</h3>
-
-<div class="callout" style="border-left-color: #b91c1c;">
-<strong>The "one dark moment" rule.</strong> Token <code>#1f2937</code> (charcoal · referred to in specs as the "dark header") is <strong>reserved exclusively for the Executive Decision page-1 header</strong>. It earns its contrast precisely because nothing else in the lifecycle is dark. Use accent blue <code>#1d4ed8</code> for emphasis on any other surface. If a future spec or PR wants a dark treatment, the answer is no — use the accent instead. This rule is enforced at design-review time; copying the dark header to another surface is a regression. See <a href="#spec-exec-decision">Spec 12</a> and cross-spec Q6 in <code>04-design-module-review.md</code>.
-</div>
-
-<div class="callout" style="border-left-color: #b45309;">
-<strong>The "no export of nothing" rule.</strong> Export and download CTAs (DOCX / PDF / HTML / PPTX / Deal Pack) are <strong>hidden until the underlying artifact has a body</strong>. Five export buttons on a not-started memo is the canonical anti-pattern that triggered this rule. Acceptance checklist for every artifact tile and export control: "Download/View actions render only when <code>artifact.body !== null</code>." Applies to Specs 7, 8, 15 and any future surface offering export.
-</div>
-
-<div class="callout" style="border-left-color: #047857;">
-<strong>The "empty state is a designed state" rule.</strong> Every list, shelf, or grid that can be empty must have an authored empty state that leads with the Next Move. "No DB-backed documents yet" is the anti-pattern. "Generate your first artifact" (or whatever the bar-grade prompt is) is the pattern. Acceptance checklist on Specs 1, 5, 7, 8, 9, 10, 11, 13, 16, 18: "Empty state authored to the bar."
 </div>
 
 <h3>Spacing scale</h3>
@@ -482,6 +434,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Replace flat queue with urgency-banded triage view</div>
     <div class="subtitle">Refs Wireframe Part 2B (target queue) · Closes L6 finding "24 cards visually identical"</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §1 · Decision Queue</a></div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -559,6 +512,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Add "Next: Approval" panel that appears at 5/5 captured</div>
     <div class="subtitle">Refs Wireframe Part 3B · Closes Anand finding "no terminal state, where does this go?"</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §2 · Intake footer</a></div>
   </div>
   <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -631,6 +585,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Dedicated approval page · blocks canvas access until resolved</div>
     <div class="subtitle">Refs Wireframe Part 4 · Closes "approval flow is invisible" finding · LOAD-BEARING</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §3 · Approval page</a></div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -807,6 +762,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Replace artifact-shelf-first layout with Next-Move-led layout on every stage</div>
     <div class="subtitle">Refs Wireframe Parts 5B-15 · Universal pattern across stages</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="06-strategy-screen.html">06 · Strategy screen</a> — the Next-Move pattern-setter</div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -884,6 +840,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Chat width matches mental task; collapses on decision-focused stages</div>
     <div class="subtitle">Refs Wireframe Part 17A</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="06-strategy-screen.html">06 · Strategy</a> + <a href="07-executive-decision-screen.html">07 · Exec Decision</a> (collapsed rail)</div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -945,6 +902,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Hide artifact codes, "Template", "GATE", "NOT STARTED" jargon from production UI</div>
     <div class="subtitle">Closes L6 finding "internal taxonomy leaks" — extends PR #2868 to canvas tiles</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="06-strategy-screen.html">06 · Strategy screen</a> (humanized shelf; scope widened — see verdict)</div>
   </div>
   <div class="pills"><span class="pill pill-fix">FIX</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -999,6 +957,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Strategy canvas inherits Next Move pattern + cleaned artifact shelf + gates checklist</div>
     <div class="subtitle">Refs Wireframe Part 5B · Composes Specs 5, 6, 7</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="06-strategy-screen.html">06 · Strategy screen</a> — build to this fidelity</div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -1050,6 +1009,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Scope = inventory + dependency map · RFP = pack + rubric + shortlist + sponsor sign-off</div>
     <div class="subtitle">Refs Wireframe Parts 6-7 · Stage views</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §7</a> (composes the Strategy pattern)</div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -1102,6 +1062,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Per-vendor completeness · symmetric Q&amp;A · weighted scorecard · dissent capture · BATNA</div>
     <div class="subtitle">Refs Wireframe Parts 8-9</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §7</a> (composes the Strategy pattern)</div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -1154,6 +1115,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">TCO bridge · iceberg · sensitivity ribbon · trap log · BAFO lever envelope · concession ledger</div>
     <div class="subtitle">Refs Wireframe Parts 10-11 · LOAD-BEARING (CXO bar exceed-bar)</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §4 · Pricing/BAFO</a></div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -1208,6 +1170,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Page-1 dark-header executive summary leads · 30-second read</div>
     <div class="subtitle">Refs Wireframe Part 12 · LOAD-BEARING · The CXO trust make-or-break</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="07-executive-decision-screen.html">07 · Exec Decision screen</a> — the fidelity bar</div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-h">hi</span></div>
 </div>
@@ -1293,6 +1256,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">KT plan + go-live readiness scorecard + risk register · stage canvas + dedicated /transition route</div>
     <div class="subtitle">Refs Wireframe Part 14 · NEW · Closes lifecycle gap (Stage 10 missing from deal pack)</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §5 · Transition</a></div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -1337,6 +1301,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Extend /value page from 4-step proof chain to attestation + variance + quarterly board pack</div>
     <div class="subtitle">Refs Wireframe Part 15 · Extends existing /events/[id]/value page</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §7</a> (Value Ledger schematic)</div>
   </div>
   <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -1391,6 +1356,7 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
   <div>
     <div class="title">Page-1 exec summary leads · stages 10+11 included · no scaffold badges · branded filenames</div>
     <div class="subtitle">Refs Wireframe Part 16</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="07-executive-decision-screen.html">07 · Exec Decision</a> page-1 summary leads the export</div>
   </div>
   <div class="pills"><span class="pill pill-edit">EDIT</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -1443,6 +1409,7 @@ apex-retail-ams-outsourcing-2026-deal-pack-2026-06-04.html</pre>
   <div>
     <div class="title">Persistent right-edge drawer · click any inline citation in an artifact → drawer opens to that record</div>
     <div class="subtitle">Refs Wireframe Part 17B</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §6 · Evidence drawer</a></div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -1485,6 +1452,7 @@ apex-retail-ams-outsourcing-2026-deal-pack-2026-06-04.html</pre>
   <div>
     <div class="title">Activity Log tab on every event canvas · per-stage filter · timestamp + actor + action + rationale + evidence_refs</div>
     <div class="subtitle">Refs Wireframe Part 17C · Already partially shipped (PR #2862)</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §7</a> (Audit log schematic)</div>
   </div>
   <div class="pills"><span class="pill pill-extend">EXTEND</span><span class="pill pill-effort-s">S</span><span class="pill pill-risk-l">low</span></div>
 </div>
@@ -1523,6 +1491,7 @@ apex-retail-ams-outsourcing-2026-deal-pack-2026-06-04.html</pre>
   <div>
     <div class="title">Source Attention surface · global notifications for current user across all events</div>
     <div class="subtitle">Refs Wireframe Part 17D</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §6 · Attention bell</a></div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-m">M</span><span class="pill pill-risk-m">med</span></div>
 </div>
@@ -1564,6 +1533,7 @@ apex-retail-ams-outsourcing-2026-deal-pack-2026-06-04.html</pre>
   <div>
     <div class="title">Contract clock auto-creates renewal event 180 days before term end · lands in Decision Queue</div>
     <div class="subtitle">Refs Wireframe Part 18 · Closes the lifecycle loop</div>
+    <div class="subtitle" style="color:#1d4ed8;font-weight:600;margin-top:3px">◧ WIREFRAME · <a href="05-wireframe-atlas.html">Atlas §1</a> — renewal lands in OVERDUE band</div>
   </div>
   <div class="pills"><span class="pill pill-new">NEW</span><span class="pill pill-effort-l">L</span><span class="pill pill-risk-h">hi</span></div>
 </div>

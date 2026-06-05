@@ -98,11 +98,11 @@ Each spec ships as its own PR. No PR spans multiple specs.
 | 02 End-to-end wireframes | ✓ Complete |
 | 03 Build specs | ✓ v2 · references atlas + pattern setters · three usage constraints locked into tokens |
 | 04 Design module review | ✓ Complete · all 19 specs reviewed · 8 cross-spec Qs resolved · Wave 1 cleared |
-| 05 Wireframe atlas | ⏸ **Placeholder · awaiting design module to paste preview/17 content** |
-| 06 Strategy screen | ⏸ **Placeholder · awaiting design module to paste preview/15 content** |
-| 07 Executive Decision screen | ⏸ **Placeholder · awaiting design module to mock + paste content** |
-| Wave 1 PRs | ⏸ Ready to ship once 05/06/07 land |
+| 05 Wireframe atlas | ✓ Complete · full atlas · all load-bearing surfaces mapped |
+| 06 Strategy screen | ✓ Complete · full-fidelity drafting-stage pattern setter |
+| 07 Executive Decision screen | ✓ Complete · full-fidelity decision-rendering pattern setter |
+| Wave 1 PRs | ✓ Ready to start |
 
-### Outstanding task for design module
+### Package status
 
-Drop the actual HTML for the atlas + two full-fidelity screens into files 05, 06, 07 (overwriting the placeholders). The placeholders contain inline instructions noting which preview file maps to which slot. Once committed, Wave 1 PRs are unblocked.
+The design package is complete and cross-linked. Codex can build from `03-build-specs.html`, with `04-design-module-review.md` for verdicts and `05-wireframe-atlas.html` plus `06/07` as the visual contract.

@@ -1,46 +1,271 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>06 · Strategy Stage — Full-Fidelity Pattern Setter — PLACEHOLDER</title>
+<meta charset="utf-8">
+<title>Source · Strategy stage — redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: #111827; background: #fafafa; margin: 40px auto; max-width: 800px; padding: 0 24px; line-height: 1.6; }
-.placeholder { background: #fef3c7; border: 2px dashed #b45309; padding: 24px 32px; border-radius: 6px; }
-h1 { font-family: Georgia, serif; font-size: 28px; margin: 0 0 8px; }
-code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
-.meta { color: #6b7280; font-size: 13px; margin-bottom: 18px; }
+  /* ── Source module locked tokens (2026-04-16) ───────────────────── */
+  :root{
+    --bg-paper:#F8F7F4; --ink:#111827; --muted:#6b7280; --accent:#1d4ed8;
+    --good:#047857; --warn:#b45309; --bad:#b91c1c; --tint:#f3f4f6;
+    --line:#e7e5e0; --line-strong:#d9d6cf; --card:#ffffff;
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',-apple-system,system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg-paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  a{color:inherit;text-decoration:none}
+
+  /* ── Top nav ─────────────────────────────────────────────────── */
+  .topnav{background:#0b0d12;color:#fff;height:64px;display:flex;align-items:center;padding:0 36px;gap:40px}
+  .brand{font-family:var(--serif);font-size:22px;font-weight:700}
+  .brand .va{color:#5b9dff}
+  .tenant{font-family:var(--serif);font-style:italic;font-size:17px;color:rgba(255,255,255,.82)}
+  .nav-items{display:flex;gap:28px;margin-left:8px}
+  .nav-items a{font-size:14px;font-weight:500;color:rgba(255,255,255,.62)}
+  .nav-items a.active{color:#fff;font-weight:600}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:20px}
+  .nav-right .lp{font-size:14px;font-weight:500;color:rgba(255,255,255,.7)}
+  .who{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500}
+  .who .ava{width:30px;height:30px;border-radius:50%;background:#26303f;color:#cfe0ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .signout{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:600;color:#fff}
+
+  /* ── Source sub-nav ──────────────────────────────────────────── */
+  .subnav{background:#fff;border-bottom:1px solid var(--line);height:52px;display:flex;align-items:center;padding:0 36px}
+  .subnav .lbl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .subnav .tabs{margin-left:auto;display:flex;gap:6px}
+  .subnav .tabs a{font-size:13px;font-weight:600;color:var(--muted);padding:7px 16px;border-radius:8px}
+  .subnav .tabs a.active{background:#0b0d12;color:#fff}
+
+  /* ── Page shell ──────────────────────────────────────────────── */
+  .wrap{max-width:1380px;margin:0 auto;padding:30px 36px 80px}
+
+  .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  .crumb a:hover{color:var(--ink)}
+  .crumb .sep{margin:0 8px;opacity:.4}
+
+  .head{display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:6px}
+  .head h1{font-family:var(--serif);font-size:34px;font-weight:400;letter-spacing:-.01em;line-height:1.12;color:var(--ink)}
+  .head .meta{font-size:14px;color:var(--muted);margin-top:10px}
+  .head-right{display:flex;align-items:center;gap:16px;flex-shrink:0;padding-top:6px}
+  .export{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:#fff;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn)}
+  .status .dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+
+  /* ── Phase rail ──────────────────────────────────────────────── */
+  .rail{margin:34px 0 40px;position:relative}
+  .rail-line{position:absolute;left:0;right:0;top:9px;height:2px;background:var(--line-strong)}
+  .rail-dots{display:flex;justify-content:space-between;position:relative}
+  .ph{display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;position:relative}
+  .ph .dot{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--line-strong);z-index:1}
+  .ph.active .dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 4px rgba(29,78,216,.14)}
+  .ph .n{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .ph .nm{font-size:12px;color:var(--muted);text-align:center}
+  .ph.active .n{color:var(--accent);font-weight:600}
+  .ph.active .nm{color:var(--ink);font-weight:600}
+
+  /* ── THE LEAD: Next Move card (Spec 5) ───────────────────────── */
+  .nextmove{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:14px;padding:30px 34px;display:grid;grid-template-columns:1fr auto;gap:36px;align-items:center;box-shadow:0 1px 2px rgba(17,24,39,.04)}
+  .nm-eyebrow{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .nm-title{font-family:var(--serif);font-size:27px;font-weight:400;letter-spacing:-.01em;line-height:1.15;color:var(--ink);margin-bottom:10px;max-width:24ch}
+  .nm-body{font-size:14.5px;line-height:1.55;color:var(--muted);max-width:54ch}
+  .nm-actions{display:flex;flex-direction:column;gap:10px;min-width:230px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:var(--sans);font-weight:600;font-size:14px;border-radius:10px;padding:13px 22px;cursor:pointer;border:1px solid transparent;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#1842b8}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn .arr{transition:transform .15s}
+  .btn-primary:hover .arr{transform:translateX(3px)}
+
+  /* ── Gates (quiet checklist) ─────────────────────────────────── */
+  .gates{margin:18px 0 0;display:flex;gap:28px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)}
+  .gate{display:flex;align-items:center;gap:10px}
+  .gate .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line-strong);flex-shrink:0}
+  .gate.done .box{background:var(--good);border-color:var(--good);position:relative}
+  .gate.done .box::after{content:'✓';position:absolute;inset:0;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .gate .gl{font-size:13px;color:var(--ink)}
+  .gate.done .gl{color:var(--muted)}
+  .gates .req{margin-left:auto;font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  /* ── Body grid: deliverables + Sentinel rail ─────────────────── */
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:24px;margin-top:32px;align-items:start}
+
+  .sect-eyebrow{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .deliverables{display:flex;flex-direction:column;gap:12px}
+  .dlv{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:flex;align-items:flex-start;gap:16px;cursor:pointer;transition:border-color .15s}
+  .dlv:hover{border-color:var(--line-strong)}
+  .dlv .ic{width:36px;height:36px;border-radius:9px;background:var(--tint);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted)}
+  .dlv .main{flex:1}
+  .dlv .dt{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--ink);margin-bottom:4px}
+  .dlv .dd{font-size:13px;color:var(--muted);line-height:1.5;max-width:60ch}
+  .dlv .st{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-top:3px}
+  .dlv .st.req{color:var(--accent)}
+  .dlv.optional .ic{opacity:.7}
+
+  /* Sentinel rail — collapsed by default on an empty drafting stage (Spec 6) */
+  .sentinel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;position:sticky;top:24px}
+  .sentinel .sh{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .sentinel .sa{width:34px;height:34px;border-radius:50%;background:#0b0d12;color:#5b9dff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .sentinel .sn{font-size:14px;font-weight:700}
+  .sentinel .sr{font-size:11px;color:var(--muted);margin-top:1px}
+  .sentinel .sd{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 0 16px}
+  .sugg{display:flex;flex-direction:column;gap:8px}
+  .sugg .sl{font-family:var(--sans);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .chip{text-align:left;background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.5px;color:var(--ink);cursor:pointer;line-height:1.4;transition:all .15s}
+  .chip:hover{border-color:var(--accent);background:rgba(29,78,216,.03)}
+  .ask{margin-top:14px;display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px}
+  .ask input{flex:1;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink);background:transparent}
+  .ask input::placeholder{color:var(--muted)}
+  .ask .send{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;flex-shrink:0;font-size:14px}
+  .disc{margin-top:12px;font-size:10.5px;line-height:1.5;color:var(--muted);background:var(--tint);border-radius:8px;padding:9px 11px}
+
+  /* annotation chips for the design-review version */
+  .note{position:relative}
+  .note::after{content:attr(data-note);position:absolute;right:-8px;top:-10px;background:var(--good);color:#fff;font-family:var(--mono);font-size:9px;letter-spacing:.04em;padding:3px 8px;border-radius:999px;white-space:nowrap;font-weight:500}
+  @media(max-width:1080px){.grid{grid-template-columns:1fr}.nextmove{grid-template-columns:1fr;gap:22px}.nm-actions{min-width:0}}
 </style>
 </head>
-<body>
+<body data-screen-label="Source · Strategy stage (target)">
 
-<h1>06 · Strategy Stage — Full-Fidelity Pattern Setter</h1>
-<p class="meta">Placeholder · awaiting design module commit · 2026-06-04</p>
+  <!-- Top nav -->
+  <nav class="topnav">
+    <span class="brand">Abar<span class="va">Va</span></span>
+    <span class="tenant">Apex Retail Group</span>
+    <span class="nav-items">
+      <a>Home</a><a>Intelligence</a><a>Moves</a><a class="active">Source</a><a>Tower</a>
+    </span>
+    <span class="nav-right">
+      <a class="lp">Learn</a><a class="lp">Product</a>
+      <span class="who"><span class="ava">CR</span>Carlos Rivera</span>
+      <a class="signout">Sign out</a>
+    </span>
+  </nav>
 
-<div class="placeholder">
-<h2 style="margin-top: 0;">⚠ This file is a placeholder</h2>
+  <!-- Source sub-nav -->
+  <div class="subnav">
+    <span class="lbl">Source</span>
+    <span class="tabs"><a>Decisions</a><a class="active">Portfolio</a><a>Setup</a></span>
+  </div>
 
-<p>The design module produced the full-fidelity Strategy screen at <code>preview/15-source-strategy-redesign.html</code>. That file's content needs to be pasted into this slot.</p>
+  <div class="wrap">
+    <div class="crumb"><a>Source</a><span class="sep">›</span><a>Apex</a><span class="sep">›</span>Data Analytics Operations 2026</div>
 
-<p><strong>What this screen proves (per design module):</strong></p>
-<ul>
-  <li>One obvious next action ("Draft your Sourcing Strategy Memo" → single blue CTA)</li>
-  <li>Answer leads, machinery hides — Next Move card is the loudest thing on screen</li>
-  <li>Quiet hierarchy — serif headline, restrained mono eyebrows, generous whitespace</li>
-  <li>Subtraction — NOT STARTED ×4, GATE ×2, TEMPLATE, STORED DOCUMENTS, AWAITING AUTHORING all gone</li>
-  <li>Sentinel rail at ~30% (not 40-50%) — present but subordinate</li>
-  <li>Export buttons hidden until memo has a body</li>
-  <li>Squint test passes: blue "Draft with Sentinel" button unmistakably the one thing to do</li>
-</ul>
+    <div class="head">
+      <div>
+        <h1>Data Analytics Operations — Global Delivery Model 2026</h1>
+        <div class="meta">Managed Service · Strategic · Owner: Carlos Rivera, CIO &nbsp;·&nbsp; co-owner Lynne Stratham, CDO</div>
+      </div>
+      <div class="head-right">
+        <span class="status"><span class="dot"></span>Waiting on client</span>
+        <button class="export">Export ▾</button>
+      </div>
+    </div>
 
-<p><strong>Role:</strong> This is the <em>canonical</em> stage screen. Every other drafting-stage canvas (Scope, RFP, BAFO question pack) matches this pattern. Codex builds to this fidelity, not just to the verbal spec.</p>
+    <!-- Phase rail -->
+    <div class="rail">
+      <div class="rail-line"></div>
+      <div class="rail-dots">
+        <div class="ph active"><div class="dot"></div><div class="n">01</div><div class="nm">Strategy</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">02</div><div class="nm">Scope</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">03</div><div class="nm">RFP</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">04</div><div class="nm">Responses</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">05</div><div class="nm">Evaluation</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">06</div><div class="nm">Pricing</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">07</div><div class="nm">BAFO</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">08</div><div class="nm">Exec Decision</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">09</div><div class="nm">Selection</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">10</div><div class="nm">Transition</div></div>
+        <div class="ph"><div class="dot"></div><div class="n">11</div><div class="nm">Value</div></div>
+      </div>
+    </div>
 
-<p><strong>To complete this file:</strong></p>
-<ol>
-  <li>Design module: copy the full HTML of your <code>preview/15-source-strategy-redesign.html</code></li>
-  <li>Replace the entire contents of this file (overwrite) with that HTML</li>
-  <li>Commit and push to branch <code>docs/source-design-package-2026-06-04</code></li>
-</ol>
-</div>
+    <!-- THE LEAD · Next Move (Spec 5) -->
+    <div class="note" data-note="SPEC 5 · leads the page">
+      <div class="nextmove">
+        <div>
+          <div class="nm-eyebrow">Next move</div>
+          <div class="nm-title">Draft your Sourcing Strategy Memo</div>
+          <div class="nm-body">Sentinel drafts from the event facts you captured at intake — why you're sourcing now, what's in scope, the value target, and the rigor level. You review and sign. Takes about two minutes.</div>
+          <div class="gates">
+            <div class="gate"><span class="box"></span><span class="gl">Sponsor sign-off</span></div>
+            <div class="gate"><span class="box"></span><span class="gl">Value target set</span></div>
+            <div class="gate"><span class="box"></span><span class="gl">Archetype confirmed</span></div>
+            <span class="req">0 of 3 cleared to advance</span>
+          </div>
+        </div>
+        <div class="nm-actions">
+          <button class="btn btn-primary">Draft with Sentinel <span class="arr">→</span></button>
+          <button class="btn btn-ghost">Author manually</button>
+        </div>
+      </div>
+    </div>
 
+    <!-- Body: deliverables + Sentinel rail -->
+    <div class="grid">
+      <div>
+        <div class="note" data-note="SPEC 7 · no codes, no NOT STARTED">
+          <div class="sect-eyebrow">What this stage produces</div>
+        </div>
+        <div class="deliverables">
+          <div class="dlv">
+            <div class="ic">▤</div>
+            <div class="main">
+              <div class="dt">Sourcing Strategy Memo</div>
+              <div class="dd">Why we're sourcing now, what we're sourcing, the value target, and the rigor level.</div>
+            </div>
+            <div class="st req">Required</div>
+          </div>
+          <div class="dlv">
+            <div class="ic">◷</div>
+            <div class="main">
+              <div class="dt">Value Target Brief</div>
+              <div class="dd">The savings and outcome envelope this sourcing event is accountable to.</div>
+            </div>
+            <div class="st req">Required</div>
+          </div>
+          <div class="dlv optional">
+            <div class="ic">◇</div>
+            <div class="main">
+              <div class="dt">Archetype Decision Record</div>
+              <div class="dd">Records the sourcing archetype and why it fits — captured only if the choice is contested.</div>
+            </div>
+            <div class="st">Optional</div>
+          </div>
+        </div>
+        <div class="note" data-note="NEW · export gated until a body exists" style="margin-top:18px">
+          <div style="font-size:12.5px;color:var(--muted);background:var(--tint);border-radius:10px;padding:14px 16px;line-height:1.5">
+            Download &amp; export options appear here once the memo has been drafted. Nothing to export yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- Sentinel — slim rail, not a 45% panel (Spec 6) -->
+      <div class="note" data-note="SPEC 6 · 30% rail, not 45%">
+        <aside class="sentinel">
+          <div class="sh">
+            <span class="sa">SS</span>
+            <div><div class="sn">Sentinel</div><div class="sr">Drafts · surfaces evidence · flags gaps</div></div>
+          </div>
+          <div class="sd">I can draft the memo, pull the value-target levers for this archetype, or recommend a rigor level from the deal size.</div>
+          <div class="sugg">
+            <div class="sl">Try</div>
+            <button class="chip">Write the strategy memo from the event facts</button>
+            <button class="chip">Show the value-target levers for this archetype</button>
+            <button class="chip">Recommend a rigor level for this deal size</button>
+          </div>
+          <div class="ask">
+            <input placeholder="Ask Sentinel…">
+            <button class="send">↑</button>
+          </div>
+          <div class="disc">Agent suggestions are proposals. A named person approves before any write or external action.</div>
+        </aside>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
