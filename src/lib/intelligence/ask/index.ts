@@ -28,6 +28,10 @@ import {
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
 } from './response-policy';
+import {
+  buildEvidenceFieldDisclosure,
+  countExactEvidenceFieldHandles,
+} from './evidence-field-disclosure';
 
 export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
@@ -204,6 +208,15 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     })) {
       answer += delta;
       yield { type: 'delta', text: delta };
+    }
+
+    const evidenceDisclosure = buildEvidenceFieldDisclosure(trimmed, sources);
+    if (evidenceDisclosure && countExactEvidenceFieldHandles(answer) < 2) {
+      const disclosureText = `\n\n${evidenceDisclosure}`;
+      answer += disclosureText;
+      for (const chunk of chunkAskText(disclosureText)) {
+        yield { type: 'delta', text: chunk };
+      }
     }
 
     const followups = await generateFollowups({
