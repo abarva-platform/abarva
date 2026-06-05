@@ -83,18 +83,18 @@ function sanitizeTenantNames(value: string): string {
     .replace(/\bSkyHarbor\b/gi, 'a canonical airline tenant')
     .replace(/\bskyharbor-air\b/gi, 'a canonical airline tenant')
     .replace(/\bskyharbor\b/gi, 'a canonical airline tenant')
-    .replace(/\bArcturus Financial Group\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bArcturus Financial\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bArcturus\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark Financial Group\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark Financial\b/gi, 'a legacy financial-services demo tenant')
-    .replace(/\bBrindlemark\b/gi, 'a legacy financial-services demo tenant')
-    .replace(new RegExp('\\bHeliara\\s+Health\\s+System\\b', 'gi'), 'a legacy healthcare demo tenant')
-    .replace(new RegExp('\\bHeliara\\s+Health\\b', 'gi'), 'a legacy healthcare demo tenant')
-    .replace(new RegExp('\\bHeliara\\b', 'gi'), 'a legacy healthcare demo tenant')
-    .replace(/\bKeystone Energy Group\b/gi, 'a legacy energy demo tenant')
-    .replace(/\bKeystone Energy\b/gi, 'a legacy energy demo tenant')
-    .replace(/\bKeystone\b/gi, 'a legacy energy demo tenant');
+    .replace(/\bArcturus Financial Group\b/gi, 'a legacy financial-services sample tenant')
+    .replace(/\bArcturus Financial\b/gi, 'a legacy financial-services sample tenant')
+    .replace(/\bArcturus\b/gi, 'a legacy financial-services sample tenant')
+    .replace(/\bBrindlemark Financial Group\b/gi, 'a legacy financial-services sample tenant')
+    .replace(/\bBrindlemark Financial\b/gi, 'a legacy financial-services sample tenant')
+    .replace(/\bBrindlemark\b/gi, 'a legacy financial-services sample tenant')
+    .replace(new RegExp('\\bHeliara\\s+Health\\s+System\\b', 'gi'), 'a legacy healthcare sample tenant')
+    .replace(new RegExp('\\bHeliara\\s+Health\\b', 'gi'), 'a legacy healthcare sample tenant')
+    .replace(new RegExp('\\bHeliara\\b', 'gi'), 'a legacy healthcare sample tenant')
+    .replace(/\bKeystone Energy Group\b/gi, 'a legacy energy sample tenant')
+    .replace(/\bKeystone Energy\b/gi, 'a legacy energy sample tenant')
+    .replace(/\bKeystone\b/gi, 'a legacy energy sample tenant');
 }
 
 function paragraph(value: string): string {
