@@ -325,6 +325,90 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).not.toContain("§1 In scope");
   });
 
+  it("renders the Strategy refit with humanized outputs and no empty export controls", () => {
+    const html = render({
+      viewStage: "strategy",
+      artifactStates: [
+        makeArtifactState({
+          id: "strategy-a1",
+          artifactCode: "d01_strategy_memo",
+          stage: "strategy",
+          family: "sourcing_strategy",
+          requirementLevel: "required",
+          gateDefining: true,
+          body: null,
+        }),
+        makeArtifactState({
+          id: "strategy-a2",
+          artifactCode: "d02_value_target",
+          stage: "strategy",
+          family: "sourcing_strategy",
+          requirementLevel: "required",
+          gateDefining: true,
+          body: null,
+        }),
+        makeArtifactState({
+          id: "strategy-a3",
+          artifactCode: "d03_archetype_decision",
+          stage: "strategy",
+          family: "sourcing_strategy",
+          requirementLevel: "optional",
+          gateDefining: true,
+          body: null,
+        }),
+      ],
+      gateCriterionStates: [
+        makeCriterion({
+          id: "strategy-c1",
+          criterionId: "GATE-STRATEGY-01",
+          fromStage: "strategy",
+          toStage: "scope",
+        }),
+        makeCriterion({
+          id: "strategy-c2",
+          criterionId: "GATE-STRATEGY-02",
+          fromStage: "strategy",
+          toStage: "scope",
+        }),
+        makeCriterion({
+          id: "strategy-c3",
+          criterionId: "GATE-STRATEGY-03",
+          fromStage: "strategy",
+          toStage: "scope",
+        }),
+      ],
+      evidenceStates: [],
+      templateByCode: {
+        d01_strategy_memo: "# Sourcing Strategy Memo\n\nTemplate body.",
+        d02_value_target: "# Value Target Brief\n\nTemplate body.",
+        d03_archetype_decision: "# Archetype Decision Record\n\nTemplate body.",
+      },
+    });
+
+    expect(html).toContain("source-strategy-stage-view");
+    expect(html).toContain("What this stage produces");
+    expect(html).toContain("Sourcing Strategy Memo");
+    expect(html).toContain("Value Target Brief");
+    expect(html).toContain("Archetype Decision Record");
+    expect(html).toContain("Why we are sourcing now");
+    expect(html).toContain("The savings and outcome envelope");
+    expect(html).toContain("Draft your Sourcing Strategy Memo");
+    expect(html).toContain("Sponsor sign-off");
+    expect(html).toContain("Value target set");
+    expect(html).toContain("Archetype confirmed");
+    expect(html).toContain("source-strategy-export-empty");
+    expect(html).toContain("Nothing to export yet");
+    expect(html).not.toContain(
+      "source-canvas-document-body-download-docx-d01_strategy_memo",
+    );
+    expect(html).not.toContain(
+      "source-canvas-document-body-download-pdf-d01_strategy_memo",
+    );
+    expect(html).not.toContain("Template badge");
+    expect(html).not.toContain("No DB-backed documents yet");
+    expect(html).not.toContain("Awaiting authoring");
+  });
+
   it("renders persisted event documents with browse links", () => {
     const html = render({
       registryArtifacts: [makeRegistryArtifact()],

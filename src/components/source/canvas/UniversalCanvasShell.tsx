@@ -121,6 +121,7 @@ import { LogTab, type ActivityEntry } from "./workspace-tabs/LogTab";
 import { StageDecisionLensPanel } from "./workspace-tabs/StageDecisionLensPanel";
 import { CommunicationDraftsPanel } from "./workspace-tabs/CommunicationDraftsPanel";
 import { threeChoicesForStage } from "./canvas-three-choices";
+import { StrategyStageView } from "./strategy/StrategyStageView";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -602,57 +603,68 @@ export function UniversalCanvasShell({
   );
 
   const initialTab: WorkspaceTabKey = "document";
+  const documentTabContent = (
+    <DocumentTab
+      stage={viewStage}
+      artifacts={stageArtifacts}
+      registryArtifacts={registryArtifactsState}
+      templateByCode={templateByCode}
+      selectedCode={selectedDocCode}
+      onSelectCode={setSelectedDocCode}
+      onChangeStatus={handleArtifactStatusChange}
+      pendingByCode={pendingStatusByCode}
+      onSaveBody={handleArtifactBodySave}
+      bodyPendingByCode={pendingBodyByCode}
+      onGenerateFromClaude={handleArtifactGenerate}
+      generatableCodes={generatableCodes}
+      generationPendingByCode={pendingGenerationByCode}
+      xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
+      xlsxDownloadHref={(code) =>
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx`
+      }
+      xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
+      xlsxComparisonDownloadHref={(code) =>
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx&variant=comparison`
+      }
+      docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
+      docxDownloadHref={(code) =>
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=docx`
+      }
+      htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
+      htmlViewHref={(code) =>
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=html`
+      }
+      pdfGeneratableCodes={PDF_GENERATABLE_CODES_CLIENT}
+      pdfDownloadHref={(code) =>
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
+      }
+      eventId={event.id}
+      onRegistryUploaded={() => router.refresh()}
+      supplementalPanel={
+        <>
+          <CommunicationDraftsPanel eventId={event.id} stage={viewStage} />
+          <StageDecisionLensPanel stage={viewStage} />
+        </>
+      }
+    />
+  );
   const tabs = [
     {
       key: "document" as WorkspaceTabKey,
       label: "Document",
       badge:
         stageArtifacts.length > 0 ? String(stageArtifacts.length) : undefined,
-      content: (
-        <DocumentTab
-          stage={viewStage}
-          artifacts={stageArtifacts}
-          registryArtifacts={registryArtifactsState}
-          templateByCode={templateByCode}
-          selectedCode={selectedDocCode}
-          onSelectCode={setSelectedDocCode}
-          onChangeStatus={handleArtifactStatusChange}
-          pendingByCode={pendingStatusByCode}
-          onSaveBody={handleArtifactBodySave}
-          bodyPendingByCode={pendingBodyByCode}
-          onGenerateFromClaude={handleArtifactGenerate}
-          generatableCodes={generatableCodes}
-          generationPendingByCode={pendingGenerationByCode}
-          xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
-          xlsxDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx`
-          }
-          xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
-          xlsxComparisonDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx&variant=comparison`
-          }
-          docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
-          docxDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=docx`
-          }
-          htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
-          htmlViewHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=html`
-          }
-          pdfGeneratableCodes={PDF_GENERATABLE_CODES_CLIENT}
-          pdfDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
-          }
-          eventId={event.id}
-          onRegistryUploaded={() => router.refresh()}
-          supplementalPanel={
-            <>
-              <CommunicationDraftsPanel eventId={event.id} stage={viewStage} />
-              <StageDecisionLensPanel stage={viewStage} />
-            </>
-          }
-        />
-      ),
+      content:
+        viewStage === "strategy" ? (
+          <StrategyStageView
+            artifacts={stageArtifacts}
+            selectedCode={selectedDocCode}
+            onSelectCode={setSelectedDocCode}
+            documentWorkspace={documentTabContent}
+          />
+        ) : (
+          documentTabContent
+        ),
     },
     {
       key: "gate" as WorkspaceTabKey,

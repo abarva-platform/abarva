@@ -65,7 +65,7 @@ describe("resolveStageNextMove", () => {
     expect(view.primaryLabel).toBe("Draft with Sentinel");
     expect(view.primaryTarget).toBe("document");
     expect(view.gateSummary).toBe("0 of 1 cleared to advance");
-    expect(view.gates[0]?.label).toContain("Sourcing strategy memo");
+    expect(view.gates[0]?.label).toBe("Sponsor sign-off");
   });
 
   it("routes authored Strategy work to the gate checklist while gates remain open", () => {
