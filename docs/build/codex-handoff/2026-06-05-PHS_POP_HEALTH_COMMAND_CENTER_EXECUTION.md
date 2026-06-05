@@ -14,7 +14,11 @@ mobilization artifacts.
 
 ## Non-Negotiables
 
-- Use OpenAI-only generation paths for live artifact generation.
+- Use Claude for pilot-facing live CXO execution and artifact synthesis unless
+  Anand explicitly re-approves another primary model after QA evidence.
+- OpenAI may be used for offline QA, comparison, evaluation, or deterministic
+  secondary generation only; it is not the pilot-facing execution path until it
+  passes the Meridian/PHS hard-question bar.
 - Use Setup/Admin loader-backed evidence. No seed side-load shortcuts.
 - Do not fabricate confidential PHS data.
 - Distinguish public evidence, synthetic internal demo evidence, and generated
@@ -27,14 +31,14 @@ mobilization artifacts.
 
 ## Workstreams
 
-| Workstream | Owner | Output |
-|---|---|---|
-| Design package | docs agent | `docs/build/moves-design/phs-population-health-command-center/` |
-| Loader contract | setup/data agent | upload schemas, parser gaps, validation tests |
-| Corpus and grounding | agent QA | PHS golden questions and corpus mapping |
-| Moves runtime | runtime agent | gated artifact chain and stage behavior |
-| Source optional | source agent | partner-event trigger only after approved delivery model |
-| QA/crawl | QA agent | browser proof, artifact open/download/evidence/gate behavior |
+| Workstream           | Owner            | Output                                                           |
+| -------------------- | ---------------- | ---------------------------------------------------------------- |
+| Design package       | docs agent       | `docs/build/moves-design/phs-population-health-command-center/`  |
+| Loader contract      | setup/data agent | upload schemas, parser gaps, validation tests                    |
+| Corpus and grounding | agent QA         | PHS golden questions, corpus mapping, and model-quality evidence |
+| Moves runtime        | runtime agent    | gated artifact chain and stage behavior                          |
+| Source optional      | source agent     | partner-event trigger only after approved delivery model         |
+| QA/crawl             | QA agent         | browser proof, artifact open/download/evidence/gate behavior     |
 
 ## Phase 0 — Design And Loader Contract
 
@@ -76,17 +80,22 @@ Definition of done:
 - Approval state is named and visible.
 - No realized-value claim.
 
-## Phase 3 — OpenAI Generation Harness
+## Phase 3 — Pilot Generation Harness
 
 Build only after Phase 2 artifact persistence exists.
 
 Definition of done:
 
-- OpenAI-only generation path can draft Strategy Memo, Target Architecture,
-  Value Case, and Mobilization Plan from approved evidence.
+- Claude-backed pilot generation path can draft Strategy Memo, Target
+  Architecture, Value Case, and Mobilization Plan from approved evidence.
 - Answers cite evidence keys.
 - Missing evidence produces evidence requests.
-- No Anthropic/Claude path is used for this demo lane.
+- OpenAI-only QA may run as a comparison harness, but any OpenAI output that is
+  thin, missing evidence keys, or weaker than the CXO digestibility standard is
+  labeled as QA evidence only, not pilot-ready execution.
+- The model provider used for every captured answer is recorded in the QA report
+  and surfaced in any runtime response headers or telemetry available to the
+  harness.
 
 ## Phase 4 — Source Optional Trigger
 
@@ -106,11 +115,28 @@ Definition of done:
   artifact open, download behavior, evidence links, approvals, logout, and
   cross-tenant probes.
 - Report records prompt/response pairs, status codes, latencies, evidence keys,
-  and issues.
+  model provider, and issues.
 - No P0/P1 tenant leakage or fake-precision findings.
+- The hard-question deck must be Meridian/PHS-specific, not Apex-derived:
+  Sacramento/30+ hospital profile grounding, CDAO org depth, Epic/ERP/claims
+  ingestion, Databricks medallion and Unity Catalog architecture, payer-provider
+  KPIs, MLR/Stars/utilization value framing, human-in-the-loop governance, AMS
+  vendor posture, AWS lift-and-shift risk, and tenant-leak probes.
 
 ## Current Execution Rule
 
 Do not proceed from Phase 0 to runtime implementation until the loader/data
 contract map is reviewed. The first PR should be docs and control-plane design
 only unless the loader review identifies a small safe schema/test addition.
+
+## Model Policy Update — 2026-06-05
+
+The first OpenAI-only Meridian/PHS 50-question QA capture proved useful as a
+canary but was not pilot-grade: the answers were too terse and often missed
+explicit source-id citations. That run remains audit evidence, not a model
+approval.
+
+Pilot-facing execution now defaults to Claude for rich CXO synthesis. OpenAI can
+continue to support offline scoring, comparison, and regression testing, but it
+must pass the same 50-question Meridian/PHS quality bar before being promoted to
+pilot execution.
