@@ -266,14 +266,12 @@ export function DocumentTab({
                   generationPendingByCode?.[active.artifactCode] ?? false
                 }
                 xlsxDownloadHref={
-                  authoredBodyCanExport &&
                   xlsxGeneratableCodes?.has(active.artifactCode) &&
                   xlsxDownloadHref
                     ? xlsxDownloadHref(active.artifactCode)
                     : null
                 }
                 xlsxComparisonDownloadHref={
-                  authoredBodyCanExport &&
                   xlsxComparisonCodes?.has(active.artifactCode) &&
                   xlsxComparisonDownloadHref
                     ? xlsxComparisonDownloadHref(active.artifactCode)
@@ -302,9 +300,7 @@ export function DocumentTab({
                 }
                 exportOptionsHidden={
                   !authoredBodyCanExport &&
-                  (xlsxGeneratableCodes?.has(active.artifactCode) ||
-                    xlsxComparisonCodes?.has(active.artifactCode) ||
-                    docxGeneratableCodes?.has(active.artifactCode) ||
+                  (docxGeneratableCodes?.has(active.artifactCode) ||
                     htmlGeneratableCodes?.has(active.artifactCode) ||
                     pdfGeneratableCodes?.has(active.artifactCode) ||
                     false)
@@ -654,8 +650,8 @@ function ArtifactBodyEditor({
       ) : null}
       {exportOptionsHidden ? (
         <div style={EXPORT_EMPTY_NOTE_STYLE}>
-          Download and export options appear once this document has a draft.
-          Nothing to export yet.
+          Document exports appear once this artifact has a draft. Workbook
+          templates stay available for governed intake.
         </div>
       ) : null}
       {authoredBody ? (
