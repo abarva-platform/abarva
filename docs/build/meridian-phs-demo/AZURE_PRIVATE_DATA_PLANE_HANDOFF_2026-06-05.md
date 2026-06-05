@@ -29,7 +29,7 @@ Scope: infrastructure, Azure private data plane, secure ingestion, Blob landing,
 | Async chunk persistence | Not live by default. The worker default `INGESTION_PIPELINE_MODE` is `audit_only`; it estimates chunk count but does not write `enterprise_context_chunks` or embeddings. |
 | Embedding handoff from async worker | Not proved. Direct Admin loader returns `pending_embed_job`, but Blob worker-to-embedding orchestration is not complete. |
 | Full document upload through Admin route | Not live. The template registry advertises PDF, DOCX, XLSX, PPTX, Markdown, and ZIP exception paths, and the worker parser supports many document formats, but the Admin context route currently allows only CSV, JSON, JSONL, YAML, and YML. |
-| Pilot ingestion ledger from worker | Consumer supports an optional `writePilotLedger` hook, but the deployed worker wrapper does not pass that writer today. The worker writes `sensitive_upload_audit` only. |
+| Pilot ingestion ledger from worker | Implemented in code behind `INGESTION_PILOT_LEDGER_ENABLED=true`. The worker can now pass accepted/quarantined outcomes to the durable pilot ingestion ledger after writing `sensitive_upload_audit`. Azure private-network smoke is still required before calling it live. |
 | Service Bus/Event Grid production wiring | Code exists, but live end-to-end evidence was not available in this audit. Do not claim live async ingestion until Service Bus -> Blob -> worker -> audit evidence is captured in Azure. |
 
 ### Blocked from local Mac
@@ -160,7 +160,7 @@ Because local private DNS is blocked, the presence of a DB URL on the Mac is not
 | Sensitive upload guard | Implemented | Consumer runs `evaluateSensitiveUpload()` before parse/pipeline. | Keep policy thresholds reviewed for PHS PHI/PII profile. |
 | Document parser | Implemented for worker path | Supports PDF, DOCX, XLSX, PPTX, Markdown, JSON, and plain text; PDF can use Azure Document Intelligence when configured. | Admin route does not yet submit these formats through Blob path. |
 | Audit write | Implemented | Worker writes `sensitive_upload_audit` if `DATABASE_URL` is set. | Prove table exists in private Postgres and write succeeds from Azure worker. |
-| Pilot ingestion ledger | Partially implemented | Consumer has optional `writePilotLedger` hook and ledger write plans exist. | Worker wrapper does not pass `writePilotLedger`; production pilot ledger is not wired from worker yet. |
+| Pilot ingestion ledger | Implemented in code, not Azure-smoked | Consumer has optional `writePilotLedger` hook, durable ledger write plans exist, and the worker wrapper wires the durable writer when `INGESTION_PILOT_LEDGER_ENABLED=true`. | Run a private-network worker smoke proving `pilot_ingestion_upload_runs`, `pilot_ingestion_file_manifests`, and quarantine rows are written for admin-produced messages. |
 | Chunk persistence | Not production-ready through worker | Worker default is `audit_only`. | Implement direct commit pipeline or proven `broker_command` path that writes tenant-scoped chunks after approval. |
 | Embedding handoff | Not production-ready through worker | Direct loader returns pending embed job; worker does not start embed job. | Add queue/job handoff for pending chunks and verify retrieval. |
 | Human approval before commit | Designed in ledger model | Pilot ledger has approval/commit tables and readiness helpers. | Wire worker/admin flow so Blob loads preview first, then commit after approval. |
@@ -234,7 +234,7 @@ Plain-English unblock plan for Anand:
    - Postgres network access and DB credentials.
    - Search RBAC only if Search index update is part of cutover.
 4. Run worker in `audit_only` mode first and capture one clean file and one quarantine file.
-5. Wire pilot ledger writer into the worker.
+5. Enable `INGESTION_PILOT_LEDGER_ENABLED=true` and run a private-network worker smoke proving durable pilot ledger rows.
 6. Add commit pipeline for approved loads into `enterprise_context_chunks`.
 7. Add pending chunk embedding job.
 8. Run retrieval smoke as Meridian persona.
@@ -278,7 +278,7 @@ No runtime code change is required to create this handoff. The changes needed fo
 |---|---|---|
 | A | Add Blob-first Admin bulk upload endpoint that stages manifest/files and emits safe metadata. | Tenancy, attestation, sensitive guard, metadata no-PHI unit tests. Implemented by PR #3139 for CSV/JSON/JSONL/YAML bulk files. |
 | B | Wire direct Service Bus queue send after Blob staging. | Service Bus message shape tests and Azure smoke. Implemented in code by the follow-on `stage_and_enqueue` mode; Azure private-network smoke is still required before calling it live. |
-| C | Pass `writePilotLedger` into worker wrapper. | Worker unit test proving upload run/file manifest/quarantine rows are written. |
+| C | Pass `writePilotLedger` into worker wrapper. | Implemented in code behind `INGESTION_PILOT_LEDGER_ENABLED=true`; unit tests prove accepted/quarantined outcomes build durable ledger inputs. Azure private-network smoke remains required. |
 | D | Implement approved-load commit pipeline into tenant context chunks. | Template mapping tests, chunk persistence tests, rollback tests. |
 | E | Add embedding handoff from committed chunks. | Pending-to-embedded smoke and retrieval proof. |
 | F | Add production runbook commands for Azure Container Apps job or Function. | Private-network smoke from worker runtime. |
@@ -289,4 +289,4 @@ Current state is strong enough to explain the architecture and prove the securit
 
 The honest pilot statement is:
 
-> AbarVa has the Azure Blob helper, tenant-gated Admin loader, required attestation, sensitive upload guard, template registry, and Azure Service Bus worker foundation in place. The remaining production cutover is to make Blob-first staging the canonical Admin path, run the worker inside the private Azure data plane, wire pilot ledger plus commit/embedding, and capture retrieval plus tenant-isolation evidence.
+> AbarVa has the Azure Blob helper, tenant-gated Admin loader, required attestation, sensitive upload guard, template registry, Azure Service Bus worker foundation, and code-level durable pilot ledger handoff in place. The remaining production cutover is to run the worker inside the private Azure data plane, prove pilot-ledger writes from Azure, then add approved commit/embedding plus retrieval and tenant-isolation evidence.

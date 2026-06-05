@@ -20,6 +20,7 @@ import {
   type IngestionPipeline,
 } from '@/lib/ingestion/azure-landing-zone-consumer';
 import { normalizeEventGridBlobCreated } from '@/lib/ingestion/event-grid-normalizer';
+import { createDurablePilotLedgerWriter } from '@/lib/ingestion/pilot-ledger-writer';
 
 const execFileAsync = promisify(execFile);
 
@@ -38,6 +39,11 @@ function readIntEnv(name: string, fallback: number): number {
     throw new Error(`Invalid integer env var ${name}: ${raw}`);
   }
   return parsed;
+}
+
+function readBooleanEnv(name: string): boolean {
+  const raw = process.env[name]?.trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
 function serviceBusNamespace(): string {
@@ -278,6 +284,9 @@ async function main(): Promise<void> {
     download: createDownloader(credential),
     writeAudit: createAuditWriter(),
     runPipeline: createPipeline(),
+    ...(readBooleanEnv('INGESTION_PILOT_LEDGER_ENABLED')
+      ? { writePilotLedger: createDurablePilotLedgerWriter() }
+      : {}),
   };
 
   try {

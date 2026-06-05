@@ -252,8 +252,17 @@ describe("bulk context upload", () => {
       declaredClassification: "confidential_business",
       metadata: {
         source: "admin_bulk_context_upload",
+        sourceSystem: "admin_bulk_context_upload",
+        clientId: "client-meridian",
+        initiatedByUserId: "user-meridian",
+        uploadedBy: "user-meridian",
+        attestationVersion: PILOT_UPLOAD_ATTESTATION_VERSION,
         loadName: "meridian-phase-0",
         templateId: "enterprise-profile",
+        templateVersion: "unversioned",
+        mappingProfileKey: "enterprise-profile",
+        mappingProfileVersion: "unversioned",
+        originalFileName: "enterprise-profile.yaml",
       },
     });
   });

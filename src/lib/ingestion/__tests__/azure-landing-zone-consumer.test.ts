@@ -2,6 +2,7 @@ import { describe, it, expect, jest } from '@jest/globals';
 import {
   consumeOneMessage,
   type ConsumeContext,
+  type PilotLedgerWriterInput,
 } from '../azure-landing-zone-consumer';
 import type { AzureLandingZoneMessage } from '../azure-landing-zone-types';
 
@@ -60,8 +61,8 @@ describe('A2b · consumeOneMessage', () => {
   it('passes accepted files to the pilot ledger writer in audit-only mode', async () => {
     const ledgerPlans: unknown[] = [];
     const { ctx } = makeCtx({
-      writePilotLedger: jest.fn(async (plan) => {
-        ledgerPlans.push(plan);
+      writePilotLedger: jest.fn(async (input: PilotLedgerWriterInput) => {
+        ledgerPlans.push(input.plan);
       }) as unknown as ConsumeContext['writePilotLedger'],
     });
     const outcome = await consumeOneMessage(
@@ -307,8 +308,8 @@ describe('A2b · consumeOneMessage', () => {
         const bytes = new TextEncoder().encode('SSN: 123-45-6789');
         return { bytes, filename: 'leak.txt' };
       }) as unknown as ConsumeContext['download'],
-      writePilotLedger: jest.fn(async (plan) => {
-        ledgerPlans.push(plan);
+      writePilotLedger: jest.fn(async (input: PilotLedgerWriterInput) => {
+        ledgerPlans.push(input.plan);
       }) as unknown as ConsumeContext['writePilotLedger'],
     });
 
