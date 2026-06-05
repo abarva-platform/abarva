@@ -277,6 +277,7 @@ table.props th { background: var(--tint); font-size: 11px; }
 <strong>Contents</strong>
 <ol>
   <li><a href="#how-to-use">How to use this document</a></li>
+  <li><a href="#visual-refs">Visual references · wireframe atlas + pattern setters</a></li>
   <li><a href="#bar">The bar · design principles</a></li>
   <li><a href="#tokens">Design tokens (color · type · space)</a></li>
   <li><a href="#component-arch">Component architecture</a></li>
@@ -322,6 +323,52 @@ table.props th { background: var(--tint); font-size: 11px; }
   <li><em>"copy in italics"</em> — exact user-facing string · review for tone</li>
   <li><span class="pill pill-new">NEW</span> <span class="pill pill-effort-s">S</span> <span class="pill pill-risk-l">low</span> — type · effort · risk pills per spec</li>
 </ul>
+
+<!-- =================== VISUAL REFERENCES =================== -->
+<h2 id="visual-refs"><span class="step">PART 1.5</span>Visual references · wireframe atlas + pattern setters</h2>
+
+<h3>The three visual artifacts Codex builds against</h3>
+
+<div class="callout">
+<strong>READ THESE BEFORE STARTING ANY SPEC.</strong> The prose in this document specifies <em>what</em> to build; the wireframe atlas and the two pattern-setter screens specify <em>how it looks and feels</em>. Build to both, not just the prose.
+</div>
+
+<table class="props">
+  <tr><th>File</th><th>What it is</th><th>When to look at it</th></tr>
+  <tr>
+    <td><span class="file-path edit">docs/build/source-design/05-wireframe-atlas.html</span></td>
+    <td>The single visual map of the whole module · all 19 specs at glance · cover + northstar + token strip + index table + inline wireframes for every load-bearing and net-new surface</td>
+    <td><strong>Always.</strong> Open in a tab and keep it next to the spec block you're implementing. Each spec's "Wireframe reference" line points to the atlas section illustrating it.</td>
+  </tr>
+  <tr>
+    <td><span class="file-path edit">docs/build/source-design/06-strategy-screen.html</span></td>
+    <td>Full-fidelity Strategy stage redesign · the canonical drafting-stage canvas · Sentinel rail at 30%, Next Move card leading, humanized labels, export-gated</td>
+    <td>Implementing <strong>any drafting stage canvas</strong> (Spec 5, 6, 8, 9 strategy/scope/rfp/bafo question pack). This is the pattern setter — match its discipline.</td>
+  </tr>
+  <tr>
+    <td><span class="file-path edit">docs/build/source-design/07-executive-decision-screen.html</span></td>
+    <td>Full-fidelity Executive Decision page-1 summary · dark charcoal header · 1+3 layout · the ONLY dark moment in the lifecycle</td>
+    <td>Implementing <strong>any decision-rendering surface</strong> (Spec 12 canvas, Spec 15 CXO Report Slide 1, Spec 15 Deal Pack Page 1). This is the second pattern setter.</td>
+  </tr>
+</table>
+
+<h3>How specs cross-reference the visual artifacts</h3>
+
+<p>Every spec block has a <strong>Wireframe reference</strong> line at the bottom pointing to the atlas section that illustrates it. Two pattern-setter specs (Strategy and Executive Decision) point to their full-fidelity screens — Codex builds those to <strong>fidelity</strong>, not just to prose.</p>
+
+<div class="callout">
+<strong>Per the design module review (2026-06-04):</strong> the Strategy and Executive Decision screens are the <em>fidelity bar</em>. Every other surface in the redesign matches their discipline. Composed-stage surfaces (Scope/RFP, Responses/Eval, Value, Audit) inherit the Strategy pattern; decision-rendering surfaces inherit the Executive Decision pattern.
+</div>
+
+<h3>Reading order when picking up a spec</h3>
+
+<ol style="font-size: 14px;">
+  <li>Read the spec block in this document (file paths, props, copy, behavior, acceptance)</li>
+  <li>Open <code>05-wireframe-atlas.html</code> and jump to the referenced section</li>
+  <li>If the spec implements a drafting canvas: open <code>06-strategy-screen.html</code> in a second tab; match its discipline</li>
+  <li>If the spec implements a decision rendering: open <code>07-executive-decision-screen.html</code>; match its discipline</li>
+  <li>Cross-check against <code>04-design-module-review.md</code> for the review verdict + revisions on that spec</li>
+</ol>
 
 <!-- =================== THE BAR =================== -->
 <h2 id="bar"><span class="step">PART 2</span>The bar · design principles</h2>
@@ -370,6 +417,20 @@ For every page, blur the screenshot 50%. Can you still tell where the primary ac
 
 <div class="callout">
 <strong>Locked per project memory:</strong> User confirmed the design system on 2026-04-16 (per <code>feedback_design_locked.md</code>). Do not propose color/font changes without explicit approval.
+</div>
+
+<h3>Usage constraints (per design module review · 2026-06-04)</h3>
+
+<div class="callout" style="border-left-color: #b91c1c;">
+<strong>The "one dark moment" rule.</strong> Token <code>#1f2937</code> (charcoal · referred to in specs as the "dark header") is <strong>reserved exclusively for the Executive Decision page-1 header</strong>. It earns its contrast precisely because nothing else in the lifecycle is dark. Use accent blue <code>#1d4ed8</code> for emphasis on any other surface. If a future spec or PR wants a dark treatment, the answer is no — use the accent instead. This rule is enforced at design-review time; copying the dark header to another surface is a regression. See <a href="#spec-exec-decision">Spec 12</a> and cross-spec Q6 in <code>04-design-module-review.md</code>.
+</div>
+
+<div class="callout" style="border-left-color: #b45309;">
+<strong>The "no export of nothing" rule.</strong> Export and download CTAs (DOCX / PDF / HTML / PPTX / Deal Pack) are <strong>hidden until the underlying artifact has a body</strong>. Five export buttons on a not-started memo is the canonical anti-pattern that triggered this rule. Acceptance checklist for every artifact tile and export control: "Download/View actions render only when <code>artifact.body !== null</code>." Applies to Specs 7, 8, 15 and any future surface offering export.
+</div>
+
+<div class="callout" style="border-left-color: #047857;">
+<strong>The "empty state is a designed state" rule.</strong> Every list, shelf, or grid that can be empty must have an authored empty state that leads with the Next Move. "No DB-backed documents yet" is the anti-pattern. "Generate your first artifact" (or whatever the bar-grade prompt is) is the pattern. Acceptance checklist on Specs 1, 5, 7, 8, 9, 10, 11, 13, 16, 18: "Empty state authored to the bar."
 </div>
 
 <h3>Spacing scale</h3>

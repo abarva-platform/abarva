@@ -12,9 +12,13 @@
 |---|---|---|---|---|
 | 1 | [01-current-state-wireframes.html](./01-current-state-wireframes.html) | ✓ | What's there today · friction points · works-well anchors | Everyone — sets the baseline |
 | 2 | [02-end-to-end-wireframes.html](./02-end-to-end-wireframes.html) | ✓ | Full lifecycle current state next to target state · 18 sections from entry through renewal | Design module · CXO reviewers |
-| 3 | [03-build-specs.html](./03-build-specs.html) | ✓ | 19 per-surface implementation specs with file paths, props, copy, behavior, acceptance criteria | Design module → Codex |
+| 3 | [03-build-specs.html](./03-build-specs.html) | ✓ | 19 per-surface implementation specs · file paths, props, copy, behavior, acceptance | Design module → Codex |
+| 4 | [04-design-module-review.md](./04-design-module-review.md) | (Markdown) | Design module verdicts on all 19 specs · 8 cross-spec questions resolved · Wave 1 cleared | Codex |
+| 5 | [05-wireframe-atlas.html](./05-wireframe-atlas.html) | ✓ | **The single visual map** · all 19 specs in one atlas · inline wireframes for every load-bearing surface · the doc Codex keeps open while building | Codex |
+| 6 | [06-strategy-screen.html](./06-strategy-screen.html) | ✓ | **Full-fidelity Strategy stage** · the canonical drafting-stage canvas · pattern setter for Specs 5, 6, 8, 9 | Codex |
+| 7 | [07-executive-decision-screen.html](./07-executive-decision-screen.html) | ✓ | **Full-fidelity Executive Decision page-1** · dark-charcoal header · 1+3 layout · pattern setter for Specs 12, 15 | Codex |
 
-All three are self-contained HTML — no build step, no JS deps. Open in any browser.
+All files are self-contained — no build step, no JS deps. Open HTML in any browser.
 
 ---
 
@@ -24,73 +28,57 @@ All three are self-contained HTML — no build step, no JS deps. Open in any bro
 14 sections covering every Source page rendered today with proportions matching the production crawl screenshots. Color-coded friction calls (P1 red · P2 amber · works-well green). Identifies seven cross-cutting patterns the redesign must address.
 
 ### 02 · End-to-end wireframes
-18 parts walking the full sourcing lifecycle:
-
-- **Part 1**: Full state machine diagram (every state, every transition, four missing transitions called out)
-- **Parts 2-4**: Entry · Intake · Approval (the new page)
-- **Parts 5-15**: Stages 1-11 with current next to target side-by-side
-- **Part 16**: Exports (CXO Report + Deal Pack target structure)
-- **Part 17**: Cross-cutting (chat sizing, evidence drawer, audit log, notifications)
-- **Part 18**: Renewal loop back to entry
-
-Each section has a lifecycle ribbon at top showing where in the flow it sits.
+18 parts walking the full sourcing lifecycle — state machine diagram, every stage current-vs-target side by side, exports, cross-cutting patterns, renewal loop.
 
 ### 03 · Build specs
-19 PR-shaped specs, each with:
+19 PR-shaped specs with file paths, component signatures, copy strings, acceptance criteria, and per-spec wireframe references. New in v2: a "Visual references" section (Part 1.5) that tells Codex which atlas section to consult per spec; three locked usage constraints in Part 3 (the "one dark moment" rule, the "no export of nothing" rule, the "empty state is a designed state" rule).
 
-- **Files** (real repo paths — ✦ new, ✎ edit)
-- **Layout / Behavior** (what the surface does)
-- **Component signatures** (typed props)
-- **Copy** (italicized exact strings · ready for tone review)
-- **Acceptance** (definition of done as checklist)
-- **OPEN FOR DESIGN REVIEW** (2-5 explicit questions per spec)
+### 04 · Design module review
+Per-spec verdicts (9 approved as-is · 10 approved with revisions · 0 rejected). All 8 cross-spec questions resolved with rationale. Wave 1 PR sequencing called out (parallel: Specs 4 · 2 · 7; sequential: Spec 3 after Spec 4 merges).
 
-Specs are organized into **4 waves** sequenced by load-bearing priority. Wave 1 closes the most user-jarring bugs (routing guard, approval page, intake footer, humanization). Waves 2-4 layer the canvas redesign, stage depth, and lifecycle completion.
+### 05 · Wireframe atlas
+The single visual map. Cover + northstar + token strip + index table + inline wireframes for every load-bearing and net-new surface. Two pattern-setter screens (06, 07) linked from here; every other surface inherits their discipline.
 
-Also includes:
-- **The bar** — five design principles every spec must clear
-- **Design tokens** — locked color palette, typography, spacing (per project memory · do not change)
-- **Component architecture** — existing components to be aware of, new components to create
-- **8 cross-spec open questions** the design module needs to weigh in on
+### 06 · Strategy stage — full-fidelity
+The canonical drafting canvas. Sentinel rail at ~30%, Next Move card leading, humanized labels, no scaffold jargon, export-gated. Squint test passes (blue "Draft with Sentinel" button unmistakable). Every drafting-stage canvas in the redesign (Scope, RFP, BAFO question pack) matches this fidelity.
 
----
-
-## How the design module should use this package
-
-1. **Read 01 first** to ground in current state and friction
-2. **Read 02 next** to understand the lifecycle and current-vs-target deltas
-3. **Refine 03** spec-by-spec — each has explicit "OPEN FOR DESIGN REVIEW" blocks
-
-### Per-spec review pattern
-
-For each of the 19 specs, leave a comment block:
-
-```
-// DESIGN MODULE REVIEW
-// Approved as-is: [Y/N]
-// Revisions:
-//   - [bullet]
-// Open with Codex before ship: [yes/no]
-```
-
-That structure makes the handoff to Codex deterministic — no ambiguity about what's approved, what needs work, and what should be discussed in implementation.
-
-### Cross-spec questions to resolve before Wave 1 ships
-
-The build specs surface eight questions that span specs (voice and tone, density philosophy, chat positioning, etc.). Resolve these before Wave 1 ships — they affect every downstream design decision.
+### 07 · Executive Decision stage — full-fidelity
+The canonical decision-rendering surface. Dark charcoal #1f2937 header — the ONLY dark moment in the lifecycle. 1+3 layout (Recommendation HUGE; Savings / Trade-off / Dissent stack smaller). Squint test passes (recommendation + savings number survive 50% blur). Decision rendering in CXO Report Slide 1 and Deal Pack Page 1 inherit this pattern.
 
 ---
 
 ## How Codex uses this package
 
-After design module review, Codex picks up the refined `03-build-specs.html` and ships PRs **wave-by-wave**:
+Codex picks up the **refined `03-build-specs.html` + `04-design-module-review.md`** and ships PRs **wave-by-wave**, building against `05-wireframe-atlas.html` (visual map) and `06/07-*-screen.html` (fidelity bar).
 
-- **Wave 1** (week 1) — Specs 2 · 3 · 4 · 7
-- **Wave 2** (week 2-3) — Specs 1 · 5 · 6 · 8
-- **Wave 3** (week 4-5) — Specs 9 · 10 · 11 · 12
-- **Wave 4** (week 6+) — Specs 13 · 14 · 15 · 16 · 17 · 18 · 19
+### Wave 1 — load-bearing fixes (week 1)
 
-Each spec is bounded enough to ship as its own PR. No PR spans multiple specs.
+**Phase 1 (parallel — 3 PRs):**
+- **Spec 4** — Lifecycle routing guard (middleware, per Q4 review)
+- **Spec 2** — Intake completion footer
+- **Spec 7** — Artifact tile humanization (WIDENED scope per review — strings the original spec missed)
+
+**Phase 2 (after Spec 4 merges — 1 PR):**
+- **Spec 3** — Approval page (depends on routing guard existing)
+
+### Wave 2 — canvas redesign (week 2-3)
+Specs 1 · 5 · 6 · 8 — queue triage bands, Next-Move pattern, chat sizing, Strategy refit (matches `06-strategy-screen.html`)
+
+### Wave 3 — stage depth (week 4-5)
+Specs 9 · 10 · 11 · 12 — Scope/RFP, Responses/Evaluation, Pricing/BAFO, Executive Decision (matches `07-executive-decision-screen.html`)
+
+### Wave 4 — lifecycle completion (week 6+)
+Specs 13 · 14 · 15 · 16 · 17 · 18 · 19 — Transition, Value, Exports, Evidence drawer, Audit log, Attention bell, Renewal auto-event
+
+Each spec ships as its own PR. No PR spans multiple specs.
+
+### Reading order when picking up a spec
+
+1. Read the spec block in **03-build-specs.html** (file paths, props, copy, behavior, acceptance)
+2. Open **05-wireframe-atlas.html** and jump to the referenced section
+3. If the spec implements a drafting canvas → open **06-strategy-screen.html** in a second tab; match its discipline
+4. If the spec implements a decision rendering → open **07-executive-decision-screen.html**; match its discipline
+5. Cross-check against **04-design-module-review.md** for the review verdict + revisions on that spec
 
 ---
 
@@ -106,7 +94,15 @@ Each spec is bounded enough to ship as its own PR. No PR spans multiple specs.
 
 | Doc | State |
 |---|---|
-| 01 Current-state wireframes | ✓ Complete · ready for review |
-| 02 End-to-end wireframes | ✓ Complete · ready for review |
-| 03 Build specs | ✓ Draft v1 · design module to refine, then hand to Codex |
-| Wave 1 PRs | ⏸ Pending design module pass |
+| 01 Current-state wireframes | ✓ Complete |
+| 02 End-to-end wireframes | ✓ Complete |
+| 03 Build specs | ✓ v2 · references atlas + pattern setters · three usage constraints locked into tokens |
+| 04 Design module review | ✓ Complete · all 19 specs reviewed · 8 cross-spec Qs resolved · Wave 1 cleared |
+| 05 Wireframe atlas | ⏸ **Placeholder · awaiting design module to paste preview/17 content** |
+| 06 Strategy screen | ⏸ **Placeholder · awaiting design module to paste preview/15 content** |
+| 07 Executive Decision screen | ⏸ **Placeholder · awaiting design module to mock + paste content** |
+| Wave 1 PRs | ⏸ Ready to ship once 05/06/07 land |
+
+### Outstanding task for design module
+
+Drop the actual HTML for the atlas + two full-fidelity screens into files 05, 06, 07 (overwriting the placeholders). The placeholders contain inline instructions noting which preview file maps to which slot. Once committed, Wave 1 PRs are unblocked.
