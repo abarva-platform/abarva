@@ -27,7 +27,13 @@ const expectedByKey: ReadonlyMap<string, (typeof CANONICAL_TENANTS)[number]> =
 
 const LAKESHORE_HOLDING_GROUP_ID = '830de810-0000-4c9e-8f59-000000000000';
 
-const ALLOWED_CHILD_CLIENTS = new Map([
+type AllowedChildClient = {
+  name: string;
+  parentKey: string;
+  industryCode: string;
+};
+
+const ALLOWED_CHILD_CLIENTS: ReadonlyMap<string, AllowedChildClient> = new Map([
   [
     'morgan-street-holdings',
     {
@@ -52,7 +58,7 @@ const ALLOWED_CHILD_CLIENTS = new Map([
       industryCode: 'diversified_holdco',
     },
   ],
-] as const);
+]);
 
 const LIVE_DRIFT_CHECK_ATTEMPTS = 6;
 const LIVE_DRIFT_CHECK_RETRY_MS = 15_000;
