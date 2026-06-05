@@ -2,7 +2,10 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
-import { NORTHSTAR_CONTEXT_TEMPLATES } from "@/lib/context-ingestion/template-registry";
+import {
+  CONTEXT_TEMPLATE_REGISTRY,
+  PHS_CONTEXT_TEMPLATES,
+} from "@/lib/context-ingestion/template-registry";
 import { buildTemplateSchemaPreflight } from "@/lib/context-ingestion/schema-preflight";
 import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
 import { RATE_CARD_TEMPLATE_DEFINITIONS } from "@/lib/programs/expert-kernel/rate-card/rate-card-templates";
@@ -88,8 +91,8 @@ export function CsvUploadConnector({
 
   const template = useMemo(
     () =>
-      NORTHSTAR_CONTEXT_TEMPLATES.find((item) => item.id === templateId) ??
-      NORTHSTAR_CONTEXT_TEMPLATES[0],
+      CONTEXT_TEMPLATE_REGISTRY.find((item) => item.id === templateId) ??
+      CONTEXT_TEMPLATE_REGISTRY[0],
     [templateId],
   );
   const rateCardTemplate = useMemo(
@@ -241,7 +244,16 @@ export function CsvUploadConnector({
               onChange={(event) => setTemplateId(event.target.value)}
             >
               <optgroup label="Context templates">
-                {NORTHSTAR_CONTEXT_TEMPLATES.map((item) => (
+                {CONTEXT_TEMPLATE_REGISTRY.filter(
+                  (item) => !PHS_CONTEXT_TEMPLATES.some((template) => template.id === item.id),
+                ).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="PHS command center phase 0">
+                {PHS_CONTEXT_TEMPLATES.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
