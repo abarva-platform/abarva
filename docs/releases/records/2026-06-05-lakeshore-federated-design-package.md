@@ -45,11 +45,11 @@ Total: 12 files, +11,794 / -0 lines.
 
 ## QA / Validation
 
-- Design module synthesis review captured in `05-design-module-review.md` — per-doc verdicts (9 of 10 approved as-is, 2 of 10 approved with revisions Q1-Q5 carrying named ownership to Codex spec authors).
-- Cross-doc consistency verified across CXO naming, Source spawn IDs (L-S01 through L-S06), tenant model posture (`holding_group_id` shortcut), and design tokens (paper #F8F7F4 · ink #1f2937 · accent #1d4ed8 · Georgia serif · DM Sans body).
-- All HTML files self-contained — no external CDN, no JS, no build step; verified by inspection.
-- No emojis verified across all files.
-- Five locked rules satisfied: no claim without provenance · foundation-before-AI sequencing · no fake completion · HoldCo data sovereignty · no demo-only data.
+- `passed`: Design module synthesis review captured in `05-design-module-review.md` — per-doc verdicts (9 of 10 approved as-is, 2 of 10 approved with revisions Q1-Q5 carrying named ownership to Codex spec authors).
+- `passed`: Cross-doc consistency verified across CXO naming, Source spawn IDs (L-S01 through L-S06), tenant model posture (`holding_group_id` shortcut), and design tokens (paper #F8F7F4 · ink #1f2937 · accent #1d4ed8 · Georgia serif · DM Sans body).
+- `passed`: All HTML files self-contained — no external CDN, no JS, no build step; verified by inspection.
+- `passed`: No emojis verified across all files.
+- `passed`: Five locked rules satisfied: no claim without provenance · foundation-before-AI sequencing · no fake completion · HoldCo data sovereignty · no demo-only data.
 
 ## Rollout Plan
 
