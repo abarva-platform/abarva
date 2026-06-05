@@ -12,10 +12,10 @@
 import type {
   SourceArtifactPromptTemplate,
   SourceGenerationContext,
-} from './types';
+} from "./types";
 
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
-// Practical ceiling — Sonnet at 4000 output tokens produces ~10–12 pages
+const DEFAULT_MODEL = "gpt-5.1";
+// Practical ceiling — 4000 output tokens produces ~10–12 pages
 // of polished markdown in ~30–45s wall-clock. Above 4000 the marginal
 // quality is small and the wall-clock blows past Vercel function
 // budgets. Override per template only when the artifact genuinely needs
@@ -40,7 +40,7 @@ Format requirements:
 
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
-    artifactCode: 'd01_strategy_memo',
+    artifactCode: "d01_strategy_memo",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
@@ -69,26 +69,26 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
         ctx.event.estimatedValueUsd
           ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
           : null,
-        '',
-        `Trigger / why-now: ${ctx.event.triggerDescription ?? '(not provided in intake)'}`,
-        '',
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided in intake)"}`,
+        "",
         `Scope description from intake:`,
-        ctx.event.scopeDescription || '(not provided)',
-        '',
+        ctx.event.scopeDescription || "(not provided)",
+        "",
         `Draft the Sourcing Strategy Memo per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
-        .join('\n');
+        .join("\n");
     },
   },
 
   d05_scope_memo: {
-    artifactCode: 'd05_scope_memo',
+    artifactCode: "d05_scope_memo",
     version: 1,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
-    upstreamRequired: ['d01_strategy_memo'],
-    upstreamOptional: ['d04_app_inv', 'd07_ticket_synth'],
+    upstreamRequired: ["d01_strategy_memo"],
+    upstreamOptional: ["d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
 
 You are drafting the Scope Memo with Boundaries (artifact d05_scope_memo). This document is vendor-facing once locked — it must be precise about what's in and out of scope so vendors price + propose against the same definition.
@@ -105,37 +105,42 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
         `Tenant: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
-        '',
-        '— UPSTREAM CONTEXT —',
-        '',
+        "",
+        "— UPSTREAM CONTEXT —",
+        "",
         `Approved Sourcing Strategy Memo (d01_strategy_memo):`,
-        upstream.d01_strategy_memo ?? '(NOT YET AUTHORED — generate using event intake fallback)',
-        '',
+        upstream.d01_strategy_memo ??
+          "(NOT YET AUTHORED — generate using event intake fallback)",
+        "",
       ].filter((line): line is string => line !== null);
 
       if (upstream.d04_app_inv) {
-        lines.push('Approved Application Inventory (d04_app_inv) — use as in-scope source list:');
+        lines.push(
+          "Approved Application Inventory (d04_app_inv) — use as in-scope source list:",
+        );
         lines.push(upstream.d04_app_inv);
-        lines.push('');
+        lines.push("");
       }
       if (upstream.d07_ticket_synth) {
-        lines.push('Ticket History Synthesis (d07_ticket_synth) — informs SLA / hours-of-coverage:');
+        lines.push(
+          "Ticket History Synthesis (d07_ticket_synth) — informs SLA / hours-of-coverage:",
+        );
         lines.push(upstream.d07_ticket_synth);
-        lines.push('');
+        lines.push("");
       }
 
-      lines.push('Draft the Scope Memo per the system prompt requirements.');
-      return lines.join('\n');
+      lines.push("Draft the Scope Memo per the system prompt requirements.");
+      return lines.join("\n");
     },
   },
 
   d09_rfp_pack: {
-    artifactCode: 'd09_rfp_pack',
+    artifactCode: "d09_rfp_pack",
     version: 2,
     model: DEFAULT_MODEL,
     maxTokens: 5000,
-    upstreamRequired: ['d01_strategy_memo', 'd05_scope_memo'],
-    upstreamOptional: ['d02_value_target', 'd04_app_inv', 'd07_ticket_synth'],
+    upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
+    upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
 
 You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing document. Vendors will price + propose against this. It must be complete, unambiguous, and structured so vendor responses are comparable downstream.
@@ -160,35 +165,39 @@ Tone: formal procurement style. Vendor-facing — assume the reader is a sales e
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
         ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
         ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
-        '',
-        '— UPSTREAM CONTEXT —',
-        '',
-        'Approved Sourcing Strategy Memo (d01_strategy_memo):',
-        upstream.d01_strategy_memo ?? '(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)',
-        '',
-        'Approved Scope Memo (d05_scope_memo):',
-        upstream.d05_scope_memo ?? '(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)',
-        '',
+        "",
+        "— UPSTREAM CONTEXT —",
+        "",
+        "Approved Sourcing Strategy Memo (d01_strategy_memo):",
+        upstream.d01_strategy_memo ??
+          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
+        "",
+        "Approved Scope Memo (d05_scope_memo):",
+        upstream.d05_scope_memo ??
+          "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
+        "",
       ].filter((line): line is string => line !== null);
 
       if (upstream.d02_value_target) {
-        lines.push('Value Target Brief (d02_value_target):');
+        lines.push("Value Target Brief (d02_value_target):");
         lines.push(upstream.d02_value_target);
-        lines.push('');
+        lines.push("");
       }
       if (upstream.d04_app_inv) {
-        lines.push('Application Inventory (d04_app_inv) — drives §3:');
+        lines.push("Application Inventory (d04_app_inv) — drives §3:");
         lines.push(upstream.d04_app_inv);
-        lines.push('');
+        lines.push("");
       }
       if (upstream.d07_ticket_synth) {
-        lines.push('Ticket History Synthesis (d07_ticket_synth) — drives §4 SLA expectations:');
+        lines.push(
+          "Ticket History Synthesis (d07_ticket_synth) — drives §4 SLA expectations:",
+        );
         lines.push(upstream.d07_ticket_synth);
-        lines.push('');
+        lines.push("");
       }
 
-      lines.push('Draft the RFP Package per the system prompt requirements.');
-      return lines.join('\n');
+      lines.push("Draft the RFP Package per the system prompt requirements.");
+      return lines.join("\n");
     },
   },
 };

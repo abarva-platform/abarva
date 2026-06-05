@@ -95,7 +95,7 @@ describe("Source governance enforcement", () => {
           status: "approved",
           body: "AI generated strategy outline.",
           bodyGenerationMetadata: {
-            model: "claude-sonnet-4-6",
+            model: "gpt-5.1",
             generatedAt: "2026-06-01T00:00:00.000Z",
           },
         }),
@@ -109,7 +109,7 @@ describe("Source governance enforcement", () => {
           status: "approved",
           body: "AI generated strategy outline with human edits.",
           bodyGenerationMetadata: {
-            model: "claude-sonnet-4-6",
+            model: "gpt-5.1",
             generatedAt: "2026-06-01T00:00:00.000Z",
             humanEditedAt: "2026-06-01T00:05:00.000Z",
           },

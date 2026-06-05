@@ -10,7 +10,7 @@
 //      tenant/event metadata).
 //   4. Prompt registry returns the per-artifact prompt template
 //      (versioned). Builder fills the template with bound context.
-//   5. Anthropic SDK call (Claude Sonnet) returns the markdown body.
+//   5. OpenAI Responses API call returns the markdown body.
 //   6. Server writes the body to source_event_artifact_states.body
 //      AND a generation receipt to body_generation_metadata.
 //
@@ -21,16 +21,16 @@ import type {
   SourceEventArtifactState,
   SourceEventEvidence,
   SourceEventGateCriterion,
-} from '@/lib/source/canvas-substrate/types';
-import type { SourceStageKey } from '@/lib/source/types';
+} from "@/lib/source/canvas-substrate/types";
+import type { SourceStageKey } from "@/lib/source/types";
 
 /**
- * Audit receipt persisted to body_generation_metadata after a Claude
+ * Audit receipt persisted to body_generation_metadata after an OpenAI
  * generation. Survives the body itself; if the body is later
  * hand-edited the metadata still describes the original generation.
  */
 export interface SourceArtifactBodyGenerationMetadata {
-  /** Anthropic model id used (e.g. `claude-sonnet-4-6`). */
+  /** OpenAI model id used (e.g. `gpt-5.1`). */
   model: string;
   /** Prompt template id — typically the artifact code. */
   promptTemplateId: string;
@@ -48,11 +48,11 @@ export interface SourceArtifactBodyGenerationMetadata {
   generatedAt: string;
   /** Clerk user id of whoever clicked Generate. */
   generatedByUserId: string | null;
-  /** From Anthropic usage: input tokens (best-effort). */
+  /** From OpenAI usage: input tokens (best-effort). */
   tokensIn: number | null;
-  /** From Anthropic usage: output tokens (best-effort). */
+  /** From OpenAI usage: output tokens (best-effort). */
   tokensOut: number | null;
-  /** Anthropic stop reason (`end_turn`, `max_tokens`, …). */
+  /** Provider stop reason (`completed`, `max_output_tokens`, etc.). */
   stopReason: string | null;
   /** ISO timestamp set when a human edits/saves the AI draft. */
   humanEditedAt?: string;
@@ -99,7 +99,7 @@ export interface SourceArtifactPromptTemplate {
   artifactCode: string;
   /** Bump on any prompt change. */
   version: number;
-  /** Anthropic model id. Defaults to the latest Sonnet. */
+  /** OpenAI model id. Defaults to the Source OpenAI model. */
   model: string;
   /** Max output tokens — keep generous; cap at 8000 for v1. */
   maxTokens: number;

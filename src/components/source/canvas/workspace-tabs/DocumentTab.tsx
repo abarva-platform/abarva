@@ -55,11 +55,11 @@ interface DocumentTabProps {
   /** Per-artifact body-pending flag (separate from status pending). */
   bodyPendingByCode?: Record<string, boolean>;
   /**
-   * Trigger Claude generation for a specific artifact code.
+   * Trigger AI generation for a specific artifact code.
    * Returns generation result so the caller can surface failure
    * states (missing upstream, etc.).
    */
-  onGenerateFromClaude?: (
+  onGenerateArtifact?: (
     code: string,
   ) => Promise<
     | { ok: true }
@@ -133,7 +133,7 @@ export function DocumentTab({
   pendingByCode,
   onSaveBody,
   bodyPendingByCode,
-  onGenerateFromClaude,
+  onGenerateArtifact,
   generatableCodes,
   generationPendingByCode,
   xlsxGeneratableCodes,
@@ -258,7 +258,7 @@ export function DocumentTab({
                 onSaveBody={onSaveBody}
                 pending={bodyPendingByCode?.[active.artifactCode] ?? false}
                 stage={stage}
-                onGenerateFromClaude={onGenerateFromClaude}
+                onGenerateArtifact={onGenerateArtifact}
                 isGeneratable={
                   generatableCodes?.has(active.artifactCode) ?? false
                 }
@@ -429,7 +429,7 @@ interface ArtifactBodyEditorProps {
   onSaveBody?: (code: string, body: string) => Promise<void>;
   pending: boolean;
   stage: SourceStageKey;
-  onGenerateFromClaude?: (
+  onGenerateArtifact?: (
     code: string,
   ) => Promise<
     | { ok: true }
@@ -457,7 +457,7 @@ function ArtifactBodyEditor({
   bodyIsAuthored,
   onSaveBody,
   pending,
-  onGenerateFromClaude,
+  onGenerateArtifact,
   isGeneratable,
   generationPending,
   xlsxDownloadHref,
@@ -485,9 +485,9 @@ function ArtifactBodyEditor({
   }
 
   const handleGenerate = async () => {
-    if (!onGenerateFromClaude) return;
+    if (!onGenerateArtifact) return;
     setGenerationError(null);
-    const result = await onGenerateFromClaude(artifact.artifactCode);
+    const result = await onGenerateArtifact(artifact.artifactCode);
     if (!result.ok) {
       const detail =
         result.error === "upstream_required" && result.missingUpstream
@@ -556,7 +556,7 @@ function ArtifactBodyEditor({
               : "Draft needed"}
         </span>
         <div style={READER_BUTTONS_STYLE}>
-          {onGenerateFromClaude && isGeneratable ? (
+          {onGenerateArtifact && isGeneratable ? (
             <button
               type="button"
               disabled={generationPending}
