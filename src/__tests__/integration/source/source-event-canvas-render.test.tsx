@@ -279,6 +279,43 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("agent-dock-suggestion-c2");
   });
 
+  it("renders the Scope stage with explicit CMDB pull, inventory, and dependency list", () => {
+    const html = render({ viewStage: "scope" });
+    expect(html).toContain("source-scope-stage-view");
+    expect(html).toContain("source-scope-inventory-table");
+    expect(html).toContain("Pull from CMDB");
+    expect(html).toContain("Source never silently populates inventory");
+    expect(html).toContain("source-scope-dependency-list");
+    expect(html).toContain("Dependency list");
+    expect(html).toContain("Retained organization");
+    expect(html).toContain("source-scope-document-workspace");
+  });
+
+  it("renders the RFP stage with rubric, shortlist, and governed release state", () => {
+    const html = render({
+      viewStage: "rfp",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d09_rfp_pack",
+          stage: "rfp",
+          family: "rfp",
+        }),
+      ],
+      templateByCode: {
+        d09_rfp_pack: "# RFP Package\n\nDraft sections ...",
+      },
+    });
+
+    expect(html).toContain("source-rfp-stage-view");
+    expect(html).toContain("source-rfp-eval-rubric");
+    expect(html).toContain("100% total");
+    expect(html).toContain("source-rfp-vendor-shortlist");
+    expect(html).toContain("Q&amp;A protocol");
+    expect(html).toContain("Release RFP unavailable");
+    expect(html).toContain("does not send vendor communications");
+    expect(html).toContain("source-rfp-document-workspace");
+  });
+
   it("renders the sticky AgentDock composer", () => {
     const html = render();
     expect(html).toContain("agent-dock-input");

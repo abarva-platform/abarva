@@ -8,7 +8,7 @@ function read(relativePath: string): string {
 }
 
 describe("Source vendor response pack flow wiring", () => {
-  it("surfaces a dedicated vendor response intake on the response checklist artifact", () => {
+  it("surfaces a dedicated vendor response intake on the vendor response pack artifact", () => {
     const documentTab = read(
       "src/components/source/canvas/workspace-tabs/DocumentTab.tsx",
     );
@@ -16,9 +16,10 @@ describe("Source vendor response pack flow wiring", () => {
       "src/components/source/canvas/workspace-tabs/VendorResponsePackPanel.tsx",
     );
 
-    expect(documentTab).toContain("d11_response_checklist");
+    expect(documentTab).toContain("d13_vendor_responses");
     expect(documentTab).toContain("VendorResponsePackPanel");
     expect(panel).toContain("DOCX, PDF, XLSX, and PPTX");
+    expect(panel).toContain("d13_vendor_responses");
     expect(panel).toContain("artifactFamily");
     expect(panel).toContain("proposal");
     expect(panel).toContain("vendor_response_pack");

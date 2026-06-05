@@ -40,7 +40,7 @@ export function VendorResponsePackPanel({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("stageKey", "responses");
-      formData.append("artifactCode", "d11_response_checklist");
+      formData.append("artifactCode", "d13_vendor_responses");
       formData.append("artifactFamily", "proposal");
       formData.append("artifactKind", "vendor_response_pack");
       formData.append("dataClassification", "Confidential");
