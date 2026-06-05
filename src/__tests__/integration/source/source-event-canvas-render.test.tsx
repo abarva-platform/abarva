@@ -18,6 +18,7 @@ import type {
 } from "@/lib/source/canvas-substrate";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import type { SourcingEventSummary } from "@/lib/source/types";
+import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 // Shell uses next/navigation + Clerk hooks; mock so SSR doesn't blow up.
 jest.mock("next/navigation", () => ({
@@ -180,6 +181,81 @@ function makeRegistryArtifact(
   };
 }
 
+function makeVendorResponseReadiness(): SourceVendorResponseCompleteness {
+  return {
+    eventId: "evt-canvas-1",
+    eventName: "AMS Outsourcing 2026",
+    generatedAt: "2026-06-05T06:15:00.000Z",
+    stage: "responses",
+    summary: {
+      totalVendors: 2,
+      complete: 1,
+      partiallyComplete: 1,
+      incomplete: 0,
+      notComparable: 0,
+      blocked: 0,
+    },
+    comparabilityReadiness: "partially_complete",
+    blockers: ["Atlas SI: transition plan status is incomplete."],
+    recommendedNextAction:
+      "Collect missing sections, normalize pricing units, and resolve evidence quality before comparison.",
+    records: [
+      {
+        vendorId: "northstar",
+        vendorName: "Northstar",
+        responseStatus: "submitted",
+        receivedAt: "2026-06-01",
+        requiredSections: ["Scope confirmation", "Pricing template"],
+        submittedSections: ["Scope confirmation", "Pricing template"],
+        missingSections: [],
+        assumptions: ["3-year term"],
+        exclusions: ["ERP implementation"],
+        pricingTemplateStatus: "complete",
+        transitionPlanStatus: "complete",
+        securityResponseStatus: "complete",
+        automationRoadmapStatus: "complete",
+        evidenceStatus: "Usable Evidence",
+        comparabilityStatus: "comparable",
+        blockers: [],
+        completenessStatus: "complete",
+        rationale: ["Response is complete."],
+        recommendedNextAction: "Compare with peers.",
+        nexusGuidance: "Compare with peers.",
+        sentinelEvidenceNotes: [],
+        stewardGateNotes: ["Vendor is not blocked."],
+        atlasExecutiveImplication: "Response quality is sufficient.",
+      },
+      {
+        vendorId: "atlas",
+        vendorName: "Atlas SI",
+        responseStatus: "submitted",
+        receivedAt: "2026-06-02",
+        requiredSections: ["Scope confirmation", "Pricing template"],
+        submittedSections: ["Scope confirmation", "Pricing template"],
+        missingSections: ["Transition plan"],
+        assumptions: ["Named retained team"],
+        exclusions: ["Travel pass-through"],
+        pricingTemplateStatus: "complete",
+        transitionPlanStatus: "incomplete",
+        securityResponseStatus: "complete",
+        automationRoadmapStatus: "complete",
+        evidenceStatus: "Available",
+        comparabilityStatus: "partially_comparable",
+        blockers: ["Atlas SI: transition plan status is incomplete."],
+        completenessStatus: "partially_complete",
+        rationale: ["Transition plan needs clarification."],
+        recommendedNextAction:
+          "Atlas SI: transition plan status is incomplete.",
+        nexusGuidance: "Complete required sections before comparison.",
+        sentinelEvidenceNotes: [],
+        stewardGateNotes: ["Do not advance until complete."],
+        atlasExecutiveImplication:
+          "Comparability confidence is reduced.",
+      },
+    ],
+  };
+}
+
 function render(
   options: {
     artifactStates?: SourceEventArtifactState[];
@@ -188,6 +264,7 @@ function render(
     registryArtifacts?: SourceArtifactRegistryRecord[];
     templateByCode?: Record<string, string | null>;
     viewStage?: SourceEventArtifactState["stage"];
+    vendorResponseReadiness?: SourceVendorResponseCompleteness;
   } = {},
 ): string {
   return renderToStaticMarkup(
@@ -203,6 +280,7 @@ function render(
       },
       activityEntries: [],
       tenantName: "Apex Retail Group",
+      vendorResponseReadiness: options.vendorResponseReadiness,
     }),
   );
 }
@@ -314,6 +392,61 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("Release RFP unavailable");
     expect(html).toContain("does not send vendor communications");
     expect(html).toContain("source-rfp-document-workspace");
+  });
+
+  it("renders the Responses stage with completeness matrix, Q&A symmetry, and decision point", () => {
+    const html = render({
+      viewStage: "responses",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d13_vendor_responses",
+          stage: "responses",
+          family: "proposal",
+        }),
+      ],
+      templateByCode: {
+        d13_vendor_responses: "# Vendor Response Pack\n\nReceived responses ...",
+      },
+      vendorResponseReadiness: makeVendorResponseReadiness(),
+    });
+
+    expect(html).toContain("source-responses-stage-view");
+    expect(html).toContain("Review vendor response completeness");
+    expect(html).toContain("source-responses-completeness-matrix");
+    expect(html).toContain("Northstar");
+    expect(html).toContain("Atlas SI");
+    expect(html).toContain("source-responses-qna-symmetry-log");
+    expect(html).toContain("Questions go to everyone");
+    expect(html).toContain("source-responses-disqualification-card");
+    expect(html).toContain("procurement system unless explicitly configured");
+    expect(html).toContain("source-responses-document-workspace");
+  });
+
+  it("renders the Evaluation stage with scorecard, dissent, and human-named BATNA", () => {
+    const html = render({
+      viewStage: "evaluation",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d16_scorecard",
+          stage: "evaluation",
+          family: "scorecard",
+        }),
+      ],
+      templateByCode: {
+        d16_scorecard: "# Evaluation Scorecard\n\nWeighted scoring ...",
+      },
+    });
+
+    expect(html).toContain("source-evaluation-stage-view");
+    expect(html).toContain("Complete scoring before pricing");
+    expect(html).toContain("source-evaluation-weighted-scorecard");
+    expect(html).toContain("Reviewer rationale");
+    expect(html).toContain("source-evaluation-dissent-panel");
+    expect(html).toContain("Attachment allowed");
+    expect(html).toContain("source-evaluation-batna-panel");
+    expect(html).toContain("Named by sourcing lead");
+    expect(html).toContain("does not pick a winner silently");
+    expect(html).toContain("source-evaluation-document-workspace");
   });
 
   it("renders the sticky AgentDock composer", () => {

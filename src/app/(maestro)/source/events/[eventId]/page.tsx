@@ -20,6 +20,7 @@ import {
 import type { SourceStageKey } from "@/lib/source/types";
 import { ensureThreadForSourceEvent } from "@/lib/decisions/auto-linker";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
+import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,9 @@ export default async function SourceEventDetailPage({
     : null;
 
   const activityEntries = await listSourceEventActivityEntries(event.id);
+  const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
+    event,
+  });
 
   return (
     <UniversalCanvasShell
@@ -139,6 +143,7 @@ export default async function SourceEventDetailPage({
       activityEntries={activityEntries}
       tenantName={tenantName}
       decisionThreadId={decisionThread?.id ?? null}
+      vendorResponseReadiness={vendorResponseReadiness}
     />
   );
 }
