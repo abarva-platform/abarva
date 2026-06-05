@@ -41,6 +41,9 @@ async function main() {
   const surfaces = resolveCrawlSurfaces(args.surface);
   const questions = resolveCrawlQuestions(args.questionSet);
   const plannedObservationCount = personas.length * surfaces.length;
+  console.log(
+    `crawl_plan:${personas.map((persona) => persona.key).join(",")}:${surfaces.map((surface) => surface.id).join(",")}:questions=${questions.length}`,
+  );
   const baseline = args.baseline ? await readBaseline(args.baseline) : null;
   const persistProgress = async (complete: boolean) => {
     const run = buildCrawlRun(args.baseUrl, runId, observations);
@@ -51,6 +54,7 @@ async function main() {
   let fatalError: unknown = null;
   try {
     for (const persona of personas) {
+      console.log(`crawl_persona_start:${persona.key}:${persona.tenantKey}`);
       const browser = await launchCrawlBrowser();
       let personaContext: { context: BrowserContext; page: Page } | null = null;
       try {
@@ -59,12 +63,15 @@ async function main() {
           : await createIsolatedPersonaContext(browser, persona, { baseUrl: args.baseUrl });
         personaContext = activeContext;
         for (const surface of surfaces) {
+          console.log(`crawl_surface_start:${persona.key}:${surface.id}:${surface.path}`);
           observations.push(await crawlSurface(activeContext.page, persona, surface, args.baseUrl, out, questions));
           await persistProgress(false);
+          console.log(`crawl_surface_complete:${persona.key}:${surface.id}:captured=${observations.length}/${plannedObservationCount}`);
         }
       } finally {
         await personaContext?.context.close().catch(() => undefined);
         await browser.close().catch(() => undefined);
+        console.log(`crawl_persona_complete:${persona.key}`);
       }
     }
   } catch (error) {
@@ -315,6 +322,8 @@ async function askHardQuestions(
   }> = [];
   let exactFieldCitations = 0;
   for (const question of questions) {
+    const questionNumber = transcript.length + 1;
+    console.log(`crawl_question_start:${persona.key}:${surface.id}:${questionNumber}/${questions.length}`);
     const response = await askIntelligenceApi(page, question, persona, surface);
     const answer = response.answer;
     exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
@@ -325,6 +334,9 @@ async function askHardQuestions(
       error: response.error,
       eventCount: response.eventCount,
     });
+    console.log(
+      `crawl_question_complete:${persona.key}:${surface.id}:${questionNumber}/${questions.length}:ok=${response.ok}:events=${response.eventCount}`,
+    );
   }
   await fs.writeFile(path.join(out, 'transcripts', `${safeName}.json`), JSON.stringify(transcript, null, 2));
   return { exactFieldCitations };
