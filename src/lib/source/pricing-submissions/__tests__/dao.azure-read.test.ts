@@ -107,6 +107,28 @@ describe('pricing submission read DAO through azureRead', () => {
     );
   });
 
+  it('normalizes Postgres Date timestamp fields to ISO strings for renderers', async () => {
+    const submittedAt = new Date('2026-05-28T12:00:00.000Z');
+    const createdAt = new Date('2026-05-28T12:01:00.000Z');
+    const updatedAt = new Date('2026-05-28T12:02:00.000Z');
+    queryMock.mockResolvedValueOnce([
+      {
+        ...baseRow,
+        submitted_at: submittedAt,
+        created_at: createdAt,
+        updated_at: updatedAt,
+      },
+    ]);
+
+    await expect(listActiveSubmissionsForEvent('event-1')).resolves.toMatchObject([
+      {
+        submittedAt: submittedAt.toISOString(),
+        createdAt: createdAt.toISOString(),
+        updatedAt: updatedAt.toISOString(),
+      },
+    ]);
+  });
+
   it('degrades to an empty list when azureRead fails', async () => {
     queryMock.mockRejectedValueOnce(new Error('connection refused'));
 

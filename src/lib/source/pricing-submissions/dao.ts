@@ -31,7 +31,7 @@ interface DbRow {
   source_event_id: string;
   tenant_key: string;
   vendor_name: string;
-  submitted_at: string;
+  submitted_at: string | Date;
   uploaded_by_user_id: string | null;
   uploaded_filename: string | null;
   unit_prices_by_id: Record<string, number> | null;
@@ -41,12 +41,16 @@ interface DbRow {
   parse_status: ParseStatus;
   parse_warnings: ParseWarning[] | null;
   superseded_by: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
 function toJsonbParam(value: unknown): string {
   return JSON.stringify(value ?? null);
+}
+
+function toIsoTimestamp(value: string | Date): string {
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 function rowToView(row: DbRow): VendorPricingSubmissionRow {
@@ -55,7 +59,7 @@ function rowToView(row: DbRow): VendorPricingSubmissionRow {
     sourceEventId: row.source_event_id,
     tenantKey: row.tenant_key,
     vendorName: row.vendor_name,
-    submittedAt: row.submitted_at,
+    submittedAt: toIsoTimestamp(row.submitted_at),
     uploadedByUserId: row.uploaded_by_user_id,
     uploadedFilename: row.uploaded_filename,
     unitPricesById: row.unit_prices_by_id ?? {},
@@ -65,8 +69,8 @@ function rowToView(row: DbRow): VendorPricingSubmissionRow {
     parseStatus: row.parse_status,
     parseWarnings: row.parse_warnings ?? [],
     supersededBy: row.superseded_by,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: toIsoTimestamp(row.created_at),
+    updatedAt: toIsoTimestamp(row.updated_at),
   };
 }
 
