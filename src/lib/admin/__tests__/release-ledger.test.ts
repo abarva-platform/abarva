@@ -101,8 +101,42 @@ Retired tenant references still exist in archived docs.
     ].join('\n');
 
     expect(renderedText).toContain('Removes retired tenant copy');
-    expect(renderedText).toContain('legacy financial-services sample tenant');
-    expect(renderedText).toContain('legacy healthcare sample tenant');
+    expect(renderedText).toContain('legacy financial-services workspace');
+    expect(renderedText).toContain('legacy healthcare workspace');
+  });
+
+  it('removes generic tenant phrasing from tenant-visible release fields', () => {
+    const record = parseReleaseRecord(
+      '2026-06-05-generic-copy.md',
+      `# Generic tenant wording cleanup
+
+## Release ID
+
+\`2026-06-05-generic-copy\`
+
+## Status
+
+\`released\`
+
+## Plain-English Summary
+
+Stops rendering generic tenant and demo tenant language in the admin release ledger.
+
+## Client Applicability
+
+- All clients: sample client copy no longer appears in tenant-visible release rows.
+`,
+    );
+
+    const renderedText = [
+      record.title,
+      record.summary,
+      ...record.clientApplicability,
+    ].join('\n');
+
+    expect(renderedText).toContain('general workspace');
+    expect(renderedText).toContain('sample workspace');
+    expect(renderedText).not.toMatch(/\bgeneric tenant\b|\bdemo tenant\b|\bsample client\b/i);
   });
 
   it('redacts canonical tenant names and aliases from tenant-visible release fields', () => {
