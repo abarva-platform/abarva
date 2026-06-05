@@ -7,6 +7,7 @@ import Papa from 'papaparse';
 import { getAzureWriteFluentClient, type PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
 
 import { classifyUploadedFile } from './file-classifier';
+import { buildTemplateSchemaPreflight } from './schema-preflight';
 import {
   getTemplateById,
   getTemplateForDimension,
@@ -150,6 +151,13 @@ function resolveTemplate(fileName: string, templateId?: string | null): ContextT
   return getTemplateForDimension(classification.dimension) ?? getTemplateById('application-portfolio')!;
 }
 
+function assertPHSRequiredFieldsMapped(template: ContextTemplateDefinition, headers: readonly string[]): void {
+  if (!template.id.startsWith('phs-')) return;
+  const preflight = buildTemplateSchemaPreflight({ templateId: template.id, headers });
+  if (preflight.missingRequiredFields.length === 0) return;
+  throw new Error(`csv_missing_required_fields:${preflight.missingRequiredFields.join(',')}`);
+}
+
 function parseJsonObject(raw: unknown): Record<string, string> | undefined {
   if (typeof raw !== 'string' || raw.trim() === '') return undefined;
   try {
@@ -277,6 +285,7 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     templateId: template.id,
     mapping: input.mapping,
   });
+  assertPHSRequiredFieldsMapped(template, parsed.headers);
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
   const fileHash = crypto.createHash('sha256').update(input.csvText).digest('hex').slice(0, 12);
   const uploadId = [

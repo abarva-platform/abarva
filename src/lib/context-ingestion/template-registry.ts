@@ -1,4 +1,5 @@
 import type { ContextDimension, UploadedFileFormat } from './types';
+import { PHS_PHASE0_TEMPLATE_DEFINITIONS } from './phs-phase0-templates';
 
 export type TemplateParserMode =
   | 'structured_rows'
@@ -251,14 +252,49 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
   ],
 }));
 
+const PHS_OBJECT_DIMENSION_MAP = {
+  evidence_item: 'c_suite_strategy',
+  uploaded_artifact: 'c_suite_strategy',
+  workload_record: 'application_portfolio',
+  rate_card_row: 'financial_kpis',
+  gate_criterion: 'c_suite_strategy',
+  approval_record: 'c_suite_strategy',
+} satisfies Record<string, ContextDimension>;
+
+export const PHS_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = PHS_PHASE0_TEMPLATE_DEFINITIONS.map((template) => ({
+  id: template.id,
+  dimension: PHS_OBJECT_DIMENSION_MAP[template.objectType],
+  label: template.label,
+  acceptedFormats: [...template.acceptedFormats],
+  exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+    (format) => !(template.acceptedFormats as readonly UploadedFileFormat[]).includes(format),
+  ),
+  formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map((format) => FORMAT_SUPPORT_PROFILES[format]),
+  requiredFields: [...template.requiredFields],
+  optionalFields: [...template.optionalFields],
+  ownerRole: template.ownerRole,
+  refreshCadence: 'per demo setup cycle',
+  exceptionMetadataRequirements: buildExceptionMetadataRequirements([...template.acceptedFormats]),
+  unlocks: [
+    template.stageAdvanceUse,
+    'PHS demo claims can cite governed Phase 0 evidence',
+    'Stage advancement can distinguish parsed rows from approved evidence',
+  ],
+}));
+
+export const CONTEXT_TEMPLATE_REGISTRY: ContextTemplateDefinition[] = [
+  ...NORTHSTAR_CONTEXT_TEMPLATES,
+  ...PHS_CONTEXT_TEMPLATES,
+];
+
 export function getTemplateById(id: string): ContextTemplateDefinition | null {
-  return NORTHSTAR_CONTEXT_TEMPLATES.find((template) => template.id === id) ?? null;
+  return CONTEXT_TEMPLATE_REGISTRY.find((template) => template.id === id) ?? null;
 }
 
 export function getTemplateForDimension(
   dimension: ContextDimension,
 ): ContextTemplateDefinition | null {
-  return NORTHSTAR_CONTEXT_TEMPLATES.find((template) => template.dimension === dimension) ?? null;
+  return CONTEXT_TEMPLATE_REGISTRY.find((template) => template.dimension === dimension) ?? null;
 }
 
 export function getTemplateFormatCoverage(): Record<Exclude<UploadedFileFormat, 'unknown'>, number> {
