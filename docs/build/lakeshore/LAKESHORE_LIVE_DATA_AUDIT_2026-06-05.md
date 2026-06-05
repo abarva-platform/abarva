@@ -7,9 +7,9 @@ Purpose: confirm what is truly loaded, which loader path was used, where depth i
 
 ## Executive Status
 
-Lakeshore has a real tenant row, a loaded synthetic context bundle, an active corpus in Azure AI Search, two Source events, six Moves, and Tower/Intelligence rows. The strongest live demo spine is still the Kyriba treasury rollout because it has both:
+Lakeshore has a real tenant row, a loaded synthetic context bundle, an active corpus in Azure AI Search, two Source events, six Moves, and Tower/Intelligence rows. The strongest live demo spine is the Kyriba treasury rollout because it has both:
 
-- Source stage documents through BAFO, with executive-decision artifacts in review.
+- Source stage documents across all 11 stages. Strategy through BAFO are approved, while Executive Decision through Value are artifact-backed and in review.
 - Moves board-grade deliverables, Move 0 rollout-gate evidence, and Azure-backed attachments for the linked Kyriba Move.
 
 The AMS modernization Source event is now document-real through its current Evaluation stage. It can be used as a second Source-only demo story, but not as a Pricing/BAFO/Decision story. The Shared Data Platform and Evidence Spine Move is now document-real as a second Moves story with six Azure-backed deliverables. The remaining four Moves are still row-only.
@@ -158,17 +158,17 @@ Live Source artifact proof:
 
 | Area | Count / state |
 |---|---:|
-| Azure Blob files in `source-artifacts/lakeshore/LSH-KYRIBA-TREASURY-2026/` | 26 |
-| `source_artifacts` rows | 26 |
-| `source_event_artifact_states` bodies linked | 26 |
-| `source_artifact_chunks` | 26 |
-| `source_artifact_facts` | 26 |
-| `source_graph_edges` | 26 |
+| Azure Blob files in `source-artifacts/lakeshore/LSH-KYRIBA-TREASURY-2026/` | 33 |
+| `source_artifacts` rows | 33 |
+| `source_event_artifact_states` bodies linked | 33 |
+| `source_artifact_chunks` | 33 |
+| `source_artifact_facts` | 33 |
+| `source_graph_edges` | 33 |
 | Source artifact/chunk embedding state | `not_applicable` |
-| Evidence states through executive decision | usable evidence |
+| Evidence states through value | usable evidence |
 | Gates through BAFO | met |
 | Executive decision artifacts | in review / needs review |
-| Selection / transition / value stage artifacts | not started |
+| Selection / transition / value stage artifacts | in review / needs review |
 
 Stage artifact coverage:
 
@@ -182,9 +182,9 @@ Stage artifact coverage:
 | Pricing | 3 approved artifacts |
 | BAFO | 2 approved artifacts |
 | Executive decision | 3 artifacts in review |
-| Selection | scaffold only |
-| Transition | scaffold only |
-| Value | scaffold only |
+| Selection | 2 artifacts in review |
+| Transition | 3 artifacts in review |
+| Value | 2 artifacts in review |
 
 Gate and evidence truth:
 
@@ -193,10 +193,28 @@ Gate and evidence truth:
 | Strategy through BAFO gates | all required criteria met |
 | Executive Decision to Selection gate | pending |
 | Selection / Transition / Value gates | pending |
-| Evidence through Executive Decision | usable evidence |
-| Selection / Transition / Value evidence | not requested |
+| Evidence through Value | usable evidence |
+| Selection / Transition / Value evidence | usable evidence, artifact-backed |
 
-Demo guidance: safe to demo Strategy through BAFO and show Executive Decision as in review. Do not imply Selection, Transition, or Value is complete.
+Downstream artifact proof loaded on 2026-06-05:
+
+| Stage | Artifact | Live artifact id |
+|---|---|---|
+| Selection | `d27_selection_memo` / Selection Memo | `963dbcd5-446a-4791-ae23-70262a62b46f` |
+| Selection | `d28_contract_record` / Contract Record | `41ac976f-b401-461c-8634-f8c3e0793b3d` |
+| Transition | `d29_transition_plan` / Transition Plan | `7d54cd1f-6591-42e1-8904-07462c697d19` |
+| Transition | `d30_checkpoint_log` / Checkpoint Log | `af481e19-6d28-4ce4-a185-00489ab1850e` |
+| Transition | `d31_kt_evidence` / Knowledge-Transfer Evidence | `4b6fde42-47a8-4c22-ad8c-dec162297de4` |
+| Value | `d32_value_ledger` / Value Ledger | `48577b66-42b3-4c3b-986d-3b177831c534` |
+| Value | `d33_governance_review` / Governance Review Note | `e2fae778-9bd7-4cb0-8dad-00c45f1f7eab` |
+
+Live product proof: Clerk-ticket sign-in as `cfo@lakeshore-holdings.example.com` with `abarva_active_client=lakeshore` returned 200 for:
+
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=selection`, with `Selection Memo` and `Contract Record` visible.
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=transition`, with `Transition Plan`, `Checkpoint Log`, and `Knowledge-Transfer Evidence` visible.
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=value`, with `Value Ledger` and `Governance Review Note` visible.
+
+Demo guidance: safe to demo the full Kyriba Source artifact spine as synthetic but real evidence. Be precise: the event is still at Executive Decision, and Selection/Transition/Value are loaded for continuity and downstream preview but remain `needs_review`; do not imply the award, transition, or realized value is complete.
 
 ### `LSH-AMS-MODERNIZATION-2026`
 
