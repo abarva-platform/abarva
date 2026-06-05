@@ -65,6 +65,7 @@
     "ops:founder-operating-system:verify": "node scripts/ops/verify-founder-operating-system.mjs",
     "sync-ai-rules": "tsx scripts/governance/sync-ai-rules.ts",
     "repo:alignment:verify": "node scripts/governance/verify-repository-alignment.mjs",
+    "tenant:shared-readiness:verify": "node scripts/verify/tenant-shared-readiness-evidence.mjs",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
     "verify:meridian-context-showcase": "node scripts/verify/meridian-context-showcase.mjs",
