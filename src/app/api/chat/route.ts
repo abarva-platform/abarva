@@ -1,136 +1,91 @@
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
-import { meridianHealth } from "@/data/meridian";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
-import { getRelevantTools } from "@/lib/agent/tools/registry";
-import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
+import { getActiveClientKey, getActiveClientRow } from "@/lib/active-client";
+import {
+  createIntelligenceAskOpenAIText,
+  INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL,
+} from "@/lib/intelligence/ask/openai-runtime";
+import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
-import { getActiveClientRow } from "@/lib/active-client";
 
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
 
-  // F0.2 Layer 0 — user context for authenticated visitors. Returns
-  // empty string for the common unauthenticated marketing-funnel hit.
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json(
+      { error: "no_client", detail: "No active client for AI egress policy." },
+      { status: 403 },
+    );
+  }
+
   const userContextBlock = await getUserContextPromptBlock();
+  const activeClientKey = await getActiveClientKey();
+  const tenantContextBlock = await buildTenantContextBlock(activeClientKey);
 
-  // Load org context if Meridian
-  const isMeridian = orgName.toLowerCase().includes("meridian");
-  const orgContext = isMeridian
-    ? `
-ORGANIZATION CONTEXT — CONFIDENTIAL:
-- ${meridianHealth.org.name}: ${meridianHealth.hospitals.total} hospitals, ${meridianHealth.org.employees.toLocaleString()} employees, $${meridianHealth.org.revenue}B revenue
-- Operating margin: ${meridianHealth.org.operatingMargin}% (board target: ${meridianHealth.financials.targetOperatingMargin}%)
-- RCM denial rate: ${meridianHealth.technology.rcm.denialRate}% (industry benchmark: 11.4%) — $${meridianHealth.technology.rcm.denialWriteOff2023}M written off in 2023
-- Epic optimization score: ${meridianHealth.technology.ehr.optimizationScore}/100 — only 12 of 47 Cogito dashboards live
-- Days in AR: ${meridianHealth.technology.rcm.daysInAR} days (target: 42)
-- Medicare Advantage star rating: ${meridianHealth.healthPlan.medicareAdvantage.starRating} (bonus threshold: 4.0)
-- IT budget: $${meridianHealth.financials.itBudget2024}M — only $${meridianHealth.financials.itBudgetBreakdown.projectsAndTransformation}M for transformation
-- CDO role: VACANT — CIO carrying both roles 8 months in
-- Blue Ridge merger integration: 8 months overdue, 2 hospitals still on legacy Cerner
+  const systemPrompt = `You are AbarVa, a senior enterprise transformation advisor.
+Use only the authenticated tenant context supplied below for organization-specific facts.
+Do not use static seed files, legacy fixture data, or remembered facts.
+If the tenant context does not include a number, owner, quote, date, vendor, or metric, say what is missing instead of inventing it.
+Never call synthetic planning context "actual client data."
+Write in short, scannable sections that a CXO can act on.
 
-KEY CONTRADICTIONS DETECTED:
-${meridianHealth.contradictions.map((c, i) => `${i + 1}. ${c}`).join("\n")}
+${userContextBlock}
 
-LEADERSHIP INSIGHTS:
-- CIO: "${meridianHealth.interviewInsights.cio}"
-- CFO: "${meridianHealth.interviewInsights.cfo}"
-- COO: "${meridianHealth.interviewInsights.coo}"
-- CMIO: "${meridianHealth.interviewInsights.cmio}"
-`
-    : "";
+${tenantContextBlock ?? "TENANT CONTEXT: No loader-backed tenant context was available for this diagnostic route."}
 
-  // F0.4: Meridian diagnostic surface has no actionable tools today —
-  // it's a one-shot diagnostic generator. Routing through the loop
-  // anyway keeps all 4 interactive routes structurally consistent
-  // (kickoff §4 F0.4) and means future tools (e.g. `start_engagement`)
-  // can be added without re-plumbing the route.
-  const tools = getRelevantTools('/diagnostic');
-
-  const systemPrompt = `You are AbarVa, the world's most experienced enterprise transformation advisor.
-You have deep expertise in healthcare and financial services transformations.
-You have access to this organization's actual data, financials, leadership interviews, and known contradictions.
-Reference specific numbers, names, and contradictions from the org data.
-Never give generic advice — every insight must reference their specific situation.
-
-${userContextBlock}${FOUR_LAYER_REASONING_INSTRUCTIONS}
+${FOUR_LAYER_REASONING_INSTRUCTIONS}
 
 Format your response with these exact sections:
 
 ## TOP 3 TRANSFORMATION CHALLENGES
-(Reference specific metrics and dollar amounts)
+(Reference specific loaded facts when available; otherwise label the evidence gap)
 
 ## ROOT CAUSES
-(Reference leadership quotes and contradictions detected)
+(Connect symptoms to operating-model, data, process, or vendor causes)
 
 ## CONTRADICTIONS DETECTED
-(Surface the conflicts in their own data and decisions)
+(Surface conflicts only when the loaded tenant context supports them)
 
-## PRIORITY ACTIONS — NEXT 90 DAYS
+## PRIORITY ACTIONS - NEXT 90 DAYS
 (Specific, actionable, sequenced)
 
 ## BENCHMARK COMPARISON
-(Compare their metrics to industry benchmarks with specific numbers)
+(Compare to patterns only when no tenant benchmark is loaded; label it as pattern context)
 
 ## FINANCIAL IMPACT
-(Quantify the cost of inaction in dollars)`;
+(Quantify only when the loaded tenant context includes enough evidence; otherwise name the missing inputs)`;
 
-  const userMessage = `${orgContext}
-
-Diagnose this organization:
+  const userMessage = `Diagnose this organization:
 Organization: ${orgName}
 Size: ${orgSize}
 Industry: ${vertical}
 Primary Challenge: ${challenge}
 
-Provide a specific diagnosis using their actual data.`;
-  const activeClient = await getActiveClientRow();
-  if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
-  }
-  const preflight = await preflightAnthropicDirectClient({
-    tenantId: activeClient.id,
-    workflow: 'chat-diagnostic',
-    model: 'claude-sonnet-4-6',
-    prompt: [systemPrompt, userMessage].join('\n\n'),
-    dataClass: isMeridian ? 'confidential' : 'internal',
-    metadata: { surface: '/diagnostic', orgName, vertical },
-  });
-  if (!preflight.ok) {
-    return Response.json({ error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId }, { status: 403 });
-  }
-  const anthropicClient = preflight.client;
+Provide a specific diagnosis from the loader-backed context when available. If context is thin, give a pattern-based diagnosis and label the evidence gaps.`;
 
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        await runToolUseLoop({
-          client: anthropicClient,
-          model: "claude-sonnet-4-6",
-          maxTokens: 2048,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userMessage }],
-          tools,
-          toolContext: { request, surface: '/diagnostic' },
-          writer: {
-            write(text) {
-              controller.enqueue(encoder.encode(text));
-            },
-          },
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        controller.enqueue(encoder.encode(`\n\n[stream error: ${message}]`));
-      } finally {
-        controller.close();
-      }
-    },
-  });
+  try {
+    const text = await createIntelligenceAskOpenAIText({
+      tenantId: activeClient.id,
+      workflow: "chat-diagnostic",
+      model: INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL,
+      instructions: systemPrompt,
+      input: userMessage,
+      maxOutputTokens: 2048,
+      dataClass: tenantContextBlock ? "confidential" : "internal",
+      metadata: { surface: "/diagnostic", orgName, vertical },
+    });
 
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-    },
-  });
+    return new Response(text, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "x-abarva-model-provider": "openai",
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return Response.json(
+      { error: "ai_egress_denied", detail: message },
+      { status: 403 },
+    );
+  }
 }
