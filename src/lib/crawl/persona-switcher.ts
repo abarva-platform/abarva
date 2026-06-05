@@ -1,3 +1,4 @@
+import { createClerkClient } from "@clerk/backend";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { CXO_PERSONAS, type CxoPersona } from "@/lib/auth/cxo-personas";
 
@@ -160,6 +161,11 @@ export async function signInPersona(
   persona: CrawlPersona,
   options: PersonaContextOptions,
 ): Promise<void> {
+  if (process.env.CLERK_SECRET_KEY?.trim()) {
+    await signInPersonaWithClerkTicket(page, persona, options);
+    return;
+  }
+
   const password = firstPresent(
     process.env[`CRAWL_${envKey(persona.key)}_PASSWORD`],
     options.password,
@@ -236,6 +242,82 @@ export async function signInPersona(
   if (outcome.type === "timeout") {
     throw new Error("crawl_sign_in_timeout_no_redirect_or_session");
   }
+
+  await page.context().addCookies([
+    {
+      name: "abarva_active_client",
+      value: persona.tenantKey,
+      domain: new URL(options.baseUrl).hostname,
+      path: "/",
+      sameSite: "Lax",
+      secure: options.baseUrl.startsWith("https://"),
+    },
+  ]);
+}
+
+async function signInPersonaWithClerkTicket(
+  page: Page,
+  persona: CrawlPersona,
+  options: PersonaContextOptions,
+): Promise<void> {
+  const secretKey = process.env.CLERK_SECRET_KEY?.trim();
+  if (!secretKey) throw new Error("Missing CLERK_SECRET_KEY");
+
+  const clerk = createClerkClient({ secretKey });
+  const users = await clerk.users.getUserList({
+    emailAddress: [persona.email],
+    limit: 1,
+  });
+  const user = users.data[0];
+  if (!user) {
+    throw new Error(`crawl_clerk_ticket_user_not_found:${persona.email}`);
+  }
+
+  const token = await clerk.signInTokens.createSignInToken({
+    userId: user.id,
+    expiresInSeconds: 300,
+  });
+
+  await page.goto(options.baseUrl, {
+    waitUntil: "domcontentloaded",
+    timeout: 45_000,
+  });
+  await page.waitForFunction(
+    () => {
+      return Boolean(
+        (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded,
+      );
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  await page.evaluate(async (ticket) => {
+    const clerk = (
+      window as unknown as {
+        Clerk?: {
+          client?: {
+            signIn?: {
+              create: (args: {
+                strategy: "ticket";
+                ticket: string;
+              }) => Promise<{ status?: string; createdSessionId?: string }>;
+            };
+          };
+          setActive?: (args: { session: string }) => Promise<unknown>;
+        };
+      }
+    ).Clerk;
+    const result = await clerk?.client?.signIn?.create({
+      strategy: "ticket",
+      ticket,
+    });
+    if (result?.status !== "complete" || !result.createdSessionId) {
+      throw new Error(
+        `crawl_clerk_ticket_incomplete:${result?.status ?? "unknown"}`,
+      );
+    }
+    await clerk?.setActive?.({ session: result.createdSessionId });
+  }, token.token);
 
   await page.context().addCookies([
     {
