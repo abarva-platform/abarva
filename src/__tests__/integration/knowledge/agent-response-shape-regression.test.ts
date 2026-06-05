@@ -125,10 +125,14 @@ describe('all-agent response-shape regression', () => {
     expect(doctrine).toContain('Challenge mode');
     expect(doctrine).toContain('Value proof from day one');
     expect(doctrine).toContain('active tenant/current-state context');
-    expect(doctrine).toContain('AGENT OUTPUT CONTRACT v2026-05-09');
+    expect(doctrine).toContain('AGENT OUTPUT CONTRACT v2026-06-05');
     expect(doctrine).toContain('three-depth CXO reading model');
     expect(doctrine).toContain('Always lead with a 1-2 sentence answer');
-    expect(doctrine).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(doctrine).toContain('cxo-decision-digest, lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(doctrine).toContain('For hard CXO or strategic questions, default to cxo-decision-digest');
+    expect(doctrine).toContain('CXO decision digest labels: My read; Why; Decision fork; What I would do next; Evidence gap');
+    expect(doctrine).toContain('Simple factual questions stay simple');
+    expect(doctrine).toContain('avoid wall-of-text answers over roughly 120 words');
     expect(doctrine).toContain('do not emit raw markdown emphasis markers');
     expect(doctrine).toContain('offer 2-4 options');
     expect(doctrine).toContain('Never invent current-state facts, KPI values, financials, org structure');

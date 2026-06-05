@@ -181,6 +181,11 @@ describe("Source Sentinel chat LLM helper", () => {
     expect(prompt).toContain(
       "Do not fall back to a generic sourcing checklist",
     );
+    expect(prompt).toContain("AGENT OUTPUT CONTRACT v2026-06-05");
+    expect(prompt).toContain(
+      "CXO decision digest labels: My read; Why; Decision fork; What I would do next; Evidence gap",
+    );
+    expect(prompt).toContain("Simple factual questions stay simple");
   });
 
   it("upgrades the deterministic response with a cited model answer when enabled", async () => {

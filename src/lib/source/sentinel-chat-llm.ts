@@ -1,3 +1,4 @@
+import { composeRuntimeOutputDisciplineBlock } from "@/lib/agent/output-discipline/prompt-contract";
 import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
 import { SOURCE_STAGE_LABELS } from "./constants";
 import type { SourceLiveTenantContextSnapshot } from "./agent-context";
@@ -173,6 +174,8 @@ export function buildSourceSentinelChatSystemPrompt(args: {
     "3. Never fabricate vendor names, numbers, contract dates, owners, savings, or tool names.",
     "4. Be brief and executive-readable: answer first, then evidence, then next action.",
     "5. Keep any draft output clearly marked as a draft requiring human review before use.",
+    "",
+    composeRuntimeOutputDisciplineBlock("Source"),
   ].join("\n");
 }
 

@@ -6,8 +6,9 @@ import {
 } from './prompt-contract';
 
 describe('agent output prompt contract', () => {
-  it('locks the five allowed answer shapes', () => {
+  it('locks the six allowed answer shapes', () => {
     expect(AGENT_OUTPUT_SHAPES).toEqual([
+      'cxo-decision-digest',
       'lead-bullets',
       'lead-table',
       'stat-stack',
@@ -31,17 +32,20 @@ describe('agent output prompt contract', () => {
 
     const block = composeRuntimeOutputDisciplineBlock(agentName);
     expect(block).toContain(`soft ${soft} words, hard ${hard} words`);
-    expect(block).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(block).toContain('cxo-decision-digest, lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
   });
 
   it('forbids raw markdown, visible raw ids, oversized structures, and unsupported value ranking', () => {
     const block = composeRuntimeOutputDisciplineBlock('Nexus');
 
+    expect(block).toContain('For hard CXO or strategic questions, default to cxo-decision-digest');
+    expect(block).toContain('CXO decision digest labels: My read; Why; Decision fork; What I would do next; Evidence gap');
+    expect(block).toContain('Simple factual questions stay simple');
+    expect(block).toContain('avoid wall-of-text answers over roughly 120 words');
     expect(block).toContain('do not emit raw markdown emphasis markers');
-    expect(block).toContain('do not show raw pattern, use-case, or vendor IDs');
+    expect(block).toContain('do not show raw pattern, use-case, vendor, database field, or artifact IDs');
     expect(block).toContain('no paragraph over 3 sentences');
     expect(block).toContain('rank from available tenant KPIs, financials, strategic priorities, systems, current programs, and evidence');
     expect(block).toContain('State exactly what is missing');
   });
 });
-
