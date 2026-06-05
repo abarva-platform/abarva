@@ -449,6 +449,83 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-evaluation-document-workspace");
   });
 
+  it("renders the Pricing stage with TCO bridge, stacked bars, sensitivity cards, traps, and d19 downloads", () => {
+    const html = render({
+      viewStage: "pricing",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d19_pricing_workbook",
+          stage: "pricing",
+          family: "pricing_workbook",
+          body: "# Pricing Workbook\n\nUploaded pricing is normalized here.",
+        }),
+      ],
+      templateByCode: {
+        d19_pricing_workbook: "# Pricing Workbook\n\nTemplate body ...",
+      },
+    });
+
+    expect(html).toContain("source-pricing-stage-view");
+    expect(html).toContain("Normalize current pricing");
+    expect(html).toContain("source-pricing-tco-bridge");
+    expect(html).toContain("3-year TCO");
+    expect(html).toContain("source-pricing-tco-iceberg");
+    expect(html).toContain("Visible vs hidden cost");
+    expect(html).toContain("source-pricing-sensitivity-ribbon");
+    expect(html).toContain("Volume +20%");
+    expect(html).toContain("Scope +10%");
+    expect(html).toContain("FX +5%");
+    expect(html).toContain("source-pricing-trap-log");
+    expect(html).toContain("Commercial traps feed BAFO");
+    expect(html).toContain("source-pricing-upload-proof");
+    expect(html).toContain("bound to real submitted rows");
+    expect(html).toContain("source-pricing-document-workspace");
+    expect(html).toContain(
+      "source-canvas-document-body-download-xlsx-d19_pricing_workbook",
+    );
+    expect(html).toContain(
+      "source-canvas-document-body-download-xlsx-comparison-d19_pricing_workbook",
+    );
+  });
+
+  it("renders the BAFO stage with per-vendor lever envelope, concession ledger, and governed d22 downloads", () => {
+    const html = render({
+      viewStage: "bafo",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d22_bafo_question_pack",
+          stage: "bafo",
+          family: "bafo",
+          body: "# BAFO Question Pack\n\nHuman-reviewed questions.",
+        }),
+      ],
+      templateByCode: {
+        d22_bafo_question_pack: "# BAFO Question Pack\n\nTemplate body ...",
+      },
+    });
+
+    expect(html).toContain("source-bafo-stage-view");
+    expect(html).toContain("Prepare the BAFO question pack");
+    expect(html).toContain("procurement owns external distribution");
+    expect(html).toContain("source-bafo-lever-envelope");
+    expect(html).toContain("Per-vendor negotiation cards");
+    expect(html).toContain("Walk-away");
+    expect(html).toContain("source-bafo-concession-ledger");
+    expect(html).toContain("Every trade is attributable");
+    expect(html).toContain("source-bafo-question-pack-governance");
+    expect(html).toContain("Anti-pattern flags come from the trap log");
+    expect(html).toContain("source-bafo-document-workspace");
+    expect(html).toContain(
+      "source-canvas-document-body-download-xlsx-d22_bafo_question_pack",
+    );
+    expect(html).toContain(
+      "source-canvas-document-body-download-docx-d22_bafo_question_pack",
+    );
+    expect(html).toContain(
+      "source-canvas-document-body-download-pdf-d22_bafo_question_pack",
+    );
+  });
+
   it("renders the sticky AgentDock composer", () => {
     const html = render();
     expect(html).toContain("agent-dock-input");

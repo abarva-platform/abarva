@@ -126,6 +126,8 @@ import { ScopeStageView } from "./scope/ScopeStageView";
 import { RfpStageView } from "./rfp/RfpStageView";
 import { ResponsesStageView } from "./responses/ResponsesStageView";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
+import { PricingStageView } from "./pricing/PricingStageView";
+import { BafoStageView } from "./bafo/BafoStageView";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 interface UniversalCanvasShellProps {
@@ -159,6 +161,7 @@ interface UniversalCanvasShellProps {
 
 function renderStageDocumentContent({
   viewStage,
+  event,
   stageArtifacts,
   selectedDocCode,
   onSelectCode,
@@ -166,6 +169,7 @@ function renderStageDocumentContent({
   vendorResponseReadiness,
 }: {
   viewStage: SourceStageKey;
+  event: Pick<SourcingEventSummary, "id" | "name" | "currentStageKey">;
   stageArtifacts: SourceEventArtifactState[];
   selectedDocCode?: string;
   onSelectCode: (code: string) => void;
@@ -202,6 +206,16 @@ function renderStageDocumentContent({
 
   if (viewStage === "evaluation") {
     return <EvaluationStageView documentWorkspace={documentTabContent} />;
+  }
+
+  if (viewStage === "pricing") {
+    return (
+      <PricingStageView event={event} documentWorkspace={documentTabContent} />
+    );
+  }
+
+  if (viewStage === "bafo" || viewStage === "orals_bafo") {
+    return <BafoStageView event={event} documentWorkspace={documentTabContent} />;
   }
 
   return documentTabContent;
@@ -713,6 +727,7 @@ export function UniversalCanvasShell({
         stageArtifacts.length > 0 ? String(stageArtifacts.length) : undefined,
       content: renderStageDocumentContent({
         viewStage,
+        event,
         stageArtifacts,
         selectedDocCode,
         onSelectCode: setSelectedDocCode,
