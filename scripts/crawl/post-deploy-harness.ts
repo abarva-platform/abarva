@@ -194,7 +194,7 @@ async function crawlSurface(
   await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
 
   const transcript = surface.requiresAgentProbe
-    ? await askHardQuestions(page, safeName, out)
+    ? await askHardQuestions(page, persona, surface, safeName, out)
     : { exactFieldCitations: 0 };
 
   const html = await page.content();
@@ -295,33 +295,126 @@ interface PageCounts {
   watchlistTopEntries: string[];
 }
 
-async function askHardQuestions(page: Page, safeName: string, out: string): Promise<{ exactFieldCitations: number }> {
-  const transcript: Array<{ question: string; answer: string }> = [];
+async function askHardQuestions(
+  page: Page,
+  persona: { key: string; tenantKey: string; tenantName: string },
+  surface: CrawlSurface,
+  safeName: string,
+  out: string,
+): Promise<{ exactFieldCitations: number }> {
+  const transcript: Array<{
+    question: string;
+    answer: string;
+    status: 'answered' | 'error';
+    error?: string;
+    eventCount?: number;
+  }> = [];
   let exactFieldCitations = 0;
   for (const question of POST_DEPLOY_HARD_QUESTIONS) {
-    const input = page.getByRole('textbox').first();
-    if (!(await input.isVisible().catch(() => false))) break;
-    await input.fill(question);
-    const submit = page.getByRole('button', { name: /^Ask Sentinel$/i }).first();
-    if (!(await submit.isVisible().catch(() => false))) break;
-    await submit.click();
-    await page
-      .getByRole('button', { name: /reasoning/i })
-      .first()
-      .waitFor({ state: 'visible', timeout: 10_000 })
-      .catch(() => undefined);
-    await page
-      .getByRole('button', { name: /^Ask Sentinel$/i })
-      .first()
-      .waitFor({ state: 'visible', timeout: 90_000 })
-      .catch(() => undefined);
-    await page.waitForTimeout(500);
-    const answer = (await page.locator('body').innerText().catch(() => '')).slice(-5000);
+    const response = await askIntelligenceApi(page, question, persona, surface);
+    const answer = response.answer;
     exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
-    transcript.push({ question, answer });
+    transcript.push({
+      question,
+      answer,
+      status: response.ok ? 'answered' : 'error',
+      error: response.error,
+      eventCount: response.eventCount,
+    });
   }
   await fs.writeFile(path.join(out, 'transcripts', `${safeName}.json`), JSON.stringify(transcript, null, 2));
   return { exactFieldCitations };
+}
+
+async function askIntelligenceApi(
+  page: Page,
+  question: string,
+  persona: { tenantKey: string; tenantName: string },
+  surface: CrawlSurface,
+): Promise<{ ok: boolean; answer: string; error?: string; eventCount: number }> {
+  return page.evaluate(async ({ question: q, persona: p, surface: s }) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 55_000);
+    try {
+      const response = await fetch('/api/intelligence/ask', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q,
+          client: p.tenantKey,
+          surfaceContext: {
+            activeTab: s.id,
+            activeClient: p.tenantKey,
+            clientKey: p.tenantKey,
+            facts: [
+              `crawl_persona_tenant=${p.tenantName}`,
+              `crawl_surface=${s.path}`,
+            ],
+          },
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) {
+        return {
+          ok: false,
+          answer: '',
+          error: `ask_api_http_${response.status}`,
+          eventCount: 0,
+        };
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let answer = '';
+      let eventCount = 0;
+      let error: string | undefined;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          eventCount += 1;
+          const event = JSON.parse(line) as {
+            type?: string;
+            text?: string;
+            delta?: string;
+            error?: string;
+            stage?: { name?: string; content?: string };
+          };
+          if (event.type === 'delta' && event.text) answer += event.text;
+          if (event.type === 'delta' && event.delta) answer += event.delta;
+          if (event.type === 'sentinel-stage' && event.stage?.content) {
+            answer += `${event.stage.name ?? 'Stage'}: ${event.stage.content}\n`;
+          }
+          if (event.type === 'error') error = event.error ?? 'ask_api_stream_error';
+        }
+      }
+
+      return {
+        ok: !error && answer.trim().length > 0,
+        answer: answer.trim(),
+        error,
+        eventCount,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        answer: '',
+        error: err instanceof Error ? err.message : String(err),
+        eventCount: 0,
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }, { question, persona, surface });
 }
 
 async function readBaseline(file: string): Promise<CrawlBaseline | null> {
