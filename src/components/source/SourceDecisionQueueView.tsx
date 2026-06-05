@@ -17,7 +17,6 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import {
-  BAND_ORDER,
   URGENCY_LABEL,
   type BundleAccountability,
   type DecisionPosture,
@@ -31,6 +30,16 @@ import {
   type EvidenceResolutionContext,
 } from "@/lib/source/evidence-trace/evidence-trace";
 import { EvidenceTraceTrigger } from "./EvidenceTraceDrawer";
+import { SourceTriageBands } from "./SourceTriageBands";
+import {
+  buildSourceTriageQueueView,
+  TRIAGE_BAND_LABELS,
+  TRIAGE_SORT_LABELS,
+  triageBandForUrgency,
+  type SourceTriageBand,
+  type SourceTriageBandFilter,
+  type SourceTriageSort,
+} from "@/lib/source/queue/triage-banding";
 
 const CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -99,6 +108,12 @@ const ENTRY_POINTS: { label: string; href: string }[] = [
 
 function formatUsd(value: number): string {
   return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
+function formatCompactUsd(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${Math.round(value / 1_000).toLocaleString("en-US")}K`;
+  return formatUsd(value);
 }
 
 function Pill({
@@ -290,8 +305,9 @@ function DecisionBundleCard({
   evidenceContext?: EvidenceResolutionContext;
 }) {
   const urgency = URGENCY_META[bundle.urgency];
+  const band = triageBandForUrgency(bundle.urgency);
   return (
-    <article style={CARD}>
+    <article style={CARD} data-testid={`source-decision-card-${bundle.bundleId}`}>
       <div
         style={{
           display: "flex",
@@ -301,7 +317,7 @@ function DecisionBundleCard({
         }}
       >
         <Pill
-          text={URGENCY_LABEL[bundle.urgency]}
+          text={`${TRIAGE_BAND_LABELS[band]} · ${URGENCY_LABEL[bundle.urgency]}`}
           bg={urgency.bg}
           line={urgency.line}
           color={urgency.text}
@@ -400,6 +416,7 @@ function DecisionBundleCard({
         </span>
         <Link
           href={bundle.deepLink}
+          data-testid={`source-decision-open-${bundle.bundleId}`}
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
@@ -413,8 +430,9 @@ function DecisionBundleCard({
             whiteSpace: "nowrap",
           }}
         >
-          Open decision →
+          Open event
         </Link>
+        <SecondaryDecisionAction band={band} bundleId={bundle.bundleId} />
       </div>
       <div
         style={{
@@ -442,6 +460,80 @@ function DecisionBundleCard({
         ) : null}
       </div>
     </article>
+  );
+}
+
+function secondaryActionLabel(band: SourceTriageBand): string {
+  if (band === "overdue") return "Defer to Q4";
+  if (band === "due_this_quarter") return "Schedule scoping";
+  return "Snooze 30 days";
+}
+
+function SecondaryDecisionAction({
+  band,
+  bundleId,
+}: {
+  band: SourceTriageBand;
+  bundleId: string;
+}) {
+  const label = secondaryActionLabel(band);
+  return (
+    <details
+      data-testid={`source-decision-secondary-${bundleId}`}
+      style={{
+        border: "1px solid " + SHELL.CARD_LINE,
+        borderRadius: 6,
+        background: SHELL.CARD_WHITE,
+      }}
+    >
+      <summary
+        style={{
+          cursor: "pointer",
+          listStyle: "none",
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          fontWeight: 600,
+          color: SHELL.INK_MID,
+          padding: "7px 12px",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </summary>
+      <div
+        style={{
+          width: 220,
+          borderTop: "1px solid " + SHELL.CARD_LINE,
+          padding: 10,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            lineHeight: 1.45,
+            color: SHELL.INK_SOFT,
+          }}
+        >
+          Confirm before changing deadlines. No queue date is changed silently.
+        </span>
+        <Link
+          href="/source/portfolio"
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            fontWeight: 700,
+            color: SHELL.INK,
+            textDecoration: "none",
+          }}
+        >
+          Review in Portfolio →
+        </Link>
+      </div>
+    </details>
   );
 }
 
@@ -517,80 +609,90 @@ function EntryRail() {
 export function SourceDecisionQueueView({
   queue,
   evidenceContext,
+  activeBand = "all",
+  sort = "deadline",
+  activeEventsCount = 0,
 }: {
   queue: SourceDecisionQueue;
   /** Substrate for resolving the evidence-trace drawer; omit to hide triggers. */
   evidenceContext?: EvidenceResolutionContext;
+  activeBand?: SourceTriageBandFilter;
+  sort?: SourceTriageSort;
+  activeEventsCount?: number;
 }) {
-  const total = queue.bundles.length;
+  const triage = buildSourceTriageQueueView(queue, { activeBand, sort });
+  const total = triage.totalCount;
+  const activeBandLabel =
+    activeBand === "all" ? "All triage bands" : TRIAGE_BAND_LABELS[activeBand];
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 20,
-        maxWidth: 860,
+        gap: 18,
+        maxWidth: 1040,
       }}
     >
-      <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: SHELL.INK_MUTED,
-          }}
-        >
-          Source · Decision Queue
-        </span>
-        <h1
-          style={{
-            fontFamily: SHELL.SERIF,
-            fontWeight: "normal",
-            fontSize: 26,
-            color: SHELL.INK,
-            margin: 0,
-          }}
-        >
-          {total > 0
-            ? `${total} decision${total === 1 ? "" : "s"} need your attention`
-            : "Nothing needs a decision today"}
-        </h1>
-        <p
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 13,
-            color: SHELL.INK_SOFT,
-            margin: 0,
-          }}
-        >
-          Renewal decisions that need action today, sorted by risk and value at
-          stake.
-        </p>
-        {total > 0 ? (
-          <div
-            style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 20,
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: SHELL.INK_MUTED,
+            }}
           >
-            {BAND_ORDER.filter((b) => queue.bandCounts[b] > 0).map((band) => {
-              const meta = URGENCY_META[band];
-              return (
-                <Pill
-                  key={band}
-                  text={`${URGENCY_LABEL[band]}: ${queue.bandCounts[band]}`}
-                  bg={meta.bg}
-                  line={meta.line}
-                  color={meta.text}
-                />
-              );
-            })}
-          </div>
-        ) : null}
+            Source · Attention
+          </span>
+          <h1
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontWeight: "normal",
+              fontSize: 30,
+              color: SHELL.INK,
+              margin: 0,
+            }}
+          >
+            {total > 0
+              ? `${total} decision${total === 1 ? "" : "s"} in queue`
+              : "Nothing needs you"}
+          </h1>
+          <p
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              color: SHELL.INK_SOFT,
+              margin: 0,
+            }}
+          >
+            {total} decision{total === 1 ? "" : "s"} in queue ·{" "}
+            {triage.overdueCount} overdue ·{" "}
+            {formatCompactUsd(triage.aggregateValueThisQuarterUsd)} at stake
+            this quarter
+          </p>
+        </div>
+        <QueueToolbar activeBand={activeBand} sort={sort} />
       </header>
 
       <EntryRail />
 
-      {queue.emptyState ? (
+      <SourceTriageBands
+        summaries={triage.summaries}
+        activeBand={activeBand}
+        sort={sort}
+      />
+
+      {queue.emptyState || triage.visibleBundles.length === 0 ? (
         <div
           style={{
             ...CARD,
@@ -606,12 +708,38 @@ export function SourceDecisionQueueView({
               margin: 0,
             }}
           >
-            {queue.emptyState}
+            {queue.emptyState
+              ? `Nothing needs you. ${activeEventsCount} active event${activeEventsCount === 1 ? "" : "s"} in Portfolio →`
+              : `Nothing in ${activeBandLabel}. ${activeEventsCount} active event${activeEventsCount === 1 ? "" : "s"} in Portfolio →`}
           </p>
+          {queue.emptyState ? (
+            <p
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_MUTED,
+                margin: 0,
+              }}
+            >
+              {queue.emptyState}
+            </p>
+          ) : null}
+          <Link
+            href="/source/portfolio"
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              fontWeight: 700,
+              color: SHELL.INK,
+              textDecoration: "none",
+            }}
+          >
+            Open Portfolio →
+          </Link>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {queue.bundles.map((bundle) => (
+          {triage.visibleBundles.map((bundle) => (
             <DecisionBundleCard
               key={bundle.bundleId}
               bundle={bundle}
@@ -621,5 +749,129 @@ export function SourceDecisionQueueView({
         </div>
       )}
     </div>
+  );
+}
+
+function QueueToolbar({
+  activeBand,
+  sort,
+}: {
+  activeBand: SourceTriageBandFilter;
+  sort: SourceTriageSort;
+}) {
+  return (
+    <form
+      action="/source/queue"
+      style={{
+        display: "flex",
+        gap: 8,
+        alignItems: "center",
+        justifyContent: "flex-end",
+        flexWrap: "wrap",
+      }}
+    >
+      <label
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        Filter
+        <select
+          name="band"
+          defaultValue={activeBand}
+          data-testid="source-triage-filter"
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            color: SHELL.INK,
+            background: SHELL.CARD_WHITE,
+            border: "1px solid " + SHELL.CARD_LINE,
+            borderRadius: 6,
+            padding: "7px 10px",
+          }}
+        >
+          <option value="all">All</option>
+          <option value="overdue">Overdue</option>
+          <option value="due_this_quarter">Due</option>
+          <option value="pipeline">Pipeline</option>
+        </select>
+      </label>
+      <label
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        Sort
+        <select
+          name="sort"
+          defaultValue={sort}
+          data-testid="source-triage-sort"
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            color: SHELL.INK,
+            background: SHELL.CARD_WHITE,
+            border: "1px solid " + SHELL.CARD_LINE,
+            borderRadius: 6,
+            padding: "7px 10px",
+          }}
+        >
+          {Object.entries(TRIAGE_SORT_LABELS).map(([key, label]) => (
+            <option key={key} value={key}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="submit"
+        style={{
+          alignSelf: "flex-end",
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          fontWeight: 700,
+          color: SHELL.INK,
+          background: SHELL.PAPER_SOFT,
+          border: "1px solid " + SHELL.CARD_LINE,
+          borderRadius: 6,
+          padding: "8px 12px",
+          cursor: "pointer",
+        }}
+      >
+        Apply
+      </button>
+      <Link
+        href="/source/new"
+        style={{
+          alignSelf: "flex-end",
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          fontWeight: 700,
+          color: SHELL.PAPER,
+          background: SHELL.INK,
+          border: "1px solid " + SHELL.INK,
+          borderRadius: 6,
+          padding: "8px 12px",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        New event
+      </Link>
+    </form>
   );
 }
