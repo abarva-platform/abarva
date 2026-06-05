@@ -10,6 +10,10 @@ import type {
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 import type { SourceStageKey } from "@/lib/source/types";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import {
+  artifactDisplayName,
+  artifactStatusDisplayName,
+} from "@/lib/source/artifact-display-names";
 import { CANVAS } from "../canvas-tokens";
 import { VendorPricingSubmissionsPanel } from "./VendorPricingSubmissionsPanel";
 import { VendorResponsePackPanel } from "./VendorResponsePackPanel";
@@ -25,7 +29,7 @@ interface DocumentTabProps {
   eventId?: string;
   stage: SourceStageKey;
   artifacts: SourceEventArtifactState[];
-  /** Uploaded/generated documents persisted in source_artifacts for the event. */
+  /** Uploaded/generated documents for the event. */
   registryArtifacts?: SourceArtifactRegistryRecord[];
   /** Map of artifact code → markdown template body (server-loaded). */
   templateByCode: Record<string, string | null>;
@@ -66,8 +70,7 @@ interface DocumentTabProps {
   /** Per-artifact generation-pending flag. */
   generationPendingByCode?: Record<string, boolean>;
   /**
-   * Set of codes that have an xlsx renderer wired. The card shows a
-   * "Download xlsx template" button when its code is in this set.
+   * Set of codes that have an xlsx renderer wired.
    */
   xlsxGeneratableCodes?: ReadonlySet<string>;
   /**
@@ -112,20 +115,11 @@ interface DocumentTabProps {
   onRegistryUploaded?: () => void;
 }
 
-const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
-  not_started: "Not started",
-  drafting: "Drafting",
-  needs_review: "Needs review",
-  approved: "Approved",
-  locked: "Locked",
-  superseded: "Superseded",
-};
-
 /**
  * The Document tab is the workspace's main surface — shows what's being
  * assembled at the current stage. Left rail of artifact slots, right side
- * renders the selected artifact's content (template body when stub, real
- * content when promoted).
+ * renders the selected artifact's content (starter body when stub, real content
+ * when promoted).
  */
 export function DocumentTab({
   eventId,
@@ -159,12 +153,12 @@ export function DocumentTab({
     return (
       <div data-testid="source-canvas-document-tab" style={EMPTY_STYLE}>
         <p style={EMPTY_TITLE_STYLE}>
-          No documents yet for {SOURCE_STAGE_LABELS[stage]}.
+          Start with the next {SOURCE_STAGE_LABELS[stage]} document.
         </p>
         <p style={EMPTY_BODY_STYLE}>
-          Documents appear here as Sentinel drafts them for this stage. If this
-          stage should already have documents, contact your AbarVa lead before
-          using it for an executive decision, vendor communication, or approval.
+          When this stage is ready, draft the required document with Sentinel or
+          ask your AbarVa lead to load the event facts before using it for an
+          executive decision, vendor communication, or approval.
         </p>
       </div>
     );
@@ -184,7 +178,8 @@ export function DocumentTab({
     ? (templateByCode[active.artifactCode] ?? null)
     : null;
   const body = authoredBody ?? templateBody;
-  const bodyIsAuthored = Boolean(authoredBody);
+  const authoredBodyCanExport = Boolean(authoredBody?.trim());
+  const bodyIsAuthored = authoredBodyCanExport;
 
   return (
     <div data-testid="source-canvas-document-tab" style={DOCUMENT_TAB_STYLE}>
@@ -240,12 +235,12 @@ export function DocumentTab({
               <header style={BODY_HEADER_STYLE}>
                 <div style={BODY_EYEBROW_STYLE}>
                   <span style={BODY_CODE_STYLE} title={active.artifactCode}>
-                    {tierLabel(active.tier)}
+                    {artifactRequirementLabel(active)}
                   </span>
                 </div>
                 <div style={BODY_TITLE_ROW_STYLE}>
                   <h2 id="active-artifact-title" style={BODY_TITLE_STYLE}>
-                    {activeSpec.name}
+                    {artifactDisplayName(active.artifactCode, activeSpec.name)}
                   </h2>
                   <ArtifactStatusControls
                     artifact={active}
@@ -271,33 +266,48 @@ export function DocumentTab({
                   generationPendingByCode?.[active.artifactCode] ?? false
                 }
                 xlsxDownloadHref={
+                  authoredBodyCanExport &&
                   xlsxGeneratableCodes?.has(active.artifactCode) &&
                   xlsxDownloadHref
                     ? xlsxDownloadHref(active.artifactCode)
                     : null
                 }
                 xlsxComparisonDownloadHref={
+                  authoredBodyCanExport &&
                   xlsxComparisonCodes?.has(active.artifactCode) &&
                   xlsxComparisonDownloadHref
                     ? xlsxComparisonDownloadHref(active.artifactCode)
                     : null
                 }
                 docxDownloadHref={
+                  authoredBodyCanExport &&
                   docxGeneratableCodes?.has(active.artifactCode) &&
                   docxDownloadHref
                     ? docxDownloadHref(active.artifactCode)
                     : null
                 }
                 htmlViewHref={
-                  htmlGeneratableCodes?.has(active.artifactCode) && htmlViewHref
+                  authoredBodyCanExport &&
+                  htmlGeneratableCodes?.has(active.artifactCode) &&
+                  htmlViewHref
                     ? htmlViewHref(active.artifactCode)
                     : null
                 }
                 pdfDownloadHref={
+                  authoredBodyCanExport &&
                   pdfGeneratableCodes?.has(active.artifactCode) &&
                   pdfDownloadHref
                     ? pdfDownloadHref(active.artifactCode)
                     : null
+                }
+                exportOptionsHidden={
+                  !authoredBodyCanExport &&
+                  (xlsxGeneratableCodes?.has(active.artifactCode) ||
+                    xlsxComparisonCodes?.has(active.artifactCode) ||
+                    docxGeneratableCodes?.has(active.artifactCode) ||
+                    htmlGeneratableCodes?.has(active.artifactCode) ||
+                    pdfGeneratableCodes?.has(active.artifactCode) ||
+                    false)
                 }
               />
               {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
@@ -315,13 +325,9 @@ export function DocumentTab({
               {supplementalPanel}
               {body ? null : (
                 <p style={MISSING_TEMPLATE_STYLE}>
-                  No template content found for this artifact code. Add a
-                  markdown file at{" "}
-                  <code>
-                    src/content/source-templates/{stage}/{active.artifactCode}
-                    .md
-                  </code>
-                  .
+                  This document is not ready to draft yet. Ask your AbarVa lead
+                  to load the starter content before using this stage for
+                  review.
                 </p>
               )}
             </>
@@ -342,24 +348,21 @@ function RegistryDocumentsShelf({
   documents,
 }: RegistryDocumentsShelfProps) {
   return (
-    <section style={REGISTRY_SHELF_STYLE} aria-label="Stored source documents">
+    <section style={REGISTRY_SHELF_STYLE} aria-label="Event documents">
       <div style={REGISTRY_SHELF_HEADER_STYLE}>
         <div>
-          <div style={GROUP_LABEL_STYLE}>Stored documents</div>
+          <div style={GROUP_LABEL_STYLE}>Event documents</div>
           <h2 style={REGISTRY_SHELF_TITLE_STYLE}>
             {documents.length === 0
-              ? "No DB-backed documents yet"
-              : `${documents.length} DB-backed document${documents.length === 1 ? "" : "s"}`}
+              ? "Attach a file when it supports the next decision"
+              : `${documents.length} document${documents.length === 1 ? "" : "s"} available`}
           </h2>
         </div>
-        {documents.length > 0 ? (
-          <span style={REGISTRY_SHELF_BADGE_STYLE}>source_artifacts</span>
-        ) : null}
       </div>
       {documents.length === 0 ? (
         <p style={REGISTRY_EMPTY_STYLE}>
-          Uploaded files and generated packets will appear here when they are
-          persisted to the Source artifact registry.
+          Uploads and generated packets will appear here after you add them from
+          the workspace.
         </p>
       ) : (
         <div style={REGISTRY_GRID_STYLE}>
@@ -434,7 +437,7 @@ interface ArtifactBodyEditorProps {
   >;
   isGeneratable: boolean;
   generationPending: boolean;
-  /** When non-null the card shows a "Download xlsx template" anchor. */
+  /** When non-null the card shows a workbook download anchor. */
   xlsxDownloadHref: string | null;
   /** When non-null the card shows a "Download comparison xlsx" anchor. */
   xlsxComparisonDownloadHref?: string | null;
@@ -444,6 +447,7 @@ interface ArtifactBodyEditorProps {
   htmlViewHref?: string | null;
   /** When non-null the card shows a "Download PDF" anchor. */
   pdfDownloadHref?: string | null;
+  exportOptionsHidden: boolean;
 }
 
 function ArtifactBodyEditor({
@@ -461,6 +465,7 @@ function ArtifactBodyEditor({
   docxDownloadHref,
   htmlViewHref,
   pdfDownloadHref,
+  exportOptionsHidden,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -505,8 +510,7 @@ function ArtifactBodyEditor({
         />
         <div style={EDITOR_TOOLBAR_STYLE}>
           <span style={EDITOR_HINT_STYLE}>
-            Markdown · per-event content · saves to{" "}
-            <code>source_event_artifact_states.body</code>
+            Markdown supported. Your changes save to this event&apos;s document.
           </span>
           <div style={EDITOR_BUTTONS_STYLE}>
             <button
@@ -549,7 +553,7 @@ function ArtifactBodyEditor({
             ? "Generated by Sentinel · editable"
             : bodyIsAuthored
               ? "Authored content"
-              : "Awaiting authoring"}
+              : "Draft needed"}
         </span>
         <div style={READER_BUTTONS_STYLE}>
           {onGenerateFromClaude && isGeneratable ? (
@@ -589,7 +593,7 @@ function ArtifactBodyEditor({
               style={{ ...GHOST_BUTTON_STYLE, textDecoration: "none" }}
               download
             >
-              Download xlsx template
+              Download workbook
             </a>
           ) : null}
           {xlsxComparisonDownloadHref ? (
@@ -648,6 +652,12 @@ function ArtifactBodyEditor({
           Generation failed — {generationError}
         </div>
       ) : null}
+      {exportOptionsHidden ? (
+        <div style={EXPORT_EMPTY_NOTE_STYLE}>
+          Download and export options appear once this document has a draft.
+          Nothing to export yet.
+        </div>
+      ) : null}
       {authoredBody ? (
         <pre
           style={MARKDOWN_BODY_STYLE}
@@ -662,7 +672,7 @@ function ArtifactBodyEditor({
         >
           <strong>No client-authored body yet.</strong> Use Generate with
           Sentinel, Author content, or upload evidence before this document is
-          treated as review-ready. The starter template is kept out of the main
+          treated as review-ready. The starter content is kept out of the main
           workspace so it is not mistaken for approved event content.
         </div>
       ) : null}
@@ -692,15 +702,12 @@ function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
         }}
       >
         <span style={ROW_NAME_STYLE}>
-          {spec?.name ?? artifact.artifactCode}
+          {artifactDisplayName(artifact.artifactCode, spec?.name)}
         </span>
         <span style={ROW_META_STYLE}>
-          <span style={tierStyle(artifact.tier)}>
-            {tierLabel(artifact.tier)}
-          </span>
-          <StatusPill status={artifact.status} />
+          <StatusPill artifact={artifact} />
           {artifact.gateDefining ? (
-            <span style={GATE_TAG_STYLE}>gate</span>
+            <span style={GATE_TAG_STYLE}>Required to advance</span>
           ) : null}
         </span>
       </button>
@@ -708,11 +715,11 @@ function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
   );
 }
 
-function StatusPill({ status }: { status: SourceEventArtifactStatus }) {
-  const tone = statusTone(status);
+function StatusPill({ artifact }: { artifact: SourceEventArtifactState }) {
+  const tone = statusTone(artifact.status);
   return (
     <span
-      data-testid={`source-canvas-artifact-status-${status}`}
+      data-testid={`source-canvas-artifact-status-${artifact.status}`}
       style={{
         ...PILL_STYLE,
         background: tone.bg,
@@ -720,7 +727,7 @@ function StatusPill({ status }: { status: SourceEventArtifactStatus }) {
         borderColor: tone.border,
       }}
     >
-      {STATUS_LABEL[status]}
+      {artifactStatusDisplayName(artifact)}
     </span>
   );
 }
@@ -744,7 +751,7 @@ function ArtifactStatusControls({
   const isApproved = artifact.status === "approved";
   return (
     <div style={STATUS_CONTROLS_STYLE}>
-      <StatusPill status={artifact.status} />
+      <StatusPill artifact={artifact} />
       {onChangeStatus && !isTerminal ? (
         isApproved ? (
           <button
@@ -818,20 +825,11 @@ function statusTone(status: SourceEventArtifactStatus): {
   }
 }
 
-function tierStyle(tier: SourceEventArtifactState["tier"]): CSSProperties {
-  const color =
-    tier === "rich"
-      ? CANVAS.ACTIVE
-      : tier === "outline"
-        ? CANVAS.WAITING
-        : CANVAS.GRAY_DK;
-  return { color, fontWeight: 600 };
-}
-
-function tierLabel(tier: SourceEventArtifactState["tier"]): string {
-  if (tier === "rich") return "Authored";
-  if (tier === "outline") return "Prepared";
-  return "Template";
+function artifactRequirementLabel(artifact: SourceEventArtifactState): string {
+  if (artifact.gateDefining) return "Required artifact";
+  if (artifact.requirementLevel === "recommended") return "Recommended";
+  if (artifact.requirementLevel === "optional") return "Optional";
+  return "Required";
 }
 
 const DOCUMENT_TAB_STYLE: CSSProperties = {
@@ -995,11 +993,14 @@ const ROW_META_STYLE: CSSProperties = {
 const GATE_TAG_STYLE: CSSProperties = {
   marginLeft: "auto",
   fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  color: CANVAS.WAITING,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
+  fontSize: 10,
+  fontWeight: 600,
+  color: CANVAS.INK_SOFT,
+  letterSpacing: 0,
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 999,
+  padding: "2px 7px",
+  background: "rgba(10,10,11,0.025)",
 };
 
 const UNAUTHORED_BODY_STYLE: CSSProperties = {
@@ -1033,8 +1034,7 @@ const BODY_EYEBROW_STYLE: CSSProperties = {
   gap: 8,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
+  letterSpacing: 0,
   color: CANVAS.GRAY_DK,
 };
 
@@ -1059,7 +1059,7 @@ const BODY_TITLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SERIF,
   fontSize: 26,
   fontWeight: 400,
-  letterSpacing: "-0.015em",
+  letterSpacing: 0,
   color: CANVAS.INK,
   margin: 0,
   lineHeight: 1.15,
@@ -1078,10 +1078,9 @@ const PILL_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
+  fontSize: 10,
+  fontWeight: 600,
+  letterSpacing: 0,
   padding: "3px 8px",
   borderRadius: 999,
   border: "1px solid transparent",
@@ -1182,11 +1181,22 @@ const GENERATION_ERROR_STYLE: CSSProperties = {
 
 const READER_BADGE_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
+  fontSize: 10,
+  letterSpacing: 0,
   color: CANVAS.INK_SOFT,
   fontWeight: 600,
+};
+
+const EXPORT_EMPTY_NOTE_STYLE: CSSProperties = {
+  margin: 0,
+  padding: "12px 14px",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: "#fbfaf7",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  color: CANVAS.INK_SOFT,
 };
 
 const GHOST_BUTTON_STYLE: CSSProperties = {
