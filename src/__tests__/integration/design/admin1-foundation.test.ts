@@ -62,23 +62,24 @@ describe('ADMIN1 — Foundation: Logo + Tokens', () => {
   });
 
   describe('logo asset', () => {
-    it('lockup-v2 SVG exists at canonical path', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
+    it('Option 2 standard SVG exists at canonical path', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
       expect(existsSync(path)).toBe(true);
     });
 
-    it('lockup-v2 SVG contains the orbital symbol', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
+    it('Option 2 SVG contains the intersecting A plus V mark and embedded wordmark', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
       const content = readFileSync(path, 'utf8');
-      expect(content).toContain('abarva-symbol');
-      expect(content).toContain('abarva-wordmark');
+      expect(content).toContain('M18 80 L50 20 L82 80');
+      expect(content).toContain('M62 55 L82 80 L110 20');
+      expect(content).toContain('<image href="data:image/png;base64,');
     });
 
-    it('lockup-v2 SVG uses canonical ink and navy hexes', () => {
-      const path = resolve(process.cwd(), 'public/brand/abarva-logo-lockup-v2.svg');
+    it('Option 2 SVG uses canonical black and signal blue hexes', () => {
+      const path = resolve(process.cwd(), 'public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-standard.svg');
       const content = readFileSync(path, 'utf8');
-      expect(content.toLowerCase()).toContain('#070707');
-      expect(content.toLowerCase()).toContain('#0b4a91');
+      expect(content.toLowerCase()).toContain('#050505');
+      expect(content.toLowerCase()).toContain('#22aeea');
     });
   });
 

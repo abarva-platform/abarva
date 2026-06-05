@@ -25,7 +25,7 @@ function AbarvaWordmark({
 }) {
   return (
     <Image
-      src={inverse ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-logo.svg'}
+      src={inverse ? '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg' : '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'}
       alt="AbarVa"
       width={130}
       height={42}

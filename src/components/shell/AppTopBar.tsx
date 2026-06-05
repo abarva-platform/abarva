@@ -9,12 +9,9 @@
 //
 // Spec:
 // - True black bar (#000000), 64px tall, sticky, z-index 50
-// - 22px AbarVa wordmark (Claude / ChatGPT scale)
-// - Hairline divider, then compact handwritten "AI Success Platform"
-//   tagline — quiet supporting note, not a second logo
+// - 28px AbarVa Option 2 compact nav lockup
 // - Centered nav · client context sits quietly before Home
-// - Module nav inactive items at 72% white · active = full white
-//   + 600 weight + 3px signal-blue underline
+// - Module nav inactive items at 72% white · active = white raised pill
 // - Right rail: Learn, Product, avatar + first name + Sign-out
 // - All colors from the locked brand kit (no green / teal in chrome)
 //
@@ -51,7 +48,11 @@ const BRAND = {
   hair: "rgba(255,255,255,0.10)",
   textMute: "rgba(255,255,255,0.72)",
   textStrong: "rgba(255,255,255,0.92)",
+  activePillShadow: "0 0 0 1px rgba(255,255,255,0.95), 0 8px 22px rgba(34,174,234,0.28)",
 };
+
+const OPTION2_NAV_LOGO =
+  "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg";
 
 export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
@@ -75,6 +76,8 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
     .slice(0, 2)
     .toUpperCase();
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
+  const learnActive = pathname === "/home/learn" || pathname.startsWith("/home/learn/");
+  const productActive = pathname === "/product" || pathname.startsWith("/product/");
 
   function handleSignOut() {
     void signOut();
@@ -103,8 +106,17 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
       }}
     >
       <style jsx global>{`
-        .app-top-bar__nav-link { transition: color 140ms ease; }
-        .app-top-bar__nav-link:hover { color: white !important; }
+        .app-top-bar__nav-link {
+          transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+        }
+        .app-top-bar__nav-link:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: white !important;
+        }
+        .app-top-bar__nav-link[aria-current="page"]:hover {
+          background: white;
+          color: #050505 !important;
+        }
       `}</style>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flexShrink: 0 }}>
@@ -114,11 +126,11 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
         >
           <Image
-            src="/brand/abarva-logo-inverse.svg"
+            src={OPTION2_NAV_LOGO}
             alt="AbarVa"
-            width={85}
-            height={22}
-            style={{ height: 22, width: "auto", display: "block" }}
+            width={142}
+            height={32}
+            style={{ height: 28, width: "auto", display: "block" }}
             priority
           />
         </Link>
@@ -171,29 +183,19 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                 style={{
                   fontFamily: "Inter, system-ui, sans-serif",
                   fontSize: 13.5,
-                  fontWeight: active ? 600 : 500,
-                  color: active ? "white" : BRAND.textMute,
+                  fontWeight: active ? 750 : 500,
+                  color: active ? "#050505" : BRAND.textMute,
+                  background: active ? "white" : "transparent",
+                  boxShadow: active ? BRAND.activePillShadow : "none",
+                  borderRadius: 7,
                   textDecoration: "none",
-                  padding: "22px 14px",
-                  letterSpacing: "-0.005em",
+                  padding: "0 12px",
+                  minHeight: 34,
+                  letterSpacing: 0,
                   position: "relative",
                 }}
                 >
                   {item.label}
-                  {active && (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      position: "absolute",
-                      left: 14,
-                      right: 14,
-                      bottom: 0,
-                      height: 3,
-                      background: BRAND.signalBlue,
-                      borderRadius: 2,
-                    }}
-                    />
-                  )}
               </a>
             );
           })}
@@ -205,17 +207,22 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           <Link
             href="/home/learn"
             data-nav-key="learn"
-            aria-current={pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "page" : undefined}
+            aria-current={learnActive ? "page" : undefined}
+            className="app-top-bar__nav-link"
             style={{
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              color: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "white" : BRAND.textStrong,
-              textDecoration: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "underline" : "none",
-              textDecorationColor: BRAND.signalBlue,
-              textUnderlineOffset: 6,
-              padding: "22px 0",
+              fontWeight: learnActive ? 750 : 600,
+              letterSpacing: 0,
+              color: learnActive ? "#050505" : BRAND.textStrong,
+              background: learnActive ? "white" : "transparent",
+              boxShadow: learnActive ? BRAND.activePillShadow : "none",
+              borderRadius: 7,
+              textDecoration: "none",
+              padding: "0 12px",
+              minHeight: 34,
+              display: "inline-flex",
+              alignItems: "center",
               whiteSpace: "nowrap",
             }}
           >
@@ -226,17 +233,22 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           <Link
             href="/product"
             data-nav-key="product"
-            aria-current={pathname === "/product" || pathname.startsWith("/product/") ? "page" : undefined}
+            aria-current={productActive ? "page" : undefined}
+            className="app-top-bar__nav-link"
             style={{
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              color: pathname === "/product" || pathname.startsWith("/product/") ? "white" : BRAND.textStrong,
-              textDecoration: pathname === "/product" || pathname.startsWith("/product/") ? "underline" : "none",
-              textDecorationColor: BRAND.signalBlue,
-              textUnderlineOffset: 6,
-              padding: "22px 0",
+              fontWeight: productActive ? 750 : 600,
+              letterSpacing: 0,
+              color: productActive ? "#050505" : BRAND.textStrong,
+              background: productActive ? "white" : "transparent",
+              boxShadow: productActive ? BRAND.activePillShadow : "none",
+              borderRadius: 7,
+              textDecoration: "none",
+              padding: "0 12px",
+              minHeight: 34,
+              display: "inline-flex",
+              alignItems: "center",
               whiteSpace: "nowrap",
               marginRight: 2,
             }}
