@@ -9,6 +9,10 @@ import {
   shouldDenySourceEventSlugForPinnedClient,
   shouldStripUnauthorizedClientParam,
 } from "@/lib/auth/access-routing";
+import {
+  loadSourceLifecycleRouteAction,
+  parseSourceEventRoute,
+} from "@/lib/source/lifecycle-routing-guard";
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 const ACTIVE_CLIENT_COOKIE = "abarva_active_client";
@@ -506,6 +510,35 @@ const clerkProtectedProxy = clerkMiddleware(
         ))
     ) {
       return createGenericNotFoundResponse();
+    }
+
+    const sourceLifecycleRoute = parseSourceEventRoute(
+      request.nextUrl.pathname,
+    );
+    if (requiresAuth && userId && sourceLifecycleRoute) {
+      const lifecycleClientKey =
+        activeClientId ??
+        resolvePinnedSessionClientKey({
+          clientId: metadata.clientId,
+          defaultClientId: metadata.defaultClientId,
+          email,
+        }) ??
+        (role === "admin" ? requestedClientId : null);
+      const routeAction = await loadSourceLifecycleRouteAction({
+        eventId: sourceLifecycleRoute.eventId,
+        clientKey: lifecycleClientKey,
+        pathname: request.nextUrl.pathname,
+        search: request.nextUrl.search,
+      });
+      if (routeAction.type === "redirect") {
+        return withProductionReadinessNoStoreHeaders(
+          request,
+          NextResponse.redirect(
+            new URL(routeAction.destination, request.url),
+            routeAction.status ?? 302,
+          ),
+        );
+      }
     }
 
     if (!isPublicRoute(request)) {
