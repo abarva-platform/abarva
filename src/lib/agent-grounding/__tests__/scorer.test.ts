@@ -112,4 +112,28 @@ describe('scoreGroundingCase', () => {
     expect(score.passed).toBe(false);
     expect(score.issues.some((issue) => issue.severity === 'P0' && issue.code === 'transport_failure')).toBe(true);
   });
+
+  it('matches single-word forbidden terms on word boundaries only', () => {
+    const score = scoreGroundingCase(
+      {
+        ...baseCase,
+        expected: {
+          ...baseCase.expected,
+          requiredTerms: ['Sacramento', '30+ hospitals', 'next'],
+          forbiddenTerms: ['final'],
+          requiresCorpusContext: false,
+          requiresEvidence: false,
+        },
+      },
+      {
+        id: baseCase.id,
+        mode: 'live',
+        status: 200,
+        answer:
+          'Meridian is a Sacramento-based integrated health system with 30+ hospitals. Next step: finalize the profile review through Steward.',
+      },
+    );
+
+    expect(score.issues.some((issue) => issue.code === 'forbidden_term')).toBe(false);
+  });
 });

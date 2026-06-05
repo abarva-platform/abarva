@@ -242,6 +242,7 @@
     "qa:agent-grounding:dry": "npx tsx src/scripts/qa/agent-grounding-runner.ts --mode dry-run",
     "qa:agent-grounding:score": "npx tsx src/scripts/qa/agent-grounding-runner.ts --mode score-file",
     "qa:agent-grounding:live": "npx tsx src/scripts/qa/agent-grounding-runner.ts --mode live",
+    "qa:agent-grounding:openai": "npx tsx src/scripts/qa/agent-grounding-runner.ts --mode openai",
     "qa:atlas-prod-comprehensive": "npx tsx -r dotenv/config scripts/qa/atlas-prod-comprehensive-surface.ts dotenv_config_path=.env.local",
     "export:soc2-evidence-pack": "npx tsx src/scripts/export-soc2-evidence-pack.ts",
     "assert:sensitive-upload-audit-immutability": "npx tsx src/scripts/assert-sensitive-upload-audit-immutability.ts",
