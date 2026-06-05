@@ -38,6 +38,7 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - Created `program-attachments` container in storage account `stlakeshorepilotlsh001`.
   - Verified existing `source-artifacts` container usage for Kyriba and AMS Source files.
   - Loaded six synthetic Markdown deliverables for the Shared Data Platform Move into `program-attachments` and linked them to `deliverables_v2`, `deliverable_versions`, `program_attachments`, and `program_evidence_items`.
+  - Normalized 44 Lakeshore Source artifact/chunk `embedding_status` values from `pending` to `not_applicable` after verifying those generated artifacts are parsed/cited through Blob/Postgres evidence rather than a Source-specific vector index.
 
 ## QA / Validation
 
@@ -52,6 +53,7 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - Product data rows across Intelligence, Moves, Tower, and persona memberships.
   - 26 Source artifacts/chunks/facts/edges for `LSH-KYRIBA-TREASURY-2026`.
   - 18 Source artifacts/chunks/facts/edges for `LSH-AMS-MODERNIZATION-2026`.
+  - 44 Lakeshore Source artifact rows and 44 matching chunk rows now carry `embedding_status=not_applicable`; Azure AI Search vectorization remains the separate Lakeshore corpus lane in `lakeshore-patterns-v1`.
   - Source gate and evidence states match the intended demo posture: Kyriba is real through BAFO with Executive Decision in review; AMS is real through Evaluation.
   - 6 Move deliverables, 6 deliverable versions, 6 program attachments, and 6 evidence rows for the Kyriba Move.
   - 6 Move deliverables, 6 deliverable versions, 6 program attachments, and 6 evidence rows for the Shared Data Platform Move.

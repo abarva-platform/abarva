@@ -138,6 +138,12 @@ Current Lakeshore corpus status from the active build run:
 
 The corpus is deep enough for a grounded demo around treasury, governance, IT/data, and holdings-company operating doctrine, but the remaining approximately 1,013 patterns should still be generated and QA'd.
 
+Important lane distinction:
+
+- Lakeshore corpus doctrine is vectorized in Azure AI Search `lakeshore-patterns-v1`.
+- Source artifacts are Blob/Postgres artifacts with parsed bodies, chunks, facts, graph edges, evidence states, and approval states.
+- The current Source artifact lane does not write embeddings to a Source-specific vector index; Lakeshore Source artifact and chunk `embedding_status` values were normalized to `not_applicable` after confirming the working path is parsed/cited evidence rather than an unfinished vector job.
+
 ## Source Coverage
 
 ### `LSH-KYRIBA-TREASURY-2026`
@@ -158,6 +164,7 @@ Live Source artifact proof:
 | `source_artifact_chunks` | 26 |
 | `source_artifact_facts` | 26 |
 | `source_graph_edges` | 26 |
+| Source artifact/chunk embedding state | `not_applicable` |
 | Evidence states through executive decision | usable evidence |
 | Gates through BAFO | met |
 | Executive decision artifacts | in review / needs review |
@@ -209,6 +216,7 @@ Live Source artifact proof:
 | `source_artifact_chunks` | 18 |
 | `source_artifact_facts` | 18 |
 | `source_graph_edges` | 18 |
+| Source artifact/chunk embedding state | `not_applicable` |
 | Evidence states through Evaluation | usable evidence |
 | Gates through Responses | met |
 | Evaluation artifacts | in review / needs review |
