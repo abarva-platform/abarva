@@ -271,7 +271,7 @@ function scoreAnswer(question, status, answer, sources, events) {
   ) {
     flags.push('unsafe_pinecone_claim');
   }
-  if (/realized savings (?:are|have been)|award is complete|cutover is complete|all modules are 100% production-ready/i.test(answer)) {
+  if (hasCompletionOverclaim(answer)) {
     flags.push('overclaims_completion');
   }
   if (sources.length === 0 && !/(based on the provided|current proof|what is known|not yet|do not claim|cannot claim)/i.test(answer)) {
@@ -281,6 +281,25 @@ function scoreAnswer(question, status, answer, sources, events) {
   const verdict = failFlags.length ? 'fail' : flags.length ? 'watch' : 'pass';
   const numeric = verdict === 'pass' ? 10 : verdict === 'watch' ? Math.max(6, 9 - flags.length) : 3;
   return { verdict, numeric, flags };
+}
+
+function hasCompletionOverclaim(answer) {
+  const unsafePatterns = [
+    /realized savings (?:are|have been)/i,
+    /award is complete/i,
+    /cutover is complete/i,
+  ];
+  if (unsafePatterns.some((pattern) => pattern.test(answer))) return true;
+
+  const readinessPattern = /all modules are 100% production-ready/i;
+  const match = readinessPattern.exec(answer);
+  if (!match) return false;
+
+  const prefix = answer
+    .slice(Math.max(0, match.index - 80), match.index)
+    .toLowerCase();
+
+  return !/\b(?:not|no|never|cannot|can't|should not|do not|don't|whether|asked whether)\b/.test(prefix);
 }
 
 function escapeHtml(value) {
