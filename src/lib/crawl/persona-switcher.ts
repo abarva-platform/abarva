@@ -162,7 +162,11 @@ export async function signInPersona(
   options: PersonaContextOptions,
 ): Promise<void> {
   if (process.env.CLERK_SECRET_KEY?.trim()) {
+    console.log(`crawl_auth_ticket_start:${persona.key}:${persona.tenantKey}`);
     await signInPersonaWithClerkTicket(page, persona, options);
+    console.log(
+      `crawl_auth_ticket_complete:${persona.key}:${persona.tenantKey}`,
+    );
     return;
   }
 
@@ -264,19 +268,27 @@ async function signInPersonaWithClerkTicket(
   if (!secretKey) throw new Error("Missing CLERK_SECRET_KEY");
 
   const clerk = createClerkClient({ secretKey });
-  const users = await clerk.users.getUserList({
-    emailAddress: [persona.email],
-    limit: 1,
-  });
+  const users = await withTimeout(
+    clerk.users.getUserList({
+      emailAddress: [persona.email],
+      limit: 1,
+    }),
+    20_000,
+    `crawl_clerk_ticket_user_lookup_timeout:${persona.key}`,
+  );
   const user = users.data[0];
   if (!user) {
     throw new Error(`crawl_clerk_ticket_user_not_found:${persona.email}`);
   }
 
-  const token = await clerk.signInTokens.createSignInToken({
-    userId: user.id,
-    expiresInSeconds: 300,
-  });
+  const token = await withTimeout(
+    clerk.signInTokens.createSignInToken({
+      userId: user.id,
+      expiresInSeconds: 300,
+    }),
+    20_000,
+    `crawl_clerk_ticket_create_timeout:${persona.key}`,
+  );
 
   await page.goto(options.baseUrl, {
     waitUntil: "domcontentloaded",
@@ -318,6 +330,11 @@ async function signInPersonaWithClerkTicket(
     }
     await clerk?.setActive?.({ session: result.createdSessionId });
   }, token.token);
+  await page.waitForFunction(
+    () => document.cookie.includes("__session="),
+    null,
+    { timeout: 20_000 },
+  );
 
   await page.context().addCookies([
     {
@@ -329,6 +346,24 @@ async function signInPersonaWithClerkTicket(
       secure: options.baseUrl.startsWith("https://"),
     },
   ]);
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(message)), ms);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 export function resolveCrawlPersonas(filter?: string): CrawlPersona[] {
