@@ -29,6 +29,12 @@ type UploadResult = {
     status: string;
     detail: string;
   };
+  evidenceLedger?: {
+    status: string;
+    rowsRecorded: number;
+    evidenceIds: string[];
+    detail: string;
+  };
   mode?: string;
   readyForCommit?: boolean;
   validation?: {
@@ -551,6 +557,14 @@ export function CsvUploadConnector({
                 {result.rowsParsed?.toLocaleString()} rows.
               </strong>
               <span>{result.persistence?.detail}</span>
+              {result.evidenceLedger?.rowsRecorded ? (
+                <span>
+                  Evidence ledger:{" "}
+                  {result.evidenceLedger.rowsRecorded.toLocaleString()} row
+                  {result.evidenceLedger.rowsRecorded === 1 ? "" : "s"}{" "}
+                  recorded ({result.evidenceLedger.evidenceIds.join(", ")}).
+                </span>
+              ) : null}
               <code style={{ whiteSpace: "normal" }}>
                 {result.embeddingHandoff?.command}
               </code>

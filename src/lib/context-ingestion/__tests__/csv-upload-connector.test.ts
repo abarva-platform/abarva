@@ -157,4 +157,66 @@ describe('csv upload connector', () => {
 
     expect(calls).toHaveLength(0);
   });
+
+  it('appends PHS evidence-register rows to the evidence ledger after context chunks insert', async () => {
+    const calls: Array<{ table: string; operation: string; payload: unknown }> = [];
+    const evidenceInputs: unknown[] = [];
+    const db = {
+      from(table: string) {
+        return {
+          insert(payload: unknown) {
+            calls.push({ table, operation: 'insert', payload });
+            return {
+              select() {
+                const rows = Array.isArray(payload) ? payload : [payload];
+                return Promise.resolve({
+                  data: rows.map((_, index) => ({ id: `row-${index}`, chunk_id: `chunk-${index}` })),
+                  error: null,
+                  count: rows.length,
+                });
+              },
+            };
+          },
+        };
+      },
+    };
+
+    const result = await loadCsvUploadToTenantContext({
+      clientId: 'client-meridian',
+      tenantKey: 'meridian-health',
+      uploadedBy: 'user-3',
+      fileName: 'phs-evidence-register.csv',
+      uploadedAt: '2026-06-05T12:00:00.000Z',
+      csvText: [
+        'citation_key,title,source_type,owner,evidence_date,sensitivity,confidence,summary,usable_by_surface,source_url,source_quote',
+        'PHS-STARS-2026,Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin",https://example.test/stars,"3.0 Stars baseline"',
+      ].join('\n'),
+      mapping: { templateId: 'phs-evidence-register' },
+      db: db as never,
+      recordEvidenceFn: async (input) => {
+        evidenceInputs.push(input);
+        return 'ledger-1';
+      },
+    });
+
+    expect(result.persistence.status).toBe('inserted');
+    expect(result.evidenceLedger).toEqual({
+      status: 'inserted',
+      rowsRecorded: 1,
+      evidenceIds: ['ledger-1'],
+      detail: 'PHS evidence register rows were appended to the evidence ledger.',
+    });
+    expect(calls.map((call) => call.table)).toEqual([
+      'data_ingestion_runs',
+      'enterprise_context_chunks',
+    ]);
+    expect(evidenceInputs).toEqual([
+      expect.objectContaining({
+        clientId: 'client-meridian',
+        artifactRef: 'PHS-STARS-2026',
+        sourceType: 'document_extract',
+        sourceQuote: '3.0 Stars baseline',
+      }),
+    ]);
+  });
 });

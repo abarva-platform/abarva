@@ -9,15 +9,34 @@ const eventCode = 'LSH-KYRIBA-TREASURY-2026';
 const stageExpectations = [
   {
     stage: 'selection',
-    markers: ['Selection Memo', 'Contract Record', 'Kyriba', 'Lakeshore'],
+    markers: [
+      'Selection Memo',
+      'Contract Record',
+      'Kyriba',
+      'Lakeshore',
+      'Lakeshore should proceed with a treasury platform rollout anchored on Kyriba',
+    ],
   },
   {
     stage: 'transition',
-    markers: ['Transition Plan', 'Checkpoint Log', 'Knowledge-Transfer Evidence', 'Kyriba', 'Lakeshore'],
+    markers: [
+      'Transition Plan',
+      'Checkpoint Log',
+      'Knowledge-Transfer Evidence',
+      'Kyriba',
+      'Lakeshore',
+      'The transition plan is built around a controlled parallel run',
+    ],
   },
   {
     stage: 'value',
-    markers: ['Value Ledger', 'Governance Review Note', 'Kyriba', 'Lakeshore'],
+    markers: [
+      'Value Ledger',
+      'Governance Review Note',
+      'Kyriba',
+      'Lakeshore',
+      'The Kyriba rollout value ledger is intentionally conservative',
+    ],
   },
 ];
 

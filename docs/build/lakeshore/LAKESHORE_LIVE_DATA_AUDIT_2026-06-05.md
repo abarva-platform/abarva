@@ -210,9 +210,9 @@ Downstream artifact proof loaded on 2026-06-05:
 
 Live product proof: Clerk-ticket sign-in as `cfo@lakeshore-holdings.example.com` with `abarva_active_client=lakeshore` returned 200 for:
 
-- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=selection`, with `Selection Memo` and `Contract Record` visible.
-- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=transition`, with `Transition Plan`, `Checkpoint Log`, and `Knowledge-Transfer Evidence` visible.
-- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=value`, with `Value Ledger` and `Governance Review Note` visible.
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=selection`, with `Selection Memo`, `Contract Record`, and the selection memo body phrase `Lakeshore should proceed with a treasury platform rollout anchored on Kyriba` visible.
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=transition`, with `Transition Plan`, `Checkpoint Log`, `Knowledge-Transfer Evidence`, and the transition plan body phrase `The transition plan is built around a controlled parallel run` visible.
+- `/source/events/LSH-KYRIBA-TREASURY-2026?stage=value`, with `Value Ledger`, `Governance Review Note`, and the value ledger body phrase `The Kyriba rollout value ledger is intentionally conservative` visible.
 
 Demo guidance: safe to demo the full Kyriba Source artifact spine as synthetic but real evidence. Be precise: the event is still at Executive Decision, and Selection/Transition/Value are loaded for continuity and downstream preview but remain `needs_review`; do not imply the award, transition, or realized value is complete.
 

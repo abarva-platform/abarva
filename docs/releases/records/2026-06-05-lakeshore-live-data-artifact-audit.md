@@ -78,9 +78,9 @@ This release records the Lakeshore live data audit and the Lakeshore-only artifa
   - `/strategic-moves/6a4c7fc4-0a2d-4479-b807-7350fb727527` returns 200 for the Data Spine Move detail.
   - `/strategic-moves/1196dac0-715c-45ce-8eeb-5e70792d9aa4?tab=documents` renders all six Kyriba rollout-gate filenames and twelve total Kyriba attachments.
   - Downloading `kyriba-rollout-gate-01-bank-connectivity-matrix.md` through `/api/programs/:id/attachments/:attachmentId` returns a 302 to `stlakeshorepilotlsh001.blob.core.windows.net`; following the redirect returns 200 with the synthetic Markdown artifact.
-  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=selection` returns 200 with `Selection Memo`, `Contract Record`, `Kyriba`, and `Lakeshore` visible.
-  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=transition` returns 200 with `Transition Plan`, `Checkpoint Log`, `Knowledge-Transfer Evidence`, `Kyriba`, and `Lakeshore` visible.
-  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=value` returns 200 with `Value Ledger`, `Governance Review Note`, `Kyriba`, and `Lakeshore` visible.
+  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=selection` returns 200 with `Selection Memo`, `Contract Record`, `Kyriba`, `Lakeshore`, and the rendered selection body phrase `Lakeshore should proceed with a treasury platform rollout anchored on Kyriba`.
+  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=transition` returns 200 with `Transition Plan`, `Checkpoint Log`, `Knowledge-Transfer Evidence`, `Kyriba`, `Lakeshore`, and the rendered transition body phrase `The transition plan is built around a controlled parallel run`.
+  - `/source/events/LSH-KYRIBA-TREASURY-2026?stage=value` returns 200 with `Value Ledger`, `Governance Review Note`, `Kyriba`, `Lakeshore`, and the rendered value body phrase `The Kyriba rollout value ledger is intentionally conservative`.
 
 ## Rollout Plan
 
