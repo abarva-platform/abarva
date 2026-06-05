@@ -285,6 +285,19 @@ function formatSourcesBlock(sources: AskSource[]): string {
     .join("\n\n");
 }
 
+export function formatMandatorySurfaceEvidenceBlock(sources: AskSource[]): string {
+  const prioritySources = sources
+    .filter((source) => source.type === "SURFACE" || source.type === "TENANT" || source.type === "GRAPH")
+    .slice(0, 4);
+  if (prioritySources.length === 0) return "";
+
+  return [
+    "CURRENT TENANT / SURFACE FACTS TO USE:",
+    "These facts come from the authenticated product surface and loaded tenant context. Use the question-relevant facts explicitly before falling back to general doctrine.",
+    ...prioritySources.map((source, index) => `[FACT BLOCK ${index + 1} · ${source.type} · ${source.name}]\n${source.detail}`),
+  ].join("\n\n");
+}
+
 export async function* synthesizeStream(args: {
   query: string;
   sources: AskSource[];
@@ -347,7 +360,13 @@ export async function* synthesizeStream(args: {
     contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`
       : `${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`;
-  const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
+  const mandatorySurfaceEvidenceBlock = formatMandatorySurfaceEvidenceBlock(args.sources);
+  const prompt = [
+    `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}`,
+    mandatorySurfaceEvidenceBlock,
+    `USER QUESTION:\n${args.query}`,
+    "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
+  ].filter(Boolean).join("\n\n");
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
     : "";
