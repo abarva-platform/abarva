@@ -5,7 +5,9 @@ import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
 import {
   chunkAskText,
   chooseSynthesisTokenBudget,
+  chooseSynthesisWordLimit,
   formatMandatorySurfaceEvidenceBlock,
+  isEnumeratedCompletenessAsk,
   sanitizeAskSynthesis,
 } from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
@@ -41,6 +43,20 @@ describe('Ask Intelligence guardrails', () => {
     expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(160);
     expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(160);
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
+  });
+
+  it('gives enumerated CXO readiness questions enough room to complete every requested item', () => {
+    const query = 'What are the six Kyriba rollout failure modes Lakeshore needs to de-risk?';
+
+    expect(isEnumeratedCompletenessAsk(query)).toBe(true);
+    expect(chooseSynthesisTokenBudget(query)).toBe(900);
+    expect(chooseSynthesisWordLimit(query)).toBe(380);
+  });
+
+  it('keeps ordinary and explicit-concise Ask responses on the standard digest limits', () => {
+    expect(isEnumeratedCompletenessAsk('What is your read on the Kyriba rollout?')).toBe(false);
+    expect(chooseSynthesisWordLimit('What is your read on the Kyriba rollout?')).toBe(240);
+    expect(chooseSynthesisWordLimit('Give me one short paragraph on Kyriba readiness.')).toBe(120);
   });
 
   it('uses deterministic followups only for explicit concise Ask requests', () => {
