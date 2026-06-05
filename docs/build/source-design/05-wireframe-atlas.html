@@ -1,63 +1,445 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>05 · Source Wireframe Atlas — PLACEHOLDER</title>
+
+
+<meta charset="utf-8">
+<title>Source Module · Wireframe Atlas — Codex reference</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: #111827; background: #fafafa; margin: 40px auto; max-width: 800px; padding: 0 24px; line-height: 1.6; }
-.placeholder { background: #fef3c7; border: 2px dashed #b45309; padding: 24px 32px; border-radius: 6px; }
-h1 { font-family: Georgia, serif; font-size: 28px; margin: 0 0 8px; }
-code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
-.meta { color: #6b7280; font-size: 13px; margin-bottom: 18px; }
-.ref { background: #fff; padding: 14px 18px; border-left: 3px solid #1d4ed8; border-radius: 3px; margin: 14px 0; font-size: 13px; }
+  :root{
+    --bg-paper:#F8F7F4;--ink:#111827;--muted:#6b7280;--accent:#1d4ed8;
+    --good:#047857;--warn:#b45309;--bad:#b91c1c;--tint:#f3f4f6;
+    --line:#e7e5e0;--line-strong:#d9d6cf;--card:#fff;--charcoal:#1f2937;
+    --serif:Georgia,'Times New Roman',serif;--sans:'DM Sans',-apple-system,system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg-paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .page{max-width:1200px;margin:0 auto;padding:0 32px}
+
+  /* cover */
+  .cover{background:var(--charcoal);color:#fff;padding:64px 0 56px;margin-bottom:0}
+  .cover .inner{max-width:1200px;margin:0 auto;padding:0 32px}
+  .cover .brand{font-family:var(--serif);font-size:24px;font-weight:700;margin-bottom:30px}
+  .cover .brand .va{color:#5b9dff}
+  .cover h1{font-family:var(--serif);font-size:46px;font-weight:400;letter-spacing:-.015em;line-height:1.08;margin-bottom:16px;max-width:20ch}
+  .cover .sub{font-size:16px;line-height:1.6;color:rgba(255,255,255,.72);max-width:62ch}
+  .cover .meta{margin-top:28px;display:flex;gap:28px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.55)}
+  .cover .meta b{color:#8fb8ff;font-weight:500}
+
+  section.block{padding:52px 0;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h2.bh{font-family:var(--serif);font-size:30px;font-weight:400;letter-spacing:-.01em;margin-bottom:14px}
+  .lede{font-size:15px;line-height:1.65;color:var(--muted);max-width:70ch}
+
+  /* northstar list */
+  .star{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:24px}
+  .star .s{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .star .s .n{font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:6px}
+  .star .s .t{font-family:var(--serif);font-size:18px;margin-bottom:6px}
+  .star .s .d{font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* token strip */
+  .tokrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .tok{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 13px}
+  .sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.08)}
+  .tok .tn{font-family:var(--mono);font-size:11px;font-weight:500}
+  .tok .tv{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .typestrip{margin-top:14px;display:flex;gap:30px;flex-wrap:wrap;align-items:baseline}
+  .typestrip .ti{font-family:var(--serif);font-size:24px}
+  .typestrip .tb{font-family:var(--sans);font-size:14px}
+  .typestrip .tm{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+  /* index table */
+  table.idx{width:100%;border-collapse:collapse;margin-top:22px;font-size:13px}
+  table.idx th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line-strong)}
+  table.idx td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.idx tr:hover td{background:var(--card)}
+  .vd{font-family:var(--mono);font-size:10px;font-weight:500;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .vd.ok{background:#e3f1ea;color:var(--good)}
+  .vd.rev{background:#fdf1e3;color:var(--warn)}
+  .vd.new{background:#e6edfb;color:var(--accent)}
+
+  /* surface frame */
+  .surface{margin-top:24px;border:1px solid var(--line-strong);border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(17,24,39,.05)}
+  .sframe-bar{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--charcoal);color:#fff}
+  .sframe-bar .dot{width:10px;height:10px;border-radius:50%;background:#3b4453}
+  .sframe-bar .t{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:rgba(255,255,255,.7)}
+  .sframe-bar .spec{margin-left:auto;font-family:var(--mono);font-size:10px;color:#8fb8ff}
+  .sframe-body{padding:28px 30px;background:var(--bg-paper)}
+  .verdict-line{margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--good);border-radius:0 10px 10px 0;padding:14px 18px}
+  .verdict-line b{color:var(--ink)}
+
+  /* generic UI atoms reused across mini-wireframes */
+  .eyebrow{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:600;font-size:13px;border-radius:9px;padding:10px 18px;border:1px solid transparent;cursor:default}
+  .btn.p{background:var(--accent);color:#fff}.btn.g{background:#fff;color:var(--ink);border-color:var(--line-strong)}
+  .h1s{font-family:var(--serif);font-size:26px;font-weight:400;letter-spacing:-.01em}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .chip.warn{background:#fdf1e3;color:var(--warn)}.chip.bad{background:#fae7e7;color:var(--bad)}.chip.good{background:#e3f1ea;color:var(--good)}.chip.muted{background:var(--tint);color:var(--muted)}
+
+  /* Decision Queue */
+  .bands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+  .band{border-radius:12px;padding:18px 20px;border:1px solid var(--line);background:#fff}
+  .band.over{border-top:3px solid var(--bad)}.band.due{border-top:3px solid var(--warn)}.band.pipe{border-top:3px solid var(--muted)}
+  .band .bn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+  .band.over .bn{color:var(--bad)}.band.due .bn{color:var(--warn)}.band.pipe .bn{color:var(--muted)}
+  .band .bv{font-family:var(--serif);font-size:30px}.band .bc{font-size:12px;color:var(--muted);margin-top:4px}
+  .qcard{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 18px;margin-bottom:9px}
+  .qcard .ql{width:3px;height:38px;border-radius:3px;flex-shrink:0}
+  .qcard.over .ql{background:var(--bad)}.qcard.due .ql{background:var(--warn)}
+  .qcard .qm{flex:1}.qcard .qt{font-family:var(--serif);font-size:17px}.qcard .qd{font-size:12px;color:var(--muted);margin-top:2px}
+  .qcard .qv{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink)}
+  .qcard .qa{display:flex;gap:8px}
+
+  /* Approval */
+  .appgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px}
+  .pendbar{background:#fdf8f1;border:1px solid #f0e2cd;border-radius:11px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  .pendbar .chip{flex-shrink:0}
+  .pcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .pcard h4{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .fact{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .fact:last-child{border-bottom:none}.fact .fk{color:var(--muted)}.fact .fv{font-weight:600;text-align:right}
+  .signer{display:flex;align-items:center;gap:9px;padding:9px 0;font-size:13px}
+  .signer .st{width:9px;height:9px;border-radius:50%}.signer.pending .st{background:var(--warn)}.signer.signed .st{background:var(--good)}
+  .signer .nm{font-weight:600}.signer .role{color:var(--muted)}
+  .rationale{margin-top:14px;background:var(--tint);border:1px dashed var(--line-strong);border-radius:9px;padding:13px 15px;font-size:12.5px;color:var(--muted);font-style:italic}
+  .selfnote{background:#fae7e7;border-radius:8px;padding:9px 13px;font-size:12px;color:var(--bad);margin:12px 0;font-weight:500}
+  .appactions{display:flex;align-items:center;gap:10px;margin-top:16px;justify-content:flex-end}
+  .appactions .more{color:var(--muted);font-weight:600;font-size:13px}
+
+  /* Pricing iceberg */
+  .pricegrid{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;margin-top:16px;align-items:start}
+  .stackbar{display:flex;flex-direction:column;gap:4px;max-width:240px}
+  .seg{border-radius:6px;padding:11px 14px;color:#fff;font-size:12px;font-weight:600;display:flex;justify-content:space-between}
+  .seg.vis{background:#5b6b86}.seg.hid{background:var(--charcoal)}
+  .vendcard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:10px}
+  .vendcard.win{border:1.5px solid var(--accent)}
+  .vendcard .vh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .vendcard .vn{font-family:var(--serif);font-size:18px}.vendcard .vt{font-family:var(--mono);font-size:14px;font-weight:500}
+  .lever{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;font-size:12px;padding:6px 0;border-top:1px solid var(--line)}
+  .lever .lk{color:var(--muted)} .lever .lv{font-family:var(--mono);text-align:right}
+  .leverhead{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+  /* Transition readiness */
+  .ktrow{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+  .ktrow:first-child{border-top:none}
+  .ktrow .kd{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .ktrow.done .kd{background:var(--good)}.ktrow.now .kd{background:var(--accent)}.ktrow.next .kd{background:var(--line-strong)}
+  .ktrow .kn{flex:1;font-size:14px}.ktrow.now .kn{font-weight:600}
+  .ktrow .ks{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .rag{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+  .ragc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .ragc .rl{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .ragc .rs{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .ragc.g{border-top:3px solid var(--good)}.ragc.a{border-top:3px solid var(--warn)}.ragc.r{border-top:3px solid var(--bad)}
+  .ragc.g .rs{color:var(--good)}.ragc.a .rs{color:var(--warn)}.ragc.r .rs{color:var(--bad)}
+
+  /* Attention */
+  .attn{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;max-width:520px}
+  .attn .ah{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .attn .ah .t{font-weight:700;font-size:14px}.attn .ah .ct{margin-left:auto;background:var(--bad);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .arow{display:flex;gap:13px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .arow:last-child{border-bottom:none}
+  .arow .ad{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+  .arow.urgent .ad{background:var(--bad)}.arow.warn .ad{background:var(--warn)}.arow.info .ad{background:var(--accent)}
+  .arow .at{font-size:13px;line-height:1.45}.arow .at b{font-weight:600}
+  .arow .atm{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+
+  /* schematic mini for composed stages */
+  .schem{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .scard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+  .scard .sn{font-family:var(--serif);font-size:16px;margin-bottom:5px}
+  .scard .sd{font-size:12px;color:var(--muted);line-height:1.5}
+  .scard .stag{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+
+  .linkout{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;margin-top:6px}
+  .foot{padding:40px 0 70px;color:var(--muted);font-size:13px;line-height:1.6}
 </style>
 </head>
-<body>
+<body data-screen-label="Source Wireframe Atlas">
 
-<h1>05 · Source Wireframe Atlas</h1>
-<p class="meta">Placeholder · awaiting design module commit · 2026-06-04</p>
-
-<div class="placeholder">
-<h2 style="margin-top: 0;">⚠ This file is a placeholder</h2>
-
-<p>The design module produced the full Wireframe Atlas in their working environment at <code>preview/17-source-wireframe-atlas.html</code>. That file's content needs to be pasted into this slot.</p>
-
-<p><strong>Atlas contents (per design module):</strong></p>
-<ol>
-  <li><strong>Cover + northstar</strong> — four non-negotiable Moves-module-bar properties + squint-test gate</li>
-  <li><strong>Token strip</strong> — locked Source palette + type</li>
-  <li><strong>Index table</strong> — all 19 specs → surface → type → verdict pills → where to see it</li>
-  <li><strong>Inline wireframes</strong> for every load-bearing and net-new surface:
-    <ul>
-      <li>§1 Decision Queue (three urgency bands + renewal auto-events in OVERDUE)</li>
-      <li>§2 Intake footer (5/5 completion → approval routing)</li>
-      <li>§3 Approval page (one primary + demoted actions, Q4 resolved)</li>
-      <li>§4 Pricing/BAFO (iceberg as labeled stacked bar, per-vendor lever envelopes)</li>
-      <li>§5 Transition (KT milestone list + 4-workstream R/A/G readiness)</li>
-      <li>§6 Evidence drawer + Attention bell (cross-cutting patterns)</li>
-      <li>§7 Composed stages (Scope/RFP, Responses/Eval, Value, Audit as schematic cards)</li>
-    </ul>
-  </li>
-  <li>Every surface carries its design-module verdict in a green line beneath it</li>
-  <li>Cross-references <code>03-build-specs.html</code> + <code>04-design-module-review.md</code></li>
-</ol>
-
-<p><strong>To complete this file:</strong></p>
-<ol>
-  <li>Design module: copy the full HTML of your <code>preview/17-source-wireframe-atlas.html</code></li>
-  <li>Replace the entire contents of this file (overwrite) with that HTML</li>
-  <li>Ensure internal links point to <code>06-strategy-screen.html</code> (NOT preview/15) and <code>07-executive-decision-screen.html</code> (NOT preview/16) — the repo paths, not the design module's preview paths</li>
-  <li>Commit and push to branch <code>docs/source-design-package-2026-06-04</code></li>
-</ol>
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="inner">
+    <div class="brand">Abar<span class="va">Va</span></div>
+    <div class="kicker" style="color:#8fb8ff">Source module · redesign reference</div>
+    <h1>Wireframe Atlas</h1>
+    <p class="sub">The visual target for every redesigned Source surface. Each wireframe applies the agreed northstar — Apple-grade ease, the Moves module as the bar — using the Source module's locked tokens. Built for Codex to build against, not just read.</p>
+    <div class="meta">
+      <span>Date · <b>2026-06-04</b></span>
+      <span>Companion · <b>03-build-specs.html</b></span>
+      <span>Verdicts · <b>04-design-module-review.md</b></span>
+      <span>Surfaces · <b>10</b></span>
+    </div>
+  </div>
 </div>
 
-<div class="ref">
-<strong>References while this is a placeholder:</strong>
-<ul>
-  <li><a href="03-build-specs.html">03-build-specs.html</a> — the 19 specs</li>
-  <li><a href="04-design-module-review.md">04-design-module-review.md</a> — design module verdicts</li>
-  <li><a href="02-end-to-end-wireframes.html">02-end-to-end-wireframes.html</a> — older end-to-end wireframes (superseded by this atlas once live)</li>
-</ul>
+<!-- ============ NORTHSTAR ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">The bar · every surface clears all four</div>
+  <h2 class="bh">Northstar</h2>
+  <p class="lede">The Moves module set the standard. These four properties are non-negotiable on every Source surface. The squint test — blur the screen 50%, the primary action is still obvious — is the acceptance gate.</p>
+  <div class="star">
+    <div class="s"><div class="n">01</div><div class="t">One obvious next action</div><div class="d">If the user has to hunt for what to do, the screen failed. Each surface leads with a single highest-leverage move.</div></div>
+    <div class="s"><div class="n">02</div><div class="t">The answer leads, machinery hides</div><div class="d">Page 1 states the decision or the next move. Reasoning, evidence, history live below the fold or one click away.</div></div>
+    <div class="s"><div class="n">03</div><div class="t">Quiet hierarchy</div><div class="d">Serif headline carries the page. Mono eyebrows used once per region, never stacked. Status color is semantic, never decorative.</div></div>
+    <div class="s"><div class="n">04</div><div class="t">Subtract before adding</div><div class="d">Every element must change what the user does next. Five export buttons on a not-started doc is the anti-pattern.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ TOKENS ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Locked 2026-04-16 · do not change</div>
+  <h2 class="bh">Tokens used throughout</h2>
+  <p class="lede">Source keeps its own palette and type — distinct from Moves. We match the discipline, not the skin.</p>
+  <div class="tokrow">
+    <div class="tok"><span class="sw" style="background:#F8F7F4"></span><span class="tn">paper</span><span class="tv">#F8F7F4</span></div>
+    <div class="tok"><span class="sw" style="background:#111827"></span><span class="tn">ink</span><span class="tv">#111827</span></div>
+    <div class="tok"><span class="sw" style="background:#1d4ed8"></span><span class="tn">accent</span><span class="tv">#1d4ed8</span></div>
+    <div class="tok"><span class="sw" style="background:#047857"></span><span class="tn">good</span><span class="tv">#047857</span></div>
+    <div class="tok"><span class="sw" style="background:#b45309"></span><span class="tn">warn</span><span class="tv">#b45309</span></div>
+    <div class="tok"><span class="sw" style="background:#b91c1c"></span><span class="tn">bad</span><span class="tv">#b91c1c</span></div>
+    <div class="tok"><span class="sw" style="background:#1f2937"></span><span class="tn">charcoal</span><span class="tv">#1f2937</span></div>
+  </div>
+  <div class="typestrip">
+    <span class="ti">Georgia serif — headlines &amp; event titles</span>
+    <span class="tb">DM Sans — body &amp; UI</span>
+    <span class="tm">JetBrains Mono — eyebrows &amp; IDs</span>
+  </div>
+</div></section>
+
+<!-- ============ INDEX ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Read me first</div>
+  <h2 class="bh">Index · spec → surface → verdict</h2>
+  <p class="lede">Every surface below maps to a spec in <code>03-build-specs.html</code> and a verdict in <code>04-design-module-review.md</code>. Two surfaces are shipped as full-fidelity standalone files (linked); the rest are wireframed inline.</p>
+  <table class="idx">
+    <tr><th>Spec</th><th>Surface</th><th>Type</th><th>Verdict</th><th>Where</th></tr>
+    <tr><td>1</td><td>Decision Queue · triage bands</td><td>Edit</td><td><span class="vd rev">revisions</span></td><td>Atlas §1</td></tr>
+    <tr><td>2</td><td>Intake completion footer</td><td>Extend</td><td><span class="vd ok">approved</span></td><td>Atlas §2</td></tr>
+    <tr><td>3</td><td>Approval page</td><td>NEW · load-bearing</td><td><span class="vd rev">revisions</span></td><td>Atlas §3</td></tr>
+    <tr><td>4</td><td>Lifecycle routing guard</td><td>NEW · logic</td><td><span class="vd ok">approved</span></td><td>no UI — middleware</td></tr>
+    <tr><td>5 · 8</td><td>Strategy stage (Next-Move pattern)</td><td>Edit · pattern-setter</td><td><span class="vd ok">approved</span></td><td><a href="06-strategy-screen.html">full screen ↗</a></td></tr>
+    <tr><td>6</td><td>Sentinel chat sizing</td><td>Edit</td><td><span class="vd rev">revisions</span></td><td>shown in §Strategy + §Exec</td></tr>
+    <tr><td>9</td><td>Scope + RFP</td><td>Edit</td><td><span class="vd rev">revisions</span></td><td>Atlas §7 (schematic)</td></tr>
+    <tr><td>10</td><td>Responses + Evaluation</td><td>NEW</td><td><span class="vd ok">approved</span></td><td>Atlas §7 (schematic)</td></tr>
+    <tr><td>11</td><td>Pricing + BAFO</td><td>NEW · load-bearing</td><td><span class="vd rev">revisions</span></td><td>Atlas §4</td></tr>
+    <tr><td>12</td><td>Executive Decision page-1</td><td>NEW · load-bearing</td><td><span class="vd rev">revisions</span></td><td><a href="07-executive-decision-screen.html">full screen ↗</a></td></tr>
+    <tr><td>13</td><td>Transition (Stage 10)</td><td>NEW</td><td><span class="vd rev">revisions</span></td><td>Atlas §5</td></tr>
+    <tr><td>14</td><td>Value Ledger extension</td><td>Extend</td><td><span class="vd rev">revisions</span></td><td>Atlas §7 (schematic)</td></tr>
+    <tr><td>15</td><td>CXO Report + Deal Pack</td><td>Edit</td><td><span class="vd ok">approved</span></td><td>export — see specs</td></tr>
+    <tr><td>16</td><td>Evidence drawer</td><td>NEW · pattern</td><td><span class="vd ok">approved</span></td><td>Atlas §6</td></tr>
+    <tr><td>17</td><td>Audit log</td><td>Extend</td><td><span class="vd ok">approved</span></td><td>Atlas §7 (schematic)</td></tr>
+    <tr><td>18</td><td>Cross-event attention</td><td>NEW</td><td><span class="vd rev">revisions</span></td><td>Atlas §6</td></tr>
+    <tr><td>19</td><td>Renewal auto-event</td><td>NEW · ops</td><td><span class="vd ok">approved</span></td><td>lands in Queue §1 (OVERDUE)</td></tr>
+  </table>
+</div></section>
+
+<!-- ============ §1 DECISION QUEUE ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §1 · Spec 1 + Spec 19</div>
+  <h2 class="bh">Decision Queue · triage bands</h2>
+  <p class="lede">Replaces 24 visually identical cards with three urgency bands. Renewal auto-events (Spec 19) land in OVERDUE. Bands are clickable filters, not summaries.</p>
+  <div class="surface">
+    <div class="sframe-bar"><span class="dot"></span><span class="t">/source/queue</span><span class="spec">SPEC 1 · 19</span></div>
+    <div class="sframe-body">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+        <div><div class="eyebrow">Source · Attention</div><div class="h1s" style="margin-top:6px">9 decisions in queue</div></div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">2 overdue · $84M at stake this quarter</div>
+      </div>
+      <div class="bands">
+        <div class="band over"><div class="bn">Overdue — act now</div><div class="bv">2</div><div class="bc">Renewals past trigger · $31M</div></div>
+        <div class="band due"><div class="bn">Due this quarter</div><div class="bv">4</div><div class="bc">$38M · 2 need scope clarity</div></div>
+        <div class="band pipe"><div class="bn">Pipeline</div><div class="bv">3</div><div class="bc">$15M · triggers 6+ mo out</div></div>
+      </div>
+      <div class="qcard over"><div class="ql"></div><div class="qm"><div class="qt">Network Services Renewal 2026</div><div class="qd">Auto-created · contract ends in 174 days · SRM scorecard pre-loaded</div></div><div class="qv">$18.2M</div><div class="qa"><span class="btn p">Open event</span><span class="btn g">Defer to Q4</span></div></div>
+      <div class="qcard over"><div class="ql"></div><div class="qm"><div class="qt">EUC Managed Services</div><div class="qd">Trigger window passed 8 days ago</div></div><div class="qv">$12.8M</div><div class="qa"><span class="btn p">Open event</span><span class="btn g">Defer to Q4</span></div></div>
+      <div class="qcard due"><div class="ql"></div><div class="qm"><div class="qt">Data Analytics Operations 2026</div><div class="qd">Waiting on client · approval pending</div></div><div class="qv">$13.2M</div><div class="qa"><span class="btn p">Open event</span><span class="btn g">Schedule scoping</span></div></div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict ✏️ revisions:</b> bands are clickable filters (not summaries); no month sub-split (three is the scan limit); "Defer/Snooze" get a one-tap confirm — no silent deadline mutation; author the zero state to lead with "Nothing needs you → Portfolio."</div>
+</div></section>
+
+<!-- ============ §2 INTAKE FOOTER ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §2 · Spec 2</div>
+  <h2 class="bh">Intake · 5/5 completion footer</h2>
+  <p class="lede">Appears only at 5/5 facts captured. Closes "where does this go?" — routes to approval, never the canvas.</p>
+  <div class="surface">
+    <div class="sframe-bar"><span class="dot"></span><span class="t">/source/new</span><span class="spec">SPEC 2</span></div>
+    <div class="sframe-body">
+      <div class="pcard" style="max-width:680px">
+        <div class="eyebrow" style="color:var(--accent)">▼ Next · Approval</div>
+        <div class="h1s" style="margin:8px 0 6px">Open event for approval</div>
+        <div style="font-size:13.5px;color:var(--muted);margin-bottom:14px">Routes to: <b style="color:var(--ink)">Carlos Rivera</b> (you) + <b style="color:var(--ink)">Lynne Stratham</b> (co-decision). Pilot mode: self-approval allowed with rationale.</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="btn p">▶ Open event</span><span class="btn g">Save draft</span>
+          <span class="chip muted" style="margin-left:auto">5 of 5 facts captured ✓</span>
+        </div>
+        <div class="rationale">After submit you land on the approval page, not the canvas. The canvas unlocks after approval.</div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict ✅ approved:</b> collapse facts to a checklist at 5/5 (not expanded); keep the pilot-mode self-approval note off intake — it belongs on the approval page; 5 is the schema, no 6th-fact escape hatch.</div>
+</div></section>
+
+<!-- ============ §3 APPROVAL PAGE ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §3 · Spec 3 · NEW · load-bearing</div>
+  <h2 class="bh">Approval page</h2>
+  <p class="lede">The missing surface. Blocks the canvas until resolved (routing guard, Spec 4). One primary action; the rest demoted.</p>
+  <div class="surface">
+    <div class="sframe-bar"><span class="dot"></span><span class="t">/source/events/[id]/approval</span><span class="spec">SPEC 3 · Q4</span></div>
+    <div class="sframe-body">
+      <div class="pendbar"><span class="chip warn">● Pending approval</span><span style="font-size:13px;color:var(--ink)">Waiting on client · 24 min aged · Managed Service · Strategic · opened by C. Rivera, CIO</span></div>
+      <div class="appgrid">
+        <div class="pcard">
+          <h4>Captured facts</h4>
+          <div class="fact"><span class="fk">Why sourcing now</span><span class="fv">Incumbent term ends Q1 2027</span></div>
+          <div class="fact"><span class="fk">Scope</span><span class="fv">Global delivery · 11 apps</span></div>
+          <div class="fact"><span class="fk">Value target</span><span class="fv">$20–24M / 3yr</span></div>
+          <div class="fact"><span class="fk">Archetype</span><span class="fv">Managed Service</span></div>
+          <div class="fact"><span class="fk">Rigor</span><span class="fv">Strategic (full)</span></div>
+          <div style="margin-top:12px"><a>▾ Expand intake chat trail (4 turns)</a></div>
+        </div>
+        <div class="pcard">
+          <h4>Approval routing</h4>
+          <div class="signer pending"><span class="st"></span><span class="nm">Carlos Rivera</span><span class="role">CIO · you</span></div>
+          <div class="signer pending"><span class="st"></span><span class="nm">Lynne Stratham</span><span class="role">CDO · co-decision</span></div>
+          <div class="selfnote">⚠ Self-approval notice: you are the recorded creator. Audit log will flag.</div>
+          <div class="rationale">Why are you approving? Required for audit log.</div>
+          <div class="appactions"><span class="more">Other decisions ▾</span><span class="btn g">Send to co-approver</span><span class="btn p">Approve</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict ✏️ revisions (open with Codex):</b> ONE primary "Approve" + secondary "Send to co-approver"; "Request changes" + "Reject" behind "Other decisions ▾" (resolves Q4 — four equal buttons fails "one obvious action"). Intake trail expands inline. Non-approvers see a read-only "Pending {sponsor}" view, not a 403.</div>
+</div></section>
+
+<!-- ============ §4 PRICING / BAFO ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §4 · Spec 11 · NEW · load-bearing</div>
+  <h2 class="bh">Pricing + BAFO</h2>
+  <p class="lede">The CXO exceed-bar surface. TCO iceberg as a labeled stacked bar (not skeuomorphic); BAFO lever envelopes as per-vendor cards (not one grand table).</p>
+  <div class="surface">
+    <div class="sframe-bar"><span class="dot"></span><span class="t">/source/events/[id]?stage=pricing</span><span class="spec">SPEC 11</span></div>
+    <div class="sframe-body">
+      <div class="pricegrid">
+        <div>
+          <div class="eyebrow">Normalized TCO · Cognizant · 3-yr</div>
+          <div class="h1s" style="margin:6px 0 14px">$13.21M total</div>
+          <div class="stackbar">
+            <div class="seg vis"><span>Visible (bid)</span><span>$9.24M</span></div>
+            <div class="seg hid"><span>Hidden (transition, exit, run)</span><span>$3.97M</span></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:10px;max-width:34ch">30% of true cost sits below the bid line. Sensitivity holds the ranking under volume ±20%, scope ±10%, FX ±5%.</div>
+        </div>
+        <div>
+          <div class="leverhead" style="margin-bottom:8px">BAFO lever envelope · per vendor</div>
+          <div class="vendcard win">
+            <div class="vh"><span class="vn">Cognizant</span><span class="vt">$13.21M</span></div>
+            <div class="lever"><span class="lk">Rate card</span><span class="lv">open $14.8</span><span class="lv">tgt $13.2</span><span class="lv">walk $12.6</span></div>
+            <div class="lever"><span class="lk">Transition fee</span><span class="lv">open $1.2</span><span class="lv">tgt $0.7</span><span class="lv">walk $0.5</span></div>
+          </div>
+          <div class="vendcard">
+            <div class="vh"><span class="vn">Infosys</span><span class="vt">$11.40M</span></div>
+            <div class="lever"><span class="lk">Rate card</span><span class="lv">open $12.9</span><span class="lv">tgt $11.4</span><span class="lv">walk $10.9</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict ✏️ revisions (open with Codex):</b> iceberg = stacked bars, not skeuomorphic; sensitivity = pre-rendered scenario cards for v1, not live sliders; lever envelopes = per-vendor cards. Hold the squint test hardest here — recommended-vendor TCO + savings survive a 50% blur.</div>
+</div></section>
+
+<!-- ============ §5 TRANSITION ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §5 · Spec 13 · NEW</div>
+  <h2 class="bh">Transition (Stage 10)</h2>
+  <p class="lede">Closes the lifecycle gap — Stage 10 was missing from the deal pack. KT plan as a milestone list (not Gantt for v1); readiness as a 4-workstream R/A/G scorecard.</p>
+  <div class="surface">
+    <div class="sframe-bar"><span class="dot"></span><span class="t">/source/events/[id]?stage=transition</span><span class="spec">SPEC 13</span></div>
+    <div class="sframe-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div class="eyebrow">KT plan · 5 phases</div>
+          <div style="margin-top:10px">
+            <div class="ktrow done"><span class="kd"></span><span class="kn">Discovery</span><span class="ks">complete · wk 1–2</span></div>
+            <div class="ktrow done"><span class="kd"></span><span class="kn">Shadow</span><span class="ks">complete · wk 3–6</span></div>
+            <div class="ktrow now"><span class="kd"></span><span class="kn">Reverse shadow</span><span class="ks">active · wk 7–9</span></div>
+            <div class="ktrow next"><span class="kd"></span><span class="kn">Cutover</span><span class="ks">wk 10</span></div>
+            <div class="ktrow next"><span class="kd"></span><span class="kn">Hypercare</span><span class="ks">wk 11–14</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="eyebrow">Go-live readiness</div>
+          <div class="rag" style="grid-template-columns:repeat(2,1fr)">
+            <div class="ragc g"><div class="rl">Infrastructure</div><div class="rs">Green</div></div>
+            <div class="ragc a"><div class="rl">Knowledge transfer</div><div class="rs">Amber</div></div>
+            <div class="ragc g"><div class="rl">Vendor staffing</div><div class="rs">Green</div></div>
+            <div class="ragc r"><div class="rl">Incumbent exit</div><div class="rs">Red</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:12px">Go-live gate: CIO + CDO + Vendor PM sign-off required before cutover.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict ✏️ revisions:</b> milestone list for v1 (Gantt is later); fixed signer schema (CIO + CDO + Vendor PM) with a config hook stubbed; risk register reuses the Evaluation dissent-panel pattern — don't invent a new one.</div>
+</div></section>
+
+<!-- ============ §6 EVIDENCE DRAWER + ATTENTION ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §6 · Spec 16 + Spec 18</div>
+  <h2 class="bh">Cross-cutting patterns</h2>
+  <p class="lede">Two surfaces that live across stages: the evidence drawer (citations at hand) and the attention bell (cross-event signal, distinct from the Decision Queue).</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px">
+    <div class="surface" style="margin-top:16px">
+      <div class="sframe-bar"><span class="dot"></span><span class="t">Evidence drawer</span><span class="spec">SPEC 16</span></div>
+      <div class="sframe-body">
+        <div style="font-size:13px;line-height:1.6">Click any citation <span style="color:var(--accent);font-weight:600">E-014</span> in an artifact → a right-edge drawer (~28%) opens to that record. Search, filter by source, pin to the current draft.</div>
+        <div class="pcard" style="margin-top:14px">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:4px">E-014</div>
+          <div style="font-family:var(--serif);font-size:15px;margin-bottom:5px">Transition readiness benchmark</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.5">Cognizant 8.6 / Infosys 5.9. Source: vendor response §4.2 · confidence high · cited 3×</div>
+        </div>
+      </div>
+    </div>
+    <div class="surface" style="margin-top:16px">
+      <div class="sframe-bar"><span class="dot"></span><span class="t">Attention bell</span><span class="spec">SPEC 18</span></div>
+      <div class="sframe-body">
+        <div class="attn">
+          <div class="ah"><span class="t">Attention</span><span class="ct">3</span></div>
+          <div class="arow urgent"><span class="ad"></span><div><div class="at"><b>Approval awaiting you</b> · Data Analytics Operations 2026</div><div class="atm">2 min ago</div></div></div>
+          <div class="arow warn"><span class="ad"></span><div><div class="at"><b>Co-approver hasn't responded</b> · you routed Network Services</div><div class="atm">1 day ago</div></div></div>
+          <div class="arow info"><span class="ad"></span><div><div class="at"><b>BAFO round closes in 3 days</b> · EUC Managed Services</div><div class="atm">3 h ago</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict-line"><b>Verdict:</b> drawer ✅ approved (right-edge, superscript citation chips, available on Portfolio too). Attention ✏️ revisions — top-nav bell + panel for v1 (not a full page); <b>distinct from the Decision Queue</b> — queue = needs a decision, bell = needs your attention. If they overlap, merge them.</div>
+</div></section>
+
+<!-- ============ §7 COMPOSED STAGES ============ -->
+<section class="block"><div class="page">
+  <div class="kicker">Atlas §7 · Specs 9 · 10 · 14 · 17</div>
+  <h2 class="bh">Composed stages — same pattern, different content</h2>
+  <p class="lede">These stages inherit the Strategy template (Next-Move card + demoted shelf + proportional Sentinel rail). They don't need bespoke wireframes — they compose from the established pattern. Each note carries its design verdict.</p>
+  <div class="schem">
+    <div class="scard"><div class="stag">Spec 9 · Scope + RFP</div><div class="sn">Scope + RFP</div><div class="sd">Inventory table + dependency list + eval rubric. CMDB pull is explicit (provenance); rubric weights warn-not-block; dependency map = list for v1.</div></div>
+    <div class="scard"><div class="stag">Spec 10 · Responses + Eval</div><div class="sn">Responses + Evaluation</div><div class="sd">Completeness matrix (R/A/G) + weighted scorecard + dissent panel (first-class, attachments allowed) + BATNA (human-named, not auto-derived).</div></div>
+    <div class="scard"><div class="stag">Spec 14 · Value</div><div class="sn">Value Ledger</div><div class="sd">4-step chain: Baseline → Projected → Realized → Variance. CFO attestation reuses the approval pattern; variance card at &gt;8% (configurable); "Locked" badge + signature trail.</div></div>
+    <div class="scard"><div class="stag">Spec 17 · Audit</div><div class="sn">Audit log</div><div class="sd">Humanized action names in UI / raw enum in export; local time + UTC tooltip; AI rows tagged "Sentinel", not a different background block.</div></div>
+    <div class="scard"><div class="stag">Spec 5 · 8 · built</div><div class="sn">Strategy stage ↗</div><div class="sd">The pattern-setter — built at full fidelity.</div><a class="linkout" href="06-strategy-screen.html">Open Strategy screen →</a></div>
+    <div class="scard"><div class="stag">Spec 12 · built</div><div class="sn">Executive Decision ↗</div><div class="sd">The load-bearing verdict — built at full fidelity.</div><a class="linkout" href="07-executive-decision-screen.html">Open Exec Decision →</a></div>
+  </div>
+</div></section>
+
+<div class="page foot">
+  <strong>How Codex uses this atlas.</strong> Each surface is the visual target for its spec. Build to the wireframe, not just the prose in <code>03-build-specs.html</code>. Where a verdict says "open with Codex before ship," walk it together first. The two full-fidelity screens (Strategy, Executive Decision) are the fidelity bar for everything else — match their polish, spacing, and restraint.<br><br>
+  Source Wireframe Atlas · 2026-06-04 · Companion to 03-build-specs.html + 04-design-module-review.md · Built to the Moves-module northstar with Source locked tokens.
 </div>
 
 </body>
