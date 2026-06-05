@@ -8,6 +8,11 @@ files, source markdown, and embedded context chunks. The missing buyer story
 was the visible craft of how that substrate becomes an agent-ready healthcare
 context layer.
 
+The current canonical profile is a Sacramento-based integrated delivery network
+with 30 hospitals, 280 ambulatory sites, 58,000 employees, and 1.4M covered
+lives. Any older 23-hospital, 142-clinic, or non-California profile should be
+treated as stale until a governed Setup/Admin reload supersedes it.
+
 This showcase adds the missing front door: upload templates and guided
 scenarios that show the ingestion path from operator-owned files to evidence
 rows, embeddings, and grounded agent answers.
