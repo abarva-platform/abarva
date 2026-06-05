@@ -94,6 +94,32 @@ describe('source access policy', () => {
     expect(formatUserSourceAccessPolicyForPrompt(policy)).not.toContain('super_admin');
   });
 
+  it('marks Lakeshore L0 sponsor as aggregate-only across the holding group', async () => {
+    setupRows({
+      person_client_memberships: { access_level: 'client_admin', financial_visibility: true },
+      clients: {
+        id: 'client-lakeshore',
+        tenant_key: 'lakeshore-holdings',
+        holding_group_id: 'group-lakeshore',
+        parent_client_id: null,
+        holding_group_role: 'l0_sponsor',
+        aggregate_visibility_level: 'group_aggregate',
+      },
+      source_event_participants: [],
+    });
+    const { loadUserSourceAccessPolicy, formatUserSourceAccessPolicyForPrompt } = await import('../source-access-policy');
+    const policy = await loadUserSourceAccessPolicy({
+      clientId: 'client-lakeshore',
+      userId: '00000000-0000-4000-8000-000000000001',
+    }, { activeClientKey: 'lakeshore' });
+
+    expect(policy.accessLevel).toBe('client_admin');
+    expect(policy.federatedScope).toBe('l0_group_aggregate');
+    expect(policy.canReadHoldingGroupAggregates).toBe(true);
+    expect(policy.canReadSiblingTransactionGrain).toBe(false);
+    expect(formatUserSourceAccessPolicyForPrompt(policy)).toContain('L0 aggregate rollups');
+  });
+
   it('treats canonical client admin accounts as one-client client admins for Source', async () => {
     setupRows({});
     const { loadUserSourceAccessPolicy } = await import('../source-access-policy');
@@ -264,6 +290,7 @@ describe('source access policy', () => {
 
     expect(queryOrder).toEqual([
       'person_client_memberships',
+      'clients',
       'source_event_participants',
     ]);
   });
