@@ -124,6 +124,9 @@ import { threeChoicesForStage } from "./canvas-three-choices";
 import { StrategyStageView } from "./strategy/StrategyStageView";
 import { ScopeStageView } from "./scope/ScopeStageView";
 import { RfpStageView } from "./rfp/RfpStageView";
+import { ResponsesStageView } from "./responses/ResponsesStageView";
+import { EvaluationStageView } from "./evaluation/EvaluationStageView";
+import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -151,6 +154,7 @@ interface UniversalCanvasShellProps {
   activityEntries: ActivityEntry[];
   tenantName: string;
   decisionThreadId?: string | null;
+  vendorResponseReadiness?: SourceVendorResponseCompleteness;
 }
 
 function renderStageDocumentContent({
@@ -159,12 +163,14 @@ function renderStageDocumentContent({
   selectedDocCode,
   onSelectCode,
   documentTabContent,
+  vendorResponseReadiness,
 }: {
   viewStage: SourceStageKey;
   stageArtifacts: SourceEventArtifactState[];
   selectedDocCode?: string;
   onSelectCode: (code: string) => void;
   documentTabContent: ReactNode;
+  vendorResponseReadiness?: SourceVendorResponseCompleteness;
 }) {
   if (viewStage === "strategy") {
     return (
@@ -183,6 +189,19 @@ function renderStageDocumentContent({
 
   if (viewStage === "rfp" || viewStage === "rfp_rfi_package") {
     return <RfpStageView documentWorkspace={documentTabContent} />;
+  }
+
+  if (viewStage === "responses" || viewStage === "vendor_responses") {
+    return (
+      <ResponsesStageView
+        readiness={vendorResponseReadiness}
+        documentWorkspace={documentTabContent}
+      />
+    );
+  }
+
+  if (viewStage === "evaluation") {
+    return <EvaluationStageView documentWorkspace={documentTabContent} />;
   }
 
   return documentTabContent;
@@ -217,6 +236,7 @@ export function UniversalCanvasShell({
   activityEntries,
   tenantName,
   decisionThreadId = null,
+  vendorResponseReadiness,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -697,6 +717,7 @@ export function UniversalCanvasShell({
         selectedDocCode,
         onSelectCode: setSelectedDocCode,
         documentTabContent,
+        vendorResponseReadiness,
       }),
     },
     {
