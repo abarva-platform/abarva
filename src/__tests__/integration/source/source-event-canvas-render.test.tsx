@@ -240,7 +240,12 @@ describe("UniversalCanvasShell · SSR render", () => {
 
   it("renders late-stage rail links with a full clickable hit area", () => {
     const html = render();
-    for (const stage of ["executive_decision", "selection", "transition", "value"]) {
+    for (const stage of [
+      "executive_decision",
+      "selection",
+      "transition",
+      "value",
+    ]) {
       const anchor = html.match(
         new RegExp(`<a[^>]+data-testid="source-canvas-step-${stage}"[^>]*>`),
       )?.[0];
@@ -294,22 +299,28 @@ describe("UniversalCanvasShell · SSR render", () => {
     const html = render();
     expect(html).toContain('data-active-tab="document"');
     expect(html).toContain("source-canvas-document-tab");
-    expect(html).toContain("No DB-backed documents yet");
+    expect(html).toContain("Attach a file when it supports the next decision");
     expect(html).toContain("source-canvas-artifact-d05_scope_memo");
     expect(html).toContain("Scope Memo with Boundaries"); // canonical name
+    expect(html).toContain("Awaiting draft");
+    expect(html).toContain("Required to advance");
+    expect(html).toContain("Draft needed");
     expect(html).toContain("No client-authored body yet");
-    expect(html).toContain(
-      "starter template is kept out of the main workspace",
-    );
+    expect(html).toContain("starter content is kept out of the main workspace");
+    expect(html).not.toContain("No DB-backed documents yet");
+    expect(html).not.toContain("source_artifacts");
+    expect(html).not.toContain("Awaiting authoring");
+    expect(html).not.toContain("Download xlsx template");
     expect(html).not.toContain("§1 In scope");
   });
 
-  it("renders persisted source_artifacts documents with browse links", () => {
+  it("renders persisted event documents with browse links", () => {
     const html = render({
       registryArtifacts: [makeRegistryArtifact()],
     });
-    expect(html).toContain("1 DB-backed document");
-    expect(html).toContain("source_artifacts");
+    expect(html).toContain("1 document available");
+    expect(html).not.toContain("DB-backed");
+    expect(html).not.toContain("source_artifacts");
     expect(html).toContain("RFP_RFI_Package_generated_packet.md");
     expect(html).toContain("RFP · parse pending · approval draft");
     expect(html).toContain("source-canvas-registry-doc-registry-doc-1");
@@ -369,7 +380,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   });
 
   // ── Slice 2 · xlsx download anchor ────────────────────────────────────────
-  it("renders Download xlsx template anchor on d19 pricing workbook", () => {
+  it("hides workbook download until the pricing workbook has authored body", () => {
     const html = render({
       viewStage: "pricing",
       artifactStates: [
@@ -379,10 +390,29 @@ describe("UniversalCanvasShell · SSR render", () => {
         }),
       ],
     });
+    expect(html).not.toContain(
+      "source-canvas-document-body-download-xlsx-d19_pricing_workbook",
+    );
+    expect(html).not.toContain("Download xlsx template");
+    expect(html).toContain("Nothing to export yet");
+  });
+
+  it("renders workbook download anchor on authored d19 pricing workbook", () => {
+    const html = render({
+      viewStage: "pricing",
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: "d19_pricing_workbook",
+          stage: "pricing",
+          body: "# Pricing workbook\n\nReady to export.",
+        }),
+      ],
+    });
     expect(html).toContain(
       "source-canvas-document-body-download-xlsx-d19_pricing_workbook",
     );
-    expect(html).toContain("Download xlsx template");
+    expect(html).toContain("Download workbook");
+    expect(html).not.toContain("Download xlsx template");
     // Anchor links to the GET endpoint with the event UUID + code.
     expect(html).toMatch(
       /href="[^"]*\/api\/v1\/source\/[^/]+\/artifacts\/d19_pricing_workbook\/render\?format=xlsx"/,
@@ -451,7 +481,8 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-canvas-document-body-edit-d05_scope_memo");
     // Badge tells the user the displayed content is awaiting authoring,
     // not yet authored.
-    expect(html).toContain("Awaiting authoring");
+    expect(html).toContain("Draft needed");
+    expect(html).not.toContain("Awaiting authoring");
   });
 
   it("shows authored content + Edit button when artifact body is non-null", () => {
@@ -503,7 +534,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     });
     expect(html).toContain("source-canvas-artifact-status-approved");
     expect(html).toContain("Approved");
-    expect(html).toContain("Prepared");
+    expect(html).not.toContain("Template");
     expect(html).not.toContain("In progress");
     expect(html).toContain("source-canvas-artifact-reopen-d05_scope_memo");
     expect(html).not.toContain(
@@ -538,9 +569,9 @@ describe("UniversalCanvasShell · SSR render", () => {
       }),
     );
     expect(html).toContain("source-canvas-document-tab");
-    expect(html).toContain("No documents yet for RFP.");
-    expect(html).toContain("Documents appear here as Sentinel drafts");
-    expect(html).toContain("contact your AbarVa lead");
+    expect(html).toContain("Start with the next RFP document.");
+    expect(html).toContain("draft the required document with Sentinel");
+    expect(html).toContain("ask your AbarVa lead");
     expect(html).not.toContain("npm run db:backfill:source-canvas");
   });
 });
