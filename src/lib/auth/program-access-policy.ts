@@ -206,15 +206,15 @@ function buildPolicy(args: {
 
 async function loadClientMembership(
   ctx: TenancyCtx,
+  personId: string,
 ): Promise<ClientMembershipRow | null> {
-  if (!isUuidLike(ctx.userId)) return null;
   const sb = getAzureReadFluentClient();
   const { data } = await sb
     .from("person_client_memberships")
     .select(
       "role, access_level, financial_visibility, can_admin_users, can_create_programs, can_approve_gates",
     )
-    .eq("person_id", ctx.userId)
+    .eq("person_id", personId)
     .eq("client_id", ctx.clientId)
     .maybeSingle();
   return (data as ClientMembershipRow | null) ?? null;
@@ -222,6 +222,7 @@ async function loadClientMembership(
 
 async function loadProgramParticipants(
   ctx: TenancyCtx,
+  personId: string,
 ): Promise<ParticipantRow[]> {
   const sb = getAzureReadFluentClient();
   const { data } = await sb
@@ -229,13 +230,30 @@ async function loadProgramParticipants(
     .select(
       "engagement_id, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates, engagement:engagements!inner(client_id, archived_at, deleted_at)",
     )
-    .eq("user_id", ctx.userId)
+    .eq("user_id", personId)
     .eq("engagement.client_id", ctx.clientId)
     .is("engagement.archived_at", null)
     .is("engagement.deleted_at", null);
   return ((data as ParticipantRow[] | null) ?? []).filter((row) =>
     Boolean(row.engagement_id),
   );
+}
+
+async function resolvePolicyPersonId(ctx: TenancyCtx): Promise<string | null> {
+  if (isUuidLike(ctx.userId)) return ctx.userId;
+  const normalizedEmail = ctx.email?.trim().toLowerCase() ?? "";
+  if (!normalizedEmail) return null;
+  const inferredClientKey = inferCanonicalClientKeyFromEmail(normalizedEmail);
+  if (!inferredClientKey || inferredClientKey !== ctx.clientKey) return null;
+
+  const sb = getAzureReadFluentClient();
+  const { data } = await sb
+    .from("persons")
+    .select("id")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  return (data as { id?: string | null } | null)?.id ?? null;
 }
 
 function inferAccessLevel(
@@ -286,10 +304,13 @@ export async function loadUserProgramAccessPolicy(
     }
   }
 
-  const [membership, participants] = await Promise.all([
-    loadClientMembership(ctx),
-    loadProgramParticipants(ctx),
-  ]);
+  const personId = await resolvePolicyPersonId(ctx);
+  const [membership, participants] = personId
+    ? await Promise.all([
+        loadClientMembership(ctx, personId),
+        loadProgramParticipants(ctx, personId),
+      ])
+    : [null, [] as ParticipantRow[]];
 
   const accessLevel = inferAccessLevel(ctx, membership, participants);
   const admin = isClientAdminPolicy(accessLevel);
