@@ -816,102 +816,73 @@ async function seedSourceEvent(
   linkedProgramId: string | null,
 ): Promise<string> {
   const code = eventCode(event.eventName);
-  const result = await client.query<{ id: string }>(
-    `
-    INSERT INTO source_events (
-      client_key, event_code, event_name, event_type, current_stage_key,
-      lifecycle_state, linked_program_id, estimated_value_usd,
-      trigger_description, scope_description, decision_owner, created_by_user_id
-    )
-    VALUES ($1, $2, $3, $4, 'strategy', 'waiting_on_client', $5, $6, $7, $8, $9, $10)
-    ON CONFLICT (client_key, event_code) DO UPDATE SET
-      event_name = excluded.event_name,
-      event_type = excluded.event_type,
-      current_stage_key = excluded.current_stage_key,
-      lifecycle_state = excluded.lifecycle_state,
-      linked_program_id = excluded.linked_program_id,
-      estimated_value_usd = excluded.estimated_value_usd,
-      trigger_description = excluded.trigger_description,
-      scope_description = excluded.scope_description,
-      decision_owner = excluded.decision_owner,
-      updated_at = now()
-    RETURNING id::text
-    `,
-    [
-      CLIENT_KEY,
-      code,
-      event.eventName,
-      event.eventType,
-      linkedProgramId,
-      event.estimatedValueUsd,
-      `${event.triggerDescription}\n\nProvenance: ${PROVENANCE_TAG}`,
-      `${event.scopeDescription}\n\nBaseline evidence: ${event.baselineEvidence.join("; ")}.\n\nStop condition: ${event.stopCondition}`,
-      event.decisionOwner,
-      PROVENANCE_TAG,
-    ],
+  const eventId = await upsertRow(
+    client,
+    "source_events",
+    {
+      client_key: CLIENT_KEY,
+      event_code: code,
+      event_name: event.eventName,
+      event_type: event.eventType,
+      current_stage_key: "strategy",
+      lifecycle_state: "waiting_on_client",
+      linked_program_id: linkedProgramId,
+      estimated_value_usd: event.estimatedValueUsd,
+      trigger_description: `${event.triggerDescription}\n\nProvenance: ${PROVENANCE_TAG}`,
+      scope_description: `${event.scopeDescription}\n\nBaseline evidence: ${event.baselineEvidence.join("; ")}.\n\nStop condition: ${event.stopCondition}`,
+      decision_owner: event.decisionOwner,
+      created_by_user_id: PROVENANCE_TAG,
+    },
+    ["client_key", "event_code"],
   );
-  const eventId = result.rows[0]?.id;
   if (!eventId) throw new Error(`No Source event id returned for ${event.eventName}`);
 
   const scaffold = buildEventScaffold({ sourceEventId: eventId, tenantKey: CLIENT_KEY });
   for (const row of scaffold.artifactStates) {
-    await client.query(
-      `
-      INSERT INTO source_event_artifact_states (
-        source_event_id, tenant_key, artifact_code, stage_key, artifact_family,
-        tier, status, requirement_level, gate_defining
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      ON CONFLICT (source_event_id, artifact_code) DO UPDATE SET
-        tenant_key = excluded.tenant_key,
-        stage_key = excluded.stage_key,
-        artifact_family = excluded.artifact_family,
-        requirement_level = excluded.requirement_level,
-        gate_defining = excluded.gate_defining,
-        updated_at = now()
-      `,
-      [
-        row.source_event_id,
-        row.tenant_key,
-        row.artifact_code,
-        row.stage_key,
-        row.artifact_family,
-        row.tier,
-        row.status,
-        row.requirement_level,
-        row.gate_defining,
-      ],
+    await upsertRow(
+      client,
+      "source_event_artifact_states",
+      {
+        source_event_id: row.source_event_id,
+        tenant_key: row.tenant_key,
+        artifact_code: row.artifact_code,
+        stage_key: row.stage_key,
+        artifact_family: row.artifact_family,
+        tier: row.tier,
+        status: row.status,
+        requirement_level: row.requirement_level,
+        gate_defining: row.gate_defining,
+      },
+      ["source_event_id", "artifact_code"],
     );
   }
   for (const row of scaffold.gateCriterionStates) {
-    await client.query(
-      `
-      INSERT INTO source_event_gate_criterion_states (
-        source_event_id, tenant_key, criterion_id, from_stage, to_stage, state
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (source_event_id, criterion_id) DO UPDATE SET
-        tenant_key = excluded.tenant_key,
-        from_stage = excluded.from_stage,
-        to_stage = excluded.to_stage,
-        updated_at = now()
-      `,
-      [row.source_event_id, row.tenant_key, row.criterion_id, row.from_stage, row.to_stage, row.state],
+    await upsertRow(
+      client,
+      "source_event_gate_criterion_states",
+      {
+        source_event_id: row.source_event_id,
+        tenant_key: row.tenant_key,
+        criterion_id: row.criterion_id,
+        from_stage: row.from_stage,
+        to_stage: row.to_stage,
+        state: row.state,
+      },
+      ["source_event_id", "criterion_id"],
     );
   }
   for (const row of scaffold.evidenceStates) {
-    await client.query(
-      `
-      INSERT INTO source_event_evidence_states (
-        source_event_id, tenant_key, requirement_id, stage_key, current_state
-      )
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (source_event_id, requirement_id) DO UPDATE SET
-        tenant_key = excluded.tenant_key,
-        stage_key = excluded.stage_key,
-        updated_at = now()
-      `,
-      [row.source_event_id, row.tenant_key, row.requirement_id, row.stage_key, row.current_state],
+    await upsertRow(
+      client,
+      "source_event_evidence_states",
+      {
+        source_event_id: row.source_event_id,
+        tenant_key: row.tenant_key,
+        requirement_id: row.requirement_id,
+        stage_key: row.stage_key,
+        current_state: row.current_state,
+      },
+      ["source_event_id", "requirement_id"],
     );
   }
 
