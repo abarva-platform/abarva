@@ -422,21 +422,52 @@ async function tableColumns(client: PgClient, table: string): Promise<Set<string
 }
 
 async function findSkyHarborClient(client: PgClient): Promise<{ id: string; name: string }> {
+  const columns = await tableColumns(client, "clients");
+  const nameExpr = columns.has("name")
+    ? "name"
+    : columns.has("legal_name")
+      ? "legal_name"
+      : `'${CLIENT_NAME}'`;
+  const conditions: string[] = [];
+  const orderParts: string[] = [];
+  const params: unknown[] = [CLIENT_KEY, "%skyharbor%", "%sky harbor%"];
+
+  if (columns.has("tenant_key")) {
+    conditions.push("lower(coalesce(tenant_key, '')) = $1");
+    orderParts.push("CASE WHEN lower(coalesce(tenant_key, '')) = $1 THEN 0 ELSE 1 END");
+  }
+  if (columns.has("key")) {
+    conditions.push("lower(coalesce(key, '')) = $1");
+    orderParts.push("CASE WHEN lower(coalesce(key, '')) = $1 THEN 0 ELSE 1 END");
+  }
+  if (columns.has("slug")) {
+    conditions.push("lower(coalesce(slug, '')) = $1");
+    orderParts.push("CASE WHEN lower(coalesce(slug, '')) = $1 THEN 0 ELSE 1 END");
+  }
+  if (columns.has("name")) {
+    conditions.push("lower(coalesce(name, '')) LIKE $2");
+    conditions.push("lower(coalesce(name, '')) LIKE $3");
+  }
+  if (columns.has("legal_name")) {
+    conditions.push("lower(coalesce(legal_name, '')) LIKE $2");
+    conditions.push("lower(coalesce(legal_name, '')) LIKE $3");
+  }
+  if (columns.has("updated_at")) orderParts.push("updated_at DESC NULLS LAST");
+  if (columns.has("created_at")) orderParts.push("created_at DESC NULLS LAST");
+
+  if (conditions.length === 0) {
+    throw new Error("clients table does not expose a usable SkyHarbor lookup column.");
+  }
+
   const result = await client.query<{ id: string; name: string }>(
     `
-    SELECT id::text, name
+    SELECT id::text, ${nameExpr}::text AS name
     FROM clients
-    WHERE lower(name) LIKE '%skyharbor%'
-       OR lower(name) LIKE '%sky harbor%'
-       OR lower(coalesce(key, '')) = $1
-       OR lower(coalesce(slug, '')) = $1
-    ORDER BY
-      CASE WHEN lower(coalesce(key, '')) = $1 THEN 0 ELSE 1 END,
-      updated_at DESC NULLS LAST,
-      created_at DESC NULLS LAST
+    WHERE ${conditions.join("\n       OR ")}
+    ORDER BY ${orderParts.length > 0 ? orderParts.join(", ") : "id"}
     LIMIT 1
     `,
-    [CLIENT_KEY],
+    params,
   );
   const row = result.rows[0];
   if (!row) {
