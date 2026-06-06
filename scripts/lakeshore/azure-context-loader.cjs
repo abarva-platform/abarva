@@ -19,7 +19,8 @@
   const { BlobServiceClient } = require('@azure/storage-blob');
   const exceljs = require('exceljs');
   const mammoth = require('mammoth');
-  const pdfParse = require('pdf-parse');
+  const _pdf = require('pdf-parse');
+  const pdfParse = (_pdf && _pdf.default) ? _pdf.default : _pdf;
   const crypto = require('crypto');
 
   const RESULT = { ok: false, started: new Date().toISOString(), steps: {}, errors: [] };
@@ -165,7 +166,7 @@
         tuples.push(`(${cols.map((_, k) => `$${base + k + 1}`).join(',')})`);
         params.push(clientId, TENANT_KEY, c.chunk_id, c.source_doc, c.source_path, c.chunk_index, c.chunk_text, c.token_count, 'pending', JSON.stringify(c.provenance), JSON.stringify(c.chunk_metadata));
       });
-      await client.query(`insert into enterprise_context_chunks (${cols.join(',')}) values ${tuples.join(',')} on conflict (chunk_id) do update set chunk_text=excluded.chunk_text, chunk_metadata=excluded.chunk_metadata`, params);
+      await client.query(`insert into enterprise_context_chunks (${cols.join(',')}) values ${tuples.join(',')}`, params);
       committed += slice.length;
     }
     log('db.commit', { committed });
@@ -224,15 +225,17 @@
       for (const r of rows) embMap[r.chunk_id] = typeof r.embedding === 'string' ? JSON.parse(r.embedding) : r.embedding;
     }
     const all = chunks;
-    const B = 800;
+    const B = vectorField ? 200 : 800;
     for (let i = 0; i < all.length; i += B) {
       const docs = all.slice(i, i + B).map((c) => {
         const d = { '@search.action': 'mergeOrUpload' };
         d[keyField] = c.chunk_id.replace(/[^A-Za-z0-9_\-=]/g, '_');
         const set = (name, val) => { if (fnames.has(name) && val != null) d[name] = val; };
         set('chunk_id', c.chunk_id); set('tenant_key', TENANT_KEY); set('client_id', clientId);
-        set('chunk_text', c.chunk_text); set('content', c.chunk_text); set('text', c.chunk_text);
+        set('chunk_text', c.chunk_text); set('content', c.chunk_text); set('text', c.chunk_text); set('body', c.chunk_text);
         set('source_path', c.source_path); set('source_doc', c.source_doc);
+        set('source_uri', `${BLOB_PREFIX}/${c.source_path}`); set('record_id', c.chunk_id);
+        set('source_segment', c.chunk_metadata.context_domain);
         set('context_domain', c.chunk_metadata.context_domain); set('source_system', c.provenance.source_system);
         set('sensitivity', c.chunk_metadata.sensitivity); set('title', c.chunk_metadata.title);
         set('chunk_index', c.chunk_index);
