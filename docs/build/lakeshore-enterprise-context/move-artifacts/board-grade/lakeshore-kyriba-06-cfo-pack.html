@@ -1,0 +1,518 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization — CFO Pack — Lakeshore Holdings</title><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #e7e3da;
+  color: #070707;
+  font-family: "DM Sans","Inter",system-ui,-apple-system,sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: "Newsreader","Cormorant Garamond","Georgia",serif;
+  font-weight: 500; letter-spacing: -0.01em; margin: 0;
+}
+
+/* === Deck shell — fixed left menu, scrolling right stage. === */
+.deck {
+  display: grid;
+  grid-template-columns: 264px minmax(0,1fr);
+  height: 100vh;
+}
+
+/* --- Left menu rail --- */
+.menu {
+  background: #11100e; color: #e7e3da;
+  height: 100vh; position: sticky; top: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #2a2824;
+}
+.menu-head {
+  padding: 22px 22px 16px; border-bottom: 1px solid #2a2824;
+}
+.menu-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #6ea2dd;
+}
+.menu-title {
+  font-family: "Newsreader","Georgia",serif; font-size: 19px;
+  color: #f8f7f4; margin-top: 8px; line-height: 1.2;
+}
+.menu-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 600; color: #a39d8e; margin-top: 5px;
+}
+.menu-list {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+}
+.menu-item {
+  display: flex; gap: 11px; align-items: flex-start; width: 100%;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 9px 18px 9px 16px; text-align: left;
+  border-left: 3px solid transparent; color: #cdc8bc;
+  font-family: inherit;
+}
+.menu-item:hover { background: #1b1a17; color: #f8f7f4; }
+.menu-item[aria-current="true"] {
+  background: #1f1e1a; border-left-color: #6ea2dd; color: #f8f7f4;
+}
+.menu-num {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; color: #75706320; color: #888273;
+  padding-top: 2px; min-width: 18px;
+}
+.menu-item[aria-current="true"] .menu-num { color: #6ea2dd; }
+.menu-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: -0.005em;
+}
+.menu-sub {
+  font-size: 10.5px; line-height: 1.4; color: #8b8678;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menu-item[aria-current="true"] .menu-sub { color: #b4ae9f; }
+.menu-foot {
+  padding: 14px 18px; border-top: 1px solid #2a2824;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.menu-foot-verdict {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #d8b65a;
+}
+.menu-foot-sub { font-size: 10px; color: #8b8678; }
+
+/* --- Right stage --- */
+.stage {
+  height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 30px 38px 96px;
+}
+
+/* --- Slide — one composed screen. --- */
+.slide { display: none; }
+.slide.is-active { display: block; }
+.slide-inner {
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 8px;
+  max-width: 1080px; margin: 0 auto; width: 100%;
+  min-height: calc(100vh - 130px);
+  padding: 38px 52px 34px;
+  display: flex; flex-direction: column;
+}
+
+/* Slide chrome — slim header rule. */
+.slide-rule {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #8b8678;
+  padding-bottom: 11px; border-bottom: 1px solid #e6e1d5;
+}
+.slide-rule-l { display: flex; gap: 7px; }
+.slide-brand { color: #0b4a91; font-weight: 800; }
+.slide-sep { color: #c9c3b3; }
+.slide-rule-r { color: #8b8678; }
+
+.slide-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #0b4a91; margin: 22px 0 9px;
+}
+.slide-headline {
+  font-size: 30px; line-height: 1.18; max-width: 880px;
+  margin-bottom: 6px; color: #070707;
+}
+
+.slide-stage {
+  flex: 1; padding: 16px 0 6px;
+}
+.slide-lede {
+  font-size: 14.5px; line-height: 1.6; color: #2c2a26;
+  max-width: 720px; margin: 4px 0 20px;
+}
+
+/* --- Hero exhibit — one dominant exhibit per slide. --- */
+.hero { margin: 0 0 6px; }
+.hero-caption {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #070707; margin-bottom: 9px;
+}
+.hero-frame {
+  background: #ffffff; border: 1px solid #e0dbcd; border-radius: 5px;
+  padding: 20px 22px;
+}
+.hero-note {
+  font-size: 11.5px; color: #5b5852; line-height: 1.5;
+  margin: 9px 2px 0; max-width: 760px;
+}
+
+/* --- Quiet footer strip — facts compressed to one thin row. --- */
+.slide-foot {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 0;
+  border-top: 1px solid #e6e1d5; margin-top: 18px; padding-top: 14px;
+}
+.foot-cell {
+  padding: 0 16px 6px 0; border-right: 1px solid #ece7da;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.foot-cell:last-child { border-right: 0; }
+.foot-implication { grid-row: span 1; }
+.foot-key {
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #8b8678;
+}
+.foot-val { font-size: 10.5px; line-height: 1.45; color: #2c2a26; }
+.foot-implication .foot-val { color: #1c1a17; font-weight: 600; }
+
+/* --- Collapsible detail strip — dense tables one click away. --- */
+.slide-detail {
+  margin-top: 16px; border: 1px solid #e0dbcd; border-radius: 5px;
+  background: #f3f0e9;
+}
+.slide-detail-summary {
+  cursor: pointer; list-style: none;
+  display: flex; gap: 9px; align-items: center;
+  padding: 11px 15px; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.03em; text-transform: uppercase; color: #5b5852;
+}
+.slide-detail-summary::-webkit-details-marker { display: none; }
+.detail-chevron {
+  width: 0; height: 0; border-left: 5px solid #8b8678;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.12s ease;
+}
+.slide-detail[open] .detail-chevron { transform: rotate(90deg); }
+.slide-detail-summary:hover { color: #0b4a91; }
+.slide-detail-body { padding: 4px 16px 16px; }
+
+/* --- Cover slide --- */
+.slide-cover .slide-inner { justify-content: center; }
+.cover-inner { padding: 56px 60px; }
+.cover-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5b5852; margin-top: 16px;
+}
+.cover-title {
+  font-size: 54px; line-height: 1.04; margin: 10px 0 14px; max-width: 760px;
+}
+.cover-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 12px; font-weight: 700; color: #070707;
+}
+.cover-lede {
+  max-width: 620px; margin: 22px 0 30px; font-size: 15px;
+  color: #2c2a26; line-height: 1.62;
+}
+.cover-meta {
+  display: flex; gap: 44px; border-top: 1px solid #d8d3c6;
+  padding-top: 20px;
+}
+.cover-meta-label {
+  display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #8b8678;
+}
+.cover-meta-val {
+  display: block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 16px; font-weight: 800; margin-top: 4px;
+}
+.cover-hint {
+  margin-top: 26px; font-size: 11px; color: #8b8678;
+  font-style: italic;
+}
+
+/* --- Chips --- */
+.chip {
+  display: inline-block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid;
+}
+.chip-good { background: #e2efe2; color: #1B5E20; border-color: #1B5E20; }
+.chip-warn { background: #f7ecd6; color: #7A4F01; border-color: #7A4F01; }
+.chip-bad { background: #f4ddd6; color: #8B1F0F; border-color: #8B1F0F; }
+
+/* --- Board card --- */
+.board-card {
+  border-radius: 6px; padding: 20px 24px; margin: 0 0 20px;
+  border: 1px solid;
+}
+.verdict-shape { background: #f7ecd6; border-color: #7A4F01; }
+.verdict-fund { background: #e2efe2; border-color: #1B5E20; }
+.verdict-kill { background: #f4ddd6; border-color: #8B1F0F; }
+.board-card-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7A4F01; margin-bottom: 7px;
+}
+.verdict-fund .board-card-tag { color: #1B5E20; }
+.verdict-kill .board-card-tag { color: #8B1F0F; }
+.board-verdict {
+  font-family: "Newsreader","Georgia",serif; font-size: 23px;
+  line-height: 1.26; color: #070707;
+}
+.board-detail { margin: 9px 0 0; font-size: 12.5px; color: #2c2a26; }
+
+/* --- Board-answer split --- */
+.answer-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 16px 0 16px;
+}
+.answer-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff;
+}
+.answer-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.answer-col ul { margin: 0; padding-left: 17px; }
+.answer-col li { font-size: 11.5px; line-height: 1.5; margin-bottom: 5px; }
+.answer-fund { border-left: 3px solid #1B5E20; }
+.answer-fund .answer-head { color: #1B5E20; }
+.answer-hold { border-left: 3px solid #8B1F0F; }
+.answer-hold .answer-head { color: #8B1F0F; }
+
+/* --- Ask + payback lines --- */
+.ask-line, .payback-line {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 16px; border-radius: 5px; font-size: 12.5px;
+  line-height: 1.5; margin: 0 0 16px;
+}
+.ask-line { background: #e8f0fa; color: #2c2a26; }
+.payback-line { background: #f7ecd6; color: #2c2a26; }
+.ask-line-tag, .payback-line-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; white-space: nowrap; padding-top: 2px;
+}
+.ask-line-tag { color: #0b4a91; }
+.payback-line-tag { color: #7A4F01; }
+
+/* --- Context diagram --- */
+.context-diagram { display: flex; flex-direction: column; gap: 9px; }
+.context-band {
+  display: grid; grid-template-columns: 128px 1fr; gap: 12px;
+  align-items: center;
+}
+.context-band-label {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #8b8678; text-align: right;
+}
+.context-nodes { display: flex; gap: 8px; flex-wrap: wrap; }
+.context-node {
+  flex: 1; min-width: 160px; background: #fff;
+  border: 1px solid #cfc9b9; border-radius: 4px; padding: 9px 11px;
+}
+.context-node-gap { background: #f7ecd6; border-color: #7A4F01; }
+.context-node-title { font-size: 12px; font-weight: 800; }
+.context-node-detail {
+  font-size: 10.5px; color: #5b5852; margin-top: 3px; line-height: 1.42;
+}
+.gap-flag {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 8px; font-weight: 800; color: #7A4F01;
+  background: #fff; border: 1px solid #7A4F01; border-radius: 999px;
+  padding: 1px 5px; text-transform: uppercase;
+}
+
+/* --- Scope triplet --- */
+.scope-triplet {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+  margin: 16px 0 4px;
+}
+.scope-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 15px;
+  background: #fff;
+}
+.scope-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.scope-col ul { margin: 0; padding-left: 16px; }
+.scope-col li { font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+.scope-in { border-left: 3px solid #1B5E20; }
+.scope-in .scope-head { color: #1B5E20; }
+.scope-out { border-left: 3px solid #8B1F0F; }
+.scope-out .scope-head { color: #8B1F0F; }
+.scope-retain { border-left: 3px solid #0b4a91; }
+.scope-retain .scope-head { color: #0b4a91; }
+
+/* --- Tables --- */
+.data-table {
+  width: 100%; border-collapse: collapse; margin: 10px 0 14px;
+  background: #fff; border: 1px solid #e0dbcd; font-size: 11.5px;
+}
+.data-table th {
+  text-align: left; background: #070707; color: #fbfaf7;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 9px 11px;
+}
+.data-table td {
+  padding: 8px 11px; border-top: 1px solid #ece7da;
+  vertical-align: top; line-height: 1.45;
+}
+.data-table tbody tr:nth-child(even) { background: #f7f5ef; }
+.data-table .num {
+  text-align: right; white-space: nowrap;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+}
+.data-table th.num { text-align: right; }
+.data-table tfoot td {
+  background: #ece7da; font-weight: 800; border-top: 2px solid #070707;
+}
+.data-table-ledger td:nth-child(2) { width: 36%; }
+.row-proxy { background: #fdf6e8 !important; }
+.blocked-cell { color: #8B1F0F; font-weight: 800; }
+
+/* --- Assumption cards --- */
+.assume-cards { display: flex; flex-direction: column; gap: 10px; }
+.assume-card {
+  display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff; border-left: 3px solid #0b4a91;
+}
+.assume-proxy { border-left-color: #7A4F01; background: #fdf6e8; }
+.assume-rank {
+  font-family: "Newsreader","Georgia",serif; font-size: 26px;
+  color: #0b4a91; font-weight: 500;
+}
+.assume-proxy .assume-rank { color: #7A4F01; }
+.assume-statement { font-size: 13px; font-weight: 600; color: #1c1a17;
+  line-height: 1.45; }
+.assume-meta {
+  display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+  margin-top: 7px; font-size: 11px; color: #5b5852;
+}
+.assume-dot { color: #c9c3b3; }
+
+/* --- Coverage tiles --- */
+.coverage-tiles {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+}
+.coverage-tile {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 22px 20px;
+  background: #fff; border-top: 3px solid #5b5852;
+}
+.coverage-good { border-top-color: #1B5E20; }
+.coverage-gap { border-top-color: #8B1F0F; }
+.coverage-neutral { border-top-color: #0b4a91; }
+.coverage-num {
+  font-family: "Newsreader","Georgia",serif; font-size: 44px;
+  line-height: 1; color: #070707;
+}
+.coverage-good .coverage-num { color: #1B5E20; }
+.coverage-gap .coverage-num { color: #8B1F0F; }
+.coverage-neutral .coverage-num { color: #0b4a91; }
+.coverage-label {
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; margin-top: 10px;
+}
+.coverage-sub { font-size: 10.5px; color: #5b5852; margin-top: 3px; }
+
+/* --- Checklist --- */
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-row {
+  display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 12px 15px;
+  background: #fff; align-items: start;
+}
+.check-approve { border-left: 3px solid #1B5E20; }
+.check-hold { border-left: 3px solid #8B1F0F; }
+.check-condition { border-left: 3px solid #7A4F01; }
+.check-label { font-weight: 800; font-size: 12.5px; }
+.check-detail {
+  font-size: 11px; color: #5b5852; margin-top: 3px; line-height: 1.5;
+}
+
+/* --- Mini split (detail strip prose) --- */
+.mini-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 12px 0 4px;
+}
+.mini-key {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.mini-key-block { display: block; margin: 14px 0 2px; }
+.mini-key-block:first-child { margin-top: 4px; }
+.mini-key-gap { color: #8B1F0F; }
+.mini-split p { margin: 5px 0 0; font-size: 11.5px; color: #2c2a26;
+  line-height: 1.55; }
+.mini-list { margin: 6px 0 0; padding-left: 16px; }
+.mini-list li { font-size: 11px; line-height: 1.5; margin-bottom: 4px; }
+
+/* --- Deck controls --- */
+.deck-controls {
+  position: fixed; bottom: 22px; right: 30px; z-index: 20;
+  display: flex; gap: 8px; align-items: center;
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 999px;
+  padding: 6px 8px; box-shadow: 0 6px 22px rgba(7,7,7,0.16);
+}
+.deck-btn {
+  background: #11100e; color: #f8f7f4; border: 0; cursor: pointer;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  padding: 7px 13px; border-radius: 999px;
+}
+.deck-btn:hover { background: #2a2824; }
+.deck-counter {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; color: #5b5852; padding: 0 4px;
+}
+
+/* --- Narrow screens — menu collapses to the top. --- */
+@media (max-width: 880px) {
+  .deck { grid-template-columns: 1fr; height: auto; }
+  .menu { height: auto; position: static; }
+  .menu-list { max-height: 220px; }
+  .stage { height: auto; padding: 20px; }
+  .slide-inner { min-height: 0; padding: 26px 22px; }
+  .slide-foot, .answer-split, .scope-triplet, .coverage-tiles,
+  .mini-split, .context-band, .check-row, .assume-card {
+    grid-template-columns: 1fr;
+  }
+  .slide-headline { font-size: 24px; }
+  .cover-title { font-size: 38px; }
+}
+
+/* === Print / PDF — expand EVERY slide, stacked, one page each. === */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff; }
+  .deck { display: block; height: auto; }
+  .menu, .deck-controls { display: none !important; }
+  .stage { display: block; height: auto; overflow: visible; padding: 0; }
+  .slide {
+    display: block !important; page-break-after: always;
+    break-after: page;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .slide[hidden] { display: block !important; }
+  .slide-inner {
+    min-height: 0; border-radius: 0; border: 0;
+    box-shadow: none; padding: 8mm 4mm; max-width: 100%;
+  }
+  /* Print shows the full document — detail strips expanded. */
+  .slide-detail { background: #fff; border-color: #d8d3c6; }
+  .slide-detail-body { display: block !important; }
+  .slide-detail summary { color: #070707; }
+  .detail-chevron { display: none; }
+  .hero-frame, .data-table, .board-card, .answer-col, .scope-col,
+  .context-node, .assume-card, .coverage-tile, .check-row {
+    page-break-inside: avoid;
+  }
+}
+
+/* --- CFO Pack — holdback / threshold line. --- */
+.check-threshold { margin-top: 5px; color: #2c2a26; }
+.check-threshold strong { color: #1B5E20; }
+.check-owner { color: #8b8678; font-weight: 600; }
+.mini-para {
+  margin: 5px 0 0; font-size: 11.5px; color: #2c2a26; line-height: 1.55;
+}
+</style></head><body><div class="deck"><nav class="menu" aria-label="Deck navigation"><div class="menu-head"><div class="menu-brand">AbarVa · Moves</div><div class="menu-title">CFO Pack</div><div class="menu-tenant">Lakeshore Holdings</div></div><div class="menu-list"><button class="menu-item" type="button" data-goto="1" aria-current="true"><span class="menu-num">00</span><span class="menu-text"><span class="menu-label">Cover</span><span class="menu-sub">CFO Pack</span></span></button><button class="menu-item" type="button" data-goto="2"><span class="menu-num">01</span><span class="menu-text"><span class="menu-label">The answer</span><span class="menu-sub">Finance should reject this Move — the case does not pay back on current evidence.</span></span></button><button class="menu-item" type="button" data-goto="3"><span class="menu-num">02</span><span class="menu-text"><span class="menu-label">The case</span><span class="menu-sub">The value is a planning range built on curated benchmark proxies — the net is a proxy ceiling, not a verified return, because the unit economics are a seed gap.</span></span></button><button class="menu-item" type="button" data-goto="4"><span class="menu-num">03</span><span class="menu-text"><span class="menu-label">Assumptions</span><span class="menu-sub">The case-moving assumptions are ranked by sensitivity — the seed-gap proxies are the highest-leverage evidence the funding spend must replace with measured tenant data.</span></span></button><button class="menu-item" type="button" data-goto="5"><span class="menu-num">04</span><span class="menu-text"><span class="menu-label">What would make it wrong</span><span class="menu-sub">The case breaks the same way it is built — on the missing unit economics. Until the seed gaps close, every dollar in the case is a proxy, not a forecast.</span></span></button><button class="menu-item" type="button" data-goto="6"><span class="menu-num">05</span><span class="menu-text"><span class="menu-label">What not to fund yet</span><span class="menu-sub">5 things must be explicitly withheld at this gate — each with the condition that releases it. A CFO Pack without an explicit holdback list is a hard fail.</span></span></button><button class="menu-item" type="button" data-goto="7"><span class="menu-num">06</span><span class="menu-text"><span class="menu-label">What Tower will measure</span><span class="menu-sub">Value will be proven, not asserted — every metric with a recorded baseline is measurable from day one; the seed-gapped metrics are honestly carried as not-yet-measurable.</span></span></button><button class="menu-item" type="button" data-goto="8"><span class="menu-num">07</span><span class="menu-text"><span class="menu-label">Evidence and gaps</span><span class="menu-sub">Finance can audit every number in this pack — 4 metrics trace to a named source, and the 8 missing ones are declared seed gaps, never silent.</span></span></button></div><div class="menu-foot"><span class="menu-foot-verdict">Verdict · REJECT</span><span class="menu-foot-sub">Payback blocked — capital withheld</span></div></nav><main class="stage" id="stage"><section class="slide slide-cover" id="cover" data-slide="1" aria-label="Cover"><div class="slide-inner cover-inner"><div class="cover-brand">AbarVa · Moves</div><div class="cover-eyebrow">CFO Pack · Kernel-derived for a real Move</div><h1 class="cover-title">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</h1><div class="cover-tenant">Lakeshore Holdings · Finance, treasury &amp; ALM</div><p class="cover-lede">A CFO Pack in 8 slides — a financial challenge, not product advocacy. Every figure is produced by the Moves Expert Kernel for this Move. The verdict is the kernel’s <strong>real recommendation</strong>; value is a planning range; the do-not-fund holdbacks are explicit; and unrecorded metrics are named seed gaps, never papered over.</p><div class="cover-meta"><div><span class="cover-meta-label">Finance verdict</span><span class="cover-meta-val">REJECT</span></div><div><span class="cover-meta-label">Payback</span><span class="cover-meta-val">Blocked — seed gap</span></div><div><span class="cover-meta-label">Slides</span><span class="cover-meta-val">8</span></div><div><span class="cover-meta-label">Generated</span><span class="cover-meta-val">2026-06-06</span></div></div><div class="cover-hint">Use the menu, the arrows, or ← → keys to move through the deck.</div></div></section><section class="slide" id="the-answer" data-slide="2" aria-label="The answer"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>The answer</span></div><div class="slide-rule-r">Slide 2 / 8</div></div><div class="slide-eyebrow">Section 1 · The answer</div><h2 class="slide-headline">Finance should reject this Move — the case does not pay back on current evidence.</h2><div class="slide-stage"><div class="board-card verdict-kill"><div class="board-card-tag">Finance verdict</div><div class="board-verdict">REJECT — KILL. The case does not pay back on current evidence.</div><p class="board-detail">Base-case net return is not positive — the Move does not pay back on current assumptions.</p><div class="verdict-explainer-chip" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:4px;background:#fdecea;color:#7a1b14;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;line-height:1.45;border:1px solid #f1c0bc;"><span style="font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">Why kill?</span><span style="font-family:'DM Sans','Inter',system-ui,sans-serif;font-size:12px;line-height:1.45;">Seed gap blocks monetisation — value rests on a planning-range proxy until the missing unit economics are supplied.</span></div></div><figure class="hero"><figcaption class="hero-caption">Exhibit 1 — The finance decision at a glance</figcaption><div class="hero-frame"><svg viewBox="0 0 720 96" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Headline economics" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Headline economics</title><rect x="0" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="0" y="0" width="3" height="96" fill="#8B1F0F"/><text x="14" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">FINANCE VERDICT</text><text x="14" y="52" font-size="19" font-weight="800" fill="#8B1F0F" text-anchor="start">REJECT</text><text x="14" y="76" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">Do not fund</text><rect x="145.6" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="145.6" y="0" width="3" height="96" fill="#070707"/><text x="159.6" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">INVESTMENT</text><text x="159.6" y="52" font-size="19" font-weight="800" fill="#070707" text-anchor="start">$5.20M–$8.56M</text><text x="159.6" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Planning range — never a point</text><rect x="291.2" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="291.2" y="0" width="3" height="96" fill="#7A4F01"/><text x="305.2" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">NET VALUE (3-YR)</text><text x="305.2" y="52" font-size="19" font-weight="800" fill="#7A4F01" text-anchor="start">$61–$165</text><text x="305.2" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Proxy ceiling — not a verified return</text><rect x="436.79999999999995" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="436.79999999999995" y="0" width="3" height="96" fill="#8B1F0F"/><text x="450.79999999999995" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">PAYBACK</text><text x="450.79999999999995" y="52" font-size="19" font-weight="800" fill="#8B1F0F" text-anchor="start">Blocked</text><text x="450.79999999999995" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Monetisation seed gap open</text><rect x="582.4" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="582.4" y="0" width="3" height="96" fill="#7A4F01"/><text x="596.4" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">OPEN BLOCKERS</text><text x="596.4" y="52" font-size="19" font-weight="800" fill="#7A4F01" text-anchor="start">2</text><text x="596.4" y="76" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">8 seed gaps</text></svg></div></figure><div class="ask-line"><span class="ask-line-tag">Funding ask</span><span>Do not fund this Move. The case does not pay back on current evidence — re-present only if the assumptions that break it can be shown to be wrong.</span></div><div class="payback-line"><span class="payback-line-tag">Open blocker</span><span>Value cannot be monetised to a hard dollar figure — the gross value range rests on a seed-gap proxy. The CFO will not approve a fabricated return; the case must close the baseline gap first.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>How the kernel inputs were derived — honesty notes</span></summary><div class="slide-detail-body"><ul class="mini-list"><li>Baseline: 4 of 12 Function-Pack operating metrics are recorded by this Move (coverage 33%). The remaining 8 are precise, named seed gaps — not fabricated values.</li><li>Assumptions: 13 named assumptions derived from the Function Pack (haircut factors, value narrative, evidence anchors, pain themes); 12 are seed-gap proxies owned by a &quot;to be confirmed with the tenant&quot; placeholder — no human owner is fabricated.</li><li>Value: the gross value range is built from the Function Pack's curated value benchmarks — labelled planning ranges, NOT this tenant's own measured unit economics. It is carried as a proxy, so the kernel honestly blocks a claimable dollar payback until the tenant's spend base and the seed-gapped metrics are supplied.</li><li>Value: 8 operating metric(s) needed to ground the forecast are seed-gapped — the value range is a planning proxy, not a forecast, until they are closed.</li></ul></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The verdict is the kernel’s real recommendation — it is read, not negotiated. Capital approval is conditional on the open blocker and the seed gaps closing.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Approve the funding the kernel verdict supports, reject, or request the evidence that closes the open blocker.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">CFO · Finance Committee</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Blocked · 1 open gap</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next phase gate for this Move — a conditional decision</span></div></div></div></section><section class="slide" id="the-case" data-slide="3" aria-label="The case"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>The case</span></div><div class="slide-rule-r">Slide 3 / 8</div></div><div class="slide-eyebrow">Section 2 · The case</div><h2 class="slide-headline">The value is a planning range built on curated benchmark proxies — the net is a proxy ceiling, not a verified return, because the unit economics are a seed gap.</h2><div class="slide-stage"><p class="slide-lede">Investment is $5.20M–$8.56M; the net value band is $61–$165 — but that is a proxy ceiling, not a verified return, because the unit economics are a seed gap.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 2 — Value against investment: both as ranges</figcaption><div class="hero-frame"><svg viewBox="0 0 720 240" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Value vs effort summary" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Value vs effort summary</title><rect x="0" y="0" width="720" height="240" fill="#ffffff"/><defs><pattern id="vehatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="7" stroke="#7A4F01" stroke-width="2.2"/></pattern></defs><line x1="96" y1="34" x2="96" y2="164" stroke="#dedacf" stroke-width="1"/><text x="96" y="28" font-size="8.5" font-weight="500" fill="#5b5852" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$0</text><line x1="224.5" y1="34" x2="224.5" y2="164" stroke="#dedacf" stroke-width="1"/><text x="224.5" y="28" font-size="8.5" font-weight="500" fill="#5b5852" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$2.31M</text><line x1="353" y1="34" x2="353" y2="164" stroke="#dedacf" stroke-width="1"/><text x="353" y="28" font-size="8.5" font-weight="500" fill="#5b5852" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$4.62M</text><line x1="481.5" y1="34" x2="481.5" y2="164" stroke="#dedacf" stroke-width="1"/><text x="481.5" y="28" font-size="8.5" font-weight="500" fill="#5b5852" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$6.93M</text><line x1="610" y1="34" x2="610" y2="164" stroke="#dedacf" stroke-width="1"/><text x="610" y="28" font-size="8.5" font-weight="500" fill="#5b5852" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$9.25M</text><text x="84" y="68" font-size="10" font-weight="800" fill="#070707" text-anchor="end">Investment</text><rect x="384.9550265344403" y="44" width="186.97089939148555" height="40" fill="#0b4a91" stroke="#0b4a91" stroke-width="1.25" rx="3"/><path d="M 435.9470901059177 41 L 443.9470901059177 64 L 435.9470901059177 87 L 427.9470901059177 64 Z" fill="#070707"/><text x="378.9550265344403" y="68" font-size="8.5" font-weight="700" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$5.20M</text><text x="579.9259259259259" y="68" font-size="9.5" font-weight="800" fill="#070707" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$8.56M</text><text x="435.9470901059177" y="35" font-size="8.5" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$6.12M</text><text x="84" y="138" font-size="10" font-weight="800" fill="#070707" text-anchor="end">Value (3-yr net)</text><rect x="96.00339264078083" y="114" width="2" height="40" fill="url(#vehatch)" stroke="#7A4F01" stroke-width="1.25" rx="3"/><path d="M 96.00628997713174 111 L 104.00628997713174 134 L 96.00628997713174 157 L 88.00628997713174 134 Z" fill="#070707"/><text x="90.00339264078083" y="138" font-size="8.5" font-weight="700" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$61</text><text x="104.0091878693799" y="138" font-size="9.5" font-weight="800" fill="#7A4F01" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$165</text><text x="96.00628997713174" y="105" font-size="8.5" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$113</text><rect x="12" y="162" width="684" height="36" fill="#f7ecd6" stroke="#7A4F01" stroke-width="1" rx="3"/><text x="24" y="184" font-size="9" font-weight="700" fill="#7A4F01" text-anchor="start">Value is a proxy ceiling — cost-per-contact is a seed gap, so no payback or ROI is claimed. Both bars are ranges, never single points.</text></svg></div><p class="hero-note">The value bar is hatched — it rests on a seed-gap proxy, so no payback or ROI is drawn. A single-point return is never shown.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Where the value comes from, and the figures behind it</span></summary><div class="slide-detail-body"><div class="mini-key mini-key-block">Value source</div><p class="mini-para">Value is built from the curated Function-Pack value benchmarks — labelled planning ranges — and discounted by the mandatory six-factor haircut. The dollar conversion needs the tenant’s own spend base and the seed-gapped operating metrics; until those land, the value is a planning proxy, not a forecast.</p><table class="data-table"><thead><tr><th>Figure</th><th class="num">Low</th><th class="num">Base</th><th class="num">High</th></tr></thead><tbody><tr class="row-proxy"><td>Net value (3-yr, post-haircut)</td><td class="num">$61</td><td class="num">$113</td><td class="num">$165</td></tr><tr><td>Investment</td><td class="num">$5.20M</td><td class="num">$6.12M</td><td class="num">$8.56M</td></tr></tbody></table><p class="mini-para">Payback — not computable. Monetisation is blocked; the case models net value, not cash, and never crosses break-even.</p></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The case is fundable to SHAPE, not to build — the value cannot be verified until the unit economics land.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Test whether the case creates verifiable value, not advocacy.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant) · CFO</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 1 open gap</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next gate — value re-expressed against measured tenant data</span></div></div></div></section><section class="slide" id="assumptions" data-slide="4" aria-label="Assumptions"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>Assumptions</span></div><div class="slide-rule-r">Slide 4 / 8</div></div><div class="slide-eyebrow">Section 3 · Assumptions</div><h2 class="slide-headline">The case-moving assumptions are ranked by sensitivity — the seed-gap proxies are the highest-leverage evidence the funding spend must replace with measured tenant data.</h2><div class="slide-stage"><p class="slide-lede">The top 5 assumptions are ranked by how much they move the case. 5 of them are seed-gap proxies — assumptions standing in for tenant data that has not yet been captured.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 3 — Sensitivity stack: the assumptions that move the case</figcaption><div class="hero-frame"><svg viewBox="0 0 720 294" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sensitivity tornado" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Sensitivity tornado</title><rect x="0" y="0" width="720" height="294" fill="#ffffff"/><defs><pattern id="proxyhatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#7A4F01" stroke-width="2"/></pattern></defs><line x1="180" y1="32" x2="180" y2="270" stroke="#070707" stroke-width="1.5"/><text x="180" y="24" font-size="9" font-weight="700" fill="#5b5852" text-anchor="middle" letter-spacing="0.5">BASE CASE</text><text x="572" y="24" font-size="9" font-weight="600" fill="#5b5852" text-anchor="end">Wider = moves the case more</text><rect x="180" y="52" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="52" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="60" font-size="10" font-weight="700" fill="#070707" text-anchor="end">The case rests</text><text x="168" y="71" font-size="10" font-weight="700" fill="#070707" text-anchor="end">on 8 seed-gapped</text><text x="168" y="82" font-size="10" font-weight="700" fill="#070707" text-anchor="end">operating metr</text><text x="580" y="67" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="98" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="98" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="106" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Rate-environment</text><text x="168" y="117" font-size="10" font-weight="700" fill="#070707" text-anchor="end">and macro</text><text x="168" y="128" font-size="10" font-weight="700" fill="#070707" text-anchor="end">contingency</text><text x="580" y="113" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="144" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="144" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="152" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Regulatory</text><text x="168" y="163" font-size="10" font-weight="700" fill="#070707" text-anchor="end">floors and</text><text x="168" y="174" font-size="10" font-weight="700" fill="#070707" text-anchor="end">risk-appetite</text><text x="580" y="159" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="190" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="190" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="198" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Value</text><text x="168" y="209" font-size="10" font-weight="700" fill="#070707" text-anchor="end">realisation</text><text x="168" y="220" font-size="10" font-weight="700" fill="#070707" text-anchor="end">follows the</text><text x="580" y="205" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="236" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="236" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="244" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="255" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the tenant can</text><text x="168" y="266" font-size="10" font-weight="700" fill="#070707" text-anchor="end">substantiate</text><text x="415.36" y="251" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text></svg></div><p class="hero-note">A hatched bar is a seed-gap proxy; a solid bar is grounded. Finance should challenge the widest bars first.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>The case-moving assumptions — statement, owner, confidence, sensitivity</span></summary><div class="slide-detail-body"><div class="assume-cards"><div class="assume-card assume-proxy"><div class="assume-rank">1</div><div><div class="assume-statement">The case rests on 8 seed-gapped operating metric(s); their values are assumed to be obtainable from the named data sources before the funding gate. Until then the baseline is incomplete and the forecast is a planning proxy.</div><div class="assume-meta"><span>Owner — To be confirmed with the tenant (Move sponsor)</span><span class="assume-dot">·</span><span>Confidence <span class="chip chip-bad">low</span></span><span class="assume-dot">·</span><span>Sensitivity high</span><span class="assume-dot">·</span><span class="chip chip-warn">Seed-gap proxy</span></div></div></div><div class="assume-card assume-proxy"><div class="assume-rank">2</div><div><div class="assume-statement">Rate-environment and macro contingency: Margin, deposit-beta, and balance-sheet value gains depend on the rate path and the macro environment, which the institution does not control. A large share of modelled value is contingent on a rate scenario and must be presented as scenario-conditional, not certain. Planning haircut range 25%–55% of unhaircut value (planning-range).</div><div class="assume-meta"><span>Owner — To be confirmed with the tenant (Move sponsor)</span><span class="assume-dot">·</span><span>Confidence <span class="chip chip-bad">low</span></span><span class="assume-dot">·</span><span>Sensitivity high</span><span class="assume-dot">·</span><span class="chip chip-warn">Seed-gap proxy</span></div></div></div><div class="assume-card assume-proxy"><div class="assume-rank">3</div><div><div class="assume-statement">Regulatory floors and risk-appetite ceilings: Liquidity and capital buffers cannot be optimised below regulatory minimums or board risk appetite. The releasable efficiency is the gap between an over-conservative buffer and a precise prudent one — a bounded amount, not the whole buffer. Planning haircut range 20%–45% of unhaircut value (planning-range).</div><div class="assume-meta"><span>Owner — To be confirmed with the tenant (Move sponsor)</span><span class="assume-dot">·</span><span>Confidence <span class="chip chip-bad">low</span></span><span class="assume-dot">·</span><span>Sensitivity high</span><span class="assume-dot">·</span><span class="chip chip-warn">Seed-gap proxy</span></div></div></div><div class="assume-card assume-proxy"><div class="assume-rank">4</div><div><div class="assume-statement">Value realisation follows the Function Pack model: Finance, treasury &amp; ALM value is realised in three distinct ways and a forecast must keep them separate. First, margin and return: sharper deposit-behaviour modelling, faster ALM scenario analysis, and better-informed balance-sheet and hedging decisions protect or lift net interest margin and keep rate risk inside tol…</div><div class="assume-meta"><span>Owner — To be confirmed with the tenant (Move sponsor)</span><span class="assume-dot">·</span><span>Confidence <span class="chip chip-bad">low</span></span><span class="assume-dot">·</span><span>Sensitivity high</span><span class="assume-dot">·</span><span class="chip chip-warn">Seed-gap proxy</span></div></div></div><div class="assume-card assume-proxy"><div class="assume-rank">5</div><div><div class="assume-statement">It is assumed the tenant can substantiate &quot;Net interest margin and the spread it is earned on&quot; from The general ledger and the ALM system, reconciling interest income and expense against average earning-asset and funding balances. — good evidence is: Net interest margin decomposed into asset yield and funding cost, with the deposit and wholesale funding mix and the rate-cycle context made explicit. Weak evidence to reject: A headline NIM figure with no decomposition into yield and funding cost, or a margin claim with no link to the rate environment it was earned in.</div><div class="assume-meta"><span>Owner — To be confirmed with the tenant (Move sponsor)</span><span class="assume-dot">·</span><span>Confidence <span class="chip chip-bad">low</span></span><span class="assume-dot">·</span><span>Sensitivity medium</span><span class="assume-dot">·</span><span class="chip chip-warn">Seed-gap proxy</span></div></div></div></div></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">No assumption is unowned; the seed-gap proxies are the highest-leverage evidence the funding spend must close.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm every case-moving assumption is owned and challengeable.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 3 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next gate — proxies replaced with measured tenant data</span></div></div></div></section><section class="slide" id="what-would-make-it-wrong" data-slide="5" aria-label="What would make it wrong"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>What would make it wrong</span></div><div class="slide-rule-r">Slide 5 / 8</div></div><div class="slide-eyebrow">Section 4 · What would make it wrong</div><h2 class="slide-headline">The case breaks the same way it is built — on the missing unit economics. Until the seed gaps close, every dollar in the case is a proxy, not a forecast.</h2><div class="slide-stage"><p class="slide-lede">A CFO Pack must show what breaks the case before it shows the upside. For this Move the breakpoint and the case rest on the same missing number — the unit economics.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 4 — Tornado: what swings the case, widest mover at top</figcaption><div class="hero-frame"><svg viewBox="0 0 720 662" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sensitivity tornado" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Sensitivity tornado</title><rect x="0" y="0" width="720" height="662" fill="#ffffff"/><defs><pattern id="proxyhatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#7A4F01" stroke-width="2"/></pattern></defs><line x1="180" y1="32" x2="180" y2="638" stroke="#070707" stroke-width="1.5"/><text x="180" y="24" font-size="9" font-weight="700" fill="#5b5852" text-anchor="middle" letter-spacing="0.5">BASE CASE</text><text x="572" y="24" font-size="9" font-weight="600" fill="#5b5852" text-anchor="end">Wider = moves the case more</text><rect x="180" y="52" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="52" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="60" font-size="10" font-weight="700" fill="#070707" text-anchor="end">The case rests</text><text x="168" y="71" font-size="10" font-weight="700" fill="#070707" text-anchor="end">on 8 seed-gapped</text><text x="168" y="82" font-size="10" font-weight="700" fill="#070707" text-anchor="end">operating met…</text><text x="580" y="67" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="98" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="98" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="106" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Rate-environment</text><text x="168" y="117" font-size="10" font-weight="700" fill="#070707" text-anchor="end">and macro</text><text x="168" y="128" font-size="10" font-weight="700" fill="#070707" text-anchor="end">contingency</text><text x="580" y="113" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="144" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="144" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="152" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Regulatory</text><text x="168" y="163" font-size="10" font-weight="700" fill="#070707" text-anchor="end">floors and</text><text x="168" y="174" font-size="10" font-weight="700" fill="#070707" text-anchor="end">risk-appetite</text><text x="580" y="159" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="190" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="190" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="198" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Value</text><text x="168" y="209" font-size="10" font-weight="700" fill="#070707" text-anchor="end">realisation</text><text x="168" y="220" font-size="10" font-weight="700" fill="#070707" text-anchor="end">follows the</text><text x="580" y="205" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="236" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="236" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="244" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="255" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the tenant can</text><text x="168" y="266" font-size="10" font-weight="700" fill="#070707" text-anchor="end">substantiate</text><text x="415.36" y="251" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="282" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="282" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="290" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="301" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the tenant can</text><text x="168" y="312" font-size="10" font-weight="700" fill="#070707" text-anchor="end">substantiate</text><text x="415.36" y="297" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="328" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="328" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="336" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="347" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the tenant can</text><text x="168" y="358" font-size="10" font-weight="700" fill="#070707" text-anchor="end">substantiate</text><text x="415.36" y="343" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="374" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="374" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="382" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Data lineage and</text><text x="168" y="393" font-size="10" font-weight="700" fill="#070707" text-anchor="end">model-readiness</text><text x="415.36" y="389" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="420" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="420" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="428" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Model governance</text><text x="168" y="439" font-size="10" font-weight="700" fill="#070707" text-anchor="end">and adoption</text><text x="415.36" y="435" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="466" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="466" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="474" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="485" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the Move design</text><text x="168" y="496" font-size="10" font-weight="700" fill="#070707" text-anchor="end">addresses the &quot;…</text><text x="415.36" y="481" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="512" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="512" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="520" font-size="10" font-weight="700" fill="#070707" text-anchor="end">It is assumed</text><text x="168" y="531" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the Move design</text><text x="168" y="542" font-size="10" font-weight="700" fill="#070707" text-anchor="end">addresses the &quot;…</text><text x="415.36" y="527" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="558" width="227.35999999999999" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="558" width="227.35999999999999" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="566" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Time to value is</text><text x="168" y="577" font-size="10" font-weight="700" fill="#070707" text-anchor="end">assumed to track</text><text x="168" y="588" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the Functio…</text><text x="415.36" y="573" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="604" width="227.35999999999999" height="22" fill="#0b4a91" rx="1.5"/><text x="168" y="612" font-size="10" font-weight="700" fill="#070707" text-anchor="end">The effort and</text><text x="168" y="623" font-size="10" font-weight="700" fill="#070707" text-anchor="end">cost figures are</text><text x="168" y="634" font-size="10" font-weight="700" fill="#070707" text-anchor="end">a planning ra…</text><text x="415.36" y="619" font-size="8" font-weight="800" fill="#1f6f43" text-anchor="start" letter-spacing="0.4">GROUNDED</text></svg></div><p class="hero-note">The widest movers are the seed-gap proxies. Until they are measured, the case can swing in either direction without warning.</p></figure><div class="payback-line"><span class="payback-line-tag">What breaks the case</span><span>The case breaks if the baseline seed gap is not closed — without the missing unit economics the value range is a proxy, not a forecast.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>The downside read, the breakpoints and the monetisation gaps</span></summary><div class="slide-detail-body"><div class="mini-key mini-key-block">Downside read</div><p class="mini-para">The conservative case cannot be expressed in hard dollars — the value rests on a seed-gap proxy. A CFO funds the downside, not the point estimate; this case has no verifiable downside until the baseline gaps close. That is a withhold-capital signal, not a fund signal.</p><div class="mini-key mini-key-block">Net return — conservative / base / upside</div><table class="data-table"><thead><tr><th>Scenario</th><th class="num">Net return</th><th>Read</th></tr></thead><tbody><tr class="row-proxy"><td>Conservative</td><td class="num">-$8.56M</td><td>The figure a CFO funds against</td></tr><tr><td>Base</td><td class="num">-$6.12M</td><td>Proxy ceiling — rests on the seed gap</td></tr><tr><td>Upside</td><td class="num">-$5.20M</td><td>Planning upper bound — not a commitment</td></tr></tbody></table><div class="mini-key mini-key-block mini-key-gap">Monetisation gaps — what blocks a hard return</div><ul class="mini-list"><li>Net interest margin (NIM) — &quot;Net interest margin (NIM)&quot; is not recorded — this function expects it; it is sourced from The general ledger and the ALM system, reconciling interest income and expense against average earning-asset balances.; its absence blocks the baseline and the value forecast.</li><li>Liquidity coverage ratio (LCR) — &quot;Liquidity coverage ratio (LCR)&quot; is not recorded — this function expects it; it is sourced from The liquidity-risk and regulatory-reporting systems, computing HQLA and stressed outflows under the LCR rule.; its absence blocks the baseline and the value forecast.</li><li>Net stable funding ratio (NSFR) — &quot;Net stable funding ratio (NSFR)&quot; is not recorded — this function expects it; it is sourced from The liquidity-risk and regulatory-reporting systems, computing available and required stable funding under the NSFR rule.; its absence blocks the baseline and the value forecast.</li><li>Economic-value-of-equity rate sensitivity — &quot;Economic-value-of-equity rate sensitivity&quot; is not recorded — this function expects it; it is sourced from The ALM system, running the EVE measurement under the institution’s rate-shock scenario set.; its absence blocks the baseline and the value forecast.</li></ul></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The downside is not a number yet — it is a proxy. That is itself the reason capital is withheld.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">See the downside, the breakpoints and the monetisation gaps before committing capital.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">CFO · Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 1 open gap</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next gate — downside re-modelled on measured economics</span></div></div></div></section><section class="slide" id="what-not-to-fund-yet" data-slide="6" aria-label="What not to fund yet"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>What not to fund yet</span></div><div class="slide-rule-r">Slide 6 / 8</div></div><div class="slide-eyebrow">Section 5 · What not to fund yet</div><h2 class="slide-headline">5 things must be explicitly withheld at this gate — each with the condition that releases it. A CFO Pack without an explicit holdback list is a hard fail.</h2><div class="slide-stage"><p class="slide-lede">A CFO Pack without an explicit holdback list is a hard fail. These are the 5 things finance should withhold at this gate — each with the condition that releases it.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 5 — Do-not-fund checklist: what to withhold, and why</figcaption><div class="hero-frame"><div class="checklist"><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Withhold</span></div><div class="check-body"><div class="check-label">Build / capital funding</div><div class="check-detail">Do not approve capital for the Finance, treasury &amp; ALM build. The kernel verdict is KILL — a costed roadmap exists, but the case does not yet clear the critic for a capital commitment.</div><div class="check-detail check-threshold"><strong>Release condition</strong> — The kernel verdict moves to FUND once the named blockers and seed gaps close and the case is re-run. <span class="check-owner">Owner: Move sponsor (to be confirmed with the tenant)</span></div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Withhold</span></div><div class="check-body"><div class="check-label">Any value claim in dollars</div><div class="check-detail">Do not let the case be quoted as a dollar return. Gross value rests on the Function Pack’s curated benchmark proxies; the net is a proxy ceiling, not a forecast.</div><div class="check-detail check-threshold"><strong>Release condition</strong> — The seed-gapped operating metrics close and the tenant’s own spend base is supplied — then the value forecast can be stated in hard dollars. <span class="check-owner">Owner: Move sponsor (to be confirmed with the tenant)</span></div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Withhold</span></div><div class="check-body"><div class="check-label">Scope past a kill criterion</div><div class="check-detail">Do not let the Move proceed past a kernel kill criterion without a re-decision. Kill criterion: Net return is negative in the conservative case (-8561340.29). Kill or re-shape if the downside cannot be lifted above zero.</div><div class="check-detail check-threshold"><strong>Release condition</strong> — Only after the kill criterion is explicitly cleared and the case re-run against the new evidence. <span class="check-owner">Owner: Move sponsor (to be confirmed with the tenant)</span></div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Withhold</span></div><div class="check-body"><div class="check-label">Scope past a kill criterion</div><div class="check-detail">Do not let the Move proceed past a kernel kill criterion without a re-decision. Kill criterion: The baseline seed gap that blocks monetisation is not closed before the gate — without it the return is unverifiable.</div><div class="check-detail check-threshold"><strong>Release condition</strong> — Only after the kill criterion is explicitly cleared and the case re-run against the new evidence. <span class="check-owner">Owner: Move sponsor (to be confirmed with the tenant)</span></div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Withhold</span></div><div class="check-body"><div class="check-label">Funding against an incomplete baseline</div><div class="check-detail">Do not fund against the current baseline — 8 operating metric(s) the curated Finance, treasury &amp; ALM pack expects are not recorded by the Move (e.g. Net interest margin (NIM)).</div><div class="check-detail check-threshold"><strong>Release condition</strong> — The seed-gapped metrics are captured from their named data sources (e.g. The general ledger and the ALM system, reconciling interest income and expense against average earning-asset balances.) before the funding gate. <span class="check-owner">Owner: Move sponsor (to be confirmed with the tenant)</span></div></div></div></div></div></figure><div class="ask-line"><span class="ask-line-tag">The shape of the ask</span><span>Approving the shaping spend is not approving the build. Each holdback above is released only against its stated condition — not bundled into a single capital decision.</span></div></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">A CFO Pack without an explicit holdback list is a hard fail — these are the holdbacks, each released only against its stated condition.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Decide what scope finance withholds at this gate.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">CFO · Finance Committee</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Medium · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next gate — each holdback released against its condition</span></div></div></div></section><section class="slide" id="tower-measurement" data-slide="7" aria-label="What Tower will measure"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>What Tower will measure</span></div><div class="slide-rule-r">Slide 7 / 8</div></div><div class="slide-eyebrow">Section 6 · What Tower will measure</div><h2 class="slide-headline">Value will be proven, not asserted — every metric with a recorded baseline is measurable from day one; the seed-gapped metrics are honestly carried as not-yet-measurable.</h2><div class="slide-stage"><p class="slide-lede">Value will be proven, not asserted. 4 of the 12 Tower metrics are measurable today against a recorded baseline; the seed-gapped metrics are honestly carried as not-yet-measurable.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 6 — Tower measurement table: metric, baseline, owner</figcaption><div class="hero-frame"><table class="data-table"><thead><tr><th>Metric</th><th class="num">Baseline</th><th>Owner</th></tr></thead><tbody><tr class="row-proxy"><td>Net interest margin (NIM) <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class=""><td>Cost of funds <span class="chip chip-good">Measurable</span></td><td class="num">4.6 percent (blended)</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Liquidity coverage ratio (LCR) <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Net stable funding ratio (NSFR) <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Economic-value-of-equity rate sensitivity <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Net-interest-income rate sensitivity <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Loan-to-deposit ratio <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Deposit beta <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class="row-proxy"><td>Common equity tier 1 (CET1) capital ratio <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded — seed gap</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class=""><td>Return on equity (ROE) <span class="chip chip-good">Measurable</span></td><td class="num">11.8 percent (EBITDA margin proxy)</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class=""><td>Financial-forecast accuracy <span class="chip chip-good">Measurable</span></td><td class="num">78 percent (forecast vs actual)</td><td>Move sponsor (to be confirmed with the tenant)</td></tr><tr class=""><td>Planning and close cycle time <span class="chip chip-good">Measurable</span></td><td class="num">8.5 business days to close</td><td>Move sponsor (to be confirmed with the tenant)</td></tr></tbody></table></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Measurement readiness — what must be true for Tower to verify each</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Metric</th><th>Readiness note</th></tr></thead><tbody><tr class="row-proxy"><td>Net interest margin (NIM)</td><td>SEED GAP — not measurable until the baseline for &quot;Net interest margin (NIM)&quot; is captured (expected source: The general ledger and the ALM system, reconciling interest income and expense against average earning-asset balances.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class=""><td>Cost of funds</td><td>Measurable now from the tenant baseline (Debt &amp; FX exposure (treasury_kyriba)). The improvement target is set with the tenant — the Function Pack benchmark (0.5–3.5 % annualised on average funding, planning-range) frames the range, it is not a committed target.</td></tr><tr class="row-proxy"><td>Liquidity coverage ratio (LCR)</td><td>SEED GAP — not measurable until the baseline for &quot;Liquidity coverage ratio (LCR)&quot; is captured (expected source: The liquidity-risk and regulatory-reporting systems, computing HQLA and stressed outflows under the LCR rule.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Net stable funding ratio (NSFR)</td><td>SEED GAP — not measurable until the baseline for &quot;Net stable funding ratio (NSFR)&quot; is captured (expected source: The liquidity-risk and regulatory-reporting systems, computing available and required stable funding under the NSFR rule.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Economic-value-of-equity rate sensitivity</td><td>SEED GAP — not measurable until the baseline for &quot;Economic-value-of-equity rate sensitivity&quot; is captured (expected source: The ALM system, running the EVE measurement under the institution’s rate-shock scenario set.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Net-interest-income rate sensitivity</td><td>SEED GAP — not measurable until the baseline for &quot;Net-interest-income rate sensitivity&quot; is captured (expected source: The ALM system, running the net-interest-income simulation under the institution’s rate scenarios.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Loan-to-deposit ratio</td><td>SEED GAP — not measurable until the baseline for &quot;Loan-to-deposit ratio&quot; is captured (expected source: The general ledger and treasury systems, aggregating loan and deposit balances.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Deposit beta</td><td>SEED GAP — not measurable until the baseline for &quot;Deposit beta&quot; is captured (expected source: The ALM system and deposit-analytics models, comparing historical deposit-rate moves against benchmark-rate moves.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class="row-proxy"><td>Common equity tier 1 (CET1) capital ratio</td><td>SEED GAP — not measurable until the baseline for &quot;Common equity tier 1 (CET1) capital ratio&quot; is captured (expected source: The capital and regulatory-reporting systems, computing CET1 capital and risk-weighted assets under the regulatory capital framework.). Tower cannot verify movement on this metric before the gap is closed.</td></tr><tr class=""><td>Return on equity (ROE)</td><td>Measurable now from the tenant baseline (Revenue &amp; cost baseline (finance_performance)). The improvement target is set with the tenant — the Function Pack benchmark (8–15 % return on average equity, planning-range) frames the range, it is not a committed target.</td></tr><tr class=""><td>Financial-forecast accuracy</td><td>Measurable now from the tenant baseline (FP&amp;A reconciliation (Lakeshore enterprise context load V1)). The improvement target is set with the tenant — the Function Pack benchmark (2–10 % mean absolute forecast variance, planning-range) frames the range, it is not a committed target.</td></tr><tr class=""><td>Planning and close cycle time</td><td>Measurable now from the tenant baseline (Month-end close baseline (operations_business_process)). The improvement target is set with the tenant — the Function Pack benchmark (3–12 business days per cycle, planning-range) frames the range, it is not a committed target.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">Tower can verify value on every recorded metric from day one; the seed-gapped metrics are unwired until their gaps close.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm value will be proven, not asserted, after funding.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant) · Tower</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Medium · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Tower handoff — forecast-to-actual once the Move is live</span></div></div></div></section><section class="slide" id="evidence-and-gaps" data-slide="8" aria-label="Evidence and gaps"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Lakeshore Enterprise Finance &amp; Treasury Modernization: Kyriba Rollout, Corporate Controls, Reporting Rationalization, Vendor Optimization &amp; Value Realization</span><span class="slide-sep">·</span><span>Evidence and gaps</span></div><div class="slide-rule-r">Slide 8 / 8</div></div><div class="slide-eyebrow">Section 7 · Evidence and gaps</div><h2 class="slide-headline">Finance can audit every number in this pack — 4 metrics trace to a named source, and the 8 missing ones are declared seed gaps, never silent.</h2><div class="slide-stage"><p class="slide-lede">Finance can audit this pack end to end. Baseline coverage is 33% — 4 metrics trace to a named source; every missing one is a declared seed gap, never a silent omission.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 7 — Evidence / gap matrix: recorded facts against seed gaps</figcaption><div class="hero-frame"><svg viewBox="0 0 720 488" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Evidence and gap matrix" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Evidence and gap matrix</title><rect x="0" y="0" width="720" height="488" fill="#ffffff"/><rect x="12" y="14" width="336" height="30" fill="#e2efe2" rx="3"/><text x="24" y="33" font-size="10" font-weight="800" fill="#1B5E20" text-anchor="start" letter-spacing="0.4">RECORDED — 4 sourced facts</text><rect x="366" y="14" width="336" height="30" fill="#f4ddd6" rx="3"/><text x="378" y="33" font-size="10" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.4">SEED GAPS — 8 declared, not blank</text><rect x="12" y="56" width="336" height="44" fill="#ffffff" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="12" y="56" width="3" height="44" fill="#1B5E20"/><text x="26" y="73" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Cost of funds</text><text x="26" y="89" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">4.6 percent (blended) · Debt &amp; FX exposure (treasury_kyriba) · medium</text><rect x="366" y="56" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="56" width="3" height="44" fill="#8B1F0F"/><text x="380" y="73" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Net interest margin (NIM)</text><text x="380" y="89" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Net interest margin (NIM)&quot; is not recorded — this function expects it; it …</text><rect x="12" y="108" width="336" height="44" fill="#ffffff" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="12" y="108" width="3" height="44" fill="#1B5E20"/><text x="26" y="125" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Return on equity (ROE)</text><text x="26" y="141" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">11.8 percent (EBITDA margin proxy) · Revenue &amp; cost baseline (finance_perfo…</text><rect x="366" y="108" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="108" width="3" height="44" fill="#8B1F0F"/><text x="380" y="125" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Liquidity coverage ratio (LCR)</text><text x="380" y="141" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Liquidity coverage ratio (LCR)&quot; is not recorded — this function expects it…</text><rect x="12" y="160" width="336" height="44" fill="#ffffff" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="12" y="160" width="3" height="44" fill="#1B5E20"/><text x="26" y="177" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Financial-forecast accuracy</text><text x="26" y="193" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">78 percent (forecast vs actual) · FP&amp;A reconciliation (Lakeshore enterprise…</text><rect x="366" y="160" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="160" width="3" height="44" fill="#8B1F0F"/><text x="380" y="177" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Net stable funding ratio (NSFR)</text><text x="380" y="193" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Net stable funding ratio (NSFR)&quot; is not recorded — this function expects i…</text><rect x="12" y="212" width="336" height="44" fill="#ffffff" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="12" y="212" width="3" height="44" fill="#1B5E20"/><text x="26" y="229" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Planning and close cycle time</text><text x="26" y="245" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">8.5 business days to close · Month-end close baseline (operations_business_…</text><rect x="366" y="212" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="212" width="3" height="44" fill="#8B1F0F"/><text x="380" y="229" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Economic-value-of-equity rate sensitivity</text><text x="380" y="245" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Economic-value-of-equity rate sensitivity&quot; is not recorded — this function…</text><rect x="366" y="264" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="264" width="3" height="44" fill="#8B1F0F"/><text x="380" y="281" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Net-interest-income rate sensitivity</text><text x="380" y="297" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Net-interest-income rate sensitivity&quot; is not recorded — this function expe…</text><rect x="366" y="316" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="316" width="3" height="44" fill="#8B1F0F"/><text x="380" y="333" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Loan-to-deposit ratio</text><text x="380" y="349" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Loan-to-deposit ratio&quot; is not recorded — this function expects it; it is s…</text><rect x="366" y="368" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="368" width="3" height="44" fill="#8B1F0F"/><text x="380" y="385" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Deposit beta</text><text x="380" y="401" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Deposit beta&quot; is not recorded — this function expects it; it is sourced fr…</text><rect x="366" y="420" width="336" height="44" fill="#f7ecd6" stroke="#dedacf" stroke-width="1" rx="3"/><rect x="366" y="420" width="3" height="44" fill="#8B1F0F"/><text x="380" y="437" font-size="10.5" font-weight="800" fill="#070707" text-anchor="start">Common equity tier 1 (CET1) capital ratio</text><text x="380" y="453" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start">&quot;Common equity tier 1 (CET1) capital ratio&quot; is not recorded — this function…</text></svg></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Source ledger, seed gaps and assumption provenance</span></summary><div class="slide-detail-body"><div class="mini-key mini-key-block">Recorded metrics — measured, sourced, dated</div><table class="data-table"><thead><tr><th>Recorded metric</th><th class="num">Value</th><th>Source</th><th class="num">As of</th><th class="num">Confidence</th></tr></thead><tbody><tr><td>Cost of funds</td><td class="num">4.6 percent (blended)</td><td>Debt &amp; FX exposure (treasury_kyriba)</td><td class="num">2026-03-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Return on equity (ROE)</td><td class="num">11.8 percent (EBITDA margin proxy)</td><td>Revenue &amp; cost baseline (finance_performance)</td><td class="num">2026-03-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Financial-forecast accuracy</td><td class="num">78 percent (forecast vs actual)</td><td>FP&amp;A reconciliation (Lakeshore enterprise context load V1)</td><td class="num">2026-05-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Planning and close cycle time</td><td class="num">8.5 business days to close</td><td>Month-end close baseline (operations_business_process)</td><td class="num">2026-05-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr></tbody></table><div class="mini-key mini-key-block mini-key-gap">Seed gaps — declared, never blank, named with their source</div><table class="data-table"><thead><tr><th>Metric</th><th>Why it is a gap</th><th>Expected data source</th></tr></thead><tbody><tr class="row-proxy"><td>Net interest margin (NIM) <span class="chip chip-bad">Seed gap</span></td><td>&quot;Net interest margin (NIM)&quot; is not recorded — this function expects it; it is sourced from The general ledger and the ALM system, reconciling interest income and expense against average earning-asset balances.; its absence blocks the baseline and the value forecast.</td><td>The general ledger and the ALM system, reconciling interest income and expense against average earning-asset balances.</td></tr><tr class="row-proxy"><td>Liquidity coverage ratio (LCR) <span class="chip chip-bad">Seed gap</span></td><td>&quot;Liquidity coverage ratio (LCR)&quot; is not recorded — this function expects it; it is sourced from The liquidity-risk and regulatory-reporting systems, computing HQLA and stressed outflows under the LCR rule.; its absence blocks the baseline and the value forecast.</td><td>The liquidity-risk and regulatory-reporting systems, computing HQLA and stressed outflows under the LCR rule.</td></tr><tr class="row-proxy"><td>Net stable funding ratio (NSFR) <span class="chip chip-bad">Seed gap</span></td><td>&quot;Net stable funding ratio (NSFR)&quot; is not recorded — this function expects it; it is sourced from The liquidity-risk and regulatory-reporting systems, computing available and required stable funding under the NSFR rule.; its absence blocks the baseline and the value forecast.</td><td>The liquidity-risk and regulatory-reporting systems, computing available and required stable funding under the NSFR rule.</td></tr><tr class="row-proxy"><td>Economic-value-of-equity rate sensitivity <span class="chip chip-bad">Seed gap</span></td><td>&quot;Economic-value-of-equity rate sensitivity&quot; is not recorded — this function expects it; it is sourced from The ALM system, running the EVE measurement under the institution’s rate-shock scenario set.; its absence blocks the baseline and the value forecast.</td><td>The ALM system, running the EVE measurement under the institution’s rate-shock scenario set.</td></tr><tr class="row-proxy"><td>Net-interest-income rate sensitivity <span class="chip chip-bad">Seed gap</span></td><td>&quot;Net-interest-income rate sensitivity&quot; is not recorded — this function expects it; it is sourced from The ALM system, running the net-interest-income simulation under the institution’s rate scenarios.; its absence blocks the baseline and the value forecast.</td><td>The ALM system, running the net-interest-income simulation under the institution’s rate scenarios.</td></tr><tr class="row-proxy"><td>Loan-to-deposit ratio <span class="chip chip-bad">Seed gap</span></td><td>&quot;Loan-to-deposit ratio&quot; is not recorded — this function expects it; it is sourced from The general ledger and treasury systems, aggregating loan and deposit balances.; its absence blocks the baseline and the value forecast.</td><td>The general ledger and treasury systems, aggregating loan and deposit balances.</td></tr><tr class="row-proxy"><td>Deposit beta <span class="chip chip-bad">Seed gap</span></td><td>&quot;Deposit beta&quot; is not recorded — this function expects it; it is sourced from The ALM system and deposit-analytics models, comparing historical deposit-rate moves against benchmark-rate moves.; its absence blocks the baseline and the value forecast.</td><td>The ALM system and deposit-analytics models, comparing historical deposit-rate moves against benchmark-rate moves.</td></tr><tr class="row-proxy"><td>Common equity tier 1 (CET1) capital ratio <span class="chip chip-bad">Seed gap</span></td><td>&quot;Common equity tier 1 (CET1) capital ratio&quot; is not recorded — this function expects it; it is sourced from The capital and regulatory-reporting systems, computing CET1 capital and risk-weighted assets under the regulatory capital framework.; its absence blocks the baseline and the value forecast.</td><td>The capital and regulatory-reporting systems, computing CET1 capital and risk-weighted assets under the regulatory capital framework.</td></tr></tbody></table><div class="mini-key mini-key-block">Assumption provenance</div><table class="data-table"><thead><tr><th>Provenance note</th><th>Basis</th></tr></thead><tbody><tr><td>The gross value range is built from the Function Pack’s curated value benchmarks — labelled planning ranges, not the tenant’s own measured unit economics.</td><td>It is carried as a proxy; the value forecast flags monetisation as blocked until the tenant’s spend base lands. No hard return is claimed.</td></tr><tr><td>The value forecast applies a mandatory six-factor haircut before any figure is reported.</td><td>Gross value is never reported as net — the haircut is applied to every figure in this pack.</td></tr><tr><td>The recommendation is the kernel critic verdict — a blocker downgrades the case from fund to shape or kill.</td><td>The critic raised 2 blocker(s); the case is not advocacy, it is the critic-challenged output.</td></tr><tr><td>The effort and cost figures are a planning range, not a quote.</td><td>They are derived from the Function Pack archetypes on a researched benchmark rate card and must be replaced with a client-specific estimate before any funding commitment.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The pack is auditable end to end; the seed gaps are the declared limits of what finance can verify today.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Audit every claim back to a source or a declared gap.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">The next gate inherits this source ledger unchanged</span></div></div></div></section></main></div><div class="deck-controls" aria-hidden="false"><button class="deck-btn" type="button" id="deck-prev" aria-label="Previous slide">‹ Prev</button><span class="deck-counter" id="deck-counter">1 / 8</span><button class="deck-btn" type="button" id="deck-next" aria-label="Next slide">Next ›</button></div><script>(function(){var total=8;var stage=document.getElementById('stage');var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));var items=Array.prototype.slice.call(document.querySelectorAll('.menu-item'));var cur=1;function show(n){if(n<1)n=1;if(n>total)n=total;cur=n;slides.forEach(function(s){var sn=parseInt(s.getAttribute('data-slide'),10);var on=sn===n;s.classList.toggle('is-active',on);if(on){s.removeAttribute('hidden');}else{s.setAttribute('hidden','');}});items.forEach(function(it){var gn=parseInt(it.getAttribute('data-goto'),10);if(gn===n){it.setAttribute('aria-current','true');}else{it.removeAttribute('aria-current');}});var active=items[n-1];if(active&&active.scrollIntoView){active.scrollIntoView({block:'nearest'});}if(stage){stage.scrollTop=0;}window.scrollTo(0,0);var c=document.getElementById('deck-counter');if(c){c.textContent=n+' / '+total;}}items.forEach(function(it){it.addEventListener('click',function(){show(parseInt(it.getAttribute('data-goto'),10));});});var prev=document.getElementById('deck-prev');var next=document.getElementById('deck-next');if(prev){prev.addEventListener('click',function(){show(cur-1);});}if(next){next.addEventListener('click',function(){show(cur+1);});}document.addEventListener('keydown',function(e){var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;if(e.key==='ArrowRight'||e.key==='PageDown'){show(cur+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){show(cur-1);e.preventDefault();}else if(e.key==='Home'){show(1);e.preventDefault();}else if(e.key==='End'){show(total);e.preventDefault();}});show(1);})();</script></body></html>
