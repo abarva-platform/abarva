@@ -1,6 +1,7 @@
 import {
   applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
+  enforceCxoSectionBreaks,
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
 } from './response-policy';
@@ -114,5 +115,24 @@ describe('Ask Intelligence response policy', () => {
     const text = "I don't have the exact EDP floor in the loaded sources. Ask AWS for the schedule.";
 
     expect(applyPartialEvidencePolicy(text, [])).toBe(text);
+  });
+
+  it('enforces CXO section breaks when the model compresses labels into one block', () => {
+    const text = [
+      'My read: Meridian is ready for a controlled CDAO/CFO walkthrough, not a full pilot claim.',
+      'Evidence: Enterprise Context has 3,503 records and 38,640 facts.',
+      'Decision fork: If the CFO wants MLR proof, hold value claims at forecast; if the CDAO wants architecture proof, show Databricks data products.',
+      'Risk/gate: Do not advance until artifacts and approvals are stored for retrieval.',
+    ].join(' ');
+
+    expect(enforceCxoSectionBreaks(text)).toBe([
+      'My read: Meridian is ready for a controlled CDAO/CFO walkthrough, not a full pilot claim.',
+      '',
+      'Evidence: Enterprise Context has 3,503 records and 38,640 facts.',
+      '',
+      'Decision fork: If the CFO wants MLR proof, hold value claims at forecast; if the CDAO wants architecture proof, show Databricks data products.',
+      '',
+      'Risk / gate: Do not advance until artifacts and approvals are stored for retrieval.',
+    ].join('\n'));
   });
 });

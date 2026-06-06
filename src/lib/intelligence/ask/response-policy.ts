@@ -65,6 +65,16 @@ export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): 
     .trim();
 }
 
+export function enforceCxoSectionBreaks(text: string): string {
+  return text
+    .replace(
+      /([^\n])\s+(Evidence:|Decision fork:|Risk\s*\/\s*gate:|Risk\/gate:)/g,
+      (_match, before: string, marker: string) => `${before}\n\n${normalizeCxoSectionMarker(marker)}`,
+    )
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function chunkAskText(text: string): string[] {
   return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
 }
@@ -168,4 +178,10 @@ function neutralizeUnavailableDetectorPhrases(text: string): string {
       /\bno ([^.?!]{1,140}?\b(?:ledger|inventory)\b)/gi,
       (_match, phrase: string) => `the loaded evidence does not show ${cleanClause(phrase)}`,
     );
+}
+
+function normalizeCxoSectionMarker(value: string): string {
+  return value
+    .replace(/^Risk\s*\/\s*gate:/i, 'Risk / gate:')
+    .replace(/^Risk\/gate:/i, 'Risk / gate:');
 }

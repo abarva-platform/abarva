@@ -2,6 +2,7 @@ import type { AskSource, AskIntent } from "./types";
 import {
   applyPartialEvidencePolicy,
   chunkAskText,
+  enforceCxoSectionBreaks,
   sanitizeAskSynthesis,
 } from "./response-policy";
 import {
@@ -473,7 +474,8 @@ export async function* synthesizeStream(args: {
       sanitized,
       args.sources,
     );
-    for (const chunk of chunkAskText(evidenceDisciplined)) {
+    const displayDisciplined = enforceCxoSectionBreaks(evidenceDisciplined);
+    for (const chunk of chunkAskText(displayDisciplined)) {
       yield chunk;
     }
   } catch (err) {
