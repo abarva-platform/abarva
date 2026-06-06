@@ -915,7 +915,7 @@ async function seedSourceEvent(
   await client.query(
     `
     UPDATE source_event_evidence_states
-    SET current_state = 'Available', notes = $3, last_synced_at = now(), updated_at = now()
+    SET current_state = 'Available', notes = $2, last_synced_at = now(), updated_at = now()
     WHERE source_event_id = $1
       AND requirement_id IN (
         SELECT requirement_id
@@ -925,7 +925,7 @@ async function seedSourceEvent(
         LIMIT 3
       )
     `,
-    [eventId, CLIENT_KEY, `Baseline evidence named in seeded intake; client-approved files still pending (${PROVENANCE_TAG}).`],
+    [eventId, `Baseline evidence named in seeded intake; client-approved files still pending (${PROVENANCE_TAG}).`],
   );
 
   return eventId;
