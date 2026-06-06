@@ -92,16 +92,20 @@ function Chip({ label, color }: { label: string; color: { bg: string; text: stri
 
 interface IntelligenceSignalDetailPageProps {
   view: IntelligenceSignalDetailView;
+  tenantName: string;
 }
 
-export function IntelligenceSignalDetailPage({ view }: IntelligenceSignalDetailPageProps) {
+export function IntelligenceSignalDetailPage({
+  view,
+  tenantName,
+}: IntelligenceSignalDetailPageProps) {
   const sourceColor = SOURCE_COLOR[view.sourceType];
 
   return (
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · Signal · ${view.signalId.toUpperCase()}`,
       }}

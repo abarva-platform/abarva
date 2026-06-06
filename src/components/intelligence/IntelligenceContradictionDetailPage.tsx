@@ -322,6 +322,7 @@ function AffectedPatterns({
 
 interface IntelligenceContradictionDetailPageProps {
   view: IntelligenceContradictionDetailView;
+  tenantName: string;
 }
 
 function resolvedToward(
@@ -334,6 +335,7 @@ function resolvedToward(
 
 export function IntelligenceContradictionDetailPage({
   view,
+  tenantName,
 }: IntelligenceContradictionDetailPageProps) {
   const statusStyle = STATUS_STYLE[view.status];
   const isResolved =
@@ -344,7 +346,7 @@ export function IntelligenceContradictionDetailPage({
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · Contradiction · ${view.contradictionId.toUpperCase()}`,
       }}

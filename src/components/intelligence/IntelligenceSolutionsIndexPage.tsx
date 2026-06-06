@@ -194,16 +194,18 @@ function SolutionCard({ solution }: { solution: SolutionCardView }) {
 
 interface IntelligenceSolutionsIndexPageProps {
   view: IntelligenceSolutionsIndexView;
+  tenantName: string;
 }
 
 export function IntelligenceSolutionsIndexPage({
   view,
+  tenantName,
 }: IntelligenceSolutionsIndexPageProps) {
   return (
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: 'Intelligence · Solution Archetypes',
       }}

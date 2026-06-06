@@ -5,6 +5,7 @@
 
 import { redirect } from 'next/navigation';
 import { IntelligenceSignalDetailPage } from '@/components/intelligence/IntelligenceSignalDetailPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceSignalDetailView,
   getKnownSignalIds,
@@ -38,5 +39,11 @@ export default async function SignalDetailRoute({
     redirect('/intelligence/signals');
   }
 
-  return <IntelligenceSignalDetailPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligenceSignalDetailPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }

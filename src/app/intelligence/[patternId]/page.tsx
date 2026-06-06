@@ -6,6 +6,7 @@
 
 import { redirect } from 'next/navigation';
 import { IntelligencePatternDetailPage } from '@/components/intelligence/IntelligencePatternDetailPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligencePatternDetailView,
   getKnownPatternIds,
@@ -39,5 +40,11 @@ export default async function PatternDetailRoute({
     redirect('/intelligence');
   }
 
-  return <IntelligencePatternDetailPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligencePatternDetailPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }
