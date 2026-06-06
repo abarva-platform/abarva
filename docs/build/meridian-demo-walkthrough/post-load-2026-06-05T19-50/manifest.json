@@ -1,0 +1,52 @@
+{
+  "capturedAt": "2026-06-05T19:50:00-05:00",
+  "tenant": "meridian-health",
+  "clientId": "a20ecef5-f0ea-4890-b9d5-7375fab223ff",
+  "routeBase": "https://app.abarva.ai",
+  "productionDeployment": {
+    "id": "dpl_GfVZVSZzuDnb8P19qJ3UgQSkzc9W",
+    "url": "https://nexus-ipqujddfo-anandsundaram-hashs-projects.vercel.app",
+    "alias": "https://app.abarva.ai"
+  },
+  "screenshots": [
+    {
+      "file": "00-signin-ready.png",
+      "route": "/sign-in?mode=demo-code&redirect=/admin/context-layer/uploads",
+      "purpose": "Meridian demo-code sign-in ready",
+      "pass": true
+    },
+    {
+      "file": "01-admin-uploads-before.png",
+      "route": "/admin/context-layer/uploads",
+      "purpose": "Admin uploads route renders for Meridian CDAO after sign-in",
+      "pass": true
+    },
+    {
+      "file": "04-admin-uploads-after.png",
+      "route": "/admin/context-layer/uploads",
+      "purpose": "Admin uploads route after validate/stage attempt",
+      "pass": true
+    }
+  ],
+  "apiEvidence": {
+    "validateOnly": {
+      "status": 202,
+      "ok": true,
+      "filesProcessed": 26,
+      "rowsParsed": 0,
+      "chunksQueued": 0,
+      "persistence": {
+        "status": "validation_only",
+        "detail": "Manifest, files, template mappings, and sensitive-data gate passed. No Blob or context rows were written."
+      }
+    },
+    "stageAndProcess": {
+      "status": 500,
+      "ok": false,
+      "error": "bulk_upload_failed",
+      "detail": "object_upload_failed:code=AuthorizationFailure;status=403;name=RestError;message=This request is not authorized to perform this operation.\nRequestId:5039de31-c01e-0049-364e-f5a0db000000\nTime:2026-06-06T00:50:14.2284264Z"
+    }
+  },
+  "decision": "HOLD",
+  "blocker": "Azure Blob credential/RBAC cannot write to the landing container from production runtime."
+}
