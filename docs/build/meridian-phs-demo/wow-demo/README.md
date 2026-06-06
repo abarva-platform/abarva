@@ -48,6 +48,34 @@ In production the phase deliverables live in `deliverable_versions.content`
 `content-export` route. The files in `artifacts/` are pre-rendered twins so a
 reviewer can open them without a database.
 
+## Production board-grade kernel (the real quality bar)
+
+The `artifacts/` files above are lightweight standalone twins. The **production**
+quality bar is the board-grade Expert Kernel
+(`src/lib/programs/expert-kernel/exports/board-grade/`), which renders 8 decks
+with inline SVG exhibits, a shape/fund/kill verdict system, and evidence strips:
+costed business case, discover brief, solution architecture, estimate model,
+mobilize packet, charter skeleton, CFO pack, and master dossier.
+
+- Render samples: `npx tsx scripts/demo/render-board-grade-decks.ts`
+- **Meridian bound deck** (curated `population_health_value_based_care` function
+  pack): `kernel-samples/meridian-move/costed-business-case-pack.html` — a real,
+  kernel-bound Meridian business case (MLR, RAF, quality composite, wellness-visit
+  drivers; ~89 KB with SVG exhibit and verdict).
+- Apex reference decks (the hand-curated fidelity target) already live at repo
+  root as `apex-*.sample.html` / `apex-costed-business-case-pack.sample.pptx`.
+
+### PPTX status / gap
+
+The kernel ships an **editable PPTX only for the Apex reference business-case
+deck** (`renderApexCostedBusinessCasePptx`). The generic, Move-data-driven decks
+(including Meridian) currently render **HTML only** (print → PDF). Closing the
+PPTX gap means adding a generic `renderMove*Pptx` path (and ideally extending
+PPTX to the other 7 decks). The Meridian deck only renders fully when the Move
+binds a curated Domain Function Pack — `population_health_value_based_care`
+exists; other Meridian functions would each need a curated pack to render bound
+(otherwise the kernel honestly renders an UNBOUND deck rather than fabricating).
+
 ## Dataset enrichment (WS1)
 
 Enrichment pack v1 adds 10 governed-loader-compatible templates (246 synthetic
