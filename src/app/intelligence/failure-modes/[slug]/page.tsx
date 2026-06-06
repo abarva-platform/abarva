@@ -77,6 +77,7 @@ export default async function FailureModePage({ params }: PageProps) {
 
   // INT-2.6: tenant detection for telemetry.
   const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantName = activeClient?.name ?? 'Client workspace';
   const tenantKey = activeClient?.key ?? null;
   const visitorType: 'cold' | 'authenticated' =
     activeClient ? 'authenticated' : 'cold';
@@ -85,7 +86,7 @@ export default async function FailureModePage({ params }: PageProps) {
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · ${card.editorialName}`,
       }}

@@ -22,7 +22,11 @@ export default async function PatternGraphRoute() {
       <div style={{ padding: '24px 32px 0', background: '#F8F7F4' }}>
         <TenantIdentityStrip clientName={activeClient?.name} surface="Intelligence patterns" />
       </div>
-      <PatternGraphShell shell={shell} graph={graph} />
+      <PatternGraphShell
+        shell={shell}
+        graph={graph}
+        tenantName={activeClient?.name ?? 'Client workspace'}
+      />
     </>
   );
 }
