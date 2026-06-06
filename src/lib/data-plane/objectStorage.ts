@@ -214,6 +214,33 @@ function headersFromOptions(options?: ObjectStorageUploadOptions): BlobHTTPHeade
   };
 }
 
+function isAzureAuthorizationFailure(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as {
+    statusCode?: unknown;
+    code?: unknown;
+    details?: { errorCode?: unknown };
+    message?: unknown;
+  };
+  if (candidate.statusCode === 403) return true;
+  const code = String(candidate.code ?? candidate.details?.errorCode ?? '');
+  return (
+    code === 'AuthorizationPermissionMismatch' ||
+    code === 'AuthorizationFailure'
+  );
+}
+
+async function createContainerIfAllowed(
+  container: ContainerClient,
+): Promise<void> {
+  try {
+    await container.createIfNotExists();
+  } catch (error) {
+    if (isAzureAuthorizationFailure(error)) return;
+    throw error;
+  }
+}
+
 function contentDisposition(download: string | boolean | undefined): string | undefined {
   if (!download) return undefined;
   if (download === true) return 'attachment';
@@ -252,7 +279,7 @@ async function createReadSasUrl(
 class AzureBlobObjectStorageAdapter implements ObjectStorageAdapter {
   async upload(bucket: string, path: string, body: BodyInitLike, options: ObjectStorageUploadOptions = {}): Promise<void> {
     const { container, blobName } = containerClient(bucket, path);
-    await container.createIfNotExists();
+    await createContainerIfAllowed(container);
     const blob = container.getBlockBlobClient(blobName);
     if (!options.upsert && await blob.exists()) {
       throw new Error(`object_exists:${bucket}/${path}`);
