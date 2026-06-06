@@ -21,8 +21,23 @@ export function hasAgentCitationMarkup(text: string): boolean {
   return PATTERN_CITATION_REGEX.test(text);
 }
 
-export function shouldShowPlainTextCitationGap(text: string): boolean {
-  return hasSubstantiveClaimText(text) && !hasAgentCitationMarkup(text);
+export function hasEvidenceBackedSurfaceContext(surfaceContext: unknown): boolean {
+  if (!surfaceContext || typeof surfaceContext !== "object") return false;
+  const evidenceContext = (surfaceContext as { evidenceContext?: unknown }).evidenceContext;
+  if (!evidenceContext || typeof evidenceContext !== "object") return false;
+  const usableEvidenceCount = (evidenceContext as { usableEvidenceCount?: unknown }).usableEvidenceCount;
+  return typeof usableEvidenceCount === "number" && usableEvidenceCount > 0;
+}
+
+export function shouldShowPlainTextCitationGap(
+  text: string,
+  surfaceContext?: unknown,
+): boolean {
+  return (
+    hasSubstantiveClaimText(text) &&
+    !hasAgentCitationMarkup(text) &&
+    !hasEvidenceBackedSurfaceContext(surfaceContext)
+  );
 }
 
 export function shouldShowRenderedResponseCitationGap(

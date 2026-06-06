@@ -57,6 +57,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
     activeTab: args.stage,
     activeClient: args.activeClient,
     clientKey: args.clientKey ?? (args.isApexBound ? 'apexretail' : null),
+    evidenceContext: buildEvidenceContext(args.enterpriseContext),
     substrate: args.status,
     pageFacts,
     stageFacts,
@@ -80,6 +81,21 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
       ...sourceFacts,
       ...qualityFacts,
     ]),
+  };
+}
+
+function buildEvidenceContext(overview: EnterpriseContextOverview | null | undefined): Record<string, unknown> | null {
+  if (!overview || overview.evidenceUsableCount <= 0) return null;
+  return {
+    kind: 'enterprise_context',
+    tenantKey: overview.tenantKey,
+    recordCount: overview.counts.records,
+    factCount: overview.counts.facts,
+    relationshipCount: overview.counts.relationships,
+    evidenceCount: overview.counts.evidence,
+    usableEvidenceCount: overview.evidenceUsableCount,
+    sourceCount: overview.counts.sources,
+    sourceSystems: overview.sourceSystems.slice(0, 12),
   };
 }
 

@@ -801,7 +801,7 @@ export function AgentDock(props: AgentDockProps) {
                 ) : null}
                 <div style={BUBBLE_STYLE}>
                   {turn.role === "agent" &&
-                  shouldShowPlainTextCitationGap(turn.body) ? (
+                  shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
                     <CitationGapNotice compact />
                   ) : null}
                   {turn.role === "agent"
@@ -978,6 +978,7 @@ export function AgentDock(props: AgentDockProps) {
     sendDisabled,
     setMode,
     surface,
+    surfaceContext,
     startUploads,
     submit,
     submitting,
