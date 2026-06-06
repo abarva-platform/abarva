@@ -50,6 +50,30 @@
   await client.connect();
   L('db', { ok: true });
 
+  // ensure the product table exists (faithful to migration 20260524162000; omits optional egress FK)
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS public.generated_artifacts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      client_id TEXT NOT NULL,
+      artifact_type TEXT NOT NULL CHECK (artifact_type IN ('move_board_pack','source_board_pack','pilot_evidence_package','watchlist_review_pack','dossier_board_pack')),
+      source_artifact_ref TEXT NOT NULL,
+      render_engine TEXT NOT NULL CHECK (render_engine IN ('gamma','internal','gamma_with_internal_fallback')),
+      output_format TEXT NOT NULL CHECK (output_format IN ('pptx','pdf','html','docx')),
+      blob_url TEXT NOT NULL,
+      blob_sha256 TEXT NOT NULL,
+      quality_score NUMERIC CHECK (quality_score IS NULL OR quality_score BETWEEN 0 AND 10),
+      evidence_ledger_ids UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
+      generation_egress_audit UUID,
+      rendered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      rendered_by TEXT NOT NULL,
+      superseded_by UUID,
+      quarantine_reason TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+    )`);
+    await client.query("CREATE INDEX IF NOT EXISTS generated_artifacts_lookup_idx ON public.generated_artifacts (client_id, artifact_type, source_artifact_ref, rendered_at DESC)");
+    L('ensure_table', { generated_artifacts: 'ok' });
+  } catch (e) { E('ensure_table', e); }
+
   // ---- resolve tenant ----
   const clientRow = (await client.query("select id from clients where tenant_key=$1 limit 1", [TENANT_KEY])).rows[0];
   const clientUuid = clientRow ? clientRow.id : null;
@@ -121,7 +145,7 @@
       try {
         const row = {
           id: crypto.randomUUID(), client_id: TENANT_KEY, artifact_type: 'move_board_pack',
-          source_artifact_ref: `move:${moveId}:${aid}`, render_engine: 'expert-kernel', output_format: fmt,
+          source_artifact_ref: `move:${moveId}:${aid}`, render_engine: 'internal', output_format: fmt,
           blob_url: `https://${ACCT}.blob.core.windows.net/${CONTAINER}/${blobPath}`, blob_sha256: sha,
           rendered_by: RENDERED_BY,
           metadata: JSON.stringify({
