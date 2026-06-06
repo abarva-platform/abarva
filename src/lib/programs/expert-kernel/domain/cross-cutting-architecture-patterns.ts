@@ -6,10 +6,19 @@
 // the metadata-driven ingestion framework, the medallion data-product layer,
 // governed model serving and monitoring, and the governance/compliance spine.
 //
-// These are authored once here and spread into each function pack's
-// `referenceSolutionPatterns` so that a generated Solution Architecture artifact
-// inherits the platform foundation instead of improvising it — closing the
-// "architecture with no landing zone / reinvented ingestion" failure mode.
+// These are authored once here as the typed source of truth for the platform
+// foundation. They are NOT spread into a function pack's
+// `referenceSolutionPatterns` — the solution-architecture renderer treats that
+// array as a mutually-exclusive option set (it selects the most
+// human-accountable pattern and rejects the rest), so foundation layers placed
+// there would render as "rejected alternatives". Instead, the foundation depth
+// reaches a generated Solution Architecture through the pack's
+// `solution_architecture` deliverable outline (Layer 7) guidance, which names
+// the landing zone and the own-it ingestion framework as required sections.
+// This module stands ready for a foundation-aware renderer that can present
+// these as adopted foundation components rather than competing options —
+// closing the "architecture with no landing zone / reinvented ingestion"
+// failure mode without the mis-rendering.
 //
 // The canonical, human-readable source for each pattern is the Pattern Pack
 // Bible (docs/build/pattern-packs/) — the cited pattern IDs (ARCH-xx, INGEST-xx,
