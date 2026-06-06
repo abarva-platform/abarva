@@ -39,6 +39,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-p6ht1ub` reached the runner and failed on `column "key" does not exist`; the client lookup now detects available `clients` columns instead of assuming `key` / `slug`.
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-b2ar93c` resolved SkyHarbor and then failed on `relation "public.data_ingestion_runs" does not exist`; the runner now verifies/creates the ingestion-ledger table before starting the audit row.
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-ec7r8a6` verified the ingestion ledger and started a dry-run row, then failed on `invalid input syntax for type json`; the runner now inspects target column types and explicitly serializes JSON/JSONB payloads before database writes.
+- FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-sdgdfbv` advanced through JSON serialization and then failed on `there is no unique or exclusion constraint matching the ON CONFLICT specification`; the runner now uses schema-tolerant manual select/update/insert upserts instead of assuming every demo database has the expected unique indexes.
 
 Live Azure apply and signed-in crawl proof remain required before marking the SkyHarbor Moves/Source backlog item complete. The apply path writes a `data_ingestion_runs` ledger row; no side-load path is approved for completion.
 

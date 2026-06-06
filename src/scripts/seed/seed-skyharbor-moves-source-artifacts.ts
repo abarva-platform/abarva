@@ -511,6 +511,10 @@ function valuesSql(start: number, count: number): string {
   return Array.from({ length: count }, (_, index) => `$${start + index}`).join(", ");
 }
 
+function whereSql(columns: string[], start = 1): string {
+  return columns.map((column, index) => `${column} = $${start + index}`).join(" AND ");
+}
+
 async function upsertRow(
   client: PgClient,
   table: string,
@@ -522,17 +526,47 @@ async function upsertRow(
   const entries = Object.entries(row).filter(([column, value]) => columnInfo.has(column) && value !== undefined);
   const names = entries.map(([column]) => column);
   const values = entries.map(([column, value]) => valueForColumn(value, columnInfo.get(column)));
-  const updates = names
-    .filter((name) => !conflictColumns.includes(name))
-    .map((name) => `${name} = excluded.${name}`);
-  const sql = `
+  const conflictValues = conflictColumns.map((column) => valueForColumn(row[column], columnInfo.get(column)));
+  if (conflictValues.some((value) => value === undefined)) {
+    throw new Error(`Missing conflict value for ${table}: ${conflictColumns.join(", ")}`);
+  }
+
+  const existing = await client.query<Record<string, string>>(
+    `
+    SELECT ${returning}
+    FROM ${table}
+    WHERE ${whereSql(conflictColumns)}
+    ORDER BY ${returning}
+    LIMIT 1
+    `,
+    conflictValues,
+  );
+  const existingId = existing.rows[0]?.[returning];
+  if (existingId) {
+    const updateEntries = entries.filter(([column]) => !conflictColumns.includes(column));
+    if (updateEntries.length === 0) return existingId;
+    const updateValues = updateEntries.map(([column, value]) => valueForColumn(value, columnInfo.get(column)));
+    const assignments = updateEntries.map(([column], index) => `${column} = $${index + 1}`).join(", ");
+    const result = await client.query<Record<string, string>>(
+      `
+      UPDATE ${table}
+      SET ${assignments}
+      WHERE ${returning} = $${updateValues.length + 1}
+      RETURNING ${returning}
+      `,
+      [...updateValues, existingId],
+    );
+    return result.rows[0]?.[returning] ?? existingId;
+  }
+
+  const result = await client.query<Record<string, string>>(
+    `
     INSERT INTO ${table} (${names.join(", ")})
     VALUES (${valuesSql(1, values.length)})
-    ON CONFLICT (${conflictColumns.join(", ")}) DO UPDATE SET
-      ${updates.length > 0 ? updates.join(", ") : `${conflictColumns[0]} = excluded.${conflictColumns[0]}`}
     RETURNING ${returning}
-  `;
-  const result = await client.query<Record<string, string>>(sql, values);
+    `,
+    values,
+  );
   return result.rows[0]?.[returning] ?? null;
 }
 
