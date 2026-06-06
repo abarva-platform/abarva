@@ -84,6 +84,8 @@ export type FinancialServicesFunctionKey =
   | 'fraud_financial_crime'
   | 'regulatory_compliance'
   | 'finance_treasury_alm'
+  /** Cross-entity cost reduction & vendor/procurement rationalization — the corporate/G&A spend spine of a diversified HoldCo. */
+  | 'cost_optimization_vendor_management'
   | 'customer_servicing_contact_center'
   | 'collections_recovery';
 
