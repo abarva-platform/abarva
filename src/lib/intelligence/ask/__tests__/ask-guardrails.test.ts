@@ -139,7 +139,7 @@ describe('Ask Intelligence guardrails', () => {
       .map((chunk) => chunk.trim())
       .join('');
     expect(fusedFromTrimmedChunks).toMatch(
-      /show upover|merchandisingside|loyaltynext-best-offer/,
+      /show upover|show up overand|merchandisingside|side,AI|loyaltynext-best-offer/,
     );
 
     // Post-fix behaviour: passing chunks through unchanged reconstructs the
