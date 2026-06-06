@@ -23,8 +23,8 @@ export async function requireCorpusCtx(): Promise<CorpusApiCtx | NextResponse> {
   }
 }
 
-export function mutationCtx(ctx: CorpusApiCtx): { userId: string; clientId: string } {
-  return { userId: ctx.userId, clientId: ctx.clientId };
+export function mutationCtx(ctx: CorpusApiCtx): { userId: string; clientId: string; clientKey: string | null } {
+  return { userId: ctx.userId, clientId: ctx.clientId, clientKey: ctx.clientKey ?? null };
 }
 
 export function canReviewCorpus(ctx: CorpusApiCtx): boolean {

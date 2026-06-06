@@ -78,6 +78,7 @@ export interface CorpusSearchHit extends CorpusPatternRecord {
 export interface CorpusMutationContext {
   userId: string;
   clientId?: string | null;
+  clientKey?: string | null;
 }
 
 export interface CorpusReviewInput {
