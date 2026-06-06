@@ -356,6 +356,12 @@ type PgModule = {
   Client: new (config: { connectionString: string; ssl: false | { rejectUnauthorized: false } }) => PgClient;
 };
 
+type ColumnInfo = {
+  columnName: string;
+  dataType: string;
+  udtName: string;
+};
+
 const args = new Set(process.argv.slice(2));
 const APPLY = args.has("--apply");
 const PLAN_ONLY = args.has("--plan-only");
@@ -410,15 +416,40 @@ function printPlan(): void {
 }
 
 async function tableColumns(client: PgClient, table: string): Promise<Set<string>> {
-  const result = await client.query<{ column_name: string }>(
+  const info = await tableColumnInfo(client, table);
+  return new Set(info.keys());
+}
+
+async function tableColumnInfo(client: PgClient, table: string): Promise<Map<string, ColumnInfo>> {
+  const result = await client.query<{ column_name: string; data_type: string; udt_name: string }>(
     `
-    SELECT column_name
+    SELECT column_name, data_type, udt_name
     FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = $1
     `,
     [table],
   );
-  return new Set(result.rows.map((row) => row.column_name));
+  return new Map(
+    result.rows.map((row) => [
+      row.column_name,
+      {
+        columnName: row.column_name,
+        dataType: row.data_type,
+        udtName: row.udt_name,
+      },
+    ]),
+  );
+}
+
+function valueForColumn(value: unknown, info: ColumnInfo | undefined): unknown {
+  if (
+    value !== null &&
+    value !== undefined &&
+    (info?.dataType === "json" || info?.dataType === "jsonb" || info?.udtName === "json" || info?.udtName === "jsonb")
+  ) {
+    return asJsonb(value);
+  }
+  return value;
 }
 
 async function findSkyHarborClient(client: PgClient): Promise<{ id: string; name: string }> {
@@ -487,10 +518,10 @@ async function upsertRow(
   conflictColumns: string[],
   returning = "id",
 ): Promise<string | null> {
-  const columns = await tableColumns(client, table);
-  const entries = Object.entries(row).filter(([column, value]) => columns.has(column) && value !== undefined);
+  const columnInfo = await tableColumnInfo(client, table);
+  const entries = Object.entries(row).filter(([column, value]) => columnInfo.has(column) && value !== undefined);
   const names = entries.map(([column]) => column);
-  const values = entries.map(([, value]) => value);
+  const values = entries.map(([column, value]) => valueForColumn(value, columnInfo.get(column)));
   const updates = names
     .filter((name) => !conflictColumns.includes(name))
     .map((name) => `${name} = excluded.${name}`);
@@ -678,7 +709,7 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
       INSERT INTO deliverable_versions (
         deliverable_id, version, content, structured_data, quality_score
       )
-      VALUES ($1, 1, $2, $3, $4)
+      VALUES ($1, 1, $2, $3::jsonb, $4::jsonb)
       ON CONFLICT (deliverable_id, version) DO UPDATE SET
         content = excluded.content,
         structured_data = excluded.structured_data,
@@ -687,12 +718,12 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
       [
         deliverableId,
         `# ${title}\n\n${move.targetOutcome}\n\nEvidence themes: ${move.evidenceThemes.join(", ")}.\n\nValue range: ${formatUsd(move.valueProjectedLowUsd)}-${formatUsd(move.valueProjectedHighUsd)}.\n\nHuman control: executive sponsor and owner approval remain required before mobilization.`,
-        {
+        asJsonb({
           provenance_tag: PROVENANCE_TAG,
           move_seed_key: move.seedKey,
           evidence_themes: move.evidenceThemes,
-        },
-        { score: 0.82, caveat: "Demo-quality scaffold; client evidence validation pending." },
+        }),
+        asJsonb({ score: 0.82, caveat: "Demo-quality scaffold; client evidence validation pending." }),
       ],
     );
   }
@@ -709,7 +740,7 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
         engagement_id, title, description, item_type, status, priority,
         module_key, phase_number, metadata_jsonb
       )
-      VALUES ($1, $2, $3, $4, 'in_progress', $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, 'in_progress', $5, $6, $7, $8::jsonb)
       ON CONFLICT DO NOTHING
       `,
       [
@@ -720,7 +751,7 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
         priority,
         move.currentModuleKey,
         move.phase,
-        { provenance_tag: PROVENANCE_TAG },
+        asJsonb({ provenance_tag: PROVENANCE_TAG }),
       ],
     );
   }
