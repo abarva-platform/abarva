@@ -44,6 +44,7 @@ import { riskManagementPack } from '../financial-services/risk-management';
 import { fraudFinancialCrimePack } from '../financial-services/fraud-financial-crime';
 import { regulatoryCompliancePack } from '../financial-services/regulatory-compliance';
 import { financeTreasuryAlmPack } from '../financial-services/finance-treasury-alm';
+import { costOptimizationVendorManagementPack } from '../financial-services/cost-optimization-vendor-management';
 import { retailBankingDepositsPack } from '../financial-services/retail-banking-deposits';
 import { lendingCreditUnderwritingPack } from '../financial-services/lending-credit-underwriting';
 import { capitalMarketsTradingPack } from '../financial-services/capital-markets-trading';
@@ -91,6 +92,10 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['fraud_financial_crime', fraudFinancialCrimePack],
   ['regulatory_compliance', regulatoryCompliancePack],
   ['finance_treasury_alm', financeTreasuryAlmPack],
+  [
+    'cost_optimization_vendor_management',
+    costOptimizationVendorManagementPack,
+  ],
   ['retail_banking_deposits', retailBankingDepositsPack],
   ['lending_credit_underwriting', lendingCreditUnderwritingPack],
   ['capital_markets_trading', capitalMarketsTradingPack],
