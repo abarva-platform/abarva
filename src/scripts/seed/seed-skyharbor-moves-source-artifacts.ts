@@ -933,6 +933,31 @@ async function summarize(client: PgClient, clientId: string): Promise<void> {
   console.log(`- Source evidence states beyond Not Requested: ${source?.evidence ?? "0"}`);
 }
 
+async function ensureIngestionLedger(client: PgClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.data_ingestion_runs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      client_id UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+      tenant_key TEXT NOT NULL,
+      source_label TEXT NOT NULL,
+      source_root TEXT,
+      status TEXT NOT NULL CHECK (status IN ('started','completed','failed')) DEFAULT 'started',
+      records_loaded BIGINT NOT NULL DEFAULT 0,
+      chunks_loaded BIGINT NOT NULL DEFAULT 0,
+      nodes_loaded BIGINT NOT NULL DEFAULT 0,
+      edges_loaded BIGINT NOT NULL DEFAULT 0,
+      summary JSONB NOT NULL DEFAULT '{}'::jsonb,
+      started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      completed_at TIMESTAMPTZ,
+      error_message TEXT
+    )
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS idx_data_ingestion_runs_tenant_started
+    ON public.data_ingestion_runs(tenant_key, started_at DESC)
+  `);
+}
+
 async function startIngestionRun(client: PgClient, clientId: string): Promise<string> {
   const result = await client.query<{ id: string }>(
     `
@@ -1009,6 +1034,8 @@ async function main(): Promise<void> {
   try {
     const skyharbor = await findSkyHarborClient(client);
     console.log(`Resolved client: ${skyharbor.name} (${skyharbor.id})`);
+    await ensureIngestionLedger(client);
+    console.log("Verified data_ingestion_runs ledger table.");
     const runId = await startIngestionRun(client, skyharbor.id);
     console.log(`Started data_ingestion_runs ledger: ${runId}`);
 
