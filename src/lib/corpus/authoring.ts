@@ -435,6 +435,8 @@ export async function publishPattern(
   const searchDocId = await uploadCorpusSearchDocument({
     pattern,
     embedding: embedding.embedding,
+    clientId,
+    clientKey: context.clientKey,
   });
 
   return withCorpusTransaction(async (client) => {

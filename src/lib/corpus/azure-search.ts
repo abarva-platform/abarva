@@ -63,9 +63,10 @@ export function toCorpusSearchDocument(args: {
   pattern: CorpusPatternRecord;
   embedding?: number[];
   clientId?: string | null;
+  clientKey?: string | null;
 }): Record<string, unknown> {
   const docId = args.pattern.searchDocId || searchDocId(args.pattern, args.clientId);
-  return {
+  const doc: Record<string, unknown> = {
     '@search.action': 'mergeOrUpload',
     id: docId,
     slug: args.pattern.slug,
@@ -80,14 +81,21 @@ export function toCorpusSearchDocument(args: {
     version: args.pattern.version,
     client_id: args.clientId ?? null,
   };
+  if (isLakeshoreClient(args.clientKey) || isLakeshoreClient(args.clientId)) {
+    doc.tenant_scope = 'lakeshore';
+  }
+  return doc;
 }
 
 export async function uploadCorpusSearchDocument(args: {
   pattern: CorpusPatternRecord;
   embedding: number[];
   clientId?: string | null;
+  clientKey?: string | null;
 }): Promise<string> {
-  const indexName = args.clientId ? corpusClientIndex(args.clientId) : CORPUS_GLOBAL_INDEX;
+  const indexName = isLakeshoreClient(args.clientKey) || isLakeshoreClient(args.clientId)
+    ? lakeshoreCorpusIndex()
+    : args.clientId ? corpusClientIndex(args.clientId) : CORPUS_GLOBAL_INDEX;
   const doc = toCorpusSearchDocument(args);
   const response = await fetch(
     `${endpointBase()}/indexes/${encodeURIComponent(indexName)}/docs/index?api-version=${encodeURIComponent(apiVersion())}`,
