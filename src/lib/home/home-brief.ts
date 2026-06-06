@@ -31,6 +31,11 @@ export interface HomePortfolioRow {
   tone: "risk" | "ok" | "gate";
 }
 
+export interface HomeAttentionItem {
+  module: string;
+  text: string;
+}
+
 export interface HomeDecision {
   /** Eyebrow line, e.g. "Needs review today · $4.0M · Store Labor AI". */
   eyebrow: string;
@@ -54,6 +59,7 @@ export interface HomeBrief {
   hasPortfolio: boolean;
   kpis: HomeKpi[];
   portfolio: HomePortfolioRow[];
+  attention: HomeAttentionItem[];
   decision: HomeDecision | null;
 }
 
@@ -110,9 +116,12 @@ export function buildHomeBrief(input: {
   const hasPortfolio = initiatives.length > 0;
   const decisionsCount = approvals.length;
 
+  const sortedInitiatives = [...initiatives].sort(
+    (a, b) => (b.committedTotalUsd ?? 0) - (a.committedTotalUsd ?? 0),
+  );
+
   // ── Portfolio rows: highest committed value first, top 6. ──
-  const portfolio: HomePortfolioRow[] = [...initiatives]
-    .sort((a, b) => (b.committedTotalUsd ?? 0) - (a.committedTotalUsd ?? 0))
+  const portfolio: HomePortfolioRow[] = sortedInitiatives
     .slice(0, 6)
     .map((i) => ({
       name: i.name,
@@ -132,9 +141,10 @@ export function buildHomeBrief(input: {
     (sum, i) => sum + (i.measuredValueUsd ?? 0),
     0,
   );
-  const atRisk = initiatives.filter((i) =>
+  const riskInitiatives = sortedInitiatives.filter((i) =>
     RISK_STATUSES.has(i.statusFlag),
-  ).length;
+  );
+  const atRisk = riskInitiatives.length;
   const realizedPct =
     valueAtStake > 0 ? Math.round((realized / valueAtStake) * 100) : 0;
 
@@ -185,6 +195,20 @@ export function buildHomeBrief(input: {
   }
 
   const greeting = greetingFor(firstName);
+  const attention: HomeAttentionItem[] = [
+    ...(decision
+      ? [
+          {
+            module: "Decision",
+            text: decision.question.replace(/^Review and decide:\s*/, ""),
+          },
+        ]
+      : []),
+    ...riskInitiatives.slice(0, 3).map((i) => ({
+      module: STAGE_LABELS[i.stage] ?? i.stage,
+      text: `${i.name} — ${STATUS_LABELS[i.statusFlag] ?? i.statusFlag}`,
+    })),
+  ];
 
   return {
     tenantName,
@@ -195,6 +219,7 @@ export function buildHomeBrief(input: {
     hasPortfolio,
     kpis,
     portfolio,
+    attention,
     decision,
   };
 }
