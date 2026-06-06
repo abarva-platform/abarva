@@ -36,6 +36,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - PASS: `npm run seed:skyharbor-artifacts -- --plan-only`
 - BLOCKED: `npx tsc --noEmit --pretty false` could not run in the clean worktree because local `node_modules` is absent and `npx` resolved the placeholder `tsc` package. Run again in CI or after dependency install.
 - PASS: `npm run release:check -- --base origin/main --head HEAD`
+- FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-p6ht1ub` reached the runner and failed on `column "key" does not exist`; the client lookup now detects available `clients` columns instead of assuming `key` / `slug`.
 
 Live Azure apply and signed-in crawl proof remain required before marking the SkyHarbor Moves/Source backlog item complete. The apply path writes a `data_ingestion_runs` ledger row; no side-load path is approved for completion.
 
