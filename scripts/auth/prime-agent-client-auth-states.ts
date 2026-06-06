@@ -9,6 +9,10 @@ import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
 } from '../../src/lib/ai-liability/responsible-ai-acknowledgment-copy';
+import {
+  RESPONSIBLE_AI_TRAINING_ROUTE,
+  RESPONSIBLE_AI_TRAINING_VERSION,
+} from '../../src/lib/ai-liability/responsible-ai-training-copy';
 
 type ClientKey =
   | 'apexretail'
@@ -293,6 +297,26 @@ async function acknowledgeResponsibleAi(page: Page, baseUrl: string): Promise<vo
   }
 }
 
+async function completeResponsibleAiTraining(page: Page, baseUrl: string): Promise<void> {
+  const trainingUrl = new URL(RESPONSIBLE_AI_TRAINING_ROUTE, baseUrl).toString();
+  const response = await page.goto(trainingUrl, { waitUntil: 'domcontentloaded' }).catch(() => null);
+  if (response && response.status() >= 400 && response.status() !== 404) {
+    throw new Error(`Responsible AI training route returned ${response.status()}.`);
+  }
+
+  if (!page.url().includes(RESPONSIBLE_AI_TRAINING_ROUTE)) return;
+
+  const apiResponse = await page.request.post('/api/ai-liability/responsible-ai-training', {
+    data: {
+      completed: true,
+      trainingVersion: RESPONSIBLE_AI_TRAINING_VERSION,
+    },
+  });
+  if (![200, 409].includes(apiResponse.status())) {
+    throw new Error(`Responsible AI training API returned ${apiResponse.status()}.`);
+  }
+}
+
 async function probeRoutes(
   page: Page,
   baseUrl: string,
@@ -352,6 +376,7 @@ async function primePersona(
       await signInWithTicket(page, args.baseUrl, user.id);
       await pinActiveClient(context, page, args.baseUrl, persona.clientKey);
       await acknowledgeResponsibleAi(page, args.baseUrl);
+      await completeResponsibleAiTraining(page, args.baseUrl);
       await pinActiveClient(context, page, args.baseUrl, persona.clientKey);
       const probeNotes = await probeRoutes(page, args.baseUrl, persona, args.includeOptionalProbeFailures);
 
