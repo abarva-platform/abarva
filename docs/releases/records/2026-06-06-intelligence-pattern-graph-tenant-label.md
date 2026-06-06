@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes a tenant-copy leak found during the Lakeshore live module crawl. The `/intelligence/patterns` page correctly resolved Lakeshore for the tenant identity strip, but the Pattern Graph shell still hard-coded the Apex Retail fixture label in the app top bar. The shell now receives the active tenant name from the route and falls back to a neutral label when no tenant is resolved.
+This release fixes tenant-copy leaks found during the Lakeshore live module crawl and follow-up Intelligence route sweep. The `/intelligence/patterns` page correctly resolved Lakeshore for the tenant identity strip, but the Pattern Graph shell still hard-coded the Apex Retail fixture label in the app top bar. Adjacent Intelligence topic and failure-mode routes also resolved the active tenant for telemetry while rendering Apex in the shell. These shells now use the active tenant name and fall back to a neutral label when no tenant is resolved.
 
 ## Layer Impact
 
@@ -29,16 +29,17 @@ This release fixes a tenant-copy leak found during the Lakeshore live module cra
 
 - Threads `activeClient.name` from `/intelligence/patterns` into `PatternGraphShell`.
 - Replaces the hard-coded `Apex Retail Group` top-bar label with the active tenant name.
+- Replaces hard-coded Apex top-bar labels on `/intelligence/topics`, `/intelligence/topics/[topicId]`, and `/intelligence/failure-modes/[slug]` with the active tenant name.
 - Adds a focused regression test proving `PatternGraphShell` renders `Lakeshore Holdings` and not the Apex fixture label when passed a Lakeshore tenant name.
 
 ## QA / Validation
 
 - `npx jest src/components/intelligence/__tests__/PatternGraphShell.tenant.test.tsx --runInBand` — passed.
-- `npx eslint src/app/intelligence/patterns/page.tsx src/components/intelligence/PatternGraphShell.tsx src/components/intelligence/__tests__/PatternGraphShell.tenant.test.tsx` — passed.
+- `npx eslint src/app/intelligence/patterns/page.tsx src/app/intelligence/topics/page.tsx 'src/app/intelligence/topics/[topicId]/page.tsx' 'src/app/intelligence/failure-modes/[slug]/page.tsx' src/components/intelligence/PatternGraphShell.tsx src/components/intelligence/__tests__/PatternGraphShell.tenant.test.tsx` — passed.
 
 ## Rollout Plan
 
-Merge to main, deploy the Vercel production app, and rerun the Lakeshore live module crawl for `/intelligence/patterns?client=lakeshore` to confirm the page renders `Lakeshore Holdings` with no Apex copy.
+Merge to main, deploy the Vercel production app, and rerun the Lakeshore live module crawl for `/intelligence/patterns?client=lakeshore` plus the adjacent Intelligence topic and failure-mode routes to confirm they render `Lakeshore Holdings` with no Apex copy.
 
 ## Rollback Plan
 
