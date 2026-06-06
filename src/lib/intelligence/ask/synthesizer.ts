@@ -323,6 +323,43 @@ export function chooseSynthesisWordLimit(query: string): number {
   return 240;
 }
 
+export function buildCxoQueryFocusChecklist(query: string): string {
+  const normalized = query.toLowerCase();
+  const lines: string[] = [];
+
+  if (/\b(?:third[-\s]?party|external|hcup|dataset|benchmark|market data)\b/.test(normalized)) {
+    lines.push("External datasets: explicitly name HCUP when relevant, plus CMS quality / Stars, SDOH, claims, eligibility, provider directory, pharmacy, and benchmark sources.");
+  }
+
+  if (/\b(?:provider|hospital|clinical|readmission|length of stay|los|avoidable|utilization|quality|safety)\b/.test(normalized)) {
+    lines.push("Provider analytics: include readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.");
+  }
+
+  if (/\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(normalized)) {
+    lines.push("Plan analytics: include MLR, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant.");
+  }
+
+  if (/\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(normalized)) {
+    lines.push("Databricks delivery: explicitly address bronze / silver / gold, data products, reports, metrics, lineage, Unity Catalog, PHI governance, FHIR / HL7, Epic, ERP, and metadata-driven ETL when relevant.");
+  }
+
+  if (/\b(?:aws|lift[-\s]?and[-\s]?shift|on[-\s]?prem|data center|rehost|refactor|modernization|cutover|rationalize|rationalization)\b/.test(normalized)) {
+    lines.push("Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalization, operating-model risk, SLA, and cutover risk when relevant.");
+  }
+
+  if (/\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence)\b/.test(normalized)) {
+    lines.push("Artifact / approval proof: name the artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, and stored evidence when relevant.");
+  }
+
+  if (lines.length === 0) return "";
+
+  return [
+    "QUESTION-SPECIFIC FOCUS CHECKLIST:",
+    "The user asked a hard CXO question. Do not mechanically list every term below, but do explicitly cover the terms that are relevant to this answer and do not omit the named proof gates.",
+    ...lines.map((line) => `- ${line}`),
+  ].join("\n");
+}
+
 function formatSourcesBlock(sources: AskSource[]): string {
   if (sources.length === 0) {
     // INT-VOICE.STRAT-2026-05-10 — Empty SOURCES PROVIDED is now an explicit
@@ -412,10 +449,12 @@ export async function* synthesizeStream(args: {
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`
       : `${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`;
   const mandatorySurfaceEvidenceBlock = formatMandatorySurfaceEvidenceBlock(args.sources);
+  const focusChecklist = buildCxoQueryFocusChecklist(args.query);
   const prompt = [
     `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}`,
     mandatorySurfaceEvidenceBlock,
     `USER QUESTION:\n${args.query}`,
+    focusChecklist,
     "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include a named active client, name that client in the first sentence. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
     isEnumeratedCompletenessAsk(args.query)
       ? "The user asked for a specific count of items. Answer every requested item before ending. Keep each item short, but do not stop after the first two or three."
