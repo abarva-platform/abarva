@@ -7,18 +7,15 @@
 // governed model serving and monitoring, and the governance/compliance spine.
 //
 // These are authored once here as the typed source of truth for the platform
-// foundation. They are NOT spread into a function pack's
-// `referenceSolutionPatterns` — the solution-architecture renderer treats that
-// array as a mutually-exclusive option set (it selects the most
-// human-accountable pattern and rejects the rest), so foundation layers placed
-// there would render as "rejected alternatives". Instead, the foundation depth
-// reaches a generated Solution Architecture through the pack's
-// `solution_architecture` deliverable outline (Layer 7) guidance, which names
-// the landing zone and the own-it ingestion framework as required sections.
-// This module stands ready for a foundation-aware renderer that can present
-// these as adopted foundation components rather than competing options —
-// closing the "architecture with no landing zone / reinvented ingestion"
-// failure mode without the mis-rendering.
+// foundation. Each pattern is tagged `dispositionKind: 'foundation'`, which
+// makes it safe to spread into a function pack's `referenceSolutionPatterns`:
+// the foundation-aware solution-architecture renderer partitions that array,
+// runs the mutually-exclusive option scorecard (select one, name the rest as
+// alternatives) ONLY over the `'option'` patterns, and presents foundation
+// patterns in a separate "Adopted platform foundation" exhibit — adopted,
+// never ranked or rejected. This closes the "architecture with no landing
+// zone / reinvented ingestion" failure mode without the mis-rendering that
+// previously made a foundation layer show up as a "rejected alternative".
 //
 // The canonical, human-readable source for each pattern is the Pattern Pack
 // Bible (docs/build/pattern-packs/) — the cited pattern IDs (ARCH-xx, INGEST-xx,
@@ -55,6 +52,7 @@ export const CROSS_CUTTING_ARCHITECTURE_PATTERNS: readonly ReferenceSolutionPatt
         'The cloud platform / enterprise-architecture owner accountable for ' +
         'the landing zone and the platform-readiness gate.',
       controlPosture: 'human-on-the-loop',
+      dispositionKind: 'foundation',
     },
     {
       key: 'cc_metadata_driven_ingestion_framework',
@@ -79,6 +77,7 @@ export const CROSS_CUTTING_ARCHITECTURE_PATTERNS: readonly ReferenceSolutionPatt
         'The data-engineering owner accountable for the ingestion framework ' +
         'and the source-onboarding configuration.',
       controlPosture: 'human-on-the-loop',
+      dispositionKind: 'foundation',
     },
     {
       key: 'cc_medallion_data_products',
@@ -100,6 +99,7 @@ export const CROSS_CUTTING_ARCHITECTURE_PATTERNS: readonly ReferenceSolutionPatt
         'The data-product / analytics owner accountable for the Gold marts and ' +
         'the common data model.',
       controlPosture: 'human-on-the-loop',
+      dispositionKind: 'foundation',
     },
     {
       key: 'cc_governed_model_serving_monitoring',
@@ -121,6 +121,7 @@ export const CROSS_CUTTING_ARCHITECTURE_PATTERNS: readonly ReferenceSolutionPatt
         'The model owner and the named human decision-maker at the ' +
         'in-the-loop gate.',
       controlPosture: 'human-in-the-loop',
+      dispositionKind: 'foundation',
     },
     {
       key: 'cc_unity_catalog_hitrust_governance',
@@ -143,5 +144,6 @@ export const CROSS_CUTTING_ARCHITECTURE_PATTERNS: readonly ReferenceSolutionPatt
         'The CISO / data-governance owner accountable for the control mapping ' +
         'and the compliance-readiness gate.',
       controlPosture: 'human-on-the-loop',
+      dispositionKind: 'foundation',
     },
   ] as const;

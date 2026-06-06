@@ -218,7 +218,7 @@ export interface MoveArchInheritedOutlineSection {
 
 export interface MoveArchTargetSection {
   anatomy: MoveArchSectionAnatomy;
-  /** Every curated reference solution pattern, projected. */
+  /** The curated reference solution OPTIONS, projected (the ranked scorecard). */
   patterns: Array<{
     name: string;
     description: string;
@@ -226,6 +226,18 @@ export interface MoveArchTargetSection {
     humanAccountabilityPoint: string;
     controlPosture: ControlPosture;
     selected: boolean;
+  }>;
+  /**
+   * The adopted platform-foundation components (`dispositionKind: 'foundation'`)
+   * — landing zone, ingestion, medallion, governed serving, governance spine.
+   * Every entry is adopted; none is ranked or rejected.
+   */
+  foundation: Array<{
+    name: string;
+    /** A short boundary statement — what the component owns and does not. */
+    boundary: string;
+    controlPosture: ControlPosture;
+    humanAccountabilityPoint: string;
   }>;
 }
 
@@ -462,14 +474,43 @@ const POSTURE_RANK: Record<ControlPosture, number> = {
 };
 
 /**
+ * Partition a pack's reference solution patterns into the competing OPTIONS
+ * (ranked; one selected, the rest named as alternatives) and the adopted
+ * platform-FOUNDATION components (`dispositionKind: 'foundation'` — landing
+ * zone, ingestion, governance — adopted, never ranked or rejected).
+ *
+ * Foundation patterns are excluded from the option scorecard entirely, so the
+ * select-one/reject-rest logic only ever runs over genuinely-competing
+ * options. Omitted/`'option'` dispositions stay in the option set
+ * (back-compatible: packs with no foundation patterns behave exactly as before).
+ */
+function partitionPatterns(pack: FunctionPack): {
+  optionPatterns: ReferenceSolutionPattern[];
+  foundationPatterns: ReferenceSolutionPattern[];
+} {
+  const optionPatterns: ReferenceSolutionPattern[] = [];
+  const foundationPatterns: ReferenceSolutionPattern[] = [];
+  for (const p of pack.referenceSolutionPatterns) {
+    if (p.dispositionKind === 'foundation') foundationPatterns.push(p);
+    else optionPatterns.push(p);
+  }
+  return { optionPatterns, foundationPatterns };
+}
+
+/**
  * Select the target-state pattern from the curated reference solution
  * patterns. The selected pattern is the lowest-autonomy (most
- * human-accountable) curated pattern — blueprint §7 forbids recommending full
+ * human-accountable) curated OPTION — blueprint §7 forbids recommending full
  * autonomy where the evidence does not support it. The higher-autonomy
- * patterns are named as the rejected alternatives.
+ * options are named as the rejected alternatives. Foundation patterns are
+ * never ranked or rejected here — they are presented as adopted foundation.
  */
 function buildTargetPattern(pack: FunctionPack): MoveTargetPattern {
-  const patterns = [...pack.referenceSolutionPatterns];
+  const { optionPatterns, foundationPatterns } = partitionPatterns(pack);
+  // In practice options always exist; if a pack carried only foundation
+  // patterns, fall back to the first foundation pattern so we never crash.
+  const patterns =
+    optionPatterns.length > 0 ? [...optionPatterns] : [...foundationPatterns];
   // Stable sort by autonomy rank — the lowest-autonomy pattern is selected.
   patterns.sort(
     (a, b) => POSTURE_RANK[a.controlPosture] - POSTURE_RANK[b.controlPosture],
@@ -548,10 +589,12 @@ function buildDecisionSection(
   generatedOn: string,
   binding: FunctionPackBinding,
 ): MoveArchDecisionSection {
-  // Score every curated reference pattern — a lower-autonomy pattern reads as
+  // Score every curated reference OPTION — a lower-autonomy pattern reads as
   // more production-ready for an originated Move (a readable rendering of the
-  // posture rank, not an invented score).
-  const ranked = [...pack.referenceSolutionPatterns].sort(
+  // posture rank, not an invented score). Foundation patterns are adopted, not
+  // scored, so they never appear in the option scorecard.
+  const { optionPatterns, foundationPatterns } = partitionPatterns(pack);
+  const ranked = [...optionPatterns].sort(
     (a, b) => POSTURE_RANK[a.controlPosture] - POSTURE_RANK[b.controlPosture],
   );
   const selectedName = targetPattern.name;
@@ -608,10 +651,11 @@ function buildDecisionSection(
       `The pattern is inherited from the curated ${pack.functionLabel} ` +
         'Domain Function Pack — the section structure and the pattern set ' +
         'are not improvised.',
-      'The lowest-autonomy curated pattern is selected: an originated Move ' +
+      'The lowest-autonomy curated option is selected: an originated Move ' +
         'keeps a named human accountable before autonomy expands.',
-      `The pack carries ${pack.referenceSolutionPatterns.length} reference ` +
-        `patterns and ${pack.aiUseCaseArchetypes.length} AI use-case ` +
+      `The pack carries ${optionPatterns.length} competing reference ` +
+        `options plus ${foundationPatterns.length} adopted platform-foundation ` +
+        `components and ${pack.aiUseCaseArchetypes.length} AI use-case ` +
         'archetypes — the architecture is calibrated to this function.',
     ],
   };
@@ -659,18 +703,26 @@ function buildTargetSection(
   pack: FunctionPack,
   generatedOn: string,
 ): MoveArchTargetSection {
-  const ranked = [...pack.referenceSolutionPatterns].sort(
+  const { optionPatterns, foundationPatterns } = partitionPatterns(pack);
+  const ranked = [...optionPatterns].sort(
     (a, b) => POSTURE_RANK[a.controlPosture] - POSTURE_RANK[b.controlPosture],
   );
   const selectedKey = ranked[0]?.key;
+  const foundationClause =
+    foundationPatterns.length > 0
+      ? ` on an adopted platform foundation of ${foundationPatterns.length} ` +
+        'components (landing zone, ingestion, governance)'
+      : '';
   return {
     anatomy: {
       page: 3,
       id: 'target-architecture',
       navLabel: 'Target architecture',
       takeaway:
-        `The target state is built from ${pack.referenceSolutionPatterns.length} ` +
-        'curated reference solution patterns — every pattern names its ' +
+        `The target state is built from ${optionPatterns.length} ` +
+        'curated reference solution options' +
+        foundationClause +
+        ' — every pattern names its ' +
         'boundary and a human accountability point.',
       decisionRole:
         'Confirm the target-state architecture the Move funds and shapes ' +
@@ -696,6 +748,12 @@ function buildTargetSection(
       humanAccountabilityPoint: p.humanAccountabilityPoint,
       controlPosture: p.controlPosture,
       selected: p.key === selectedKey,
+    })),
+    foundation: foundationPatterns.map((p: ReferenceSolutionPattern) => ({
+      name: p.name,
+      boundary: p.boundary,
+      controlPosture: p.controlPosture,
+      humanAccountabilityPoint: p.humanAccountabilityPoint,
     })),
   };
 }
@@ -918,9 +976,11 @@ function buildOpenDecisionsSection(
     });
   }
 
-  // The highest-autonomy curated pattern is a future autonomy-expansion
-  // decision — not blocking, but a real open question.
-  const highest = [...pack.referenceSolutionPatterns].sort(
+  // The highest-autonomy curated OPTION is a future autonomy-expansion
+  // decision — not blocking, but a real open question. Foundation patterns are
+  // adopted, not autonomy-expansion candidates, so they are excluded here.
+  const { optionPatterns } = partitionPatterns(pack);
+  const highest = [...optionPatterns].sort(
     (a, b) => POSTURE_RANK[b.controlPosture] - POSTURE_RANK[a.controlPosture],
   )[0];
   if (highest) {

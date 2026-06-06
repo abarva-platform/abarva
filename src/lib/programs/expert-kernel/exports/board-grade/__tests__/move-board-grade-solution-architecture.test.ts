@@ -241,3 +241,88 @@ describe('buildMoveSolutionArchitecture — honesty discipline', () => {
     expect(decisions.some((d) => d.blocksGate)).toBe(true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Foundation-aware rendering — a pack that carries `dispositionKind:
+// 'foundation'` patterns (the population-health pack now spreads the five
+// cross-cutting architecture patterns) renders them as ADOPTED foundation,
+// never as ranked or rejected options.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const POP_HEALTH_MOVE: MoveBusinessCaseInput = {
+  industry_code: 'HEALTHCARE_IDN',
+  name: 'Population-health & value-based-care command centre',
+  charter: { [CHARTER_FUNCTION_PACK_KEY]: 'population_health_value_based_care' },
+  baseline_metrics: [],
+};
+
+describe('buildMoveSolutionArchitecture — foundation-aware partition', () => {
+  const arch = buildMoveSolutionArchitecture(
+    POP_HEALTH_MOVE,
+    GENERATED_ON,
+  ) as MoveSolutionArchitecture;
+
+  it('binds the population-health pack', () => {
+    expect(arch.bound).toBe(true);
+  });
+
+  it('separates the five adopted foundation patterns from the options', () => {
+    const target = arch.sections.targetArchitecture;
+    // The five cross-cutting patterns render as adopted foundation.
+    expect(target.foundation.length).toBe(5);
+    const foundationNames = target.foundation.map((f) => f.name);
+    expect(foundationNames).toEqual(
+      expect.arrayContaining([
+        'Cloud landing zone & private data plane',
+        'Metadata-driven (own-it) ingestion framework',
+        'Medallion data products on the lakehouse',
+        'Governed model serving & monitoring',
+        'Unity Catalog governance & HITRUST/HIPAA control spine',
+      ]),
+    );
+    // The option scorecard carries only the competing options — the
+    // foundation patterns are NOT in `patterns`.
+    const optionNames = target.patterns.map((p) => p.name);
+    for (const fn of foundationNames) {
+      expect(optionNames).not.toContain(fn);
+    }
+    // Exactly one option is the selected target.
+    expect(target.patterns.filter((p) => p.selected)).toHaveLength(1);
+    // Every foundation entry names a boundary + a human accountability point.
+    for (const f of target.foundation) {
+      expect(f.boundary.length).toBeGreaterThan(0);
+      expect(f.humanAccountabilityPoint.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('never ranks or rejects a foundation pattern', () => {
+    const target = arch.sections.targetArchitecture;
+    const foundationNames = new Set(target.foundation.map((f) => f.name));
+    // The target-pattern selection + rejection set draws only from options.
+    expect(foundationNames.has(arch.targetPattern.name)).toBe(false);
+    for (const r of arch.targetPattern.rejected) {
+      expect(foundationNames.has(r.name)).toBe(false);
+    }
+    // The decision scorecard options exclude foundation patterns too.
+    const scorecardNames = arch.sections.architectureDecision.options.map(
+      (o) => o.name,
+    );
+    for (const fn of foundationNames) {
+      expect(scorecardNames).not.toContain(fn);
+    }
+  });
+
+  it('renders an Adopted platform foundation exhibit, foundation not rejected', () => {
+    const html = renderMoveSolutionArchitectureHtml(
+      POP_HEALTH_MOVE,
+      GENERATED_ON,
+    );
+    expect(html).toContain('Adopted platform foundation');
+    expect(html).toContain('Cloud landing zone &amp; private data plane');
+    // The target-architecture slide renders the adopted-foundation treatment,
+    // not the rejected treatment, for the foundation cards.
+    const target = html.slice(html.indexOf('id="target-architecture"'));
+    expect(target).toContain('pattern-foundation');
+    expect(target).not.toContain('pattern-rejected');
+  });
+});
