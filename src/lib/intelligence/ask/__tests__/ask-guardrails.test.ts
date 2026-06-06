@@ -284,6 +284,17 @@ describe('Ask Intelligence guardrails', () => {
     expect(checklist).toContain('evidence');
   });
 
+  it('builds a query-aware focus checklist for MLR baseline and forecast questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'How should Meridian use MLR compression as a value spine without claiming realized savings?',
+    );
+
+    expect(checklist).toContain('MLR');
+    expect(checklist).toContain('baseline');
+    expect(checklist).toContain('forecast');
+    expect(checklist).toContain('realized savings');
+  });
+
   it('builds a query-aware focus checklist for modernization estate questions', () => {
     const checklist = buildCxoQueryFocusChecklist(
       'What is the risk of our AWS lift-and-shift and on-prem data center exit?',
@@ -294,6 +305,30 @@ describe('Ask Intelligence guardrails', () => {
     expect(checklist).toContain('on-prem exit');
     expect(checklist).toContain('SLA');
     expect(checklist).toContain('cutover risk');
+  });
+
+  it('builds a query-aware focus checklist for AMS provider operating model questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'What should Meridian require from a data analytics AMS provider so the lakehouse does not become a ticket factory?',
+    );
+
+    expect(checklist).toContain('AMS');
+    expect(checklist).toContain('SLA');
+    expect(checklist).toContain('operating model');
+    expect(checklist).toContain('data quality');
+    expect(checklist).toContain('governance');
+  });
+
+  it('builds a query-aware focus checklist for model risk and data quality questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'What model risk, drift, monitoring, and data quality gates should block clinical safety sign-off?',
+    );
+
+    expect(checklist).toContain('drift');
+    expect(checklist).toContain('data quality');
+    expect(checklist).toContain('monitoring');
+    expect(checklist).toContain('human-in-the-loop');
+    expect(checklist).toContain('rollback');
   });
 
   it('builds a query-aware focus checklist for artifact, approval, and no-go questions', () => {
@@ -309,6 +344,7 @@ describe('Ask Intelligence guardrails', () => {
     expect(checklist).toContain('Source partner trigger');
     expect(checklist).toContain('Move registration');
     expect(checklist).toContain('no-go condition');
+    expect(checklist).toContain('decision fork');
   });
 
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {

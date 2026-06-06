@@ -333,11 +333,11 @@ export function buildCxoQueryFocusChecklist(query: string): string {
   }
 
   if (/\b(?:provider|hospital|clinical|readmission|length of stay|los|avoidable|utilization|quality|safety)\b/.test(normalized)) {
-    lines.push("Provider analytics: include readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.");
+    lines.push("Provider analytics: use the exact terms readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.");
   }
 
   if (/\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(normalized)) {
-    lines.push("Plan analytics: include MLR, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant.");
+    lines.push("Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings.");
   }
 
   if (/\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(normalized)) {
@@ -345,18 +345,26 @@ export function buildCxoQueryFocusChecklist(query: string): string {
   }
 
   if (/\b(?:aws|lift[-\s]?and[-\s]?shift|on[-\s]?prem|data center|rehost|refactor|modernization|cutover|rationalize|rationalization)\b/.test(normalized)) {
-    lines.push("Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalization, operating-model risk, SLA, and cutover risk when relevant.");
+    lines.push("Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalize / rationalization, operating model risk, SLA, and cutover risk when relevant.");
   }
 
-  if (/\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence)\b/.test(normalized)) {
-    lines.push("Artifact / approval proof: name the artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, and stored evidence when relevant.");
+  if (/\b(?:ams|managed service|provider|vendor|ticket factory|sow|service level|sla)\b/.test(normalized)) {
+    lines.push("Vendor / AMS proof: include SLA, operating model, service credits, governance, data quality, escalation path, and handoff boundaries when relevant.");
+  }
+
+  if (/\b(?:model risk|clinical safety|drift|monitoring|human[-\s]?in[-\s]?the[-\s]?loop|governance|data quality|quality gate|validation)\b/.test(normalized)) {
+    lines.push("Risk controls: include drift, data quality, governance, validation, monitoring, human-in-the-loop review, audit trail, rollback, and evidence when relevant.");
+  }
+
+  if (/\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence|reviewable|slide|synthetic note)\b/.test(normalized)) {
+    lines.push("Artifact / approval proof: use the exact terms artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, stored evidence, and decision fork when relevant.");
   }
 
   if (lines.length === 0) return "";
 
   return [
     "QUESTION-SPECIFIC FOCUS CHECKLIST:",
-    "The user asked a hard CXO question. Do not mechanically list every term below, but do explicitly cover the terms that are relevant to this answer and do not omit the named proof gates.",
+    "The user asked a hard CXO question. Do not mechanically list every term below, but use the exact words from the relevant line when they are material to the answer and do not omit the named proof gates.",
     ...lines.map((line) => `- ${line}`),
   ].join("\n");
 }
