@@ -22,6 +22,7 @@ import {
   SELECTION_MEMO_DOCX_CONFIG,
   SOURCING_APPROACH_DOCX_CONFIG,
   STRATEGY_MEMO_DOCX_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG,
   VENDOR_RISK_PACK_DOCX_CONFIG,
   buildNarrativeDocx,
   type NarrativeDocxPayload,
@@ -37,10 +38,12 @@ import { buildBafoQuestionPackDocx } from "./renderers/bafo-question-pack-docx";
 import type { ScopeMemoDocxPayload } from "./renderers/scope-memo-docx";
 import {
   DECISION_BRIEF_HTML_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_HTML_CONFIG,
   RFP_PACK_HTML_CONFIG,
   SCOPE_MEMO_HTML_CONFIG,
   SELECTION_MEMO_HTML_CONFIG,
   STRATEGY_MEMO_HTML_CONFIG,
+  VENDOR_RESPONSE_PACK_HTML_CONFIG,
   buildNarrativeHtml,
   type NarrativeHtmlConfig,
   type NarrativeHtmlPayload,
@@ -53,6 +56,7 @@ import {
   SELECTION_MEMO_PDF_CONFIG,
   SOURCING_APPROACH_PDF_CONFIG,
   STRATEGY_MEMO_PDF_CONFIG,
+  VENDOR_RESPONSE_PACK_PDF_CONFIG,
   VENDOR_RISK_PACK_PDF_CONFIG,
   buildNarrativePdf,
   type NarrativePdfConfig,
@@ -160,6 +164,7 @@ export const DOCX_GENERATABLE_CODES = new Set([
   "d05_scope_memo",
   "d09_rfp_pack",
   "d11_response_checklist",
+  "d13_vendor_responses",
   "d16_scorecard",
   "d19_pricing_workbook",
   "d20_trap_log",
@@ -185,6 +190,8 @@ export const HTML_GENERATABLE_CODES = new Set([
   "d01_strategy_memo",
   "d05_scope_memo",
   "d09_rfp_pack",
+  "d13_vendor_responses",
+  "d19_pricing_workbook",
   "d24_decision_brief",
   "d27_selection_memo",
   // Lifecycle-coverage wave — only the AI Clause Gap ships as a
@@ -206,6 +213,7 @@ export const PDF_GENERATABLE_CODES = new Set([
   "d05_scope_memo",
   "d09_rfp_pack",
   "d11_response_checklist",
+  "d13_vendor_responses",
   "d16_scorecard",
   "d19_pricing_workbook",
   "d20_trap_log",
@@ -337,6 +345,11 @@ export async function renderArtifactDocx(
         args.payload as NarrativeDocxPayload,
         RFP_PACK_DOCX_CONFIG,
       );
+    case "d13_vendor_responses":
+      return buildNarrativeDocx(
+        args.payload as NarrativeDocxPayload,
+        VENDOR_RESPONSE_PACK_DOCX_CONFIG,
+      );
     case "d24_decision_brief":
       return buildNarrativeDocx(
         args.payload as NarrativeDocxPayload,
@@ -412,6 +425,10 @@ export function renderArtifactHtml(args: RenderHtmlArgs): string {
       return buildNarrativeHtml(payload, SCOPE_MEMO_HTML_CONFIG);
     case "d09_rfp_pack":
       return buildNarrativeHtml(payload, RFP_PACK_HTML_CONFIG);
+    case "d13_vendor_responses":
+      return buildNarrativeHtml(payload, VENDOR_RESPONSE_PACK_HTML_CONFIG);
+    case "d19_pricing_workbook":
+      return buildNarrativeHtml(payload, PRICING_WORKBOOK_SUMMARY_HTML_CONFIG);
     case "d24_decision_brief":
       return buildNarrativeHtml(payload, DECISION_BRIEF_HTML_CONFIG);
     case "d27_selection_memo":
@@ -457,6 +474,11 @@ export function renderArtifactPdf(
       return buildNarrativePdf(
         args.payload as NarrativePdfPayload,
         RFP_PACK_PDF_CONFIG,
+      );
+    case "d13_vendor_responses":
+      return buildNarrativePdf(
+        args.payload as NarrativePdfPayload,
+        VENDOR_RESPONSE_PACK_PDF_CONFIG,
       );
     case "d24_decision_brief":
       return buildNarrativePdf(

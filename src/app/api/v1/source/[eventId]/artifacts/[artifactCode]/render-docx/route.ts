@@ -44,6 +44,7 @@ const NARRATIVE_CODES = new Set([
   "d01_strategy_memo",
   "d05_scope_memo",
   "d09_rfp_pack",
+  "d13_vendor_responses",
   "d24_decision_brief",
   "d27_selection_memo",
   "dx0_demand_challenge",

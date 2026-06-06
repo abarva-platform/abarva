@@ -47,6 +47,7 @@ import {
   SELECTION_MEMO_PDF_CONFIG,
   SOURCING_APPROACH_PDF_CONFIG,
   STRATEGY_MEMO_PDF_CONFIG,
+  VENDOR_RESPONSE_PACK_PDF_CONFIG,
   VENDOR_RISK_PACK_PDF_CONFIG,
   buildNarrativePdf,
 } from "@/lib/source/exports/renderers/narrative-pdf";
@@ -55,6 +56,7 @@ const NARRATIVE_CODES = new Set([
   "d01_strategy_memo",
   "d05_scope_memo",
   "d09_rfp_pack",
+  "d13_vendor_responses",
   "d24_decision_brief",
   "d27_selection_memo",
   "dx0_demand_challenge",
@@ -291,6 +293,8 @@ function configForCode(artifactCode: string) {
       return SCOPE_MEMO_PDF_CONFIG;
     case "d09_rfp_pack":
       return RFP_PACK_PDF_CONFIG;
+    case "d13_vendor_responses":
+      return VENDOR_RESPONSE_PACK_PDF_CONFIG;
     case "d24_decision_brief":
       return DECISION_BRIEF_PDF_CONFIG;
     case "d27_selection_memo":
