@@ -1,0 +1,140 @@
+[
+  {
+    "scene": "01",
+    "title": "AI success is not a chatbot problem.",
+    "plate": "detailed-render/plates/01-executive-thesis.png",
+    "narration": "AI success for Lakeshore is not a chatbot problem. It is a governed execution layer that knows the portfolio, understands the evidence, turns decisions into work, and proves value without pretending the data is cleaner than it is."
+  },
+  {
+    "scene": "02",
+    "title": "A private holdings operating network.",
+    "plate": "detailed-render/plates/02-who-lakeshore-is.png",
+    "narration": "We should orient Lakeshore like an operating-company portfolio, not a financial abstraction. The modeled Northshore profile covers supply chain and logistics, brand services, consumer products, and workplace convenience services. These businesses make money through margin, programs, route density, service quality, and customer depth."
+  },
+  {
+    "scene": "03",
+    "title": "Where value and leakage actually show up.",
+    "plate": "detailed-render/plates/03-business-economics.png",
+    "narration": "The context layer gets powerful when it knows how each business makes money. Supply chain programs depend on distribution margin, sourcing spread, inventory turns, and transport cost. Brand services depend on scope, vendor pricing, fulfillment, and renewal discipline. Workplace services depend on route density, cash capture, uptime, and local execution."
+  },
+  {
+    "scene": "04",
+    "title": "The portfolio is not one clean system.",
+    "plate": "detailed-render/plates/04-typical-challenges.png",
+    "narration": "The difficult part is not asking a model a treasury question. The difficult part is loading the real operating picture: ERP and TMS gaps, CMDB records, vendor contracts, bank relationships, payment controls, route operations, customer concentration, board priorities, and the exceptions that only the operators know."
+  },
+  {
+    "scene": "05",
+    "title": "The secret sauce is not a document dump.",
+    "plate": "detailed-render/plates/05-context-layer.png",
+    "narration": "The context layer is the long-term moat. It connects tenant, persona, holding-company layer, operating company, system, vendor, contract, bank, process, artifact, corpus pattern, and value claim. That is what lets the agent answer like a senior advisor instead of a generic model."
+  },
+  {
+    "scene": "06",
+    "title": "The best insights are cross-context joins.",
+    "plate": "detailed-render/plates/06-what-the-context-layer-learned.png",
+    "narration": "The interesting insights come from joins. Same bank fragmentation plus Kyriba schedule plus ERP variance plus covenant exposure means an urgent treasury Move. Same vendor across HoldCos plus renewal dates plus underused licenses means a Source event. Same use case requested by two companies means a reusable AI capability, not two disconnected pilots."
+  },
+  {
+    "scene": "07",
+    "title": "The corpus must stay editable.",
+    "plate": "detailed-render/plates/07-corpus-doctrine.png",
+    "narration": "The corpus cannot be set in stone. Lakeshore should be able to approve a treasury rule, localize it for a bank, change the owner from CFO to Treasurer plus CFO, downgrade confidence when evidence is weak, or retire a pattern that no longer fits how the portfolio operates."
+  },
+  {
+    "scene": "08",
+    "title": "What finance and treasury doctrine is already modeled.",
+    "plate": "detailed-render/plates/08-loaded-pattern-truth.png",
+    "narration": "Today the buyer brief cites a global baseline of eight thousand nine hundred eighty-seven published patterns and twenty-seven thousand fifty-two relationships. For Lakeshore, the Kyriba and treasury doctrine is modeled in the prompt, success brief, and Move Zero package. The next step is to promote these into editable Lakeshore corpus rows before buyer reliance."
+  },
+  {
+    "scene": "09",
+    "title": "Kyriba is a treasury operating platform.",
+    "plate": "detailed-render/plates/09-what-kyriba-is.png",
+    "narration": "Kyriba is a treasury management platform. It supports cash visibility, bank connectivity, payments, liquidity planning, cash forecasting, bank account management, risk, and treasury controls. For Lakeshore, the vision is not to install software. The vision is to make treasury operating facts reliable enough for the CFO, Treasurer, audit committee, and board to trust."
+  },
+  {
+    "scene": "10",
+    "title": "Move 0 first. AI on top second.",
+    "plate": "detailed-render/plates/10-implementation-vision.png",
+    "narration": "The implementation vision is simple but strict. Move Zero de-risks Kyriba readiness: banks, feeds, entities, history, controls, adoption, intercompany, and covenants. Move One puts AI on top only when the foundation is clean enough. Otherwise, AI just makes weak data sound confident."
+  },
+  {
+    "scene": "11",
+    "title": "Bank connectivity stalls the rollout.",
+    "plate": "detailed-render/plates/11-failure-mode-1.png",
+    "narration": "The first failure mode is bank connectivity. Teams discover bank by bank that only a fraction of the estate is host-to-host ready. Abarva should force a bank inventory and connectivity matrix before the schedule is committed, then spawn a Source event if consolidation is the smarter path."
+  },
+  {
+    "scene": "12",
+    "title": "ERP and GL feeds look automated but do not reconcile.",
+    "plate": "detailed-render/plates/12-failure-mode-2.png",
+    "narration": "The second failure mode is feed quality. A feed can load and still be wrong. The Move Zero design models a demo gap of zero point four one percent cash-versus-GL variance against a tighter production target. Abarva should name the variance source, owner, remediation plan, and pass-fail gate."
+  },
+  {
+    "scene": "13",
+    "title": "Entity hierarchy breaks treasury rollup.",
+    "plate": "detailed-render/plates/13-failure-mode-3.png",
+    "narration": "The third failure mode is entity hierarchy. In a holdings company, treasury reporting breaks when legal, tax, finance, bank-account, and intercompany records disagree. Abarva should load the canonical entity registry before treasury automation goes live."
+  },
+  {
+    "scene": "14",
+    "title": "Forecasting starts without enough cash history.",
+    "plate": "detailed-render/plates/14-failure-mode-4.png",
+    "narration": "The fourth failure mode is weak history. Forecasting needs more than a model demo. Lakeshore should reconstruct twelve to twenty-four months of bank statements or position history into normalized entity-currency-day records before trusting predictive cash forecasts."
+  },
+  {
+    "scene": "15",
+    "title": "Adoption quietly falls back to Excel.",
+    "plate": "detailed-render/plates/15-failure-mode-5.png",
+    "narration": "The fifth failure mode is adoption. Users log in for meetings, but real work stays in Excel. Abarva should track usage by role, unresolved exceptions, training completion, dashboards used, and a thirty-day Excel-elimination sprint with named owners."
+  },
+  {
+    "scene": "16",
+    "title": "Intercompany and covenants stay manual.",
+    "plate": "detailed-render/plates/16-failure-mode-6.png",
+    "narration": "The sixth failure mode is manual intercompany and covenant work. Intercompany notes, rate basis, monthly true-ups, covenant definitions, EBITDA add-backs, leverage, fixed-charge coverage, and liquidity thresholds need a finance-owned evidence pack. Otherwise treasury modernization stops short of what the CFO really needs."
+  },
+  {
+    "scene": "17",
+    "title": "The treasury corpus should sound like a treasurer.",
+    "plate": "detailed-render/plates/17-patterns-that-matter.png",
+    "narration": "The finance and treasury patterns need to be specific enough for a real treasurer. Daily cash pre-walk by nine Central. Material surprises reconciled same day. Payment controls for first-time payees and BEC risk. Cash pooling with tax and intercompany consequences. FX and ASC 815 clarity. And no realized value claim until finance accepts the evidence chain."
+  },
+  {
+    "scene": "18",
+    "title": "The six-month case must show 5-10x potential.",
+    "plate": "detailed-render/plates/18-value-case.png",
+    "narration": "The five hundred thousand dollar case should be grounded in five-to-ten times value potential. Avoiding a ten-to-twenty percent delay or change-order tax on a multi-million-dollar treasury rollout can cover a meaningful share of the engagement. Banking, vendor, SI, audit, software, and cyber optimization can add more. The key is to separate forecast, approved, negotiated, and finance-attested value."
+  },
+  {
+    "scene": "19",
+    "title": "Insights become commercial actions.",
+    "plate": "detailed-render/plates/19-source-events.png",
+    "narration": "Abarva should turn context-layer insights into Source events. Bank consolidation when connectivity blocks Kyriba. SI scope control when implementation risk rises. Vendor leverage when multiple platforms buy the same services separately. Audit, advisory, cyber insurance, and software renewals all become governed decision paths with artifacts."
+  },
+  {
+    "scene": "20",
+    "title": "The app must show the actual work.",
+    "plate": "detailed-render/plates/20-product-proof-flow.png",
+    "narration": "The demo needs to show the work, not just the answer. Setup loads the Lakeshore context. Intelligence explains what is known and missing. Moves runs the Kyriba readiness gates. Source creates commercial decision artifacts. Tower shows the value ledger and risk concentrations without mixing forecast with realized proof."
+  },
+  {
+    "scene": "21",
+    "title": "Claude can reason. AbarVa governs the operating frame.",
+    "plate": "detailed-render/plates/21-why-not-raw-claude.png",
+    "narration": "Claude can reason. Abarva governs what Claude can see, cite, create, and persist. That is the buyer proof. The answer is shaped by Lakeshore context, role and persona, corpus doctrine, evidence gaps, tenant boundaries, and the workflow artifact that follows from the recommendation."
+  },
+  {
+    "scene": "22",
+    "title": "The engagement should build durable capability.",
+    "plate": "detailed-render/plates/22-six-month-roadmap.png",
+    "narration": "The six-month roadmap should not end with a one-month sales push. Month one loads and validates context. Month two promotes editable corpus doctrine. Month three runs Kyriba and treasury gates. Month four launches Source value events. Month five moves opportunities through execution. Month six publishes the board-ready value ledger, corpus coverage, operating model, and renewal case."
+  },
+  {
+    "scene": "23",
+    "title": "What a real win looks like.",
+    "plate": "detailed-render/plates/23-success-standard.png",
+    "narration": "The success standard is practical. Lakeshore can see what is loaded, what is missing, what decision is next, who owns it, what evidence supports it, what artifact gets created, and how value will be proven. That is the difference between AI theater and an AI success platform."
+  }
+]

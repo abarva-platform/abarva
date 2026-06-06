@@ -1,0 +1,120 @@
+# Demo Proof Artifact Index
+
+Created: 2026-06-05
+
+Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA evidence, and remaining proof gaps across Lakeshore, Meridian / PHS, and SkyHarbor.
+
+## Current Status
+
+| Client / lane | Status | Percent | Buyer-ready artifact | QA evidence | Blocker / next action |
+|---|---:|---:|---|---|---|
+| Lakeshore | Buyer brief + detailed reading page + MP4 ready for review | 98% | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Final human listen/read-through before sending externally. |
+| Meridian / PHS | Proof-page ready for review | 88% | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_2026-06-05.html` | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_VISUAL_QA_2026-06-05.md` | Package into deeper CDAO/admin training and resolve citation/context gaps before final buyer reliance. |
+| SkyHarbor | Dataset-ready, not live-proofed | 25% | None yet | `reports/2026-06-05-skyharbor-reality/00-before-state.md` | Azure/Postgres host did not resolve; run read-only counts, loader, screenshots, persisted Moves/Source proof after access is restored. |
+
+## Lakeshore Proof Packet
+
+| Artifact | Path | Notes |
+|---|---|---|
+| Source brief | `docs/build/lakeshore-proof/LAKESHORE_BUYER_PROOF_PAGE_SOURCE_2026-06-05.md` | Maps screenshots and Final4 hard-question QA into buyer-proof vignettes. |
+| HTML proof page | `docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_PROOF_2026-06-05.html` | Shows why AbarVa is more than a raw LLM for finance/treasury rollout decisions. |
+| Visual QA note | `docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_VISUAL_QA_2026-06-05.md` | Records desktop/mobile QA, image load, console, and overflow checks. |
+| Video storyboard | `docs/build/lakeshore-proof/LAKESHORE_DEMO_VIDEO_STORYBOARD_2026-06-05.md` | 4-6 minute narration plan, scene list, buyer questions, and what-not-to-say guardrails. |
+| Video shot list | `docs/build/lakeshore-proof/LAKESHORE_DEMO_VIDEO_SHOT_LIST_2026-06-05.md` | Recording checklist with exact visuals, framing, narration cues, guardrails, and post-recording QA. |
+| Surekha buyer success brief | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_2026-06-05.html` | Current buyer-facing reading page: Lakeshore operating profile, context layer, editable corpus, Kyriba de-risk, 5-10x value case, architecture trust layer, and six-month roadmap. |
+| Success brief source note | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_SOURCE_2026-06-05.md` | Editorial source and claim-discipline note for the Lakeshore success brief. |
+| MP4 screen + narration storyboard | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_SCREEN_NARRATION_STORYBOARD_2026-06-05.html` | Side-by-side screen/narration storyboard with 14 page plates, trimmed voiceover copy, camera cues, and logo/header QA. |
+| MP4 executive frame library | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_EXECUTIVE_PLATES_V2_2026-06-05.html` | 14 premium 16:9 plates based on the high-impact MP4 frame-library style; uses simple generated graphics, one idea per frame, and the canonical nav logo. |
+| MP4 executive plates visual QA | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_EXECUTIVE_PLATES_VISUAL_QA_2026-06-05.md` | QA record for the executive plates, storyboard, logo usage, and scene-image regeneration. |
+| MP4 executive plates contact sheet | `docs/build/lakeshore-success-brief/video-storyboard/qa/v2-contact-sheet.png` | One-page visual scan of all 14 V2 plates for sequence, density, logo, and graphic-accuracy review. |
+| MP4 preview render | `docs/build/lakeshore-success-brief/video-storyboard/render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1.mp4` | Draft OpenAI voiceover preview. Source narration and profile copy have been updated; regenerate this MP4 before using it as the final buyer video. |
+| MP4 preview frame samples | `docs/build/lakeshore-success-brief/video-storyboard/render/qa/video-samples.png` | Actual-video sampled frames showing where each camera move lands during narration. |
+| OpenAI TTS scene text | `docs/build/lakeshore-success-brief/video-storyboard/OPENAI_TTS_SCENE_TEXT_2026-06-05.md` | Clean scene-by-scene voiceover text for OpenAI text-to-speech generation. |
+| Kyriba and treasury pattern orientation | `docs/build/lakeshore-success-brief/LAKESHORE_KYRIBA_TREASURY_PATTERN_ORIENTATION_2026-06-05.md` | Buyer-safe appendix defining Kyriba, the AbarVa implementation vision, modeled treasury patterns, six failure modes, and what still needs to be promoted into editable Lakeshore corpus rows. |
+| Detailed MP4 V2 scene plan | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_DETAILED_MP4_V2_SCENE_PLAN_2026-06-05.md` | Longer 23-scene buyer-video plan covering operating-company economics, context-layer insights, editable corpus, Kyriba vision, treasury failure modes, value case, Source events, and six-month roadmap. |
+| Detailed MP4 V2 render | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V2.mp4` | 8:12 detailed OpenAI voiceover render with fresh SVG-generated 16:9 plates, female voice direction, AbarVa pronunciation guidance, and expanded Kyriba/treasury/corpus depth. |
+| Detailed MP4 V2 frame samples | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v2-video-samples.png` | Sampled video frame sheet for visual QA of the detailed V2 render. |
+| Success brief header QA | `docs/build/lakeshore-success-brief/qa/header-logo-main-v2.png` | Product-black header and canonical vector logo check after logo correction. |
+| Storyboard header QA | `docs/build/lakeshore-success-brief/video-storyboard/header-logo-storyboard-v2.png` | Storyboard header/logo check after logo correction. |
+| Detailed reading HTML | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | Companion deep-reading artifact with Apple-style left navigation, correct AbarVa nav logo, detailed context/corpus/Kyriba/AI strategy sections, and embedded V3 video. |
+| Detailed reading desktop QA | `docs/build/lakeshore-success-brief/qa/lakeshore-detailed-reading-desktop.png` | Browser-rendered desktop screenshot; local QA found 0 horizontal overflow and verified the 248x56 nav logo asset loaded. |
+| Detailed MP4 V3 render | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V3.mp4` | Current detailed MP4: 10:30, 1600x900, H.264/AAC, no zoom, correct nav logo, product screenshots, expanded context graph, 90-day AI strategy, IT/data modernization, captured-interaction QA proof, and regenerated OpenAI voiceover with AbarVa pronunciation guidance. |
+| Detailed MP4 V3 frame samples | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Sampled video frame sheet for V3 visual QA. V2 should be treated as superseded. |
+| CXO hard-question QA report | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/report.html` | 100 captured OpenAI-only Lakeshore hard-question answers with question pack, answer JSONL, scoring JSONL, issue counts, and HTML review report. |
+| CXO hard-question answer JSONL | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/answers.jsonl` | Captured answer payloads used by the QA report. |
+| Source/Kyriba live-route QA | `reports/2026-06-05-agent-a-source-kyriba-qa/AGENT_A_SOURCE_KYRIBA_QA_SUMMARY.md` | 26/26 live route checks plus API/export checks for the Lakeshore Kyriba Source event and artifacts. |
+| Moves evidence QA | `reports/2026-06-05-lakeshore-agent-b-moves-evidence/lakeshore-app-demo-readiness-2026-06-05T18-42-07-086Z-a879c5bc4/report.html` | Live app readiness evidence for Lakeshore Moves/Setup surfaces captured by Agent B. |
+| Desktop screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-desktop.png` | Rendered proof page. |
+| Mobile screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-mobile.png` | Rendered proof page. |
+
+Evidence basis:
+
+- Live Source/Kyriba route screenshot/API pack: 26/26 route checks pass, 7/7 API/export checks pass, 0 fail.
+- Lakeshore CXO hard-question QA: 100 questions, 60 pass, 40 watch, 0 fail, average score 4.53 / 5.
+- Known watch themes are intentionally preserved: sharper owner/action specificity, weaker finance depth in 7 answers, missing evidence reference in 3 answers, no next action in 3 answers, and 1 overclaim-completion warning.
+
+## Meridian / PHS Proof Packet
+
+| Artifact | Path | Notes |
+|---|---|---|
+| Demo plan | `docs/build/meridian-phs-demo/PHS_AI_STRATEGY_DEMO_PLAN_2026-06-05.md` | Review/approval source for PHS-inspired CDAO strategy demo. |
+| Prompt source | `docs/build/meridian-phs-demo/PHS_AI_STRATEGY_PROMPT_SOURCE_2026-06-05.md` | Prompt contract after human approval. |
+| Walkthrough HTML | `docs/build/meridian-demo-walkthrough/meridian-demo-crawl-2026-06-05T19-21-realapp/MERIDIAN_DEMO_WALKTHROUGH.html` | Live production walkthrough capture. |
+| Proof source brief | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_PAGE_SOURCE_2026-06-05.md` | Buyer-proof source: CDAO, context layer, AI failure avoidance, Azure / Databricks modernization. |
+| HTML proof page | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_2026-06-05.html` | Buyer proof page using real product screenshots and the current logo asset. |
+| Visual QA note | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_VISUAL_QA_2026-06-05.md` | Records desktop/mobile QA, image load, console, and overflow checks. |
+| Training manual source | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_DEMO_TRAINING_MANUAL_SOURCE_2026-06-05.md` | Route-by-route talk track, prompts, expected answer shapes, context-layer explanation, human controls, and services attach framing. |
+| HTML training manual | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_DEMO_TRAINING_MANUAL_2026-06-05.html` | Visual manual with left-side navigation, route-by-route screenshots, prompt blocks, evidence boundaries, and services attach framing. |
+| Training manual QA note | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_DEMO_TRAINING_MANUAL_VISUAL_QA_2026-06-05.md` | Records desktop/mobile QA, image load, console, and overflow checks for the training manual. |
+| Desktop screenshot | `docs/build/meridian-phs-proof/qa/meridian-phs-proof-desktop.png` | Rendered proof page. |
+| Mobile screenshot | `docs/build/meridian-phs-proof/qa/meridian-phs-proof-mobile.png` | Rendered proof page. |
+
+Evidence basis:
+
+- Live production walkthrough: 12 route screenshots.
+- Screenshots cover Home, Admin/Setup, Intelligence, Moves, Source, and Tower.
+- Important readiness truth: the walkthrough shows citation-gap warnings and an internal-context-not-loaded message. These are not hidden; they are framed as proof that AbarVa does not pretend private context exists before it is loaded.
+
+## SkyHarbor Reality Packet
+
+| Artifact | Path | Notes |
+|---|---|---|
+| Before-state report | `reports/2026-06-05-skyharbor-reality/00-before-state.md` | Truthful baseline: dry-run ready, not live Azure/Postgres proven. |
+
+Verified locally:
+
+- Dataset root exists: `datasets/skyharbor-air-synthetic-v1`.
+- Loader dry-run identifies 3,240 chunks, 92 apps, 38 initiatives, and 52 vendor contracts.
+- Tenant key used by loader: `skyharbor-air`.
+- Client id used by loader: `6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301`.
+
+Not yet proven:
+
+- Setup/Admin loader completed.
+- Azure/Postgres chunks exist.
+- Embeddings completed.
+- Admin UI shows SkyHarbor source files.
+- Saved Moves exist.
+- Saved Source events exist.
+- Persisted generated artifacts exist and open.
+- KK/CTO login is tenant-isolated to SkyHarbor.
+
+Current blocker:
+
+```text
+Postgres connection failed: getaddrinfo ENOTFOUND pg-abarva-context-lab-001.postgres.database.azure.com
+```
+
+## PR / CI State
+
+| PR | State | Checks | Notes |
+|---|---:|---:|---|
+| #3099 `docs(readiness): add shared tenant evidence checklist` | Merged 2026-06-05T17:52:41Z | Green | Shared tenant readiness record is merged. |
+| #3130 `fix(auth): gate detail pages behind sign-in` | Merged 2026-06-05T20:25:09Z | Green | Signed-out page gating is merged. |
+
+## Next Recommended Work
+
+1. Meridian / PHS: review the new HTML training manual, then optionally convert it into Word/deck/video script form.
+2. Lakeshore: final human read-through of the Surekha success brief, then render or rehearse the MP4 from the side-by-side storyboard.
+3. SkyHarbor: wait for Azure/Postgres reachability, run read-only counts, then load via admin/setup path, create saved Moves/Source artifacts, and capture screenshots before making the KK primer.
+4. Auth/setup: refresh signed-in storage state for each real user/profile once Clerk user mapping is finalized; never grant multi-account access unless explicitly approved.
