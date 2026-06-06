@@ -1,0 +1,42 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=risk_controls_responsible_ai | owner=David Chen | system=GRC | as_of=2026-06-06 | sensitivity=Internal
+gap_id,domain,gap_type,severity
+GAP-001,AI,No source doc,High
+GAP-002,AI,Stale evidence,Low
+GAP-003,AI,Stale evidence,High
+GAP-004,Vendor,Owner unknown,Low
+GAP-005,Vendor,No source doc,High
+GAP-006,Vendor,No source doc,High
+GAP-007,Treasury,No source doc,High
+GAP-008,IT,Unverified claim,High
+GAP-009,IT,Stale evidence,High
+GAP-010,Vendor,No source doc,Medium
+GAP-011,Treasury,No source doc,Low
+GAP-012,Treasury,Stale evidence,High
+GAP-013,Vendor,Stale evidence,Low
+GAP-014,IT,Stale evidence,High
+GAP-015,AI,Owner unknown,High
+GAP-016,IT,No source doc,High
+GAP-017,IT,Owner unknown,Medium
+GAP-018,Vendor,Unverified claim,Low
+GAP-019,IT,Stale evidence,Low
+GAP-020,IT,No source doc,Low
+GAP-021,Vendor,No source doc,Low
+GAP-022,AI,No source doc,Medium
+GAP-023,Treasury,No source doc,High
+GAP-024,IT,Unverified claim,Low
+GAP-025,IT,Owner unknown,High
+GAP-026,IT,Owner unknown,Low
+GAP-027,Finance,Stale evidence,Low
+GAP-028,Finance,No source doc,High
+GAP-029,Finance,Unverified claim,Medium
+GAP-030,Finance,Owner unknown,Low
+GAP-031,IT,Unverified claim,Medium
+GAP-032,AI,Unverified claim,Medium
+GAP-033,AI,Unverified claim,Medium
+GAP-034,Vendor,Owner unknown,Low
+GAP-035,AI,Stale evidence,Low
+GAP-036,IT,No source doc,Low
+GAP-037,Vendor,Unverified claim,Medium
+GAP-038,AI,Stale evidence,Low
+GAP-039,AI,No source doc,High
+GAP-040,Treasury,No source doc,Medium

@@ -1,0 +1,1602 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=servicenow_support_workload | owner=Priya Natarajan | system=ServiceNow ITSM | as_of=2026-06-06 | sensitivity=Internal
+number,category,application,priority,state,opened_at,resolve_hours,root_cause,tier,region,assignment_owner,short_description
+INC100000,Problem,ServiceNow,P3,Closed,2025-12-27,58.1,Unknown,L3,APAC,Elena Vasquez,P3 outage in Kyriba
+INC100001,Request-Access,Kyriba,P2,Resolved,2025-07-28,203.0,Data quality,L1,EMEA,Aisha Bello,P2 slow in Workday
+INC100002,Request-Access,ServiceNow,P4,In Progress,2025-11-16,15.8,Integration failure,L1,EMEA,Elena Vasquez,P4 request in S/4HANA
+INC100003,Incident-ERP,Snowflake,P2,In Progress,2025-11-03,174.3,Network,L3,North America,Aisha Bello,P2 outage in Power BI
+INC100004,Incident-ERP,Salesforce,P3,Resolved,2025-01-11,88.1,Vendor outage,L2,North America,Priya Natarajan,P3 outage in Snowflake
+INC100005,Incident-Access,Snowflake,P3,Resolved,2026-04-09,18.3,Config error,L2,North America,Sofia Marchetti,P3 request in Kyriba
+INC100006,Request-Change,Power BI,P3,Resolved,2025-10-26,139.0,Code defect,L3,APAC,Marcus Reilly,P3 request in Snowflake
+INC100007,Incident-ERP,Salesforce,P1,Resolved,2025-01-14,26.9,Network,L2,EMEA,Aisha Bello,P1 outage in Coupa
+INC100008,Incident-Access,Salesforce,P3,Resolved,2026-01-01,114.8,Data quality,L2,North America,Sofia Marchetti,P3 slow in Azure AD
+INC100009,Incident-Treasury,SAP ECC,P4,Closed,2025-11-28,44.7,Permission,L3,North America,David Chen,P4 outage in ServiceNow
+INC100010,Incident-Treasury,S/4HANA,P2,Closed,2025-06-20,199.4,Permission,L1,EMEA,Marcus Reilly,P2 request in Salesforce
+INC100011,Request-Report,Power BI,P2,Resolved,2026-04-20,4.4,Data quality,L3,North America,Marcus Reilly,P2 failure in Snowflake
+INC100012,Problem,Azure AD,P2,Resolved,2025-03-11,168.2,Permission,L2,APAC,Raymond Okafor,P2 slow in Coupa
+INC100013,Request-Report,S/4HANA,P3,Closed,2025-04-04,14.3,Permission,L2,APAC,Elena Vasquez,P3 error in ServiceNow
+INC100014,Incident-Access,Kyriba,P4,In Progress,2026-04-27,4.7,Capacity,L1,APAC,Priya Natarajan,P4 slow in ServiceNow
+INC100015,Request-Report,Workday,P3,Closed,2025-01-03,20.9,Code defect,L1,North America,Aisha Bello,P3 request in Snowflake
+INC100016,Request-Change,ServiceNow,P4,Open,2025-12-02,27.7,Data quality,L3,North America,Liam O'Sullivan,P4 failure in Kyriba
+INC100017,Request-Access,Snowflake,P2,Resolved,2025-06-23,148.7,Permission,L3,LATAM,Raymond Okafor,P2 failure in Kyriba
+INC100018,Incident-Network,Kyriba,P3,Closed,2025-12-08,10.6,Code defect,L1,North America,Liam O'Sullivan,P3 slow in Power BI
+INC100019,Incident-Network,Salesforce,P3,Resolved,2026-03-14,187.2,Capacity,L2,EMEA,Liam O'Sullivan,P3 slow in Azure AD
+INC100020,Incident-ERP,Coupa,P1,Closed,2025-05-24,173.9,Capacity,L2,APAC,Raymond Okafor,P1 outage in Workday
+INC100021,Request-Report,Kyriba,P3,In Progress,2026-01-11,148.3,User error,L1,APAC,Raymond Okafor,P3 error in S/4HANA
+INC100022,Incident-Reporting,Workday,P3,Closed,2025-03-01,84.9,Capacity,L2,EMEA,Aisha Bello,P3 slow in Power BI
+INC100023,Incident-Treasury,Snowflake,P3,Resolved,2025-01-02,163.8,Config error,L2,EMEA,Maria Donnelly,P3 error in Snowflake
+INC100024,Incident-Access,Azure AD,P3,Resolved,2025-04-29,78.9,Code defect,L1,LATAM,Liam O'Sullivan,P3 error in Power BI
+INC100025,Incident-Access,Snowflake,P3,Closed,2025-04-14,185.9,Data quality,L1,APAC,David Chen,P3 slow in Power BI
+INC100026,Incident-Network,S/4HANA,P3,Resolved,2026-01-30,116.3,Vendor outage,L1,EMEA,Aisha Bello,P3 failure in ServiceNow
+INC100027,Enhancement,ServiceNow,P2,Resolved,2025-05-18,95.0,Integration failure,L2,EMEA,Elena Vasquez,P2 request in SAP ECC
+INC100028,Incident-Treasury,Salesforce,P3,Open,2025-07-07,15.0,Capacity,L2,APAC,Tomas Halvorsen,P3 failure in Workday
+INC100029,Incident-Treasury,Snowflake,P3,In Progress,2025-03-15,18.0,Integration failure,L3,EMEA,Priya Natarajan,P3 request in Workday
+INC100030,Request-Change,Power BI,P4,In Progress,2025-02-15,214.4,Capacity,L2,North America,Marcus Reilly,P4 request in Kyriba
+INC100031,Incident-Access,Coupa,P3,In Progress,2025-07-09,176.1,Code defect,L1,APAC,Maria Donnelly,P3 failure in Azure AD
+INC100032,Incident-ERP,S/4HANA,P4,Closed,2025-02-04,86.7,Vendor outage,L1,North America,Priya Natarajan,P4 slow in S/4HANA
+INC100033,Request-Report,Salesforce,P3,Resolved,2025-09-28,108.0,Unknown,L2,LATAM,Marcus Reilly,P3 outage in Snowflake
+INC100034,Incident-Network,ServiceNow,P3,In Progress,2025-12-13,95.3,Integration failure,L1,APAC,Elena Vasquez,P3 request in Kyriba
+INC100035,Incident-Network,Kyriba,P4,On Hold,2026-03-09,63.0,Permission,L2,EMEA,Aisha Bello,P4 slow in Workday
+INC100036,Request-Report,Workday,P3,Open,2025-10-31,51.4,Unknown,L3,APAC,David Chen,P3 failure in Coupa
+INC100037,Incident-Access,ServiceNow,P3,Closed,2025-11-05,134.5,Unknown,L1,North America,Liam O'Sullivan,P3 request in Coupa
+INC100038,Incident-Network,Snowflake,P4,Closed,2025-10-22,30.5,Permission,L2,EMEA,Priya Natarajan,P4 slow in Power BI
+INC100039,Enhancement,Workday,P2,Resolved,2025-10-14,151.3,User error,L3,APAC,Priya Natarajan,P2 failure in S/4HANA
+INC100040,Incident-Access,Snowflake,P3,Closed,2026-05-16,31.0,Permission,L3,LATAM,Aisha Bello,P3 failure in Workday
+INC100041,Request-Access,Azure AD,P2,Closed,2025-03-16,81.2,Capacity,L3,LATAM,David Chen,P2 request in Kyriba
+INC100042,Request-Access,Workday,P3,Closed,2025-01-13,74.6,Unknown,L1,APAC,Raymond Okafor,P3 slow in Snowflake
+INC100043,Incident-Network,Workday,P2,Closed,2025-10-26,90.5,Integration failure,L3,LATAM,Elena Vasquez,P2 error in Snowflake
+INC100044,Incident-Reporting,Power BI,P3,Closed,2026-01-22,129.0,Code defect,L3,North America,Priya Natarajan,P3 request in Salesforce
+INC100045,Incident-Access,Power BI,P4,Resolved,2026-05-25,68.7,Unknown,L2,North America,Sofia Marchetti,P4 outage in Azure AD
+INC100046,Problem,Salesforce,P4,Resolved,2026-01-23,81.4,Capacity,L3,APAC,Aisha Bello,P4 failure in ServiceNow
+INC100047,Incident-Access,Salesforce,P3,Resolved,2025-03-21,48.4,Integration failure,L2,APAC,Raymond Okafor,P3 slow in ServiceNow
+INC100048,Request-Report,ServiceNow,P2,Resolved,2025-06-08,7.6,Code defect,L3,APAC,Maria Donnelly,P2 error in ServiceNow
+INC100049,Incident-ERP,Salesforce,P4,Closed,2025-10-10,38.7,Unknown,L2,EMEA,Priya Natarajan,P4 failure in Kyriba
+INC100050,Incident-ERP,Coupa,P3,Resolved,2025-03-14,154.9,User error,L1,EMEA,David Chen,P3 slow in ServiceNow
+INC100051,Incident-Reporting,S/4HANA,P3,In Progress,2025-01-09,92.8,Code defect,L2,EMEA,Aisha Bello,P3 failure in Power BI
+INC100052,Enhancement,S/4HANA,P4,Resolved,2025-10-24,104.5,Unknown,L2,EMEA,Priya Natarajan,P4 error in ServiceNow
+INC100053,Incident-Access,Salesforce,P3,Closed,2025-12-11,209.9,Unknown,L1,APAC,Aisha Bello,P3 failure in Azure AD
+INC100054,Request-Report,Coupa,P2,On Hold,2025-10-31,112.9,Unknown,L3,APAC,Tomas Halvorsen,P2 request in Snowflake
+INC100055,Problem,S/4HANA,P2,Closed,2026-04-16,61.4,Capacity,L2,APAC,Raymond Okafor,P2 error in ServiceNow
+INC100056,Incident-Reporting,Salesforce,P4,In Progress,2025-02-06,103.3,Config error,L2,North America,Aisha Bello,P4 request in Workday
+INC100057,Incident-Access,Snowflake,P3,Resolved,2025-03-28,56.9,Unknown,L2,North America,Tomas Halvorsen,P3 slow in ServiceNow
+INC100058,Incident-ERP,Power BI,P4,Closed,2026-04-04,212.3,Capacity,L2,North America,Priya Natarajan,P4 failure in Salesforce
+INC100059,Incident-Reporting,Azure AD,P3,Resolved,2025-07-14,136.4,Permission,L3,APAC,Raymond Okafor,P3 error in Snowflake
+INC100060,Request-Access,Coupa,P3,Resolved,2026-01-19,78.5,Permission,L3,North America,Priya Natarajan,P3 outage in Workday
+INC100061,Incident-Treasury,SAP ECC,P3,Open,2026-05-26,77.4,Permission,L1,North America,David Chen,P3 failure in Kyriba
+INC100062,Request-Report,Snowflake,P3,On Hold,2025-10-28,122.1,Unknown,L3,North America,Sofia Marchetti,P3 outage in S/4HANA
+INC100063,Incident-Treasury,Azure AD,P3,In Progress,2025-07-07,75.6,Permission,L3,North America,Sofia Marchetti,P3 slow in Snowflake
+INC100064,Enhancement,SAP ECC,P4,Resolved,2025-12-03,108.6,Capacity,L1,EMEA,Aisha Bello,P4 slow in ServiceNow
+INC100065,Request-Report,Snowflake,P3,Closed,2025-01-09,175.9,Unknown,L3,EMEA,Elena Vasquez,P3 request in Workday
+INC100066,Request-Access,Workday,P3,In Progress,2025-09-19,83.2,Network,L1,EMEA,Priya Natarajan,P3 slow in SAP ECC
+INC100067,Incident-Reporting,Power BI,P2,On Hold,2025-03-28,217.2,Code defect,L1,APAC,Priya Natarajan,P2 slow in Kyriba
+INC100068,Incident-Reporting,Coupa,P3,Closed,2025-06-19,50.9,Code defect,L2,LATAM,Marcus Reilly,P3 error in Salesforce
+INC100069,Request-Change,Coupa,P2,On Hold,2025-06-03,60.9,Capacity,L3,North America,Aisha Bello,P2 slow in Workday
+INC100070,Incident-ERP,Workday,P4,Closed,2025-04-23,207.5,Config error,L3,APAC,Marcus Reilly,P4 request in Workday
+INC100071,Enhancement,Coupa,P3,On Hold,2025-12-26,104.5,Integration failure,L1,LATAM,Raymond Okafor,P3 request in SAP ECC
+INC100072,Request-Access,Salesforce,P3,Closed,2025-07-30,11.2,Permission,L1,North America,Marcus Reilly,P3 slow in Salesforce
+INC100073,Enhancement,S/4HANA,P3,Resolved,2025-05-10,191.2,Config error,L2,LATAM,Sofia Marchetti,P3 slow in Azure AD
+INC100074,Request-Report,SAP ECC,P4,Closed,2025-03-15,57.5,Unknown,L2,APAC,Priya Natarajan,P4 outage in Snowflake
+INC100075,Incident-Reporting,Coupa,P2,Resolved,2025-05-28,183.9,User error,L1,APAC,Marcus Reilly,P2 failure in Power BI
+INC100076,Request-Access,Salesforce,P4,Resolved,2025-01-07,207.2,Unknown,L2,LATAM,Tomas Halvorsen,P4 slow in S/4HANA
+INC100077,Incident-Treasury,Snowflake,P3,Resolved,2026-02-22,136.3,Config error,L3,EMEA,Maria Donnelly,P3 error in Workday
+INC100078,Incident-ERP,S/4HANA,P4,Resolved,2025-08-14,208.3,User error,L2,APAC,Aisha Bello,P4 outage in Kyriba
+INC100079,Incident-Reporting,Snowflake,P3,Resolved,2026-05-16,140.0,Unknown,L1,North America,Sofia Marchetti,P3 slow in S/4HANA
+INC100080,Incident-Treasury,Snowflake,P3,Closed,2025-04-19,79.7,Data quality,L2,EMEA,Liam O'Sullivan,P3 slow in Coupa
+INC100081,Incident-ERP,Kyriba,P4,Open,2025-09-11,68.9,Network,L3,EMEA,Raymond Okafor,P4 outage in Coupa
+INC100082,Problem,ServiceNow,P3,Resolved,2025-04-17,212.8,Capacity,L1,APAC,Maria Donnelly,P3 error in SAP ECC
+INC100083,Request-Report,Coupa,P4,Closed,2026-03-19,78.6,Code defect,L3,APAC,Tomas Halvorsen,P4 request in S/4HANA
+INC100084,Incident-Reporting,SAP ECC,P4,In Progress,2026-02-28,43.5,Code defect,L1,North America,David Chen,P4 slow in SAP ECC
+INC100085,Enhancement,Snowflake,P2,Closed,2025-05-12,190.7,Data quality,L2,EMEA,Sofia Marchetti,P2 request in Workday
+INC100086,Incident-Access,Kyriba,P3,Resolved,2025-01-19,146.8,Capacity,L3,LATAM,Liam O'Sullivan,P3 outage in Azure AD
+INC100087,Request-Report,Kyriba,P4,Resolved,2026-01-23,54.6,Network,L1,APAC,Marcus Reilly,P4 failure in ServiceNow
+INC100088,Request-Change,Azure AD,P2,Resolved,2026-03-04,169.6,Config error,L3,North America,Maria Donnelly,P2 slow in S/4HANA
+INC100089,Incident-Reporting,ServiceNow,P4,Resolved,2026-05-29,61.0,Vendor outage,L3,APAC,Aisha Bello,P4 outage in Kyriba
+INC100090,Incident-Network,Salesforce,P3,Resolved,2025-08-21,103.6,Config error,L2,APAC,Aisha Bello,P3 outage in Azure AD
+INC100091,Incident-Treasury,Coupa,P1,Resolved,2025-12-04,153.2,Code defect,L1,APAC,Priya Natarajan,P1 request in Snowflake
+INC100092,Incident-Access,S/4HANA,P1,Open,2025-06-25,111.7,Capacity,L2,North America,Marcus Reilly,P1 slow in S/4HANA
+INC100093,Enhancement,Power BI,P2,In Progress,2025-07-11,43.4,Unknown,L1,APAC,Elena Vasquez,P2 outage in ServiceNow
+INC100094,Incident-Access,Azure AD,P3,In Progress,2026-01-13,3.2,Capacity,L2,North America,Raymond Okafor,P3 error in Kyriba
+INC100095,Request-Change,Azure AD,P4,Resolved,2026-02-26,192.9,Integration failure,L1,EMEA,Liam O'Sullivan,P4 slow in Power BI
+INC100096,Request-Change,Power BI,P3,On Hold,2025-01-19,126.9,Data quality,L2,EMEA,Tomas Halvorsen,P3 request in Coupa
+INC100097,Request-Report,Snowflake,P3,Resolved,2025-12-07,45.4,Unknown,L2,North America,Raymond Okafor,P3 outage in Workday
+INC100098,Incident-Access,Coupa,P3,Resolved,2026-05-05,59.7,Unknown,L2,EMEA,Raymond Okafor,P3 slow in S/4HANA
+INC100099,Request-Change,S/4HANA,P4,In Progress,2025-02-21,195.3,Unknown,L1,APAC,Maria Donnelly,P4 outage in Azure AD
+INC100100,Problem,Workday,P4,Resolved,2025-03-10,67.8,Capacity,L2,EMEA,Aisha Bello,P4 slow in ServiceNow
+INC100101,Problem,Power BI,P3,Resolved,2026-01-20,49.0,Network,L3,EMEA,Priya Natarajan,P3 error in Workday
+INC100102,Incident-Treasury,S/4HANA,P3,On Hold,2025-03-04,27.2,Network,L1,LATAM,Raymond Okafor,P3 outage in SAP ECC
+INC100103,Request-Report,ServiceNow,P3,Resolved,2026-02-11,1.0,Permission,L1,EMEA,David Chen,P3 failure in Power BI
+INC100104,Incident-Access,Workday,P4,Resolved,2025-09-07,42.5,Integration failure,L3,EMEA,Sofia Marchetti,P4 request in Workday
+INC100105,Incident-Reporting,Snowflake,P4,Resolved,2025-02-09,170.4,User error,L2,EMEA,Aisha Bello,P4 error in Salesforce
+INC100106,Incident-Access,Power BI,P4,Resolved,2026-05-06,22.2,Integration failure,L1,EMEA,Sofia Marchetti,P4 error in SAP ECC
+INC100107,Request-Change,ServiceNow,P2,Resolved,2026-02-24,190.6,Config error,L2,LATAM,Raymond Okafor,P2 slow in Azure AD
+INC100108,Enhancement,Power BI,P3,Resolved,2025-03-14,98.8,Capacity,L3,North America,David Chen,P3 outage in Snowflake
+INC100109,Incident-Network,SAP ECC,P3,Closed,2026-02-15,159.9,Code defect,L3,North America,Marcus Reilly,P3 error in S/4HANA
+INC100110,Incident-Access,S/4HANA,P2,Resolved,2026-05-16,194.3,User error,L2,APAC,Maria Donnelly,P2 outage in SAP ECC
+INC100111,Incident-Reporting,S/4HANA,P3,In Progress,2025-08-07,24.2,Unknown,L2,EMEA,Aisha Bello,P3 failure in Salesforce
+INC100112,Enhancement,S/4HANA,P1,Resolved,2025-07-06,36.1,Config error,L3,APAC,Liam O'Sullivan,P1 error in Coupa
+INC100113,Problem,Azure AD,P2,Resolved,2025-05-02,107.3,Unknown,L3,LATAM,Sofia Marchetti,P2 request in Power BI
+INC100114,Incident-ERP,S/4HANA,P3,Resolved,2026-01-11,2.2,Integration failure,L2,EMEA,Raymond Okafor,P3 request in Power BI
+INC100115,Problem,Kyriba,P3,Resolved,2026-04-10,166.3,Network,L2,EMEA,Maria Donnelly,P3 slow in S/4HANA
+INC100116,Incident-Reporting,S/4HANA,P3,Resolved,2025-07-25,24.3,Unknown,L2,EMEA,Liam O'Sullivan,P3 outage in Azure AD
+INC100117,Incident-Reporting,SAP ECC,P2,Resolved,2025-07-26,212.8,Permission,L1,LATAM,Maria Donnelly,P2 failure in ServiceNow
+INC100118,Request-Access,Workday,P2,Resolved,2025-03-20,50.9,Data quality,L1,EMEA,Elena Vasquez,P2 error in Workday
+INC100119,Incident-Reporting,S/4HANA,P4,Open,2025-11-18,148.1,Permission,L3,LATAM,Aisha Bello,P4 request in Salesforce
+INC100120,Request-Change,Salesforce,P3,Resolved,2025-06-14,182.6,User error,L3,EMEA,Aisha Bello,P3 slow in Workday
+INC100121,Incident-Treasury,Power BI,P4,Resolved,2025-12-12,50.0,Network,L2,LATAM,David Chen,P4 slow in Salesforce
+INC100122,Request-Change,Power BI,P3,Resolved,2026-05-31,217.1,Unknown,L3,North America,Sofia Marchetti,P3 outage in S/4HANA
+INC100123,Incident-Treasury,S/4HANA,P3,Resolved,2026-05-05,217.6,Unknown,L1,EMEA,Elena Vasquez,P3 request in Kyriba
+INC100124,Request-Report,Snowflake,P3,Resolved,2025-10-21,0.5,Config error,L3,LATAM,Raymond Okafor,P3 outage in Snowflake
+INC100125,Enhancement,ServiceNow,P4,Closed,2026-03-25,61.7,Capacity,L1,EMEA,Tomas Halvorsen,P4 slow in Power BI
+INC100126,Incident-Network,Salesforce,P4,Open,2025-01-24,179.7,Capacity,L3,LATAM,Raymond Okafor,P4 failure in Kyriba
+INC100127,Incident-ERP,Snowflake,P4,Closed,2025-06-08,82.2,Integration failure,L1,EMEA,Liam O'Sullivan,P4 outage in Power BI
+INC100128,Incident-ERP,Salesforce,P4,Resolved,2025-03-23,77.9,Permission,L1,North America,Elena Vasquez,P4 error in Snowflake
+INC100129,Incident-Treasury,Kyriba,P4,Resolved,2026-03-17,167.4,Code defect,L1,North America,David Chen,P4 error in Coupa
+INC100130,Incident-Treasury,Azure AD,P3,Closed,2025-07-19,139.1,Network,L2,APAC,Maria Donnelly,P3 slow in Snowflake
+INC100131,Incident-Network,Azure AD,P3,Closed,2025-02-15,219.1,Unknown,L3,EMEA,Priya Natarajan,P3 request in SAP ECC
+INC100132,Incident-Treasury,Snowflake,P2,Closed,2026-02-09,6.3,Integration failure,L3,EMEA,Priya Natarajan,P2 error in S/4HANA
+INC100133,Request-Access,Azure AD,P1,Resolved,2026-05-15,149.1,Vendor outage,L3,EMEA,Priya Natarajan,P1 request in SAP ECC
+INC100134,Incident-Reporting,Azure AD,P3,Resolved,2025-10-14,169.9,Config error,L2,North America,Aisha Bello,P3 slow in S/4HANA
+INC100135,Request-Report,Salesforce,P3,In Progress,2025-09-01,218.7,Permission,L1,EMEA,Marcus Reilly,P3 error in Kyriba
+INC100136,Incident-ERP,Salesforce,P3,Closed,2025-07-17,55.4,Integration failure,L1,North America,Tomas Halvorsen,P3 outage in ServiceNow
+INC100137,Request-Access,Azure AD,P3,Resolved,2025-02-20,23.7,Unknown,L1,APAC,Priya Natarajan,P3 request in Snowflake
+INC100138,Incident-Reporting,Power BI,P4,In Progress,2025-07-13,173.2,Code defect,L1,EMEA,Marcus Reilly,P4 outage in Power BI
+INC100139,Request-Report,Power BI,P3,Resolved,2025-02-19,82.4,Network,L2,EMEA,David Chen,P3 error in Coupa
+INC100140,Incident-Access,SAP ECC,P4,In Progress,2025-09-22,116.4,Unknown,L3,North America,Priya Natarajan,P4 outage in Power BI
+INC100141,Request-Access,Power BI,P2,Closed,2026-01-17,213.4,Integration failure,L1,APAC,Elena Vasquez,P2 failure in Workday
+INC100142,Incident-Network,S/4HANA,P3,Resolved,2025-01-07,15.5,Vendor outage,L1,APAC,Maria Donnelly,P3 slow in Workday
+INC100143,Request-Report,Snowflake,P3,On Hold,2026-04-13,9.3,User error,L2,North America,Marcus Reilly,P3 request in ServiceNow
+INC100144,Request-Change,ServiceNow,P4,Resolved,2025-01-14,186.2,Integration failure,L2,APAC,Elena Vasquez,P4 request in S/4HANA
+INC100145,Request-Change,Azure AD,P2,Closed,2026-05-31,137.9,Network,L3,EMEA,Aisha Bello,P2 failure in Coupa
+INC100146,Request-Report,ServiceNow,P3,Closed,2025-01-18,157.6,Code defect,L3,North America,Raymond Okafor,P3 failure in ServiceNow
+INC100147,Request-Report,Salesforce,P4,Open,2025-07-24,44.1,Vendor outage,L3,North America,Marcus Reilly,P4 slow in Workday
+INC100148,Request-Access,Snowflake,P1,Closed,2025-12-28,41.5,Network,L3,APAC,David Chen,P1 request in Kyriba
+INC100149,Incident-ERP,Azure AD,P4,Resolved,2026-03-02,6.0,Integration failure,L2,EMEA,Tomas Halvorsen,P4 outage in Azure AD
+INC100150,Incident-Treasury,Workday,P3,Closed,2025-06-17,204.8,Network,L3,LATAM,Tomas Halvorsen,P3 slow in S/4HANA
+INC100151,Incident-Reporting,SAP ECC,P2,Open,2025-05-29,74.8,Network,L2,EMEA,Elena Vasquez,P2 error in Coupa
+INC100152,Request-Report,SAP ECC,P3,Closed,2026-05-24,93.2,User error,L1,North America,Marcus Reilly,P3 error in Kyriba
+INC100153,Incident-Treasury,Workday,P3,Closed,2025-08-06,215.6,Capacity,L1,LATAM,Raymond Okafor,P3 request in Salesforce
+INC100154,Incident-Network,Kyriba,P3,Closed,2025-11-10,98.1,User error,L2,EMEA,Elena Vasquez,P3 request in Power BI
+INC100155,Request-Report,Power BI,P2,Closed,2025-05-06,100.1,User error,L1,EMEA,Priya Natarajan,P2 slow in S/4HANA
+INC100156,Incident-Network,Salesforce,P3,Closed,2026-04-20,144.5,Code defect,L1,EMEA,Elena Vasquez,P3 outage in Snowflake
+INC100157,Request-Report,ServiceNow,P3,Resolved,2025-08-05,43.3,Integration failure,L3,APAC,Aisha Bello,P3 slow in Coupa
+INC100158,Problem,S/4HANA,P3,Resolved,2025-10-08,186.7,Permission,L1,EMEA,Aisha Bello,P3 request in Kyriba
+INC100159,Incident-Network,Kyriba,P3,In Progress,2025-09-07,73.8,Vendor outage,L1,APAC,David Chen,P3 request in Power BI
+INC100160,Incident-Reporting,Coupa,P4,Resolved,2025-01-21,131.1,Network,L1,EMEA,David Chen,P4 request in Azure AD
+INC100161,Incident-Network,Salesforce,P3,Resolved,2025-02-18,163.4,Config error,L3,North America,Maria Donnelly,P3 error in Coupa
+INC100162,Incident-Access,Power BI,P3,Closed,2025-02-17,130.6,Data quality,L3,EMEA,Sofia Marchetti,P3 failure in Salesforce
+INC100163,Incident-Access,ServiceNow,P2,Closed,2025-06-16,54.5,Unknown,L3,APAC,Aisha Bello,P2 error in Snowflake
+INC100164,Request-Change,Snowflake,P3,Resolved,2026-04-03,108.2,User error,L3,North America,Maria Donnelly,P3 request in ServiceNow
+INC100165,Incident-ERP,Kyriba,P3,Resolved,2026-03-20,35.9,Code defect,L2,EMEA,Liam O'Sullivan,P3 outage in Kyriba
+INC100166,Enhancement,Kyriba,P1,Closed,2025-01-22,125.0,Data quality,L3,EMEA,David Chen,P1 slow in ServiceNow
+INC100167,Problem,Coupa,P1,Resolved,2025-11-07,145.3,User error,L3,EMEA,Sofia Marchetti,P1 request in Power BI
+INC100168,Incident-Network,Snowflake,P3,Closed,2025-07-02,192.3,User error,L3,EMEA,Elena Vasquez,P3 request in Snowflake
+INC100169,Incident-Reporting,ServiceNow,P4,Closed,2026-02-05,136.2,Data quality,L3,LATAM,Aisha Bello,P4 failure in ServiceNow
+INC100170,Request-Access,Kyriba,P3,Resolved,2026-05-14,74.3,Config error,L2,North America,Tomas Halvorsen,P3 error in Snowflake
+INC100171,Incident-Network,Snowflake,P2,Resolved,2025-03-31,158.7,User error,L1,North America,Priya Natarajan,P2 error in Coupa
+INC100172,Problem,Azure AD,P3,Resolved,2025-02-01,43.1,Capacity,L3,North America,Priya Natarajan,P3 slow in ServiceNow
+INC100173,Incident-Reporting,Salesforce,P4,In Progress,2025-08-26,196.2,Data quality,L2,North America,Aisha Bello,P4 slow in Workday
+INC100174,Incident-ERP,SAP ECC,P4,Resolved,2025-12-03,133.1,Unknown,L2,APAC,Elena Vasquez,P4 failure in Power BI
+INC100175,Problem,Kyriba,P4,Closed,2025-02-19,87.3,Config error,L3,EMEA,Priya Natarajan,P4 outage in Salesforce
+INC100176,Incident-Reporting,Workday,P2,Resolved,2025-01-05,181.8,Unknown,L1,EMEA,Sofia Marchetti,P2 outage in Power BI
+INC100177,Enhancement,Kyriba,P4,Closed,2025-02-13,80.9,Unknown,L3,North America,Marcus Reilly,P4 request in S/4HANA
+INC100178,Problem,Snowflake,P2,Resolved,2025-04-24,37.1,Unknown,L1,North America,Aisha Bello,P2 failure in Power BI
+INC100179,Incident-Treasury,Salesforce,P3,Closed,2026-04-20,164.1,Capacity,L1,LATAM,Aisha Bello,P3 request in Power BI
+INC100180,Enhancement,Kyriba,P2,Resolved,2025-06-24,216.3,Unknown,L1,North America,Marcus Reilly,P2 request in Azure AD
+INC100181,Incident-Treasury,Coupa,P4,Closed,2025-07-08,145.9,Capacity,L3,APAC,Sofia Marchetti,P4 request in Coupa
+INC100182,Request-Access,Kyriba,P2,Resolved,2025-10-25,38.0,Permission,L2,APAC,Liam O'Sullivan,P2 outage in Power BI
+INC100183,Incident-Treasury,S/4HANA,P3,Closed,2026-04-22,13.7,Permission,L2,North America,Elena Vasquez,P3 outage in Power BI
+INC100184,Problem,Power BI,P3,Resolved,2026-02-16,142.6,User error,L2,LATAM,Tomas Halvorsen,P3 error in SAP ECC
+INC100185,Incident-Reporting,ServiceNow,P3,Resolved,2025-04-28,41.2,Config error,L2,EMEA,Elena Vasquez,P3 slow in Workday
+INC100186,Request-Access,Coupa,P3,Resolved,2025-06-14,82.4,Config error,L3,North America,Priya Natarajan,P3 outage in Kyriba
+INC100187,Incident-Treasury,Workday,P4,Resolved,2025-06-03,112.9,Network,L1,North America,Raymond Okafor,P4 request in Power BI
+INC100188,Problem,Azure AD,P2,Resolved,2026-02-10,149.6,Integration failure,L2,APAC,Sofia Marchetti,P2 slow in Salesforce
+INC100189,Request-Change,SAP ECC,P3,Resolved,2025-11-08,76.8,Network,L1,EMEA,David Chen,P3 slow in Azure AD
+INC100190,Incident-Treasury,Workday,P4,Resolved,2026-04-22,179.4,Code defect,L2,APAC,Priya Natarajan,P4 failure in Salesforce
+INC100191,Problem,SAP ECC,P3,Resolved,2026-01-22,175.1,Code defect,L1,EMEA,Marcus Reilly,P3 outage in Salesforce
+INC100192,Incident-ERP,Azure AD,P4,In Progress,2026-04-06,23.9,Unknown,L1,APAC,Elena Vasquez,P4 failure in ServiceNow
+INC100193,Incident-Network,S/4HANA,P3,Resolved,2025-01-15,200.3,Data quality,L2,APAC,Marcus Reilly,P3 slow in SAP ECC
+INC100194,Enhancement,ServiceNow,P3,Resolved,2025-05-04,195.1,Vendor outage,L2,APAC,Aisha Bello,P3 outage in ServiceNow
+INC100195,Enhancement,Workday,P3,Resolved,2026-02-16,128.3,Code defect,L3,North America,Liam O'Sullivan,P3 outage in Power BI
+INC100196,Incident-Access,Snowflake,P4,Resolved,2025-04-26,152.7,Vendor outage,L2,APAC,Priya Natarajan,P4 outage in Snowflake
+INC100197,Incident-Treasury,Salesforce,P4,Closed,2026-01-25,47.5,Data quality,L3,North America,Priya Natarajan,P4 outage in Kyriba
+INC100198,Problem,SAP ECC,P4,Open,2025-05-02,69.7,Data quality,L1,EMEA,Priya Natarajan,P4 failure in Kyriba
+INC100199,Request-Access,Salesforce,P4,Resolved,2025-05-09,213.3,Network,L1,APAC,Raymond Okafor,P4 failure in Azure AD
+INC100200,Incident-ERP,Workday,P4,Resolved,2025-01-10,203.3,Capacity,L3,EMEA,Raymond Okafor,P4 outage in Workday
+INC100201,Incident-Access,Salesforce,P2,Closed,2025-02-17,2.0,Network,L2,EMEA,Priya Natarajan,P2 failure in ServiceNow
+INC100202,Enhancement,SAP ECC,P3,Resolved,2025-05-26,62.2,Integration failure,L3,LATAM,Aisha Bello,P3 failure in Workday
+INC100203,Enhancement,SAP ECC,P3,Resolved,2025-02-16,106.4,Code defect,L2,North America,Sofia Marchetti,P3 request in Kyriba
+INC100204,Request-Change,Kyriba,P1,Closed,2025-07-20,16.4,Unknown,L2,North America,Aisha Bello,P1 slow in Snowflake
+INC100205,Request-Access,Workday,P3,In Progress,2025-01-02,58.0,Unknown,L3,APAC,Marcus Reilly,P3 request in Azure AD
+INC100206,Incident-Network,Snowflake,P3,Closed,2026-01-17,97.7,Code defect,L2,EMEA,Tomas Halvorsen,P3 outage in Power BI
+INC100207,Request-Access,Workday,P4,Resolved,2025-11-24,154.3,Vendor outage,L3,EMEA,Liam O'Sullivan,P4 slow in S/4HANA
+INC100208,Incident-Treasury,ServiceNow,P4,Closed,2026-03-16,49.2,Capacity,L1,APAC,Liam O'Sullivan,P4 request in SAP ECC
+INC100209,Problem,Coupa,P2,Open,2025-11-14,139.2,Code defect,L1,EMEA,Liam O'Sullivan,P2 outage in Kyriba
+INC100210,Incident-Network,S/4HANA,P4,Closed,2025-05-31,45.8,Network,L3,APAC,David Chen,P4 error in Coupa
+INC100211,Incident-Access,Kyriba,P3,Open,2025-02-19,121.4,Vendor outage,L2,APAC,David Chen,P3 request in Power BI
+INC100212,Enhancement,Snowflake,P3,Resolved,2025-05-19,182.6,Capacity,L2,LATAM,Raymond Okafor,P3 failure in ServiceNow
+INC100213,Request-Change,Salesforce,P3,Resolved,2025-03-01,209.2,Vendor outage,L3,EMEA,Marcus Reilly,P3 outage in S/4HANA
+INC100214,Enhancement,ServiceNow,P4,In Progress,2025-09-21,76.2,User error,L1,APAC,Raymond Okafor,P4 failure in Power BI
+INC100215,Enhancement,SAP ECC,P3,Closed,2025-03-07,182.1,Data quality,L2,APAC,Sofia Marchetti,P3 error in Salesforce
+INC100216,Incident-Access,Kyriba,P3,Resolved,2025-04-26,150.7,Capacity,L1,EMEA,Maria Donnelly,P3 request in Azure AD
+INC100217,Incident-Treasury,Kyriba,P4,Closed,2026-04-23,58.2,User error,L3,LATAM,Marcus Reilly,P4 outage in Salesforce
+INC100218,Request-Report,Coupa,P4,Resolved,2025-09-21,110.4,Unknown,L3,North America,Maria Donnelly,P4 request in Snowflake
+INC100219,Problem,S/4HANA,P3,Resolved,2026-05-17,98.1,Network,L1,EMEA,Maria Donnelly,P3 failure in S/4HANA
+INC100220,Incident-Reporting,Azure AD,P4,Resolved,2025-06-16,62.9,User error,L3,APAC,Priya Natarajan,P4 error in SAP ECC
+INC100221,Incident-Treasury,Workday,P3,Closed,2025-07-17,74.1,Integration failure,L1,North America,David Chen,P3 slow in Workday
+INC100222,Incident-Network,Snowflake,P4,Open,2025-08-30,156.4,Permission,L2,APAC,Priya Natarajan,P4 error in Power BI
+INC100223,Request-Change,SAP ECC,P1,Closed,2025-05-14,172.2,Capacity,L1,APAC,Maria Donnelly,P1 slow in Workday
+INC100224,Incident-Access,Kyriba,P2,Resolved,2025-08-04,92.7,Unknown,L1,EMEA,Priya Natarajan,P2 failure in Kyriba
+INC100225,Incident-Access,SAP ECC,P4,Resolved,2025-08-05,89.8,Network,L2,North America,Raymond Okafor,P4 outage in SAP ECC
+INC100226,Incident-Access,SAP ECC,P3,Closed,2025-05-13,41.3,Vendor outage,L2,LATAM,Maria Donnelly,P3 outage in ServiceNow
+INC100227,Incident-Network,Azure AD,P3,Resolved,2025-08-08,104.7,Data quality,L1,North America,Raymond Okafor,P3 error in Snowflake
+INC100228,Incident-Network,Power BI,P3,Open,2025-09-28,27.4,Integration failure,L2,North America,Liam O'Sullivan,P3 outage in Workday
+INC100229,Problem,Snowflake,P3,Resolved,2025-06-09,46.5,Data quality,L1,North America,Sofia Marchetti,P3 outage in Power BI
+INC100230,Request-Change,Coupa,P4,Resolved,2025-12-30,159.7,Code defect,L3,LATAM,Raymond Okafor,P4 error in Salesforce
+INC100231,Incident-Reporting,SAP ECC,P3,Resolved,2026-03-22,158.1,Integration failure,L1,EMEA,Tomas Halvorsen,P3 request in Azure AD
+INC100232,Enhancement,ServiceNow,P2,Resolved,2025-12-31,8.6,Permission,L3,APAC,Raymond Okafor,P2 slow in S/4HANA
+INC100233,Enhancement,Salesforce,P4,Resolved,2026-04-14,13.9,Integration failure,L2,APAC,Sofia Marchetti,P4 request in Salesforce
+INC100234,Request-Report,ServiceNow,P3,Resolved,2026-03-24,118.0,Code defect,L3,APAC,Marcus Reilly,P3 request in S/4HANA
+INC100235,Request-Change,Snowflake,P1,Closed,2025-06-05,58.5,User error,L3,EMEA,David Chen,P1 slow in Coupa
+INC100236,Request-Report,Kyriba,P4,Closed,2025-06-06,19.8,Vendor outage,L2,North America,Aisha Bello,P4 request in Snowflake
+INC100237,Incident-ERP,Snowflake,P4,Resolved,2025-06-14,27.7,Integration failure,L2,APAC,Raymond Okafor,P4 outage in Snowflake
+INC100238,Enhancement,Azure AD,P3,Resolved,2025-09-29,44.0,Config error,L3,EMEA,Priya Natarajan,P3 request in Coupa
+INC100239,Request-Report,Snowflake,P4,Resolved,2025-04-15,208.1,Network,L3,North America,Liam O'Sullivan,P4 outage in Azure AD
+INC100240,Request-Report,Snowflake,P4,In Progress,2025-11-20,101.2,Code defect,L2,North America,David Chen,P4 outage in Azure AD
+INC100241,Request-Report,S/4HANA,P2,Resolved,2025-03-24,74.1,Capacity,L1,APAC,Marcus Reilly,P2 error in SAP ECC
+INC100242,Request-Change,ServiceNow,P3,Closed,2026-01-25,54.9,User error,L3,LATAM,Sofia Marchetti,P3 error in Snowflake
+INC100243,Incident-Reporting,Power BI,P3,Closed,2025-02-27,22.0,Unknown,L2,EMEA,Priya Natarajan,P3 outage in S/4HANA
+INC100244,Incident-Reporting,Snowflake,P1,Resolved,2025-05-28,104.8,Data quality,L1,LATAM,Tomas Halvorsen,P1 error in Kyriba
+INC100245,Request-Change,Kyriba,P4,Resolved,2025-01-13,120.1,Unknown,L3,North America,Marcus Reilly,P4 slow in S/4HANA
+INC100246,Request-Access,SAP ECC,P1,Open,2025-08-18,87.3,Permission,L2,North America,Raymond Okafor,P1 failure in Workday
+INC100247,Incident-Reporting,SAP ECC,P1,Resolved,2026-03-01,74.8,Code defect,L3,EMEA,Sofia Marchetti,P1 slow in SAP ECC
+INC100248,Request-Change,Kyriba,P3,Resolved,2025-08-17,40.0,Vendor outage,L2,LATAM,Maria Donnelly,P3 slow in ServiceNow
+INC100249,Request-Report,Salesforce,P3,Resolved,2025-11-27,196.3,Data quality,L2,APAC,David Chen,P3 request in Kyriba
+INC100250,Request-Access,S/4HANA,P3,Closed,2025-02-22,215.1,Code defect,L3,EMEA,Raymond Okafor,P3 failure in Azure AD
+INC100251,Problem,Azure AD,P4,Closed,2025-04-30,92.5,Permission,L1,LATAM,Marcus Reilly,P4 slow in Coupa
+INC100252,Enhancement,Snowflake,P4,Closed,2025-02-19,44.5,Permission,L2,LATAM,David Chen,P4 failure in SAP ECC
+INC100253,Enhancement,Kyriba,P3,Closed,2025-01-14,215.8,User error,L1,EMEA,Elena Vasquez,P3 failure in Salesforce
+INC100254,Incident-ERP,Power BI,P3,Resolved,2025-06-05,102.5,User error,L2,North America,David Chen,P3 request in S/4HANA
+INC100255,Incident-Reporting,S/4HANA,P4,Resolved,2025-01-21,53.0,Integration failure,L2,North America,Aisha Bello,P4 outage in Workday
+INC100256,Incident-Treasury,Coupa,P3,Closed,2026-01-03,186.2,Config error,L1,North America,Priya Natarajan,P3 error in S/4HANA
+INC100257,Request-Change,Snowflake,P3,Resolved,2026-01-06,43.5,Integration failure,L2,APAC,Marcus Reilly,P3 error in Coupa
+INC100258,Incident-Access,Power BI,P4,Closed,2025-05-18,53.8,Capacity,L3,APAC,David Chen,P4 slow in Kyriba
+INC100259,Incident-Access,Kyriba,P4,Closed,2026-04-15,145.6,Network,L1,EMEA,Elena Vasquez,P4 request in SAP ECC
+INC100260,Request-Access,SAP ECC,P4,Closed,2025-05-20,25.1,Capacity,L2,EMEA,Aisha Bello,P4 failure in Snowflake
+INC100261,Incident-Reporting,Kyriba,P3,Resolved,2025-05-18,79.1,Capacity,L1,APAC,Maria Donnelly,P3 failure in Workday
+INC100262,Request-Report,Salesforce,P2,Open,2025-05-09,167.8,Code defect,L3,North America,Sofia Marchetti,P2 slow in Salesforce
+INC100263,Enhancement,ServiceNow,P4,Resolved,2025-09-25,133.9,User error,L2,APAC,Tomas Halvorsen,P4 outage in Snowflake
+INC100264,Incident-Network,Coupa,P3,Resolved,2025-02-01,106.6,Permission,L3,EMEA,Maria Donnelly,P3 outage in Coupa
+INC100265,Problem,SAP ECC,P3,Resolved,2026-05-17,16.3,Code defect,L1,APAC,Liam O'Sullivan,P3 slow in SAP ECC
+INC100266,Request-Report,Snowflake,P4,Resolved,2025-11-19,114.5,Data quality,L3,North America,Tomas Halvorsen,P4 request in Salesforce
+INC100267,Incident-Treasury,Snowflake,P4,Resolved,2025-07-24,173.8,User error,L1,APAC,Elena Vasquez,P4 outage in Salesforce
+INC100268,Incident-ERP,Azure AD,P3,Resolved,2025-03-10,209.9,Config error,L2,North America,David Chen,P3 outage in Azure AD
+INC100269,Incident-Network,Salesforce,P4,Closed,2025-05-05,116.7,Unknown,L1,APAC,Raymond Okafor,P4 error in Salesforce
+INC100270,Incident-Network,Power BI,P3,Resolved,2025-01-10,50.0,User error,L1,APAC,Tomas Halvorsen,P3 outage in Azure AD
+INC100271,Enhancement,ServiceNow,P3,Resolved,2025-06-20,27.9,Network,L2,LATAM,Raymond Okafor,P3 request in Workday
+INC100272,Incident-Access,Snowflake,P3,Resolved,2025-04-20,109.8,Capacity,L3,APAC,Raymond Okafor,P3 error in ServiceNow
+INC100273,Request-Change,SAP ECC,P3,On Hold,2025-04-21,16.2,Network,L3,EMEA,Aisha Bello,P3 slow in ServiceNow
+INC100274,Incident-ERP,ServiceNow,P2,Resolved,2025-01-14,73.2,Config error,L1,EMEA,Maria Donnelly,P2 slow in S/4HANA
+INC100275,Incident-Network,SAP ECC,P4,Closed,2025-07-09,40.4,Capacity,L3,EMEA,Aisha Bello,P4 failure in Snowflake
+INC100276,Request-Report,Power BI,P2,In Progress,2025-01-02,10.9,Network,L3,EMEA,Sofia Marchetti,P2 request in Azure AD
+INC100277,Request-Access,Salesforce,P3,Closed,2025-07-07,175.9,Vendor outage,L2,EMEA,Aisha Bello,P3 failure in Snowflake
+INC100278,Incident-Network,Coupa,P4,Closed,2026-03-03,51.2,Integration failure,L3,North America,Elena Vasquez,P4 error in Coupa
+INC100279,Enhancement,SAP ECC,P4,Resolved,2026-01-05,147.1,Vendor outage,L1,EMEA,David Chen,P4 failure in Coupa
+INC100280,Incident-Access,Kyriba,P3,Resolved,2026-04-23,175.8,Integration failure,L3,North America,Liam O'Sullivan,P3 outage in Kyriba
+INC100281,Incident-Treasury,Power BI,P4,Resolved,2025-06-19,90.3,Data quality,L2,EMEA,David Chen,P4 failure in Coupa
+INC100282,Incident-Network,Salesforce,P1,Resolved,2025-06-04,104.5,Integration failure,L1,LATAM,Aisha Bello,P1 failure in Workday
+INC100283,Incident-Reporting,Kyriba,P3,Closed,2025-05-30,22.7,Capacity,L2,North America,David Chen,P3 error in Workday
+INC100284,Incident-ERP,ServiceNow,P2,Resolved,2026-04-18,3.1,Vendor outage,L2,APAC,Liam O'Sullivan,P2 outage in S/4HANA
+INC100285,Incident-Reporting,SAP ECC,P4,In Progress,2026-02-09,154.6,Capacity,L2,North America,Liam O'Sullivan,P4 error in SAP ECC
+INC100286,Problem,Snowflake,P2,Resolved,2026-05-09,73.8,Network,L2,North America,Aisha Bello,P2 error in Workday
+INC100287,Enhancement,Kyriba,P1,Closed,2026-05-12,115.3,Config error,L3,EMEA,Maria Donnelly,P1 failure in Workday
+INC100288,Request-Change,Workday,P3,Resolved,2025-05-10,25.3,Unknown,L3,North America,Raymond Okafor,P3 request in S/4HANA
+INC100289,Incident-Reporting,Azure AD,P3,Resolved,2025-04-12,122.3,User error,L1,APAC,Aisha Bello,P3 outage in Snowflake
+INC100290,Problem,Workday,P3,Resolved,2026-05-01,111.2,Permission,L2,EMEA,Sofia Marchetti,P3 error in Kyriba
+INC100291,Request-Change,Salesforce,P3,Resolved,2025-08-21,141.0,Permission,L2,APAC,Priya Natarajan,P3 failure in Coupa
+INC100292,Enhancement,Workday,P4,Resolved,2026-05-27,38.4,Config error,L3,North America,Elena Vasquez,P4 error in ServiceNow
+INC100293,Request-Change,Salesforce,P3,Closed,2026-02-16,70.7,Permission,L2,APAC,Aisha Bello,P3 slow in S/4HANA
+INC100294,Request-Report,Azure AD,P2,Resolved,2025-08-08,72.9,Capacity,L1,EMEA,Tomas Halvorsen,P2 outage in ServiceNow
+INC100295,Request-Report,S/4HANA,P3,Resolved,2025-09-09,39.9,Vendor outage,L1,North America,Aisha Bello,P3 outage in Coupa
+INC100296,Request-Report,Coupa,P4,Closed,2026-04-08,4.0,Code defect,L2,North America,Sofia Marchetti,P4 failure in Snowflake
+INC100297,Incident-Network,Snowflake,P4,Closed,2025-04-01,180.9,Data quality,L3,APAC,Maria Donnelly,P4 slow in Power BI
+INC100298,Request-Report,SAP ECC,P3,On Hold,2025-07-23,72.3,Unknown,L2,LATAM,Tomas Halvorsen,P3 request in S/4HANA
+INC100299,Enhancement,Salesforce,P4,Resolved,2025-09-19,18.4,User error,L2,EMEA,Sofia Marchetti,P4 failure in ServiceNow
+INC100300,Enhancement,Snowflake,P4,Resolved,2026-03-13,26.3,Integration failure,L2,APAC,Marcus Reilly,P4 outage in S/4HANA
+INC100301,Incident-Network,S/4HANA,P3,Closed,2026-01-23,35.2,Unknown,L2,North America,Aisha Bello,P3 request in Workday
+INC100302,Incident-Network,Snowflake,P4,Resolved,2026-01-06,57.5,Unknown,L2,North America,Marcus Reilly,P4 failure in S/4HANA
+INC100303,Request-Change,S/4HANA,P2,Resolved,2025-06-22,184.5,Capacity,L3,APAC,Liam O'Sullivan,P2 outage in Salesforce
+INC100304,Incident-Access,ServiceNow,P3,Resolved,2025-08-08,118.6,Network,L1,EMEA,Sofia Marchetti,P3 failure in Snowflake
+INC100305,Incident-Treasury,Kyriba,P1,Closed,2025-04-18,153.1,Unknown,L3,APAC,David Chen,P1 request in Azure AD
+INC100306,Incident-ERP,Coupa,P2,In Progress,2026-01-08,179.9,Config error,L1,North America,Aisha Bello,P2 slow in Snowflake
+INC100307,Problem,Salesforce,P4,Resolved,2025-08-30,29.6,Data quality,L3,North America,Elena Vasquez,P4 slow in Coupa
+INC100308,Incident-Network,S/4HANA,P3,Resolved,2025-06-19,5.9,Unknown,L2,APAC,Liam O'Sullivan,P3 failure in Kyriba
+INC100309,Enhancement,ServiceNow,P3,Resolved,2025-08-30,195.6,Integration failure,L2,North America,Liam O'Sullivan,P3 error in Salesforce
+INC100310,Request-Change,Kyriba,P3,Resolved,2025-12-20,33.4,Integration failure,L3,North America,Aisha Bello,P3 outage in Kyriba
+INC100311,Request-Access,S/4HANA,P4,Closed,2025-07-21,63.2,Config error,L2,EMEA,Marcus Reilly,P4 error in S/4HANA
+INC100312,Incident-Access,Kyriba,P4,In Progress,2026-04-30,68.3,Permission,L2,North America,Elena Vasquez,P4 error in Kyriba
+INC100313,Incident-Reporting,Coupa,P3,In Progress,2025-06-22,92.3,Vendor outage,L3,North America,Marcus Reilly,P3 error in Salesforce
+INC100314,Enhancement,Kyriba,P3,Resolved,2026-02-03,29.8,User error,L1,EMEA,Marcus Reilly,P3 outage in Power BI
+INC100315,Enhancement,Power BI,P4,Resolved,2026-05-22,93.7,Integration failure,L2,EMEA,Sofia Marchetti,P4 error in Coupa
+INC100316,Problem,S/4HANA,P4,Closed,2025-05-07,95.4,Network,L2,North America,Sofia Marchetti,P4 outage in S/4HANA
+INC100317,Incident-ERP,Power BI,P4,Closed,2026-01-29,102.4,Data quality,L3,APAC,Maria Donnelly,P4 failure in ServiceNow
+INC100318,Enhancement,SAP ECC,P3,Closed,2025-05-04,19.3,Code defect,L1,LATAM,Marcus Reilly,P3 error in Azure AD
+INC100319,Enhancement,SAP ECC,P3,Resolved,2025-12-04,144.1,Config error,L3,EMEA,Tomas Halvorsen,P3 slow in Workday
+INC100320,Incident-Network,Coupa,P3,Resolved,2025-03-28,34.5,User error,L1,North America,David Chen,P3 slow in ServiceNow
+INC100321,Request-Access,Workday,P2,In Progress,2026-04-21,90.7,Unknown,L1,EMEA,Liam O'Sullivan,P2 error in Salesforce
+INC100322,Incident-ERP,SAP ECC,P4,In Progress,2025-11-18,51.6,Data quality,L2,APAC,Raymond Okafor,P4 slow in Azure AD
+INC100323,Incident-ERP,Snowflake,P1,Resolved,2026-01-14,155.5,Data quality,L2,North America,David Chen,P1 error in Power BI
+INC100324,Incident-Network,Snowflake,P1,Closed,2025-05-10,44.6,Data quality,L1,North America,Aisha Bello,P1 error in Workday
+INC100325,Request-Access,SAP ECC,P3,Closed,2025-02-23,130.7,Network,L2,North America,Tomas Halvorsen,P3 failure in ServiceNow
+INC100326,Incident-ERP,Snowflake,P3,Resolved,2025-04-05,184.4,Unknown,L3,LATAM,Aisha Bello,P3 outage in Azure AD
+INC100327,Problem,Power BI,P4,Resolved,2025-06-19,12.2,Code defect,L3,EMEA,Aisha Bello,P4 outage in Salesforce
+INC100328,Enhancement,Power BI,P4,Resolved,2026-01-28,14.6,Permission,L3,North America,Maria Donnelly,P4 request in S/4HANA
+INC100329,Incident-Access,Coupa,P3,Closed,2026-02-07,44.3,Vendor outage,L2,APAC,Priya Natarajan,P3 request in S/4HANA
+INC100330,Incident-Treasury,Workday,P3,Resolved,2025-11-11,42.1,Network,L3,LATAM,Aisha Bello,P3 outage in S/4HANA
+INC100331,Problem,Snowflake,P3,Resolved,2025-07-08,102.9,Unknown,L1,EMEA,Tomas Halvorsen,P3 request in Kyriba
+INC100332,Request-Report,SAP ECC,P3,Resolved,2025-10-25,115.6,Vendor outage,L2,EMEA,Maria Donnelly,P3 request in Workday
+INC100333,Incident-ERP,Workday,P3,Resolved,2025-06-08,44.4,Capacity,L2,APAC,Aisha Bello,P3 slow in S/4HANA
+INC100334,Incident-ERP,Snowflake,P3,Open,2025-12-07,169.3,Vendor outage,L1,North America,Aisha Bello,P3 failure in Power BI
+INC100335,Incident-Reporting,Workday,P3,Closed,2025-12-05,0.6,Config error,L3,LATAM,Raymond Okafor,P3 error in Snowflake
+INC100336,Incident-Access,Coupa,P2,Resolved,2026-03-24,27.5,Vendor outage,L3,North America,Tomas Halvorsen,P2 request in Power BI
+INC100337,Incident-Reporting,Kyriba,P3,Resolved,2026-03-17,69.1,Capacity,L1,APAC,Elena Vasquez,P3 error in Kyriba
+INC100338,Incident-Access,Workday,P3,Resolved,2025-05-15,188.5,Config error,L1,EMEA,Sofia Marchetti,P3 error in Coupa
+INC100339,Problem,Azure AD,P3,Resolved,2025-09-22,94.9,Data quality,L2,APAC,David Chen,P3 error in Snowflake
+INC100340,Problem,S/4HANA,P1,Resolved,2025-01-26,147.0,Config error,L1,EMEA,Raymond Okafor,P1 request in ServiceNow
+INC100341,Incident-Reporting,SAP ECC,P2,Closed,2025-05-09,28.2,Data quality,L2,North America,Marcus Reilly,P2 slow in Salesforce
+INC100342,Incident-Treasury,Snowflake,P3,Resolved,2025-11-11,170.9,Permission,L3,LATAM,David Chen,P3 outage in Power BI
+INC100343,Request-Report,Salesforce,P1,Resolved,2026-01-24,114.6,Integration failure,L2,North America,Maria Donnelly,P1 error in ServiceNow
+INC100344,Incident-Treasury,Azure AD,P3,Resolved,2025-07-24,200.3,User error,L1,APAC,Priya Natarajan,P3 slow in Kyriba
+INC100345,Incident-Reporting,SAP ECC,P3,Resolved,2025-07-03,122.9,Network,L2,APAC,Tomas Halvorsen,P3 request in Coupa
+INC100346,Incident-Treasury,Power BI,P3,Closed,2025-10-07,35.7,Unknown,L3,APAC,Liam O'Sullivan,P3 request in Coupa
+INC100347,Incident-Reporting,S/4HANA,P2,In Progress,2025-06-18,51.7,Capacity,L2,North America,Raymond Okafor,P2 slow in Snowflake
+INC100348,Incident-ERP,S/4HANA,P2,Resolved,2026-02-25,71.1,Integration failure,L3,APAC,Liam O'Sullivan,P2 request in Kyriba
+INC100349,Incident-ERP,ServiceNow,P3,Resolved,2025-01-27,7.8,Config error,L3,North America,Priya Natarajan,P3 failure in Workday
+INC100350,Incident-ERP,Workday,P2,Resolved,2025-10-30,213.3,Unknown,L3,EMEA,David Chen,P2 slow in Power BI
+INC100351,Incident-Network,Workday,P2,Resolved,2025-09-20,55.5,Data quality,L1,North America,Marcus Reilly,P2 failure in Workday
+INC100352,Request-Report,Salesforce,P3,Closed,2025-03-18,147.1,Capacity,L3,EMEA,Sofia Marchetti,P3 failure in ServiceNow
+INC100353,Request-Access,Azure AD,P3,Resolved,2025-10-13,164.6,Vendor outage,L1,APAC,Elena Vasquez,P3 outage in Kyriba
+INC100354,Incident-Network,Coupa,P3,Closed,2025-04-24,26.4,Network,L3,North America,Elena Vasquez,P3 outage in SAP ECC
+INC100355,Problem,Salesforce,P3,In Progress,2026-05-17,121.4,Capacity,L2,North America,Liam O'Sullivan,P3 request in Salesforce
+INC100356,Enhancement,S/4HANA,P2,Resolved,2026-05-18,55.5,Config error,L3,APAC,Priya Natarajan,P2 outage in Workday
+INC100357,Incident-Access,Power BI,P3,Open,2025-12-28,200.4,Code defect,L2,EMEA,Marcus Reilly,P3 failure in Snowflake
+INC100358,Request-Access,Workday,P3,Resolved,2025-04-13,43.2,Vendor outage,L3,EMEA,Tomas Halvorsen,P3 failure in Coupa
+INC100359,Incident-Access,Kyriba,P3,Resolved,2025-08-18,78.3,User error,L3,North America,Liam O'Sullivan,P3 request in ServiceNow
+INC100360,Incident-Treasury,Coupa,P3,On Hold,2025-10-02,138.3,Permission,L3,North America,Elena Vasquez,P3 slow in Kyriba
+INC100361,Incident-Network,Snowflake,P2,Resolved,2025-09-21,122.2,Data quality,L1,EMEA,Marcus Reilly,P2 failure in Azure AD
+INC100362,Incident-Reporting,ServiceNow,P4,On Hold,2025-05-26,2.7,Network,L1,North America,Raymond Okafor,P4 request in Workday
+INC100363,Incident-Access,Workday,P2,Resolved,2025-06-19,178.7,Vendor outage,L2,APAC,Priya Natarajan,P2 outage in Coupa
+INC100364,Incident-Network,S/4HANA,P3,Resolved,2026-04-26,93.3,Network,L3,EMEA,Tomas Halvorsen,P3 request in Workday
+INC100365,Enhancement,Salesforce,P4,In Progress,2025-06-02,32.2,Network,L1,EMEA,Priya Natarajan,P4 outage in Snowflake
+INC100366,Request-Access,Salesforce,P2,Resolved,2025-08-16,99.1,User error,L2,LATAM,Priya Natarajan,P2 request in Power BI
+INC100367,Incident-ERP,Snowflake,P3,Resolved,2025-05-14,75.0,Config error,L2,EMEA,Sofia Marchetti,P3 request in SAP ECC
+INC100368,Request-Report,Salesforce,P3,In Progress,2025-08-28,204.4,Code defect,L3,North America,Sofia Marchetti,P3 error in Azure AD
+INC100369,Incident-Reporting,Coupa,P4,Closed,2025-05-15,7.0,Config error,L3,APAC,Priya Natarajan,P4 failure in Power BI
+INC100370,Incident-Reporting,Power BI,P2,In Progress,2025-08-01,162.2,Vendor outage,L3,APAC,Marcus Reilly,P2 error in S/4HANA
+INC100371,Incident-Treasury,Snowflake,P4,Closed,2025-12-11,198.2,Capacity,L1,APAC,Priya Natarajan,P4 failure in Workday
+INC100372,Request-Change,Workday,P4,On Hold,2025-07-13,16.1,Unknown,L1,EMEA,Priya Natarajan,P4 failure in Power BI
+INC100373,Request-Change,Snowflake,P3,Resolved,2025-08-10,46.3,Integration failure,L3,North America,Liam O'Sullivan,P3 slow in Coupa
+INC100374,Request-Change,Salesforce,P3,Closed,2025-09-16,28.8,Capacity,L2,North America,Elena Vasquez,P3 outage in SAP ECC
+INC100375,Problem,Power BI,P3,Resolved,2026-02-19,96.8,Integration failure,L2,LATAM,David Chen,P3 slow in S/4HANA
+INC100376,Problem,Salesforce,P3,In Progress,2025-03-27,43.4,Vendor outage,L3,North America,Raymond Okafor,P3 outage in Azure AD
+INC100377,Enhancement,Azure AD,P3,Closed,2026-03-16,61.5,Vendor outage,L2,EMEA,Tomas Halvorsen,P3 failure in Workday
+INC100378,Incident-Network,Salesforce,P2,Closed,2025-08-15,164.9,Capacity,L1,EMEA,Marcus Reilly,P2 request in SAP ECC
+INC100379,Request-Access,Coupa,P1,Closed,2026-02-16,49.6,Data quality,L3,North America,Tomas Halvorsen,P1 request in S/4HANA
+INC100380,Incident-Access,Kyriba,P3,Resolved,2026-02-01,215.1,User error,L2,APAC,Raymond Okafor,P3 outage in Azure AD
+INC100381,Incident-Access,SAP ECC,P3,On Hold,2025-05-19,103.1,Network,L1,APAC,David Chen,P3 slow in Salesforce
+INC100382,Enhancement,Salesforce,P4,Resolved,2026-02-22,163.8,User error,L2,EMEA,Tomas Halvorsen,P4 request in Kyriba
+INC100383,Problem,Snowflake,P4,Resolved,2026-05-15,31.7,User error,L1,North America,Tomas Halvorsen,P4 failure in S/4HANA
+INC100384,Incident-Access,Snowflake,P3,Resolved,2025-05-18,106.5,Config error,L1,EMEA,Sofia Marchetti,P3 outage in S/4HANA
+INC100385,Incident-Network,Power BI,P4,Closed,2025-12-24,214.2,Code defect,L1,APAC,Tomas Halvorsen,P4 request in SAP ECC
+INC100386,Incident-Access,Snowflake,P3,Resolved,2025-02-06,8.5,Unknown,L2,APAC,Tomas Halvorsen,P3 request in ServiceNow
+INC100387,Request-Report,Snowflake,P4,Open,2025-10-17,5.3,Unknown,L1,EMEA,Raymond Okafor,P4 outage in Snowflake
+INC100388,Incident-Network,Azure AD,P4,On Hold,2026-04-20,110.6,Unknown,L1,EMEA,Maria Donnelly,P4 error in Kyriba
+INC100389,Incident-Access,Coupa,P4,Resolved,2025-10-31,47.9,Network,L2,EMEA,Marcus Reilly,P4 request in S/4HANA
+INC100390,Request-Access,Kyriba,P2,Closed,2026-01-26,5.9,Vendor outage,L2,North America,Tomas Halvorsen,P2 request in S/4HANA
+INC100391,Incident-ERP,SAP ECC,P2,Resolved,2025-11-16,123.5,Unknown,L3,APAC,Aisha Bello,P2 error in Workday
+INC100392,Incident-ERP,S/4HANA,P3,Closed,2026-02-17,61.7,Network,L3,APAC,Marcus Reilly,P3 slow in Azure AD
+INC100393,Incident-Reporting,Kyriba,P4,Resolved,2025-01-18,121.0,User error,L3,LATAM,Elena Vasquez,P4 error in Coupa
+INC100394,Request-Change,Kyriba,P2,Closed,2025-07-21,127.4,Permission,L3,APAC,Tomas Halvorsen,P2 request in Coupa
+INC100395,Incident-Reporting,Azure AD,P3,Resolved,2026-03-17,120.3,Config error,L3,LATAM,Raymond Okafor,P3 slow in Coupa
+INC100396,Request-Change,Coupa,P3,Resolved,2026-04-24,13.3,Config error,L2,North America,David Chen,P3 error in ServiceNow
+INC100397,Incident-Reporting,SAP ECC,P4,Closed,2025-03-27,173.0,Vendor outage,L2,LATAM,David Chen,P4 failure in Kyriba
+INC100398,Enhancement,Coupa,P4,Resolved,2026-04-10,164.4,User error,L1,APAC,David Chen,P4 failure in Snowflake
+INC100399,Incident-ERP,Coupa,P3,Resolved,2025-03-03,126.0,Vendor outage,L3,North America,Marcus Reilly,P3 request in Workday
+INC100400,Incident-Network,Power BI,P3,Open,2025-04-03,146.6,Data quality,L2,EMEA,Tomas Halvorsen,P3 request in Salesforce
+INC100401,Enhancement,Azure AD,P3,Resolved,2025-01-24,70.1,Unknown,L2,LATAM,Sofia Marchetti,P3 request in Azure AD
+INC100402,Request-Report,ServiceNow,P3,Open,2026-05-14,36.3,Integration failure,L2,APAC,Maria Donnelly,P3 request in Workday
+INC100403,Incident-Network,Snowflake,P3,Closed,2025-04-28,40.1,User error,L3,EMEA,Liam O'Sullivan,P3 request in SAP ECC
+INC100404,Incident-Access,Azure AD,P3,Resolved,2025-07-03,42.1,Permission,L2,APAC,Maria Donnelly,P3 failure in Coupa
+INC100405,Problem,S/4HANA,P3,Closed,2025-07-07,161.7,Integration failure,L2,APAC,Aisha Bello,P3 failure in Power BI
+INC100406,Incident-Treasury,Azure AD,P1,Closed,2025-05-11,54.8,Capacity,L2,EMEA,Sofia Marchetti,P1 outage in Coupa
+INC100407,Incident-ERP,Workday,P4,On Hold,2025-07-12,188.7,User error,L1,APAC,David Chen,P4 request in Kyriba
+INC100408,Enhancement,SAP ECC,P2,Resolved,2025-07-10,55.0,Config error,L1,APAC,Priya Natarajan,P2 outage in S/4HANA
+INC100409,Incident-ERP,Snowflake,P3,Resolved,2026-04-30,10.9,Integration failure,L3,EMEA,Sofia Marchetti,P3 outage in ServiceNow
+INC100410,Request-Access,ServiceNow,P3,Resolved,2025-08-08,155.7,Permission,L1,North America,Maria Donnelly,P3 outage in Kyriba
+INC100411,Incident-Reporting,Kyriba,P3,Closed,2025-03-03,9.3,Permission,L1,EMEA,David Chen,P3 outage in Snowflake
+INC100412,Request-Report,Workday,P2,In Progress,2025-01-12,71.5,Capacity,L2,North America,David Chen,P2 slow in S/4HANA
+INC100413,Incident-Network,Salesforce,P3,Closed,2025-11-12,6.2,Permission,L3,EMEA,Aisha Bello,P3 outage in Coupa
+INC100414,Problem,Coupa,P2,Resolved,2026-01-25,167.3,Vendor outage,L2,LATAM,Tomas Halvorsen,P2 slow in ServiceNow
+INC100415,Request-Access,Kyriba,P3,Resolved,2025-02-15,138.3,Integration failure,L2,APAC,Sofia Marchetti,P3 slow in Coupa
+INC100416,Incident-Network,Workday,P4,Closed,2025-08-24,36.4,Data quality,L2,APAC,Marcus Reilly,P4 error in Power BI
+INC100417,Enhancement,Workday,P2,Resolved,2026-03-13,207.1,Integration failure,L2,EMEA,Liam O'Sullivan,P2 failure in Power BI
+INC100418,Request-Change,Workday,P1,Resolved,2025-04-03,27.9,Unknown,L2,North America,Maria Donnelly,P1 request in ServiceNow
+INC100419,Problem,S/4HANA,P3,Resolved,2025-06-27,215.4,Network,L3,APAC,Marcus Reilly,P3 failure in Power BI
+INC100420,Problem,Kyriba,P2,Resolved,2025-01-27,27.4,Config error,L1,EMEA,Elena Vasquez,P2 outage in ServiceNow
+INC100421,Request-Change,Kyriba,P3,Resolved,2026-04-01,52.0,Network,L2,APAC,David Chen,P3 outage in Coupa
+INC100422,Enhancement,Workday,P4,Resolved,2025-12-18,169.7,Network,L2,EMEA,Sofia Marchetti,P4 failure in S/4HANA
+INC100423,Incident-Network,Kyriba,P2,Resolved,2025-04-27,195.5,Vendor outage,L1,EMEA,Elena Vasquez,P2 outage in Coupa
+INC100424,Incident-Treasury,Workday,P3,Closed,2025-08-10,163.3,Data quality,L2,North America,David Chen,P3 error in SAP ECC
+INC100425,Request-Access,Salesforce,P3,Closed,2025-11-23,54.1,Capacity,L3,EMEA,Maria Donnelly,P3 failure in ServiceNow
+INC100426,Request-Access,Kyriba,P4,Resolved,2026-01-14,93.4,Integration failure,L1,North America,Priya Natarajan,P4 slow in Snowflake
+INC100427,Incident-Treasury,S/4HANA,P3,Resolved,2026-01-08,54.0,Network,L2,EMEA,David Chen,P3 outage in Azure AD
+INC100428,Incident-Reporting,SAP ECC,P2,Resolved,2026-02-03,44.4,Permission,L2,APAC,Tomas Halvorsen,P2 failure in Power BI
+INC100429,Enhancement,Workday,P3,Resolved,2025-02-22,20.4,Permission,L2,APAC,Aisha Bello,P3 failure in Workday
+INC100430,Problem,Kyriba,P2,Closed,2025-11-21,115.7,Permission,L2,EMEA,Aisha Bello,P2 outage in ServiceNow
+INC100431,Problem,Workday,P3,Closed,2025-05-08,212.7,Config error,L1,APAC,Marcus Reilly,P3 slow in Azure AD
+INC100432,Incident-Network,S/4HANA,P3,Closed,2025-09-05,170.2,Permission,L3,LATAM,Sofia Marchetti,P3 slow in Kyriba
+INC100433,Request-Change,Snowflake,P2,Resolved,2025-02-07,180.0,Integration failure,L1,North America,Aisha Bello,P2 failure in Snowflake
+INC100434,Request-Change,S/4HANA,P3,Closed,2025-09-13,111.2,Permission,L1,North America,Raymond Okafor,P3 slow in S/4HANA
+INC100435,Request-Access,SAP ECC,P3,Resolved,2025-10-30,145.0,Network,L2,LATAM,Elena Vasquez,P3 request in S/4HANA
+INC100436,Incident-Network,Salesforce,P4,Resolved,2025-12-30,84.8,Data quality,L2,EMEA,Elena Vasquez,P4 request in Power BI
+INC100437,Incident-Treasury,Azure AD,P4,Resolved,2025-01-22,106.0,Data quality,L1,EMEA,Sofia Marchetti,P4 request in ServiceNow
+INC100438,Request-Report,Kyriba,P3,Closed,2025-09-04,183.9,Capacity,L3,EMEA,Elena Vasquez,P3 outage in Power BI
+INC100439,Incident-Access,Coupa,P1,Resolved,2025-10-11,10.8,Network,L1,LATAM,Maria Donnelly,P1 failure in Workday
+INC100440,Incident-Treasury,Kyriba,P3,Resolved,2025-11-25,157.2,User error,L3,EMEA,Maria Donnelly,P3 error in ServiceNow
+INC100441,Incident-Access,Power BI,P3,On Hold,2026-02-16,216.6,Data quality,L2,EMEA,Elena Vasquez,P3 slow in Azure AD
+INC100442,Problem,Kyriba,P2,Closed,2026-01-29,57.7,User error,L1,APAC,Sofia Marchetti,P2 failure in Azure AD
+INC100443,Problem,S/4HANA,P2,Open,2025-02-06,9.5,Capacity,L3,LATAM,Tomas Halvorsen,P2 error in Snowflake
+INC100444,Incident-Access,Power BI,P3,Resolved,2025-12-25,127.5,Data quality,L1,North America,David Chen,P3 request in S/4HANA
+INC100445,Problem,Azure AD,P2,Resolved,2025-11-26,70.1,Unknown,L3,EMEA,David Chen,P2 slow in Workday
+INC100446,Incident-Access,Power BI,P3,Closed,2025-02-25,204.1,Config error,L3,APAC,Marcus Reilly,P3 outage in S/4HANA
+INC100447,Request-Report,ServiceNow,P4,In Progress,2025-02-09,139.8,Config error,L3,APAC,Elena Vasquez,P4 slow in Coupa
+INC100448,Request-Change,S/4HANA,P2,Resolved,2026-04-02,152.6,Vendor outage,L3,EMEA,Maria Donnelly,P2 request in SAP ECC
+INC100449,Incident-Network,Power BI,P3,Resolved,2025-09-15,194.9,User error,L3,EMEA,Sofia Marchetti,P3 failure in SAP ECC
+INC100450,Incident-ERP,Workday,P4,Resolved,2026-01-26,166.0,Network,L2,North America,Sofia Marchetti,P4 error in Power BI
+INC100451,Incident-Reporting,Azure AD,P2,Resolved,2026-02-18,73.3,Permission,L1,North America,David Chen,P2 failure in Salesforce
+INC100452,Request-Change,Kyriba,P3,Resolved,2025-01-01,24.2,Integration failure,L2,APAC,Raymond Okafor,P3 error in S/4HANA
+INC100453,Request-Report,Kyriba,P2,Resolved,2025-02-15,140.5,Network,L3,North America,Elena Vasquez,P2 request in Snowflake
+INC100454,Incident-Access,Kyriba,P3,Open,2025-04-23,139.2,User error,L1,LATAM,David Chen,P3 error in Azure AD
+INC100455,Request-Report,Azure AD,P3,Closed,2026-01-23,162.8,Data quality,L1,North America,Sofia Marchetti,P3 slow in Azure AD
+INC100456,Incident-Network,Kyriba,P3,In Progress,2025-09-09,173.7,Network,L3,North America,Marcus Reilly,P3 error in Coupa
+INC100457,Enhancement,Azure AD,P4,Closed,2025-03-31,132.3,Capacity,L3,EMEA,Marcus Reilly,P4 error in Kyriba
+INC100458,Enhancement,Snowflake,P3,On Hold,2025-12-21,190.1,Unknown,L1,APAC,Elena Vasquez,P3 request in SAP ECC
+INC100459,Request-Access,Kyriba,P3,Closed,2025-07-15,127.5,User error,L1,North America,Raymond Okafor,P3 failure in S/4HANA
+INC100460,Incident-Treasury,SAP ECC,P3,Resolved,2026-03-07,219.0,Integration failure,L2,EMEA,Liam O'Sullivan,P3 slow in Azure AD
+INC100461,Incident-Access,Coupa,P3,Closed,2025-11-23,167.0,Permission,L2,North America,Aisha Bello,P3 request in Coupa
+INC100462,Enhancement,Snowflake,P3,Closed,2026-03-10,29.4,Integration failure,L1,EMEA,Tomas Halvorsen,P3 failure in Snowflake
+INC100463,Incident-Network,Power BI,P3,Closed,2025-11-05,111.3,Network,L3,North America,Maria Donnelly,P3 slow in ServiceNow
+INC100464,Incident-Reporting,Snowflake,P3,Closed,2025-07-19,212.1,Integration failure,L1,North America,Maria Donnelly,P3 request in SAP ECC
+INC100465,Problem,Azure AD,P4,Closed,2026-03-20,10.5,Integration failure,L3,APAC,Elena Vasquez,P4 error in Power BI
+INC100466,Request-Change,Snowflake,P4,Resolved,2026-02-19,14.7,Capacity,L1,LATAM,Liam O'Sullivan,P4 failure in Power BI
+INC100467,Request-Change,S/4HANA,P4,In Progress,2025-12-20,110.4,Config error,L3,North America,Sofia Marchetti,P4 request in Workday
+INC100468,Incident-ERP,Kyriba,P2,Resolved,2026-02-08,27.1,Data quality,L3,LATAM,Tomas Halvorsen,P2 failure in SAP ECC
+INC100469,Incident-Treasury,Workday,P2,Resolved,2025-03-03,59.9,Integration failure,L1,APAC,David Chen,P2 outage in Salesforce
+INC100470,Incident-Network,Workday,P4,Resolved,2025-01-10,193.3,User error,L2,EMEA,Liam O'Sullivan,P4 outage in Kyriba
+INC100471,Request-Report,Workday,P3,Resolved,2025-07-30,144.0,Vendor outage,L1,LATAM,Aisha Bello,P3 outage in S/4HANA
+INC100472,Incident-Access,Power BI,P3,Closed,2025-03-18,167.1,Integration failure,L1,North America,Priya Natarajan,P3 outage in ServiceNow
+INC100473,Incident-Reporting,Salesforce,P2,Closed,2025-07-07,70.7,Integration failure,L3,APAC,David Chen,P2 outage in Azure AD
+INC100474,Request-Access,ServiceNow,P2,Closed,2025-05-15,46.5,Data quality,L3,EMEA,Tomas Halvorsen,P2 outage in SAP ECC
+INC100475,Incident-Reporting,Coupa,P2,Resolved,2025-03-20,211.9,Network,L2,North America,Tomas Halvorsen,P2 error in Kyriba
+INC100476,Incident-Treasury,Power BI,P3,Closed,2026-03-09,66.0,Capacity,L1,EMEA,Liam O'Sullivan,P3 request in Workday
+INC100477,Incident-Network,Workday,P3,Closed,2026-05-27,124.3,Data quality,L2,EMEA,Aisha Bello,P3 error in S/4HANA
+INC100478,Request-Access,SAP ECC,P4,Resolved,2025-06-27,29.6,Capacity,L3,APAC,Elena Vasquez,P4 request in SAP ECC
+INC100479,Request-Access,Power BI,P3,Closed,2025-06-04,37.0,Vendor outage,L3,APAC,Sofia Marchetti,P3 request in Power BI
+INC100480,Request-Report,Snowflake,P1,Resolved,2026-02-01,142.7,Data quality,L2,North America,David Chen,P1 error in Power BI
+INC100481,Incident-Access,Snowflake,P4,Closed,2025-12-26,201.1,Capacity,L2,North America,Priya Natarajan,P4 outage in S/4HANA
+INC100482,Incident-Treasury,S/4HANA,P4,Resolved,2026-05-26,28.1,Config error,L3,APAC,Sofia Marchetti,P4 slow in SAP ECC
+INC100483,Incident-Reporting,ServiceNow,P2,Resolved,2025-04-28,140.6,Config error,L1,EMEA,Elena Vasquez,P2 slow in Salesforce
+INC100484,Incident-Network,Snowflake,P4,Resolved,2025-05-20,132.6,Vendor outage,L1,APAC,Maria Donnelly,P4 request in Coupa
+INC100485,Request-Access,ServiceNow,P4,Resolved,2025-02-16,156.7,Permission,L3,North America,Elena Vasquez,P4 error in ServiceNow
+INC100486,Request-Change,Coupa,P3,Closed,2025-07-16,68.0,Integration failure,L3,APAC,Priya Natarajan,P3 outage in Workday
+INC100487,Request-Access,Salesforce,P4,Resolved,2025-10-12,209.2,Vendor outage,L3,EMEA,Tomas Halvorsen,P4 slow in Coupa
+INC100488,Incident-ERP,ServiceNow,P1,Resolved,2025-01-29,212.8,Integration failure,L1,APAC,Elena Vasquez,P1 outage in Power BI
+INC100489,Request-Report,Power BI,P3,Resolved,2025-02-10,10.9,User error,L2,North America,Priya Natarajan,P3 failure in SAP ECC
+INC100490,Request-Access,Power BI,P3,Closed,2025-09-01,50.5,Data quality,L2,APAC,Maria Donnelly,P3 outage in Power BI
+INC100491,Incident-ERP,Workday,P4,Resolved,2025-11-11,31.2,Permission,L3,APAC,Sofia Marchetti,P4 outage in Azure AD
+INC100492,Problem,ServiceNow,P4,Closed,2025-12-29,123.3,Config error,L1,APAC,Tomas Halvorsen,P4 outage in Azure AD
+INC100493,Incident-ERP,Coupa,P4,Closed,2025-09-03,212.1,Integration failure,L1,EMEA,Priya Natarajan,P4 slow in Power BI
+INC100494,Incident-Network,ServiceNow,P2,Closed,2026-03-21,113.8,Permission,L1,North America,Liam O'Sullivan,P2 error in Workday
+INC100495,Incident-Reporting,SAP ECC,P4,Open,2026-02-20,150.5,Unknown,L1,LATAM,Maria Donnelly,P4 slow in Coupa
+INC100496,Incident-Reporting,Power BI,P3,Resolved,2025-02-08,194.3,Integration failure,L3,EMEA,Sofia Marchetti,P3 request in Workday
+INC100497,Incident-Access,Power BI,P3,Closed,2025-11-13,39.9,Code defect,L3,LATAM,Aisha Bello,P3 outage in Coupa
+INC100498,Problem,Azure AD,P3,Resolved,2026-05-21,23.3,Integration failure,L1,North America,Maria Donnelly,P3 failure in Kyriba
+INC100499,Incident-Network,Salesforce,P3,Resolved,2025-05-09,186.4,Integration failure,L1,North America,Liam O'Sullivan,P3 outage in ServiceNow
+INC100500,Incident-Treasury,Salesforce,P3,In Progress,2025-03-04,114.2,Unknown,L1,North America,Sofia Marchetti,P3 error in Coupa
+INC100501,Incident-Network,Azure AD,P3,Resolved,2025-07-15,219.0,Code defect,L2,North America,Elena Vasquez,P3 outage in Coupa
+INC100502,Enhancement,Kyriba,P3,Resolved,2025-11-01,19.7,Vendor outage,L1,EMEA,Raymond Okafor,P3 slow in Power BI
+INC100503,Incident-Reporting,SAP ECC,P4,Resolved,2025-01-19,205.0,User error,L3,APAC,Liam O'Sullivan,P4 slow in SAP ECC
+INC100504,Request-Report,Kyriba,P3,Resolved,2025-11-09,209.3,Data quality,L2,APAC,Liam O'Sullivan,P3 request in Workday
+INC100505,Incident-Reporting,Coupa,P2,Resolved,2026-05-07,50.2,Permission,L1,EMEA,Marcus Reilly,P2 failure in Workday
+INC100506,Incident-Network,Snowflake,P4,Closed,2026-04-26,204.9,Vendor outage,L2,APAC,Sofia Marchetti,P4 outage in ServiceNow
+INC100507,Problem,Kyriba,P1,In Progress,2025-05-22,121.0,Permission,L3,APAC,Raymond Okafor,P1 outage in SAP ECC
+INC100508,Problem,Kyriba,P3,Open,2026-05-02,68.3,User error,L2,APAC,Maria Donnelly,P3 outage in Salesforce
+INC100509,Incident-Treasury,S/4HANA,P3,Open,2025-10-30,190.0,User error,L1,APAC,Tomas Halvorsen,P3 outage in Kyriba
+INC100510,Incident-ERP,Coupa,P3,Resolved,2025-10-16,105.1,Data quality,L1,North America,David Chen,P3 request in Kyriba
+INC100511,Incident-ERP,Snowflake,P3,Closed,2025-10-13,52.4,Unknown,L3,North America,Aisha Bello,P3 outage in Power BI
+INC100512,Incident-Network,Coupa,P3,Closed,2025-02-24,160.4,Data quality,L2,EMEA,Sofia Marchetti,P3 error in Workday
+INC100513,Incident-Reporting,Power BI,P4,Resolved,2025-09-25,37.1,Data quality,L3,LATAM,Elena Vasquez,P4 error in SAP ECC
+INC100514,Request-Change,SAP ECC,P3,Resolved,2025-08-30,145.1,Code defect,L2,APAC,Tomas Halvorsen,P3 outage in S/4HANA
+INC100515,Incident-Network,Azure AD,P3,Resolved,2026-01-19,101.7,Config error,L3,North America,Aisha Bello,P3 slow in Salesforce
+INC100516,Incident-Access,Power BI,P3,Resolved,2025-01-20,32.8,Integration failure,L1,APAC,Elena Vasquez,P3 outage in ServiceNow
+INC100517,Incident-Treasury,SAP ECC,P3,On Hold,2025-07-21,70.0,Vendor outage,L1,LATAM,Raymond Okafor,P3 outage in ServiceNow
+INC100518,Incident-Network,SAP ECC,P3,Resolved,2026-01-07,157.9,Network,L1,APAC,Elena Vasquez,P3 outage in Coupa
+INC100519,Incident-Access,ServiceNow,P4,Open,2026-03-20,73.3,Capacity,L3,EMEA,Raymond Okafor,P4 outage in Power BI
+INC100520,Problem,Kyriba,P3,Closed,2025-01-13,9.2,Code defect,L3,EMEA,Aisha Bello,P3 outage in Salesforce
+INC100521,Incident-Network,S/4HANA,P3,Closed,2025-10-03,175.4,Unknown,L2,APAC,Liam O'Sullivan,P3 outage in Workday
+INC100522,Request-Report,Salesforce,P2,Resolved,2025-12-04,189.5,Capacity,L2,LATAM,Marcus Reilly,P2 error in Coupa
+INC100523,Problem,ServiceNow,P3,In Progress,2025-06-18,154.0,Vendor outage,L1,North America,Maria Donnelly,P3 slow in ServiceNow
+INC100524,Incident-Network,Azure AD,P3,Resolved,2026-04-19,118.0,Config error,L3,APAC,Maria Donnelly,P3 outage in SAP ECC
+INC100525,Request-Report,SAP ECC,P3,Resolved,2026-04-26,92.1,Permission,L2,LATAM,Tomas Halvorsen,P3 slow in S/4HANA
+INC100526,Request-Change,ServiceNow,P4,Closed,2025-10-23,168.1,Integration failure,L1,APAC,Aisha Bello,P4 error in Azure AD
+INC100527,Incident-Treasury,S/4HANA,P3,Resolved,2025-12-23,114.3,Network,L1,APAC,Priya Natarajan,P3 request in ServiceNow
+INC100528,Problem,Power BI,P1,In Progress,2025-01-05,111.6,User error,L3,APAC,Elena Vasquez,P1 failure in Workday
+INC100529,Incident-Reporting,Salesforce,P4,Closed,2025-06-01,3.1,Code defect,L3,APAC,Maria Donnelly,P4 request in Salesforce
+INC100530,Problem,Snowflake,P2,On Hold,2025-01-17,215.2,Vendor outage,L2,North America,Liam O'Sullivan,P2 slow in ServiceNow
+INC100531,Request-Report,Power BI,P3,In Progress,2026-01-02,176.4,Vendor outage,L2,EMEA,Marcus Reilly,P3 request in Coupa
+INC100532,Enhancement,SAP ECC,P4,In Progress,2026-04-25,106.2,Config error,L2,EMEA,Tomas Halvorsen,P4 failure in Salesforce
+INC100533,Enhancement,Workday,P3,Resolved,2026-02-26,211.5,Capacity,L2,APAC,Elena Vasquez,P3 request in Azure AD
+INC100534,Request-Change,Salesforce,P4,Resolved,2025-12-11,183.8,User error,L1,North America,Sofia Marchetti,P4 error in Workday
+INC100535,Problem,S/4HANA,P4,Resolved,2026-04-01,145.0,Code defect,L2,EMEA,Priya Natarajan,P4 request in Kyriba
+INC100536,Incident-Network,ServiceNow,P4,Closed,2025-08-09,123.2,Vendor outage,L3,North America,Raymond Okafor,P4 slow in Salesforce
+INC100537,Request-Change,S/4HANA,P3,Resolved,2025-11-17,12.8,Config error,L2,North America,Elena Vasquez,P3 request in Kyriba
+INC100538,Request-Change,Power BI,P3,Resolved,2025-09-03,162.6,Permission,L2,APAC,Liam O'Sullivan,P3 error in Workday
+INC100539,Enhancement,SAP ECC,P3,In Progress,2025-12-13,202.5,Capacity,L1,EMEA,Priya Natarajan,P3 outage in Snowflake
+INC100540,Incident-Reporting,Salesforce,P4,Resolved,2025-01-02,205.7,Unknown,L2,EMEA,Aisha Bello,P4 request in Kyriba
+INC100541,Incident-Treasury,Snowflake,P2,Closed,2026-03-22,33.8,Capacity,L1,North America,Elena Vasquez,P2 failure in Azure AD
+INC100542,Incident-ERP,Power BI,P4,Closed,2026-04-14,53.7,Permission,L1,EMEA,Elena Vasquez,P4 failure in Salesforce
+INC100543,Incident-Access,Power BI,P3,In Progress,2025-12-15,76.8,Network,L1,EMEA,Priya Natarajan,P3 slow in Workday
+INC100544,Problem,Power BI,P4,Resolved,2025-07-18,74.3,Data quality,L3,APAC,Sofia Marchetti,P4 error in Salesforce
+INC100545,Request-Report,ServiceNow,P1,Resolved,2026-01-17,175.3,Config error,L1,APAC,Liam O'Sullivan,P1 error in S/4HANA
+INC100546,Request-Change,Power BI,P2,Closed,2026-04-02,159.2,User error,L1,North America,Raymond Okafor,P2 failure in ServiceNow
+INC100547,Incident-Reporting,Power BI,P3,Open,2025-05-17,33.9,Data quality,L2,APAC,Raymond Okafor,P3 failure in Workday
+INC100548,Request-Access,Salesforce,P4,Closed,2025-02-06,208.5,Vendor outage,L2,APAC,Tomas Halvorsen,P4 failure in Kyriba
+INC100549,Request-Access,Kyriba,P3,Closed,2025-03-27,152.8,User error,L3,North America,Priya Natarajan,P3 request in Salesforce
+INC100550,Problem,Power BI,P3,Resolved,2025-04-15,97.4,Capacity,L3,EMEA,Tomas Halvorsen,P3 outage in Coupa
+INC100551,Enhancement,ServiceNow,P2,Closed,2025-11-11,166.6,Vendor outage,L3,EMEA,Tomas Halvorsen,P2 failure in S/4HANA
+INC100552,Problem,ServiceNow,P3,Resolved,2025-05-20,109.7,Code defect,L3,EMEA,Marcus Reilly,P3 request in Azure AD
+INC100553,Incident-Treasury,ServiceNow,P4,Closed,2025-05-03,114.7,Code defect,L2,EMEA,Raymond Okafor,P4 slow in Power BI
+INC100554,Incident-Access,Power BI,P3,Closed,2026-03-25,140.7,Unknown,L2,EMEA,Raymond Okafor,P3 request in Power BI
+INC100555,Incident-Network,Power BI,P4,Resolved,2025-12-13,99.2,Permission,L1,EMEA,David Chen,P4 request in Coupa
+INC100556,Incident-Reporting,Power BI,P1,Resolved,2025-03-16,144.6,Network,L1,APAC,Marcus Reilly,P1 slow in S/4HANA
+INC100557,Request-Access,Power BI,P4,Closed,2026-03-15,149.7,User error,L3,EMEA,Raymond Okafor,P4 request in Azure AD
+INC100558,Incident-Reporting,ServiceNow,P3,Resolved,2026-03-02,153.5,Network,L2,APAC,Tomas Halvorsen,P3 slow in Salesforce
+INC100559,Request-Report,SAP ECC,P3,Resolved,2025-05-04,204.4,Config error,L2,North America,Priya Natarajan,P3 failure in Salesforce
+INC100560,Incident-ERP,SAP ECC,P3,Closed,2026-01-26,40.6,User error,L3,North America,Aisha Bello,P3 failure in Coupa
+INC100561,Incident-Treasury,S/4HANA,P3,Resolved,2025-09-01,192.3,Integration failure,L3,EMEA,Sofia Marchetti,P3 outage in Coupa
+INC100562,Incident-Access,SAP ECC,P2,Resolved,2025-07-23,126.9,Permission,L2,North America,Raymond Okafor,P2 request in Power BI
+INC100563,Incident-Access,Workday,P4,Closed,2026-04-06,182.0,Data quality,L1,APAC,Elena Vasquez,P4 outage in ServiceNow
+INC100564,Incident-ERP,ServiceNow,P4,Resolved,2025-11-27,172.5,Data quality,L3,APAC,Aisha Bello,P4 error in Coupa
+INC100565,Incident-Treasury,Snowflake,P3,Closed,2025-05-06,16.1,Integration failure,L1,North America,Maria Donnelly,P3 request in Coupa
+INC100566,Incident-Reporting,Salesforce,P3,Closed,2025-09-02,158.5,Unknown,L3,North America,Liam O'Sullivan,P3 outage in Kyriba
+INC100567,Problem,Workday,P4,Resolved,2025-01-25,205.4,Vendor outage,L2,APAC,Aisha Bello,P4 slow in SAP ECC
+INC100568,Request-Change,ServiceNow,P2,On Hold,2026-03-01,199.8,Network,L2,APAC,Marcus Reilly,P2 request in Coupa
+INC100569,Incident-Network,Workday,P4,Resolved,2025-12-14,115.7,Vendor outage,L1,LATAM,Marcus Reilly,P4 error in Workday
+INC100570,Problem,Power BI,P3,Resolved,2025-09-04,11.6,Unknown,L1,EMEA,Aisha Bello,P3 error in Workday
+INC100571,Request-Report,S/4HANA,P3,Closed,2025-01-13,183.8,Code defect,L1,EMEA,Priya Natarajan,P3 failure in Power BI
+INC100572,Request-Change,SAP ECC,P3,Closed,2025-09-19,16.7,Config error,L2,APAC,Priya Natarajan,P3 failure in Power BI
+INC100573,Incident-Treasury,Kyriba,P4,Closed,2025-03-08,155.6,Config error,L2,APAC,Raymond Okafor,P4 failure in Snowflake
+INC100574,Request-Change,Power BI,P4,In Progress,2025-07-19,40.8,Code defect,L2,North America,Elena Vasquez,P4 error in Workday
+INC100575,Request-Change,Salesforce,P1,Closed,2026-05-29,199.7,Unknown,L2,APAC,Maria Donnelly,P1 failure in Coupa
+INC100576,Incident-Treasury,Kyriba,P3,Resolved,2025-06-24,194.8,Network,L2,EMEA,Priya Natarajan,P3 slow in Snowflake
+INC100577,Incident-Treasury,Power BI,P4,Open,2025-01-28,108.5,Integration failure,L3,EMEA,Aisha Bello,P4 slow in ServiceNow
+INC100578,Request-Change,Workday,P4,Resolved,2026-04-28,17.6,Config error,L3,LATAM,David Chen,P4 request in SAP ECC
+INC100579,Incident-Network,Snowflake,P4,Resolved,2025-02-08,211.6,Vendor outage,L1,APAC,Priya Natarajan,P4 request in Coupa
+INC100580,Request-Change,Kyriba,P4,Closed,2025-09-21,9.5,Capacity,L3,North America,Sofia Marchetti,P4 outage in Snowflake
+INC100581,Incident-Access,Coupa,P3,Resolved,2026-03-02,125.2,Data quality,L3,APAC,Raymond Okafor,P3 error in Coupa
+INC100582,Incident-ERP,Snowflake,P3,Resolved,2025-10-28,27.7,Integration failure,L3,APAC,David Chen,P3 slow in S/4HANA
+INC100583,Incident-ERP,Workday,P2,Resolved,2026-04-16,188.1,Code defect,L1,LATAM,David Chen,P2 request in S/4HANA
+INC100584,Incident-ERP,S/4HANA,P3,In Progress,2025-05-01,126.2,Data quality,L2,APAC,David Chen,P3 outage in Coupa
+INC100585,Enhancement,SAP ECC,P4,Closed,2025-03-01,211.4,Code defect,L1,EMEA,Raymond Okafor,P4 failure in Coupa
+INC100586,Request-Change,ServiceNow,P3,Resolved,2026-02-26,66.3,Capacity,L2,LATAM,Liam O'Sullivan,P3 outage in Coupa
+INC100587,Incident-Network,Workday,P3,Open,2025-02-10,191.8,Unknown,L1,North America,Sofia Marchetti,P3 request in Kyriba
+INC100588,Incident-Treasury,Kyriba,P3,Resolved,2025-07-03,212.8,Capacity,L3,EMEA,Marcus Reilly,P3 outage in ServiceNow
+INC100589,Incident-Treasury,SAP ECC,P3,Closed,2025-04-24,161.2,Capacity,L3,EMEA,Maria Donnelly,P3 failure in Power BI
+INC100590,Request-Access,S/4HANA,P3,Resolved,2026-03-05,49.4,Capacity,L1,North America,Aisha Bello,P3 error in Coupa
+INC100591,Request-Report,Salesforce,P3,Closed,2025-08-30,212.2,Network,L1,LATAM,Tomas Halvorsen,P3 error in Kyriba
+INC100592,Request-Change,Azure AD,P2,Closed,2025-04-07,49.8,Network,L3,EMEA,Maria Donnelly,P2 error in Power BI
+INC100593,Incident-Network,Snowflake,P3,Closed,2025-06-13,0.9,Integration failure,L3,EMEA,Elena Vasquez,P3 slow in Power BI
+INC100594,Enhancement,Salesforce,P4,Resolved,2025-12-17,159.5,Permission,L1,EMEA,Liam O'Sullivan,P4 request in Salesforce
+INC100595,Incident-Network,Azure AD,P4,Resolved,2026-02-19,15.1,Code defect,L2,North America,Marcus Reilly,P4 outage in Azure AD
+INC100596,Incident-ERP,Salesforce,P3,Open,2025-10-27,98.4,Integration failure,L1,EMEA,Liam O'Sullivan,P3 request in S/4HANA
+INC100597,Request-Change,Workday,P2,Closed,2026-04-07,191.6,Permission,L3,North America,Tomas Halvorsen,P2 request in Azure AD
+INC100598,Incident-Network,ServiceNow,P4,Resolved,2025-08-04,219.2,Config error,L2,APAC,Tomas Halvorsen,P4 slow in Snowflake
+INC100599,Request-Change,Snowflake,P3,Resolved,2026-04-23,177.0,Data quality,L2,North America,Raymond Okafor,P3 request in Kyriba
+INC100600,Incident-ERP,Coupa,P4,Closed,2026-01-18,118.1,Config error,L2,EMEA,Liam O'Sullivan,P4 error in ServiceNow
+INC100601,Incident-Treasury,Kyriba,P3,Open,2025-01-27,102.8,Network,L1,APAC,Elena Vasquez,P3 slow in Salesforce
+INC100602,Problem,SAP ECC,P3,Open,2025-08-18,83.6,Config error,L3,LATAM,Sofia Marchetti,P3 slow in Power BI
+INC100603,Incident-ERP,Coupa,P3,Closed,2026-02-18,192.2,Integration failure,L2,North America,Sofia Marchetti,P3 error in Workday
+INC100604,Problem,Snowflake,P3,Resolved,2025-04-30,43.8,Config error,L3,EMEA,Tomas Halvorsen,P3 outage in SAP ECC
+INC100605,Incident-ERP,Power BI,P3,Resolved,2025-05-23,140.8,Config error,L3,EMEA,Maria Donnelly,P3 error in S/4HANA
+INC100606,Request-Report,Snowflake,P2,Closed,2025-08-04,119.3,Vendor outage,L1,LATAM,Liam O'Sullivan,P2 slow in Azure AD
+INC100607,Incident-Treasury,ServiceNow,P2,Resolved,2026-02-01,52.1,Integration failure,L2,EMEA,Aisha Bello,P2 outage in Snowflake
+INC100608,Incident-Network,Snowflake,P3,Resolved,2026-04-25,194.9,Config error,L1,APAC,Tomas Halvorsen,P3 error in S/4HANA
+INC100609,Request-Access,Coupa,P1,Resolved,2025-03-25,16.3,Capacity,L1,APAC,Sofia Marchetti,P1 request in Kyriba
+INC100610,Request-Change,Azure AD,P2,Open,2025-10-10,152.0,Unknown,L1,LATAM,Marcus Reilly,P2 request in Coupa
+INC100611,Request-Report,Snowflake,P1,Closed,2025-07-31,54.3,Config error,L1,EMEA,Priya Natarajan,P1 failure in ServiceNow
+INC100612,Incident-Access,Kyriba,P2,Closed,2025-07-28,40.3,Unknown,L2,North America,Tomas Halvorsen,P2 slow in Power BI
+INC100613,Incident-Access,S/4HANA,P2,Closed,2026-02-23,111.6,Permission,L2,EMEA,David Chen,P2 error in Workday
+INC100614,Request-Report,Kyriba,P2,Closed,2026-02-11,34.6,Code defect,L3,EMEA,Sofia Marchetti,P2 failure in Snowflake
+INC100615,Incident-Reporting,Workday,P4,Closed,2026-02-25,103.9,Vendor outage,L3,North America,Priya Natarajan,P4 error in ServiceNow
+INC100616,Request-Change,Salesforce,P3,Closed,2025-03-19,196.3,User error,L2,EMEA,Maria Donnelly,P3 error in Salesforce
+INC100617,Incident-Treasury,Coupa,P2,Resolved,2025-11-19,73.8,Permission,L1,LATAM,Raymond Okafor,P2 failure in Salesforce
+INC100618,Incident-Treasury,Salesforce,P3,In Progress,2026-01-01,61.8,Integration failure,L1,North America,Elena Vasquez,P3 failure in Kyriba
+INC100619,Incident-Treasury,ServiceNow,P4,Resolved,2026-02-02,144.2,Unknown,L1,APAC,Liam O'Sullivan,P4 request in Snowflake
+INC100620,Request-Change,Workday,P4,In Progress,2025-01-06,176.5,Code defect,L3,EMEA,Aisha Bello,P4 error in Snowflake
+INC100621,Incident-Access,Azure AD,P3,In Progress,2025-01-16,158.4,Code defect,L3,EMEA,Maria Donnelly,P3 slow in Power BI
+INC100622,Incident-Reporting,Snowflake,P2,Resolved,2025-12-28,119.6,Data quality,L1,North America,David Chen,P2 outage in Snowflake
+INC100623,Enhancement,SAP ECC,P4,Closed,2025-04-28,82.5,Network,L3,APAC,Elena Vasquez,P4 error in Power BI
+INC100624,Incident-Treasury,Salesforce,P3,Closed,2026-02-22,181.2,Data quality,L2,North America,Priya Natarajan,P3 error in Azure AD
+INC100625,Request-Report,Salesforce,P3,Closed,2026-04-13,113.7,Network,L1,LATAM,Tomas Halvorsen,P3 outage in Salesforce
+INC100626,Incident-Network,ServiceNow,P3,Open,2025-04-21,125.7,Network,L1,APAC,Maria Donnelly,P3 slow in Power BI
+INC100627,Problem,Kyriba,P3,Resolved,2025-08-16,114.9,Integration failure,L3,APAC,David Chen,P3 outage in Kyriba
+INC100628,Enhancement,Kyriba,P4,Resolved,2026-05-04,13.4,Capacity,L1,North America,David Chen,P4 slow in Snowflake
+INC100629,Request-Access,Snowflake,P4,Resolved,2026-03-18,200.7,Config error,L1,EMEA,Sofia Marchetti,P4 failure in SAP ECC
+INC100630,Incident-Network,SAP ECC,P4,Closed,2025-09-25,202.0,Config error,L2,LATAM,Marcus Reilly,P4 request in Coupa
+INC100631,Request-Report,Snowflake,P3,Resolved,2025-02-18,50.5,Unknown,L3,APAC,Liam O'Sullivan,P3 error in S/4HANA
+INC100632,Incident-ERP,Coupa,P3,Resolved,2026-05-07,103.6,Network,L2,APAC,Liam O'Sullivan,P3 request in S/4HANA
+INC100633,Incident-Network,Power BI,P4,Closed,2025-06-02,93.9,Capacity,L2,EMEA,Maria Donnelly,P4 outage in Coupa
+INC100634,Request-Change,Snowflake,P2,Closed,2025-04-30,116.1,Config error,L1,LATAM,Aisha Bello,P2 slow in S/4HANA
+INC100635,Incident-Reporting,Workday,P3,In Progress,2025-05-24,8.5,Capacity,L3,North America,Marcus Reilly,P3 error in Coupa
+INC100636,Request-Access,Salesforce,P4,Closed,2025-07-05,7.7,Network,L3,LATAM,David Chen,P4 error in Workday
+INC100637,Incident-Treasury,Snowflake,P3,Closed,2026-05-06,144.9,Vendor outage,L2,APAC,Liam O'Sullivan,P3 slow in Salesforce
+INC100638,Request-Access,Workday,P3,Resolved,2025-11-17,153.5,Vendor outage,L2,EMEA,Sofia Marchetti,P3 request in Coupa
+INC100639,Incident-Access,Azure AD,P3,In Progress,2025-12-11,114.3,Permission,L3,EMEA,David Chen,P3 request in SAP ECC
+INC100640,Problem,ServiceNow,P2,Closed,2025-03-18,18.9,Vendor outage,L1,EMEA,Tomas Halvorsen,P2 error in ServiceNow
+INC100641,Problem,Snowflake,P3,Closed,2025-03-31,51.2,Unknown,L1,North America,Marcus Reilly,P3 outage in Coupa
+INC100642,Incident-Treasury,Azure AD,P3,Resolved,2025-03-20,16.8,Unknown,L2,EMEA,Liam O'Sullivan,P3 error in Snowflake
+INC100643,Enhancement,Coupa,P4,Resolved,2025-08-14,118.5,Integration failure,L2,EMEA,Tomas Halvorsen,P4 failure in Workday
+INC100644,Incident-Treasury,Kyriba,P3,Closed,2026-05-08,19.6,Config error,L2,LATAM,Marcus Reilly,P3 slow in Azure AD
+INC100645,Request-Access,Snowflake,P4,Closed,2025-01-29,99.3,Network,L3,APAC,Aisha Bello,P4 failure in Coupa
+INC100646,Incident-Network,S/4HANA,P1,On Hold,2025-02-11,195.8,Code defect,L1,EMEA,Marcus Reilly,P1 slow in Coupa
+INC100647,Problem,Azure AD,P2,In Progress,2026-01-18,81.4,Unknown,L3,North America,Priya Natarajan,P2 request in Salesforce
+INC100648,Incident-Network,ServiceNow,P3,Closed,2026-03-23,172.9,Integration failure,L3,LATAM,Tomas Halvorsen,P3 request in S/4HANA
+INC100649,Request-Access,Power BI,P3,Resolved,2026-01-10,75.7,Code defect,L1,North America,Liam O'Sullivan,P3 outage in Snowflake
+INC100650,Enhancement,Snowflake,P3,Resolved,2026-05-20,40.6,Data quality,L2,APAC,Raymond Okafor,P3 failure in ServiceNow
+INC100651,Problem,Power BI,P3,Closed,2026-02-10,170.3,Config error,L2,LATAM,Tomas Halvorsen,P3 outage in Snowflake
+INC100652,Incident-Treasury,S/4HANA,P4,Resolved,2026-03-05,122.5,Data quality,L1,APAC,Tomas Halvorsen,P4 request in Power BI
+INC100653,Incident-Access,Azure AD,P2,Closed,2026-01-23,16.3,Network,L1,North America,Liam O'Sullivan,P2 outage in Power BI
+INC100654,Incident-Access,Workday,P4,Resolved,2025-03-13,131.2,Integration failure,L1,LATAM,Priya Natarajan,P4 request in Kyriba
+INC100655,Request-Report,Power BI,P2,Closed,2026-04-28,108.0,User error,L2,APAC,Aisha Bello,P2 slow in Power BI
+INC100656,Incident-Treasury,ServiceNow,P3,Closed,2025-04-09,129.4,Capacity,L2,North America,Tomas Halvorsen,P3 outage in Coupa
+INC100657,Request-Change,ServiceNow,P3,Resolved,2025-10-12,120.0,Data quality,L2,North America,Sofia Marchetti,P3 error in Workday
+INC100658,Request-Change,Azure AD,P2,Closed,2026-02-16,23.9,Code defect,L3,North America,Priya Natarajan,P2 error in Power BI
+INC100659,Problem,SAP ECC,P2,Closed,2025-11-23,58.2,User error,L1,APAC,David Chen,P2 request in S/4HANA
+INC100660,Incident-Reporting,Power BI,P4,Resolved,2026-01-26,98.1,Code defect,L1,North America,Sofia Marchetti,P4 request in Workday
+INC100661,Incident-Reporting,SAP ECC,P4,Closed,2025-05-03,160.8,Network,L3,EMEA,Liam O'Sullivan,P4 request in S/4HANA
+INC100662,Request-Access,Power BI,P3,Closed,2026-02-18,39.5,Network,L1,EMEA,Sofia Marchetti,P3 error in Snowflake
+INC100663,Incident-Reporting,S/4HANA,P2,Closed,2025-11-08,18.9,Vendor outage,L2,APAC,Sofia Marchetti,P2 failure in Azure AD
+INC100664,Incident-Access,Snowflake,P2,Resolved,2025-12-05,22.3,Capacity,L1,APAC,Raymond Okafor,P2 outage in Kyriba
+INC100665,Request-Report,S/4HANA,P3,Closed,2025-09-30,96.4,Integration failure,L1,EMEA,Raymond Okafor,P3 error in S/4HANA
+INC100666,Enhancement,Kyriba,P2,Resolved,2026-05-03,181.3,Permission,L1,North America,Raymond Okafor,P2 failure in Workday
+INC100667,Incident-Access,Azure AD,P3,Closed,2025-07-14,85.1,Integration failure,L1,North America,Elena Vasquez,P3 outage in ServiceNow
+INC100668,Enhancement,S/4HANA,P2,Resolved,2026-04-29,193.9,Capacity,L3,EMEA,Raymond Okafor,P2 request in Coupa
+INC100669,Incident-Treasury,Azure AD,P3,Closed,2026-02-11,32.9,User error,L2,EMEA,Raymond Okafor,P3 outage in Salesforce
+INC100670,Incident-Network,Azure AD,P4,Closed,2026-01-29,180.0,Data quality,L2,North America,Marcus Reilly,P4 failure in Workday
+INC100671,Request-Access,Snowflake,P4,Resolved,2025-12-05,88.7,Data quality,L1,EMEA,Maria Donnelly,P4 request in ServiceNow
+INC100672,Request-Access,Workday,P1,Resolved,2025-03-06,114.9,Data quality,L2,LATAM,Aisha Bello,P1 error in Coupa
+INC100673,Incident-ERP,Coupa,P3,Closed,2026-02-05,150.2,Network,L3,LATAM,Sofia Marchetti,P3 request in Kyriba
+INC100674,Enhancement,Power BI,P2,In Progress,2025-12-08,67.0,User error,L3,APAC,Sofia Marchetti,P2 request in SAP ECC
+INC100675,Problem,S/4HANA,P3,Resolved,2026-03-17,45.1,Data quality,L2,LATAM,Sofia Marchetti,P3 outage in Snowflake
+INC100676,Problem,S/4HANA,P3,Resolved,2025-01-08,199.3,Permission,L1,APAC,Marcus Reilly,P3 request in Azure AD
+INC100677,Enhancement,Snowflake,P1,Resolved,2025-03-28,173.2,Capacity,L1,EMEA,Tomas Halvorsen,P1 error in Salesforce
+INC100678,Problem,Snowflake,P3,Resolved,2025-11-23,47.7,Config error,L1,North America,Aisha Bello,P3 error in Coupa
+INC100679,Incident-Access,SAP ECC,P3,Resolved,2025-04-16,211.1,User error,L1,APAC,Priya Natarajan,P3 outage in Snowflake
+INC100680,Problem,ServiceNow,P3,Resolved,2025-03-30,86.0,Integration failure,L2,APAC,Aisha Bello,P3 failure in Workday
+INC100681,Incident-ERP,S/4HANA,P3,Closed,2025-04-30,40.2,Code defect,L1,North America,Raymond Okafor,P3 slow in Kyriba
+INC100682,Incident-Access,S/4HANA,P3,Closed,2025-09-16,202.8,Permission,L2,LATAM,Tomas Halvorsen,P3 slow in SAP ECC
+INC100683,Request-Report,Azure AD,P1,Resolved,2026-02-12,112.8,Data quality,L1,North America,David Chen,P1 request in Coupa
+INC100684,Request-Access,S/4HANA,P2,In Progress,2025-02-14,187.4,Permission,L3,EMEA,Priya Natarajan,P2 outage in Salesforce
+INC100685,Incident-Treasury,Azure AD,P3,Resolved,2025-07-28,128.9,Unknown,L1,APAC,David Chen,P3 outage in Coupa
+INC100686,Incident-ERP,Workday,P1,Resolved,2026-03-31,128.1,Network,L1,North America,Tomas Halvorsen,P1 request in Azure AD
+INC100687,Problem,Workday,P4,Resolved,2025-02-08,53.4,Integration failure,L3,EMEA,Maria Donnelly,P4 slow in ServiceNow
+INC100688,Problem,Workday,P4,In Progress,2026-05-30,143.4,Integration failure,L1,APAC,Liam O'Sullivan,P4 outage in Kyriba
+INC100689,Incident-ERP,Coupa,P3,Closed,2026-03-02,119.9,Vendor outage,L1,EMEA,Tomas Halvorsen,P3 slow in SAP ECC
+INC100690,Incident-Network,ServiceNow,P4,Closed,2025-06-20,164.1,Code defect,L1,North America,Aisha Bello,P4 request in ServiceNow
+INC100691,Incident-Access,Snowflake,P4,On Hold,2025-12-15,144.7,User error,L2,APAC,David Chen,P4 outage in SAP ECC
+INC100692,Incident-ERP,Snowflake,P3,Closed,2025-12-30,38.1,Code defect,L1,LATAM,Priya Natarajan,P3 failure in Workday
+INC100693,Request-Change,ServiceNow,P3,Closed,2025-10-12,129.3,Data quality,L3,APAC,Liam O'Sullivan,P3 error in Azure AD
+INC100694,Enhancement,Power BI,P1,Resolved,2025-04-03,80.6,Permission,L2,North America,Raymond Okafor,P1 outage in Coupa
+INC100695,Enhancement,Coupa,P4,On Hold,2025-03-01,13.8,Vendor outage,L2,APAC,Marcus Reilly,P4 failure in Azure AD
+INC100696,Request-Change,Kyriba,P4,Resolved,2026-05-13,117.1,Capacity,L2,APAC,Marcus Reilly,P4 error in ServiceNow
+INC100697,Request-Change,Coupa,P3,Closed,2025-12-03,127.3,Vendor outage,L2,North America,Sofia Marchetti,P3 outage in S/4HANA
+INC100698,Incident-ERP,ServiceNow,P3,On Hold,2025-08-11,111.1,Config error,L1,LATAM,Liam O'Sullivan,P3 error in Salesforce
+INC100699,Enhancement,Salesforce,P2,Resolved,2025-12-04,178.9,Data quality,L1,North America,Marcus Reilly,P2 outage in Azure AD
+INC100700,Enhancement,Coupa,P3,Closed,2026-03-07,170.7,Integration failure,L1,APAC,Tomas Halvorsen,P3 outage in Coupa
+INC100701,Incident-Network,Power BI,P3,Resolved,2025-03-22,12.3,Config error,L1,APAC,Priya Natarajan,P3 failure in ServiceNow
+INC100702,Problem,SAP ECC,P3,On Hold,2026-01-03,14.1,Permission,L3,North America,Liam O'Sullivan,P3 outage in Azure AD
+INC100703,Enhancement,SAP ECC,P2,Resolved,2025-03-19,146.1,Capacity,L2,North America,Maria Donnelly,P2 outage in S/4HANA
+INC100704,Request-Access,Kyriba,P4,Resolved,2025-01-06,217.1,Vendor outage,L1,APAC,Maria Donnelly,P4 error in Salesforce
+INC100705,Incident-Treasury,Salesforce,P4,Resolved,2025-07-01,127.1,Vendor outage,L1,EMEA,David Chen,P4 request in ServiceNow
+INC100706,Incident-ERP,Coupa,P3,Resolved,2025-04-28,94.4,Code defect,L2,EMEA,Elena Vasquez,P3 slow in SAP ECC
+INC100707,Incident-ERP,Coupa,P3,In Progress,2025-09-07,133.6,Config error,L2,APAC,Aisha Bello,P3 failure in Salesforce
+INC100708,Request-Change,Power BI,P4,Resolved,2026-04-30,126.9,Code defect,L2,EMEA,David Chen,P4 slow in S/4HANA
+INC100709,Problem,Coupa,P3,Resolved,2025-05-12,45.4,Unknown,L3,North America,Priya Natarajan,P3 error in SAP ECC
+INC100710,Problem,Workday,P2,Resolved,2026-04-29,98.6,Unknown,L3,North America,Liam O'Sullivan,P2 outage in Snowflake
+INC100711,Request-Change,Snowflake,P3,In Progress,2025-02-01,117.1,User error,L2,APAC,David Chen,P3 failure in Kyriba
+INC100712,Request-Access,Workday,P3,Closed,2026-04-18,42.7,Vendor outage,L1,LATAM,Tomas Halvorsen,P3 error in Salesforce
+INC100713,Incident-ERP,ServiceNow,P3,Resolved,2026-05-05,87.2,User error,L3,North America,Sofia Marchetti,P3 error in SAP ECC
+INC100714,Request-Access,ServiceNow,P3,Closed,2025-07-05,110.2,Code defect,L2,LATAM,Elena Vasquez,P3 error in Azure AD
+INC100715,Incident-Network,Power BI,P4,Resolved,2025-03-02,35.2,Capacity,L1,APAC,Maria Donnelly,P4 error in SAP ECC
+INC100716,Request-Access,SAP ECC,P3,Resolved,2025-06-26,162.2,Unknown,L2,North America,Raymond Okafor,P3 outage in SAP ECC
+INC100717,Enhancement,Azure AD,P4,Closed,2025-07-26,66.5,Data quality,L3,LATAM,Elena Vasquez,P4 outage in ServiceNow
+INC100718,Request-Access,Workday,P3,Open,2025-01-24,134.3,Code defect,L2,LATAM,Raymond Okafor,P3 failure in ServiceNow
+INC100719,Problem,S/4HANA,P4,Resolved,2025-09-27,11.6,Network,L3,North America,Marcus Reilly,P4 failure in Salesforce
+INC100720,Incident-Reporting,Salesforce,P4,On Hold,2026-03-02,77.5,Integration failure,L3,North America,Tomas Halvorsen,P4 failure in Coupa
+INC100721,Enhancement,Power BI,P4,Open,2025-04-16,61.6,User error,L2,EMEA,Elena Vasquez,P4 slow in Kyriba
+INC100722,Request-Report,Kyriba,P3,Resolved,2025-05-19,45.3,Data quality,L1,EMEA,Tomas Halvorsen,P3 request in Azure AD
+INC100723,Incident-Network,Coupa,P4,Resolved,2025-04-05,140.7,User error,L2,EMEA,Priya Natarajan,P4 request in Coupa
+INC100724,Enhancement,Azure AD,P3,Resolved,2026-06-01,59.1,Integration failure,L1,North America,Sofia Marchetti,P3 request in Workday
+INC100725,Request-Report,Azure AD,P4,Open,2025-10-13,205.6,Unknown,L2,North America,Maria Donnelly,P4 error in Snowflake
+INC100726,Incident-Network,Kyriba,P3,Closed,2025-10-19,187.0,Config error,L1,North America,Priya Natarajan,P3 request in Workday
+INC100727,Incident-Network,Azure AD,P3,Resolved,2025-06-07,55.3,Data quality,L1,LATAM,Maria Donnelly,P3 request in Workday
+INC100728,Incident-ERP,Coupa,P3,Resolved,2025-05-09,183.3,Code defect,L3,North America,Liam O'Sullivan,P3 error in Workday
+INC100729,Incident-ERP,Salesforce,P1,Closed,2025-09-24,209.4,Unknown,L3,North America,Sofia Marchetti,P1 outage in SAP ECC
+INC100730,Incident-ERP,ServiceNow,P4,Closed,2025-02-08,98.2,Data quality,L3,EMEA,Raymond Okafor,P4 failure in Azure AD
+INC100731,Incident-Network,Kyriba,P3,Resolved,2025-10-14,142.3,Config error,L2,LATAM,Elena Vasquez,P3 error in Workday
+INC100732,Incident-Network,SAP ECC,P2,In Progress,2026-05-12,179.4,Network,L2,LATAM,Liam O'Sullivan,P2 request in Power BI
+INC100733,Request-Access,Coupa,P3,Resolved,2025-12-10,97.2,Config error,L3,APAC,Maria Donnelly,P3 error in Snowflake
+INC100734,Incident-Access,Workday,P2,On Hold,2026-05-20,100.4,Vendor outage,L3,EMEA,Sofia Marchetti,P2 slow in S/4HANA
+INC100735,Request-Access,Azure AD,P3,Closed,2025-01-04,40.4,Data quality,L1,North America,Aisha Bello,P3 error in Power BI
+INC100736,Incident-Network,Kyriba,P2,Resolved,2026-03-10,82.6,Vendor outage,L1,North America,Tomas Halvorsen,P2 failure in S/4HANA
+INC100737,Incident-ERP,Azure AD,P1,Resolved,2026-03-03,30.2,Config error,L1,LATAM,Tomas Halvorsen,P1 error in S/4HANA
+INC100738,Incident-ERP,Salesforce,P3,Resolved,2025-04-15,45.6,Unknown,L1,APAC,David Chen,P3 failure in Coupa
+INC100739,Request-Change,Coupa,P4,Closed,2025-12-03,147.9,Vendor outage,L2,EMEA,Sofia Marchetti,P4 request in SAP ECC
+INC100740,Incident-ERP,SAP ECC,P2,Closed,2025-09-28,161.1,Integration failure,L1,APAC,Priya Natarajan,P2 outage in SAP ECC
+INC100741,Problem,Snowflake,P4,Closed,2025-06-15,169.4,Integration failure,L1,North America,Aisha Bello,P4 outage in Snowflake
+INC100742,Request-Report,Snowflake,P3,Closed,2025-09-20,93.9,Network,L3,North America,Raymond Okafor,P3 outage in Azure AD
+INC100743,Incident-Access,Coupa,P1,Closed,2025-06-05,99.4,Capacity,L2,EMEA,Elena Vasquez,P1 request in ServiceNow
+INC100744,Request-Access,ServiceNow,P2,Resolved,2026-02-20,169.0,Code defect,L3,APAC,Maria Donnelly,P2 request in Workday
+INC100745,Incident-Reporting,S/4HANA,P2,Closed,2025-03-02,118.6,Vendor outage,L1,LATAM,Liam O'Sullivan,P2 outage in Workday
+INC100746,Incident-Treasury,Kyriba,P2,Closed,2025-04-26,28.6,Network,L3,APAC,Raymond Okafor,P2 error in Azure AD
+INC100747,Incident-Network,Kyriba,P3,In Progress,2026-01-24,213.2,Code defect,L1,North America,David Chen,P3 failure in Azure AD
+INC100748,Incident-ERP,ServiceNow,P3,Resolved,2025-03-03,216.9,Config error,L1,EMEA,David Chen,P3 outage in Azure AD
+INC100749,Request-Access,ServiceNow,P3,Resolved,2026-01-31,215.9,Permission,L3,North America,Sofia Marchetti,P3 error in Kyriba
+INC100750,Request-Change,Kyriba,P2,On Hold,2025-12-26,69.4,Vendor outage,L1,North America,Marcus Reilly,P2 error in Azure AD
+INC100751,Problem,Workday,P3,Closed,2025-11-10,154.3,Data quality,L3,LATAM,Marcus Reilly,P3 error in Snowflake
+INC100752,Incident-Treasury,Snowflake,P3,Closed,2025-10-31,55.6,Network,L1,North America,David Chen,P3 request in Salesforce
+INC100753,Incident-Reporting,SAP ECC,P3,Resolved,2025-11-22,137.9,Config error,L1,North America,Raymond Okafor,P3 error in Coupa
+INC100754,Incident-Access,Kyriba,P2,Resolved,2025-08-08,7.6,Vendor outage,L3,EMEA,Elena Vasquez,P2 slow in Coupa
+INC100755,Incident-Access,Power BI,P3,Open,2026-04-03,43.5,Integration failure,L3,North America,Marcus Reilly,P3 outage in Workday
+INC100756,Incident-ERP,Coupa,P3,On Hold,2026-05-24,128.9,Vendor outage,L2,North America,Marcus Reilly,P3 error in Azure AD
+INC100757,Incident-ERP,SAP ECC,P3,Closed,2025-11-10,73.7,Permission,L1,APAC,Liam O'Sullivan,P3 failure in Snowflake
+INC100758,Request-Access,SAP ECC,P3,On Hold,2025-04-26,130.9,Capacity,L3,North America,Aisha Bello,P3 error in SAP ECC
+INC100759,Problem,Coupa,P2,Resolved,2025-02-03,127.0,Config error,L3,North America,David Chen,P2 slow in Azure AD
+INC100760,Incident-Network,Power BI,P3,Resolved,2026-04-05,104.7,Capacity,L2,LATAM,Maria Donnelly,P3 slow in Azure AD
+INC100761,Request-Report,Workday,P3,Resolved,2025-03-16,66.8,Vendor outage,L2,North America,Raymond Okafor,P3 failure in SAP ECC
+INC100762,Problem,Snowflake,P3,Closed,2025-11-02,138.6,Integration failure,L1,APAC,Maria Donnelly,P3 request in Azure AD
+INC100763,Enhancement,ServiceNow,P2,Closed,2025-06-12,176.2,Code defect,L3,EMEA,Sofia Marchetti,P2 slow in S/4HANA
+INC100764,Request-Report,Workday,P3,In Progress,2025-07-30,201.8,Vendor outage,L1,North America,Priya Natarajan,P3 outage in ServiceNow
+INC100765,Request-Access,Snowflake,P3,In Progress,2025-11-05,90.1,Permission,L2,APAC,Priya Natarajan,P3 failure in Salesforce
+INC100766,Enhancement,ServiceNow,P3,Closed,2025-02-12,151.0,Code defect,L1,EMEA,Tomas Halvorsen,P3 failure in ServiceNow
+INC100767,Incident-Reporting,Azure AD,P3,Resolved,2025-04-20,211.4,Permission,L1,North America,David Chen,P3 error in SAP ECC
+INC100768,Request-Report,Power BI,P3,Resolved,2026-05-03,122.9,Config error,L1,North America,Liam O'Sullivan,P3 outage in Snowflake
+INC100769,Request-Access,Coupa,P3,In Progress,2025-09-17,34.8,Unknown,L2,North America,David Chen,P3 failure in Workday
+INC100770,Enhancement,SAP ECC,P4,Resolved,2025-09-22,74.0,Config error,L3,APAC,Elena Vasquez,P4 slow in ServiceNow
+INC100771,Request-Change,S/4HANA,P4,Resolved,2026-05-11,168.3,Code defect,L3,EMEA,Tomas Halvorsen,P4 failure in Workday
+INC100772,Incident-Access,ServiceNow,P3,Resolved,2025-02-10,124.7,Permission,L2,APAC,Liam O'Sullivan,P3 failure in Snowflake
+INC100773,Request-Report,Coupa,P4,Closed,2025-12-10,7.1,Vendor outage,L2,North America,Raymond Okafor,P4 failure in Power BI
+INC100774,Incident-Reporting,Workday,P3,Resolved,2025-03-17,187.2,Capacity,L2,EMEA,Sofia Marchetti,P3 outage in ServiceNow
+INC100775,Incident-Network,Azure AD,P2,Resolved,2025-12-12,36.4,Config error,L1,APAC,Marcus Reilly,P2 outage in ServiceNow
+INC100776,Request-Report,Kyriba,P4,In Progress,2025-02-17,184.4,Config error,L1,North America,Raymond Okafor,P4 request in Coupa
+INC100777,Enhancement,Coupa,P4,In Progress,2025-12-21,8.9,Config error,L1,APAC,Elena Vasquez,P4 slow in ServiceNow
+INC100778,Incident-Reporting,Azure AD,P2,In Progress,2026-05-05,82.2,Config error,L1,APAC,Tomas Halvorsen,P2 slow in Workday
+INC100779,Request-Report,S/4HANA,P3,Resolved,2025-11-06,111.9,Code defect,L2,North America,Marcus Reilly,P3 slow in S/4HANA
+INC100780,Request-Change,Azure AD,P3,Resolved,2025-08-02,67.6,Vendor outage,L2,EMEA,Liam O'Sullivan,P3 slow in Coupa
+INC100781,Incident-Reporting,Snowflake,P3,In Progress,2025-01-13,73.7,Vendor outage,L3,North America,David Chen,P3 request in SAP ECC
+INC100782,Request-Access,Snowflake,P3,On Hold,2025-04-24,41.4,Vendor outage,L3,EMEA,Elena Vasquez,P3 outage in Power BI
+INC100783,Incident-Reporting,Kyriba,P3,Resolved,2025-04-25,194.3,Capacity,L1,EMEA,Priya Natarajan,P3 request in Workday
+INC100784,Incident-Treasury,Azure AD,P3,Resolved,2025-12-05,54.0,Capacity,L3,EMEA,Liam O'Sullivan,P3 error in ServiceNow
+INC100785,Request-Report,S/4HANA,P4,Closed,2025-07-28,187.6,Integration failure,L2,EMEA,Sofia Marchetti,P4 outage in Snowflake
+INC100786,Incident-Network,SAP ECC,P1,Resolved,2026-01-04,182.0,Permission,L1,North America,Maria Donnelly,P1 slow in Salesforce
+INC100787,Incident-Access,ServiceNow,P3,Open,2026-05-05,108.0,Data quality,L3,North America,Sofia Marchetti,P3 failure in Power BI
+INC100788,Enhancement,SAP ECC,P2,Closed,2025-12-07,60.5,Data quality,L2,APAC,Raymond Okafor,P2 failure in S/4HANA
+INC100789,Request-Change,Coupa,P4,Closed,2026-03-10,48.9,Data quality,L3,LATAM,Sofia Marchetti,P4 outage in Workday
+INC100790,Request-Report,S/4HANA,P3,Closed,2025-08-14,94.6,Network,L3,APAC,David Chen,P3 request in Azure AD
+INC100791,Enhancement,Azure AD,P1,Open,2025-02-14,105.8,Integration failure,L3,North America,Liam O'Sullivan,P1 outage in Workday
+INC100792,Request-Report,Power BI,P3,Closed,2025-05-13,44.4,Network,L3,North America,Elena Vasquez,P3 outage in Azure AD
+INC100793,Problem,SAP ECC,P1,Closed,2026-02-08,96.7,Vendor outage,L1,LATAM,Liam O'Sullivan,P1 failure in Workday
+INC100794,Incident-ERP,Salesforce,P4,Open,2026-01-11,64.3,Integration failure,L2,EMEA,Aisha Bello,P4 outage in Workday
+INC100795,Incident-ERP,S/4HANA,P2,Resolved,2026-01-26,9.9,Capacity,L1,North America,Sofia Marchetti,P2 request in Workday
+INC100796,Request-Report,S/4HANA,P3,Resolved,2025-04-02,124.8,Network,L2,North America,Tomas Halvorsen,P3 error in Power BI
+INC100797,Request-Access,S/4HANA,P2,Resolved,2025-12-09,37.7,Permission,L2,APAC,Tomas Halvorsen,P2 outage in Azure AD
+INC100798,Request-Report,Coupa,P3,On Hold,2025-10-11,119.6,Capacity,L2,EMEA,Maria Donnelly,P3 slow in Kyriba
+INC100799,Incident-ERP,S/4HANA,P4,Open,2026-04-19,45.4,Capacity,L1,EMEA,Raymond Okafor,P4 error in Workday
+INC100800,Request-Access,Power BI,P2,Closed,2025-02-27,27.8,User error,L2,North America,David Chen,P2 slow in Snowflake
+INC100801,Request-Change,Coupa,P3,Resolved,2026-02-11,68.1,Vendor outage,L2,APAC,Elena Vasquez,P3 failure in Power BI
+INC100802,Incident-Reporting,Kyriba,P4,Resolved,2025-04-19,48.8,Permission,L1,APAC,Tomas Halvorsen,P4 request in Power BI
+INC100803,Request-Change,S/4HANA,P3,Open,2026-03-25,119.3,Network,L3,EMEA,Raymond Okafor,P3 slow in SAP ECC
+INC100804,Request-Change,Power BI,P4,Resolved,2025-02-10,197.4,Integration failure,L2,North America,Raymond Okafor,P4 error in SAP ECC
+INC100805,Enhancement,ServiceNow,P3,Resolved,2025-04-03,45.5,Permission,L2,APAC,Maria Donnelly,P3 outage in Snowflake
+INC100806,Incident-Treasury,Kyriba,P3,Closed,2026-05-30,124.7,Integration failure,L2,EMEA,Marcus Reilly,P3 request in Coupa
+INC100807,Problem,Workday,P3,Resolved,2026-04-26,156.7,Code defect,L1,APAC,Marcus Reilly,P3 slow in SAP ECC
+INC100808,Incident-ERP,Kyriba,P3,Resolved,2025-09-14,101.4,Vendor outage,L3,EMEA,Priya Natarajan,P3 slow in Salesforce
+INC100809,Incident-Access,ServiceNow,P4,Resolved,2025-07-28,61.3,Data quality,L3,EMEA,Priya Natarajan,P4 error in Coupa
+INC100810,Problem,Power BI,P3,Closed,2025-09-20,112.1,Permission,L3,APAC,Priya Natarajan,P3 failure in SAP ECC
+INC100811,Enhancement,Salesforce,P3,Resolved,2025-04-26,203.2,Capacity,L3,North America,Marcus Reilly,P3 failure in Salesforce
+INC100812,Incident-ERP,Power BI,P2,Resolved,2025-02-02,147.6,Code defect,L3,EMEA,David Chen,P2 failure in Coupa
+INC100813,Incident-Access,Azure AD,P2,Resolved,2025-08-08,109.2,Integration failure,L3,North America,David Chen,P2 error in Workday
+INC100814,Incident-Access,SAP ECC,P4,Closed,2025-04-09,2.5,Code defect,L2,EMEA,Tomas Halvorsen,P4 error in Azure AD
+INC100815,Request-Change,ServiceNow,P2,Closed,2025-04-23,147.5,Vendor outage,L3,APAC,Liam O'Sullivan,P2 outage in S/4HANA
+INC100816,Request-Access,Kyriba,P3,Open,2026-02-28,141.9,User error,L1,APAC,Elena Vasquez,P3 outage in S/4HANA
+INC100817,Incident-Treasury,Power BI,P4,Resolved,2025-06-01,39.4,Network,L2,EMEA,Elena Vasquez,P4 request in SAP ECC
+INC100818,Incident-ERP,ServiceNow,P4,Closed,2025-01-10,65.2,Unknown,L2,LATAM,Sofia Marchetti,P4 error in Azure AD
+INC100819,Incident-Reporting,Workday,P3,Closed,2025-02-22,28.0,Capacity,L2,APAC,Marcus Reilly,P3 request in Salesforce
+INC100820,Incident-Access,ServiceNow,P4,Resolved,2025-07-01,24.9,Data quality,L3,APAC,Tomas Halvorsen,P4 error in SAP ECC
+INC100821,Problem,S/4HANA,P2,Closed,2025-01-25,106.2,Capacity,L3,APAC,Sofia Marchetti,P2 error in Kyriba
+INC100822,Problem,Snowflake,P4,Closed,2025-02-17,8.3,User error,L2,North America,Aisha Bello,P4 error in Kyriba
+INC100823,Incident-Reporting,Workday,P3,Closed,2025-11-03,201.3,Capacity,L3,North America,David Chen,P3 request in Salesforce
+INC100824,Incident-ERP,Workday,P2,Resolved,2026-01-17,155.5,Integration failure,L1,APAC,Priya Natarajan,P2 slow in ServiceNow
+INC100825,Problem,Snowflake,P1,Resolved,2026-01-17,6.2,Code defect,L3,APAC,Liam O'Sullivan,P1 request in Power BI
+INC100826,Enhancement,Power BI,P4,Resolved,2025-05-31,211.9,Unknown,L2,North America,Raymond Okafor,P4 failure in Azure AD
+INC100827,Request-Access,Power BI,P3,Resolved,2025-04-20,217.7,Integration failure,L3,North America,Marcus Reilly,P3 failure in S/4HANA
+INC100828,Incident-ERP,Azure AD,P2,Closed,2025-12-23,60.0,Vendor outage,L2,APAC,Elena Vasquez,P2 outage in Salesforce
+INC100829,Incident-ERP,Snowflake,P3,Resolved,2025-05-06,21.5,Integration failure,L2,EMEA,Liam O'Sullivan,P3 outage in Snowflake
+INC100830,Enhancement,Workday,P3,Resolved,2025-09-14,145.7,Vendor outage,L3,APAC,Priya Natarajan,P3 outage in Snowflake
+INC100831,Request-Access,Azure AD,P3,Resolved,2025-05-21,92.0,Vendor outage,L3,LATAM,Elena Vasquez,P3 slow in Azure AD
+INC100832,Enhancement,Snowflake,P3,Open,2026-01-11,107.3,Capacity,L3,APAC,Raymond Okafor,P3 error in ServiceNow
+INC100833,Request-Access,Snowflake,P3,Closed,2026-02-01,130.6,Code defect,L1,North America,Raymond Okafor,P3 outage in SAP ECC
+INC100834,Enhancement,S/4HANA,P3,Closed,2025-12-05,209.9,Config error,L2,APAC,Tomas Halvorsen,P3 slow in Kyriba
+INC100835,Incident-Reporting,Power BI,P4,Closed,2025-03-29,1.7,Capacity,L3,EMEA,Marcus Reilly,P4 failure in SAP ECC
+INC100836,Incident-Treasury,Workday,P4,Resolved,2025-10-22,208.3,Vendor outage,L1,North America,Marcus Reilly,P4 request in Kyriba
+INC100837,Request-Report,Azure AD,P4,Closed,2026-03-09,191.1,Integration failure,L2,EMEA,Priya Natarajan,P4 slow in Snowflake
+INC100838,Incident-Treasury,SAP ECC,P3,Resolved,2025-01-12,7.9,Capacity,L2,APAC,Raymond Okafor,P3 request in Power BI
+INC100839,Incident-Access,Salesforce,P2,Open,2025-12-19,28.9,Network,L1,North America,David Chen,P2 outage in S/4HANA
+INC100840,Incident-ERP,Salesforce,P3,Closed,2026-01-22,119.6,Permission,L2,EMEA,Sofia Marchetti,P3 error in Kyriba
+INC100841,Problem,SAP ECC,P2,Open,2025-06-15,71.3,User error,L1,EMEA,Sofia Marchetti,P2 slow in Kyriba
+INC100842,Incident-Reporting,S/4HANA,P3,Resolved,2026-04-12,72.9,Integration failure,L3,APAC,Sofia Marchetti,P3 failure in SAP ECC
+INC100843,Enhancement,Workday,P3,In Progress,2025-08-23,29.3,Permission,L1,EMEA,Priya Natarajan,P3 failure in Kyriba
+INC100844,Incident-Treasury,Coupa,P3,Resolved,2026-04-10,97.4,Config error,L1,LATAM,Elena Vasquez,P3 request in Azure AD
+INC100845,Incident-Network,Coupa,P4,Resolved,2025-05-22,66.5,Vendor outage,L1,LATAM,Liam O'Sullivan,P4 outage in ServiceNow
+INC100846,Incident-ERP,Coupa,P4,Closed,2026-01-20,22.4,Data quality,L3,APAC,David Chen,P4 error in Kyriba
+INC100847,Request-Report,Snowflake,P3,Closed,2025-11-29,54.6,Data quality,L1,APAC,Liam O'Sullivan,P3 slow in S/4HANA
+INC100848,Incident-ERP,Kyriba,P3,Resolved,2026-02-21,62.6,Integration failure,L2,North America,Liam O'Sullivan,P3 error in Workday
+INC100849,Incident-Treasury,ServiceNow,P4,Closed,2025-10-20,191.1,Capacity,L2,EMEA,David Chen,P4 failure in Power BI
+INC100850,Incident-Reporting,Coupa,P4,In Progress,2025-10-15,15.2,User error,L2,EMEA,Maria Donnelly,P4 request in Snowflake
+INC100851,Incident-Access,Power BI,P3,Resolved,2026-04-03,43.2,Integration failure,L2,North America,Tomas Halvorsen,P3 failure in Salesforce
+INC100852,Incident-Access,Snowflake,P4,Closed,2025-02-23,157.8,Code defect,L1,APAC,Liam O'Sullivan,P4 slow in S/4HANA
+INC100853,Problem,Kyriba,P3,Resolved,2025-10-09,88.9,Config error,L2,LATAM,Tomas Halvorsen,P3 request in Coupa
+INC100854,Incident-Treasury,Coupa,P3,Closed,2025-10-03,147.2,Network,L1,LATAM,Maria Donnelly,P3 request in Salesforce
+INC100855,Incident-Network,Azure AD,P3,Closed,2026-03-24,43.3,Data quality,L3,APAC,Maria Donnelly,P3 slow in SAP ECC
+INC100856,Request-Access,Salesforce,P3,Resolved,2026-01-11,217.8,Capacity,L3,APAC,Raymond Okafor,P3 error in Power BI
+INC100857,Incident-Network,SAP ECC,P3,Closed,2025-04-06,182.2,Permission,L3,North America,Maria Donnelly,P3 outage in Coupa
+INC100858,Request-Access,Workday,P4,Closed,2025-12-19,173.1,Config error,L2,North America,Marcus Reilly,P4 failure in Salesforce
+INC100859,Request-Report,S/4HANA,P4,Resolved,2025-03-31,3.0,Capacity,L3,EMEA,Marcus Reilly,P4 failure in S/4HANA
+INC100860,Incident-Network,Salesforce,P4,Resolved,2026-05-02,149.0,Config error,L3,EMEA,David Chen,P4 outage in Snowflake
+INC100861,Request-Access,SAP ECC,P4,Resolved,2025-09-03,28.9,Data quality,L1,EMEA,Maria Donnelly,P4 failure in Coupa
+INC100862,Enhancement,Salesforce,P4,Resolved,2025-08-14,207.8,Unknown,L1,North America,Tomas Halvorsen,P4 outage in Power BI
+INC100863,Enhancement,Snowflake,P2,Closed,2025-05-29,204.1,Permission,L2,EMEA,David Chen,P2 failure in Coupa
+INC100864,Incident-Access,ServiceNow,P3,On Hold,2026-01-11,196.3,Integration failure,L1,North America,Tomas Halvorsen,P3 request in Salesforce
+INC100865,Enhancement,Power BI,P4,Resolved,2026-06-01,118.5,Vendor outage,L2,EMEA,David Chen,P4 outage in Snowflake
+INC100866,Request-Change,Coupa,P4,Open,2026-01-03,158.5,Data quality,L3,North America,Tomas Halvorsen,P4 request in ServiceNow
+INC100867,Incident-Network,Snowflake,P4,Resolved,2026-04-19,20.2,Config error,L2,EMEA,Sofia Marchetti,P4 slow in SAP ECC
+INC100868,Problem,Snowflake,P4,Closed,2026-01-10,136.8,Vendor outage,L2,APAC,Tomas Halvorsen,P4 error in ServiceNow
+INC100869,Incident-Reporting,ServiceNow,P3,Closed,2025-07-25,215.2,Permission,L2,North America,Priya Natarajan,P3 failure in Azure AD
+INC100870,Request-Report,Power BI,P3,Closed,2025-06-17,109.0,Unknown,L1,North America,Sofia Marchetti,P3 slow in Power BI
+INC100871,Incident-Access,Azure AD,P2,Resolved,2025-04-08,181.5,Integration failure,L1,North America,Raymond Okafor,P2 outage in ServiceNow
+INC100872,Enhancement,Snowflake,P3,Closed,2025-09-11,82.1,Unknown,L2,APAC,Tomas Halvorsen,P3 slow in ServiceNow
+INC100873,Incident-Network,Azure AD,P2,Closed,2025-04-11,186.8,Capacity,L2,EMEA,Sofia Marchetti,P2 failure in Snowflake
+INC100874,Enhancement,SAP ECC,P3,In Progress,2025-03-08,167.1,Data quality,L2,North America,David Chen,P3 error in S/4HANA
+INC100875,Incident-Treasury,Salesforce,P3,Resolved,2025-08-24,19.3,Vendor outage,L1,North America,Sofia Marchetti,P3 error in Kyriba
+INC100876,Incident-Access,Workday,P3,Resolved,2025-10-30,101.1,User error,L3,EMEA,Tomas Halvorsen,P3 slow in Azure AD
+INC100877,Incident-ERP,S/4HANA,P2,Closed,2026-02-20,189.8,Network,L1,North America,Priya Natarajan,P2 error in S/4HANA
+INC100878,Enhancement,S/4HANA,P3,Closed,2025-11-10,40.6,Data quality,L1,North America,Liam O'Sullivan,P3 error in Azure AD
+INC100879,Request-Report,Salesforce,P1,Resolved,2025-09-24,83.0,Network,L1,APAC,Marcus Reilly,P1 outage in S/4HANA
+INC100880,Incident-Access,Power BI,P3,Closed,2025-06-22,45.2,User error,L3,APAC,Elena Vasquez,P3 outage in Workday
+INC100881,Incident-Access,Salesforce,P3,Resolved,2025-05-03,76.5,Data quality,L2,North America,Marcus Reilly,P3 slow in Kyriba
+INC100882,Incident-Reporting,ServiceNow,P4,Resolved,2026-01-04,136.6,Config error,L1,EMEA,Maria Donnelly,P4 request in Kyriba
+INC100883,Request-Access,Snowflake,P3,Resolved,2025-05-20,45.0,Unknown,L1,EMEA,Marcus Reilly,P3 error in S/4HANA
+INC100884,Request-Report,Salesforce,P4,Closed,2026-02-17,66.3,Capacity,L3,EMEA,Priya Natarajan,P4 error in Azure AD
+INC100885,Incident-Treasury,Azure AD,P4,Closed,2025-06-20,186.4,Integration failure,L1,APAC,Priya Natarajan,P4 failure in ServiceNow
+INC100886,Incident-ERP,S/4HANA,P3,Resolved,2026-05-16,27.4,Permission,L2,North America,Raymond Okafor,P3 error in Power BI
+INC100887,Request-Change,S/4HANA,P3,On Hold,2025-06-20,95.3,User error,L2,EMEA,Aisha Bello,P3 request in Snowflake
+INC100888,Problem,Salesforce,P3,Closed,2026-01-27,172.1,Config error,L2,North America,Marcus Reilly,P3 slow in S/4HANA
+INC100889,Problem,Snowflake,P3,Resolved,2025-05-15,210.1,Unknown,L2,EMEA,Sofia Marchetti,P3 outage in SAP ECC
+INC100890,Incident-Reporting,Workday,P3,Closed,2025-05-29,49.4,Vendor outage,L1,North America,David Chen,P3 outage in Azure AD
+INC100891,Request-Change,Kyriba,P4,Resolved,2025-08-24,60.1,Data quality,L3,EMEA,Elena Vasquez,P4 request in Snowflake
+INC100892,Problem,Workday,P1,Resolved,2025-03-10,15.7,Vendor outage,L3,APAC,Elena Vasquez,P1 error in S/4HANA
+INC100893,Incident-Reporting,Salesforce,P4,In Progress,2026-04-19,52.0,Permission,L3,North America,Elena Vasquez,P4 slow in Coupa
+INC100894,Request-Report,Snowflake,P2,Closed,2025-10-19,135.0,User error,L2,North America,Marcus Reilly,P2 request in Workday
+INC100895,Request-Report,Power BI,P3,Resolved,2025-07-06,8.4,Config error,L2,APAC,Maria Donnelly,P3 slow in Workday
+INC100896,Request-Change,Workday,P3,Resolved,2025-04-21,218.4,Vendor outage,L3,LATAM,David Chen,P3 failure in S/4HANA
+INC100897,Incident-Treasury,Salesforce,P3,Resolved,2026-01-08,175.5,Network,L3,EMEA,Sofia Marchetti,P3 outage in Coupa
+INC100898,Incident-Access,SAP ECC,P3,Resolved,2025-11-22,196.5,User error,L3,EMEA,Liam O'Sullivan,P3 slow in Kyriba
+INC100899,Incident-ERP,ServiceNow,P2,Resolved,2025-12-31,173.5,Network,L3,LATAM,Maria Donnelly,P2 error in Kyriba
+INC100900,Request-Change,Salesforce,P3,Closed,2025-02-25,181.6,Vendor outage,L2,APAC,Priya Natarajan,P3 error in Salesforce
+INC100901,Incident-Treasury,SAP ECC,P4,Closed,2025-03-24,54.6,Network,L3,APAC,Priya Natarajan,P4 slow in S/4HANA
+INC100902,Incident-ERP,Power BI,P4,Resolved,2025-11-24,18.7,User error,L3,EMEA,Liam O'Sullivan,P4 failure in Workday
+INC100903,Incident-Access,ServiceNow,P4,Closed,2025-05-04,94.8,Config error,L2,LATAM,Maria Donnelly,P4 slow in Salesforce
+INC100904,Incident-Treasury,Coupa,P3,Closed,2025-03-13,24.8,Unknown,L1,EMEA,Tomas Halvorsen,P3 slow in Salesforce
+INC100905,Request-Change,Coupa,P4,In Progress,2025-02-21,184.6,Capacity,L3,North America,Tomas Halvorsen,P4 error in Kyriba
+INC100906,Incident-Network,Workday,P4,Closed,2025-01-01,145.9,Vendor outage,L3,EMEA,Maria Donnelly,P4 outage in Snowflake
+INC100907,Request-Change,Azure AD,P3,Open,2026-01-14,204.0,Integration failure,L2,EMEA,Raymond Okafor,P3 failure in Salesforce
+INC100908,Incident-Access,Azure AD,P1,Resolved,2026-04-28,91.4,User error,L2,APAC,Marcus Reilly,P1 error in SAP ECC
+INC100909,Incident-Treasury,ServiceNow,P4,Closed,2026-03-01,77.6,User error,L3,North America,Marcus Reilly,P4 slow in S/4HANA
+INC100910,Request-Access,Salesforce,P4,In Progress,2025-12-31,2.0,Integration failure,L1,EMEA,Priya Natarajan,P4 error in Workday
+INC100911,Incident-Treasury,Snowflake,P4,Closed,2025-11-08,175.5,Unknown,L2,North America,Raymond Okafor,P4 request in Snowflake
+INC100912,Incident-ERP,Azure AD,P4,In Progress,2025-04-26,189.4,Vendor outage,L1,LATAM,Marcus Reilly,P4 request in Coupa
+INC100913,Incident-Access,Workday,P4,Open,2025-03-07,20.6,Code defect,L3,North America,Priya Natarajan,P4 request in Power BI
+INC100914,Incident-Access,Azure AD,P3,Resolved,2026-04-16,165.6,Config error,L2,North America,Marcus Reilly,P3 request in Kyriba
+INC100915,Incident-ERP,SAP ECC,P4,Closed,2026-01-22,89.7,Code defect,L3,APAC,Aisha Bello,P4 request in Azure AD
+INC100916,Incident-Reporting,Azure AD,P4,Resolved,2025-04-29,3.8,Capacity,L2,North America,Elena Vasquez,P4 outage in Salesforce
+INC100917,Incident-Treasury,Kyriba,P2,Closed,2025-10-02,118.1,User error,L1,LATAM,Priya Natarajan,P2 outage in Snowflake
+INC100918,Request-Report,Snowflake,P3,In Progress,2025-03-23,3.4,Vendor outage,L1,North America,Elena Vasquez,P3 failure in Kyriba
+INC100919,Request-Report,S/4HANA,P3,Resolved,2026-02-10,94.0,Code defect,L2,North America,Liam O'Sullivan,P3 error in Azure AD
+INC100920,Incident-Treasury,Salesforce,P3,Resolved,2026-04-07,214.5,Config error,L3,North America,Raymond Okafor,P3 slow in Power BI
+INC100921,Enhancement,ServiceNow,P2,In Progress,2025-02-09,73.3,Capacity,L2,North America,Elena Vasquez,P2 failure in Azure AD
+INC100922,Incident-ERP,Workday,P4,Resolved,2025-11-07,177.9,Code defect,L3,EMEA,Maria Donnelly,P4 slow in ServiceNow
+INC100923,Request-Report,Salesforce,P3,Resolved,2026-02-14,177.6,Permission,L1,EMEA,Elena Vasquez,P3 failure in Coupa
+INC100924,Request-Access,Power BI,P2,Closed,2025-11-06,78.1,Network,L1,North America,Sofia Marchetti,P2 error in Power BI
+INC100925,Incident-Network,Kyriba,P3,Resolved,2025-02-23,178.0,User error,L1,APAC,Aisha Bello,P3 failure in ServiceNow
+INC100926,Incident-Access,Kyriba,P3,Resolved,2025-04-17,194.9,Code defect,L1,North America,Elena Vasquez,P3 request in SAP ECC
+INC100927,Problem,Kyriba,P1,Resolved,2025-05-13,1.8,Config error,L3,EMEA,David Chen,P1 failure in Azure AD
+INC100928,Request-Report,Salesforce,P4,Resolved,2025-10-24,171.8,Permission,L1,North America,Elena Vasquez,P4 failure in Salesforce
+INC100929,Incident-Treasury,Salesforce,P3,Resolved,2026-02-13,205.5,Vendor outage,L2,North America,Priya Natarajan,P3 outage in Salesforce
+INC100930,Problem,S/4HANA,P4,Open,2026-01-21,215.3,Integration failure,L1,LATAM,Sofia Marchetti,P4 error in SAP ECC
+INC100931,Incident-ERP,S/4HANA,P3,Resolved,2025-03-18,124.3,Config error,L1,North America,Elena Vasquez,P3 error in SAP ECC
+INC100932,Incident-ERP,Azure AD,P3,Resolved,2025-03-11,55.6,Data quality,L1,North America,Sofia Marchetti,P3 error in Salesforce
+INC100933,Enhancement,SAP ECC,P3,Resolved,2025-11-11,53.1,Unknown,L2,North America,David Chen,P3 request in Workday
+INC100934,Incident-Treasury,Power BI,P3,Closed,2025-06-27,39.5,Data quality,L1,North America,Marcus Reilly,P3 outage in Power BI
+INC100935,Incident-Network,Kyriba,P3,Resolved,2025-10-08,136.2,Config error,L3,EMEA,Elena Vasquez,P3 slow in Kyriba
+INC100936,Request-Report,SAP ECC,P3,Closed,2025-07-14,57.3,Config error,L1,LATAM,Elena Vasquez,P3 slow in ServiceNow
+INC100937,Incident-Treasury,ServiceNow,P3,Resolved,2025-07-06,34.7,Vendor outage,L1,North America,Elena Vasquez,P3 request in SAP ECC
+INC100938,Problem,Kyriba,P3,Resolved,2025-12-13,114.2,Unknown,L1,North America,Aisha Bello,P3 slow in Coupa
+INC100939,Request-Report,SAP ECC,P3,Resolved,2026-05-10,153.5,Vendor outage,L1,LATAM,Priya Natarajan,P3 request in Power BI
+INC100940,Request-Access,S/4HANA,P2,Closed,2025-05-31,27.6,Capacity,L3,North America,Liam O'Sullivan,P2 request in Azure AD
+INC100941,Request-Change,Snowflake,P3,In Progress,2026-05-12,188.5,Capacity,L2,APAC,Aisha Bello,P3 request in Azure AD
+INC100942,Enhancement,Azure AD,P2,Closed,2025-06-04,162.8,Network,L3,LATAM,Priya Natarajan,P2 slow in Kyriba
+INC100943,Incident-ERP,SAP ECC,P4,Closed,2026-04-06,76.1,Unknown,L2,EMEA,David Chen,P4 request in Power BI
+INC100944,Request-Change,Workday,P2,Closed,2025-07-20,100.4,Capacity,L3,LATAM,Priya Natarajan,P2 error in Snowflake
+INC100945,Incident-Treasury,Power BI,P1,Resolved,2025-12-19,185.9,Capacity,L3,LATAM,Maria Donnelly,P1 failure in SAP ECC
+INC100946,Enhancement,Coupa,P3,On Hold,2025-05-10,117.0,Permission,L2,APAC,Maria Donnelly,P3 error in Salesforce
+INC100947,Incident-Network,Kyriba,P4,Closed,2025-10-30,69.1,Integration failure,L3,EMEA,Elena Vasquez,P4 failure in Power BI
+INC100948,Request-Report,Snowflake,P3,Closed,2026-02-07,210.7,Unknown,L3,North America,Maria Donnelly,P3 error in ServiceNow
+INC100949,Incident-Reporting,Salesforce,P4,Closed,2026-01-08,45.1,Code defect,L1,APAC,David Chen,P4 error in Power BI
+INC100950,Request-Report,Power BI,P4,Closed,2026-04-22,83.5,Network,L1,APAC,Elena Vasquez,P4 error in Workday
+INC100951,Problem,Snowflake,P3,Closed,2025-10-28,98.8,Unknown,L2,North America,Aisha Bello,P3 outage in ServiceNow
+INC100952,Problem,Snowflake,P3,Open,2025-12-29,151.5,Network,L2,EMEA,Liam O'Sullivan,P3 outage in Coupa
+INC100953,Incident-Reporting,Workday,P4,Closed,2025-06-16,11.1,Unknown,L3,North America,Aisha Bello,P4 error in Workday
+INC100954,Incident-ERP,Azure AD,P4,Resolved,2025-01-20,140.3,Code defect,L3,APAC,Sofia Marchetti,P4 failure in S/4HANA
+INC100955,Request-Access,ServiceNow,P3,Closed,2025-02-19,25.5,Data quality,L1,EMEA,David Chen,P3 slow in Kyriba
+INC100956,Incident-ERP,Kyriba,P3,On Hold,2025-05-16,176.0,Data quality,L1,EMEA,David Chen,P3 request in Coupa
+INC100957,Request-Report,Power BI,P3,Resolved,2025-10-13,205.2,Code defect,L3,EMEA,Maria Donnelly,P3 failure in S/4HANA
+INC100958,Incident-Reporting,Coupa,P3,Resolved,2026-03-12,61.3,Data quality,L1,North America,Sofia Marchetti,P3 outage in SAP ECC
+INC100959,Incident-Network,ServiceNow,P2,Closed,2026-03-08,145.8,Permission,L1,EMEA,David Chen,P2 outage in Kyriba
+INC100960,Incident-Treasury,SAP ECC,P3,Resolved,2025-07-27,119.8,Integration failure,L3,EMEA,Raymond Okafor,P3 slow in SAP ECC
+INC100961,Request-Report,Azure AD,P4,Resolved,2025-09-14,219.0,Vendor outage,L1,APAC,Maria Donnelly,P4 outage in SAP ECC
+INC100962,Request-Change,Kyriba,P1,Resolved,2026-03-28,76.7,Integration failure,L2,EMEA,Marcus Reilly,P1 error in ServiceNow
+INC100963,Problem,ServiceNow,P4,Closed,2025-02-09,214.1,Data quality,L1,North America,Priya Natarajan,P4 outage in ServiceNow
+INC100964,Request-Change,Salesforce,P2,Closed,2025-12-07,141.5,Network,L3,North America,Elena Vasquez,P2 request in Azure AD
+INC100965,Incident-Reporting,Power BI,P2,Resolved,2026-03-14,96.5,Unknown,L3,EMEA,Sofia Marchetti,P2 failure in Kyriba
+INC100966,Request-Change,Snowflake,P3,Open,2026-04-11,34.8,Unknown,L1,EMEA,Aisha Bello,P3 failure in Azure AD
+INC100967,Request-Report,Kyriba,P2,In Progress,2025-09-30,34.8,Data quality,L2,EMEA,Raymond Okafor,P2 slow in ServiceNow
+INC100968,Request-Access,ServiceNow,P3,Resolved,2026-02-07,25.8,Unknown,L3,APAC,Marcus Reilly,P3 error in Kyriba
+INC100969,Request-Access,Coupa,P3,Resolved,2026-05-08,198.7,Permission,L2,LATAM,Maria Donnelly,P3 failure in Kyriba
+INC100970,Incident-Access,S/4HANA,P3,In Progress,2025-07-31,47.9,Code defect,L1,LATAM,Priya Natarajan,P3 outage in ServiceNow
+INC100971,Incident-Access,Coupa,P4,Closed,2026-03-10,155.1,Data quality,L1,EMEA,Liam O'Sullivan,P4 slow in Azure AD
+INC100972,Incident-ERP,Power BI,P4,In Progress,2025-08-24,83.4,Vendor outage,L3,EMEA,Liam O'Sullivan,P4 error in Workday
+INC100973,Request-Change,Snowflake,P3,Resolved,2025-05-22,205.0,Vendor outage,L2,LATAM,Maria Donnelly,P3 outage in SAP ECC
+INC100974,Problem,SAP ECC,P3,Resolved,2025-08-19,149.4,Code defect,L2,APAC,Tomas Halvorsen,P3 error in Salesforce
+INC100975,Incident-Access,S/4HANA,P3,Closed,2026-03-07,10.8,Integration failure,L2,EMEA,Raymond Okafor,P3 slow in Azure AD
+INC100976,Incident-Reporting,S/4HANA,P3,Closed,2025-07-01,106.6,Network,L3,North America,Raymond Okafor,P3 slow in Workday
+INC100977,Enhancement,Snowflake,P3,Resolved,2025-11-26,176.8,Data quality,L2,EMEA,Marcus Reilly,P3 slow in Azure AD
+INC100978,Incident-Access,Salesforce,P4,Resolved,2025-04-30,82.7,Capacity,L1,APAC,Sofia Marchetti,P4 error in Power BI
+INC100979,Request-Change,Azure AD,P3,Closed,2026-01-21,13.8,Integration failure,L1,APAC,Elena Vasquez,P3 request in S/4HANA
+INC100980,Enhancement,Workday,P4,Resolved,2025-01-10,161.2,User error,L3,APAC,Raymond Okafor,P4 failure in ServiceNow
+INC100981,Request-Access,SAP ECC,P3,Open,2026-01-14,54.9,Code defect,L3,North America,Marcus Reilly,P3 failure in Azure AD
+INC100982,Request-Access,ServiceNow,P4,Closed,2026-01-14,49.5,Integration failure,L2,EMEA,Raymond Okafor,P4 failure in Salesforce
+INC100983,Request-Access,Kyriba,P4,Resolved,2026-02-11,130.5,Permission,L2,EMEA,David Chen,P4 request in Snowflake
+INC100984,Incident-ERP,Salesforce,P1,Closed,2025-04-16,203.1,Vendor outage,L2,APAC,Elena Vasquez,P1 outage in Coupa
+INC100985,Incident-Treasury,Kyriba,P3,Resolved,2025-07-11,59.0,Permission,L1,North America,Raymond Okafor,P3 failure in Workday
+INC100986,Incident-Access,S/4HANA,P3,Resolved,2026-05-25,30.3,Data quality,L3,North America,Aisha Bello,P3 slow in Salesforce
+INC100987,Request-Access,ServiceNow,P2,Open,2025-11-30,203.8,Vendor outage,L2,North America,Priya Natarajan,P2 slow in Power BI
+INC100988,Incident-Treasury,S/4HANA,P2,Resolved,2025-12-06,46.9,Code defect,L3,LATAM,Aisha Bello,P2 failure in Snowflake
+INC100989,Request-Report,SAP ECC,P4,Resolved,2025-10-11,75.5,Data quality,L1,EMEA,Priya Natarajan,P4 outage in Workday
+INC100990,Incident-Network,Kyriba,P2,Closed,2025-02-08,134.4,Integration failure,L1,EMEA,Tomas Halvorsen,P2 request in ServiceNow
+INC100991,Enhancement,Azure AD,P4,Resolved,2025-08-04,102.6,Config error,L2,North America,Aisha Bello,P4 request in Power BI
+INC100992,Incident-Treasury,Coupa,P3,Resolved,2025-12-10,74.2,Code defect,L2,North America,Maria Donnelly,P3 outage in ServiceNow
+INC100993,Request-Access,Power BI,P4,Closed,2025-01-27,65.7,Permission,L3,North America,David Chen,P4 outage in Power BI
+INC100994,Problem,Salesforce,P3,Resolved,2026-02-01,53.6,Integration failure,L1,EMEA,Marcus Reilly,P3 slow in Azure AD
+INC100995,Incident-Network,Azure AD,P4,Closed,2026-01-21,211.2,Config error,L2,APAC,Aisha Bello,P4 failure in Salesforce
+INC100996,Incident-Treasury,Azure AD,P3,Resolved,2026-02-01,118.9,Capacity,L3,APAC,Tomas Halvorsen,P3 error in Kyriba
+INC100997,Incident-ERP,S/4HANA,P3,Open,2026-03-18,93.8,Permission,L3,APAC,David Chen,P3 failure in Snowflake
+INC100998,Incident-ERP,Workday,P4,Closed,2025-11-23,51.9,Capacity,L2,EMEA,David Chen,P4 error in Workday
+INC100999,Request-Report,ServiceNow,P2,Resolved,2025-11-19,41.7,Data quality,L3,North America,Liam O'Sullivan,P2 failure in Kyriba
+INC101000,Problem,SAP ECC,P4,Resolved,2025-08-05,56.4,Vendor outage,L3,North America,Elena Vasquez,P4 outage in SAP ECC
+INC101001,Enhancement,Power BI,P4,Closed,2025-09-01,51.3,Code defect,L3,North America,David Chen,P4 error in Snowflake
+INC101002,Incident-Reporting,ServiceNow,P4,Resolved,2025-10-13,97.6,Permission,L3,APAC,Maria Donnelly,P4 error in ServiceNow
+INC101003,Request-Access,Kyriba,P3,Resolved,2025-05-03,194.9,Network,L1,EMEA,Sofia Marchetti,P3 request in Kyriba
+INC101004,Problem,Workday,P4,On Hold,2025-03-15,80.1,User error,L3,EMEA,Priya Natarajan,P4 outage in Azure AD
+INC101005,Incident-ERP,Kyriba,P4,Closed,2025-04-24,37.8,Network,L1,APAC,Marcus Reilly,P4 failure in Workday
+INC101006,Incident-Treasury,Workday,P3,Closed,2026-02-15,129.2,Integration failure,L2,EMEA,Marcus Reilly,P3 slow in Power BI
+INC101007,Problem,Coupa,P3,Open,2025-05-28,36.7,Network,L2,EMEA,David Chen,P3 outage in Kyriba
+INC101008,Incident-ERP,SAP ECC,P3,In Progress,2025-06-08,69.8,Data quality,L1,North America,Raymond Okafor,P3 outage in SAP ECC
+INC101009,Incident-Access,Azure AD,P2,In Progress,2025-07-30,94.5,Integration failure,L3,LATAM,Marcus Reilly,P2 error in Snowflake
+INC101010,Incident-Access,ServiceNow,P4,Resolved,2026-01-11,147.3,Data quality,L3,North America,Sofia Marchetti,P4 failure in Salesforce
+INC101011,Incident-Treasury,SAP ECC,P2,Resolved,2025-08-13,64.0,Unknown,L2,North America,Liam O'Sullivan,P2 failure in SAP ECC
+INC101012,Incident-Network,Salesforce,P3,In Progress,2025-09-22,29.8,Data quality,L1,APAC,Aisha Bello,P3 request in Salesforce
+INC101013,Enhancement,Kyriba,P2,Resolved,2025-08-13,168.3,Code defect,L3,North America,Aisha Bello,P2 error in Salesforce
+INC101014,Problem,Azure AD,P4,Closed,2025-07-27,155.2,Unknown,L2,EMEA,David Chen,P4 slow in Workday
+INC101015,Request-Report,Power BI,P4,Resolved,2025-03-17,89.0,Code defect,L2,North America,Aisha Bello,P4 outage in Power BI
+INC101016,Incident-Reporting,Coupa,P4,In Progress,2025-01-15,181.9,Network,L2,APAC,Maria Donnelly,P4 outage in Salesforce
+INC101017,Request-Report,SAP ECC,P3,Closed,2025-07-01,46.1,Data quality,L3,APAC,Tomas Halvorsen,P3 error in Coupa
+INC101018,Request-Change,Coupa,P3,Closed,2025-12-01,178.2,Data quality,L3,APAC,Priya Natarajan,P3 error in Power BI
+INC101019,Incident-Treasury,Power BI,P4,In Progress,2025-03-17,157.0,Integration failure,L1,EMEA,Raymond Okafor,P4 error in SAP ECC
+INC101020,Incident-Reporting,SAP ECC,P3,Resolved,2025-01-26,116.8,Unknown,L2,APAC,Marcus Reilly,P3 slow in Snowflake
+INC101021,Incident-ERP,Power BI,P2,Resolved,2025-06-23,42.4,Unknown,L2,EMEA,Priya Natarajan,P2 slow in Azure AD
+INC101022,Incident-Reporting,Coupa,P3,Closed,2025-01-02,193.1,Config error,L2,APAC,Elena Vasquez,P3 outage in Coupa
+INC101023,Request-Access,Coupa,P3,In Progress,2025-03-18,38.8,Config error,L1,North America,Marcus Reilly,P3 error in S/4HANA
+INC101024,Incident-ERP,Kyriba,P3,Resolved,2026-05-17,138.5,Data quality,L2,APAC,Raymond Okafor,P3 request in ServiceNow
+INC101025,Incident-Network,Power BI,P3,Resolved,2026-05-14,91.1,Network,L3,EMEA,David Chen,P3 failure in Workday
+INC101026,Request-Report,Workday,P4,Closed,2025-05-28,160.2,Unknown,L1,APAC,Raymond Okafor,P4 error in Snowflake
+INC101027,Incident-Reporting,SAP ECC,P3,Resolved,2025-12-05,50.6,Network,L2,EMEA,Liam O'Sullivan,P3 outage in Kyriba
+INC101028,Request-Change,ServiceNow,P3,In Progress,2026-01-12,55.9,Unknown,L2,EMEA,Marcus Reilly,P3 slow in Salesforce
+INC101029,Request-Report,ServiceNow,P3,Closed,2025-07-29,116.1,Vendor outage,L1,EMEA,Liam O'Sullivan,P3 slow in ServiceNow
+INC101030,Request-Change,Kyriba,P4,Resolved,2025-04-10,12.7,Permission,L3,North America,Aisha Bello,P4 slow in Salesforce
+INC101031,Enhancement,Azure AD,P4,Closed,2025-04-04,191.3,Integration failure,L1,EMEA,Liam O'Sullivan,P4 slow in Snowflake
+INC101032,Incident-Reporting,Power BI,P3,Closed,2026-05-23,87.7,Config error,L3,APAC,Raymond Okafor,P3 outage in SAP ECC
+INC101033,Incident-Treasury,Coupa,P3,Closed,2025-09-10,150.7,Permission,L1,EMEA,Priya Natarajan,P3 outage in Kyriba
+INC101034,Incident-Treasury,Azure AD,P2,Closed,2026-01-25,13.8,Permission,L3,North America,Marcus Reilly,P2 failure in SAP ECC
+INC101035,Request-Access,Salesforce,P1,Resolved,2025-02-17,165.8,Unknown,L1,LATAM,Liam O'Sullivan,P1 failure in Kyriba
+INC101036,Enhancement,Kyriba,P3,Resolved,2025-08-18,65.1,User error,L2,LATAM,Tomas Halvorsen,P3 slow in ServiceNow
+INC101037,Problem,Kyriba,P3,Resolved,2025-03-26,102.5,Code defect,L2,LATAM,Aisha Bello,P3 error in Workday
+INC101038,Request-Change,Azure AD,P3,Resolved,2026-04-06,73.9,Data quality,L1,North America,Liam O'Sullivan,P3 slow in S/4HANA
+INC101039,Incident-Reporting,ServiceNow,P2,Open,2026-01-07,7.7,Data quality,L3,APAC,Elena Vasquez,P2 slow in ServiceNow
+INC101040,Request-Report,S/4HANA,P3,Closed,2025-06-12,63.7,Data quality,L3,APAC,Raymond Okafor,P3 request in S/4HANA
+INC101041,Request-Change,Power BI,P2,Resolved,2025-09-21,217.4,Integration failure,L1,APAC,Priya Natarajan,P2 slow in Snowflake
+INC101042,Incident-Reporting,Workday,P3,In Progress,2025-11-09,61.7,Code defect,L3,APAC,Raymond Okafor,P3 failure in Kyriba
+INC101043,Request-Change,Snowflake,P3,Resolved,2025-11-09,105.3,Vendor outage,L2,APAC,Priya Natarajan,P3 error in Workday
+INC101044,Incident-Access,Coupa,P4,Closed,2025-07-15,123.4,Integration failure,L1,APAC,Sofia Marchetti,P4 slow in Power BI
+INC101045,Request-Report,ServiceNow,P4,Resolved,2025-10-25,1.8,Integration failure,L1,EMEA,Priya Natarajan,P4 outage in Azure AD
+INC101046,Enhancement,Salesforce,P4,Closed,2025-02-13,102.1,Data quality,L1,APAC,Aisha Bello,P4 failure in Azure AD
+INC101047,Request-Access,ServiceNow,P3,In Progress,2026-02-22,202.1,Integration failure,L2,EMEA,Liam O'Sullivan,P3 outage in Salesforce
+INC101048,Incident-ERP,Coupa,P3,Resolved,2026-03-25,179.1,Code defect,L2,North America,Aisha Bello,P3 outage in SAP ECC
+INC101049,Request-Report,Coupa,P3,Open,2025-08-27,33.3,Vendor outage,L2,EMEA,Sofia Marchetti,P3 outage in Kyriba
+INC101050,Incident-Reporting,Snowflake,P3,Resolved,2025-09-18,196.1,Config error,L1,APAC,David Chen,P3 slow in ServiceNow
+INC101051,Incident-ERP,Kyriba,P4,Closed,2026-03-29,207.2,Code defect,L3,EMEA,Maria Donnelly,P4 outage in Power BI
+INC101052,Incident-ERP,Kyriba,P4,Resolved,2025-03-09,72.7,Network,L2,North America,Elena Vasquez,P4 failure in Workday
+INC101053,Request-Access,Azure AD,P4,Closed,2026-04-21,190.9,User error,L2,APAC,Elena Vasquez,P4 error in Coupa
+INC101054,Incident-Treasury,Azure AD,P3,Resolved,2025-02-06,65.8,Permission,L2,EMEA,Liam O'Sullivan,P3 error in ServiceNow
+INC101055,Incident-Access,Workday,P3,Resolved,2025-11-27,112.8,Code defect,L3,EMEA,Raymond Okafor,P3 request in Power BI
+INC101056,Incident-Access,Workday,P3,Open,2025-04-28,216.5,Code defect,L2,EMEA,Maria Donnelly,P3 request in ServiceNow
+INC101057,Request-Change,Coupa,P3,Closed,2025-07-06,214.9,Permission,L1,APAC,Aisha Bello,P3 outage in S/4HANA
+INC101058,Enhancement,SAP ECC,P2,Open,2026-04-01,104.1,Vendor outage,L3,North America,Marcus Reilly,P2 request in Power BI
+INC101059,Incident-Network,SAP ECC,P3,Closed,2026-03-07,52.8,Unknown,L2,APAC,Raymond Okafor,P3 request in Salesforce
+INC101060,Incident-Treasury,Snowflake,P4,Resolved,2025-11-06,109.0,User error,L1,APAC,Sofia Marchetti,P4 outage in Power BI
+INC101061,Request-Change,Salesforce,P3,Resolved,2025-03-11,1.1,Unknown,L2,EMEA,Sofia Marchetti,P3 failure in ServiceNow
+INC101062,Incident-ERP,Power BI,P3,Resolved,2025-04-23,82.4,Integration failure,L3,LATAM,David Chen,P3 outage in Coupa
+INC101063,Enhancement,ServiceNow,P3,Resolved,2026-04-05,211.7,Unknown,L3,North America,Elena Vasquez,P3 error in Kyriba
+INC101064,Incident-Treasury,ServiceNow,P3,In Progress,2025-12-12,195.6,Code defect,L2,APAC,Liam O'Sullivan,P3 outage in Azure AD
+INC101065,Request-Access,Power BI,P3,In Progress,2025-07-26,32.4,Vendor outage,L2,EMEA,Liam O'Sullivan,P3 outage in Azure AD
+INC101066,Request-Report,Workday,P3,Resolved,2025-02-01,4.5,Permission,L1,APAC,Maria Donnelly,P3 request in Coupa
+INC101067,Request-Change,Azure AD,P3,Resolved,2026-04-05,1.2,Config error,L1,North America,David Chen,P3 slow in Azure AD
+INC101068,Problem,Coupa,P4,Open,2025-03-08,41.6,Data quality,L3,EMEA,Priya Natarajan,P4 error in Power BI
+INC101069,Request-Change,Salesforce,P2,Resolved,2025-11-26,188.1,Network,L2,North America,Priya Natarajan,P2 failure in Coupa
+INC101070,Incident-Treasury,Workday,P3,Resolved,2025-01-26,121.7,Code defect,L1,LATAM,David Chen,P3 outage in SAP ECC
+INC101071,Request-Access,Coupa,P3,Resolved,2025-09-14,34.1,Config error,L2,EMEA,Maria Donnelly,P3 request in Kyriba
+INC101072,Incident-Access,ServiceNow,P3,In Progress,2026-03-20,101.1,Integration failure,L3,EMEA,Sofia Marchetti,P3 request in Azure AD
+INC101073,Incident-Treasury,Azure AD,P2,Resolved,2026-04-05,34.7,Config error,L2,EMEA,Tomas Halvorsen,P2 error in Salesforce
+INC101074,Request-Access,Kyriba,P3,On Hold,2026-01-21,16.2,Integration failure,L3,EMEA,Elena Vasquez,P3 outage in SAP ECC
+INC101075,Request-Report,SAP ECC,P4,Resolved,2025-03-04,21.2,Integration failure,L1,EMEA,Maria Donnelly,P4 failure in Salesforce
+INC101076,Request-Change,Power BI,P4,Closed,2025-10-04,108.8,Config error,L2,EMEA,Maria Donnelly,P4 slow in Salesforce
+INC101077,Incident-ERP,Snowflake,P3,Closed,2025-04-05,10.2,Capacity,L1,North America,Liam O'Sullivan,P3 slow in Salesforce
+INC101078,Incident-Access,Kyriba,P3,Closed,2026-05-27,189.3,Unknown,L3,EMEA,Aisha Bello,P3 outage in ServiceNow
+INC101079,Incident-Network,SAP ECC,P4,Resolved,2025-07-01,192.9,Data quality,L1,North America,David Chen,P4 request in SAP ECC
+INC101080,Request-Change,S/4HANA,P4,Resolved,2025-05-11,41.5,Integration failure,L3,North America,Tomas Halvorsen,P4 slow in Salesforce
+INC101081,Enhancement,Power BI,P3,Closed,2026-04-02,188.7,Unknown,L3,APAC,Sofia Marchetti,P3 failure in Power BI
+INC101082,Incident-ERP,Salesforce,P3,In Progress,2025-10-14,140.7,User error,L1,EMEA,Tomas Halvorsen,P3 slow in Salesforce
+INC101083,Incident-Reporting,Workday,P2,In Progress,2026-04-18,55.7,Config error,L2,APAC,Elena Vasquez,P2 failure in Kyriba
+INC101084,Incident-Network,Kyriba,P4,In Progress,2025-03-02,86.8,Integration failure,L3,LATAM,Raymond Okafor,P4 failure in Snowflake
+INC101085,Incident-Network,SAP ECC,P2,Resolved,2025-04-21,11.6,Vendor outage,L2,EMEA,Raymond Okafor,P2 request in Coupa
+INC101086,Request-Report,Kyriba,P3,Resolved,2026-03-29,192.7,Code defect,L1,North America,Priya Natarajan,P3 error in SAP ECC
+INC101087,Incident-Reporting,Coupa,P3,Closed,2026-03-24,91.1,Integration failure,L2,North America,Raymond Okafor,P3 request in Azure AD
+INC101088,Incident-Reporting,Workday,P3,Closed,2026-03-04,16.3,Code defect,L1,North America,Priya Natarajan,P3 error in Workday
+INC101089,Incident-Treasury,SAP ECC,P4,In Progress,2025-10-11,44.5,Code defect,L1,EMEA,Sofia Marchetti,P4 outage in Salesforce
+INC101090,Incident-Network,Workday,P4,Closed,2025-05-17,50.6,Config error,L3,EMEA,Maria Donnelly,P4 error in Salesforce
+INC101091,Incident-Access,ServiceNow,P4,Closed,2026-05-22,45.3,User error,L1,EMEA,Elena Vasquez,P4 error in ServiceNow
+INC101092,Incident-ERP,Kyriba,P1,Resolved,2025-10-26,142.5,Config error,L3,APAC,Raymond Okafor,P1 failure in ServiceNow
+INC101093,Incident-Treasury,Coupa,P2,Resolved,2025-05-19,194.2,Code defect,L2,LATAM,Liam O'Sullivan,P2 failure in Power BI
+INC101094,Incident-Reporting,Azure AD,P4,Closed,2025-03-29,86.1,Code defect,L2,APAC,Elena Vasquez,P4 failure in SAP ECC
+INC101095,Request-Report,Kyriba,P3,Resolved,2025-11-20,63.5,Data quality,L1,North America,David Chen,P3 request in S/4HANA
+INC101096,Problem,Coupa,P3,Resolved,2026-02-25,47.4,Vendor outage,L3,APAC,Elena Vasquez,P3 request in SAP ECC
+INC101097,Request-Access,Kyriba,P3,Resolved,2026-03-27,171.9,Vendor outage,L3,EMEA,David Chen,P3 failure in S/4HANA
+INC101098,Incident-Treasury,Azure AD,P3,Closed,2025-10-15,107.1,Vendor outage,L2,North America,Maria Donnelly,P3 failure in Workday
+INC101099,Request-Change,Kyriba,P3,Closed,2025-01-11,149.2,User error,L1,APAC,Sofia Marchetti,P3 request in Azure AD
+INC101100,Incident-ERP,Azure AD,P3,In Progress,2025-11-20,159.0,Permission,L2,APAC,Tomas Halvorsen,P3 slow in Azure AD
+INC101101,Request-Change,Workday,P3,Resolved,2025-12-06,26.7,Integration failure,L2,North America,Raymond Okafor,P3 slow in Snowflake
+INC101102,Problem,Snowflake,P4,Resolved,2025-01-13,69.6,Capacity,L1,EMEA,Tomas Halvorsen,P4 failure in SAP ECC
+INC101103,Enhancement,ServiceNow,P4,On Hold,2025-03-23,193.8,Config error,L1,EMEA,Liam O'Sullivan,P4 failure in Power BI
+INC101104,Request-Report,Azure AD,P4,Closed,2025-12-30,144.0,Unknown,L2,APAC,Priya Natarajan,P4 failure in Azure AD
+INC101105,Incident-Reporting,Azure AD,P3,Resolved,2025-07-31,47.3,Unknown,L2,North America,Elena Vasquez,P3 failure in Salesforce
+INC101106,Enhancement,Coupa,P3,Resolved,2025-01-18,111.0,Config error,L1,APAC,Sofia Marchetti,P3 failure in Kyriba
+INC101107,Incident-Network,SAP ECC,P3,Closed,2025-12-27,179.1,Vendor outage,L2,EMEA,Raymond Okafor,P3 outage in Salesforce
+INC101108,Request-Report,Snowflake,P3,Resolved,2025-11-15,80.8,Code defect,L1,North America,Maria Donnelly,P3 outage in Salesforce
+INC101109,Request-Access,SAP ECC,P2,Closed,2025-05-28,27.7,Unknown,L3,North America,Raymond Okafor,P2 slow in S/4HANA
+INC101110,Request-Access,Workday,P3,Resolved,2025-10-03,3.6,Permission,L3,EMEA,Sofia Marchetti,P3 failure in S/4HANA
+INC101111,Problem,Kyriba,P4,Closed,2025-05-02,51.8,Unknown,L1,EMEA,Aisha Bello,P4 outage in ServiceNow
+INC101112,Request-Change,Kyriba,P3,In Progress,2026-01-26,122.5,Data quality,L1,North America,Maria Donnelly,P3 request in Coupa
+INC101113,Incident-Treasury,SAP ECC,P3,Resolved,2025-04-12,75.6,Integration failure,L2,APAC,Raymond Okafor,P3 failure in Salesforce
+INC101114,Incident-Treasury,SAP ECC,P4,Resolved,2025-07-21,152.2,Capacity,L1,APAC,Aisha Bello,P4 slow in Snowflake
+INC101115,Incident-ERP,Azure AD,P2,In Progress,2025-06-17,213.3,Unknown,L2,North America,Maria Donnelly,P2 failure in Snowflake
+INC101116,Request-Access,SAP ECC,P3,Resolved,2025-12-20,82.0,Permission,L2,North America,Sofia Marchetti,P3 error in Azure AD
+INC101117,Incident-ERP,ServiceNow,P4,Closed,2025-07-03,163.5,User error,L2,APAC,Elena Vasquez,P4 error in Workday
+INC101118,Request-Report,Power BI,P3,In Progress,2025-07-31,123.9,Config error,L3,EMEA,David Chen,P3 failure in Power BI
+INC101119,Problem,Salesforce,P3,Resolved,2026-02-25,56.6,User error,L1,North America,Raymond Okafor,P3 outage in Power BI
+INC101120,Request-Access,Kyriba,P4,Resolved,2025-12-15,145.3,Capacity,L1,EMEA,Aisha Bello,P4 failure in Workday
+INC101121,Incident-ERP,Azure AD,P3,Resolved,2025-01-11,45.2,Config error,L3,North America,Tomas Halvorsen,P3 slow in SAP ECC
+INC101122,Incident-Reporting,ServiceNow,P4,Open,2025-02-21,131.9,Capacity,L1,North America,Elena Vasquez,P4 failure in Coupa
+INC101123,Request-Access,Snowflake,P4,Resolved,2025-10-16,144.7,Permission,L1,APAC,Raymond Okafor,P4 failure in Coupa
+INC101124,Enhancement,Azure AD,P4,Resolved,2025-04-19,92.3,Config error,L3,APAC,Marcus Reilly,P4 slow in SAP ECC
+INC101125,Problem,SAP ECC,P3,Resolved,2025-06-14,66.8,Unknown,L3,EMEA,Liam O'Sullivan,P3 request in Workday
+INC101126,Incident-Treasury,Snowflake,P3,Resolved,2025-06-21,198.5,Capacity,L2,North America,Sofia Marchetti,P3 outage in Azure AD
+INC101127,Enhancement,Coupa,P3,Resolved,2026-01-15,11.2,Data quality,L3,North America,Elena Vasquez,P3 error in Coupa
+INC101128,Request-Report,Kyriba,P2,Closed,2025-04-10,43.9,Permission,L3,EMEA,Raymond Okafor,P2 failure in S/4HANA
+INC101129,Problem,S/4HANA,P3,Closed,2025-06-29,13.1,Integration failure,L2,North America,Maria Donnelly,P3 failure in Power BI
+INC101130,Request-Report,S/4HANA,P4,Open,2025-08-15,53.4,Config error,L2,APAC,Elena Vasquez,P4 error in Power BI
+INC101131,Incident-Access,Snowflake,P4,Resolved,2025-11-24,218.7,Data quality,L2,North America,Priya Natarajan,P4 outage in Salesforce
+INC101132,Incident-Network,Salesforce,P4,Closed,2025-07-06,189.7,Data quality,L2,EMEA,Maria Donnelly,P4 error in Kyriba
+INC101133,Incident-Access,S/4HANA,P3,Resolved,2025-12-10,137.6,Data quality,L3,North America,Aisha Bello,P3 error in Salesforce
+INC101134,Incident-Treasury,Kyriba,P3,On Hold,2025-10-23,104.6,Vendor outage,L1,North America,Tomas Halvorsen,P3 failure in Kyriba
+INC101135,Request-Report,Azure AD,P3,Resolved,2026-03-25,195.5,Permission,L1,EMEA,Liam O'Sullivan,P3 slow in Coupa
+INC101136,Request-Report,SAP ECC,P1,Closed,2025-01-24,111.1,Integration failure,L3,North America,Marcus Reilly,P1 outage in Workday
+INC101137,Problem,S/4HANA,P4,Resolved,2025-11-30,123.3,Capacity,L1,North America,Priya Natarajan,P4 outage in Power BI
+INC101138,Incident-Access,Azure AD,P4,Closed,2026-03-14,145.8,Integration failure,L3,EMEA,Elena Vasquez,P4 error in ServiceNow
+INC101139,Incident-Network,Snowflake,P2,On Hold,2026-05-19,209.3,Config error,L3,LATAM,Maria Donnelly,P2 failure in Workday
+INC101140,Request-Access,Snowflake,P3,Resolved,2026-02-24,60.4,Config error,L3,LATAM,Marcus Reilly,P3 error in S/4HANA
+INC101141,Request-Report,S/4HANA,P2,Resolved,2026-03-22,49.5,Capacity,L1,APAC,Elena Vasquez,P2 request in Azure AD
+INC101142,Incident-Access,Snowflake,P3,Resolved,2025-08-09,176.7,Integration failure,L1,APAC,Raymond Okafor,P3 failure in Workday
+INC101143,Request-Access,ServiceNow,P3,Closed,2025-06-01,111.0,Code defect,L2,LATAM,David Chen,P3 failure in Snowflake
+INC101144,Incident-Treasury,Kyriba,P3,Resolved,2026-01-18,115.1,Permission,L1,LATAM,Maria Donnelly,P3 slow in Azure AD
+INC101145,Incident-Reporting,Power BI,P4,Resolved,2025-05-06,170.6,Vendor outage,L3,APAC,Elena Vasquez,P4 slow in ServiceNow
+INC101146,Enhancement,ServiceNow,P2,Resolved,2026-02-16,8.5,Vendor outage,L2,APAC,Raymond Okafor,P2 outage in SAP ECC
+INC101147,Incident-Reporting,Coupa,P2,Closed,2026-01-01,109.1,Permission,L2,EMEA,Marcus Reilly,P2 failure in Azure AD
+INC101148,Incident-Network,Snowflake,P4,On Hold,2025-01-21,196.4,Integration failure,L2,APAC,Priya Natarajan,P4 error in Salesforce
+INC101149,Problem,Azure AD,P2,Closed,2026-01-05,17.8,Capacity,L2,APAC,David Chen,P2 request in SAP ECC
+INC101150,Request-Change,Coupa,P3,Resolved,2025-12-26,24.8,Permission,L1,EMEA,Liam O'Sullivan,P3 failure in S/4HANA
+INC101151,Enhancement,Kyriba,P2,Resolved,2025-10-21,173.4,Code defect,L2,North America,Maria Donnelly,P2 slow in Power BI
+INC101152,Enhancement,Kyriba,P3,Closed,2025-10-18,95.6,Code defect,L1,EMEA,Elena Vasquez,P3 slow in Snowflake
+INC101153,Incident-Network,SAP ECC,P3,Resolved,2026-04-30,133.6,Network,L2,EMEA,Liam O'Sullivan,P3 request in Workday
+INC101154,Incident-Reporting,Azure AD,P3,Open,2025-06-11,62.5,Network,L2,North America,Tomas Halvorsen,P3 outage in Kyriba
+INC101155,Request-Change,Power BI,P4,Open,2026-04-06,163.0,User error,L1,APAC,Marcus Reilly,P4 request in Kyriba
+INC101156,Request-Report,Snowflake,P3,Resolved,2026-03-26,165.1,Integration failure,L1,EMEA,Liam O'Sullivan,P3 failure in Workday
+INC101157,Request-Change,ServiceNow,P3,Resolved,2025-07-30,1.0,Vendor outage,L1,North America,Tomas Halvorsen,P3 slow in Workday
+INC101158,Incident-Network,Salesforce,P4,Resolved,2025-05-20,21.6,User error,L2,APAC,Aisha Bello,P4 failure in ServiceNow
+INC101159,Incident-ERP,Azure AD,P3,Closed,2026-02-04,147.5,Unknown,L2,LATAM,Sofia Marchetti,P3 outage in Kyriba
+INC101160,Request-Change,Kyriba,P3,Resolved,2025-08-29,143.7,Integration failure,L2,North America,Maria Donnelly,P3 request in S/4HANA
+INC101161,Request-Report,Coupa,P4,Closed,2026-03-08,94.1,Unknown,L3,North America,David Chen,P4 failure in Coupa
+INC101162,Request-Change,Kyriba,P3,Resolved,2025-01-13,67.9,Code defect,L2,EMEA,Marcus Reilly,P3 outage in Salesforce
+INC101163,Incident-Reporting,ServiceNow,P3,Closed,2025-05-13,200.0,Vendor outage,L1,APAC,Tomas Halvorsen,P3 request in Workday
+INC101164,Problem,Kyriba,P4,Resolved,2026-05-02,36.8,Capacity,L2,APAC,David Chen,P4 request in Coupa
+INC101165,Incident-ERP,Salesforce,P3,Resolved,2025-11-03,70.6,Unknown,L2,APAC,Aisha Bello,P3 slow in ServiceNow
+INC101166,Request-Report,Azure AD,P1,Closed,2025-04-16,19.3,Network,L2,APAC,Maria Donnelly,P1 outage in Azure AD
+INC101167,Incident-Treasury,ServiceNow,P1,Resolved,2025-11-26,196.9,Permission,L1,North America,Raymond Okafor,P1 error in SAP ECC
+INC101168,Request-Report,Power BI,P4,Resolved,2025-08-08,11.6,Integration failure,L3,EMEA,Priya Natarajan,P4 failure in SAP ECC
+INC101169,Request-Access,Snowflake,P4,Closed,2025-02-21,47.2,Unknown,L3,EMEA,Liam O'Sullivan,P4 request in S/4HANA
+INC101170,Request-Report,Snowflake,P3,Open,2025-06-03,67.9,Integration failure,L2,EMEA,Raymond Okafor,P3 error in Coupa
+INC101171,Incident-Reporting,Workday,P2,Closed,2026-03-17,198.1,Config error,L3,North America,Sofia Marchetti,P2 outage in Salesforce
+INC101172,Incident-Access,Kyriba,P4,Open,2025-04-15,82.4,Unknown,L2,APAC,Marcus Reilly,P4 slow in Workday
+INC101173,Incident-Reporting,SAP ECC,P3,Resolved,2025-10-04,80.2,Network,L1,LATAM,Aisha Bello,P3 error in Azure AD
+INC101174,Enhancement,Workday,P4,On Hold,2026-04-17,12.6,Integration failure,L3,North America,Liam O'Sullivan,P4 request in S/4HANA
+INC101175,Incident-Reporting,Salesforce,P2,Closed,2026-03-24,175.9,Integration failure,L3,APAC,Aisha Bello,P2 failure in Power BI
+INC101176,Request-Access,Power BI,P4,Open,2025-12-27,35.2,Config error,L1,APAC,Priya Natarajan,P4 error in Coupa
+INC101177,Incident-Access,ServiceNow,P4,Open,2026-01-05,112.8,User error,L1,EMEA,Raymond Okafor,P4 request in Coupa
+INC101178,Incident-Treasury,Salesforce,P3,Resolved,2025-08-31,34.1,Data quality,L1,North America,Aisha Bello,P3 slow in SAP ECC
+INC101179,Incident-Reporting,S/4HANA,P3,Closed,2026-01-22,67.1,Integration failure,L2,EMEA,Sofia Marchetti,P3 failure in S/4HANA
+INC101180,Incident-Access,Kyriba,P3,Closed,2025-06-10,100.6,Network,L1,EMEA,Liam O'Sullivan,P3 failure in Azure AD
+INC101181,Incident-Network,Snowflake,P2,Resolved,2025-08-24,123.2,Unknown,L3,APAC,Priya Natarajan,P2 error in Azure AD
+INC101182,Incident-Network,Power BI,P2,Resolved,2025-12-29,123.1,Permission,L2,North America,Maria Donnelly,P2 outage in S/4HANA
+INC101183,Request-Report,Power BI,P4,Resolved,2025-10-19,179.9,Data quality,L2,APAC,Sofia Marchetti,P4 slow in S/4HANA
+INC101184,Enhancement,Workday,P3,Resolved,2025-07-04,103.9,Integration failure,L2,North America,David Chen,P3 error in S/4HANA
+INC101185,Enhancement,Workday,P2,Resolved,2025-05-15,7.3,Network,L3,APAC,Elena Vasquez,P2 outage in Salesforce
+INC101186,Incident-Access,Snowflake,P3,Resolved,2025-11-21,203.6,Permission,L2,North America,Maria Donnelly,P3 slow in Coupa
+INC101187,Enhancement,Kyriba,P3,Closed,2025-07-06,58.5,Code defect,L3,EMEA,Tomas Halvorsen,P3 slow in Azure AD
+INC101188,Incident-Reporting,Salesforce,P4,Resolved,2025-07-31,154.3,Code defect,L3,LATAM,Raymond Okafor,P4 outage in Kyriba
+INC101189,Enhancement,S/4HANA,P3,On Hold,2025-02-17,116.4,Data quality,L2,EMEA,Marcus Reilly,P3 failure in Power BI
+INC101190,Problem,Workday,P4,Resolved,2025-12-11,94.4,User error,L1,EMEA,Elena Vasquez,P4 error in Workday
+INC101191,Enhancement,Salesforce,P3,Closed,2026-05-14,219.7,User error,L2,EMEA,Raymond Okafor,P3 error in Salesforce
+INC101192,Incident-Access,ServiceNow,P3,Resolved,2025-09-12,115.8,Permission,L1,EMEA,Marcus Reilly,P3 outage in Kyriba
+INC101193,Problem,Power BI,P4,Resolved,2025-05-16,25.2,User error,L1,North America,Priya Natarajan,P4 slow in S/4HANA
+INC101194,Incident-Access,SAP ECC,P2,Resolved,2025-01-05,72.0,Data quality,L1,North America,Marcus Reilly,P2 error in ServiceNow
+INC101195,Incident-Access,Salesforce,P3,Open,2025-03-02,83.6,Code defect,L2,EMEA,David Chen,P3 failure in S/4HANA
+INC101196,Request-Report,Kyriba,P2,Resolved,2025-08-14,147.5,Permission,L2,EMEA,David Chen,P2 outage in SAP ECC
+INC101197,Incident-Treasury,S/4HANA,P1,Resolved,2025-06-24,144.3,Code defect,L2,North America,Marcus Reilly,P1 slow in Coupa
+INC101198,Incident-Reporting,ServiceNow,P1,Closed,2026-04-24,196.6,Code defect,L1,APAC,Marcus Reilly,P1 request in Workday
+INC101199,Request-Report,Salesforce,P4,Resolved,2025-12-26,44.6,Network,L1,LATAM,Aisha Bello,P4 slow in Salesforce
+INC101200,Incident-Treasury,Azure AD,P4,Closed,2025-11-23,198.4,Config error,L3,North America,Raymond Okafor,P4 outage in S/4HANA
+INC101201,Incident-Reporting,Power BI,P3,Resolved,2025-02-21,167.3,Code defect,L1,North America,Liam O'Sullivan,P3 request in Kyriba
+INC101202,Incident-Access,Salesforce,P2,Closed,2025-11-06,28.7,User error,L2,APAC,Priya Natarajan,P2 request in Power BI
+INC101203,Incident-Access,Azure AD,P2,Resolved,2025-07-06,83.4,Data quality,L2,APAC,Maria Donnelly,P2 error in Kyriba
+INC101204,Problem,SAP ECC,P3,Closed,2026-02-12,51.4,Config error,L3,North America,Liam O'Sullivan,P3 request in Power BI
+INC101205,Incident-ERP,SAP ECC,P4,Resolved,2025-09-20,199.3,Network,L2,North America,Elena Vasquez,P4 slow in Coupa
+INC101206,Request-Change,Azure AD,P2,Resolved,2025-06-23,40.5,Vendor outage,L1,North America,Aisha Bello,P2 error in Snowflake
+INC101207,Problem,Azure AD,P3,Closed,2025-06-25,210.0,Network,L3,EMEA,Tomas Halvorsen,P3 outage in Snowflake
+INC101208,Incident-ERP,Azure AD,P2,In Progress,2025-04-28,17.7,Permission,L2,EMEA,Liam O'Sullivan,P2 failure in Workday
+INC101209,Request-Report,S/4HANA,P4,In Progress,2025-01-19,92.3,Vendor outage,L2,APAC,Liam O'Sullivan,P4 outage in Kyriba
+INC101210,Request-Report,Kyriba,P2,Resolved,2025-11-26,64.3,Capacity,L1,North America,David Chen,P2 failure in Workday
+INC101211,Incident-ERP,Coupa,P2,In Progress,2025-06-02,96.4,Network,L2,LATAM,Maria Donnelly,P2 request in Azure AD
+INC101212,Request-Change,ServiceNow,P2,Closed,2025-01-06,1.8,Vendor outage,L2,LATAM,Priya Natarajan,P2 failure in S/4HANA
+INC101213,Request-Access,ServiceNow,P3,Resolved,2025-10-30,98.4,Code defect,L1,EMEA,David Chen,P3 failure in Kyriba
+INC101214,Problem,Power BI,P3,Closed,2025-10-24,136.6,Permission,L1,APAC,Raymond Okafor,P3 failure in Snowflake
+INC101215,Incident-Reporting,Azure AD,P3,Closed,2025-12-03,211.5,Code defect,L1,North America,Sofia Marchetti,P3 failure in ServiceNow
+INC101216,Incident-Access,Snowflake,P3,Resolved,2026-03-31,67.6,Capacity,L1,APAC,Maria Donnelly,P3 outage in Coupa
+INC101217,Request-Change,Power BI,P2,Closed,2026-04-16,185.1,Integration failure,L2,APAC,Liam O'Sullivan,P2 request in Power BI
+INC101218,Request-Report,Power BI,P3,Resolved,2025-02-21,107.5,Integration failure,L1,APAC,Aisha Bello,P3 failure in Workday
+INC101219,Incident-Network,Power BI,P4,Resolved,2025-05-23,182.4,Integration failure,L2,North America,Raymond Okafor,P4 failure in S/4HANA
+INC101220,Incident-ERP,Salesforce,P4,In Progress,2025-01-24,143.0,Capacity,L2,North America,Aisha Bello,P4 failure in SAP ECC
+INC101221,Incident-Access,Workday,P4,Resolved,2025-08-16,143.0,Config error,L3,APAC,Sofia Marchetti,P4 request in Salesforce
+INC101222,Incident-Network,Coupa,P3,Resolved,2025-04-16,189.5,Unknown,L1,APAC,Raymond Okafor,P3 failure in S/4HANA
+INC101223,Request-Report,Snowflake,P3,Closed,2025-08-22,56.9,Permission,L1,LATAM,Elena Vasquez,P3 error in Workday
+INC101224,Enhancement,ServiceNow,P4,Closed,2025-04-22,91.2,Capacity,L1,APAC,David Chen,P4 error in Snowflake
+INC101225,Incident-ERP,ServiceNow,P4,Resolved,2026-02-22,171.4,Unknown,L1,North America,Raymond Okafor,P4 outage in Power BI
+INC101226,Incident-Access,Snowflake,P3,In Progress,2025-01-30,98.2,Vendor outage,L2,EMEA,Maria Donnelly,P3 slow in SAP ECC
+INC101227,Request-Access,SAP ECC,P3,Closed,2025-11-15,210.8,Code defect,L1,EMEA,Sofia Marchetti,P3 slow in ServiceNow
+INC101228,Incident-ERP,Kyriba,P3,Resolved,2026-03-22,0.4,Unknown,L3,North America,Maria Donnelly,P3 outage in Workday
+INC101229,Incident-Access,Snowflake,P4,In Progress,2026-05-30,0.5,Network,L1,APAC,Marcus Reilly,P4 outage in Azure AD
+INC101230,Incident-Access,Snowflake,P3,Closed,2025-03-19,192.0,Config error,L1,APAC,Maria Donnelly,P3 request in Coupa
+INC101231,Request-Report,ServiceNow,P4,Closed,2025-01-31,49.2,Capacity,L2,APAC,David Chen,P4 request in ServiceNow
+INC101232,Incident-Reporting,Snowflake,P4,Resolved,2025-10-27,134.8,Permission,L3,EMEA,Tomas Halvorsen,P4 error in Snowflake
+INC101233,Incident-Reporting,Kyriba,P3,Resolved,2026-02-21,108.0,Network,L1,APAC,Priya Natarajan,P3 request in Azure AD
+INC101234,Incident-Access,Power BI,P1,Resolved,2026-02-10,3.9,Integration failure,L1,North America,Liam O'Sullivan,P1 request in Kyriba
+INC101235,Request-Report,Snowflake,P4,Closed,2025-06-05,148.1,Integration failure,L3,EMEA,Maria Donnelly,P4 slow in Kyriba
+INC101236,Incident-Network,Salesforce,P3,Open,2026-01-31,71.5,Unknown,L3,North America,Maria Donnelly,P3 error in Workday
+INC101237,Request-Access,S/4HANA,P4,Closed,2025-10-22,9.4,Config error,L1,EMEA,Raymond Okafor,P4 slow in S/4HANA
+INC101238,Incident-Reporting,ServiceNow,P3,Open,2026-01-12,202.9,Code defect,L3,EMEA,Elena Vasquez,P3 failure in S/4HANA
+INC101239,Incident-Network,S/4HANA,P3,Resolved,2025-07-04,106.5,Data quality,L3,LATAM,Marcus Reilly,P3 request in Power BI
+INC101240,Problem,Power BI,P4,Resolved,2025-03-12,132.6,Config error,L3,EMEA,Maria Donnelly,P4 request in Workday
+INC101241,Incident-Treasury,Coupa,P3,Resolved,2025-12-20,97.8,Permission,L2,LATAM,Priya Natarajan,P3 failure in S/4HANA
+INC101242,Incident-Reporting,SAP ECC,P4,Resolved,2026-02-16,53.7,Data quality,L3,EMEA,Elena Vasquez,P4 failure in ServiceNow
+INC101243,Request-Report,S/4HANA,P1,Closed,2025-03-03,187.6,Vendor outage,L2,EMEA,Tomas Halvorsen,P1 outage in Kyriba
+INC101244,Request-Report,Salesforce,P2,Closed,2026-01-01,195.8,Integration failure,L1,North America,Marcus Reilly,P2 request in Snowflake
+INC101245,Problem,Kyriba,P4,Closed,2026-02-05,175.1,Capacity,L3,APAC,Sofia Marchetti,P4 slow in Azure AD
+INC101246,Enhancement,Salesforce,P4,Closed,2025-03-01,20.7,User error,L3,North America,Aisha Bello,P4 outage in Salesforce
+INC101247,Enhancement,Salesforce,P3,Closed,2025-11-10,81.1,Integration failure,L3,APAC,Maria Donnelly,P3 slow in Salesforce
+INC101248,Incident-ERP,SAP ECC,P1,Resolved,2025-01-09,52.2,Integration failure,L1,APAC,Liam O'Sullivan,P1 error in SAP ECC
+INC101249,Enhancement,S/4HANA,P3,Resolved,2025-09-24,157.1,Data quality,L1,North America,David Chen,P3 error in Kyriba
+INC101250,Request-Change,Azure AD,P3,Resolved,2025-08-26,186.0,Permission,L3,EMEA,Liam O'Sullivan,P3 request in Azure AD
+INC101251,Incident-Access,Coupa,P4,On Hold,2026-02-11,205.2,Data quality,L2,APAC,Priya Natarajan,P4 outage in Coupa
+INC101252,Incident-ERP,Workday,P3,In Progress,2026-03-18,136.2,Network,L2,North America,Priya Natarajan,P3 error in S/4HANA
+INC101253,Problem,Power BI,P3,In Progress,2025-10-04,78.3,User error,L3,EMEA,Liam O'Sullivan,P3 outage in ServiceNow
+INC101254,Incident-Access,S/4HANA,P3,Closed,2026-04-18,120.2,Data quality,L1,EMEA,Priya Natarajan,P3 slow in Coupa
+INC101255,Incident-Network,SAP ECC,P4,Closed,2025-09-22,218.0,Data quality,L1,North America,Marcus Reilly,P4 outage in SAP ECC
+INC101256,Incident-ERP,Power BI,P3,Resolved,2025-09-28,55.9,Capacity,L1,North America,Sofia Marchetti,P3 slow in Kyriba
+INC101257,Incident-ERP,ServiceNow,P3,Resolved,2025-07-13,66.4,Vendor outage,L3,North America,Sofia Marchetti,P3 error in Salesforce
+INC101258,Incident-Network,Power BI,P4,Resolved,2026-01-22,206.7,Code defect,L2,EMEA,Marcus Reilly,P4 request in Kyriba
+INC101259,Incident-Treasury,Power BI,P2,Resolved,2025-05-04,147.1,User error,L1,APAC,Sofia Marchetti,P2 request in Azure AD
+INC101260,Request-Report,Azure AD,P3,Resolved,2025-11-03,128.0,Config error,L2,APAC,Priya Natarajan,P3 slow in SAP ECC
+INC101261,Request-Access,Coupa,P2,Resolved,2025-12-12,177.6,User error,L3,North America,Marcus Reilly,P2 error in ServiceNow
+INC101262,Request-Change,S/4HANA,P4,Closed,2025-10-20,37.4,Unknown,L1,APAC,Priya Natarajan,P4 slow in Salesforce
+INC101263,Problem,Workday,P3,Closed,2026-01-15,26.5,Capacity,L2,EMEA,Elena Vasquez,P3 error in Workday
+INC101264,Request-Access,Kyriba,P2,Closed,2026-04-25,188.1,Unknown,L3,LATAM,Aisha Bello,P2 request in SAP ECC
+INC101265,Problem,Azure AD,P1,Closed,2025-08-26,108.5,Vendor outage,L1,EMEA,Priya Natarajan,P1 outage in Azure AD
+INC101266,Request-Access,Power BI,P3,Closed,2025-08-23,168.4,Code defect,L3,APAC,Sofia Marchetti,P3 outage in Kyriba
+INC101267,Incident-Reporting,ServiceNow,P3,Closed,2026-03-02,64.2,Data quality,L2,APAC,Liam O'Sullivan,P3 outage in Azure AD
+INC101268,Request-Access,Snowflake,P3,Resolved,2025-06-19,180.0,Vendor outage,L2,North America,Liam O'Sullivan,P3 error in SAP ECC
+INC101269,Incident-ERP,Workday,P3,Closed,2025-06-24,73.8,Code defect,L3,LATAM,David Chen,P3 slow in Power BI
+INC101270,Request-Access,Salesforce,P4,Resolved,2025-07-06,187.0,User error,L3,EMEA,Priya Natarajan,P4 outage in Power BI
+INC101271,Request-Access,Salesforce,P3,Closed,2026-01-25,6.7,Vendor outage,L2,APAC,Elena Vasquez,P3 slow in ServiceNow
+INC101272,Enhancement,ServiceNow,P2,Closed,2025-04-28,57.2,Code defect,L2,APAC,Liam O'Sullivan,P2 outage in Snowflake
+INC101273,Incident-ERP,Kyriba,P4,Resolved,2025-12-28,123.9,Code defect,L1,North America,Elena Vasquez,P4 request in Coupa
+INC101274,Incident-Treasury,Azure AD,P4,Closed,2026-06-01,187.9,Unknown,L2,EMEA,David Chen,P4 outage in Salesforce
+INC101275,Incident-Reporting,Salesforce,P3,Closed,2026-01-07,4.1,Vendor outage,L3,North America,Aisha Bello,P3 request in Salesforce
+INC101276,Incident-ERP,ServiceNow,P2,Closed,2026-05-12,116.8,Vendor outage,L2,APAC,Maria Donnelly,P2 failure in Azure AD
+INC101277,Incident-Treasury,Azure AD,P3,Closed,2026-05-03,151.5,Integration failure,L3,EMEA,David Chen,P3 failure in Snowflake
+INC101278,Request-Change,Salesforce,P3,Resolved,2025-03-27,210.8,Network,L2,North America,Sofia Marchetti,P3 outage in Salesforce
+INC101279,Incident-Reporting,SAP ECC,P3,Closed,2025-07-20,26.8,Config error,L1,EMEA,Liam O'Sullivan,P3 error in Kyriba
+INC101280,Request-Access,Workday,P3,Closed,2025-09-09,99.4,Integration failure,L1,APAC,David Chen,P3 outage in SAP ECC
+INC101281,Problem,Coupa,P1,In Progress,2025-09-14,167.4,Capacity,L2,North America,David Chen,P1 failure in S/4HANA
+INC101282,Incident-ERP,Salesforce,P3,Resolved,2025-01-19,130.5,Permission,L1,North America,Raymond Okafor,P3 failure in SAP ECC
+INC101283,Incident-Network,Kyriba,P3,Resolved,2026-01-31,215.4,Unknown,L2,LATAM,Liam O'Sullivan,P3 failure in Power BI
+INC101284,Problem,Power BI,P4,Resolved,2026-05-07,118.6,Permission,L2,North America,Elena Vasquez,P4 failure in SAP ECC
+INC101285,Problem,ServiceNow,P4,Resolved,2026-02-02,115.2,Data quality,L3,North America,Marcus Reilly,P4 outage in Power BI
+INC101286,Problem,Power BI,P4,Resolved,2025-12-04,148.2,Data quality,L2,LATAM,Raymond Okafor,P4 failure in Salesforce
+INC101287,Incident-Network,Azure AD,P4,Closed,2025-12-28,88.4,Integration failure,L1,North America,Priya Natarajan,P4 slow in Power BI
+INC101288,Request-Access,S/4HANA,P1,Resolved,2026-01-15,5.7,Permission,L1,APAC,Elena Vasquez,P1 request in Power BI
+INC101289,Incident-Access,Power BI,P3,Closed,2025-08-27,195.6,Permission,L1,APAC,Elena Vasquez,P3 request in Power BI
+INC101290,Incident-ERP,Kyriba,P3,In Progress,2025-11-30,127.5,Integration failure,L1,North America,Marcus Reilly,P3 slow in Salesforce
+INC101291,Problem,Power BI,P2,Resolved,2026-03-19,75.2,Capacity,L3,LATAM,Marcus Reilly,P2 outage in SAP ECC
+INC101292,Incident-Network,Azure AD,P2,Resolved,2025-04-28,152.9,Integration failure,L1,EMEA,Elena Vasquez,P2 error in Kyriba
+INC101293,Incident-Reporting,SAP ECC,P4,In Progress,2026-03-17,29.2,Permission,L3,LATAM,David Chen,P4 failure in ServiceNow
+INC101294,Request-Access,Snowflake,P3,Resolved,2025-04-09,164.2,Network,L3,North America,Tomas Halvorsen,P3 slow in Snowflake
+INC101295,Problem,Kyriba,P2,Closed,2025-07-17,67.5,User error,L1,North America,Tomas Halvorsen,P2 failure in Salesforce
+INC101296,Incident-Access,SAP ECC,P3,Open,2025-08-18,194.8,Capacity,L1,EMEA,Tomas Halvorsen,P3 failure in Kyriba
+INC101297,Incident-Reporting,S/4HANA,P2,Closed,2025-05-18,208.8,Vendor outage,L3,APAC,Aisha Bello,P2 request in Kyriba
+INC101298,Problem,Azure AD,P3,Closed,2026-05-09,15.3,Integration failure,L2,North America,Tomas Halvorsen,P3 request in SAP ECC
+INC101299,Incident-ERP,Power BI,P3,Closed,2025-06-28,213.7,Unknown,L1,EMEA,Liam O'Sullivan,P3 outage in Workday
+INC101300,Request-Change,S/4HANA,P2,Resolved,2025-01-08,186.7,Code defect,L2,North America,Aisha Bello,P2 outage in Azure AD
+INC101301,Incident-Reporting,Workday,P3,In Progress,2025-05-21,49.4,Capacity,L2,EMEA,Maria Donnelly,P3 outage in Power BI
+INC101302,Incident-Reporting,ServiceNow,P4,Resolved,2025-12-30,56.8,Permission,L2,EMEA,Priya Natarajan,P4 error in Snowflake
+INC101303,Request-Report,Kyriba,P3,Resolved,2026-02-19,116.8,Data quality,L1,EMEA,Priya Natarajan,P3 error in Snowflake
+INC101304,Request-Change,S/4HANA,P3,Closed,2026-03-12,148.3,Data quality,L2,APAC,Marcus Reilly,P3 slow in Snowflake
+INC101305,Incident-ERP,Workday,P3,Closed,2026-03-15,141.7,User error,L2,EMEA,David Chen,P3 error in Workday
+INC101306,Incident-Treasury,Coupa,P3,Closed,2025-02-05,48.1,Unknown,L2,EMEA,Liam O'Sullivan,P3 request in Snowflake
+INC101307,Incident-Network,Salesforce,P4,Resolved,2025-03-17,160.1,Permission,L1,EMEA,Liam O'Sullivan,P4 request in Kyriba
+INC101308,Incident-Treasury,Coupa,P2,Resolved,2025-12-07,124.0,Unknown,L3,APAC,Marcus Reilly,P2 request in Coupa
+INC101309,Incident-Access,Power BI,P1,Closed,2026-03-26,116.9,Code defect,L3,EMEA,Marcus Reilly,P1 outage in S/4HANA
+INC101310,Request-Access,Azure AD,P2,Closed,2025-09-03,215.4,Code defect,L1,North America,Liam O'Sullivan,P2 slow in SAP ECC
+INC101311,Enhancement,Power BI,P4,Resolved,2025-02-01,176.5,Permission,L3,APAC,Elena Vasquez,P4 outage in Workday
+INC101312,Incident-Access,S/4HANA,P4,Closed,2025-02-11,110.0,User error,L2,North America,Tomas Halvorsen,P4 failure in ServiceNow
+INC101313,Enhancement,Power BI,P3,Closed,2025-03-21,89.0,Code defect,L2,EMEA,David Chen,P3 error in Coupa
+INC101314,Incident-ERP,S/4HANA,P3,In Progress,2025-06-11,79.9,Permission,L2,EMEA,Marcus Reilly,P3 failure in S/4HANA
+INC101315,Request-Change,Coupa,P4,Resolved,2025-09-05,153.5,User error,L3,EMEA,Sofia Marchetti,P4 request in Coupa
+INC101316,Problem,Workday,P4,Resolved,2025-08-10,24.0,Unknown,L3,APAC,David Chen,P4 slow in ServiceNow
+INC101317,Incident-Reporting,Power BI,P2,Resolved,2025-10-15,165.8,Code defect,L2,APAC,Elena Vasquez,P2 error in ServiceNow
+INC101318,Request-Access,SAP ECC,P4,Resolved,2025-06-17,113.5,User error,L3,EMEA,Sofia Marchetti,P4 error in ServiceNow
+INC101319,Incident-Access,Workday,P3,Closed,2025-06-22,37.8,User error,L2,EMEA,Raymond Okafor,P3 failure in Snowflake
+INC101320,Incident-Access,Kyriba,P4,Closed,2025-02-27,196.5,Vendor outage,L2,EMEA,Maria Donnelly,P4 failure in SAP ECC
+INC101321,Incident-Network,Power BI,P2,Closed,2025-05-19,79.2,Config error,L1,APAC,David Chen,P2 error in S/4HANA
+INC101322,Incident-ERP,Coupa,P4,Closed,2025-08-06,14.4,Capacity,L2,APAC,Tomas Halvorsen,P4 outage in Workday
+INC101323,Request-Report,Power BI,P4,Open,2026-04-03,199.4,Vendor outage,L2,EMEA,Marcus Reilly,P4 outage in Power BI
+INC101324,Incident-Network,Salesforce,P3,Closed,2026-04-18,78.5,Network,L2,APAC,Priya Natarajan,P3 outage in Salesforce
+INC101325,Request-Access,Coupa,P3,Resolved,2026-04-27,136.7,Config error,L2,EMEA,Sofia Marchetti,P3 failure in SAP ECC
+INC101326,Request-Report,Snowflake,P3,Closed,2025-11-08,55.0,Integration failure,L3,LATAM,Tomas Halvorsen,P3 outage in Snowflake
+INC101327,Request-Change,Azure AD,P4,In Progress,2025-07-10,87.1,Capacity,L1,APAC,Maria Donnelly,P4 outage in SAP ECC
+INC101328,Incident-Access,SAP ECC,P3,Resolved,2025-01-11,24.4,Network,L1,EMEA,Tomas Halvorsen,P3 request in Snowflake
+INC101329,Incident-Reporting,Workday,P3,Resolved,2025-05-05,113.9,Network,L2,EMEA,Elena Vasquez,P3 failure in S/4HANA
+INC101330,Request-Change,Azure AD,P3,Resolved,2025-06-07,36.0,Data quality,L3,EMEA,Aisha Bello,P3 failure in SAP ECC
+INC101331,Enhancement,SAP ECC,P4,Closed,2026-02-22,115.5,Config error,L2,North America,Maria Donnelly,P4 error in Azure AD
+INC101332,Request-Report,ServiceNow,P3,Resolved,2026-03-17,49.1,Integration failure,L3,APAC,Raymond Okafor,P3 error in Salesforce
+INC101333,Enhancement,SAP ECC,P3,Closed,2025-05-29,116.6,User error,L2,EMEA,Tomas Halvorsen,P3 error in Snowflake
+INC101334,Incident-Treasury,S/4HANA,P2,Resolved,2025-08-16,6.4,Integration failure,L3,North America,Marcus Reilly,P2 slow in Coupa
+INC101335,Incident-Reporting,Snowflake,P4,Closed,2025-12-10,54.9,Unknown,L2,North America,Marcus Reilly,P4 error in Salesforce
+INC101336,Request-Access,Workday,P2,Closed,2025-06-16,3.7,User error,L3,EMEA,Maria Donnelly,P2 request in SAP ECC
+INC101337,Incident-Access,Coupa,P2,Resolved,2025-12-04,80.3,Unknown,L1,APAC,Liam O'Sullivan,P2 slow in Kyriba
+INC101338,Problem,Azure AD,P3,Closed,2025-10-26,109.2,Unknown,L1,LATAM,Aisha Bello,P3 request in Power BI
+INC101339,Request-Access,Azure AD,P3,Resolved,2026-02-12,3.0,Code defect,L2,APAC,David Chen,P3 request in Coupa
+INC101340,Enhancement,Coupa,P3,Open,2026-02-18,100.3,Capacity,L3,EMEA,David Chen,P3 slow in SAP ECC
+INC101341,Incident-Access,Kyriba,P3,Closed,2025-12-07,154.7,Vendor outage,L3,APAC,Priya Natarajan,P3 slow in Salesforce
+INC101342,Incident-Reporting,ServiceNow,P3,In Progress,2025-11-27,31.5,Data quality,L2,North America,Tomas Halvorsen,P3 slow in Coupa
+INC101343,Incident-ERP,Kyriba,P3,Resolved,2025-10-07,97.1,User error,L3,APAC,Aisha Bello,P3 outage in Snowflake
+INC101344,Incident-ERP,Azure AD,P2,Closed,2025-04-06,93.1,Capacity,L2,EMEA,Tomas Halvorsen,P2 outage in Workday
+INC101345,Request-Access,Snowflake,P4,Closed,2025-11-29,34.6,Data quality,L3,EMEA,Elena Vasquez,P4 request in Coupa
+INC101346,Incident-Treasury,ServiceNow,P3,Resolved,2025-09-21,5.2,User error,L1,APAC,Liam O'Sullivan,P3 error in Salesforce
+INC101347,Problem,Kyriba,P3,Resolved,2025-06-03,67.5,Code defect,L2,North America,Aisha Bello,P3 outage in SAP ECC
+INC101348,Problem,Azure AD,P3,On Hold,2025-10-28,27.2,Unknown,L3,North America,Marcus Reilly,P3 slow in S/4HANA
+INC101349,Request-Report,Kyriba,P4,Closed,2025-10-12,166.6,Network,L2,North America,Raymond Okafor,P4 outage in Workday
+INC101350,Incident-Access,Salesforce,P1,Closed,2026-05-19,40.9,Integration failure,L3,LATAM,Marcus Reilly,P1 outage in ServiceNow
+INC101351,Problem,Kyriba,P3,Resolved,2025-10-12,44.3,Integration failure,L1,LATAM,Priya Natarajan,P3 failure in Kyriba
+INC101352,Incident-Network,S/4HANA,P3,Closed,2025-04-01,172.9,Network,L2,North America,Liam O'Sullivan,P3 request in SAP ECC
+INC101353,Incident-Treasury,Coupa,P3,Resolved,2026-03-01,144.0,Permission,L3,EMEA,Raymond Okafor,P3 failure in Snowflake
+INC101354,Request-Change,ServiceNow,P3,Closed,2025-01-07,121.6,Code defect,L1,North America,Aisha Bello,P3 error in SAP ECC
+INC101355,Incident-Treasury,Snowflake,P3,Resolved,2026-01-28,152.5,Permission,L1,North America,Raymond Okafor,P3 error in Kyriba
+INC101356,Enhancement,Kyriba,P2,Resolved,2026-01-18,153.0,Permission,L3,APAC,Tomas Halvorsen,P2 error in ServiceNow
+INC101357,Incident-Access,Salesforce,P2,Resolved,2025-10-17,154.1,Code defect,L2,APAC,Priya Natarajan,P2 error in Snowflake
+INC101358,Request-Access,ServiceNow,P2,Closed,2026-05-24,102.2,Network,L2,EMEA,Tomas Halvorsen,P2 error in Coupa
+INC101359,Incident-Reporting,Workday,P3,Closed,2025-06-30,76.9,Unknown,L3,EMEA,Marcus Reilly,P3 failure in Snowflake
+INC101360,Incident-Reporting,SAP ECC,P3,Closed,2025-02-27,216.0,Vendor outage,L3,North America,David Chen,P3 error in Salesforce
+INC101361,Request-Access,S/4HANA,P2,Closed,2025-09-27,181.2,Config error,L3,EMEA,Sofia Marchetti,P2 error in ServiceNow
+INC101362,Incident-Treasury,ServiceNow,P1,Resolved,2025-02-12,105.5,Network,L1,EMEA,Liam O'Sullivan,P1 request in ServiceNow
+INC101363,Request-Access,Workday,P3,Resolved,2025-08-13,37.3,Data quality,L1,APAC,Aisha Bello,P3 outage in Kyriba
+INC101364,Request-Change,Workday,P3,Resolved,2025-05-15,87.2,Capacity,L3,North America,Tomas Halvorsen,P3 outage in Azure AD
+INC101365,Incident-Treasury,Azure AD,P4,Resolved,2026-01-25,8.0,User error,L2,North America,Marcus Reilly,P4 outage in Snowflake
+INC101366,Request-Report,ServiceNow,P4,Closed,2025-08-06,126.1,Config error,L1,APAC,Marcus Reilly,P4 slow in Coupa
+INC101367,Incident-Reporting,Azure AD,P3,Resolved,2025-01-27,198.3,Data quality,L3,North America,Marcus Reilly,P3 error in Salesforce
+INC101368,Incident-Access,Power BI,P4,Closed,2025-07-22,131.3,Data quality,L1,North America,Maria Donnelly,P4 request in Salesforce
+INC101369,Request-Access,S/4HANA,P3,In Progress,2025-01-21,150.1,Config error,L1,APAC,Priya Natarajan,P3 failure in Power BI
+INC101370,Request-Access,Azure AD,P4,Open,2025-06-22,8.9,Config error,L3,APAC,Priya Natarajan,P4 slow in Workday
+INC101371,Incident-Reporting,Kyriba,P3,Resolved,2025-01-13,190.3,Network,L1,North America,Sofia Marchetti,P3 request in S/4HANA
+INC101372,Request-Report,Salesforce,P3,Resolved,2025-11-07,25.6,Integration failure,L3,North America,Elena Vasquez,P3 error in Kyriba
+INC101373,Incident-Reporting,Snowflake,P3,Resolved,2026-04-11,13.2,User error,L3,APAC,Maria Donnelly,P3 error in Power BI
+INC101374,Problem,Coupa,P3,Closed,2026-05-24,156.1,Integration failure,L1,EMEA,Aisha Bello,P3 error in Salesforce
+INC101375,Request-Change,S/4HANA,P4,Closed,2025-09-11,176.8,User error,L1,North America,Marcus Reilly,P4 error in ServiceNow
+INC101376,Request-Access,Salesforce,P4,Closed,2026-02-25,72.9,Config error,L1,North America,David Chen,P4 slow in Power BI
+INC101377,Request-Access,ServiceNow,P3,Open,2025-08-12,180.0,Permission,L1,APAC,Elena Vasquez,P3 error in Coupa
+INC101378,Incident-Network,Snowflake,P3,Resolved,2025-08-24,131.4,User error,L2,EMEA,Elena Vasquez,P3 failure in Azure AD
+INC101379,Incident-Reporting,Azure AD,P4,Open,2025-04-07,174.8,Network,L2,North America,Elena Vasquez,P4 request in Snowflake
+INC101380,Incident-Access,S/4HANA,P4,Closed,2025-09-18,39.8,Permission,L2,North America,Maria Donnelly,P4 request in Snowflake
+INC101381,Problem,SAP ECC,P2,Resolved,2025-02-24,62.8,Data quality,L1,APAC,Marcus Reilly,P2 failure in ServiceNow
+INC101382,Request-Report,Azure AD,P4,Open,2025-06-12,152.3,Config error,L2,EMEA,Priya Natarajan,P4 outage in Azure AD
+INC101383,Enhancement,Snowflake,P4,Open,2025-01-22,141.2,Code defect,L2,EMEA,Raymond Okafor,P4 failure in Azure AD
+INC101384,Incident-Treasury,Coupa,P4,Resolved,2025-01-10,48.4,Config error,L3,EMEA,Maria Donnelly,P4 request in Workday
+INC101385,Problem,S/4HANA,P3,Closed,2025-08-09,14.0,Code defect,L3,North America,Tomas Halvorsen,P3 failure in Kyriba
+INC101386,Problem,Power BI,P2,Resolved,2025-04-23,83.5,User error,L1,EMEA,Marcus Reilly,P2 request in Azure AD
+INC101387,Problem,Snowflake,P2,Closed,2026-04-13,44.2,Vendor outage,L1,APAC,Liam O'Sullivan,P2 outage in Kyriba
+INC101388,Incident-Access,S/4HANA,P2,Closed,2025-08-18,168.5,Vendor outage,L1,EMEA,Liam O'Sullivan,P2 request in Salesforce
+INC101389,Incident-Treasury,S/4HANA,P2,Resolved,2025-02-14,92.7,Config error,L1,APAC,Elena Vasquez,P2 failure in S/4HANA
+INC101390,Incident-Reporting,S/4HANA,P4,Closed,2025-10-10,70.2,User error,L3,EMEA,David Chen,P4 slow in Workday
+INC101391,Incident-Treasury,Snowflake,P4,Resolved,2025-01-01,138.7,Unknown,L1,APAC,David Chen,P4 slow in Kyriba
+INC101392,Request-Change,SAP ECC,P3,Resolved,2025-11-15,5.3,Network,L1,APAC,Elena Vasquez,P3 error in Azure AD
+INC101393,Incident-Network,Coupa,P1,Resolved,2026-01-19,20.5,Data quality,L2,EMEA,Elena Vasquez,P1 failure in SAP ECC
+INC101394,Request-Access,Kyriba,P2,Closed,2025-03-21,135.9,Data quality,L3,APAC,Sofia Marchetti,P2 request in S/4HANA
+INC101395,Incident-Treasury,Coupa,P3,Resolved,2026-01-14,74.3,Permission,L3,North America,Priya Natarajan,P3 outage in Workday
+INC101396,Request-Report,Workday,P3,Resolved,2025-10-02,57.8,Network,L3,APAC,Raymond Okafor,P3 slow in Power BI
+INC101397,Incident-Treasury,Workday,P1,Closed,2025-10-18,44.4,Data quality,L1,North America,Raymond Okafor,P1 error in Power BI
+INC101398,Enhancement,Snowflake,P4,Resolved,2025-04-13,62.0,Code defect,L3,APAC,Raymond Okafor,P4 outage in ServiceNow
+INC101399,Request-Report,Salesforce,P3,Closed,2025-07-09,148.3,Integration failure,L1,APAC,Liam O'Sullivan,P3 slow in S/4HANA
+INC101400,Enhancement,ServiceNow,P4,Resolved,2025-01-17,193.7,Config error,L3,EMEA,Tomas Halvorsen,P4 outage in Coupa
+INC101401,Request-Report,Power BI,P4,Resolved,2025-03-27,56.6,User error,L3,APAC,David Chen,P4 slow in Coupa
+INC101402,Request-Access,Power BI,P3,Resolved,2026-04-11,106.5,Permission,L3,APAC,Marcus Reilly,P3 slow in Snowflake
+INC101403,Incident-Access,Azure AD,P4,Resolved,2025-10-10,130.3,User error,L1,LATAM,Maria Donnelly,P4 request in Power BI
+INC101404,Request-Change,Salesforce,P1,Resolved,2025-04-30,215.7,Network,L1,North America,Raymond Okafor,P1 failure in Coupa
+INC101405,Enhancement,Salesforce,P3,Open,2025-03-03,81.1,Integration failure,L3,APAC,Sofia Marchetti,P3 request in Coupa
+INC101406,Request-Report,Snowflake,P3,Resolved,2025-06-30,98.3,Data quality,L1,EMEA,Maria Donnelly,P3 outage in S/4HANA
+INC101407,Incident-Access,Snowflake,P3,Resolved,2025-09-27,87.2,Capacity,L3,North America,Tomas Halvorsen,P3 outage in Coupa
+INC101408,Problem,ServiceNow,P4,In Progress,2025-07-28,78.6,Permission,L2,North America,Liam O'Sullivan,P4 failure in SAP ECC
+INC101409,Incident-Treasury,Workday,P3,Resolved,2026-02-03,31.3,Data quality,L3,APAC,Tomas Halvorsen,P3 slow in Kyriba
+INC101410,Enhancement,Kyriba,P3,Resolved,2025-07-24,58.2,Capacity,L1,EMEA,Maria Donnelly,P3 request in ServiceNow
+INC101411,Incident-Network,Power BI,P4,Resolved,2026-01-19,72.9,Unknown,L1,EMEA,Priya Natarajan,P4 outage in ServiceNow
+INC101412,Request-Change,SAP ECC,P3,Resolved,2025-10-04,83.7,Capacity,L3,APAC,Sofia Marchetti,P3 request in Kyriba
+INC101413,Request-Access,S/4HANA,P2,In Progress,2025-07-23,87.5,User error,L1,APAC,Sofia Marchetti,P2 slow in Salesforce
+INC101414,Incident-Reporting,Power BI,P4,Closed,2025-07-15,129.6,Capacity,L2,North America,Elena Vasquez,P4 error in Azure AD
+INC101415,Request-Change,Workday,P2,On Hold,2025-02-28,13.5,Data quality,L1,North America,Priya Natarajan,P2 error in Azure AD
+INC101416,Incident-ERP,Kyriba,P3,Resolved,2025-08-12,100.5,Data quality,L3,LATAM,Raymond Okafor,P3 failure in SAP ECC
+INC101417,Problem,Coupa,P3,Closed,2026-01-18,44.4,Network,L1,APAC,Priya Natarajan,P3 error in SAP ECC
+INC101418,Incident-Access,Salesforce,P3,Resolved,2026-03-24,158.7,User error,L3,APAC,Maria Donnelly,P3 slow in Azure AD
+INC101419,Incident-Network,Workday,P4,Resolved,2025-03-25,195.3,User error,L3,APAC,Raymond Okafor,P4 outage in Power BI
+INC101420,Incident-Access,ServiceNow,P4,Resolved,2025-11-04,168.1,Data quality,L1,APAC,Maria Donnelly,P4 request in Coupa
+INC101421,Enhancement,SAP ECC,P3,In Progress,2026-03-03,180.8,Capacity,L3,LATAM,Liam O'Sullivan,P3 error in Coupa
+INC101422,Incident-Access,Salesforce,P3,Resolved,2025-10-17,150.8,Integration failure,L2,APAC,Sofia Marchetti,P3 error in SAP ECC
+INC101423,Incident-Reporting,SAP ECC,P4,Resolved,2025-09-14,166.5,Integration failure,L1,EMEA,Tomas Halvorsen,P4 outage in SAP ECC
+INC101424,Problem,Kyriba,P4,Closed,2025-03-11,90.4,Permission,L1,North America,Sofia Marchetti,P4 slow in Snowflake
+INC101425,Incident-Access,Salesforce,P1,Closed,2026-04-14,81.1,Data quality,L3,APAC,Liam O'Sullivan,P1 outage in Salesforce
+INC101426,Incident-Treasury,Coupa,P3,Resolved,2025-12-22,145.5,Code defect,L1,APAC,Priya Natarajan,P3 request in Snowflake
+INC101427,Request-Report,ServiceNow,P3,Closed,2026-02-16,158.8,Config error,L2,APAC,David Chen,P3 request in Snowflake
+INC101428,Request-Report,Workday,P4,Resolved,2026-03-08,106.8,Capacity,L3,North America,David Chen,P4 request in Salesforce
+INC101429,Incident-Reporting,Power BI,P4,Open,2026-01-25,62.6,Data quality,L3,APAC,Liam O'Sullivan,P4 slow in Azure AD
+INC101430,Enhancement,Power BI,P3,Closed,2025-07-28,191.9,Permission,L3,North America,David Chen,P3 failure in Workday
+INC101431,Incident-Access,Salesforce,P3,Resolved,2026-04-10,49.4,Capacity,L3,EMEA,Elena Vasquez,P3 failure in S/4HANA
+INC101432,Request-Report,ServiceNow,P3,Resolved,2025-08-14,168.8,User error,L1,LATAM,Sofia Marchetti,P3 request in S/4HANA
+INC101433,Incident-Treasury,Workday,P3,Resolved,2025-05-29,182.0,User error,L2,APAC,Raymond Okafor,P3 outage in SAP ECC
+INC101434,Incident-Treasury,S/4HANA,P2,Closed,2025-07-26,62.6,Config error,L1,APAC,Sofia Marchetti,P2 error in Kyriba
+INC101435,Incident-Treasury,Kyriba,P3,On Hold,2025-06-08,203.8,User error,L3,North America,Tomas Halvorsen,P3 slow in ServiceNow
+INC101436,Request-Report,ServiceNow,P3,Closed,2026-04-18,149.9,Permission,L1,North America,Priya Natarajan,P3 slow in Salesforce
+INC101437,Enhancement,Coupa,P4,Closed,2025-02-14,0.5,User error,L2,EMEA,Liam O'Sullivan,P4 request in ServiceNow
+INC101438,Request-Report,Snowflake,P3,Resolved,2025-08-05,19.0,Integration failure,L3,EMEA,Raymond Okafor,P3 slow in S/4HANA
+INC101439,Incident-Reporting,Snowflake,P4,Resolved,2025-02-08,150.2,Network,L2,North America,Maria Donnelly,P4 failure in Salesforce
+INC101440,Incident-ERP,Kyriba,P4,Closed,2025-04-26,156.2,User error,L2,LATAM,Tomas Halvorsen,P4 slow in Power BI
+INC101441,Incident-Access,Power BI,P4,On Hold,2026-05-03,87.4,Code defect,L3,LATAM,Aisha Bello,P4 slow in ServiceNow
+INC101442,Request-Access,Workday,P4,In Progress,2025-11-23,210.3,Unknown,L2,North America,Tomas Halvorsen,P4 slow in Salesforce
+INC101443,Incident-Reporting,Salesforce,P4,Closed,2025-12-05,128.4,Config error,L1,APAC,Maria Donnelly,P4 error in Workday
+INC101444,Incident-ERP,ServiceNow,P2,Resolved,2026-04-01,125.5,Unknown,L2,EMEA,Aisha Bello,P2 slow in Coupa
+INC101445,Incident-Access,Salesforce,P4,Open,2025-06-11,14.8,Code defect,L3,North America,Maria Donnelly,P4 slow in Workday
+INC101446,Incident-Network,Coupa,P3,Resolved,2025-06-29,209.2,Data quality,L1,EMEA,Elena Vasquez,P3 outage in S/4HANA
+INC101447,Incident-ERP,S/4HANA,P3,In Progress,2025-12-17,58.9,Network,L3,North America,Priya Natarajan,P3 error in Azure AD
+INC101448,Request-Access,Snowflake,P2,Resolved,2025-04-09,212.8,Code defect,L3,APAC,Liam O'Sullivan,P2 outage in Snowflake
+INC101449,Incident-Treasury,Kyriba,P3,Closed,2025-04-04,177.7,Permission,L3,North America,Priya Natarajan,P3 failure in ServiceNow
+INC101450,Incident-Reporting,Kyriba,P4,Resolved,2025-04-12,92.6,Capacity,L1,North America,Maria Donnelly,P4 request in S/4HANA
+INC101451,Incident-Reporting,Azure AD,P4,Resolved,2026-02-01,213.9,Capacity,L1,EMEA,Sofia Marchetti,P4 request in Power BI
+INC101452,Enhancement,Snowflake,P4,Resolved,2025-11-27,19.3,Integration failure,L1,EMEA,Raymond Okafor,P4 request in Salesforce
+INC101453,Request-Access,SAP ECC,P3,Resolved,2025-03-22,68.1,User error,L1,APAC,Maria Donnelly,P3 error in SAP ECC
+INC101454,Incident-Treasury,SAP ECC,P2,Resolved,2026-01-19,127.9,Capacity,L2,APAC,Priya Natarajan,P2 request in Azure AD
+INC101455,Problem,ServiceNow,P4,Closed,2025-08-13,187.7,Config error,L2,APAC,Maria Donnelly,P4 request in Azure AD
+INC101456,Incident-Access,Azure AD,P3,Closed,2025-05-07,32.8,Network,L3,North America,Aisha Bello,P3 error in Azure AD
+INC101457,Incident-Reporting,Coupa,P2,Closed,2026-05-03,111.0,User error,L1,North America,David Chen,P2 outage in Power BI
+INC101458,Incident-Treasury,Workday,P3,Resolved,2025-04-16,4.1,Capacity,L2,LATAM,Raymond Okafor,P3 slow in Salesforce
+INC101459,Incident-Reporting,S/4HANA,P3,Resolved,2025-02-10,125.2,Capacity,L1,North America,Liam O'Sullivan,P3 slow in Salesforce
+INC101460,Incident-Access,Workday,P1,Closed,2025-11-22,114.2,Code defect,L3,North America,Aisha Bello,P1 request in Coupa
+INC101461,Request-Change,Power BI,P2,Resolved,2025-04-24,80.3,Integration failure,L3,APAC,Liam O'Sullivan,P2 request in Workday
+INC101462,Enhancement,Snowflake,P2,Closed,2025-07-08,20.0,Network,L2,North America,David Chen,P2 outage in Coupa
+INC101463,Incident-Access,Salesforce,P4,Closed,2026-04-25,121.2,Unknown,L1,APAC,Liam O'Sullivan,P4 request in ServiceNow
+INC101464,Request-Access,Power BI,P3,In Progress,2025-10-02,184.8,Vendor outage,L3,North America,Elena Vasquez,P3 slow in Salesforce
+INC101465,Incident-Network,S/4HANA,P4,Resolved,2025-11-28,131.8,Vendor outage,L3,APAC,Raymond Okafor,P4 failure in Azure AD
+INC101466,Request-Change,ServiceNow,P4,Open,2025-01-04,93.7,Network,L1,North America,David Chen,P4 outage in Azure AD
+INC101467,Enhancement,SAP ECC,P4,In Progress,2025-03-02,133.4,Capacity,L2,EMEA,Liam O'Sullivan,P4 outage in ServiceNow
+INC101468,Incident-ERP,ServiceNow,P4,Closed,2025-12-01,17.1,Network,L1,LATAM,Maria Donnelly,P4 failure in Power BI
+INC101469,Request-Report,Kyriba,P4,Closed,2025-03-18,151.1,Permission,L2,LATAM,Maria Donnelly,P4 slow in Workday
+INC101470,Enhancement,Workday,P4,Resolved,2025-10-18,11.9,Code defect,L2,APAC,Priya Natarajan,P4 request in Snowflake
+INC101471,Incident-Network,Snowflake,P3,Resolved,2025-08-03,26.5,Data quality,L1,EMEA,David Chen,P3 outage in ServiceNow
+INC101472,Problem,Power BI,P1,Resolved,2026-02-19,5.3,Unknown,L2,North America,Liam O'Sullivan,P1 request in Azure AD
+INC101473,Incident-Network,SAP ECC,P3,Closed,2025-11-29,100.5,Data quality,L1,APAC,Maria Donnelly,P3 request in S/4HANA
+INC101474,Request-Access,ServiceNow,P4,Closed,2025-08-29,73.5,Integration failure,L2,APAC,Tomas Halvorsen,P4 error in Workday
+INC101475,Enhancement,Power BI,P3,Open,2025-07-06,1.7,Vendor outage,L3,APAC,Sofia Marchetti,P3 outage in ServiceNow
+INC101476,Incident-Network,Salesforce,P3,Closed,2025-11-03,62.1,Code defect,L2,North America,Elena Vasquez,P3 error in Coupa
+INC101477,Problem,Azure AD,P4,Closed,2025-07-16,144.6,Permission,L3,APAC,Tomas Halvorsen,P4 outage in Workday
+INC101478,Incident-Network,Azure AD,P2,Closed,2025-11-13,131.3,Code defect,L3,North America,Liam O'Sullivan,P2 failure in SAP ECC
+INC101479,Incident-Reporting,Power BI,P3,Resolved,2025-08-01,84.2,Unknown,L2,EMEA,David Chen,P3 request in Snowflake
+INC101480,Incident-Reporting,Workday,P4,Closed,2026-03-14,206.9,Integration failure,L3,North America,Sofia Marchetti,P4 slow in Azure AD
+INC101481,Request-Report,Azure AD,P4,Resolved,2025-07-19,92.4,Unknown,L2,EMEA,Raymond Okafor,P4 request in Snowflake
+INC101482,Incident-Access,Salesforce,P4,Closed,2025-01-13,43.9,Network,L3,North America,Sofia Marchetti,P4 slow in S/4HANA
+INC101483,Incident-Reporting,S/4HANA,P2,Open,2026-02-19,115.5,Network,L3,EMEA,Tomas Halvorsen,P2 error in Salesforce
+INC101484,Request-Change,Azure AD,P4,Open,2025-06-06,54.2,Integration failure,L2,APAC,David Chen,P4 failure in ServiceNow
+INC101485,Incident-Reporting,S/4HANA,P3,Resolved,2025-08-20,147.7,Code defect,L3,North America,Aisha Bello,P3 error in Snowflake
+INC101486,Enhancement,Snowflake,P4,On Hold,2025-09-17,177.8,Unknown,L3,North America,Marcus Reilly,P4 failure in Power BI
+INC101487,Request-Access,Snowflake,P4,Resolved,2026-05-16,64.5,Config error,L1,EMEA,Elena Vasquez,P4 failure in ServiceNow
+INC101488,Problem,SAP ECC,P2,In Progress,2025-02-14,169.1,Capacity,L2,EMEA,Maria Donnelly,P2 error in SAP ECC
+INC101489,Enhancement,Workday,P3,Resolved,2025-07-29,62.6,Capacity,L3,North America,Maria Donnelly,P3 request in Salesforce
+INC101490,Enhancement,Coupa,P3,Closed,2025-02-13,87.5,Data quality,L3,APAC,Marcus Reilly,P3 failure in Workday
+INC101491,Request-Change,Power BI,P4,Closed,2026-01-19,42.5,Config error,L3,LATAM,Raymond Okafor,P4 failure in ServiceNow
+INC101492,Problem,SAP ECC,P3,Resolved,2025-02-19,179.1,Code defect,L2,LATAM,Sofia Marchetti,P3 slow in Kyriba
+INC101493,Request-Access,SAP ECC,P3,Open,2025-01-03,67.3,Vendor outage,L2,EMEA,Marcus Reilly,P3 request in Kyriba
+INC101494,Request-Access,Salesforce,P3,Resolved,2025-04-26,160.7,Unknown,L1,EMEA,Liam O'Sullivan,P3 error in Kyriba
+INC101495,Request-Access,S/4HANA,P3,Closed,2025-10-01,62.2,User error,L2,EMEA,Priya Natarajan,P3 request in S/4HANA
+INC101496,Enhancement,Kyriba,P3,Resolved,2025-09-30,83.9,Integration failure,L1,APAC,Marcus Reilly,P3 outage in Snowflake
+INC101497,Request-Change,S/4HANA,P4,In Progress,2026-01-26,218.6,Vendor outage,L1,North America,Sofia Marchetti,P4 error in Snowflake
+INC101498,Incident-Reporting,Kyriba,P3,Closed,2025-05-16,10.4,Vendor outage,L1,North America,Marcus Reilly,P3 outage in ServiceNow
+INC101499,Enhancement,Kyriba,P1,Open,2025-12-03,180.3,User error,L1,APAC,Liam O'Sullivan,P1 outage in Power BI
+INC101500,Enhancement,Coupa,P3,On Hold,2025-05-19,29.0,Capacity,L3,EMEA,David Chen,P3 request in Snowflake
+INC101501,Incident-Network,Snowflake,P3,Resolved,2025-12-09,45.3,Vendor outage,L1,EMEA,Maria Donnelly,P3 slow in Power BI
+INC101502,Incident-Treasury,Coupa,P3,Open,2025-09-05,129.7,Network,L1,APAC,Tomas Halvorsen,P3 error in Coupa
+INC101503,Incident-Treasury,SAP ECC,P3,Resolved,2025-07-02,186.6,Permission,L1,LATAM,Marcus Reilly,P3 outage in Kyriba
+INC101504,Incident-Treasury,Azure AD,P3,In Progress,2025-05-02,36.1,Capacity,L2,APAC,Elena Vasquez,P3 outage in ServiceNow
+INC101505,Request-Report,SAP ECC,P4,Open,2025-12-14,218.2,User error,L1,APAC,David Chen,P4 request in Coupa
+INC101506,Incident-Reporting,Workday,P4,Closed,2026-05-21,83.8,Code defect,L1,EMEA,Elena Vasquez,P4 failure in Snowflake
+INC101507,Incident-ERP,Workday,P1,Closed,2025-11-27,3.5,Data quality,L2,EMEA,Liam O'Sullivan,P1 outage in Salesforce
+INC101508,Incident-Reporting,Power BI,P3,Resolved,2025-02-10,142.9,Capacity,L2,North America,Priya Natarajan,P3 request in Salesforce
+INC101509,Incident-Network,Power BI,P2,Closed,2025-06-30,7.0,Integration failure,L1,EMEA,Sofia Marchetti,P2 request in Workday
+INC101510,Incident-Reporting,ServiceNow,P3,Closed,2025-05-13,103.9,Vendor outage,L1,EMEA,Maria Donnelly,P3 failure in Workday
+INC101511,Incident-Reporting,Coupa,P1,Closed,2025-09-23,179.6,Vendor outage,L2,North America,Maria Donnelly,P1 request in Salesforce
+INC101512,Incident-Treasury,S/4HANA,P3,Open,2025-07-25,26.9,Config error,L1,EMEA,Raymond Okafor,P3 request in Kyriba
+INC101513,Incident-ERP,Workday,P3,Resolved,2026-02-23,217.8,Unknown,L3,APAC,Priya Natarajan,P3 error in SAP ECC
+INC101514,Incident-Treasury,Coupa,P4,Closed,2025-12-13,95.5,Data quality,L2,EMEA,Tomas Halvorsen,P4 error in Snowflake
+INC101515,Incident-Network,Power BI,P4,Closed,2025-02-24,173.0,Code defect,L3,APAC,Aisha Bello,P4 request in Power BI
+INC101516,Problem,SAP ECC,P2,Resolved,2025-10-04,21.5,Code defect,L3,North America,Sofia Marchetti,P2 error in SAP ECC
+INC101517,Incident-Access,Coupa,P3,Closed,2025-05-27,4.2,Permission,L3,EMEA,Marcus Reilly,P3 request in ServiceNow
+INC101518,Incident-Access,Coupa,P4,Closed,2026-04-20,22.4,Data quality,L3,APAC,David Chen,P4 outage in Coupa
+INC101519,Incident-Treasury,Workday,P4,Resolved,2025-03-06,126.1,Unknown,L1,EMEA,Liam O'Sullivan,P4 error in Power BI
+INC101520,Incident-Reporting,Workday,P4,Resolved,2026-04-02,200.6,Config error,L1,EMEA,Raymond Okafor,P4 outage in ServiceNow
+INC101521,Incident-Access,S/4HANA,P1,In Progress,2025-07-07,34.1,Config error,L1,APAC,Liam O'Sullivan,P1 error in Coupa
+INC101522,Incident-Access,ServiceNow,P3,Resolved,2025-01-07,136.5,Capacity,L1,North America,Liam O'Sullivan,P3 request in Snowflake
+INC101523,Request-Report,Azure AD,P4,Resolved,2025-09-03,174.8,Code defect,L1,North America,Priya Natarajan,P4 request in ServiceNow
+INC101524,Incident-ERP,Kyriba,P3,Closed,2025-05-13,47.4,Data quality,L2,LATAM,Aisha Bello,P3 request in Snowflake
+INC101525,Enhancement,Salesforce,P4,Resolved,2025-10-23,145.0,Unknown,L1,APAC,Sofia Marchetti,P4 request in ServiceNow
+INC101526,Incident-Reporting,ServiceNow,P2,Resolved,2025-02-17,59.1,User error,L1,EMEA,Elena Vasquez,P2 slow in Power BI
+INC101527,Request-Report,S/4HANA,P3,Closed,2026-05-24,195.8,Code defect,L3,North America,David Chen,P3 error in Salesforce
+INC101528,Incident-Access,Snowflake,P4,Open,2026-05-19,156.1,Network,L1,North America,David Chen,P4 request in Azure AD
+INC101529,Enhancement,Coupa,P3,Open,2025-07-07,185.5,Integration failure,L2,LATAM,Sofia Marchetti,P3 error in Snowflake
+INC101530,Incident-ERP,Coupa,P3,Closed,2025-07-31,157.6,Unknown,L2,LATAM,Aisha Bello,P3 slow in Power BI
+INC101531,Incident-Treasury,Azure AD,P2,Resolved,2025-04-23,29.5,Permission,L3,LATAM,Tomas Halvorsen,P2 failure in Workday
+INC101532,Incident-Reporting,ServiceNow,P4,Closed,2025-04-10,12.4,Capacity,L3,LATAM,Marcus Reilly,P4 outage in Kyriba
+INC101533,Enhancement,ServiceNow,P3,Closed,2025-08-09,189.0,Config error,L2,North America,Marcus Reilly,P3 slow in Coupa
+INC101534,Request-Access,Snowflake,P4,Resolved,2025-07-23,136.1,Integration failure,L1,EMEA,Sofia Marchetti,P4 request in Power BI
+INC101535,Incident-Access,Salesforce,P4,Resolved,2026-01-17,117.1,Permission,L2,EMEA,Liam O'Sullivan,P4 error in Workday
+INC101536,Request-Report,Kyriba,P2,Closed,2026-01-15,89.8,Integration failure,L2,North America,Tomas Halvorsen,P2 outage in Azure AD
+INC101537,Incident-Network,SAP ECC,P3,Resolved,2025-08-11,52.4,Unknown,L3,North America,Maria Donnelly,P3 failure in Coupa
+INC101538,Request-Report,Workday,P4,Resolved,2025-04-08,41.4,Capacity,L1,APAC,Elena Vasquez,P4 slow in S/4HANA
+INC101539,Request-Access,Snowflake,P4,Closed,2025-10-16,36.5,Vendor outage,L2,EMEA,Maria Donnelly,P4 request in Workday
+INC101540,Incident-Reporting,S/4HANA,P2,Resolved,2025-11-23,109.2,Capacity,L2,EMEA,Marcus Reilly,P2 slow in Coupa
+INC101541,Request-Report,Coupa,P2,Closed,2025-05-03,82.9,User error,L1,LATAM,Raymond Okafor,P2 slow in ServiceNow
+INC101542,Incident-Network,SAP ECC,P3,Resolved,2025-11-19,166.0,User error,L1,EMEA,Maria Donnelly,P3 slow in Azure AD
+INC101543,Incident-Network,Salesforce,P4,Resolved,2025-09-26,156.6,Data quality,L1,EMEA,Marcus Reilly,P4 request in S/4HANA
+INC101544,Incident-Network,Snowflake,P3,Resolved,2025-03-24,209.2,Capacity,L2,EMEA,David Chen,P3 request in ServiceNow
+INC101545,Enhancement,S/4HANA,P4,Closed,2026-04-22,207.6,Network,L1,EMEA,David Chen,P4 slow in Workday
+INC101546,Problem,S/4HANA,P3,Resolved,2025-09-10,72.6,Network,L2,EMEA,Maria Donnelly,P3 outage in Power BI
+INC101547,Incident-ERP,Salesforce,P3,Resolved,2025-10-24,26.2,Vendor outage,L3,APAC,David Chen,P3 outage in Snowflake
+INC101548,Incident-Access,Coupa,P2,In Progress,2025-10-19,74.6,Config error,L1,EMEA,Marcus Reilly,P2 slow in ServiceNow
+INC101549,Incident-Network,ServiceNow,P3,Closed,2025-03-11,119.6,Data quality,L2,APAC,Tomas Halvorsen,P3 outage in Power BI
+INC101550,Incident-Network,S/4HANA,P3,Resolved,2025-09-05,95.9,Vendor outage,L3,EMEA,Priya Natarajan,P3 error in SAP ECC
+INC101551,Incident-Reporting,Power BI,P3,Closed,2025-03-07,107.2,Vendor outage,L2,LATAM,Marcus Reilly,P3 request in Coupa
+INC101552,Incident-Treasury,Workday,P3,Closed,2025-02-27,128.6,User error,L3,EMEA,Raymond Okafor,P3 error in Salesforce
+INC101553,Request-Access,Workday,P3,Open,2025-08-04,154.1,Integration failure,L1,LATAM,Maria Donnelly,P3 request in Coupa
+INC101554,Problem,Salesforce,P4,Resolved,2025-07-18,109.1,Capacity,L2,EMEA,Marcus Reilly,P4 slow in ServiceNow
+INC101555,Problem,ServiceNow,P4,Closed,2025-11-28,146.9,Data quality,L1,APAC,Elena Vasquez,P4 slow in Azure AD
+INC101556,Problem,Power BI,P3,Open,2026-04-05,13.6,Capacity,L1,APAC,Raymond Okafor,P3 failure in Kyriba
+INC101557,Problem,Workday,P3,Closed,2026-05-24,119.1,Code defect,L2,APAC,Priya Natarajan,P3 outage in Kyriba
+INC101558,Enhancement,SAP ECC,P4,Closed,2025-09-11,153.7,Code defect,L1,North America,Maria Donnelly,P4 slow in Kyriba
+INC101559,Incident-Network,Coupa,P3,Resolved,2025-09-07,160.5,Capacity,L2,APAC,Elena Vasquez,P3 error in Coupa
+INC101560,Enhancement,Azure AD,P2,Resolved,2025-12-01,93.4,User error,L2,APAC,Aisha Bello,P2 outage in Workday
+INC101561,Problem,Workday,P3,Closed,2025-01-01,112.8,User error,L3,North America,Liam O'Sullivan,P3 failure in Kyriba
+INC101562,Request-Report,Workday,P3,Closed,2025-07-03,46.5,Data quality,L2,North America,Sofia Marchetti,P3 error in ServiceNow
+INC101563,Problem,Power BI,P3,On Hold,2026-01-13,152.7,Capacity,L2,APAC,Raymond Okafor,P3 slow in Kyriba
+INC101564,Incident-Treasury,Coupa,P3,Resolved,2025-08-31,151.6,Data quality,L2,APAC,Priya Natarajan,P3 failure in SAP ECC
+INC101565,Enhancement,S/4HANA,P2,Resolved,2026-04-23,46.6,Integration failure,L3,APAC,Elena Vasquez,P2 slow in ServiceNow
+INC101566,Problem,S/4HANA,P1,Resolved,2026-02-28,59.8,Vendor outage,L2,LATAM,Liam O'Sullivan,P1 request in SAP ECC
+INC101567,Request-Change,Snowflake,P3,Closed,2025-10-29,199.0,Unknown,L1,LATAM,Aisha Bello,P3 failure in Kyriba
+INC101568,Incident-ERP,SAP ECC,P3,Resolved,2025-06-05,38.8,Vendor outage,L1,North America,Elena Vasquez,P3 outage in Kyriba
+INC101569,Incident-Treasury,Kyriba,P3,Open,2025-05-29,160.8,Data quality,L3,EMEA,Maria Donnelly,P3 outage in SAP ECC
+INC101570,Incident-ERP,Snowflake,P3,Closed,2026-05-08,76.4,Permission,L3,APAC,Tomas Halvorsen,P3 request in Azure AD
+INC101571,Request-Access,Salesforce,P4,Resolved,2025-03-17,166.9,Unknown,L1,APAC,Marcus Reilly,P4 request in Workday
+INC101572,Incident-Treasury,Salesforce,P4,Resolved,2025-10-23,34.2,Capacity,L2,EMEA,Marcus Reilly,P4 outage in ServiceNow
+INC101573,Incident-ERP,Power BI,P2,In Progress,2025-02-09,128.7,User error,L3,North America,Marcus Reilly,P2 request in Salesforce
+INC101574,Incident-Treasury,Workday,P4,Closed,2026-04-07,21.5,Integration failure,L1,North America,Sofia Marchetti,P4 request in Salesforce
+INC101575,Request-Access,ServiceNow,P3,Resolved,2025-09-26,28.0,Network,L1,EMEA,Raymond Okafor,P3 error in Salesforce
+INC101576,Request-Access,S/4HANA,P1,Resolved,2025-12-04,164.0,User error,L2,EMEA,Marcus Reilly,P1 request in ServiceNow
+INC101577,Incident-Access,Workday,P2,Closed,2025-01-08,36.4,Code defect,L1,North America,Elena Vasquez,P2 outage in Salesforce
+INC101578,Incident-Access,Salesforce,P4,Resolved,2025-06-22,187.8,Integration failure,L3,North America,Raymond Okafor,P4 outage in Snowflake
+INC101579,Request-Change,Power BI,P4,Open,2026-03-02,48.7,Unknown,L1,APAC,Raymond Okafor,P4 slow in S/4HANA
+INC101580,Problem,S/4HANA,P3,Open,2025-01-19,128.5,Config error,L2,APAC,Liam O'Sullivan,P3 failure in ServiceNow
+INC101581,Request-Report,SAP ECC,P4,Closed,2025-08-23,129.9,Integration failure,L1,EMEA,Liam O'Sullivan,P4 request in Coupa
+INC101582,Request-Report,ServiceNow,P3,Closed,2025-08-22,97.8,Unknown,L1,APAC,Elena Vasquez,P3 outage in Coupa
+INC101583,Enhancement,Snowflake,P2,Closed,2025-01-17,188.4,Data quality,L2,APAC,Liam O'Sullivan,P2 request in Snowflake
+INC101584,Problem,Workday,P3,Resolved,2026-02-12,106.4,Unknown,L1,APAC,Aisha Bello,P3 slow in S/4HANA
+INC101585,Incident-ERP,Kyriba,P4,Resolved,2025-03-29,203.8,Config error,L2,APAC,Priya Natarajan,P4 failure in Azure AD
+INC101586,Incident-Network,SAP ECC,P3,Resolved,2026-02-05,212.9,Vendor outage,L1,EMEA,Liam O'Sullivan,P3 failure in Kyriba
+INC101587,Enhancement,Power BI,P3,Resolved,2025-01-01,102.8,Capacity,L2,EMEA,Liam O'Sullivan,P3 slow in Power BI
+INC101588,Request-Change,SAP ECC,P3,Open,2025-01-20,214.8,Config error,L2,APAC,Elena Vasquez,P3 error in Azure AD
+INC101589,Incident-Treasury,Azure AD,P3,On Hold,2025-09-22,54.8,Data quality,L3,North America,Marcus Reilly,P3 outage in ServiceNow
+INC101590,Incident-Network,Coupa,P3,Resolved,2025-05-04,8.7,Data quality,L3,EMEA,Raymond Okafor,P3 outage in Snowflake
+INC101591,Incident-ERP,ServiceNow,P4,Resolved,2025-09-29,105.3,Permission,L3,EMEA,Sofia Marchetti,P4 outage in Workday
+INC101592,Incident-Network,S/4HANA,P3,Open,2025-03-16,115.2,User error,L2,APAC,Priya Natarajan,P3 error in SAP ECC
+INC101593,Incident-ERP,Snowflake,P3,Resolved,2025-07-06,18.6,Permission,L2,North America,Raymond Okafor,P3 failure in Azure AD
+INC101594,Incident-Access,Salesforce,P3,In Progress,2025-10-20,168.3,Vendor outage,L1,LATAM,Elena Vasquez,P3 failure in Snowflake
+INC101595,Incident-Access,Azure AD,P4,Resolved,2026-04-30,171.4,Permission,L1,EMEA,Aisha Bello,P4 request in SAP ECC
+INC101596,Problem,SAP ECC,P1,Closed,2025-07-06,42.3,Vendor outage,L1,LATAM,Sofia Marchetti,P1 outage in Coupa
+INC101597,Incident-Reporting,SAP ECC,P4,Resolved,2025-06-22,48.3,User error,L3,North America,Sofia Marchetti,P4 request in Kyriba
+INC101598,Incident-Network,Snowflake,P3,Resolved,2025-05-30,48.2,Config error,L1,North America,Raymond Okafor,P3 slow in ServiceNow
+INC101599,Request-Change,S/4HANA,P4,On Hold,2025-05-09,84.1,Network,L3,APAC,Priya Natarajan,P4 request in ServiceNow
