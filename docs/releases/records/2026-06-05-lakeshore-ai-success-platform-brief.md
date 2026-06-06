@@ -34,6 +34,9 @@ Adds a buyer-facing Lakeshore reading HTML brief that explains how AbarVa helps 
 - `docs/build/lakeshore-success-brief/assets/*.png`
 - `docs/build/lakeshore-success-brief/video-storyboard/OPENAI_TTS_SCENE_TEXT_2026-06-05.md`
 - `docs/build/lakeshore-success-brief/video-storyboard/render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1.mp4`
+- `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_DETAILED_MP4_V2_SCENE_PLAN_2026-06-05.md`
+- `docs/build/lakeshore-success-brief/video-storyboard/render-lakeshore-detailed-mp4.cjs`
+- `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V2.mp4`
 - `docs/releases/records/2026-06-05-lakeshore-ai-success-platform-brief.md`
 
 ## V2 Alignment Notes
@@ -52,6 +55,7 @@ Adds a buyer-facing Lakeshore reading HTML brief that explains how AbarVa helps 
 - Updated the MP4 narration source and renderer direction for a warm female executive voice and corrected pronunciation guidance so AbarVa is spoken as one word, not "A bar V A."
 - Recast the fictional Lakeshore/Northshore operating profile to better match the public Chicago private-holdings archetype: supply chain/logistics, packaging/sourcing, brand services, consumer products, and workplace/convenience services. The names remain fictional and do not imply Morgan Street affiliation.
 - Added business-model substance to the Lakeshore profile: how each modeled platform makes money, typical operating challenges, and what AbarVa should optimize across treasury, sourcing, route operations, margin, vendor leverage, systems, risk, and value proof.
+- Added a detailed 23-scene MP4 V2 package that expands the short preview into a fuller buyer narrative: Northshore operating economics, context-layer insights, editable corpus, Kyriba definition and implementation vision, six treasury failure modes, treasury corpus patterns, 5-10x value logic, Source events, product proof flow, raw-Claude contrast, and six-month roadmap.
 
 ## QA / Validation
 
@@ -62,6 +66,8 @@ Adds a buyer-facing Lakeshore reading HTML brief that explains how AbarVa helps 
 - Pass: Browser visual QA rendered clean desktop and mobile screenshots with all referenced images loaded, 0 broken assets, and 0 console errors.
 - Pass pending: MP4 preview re-render with updated voice and pronunciation after OpenAI TTS regeneration. Current checked-in MP4 should be treated as a draft preview only.
 - Pass pending: Regenerate V2 PNG plates after local file screenshot capture is available; source HTML has been updated with the richer Northshore operating profile.
+- Pass: Detailed MP4 V2 rendered successfully at 1600x900 with H.264 video and AAC audio, duration 8:12.
+- Pass: Detailed MP4 V2 sampled-frame QA regenerated after layout correction; long-title/subtitle overlap was fixed in the SVG renderer.
 
 ## Rollout Plan
 
@@ -79,6 +85,8 @@ Remove the `docs/build/lakeshore-success-brief/` directory and this release reco
 - Visual QA screenshots: `docs/build/lakeshore-success-brief/qa/lakeshore-success-brief-desktop.png`, `docs/build/lakeshore-success-brief/qa/lakeshore-success-brief-mobile.png`
 - Kyriba / treasury orientation appendix: `docs/build/lakeshore-success-brief/LAKESHORE_KYRIBA_TREASURY_PATTERN_ORIENTATION_2026-06-05.md`
 - MP4 preview and timeline: `docs/build/lakeshore-success-brief/video-storyboard/render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1.mp4`, `docs/build/lakeshore-success-brief/video-storyboard/render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1_TIMELINE.json`
+- Detailed MP4 V2: `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V2.mp4`
+- Detailed MP4 V2 visual QA: `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v2-video-samples.png`
 
 ## Known Gaps
 

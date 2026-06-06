@@ -247,5 +247,5 @@
       "gapAfterVoice": 1.15
     }
   ],
-  "note": "Intermediate OpenAI audio and per-scene clip files are intentionally not checked in. Re-run render-lakeshore-mp4-preview.cjs to recreate them."
+  "note": "Intermediate OpenAI audio and per-scene clip files are intentionally not checked in. Re-run the corresponding renderer to recreate them."
 }
