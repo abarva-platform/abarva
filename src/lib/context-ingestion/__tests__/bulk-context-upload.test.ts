@@ -147,6 +147,10 @@ describe("bulk context upload", () => {
       },
       workflow: {
         summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+        status: {
+          persisted: false,
+          pollable: false,
+        },
         steps: [
           { id: "package_received", status: "complete" },
           { id: "attestation_verified", status: "complete" },
@@ -238,6 +242,11 @@ describe("bulk context upload", () => {
       workflow: {
         summary:
           "Files are staged and queued. Azure private-worker processing is the next handoff.",
+        status: {
+          persisted: true,
+          bucket: "context-uploads",
+          pollable: true,
+        },
         steps: [
           { id: "package_received", status: "complete" },
           { id: "attestation_verified", status: "complete" },
@@ -269,6 +278,12 @@ describe("bulk context upload", () => {
       ],
     });
     expect(result.workflow.jobId).toMatch(/^bulk-[a-f0-9]{16}$/);
+    expect(result.workflow.status.path).toBe(
+      `${result.workflow.jobId}.json`.replace(
+        /^/,
+        "meridian-health/_jobs/",
+      ),
+    );
     expect(queued).toHaveLength(1);
     expect(queued[0]).toMatchObject({
       schema: "abarva.ingestion.v1",
@@ -351,6 +366,12 @@ describe("bulk context upload", () => {
       mode: "stage_and_enqueue",
       rowsParsed: 0,
       chunksQueued: 0,
+      workflow: {
+        status: {
+          persisted: true,
+          pollable: true,
+        },
+      },
       results: [
         {
           fileName: "fy26-financial-report.pdf",
