@@ -14,11 +14,20 @@
 
 import { buildEventScaffold } from "../../lib/source/canvas-substrate/scaffold";
 
-const CLIENT_KEY = "skyharbor";
+const APP_CLIENT_KEY = "skyharbor";
+const SOURCE_CLIENT_KEY = "skyharbor-air";
 const CLIENT_NAME = "SkyHarbor";
 const PROVENANCE_TAG = "skyharbor_demo_artifact_seed_2026_06_06";
 const SOURCE_LABEL = "SkyHarbor Moves and Source artifact loader";
 const SOURCE_ROOT = "src/scripts/seed/seed-skyharbor-moves-source-artifacts.ts";
+
+type PersonaSeed = {
+  graphNodeId: string;
+  name: string;
+  email: string;
+  title: string;
+  role: "client_viewer";
+};
 
 type MoveSeed = {
   seedKey: string;
@@ -59,6 +68,23 @@ type SourceEventSeed = {
   baselineEvidence: string[];
   stopCondition: string;
 };
+
+const VISIBILITY_PERSONAS: PersonaSeed[] = [
+  {
+    graphNodeId: "person:skyharbor:victor-hale",
+    name: "Victor Hale",
+    email: "cto@skyharbor-air.example.com",
+    title: "Chief Technology Officer",
+    role: "client_viewer",
+  },
+  {
+    graphNodeId: "person:skyharbor:owen-mercer",
+    name: "Owen Mercer",
+    email: "admin@skyharbor-air.example.com",
+    title: "Tenant Admin / Context Layer Steward",
+    role: "client_viewer",
+  },
+];
 
 const MOVES: MoveSeed[] = [
   {
@@ -353,7 +379,10 @@ type PgClient = {
 };
 
 type PgModule = {
-  Client: new (config: { connectionString: string; ssl: false | { rejectUnauthorized: false } }) => PgClient;
+  Client: new (config: {
+    connectionString: string;
+    ssl: false | { rejectUnauthorized: false };
+  }) => PgClient;
 };
 
 type ColumnInfo = {
@@ -385,7 +414,9 @@ function dbUrl(): string {
 }
 
 function sslFor(url: string): false | { rejectUnauthorized: false } {
-  return /localhost|127\.0\.0\.1/.test(url) ? false : { rejectUnauthorized: false };
+  return /localhost|127\.0\.0\.1/.test(url)
+    ? false
+    : { rejectUnauthorized: false };
 }
 
 function formatUsd(value: number): string {
@@ -397,31 +428,73 @@ function asJsonb(value: unknown): string {
 }
 
 function printPlan(): void {
-  const moveValueLow = MOVES.reduce((sum, move) => sum + move.valueProjectedLowUsd, 0);
-  const moveValueHigh = MOVES.reduce((sum, move) => sum + move.valueProjectedHighUsd, 0);
-  const sourceValue = SOURCE_EVENTS.reduce((sum, event) => sum + event.estimatedValueUsd, 0);
+  const moveValueLow = MOVES.reduce(
+    (sum, move) => sum + move.valueProjectedLowUsd,
+    0,
+  );
+  const moveValueHigh = MOVES.reduce(
+    (sum, move) => sum + move.valueProjectedHighUsd,
+    0,
+  );
+  const sourceValue = SOURCE_EVENTS.reduce(
+    (sum, event) => sum + event.estimatedValueUsd,
+    0,
+  );
   console.log("SkyHarbor artifact seed plan");
-  console.log(`- Client key: ${CLIENT_KEY}`);
+  console.log(`- App client key: ${APP_CLIENT_KEY}`);
+  console.log(`- Source canonical client key: ${SOURCE_CLIENT_KEY}`);
   console.log(`- Provenance: ${PROVENANCE_TAG}`);
-  console.log(`- Strategic Moves: ${MOVES.length} (${formatUsd(moveValueLow)}-${formatUsd(moveValueHigh)} projected)`);
-  console.log(`- Source events: ${SOURCE_EVENTS.length} (${formatUsd(sourceValue)} sourcing value at stake)`);
+  console.log(
+    `- Strategic Moves: ${MOVES.length} (${formatUsd(moveValueLow)}-${formatUsd(moveValueHigh)} projected)`,
+  );
+  console.log(
+    `- Source events: ${SOURCE_EVENTS.length} (${formatUsd(sourceValue)} sourcing value at stake)`,
+  );
+  console.log(
+    `- Scoped visibility personas: ${VISIBILITY_PERSONAS.map((persona) => persona.email).join(", ")}`,
+  );
   console.log(`- Reset seeded rows: ${RESET_SEEDED ? "yes" : "no"}`);
-  console.log(`- Mode: ${PLAN_ONLY ? "plan-only" : APPLY ? "apply" : "dry-run rollback"}`);
+  console.log(
+    `- Mode: ${PLAN_ONLY ? "plan-only" : APPLY ? "apply" : "dry-run rollback"}`,
+  );
   for (const move of MOVES) {
-    console.log(`  move · P${move.phase} · ${move.name} · ${formatUsd(move.valueProjectedLowUsd)}-${formatUsd(move.valueProjectedHighUsd)}`);
+    console.log(
+      `  move · P${move.phase} · ${move.name} · ${formatUsd(move.valueProjectedLowUsd)}-${formatUsd(move.valueProjectedHighUsd)}`,
+    );
   }
   for (const event of SOURCE_EVENTS) {
-    console.log(`  source · ${eventCode(event.eventName)} · ${event.eventName} · ${formatUsd(event.estimatedValueUsd)}`);
+    console.log(
+      `  source · ${eventCode(event.eventName)} · ${event.eventName} · ${formatUsd(event.estimatedValueUsd)}`,
+    );
   }
 }
 
-async function tableColumns(client: PgClient, table: string): Promise<Set<string>> {
+async function tableColumns(
+  client: PgClient,
+  table: string,
+): Promise<Set<string>> {
   const info = await tableColumnInfo(client, table);
   return new Set(info.keys());
 }
 
-async function tableColumnInfo(client: PgClient, table: string): Promise<Map<string, ColumnInfo>> {
-  const result = await client.query<{ column_name: string; data_type: string; udt_name: string }>(
+async function tableHasColumns(
+  client: PgClient,
+  table: string,
+  columns: string[],
+): Promise<boolean> {
+  const info = await tableColumnInfo(client, table);
+  return columns.every((column) => info.has(column));
+}
+
+async function tableColumnInfo(
+  client: PgClient,
+  table: string,
+): Promise<Map<string, ColumnInfo>> {
+  const result = await client.query<{
+    column_name: string;
+    data_type: string;
+    udt_name: string;
+  }>(
     `
     SELECT column_name, data_type, udt_name
     FROM information_schema.columns
@@ -445,14 +518,19 @@ function valueForColumn(value: unknown, info: ColumnInfo | undefined): unknown {
   if (
     value !== null &&
     value !== undefined &&
-    (info?.dataType === "json" || info?.dataType === "jsonb" || info?.udtName === "json" || info?.udtName === "jsonb")
+    (info?.dataType === "json" ||
+      info?.dataType === "jsonb" ||
+      info?.udtName === "json" ||
+      info?.udtName === "jsonb")
   ) {
     return asJsonb(value);
   }
   return value;
 }
 
-async function findSkyHarborClient(client: PgClient): Promise<{ id: string; name: string }> {
+async function findSkyHarborClient(
+  client: PgClient,
+): Promise<{ id: string; name: string }> {
   const columns = await tableColumns(client, "clients");
   const nameExpr = columns.has("name")
     ? "name"
@@ -461,33 +539,46 @@ async function findSkyHarborClient(client: PgClient): Promise<{ id: string; name
       : `'${CLIENT_NAME}'`;
   const conditions: string[] = [];
   const orderParts: string[] = [];
-  const params: unknown[] = [CLIENT_KEY, "%skyharbor%", "%sky harbor%"];
+  const params: unknown[] = [
+    APP_CLIENT_KEY,
+    SOURCE_CLIENT_KEY,
+    "%skyharbor%",
+    "%sky harbor%",
+  ];
 
   if (columns.has("tenant_key")) {
-    conditions.push("lower(coalesce(tenant_key, '')) = $1");
-    orderParts.push("CASE WHEN lower(coalesce(tenant_key, '')) = $1 THEN 0 ELSE 1 END");
+    conditions.push("lower(coalesce(tenant_key, '')) IN ($1, $2)");
+    orderParts.push(
+      "CASE WHEN lower(coalesce(tenant_key, '')) = $1 THEN 0 WHEN lower(coalesce(tenant_key, '')) = $2 THEN 1 ELSE 2 END",
+    );
   }
   if (columns.has("key")) {
-    conditions.push("lower(coalesce(key, '')) = $1");
-    orderParts.push("CASE WHEN lower(coalesce(key, '')) = $1 THEN 0 ELSE 1 END");
+    conditions.push("lower(coalesce(key, '')) IN ($1, $2)");
+    orderParts.push(
+      "CASE WHEN lower(coalesce(key, '')) = $1 THEN 0 WHEN lower(coalesce(key, '')) = $2 THEN 1 ELSE 2 END",
+    );
   }
   if (columns.has("slug")) {
-    conditions.push("lower(coalesce(slug, '')) = $1");
-    orderParts.push("CASE WHEN lower(coalesce(slug, '')) = $1 THEN 0 ELSE 1 END");
+    conditions.push("lower(coalesce(slug, '')) IN ($1, $2)");
+    orderParts.push(
+      "CASE WHEN lower(coalesce(slug, '')) = $1 THEN 0 WHEN lower(coalesce(slug, '')) = $2 THEN 1 ELSE 2 END",
+    );
   }
   if (columns.has("name")) {
-    conditions.push("lower(coalesce(name, '')) LIKE $2");
     conditions.push("lower(coalesce(name, '')) LIKE $3");
+    conditions.push("lower(coalesce(name, '')) LIKE $4");
   }
   if (columns.has("legal_name")) {
-    conditions.push("lower(coalesce(legal_name, '')) LIKE $2");
     conditions.push("lower(coalesce(legal_name, '')) LIKE $3");
+    conditions.push("lower(coalesce(legal_name, '')) LIKE $4");
   }
   if (columns.has("updated_at")) orderParts.push("updated_at DESC NULLS LAST");
   if (columns.has("created_at")) orderParts.push("created_at DESC NULLS LAST");
 
   if (conditions.length === 0) {
-    throw new Error("clients table does not expose a usable SkyHarbor lookup column.");
+    throw new Error(
+      "clients table does not expose a usable SkyHarbor lookup column.",
+    );
   }
 
   const result = await client.query<{ id: string; name: string }>(
@@ -502,17 +593,23 @@ async function findSkyHarborClient(client: PgClient): Promise<{ id: string; name
   );
   const row = result.rows[0];
   if (!row) {
-    throw new Error("SkyHarbor client row not found. Load the SkyHarbor context layer before applying artifacts.");
+    throw new Error(
+      "SkyHarbor client row not found. Load the SkyHarbor context layer before applying artifacts.",
+    );
   }
   return row;
 }
 
 function valuesSql(start: number, count: number): string {
-  return Array.from({ length: count }, (_, index) => `$${start + index}`).join(", ");
+  return Array.from({ length: count }, (_, index) => `$${start + index}`).join(
+    ", ",
+  );
 }
 
 function whereSql(columns: string[], start = 1): string {
-  return columns.map((column, index) => `${column} = $${start + index}`).join(" AND ");
+  return columns
+    .map((column, index) => `${column} = $${start + index}`)
+    .join(" AND ");
 }
 
 async function upsertRow(
@@ -523,12 +620,20 @@ async function upsertRow(
   returning = "id",
 ): Promise<string | null> {
   const columnInfo = await tableColumnInfo(client, table);
-  const entries = Object.entries(row).filter(([column, value]) => columnInfo.has(column) && value !== undefined);
+  const entries = Object.entries(row).filter(
+    ([column, value]) => columnInfo.has(column) && value !== undefined,
+  );
   const names = entries.map(([column]) => column);
-  const values = entries.map(([column, value]) => valueForColumn(value, columnInfo.get(column)));
-  const conflictValues = conflictColumns.map((column) => valueForColumn(row[column], columnInfo.get(column)));
+  const values = entries.map(([column, value]) =>
+    valueForColumn(value, columnInfo.get(column)),
+  );
+  const conflictValues = conflictColumns.map((column) =>
+    valueForColumn(row[column], columnInfo.get(column)),
+  );
   if (conflictValues.some((value) => value === undefined)) {
-    throw new Error(`Missing conflict value for ${table}: ${conflictColumns.join(", ")}`);
+    throw new Error(
+      `Missing conflict value for ${table}: ${conflictColumns.join(", ")}`,
+    );
   }
 
   const existing = await client.query<Record<string, string>>(
@@ -543,10 +648,16 @@ async function upsertRow(
   );
   const existingId = existing.rows[0]?.[returning];
   if (existingId) {
-    const updateEntries = entries.filter(([column]) => !conflictColumns.includes(column));
+    const updateEntries = entries.filter(
+      ([column]) => !conflictColumns.includes(column),
+    );
     if (updateEntries.length === 0) return existingId;
-    const updateValues = updateEntries.map(([column, value]) => valueForColumn(value, columnInfo.get(column)));
-    const assignments = updateEntries.map(([column], index) => `${column} = $${index + 1}`).join(", ");
+    const updateValues = updateEntries.map(([column, value]) =>
+      valueForColumn(value, columnInfo.get(column)),
+    );
+    const assignments = updateEntries
+      .map(([column], index) => `${column} = $${index + 1}`)
+      .join(", ");
     const result = await client.query<Record<string, string>>(
       `
       UPDATE ${table}
@@ -573,11 +684,13 @@ async function upsertRow(
 async function resetSeededRows(client: PgClient): Promise<void> {
   const sourceNames = SOURCE_EVENTS.map((event) => event.eventName);
   await client.query(
-    "DELETE FROM source_events WHERE client_key = $1 AND event_name = ANY($2)",
-    [CLIENT_KEY, sourceNames],
+    "DELETE FROM source_events WHERE client_key = ANY($1::text[]) AND event_name = ANY($2::text[])",
+    [[APP_CLIENT_KEY, SOURCE_CLIENT_KEY], sourceNames],
   );
 
-  const graphNodeIds = MOVES.map((move) => `eng_${move.seedKey.replace(/-/g, "_")}`);
+  const graphNodeIds = MOVES.map(
+    (move) => `eng_${move.seedKey.replace(/-/g, "_")}`,
+  );
   await client.query(
     "DELETE FROM engagements WHERE graph_node_id = ANY($1) OR metadata->>'provenance_tag' = $2",
     [graphNodeIds, PROVENANCE_TAG],
@@ -596,7 +709,11 @@ function moveMetadata(move: MoveSeed): Record<string, unknown> {
   };
 }
 
-async function seedMove(client: PgClient, clientId: string, move: MoveSeed): Promise<string> {
+async function seedMove(
+  client: PgClient,
+  clientId: string,
+  move: MoveSeed,
+): Promise<string> {
   const graphNodeId = `eng_${move.seedKey.replace(/-/g, "_")}`;
   const engagementId = await upsertRow(
     client,
@@ -649,23 +766,44 @@ async function seedMove(client: PgClient, clientId: string, move: MoveSeed): Pro
         basis: "demo_value_hypothesis",
         low_usd: move.valueProjectedLowUsd,
         high_usd: move.valueProjectedHighUsd,
-        caveat: "Directional value range for demo readiness; validate with client baselines before commercial claim.",
+        caveat:
+          "Directional value range for demo readiness; validate with client baselines before commercial claim.",
       },
     },
     ["client_id", "solution"],
   );
-  if (!engagementId) throw new Error(`No engagement id returned for ${move.name}`);
+  if (!engagementId)
+    throw new Error(`No engagement id returned for ${move.name}`);
 
   await seedMoveChildren(client, engagementId, move);
   return engagementId;
 }
 
-async function seedMoveChildren(client: PgClient, engagementId: string, move: MoveSeed): Promise<void> {
+async function seedMoveChildren(
+  client: PgClient,
+  engagementId: string,
+  move: MoveSeed,
+): Promise<void> {
   const moduleRows = [
     ["p0_signal_capture", "P0 signal capture", 0, "completed"],
-    ["p1_discovery_report", "P1 discovery report", 1, move.phase >= 1 ? "completed" : "not_started"],
-    ["p2_root_cause_analysis", "P2 root cause analysis", 2, move.phase >= 2 ? "in_progress" : "not_started"],
-    [move.currentModuleKey, move.currentModuleKey.replace(/_/g, " "), move.phase, "in_progress"],
+    [
+      "p1_discovery_report",
+      "P1 discovery report",
+      1,
+      move.phase >= 1 ? "completed" : "not_started",
+    ],
+    [
+      "p2_root_cause_analysis",
+      "P2 root cause analysis",
+      2,
+      move.phase >= 2 ? "in_progress" : "not_started",
+    ],
+    [
+      move.currentModuleKey,
+      move.currentModuleKey.replace(/_/g, " "),
+      move.phase,
+      "in_progress",
+    ],
   ] as const;
   for (let index = 0; index < moduleRows.length; index += 1) {
     const [moduleKey, moduleName, phaseNumber, status] = moduleRows[index];
@@ -679,7 +817,10 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
         phase_number: phaseNumber,
         module_order: index + 1,
         status,
-        state_jsonb: { provenance_tag: PROVENANCE_TAG, evidence_themes: move.evidenceThemes },
+        state_jsonb: {
+          provenance_tag: PROVENANCE_TAG,
+          evidence_themes: move.evidenceThemes,
+        },
       },
       ["engagement_id", "module_key"],
     );
@@ -703,7 +844,9 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
         applicable_topics: ["ai_success", "product_engineering"],
         template_structure: { provenance_tag: PROVENANCE_TAG },
         required_data_inputs: { evidence_themes: move.evidenceThemes },
-        quality_rubric: { minimum: "Evidence-backed, owner-aware, value-linked." },
+        quality_rubric: {
+          minimum: "Evidence-backed, owner-aware, value-linked.",
+        },
         output_format: "markdown",
         version: 1,
         maturity: "pilot",
@@ -713,7 +856,14 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
   }
 
   for (const [index, title] of move.deliverables.entries()) {
-    const typeKey = index === 0 ? "charter" : index === 1 ? "business_case" : index === 2 ? "solution_design" : "sourcing_strategy";
+    const typeKey =
+      index === 0
+        ? "charter"
+        : index === 1
+          ? "business_case"
+          : index === 2
+            ? "solution_design"
+            : "sourcing_strategy";
     const existing = await client.query<{ id: string }>(
       `
       SELECT id::text
@@ -734,7 +884,13 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
           VALUES ($1, $2, $3, $4, 1, $5)
           RETURNING id::text
           `,
-          [engagementId, typeKey, title, index <= 1 ? "in_review" : "draft", PROVENANCE_TAG],
+          [
+            engagementId,
+            typeKey,
+            title,
+            index <= 1 ? "in_review" : "draft",
+            PROVENANCE_TAG,
+          ],
         )
       ).rows[0].id;
 
@@ -757,7 +913,10 @@ async function seedMoveChildren(client: PgClient, engagementId: string, move: Mo
           move_seed_key: move.seedKey,
           evidence_themes: move.evidenceThemes,
         }),
-        asJsonb({ score: 0.82, caveat: "Demo-quality scaffold; client evidence validation pending." }),
+        asJsonb({
+          score: 0.82,
+          caveat: "Demo-quality scaffold; client evidence validation pending.",
+        }),
       ],
     );
   }
@@ -820,7 +979,7 @@ async function seedSourceEvent(
     client,
     "source_events",
     {
-      client_key: CLIENT_KEY,
+      client_key: SOURCE_CLIENT_KEY,
       event_code: code,
       event_name: event.eventName,
       event_type: event.eventType,
@@ -835,9 +994,13 @@ async function seedSourceEvent(
     },
     ["client_key", "event_code"],
   );
-  if (!eventId) throw new Error(`No Source event id returned for ${event.eventName}`);
+  if (!eventId)
+    throw new Error(`No Source event id returned for ${event.eventName}`);
 
-  const scaffold = buildEventScaffold({ sourceEventId: eventId, tenantKey: CLIENT_KEY });
+  const scaffold = buildEventScaffold({
+    sourceEventId: eventId,
+    tenantKey: SOURCE_CLIENT_KEY,
+  });
   for (const row of scaffold.artifactStates) {
     await upsertRow(
       client,
@@ -886,7 +1049,9 @@ async function seedSourceEvent(
     );
   }
 
-  const requiredArtifacts = scaffold.artifactStates.filter((row) => row.requirement_level === "required").slice(0, 3);
+  const requiredArtifacts = scaffold.artifactStates
+    .filter((row) => row.requirement_level === "required")
+    .slice(0, 3);
   for (const row of requiredArtifacts) {
     await client.query(
       `
@@ -925,14 +1090,202 @@ async function seedSourceEvent(
         LIMIT 3
       )
     `,
-    [eventId, `Baseline evidence named in seeded intake; client-approved files still pending (${PROVENANCE_TAG}).`],
+    [
+      eventId,
+      `Baseline evidence named in seeded intake; client-approved files still pending (${PROVENANCE_TAG}).`,
+    ],
   );
 
   return eventId;
 }
 
+async function ensurePersona(
+  client: PgClient,
+  persona: PersonaSeed,
+): Promise<string> {
+  const existing = await client.query<{ id: string }>(
+    `
+    SELECT id::text
+    FROM persons
+    WHERE graph_node_id = $1 OR lower(coalesce(email, '')) = lower($2)
+    ORDER BY CASE WHEN graph_node_id = $1 THEN 0 ELSE 1 END
+    LIMIT 1
+    `,
+    [persona.graphNodeId, persona.email],
+  );
+  const existingId = existing.rows[0]?.id;
+  const personId = await upsertRow(
+    client,
+    "persons",
+    {
+      id: existingId,
+      graph_node_id: persona.graphNodeId,
+      name: persona.name,
+      email: persona.email,
+      role: persona.title,
+      organization: "SkyHarbor Air",
+      familiarity: "returning_recent",
+      primary_role: persona.role,
+      communication_style: {
+        provenance_tag: PROVENANCE_TAG,
+        demo_persona: true,
+        tenant_key: SOURCE_CLIENT_KEY,
+      },
+    },
+    existingId ? ["id"] : ["graph_node_id"],
+  );
+  if (!personId) throw new Error(`No person id returned for ${persona.email}`);
+  return personId;
+}
+
+async function seedClientMembership(
+  client: PgClient,
+  clientId: string,
+  personId: string,
+  persona: PersonaSeed,
+): Promise<void> {
+  if (
+    !(await tableHasColumns(client, "person_client_memberships", [
+      "person_id",
+      "client_id",
+      "role",
+    ]))
+  ) {
+    console.log(
+      "Skipped person_client_memberships visibility backfill; table is unavailable.",
+    );
+    return;
+  }
+  await upsertRow(
+    client,
+    "person_client_memberships",
+    {
+      person_id: personId,
+      client_id: clientId,
+      role: persona.role,
+      access_level: "client_admin",
+      financial_visibility: true,
+      can_admin_users: persona.email.startsWith("admin@"),
+      can_create_programs: true,
+      can_approve_gates: true,
+      can_create_source_events: true,
+      can_approve_source_stages: true,
+      can_approve_award: true,
+      can_upload_source_artifacts: true,
+      can_generate_sourcing_artifacts: true,
+      can_publish_sourcing_artifacts: true,
+    },
+    ["person_id", "client_id"],
+  );
+}
+
+async function seedMoveParticipants(
+  client: PgClient,
+  persona: PersonaSeed,
+  personId: string,
+  moveIds: Map<string, string>,
+): Promise<void> {
+  if (
+    !(await tableHasColumns(client, "engagement_participants", [
+      "engagement_id",
+      "user_id",
+    ]))
+  ) {
+    console.log(
+      "Skipped engagement_participants visibility backfill; table is unavailable.",
+    );
+    return;
+  }
+  for (const engagementId of moveIds.values()) {
+    await upsertRow(
+      client,
+      "engagement_participants",
+      {
+        engagement_id: engagementId,
+        user_id: personId,
+        user_name: persona.name,
+        role: persona.title,
+        notify_on: ["gate_review", "value_review"],
+        approval_authority: "approver",
+        program_access_level: "program_member",
+        can_view_financial: true,
+        can_upload: true,
+        can_generate_deliverables: true,
+        can_publish_deliverables: true,
+        can_approve_phase_gates: true,
+      },
+      ["engagement_id", "user_id"],
+    );
+  }
+}
+
+async function seedSourceParticipants(
+  client: PgClient,
+  persona: PersonaSeed,
+  personId: string,
+  sourceEventIds: string[],
+): Promise<void> {
+  if (
+    !(await tableHasColumns(client, "source_event_participants", [
+      "client_key",
+      "source_event_id",
+      "user_id",
+    ]))
+  ) {
+    console.log(
+      "Skipped source_event_participants visibility backfill; table is unavailable.",
+    );
+    return;
+  }
+  for (const sourceEventId of sourceEventIds) {
+    await upsertRow(
+      client,
+      "source_event_participants",
+      {
+        client_key: SOURCE_CLIENT_KEY,
+        source_event_id: sourceEventId,
+        source_event_row_id: sourceEventId,
+        user_id: personId,
+        user_name: persona.name,
+        role: persona.title,
+        approval_authority: "approver",
+        source_access_level: "source_member",
+        can_view_financial: true,
+        can_upload_source_artifacts: true,
+        can_generate_sourcing_artifacts: true,
+        can_publish_sourcing_artifacts: true,
+        can_approve_source_stages: true,
+        can_approve_award: true,
+        notify_on: ["stage_gate", "award_review"],
+      },
+      ["client_key", "source_event_id", "user_id"],
+    );
+  }
+}
+
+async function seedPersonaVisibility(
+  client: PgClient,
+  clientId: string,
+  moveIds: Map<string, string>,
+  sourceEventIds: string[],
+): Promise<void> {
+  for (const persona of VISIBILITY_PERSONAS) {
+    const personId = await ensurePersona(client, persona);
+    await seedClientMembership(client, clientId, personId, persona);
+    await seedMoveParticipants(client, persona, personId, moveIds);
+    await seedSourceParticipants(client, persona, personId, sourceEventIds);
+    console.log(
+      `Seeded scoped visibility for ${persona.name} (${persona.email}).`,
+    );
+  }
+}
+
 async function summarize(client: PgClient, clientId: string): Promise<void> {
-  const moveSummary = await client.query<{ n: string; low: string | null; high: string | null }>(
+  const moveSummary = await client.query<{
+    n: string;
+    low: string | null;
+    high: string | null;
+  }>(
     `
     SELECT
       COUNT(*)::text AS n,
@@ -944,7 +1297,12 @@ async function summarize(client: PgClient, clientId: string): Promise<void> {
     `,
     [clientId, PROVENANCE_TAG],
   );
-  const sourceSummary = await client.query<{ events: string; artifacts: string; outlined: string; evidence: string }>(
+  const sourceSummary = await client.query<{
+    events: string;
+    artifacts: string;
+    outlined: string;
+    evidence: string;
+  }>(
     `
     SELECT
       COUNT(DISTINCT se.id)::text AS events,
@@ -957,16 +1315,22 @@ async function summarize(client: PgClient, clientId: string): Promise<void> {
     WHERE se.client_key = $1
       AND se.event_name = ANY($2)
     `,
-    [CLIENT_KEY, SOURCE_EVENTS.map((event) => event.eventName)],
+    [SOURCE_CLIENT_KEY, SOURCE_EVENTS.map((event) => event.eventName)],
   );
   const moves = moveSummary.rows[0];
   const source = sourceSummary.rows[0];
   console.log("Post-seed summary");
-  console.log(`- Seeded moves in transaction: ${moves?.n ?? "0"} (${formatUsd(Number(moves?.low ?? 0))}-${formatUsd(Number(moves?.high ?? 0))})`);
-  console.log(`- Seeded source events in transaction: ${source?.events ?? "0"}`);
+  console.log(
+    `- Seeded moves in transaction: ${moves?.n ?? "0"} (${formatUsd(Number(moves?.low ?? 0))}-${formatUsd(Number(moves?.high ?? 0))})`,
+  );
+  console.log(
+    `- Seeded source events in transaction: ${source?.events ?? "0"}`,
+  );
   console.log(`- Source scaffold artifacts: ${source?.artifacts ?? "0"}`);
   console.log(`- Source outlined/rich artifacts: ${source?.outlined ?? "0"}`);
-  console.log(`- Source evidence states beyond Not Requested: ${source?.evidence ?? "0"}`);
+  console.log(
+    `- Source evidence states beyond Not Requested: ${source?.evidence ?? "0"}`,
+  );
 }
 
 async function ensureIngestionLedger(client: PgClient): Promise<void> {
@@ -994,7 +1358,10 @@ async function ensureIngestionLedger(client: PgClient): Promise<void> {
   `);
 }
 
-async function startIngestionRun(client: PgClient, clientId: string): Promise<string> {
+async function startIngestionRun(
+  client: PgClient,
+  clientId: string,
+): Promise<string> {
   const result = await client.query<{ id: string }>(
     `
     INSERT INTO public.data_ingestion_runs (
@@ -1005,7 +1372,7 @@ async function startIngestionRun(client: PgClient, clientId: string): Promise<st
     `,
     [
       clientId,
-      CLIENT_KEY,
+      SOURCE_CLIENT_KEY,
       SOURCE_LABEL,
       SOURCE_ROOT,
       asJsonb({
@@ -1022,7 +1389,10 @@ async function startIngestionRun(client: PgClient, clientId: string): Promise<st
   return id;
 }
 
-async function completeIngestionRun(client: PgClient, runId: string): Promise<void> {
+async function completeIngestionRun(
+  client: PgClient,
+  runId: string,
+): Promise<void> {
   await client.query(
     `
     UPDATE public.data_ingestion_runs
@@ -1044,9 +1414,18 @@ async function completeIngestionRun(client: PgClient, runId: string): Promise<vo
         provenance_tag: PROVENANCE_TAG,
         loaded_moves: MOVES.length,
         loaded_source_events: SOURCE_EVENTS.length,
-        projected_move_value_low_usd: MOVES.reduce((sum, move) => sum + move.valueProjectedLowUsd, 0),
-        projected_move_value_high_usd: MOVES.reduce((sum, move) => sum + move.valueProjectedHighUsd, 0),
-        source_value_at_stake_usd: SOURCE_EVENTS.reduce((sum, event) => sum + event.estimatedValueUsd, 0),
+        projected_move_value_low_usd: MOVES.reduce(
+          (sum, move) => sum + move.valueProjectedLowUsd,
+          0,
+        ),
+        projected_move_value_high_usd: MOVES.reduce(
+          (sum, move) => sum + move.valueProjectedHighUsd,
+          0,
+        ),
+        source_value_at_stake_usd: SOURCE_EVENTS.reduce(
+          (sum, event) => sum + event.estimatedValueUsd,
+          0,
+        ),
         loader_backed: true,
         no_side_load: true,
       }),
@@ -1087,11 +1466,18 @@ async function main(): Promise<void> {
       console.log(`Seeded move: ${move.name} (${id})`);
     }
 
+    const sourceEventIds: string[] = [];
     for (const event of SOURCE_EVENTS) {
-      const eventId = await seedSourceEvent(client, event, moveIds.get(event.linkedMoveSeedKey) ?? null);
+      const eventId = await seedSourceEvent(
+        client,
+        event,
+        moveIds.get(event.linkedMoveSeedKey) ?? null,
+      );
+      sourceEventIds.push(eventId);
       console.log(`Seeded source event: ${event.eventName} (${eventId})`);
     }
 
+    await seedPersonaVisibility(client, skyharbor.id, moveIds, sourceEventIds);
     await summarize(client, skyharbor.id);
     await completeIngestionRun(client, runId);
     console.log(`Completed data_ingestion_runs ledger: ${runId}`);

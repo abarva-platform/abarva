@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. The runner creates realistic, tenant-scoped Strategic Moves and Source events for the CTO/product-development story, with value ranges, owners, evidence themes, Source intake details, scaffolded Source artifacts, and evidence readiness placeholders. It is dry-run by default, requires `--apply` before writing, and records the committed run in `data_ingestion_runs`.
+Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. The runner creates realistic, tenant-scoped Strategic Moves and Source events for the CTO/product-development story, with value ranges, owners, evidence themes, Source intake details, scaffolded Source artifacts, evidence readiness placeholders, and scoped demo-persona visibility for the SkyHarbor CTO and tenant-admin personas. It is dry-run by default, requires `--apply` before writing, and records the committed run in `data_ingestion_runs`.
 
 ## Layer Impact
 
-- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. The runner preflights the ingestion-ledger table when a demo database is missing the existing setup-data substrate object.
+- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. The runner preflights the ingestion-ledger table when a demo database is missing the existing setup-data substrate object. Source rows are written with the canonical Source key `skyharbor-air`, while signed-in app routes continue to use the app client key `skyharbor`.
 - `internal-admin`: Adds an operator command for controlled seed execution and reset of deterministic seeded rows.
 
 ## Client Applicability
@@ -30,6 +30,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - `src/scripts/seed/seed-skyharbor-moves-source-artifacts.ts`
 - `package.json` script `seed:skyharbor-artifacts`
 - Release record for this candidate.
+- Scoped visibility backfill for `cto@skyharbor-air.example.com` and `admin@skyharbor-air.example.com` through `persons`, `person_client_memberships`, `engagement_participants`, and `source_event_participants` when those tables are present.
 
 ## QA / Validation
 
@@ -42,6 +43,9 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-sdgdfbv` advanced through JSON serialization and then failed on `there is no unique or exclusion constraint matching the ON CONFLICT specification`; the runner now uses schema-tolerant manual select/update/insert upserts instead of assuming every demo database has the expected unique indexes.
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-adv9dsb` seeded all four Strategic Moves and then failed when the Source event path hit another `ON CONFLICT` constraint mismatch; Source event and scaffold state writes now use the same schema-tolerant manual upsert helper.
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-kjqxqzf` seeded all four Strategic Moves and then failed in the Source evidence-state enrichment update with `could not determine data type of parameter $2`; the runner now removes the unused parameter and keeps SQL placeholders contiguous for Postgres type inference.
+- PASS: Azure dry-run execution `job-skyharbor-load-0528-8osgu0p` succeeded after PR #3188 and rolled back.
+- PASS: Azure apply execution `job-skyharbor-load-0528-b8m0lnv` committed ledger `58eb5a16-90c2-43af-a3df-ab2c9e020c56` and loaded 4 Strategic Moves, 8 Source events, 264 Source scaffold artifacts, 24 outlined/rich artifacts, and 24 evidence states.
+- FAIL, in progress: signed-in SkyHarbor crawl `/private/tmp/nexus-skyharbor-artifact-seed/reports/skyharbor-post-apply-signed-in-crawl/2026-06-06T09-26-15-076Z/report.md` authenticated correctly and showed SkyHarbor Air, but did not show the new seeded Moves/Source events. Root cause: the seed used the app key `skyharbor` for Source rows while Source runtime reads the canonical key `skyharbor-air`; signed-in personas also need scoped membership/participant rows for the access-policy filters. This update fixes both in the seed.
 
 Live Azure apply and signed-in crawl proof remain required before marking the SkyHarbor Moves/Source backlog item complete. The apply path writes a `data_ingestion_runs` ledger row; no side-load path is approved for completion.
 
