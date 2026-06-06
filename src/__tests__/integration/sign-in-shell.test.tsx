@@ -19,16 +19,24 @@ jest.mock("@clerk/nextjs", () => ({
 }));
 
 describe("SignInShell", () => {
-  it("uses normal Clerk sign-in by default", () => {
+  it("uses email-code sign-in by default", () => {
     render(<SignInShell redirectUrl="/auth-redirect" />);
+
+    expect(screen.getByRole("button", { name: /send email code/i })).toBeTruthy();
+    expect(screen.getByText("Sign in with a one-time code.")).toBeTruthy();
+    expect(screen.queryByLabelText("Password")).toBeNull();
+    expect(screen.queryByLabelText("Access code")).toBeNull();
+    expect(screen.queryByTestId("clerk-sign-in")).toBeNull();
+  });
+
+  it("keeps normal Clerk sign-in behind an explicit mode", () => {
+    render(<SignInShell redirectUrl="/auth-redirect" signInMode="clerk" />);
 
     expect(
       screen
         .getByTestId("clerk-sign-in")
         .getAttribute("data-force-redirect-url"),
     ).toBe("/auth-redirect");
-    expect(screen.queryByLabelText("Password")).toBeNull();
-    expect(screen.queryByLabelText("Access code")).toBeNull();
   });
 
   it("keeps legacy demo-code sign-in behind an explicit mode", () => {

@@ -4,13 +4,14 @@ import { SignIn } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
 import { DemoCodeSignIn } from "@/components/auth/DemoCodeSignIn";
+import { EmailCodeSignIn } from "@/components/auth/EmailCodeSignIn";
 
 interface Props {
   redirectUrl: string;
-  signInMode?: "accessibility" | "clerk" | "demo-code";
+  signInMode?: "accessibility" | "clerk" | "demo-code" | "email-code";
 }
 
-export function SignInShell({ redirectUrl, signInMode = "clerk" }: Props) {
+export function SignInShell({ redirectUrl, signInMode = "email-code" }: Props) {
   useEffect(() => {
     clearActiveClientContext();
   }, []);
@@ -69,6 +70,8 @@ export function SignInShell({ redirectUrl, signInMode = "clerk" }: Props) {
           </div>
         ) : signInMode === "demo-code" ? (
           <DemoCodeSignIn redirectUrl={redirectUrl} />
+        ) : signInMode === "email-code" ? (
+          <EmailCodeSignIn redirectUrl={redirectUrl} />
         ) : (
           <div
             style={{
