@@ -28,6 +28,7 @@ Companion reading page:
 - Added first-90-day corporate AI strategy coverage beyond Kyriba.
 - Added IT/data modernization coverage aligned to AI needs.
 - Added captured-interaction QA proof explaining how context, patterns, evidence refs, and watch items improve answer quality.
+- Strengthened the six-month roadmap with corporate AI strategy and a parallel AI use-case portfolio beyond Kyriba.
 - Regenerated audio with improved voice direction and stricter AbarVa pronunciation guidance.
 
 ## Detailed Story Arc
@@ -57,12 +58,12 @@ Companion reading page:
 23. Product proof flow: Setup, Intelligence, Moves, Source, Tower.
 24. Captured interactions: 100 hard questions, answer evidence, scoring, and watch taxonomy.
 25. Why not raw Claude: AbarVa governs the operating frame.
-26. Six-month roadmap: context, corpus, treasury proof, Source events, execution, board proof.
+26. Six-month roadmap: AI strategy, use-case portfolio, Kyriba proof wedge, Source value events, pilots, and scale roadmap.
 27. Success standard: what a real win looks like.
 
 ## QA Notes
 
-- MP4 metadata: 1600x900, H.264 video, AAC audio, 10:30 duration, about 13.9 MB.
+- MP4 metadata: 1600x900, H.264 video, AAC audio, 10:45 duration, about 14.4 MB.
 - V3 visual sample sheet: `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png`.
 - Detailed reading HTML desktop QA: `docs/build/lakeshore-success-brief/qa/lakeshore-detailed-reading-desktop.png`.
 - Human listen-through is still required before external send to confirm voice tone and exact brand pronunciation.

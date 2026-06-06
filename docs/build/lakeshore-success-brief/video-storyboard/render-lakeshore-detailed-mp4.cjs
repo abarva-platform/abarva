@@ -352,12 +352,12 @@ const scenes = [
   {
     id: "23",
     eyebrow: "Six-month roadmap",
-    title: "The engagement should build durable capability.",
-    subtitle: "Month by month: context, corpus, treasury proof, Source value events, execution rhythm, and board-ready renewal case.",
+    title: "Build the AI strategy while proving the Kyriba wedge.",
+    subtitle: "Month by month: AI opportunity scan, use-case portfolio, governance, pilots, Source value events, modernization dependencies, and board-ready scale plan.",
     narration:
-      "The six-month roadmap should not end with a one-month sales push. Month one loads and validates context. Month two promotes editable corpus doctrine. Month three runs Kyriba and treasury gates. Month four launches Source value events. Month five moves opportunities through execution. Month six publishes the board-ready value ledger, corpus coverage, operating model, and renewal case.",
-    flow: ["M1 context", "M2 corpus", "M3 Kyriba gates", "M4 Source events", "M5 execution", "M6 board proof"],
-    highlight: "Six months should leave Lakeshore stronger after we leave.",
+      "The roadmap cannot read like Kyriba support only. Month one loads context and builds the AI opportunity inventory. Month two defines the AI strategy, use-case portfolio, governance model, and editable corpus. Month three de-risks Kyriba and designs the first use cases: cash forecasting readiness, variance detection, covenant headroom, vendor leverage, and operating exceptions. Month four launches Source value events and data and IT modernization dependencies. Month five executes pilots and captures reusable artifacts. Month six gives the board a scale roadmap, value ledger, and operating model.",
+    flow: ["M1 AI scan", "M2 strategy", "M3 Kyriba + AI", "M4 pilots + Source", "M5 execute + reuse", "M6 scale plan"],
+    highlight: "Six months should leave Lakeshore with an AI operating model, not a one-off demo.",
     camera: { x: 800, y: 480, zoom: 1.1 },
   },
   {
