@@ -53,6 +53,18 @@ guidance, which applies to all clients (all clients) but is non-breaking.
   known gaps, screenshots plan).
 - `docs/build/meridian-phs-demo/MERIDIAN_AZURE_EMBED_DRAIN_EVIDENCE_2026-06-06.md`:
   re-verified embedding-drain evidence.
+- `scripts/demo/render-board-grade-decks.ts` + `wow-demo/kernel-samples/`: render
+  the production board-grade kernel decks; commit the kernel-bound Meridian
+  costed business-case deck (curated `population_health_value_based_care` pack).
+- `docs/build/agent-response-contract/MOVES_DELIVERABLE_STANDARD.md`: canonical
+  northstar deliverable standard (per-phase TOCs, required exhibits, P0 separate,
+  P4 three decks, all-clients/global scope).
+- `src/lib/programs/expert-kernel/exports/board-grade/__tests__/deck-quality-gate.test.ts`:
+  global Deck Quality Gate enforcing the standard across all 8 Move decks for
+  healthcare/retail/banking bound Moves + honest unbound (160 assertions).
+- `src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts`: apply
+  shrink-to-fit autofit (`fit: 'shrink'`) to prose boxes (fixes text-overrun);
+  `__tests__/pptx-autofit-gate.test.ts` guards it; regenerated reference PPTX.
 
 This change touches no pilot CONTEXT side-load path. New pilot/client context
 data must still enter through the Admin Data Loader (no side-load); ingestion
@@ -69,6 +81,9 @@ hero-Move seed under `scripts/demo/` writes control-plane demo rows only
 - `npx jest src/lib/intelligence/ask/response-policy.test.ts` + prompt-contract + sentinel — passed (189 tests).
 - Hero-Move seed dry-run — passed (validates six-phase deliverable model).
 - Artifact generation — passed; `file(1)` confirms valid DOCX/XLSX/PDF/HTML/MD.
+- Deck Quality Gate — passed (160 assertions across 3 industries × 8 decks + unbound).
+- PPTX autofit gate + existing board-grade-pptx test — passed (12 assertions);
+  rendered deck is valid OOXML with shrink-to-fit autofit on every content slide.
 - Blocked / not run: live load to Azure Postgres, live Move `--apply`, and
   browser QA/screenshots — the private Azure data-plane is network-unreachable
   from Cursor Cloud and no real Clerk session is available (see
