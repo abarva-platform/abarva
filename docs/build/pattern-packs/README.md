@@ -53,6 +53,8 @@ Worked example of the distinction (verified 2026-06-06):
 | 04 | MLOps & AI Engineering | `cross-cutting/04-mlops-ai-engineering.md` |
 | 05 | Governance, Security & Compliance | `cross-cutting/05-governance-security-compliance.md` |
 | 06 | FinOps & Value Engineering | `cross-cutting/06-finops-value-engineering.md` |
+| 07 | Responsible AI & Clinical Ops | `cross-cutting/07-responsible-ai-clinical-ops.md` |
+| 08 | Source / SI Databricks Implementation | `cross-cutting/08-source-si-databricks-implementation.md` |
 
 ### Domain packs (vertical · solution patterns)
 
@@ -61,7 +63,12 @@ Worked example of the distinction (verified 2026-06-06):
 | 01 | Population Health | `domains/01-population-health.md` |
 | 02 | Clinical Performance | `domains/02-clinical-performance.md` |
 | 03 | Payer / Health Plan | `domains/03-payer-health-plan.md` |
-| — | *Finance/Treasury, Cost Reduction/Vendor* | *tranche 2 — Lakeshore* |
+| 04 | Finance / Treasury | `domains/04-finance-treasury.md` |
+| 05 | Cost Reduction / Vendor | `domains/05-cost-reduction-vendor.md` |
+
+### The Move Artifact Contract
+
+The common "what good looks like" bar every Move artifact must satisfy (not a rigid template): `MOVE_ARTIFACT_CONTRACT.md`. It defines the universal artifact dimensions (evidence · assumptions · options · architecture · economics · governance · roadmap · sourcing), the per-phase contract, the provenance contract, and how the kernel enforces it.
 
 ---
 
@@ -111,9 +118,13 @@ foundation milestone").
 | MLOps & AI Engineering | `MLOPS` |
 | Governance, Security & Compliance | `GOV` |
 | FinOps & Value Engineering | `FINOPS` |
+| Responsible AI & Clinical Ops | `RAI` |
+| Source / SI Databricks Implementation | `SISRC` |
 | Population Health | `POPH` |
 | Clinical Performance | `CLIN` |
 | Payer / Health Plan | `PAYER` |
+| Finance / Treasury | `TREAS` |
+| Cost Reduction / Vendor | `COST` |
 
 So a pattern is cited as e.g. `INGEST-03` (metadata-driven ingestion framework) or `POPH-05` (rising-risk stratification).
 
@@ -161,9 +172,15 @@ The artifact *selects and defends* a composition. Each selected pattern's ID bec
 | 04 MLOps & AI Engineering | ✓ Complete | 20 (`MLOPS-01`…`MLOPS-20`) |
 | 05 Governance, Security & Compliance | ✓ Complete | 18 (`GOV-01`…`GOV-18`) |
 | 06 FinOps & Value Engineering | ✓ Complete | 16 (`FINOPS-01`…`FINOPS-16`) |
+| 07 Responsible AI & Clinical Ops | ✓ Complete | 17 (`RAI-01`…`RAI-17`) |
+| 08 Source / SI Databricks Implementation | ✓ Complete | 16 (`SISRC-01`…`SISRC-16`) |
 | Population Health | ✓ Complete | 19 (`POPH-01`…`POPH-19`) |
 | Clinical Performance | ✓ Complete | 18 (`CLIN-01`…`CLIN-18`) |
 | Payer / Health Plan | ✓ Complete | 19 (`PAYER-01`…`PAYER-19`) |
-| Finance/Treasury, Cost/Vendor | tranche 2 — Lakeshore | — |
+| Finance / Treasury | ✓ Complete | 19 (`TREAS-01`…`TREAS-19`) |
+| Cost Reduction / Vendor | ✓ Complete | 18 (`COST-01`…`COST-18`) |
+| Move Artifact Contract | ✓ Complete | — (the cross-artifact bar) |
 
-**Tranche 1 total: 165 patterns across 9 packs (5,644 lines).** All patterns follow the locked schema and are cited as `[CODE]-[NN]`.
+**Total: 235 patterns across 13 packs + the Move Artifact Contract (~8,600 lines).** All patterns follow the locked schema and are cited as `[CODE]-[NN]`.
+
+Healthcare domains (Population Health · Clinical Performance · Payer) are encoded into the typed expert-kernel function packs and proven grounded by the corpus grounding battery (140/140). Finance/Treasury and Cost-Reduction/Vendor (Lakeshore) are authored here and ready for the same kernel encoding.
