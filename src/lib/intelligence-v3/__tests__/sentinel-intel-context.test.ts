@@ -101,6 +101,17 @@ describe('buildSentinelIntelContext', () => {
       activeTab: 'enterprise-context',
       activeClient: 'Meridian Health',
       clientKey: 'meridian',
+      evidenceContext: {
+        kind: 'enterprise_context',
+        tenantKey: 'meridian',
+        recordCount: 1030,
+        factCount: 11428,
+        relationshipCount: 220,
+        evidenceCount: 1030,
+        usableEvidenceCount: 966,
+        sourceCount: 11,
+        sourceSystems: ['ServiceNow', 'Workday'],
+      },
     });
     expect(context).toEqual(expect.objectContaining({
       tenantFacts: expect.arrayContaining([

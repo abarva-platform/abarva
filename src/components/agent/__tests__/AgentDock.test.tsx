@@ -148,6 +148,60 @@ describe("AgentDock · default mode", () => {
     expect(within(userTurn).queryByText("AI Draft")).not.toBeInTheDocument();
   });
 
+  it("shows a citation gap for substantive uncited agent text without evidence context", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body:
+              "The tenant is ready for a board-grade decision. The accountable owner should review the program evidence before committing the next phase.",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByLabelText("Citation gap")).toHaveTextContent(
+      "no source citations attached",
+    );
+  });
+
+  it("does not show a citation gap when the surface carries usable evidence context", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        surfaceContext={{
+          evidenceContext: {
+            kind: "enterprise_context",
+            tenantKey: "meridian-health",
+            recordCount: 3503,
+            factCount: 38640,
+            evidenceCount: 3503,
+            usableEvidenceCount: 3503,
+          },
+        }}
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body:
+              "Meridian Health System has a loaded Enterprise Context layer. Sentinel should answer current-state questions from that internal context before generic healthcare patterns.",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.queryByLabelText("Citation gap")).not.toBeInTheDocument();
+  });
+
   it("renders the persistent AI responsibility footer", () => {
     render(
       <AgentDock
