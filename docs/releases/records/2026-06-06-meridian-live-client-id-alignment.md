@@ -35,7 +35,7 @@ This is a loader-backed target-id alignment, not a new seed side-load. New pilot
 
 ## QA / Validation
 
-- PASS — Live Azure/Postgres read-only check found existing Meridian row: `tenant_key = meridian-health`, client id `6e419b6e-950d-4d34-a4fc-06c3e451a6c4`.
+- PASS — Live Azure/Postgres read-only check found existing Meridian row: `tenant_key = meridian-health`, client id `a20ecef5-f0ea-4890-b9d5-7375fab223ff`.
 - PASS — `git diff --check`
 - PASS — `npm run release:check -- --base origin/main --head HEAD`
 - PASS — `NODE_PATH=/Users/anand/Projects/nexus/node_modules TENANT_KEY=meridian DATABASE_URL=postgresql://placeholder /Users/anand/Projects/nexus/node_modules/.bin/tsx scripts/seed/load-tenant-substrate.ts --dry-run --concurrency=2`
