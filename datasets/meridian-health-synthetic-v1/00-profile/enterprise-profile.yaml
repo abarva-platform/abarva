@@ -1,14 +1,17 @@
 client_id: 6e419b6e-950d-4d34-a4fc-06c3e451a6c4
 client_key: meridian-health
 tenant_key: meridian-health
-name: Healthcare Composite Demo Tenant
+name: Meridian Health System
 legal_name: Healthcare Composite Demo Tenant
 industry: healthcare_provider
+headquarters: Sacramento, California
+primary_market: Northern California
+operating_model: Integrated regional health system with acute care, ambulatory, physician enterprise, population health, and payer-provider analytics operations.
 revenue_usd: 11200000000
 employees: 52000
-hospitals: 23
+hospitals: 34
 covered_lives: 1800000
 it_budget_usd: 1720000000
 modernization_spend_3yr_usd: 850000000
-strategic_posture: CDAO-led AI strategy and modernization planning across Azure, Databricks, Epic, clinical workflow, revenue integrity, interoperability, sourcing, and value realization.
+strategic_posture: CDAO-led AI strategy and modernization planning for a Sacramento-based integrated health system across Azure, Databricks, Epic, clinical workflow, revenue integrity, interoperability, sourcing, and value realization.
 data_policy: De-identified synthetic healthcare tenant shaped by public modernization patterns and AbarVa demo requirements; no confidential PHS data is included.
