@@ -4,6 +4,7 @@ import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
 import { applyPartialEvidencePolicy } from '../response-policy';
 import {
+  buildCxoQueryFocusChecklist,
   chunkAskText,
   chooseSynthesisTokenBudget,
   chooseSynthesisWordLimit,
@@ -268,6 +269,46 @@ describe('Ask Intelligence guardrails', () => {
     for (const term of requiredTerms) {
       expect(synthesizerCode).toContain(term);
     }
+  });
+
+  it('builds a query-aware focus checklist for healthcare analytics questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'What third-party datasets and provider KPIs do we need for population health?',
+    );
+
+    expect(checklist).toContain('QUESTION-SPECIFIC FOCUS CHECKLIST');
+    expect(checklist).toContain('HCUP');
+    expect(checklist).toContain('readmissions');
+    expect(checklist).toContain('length of stay');
+    expect(checklist).toContain('data products');
+    expect(checklist).toContain('evidence');
+  });
+
+  it('builds a query-aware focus checklist for modernization estate questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'What is the risk of our AWS lift-and-shift and on-prem data center exit?',
+    );
+
+    expect(checklist).toContain('AWS');
+    expect(checklist).toContain('lift-and-shift');
+    expect(checklist).toContain('on-prem exit');
+    expect(checklist).toContain('SLA');
+    expect(checklist).toContain('cutover risk');
+  });
+
+  it('builds a query-aware focus checklist for artifact, approval, and no-go questions', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'What should block the board go/no-go if the Move artifact and Source partner trigger are not approved?',
+    );
+
+    expect(checklist).toContain('artifact');
+    expect(checklist).toContain('business case');
+    expect(checklist).toContain('approval owner');
+    expect(checklist).toContain('CFO');
+    expect(checklist).toContain('CIO');
+    expect(checklist).toContain('Source partner trigger');
+    expect(checklist).toContain('Move registration');
+    expect(checklist).toContain('no-go condition');
   });
 
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {
