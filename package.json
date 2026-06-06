@@ -74,6 +74,7 @@
     "verify:pilot-data-plane": "node scripts/pilot-env/verify-data-plane.mjs",
     "auth:clerk-sso:verify": "node scripts/auth/verify-clerk-sso-readiness.mjs",
     "auth:fakeclient-sso:verify": "node scripts/auth/verify-fakeclient-sso-rehearsal.mjs",
+    "auth:agent-client-states": "npx tsx scripts/auth/prime-agent-client-auth-states.ts",
     "generate:skyharbor-substrate": "node scripts/skyharbor/generate-skyharbor-substrate.mjs",
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
     "corpus:release-manifest": "node scripts/corpus/release-manifest.mjs",
