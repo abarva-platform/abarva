@@ -20,7 +20,12 @@
   const exceljs = require('exceljs');
   const mammoth = require('mammoth');
   const _pdf = require('pdf-parse');
-  const pdfParse = (_pdf && _pdf.default) ? _pdf.default : _pdf;
+  const PDFParse = _pdf.PDFParse || (_pdf.default && _pdf.default.PDFParse) || _pdf.default || _pdf;
+  async function pdfToText(buf) {
+    const parser = new PDFParse({ data: new Uint8Array(buf) });
+    try { const r = await parser.getText(); return r.text || ''; }
+    finally { try { await parser.destroy(); } catch (e) {} }
+  }
   const crypto = require('crypto');
 
   const RESULT = { ok: false, started: new Date().toISOString(), steps: {}, errors: [] };
@@ -91,6 +96,8 @@
     if (!text) return;
     chunks.push({
       chunk_id: `${LOAD_ID}::${file.path}::${idx}`,
+      source_segment_id: file.context_domain,
+      source_record_id: file.path,
       source_doc: file.name,
       source_path: file.path,
       chunk_index: idx,
@@ -134,7 +141,7 @@
           });
         });
       } else if (t === 'pdf') {
-        const d = await pdfParse(bytes); chunkText(file, d.text || '', 1200);
+        const txt = await pdfToText(bytes); chunkText(file, txt, 1200);
       } else if (t === 'docx') {
         const d = await mammoth.extractRawText({ buffer: bytes }); chunkText(file, d.value || '', 1200);
       } else if (t === 'csv') {
@@ -159,12 +166,12 @@
     const batch = 400;
     for (let i = 0; i < chunks.length; i += batch) {
       const slice = chunks.slice(i, i + batch);
-      const cols = ['client_id', 'tenant_key', 'chunk_id', 'source_doc', 'source_path', 'chunk_index', 'chunk_text', 'token_count', 'embedding_status', 'provenance', 'chunk_metadata'];
+      const cols = ['client_id', 'tenant_key', 'chunk_id', 'source_segment_id', 'source_record_id', 'source_doc', 'source_path', 'chunk_index', 'chunk_text', 'token_count', 'embedding_status', 'provenance', 'chunk_metadata'];
       const params = []; const tuples = [];
       slice.forEach((c, j) => {
         const base = j * cols.length;
         tuples.push(`(${cols.map((_, k) => `$${base + k + 1}`).join(',')})`);
-        params.push(clientId, TENANT_KEY, c.chunk_id, c.source_doc, c.source_path, c.chunk_index, c.chunk_text, c.token_count, 'pending', JSON.stringify(c.provenance), JSON.stringify(c.chunk_metadata));
+        params.push(clientId, TENANT_KEY, c.chunk_id, c.source_segment_id, c.source_record_id, c.source_doc, c.source_path, c.chunk_index, c.chunk_text, c.token_count, 'pending', JSON.stringify(c.provenance), JSON.stringify(c.chunk_metadata));
       });
       await client.query(`insert into enterprise_context_chunks (${cols.join(',')}) values ${tuples.join(',')}`, params);
       committed += slice.length;
