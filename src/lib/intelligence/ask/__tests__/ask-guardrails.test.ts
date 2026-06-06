@@ -217,6 +217,59 @@ describe('Ask Intelligence guardrails', () => {
     expect(routeCode).toMatch(/resolveTenant\s*\(\s*\{[\s\S]*?allowFallback:\s*false/);
   });
 
+  it('keeps healthcare modernization answers grounded in executive analytics terms', () => {
+    const synthesizerCode = readFileSync(
+      join(__dirname, '..', 'synthesizer.ts'),
+      'utf8',
+    );
+
+    const requiredTerms = [
+      'HEALTHCARE + MODERNIZATION GROUNDING',
+      'HCUP',
+      'readmissions',
+      'length of stay',
+      'Stars measures',
+      'MLR',
+      'data products',
+      'reports',
+      'metrics',
+      'lift-and-shift',
+      'on-prem exits',
+      'metadata-driven ETL',
+    ];
+
+    for (const term of requiredTerms) {
+      expect(synthesizerCode).toContain(term);
+    }
+  });
+
+  it('keeps phase, artifact, approval, and no-go proof explicit in Ask prompt discipline', () => {
+    const synthesizerCode = readFileSync(
+      join(__dirname, '..', 'synthesizer.ts'),
+      'utf8',
+    );
+
+    const requiredTerms = [
+      'ARTIFACT + APPROVAL DISCIPLINE',
+      'business case',
+      'architecture artifact',
+      'Source event',
+      'board pack',
+      'audit pack',
+      'CFO',
+      'CIO',
+      'approval owner',
+      'Phase 3 architecture proof',
+      'partner / Source trigger',
+      'no-go condition',
+      'stored artifact + approval proof',
+    ];
+
+    for (const term of requiredTerms) {
+      expect(synthesizerCode).toContain(term);
+    }
+  });
+
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {
     const sources = retrieveSurfaceContextSources(
       {
