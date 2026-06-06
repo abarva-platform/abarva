@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lakeshore MP4 Executive Plates</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #5d6678;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --line: #d9d4ca;
+      --black: #000000;
+      --blue: #2457d6;
+      --teal: #0f766e;
+      --gold: #9a5b00;
+      --rose: #9f1239;
+      --blue-soft: #e9f0ff;
+      --teal-soft: #e7f6f2;
+      --gold-soft: #fff4d6;
+      --rose-soft: #fff0f3;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #111827;
+      color: var(--ink);
+    }
+    .plate {
+      width: 1600px;
+      height: 900px;
+      background: var(--paper);
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+    .topbar {
+      height: 64px;
+      background: var(--black);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 20px;
+      font-weight: 800;
+      color: rgba(255,255,255,.84);
+    }
+    .brand img {
+      width: 124px;
+      height: 28px;
+      object-fit: contain;
+    }
+    .bar-note {
+      color: rgba(255,255,255,.76);
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .content {
+      padding: 58px 72px 64px;
+      height: 836px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .kicker {
+      color: #6b7280;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      color: #111827;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 76px;
+      line-height: .96;
+      max-width: 1120px;
+      letter-spacing: -.01em;
+    }
+    h2 {
+      color: #111827;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 58px;
+      line-height: 1;
+      max-width: 1120px;
+    }
+    h3 {
+      font-size: 22px;
+      line-height: 1.1;
+    }
+    .lead {
+      color: #374151;
+      font-size: 28px;
+      line-height: 1.34;
+      max-width: 1060px;
+      font-weight: 650;
+    }
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 14px 30px rgba(15,23,42,.08);
+    }
+    .card strong {
+      display: block;
+      color: #111827;
+      font-size: 21px;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .card span, .card p {
+      display: block;
+      color: #5d6678;
+      font-size: 20px;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+    .metric {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px 24px;
+      box-shadow: 0 14px 30px rgba(15,23,42,.08);
+    }
+    .metric strong {
+      display: block;
+      color: #111827;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 56px;
+      line-height: .95;
+      margin-bottom: 10px;
+    }
+    .metric span {
+      color: #5d6678;
+      display: block;
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .pill {
+      border: 1px solid #cfd8e7;
+      background: #fff;
+      border-radius: 999px;
+      padding: 11px 17px;
+      font-size: 19px;
+      font-weight: 850;
+      color: #1f2f55;
+    }
+    .blue { background: var(--blue-soft); border-color: #b9caff; color: #2446a6; }
+    .teal { background: var(--teal-soft); border-color: #afe0d5; color: #0f766e; }
+    .gold { background: var(--gold-soft); border-color: #ebcc78; color: #8a5200; }
+    .rose { background: var(--rose-soft); border-color: #f1b5c2; color: #9f1239; }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items: center;
+      min-height: 0;
+      flex: 1;
+    }
+    .shot {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 38px rgba(15,23,42,.12);
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .shot.tall img {
+      height: 520px;
+      object-fit: cover;
+      object-position: top;
+    }
+    .shot.large img {
+      height: 610px;
+      object-fit: cover;
+      object-position: top;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .node {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 26px;
+      min-height: 170px;
+    }
+    .node.dark {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+    .node.dark strong, .node.dark span { color: #fff; }
+    .node strong {
+      color: #111827;
+      display: block;
+      font-size: 25px;
+      margin-bottom: 12px;
+    }
+    .node span {
+      color: #5d6678;
+      font-size: 20px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+    .rail {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .rail div {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 18px;
+      min-height: 126px;
+    }
+    .rail strong {
+      display: block;
+      font-size: 18px;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+    .rail span {
+      font-size: 18px;
+      line-height: 1.16;
+      font-weight: 800;
+      color: #111827;
+    }
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .month {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 220px;
+    }
+    .month strong {
+      display: block;
+      color: var(--blue);
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .month span {
+      display: block;
+      font-size: 21px;
+      font-weight: 850;
+      color: #111827;
+      line-height: 1.14;
+    }
+    .footer-note {
+      position: absolute;
+      left: 72px;
+      right: 72px;
+      bottom: 24px;
+      color: #6b7280;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    #slide-06 .content { gap: 18px; }
+    #slide-06 h2 { font-size: 54px; max-width: 1040px; }
+    #slide-06 .split { grid-template-columns: .95fr 1.05fr; gap: 30px; align-items: start; }
+    #slide-06 .shot.large img { height: 500px; }
+    #slide-06 .rail {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    #slide-06 .rail div { min-height: 112px; padding: 15px; }
+    #slide-06 .rail strong { font-size: 17px; }
+    #slide-06 .rail span { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <section class="plate" id="slide-01">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">AI Success Platform</div></div>
+    <div class="content">
+      <span class="kicker">Executive thesis</span>
+      <h1>AI success is not a chatbot problem.</h1>
+      <p class="lead">It is a governed execution layer for treasury, vendors, risk, decisions, and measurable value.</p>
+      <div class="grid grid-4">
+        <div class="metric"><strong>26/26</strong><span>live demo screenshots passed</span></div>
+        <div class="metric"><strong>100</strong><span>CXO hard questions captured</span></div>
+        <div class="metric"><strong>8,987</strong><span>published corpus patterns</span></div>
+        <div class="metric"><strong>5</strong><span>working product surfaces</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-02">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Start With Facts</div></div>
+    <div class="content">
+      <span class="kicker">Operating profile</span>
+      <h2>Model Lakeshore before AI answers.</h2>
+      <div class="grid grid-4">
+        <div class="metric"><strong>~$3B</strong><span>planning revenue baseline</span></div>
+        <div class="metric"><strong>~10k</strong><span>planning employee footprint</span></div>
+        <div class="metric"><strong>4</strong><span>modeled operating platforms</span></div>
+        <div class="metric"><strong>50</strong><span>potential countries</span></div>
+      </div>
+      <div class="grid grid-4">
+        <div class="card"><strong>Lakeshore Holdings</strong><span>Sponsor governance, treasury, board reporting.</span></div>
+        <div class="card"><strong>Northshore Supply</strong><span>Logistics, packaging, WMS/TMS.</span></div>
+        <div class="card"><strong>Northshore BrandWorks</strong><span>Promotions, sourcing, margin leverage.</span></div>
+        <div class="card"><strong>Northshore Consumer</strong><span>Commerce, inventory, customer data.</span></div>
+        <div class="card"><strong>Northshore Workplace</strong><span>Vending, route ops, cash controls.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-03">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Federated Complexity</div></div>
+    <div class="content">
+      <span class="kicker">What raw models do not see</span>
+      <h2>Lakeshore is a federated operating system.</h2>
+      <div class="flow">
+        <div class="node dark"><strong>L0 Sponsor</strong><span>Portfolio visibility, value ledger, risk concentration, board story.</span></div>
+        <div class="node"><strong>L1 HoldCos</strong><span>Separate CXO benches, banks, systems, vendors, approvals.</span></div>
+        <div class="node"><strong>L2 PortCos</strong><span>ERP extracts, KPIs, contracts, processes, workforce data.</span></div>
+      </div>
+      <div class="grid grid-5">
+        <div class="card"><strong>CFO</strong><span>Banking, ERP, cash, close.</span></div>
+        <div class="card"><strong>CIO</strong><span>CMDB, cloud, apps, data.</span></div>
+        <div class="card"><strong>COO</strong><span>Processes, KPIs, operations.</span></div>
+        <div class="card"><strong>CHRO</strong><span>Workforce, HCM, benefits.</span></div>
+        <div class="card"><strong>GC / CCO</strong><span>Contracts, risk, entities.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-04">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Context Layer</div></div>
+    <div class="content">
+      <span class="kicker">The secret sauce</span>
+      <h2>A living intelligence layer, not a static prompt.</h2>
+      <div class="split">
+        <div class="shot tall"><img src="../assets/01-setup-cxo-intel-index.png" alt="Setup context screen" /></div>
+        <div class="grid grid-1">
+          <div class="card"><strong>Tenant + role</strong><span>Who can see what, and through which persona lens.</span></div>
+          <div class="card"><strong>Operating evidence</strong><span>Systems, contracts, vendors, KPIs, risks, processes.</span></div>
+          <div class="card"><strong>Workflow state</strong><span>Move phase, Source stage, approvals, evidence gaps.</span></div>
+          <div class="card"><strong>Value ledger</strong><span>Baseline, forecast, realized value, confidence.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-05">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Editable Corpus</div></div>
+    <div class="content">
+      <span class="kicker">Doctrine improves over time</span>
+      <h2>The corpus cannot be set in stone.</h2>
+      <div class="grid grid-4">
+        <div class="metric"><strong>Edit</strong><span>CFO/Treasurer revises ownership and rules.</span></div>
+        <div class="metric"><strong>Approve</strong><span>Promote doctrine to trusted Lakeshore pattern.</span></div>
+        <div class="metric"><strong>Localize</strong><span>Capture bank, HoldCo, PortCo exceptions.</span></div>
+        <div class="metric"><strong>Retire</strong><span>Kill weak assumptions before they mislead.</span></div>
+      </div>
+      <p class="lead">Every pattern needs owner, evidence, scope, failure mode, and workflow linkage.</p>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-06">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Kyriba Wedge</div></div>
+    <div class="content">
+      <span class="kicker">Treasury modernization</span>
+      <h2>Kyriba fails when facts surface late.</h2>
+      <div class="split">
+        <div class="shot large"><img src="../assets/09-kyriba-strategy.png" alt="Kyriba Source strategy screen" /></div>
+        <div>
+          <div class="rail">
+            <div><strong>Gate 1</strong><span>Bank connectivity</span></div>
+            <div><strong>Gate 2</strong><span>ERP feed quality</span></div>
+            <div><strong>Gate 3</strong><span>Entity hierarchy</span></div>
+            <div><strong>Gate 4</strong><span>Historical cash</span></div>
+            <div><strong>Gate 5</strong><span>Controls + adoption</span></div>
+            <div><strong>Gate 6</strong><span>IC + covenants</span></div>
+          </div>
+          <div style="height:22px"></div>
+          <div class="pill-row">
+            <span class="pill blue">Bank matrix</span><span class="pill teal">ERP audit</span><span class="pill gold">Entity registry</span><span class="pill rose">Wire controls</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-07">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Beyond Kyriba</div></div>
+    <div class="content">
+      <span class="kicker">AI Success Platform</span>
+      <h2>One context layer, many value lanes.</h2>
+      <div class="grid grid-5">
+        <div class="card"><strong>Treasury</strong><span>Kyriba gates, bank consolidation, cash visibility.</span></div>
+        <div class="card"><strong>Vendor cost</strong><span>Renewals, duplicate contracts, pricing leverage.</span></div>
+        <div class="card"><strong>IT + data</strong><span>CMDB, apps, cloud, data readiness.</span></div>
+        <div class="card"><strong>Risk + cyber</strong><span>BEC controls, insurance, vendor concentration.</span></div>
+        <div class="card"><strong>Growth AI</strong><span>Reusable use cases across operating companies.</span></div>
+      </div>
+      <p class="lead">AbarVa turns each lane into Moves, Source events, artifacts, and a value ledger.</p>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-08">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Value Case</div></div>
+    <div class="content">
+      <span class="kicker">$500K / six months</span>
+      <h2>Target 5-10x value potential.</h2>
+      <div class="grid grid-4">
+        <div class="metric"><strong>$500K</strong><span>six-month investment</span></div>
+        <div class="metric"><strong>$60M</strong><span>Source value pipeline shown</span></div>
+        <div class="metric"><strong>3-5</strong><span>board-grade decisions</span></div>
+        <div class="metric"><strong>1 win</strong><span>can fund the first phase</span></div>
+      </div>
+      <div class="grid grid-4">
+        <div class="card"><strong>Avoid rollout delay</strong><span>Kyriba gates before change orders.</span></div>
+        <div class="card"><strong>Capture vendor leverage</strong><span>5-10% on addressable spend.</span></div>
+        <div class="card"><strong>Reduce execution cost</strong><span>Reuse artifacts and patterns.</span></div>
+        <div class="card"><strong>Prove value</strong><span>Finance-attested ledger.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-09">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Move Proof</div></div>
+    <div class="content">
+      <span class="kicker">Execution surface</span>
+      <h2>A Move turns insight into owned work.</h2>
+      <div class="split">
+        <div class="grid grid-1">
+          <div class="card"><strong>Phase</strong><span>Where the work is in the lifecycle.</span></div>
+          <div class="card"><strong>Evidence</strong><span>What supports the recommendation.</span></div>
+          <div class="card"><strong>Next action</strong><span>Who must decide or produce the artifact.</span></div>
+        </div>
+        <div class="shot large"><img src="../assets/02-moves-kyriba-detail.png" alt="Move detail screen" /></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-10">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Source Decision</div></div>
+    <div class="content">
+      <span class="kicker">Decision path</span>
+      <h2>Source creates the executive fork.</h2>
+      <div class="split">
+        <div class="shot large"><img src="../assets/04-source-kyriba-executive-decision.png" alt="Source decision screen" /></div>
+        <div class="grid grid-1">
+          <div class="card"><strong>Option A</strong><span>Move now on critical banks and readiness gates.</span></div>
+          <div class="card"><strong>Option B</strong><span>Broaden scope after evidence improves.</span></div>
+          <div class="card"><strong>Required proof</strong><span>Owner, artifact, gap, and approval state.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-11">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Value Discipline</div></div>
+    <div class="content">
+      <span class="kicker">Pipeline, not theater</span>
+      <h2>Forecast value and realized value stay separate.</h2>
+      <div class="split">
+        <div class="grid grid-4">
+          <div class="metric"><strong>1</strong><span>Baseline</span></div>
+          <div class="metric"><strong>2</strong><span>Forecast</span></div>
+          <div class="metric"><strong>3</strong><span>Intervention</span></div>
+          <div class="metric"><strong>4</strong><span>Finance proof</span></div>
+        </div>
+        <div class="shot large"><img src="../assets/07-source-portfolio.png" alt="Source portfolio screen" /></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-12">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Architecture Trust</div></div>
+    <div class="content">
+      <span class="kicker">More than Claude with a UI</span>
+      <h2>AbarVa governs what models can see, cite, create, and persist.</h2>
+      <div class="grid grid-4">
+        <div class="metric"><strong>App</strong><span>Setup, Intelligence, Moves, Source, Tower.</span></div>
+        <div class="metric"><strong>Orch</strong><span>Context envelope, tools, answer shape.</span></div>
+        <div class="metric"><strong>Data</strong><span>Azure/Postgres, AI Search, storage, audit.</span></div>
+        <div class="metric"><strong>Model</strong><span>Claude/OpenAI reasoning boundary.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-13">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Six-Month Roadmap</div></div>
+    <div class="content">
+      <span class="kicker">No one-month hard sell</span>
+      <h2>Six months to build the AI Success Platform.</h2>
+      <div class="timeline">
+        <div class="month"><strong>Month 1</strong><span>Load context layer</span></div>
+        <div class="month"><strong>Month 2</strong><span>Approve editable corpus</span></div>
+        <div class="month"><strong>Month 3</strong><span>Run Kyriba gates</span></div>
+        <div class="month"><strong>Month 4</strong><span>Launch Source value events</span></div>
+        <div class="month"><strong>Month 5</strong><span>Move 3-5 opportunities</span></div>
+        <div class="month"><strong>Month 6</strong><span>Publish board value pack</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" id="slide-14">
+    <div class="topbar"><div class="brand"><img src="../assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" /><span>Lakeshore</span></div><div class="bar-note">Renewal Standard</div></div>
+    <div class="content">
+      <span class="kicker">Earn the renewal</span>
+      <h2>By month six, proof should be board-ready.</h2>
+      <div class="grid grid-3">
+        <div class="metric"><strong>Coverage</strong><span>Entities, systems, contracts, banks, KPIs, risks.</span></div>
+        <div class="metric"><strong>Proof</strong><span>Kyriba readiness, Source events, decision artifacts.</span></div>
+        <div class="metric"><strong>ROI</strong><span>5-10x value potential with finance discipline.</span></div>
+      </div>
+      <p class="lead">The renewal case is not a prettier demo. It is context coverage, execution proof, and a finance-defensible value ledger.</p>
+    </div>
+  </section>
+</body>
+</html>
