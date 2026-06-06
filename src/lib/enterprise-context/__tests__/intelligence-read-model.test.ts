@@ -212,6 +212,53 @@ describe('enterprise context Intelligence read model', () => {
     expect(overview?.sentinelFacts.join('\n')).toContain('chunk-backed loader evidence');
   });
 
+  it('canonicalizes legacy app tenant aliases before reading chunk-backed context', async () => {
+    const queriedTenantKeys: string[] = [];
+    const countByTable: Record<string, number> = {
+      enterprise_context_sources: 0,
+      enterprise_context_records: 0,
+      enterprise_context_facts: 0,
+      enterprise_context_relationships: 0,
+      enterprise_context_evidence: 0,
+      enterprise_context_quality_issues: 0,
+      enterprise_context_stewardship_tasks: 0,
+      enterprise_context_chunk_queue: 0,
+    };
+    const rowsByTable: Record<string, unknown[]> = {
+      enterprise_context_chunks: [
+        chunk({ source_doc: '03-cmdb-applications-services.csv', chunk_id: 'cmdb-1' }),
+      ],
+    };
+
+    mockGetAzureReadFluentClient.mockReturnValue({
+      from: (table: string) => ({
+        select: (_columns: string, options?: { count?: 'exact'; head?: boolean }) => ({
+          eq: (_column: string, value: string) => {
+            queriedTenantKeys.push(value);
+            return {
+              range: () => {
+                if (options?.head) return Promise.resolve({ data: null, error: null, count: countByTable[table] ?? 0 });
+                return Promise.resolve({ data: rowsByTable[table] ?? [], error: null, count: null });
+              },
+              then: (onfulfilled: (value: unknown) => unknown, onrejected?: (error: unknown) => unknown) => {
+                const result = options?.head
+                  ? { data: null, error: null, count: countByTable[table] ?? 0 }
+                  : { data: rowsByTable[table] ?? [], error: null, count: null };
+                return Promise.resolve(result).then(onfulfilled, onrejected);
+              },
+            };
+          },
+        }),
+      }),
+    } as unknown as ReturnType<typeof getAzureReadFluentClient>);
+
+    const overview = await getEnterpriseContextOverviewForTenant('meridian', 'Meridian Health System');
+
+    expect(overview?.tenantKey).toBe('meridian-health');
+    expect(overview?.counts.records).toBe(1);
+    expect(new Set(queriedTenantKeys)).toEqual(new Set(['meridian-health']));
+  });
+
   it('summarizes chunk-backed context with source-doc domain counts', () => {
     const overview = summarizeEnterpriseContextChunks({
       tenantKey: 'meridian-health',
