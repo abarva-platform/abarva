@@ -27,6 +27,14 @@ import {
   renderApexCfoPackHtml,
   renderApexMasterDossierHtml,
   renderMoveCostedBusinessCaseHtml,
+  renderMoveCharterSkeletonHtml,
+  renderMoveDiscoverBriefHtml,
+  renderMoveSolutionArchitectureHtml,
+  renderMoveEstimateModelHtml,
+  renderMoveCfoPackHtml,
+  renderMoveMobilizePacketHtml,
+  renderMoveMasterDossierHtml,
+  renderMoveCostedBusinessCasePptx,
 } from '../../src/lib/programs/expert-kernel/exports/board-grade/index';
 import type { MoveBusinessCaseInput } from '../../src/lib/programs/move-business-case';
 
@@ -86,11 +94,20 @@ async function main(): Promise<void> {
       { label: 'Risk-adjustment capture', value: '88%', unit: '%' },
     ] as unknown as MoveBusinessCaseInput['baseline_metrics'],
   };
-  write(
-    MERIDIAN,
-    'costed-business-case-pack.html',
-    renderMoveCostedBusinessCaseHtml(meridianMove, today),
-  );
+  // Full Meridian deck set — every board-grade deck for the hero Move, so the
+  // whole deliverable book can be reviewed in one folder.
+  write(MERIDIAN, 'p1-charter-skeleton.html', renderMoveCharterSkeletonHtml(meridianMove, today));
+  write(MERIDIAN, 'p2-discover-brief.html', renderMoveDiscoverBriefHtml(meridianMove, today));
+  write(MERIDIAN, 'p3-solution-architecture-pack.html', renderMoveSolutionArchitectureHtml(meridianMove, today));
+  write(MERIDIAN, 'p4-costed-business-case-pack.html', renderMoveCostedBusinessCaseHtml(meridianMove, today));
+  write(MERIDIAN, 'p4-estimate-model.html', renderMoveEstimateModelHtml(meridianMove, today));
+  write(MERIDIAN, 'p4-cfo-pack.html', renderMoveCfoPackHtml(meridianMove, today));
+  write(MERIDIAN, 'p5-mobilize-packet.html', renderMoveMobilizePacketHtml(meridianMove, today));
+  write(MERIDIAN, 'master-move-dossier.html', renderMoveMasterDossierHtml(meridianMove, meridianMove.id ?? 'move', today));
+
+  // The "always PPTX" board deliverable — editable PowerPoint of the business case.
+  const movePptx = await renderMoveCostedBusinessCasePptx(meridianMove, today);
+  write(MERIDIAN, 'p4-costed-business-case-pack.pptx', movePptx);
 
   console.log('\nboard-grade kernel samples complete ->', path.relative(process.cwd(), OUT));
 }
