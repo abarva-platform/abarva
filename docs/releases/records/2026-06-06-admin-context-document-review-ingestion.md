@@ -48,11 +48,14 @@ This does not claim the newest PHS/Meridian synthetic pack is searchable. Docume
 
 ## QA / Validation
 
-- Pending local validation on this branch before final PR update:
-  - `npx jest src/lib/context-ingestion/__tests__/bulk-context-upload.test.ts src/lib/context-ingestion/__tests__/bulk-document-review.test.ts src/app/api/admin/context-layer/bulk-upload/__tests__/route.test.ts src/app/api/admin/context-layer/bulk-upload/status/__tests__/route.test.ts --runInBand`
-  - `npx eslint src/lib/context-ingestion/bulk-context-upload.ts src/lib/context-ingestion/bulk-document-review.ts src/lib/context-ingestion/bulk-context-upload-status.ts src/scripts/azure-context-ingestion-worker.ts src/app/api/admin/context-layer/bulk-upload/review/route.ts src/lib/context-ingestion/__tests__/bulk-context-upload.test.ts src/lib/context-ingestion/__tests__/bulk-document-review.test.ts src/app/api/admin/context-layer/bulk-upload/__tests__/route.test.ts`
-  - `npm run release:check`
-  - `git diff --check`
+- Passed: `npx jest src/lib/context-ingestion/__tests__/bulk-context-upload.test.ts src/lib/context-ingestion/__tests__/bulk-document-review.test.ts src/app/api/admin/context-layer/bulk-upload/__tests__/route.test.ts src/app/api/admin/context-layer/bulk-upload/status/__tests__/route.test.ts --runInBand`
+  - Result: 4 suites passed, 18 tests passed.
+  - Note: Jest emitted pre-existing duplicate manual mock warnings for Markdown/GFM mocks outside this change.
+- Passed: `npx eslint src/lib/context-ingestion/bulk-context-upload.ts src/lib/context-ingestion/bulk-document-review.ts src/lib/context-ingestion/bulk-context-upload-status.ts src/scripts/azure-context-ingestion-worker.ts src/app/api/admin/context-layer/bulk-upload/review/route.ts src/lib/context-ingestion/__tests__/bulk-context-upload.test.ts src/lib/context-ingestion/__tests__/bulk-document-review.test.ts src/app/api/admin/context-layer/bulk-upload/__tests__/route.test.ts`
+- Passed: `npm run release:check`
+  - Release Control Gate passed.
+  - Pilot Data Loader Gate passed.
+- Passed: `git diff --check`
 
 ## Rollout Plan
 
