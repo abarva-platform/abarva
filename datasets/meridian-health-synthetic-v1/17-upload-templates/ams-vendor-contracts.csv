@@ -1,0 +1,23 @@
+vendor,contract_id,service_scope,annual_value_usd,ams_tier,renewal_date,ai_clause_status,owner_role
+Epic,MR-CTR-EPIC,EHR license + hosting,42000000,strategic,2027-09-30,negotiating,VP Procurement
+Accenture,MR-CTR-ACN-AMS,Epic AMS + integration,28000000,strategic,2026-12-31,absent,VP Application Services
+Deloitte,MR-CTR-DELOITTE,Revenue cycle transformation,14500000,strategic,2026-08-31,present,VP Revenue Cycle
+Microsoft,MR-CTR-MSFT,Azure + Databricks + M365,19800000,strategic,2027-03-31,present,Chief Information Officer
+Databricks,MR-CTR-DBX,Lakehouse platform,5200000,strategic,2027-03-31,present,Chief Data Architect
+Nuance,MR-CTR-NUANCE,Ambient documentation (DAX),6400000,preferred,2026-11-30,present,CMIO
+Abridge,MR-CTR-ABRIDGE,Ambient documentation pilot,1800000,pilot,2026-07-31,present,CMIO
+Sectra,MR-CTR-SECTRA,Imaging PACS + AI,4900000,preferred,2027-01-31,negotiating,Radiology Chair
+Genesys,MR-CTR-GENESYS,Contact center platform,3600000,preferred,2026-10-31,absent,VP Patient Access
+Salesforce,MR-CTR-SFDC,Health Cloud CRM,4100000,preferred,2027-02-28,present,Chief Digital Officer
+Workday,MR-CTR-WDAY,ERP/HCM/SCM,11200000,strategic,2027-06-30,absent,VP Enterprise Applications
+Reltio,MR-CTR-RELTIO,MDM platform,2300000,preferred,2026-12-31,negotiating,Chief Data & Analytics Officer
+SAS,MR-CTR-SAS,Plan analytics,3800000,legacy,2026-09-30,absent,Chief Actuary (Plan)
+Sunquest,MR-CTR-SUNQUEST,Lab LIS,4200000,legacy,2026-08-31,absent,Lab Medical Director
+Hyland,MR-CTR-HYLAND,Document management,2700000,preferred,2027-04-30,absent,VP Clinical Applications
+Cohere Health,MR-CTR-COHERE,Prior-auth automation,3100000,pilot,2026-07-31,present,VP Revenue Cycle
+Q-Centrix,MR-CTR-QCENTRIX,Quality registry abstraction,2900000,preferred,2026-12-31,negotiating,VP Quality
+Olive (legacy),MR-CTR-OLIVE,RPA (sunsetting),900000,legacy,2026-06-30,absent,VP Application Services
+Press Ganey,MR-CTR-PG,Experience surveys,1600000,preferred,2027-01-31,absent,Chief Nursing Officer
+Vizient,MR-CTR-VIZIENT,Supply chain GPO + analytics,3400000,preferred,2026-12-31,absent,Chief Supply Chain Officer
+Tableau (legacy),MR-CTR-TABLEAU,BI (migrating to Power BI),700000,legacy,2026-09-30,absent,Chief Data & Analytics Officer
+Innovaccer,MR-CTR-INNOVACCER,Population health platform,4600000,preferred,2027-02-28,negotiating,Chief Population Health Officer

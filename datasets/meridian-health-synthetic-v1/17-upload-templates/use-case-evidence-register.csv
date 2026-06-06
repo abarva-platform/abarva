@@ -1,0 +1,31 @@
+use_case_id,use_case,evidence_type,evidence_ref,confidence,public_or_synthetic,owner_role,last_validated_date
+MR-UC-001,Ambient clinical documentation,pilot_metric,ambient-documentation-pilot.csv,high,synthetic,CMIO,2026-06-01
+MR-UC-002,Prior-auth automation,workqueue_metric,prior-auth-workqueue.csv,high,synthetic,VP Revenue Cycle,2026-06-01
+MR-UC-003,Denials prevention,denials_metric,rcm-denials.csv,high,synthetic,Revenue Integrity Director,2026-06-01
+MR-UC-004,Sepsis early warning,model_inventory,clinical-ai-model-inventory.csv,medium,synthetic,Chief Medical Officer,2026-06-01
+MR-UC-005,Imaging AI triage,worklist_metric,imaging-ai-worklist.csv,medium,synthetic,Radiology Chair,2026-06-01
+MR-UC-006,Population health gap closure,panel_metric,population-health-risk-panels.csv,high,synthetic,VP Population Health Analytics,2026-06-01
+MR-UC-007,VBC measure capture,vbc_panel,value-based-care-panel.csv,medium,synthetic,Chief Population Health Officer,2026-06-01
+MR-UC-008,Nurse staffing optimization,acuity_metric,nursing-workload-acuity.csv,medium,synthetic,Chief Nursing Officer,2026-06-01
+MR-UC-009,Digital front door deflection,journey_metric,patient-digital-front-door.csv,medium,synthetic,Chief Digital Officer,2026-06-01
+MR-UC-010,Contact center deflection,queue_metric,patient-access-contact-center.csv,medium,synthetic,VP Patient Access,2026-06-01
+MR-UC-011,Supply / pharmacy savings,spend_metric,supply-chain-pharmacy.csv,medium,synthetic,Chief Supply Chain Officer,2026-06-01
+MR-UC-012,AI governance gating,decision_log,governance-committee-decisions.csv,high,synthetic,AI Governance Council Chair,2026-06-01
+MR-UC-013,HIPAA AI controls,control_register,hipaa-ai-controls.csv,high,synthetic,Chief Privacy Officer,2026-06-01
+MR-UC-014,Databricks modernization,target_model,databricks-lakehouse-target-model.csv,medium,synthetic,Chief Data Architect,2026-06-01
+MR-UC-015,Plan analytics gap closure,plan_metric,plan-provider-analytics.csv,medium,synthetic,Health Plan COO,2026-06-01
+MR-UC-016,Vendor / AMS consolidation,contract_register,ams-vendor-contracts.csv,high,synthetic,VP Procurement,2026-06-01
+MR-UC-017,Epic optimization backlog,backlog_register,epic-optimization-backlog.csv,high,synthetic,VP Clinical Applications,2026-06-01
+MR-UC-018,KPI baseline library,kpi_library,kpi-library.csv,high,synthetic,VP Enterprise Performance,2026-06-01
+MR-UC-019,Care management engagement,staffing_metric,care-management-staffing.csv,medium,synthetic,VP Care Management,2026-06-01
+MR-UC-020,Interoperability data contracts,data_contract,clinical-data-contracts.csv,medium,synthetic,Chief Data Officer,2026-06-01
+MR-UC-021,Downtime resilience,readiness_metric,security-downtime-readiness.csv,medium,synthetic,CISO,2026-06-01
+MR-UC-022,Interoperability compliance,compliance_metric,cms-interoperability.csv,high,synthetic,Interoperability Program Director,2026-06-01
+MR-UC-023,Service-line margin,pnl_metric,service-line-pnl.csv,high,synthetic,CFO FP&A,2026-06-01
+MR-UC-024,Delivery DORA baseline,dora_metric,dora-baseline.csv,medium,synthetic,VP Engineering,2026-06-01
+MR-UC-025,Shadow AI footprint,tool_register,ai-tool-footprint.csv,medium,synthetic,AI Governance Lead,2026-06-01
+MR-UC-026,Application rationalization,portfolio,application-portfolio.csv,high,synthetic,VP Enterprise Applications,2026-06-01
+MR-UC-027,Interop topology,topology,hl7-fhir-integration-topology.json,medium,synthetic,Integration Architecture Lead,2026-06-01
+MR-UC-028,Org decision rights,org_register,org-structure-decision-rights.csv,high,synthetic,Chief Administrative Officer,2026-06-01
+MR-UC-029,ERP / data estate,estate_register,erp-data-estate.csv,high,synthetic,VP Enterprise Applications,2026-06-01
+MR-UC-030,Enterprise profile,profile,enterprise-profile.yaml,high,synthetic,Chief Strategy Officer,2026-06-01

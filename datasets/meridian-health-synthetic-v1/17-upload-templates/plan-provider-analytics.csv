@@ -1,0 +1,29 @@
+measure,line_of_business,current_value,benchmark,gap,ai_lever,owner_role,last_validated_date
+Diabetes A1c control,Medicare Advantage,68%,75%,-7 pts,Risk-panel outreach prioritization,Chief Population Health Officer,2026-06-01
+Breast cancer screening,Medicare Advantage,71%,78%,-7 pts,Care-gap nudge + scheduling,VP Population Health Analytics,2026-06-01
+Colorectal screening,Commercial,62%,70%,-8 pts,Predictive outreach,VP Population Health Analytics,2026-06-01
+Medication adherence (statins),Medicare Advantage,82%,88%,-6 pts,Pharmacy adherence model,Chief Pharmacy Officer,2026-06-01
+Plan all-cause readmission,Medicaid,15.2%,12.5%,+2.7 pts,Post-discharge risk model,Chief Population Health Officer,2026-06-01
+ED utilization / 1k,Medicaid,640,520,+120,ED diversion analytics,Health Plan COO,2026-06-01
+Annual wellness visit rate,Medicare Advantage,58%,70%,-12 pts,AWV gap targeting,Chief Population Health Officer,2026-06-01
+RAF capture vs suspected,Medicare Advantage,88%,94%,-6 pts,Suspecting model + NLP,Chief Actuary (Plan),2026-06-01
+Network leakage,Commercial,19%,12%,+7 pts,Steerage analytics,Health Plan COO,2026-06-01
+Prior auth turnaround,All LOB,31 hrs,24 hrs,+7 hrs,Auto-approval rules,VP Revenue Cycle,2026-06-01
+Specialty referral completion,Commercial,74%,85%,-11 pts,Referral loop-closure,VP Patient Access,2026-06-01
+Maternity bundle variance,Medicaid,+9%,0%,+9%,Bundle pathway analytics,Chief Medical Officer,2026-06-01
+Behavioral health access,All LOB,12 days,7 days,+5 days,Capacity + tele-BH routing,VP Digital Health,2026-06-01
+Avoidable admissions,Medicare Advantage,7.1%,5.0%,+2.1 pts,Rising-risk model,Chief Population Health Officer,2026-06-01
+Post-acute LOS,Medicare Advantage,21 days,16 days,+5 days,PAC network analytics,Health Plan COO,2026-06-01
+Quality bonus measures met,Medicare Advantage,31/40,37/40,-6,Measure-capture automation,Health Plan COO,2026-06-01
+Provider documentation gap,All LOB,14%,6%,+8 pts,Ambient + CDI assist,CMIO,2026-06-01
+Hospitalist throughput,Provider,1.9 disch/day,2.3 disch/day,-0.4,Discharge orchestration,Chief Operating Officer,2026-06-01
+Imaging appropriate use,Provider,81%,90%,-9 pts,CDS + AppropriateUse model,Radiology Chair,2026-06-01
+Sepsis mortality index,Provider,0.94,0.80,+0.14,Early-warning model tuning,Chief Medical Officer,2026-06-01
+Care management engagement,Medicaid,44%,60%,-16 pts,Outreach propensity model,VP Care Management,2026-06-01
+SDOH screening rate,Medicaid,38%,65%,-27 pts,SDOH screening prompts,Chief Population Health Officer,2026-06-01
+Telehealth follow-up adherence,All LOB,61%,75%,-14 pts,Tele follow-up nudges,VP Digital Health,2026-06-01
+Pharmacy generic dispensing,All LOB,88%,92%,-4 pts,Formulary steerage,Chief Pharmacy Officer,2026-06-01
+Denied days (concurrent),Provider,3.8%,2.0%,+1.8 pts,Utilization review model,VP Revenue Cycle,2026-06-01
+HEDIS composite,Medicare Advantage,3.5,4.0,-0.5,Composite gap orchestration,Chief Population Health Officer,2026-06-01
+Member NPS,All LOB,31,45,-14,Experience analytics,Chief Digital Officer,2026-06-01
+Provider NPS,Provider,22,40,-18,Burden-reduction program,Chief Medical Officer,2026-06-01

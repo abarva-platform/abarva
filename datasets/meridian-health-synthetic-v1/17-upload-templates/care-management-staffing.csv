@@ -1,0 +1,19 @@
+team,role,fte,vacancy_rate_pct,ai_augmentation,owner_role,line_of_business,last_validated_date
+Complex Care,RN Care Manager,84,11,rising-risk model,VP Care Management,Medicare Advantage,2026-06-01
+Complex Care,Social Worker,36,18,SDOH screening assist,VP Care Management,Medicaid,2026-06-01
+Transitions of Care,RN Care Manager,52,9,post-discharge model,VP Care Management,All LOB,2026-06-01
+Transitions of Care,Care Coordinator,40,14,outreach propensity,VP Care Management,All LOB,2026-06-01
+Behavioral Health,BH Care Manager,28,21,tele-BH routing,VP Digital Health,All LOB,2026-06-01
+Chronic Disease,RN Educator,33,12,adherence model,VP Care Management,Commercial,2026-06-01
+Utilization Mgmt,UM Nurse,61,7,auto-approval rules,VP Revenue Cycle,All LOB,2026-06-01
+Utilization Mgmt,UM Pharmacist,12,8,drug-policy model,Chief Pharmacy Officer,All LOB,2026-06-01
+Population Health,Quality Abstractor,24,16,measure-capture NLP,VP Population Health Analytics,Medicare Advantage,2026-06-01
+Population Health,Data Analyst,18,6,panel analytics,VP Population Health Analytics,All LOB,2026-06-01
+Ambulatory Care Mgmt,RN Care Manager,47,13,gap-closure targeting,VP Care Management,Commercial,2026-06-01
+Maternal Health,OB Care Manager,19,10,maternity risk model,Chief Medical Officer,Medicaid,2026-06-01
+Pharmacy Care,Clinical Pharmacist,22,9,adherence outreach,Chief Pharmacy Officer,All LOB,2026-06-01
+Member Engagement,Outreach Specialist,38,19,engagement propensity,Chief Digital Officer,All LOB,2026-06-01
+Care Mgmt Ops,Team Lead,14,5,workload balancing,VP Care Management,All LOB,2026-06-01
+Tele-Triage,Triage Nurse,30,15,symptom triage assist,VP Digital Health,All LOB,2026-06-01
+SNF Liaison,PAC Coordinator,16,12,PAC network analytics,Health Plan COO,Medicare Advantage,2026-06-01
+Care Mgmt Analytics,Reporting Analyst,9,0,engagement dashboards,VP Population Health Analytics,All LOB,2026-06-01

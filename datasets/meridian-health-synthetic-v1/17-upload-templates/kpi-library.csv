@@ -1,0 +1,41 @@
+kpi_id,kpi_name,domain,definition,target_value,owner_role,provider_plan_shared,last_validated_date
+MR-KPI-001,ALOS,Operations,"Average length of stay, observation-adjusted",4.3 days,Chief Operating Officer,provider,2026-06-01
+MR-KPI-002,ED Boarding Hours,Operations,Hours admitted patients held in ED,<3.0 hrs,Chief Operating Officer,provider,2026-06-01
+MR-KPI-003,30-Day Readmission,Quality,Risk-adjusted all-cause readmission,<13.5%,Chief Medical Officer,shared,2026-06-01
+MR-KPI-004,HCAHPS Top Box,Experience,"Top-box patient experience, bias-noted",>72,Chief Nursing Officer,provider,2026-06-01
+MR-KPI-005,Gross Denial Rate,Revenue Cycle,Initial claim denial rate gross,<7.0%,VP Revenue Cycle,provider,2026-06-01
+MR-KPI-006,Net Denial Rate,Revenue Cycle,Denials net of overturns,<3.0%,VP Revenue Cycle,provider,2026-06-01
+MR-KPI-007,Prior Auth Cycle Time,Revenue Cycle,Submit-to-decision median,<24 hrs,VP Revenue Cycle,shared,2026-06-01
+MR-KPI-008,Medical Loss Ratio,Health Plan,Plan medical loss ratio,<86%,Chief Actuary (Plan),plan,2026-06-01
+MR-KPI-009,STAR Rating,Health Plan,CMS STAR composite,>=4.0,Health Plan COO,plan,2026-06-01
+MR-KPI-010,Network Adequacy,Health Plan,Time/distance standard met,>95%,Health Plan COO,plan,2026-06-01
+MR-KPI-011,Care Gap Closure,Population Health,HEDIS gaps closed in-year,>68%,Chief Population Health Officer,shared,2026-06-01
+MR-KPI-012,Risk Adjustment Accuracy,Population Health,RAF capture vs suspected,>92%,Chief Population Health Officer,shared,2026-06-01
+MR-KPI-013,Note Documentation Time,Clinical Ops,Clinician note minutes/visit,<6.0 min,CMIO,provider,2026-06-01
+MR-KPI-014,Clinician Burnout Index,Workforce,Validated burnout survey index,<35,Chief Medical Officer,provider,2026-06-01
+MR-KPI-015,RN Turnover,Workforce,Annualized RN turnover,<14%,Chief Nursing Officer,provider,2026-06-01
+MR-KPI-016,Premium Labor %,Workforce,Premium/agency labor of total,<8%,Chief Nursing Officer,provider,2026-06-01
+MR-KPI-017,Operating Margin,Finance,System operating margin,>2.5%,Chief Financial Officer,shared,2026-06-01
+MR-KPI-018,Days Cash on Hand,Finance,Liquidity coverage,>180 days,Chief Financial Officer,shared,2026-06-01
+MR-KPI-019,IT Run Cost % Revenue,IT,IT run cost as % net revenue,<3.4%,Chief Information Officer,shared,2026-06-01
+MR-KPI-020,Application Rationalization,IT,Apps retired vs portfolio,>12/yr,VP Enterprise Applications,provider,2026-06-01
+MR-KPI-021,Critical Incident MTTR,IT,Mean time to restore Sev1,<2.0 hrs,VP IT Operations,provider,2026-06-01
+MR-KPI-022,Change Failure Rate,IT,Failed changes / total,<8%,VP Engineering,provider,2026-06-01
+MR-KPI-023,Digital Self-Service,Consumer,Visits booked self-service,>45%,Chief Digital Officer,provider,2026-06-01
+MR-KPI-024,Contact Center Abandon,Consumer,Call abandonment rate,<5%,VP Patient Access,provider,2026-06-01
+MR-KPI-025,Telehealth Utilization,Consumer,Telehealth share of ambulatory,>12%,VP Digital Health,provider,2026-06-01
+MR-KPI-026,Imaging Critical-Result TAT,Clinical Ops,Critical result notify time,<15 min,Radiology Chair,provider,2026-06-01
+MR-KPI-027,Sepsis Bundle Compliance,Quality,3-hour bundle compliance,>90%,Chief Medical Officer,provider,2026-06-01
+MR-KPI-028,Medication Safety Events,Quality,Harmful med events / 1k doses,<0.5,Chief Pharmacy Officer,provider,2026-06-01
+MR-KPI-029,AI Model Validation Coverage,AI Governance,Models with current validation,100%,AI Governance Council Chair,shared,2026-06-01
+MR-KPI-030,Shadow AI Tools,AI Governance,Unsanctioned AI tools in use,0,Chief Data & Analytics Officer,shared,2026-06-01
+MR-KPI-031,Data Quality Score,Data,Curated data product quality,>0.9,Chief Data Officer,shared,2026-06-01
+MR-KPI-032,PHI Access Anomalies,Security,Anomalous PHI access events,<5/mo,Chief Information Security Officer,shared,2026-06-01
+MR-KPI-033,Downtime Drill Coverage,Resilience,Tier-0 systems drilled/yr,100%,Chief Information Security Officer,provider,2026-06-01
+MR-KPI-034,Supply Cost / CMI Day,Supply Chain,Supply cost per CMI-adj day,<$640,Chief Supply Chain Officer,provider,2026-06-01
+MR-KPI-035,340B Margin Capture,Pharmacy,Eligible 340B margin captured,>94%,Chief Pharmacy Officer,provider,2026-06-01
+MR-KPI-036,VBC Revenue at Risk,Health Plan,Revenue under risk contracts,>$420M,Chief Population Health Officer,shared,2026-06-01
+MR-KPI-037,Quality Bonus Realization,Health Plan,STAR bonus realized,>$58M,Health Plan COO,plan,2026-06-01
+MR-KPI-038,Specialist Access Days,Access,3rd-next-available specialty,<10 days,VP Patient Access,provider,2026-06-01
+MR-KPI-039,Coding Accuracy,Revenue Cycle,Inpatient coding accuracy,>96%,VP Revenue Cycle,provider,2026-06-01
+MR-KPI-040,Forecast Accuracy (Census),Operations,Census forecast accuracy,>90%,Chief Operating Officer,provider,2026-06-01

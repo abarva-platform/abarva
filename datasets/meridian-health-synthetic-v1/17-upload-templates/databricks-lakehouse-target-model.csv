@@ -1,0 +1,25 @@
+layer,component,current_state,target_state,unity_catalog_domain,migration_wave,owner_role,last_validated_date
+Ingestion,Epic Clarity extract,Nightly SQL ETL,Delta Live Tables CDC,clinical_raw,Wave 1,Chief Data Architect,2026-06-01
+Ingestion,Tapestry claims (X12),Batch flat files,Autoloader + DLT,plan_raw,Wave 1,Chief Data Architect,2026-06-01
+Ingestion,HL7/FHIR events,Interface engine logs,Structured streaming,interop_raw,Wave 2,Integration Architecture Lead,2026-06-01
+Ingestion,Workday finance,API nightly,Partner connect + DLT,finance_raw,Wave 2,VP Enterprise Applications,2026-06-01
+Bronze,Raw clinical,On-prem landing,UC managed Delta,clinical_bronze,Wave 1,Chief Data Architect,2026-06-01
+Bronze,Raw claims,SAS work tables,UC managed Delta,plan_bronze,Wave 1,Chief Data Architect,2026-06-01
+Silver,Patient master,Reltio + EDW joins,Conformed Delta + MDM keys,patient_conformed,Wave 2,Chief Data & Analytics Officer,2026-06-01
+Silver,Encounter fact,EDW star schema,Conformed Delta,encounter_conformed,Wave 2,Chief Data & Analytics Officer,2026-06-01
+Silver,Claims fact,SAS marts,Conformed Delta,claims_conformed,Wave 2,Chief Actuary (Plan),2026-06-01
+Gold,Population health panels,Healthy Planet exports,Gold Delta + dashboards,population_health_gold,Wave 3,VP Population Health Analytics,2026-06-01
+Gold,Service-line P&L,Excel + Cognos,Gold Delta + Power BI,finance_gold,Wave 3,CFO FP&A,2026-06-01
+Gold,Denials analytics,Resolute reports,Gold Delta,revenue_cycle_gold,Wave 3,VP Revenue Cycle,2026-06-01
+Governance,Unity Catalog,None (Hive metastore),UC enterprise metastore,platform,Wave 1,Chief Data Architect,2026-06-01
+Governance,PHI access policy,DB-level grants,UC row/column masks + ABAC,platform,Wave 1,Chief Privacy Officer,2026-06-01
+Governance,Lineage,Manual docs,UC system tables lineage,platform,Wave 2,Chief Data Officer,2026-06-01
+ML,Feature store,Ad hoc tables,Databricks Feature Store,ml_features,Wave 3,Chief Data Architect,2026-06-01
+ML,Model registry,Scattered notebooks,MLflow + UC models,ml_models,Wave 3,AI Governance Council Chair,2026-06-01
+ML,Model monitoring,None,Lakehouse Monitoring,ml_models,Wave 4,AI Governance Council Chair,2026-06-01
+Consumption,Self-service BI,Cognos + Excel,Power BI Delta Sharing,consumption,Wave 3,Chief Data & Analytics Officer,2026-06-01
+Consumption,Genie / NL query,None,Genie spaces (governed),consumption,Wave 4,Chief Data & Analytics Officer,2026-06-01
+Consumption,Reverse ETL to Epic,Manual,Delta -> FHIR write-back,interop_gold,Wave 4,Integration Architecture Lead,2026-06-01
+Resilience,DR / region,Single region,Paired-region replication,platform,Wave 4,Chief Information Security Officer,2026-06-01
+FinOps,Cluster policy,Open clusters,Policy + serverless budgets,platform,Wave 2,Chief Information Officer,2026-06-01
+FinOps,Cost attribution,None,UC tags + chargeback,platform,Wave 3,Chief Financial Officer,2026-06-01

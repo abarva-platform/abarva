@@ -1,0 +1,23 @@
+backlog_id,epic_module,optimization,expected_benefit,effort_tshirt,owner_role,service_line,last_validated_date
+MR-EPIC-001,Ambulatory,SmartPhrase cleanup + note bloat reduction,Note time -2.1 min/visit,M,VP Clinical Applications,Primary Care,2026-06-01
+MR-EPIC-002,Inpatient,Sepsis BPA tuning to cut alert fatigue,Override rate -18 pts,L,CMIO,Critical Care,2026-06-01
+MR-EPIC-003,Willow Pharmacy,Closed-loop med admin gaps,Verify-step misses -30%,M,VP Clinical Applications,Pharmacy,2026-06-01
+MR-EPIC-004,Cadence,Decision-tree scheduling for specialty,Wait time -4.2 days,M,VP Patient Access,Specialty Care,2026-06-01
+MR-EPIC-005,Resolute PB/HB,Prior-auth automation hooks,Denials -12%,L,VP Revenue Cycle,Revenue Cycle,2026-06-01
+MR-EPIC-006,Beaker,Lab result turnaround dashboards,TAT -22 min,S,Lab Medical Director,Laboratory,2026-06-01
+MR-EPIC-007,Radiant,Imaging AI worklist embed,Critical-result triage -19 min,M,Radiology Chair,Radiology,2026-06-01
+MR-EPIC-008,MyChart,Digital front-door scheduling expansion,Self-service +14 pts,M,Chief Digital Officer,Consumer,2026-06-01
+MR-EPIC-009,Healthy Planet,Risk-panel registry refresh,Gap closure +9 pts,L,VP Population Health Analytics,Population Health,2026-06-01
+MR-EPIC-010,Tapestry,Plan claims auto-adjudication rules,Manual touch -25%,L,Health Plan COO,Health Plan,2026-06-01
+MR-EPIC-011,Ambulatory,Ambient documentation write-back,Clinician satisfaction +0.4,M,CMIO,Primary Care,2026-06-01
+MR-EPIC-012,Inpatient,Nursing flowsheet acuity capture,Acuity accuracy +11 pts,M,Chief Nursing Officer,Med-Surg,2026-06-01
+MR-EPIC-013,Bridges,HL7-to-FHIR migration for orders,Interface defects -30%,L,Integration Architecture Lead,Interoperability,2026-06-01
+MR-EPIC-014,Cogito,Reporting workbench self-service,Ad hoc tickets -40%,M,Chief Data & Analytics Officer,Analytics,2026-06-01
+MR-EPIC-015,Care Everywhere,External record reconciliation,Duplicate records -15%,S,CMIO,HIM,2026-06-01
+MR-EPIC-016,Hyperdrive,Browser migration completion,Page-load -1.3s,S,VP Clinical Applications,Enterprise,2026-06-01
+MR-EPIC-017,Resolute,Denial root-cause coding rules,Avoidable write-off -8%,M,VP Revenue Cycle,Revenue Cycle,2026-06-01
+MR-EPIC-018,Cadence,No-show predictive overbooking,No-show impact -3.1 pts,M,VP Patient Access,Ambulatory,2026-06-01
+MR-EPIC-019,Willow,340B inventory optimization,Pharmacy margin +$2.4M,M,Chief Supply Chain Officer,Pharmacy,2026-06-01
+MR-EPIC-020,Healthy Planet,VBC measure capture automation,STAR measure capture +6 pts,L,Chief Population Health Officer,Population Health,2026-06-01
+MR-EPIC-021,Inpatient,Discharge milestone orchestration,ALOS -0.2 days,L,Chief Operating Officer,Med-Surg,2026-06-01
+MR-EPIC-022,MyChart,Proactive outreach for care gaps,Outreach conversion +12 pts,M,VP Digital Health,Consumer,2026-06-01

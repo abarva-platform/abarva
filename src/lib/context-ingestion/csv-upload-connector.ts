@@ -159,6 +159,11 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   nursing_workload_acuity: "org_structure",
   ai_tooling_model_inventory: "it_landscape",
   incidents_ops_telemetry: "it_landscape",
+  org_decision_rights: "org_structure",
+  kpi_library: "program_inventory",
+  databricks_lakehouse_target: "it_landscape",
+  plan_provider_analytics: "program_inventory",
+  use_case_evidence: "program_inventory",
 };
 
 export function segmentKeyForContextDimension(
@@ -286,8 +291,9 @@ function normalizeScalar(value: unknown): string {
 function rowsFromJsonValue(value: unknown): CsvRow[] {
   if (Array.isArray(value)) {
     return value
-      .filter((item): item is Record<string, unknown> =>
-        Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      .filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
       )
       .map((item) =>
         Object.fromEntries(

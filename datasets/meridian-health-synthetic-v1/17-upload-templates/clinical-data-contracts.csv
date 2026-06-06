@@ -1,0 +1,19 @@
+data_product,consumer,contract_terms,phi_class,refresh_sla,owner_role,source_system,last_validated_date
+Patient master conformed,Population Health,FHIR Patient; daily,phi,24h,Chief Data Officer,Databricks,2026-06-01
+Encounter fact gold,Service-line P&L,Delta share; daily,phi,24h,Chief Data & Analytics Officer,Databricks,2026-06-01
+Claims fact conformed,Plan analytics,Delta; weekly,phi,7d,Chief Actuary (Plan),Databricks,2026-06-01
+Risk panel registry,Care Management,FHIR Group; daily,phi,24h,VP Population Health Analytics,Epic/Databricks,2026-06-01
+Denials analytics,Revenue Cycle,Delta; daily,phi,24h,VP Revenue Cycle,Databricks,2026-06-01
+Imaging worklist,Radiology AI,DICOM + HL7; realtime,phi,realtime,Radiology Chair,Sectra,2026-06-01
+Sepsis features,Early-warning model,Feature store; hourly,phi,1h,Chief Data Architect,Databricks,2026-06-01
+Care-gap measures,Quality registry,Delta; daily,phi,24h,VP Quality,Q-Centrix,2026-06-01
+Member 360,Digital front door,FHIR + CRM; daily,restricted_pii,24h,Chief Digital Officer,Salesforce,2026-06-01
+Supply spend mart,Procurement analytics,Delta share; weekly,confidential_business,7d,VP Procurement,Power BI,2026-06-01
+Workforce acuity,Staffing model,Delta; daily,restricted_pii,24h,Chief Nursing Officer,Databricks,2026-06-01
+Pharmacy adherence,Pharmacy care,Delta; daily,phi,24h,Chief Pharmacy Officer,Databricks,2026-06-01
+PHI access audit,Security GRC,System tables; hourly,restricted_pii,1h,Chief Information Security Officer,Databricks,2026-06-01
+Lineage metadata,Data governance,UC system tables; daily,confidential_business,24h,Chief Data Officer,Databricks,2026-06-01
+STAR measure mart,Health Plan,Delta; weekly,phi,7d,Health Plan COO,Databricks,2026-06-01
+SDOH screening,Care Management,FHIR Observation; daily,phi,24h,Chief Population Health Officer,Epic/Databricks,2026-06-01
+Referral loop,Patient Access,FHIR ServiceRequest; daily,phi,24h,VP Patient Access,Epic,2026-06-01
+Telehealth utilization,Digital Health,Delta; daily,phi,24h,VP Digital Health,Databricks,2026-06-01

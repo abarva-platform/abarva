@@ -1,0 +1,25 @@
+role_id,role_title,reports_to,decision_rights,span_of_control_fte,vacancy_status,source_owner,last_validated_date
+MR-ROLE-CEO,Chief Executive Officer,Board,Enterprise strategy; capital allocation,58000,filled,Board Secretary,2026-06-01
+MR-ROLE-COO,Chief Operating Officer,MR-ROLE-CEO,Hospital operations; throughput,41000,filled,Office of the COO,2026-06-01
+MR-ROLE-CFO,Chief Financial Officer,MR-ROLE-CEO,Budget; business case approval >$5M,900,filled,FP&A,2026-06-01
+MR-ROLE-CIO,Chief Information Officer,MR-ROLE-CEO,IT strategy; platform standards,1240,filled,IT PMO,2026-06-01
+MR-ROLE-CMIO,Chief Medical Information Officer,MR-ROLE-CIO,Clinical informatics; Epic clinical content,180,filled,Clinical Informatics,2026-06-01
+MR-ROLE-CDAO,Chief Data & Analytics Officer,MR-ROLE-CIO,Data platform; AI governance co-chair,210,filled,Data Office,2026-06-01
+MR-ROLE-CDO-DIG,Chief Digital Officer,MR-ROLE-CEO,Digital front door; consumer experience,120,filled,Digital Office,2026-06-01
+MR-ROLE-CNO,Chief Nursing Officer,MR-ROLE-COO,Nursing practice; staffing models,22000,filled,Nursing Admin,2026-06-01
+MR-ROLE-CMO,Chief Medical Officer,MR-ROLE-CEO,Medical staff; clinical quality,7400,filled,Medical Affairs,2026-06-01
+MR-ROLE-CISO,Chief Information Security Officer,MR-ROLE-CIO,Security posture; risk acceptance,64,filled,Security GRC,2026-06-01
+MR-ROLE-CPO,Chief Privacy Officer,MR-ROLE-CFO,HIPAA; BAA approval,22,filled,Privacy Office,2026-06-01
+MR-ROLE-PLAN-COO,Health Plan COO,MR-ROLE-CEO,Plan operations; network adequacy,2100,filled,Plan Operations,2026-06-01
+MR-ROLE-PLAN-ACT,Chief Actuary (Plan),MR-ROLE-PLAN-COO,Risk pool; medical loss ratio,38,filled,Actuarial,2026-06-01
+MR-ROLE-CPHO,Chief Population Health Officer,MR-ROLE-CMO,VBC contracts; quality gaps,340,filled,Population Health,2026-06-01
+MR-ROLE-VP-EA,VP Enterprise Applications,MR-ROLE-CIO,Application portfolio; ERP,210,filled,Enterprise Apps,2026-06-01
+MR-ROLE-VP-CLINAPP,VP Clinical Applications,MR-ROLE-CMIO,Epic build; clinical app run,160,filled,Clinical Apps,2026-06-01
+MR-ROLE-VP-APPSVC,VP Application Services,MR-ROLE-CIO,AMS; integration delivery,0,VACANT,IT PMO,2026-06-01
+MR-ROLE-VP-RCM,VP Revenue Cycle,MR-ROLE-CFO,RCM; prior auth; denials,1900,filled,Revenue Cycle,2026-06-01
+MR-ROLE-VP-PROC,VP Procurement,MR-ROLE-CFO,Vendor contracts; sourcing,70,filled,Procurement,2026-06-01
+MR-ROLE-VP-PA,VP Patient Access,MR-ROLE-COO,Scheduling; contact center,1200,filled,Patient Access,2026-06-01
+MR-ROLE-VP-DH,VP Digital Health,MR-ROLE-CDO-DIG,Telehealth; remote monitoring,95,filled,Digital Health,2026-06-01
+MR-ROLE-VP-POPHLTH,VP Population Health Analytics,MR-ROLE-CPHO,Risk panels; outcome analytics,88,filled,Population Health,2026-06-01
+MR-ROLE-RAD-CHAIR,Radiology Chair,MR-ROLE-CMO,Imaging AI safety review,520,filled,Radiology,2026-06-01
+MR-ROLE-AIGOV,AI Governance Council Chair,MR-ROLE-CDAO,AI use-case gating; model risk,18,filled,AI Governance,2026-06-01

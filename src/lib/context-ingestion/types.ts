@@ -37,7 +37,12 @@ export type ContextDimension =
   | "clinical_downtime_cyber"
   | "nursing_workload_acuity"
   | "ai_tooling_model_inventory"
-  | "incidents_ops_telemetry";
+  | "incidents_ops_telemetry"
+  | "org_decision_rights"
+  | "kpi_library"
+  | "databricks_lakehouse_target"
+  | "plan_provider_analytics"
+  | "use_case_evidence";
 
 export type UploadedFileFormat =
   | "csv"

@@ -1,0 +1,21 @@
+system_id,domain,platform,data_classification,integration_pattern,owner_role,source_system,last_validated_date
+MR-ERP-001,Finance / GL,Workday Financials,confidential_business,API + nightly batch,VP Enterprise Applications,Workday,2026-06-01
+MR-ERP-002,Supply Chain,Workday SCM,confidential_business,API,Chief Supply Chain Officer,Workday,2026-06-01
+MR-ERP-003,HCM / Payroll,Workday HCM,restricted_pii,API,Chief Human Resources Officer,Workday,2026-06-01
+MR-ERP-004,Revenue / Billing,Epic Resolute,phi,HL7 + FHIR,VP Revenue Cycle,Epic,2026-06-01
+MR-ERP-005,Clinical EHR,Epic Hyperspace,phi,FHIR + Care Everywhere,VP Clinical Applications,Epic,2026-06-01
+MR-ERP-006,Health Plan Core,Epic Tapestry,phi,X12 EDI + FHIR,Health Plan COO,Epic,2026-06-01
+MR-ERP-007,Enterprise Data Platform,Azure Databricks Lakehouse,phi,Delta + Unity Catalog,Chief Data Architect,Databricks,2026-06-01
+MR-ERP-008,Legacy DW,On-prem SQL Server EDW,phi,ETL nightly,Chief Data & Analytics Officer,SQL Server,2026-06-01
+MR-ERP-009,Master Data,Reltio MDM,confidential_business,API streaming,Chief Data & Analytics Officer,Reltio,2026-06-01
+MR-ERP-010,Claims Analytics,SAS Health,phi,Batch extract,Chief Actuary (Plan),SAS,2026-06-01
+MR-ERP-011,Lab (LIS),Sunquest,phi,HL7 v2,Lab Medical Director,Sunquest,2026-06-01
+MR-ERP-012,Imaging (PACS),Sectra PACS,phi,DICOM + HL7,Radiology Chair,Sectra,2026-06-01
+MR-ERP-013,Patient Engagement,Salesforce Health Cloud,restricted_pii,API,Chief Digital Officer,Salesforce,2026-06-01
+MR-ERP-014,Contact Center,Genesys Cloud,restricted_pii,API + event stream,VP Patient Access,Genesys,2026-06-01
+MR-ERP-015,Identity,Microsoft Entra ID,restricted_pii,SCIM + SAML,Chief Information Security Officer,Entra,2026-06-01
+MR-ERP-016,Population Health,Epic Healthy Planet + Databricks,phi,FHIR + Delta,VP Population Health Analytics,Epic/Databricks,2026-06-01
+MR-ERP-017,Document Mgmt,Hyland OnBase,phi,API + scan ingest,VP Clinical Applications,Hyland,2026-06-01
+MR-ERP-018,Procurement Analytics,Power BI on Databricks,confidential_business,Delta Sharing,VP Procurement,Power BI,2026-06-01
+MR-ERP-019,AI Feature Store,Databricks Feature Store,phi,Delta + MLflow,Chief Data Architect,Databricks,2026-06-01
+MR-ERP-020,Quality Registry,Q-Centrix + Databricks,phi,Batch + Delta,VP Quality,Q-Centrix,2026-06-01
