@@ -93,6 +93,12 @@ export interface SourceMultiAgentBriefing {
   blockers: string[];
   defers: string[];
   recommendedNextSlice: string;
+  /**
+   * Curated Domain Function Pack grounding carried through from the context
+   * bundle, when the tenant's (industry, function) identity resolved. Surfaces
+   * the same curated depth Nexus/Moves binds; undefined = honest unbound.
+   */
+  functionGrounding?: SourceAgentContextBundle['functionGrounding'];
 }
 
 // ── Sentinel-front orchestrator types (Phase 3) ──────────────────────────────
@@ -120,4 +126,10 @@ export interface SentinelSourceBriefing {
   blockers: string[];
   defers: string[];
   recommendedNextSlice: string;
+  /**
+   * Curated Domain Function Pack grounding carried through from the context
+   * bundle, when the tenant's (industry, function) identity resolved. Surfaces
+   * the same curated depth Nexus/Moves binds; undefined = honest unbound.
+   */
+  functionGrounding?: SourceAgentContextBundle['functionGrounding'];
 }
