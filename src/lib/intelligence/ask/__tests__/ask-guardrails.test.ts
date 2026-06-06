@@ -303,9 +303,10 @@ describe('Ask Intelligence guardrails', () => {
     expect(checklist).toContain('Stars measures');
     expect(checklist).toContain('evidence');
     expect(checklist).toContain('scenario upside');
-    expect(checklist).toContain('not guaranteed dollars');
+    expect(checklist).toContain('promised or committed savings');
     expect(checklist).toContain('committed dollars');
-    expect(checklist).toContain('realized savings');
+    expect(checklist).toContain('separate from realized savings');
+    expect(checklist).not.toContain('guaranteed');
   });
 
   it('builds a query-aware focus checklist for modernization estate questions', () => {
