@@ -337,7 +337,11 @@ export function buildCxoQueryFocusChecklist(query: string): string {
   }
 
   if (/\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(normalized)) {
-    lines.push("Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings.");
+    lines.push("Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings, and do not describe projected value as guaranteed or committed dollars.");
+  }
+
+  if (/\bstars\b/.test(normalized)) {
+    lines.push("Stars value spine: use the exact terms Stars measures and evidence; frame bonus dollars as scenario upside, not guaranteed dollars, committed dollars, or realized savings.");
   }
 
   if (/\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(normalized)) {

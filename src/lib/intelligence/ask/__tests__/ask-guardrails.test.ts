@@ -295,6 +295,19 @@ describe('Ask Intelligence guardrails', () => {
     expect(checklist).toContain('realized savings');
   });
 
+  it('builds a query-aware focus checklist for Stars value-spine questions without overclaiming', () => {
+    const checklist = buildCxoQueryFocusChecklist(
+      'How should Meridian use Stars improvement as a value spine without overpromising bonus dollars?',
+    );
+
+    expect(checklist).toContain('Stars measures');
+    expect(checklist).toContain('evidence');
+    expect(checklist).toContain('scenario upside');
+    expect(checklist).toContain('not guaranteed dollars');
+    expect(checklist).toContain('committed dollars');
+    expect(checklist).toContain('realized savings');
+  });
+
   it('builds a query-aware focus checklist for modernization estate questions', () => {
     const checklist = buildCxoQueryFocusChecklist(
       'What is the risk of our AWS lift-and-shift and on-prem data center exit?',
