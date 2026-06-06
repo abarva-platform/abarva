@@ -15,7 +15,7 @@
 import { buildEventScaffold } from "../../lib/source/canvas-substrate/scaffold";
 
 const APP_CLIENT_KEY = "skyharbor";
-const SOURCE_CLIENT_KEY = "skyharbor-air";
+const SOURCE_CLIENT_KEY = "skyharbor";
 const CLIENT_NAME = "SkyHarbor";
 const PROVENANCE_TAG = "skyharbor_demo_artifact_seed_2026_06_06";
 const SOURCE_LABEL = "SkyHarbor Moves and Source artifact loader";
@@ -442,7 +442,7 @@ function printPlan(): void {
   );
   console.log("SkyHarbor artifact seed plan");
   console.log(`- App client key: ${APP_CLIENT_KEY}`);
-  console.log(`- Source canonical client key: ${SOURCE_CLIENT_KEY}`);
+  console.log(`- Source runtime client key: ${SOURCE_CLIENT_KEY}`);
   console.log(`- Provenance: ${PROVENANCE_TAG}`);
   console.log(
     `- Strategic Moves: ${MOVES.length} (${formatUsd(moveValueLow)}-${formatUsd(moveValueHigh)} projected)`,

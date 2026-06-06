@@ -14,7 +14,8 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 
 ## Layer Impact
 
-- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. The runner preflights the ingestion-ledger table when a demo database is missing the existing setup-data substrate object. Source rows are written with the canonical Source key `skyharbor-air`, while signed-in app routes continue to use the app client key `skyharbor`.
+- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. The runner preflights the ingestion-ledger table when a demo database is missing the existing setup-data substrate object. Post-apply crawl proof showed the production Source portfolio currently reads the route-visible client key `skyharbor`, so this runner writes Source rows and Source participant rows with that runtime key.
+- `global-control-lane`: Adds the same canonical-email, active-client-only fallback to Strategic Moves that Source already uses, so single-client demo/test Clerk users without a `persons` UUID in Clerk metadata can see their own client Moves without gaining cross-client access.
 - `internal-admin`: Adds an operator command for controlled seed execution and reset of deterministic seeded rows.
 
 ## Client Applicability
@@ -28,6 +29,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 ## Changes Included
 
 - `src/scripts/seed/seed-skyharbor-moves-source-artifacts.ts`
+- `src/lib/auth/program-access-policy.ts`
 - `package.json` script `seed:skyharbor-artifacts`
 - Release record for this candidate.
 - Scoped visibility backfill for `cto@skyharbor-air.example.com` and `admin@skyharbor-air.example.com` through `persons`, `person_client_memberships`, `engagement_participants`, and `source_event_participants` when those tables are present.
@@ -45,7 +47,10 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-kjqxqzf` seeded all four Strategic Moves and then failed in the Source evidence-state enrichment update with `could not determine data type of parameter $2`; the runner now removes the unused parameter and keeps SQL placeholders contiguous for Postgres type inference.
 - PASS: Azure dry-run execution `job-skyharbor-load-0528-8osgu0p` succeeded after PR #3188 and rolled back.
 - PASS: Azure apply execution `job-skyharbor-load-0528-b8m0lnv` committed ledger `58eb5a16-90c2-43af-a3df-ab2c9e020c56` and loaded 4 Strategic Moves, 8 Source events, 264 Source scaffold artifacts, 24 outlined/rich artifacts, and 24 evidence states.
-- FAIL, in progress: signed-in SkyHarbor crawl `/private/tmp/nexus-skyharbor-artifact-seed/reports/skyharbor-post-apply-signed-in-crawl/2026-06-06T09-26-15-076Z/report.md` authenticated correctly and showed SkyHarbor Air, but did not show the new seeded Moves/Source events. Root cause: the seed used the app key `skyharbor` for Source rows while Source runtime reads the canonical key `skyharbor-air`; signed-in personas also need scoped membership/participant rows for the access-policy filters. This update fixes both in the seed.
+- FAIL, then partially fixed in PR #3192: signed-in SkyHarbor crawl `/private/tmp/nexus-skyharbor-artifact-seed/reports/skyharbor-post-apply-signed-in-crawl/2026-06-06T09-26-15-076Z/report.md` authenticated correctly and showed SkyHarbor Air, but did not show the new seeded Moves/Source events. PR #3192 added scoped persona visibility and canonical Source-key handling.
+- PASS: Azure dry-run execution `job-skyharbor-load-0528-qmtdz8w` succeeded after PR #3192 and rolled back. The transaction seeded 4 Moves, 8 Source events, 264 Source scaffold artifacts, 24 outlined/rich artifacts, 24 evidence states, and scoped visibility for Victor Hale and Owen Mercer.
+- PASS: Azure apply execution `job-skyharbor-load-0528-ibvygjt` committed ledger `388bba5e-64e1-45f2-8690-4dd227d6b7bf` with the same counts and persona visibility.
+- FAIL, in progress: signed-in SkyHarbor crawl `/private/tmp/nexus-skyharbor-artifact-seed/reports/skyharbor-post-3192-signed-in-crawl/2026-06-06T10-06-23-222Z/report.md` showed production `/source/portfolio?client=skyharbor` still lists the older two SkyHarbor rows keyed to the route-visible `skyharbor` client key, not the new canonical-key rows. The crawl also showed Strategic Moves still returns `NO MOVES YET` for Victor because Program access lacked Source's canonical-email fallback. This update fixes both remaining route-visibility issues.
 
 Live Azure apply and signed-in crawl proof remain required before marking the SkyHarbor Moves/Source backlog item complete. The apply path writes a `data_ingestion_runs` ledger row; no side-load path is approved for completion.
 
