@@ -14,6 +14,7 @@
 // is a labelled planning range, never an asserted fact (spec §6 hard fail).
 
 import type { FunctionPack } from '../function-pack-types';
+import { CROSS_CUTTING_ARCHITECTURE_PATTERNS } from '../cross-cutting-architecture-patterns';
 
 export const populationHealthValueBasedCarePack: FunctionPack = {
   industryKey: 'healthcare-provider',
@@ -30,7 +31,7 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
     'program can be excellent and still lose money if this function entered ' +
     'the wrong contract, mis-modelled the risk, or under-captured the ' +
     'population’s acuity.',
-  version: '1.1.0',
+  version: '1.2.0',
   lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
@@ -727,6 +728,15 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'The quality officer accountable for the program quality score.',
       controlPosture: 'human-on-the-loop',
     },
+    // Cross-cutting technical reference patterns — the platform foundation
+    // every population-health Move rests on: landing zone & private data
+    // plane, metadata-driven own-it ingestion, medallion data products,
+    // governed model serving, and the Unity Catalog / HITRUST governance
+    // spine. Authored once in cross-cutting-architecture-patterns.ts and
+    // sourced from the Pattern Pack Bible (docs/build/pattern-packs/). This is
+    // what makes a generated Solution Architecture inherit a landing zone and
+    // an own-it ingestion framework instead of improvising them.
+    ...CROSS_CUTTING_ARCHITECTURE_PATTERNS,
   ],
 
   // ── Layer 5 — Value model ─────────────────────────────────────────────────
@@ -1206,11 +1216,37 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
             'apply and how they connect.',
         },
         {
+          heading: 'Platform landing zone & private data plane',
+          guidance:
+            'Specify the cloud landing zone and private data plane the ' +
+            'capability runs on — multi-account governance, private ' +
+            'networking with no public-IP compute and an egress allowlist, ' +
+            'PrivateLink to the lakehouse, a regional Unity Catalog metastore, ' +
+            'and identity federation. State the platform-readiness gate that ' +
+            'must be green before PHI lands. Do not present an architecture ' +
+            'with no landing zone (cross-cutting pattern ' +
+            'cc_cloud_landing_zone_private_data_plane).',
+        },
+        {
+          heading: 'Ingestion & data-integration framework (own-it)',
+          guidance:
+            'Specify the metadata-driven ingestion framework that onboards ' +
+            'Epic Clarity/Caboodle, claims, ERP, and SaaS sources by ' +
+            'configuration rather than per-pipeline code — name the own-it ' +
+            'choice (e.g. DLT-META / the Databricks four-config framework, ' +
+            'Lakeflow Connect landing in the client’s own Unity Catalog) and ' +
+            'reject reinventing a bespoke framework or renting an outsourced ' +
+            'destination platform that holds the data on the vendor side ' +
+            '(cross-cutting pattern cc_metadata_driven_ingestion_framework).',
+        },
+        {
           heading: 'Population data architecture',
           guidance:
             'Specify the claims, EHR, attribution, quality, and risk feeds, ' +
             'their latency and reconciliation, and how the single ' +
-            'authoritative population view is built and governed.',
+            'authoritative population view is built and governed — as an ' +
+            'own-it, lakehouse-native reconciled layer, not a rented ' +
+            'population-health SaaS that holds the data and models.',
         },
         {
           heading: 'AI use-case design and control posture',
@@ -1238,7 +1274,13 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
           guidance:
             'State the model-monitoring, equity-check, coding-compliance, ' +
             'and audit controls, and the regulatory frames (MSSP, REACH, ' +
-            'MA/HCC, RADV) that bound the design.',
+            'MA/HCC, RADV, HEI) that bound the design. Make the governance ' +
+            'spine explicit: Unity Catalog access/lineage controls, a HITRUST ' +
+            'CSF control mapping over the cloud + lakehouse services, and ' +
+            'HIPAA via the compliance security profile + BAA with both the ' +
+            'cloud provider and the lakehouse vendor, with PHI processed in ' +
+            'the client’s own account (cross-cutting pattern ' +
+            'cc_unity_catalog_hitrust_governance).',
         },
         {
           heading: 'Integration and build approach',
