@@ -16,11 +16,12 @@
 // make most fundable now. Where a bet's feasibility depends on data the tenant
 // has not seeded, it renders as an explicit seed gap — never a fabricated bet.
 //
-// HONESTY (audit 2026-05-22): the route must NEVER show a non-healthcare tenant
-// Meridian's healthcare metrics as their own. It binds the active tenant's own
-// industry pack. If the active tenant's industry cannot be resolved at all, it
-// falls back to the Meridian reference binding — but labels it honestly as a
-// reference example, not the tenant's own analysis.
+// HONESTY (audit 2026-05-22, hardened 2026-06-06): the route must NEVER show
+// Meridian's healthcare metrics to another active tenant as its own decision
+// surface. It binds the active tenant's own industry pack. If a real active
+// tenant has no supported industry/function binding yet, it renders the empty
+// onboarding state. The Meridian reference is allowed only when there is no
+// active tenant row at all.
 //
 // Pure server-rendered read — the Function Pack is the frame, audited tenant
 // substrate fills it, and seed gaps render honestly. No kernel logic changes.
@@ -42,6 +43,7 @@ import '@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap';
 import { industryKeyForCode } from '@/lib/programs/function-identity';
 import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
 import { getActiveClientRow } from '@/lib/active-client';
+import { resolveIntelligenceDecisionRouteMode } from '@/lib/intelligence/decision-route-mode';
 import { resolveBetSelectionBinding } from '@/lib/programs/expert-kernel/domain/tenant-binding-registry';
 
 export const metadata: Metadata = {
@@ -107,22 +109,23 @@ export default async function IntelligenceDecisionPage() {
   // `expectedClientKey`, render the empty state instead. The substrate stays
   // bound to its owning tenant; the new tenant gets a real onboarding
   // signpost.
-  let intelligenceEmptyForTenant = false;
+  let bindingExpectedClientKey: string | null = null;
   if (industryKey) {
     const candidateFunctionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
     const binding = resolveBetSelectionBinding(industryKey, candidateFunctionKey);
-    if (
-      binding?.expectedClientKey &&
-      activeClientKey &&
-      binding.expectedClientKey !== activeClientKey
-    ) {
-      intelligenceEmptyForTenant = true;
-    }
+    bindingExpectedClientKey = binding?.expectedClientKey ?? null;
   }
+
+  const routeMode = resolveIntelligenceDecisionRouteMode({
+    activeClientKey,
+    industryKey,
+    bindingExpectedClientKey,
+  });
+  const intelligenceEmptyForTenant = routeMode === 'tenant-empty';
 
   let selection: ReturnType<typeof buildVbcBetSelection> = null;
 
-  if (industryKey && !intelligenceEmptyForTenant) {
+  if (industryKey && routeMode === 'tenant-selection') {
     // The active tenant's industry resolved AND the binding's
     // `expectedClientKey` matches — bind the tenant's own spine Function Pack
     // and render that industry's bet selection. No cross-tenant leak.
@@ -132,11 +135,11 @@ export default async function IntelligenceDecisionPage() {
       functionKey,
       activeTenantName ?? 'Your organisation',
     );
-  } else if (!industryKey) {
-    // The active tenant's industry could not be resolved (no row, or an
-    // unknown industry code). Fall back to the Meridian reference binding —
-    // but mark it honestly as a reference EXAMPLE so no tenant ever reads
-    // Meridian's healthcare metrics as their own analysis.
+  } else if (routeMode === 'reference-example') {
+    // No active tenant row resolved. Fall back to the Meridian reference
+    // binding, but mark it honestly as a reference EXAMPLE. A real active
+    // tenant with an unknown/unsupported industry renders the empty state
+    // instead of seeing another tenant's decision surface.
     const reference = buildVbcBetSelection(
       MERIDIAN_INDUSTRY_KEY,
       MERIDIAN_FUNCTION_KEY,
