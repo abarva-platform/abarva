@@ -1,4 +1,21 @@
-import { resolveIntelligenceDecisionRouteMode } from '../decision-route-mode';
+import {
+  firstClientSearchParam,
+  resolveIntelligenceDecisionRouteMode,
+} from '../decision-route-mode';
+
+describe('firstClientSearchParam', () => {
+  it('preserves a single requested client key', () => {
+    expect(firstClientSearchParam('lakeshore')).toBe('lakeshore');
+  });
+
+  it('uses the first requested client key when Next provides repeated params', () => {
+    expect(firstClientSearchParam(['lakeshore', 'meridian'])).toBe('lakeshore');
+  });
+
+  it('returns null when no client was requested', () => {
+    expect(firstClientSearchParam(undefined)).toBeNull();
+  });
+});
 
 describe('resolveIntelligenceDecisionRouteMode', () => {
   it('renders an empty state for an active tenant with no supported industry binding', () => {
