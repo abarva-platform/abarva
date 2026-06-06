@@ -6,6 +6,7 @@
 
 import { redirect } from 'next/navigation';
 import { IntelligenceContradictionDetailPage } from '@/components/intelligence/IntelligenceContradictionDetailPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceContradictionDetailView,
   getKnownContradictionIds,
@@ -38,5 +39,11 @@ export default async function ContradictionDetailRoute({
     redirect('/intelligence');
   }
 
-  return <IntelligenceContradictionDetailPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligenceContradictionDetailPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }

@@ -5,13 +5,20 @@
 // contradiction status, solution count, and identified gaps.
 
 import { IntelligenceQualityLensPage } from '@/components/intelligence/IntelligenceQualityLensPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import { buildIntelligenceQualityLensView } from '@/lib/intelligence/intelligence-quality-lens-view';
 
 export const metadata = {
   title: 'Knowledge Quality · Intelligence',
 };
 
-export default function QualityLensRoute() {
+export default async function QualityLensRoute() {
   const view = buildIntelligenceQualityLensView();
-  return <IntelligenceQualityLensPage view={view} />;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  return (
+    <IntelligenceQualityLensPage
+      view={view}
+      tenantName={activeClient?.name ?? 'Client workspace'}
+    />
+  );
 }

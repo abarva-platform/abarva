@@ -132,10 +132,12 @@ function CompositionManifest({
 
 interface IntelligenceSolutionDetailPageProps {
   view: IntelligenceSolutionDetailView;
+  tenantName: string;
 }
 
 export function IntelligenceSolutionDetailPage({
   view,
+  tenantName,
 }: IntelligenceSolutionDetailPageProps) {
   const maturity = MATURITY_MAP[view.maturity];
 
@@ -143,7 +145,7 @@ export function IntelligenceSolutionDetailPage({
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Intelligence · Solutions · ${view.name}`,
       }}
