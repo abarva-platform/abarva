@@ -113,11 +113,15 @@ My read: one direct recommendation or judgment.
 
 Evidence: the loaded tenant facts, source handles, counts, systems, owners, dates, or corpus patterns that make the view credible.
 
+Options: when the decision has more than one credible path, list two or three as short bullets with the trade-off on each, then say which one you would pick. Keep the ranked set tight — do not list every option.
+
 Decision fork: when the answer would change by stakeholder priority, show the two paths explicitly, e.g. "If the CFO is optimizing MLR..." versus "If the CMO is optimizing access/quality...".
+
+Assumptions: when your recommendation depends on something not yet proven in the loaded evidence, name those assumptions in one short line so the executive can challenge them.
 
 Risk / gate: the one thing that must be proven, approved, or loaded before the recommendation should advance.
 
-Do not force this structure onto tiny answers, but never return a dense 250+ word block for strategic questions.
+Do not force this structure onto tiny answers, but never return a dense 250+ word block for strategic questions. Prefer short scannable sections and bullets over walls of text.
 
 HEALTHCARE + MODERNIZATION GROUNDING
 For healthcare integrated-system questions, be concrete about the payer-provider operating model when the question asks for it. Use the terms that make the answer decision-grade:
@@ -328,40 +332,90 @@ export function buildCxoQueryFocusChecklist(query: string): string {
   const normalized = query.toLowerCase();
   const lines: string[] = [];
 
-  if (/\b(?:third[-\s]?party|external|hcup|dataset|benchmark|market data)\b/.test(normalized)) {
-    lines.push("External datasets: explicitly name HCUP when relevant, plus CMS quality / Stars, SDOH, claims, eligibility, provider directory, pharmacy, and benchmark sources.");
+  if (
+    /\b(?:third[-\s]?party|external|hcup|dataset|benchmark|market data)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "External datasets: explicitly name HCUP when relevant, plus CMS quality / Stars, SDOH, claims, eligibility, provider directory, pharmacy, and benchmark sources.",
+    );
   }
 
-  if (/\b(?:provider|hospital|clinical|readmission|length of stay|los|avoidable|utilization|quality|safety)\b/.test(normalized)) {
-    lines.push("Provider analytics: use the exact terms readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.");
+  if (
+    /\b(?:provider|hospital|clinical|readmission|length of stay|los|avoidable|utilization|quality|safety)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Provider analytics: use the exact terms readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.",
+    );
   }
 
-  if (/\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(normalized)) {
-    lines.push("Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings. If you mention realized savings, use the exact phrase separate from realized savings. Do not describe projected value as promised or committed dollars.");
+  if (
+    /\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings. If you mention realized savings, use the exact phrase separate from realized savings. Do not describe projected value as promised or committed dollars.",
+    );
   }
 
   if (/\bstars\b/.test(normalized)) {
-    lines.push("Stars value spine: use the exact terms Stars measures and evidence; frame bonus dollars as scenario upside or sensitivity, not promised or committed savings. Avoid the term realized savings unless using the exact phrase separate from realized savings.");
+    lines.push(
+      "Stars value spine: use the exact terms Stars measures and evidence; frame bonus dollars as scenario upside or sensitivity, not promised or committed savings. Avoid the term realized savings unless using the exact phrase separate from realized savings.",
+    );
   }
 
-  if (/\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(normalized)) {
-    lines.push("Databricks delivery: explicitly address bronze / silver / gold, data products, reports, metrics, lineage, Unity Catalog, PHI governance, FHIR / HL7, Epic, ERP, and metadata-driven ETL when relevant.");
+  if (
+    /\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Databricks delivery: explicitly address bronze / silver / gold, data products, reports, metrics, lineage, Unity Catalog, PHI governance, FHIR / HL7, Epic, ERP, and metadata-driven ETL when relevant.",
+    );
   }
 
-  if (/\b(?:aws|lift[-\s]?and[-\s]?shift|on[-\s]?prem|data center|rehost|refactor|modernization|cutover|rationalize|rationalization)\b/.test(normalized)) {
-    lines.push("Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalize / rationalization, operating model risk, SLA, and cutover risk when relevant.");
+  if (
+    /\b(?:aws|lift[-\s]?and[-\s]?shift|on[-\s]?prem|data center|rehost|refactor|modernization|cutover|rationalize|rationalization)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalize / rationalization, operating model risk, SLA, and cutover risk when relevant.",
+    );
   }
 
-  if (/\b(?:ams|managed service|provider|vendor|ticket factory|sow|service level|sla)\b/.test(normalized)) {
-    lines.push("Vendor / AMS proof: include SLA, operating model, service credits, governance, data quality, escalation path, and handoff boundaries when relevant.");
+  if (
+    /\b(?:ams|managed service|provider|vendor|ticket factory|sow|service level|sla)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Vendor / AMS proof: include SLA, operating model, service credits, governance, data quality, escalation path, and handoff boundaries when relevant.",
+    );
   }
 
-  if (/\b(?:model risk|clinical safety|drift|monitoring|human[-\s]?in[-\s]?the[-\s]?loop|governance|data quality|quality gate|validation)\b/.test(normalized)) {
-    lines.push("Risk controls: include drift, data quality, governance, validation, monitoring, human-in-the-loop review, audit trail, rollback, and evidence when relevant.");
+  if (
+    /\b(?:model risk|clinical safety|drift|monitoring|human[-\s]?in[-\s]?the[-\s]?loop|governance|data quality|quality gate|validation)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Risk controls: include drift, data quality, governance, validation, monitoring, human-in-the-loop review, audit trail, rollback, and evidence when relevant.",
+    );
   }
 
-  if (/\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence|reviewable|slide|synthetic note)\b/.test(normalized)) {
-    lines.push("Artifact / approval proof: use the exact terms artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, stored evidence, and decision fork when relevant.");
+  if (
+    /\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence|reviewable|slide|synthetic note)\b/.test(
+      normalized,
+    )
+  ) {
+    lines.push(
+      "Artifact / approval proof: use the exact terms artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, stored evidence, and decision fork when relevant.",
+    );
   }
 
   if (lines.length === 0) return "";
@@ -386,16 +440,26 @@ function formatSourcesBlock(sources: AskSource[]): string {
     .join("\n\n");
 }
 
-export function formatMandatorySurfaceEvidenceBlock(sources: AskSource[]): string {
+export function formatMandatorySurfaceEvidenceBlock(
+  sources: AskSource[],
+): string {
   const prioritySources = sources
-    .filter((source) => source.type === "SURFACE" || source.type === "TENANT" || source.type === "GRAPH")
+    .filter(
+      (source) =>
+        source.type === "SURFACE" ||
+        source.type === "TENANT" ||
+        source.type === "GRAPH",
+    )
     .slice(0, 4);
   if (prioritySources.length === 0) return "";
 
   return [
     "CURRENT TENANT / SURFACE FACTS TO USE:",
     "These facts come from the authenticated product surface and loaded tenant context. Use the question-relevant facts explicitly before falling back to general doctrine.",
-    ...prioritySources.map((source, index) => `[FACT BLOCK ${index + 1} · ${source.type} · ${source.name}]\n${source.detail}`),
+    ...prioritySources.map(
+      (source, index) =>
+        `[FACT BLOCK ${index + 1} · ${source.type} · ${source.name}]\n${source.detail}`,
+    ),
   ].join("\n\n");
 }
 
@@ -461,7 +525,9 @@ export async function* synthesizeStream(args: {
     contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`
       : `${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`;
-  const mandatorySurfaceEvidenceBlock = formatMandatorySurfaceEvidenceBlock(args.sources);
+  const mandatorySurfaceEvidenceBlock = formatMandatorySurfaceEvidenceBlock(
+    args.sources,
+  );
   const focusChecklist = buildCxoQueryFocusChecklist(args.query);
   const prompt = [
     `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}`,
@@ -472,7 +538,9 @@ export async function* synthesizeStream(args: {
     isEnumeratedCompletenessAsk(args.query)
       ? "The user asked for a specific count of items. Answer every requested item before ending. Keep each item short, but do not stop after the first two or three."
       : "",
-  ].filter(Boolean).join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
     : "";

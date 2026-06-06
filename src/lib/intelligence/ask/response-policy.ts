@@ -1,4 +1,4 @@
-import type { AskSource } from './types';
+import type { AskSource } from "./types";
 
 const HOLLOW_OPENER_RE =
   /^\s*(?:good|great|excellent)\s+question(?:,\s*[A-Z][a-z]+)?\.?\s*(?:let me\s+(?:give|be|walk|explain)[^.]*\.\s*)?/i;
@@ -12,31 +12,36 @@ export function isBroadCurrentStateQuestion(query: string): boolean {
 
 export function stripMarkdownControl(text: string): string {
   return text
-    .replace(/\*\*([^*\n][\s\S]*?[^*\n])\*\*/g, '$1')
-    .replace(/\*([^*\n][^*\n]*?[^*\n])\*/g, '$1')
-    .replace(/__([^_\n][\s\S]*?[^_\n])__/g, '$1')
-    .replace(/`([^`\n]+)`/g, '$1')
-    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
-    .replace(/^\s{0,3}[-*]\s+/gm, '')
-    .replace(/[ \t]+\n/g, '\n');
+    .replace(/\*\*([^*\n][\s\S]*?[^*\n])\*\*/g, "$1")
+    .replace(/\*([^*\n][^*\n]*?[^*\n])\*/g, "$1")
+    .replace(/__([^_\n][\s\S]*?[^_\n])__/g, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}[-*]\s+/gm, "")
+    .replace(/[ \t]+\n/g, "\n");
 }
 
 export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
-  const withoutOpener = stripMarkdownControl(text.replace(HOLLOW_OPENER_RE, '').trim());
+  const withoutOpener = stripMarkdownControl(
+    text.replace(HOLLOW_OPENER_RE, "").trim(),
+  );
   const words = withoutOpener.split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return withoutOpener;
 
-  const capped = words.slice(0, maxWords).join(' ');
+  const capped = words.slice(0, maxWords).join(" ");
   const lastSentenceEnd = Math.max(
-    capped.lastIndexOf('.'),
-    capped.lastIndexOf('?'),
-    capped.lastIndexOf('!'),
+    capped.lastIndexOf("."),
+    capped.lastIndexOf("?"),
+    capped.lastIndexOf("!"),
   );
   if (lastSentenceEnd > 80) return capped.slice(0, lastSentenceEnd + 1);
-  return `${capped.replace(/[,\s;:]+$/, '')}...`;
+  return `${capped.replace(/[,\s;:]+$/, "")}...`;
 }
 
-export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): string {
+export function applyPartialEvidencePolicy(
+  text: string,
+  sources: AskSource[],
+): string {
   if (!hasTenantEvidence(sources)) return text;
 
   let rewritten = text.replace(
@@ -60,18 +65,19 @@ export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): 
   rewritten = neutralizeUnavailableDetectorPhrases(rewritten);
 
   return rewritten
-    .replace(/[ \t]{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
 export function enforceCxoSectionBreaks(text: string): string {
   const sectioned = text
     .replace(
-      /([^\n])\s+(Evidence:|Decision fork:|Risk\s*\/\s*gate:|Risk\/gate:)/g,
-      (_match, before: string, marker: string) => `${before}\n\n${normalizeCxoSectionMarker(marker)}`,
+      /([^\n])\s+(Evidence:|Options:|Decision fork:|Assumptions:|Risk\s*\/\s*gate:|Risk\/gate:)/g,
+      (_match, before: string, marker: string) =>
+        `${before}\n\n${normalizeCxoSectionMarker(marker)}`,
     )
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   const paragraphBreaks = (sectioned.match(/\n\s*\n/g) ?? []).length;
@@ -102,7 +108,7 @@ export function enforceCxoSectionBreaks(text: string): string {
       /([^\n])\s+(\d+\)\s+[A-Z][^:]{4,80})/g,
       (_match, before: string, marker: string) => `${before}\n\n${marker}`,
     )
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -110,12 +116,12 @@ export function chunkAskText(text: string): string[] {
   if (!text) return [text];
 
   const chunks: string[] = [];
-  let buffer = '';
+  let buffer = "";
   for (const char of text) {
     buffer += char;
     if (buffer.length >= 80 && /\s/.test(char)) {
       chunks.push(buffer);
-      buffer = '';
+      buffer = "";
     }
   }
 
@@ -124,19 +130,32 @@ export function chunkAskText(text: string): string[] {
 }
 
 export function buildCurrentStateAdvisory(sources: AskSource[]): string | null {
-  const facts = sources.flatMap((source) => source.detail.split('\n').map((line) => cleanFact(line)));
-  const activeClient = stripTerminalPeriod(readAfter(facts, 'Active client:') ?? readAfter(facts, 'Tenant:')) ?? 'the active client';
+  const facts = sources.flatMap((source) =>
+    source.detail.split("\n").map((line) => cleanFact(line)),
+  );
+  const activeClient =
+    stripTerminalPeriod(
+      readAfter(facts, "Active client:") ?? readAfter(facts, "Tenant:"),
+    ) ?? "the active client";
   const isApex = facts.some((fact) => /Apex Retail/i.test(fact));
-  const strategicCenter = readAfter(facts, 'Current strategic center:');
-  const executivePosture = readAfter(facts, 'Executive posture:');
-  const briefSynthesis = readAfter(facts, 'Brief synthesis:');
+  const strategicCenter = readAfter(facts, "Current strategic center:");
+  const executivePosture = readAfter(facts, "Executive posture:");
+  const briefSynthesis = readAfter(facts, "Brief synthesis:");
   const risk = facts.find((fact) => /^Risk:/i.test(fact));
   const graphEdge = facts.find((fact) => /^Graph edge:/i.test(fact));
 
-  if (!isApex && !strategicCenter && !briefSynthesis && !risk && !graphEdge) return null;
+  if (!isApex && !strategicCenter && !briefSynthesis && !risk && !graphEdge)
+    return null;
 
-  const businessLens = briefSynthesis ?? strategicCenter ?? risk ?? 'The portfolio needs sequencing before more AI commitments are added.';
-  const technicalLens = graphEdge ?? strategicCenter ?? 'The technical question is whether the data, ownership, and integration baseline is strong enough to support the next wave.';
+  const businessLens =
+    briefSynthesis ??
+    strategicCenter ??
+    risk ??
+    "The portfolio needs sequencing before more AI commitments are added.";
+  const technicalLens =
+    graphEdge ??
+    strategicCenter ??
+    "The technical question is whether the data, ownership, and integration baseline is strong enough to support the next wave.";
   const posture = executivePosture
     ? `The leadership tension is visible: ${executivePosture}`
     : `${activeClient} has enough signal for an executive conversation, but the operating model still needs sharper ownership.`;
@@ -147,51 +166,60 @@ export function buildCurrentStateAdvisory(sources: AskSource[]): string | null {
     `Technical lens: ${technicalLens}`,
     `Leadership lens: ${posture}`,
     'The next useful question is not "what number is biggest?" It is: do you want to pressure-test this from the CFO value lens, the CIO delivery lens, or the CMO customer-growth lens first?',
-  ].join('\n\n');
+  ].join("\n\n");
 }
 
 function cleanFact(line: string): string {
-  return line.replace(/^\s*-\s*/, '').replace(/\s+/g, ' ').trim();
+  return line
+    .replace(/^\s*-\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function readAfter(facts: string[], prefix: string): string | null {
-  const match = facts.find((fact) => fact.toLowerCase().startsWith(prefix.toLowerCase()));
+  const match = facts.find((fact) =>
+    fact.toLowerCase().startsWith(prefix.toLowerCase()),
+  );
   return match ? match.slice(prefix.length).trim() : null;
 }
 
 function stripTerminalPeriod(value: string | null): string | null {
-  return value ? value.replace(/\.$/, '') : null;
+  return value ? value.replace(/\.$/, "") : null;
 }
 
 function hasTenantEvidence(sources: AskSource[]): boolean {
-  return sources.some((source) => (
-    source.type === 'TENANT' ||
-    source.type === 'SURFACE' ||
-    source.type === 'GRAPH'
-  ));
+  return sources.some(
+    (source) =>
+      source.type === "TENANT" ||
+      source.type === "SURFACE" ||
+      source.type === "GRAPH",
+  );
 }
 
 function normalizeEvidenceScope(value: string): string {
   const cleaned = cleanClause(value);
-  if (!cleaned || /\b(?:the|some)\s+(?:structural\s+)?(?:picture|context)\b/i.test(cleaned)) {
-    return 'the exposure shape and decision context';
+  if (
+    !cleaned ||
+    /\b(?:the|some)\s+(?:structural\s+)?(?:picture|context)\b/i.test(cleaned)
+  ) {
+    return "the exposure shape and decision context";
   }
   return cleaned;
 }
 
 function normalizeMissingField(value: string): string {
   return cleanClause(value)
-    .replace(/^(?:a|an|the)\s+/i, 'the ')
-    .replace(/\b(?:itself|directly|specifically)\b/gi, '')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/^(?:a|an|the)\s+/i, "the ")
+    .replace(/\b(?:itself|directly|specifically)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
 function cleanClause(value: string): string {
   return value
-    .replace(/^[\s:;,\-—]+/, '')
-    .replace(/[\s:;,\-—]+$/, '')
-    .replace(/\s+/g, ' ')
+    .replace(/^[\s:;,\-—]+/, "")
+    .replace(/[\s:;,\-—]+$/, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -199,33 +227,35 @@ function neutralizeUnavailableDetectorPhrases(text: string): string {
   return text
     .replace(
       /\bNo specific ([^.?!]{1,90}?) loaded,\s+so\s+/gi,
-      (_match, field: string) => `The loaded sources do not include a specific ${cleanClause(field)}, so `,
+      (_match, field: string) =>
+        `The loaded sources do not include a specific ${cleanClause(field)}, so `,
     )
     .replace(
       /\bno SHA-MOD entry is explicitly flagged\b/gi,
-      'the loaded SHA-MOD entries are not explicitly flagged',
+      "the loaded SHA-MOD entries are not explicitly flagged",
     )
     .replace(
       /\bNo airline in a rational posture touches\b/gi,
-      'A rational airline posture leaves',
+      "A rational airline posture leaves",
     )
     .replace(
       /\bno\s+(realized value signal|real-time coupling risk|delivery track record|controversy|dispute|contested ground)\b/gi,
       (_match, phrase: string) => `zero ${phrase}`,
     )
-    .replace(/\bno clean exit path\b/gi, 'lack a clean exit path')
+    .replace(/\bno clean exit path\b/gi, "lack a clean exit path")
     .replace(
       /\bnot a ledger\b/gi,
-      'pattern-informed rather than ledger-confirmed',
+      "pattern-informed rather than ledger-confirmed",
     )
     .replace(
       /\bno ([^.?!]{1,140}?\b(?:ledger|inventory)\b)/gi,
-      (_match, phrase: string) => `the loaded evidence does not show ${cleanClause(phrase)}`,
+      (_match, phrase: string) =>
+        `the loaded evidence does not show ${cleanClause(phrase)}`,
     );
 }
 
 function normalizeCxoSectionMarker(value: string): string {
   return value
-    .replace(/^Risk\s*\/\s*gate:/i, 'Risk / gate:')
-    .replace(/^Risk\/gate:/i, 'Risk / gate:');
+    .replace(/^Risk\s*\/\s*gate:/i, "Risk / gate:")
+    .replace(/^Risk\/gate:/i, "Risk / gate:");
 }

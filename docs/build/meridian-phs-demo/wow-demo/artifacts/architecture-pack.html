@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI-enabled Population Health & Clinical Performance Command Center — Architecture Pack</title>
+<style>
+  :root{ --cream:#f5f1eb; --surface:#fff; --ink:#0c1a3a; --muted:#706d66; --accent:#0066CC; --line:#e6e1d8; }
+  *{box-sizing:border-box} body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:48px 24px}
+  .eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;text-transform:uppercase;
+    letter-spacing:.12em;font-size:12px;color:var(--accent);font-weight:600}
+  h1{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:34px;margin:.2em 0}
+  h2{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:22px;margin-top:2em}
+  .note{color:var(--muted);font-style:italic;font-size:13px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--muted)}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+</style></head>
+<body><div class="wrap">
+  <div class="eyebrow">AbarVa · Strategic Move · Architecture Pack</div>
+  <h1>AI-enabled Population Health & Clinical Performance Command Center</h1>
+  <p class="note">Meridian Health System (synthetic) — Synthetic, Meridian/PHS-inspired pilot context. Not real confidential PHS data.</p>
+  <div class="card">
+    <h2 style="margin-top:0">Lakehouse target model (Azure Databricks)</h2>
+    <table><thead><tr><th>Layer</th><th>Scope</th><th>Pattern</th></tr></thead>
+    <tbody><tr><td class="mono">Ingestion</td><td>Epic Clarity + Tapestry (X12) + HL7/FHIR</td><td>DLT / Autoloader CDC</td></tr>
+<tr><td class="mono">Bronze</td><td>Raw clinical + raw claims</td><td>UC managed Delta</td></tr>
+<tr><td class="mono">Silver</td><td>Patient master, encounter, claims conformed</td><td>MDM keys + conformed Delta</td></tr>
+<tr><td class="mono">Gold</td><td>Population-health panels, service-line P&L, denials</td><td>Gold Delta + dashboards</td></tr>
+<tr><td class="mono">ML</td><td>Rising-risk, readmission, care-gap, RAF suspecting</td><td>Feature Store + MLflow + UC models</td></tr>
+<tr><td class="mono">Governance</td><td>Unity Catalog, PHI masking/ABAC, lineage</td><td>Wave 1 platform</td></tr>
+<tr><td class="mono">Consumption</td><td>Power BI, Genie (governed), FHIR write-back</td><td>Delta Sharing + reverse-ETL</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Phase deliverables</h2>
+    <table><thead><tr><th>Phase</th><th>Deliverable</th><th>Summary</th></tr></thead>
+    <tbody><tr><td class="mono">P0 Originate</td><td>Originate brief</td><td>Frame the command-center bet across provider and plan; name sponsor, value range, and the first gate.</td></tr>
+<tr><td class="mono">P1 Charter</td><td>Charter</td><td>Lock scope, decision rights, value hypothesis, and the evidence the Move must clear at each gate.</td></tr>
+<tr><td class="mono">P2 Discover & Diagnose</td><td>Discovery brief</td><td>Diagnose the loaded baseline: gaps, denials, acuity, data readiness, and where AI realistically moves the metric.</td></tr>
+<tr><td class="mono">P3 Design Future State</td><td>Solution & target-state architecture</td><td>Design the bronze/silver/gold lakehouse, the model portfolio, and the clinical-safety governance path.</td></tr>
+<tr><td class="mono">P4 Roadmap & Business Case</td><td>Costed business case & value model</td><td>Sequence the waves, cost the platform and AMS, and produce the funding-gate business case.</td></tr>
+<tr><td class="mono">P5 Mobilize & Handoff</td><td>Mobilization plan & value-measurement contract</td><td>Stand up the RACI, the operating cadence, and the value-measurement contract Control Tower will own.</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Governance gates</h2>
+    <ul>
+      <li>Unity Catalog PHI masking + ABAC stood up in Wave 1 before any model build.</li>
+      <li>AI Governance Council clinical-safety gate before limited rollout.</li>
+      <li>Control Tower owns value realization, model monitoring, and risk after P5 handoff.</li>
+    </ul>
+  </div>
+</div></body></html>
