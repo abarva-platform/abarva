@@ -223,6 +223,19 @@
     const fields = (schema.fields || []);
     const fnames = new Set(fields.map((f) => f.name));
     const keyField = (fields.find((f) => f.key) || { name: 'chunk_id' }).name;
+    // purge stale tenant docs from prior runs (delete-by-key paging) for a clean, consistent index
+    search.purged = 0;
+    try {
+      for (let pass = 0; pass < 60; pass++) {
+        const qr = await fetch(`${SEARCH_EP}/indexes/${SEARCH_INDEX}/docs/search?api-version=2024-07-01`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tok }, body: JSON.stringify({ search: '*', filter: `tenant_key eq '${TENANT_KEY}'`, top: 1000, select: keyField }) });
+        const docs = ((await qr.json()).value || []);
+        if (!docs.length) break;
+        const del = docs.map((d) => ({ '@search.action': 'delete', [keyField]: d[keyField] }));
+        await fetch(`${SEARCH_EP}/indexes/${SEARCH_INDEX}/docs/index?api-version=2024-07-01`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tok }, body: JSON.stringify({ value: del }) });
+        search.purged += del.length;
+        await new Promise((r) => setTimeout(r, 800));
+      }
+    } catch (e) { err('search.purge', e); }
     const vectorField = (fields.find((f) => f.type && f.type.includes('Collection(Edm.Single)')) || {}).name;
     search.keyField = keyField; search.vectorField = vectorField || null; search.fields = [...fnames].slice(0, 40);
     // fetch embeddings if vector field present
