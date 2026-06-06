@@ -6,6 +6,7 @@ import {
   sanitizeAskSynthesis,
 } from "./response-policy";
 import {
+  buildOffTenantMentionFallback,
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
@@ -506,11 +507,11 @@ export async function* synthesizeStream(args: {
       query: args.query,
     });
     if (offTenantMention.detected) {
-      yield [
-        "I detected mixed-tenant language in the draft answer, so I am not going to surface it.",
-        "Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.",
-        "[tenant-isolation guard fired: off-tenant mention blocked]",
-      ].join("\n");
+      yield buildOffTenantMentionFallback({
+        clientKey: args.tenantClientKey ?? args.tenantId ?? null,
+        query: args.query,
+        term: offTenantMention.term,
+      });
       return;
     }
 
