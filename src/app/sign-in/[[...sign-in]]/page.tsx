@@ -30,7 +30,9 @@ export default async function SignInPage({
     ? "accessibility"
     : params.mode === "demo-code"
       ? "demo-code"
-      : "clerk";
+      : params.mode === "clerk"
+        ? "clerk"
+        : "email-code";
 
   return (
     <SignInShell
