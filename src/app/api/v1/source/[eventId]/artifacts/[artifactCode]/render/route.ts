@@ -70,19 +70,22 @@ async function renderArtifact(req: NextRequest, { params }: RouteCtx, method: 'G
 
   const { eventId, artifactCode } = await params;
   const url = new URL(req.url);
+  const requestedClientId = url.searchParams.get('client');
   const postOptions = method === 'POST' ? await readPostRenderOptions(req) : {};
 
   // Resolve event context before validating format, variant, or artifact code.
   // Cross-tenant callers must always see the same generic 404; otherwise a
   // bad format/code can reveal that the route exists before tenant scoping ran.
-  const ctx = await buildSourceGenerationContext(eventId);
+  const ctx = await buildSourceGenerationContext(eventId, {
+    requestedClientId,
+  });
   if (!ctx) {
     return Response.json({ error: 'not_found' }, { status: 404 });
   }
 
   // Auth gate (same as legacy routes).
   const [activeClient, currentUser] = await Promise.all([
-    getActiveClientRow().catch(() => null),
+    getActiveClientRow(requestedClientId).catch(() => null),
     getCurrentUser().catch(() => null),
   ]);
   const accessPolicy =

@@ -136,4 +136,65 @@ describe('buildSourceGenerationContext', () => {
       '522eedf2-ff6b-4307-b312-3e0903c6fd42',
     );
   });
+
+  it('retries event-code lookup through the active-client UUID before returning null', async () => {
+    const persistedEvent = {
+      ...makeSeedEvent(),
+      id: '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+      code: 'LSH-KYRIBA-TREASURY-2026',
+      name: 'Kyriba Treasury Rollout Commercial Readiness',
+      accountName: 'Lakeshore Holdings',
+    };
+    getActiveClientRow.mockResolvedValue({
+      id: 'client-lakeshore',
+      key: 'lakeshore',
+      name: 'Lakeshore Holdings',
+      industry_code: 'HOLDCO',
+    });
+    getSourcingEvent.mockImplementation(async (value: string) => {
+      if (value === '522eedf2-ff6b-4307-b312-3e0903c6fd42') {
+        return persistedEvent;
+      }
+      return null;
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+    resolveSourceEventUuidForClient.mockImplementation(
+      async (value: string, clientKey: string) => {
+        if (
+          value === 'LSH-KYRIBA-TREASURY-2026' &&
+          clientKey === 'lakeshore'
+        ) {
+          return '522eedf2-ff6b-4307-b312-3e0903c6fd42';
+        }
+        return null;
+      },
+    );
+
+    const ctx = await buildSourceGenerationContext(
+      'LSH-KYRIBA-TREASURY-2026',
+      { requestedClientId: 'lakeshore' },
+    );
+
+    expect(ctx?.event.id).toBe('522eedf2-ff6b-4307-b312-3e0903c6fd42');
+    expect(getActiveClientRow).toHaveBeenCalledWith('lakeshore');
+    expect(getSourcingEvent).toHaveBeenNthCalledWith(
+      1,
+      'LSH-KYRIBA-TREASURY-2026',
+      'lakeshore',
+    );
+    expect(resolveSourceEventUuidForClient).toHaveBeenCalledWith(
+      'LSH-KYRIBA-TREASURY-2026',
+      'lakeshore',
+    );
+    expect(getSourcingEvent).toHaveBeenNthCalledWith(
+      2,
+      '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+      'lakeshore',
+    );
+    expect(listArtifactStatesForEvent).toHaveBeenCalledWith(
+      '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+  });
 });
