@@ -14,7 +14,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 
 ## Layer Impact
 
-- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. No schema changes are included.
+- `client-data-lane`: Adds a SkyHarbor-only, loader-backed data runner for Strategic Moves and Source event artifacts. The runner records `data_ingestion_runs` audit evidence and is documented as no side-load. The runner preflights the ingestion-ledger table when a demo database is missing the existing setup-data substrate object.
 - `internal-admin`: Adds an operator command for controlled seed execution and reset of deterministic seeded rows.
 
 ## Client Applicability
@@ -37,6 +37,7 @@ Adds a controlled Admin Data Loader-backed runner for SkyHarbor demo readiness. 
 - BLOCKED: `npx tsc --noEmit --pretty false` could not run in the clean worktree because local `node_modules` is absent and `npx` resolved the placeholder `tsc` package. Run again in CI or after dependency install.
 - PASS: `npm run release:check -- --base origin/main --head HEAD`
 - FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-p6ht1ub` reached the runner and failed on `column "key" does not exist`; the client lookup now detects available `clients` columns instead of assuming `key` / `slug`.
+- FAIL, then fixed in follow-up: Azure dry-run execution `job-skyharbor-load-0528-b2ar93c` resolved SkyHarbor and then failed on `relation "public.data_ingestion_runs" does not exist`; the runner now verifies/creates the ingestion-ledger table before starting the audit row.
 
 Live Azure apply and signed-in crawl proof remain required before marking the SkyHarbor Moves/Source backlog item complete. The apply path writes a `data_ingestion_runs` ledger row; no side-load path is approved for completion.
 
