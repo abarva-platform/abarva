@@ -35,6 +35,7 @@ describe("renderSourceDeliverable · narrative kinds", () => {
     "strategy-memo",
     "scope-memo",
     "rfp-package",
+    "vendor-response-pack",
     "decision-brief",
     "selection-memo",
   ] as const) {
@@ -413,12 +414,15 @@ describe("renderSourceDeliverable · structured artifacts render every format (G
     expectPdf(pdf.buffer);
   });
 
-  it("still rejects html for structured kinds (no narrative HTML surface)", async () => {
-    await expect(
-      renderSourceDeliverable(
-        makeSpec("pricing-template", PRICING_TEMPLATE_PAYLOAD),
-        "html",
-      ),
-    ).rejects.toThrow(/Format "html" is not allowed/);
+  it("renders pricing-template html as a buyer-readable summary", async () => {
+    const result = await renderSourceDeliverable(
+      makeSpec("pricing-template", PRICING_TEMPLATE_PAYLOAD),
+      "html",
+    );
+    const html = result.buffer.toString("utf8");
+    expect(result.format).toBe("html");
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("Pricing Workbook Summary");
+    expect(html).toContain("d19_pricing_workbook");
   });
 });
