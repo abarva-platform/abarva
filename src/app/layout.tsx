@@ -5,7 +5,7 @@ import { headers } from 'next/headers'
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
-import PostHogPageView from './posthog-pageview'
+import ProductUsageTelemetry from '@/components/ProductUsageTelemetry'
 import MobileGuard from '@/components/MobileGuard'
 import { ToastProvider } from '@/components/shell/Toast'
 
@@ -58,6 +58,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const clerkDisabledForAxe = await shouldDisableClerkForAxe()
   const shell = (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
@@ -71,7 +72,7 @@ export default async function RootLayout({
       <body>
         <PostHogProvider>
           <Suspense fallback={null}>
-            <PostHogPageView />
+            <ProductUsageTelemetry clerkEnabled={!clerkDisabledForAxe} />
           </Suspense>
           <MobileGuard>
             <ToastProvider>
@@ -83,7 +84,7 @@ export default async function RootLayout({
     </html>
   )
 
-  if (await shouldDisableClerkForAxe()) {
+  if (clerkDisabledForAxe) {
     return shell
   }
 

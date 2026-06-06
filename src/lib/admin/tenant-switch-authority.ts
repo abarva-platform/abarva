@@ -3,9 +3,10 @@
  *
  * Mirrors the gate used by `/admin` layout: a caller is allowed to
  * change the active-tenant view-context only when:
- *   1. publicMetadata.role === 'admin', OR
- *   2. unsafeMetadata.role === 'admin' / publicMetadata.legacyRole === 'admin', OR
- *   3. primary email ∈ ADMIN_EMAIL_ALLOWLIST.
+ *   1. ABARVA_ENABLE_TENANT_SWITCHER === '1', AND
+ *   2. publicMetadata.role === 'admin', OR
+ *   3. unsafeMetadata.role === 'admin' / publicMetadata.legacyRole === 'admin', OR
+ *   4. primary email ∈ ADMIN_EMAIL_ALLOWLIST.
  *
  * The allowlist is the same set the /admin route gates on. If/when
  * that set moves to a single shared module this helper should re-export
@@ -55,6 +56,10 @@ export interface TenantSwitchOption {
   industryLabel: string;
 }
 
+export function isTenantSwitcherEnabled(): boolean {
+  return process.env.ABARVA_ENABLE_TENANT_SWITCHER === '1';
+}
+
 /**
  * Returns the canonical tenant options the switcher renders.
  *
@@ -86,6 +91,7 @@ export function getCanonicalTenantSwitchOptions(): ReadonlyArray<TenantSwitchOpt
  * to flip the active-tenant view-context. Mirrors the /admin route gate.
  */
 export async function canSwitchActiveTenant(): Promise<boolean> {
+  if (!isTenantSwitcherEnabled()) return false;
   try {
     const user = await currentUser();
     if (!user) return false;

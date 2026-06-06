@@ -220,11 +220,6 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> =
     ["firstcapital.example.com", "arcturus"],
     ["northstar-clinical.example.com", "northstar"],
     ["skyharbor-air.example.com", "skyharbor"],
-    // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
-    // by inference. Documented in demo_accounts memory. Anyone uncomfortable
-    // with this should remove the entry and add the email to Clerk metadata
-    // pinning instead.
-    ["thesundaram.com", "meridian"],
     ["lakeshore-holdings.example.com", "lakeshore"],
   ];
 
