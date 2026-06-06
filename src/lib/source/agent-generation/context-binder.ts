@@ -30,11 +30,27 @@ import type { SourceGenerationContext } from './types';
  */
 export async function buildSourceGenerationContext(
   eventIdOrCode: string,
+  options: { requestedClientId?: string | null } = {},
 ): Promise<SourceGenerationContext | null> {
-  const [event, activeClient] = await Promise.all([
-    getSourcingEvent(eventIdOrCode),
-    getActiveClientRow().catch(() => null),
-  ]);
+  const activeClient = await getActiveClientRow(
+    options.requestedClientId,
+  ).catch(() => null);
+  let event = await getSourcingEvent(
+    eventIdOrCode,
+    options.requestedClientId,
+  );
+  if (!event && activeClient) {
+    const resolvedEventId = await resolveSourceEventUuidForClient(
+      eventIdOrCode,
+      activeClient.key,
+    ).catch(() => null);
+    if (resolvedEventId) {
+      event = await getSourcingEvent(
+        resolvedEventId,
+        options.requestedClientId,
+      );
+    }
+  }
   if (!event) return null;
 
   const tenantName =

@@ -595,9 +595,10 @@ function isSourceLifecycleStatus(
 
 export async function getSourcingEvent(
   eventId: string,
+  requestedClientId?: string | null,
 ): Promise<SourcingEventDetail | null> {
   const [activeClient, tenancy] = await Promise.all([
-    getActiveClientRow().catch(() => null),
+    getActiveClientRow(requestedClientId).catch(() => null),
     requireTenancy().catch(() => null),
   ]);
 

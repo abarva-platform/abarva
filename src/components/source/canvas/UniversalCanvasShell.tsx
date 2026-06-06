@@ -289,6 +289,18 @@ export function UniversalCanvasShell({
   vendorResponseReadiness,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeClientParam = searchParams?.get("client")?.trim() || null;
+  const sourceArtifactRenderHref = (
+    code: string,
+    format: "xlsx" | "docx" | "html" | "pdf",
+    variant?: "comparison",
+  ) => {
+    const params = new URLSearchParams({ format });
+    if (variant) params.set("variant", variant);
+    if (activeClientParam) params.set("client", activeClientParam);
+    return `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?${params.toString()}`;
+  };
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(
     undefined,
@@ -726,25 +738,17 @@ export function UniversalCanvasShell({
       generatableCodes={generatableCodes}
       generationPendingByCode={pendingGenerationByCode}
       xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
-      xlsxDownloadHref={(code) =>
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx`
-      }
+      xlsxDownloadHref={(code) => sourceArtifactRenderHref(code, "xlsx")}
       xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
       xlsxComparisonDownloadHref={(code) =>
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx&variant=comparison`
+        sourceArtifactRenderHref(code, "xlsx", "comparison")
       }
       docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
-      docxDownloadHref={(code) =>
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=docx`
-      }
+      docxDownloadHref={(code) => sourceArtifactRenderHref(code, "docx")}
       htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
-      htmlViewHref={(code) =>
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=html`
-      }
+      htmlViewHref={(code) => sourceArtifactRenderHref(code, "html")}
       pdfGeneratableCodes={PDF_GENERATABLE_CODES_CLIENT}
-      pdfDownloadHref={(code) =>
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
-      }
+      pdfDownloadHref={(code) => sourceArtifactRenderHref(code, "pdf")}
       eventId={event.id}
       onRegistryUploaded={() => router.refresh()}
       supplementalPanel={

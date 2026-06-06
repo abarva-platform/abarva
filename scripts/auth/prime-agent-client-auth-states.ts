@@ -121,6 +121,10 @@ const PERSONAS: AgentAuthPersona[] = [
   },
 ];
 
+const TENANT_NAMES_BY_CLIENT = new Map<ClientKey, string>(
+  PERSONAS.map((persona) => [persona.clientKey, persona.tenantName]),
+);
+
 function loadEnvFiles(): void {
   for (const candidate of [
     path.join(REPO_ROOT, '.env.local'),
@@ -324,6 +328,10 @@ async function probeRoutes(
   strict: boolean,
 ): Promise<string[]> {
   const notes: string[] = [];
+  const expectedTenantName = persona.tenantName;
+  const foreignTenantNames = [...TENANT_NAMES_BY_CLIENT.entries()]
+    .filter(([clientKey]) => clientKey !== persona.clientKey)
+    .map(([, tenantName]) => tenantName);
   for (const route of persona.probeRoutes) {
     const url = new URL(route, baseUrl).toString();
     const response = await page.goto(url, { waitUntil: 'domcontentloaded' }).catch((error: unknown) => {
@@ -337,7 +345,22 @@ async function probeRoutes(
       if (strict) throw new Error(note);
       notes.push(note);
     } else {
-      notes.push(`${route}: ok`);
+      const bodyText = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
+      const landedUrl = page.url();
+      if (!bodyText.includes(expectedTenantName)) {
+        throw new Error(
+          `${route}: landed on ${landedUrl} but did not render expected tenant "${expectedTenantName}".`,
+        );
+      }
+      const leakedTenantName = foreignTenantNames.find((tenantName) =>
+        bodyText.includes(tenantName),
+      );
+      if (leakedTenantName) {
+        throw new Error(
+          `${route}: landed on ${landedUrl} but rendered foreign tenant "${leakedTenantName}".`,
+        );
+      }
+      notes.push(`${route}: ok (${expectedTenantName})`);
     }
   }
   return notes;
