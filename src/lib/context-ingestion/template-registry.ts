@@ -972,7 +972,7 @@ const MERIDIAN_HEALTHCARE_TEMPLATE_SEEDS: ContextTemplateSeed[] = [
   },
   {
     id: "epic-optimization-backlog",
-    dimension: "ehr_platform",
+    dimension: "epic_optimization_backlog",
     label: "Epic optimization backlog",
     acceptedFormats: ["csv"],
     requiredFields: [
@@ -990,7 +990,7 @@ const MERIDIAN_HEALTHCARE_TEMPLATE_SEEDS: ContextTemplateSeed[] = [
   },
   {
     id: "erp-data-estate",
-    dimension: "erp_landscape",
+    dimension: "erp_data_estate",
     label: "ERP and data estate",
     acceptedFormats: ["csv"],
     requiredFields: [
@@ -1065,7 +1065,7 @@ const MERIDIAN_HEALTHCARE_TEMPLATE_SEEDS: ContextTemplateSeed[] = [
   },
   {
     id: "ams-vendor-contracts",
-    dimension: "vendor_contracts",
+    dimension: "ams_vendor_contracts",
     label: "AMS and vendor contracts",
     acceptedFormats: ["csv"],
     requiredFields: [
@@ -1103,7 +1103,7 @@ const MERIDIAN_HEALTHCARE_TEMPLATE_SEEDS: ContextTemplateSeed[] = [
   },
   {
     id: "care-management-staffing",
-    dimension: "org_roles_teams",
+    dimension: "care_management_staffing",
     label: "Care management staffing",
     acceptedFormats: ["csv"],
     requiredFields: [
@@ -1121,7 +1121,7 @@ const MERIDIAN_HEALTHCARE_TEMPLATE_SEEDS: ContextTemplateSeed[] = [
   },
   {
     id: "clinical-data-contracts",
-    dimension: "data_platform_lineage",
+    dimension: "clinical_data_contracts",
     label: "Clinical and interoperability data contracts",
     acceptedFormats: ["csv"],
     requiredFields: [

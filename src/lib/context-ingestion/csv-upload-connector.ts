@@ -164,6 +164,11 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   databricks_lakehouse_target: "it_landscape",
   plan_provider_analytics: "program_inventory",
   use_case_evidence: "program_inventory",
+  epic_optimization_backlog: "it_landscape",
+  erp_data_estate: "it_landscape",
+  ams_vendor_contracts: "it_financials",
+  care_management_staffing: "org_structure",
+  clinical_data_contracts: "it_landscape",
 };
 
 export function segmentKeyForContextDimension(

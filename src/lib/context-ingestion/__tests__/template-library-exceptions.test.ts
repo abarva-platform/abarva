@@ -56,7 +56,7 @@ describe("context template library exception coverage", () => {
   });
 
   it("registers the Meridian/PHS healthcare context upload breadth without shrinking phase 0 controls", () => {
-    expect(MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES).toHaveLength(26);
+    expect(MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES).toHaveLength(36);
     expect(
       getTemplateById("prior-auth-workqueue", { tenantKey: "meridian-health" }),
     ).toMatchObject({

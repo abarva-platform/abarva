@@ -42,7 +42,12 @@ export type ContextDimension =
   | "kpi_library"
   | "databricks_lakehouse_target"
   | "plan_provider_analytics"
-  | "use_case_evidence";
+  | "use_case_evidence"
+  | "epic_optimization_backlog"
+  | "erp_data_estate"
+  | "ams_vendor_contracts"
+  | "care_management_staffing"
+  | "clinical_data_contracts";
 
 export type UploadedFileFormat =
   | "csv"

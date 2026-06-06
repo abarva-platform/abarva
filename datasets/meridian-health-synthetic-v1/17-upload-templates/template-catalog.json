@@ -461,7 +461,7 @@
     {
       "id": "epic-optimization-backlog",
       "file": "epic-optimization-backlog.csv",
-      "dimension": "ehr_platform",
+      "dimension": "epic_optimization_backlog",
       "owner_role": "VP Clinical Applications",
       "refresh_cadence": "monthly",
       "required_fields": [
@@ -481,7 +481,7 @@
     {
       "id": "erp-data-estate",
       "file": "erp-data-estate.csv",
-      "dimension": "erp_landscape",
+      "dimension": "erp_data_estate",
       "owner_role": "VP Enterprise Applications",
       "refresh_cadence": "monthly",
       "required_fields": [
@@ -558,7 +558,7 @@
     {
       "id": "ams-vendor-contracts",
       "file": "ams-vendor-contracts.csv",
-      "dimension": "vendor_contracts",
+      "dimension": "ams_vendor_contracts",
       "owner_role": "VP Procurement",
       "refresh_cadence": "monthly",
       "required_fields": [
@@ -600,7 +600,7 @@
     {
       "id": "care-management-staffing",
       "file": "care-management-staffing.csv",
-      "dimension": "org_roles_teams",
+      "dimension": "care_management_staffing",
       "owner_role": "VP Care Management",
       "refresh_cadence": "monthly",
       "required_fields": [
@@ -620,7 +620,7 @@
     {
       "id": "clinical-data-contracts",
       "file": "clinical-data-contracts.csv",
-      "dimension": "data_platform_lineage",
+      "dimension": "clinical_data_contracts",
       "owner_role": "Chief Data Officer",
       "refresh_cadence": "monthly",
       "required_fields": [
