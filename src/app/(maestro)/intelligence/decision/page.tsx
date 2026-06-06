@@ -43,7 +43,10 @@ import '@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap';
 import { industryKeyForCode } from '@/lib/programs/function-identity';
 import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
 import { getActiveClientRow } from '@/lib/active-client';
-import { resolveIntelligenceDecisionRouteMode } from '@/lib/intelligence/decision-route-mode';
+import {
+  firstClientSearchParam,
+  resolveIntelligenceDecisionRouteMode,
+} from '@/lib/intelligence/decision-route-mode';
 import { resolveBetSelectionBinding } from '@/lib/programs/expert-kernel/domain/tenant-binding-registry';
 
 export const metadata: Metadata = {
@@ -85,8 +88,13 @@ const INDUSTRY_SPINE_FUNCTION_KEY: Record<FunctionPackIndustryKey, string> = {
  * the pure view. The surface is function-correct from the tenant + the bound
  * pack alone — zero configuration (§3).
  */
-export default async function IntelligenceDecisionPage() {
-  const activeClient = await getActiveClientRow().catch(() => null);
+export default async function IntelligenceDecisionPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ client?: string | string[] }>;
+}) {
+  const requestedClient = firstClientSearchParam((await searchParams)?.client);
+  const activeClient = await getActiveClientRow(requestedClient).catch(() => null);
 
   // Resolve the active tenant's industry from its `industry_code`. This is the
   // audit fix: a retail or financial-services tenant must bind its OWN
