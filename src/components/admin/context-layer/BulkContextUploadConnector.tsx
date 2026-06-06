@@ -18,6 +18,16 @@ type BulkResult = {
   rowsParsed?: number;
   chunksQueued?: number;
   blobBucket?: string;
+  workflow?: {
+    jobId: string;
+    summary: string;
+    steps: Array<{
+      id: string;
+      label: string;
+      status: "complete" | "active" | "pending" | "skipped" | "blocked";
+      detail: string;
+    }>;
+  };
   persistence?: {
     status: string;
     detail: string;
@@ -39,7 +49,19 @@ type BulkResult = {
       chunksQueued: number;
       persistence: { status: string };
     } | null;
+    processing?: {
+      status: string;
+      label: string;
+      nextAction: string;
+    };
   }>;
+};
+
+type TimelineStep = {
+  id: string;
+  label: string;
+  status: "complete" | "active" | "pending" | "skipped" | "blocked";
+  detail: string;
 };
 
 const inputStyle = {
@@ -69,6 +91,141 @@ const defaultManifest = JSON.stringify(
   null,
   2,
 );
+
+const pendingSteps: TimelineStep[] = [
+  {
+    id: "package_received",
+    label: "Package upload",
+    status: "active",
+    detail: "Uploading files and manifest to the governed loader endpoint.",
+  },
+  {
+    id: "attestation_verified",
+    label: "Attestation gate",
+    status: "pending",
+    detail: "The loader will verify authority, intended use, and restricted-data review.",
+  },
+  {
+    id: "sensitive_data_scan",
+    label: "Sensitive-data scan",
+    status: "pending",
+    detail: "Files must pass the upload protection gate before any storage write.",
+  },
+  {
+    id: "blob_staging",
+    label: "Azure Blob staging",
+    status: "pending",
+    detail: "Commit modes stage files to the governed context upload container.",
+  },
+  {
+    id: "worker_queue",
+    label: "Worker handoff",
+    status: "pending",
+    detail: "Document-heavy packages are queued for Azure private-worker extraction.",
+  },
+];
+
+function badgeStyle(status: TimelineStep["status"]) {
+  const palette: Record<TimelineStep["status"], { bg: string; fg: string }> = {
+    complete: { bg: "#e7f4ea", fg: "#1c6b35" },
+    active: { bg: "#e8f0ff", fg: "#244b9a" },
+    pending: { bg: "#f4efe5", fg: "#7b6232" },
+    skipped: { bg: "#f0f1f3", fg: "#5f6673" },
+    blocked: { bg: "#ffe9e9", fg: "#9a2626" },
+  };
+  return {
+    borderRadius: 999,
+    padding: "3px 8px",
+    background: palette[status].bg,
+    color: palette[status].fg,
+    fontSize: 12,
+    fontWeight: 800,
+    textTransform: "uppercase" as const,
+  };
+}
+
+function WorkflowTimeline({
+  title,
+  summary,
+  steps,
+  framed = true,
+}: {
+  title: string;
+  summary: string;
+  steps: TimelineStep[];
+  framed?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        border: framed ? "1px solid #d8d2c4" : "0",
+        borderRadius: framed ? 6 : 0,
+        padding: framed ? 12 : 0,
+        background: framed ? "#fff" : "transparent",
+      }}
+    >
+      <p style={{ margin: 0, fontWeight: 800 }}>{title}</p>
+      <p style={{ margin: "6px 0 0", color: "#5f6673", lineHeight: 1.45 }}>
+        {summary}
+      </p>
+      <ol
+        style={{
+          listStyle: "none",
+          margin: "12px 0 0",
+          padding: 0,
+          display: "grid",
+          gap: 8,
+        }}
+      >
+        {steps.map((step, index) => (
+          <li
+            key={step.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "28px minmax(0, 1fr)",
+              gap: 10,
+              alignItems: "start",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                display: "inline-grid",
+                placeItems: "center",
+                background:
+                  step.status === "complete" ? "#1c6b35" : "#f4efe5",
+                color: step.status === "complete" ? "#fff" : "#5f6673",
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              {index + 1}
+            </span>
+            <span style={{ display: "grid", gap: 4 }}>
+              <span
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span style={{ fontWeight: 800 }}>{step.label}</span>
+                <span style={badgeStyle(step.status)}>{step.status}</span>
+              </span>
+              <span style={{ color: "#5f6673", lineHeight: 1.45 }}>
+                {step.detail}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 export function BulkContextUploadConnector({
   clientId,
@@ -280,6 +437,14 @@ export function BulkContextUploadConnector({
         </button>
       </form>
 
+      {pending ? (
+        <WorkflowTimeline
+          title="Upload workflow running"
+          summary="Keep this page open while the loader verifies the package. The final Azure handoff status appears below when the run returns."
+          steps={pendingSteps}
+        />
+      ) : null}
+
       {result ? (
         <div
           style={{
@@ -295,6 +460,19 @@ export function BulkContextUploadConnector({
           <p style={{ margin: "6px 0 0", color: "#4f5663" }}>
             {result.persistence?.detail ?? result.detail ?? result.error}
           </p>
+          {result.workflow ? (
+            <p
+              style={{
+                margin: "8px 0 0",
+                color: "#4f5663",
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+                fontSize: 12,
+              }}
+            >
+              Job {result.workflow.jobId}
+            </p>
+          ) : null}
           {typeof result.filesProcessed === "number" ? (
             <p style={{ margin: "8px 0 0" }}>
               Files {result.filesProcessed} · Rows {result.rowsParsed ?? 0} ·
@@ -312,9 +490,20 @@ export function BulkContextUploadConnector({
                     : item.blob.staged
                       ? item.blob.path
                       : "validated only"}
+                  {item.processing ? ` · next: ${item.processing.nextAction}` : ""}
                 </li>
               ))}
             </ul>
+          ) : null}
+          {result.workflow ? (
+            <div style={{ marginTop: 12 }}>
+              <WorkflowTimeline
+                title="Loader workflow"
+                summary={result.workflow.summary}
+                steps={result.workflow.steps}
+                framed={false}
+              />
+            </div>
           ) : null}
         </div>
       ) : null}

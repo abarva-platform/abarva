@@ -145,6 +145,16 @@ describe("bulk context upload", () => {
       persistence: {
         status: "validation_only",
       },
+      workflow: {
+        summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+        steps: [
+          { id: "package_received", status: "complete" },
+          { id: "attestation_verified", status: "complete" },
+          { id: "sensitive_data_scan", status: "complete" },
+          { id: "blob_staging", status: "skipped" },
+          { id: "tenant_context_commit", status: "skipped" },
+        ],
+      },
       results: [
         {
           fileName: "enterprise-profile.yaml",
@@ -153,9 +163,13 @@ describe("bulk context upload", () => {
             bucket: "context-uploads",
             staged: false,
           },
+          processing: {
+            status: "validated_only",
+          },
         },
       ],
     });
+    expect(result.workflow.jobId).toMatch(/^bulk-[a-f0-9]{16}$/);
   });
 
   it("stages matching files and queues canonical Azure worker messages", async () => {
@@ -221,6 +235,20 @@ describe("bulk context upload", () => {
       persistence: {
         status: "staged_and_enqueued",
       },
+      workflow: {
+        summary:
+          "Files are staged and queued. Azure private-worker processing is the next handoff.",
+        steps: [
+          { id: "package_received", status: "complete" },
+          { id: "attestation_verified", status: "complete" },
+          { id: "sensitive_data_scan", status: "complete" },
+          { id: "blob_staging", status: "complete" },
+          { id: "worker_queue", status: "complete" },
+          { id: "private_worker", status: "active" },
+          { id: "operator_review", status: "pending" },
+          { id: "tenant_context_commit", status: "pending" },
+        ],
+      },
       results: [
         {
           fileName: "enterprise-profile.yaml",
@@ -234,9 +262,13 @@ describe("bulk context upload", () => {
             messageId: "msg-1",
           },
           loadResult: null,
+          processing: {
+            status: "staged_for_worker",
+          },
         },
       ],
     });
+    expect(result.workflow.jobId).toMatch(/^bulk-[a-f0-9]{16}$/);
     expect(queued).toHaveLength(1);
     expect(queued[0]).toMatchObject({
       schema: "abarva.ingestion.v1",
@@ -328,6 +360,11 @@ describe("bulk context upload", () => {
             messageId: "msg-pdf-1",
           },
           loadResult: null,
+          processing: {
+            label: "Staged and queued",
+            nextAction:
+              "Wait for Azure private-worker extraction, then review mapped records.",
+          },
         },
       ],
     });
