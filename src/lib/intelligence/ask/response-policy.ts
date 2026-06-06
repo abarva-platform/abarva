@@ -59,7 +59,10 @@ export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): 
 
   rewritten = neutralizeUnavailableDetectorPhrases(rewritten);
 
-  return rewritten.replace(/\s{2,}/g, ' ').trim();
+  return rewritten
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export function chunkAskText(text: string): string[] {
