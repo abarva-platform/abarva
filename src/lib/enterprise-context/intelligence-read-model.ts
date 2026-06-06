@@ -27,6 +27,18 @@ export interface EnterpriseContextSourceRow {
   last_synced_at: string | null;
 }
 
+export interface EnterpriseContextChunkRow {
+  source_doc: string | null;
+  source_record_id: string | null;
+  chunk_id: string | null;
+  chunk_text: string | null;
+  embedding_status: string | null;
+  embedding_model: string | null;
+  embedded_at: string | null;
+  provenance: Record<string, unknown> | null;
+  chunk_metadata: Record<string, unknown> | null;
+}
+
 export interface EnterpriseContextOverviewCard {
   key: string;
   title: string;
@@ -83,6 +95,16 @@ export async function getEnterpriseContextOverviewForTenant(
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);
+
+    if (counts.records === 0) {
+      const chunkOverview = await getChunkBackedEnterpriseContextOverview({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+      });
+      if (chunkOverview) return chunkOverview;
+      return null;
+    }
+
     const records = await fetchTenantRows<EnterpriseContextRecordRow>(
       TABLES.records,
       normalizedTenantKey,
@@ -103,8 +125,6 @@ export async function getEnterpriseContextOverviewForTenant(
       normalizedTenantKey,
       'evidence_usable',
     );
-
-    if (counts.records === 0) return null;
 
     return summarizeEnterpriseContextRows({
       tenantKey: normalizedTenantKey,
@@ -264,6 +284,161 @@ export function summarizeEnterpriseContextRows(input: {
   };
 }
 
+async function getChunkBackedEnterpriseContextOverview(input: {
+  tenantKey: string;
+  tenantName: string;
+}): Promise<EnterpriseContextOverview | null> {
+  const chunks = await fetchTenantRows<EnterpriseContextChunkRow>(
+    'enterprise_context_chunks',
+    input.tenantKey,
+    'source_doc,source_record_id,chunk_id,chunk_text,embedding_status,embedding_model,embedded_at,provenance,chunk_metadata',
+  );
+
+  if (chunks.length === 0) return null;
+  return summarizeEnterpriseContextChunks({ ...input, chunks });
+}
+
+export function summarizeEnterpriseContextChunks(input: {
+  tenantKey: string;
+  tenantName: string;
+  chunks: EnterpriseContextChunkRow[];
+}): EnterpriseContextOverview {
+  const recordTypeCounts = countBy(input.chunks, (row) => recordTypeFromSourceDoc(row.source_doc));
+  const statusCounts = countBy(input.chunks, (row) => row.embedding_status ?? 'pending');
+  const embedded = statusCounts.embedded ?? 0;
+  const pending = statusCounts.pending ?? 0;
+  const failed = statusCounts.failed ?? 0;
+  const sourceSystems = [...new Set(input.chunks.map((row) => sourceDocLabel(row.source_doc)))].sort();
+  const sourceDocPreview = sourceSystems.slice(0, 6).join(', ');
+
+  const counts: EnterpriseContextOverview['counts'] = {
+    sources: sourceSystems.length,
+    records: input.chunks.length,
+    facts: input.chunks.length,
+    relationships: recordTypeCounts.ci_relationships_dependencies ?? 0,
+    evidence: input.chunks.length,
+    qualityIssues: failed,
+    stewardshipTasks: pending,
+    chunkQueue: pending + failed,
+  };
+
+  const freshnessCounts = {
+    fresh: embedded,
+    attention: pending,
+    stale: failed,
+  };
+  const confidenceAverage = input.chunks.length > 0 ? embedded / input.chunks.length : 0;
+
+  const chunkCountFor = (...types: string[]) => types.reduce((sum, type) => sum + (recordTypeCounts[type] ?? 0), 0);
+  const orgChunks = chunkCountFor('org_decision_rights', 'facilities_business_units');
+  const systemChunks = chunkCountFor('cmdb_applications_services', 'ci_relationships_dependencies');
+  const serviceChunks = chunkCountFor('incidents', 'problems', 'changes', 'slas');
+  const commercialChunks = chunkCountFor('vendors_contract_inventory', 'renewal_calendar', 'spend_baseline');
+  const governanceChunks = chunkCountFor('policies_procedures', 'risk_compliance_register');
+  const portfolioChunks = chunkCountFor('initiative_portfolio', 'data_domains_stewardship');
+
+  const cards: EnterpriseContextOverviewCard[] = [
+    {
+      key: 'chunk-backed-loader-coverage',
+      title: 'Loaded context files',
+      whatWeKnow: `${sourceSystems.length} Admin-loaded source files are available as ${input.chunks.length} chunk-backed context records.`,
+      whyItMatters: 'This proves the tenant has retrievable setup evidence even while normalized Enterprise Context tables are still catching up.',
+      owner: 'Context Stewardship',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: input.chunks.length,
+      sourceSystems: sourceSystems.slice(0, 4),
+      actions: ['Ask Sentinel', 'Open evidence map', 'Review loader files', 'Add to Tower watchlist'],
+    },
+    {
+      key: 'chunk-backed-embedding-coverage',
+      title: 'Embedded evidence coverage',
+      whatWeKnow: `${embedded}/${input.chunks.length} context chunks are embedded for retrieval; ${pending} are pending and ${failed} failed.`,
+      whyItMatters: 'Sentinel and Nexus can only ground answers on context that has been committed and embedded.',
+      owner: 'AI Platform Operations',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: embedded,
+      sourceSystems: sourceSystems.slice(0, 4),
+      actions: ['Ask Sentinel', 'Review pending chunks', 'Run embedding proof'],
+    },
+    {
+      key: 'chunk-backed-org-systems',
+      title: 'Organization and systems context',
+      whatWeKnow: `${orgChunks} org/facility chunks and ${systemChunks} system/dependency chunks are loaded from the setup templates.`,
+      whyItMatters: 'AI strategy, modernization, and sourcing decisions need named owners, decision rights, facilities, applications, and dependencies.',
+      owner: 'Enterprise Architecture',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: orgChunks + systemChunks,
+      sourceSystems: sourceSystems.filter((doc) => /org|facilities|cmdb|relationships/i.test(doc)).slice(0, 4),
+      actions: ['Ask Sentinel', 'Link to Move', 'Open dependency brief'],
+    },
+    {
+      key: 'chunk-backed-service-pressure',
+      title: 'Service and operations context',
+      whatWeKnow: `${serviceChunks} incident, problem, change, and SLA chunks are loaded for operational pressure analysis.`,
+      whyItMatters: 'This lets current-state recommendations reflect actual service pain instead of generic transformation language.',
+      owner: 'IT Service Management',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: serviceChunks,
+      sourceSystems: sourceSystems.filter((doc) => /incident|problem|change|sla/i.test(doc)).slice(0, 4),
+      actions: ['Ask Sentinel', 'Open blocker brief', 'Add to Tower watchlist'],
+    },
+    {
+      key: 'chunk-backed-commercial-context',
+      title: 'Vendor, renewal, and spend context',
+      whatWeKnow: `${commercialChunks} vendor, renewal, and spend chunks are loaded for financial and sourcing context.`,
+      whyItMatters: 'Commercial evidence gives CXOs a defensible starting point for prioritizing spend, renewal, and partner decisions.',
+      owner: 'Finance and Sourcing',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: commercialChunks,
+      sourceSystems: sourceSystems.filter((doc) => /vendor|renewal|spend/i.test(doc)).slice(0, 4),
+      actions: ['Ask Sentinel', 'Create Source event', 'Generate brief'],
+    },
+    {
+      key: 'chunk-backed-governance-portfolio',
+      title: 'Governance and portfolio context',
+      whatWeKnow: `${governanceChunks} policy/risk chunks and ${portfolioChunks} initiative/data-domain chunks are loaded.`,
+      whyItMatters: 'Moves can now tie recommendations to governance constraints, active initiatives, and data-domain ownership.',
+      owner: 'Enterprise PMO',
+      freshness: freshnessLabel(freshnessCounts),
+      confidence: confidenceLabel(confidenceAverage),
+      evidenceCount: governanceChunks + portfolioChunks,
+      sourceSystems: sourceSystems.filter((doc) => /polic|risk|initiative|data-domain|data_domains/i.test(doc)).slice(0, 4),
+      actions: ['Ask Sentinel', 'Link to Move', 'Review governance evidence'],
+    },
+  ];
+
+  const sentinelFacts = [
+    `${input.tenantName} Enterprise Context: ${embedded} embedded context chunks across ${sourceSystems.length} Admin-loaded source files are available from the chunk-backed context layer.`,
+    `Embedded posture: ${embedded}/${input.chunks.length} chunks embedded, ${pending} pending, and ${failed} failed.`,
+    `Loaded source documents include ${sourceDocPreview}${sourceSystems.length > 6 ? ', and more' : ''}.`,
+    `Context domains include org/decision rights (${recordTypeCounts.org_decision_rights ?? 0}), facilities/business units (${recordTypeCounts.facilities_business_units ?? 0}), systems/services (${recordTypeCounts.cmdb_applications_services ?? 0}), dependencies (${recordTypeCounts.ci_relationships_dependencies ?? 0}), vendors/contracts (${recordTypeCounts.vendors_contract_inventory ?? 0}), renewals (${recordTypeCounts.renewal_calendar ?? 0}), spend baseline (${recordTypeCounts.spend_baseline ?? 0}), incidents (${recordTypeCounts.incidents ?? 0}), problems (${recordTypeCounts.problems ?? 0}), changes (${recordTypeCounts.changes ?? 0}), SLAs (${recordTypeCounts.slas ?? 0}), policies/procedures (${recordTypeCounts.policies_procedures ?? 0}), initiatives (${recordTypeCounts.initiative_portfolio ?? 0}), data domains (${recordTypeCounts.data_domains_stewardship ?? 0}), and risk/compliance (${recordTypeCounts.risk_compliance_register ?? 0}).`,
+    `Sentinel rule: answer current-state questions from Admin-loaded context chunks when normalized Enterprise Context records are not yet populated, and label the basis as chunk-backed loader evidence.`,
+  ];
+
+  return {
+    tenantKey: input.tenantKey,
+    tenantName: input.tenantName,
+    counts,
+    recordTypeCounts,
+    freshnessCounts,
+    sourceSystems,
+    evidenceUsableCount: embedded,
+    confidenceAverage,
+    qualitySummary: {
+      'embedding:embedded': embedded,
+      'embedding:pending': pending,
+      'embedding:failed': failed,
+    },
+    cards,
+    sentinelFacts,
+  };
+}
+
 async function countEnterpriseContextRows(tenantKey: string): Promise<EnterpriseContextOverview['counts']> {
   const counts: Partial<EnterpriseContextOverview['counts']> = {};
   for (const [key, table] of Object.entries(TABLES)) {
@@ -334,6 +509,21 @@ function topOwner(rows: EnterpriseContextRecordRow[]): string | null {
 
 function systemsFor(rows: EnterpriseContextRecordRow[]): string[] {
   return [...new Set(rows.map((row) => row.source_system).filter(Boolean))].sort().slice(0, 4);
+}
+
+function sourceDocLabel(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed || 'unknown-source';
+}
+
+function recordTypeFromSourceDoc(value: string | null | undefined): string {
+  const sourceDoc = sourceDocLabel(value).split('/').pop() ?? 'unknown-source';
+  return sourceDoc
+    .replace(/\.[^.]+$/, '')
+    .replace(/^\d+[-_]+/, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase() || 'unknown';
 }
 
 function freshnessLabel(counts: Record<string, number>): string {
