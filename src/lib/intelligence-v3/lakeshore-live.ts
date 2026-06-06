@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { azureRead } from '@/lib/data-plane/azureRead';
+import { selectRelevantPatternRows } from '@/lib/intelligence-v3/pattern-relevance';
 import type {
   AntiPattern,
   BriefData,
@@ -357,15 +358,25 @@ export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<
         label: index === 0 ? 'Gate on treasury proof' : 'Evaluate with evidence',
         reason: 'Advance only where Source/Tower evidence and accountable owner are visible.',
       },
-      bindingPatterns: patterns.slice(index, index + 1).map((pattern) => ({
-        pattern,
-        quantifiedRow: {
-          withLabel: '+ Pattern applied',
-          withoutLabel: '- Decision theater',
-          description: pattern.description,
-          source: pattern.provenance.primarySources[0]?.source ?? 'lakeshore corpus',
-        },
-      })),
+      // Relevance-bound + fail-closed: pick the pattern actually about this
+      // bet's use case, not the one at array position `index`. Empty when no
+      // candidate clears MIN_PATTERN_RELEVANCE — the card then has no
+      // off-domain pattern to cite.
+      bindingPatterns: selectRelevantPatternRows(
+        `${initiativeRows[index]?.name ?? useCase.name} ${initiativeRows[index]?.description ?? ''}`,
+        patternRows,
+      ).map((row) => {
+        const pattern = buildPattern(row, seedUseCaseIds);
+        return {
+          pattern,
+          quantifiedRow: {
+            withLabel: '+ Pattern applied',
+            withoutLabel: '- Decision theater',
+            description: pattern.description,
+            source: pattern.provenance.primarySources[0]?.source ?? 'lakeshore corpus',
+          },
+        };
+      }),
       antiPatterns: antiPatterns.slice(index, index + 1).map((antiPattern) => ({
         antiPattern,
         description: antiPattern.description,
