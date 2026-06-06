@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="820" viewBox="0 0 1300 820" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#b91c1c"/></marker>
+<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="#39507e"/></marker>
+</defs>
+<rect width="1300" height="820" fill="#f5f1eb"/>
+<text x="36" y="34" font-size="12" fill="#6b7280" font-family="monospace">SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI</text>
+<text x="36" y="64" font-size="23" font-weight="700" fill="#0c1a3a" font-family="Georgia, serif">Integration &amp; Eventing Architecture</text>
+<text x="36" y="86" font-size="12.5" fill="#6b7280">Producers, backbone (ESB/APIM/Service Bus/MFT), consumers, interface inventory</text>
+<text x="650.0" y="410.0" font-size="150" fill="#0c1a3a" opacity="0.045" text-anchor="middle" transform="rotate(-22 650.0 410.0)" font-weight="700">SYNTHETIC</text>
+<rect x="36" y="110" width="1228" height="120" rx="12" fill="#eef7f1" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">SYSTEMS OF RECORD (producers)</text>
+<rect x="52" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="66" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">SAP ECC/S4</text>
+<text x="66" y="174" font-size="10.5" fill="#6b7280">IDoc/BAPI</text>
+<text x="66" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="254" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="254" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="268" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Workday</text>
+<text x="268" y="174" font-size="10.5" fill="#6b7280">EIB/REST</text>
+<text x="268" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="456" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="456" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="470" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Coupa</text>
+<text x="470" y="174" font-size="10.5" fill="#6b7280">cXML</text>
+<text x="470" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="658" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="658" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="672" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Kyriba</text>
+<text x="672" y="174" font-size="10.5" fill="#6b7280">API/ISO20022</text>
+<text x="672" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="860" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="860" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="874" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">ServiceNow</text>
+<text x="874" y="174" font-size="10.5" fill="#6b7280">REST</text>
+<text x="874" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="1062" y="134" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1062" y="134" width="5" height="80" rx="2" fill="#0f766e"/>
+<text x="1076" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Salesforce</text>
+<text x="1076" y="174" font-size="10.5" fill="#6b7280">Bulk API</text>
+<text x="1076" y="189" font-size="10.5" fill="#6b7280">real-time + batch</text>
+<rect x="36" y="256" width="1228" height="150" rx="12" fill="#fff7e8" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="251" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">INTEGRATION BACKBONE</text>
+<rect x="60" y="282" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="282" width="5" height="110" rx="2" fill="#b45309"/>
+<text x="74" y="303" font-size="12.5" font-weight="600" fill="#0c1a3a">SAP PI/PO Enterprise Service Bus</text>
+<text x="320" y="300" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">ESB</text>
+<text x="74" y="322" font-size="10.5" fill="#6b7280">A2A orchestration, mapping (XSLT)</text>
+<text x="74" y="337" font-size="10.5" fill="#6b7280">guaranteed delivery, monitoring</text>
+<text x="74" y="352" font-size="10.5" fill="#6b7280">240+ active interfaces</text>
+<rect x="350" y="282" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="350" y="282" width="5" height="110" rx="2" fill="#0066CC"/>
+<text x="364" y="303" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure API Management</text>
+<text x="610" y="300" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">APIM</text>
+<text x="364" y="322" font-size="10.5" fill="#6b7280">REST facade + OAuth2 policies</text>
+<text x="364" y="337" font-size="10.5" fill="#6b7280">rate limiting, versioning</text>
+<text x="364" y="352" font-size="10.5" fill="#6b7280">developer portal</text>
+<rect x="640" y="282" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="640" y="282" width="5" height="110" rx="2" fill="#6d28d9"/>
+<text x="654" y="303" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure Service Bus / Event Grid</text>
+<text x="900" y="300" font-size="8.5" fill="#6d28d9" text-anchor="end" font-family="monospace" font-weight="700">EVENT</text>
+<text x="654" y="322" font-size="10.5" fill="#6b7280">q-context-ingestion-events</text>
+<text x="654" y="337" font-size="10.5" fill="#6b7280">pub/sub, dead-letter, sessions</text>
+<text x="654" y="352" font-size="10.5" fill="#6b7280">competing consumers</text>
+<rect x="930" y="282" width="310" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="930" y="282" width="5" height="110" rx="2" fill="#15803d"/>
+<text x="944" y="303" font-size="12.5" font-weight="600" fill="#0c1a3a">Managed File Transfer (SFTP/MFT)</text>
+<text x="1230" y="300" font-size="8.5" fill="#15803d" text-anchor="end" font-family="monospace" font-weight="700">MFT</text>
+<text x="944" y="322" font-size="10.5" fill="#6b7280">bank host-to-host, PGP encryption</text>
+<text x="944" y="337" font-size="10.5" fill="#6b7280">pain.001 out / pain.002,camt.05x in</text>
+<text x="944" y="352" font-size="10.5" fill="#6b7280">scheduled + event-driven</text>
+<rect x="36" y="432" width="1228" height="120" rx="12" fill="#eef4fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="427" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">CONSUMERS (subscribers)</text>
+<rect x="52" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="66" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">Snowflake (ELT)</text>
+<text x="66" y="496" font-size="10.5" fill="#6b7280">Snowpipe/COPY</text>
+<text x="66" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<rect x="254" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="254" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="268" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">Power BI</text>
+<text x="268" y="496" font-size="10.5" fill="#6b7280">DirectQuery</text>
+<text x="268" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<rect x="456" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="456" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="470" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">AI Search</text>
+<text x="470" y="496" font-size="10.5" fill="#6b7280">indexers</text>
+<text x="470" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<rect x="658" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="658" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="672" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure Postgres</text>
+<text x="672" y="496" font-size="10.5" fill="#6b7280">JDBC</text>
+<text x="672" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<rect x="860" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="860" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="874" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">Partner Banks</text>
+<text x="874" y="496" font-size="10.5" fill="#6b7280">ISO20022</text>
+<text x="874" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<rect x="1062" y="456" width="186" height="80" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1062" y="456" width="5" height="80" rx="2" fill="#0066CC"/>
+<text x="1076" y="477" font-size="12.5" font-weight="600" fill="#0c1a3a">Context Loader</text>
+<text x="1076" y="496" font-size="10.5" fill="#6b7280">Service Bus</text>
+<text x="1076" y="511" font-size="10.5" fill="#6b7280">idempotent sink</text>
+<path d="M145,214 L195,282" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M347,214 L485,282" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<path d="M549,214 L775,282" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M751,214 L1065,282" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<path d="M953,214 L195,282" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<path d="M1155,214 L485,282" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<path d="M195,392 L145,456" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="156.9" y="415.0" width="26.200000000000003" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="170.0" y="426.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">ELT</text>
+<path d="M485,392 L700,456" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="571.3" y="415.0" width="42.400000000000006" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="592.5" y="426.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">events</text>
+<path d="M1085,392 L1055,456" fill="none" stroke="#0066CC" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="1043.4" y="415.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="1070.0" y="426.0" font-size="9" fill="#0066CC" text-anchor="middle" font-family="monospace">ISO20022</text>
+<rect x="36" y="576" width="1228" height="168" rx="12" fill="#eefbf7" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="571" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">INTERFACE PATTERN INVENTORY (illustrative)</text>
+<text x="60" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">interface_id</text><text x="210" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">route</text><text x="380" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">payload</text><text x="580" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">format/standard</text><text x="790" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">pattern</text><text x="920" y="612" font-size="10.5" font-weight="700" font-family="monospace" fill="#1F2A44">frequency</text><text x="60" y="632" font-size="10" fill="#0c1a3a">IF-ERP-TMS-01</text><text x="210" y="632" font-size="10" fill="#0c1a3a">SAP→Kyriba</text><text x="380" y="632" font-size="10" fill="#0c1a3a">Payment proposals</text><text x="580" y="632" font-size="10" fill="#0c1a3a">ISO20022 pain.001</text><text x="790" y="632" font-size="10" fill="#0c1a3a">event</text><text x="920" y="632" font-size="10" fill="#0c1a3a">hourly</text><text x="60" y="650" font-size="10" fill="#0c1a3a">IF-TMS-BANK-02</text><text x="210" y="650" font-size="10" fill="#0c1a3a">Kyriba→Bank</text><text x="380" y="650" font-size="10" fill="#0c1a3a">Outbound payments</text><text x="580" y="650" font-size="10" fill="#0c1a3a">pain.001.001.09</text><text x="790" y="650" font-size="10" fill="#0c1a3a">MFT</text><text x="920" y="650" font-size="10" fill="#0c1a3a">intraday</text><text x="60" y="668" font-size="10" fill="#0c1a3a">IF-BANK-TMS-03</text><text x="210" y="668" font-size="10" fill="#0c1a3a">Bank→Kyriba</text><text x="380" y="668" font-size="10" fill="#0c1a3a">Statements</text><text x="580" y="668" font-size="10" fill="#0c1a3a">camt.053/052</text><text x="790" y="668" font-size="10" fill="#0c1a3a">MFT</text><text x="920" y="668" font-size="10" fill="#0c1a3a">daily/intraday</text><text x="60" y="686" font-size="10" fill="#0c1a3a">IF-ERP-DW-04</text><text x="210" y="686" font-size="10" fill="#0c1a3a">SAP→Snowflake</text><text x="380" y="686" font-size="10" fill="#0c1a3a">GL/AP/AR extract</text><text x="580" y="686" font-size="10" fill="#0c1a3a">IDoc→Parquet</text><text x="790" y="686" font-size="10" fill="#0c1a3a">batch</text><text x="920" y="686" font-size="10" fill="#0c1a3a">nightly</text><text x="60" y="704" font-size="10" fill="#0c1a3a">IF-SNOW-CTX-05</text><text x="210" y="704" font-size="10" fill="#0c1a3a">Snowflake→Postgres</text><text x="380" y="704" font-size="10" fill="#0c1a3a">Context chunks</text><text x="580" y="704" font-size="10" fill="#0c1a3a">JDBC upsert</text><text x="790" y="704" font-size="10" fill="#0c1a3a">batch</text><text x="920" y="704" font-size="10" fill="#0c1a3a">on-load</text><text x="60" y="722" font-size="10" fill="#0c1a3a">IF-CTX-SEARCH-06</text><text x="210" y="722" font-size="10" fill="#0c1a3a">Postgres→AI Search</text><text x="380" y="722" font-size="10" fill="#0c1a3a">Index refresh</text><text x="580" y="722" font-size="10" fill="#0c1a3a">REST index API</text><text x="790" y="722" font-size="10" fill="#0c1a3a">event</text><text x="920" y="722" font-size="10" fill="#0c1a3a">on-commit</text><text x="36" y="806" font-size="10.5" fill="#6b7280" font-family="monospace">LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1 · it_systems_architecture · owner=Liam O'Sullivan · system=SAP PI/PO · 2026-06-06 · SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA</text>
+</svg>

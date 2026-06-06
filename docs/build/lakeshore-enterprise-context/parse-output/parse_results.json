@@ -1,62 +1,62 @@
 {
   "summary": {
     "pack_id": "LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1",
-    "parsed_at": "2026-06-06T16:16:05.479Z",
+    "parsed_at": "2026-06-06T16:44:26.827Z",
     "parser": "src/lib/ingestion/document-upload-parser.ts::parseIngestionDocument (+csv/jsonl/text chunkers)",
-    "files_total": 127,
-    "files_parsed_ok": 127,
+    "files_total": 133,
+    "files_parsed_ok": 133,
     "files_failed": 0,
-    "total_extracted_chars": 614782,
-    "estimated_total_chunks": 3333,
+    "total_extracted_chars": 711705,
+    "estimated_total_chunks": 3456,
     "by_type": {
       "md": {
         "files": 5,
         "ok": 5,
-        "chars": 6828,
-        "chunks": 11
+        "chars": 6616,
+        "chunks": 10
       },
       "csv": {
         "files": 8,
         "ok": 8,
-        "chars": 205218,
+        "chars": 205257,
         "chunks": 1816
       },
       "pdf": {
         "files": 17,
         "ok": 17,
-        "chars": 11514,
-        "chunks": 20
+        "chars": 14203,
+        "chunks": 24
       },
       "xlsx": {
-        "files": 70,
-        "ok": 70,
-        "chars": 176187,
-        "chunks": 253
+        "files": 71,
+        "ok": 71,
+        "chars": 183308,
+        "chunks": 261
       },
       "docx": {
         "files": 24,
         "ok": 24,
-        "chars": 9083,
-        "chunks": 24
-      },
-      "svg": {
-        "files": 2,
-        "ok": 2,
-        "chars": 6848,
-        "chunks": 9
+        "chars": 12567,
+        "chunks": 28
       },
       "jsonl": {
         "files": 1,
         "ok": 1,
-        "chars": 199104,
+        "chars": 199163,
         "chunks": 1200
+      },
+      "svg": {
+        "files": 7,
+        "ok": 7,
+        "chars": 90591,
+        "chunks": 117
       }
     },
     "by_domain": {
       "manifest": {
         "files": 4,
         "ok": 4,
-        "chunks": 21
+        "chunks": 20
       },
       "enterprise_profile": {
         "files": 9,
@@ -71,7 +71,7 @@
       "strategy_initiatives": {
         "files": 9,
         "ok": 9,
-        "chunks": 43
+        "chunks": 48
       },
       "finance_performance": {
         "files": 11,
@@ -79,19 +79,19 @@
         "chunks": 28
       },
       "treasury_kyriba": {
-        "files": 13,
-        "ok": 13,
-        "chunks": 79
+        "files": 14,
+        "ok": 14,
+        "chunks": 99
       },
       "it_systems_architecture": {
-        "files": 12,
-        "ok": 12,
-        "chunks": 33
+        "files": 14,
+        "ok": 14,
+        "chunks": 89
       },
       "data_analytics_reporting": {
-        "files": 10,
-        "ok": 10,
-        "chunks": 121
+        "files": 11,
+        "ok": 11,
+        "chunks": 136
       },
       "operations_business_process": {
         "files": 9,
@@ -109,14 +109,14 @@
         "chunks": 30
       },
       "risk_controls_responsible_ai": {
-        "files": 11,
-        "ok": 11,
-        "chunks": 74
+        "files": 12,
+        "ok": 12,
+        "chunks": 87
       },
       "ai_use_cases_moves": {
-        "files": 10,
-        "ok": 10,
-        "chunks": 25
+        "files": 11,
+        "ok": 11,
+        "chunks": 40
       }
     },
     "failures": []
@@ -128,7 +128,7 @@
       "domain": "manifest",
       "ok": true,
       "method": "markdown-text",
-      "chars": 2049,
+      "chars": 2044,
       "chunks": 3,
       "warnings": []
     },
@@ -138,8 +138,8 @@
       "domain": "manifest",
       "ok": true,
       "method": "markdown-text",
-      "chars": 1680,
-      "chunks": 3,
+      "chars": 1475,
+      "chunks": 2,
       "warnings": []
     },
     {
@@ -148,7 +148,7 @@
       "domain": "manifest",
       "ok": true,
       "method": "markdown-text",
-      "chars": 1581,
+      "chars": 1580,
       "chunks": 2,
       "warnings": []
     },
@@ -413,22 +413,12 @@
       "warnings": []
     },
     {
-      "path": "source/03_strategy_initiatives/roadmap_2026_2027.svg",
-      "type": "svg",
-      "domain": "strategy_initiatives",
-      "ok": true,
-      "method": "text-fallback",
-      "chars": 2934,
-      "chunks": 4,
-      "warnings": ["parsed as text fallback (worker-handled)"]
-    },
-    {
       "path": "source/04_finance_performance/pnl_baseline.xlsx",
       "type": "xlsx",
       "domain": "finance_performance",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 3165,
+      "chars": 3162,
       "chunks": 4,
       "warnings": []
     },
@@ -438,7 +428,7 @@
       "domain": "finance_performance",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1136,
+      "chars": 1137,
       "chunks": 2,
       "warnings": []
     },
@@ -488,7 +478,7 @@
       "domain": "finance_performance",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1693,
+      "chars": 1674,
       "chunks": 3,
       "warnings": []
     },
@@ -498,7 +488,7 @@
       "domain": "finance_performance",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1156,
+      "chars": 1157,
       "chunks": 2,
       "warnings": []
     },
@@ -518,7 +508,7 @@
       "domain": "finance_performance",
       "ok": true,
       "method": "csv-row-chunker",
-      "chars": 529,
+      "chars": 519,
       "chunks": 10,
       "warnings": []
     },
@@ -528,7 +518,7 @@
       "domain": "finance_performance",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 894,
+      "chars": 889,
       "chunks": 2,
       "warnings": []
     },
@@ -538,7 +528,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1344,
+      "chars": 1345,
       "chunks": 2,
       "warnings": []
     },
@@ -548,7 +538,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1516,
+      "chars": 1483,
       "chunks": 2,
       "warnings": []
     },
@@ -558,8 +548,8 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 281,
-      "chunks": 1,
+      "chars": 1187,
+      "chunks": 2,
       "warnings": []
     },
     {
@@ -568,8 +558,8 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 302,
-      "chunks": 1,
+      "chars": 1038,
+      "chunks": 2,
       "warnings": []
     },
     {
@@ -578,7 +568,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 279,
+      "chars": 517,
       "chunks": 1,
       "warnings": []
     },
@@ -588,7 +578,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 967,
+      "chars": 984,
       "chunks": 2,
       "warnings": []
     },
@@ -598,7 +588,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 993,
+      "chars": 991,
       "chunks": 2,
       "warnings": []
     },
@@ -608,7 +598,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 792,
+      "chars": 795,
       "chunks": 1,
       "warnings": []
     },
@@ -618,7 +608,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 942,
+      "chars": 935,
       "chunks": 2,
       "warnings": []
     },
@@ -648,7 +638,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1997,
+      "chars": 2070,
       "chunks": 3,
       "warnings": []
     },
@@ -658,7 +648,7 @@
       "domain": "treasury_kyriba",
       "ok": true,
       "method": "csv-row-chunker",
-      "chars": 3702,
+      "chars": 3737,
       "chunks": 60,
       "warnings": []
     },
@@ -668,7 +658,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 11800,
+      "chars": 11794,
       "chunks": 15,
       "warnings": []
     },
@@ -678,8 +668,8 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "pdf-parse",
-      "chars": 523,
-      "chunks": 1,
+      "chars": 1868,
+      "chunks": 3,
       "warnings": []
     },
     {
@@ -688,7 +678,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 280,
+      "chars": 315,
       "chunks": 1,
       "warnings": []
     },
@@ -698,7 +688,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 284,
+      "chars": 319,
       "chunks": 1,
       "warnings": []
     },
@@ -708,7 +698,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 291,
+      "chars": 326,
       "chunks": 1,
       "warnings": []
     },
@@ -718,8 +708,8 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 278,
-      "chunks": 1,
+      "chars": 934,
+      "chunks": 2,
       "warnings": []
     },
     {
@@ -748,7 +738,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 673,
+      "chars": 672,
       "chunks": 1,
       "warnings": []
     },
@@ -758,7 +748,7 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1760,
+      "chars": 1765,
       "chunks": 3,
       "warnings": []
     },
@@ -768,19 +758,19 @@
       "domain": "it_systems_architecture",
       "ok": true,
       "method": "pdf-parse",
-      "chars": 486,
-      "chunks": 1,
+      "chars": 1830,
+      "chunks": 3,
       "warnings": []
     },
     {
-      "path": "source/06_it_systems_architecture/current_state_architecture.svg",
-      "type": "svg",
+      "path": "source/06_it_systems_architecture/interface_inventory.xlsx",
+      "type": "xlsx",
       "domain": "it_systems_architecture",
       "ok": true,
-      "method": "text-fallback",
-      "chars": 3914,
-      "chunks": 5,
-      "warnings": ["parsed as text fallback (worker-handled)"]
+      "method": "exceljs-xlsx",
+      "chars": 7355,
+      "chunks": 10,
+      "warnings": []
     },
     {
       "path": "source/07_data_analytics_reporting/report_inventory.xlsx",
@@ -788,8 +778,8 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 29604,
-      "chunks": 38,
+      "chars": 29473,
+      "chunks": 37,
       "warnings": []
     },
     {
@@ -798,8 +788,8 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 4830,
-      "chunks": 7,
+      "chars": 4783,
+      "chunks": 6,
       "warnings": []
     },
     {
@@ -808,7 +798,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1644,
+      "chars": 1662,
       "chunks": 3,
       "warnings": []
     },
@@ -818,7 +808,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1002,
+      "chars": 987,
       "chunks": 2,
       "warnings": []
     },
@@ -828,7 +818,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 2854,
+      "chars": 2824,
       "chunks": 4,
       "warnings": []
     },
@@ -838,7 +828,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "csv-row-chunker",
-      "chars": 2596,
+      "chars": 2605,
       "chunks": 60,
       "warnings": []
     },
@@ -848,8 +838,8 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "docx-mammoth",
-      "chars": 283,
-      "chunks": 1,
+      "chars": 1126,
+      "chunks": 2,
       "warnings": []
     },
     {
@@ -858,7 +848,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 966,
+      "chars": 964,
       "chunks": 2,
       "warnings": []
     },
@@ -868,7 +858,7 @@
       "domain": "data_analytics_reporting",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1963,
+      "chars": 1984,
       "chunks": 3,
       "warnings": []
     },
@@ -968,7 +958,7 @@
       "domain": "operations_business_process",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 886,
+      "chars": 887,
       "chunks": 2,
       "warnings": []
     },
@@ -978,7 +968,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "csv-row-chunker",
-      "chars": 194235,
+      "chars": 194194,
       "chunks": 1600,
       "warnings": []
     },
@@ -988,7 +978,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "jsonl-record-chunker",
-      "chars": 199104,
+      "chars": 199163,
       "chunks": 1200,
       "warnings": []
     },
@@ -998,7 +988,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 7792,
+      "chars": 7804,
       "chunks": 10,
       "warnings": []
     },
@@ -1008,7 +998,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 4931,
+      "chars": 4968,
       "chunks": 7,
       "warnings": []
     },
@@ -1038,7 +1028,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 399,
+      "chars": 400,
       "chunks": 1,
       "warnings": []
     },
@@ -1058,7 +1048,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 880,
+      "chars": 876,
       "chunks": 2,
       "warnings": []
     },
@@ -1068,7 +1058,7 @@
       "domain": "servicenow_support_workload",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1046,
+      "chars": 1048,
       "chunks": 2,
       "warnings": []
     },
@@ -1078,7 +1068,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 2433,
+      "chars": 2423,
       "chunks": 4,
       "warnings": []
     },
@@ -1088,7 +1078,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 2650,
+      "chars": 2603,
       "chunks": 4,
       "warnings": []
     },
@@ -1098,7 +1088,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1298,
+      "chars": 1312,
       "chunks": 2,
       "warnings": []
     },
@@ -1128,7 +1118,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1212,
+      "chars": 1201,
       "chunks": 2,
       "warnings": []
     },
@@ -1138,7 +1128,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 774,
+      "chars": 772,
       "chunks": 1,
       "warnings": []
     },
@@ -1148,7 +1138,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1372,
+      "chars": 1360,
       "chunks": 2,
       "warnings": []
     },
@@ -1158,7 +1148,7 @@
       "domain": "vendors_contracts_source",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 2074,
+      "chars": 2035,
       "chunks": 3,
       "warnings": []
     },
@@ -1188,7 +1178,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 10904,
+      "chars": 10927,
       "chunks": 14,
       "warnings": []
     },
@@ -1198,7 +1188,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 3194,
+      "chars": 3176,
       "chunks": 4,
       "warnings": []
     },
@@ -1208,7 +1198,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 767,
+      "chars": 761,
       "chunks": 1,
       "warnings": []
     },
@@ -1218,7 +1208,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1917,
+      "chars": 1922,
       "chunks": 3,
       "warnings": []
     },
@@ -1228,7 +1218,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 2915,
+      "chars": 2920,
       "chunks": 4,
       "warnings": []
     },
@@ -1238,7 +1228,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1380,
+      "chars": 1371,
       "chunks": 2,
       "warnings": []
     },
@@ -1248,7 +1238,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1034,
+      "chars": 1033,
       "chunks": 2,
       "warnings": []
     },
@@ -1258,7 +1248,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1197,
+      "chars": 1190,
       "chunks": 2,
       "warnings": []
     },
@@ -1268,7 +1258,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 643,
+      "chars": 638,
       "chunks": 1,
       "warnings": []
     },
@@ -1278,7 +1268,7 @@
       "domain": "risk_controls_responsible_ai",
       "ok": true,
       "method": "csv-row-chunker",
-      "chars": 1573,
+      "chars": 1619,
       "chunks": 40,
       "warnings": []
     },
@@ -1298,7 +1288,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 6560,
+      "chars": 6531,
       "chunks": 9,
       "warnings": []
     },
@@ -1308,7 +1298,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1517,
+      "chars": 1520,
       "chunks": 2,
       "warnings": []
     },
@@ -1318,7 +1308,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1537,
+      "chars": 1569,
       "chunks": 2,
       "warnings": []
     },
@@ -1328,7 +1318,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1624,
+      "chars": 1643,
       "chunks": 3,
       "warnings": []
     },
@@ -1338,7 +1328,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1551,
+      "chars": 1557,
       "chunks": 2,
       "warnings": []
     },
@@ -1348,7 +1338,7 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "exceljs-xlsx",
-      "chars": 1553,
+      "chars": 1520,
       "chunks": 2,
       "warnings": []
     },
@@ -1388,9 +1378,79 @@
       "domain": "ai_use_cases_moves",
       "ok": true,
       "method": "markdown-text",
-      "chars": 831,
+      "chars": 830,
       "chunks": 2,
       "warnings": []
+    },
+    {
+      "path": "source/06_it_systems_architecture/current_state_architecture.svg",
+      "type": "svg",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 20816,
+      "chunks": 27,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/06_it_systems_architecture/integration_architecture_diagram.svg",
+      "type": "svg",
+      "domain": "it_systems_architecture",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 15004,
+      "chunks": 19,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/05_treasury_kyriba/kyriba_connectivity_architecture.svg",
+      "type": "svg",
+      "domain": "treasury_kyriba",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 14107,
+      "chunks": 18,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/07_data_analytics_reporting/data_platform_architecture.svg",
+      "type": "svg",
+      "domain": "data_analytics_reporting",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 12392,
+      "chunks": 16,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/11_risk_controls_responsible_ai/security_zero_trust_architecture.svg",
+      "type": "svg",
+      "domain": "risk_controls_responsible_ai",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 9891,
+      "chunks": 13,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/12_ai_use_cases_moves/ai_agent_reference_architecture.svg",
+      "type": "svg",
+      "domain": "ai_use_cases_moves",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 11839,
+      "chunks": 15,
+      "warnings": ["parsed as text fallback (worker-handled)"]
+    },
+    {
+      "path": "source/03_strategy_initiatives/roadmap_2026_2027.svg",
+      "type": "svg",
+      "domain": "strategy_initiatives",
+      "ok": true,
+      "method": "text-fallback",
+      "chars": 6542,
+      "chunks": 9,
+      "warnings": ["parsed as text fallback (worker-handled)"]
     }
   ]
 }

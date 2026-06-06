@@ -1,12 +1,12 @@
 # SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=finance_performance | owner=Sofia Marchetti | system=OneStream | as_of=2026-06-06 | sensitivity=Internal
 close_day,activity,owner
-WD+1,Reporting,Priya Natarajan
-WD+2,Consolidation,Tomas Halvorsen
-WD+3,Reporting,Sofia Marchetti
-WD+4,Sub-ledger close,Marcus Reilly
-WD+5,Reporting,Sofia Marchetti
-WD+6,Reporting,Priya Natarajan
-WD+7,GL close,Aisha Bello
-WD+8,Consolidation,Liam O'Sullivan
-WD+9,Consolidation,David Chen
-WD+10,Review,Elena Vasquez
+WD+1,Reporting,Liam O'Sullivan
+WD+2,Consolidation,Priya Natarajan
+WD+3,Reporting,Aisha Bello
+WD+4,Reporting,Liam O'Sullivan
+WD+5,Review,David Chen
+WD+6,GL close,Aisha Bello
+WD+7,Review,Maria Donnelly
+WD+8,Reporting,Sofia Marchetti
+WD+9,Sub-ledger close,Liam O'Sullivan
+WD+10,Consolidation,Elena Vasquez

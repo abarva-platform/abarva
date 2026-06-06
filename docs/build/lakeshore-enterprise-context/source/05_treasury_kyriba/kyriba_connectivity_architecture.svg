@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="840" viewBox="0 0 1300 840" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#b91c1c"/></marker>
+<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="#39507e"/></marker>
+</defs>
+<rect width="1300" height="840" fill="#f5f1eb"/>
+<text x="36" y="34" font-size="12" fill="#6b7280" font-family="monospace">SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI</text>
+<text x="36" y="64" font-size="23" font-weight="700" fill="#0c1a3a" font-family="Georgia, serif">Kyriba Treasury Connectivity Architecture</text>
+<text x="36" y="86" font-size="12.5" fill="#6b7280">ERP → Kyriba payments/cash → bank connectivity → 10 banking partners</text>
+<text x="650.0" y="420.0" font-size="150" fill="#0c1a3a" opacity="0.045" text-anchor="middle" transform="rotate(-22 650.0 420.0)" font-weight="700">SYNTHETIC</text>
+<rect x="36" y="110" width="600" height="150" rx="12" fill="#eef7f1" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">ERP / SOURCE</text>
+<rect x="56" y="134" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="56" y="134" width="5" height="110" rx="2" fill="#0f766e"/>
+<text x="70" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">SAP ECC / S/4HANA</text>
+<text x="316" y="152" font-size="8.5" fill="#0f766e" text-anchor="end" font-family="monospace" font-weight="700">ERP</text>
+<text x="70" y="174" font-size="10.5" fill="#6b7280">AP proposals, GL postings</text>
+<text x="70" y="189" font-size="10.5" fill="#6b7280">vendor master, bank master</text>
+<text x="70" y="204" font-size="10.5" fill="#6b7280">IDoc PEXR2002 / OData</text>
+<rect x="346" y="134" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="346" y="134" width="5" height="110" rx="2" fill="#b45309"/>
+<text x="360" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Coupa / Concur</text>
+<text x="606" y="152" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">P2P</text>
+<text x="360" y="174" font-size="10.5" fill="#6b7280">invoice approvals, expenses</text>
+<text x="360" y="189" font-size="10.5" fill="#6b7280">supplier bank details</text>
+<rect x="660" y="110" width="604" height="150" rx="12" fill="#eef4fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="664" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">TREASURY MANAGEMENT (Kyriba SaaS)</text>
+<rect x="680" y="134" width="270" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="680" y="134" width="5" height="110" rx="2" fill="#0066CC"/>
+<text x="694" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Kyriba Payments Factory</text>
+<text x="940" y="152" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">PAY</text>
+<text x="694" y="174" font-size="10.5" fill="#6b7280">payment workflow + limits</text>
+<text x="694" y="189" font-size="10.5" fill="#6b7280">dual auth, sanctions screen</text>
+<text x="694" y="204" font-size="10.5" fill="#6b7280">format transformation</text>
+<rect x="970" y="134" width="274" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="970" y="134" width="5" height="110" rx="2" fill="#0066CC"/>
+<text x="984" y="155" font-size="12.5" font-weight="600" fill="#0c1a3a">Kyriba Cash &amp; Liquidity</text>
+<text x="1234" y="152" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">CASH</text>
+<text x="984" y="174" font-size="10.5" fill="#6b7280">cash positioning, pooling</text>
+<text x="984" y="189" font-size="10.5" fill="#6b7280">13-week forecast (AI)</text>
+<text x="984" y="204" font-size="10.5" fill="#6b7280">bank fee analysis</text>
+<rect x="36" y="300" width="1228" height="130" rx="12" fill="#fff7e8" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="295" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">CONNECTIVITY LAYER</text>
+<rect x="60" y="322" width="280" height="92" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="322" width="5" height="92" rx="2" fill="#6d28d9"/>
+<text x="74" y="343" font-size="12.5" font-weight="600" fill="#0c1a3a">Kyriba Bank Connectivity</text>
+<text x="330" y="340" font-size="8.5" fill="#6d28d9" text-anchor="end" font-family="monospace" font-weight="700">CONN</text>
+<text x="74" y="362" font-size="10.5" fill="#6b7280">SWIFT Alliance Lite2 / SCORE</text>
+<text x="74" y="377" font-size="10.5" fill="#6b7280">host-to-host SFTP, EBICS, API</text>
+<text x="74" y="392" font-size="10.5" fill="#6b7280">format library ISO20022</text>
+<rect x="360" y="322" width="280" height="92" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="360" y="322" width="5" height="92" rx="2" fill="#b91c1c"/>
+<text x="374" y="343" font-size="12.5" font-weight="600" fill="#0c1a3a">Sanctions / AML</text>
+<text x="630" y="340" font-size="8.5" fill="#b91c1c" text-anchor="end" font-family="monospace" font-weight="700">AML</text>
+<text x="374" y="362" font-size="10.5" fill="#6b7280">real-time screening</text>
+<text x="374" y="377" font-size="10.5" fill="#6b7280">OFAC/EU lists</text>
+<text x="374" y="392" font-size="10.5" fill="#6b7280">hold &amp; review queue</text>
+<rect x="660" y="322" width="280" height="92" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="660" y="322" width="5" height="92" rx="2" fill="#15803d"/>
+<text x="674" y="343" font-size="12.5" font-weight="600" fill="#0c1a3a">ERP Reconciliation</text>
+<text x="930" y="340" font-size="8.5" fill="#15803d" text-anchor="end" font-family="monospace" font-weight="700">RECON</text>
+<text x="674" y="362" font-size="10.5" fill="#6b7280">auto-recon statements↔GL</text>
+<text x="674" y="377" font-size="10.5" fill="#6b7280">exception workflow</text>
+<text x="674" y="392" font-size="10.5" fill="#6b7280">fee validation</text>
+<rect x="960" y="322" width="284" height="92" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="960" y="322" width="5" height="92" rx="2" fill="#b45309"/>
+<text x="974" y="343" font-size="12.5" font-weight="600" fill="#0c1a3a">Treasury Controls</text>
+<text x="1234" y="340" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">CTRL</text>
+<text x="974" y="362" font-size="10.5" fill="#6b7280">segregation of duties</text>
+<text x="974" y="377" font-size="10.5" fill="#6b7280">audit trail (immutable)</text>
+<text x="974" y="392" font-size="10.5" fill="#6b7280">limit &amp; mandate mgmt</text>
+<rect x="36" y="470" width="1228" height="150" rx="12" fill="#eef2fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="465" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">BANKING PARTNERS (10 banks · 4 regions)</text>
+<rect x="56" y="494" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="56" y="494" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="70" y="515" font-size="12.5" font-weight="600" fill="#0c1a3a">JPMorgan</text>
+<text x="70" y="534" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="296" y="494" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="296" y="494" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="310" y="515" font-size="12.5" font-weight="600" fill="#0c1a3a">Citi</text>
+<text x="310" y="534" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="536" y="494" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="536" y="494" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="550" y="515" font-size="12.5" font-weight="600" fill="#0c1a3a">HSBC</text>
+<text x="550" y="534" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="776" y="494" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="776" y="494" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="790" y="515" font-size="12.5" font-weight="600" fill="#0c1a3a">BNP Paribas</text>
+<text x="790" y="534" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="1016" y="494" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1016" y="494" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="1030" y="515" font-size="12.5" font-weight="600" fill="#0c1a3a">Std Chartered</text>
+<text x="1030" y="534" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="56" y="552" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="56" y="552" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="70" y="573" font-size="12.5" font-weight="600" fill="#0c1a3a">BofA</text>
+<text x="70" y="592" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="296" y="552" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="296" y="552" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="310" y="573" font-size="12.5" font-weight="600" fill="#0c1a3a">Deutsche</text>
+<text x="310" y="592" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="536" y="552" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="536" y="552" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="550" y="573" font-size="12.5" font-weight="600" fill="#0c1a3a">DBS</text>
+<text x="550" y="592" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="776" y="552" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="776" y="552" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="790" y="573" font-size="12.5" font-weight="600" fill="#0c1a3a">Santander</text>
+<text x="790" y="592" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<rect x="1016" y="552" width="224" height="48" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="1016" y="552" width="5" height="48" rx="2" fill="#0066CC"/>
+<text x="1030" y="573" font-size="12.5" font-weight="600" fill="#0c1a3a">Wells Fargo</text>
+<text x="1030" y="592" font-size="10.5" fill="#6b7280">camt.053 ⇄ pain.001/002</text>
+<path d="M326,188 L680,188" fill="none" stroke="#0066CC" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="476.4" y="179.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="503.0" y="190.0" font-size="9" fill="#0066CC" text-anchor="middle" font-family="monospace">pain.001</text>
+<path d="M815,244 L200,322" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<rect x="478.2" y="274.0" width="58.6" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="507.5" y="285.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">proposals</text>
+<path d="M200,414 L200,494" fill="none" stroke="#0066CC" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="162.6" y="445.0" width="74.80000000000001" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="200.0" y="456.0" font-size="9" fill="#0066CC" text-anchor="middle" font-family="monospace">host-to-host</text>
+<path d="M500,414 L500,494" fill="none" stroke="#b91c1c" stroke-width="1.6" marker-end="url(#arwR)"/>
+<rect x="473.4" y="445.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="500.0" y="456.0" font-size="9" fill="#b91c1c" text-anchor="middle" font-family="monospace">screened</text>
+<path d="M500,552 C650.0,592 650.0,374 800,414" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="623.4" y="474.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="650.0" y="485.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">camt.05x</text>
+<path d="M800,414 C950.0,384 950.0,274 1100,244" fill="none" stroke="#39507e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<rect x="912.6" y="320.0" width="74.80000000000001" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="950.0" y="331.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">recon → cash</text>
+<rect x="36" y="632" width="1228" height="120" rx="12" fill="#eefbf7" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="627" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">PAYMENT MESSAGE FLOW (end-to-end)</text>
+<text x="60" y="668" font-size="11" fill="#0c1a3a">1. ERP raises AP proposal</text><text x="460" y="668" font-size="11" fill="#0c1a3a">2. Kyriba enriches + validates limits</text><text x="860" y="668" font-size="11" fill="#0c1a3a">3. dual authorization</text><text x="60" y="694" font-size="11" fill="#0c1a3a">4. sanctions screening</text><text x="460" y="694" font-size="11" fill="#0c1a3a">5. ISO20022 pain.001 to bank (SFTP/SWIFT)</text><text x="860" y="694" font-size="11" fill="#0c1a3a">6. bank ack pain.002</text><text x="60" y="720" font-size="11" fill="#0c1a3a">7. statement camt.053 inbound</text><text x="460" y="720" font-size="11" fill="#0c1a3a">8. auto-reconciliation to GL</text><text x="860" y="720" font-size="11" fill="#0c1a3a">9. cash position + forecast refresh</text><text x="36" y="826" font-size="10.5" fill="#6b7280" font-family="monospace">LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1 · treasury_kyriba · owner=Elena Vasquez · system=Kyriba TMS · 2026-06-06 · SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA</text>
+</svg>

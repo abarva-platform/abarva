@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="800" viewBox="0 0 1300 800" font-family="Inter, Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 z" fill="#b91c1c"/></marker>
+<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="#39507e"/></marker>
+</defs>
+<rect width="1300" height="800" fill="#f5f1eb"/>
+<text x="36" y="34" font-size="12" fill="#6b7280" font-family="monospace">SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI</text>
+<text x="36" y="64" font-size="23" font-weight="700" fill="#0c1a3a" font-family="Georgia, serif">Enterprise AI &amp; Agent Reference Architecture</text>
+<text x="36" y="86" font-size="12.5" fill="#6b7280">Governed surfaces → orchestration/guardrails → RAG retrieval → models/ingestion</text>
+<text x="650.0" y="400.0" font-size="150" fill="#0c1a3a" opacity="0.045" text-anchor="middle" transform="rotate(-22 650.0 400.0)" font-weight="700">SYNTHETIC</text>
+<rect x="36" y="110" width="1228" height="96" rx="12" fill="#eef2fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="105" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">EXPERIENCE (governed surfaces)</text>
+<rect x="52" y="132" width="288" height="60" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="52" y="132" width="5" height="60" rx="2" fill="#0066CC"/>
+<text x="66" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Sentinel Advisor (Ask)</text>
+<text x="66" y="172" font-size="10.5" fill="#6b7280">cited Q&amp;A</text>
+<rect x="358" y="132" width="288" height="60" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="358" y="132" width="5" height="60" rx="2" fill="#0066CC"/>
+<text x="372" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Nexus Sessions</text>
+<text x="372" y="172" font-size="10.5" fill="#6b7280">guided gates</text>
+<rect x="664" y="132" width="288" height="60" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="664" y="132" width="5" height="60" rx="2" fill="#0066CC"/>
+<text x="678" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Strategic Moves</text>
+<text x="678" y="172" font-size="10.5" fill="#6b7280">board artifacts</text>
+<rect x="970" y="132" width="288" height="60" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="970" y="132" width="5" height="60" rx="2" fill="#0066CC"/>
+<text x="984" y="153" font-size="12.5" font-weight="600" fill="#0c1a3a">Control Tower</text>
+<text x="984" y="172" font-size="10.5" fill="#6b7280">value tracking</text>
+<rect x="36" y="220" width="1228" height="150" rx="12" fill="#fff7e8" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="215" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">ORCHESTRATION &amp; GUARDRAILS</text>
+<rect x="60" y="244" width="380" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="244" width="5" height="110" rx="2" fill="#b45309"/>
+<text x="74" y="265" font-size="12.5" font-weight="600" fill="#0c1a3a">Agent Orchestrator</text>
+<text x="430" y="262" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">ORCH</text>
+<text x="74" y="284" font-size="10.5" fill="#6b7280">planner + tools, retries</text>
+<text x="74" y="299" font-size="10.5" fill="#6b7280">human-in-loop by risk tier</text>
+<text x="74" y="314" font-size="10.5" fill="#6b7280">cost + latency budgets</text>
+<rect x="450" y="244" width="380" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="450" y="244" width="5" height="110" rx="2" fill="#b91c1c"/>
+<text x="464" y="265" font-size="12.5" font-weight="600" fill="#0c1a3a">Responsible AI Guardrails</text>
+<text x="820" y="262" font-size="8.5" fill="#b91c1c" text-anchor="end" font-family="monospace" font-weight="700">RAI</text>
+<text x="464" y="284" font-size="10.5" fill="#6b7280">PII redaction, grounding check</text>
+<text x="464" y="299" font-size="10.5" fill="#6b7280">evidence-required outputs</text>
+<text x="464" y="314" font-size="10.5" fill="#6b7280">policy: no uncited claims</text>
+<rect x="840" y="244" width="400" height="110" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="840" y="244" width="5" height="110" rx="2" fill="#6d28d9"/>
+<text x="854" y="265" font-size="12.5" font-weight="600" fill="#0c1a3a">Evidence &amp; Audit Ledger</text>
+<text x="1230" y="262" font-size="8.5" fill="#6d28d9" text-anchor="end" font-family="monospace" font-weight="700">AUDIT</text>
+<text x="854" y="284" font-size="10.5" fill="#6b7280">every claim → source chunk</text>
+<text x="854" y="299" font-size="10.5" fill="#6b7280">immutable, replayable</text>
+<text x="854" y="314" font-size="10.5" fill="#6b7280">evidence_ledger (Postgres)</text>
+<rect x="36" y="384" width="1228" height="160" rx="12" fill="#eef4fb" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="379" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">RETRIEVAL (RAG over enterprise context)</text>
+<rect x="60" y="408" width="360" height="116" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="408" width="5" height="116" rx="2" fill="#0f766e"/>
+<text x="74" y="429" font-size="12.5" font-weight="600" fill="#0c1a3a">Context Broker</text>
+<text x="410" y="426" font-size="8.5" fill="#0f766e" text-anchor="end" font-family="monospace" font-weight="700">BROKER</text>
+<text x="74" y="448" font-size="10.5" fill="#6b7280">hybrid retrieve (vector+BM25)</text>
+<text x="74" y="463" font-size="10.5" fill="#6b7280">tenant-scoped (client_id)</text>
+<text x="74" y="478" font-size="10.5" fill="#6b7280">rerank + dedupe</text>
+<rect x="440" y="408" width="360" height="116" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="440" y="408" width="5" height="116" rx="2" fill="#0066CC"/>
+<text x="454" y="429" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure AI Search</text>
+<text x="790" y="426" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">INDEX</text>
+<text x="454" y="448" font-size="10.5" fill="#6b7280">tenant-context-v1</text>
+<text x="454" y="463" font-size="10.5" fill="#6b7280">HNSW vector + semantic</text>
+<text x="454" y="478" font-size="10.5" fill="#6b7280">filter: tenant_key</text>
+<rect x="820" y="408" width="420" height="116" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="820" y="408" width="5" height="116" rx="2" fill="#15803d"/>
+<text x="834" y="429" font-size="12.5" font-weight="600" fill="#0c1a3a">Azure Postgres context</text>
+<text x="1230" y="426" font-size="8.5" fill="#15803d" text-anchor="end" font-family="monospace" font-weight="700">STORE</text>
+<text x="834" y="448" font-size="10.5" fill="#6b7280">enterprise_context_chunks</text>
+<text x="834" y="463" font-size="10.5" fill="#6b7280">embeddings (1536-d)</text>
+<text x="834" y="478" font-size="10.5" fill="#6b7280">provenance + metadata</text>
+<rect x="36" y="556" width="1228" height="110" rx="12" fill="#eefbf7" stroke="#26324f" stroke-opacity="0.18"/>
+<text x="40" y="551" font-size="11" font-weight="700" letter-spacing="1.5" fill="#1F2A44" font-family="monospace">MODELS &amp; INGESTION</text>
+<rect x="60" y="580" width="380" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="60" y="580" width="5" height="72" rx="2" fill="#6d28d9"/>
+<text x="74" y="601" font-size="12.5" font-weight="600" fill="#0c1a3a">LLM / Embeddings</text>
+<text x="430" y="598" font-size="8.5" fill="#6d28d9" text-anchor="end" font-family="monospace" font-weight="700">MODEL</text>
+<text x="74" y="620" font-size="10.5" fill="#6b7280">Claude (reasoning) + OpenAI emb</text>
+<text x="74" y="635" font-size="10.5" fill="#6b7280">text-embedding-3-small 1536-d</text>
+<rect x="450" y="580" width="380" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="450" y="580" width="5" height="72" rx="2" fill="#b45309"/>
+<text x="464" y="601" font-size="12.5" font-weight="600" fill="#0c1a3a">Setup Admin Loader</text>
+<text x="820" y="598" font-size="8.5" fill="#b45309" text-anchor="end" font-family="monospace" font-weight="700">LOAD</text>
+<text x="464" y="620" font-size="10.5" fill="#6b7280">ZIP→Blob→parse→chunk</text>
+<text x="464" y="635" font-size="10.5" fill="#6b7280">embed→index</text>
+<text x="464" y="650" font-size="10.5" fill="#6b7280">stage_and_process</text>
+<rect x="840" y="580" width="400" height="72" rx="9" fill="#ffffff" stroke="#26324f" stroke-width="1.1"/>
+<rect x="840" y="580" width="5" height="72" rx="2" fill="#0066CC"/>
+<text x="854" y="601" font-size="12.5" font-weight="600" fill="#0c1a3a">Document Intelligence</text>
+<text x="1230" y="598" font-size="8.5" fill="#0066CC" text-anchor="end" font-family="monospace" font-weight="700">PARSE</text>
+<text x="854" y="620" font-size="10.5" fill="#6b7280">pdf/docx/xlsx parse</text>
+<text x="854" y="635" font-size="10.5" fill="#6b7280">layout + tables</text>
+<path d="M200,192 L250,244" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="206.5" y="209.0" width="37.0" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="225.0" y="220.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">query</text>
+<path d="M250,354 L240,408" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="218.4" y="372.0" width="53.2" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="245.0" y="383.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">retrieve</text>
+<path d="M420,466 L440,466" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="408.8" y="457.0" width="42.400000000000006" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="430.0" y="468.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">hybrid</text>
+<path d="M800,466 L820,466" fill="none" stroke="#39507e" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="786.1" y="457.0" width="47.800000000000004" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="810.0" y="468.0" font-size="9" fill="#39507e" text-anchor="middle" font-family="monospace">vectors</text>
+<path d="M640,652 C440.0,622 440.0,554 240,524" fill="none" stroke="#6d28d9" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="421.5" y="579.0" width="37.0" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="440.0" y="590.0" font-size="9" fill="#6d28d9" text-anchor="middle" font-family="monospace">embed</text>
+<path d="M640,580 C835.0,550 835.0,554 1030,524" fill="none" stroke="#0066CC" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="816.5" y="543.0" width="37.0" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="835.0" y="554.0" font-size="9" fill="#0066CC" text-anchor="middle" font-family="monospace">index</text>
+<path d="M900,300 L1040,192" fill="none" stroke="#6d28d9" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw)"/>
+<rect x="954.2" y="237.0" width="31.6" height="15" rx="3" fill="#f5f1eb" opacity="0.92"/><text x="970.0" y="248.0" font-size="9" fill="#6d28d9" text-anchor="middle" font-family="monospace">cite</text>
+<text x="36" y="786" font-size="10.5" fill="#6b7280" font-family="monospace">LAKESHORE_ENTERPRISE_CONTEXT_LOAD_V1 · ai_use_cases_moves · owner=Marcus Reilly · system=AbarVa · 2026-06-06 · SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA</text>
+</svg>

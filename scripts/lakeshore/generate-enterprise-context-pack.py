@@ -639,15 +639,7 @@ def build_strategy():
          ("How we win",[("bullets",["Operational excellence","Cash & cost discipline","Data-led decisions","Governed AI"])])],
         meta=M(f,"Maria Donnelly","Corporate Strategy"))
     reg(p, f, "Maria Donnelly", "Corporate Strategy", "Strategy Narrative", "Where-we-play / how-we-win narrative.")
-    p = SRC / f / "roadmap_2026_2027.svg"
-    bars=""
-    for i,n in enumerate(inits[:8]):
-        x=180+ (i%1)*0; y=110+i*64; w=random.randint(280,720)
-        bars+=(f'<rect x="180" y="{y}" width="{w}" height="34" rx="6" fill="#1F2A44"/>'
-               f'<text x="24" y="{y+22}" font-family="sans-serif" font-size="13" fill="#0c1a3a">{n}</text>'
-               f'<text x="{190}" y="{y+22}" font-family="monospace" font-size="11" fill="#fff">Q{random.randint(1,4)} FY26 → Q{random.randint(1,4)} FY27</text>')
-    write_svg(p, "Transformation Roadmap FY26-27", bars, meta=M(f,"Marcus Reilly","Corporate Strategy"))
-    reg(p, f, "Marcus Reilly", "Corporate Strategy", "Roadmap FY26-27", "Visual portfolio roadmap.")
+    # roadmap SVG built in rich_diagrams()
 
 print("built: org, strategy")
 
@@ -733,14 +725,47 @@ def build_treasury():
     write_xlsx(p, {"BankConnectivity": (["id","bank","channel","status","accounts","statement_format"], rows)},
                title="Bank Connectivity Inventory", meta=M(f,owner,sys))
     reg(p, f, owner, sys, "Bank Connectivity Inventory", "Bank channels and statement formats.", sensitivity="Confidential")
-    for fn,title,system in [("payment_process.docx","Payment Process","Kyriba TMS"),
-                            ("kyriba_integration_design.docx","Kyriba Integration Design","SAP S/4HANA"),
-                            ("treasury_policy.docx","Treasury Policy","Treasury")]:
-        p = SRC / f / fn
-        write_docx(p, title, [("Overview",[f"{title} for Lakeshore group treasury (synthetic)."]),
-            ("Controls",[("bullets",["Dual authorization on payments","Sanctions screening","Payment limits by entity"])])],
-            meta=M(f,owner,system))
-        reg(p, f, owner, system, title, f"{title} document.", sensitivity="Confidential")
+    p = SRC / f / "payment_process.docx"
+    write_docx(p, "Payment Process & Payments Factory",
+        [("End-to-end flow",["The Lakeshore payments factory centralizes outbound payments through Kyriba. AP proposals "
+          "originate in SAP (IDoc PEXR2002), are enriched and validated against entity-level limits in Kyriba, pass dual "
+          "authorization and real-time sanctions screening, and are transmitted to banks as ISO20022 pain.001 over SFTP/SWIFT. "
+          "Bank acknowledgements (pain.002) and statements (camt.053/052) flow back for auto-reconciliation to the GL."]),
+         ("Process steps",[("table",["Step","System","Control","SLA"],
+            [["AP proposal","SAP","3-way match","T+0"],["Enrichment/limits","Kyriba","limit check","<5m"],
+             ["Dual authorization","Kyriba","SoD","same day"],["Sanctions screening","Kyriba/AML","OFAC/EU","real-time"],
+             ["Transmit pain.001","Kyriba→Bank","format validation","intraday"],["Recon camt.053","Bank→Kyriba→SAP","auto-match","T+1"]])]),
+         ("Volumetrics & insight",["~412k payments/year across 10 banks; 6.8% exception rate (target <3%). Primary exception "
+          "drivers: beneficiary bank detail mismatches and missing remittance refs — addressed by vendor master cleanup and "
+          "payment anomaly detection (see AI use cases)."])],
+        meta=M(f,owner,"Kyriba TMS"))
+    reg(p, f, owner, "Kyriba TMS", "Payment Process", "Payments factory flow, controls, volumetrics.", sensitivity="Confidential")
+    p = SRC / f / "kyriba_integration_design.docx"
+    write_docx(p, "Kyriba Integration Design",
+        [("Interfaces",[("table",["Interface","Direction","Format","Channel","Frequency"],
+            [["Payment proposals","SAP→Kyriba","IDoc PEXR2002","ESB","hourly"],
+             ["Outbound payments","Kyriba→Bank","pain.001.001.09","SFTP/SWIFT","intraday"],
+             ["Payment status","Bank→Kyriba","pain.002","SFTP","intraday"],
+             ["Statements","Bank→Kyriba","camt.053/052","SFTP","daily/intraday"],
+             ["GL recon postings","Kyriba→SAP","BAPI/IDoc","ESB","T+1"],
+             ["FX rates","Refinitiv→Kyriba","REST","API","intraday"]])]),
+         ("Connectivity",["Kyriba bank connectivity uses SWIFT Alliance Lite2 (SCORE) for SWIFT-enabled banks and host-to-host "
+          "SFTP/EBICS for the remainder; Kyriba's format library handles country-specific ISO20022 variants. Mutual TLS and "
+          "PGP protect file channels."]),
+         ("Design principles",[("bullets",["Single payment hub; no direct ERP-to-bank channels.",
+            "Idempotent, replayable interfaces with full audit trail.","Clean-core: transformations in Kyriba/ESB, not ERP.",
+            "Environment parity (DEV/QA/PROD) with masked test data."])])],
+        meta=M(f,owner,"SAP S/4HANA"))
+    reg(p, f, owner, "SAP S/4HANA", "Kyriba Integration Design", "Kyriba interface and connectivity design.", sensitivity="Confidential")
+    p = SRC / f / "treasury_policy.docx"
+    write_docx(p, "Treasury Policy",
+        [("Scope",["Governs cash management, banking, payments, FX/interest-rate risk, and counterparty limits for all "
+          "Lakeshore entities."]),
+         ("Key policies",[("bullets",["Minimum cash buffers by entity and currency.",
+            "Hedging bands for transactional FX exposure (50-90% coverage).","Counterparty concentration limits per bank.",
+            "Dual authorization and four-eyes on all outbound payments.","Quarterly bank account mandate review."])])],
+        meta=M(f,owner,"Treasury"))
+    reg(p, f, owner, "Treasury", "Treasury Policy", "Treasury policy framework.", sensitivity="Confidential")
     p = SRC / f / "cash_positioning.xlsx"
     rows=[[g[1], round(random.uniform(5,400),1), round(random.uniform(0,120),1), random.choice(BANKS)] for g in GEOS]
     write_xlsx(p, {"CashPosition": (["country","cash_m","idle_cash_m","concentration_bank"], rows)}, title="Cash Positioning", meta=M(f,owner,sys))
@@ -805,21 +830,53 @@ def build_it():
                title="Application Inventory", meta=M(f,owner,"ServiceNow CMDB"))
     reg(p, f, owner, "ServiceNow CMDB", "Application Inventory", "120-row application portfolio.")
     p = SRC / f / "erp_landscape.pdf"
-    write_pdf(p, "ERP Landscape", "SAP ECC to S/4HANA landscape.",
-        [("Instances",[("table",["Instance","Region","Version","Migration"],
-            [["PRD-NA","North America","ECC 6.0","Wave 2 FY26"],["PRD-EU","EMEA","ECC 6.0","Wave 2 FY26"],
-             ["PRD-AP","APAC","S/4HANA","Live"],["PRD-LA","LATAM","ECC 6.0","Wave 3 FY27"]])])],
-        meta=M(f,"Priya Natarajan","SAP"))
-    reg(p, f, "Priya Natarajan", "SAP", "ERP Landscape", "ERP instances and migration status.")
+    write_pdf(p, "ERP Landscape & S/4HANA Migration", "SAP estate, technical debt, and brownfield migration approach.",
+        [("Production instances", [
+            "Lakeshore operates a federated SAP estate: two ECC 6.0 instances (NA, EMEA) on Oracle DB, one S/4HANA 2022 "
+            "instance (APAC) on HANA, and a legacy ECC instance (LATAM). Consolidation to a single S/4HANA tenant is the "
+            "FY26-27 ERP north star.",
+            ("table",["Instance","Region","Version","DB","Modules","Migration","Interfaces"],
+            [["PRD-NA","North America","ECC 6.0","Oracle 19c","FI/CO/MM/SD/PP","Wave 2 FY26 (brownfield)","98"],
+             ["PRD-EU","EMEA","ECC 6.0","Oracle 19c","FI/CO/MM/SD","Wave 2 FY26 (brownfield)","74"],
+             ["PRD-AP","APAC","S/4HANA 2022","HANA 2.0","Finance/Sourcing","Live (selective data transition)","41"],
+             ["PRD-LA","LATAM","ECC 6.0","Oracle 12c","FI/MM","Wave 3 FY27","27"]])]),
+         ("Integration & data flows", [
+            "ERP integrates outbound via IDoc (PEXR2002 payments to Kyriba, INVOIC, ORDERS) and OData/BAPI for real-time "
+            "lookups; inbound master data via ALE distribution. Financial actuals flow nightly to Snowflake via IDoc→Parquet "
+            "landing, then dbt curation. Payment proposals flow hourly to Kyriba over the ESB.",
+            ("bullets",["Outbound: IDoc (payments, invoices), OData (real-time), ALE (master data)",
+                        "Inbound: bank statements via Kyriba→ERP recon postings",
+                        "Batch: GL/AP/AR nightly extract → Snowflake bronze",
+                        "Clean-core principle for S/4: extensions on BTP, no core mods"])]),
+         ("Technical debt & risks", [("bullets",[
+            "ECC mainstream maintenance end-of-life pressure; 1,400+ custom Z-objects to remediate.",
+            "Inconsistent chart-of-accounts across instances complicates consolidation.",
+            "Interface sprawl (240+) raises migration regression risk — see integration architecture."])]),
+        ], meta=M(f,"Priya Natarajan","SAP"))
+    reg(p, f, "Priya Natarajan", "SAP", "ERP Landscape", "ERP instances, integration/data flows, migration approach, tech debt.", sensitivity="Confidential")
     for fn,title,system in [("hris_workday.docx","HRIS / Workday","Workday HCM"),
                             ("procurement_systems.docx","Procurement Systems","Coupa"),
-                            ("identity_sso.docx","Identity & SSO","Azure Active Directory"),
-                            ("data_platforms.docx","Data Platforms","Snowflake")]:
+                            ("identity_sso.docx","Identity & SSO","Azure Active Directory")]:
         p = SRC / f / fn
         write_docx(p, title, [("Overview",[f"{title} landscape for Lakeshore (synthetic)."]),
-            ("Notes",[("bullets",["Integration via middleware","Identity federated to Azure AD","Data lands in Snowflake"])])],
+            ("Notes",[("bullets",["Integration via middleware (ESB/APIM)","Identity federated to Entra ID (SAML/OIDC)","Data lands in Snowflake via CDC/EIB"])])],
             meta=M(f,owner,system))
         reg(p, f, owner, system, title, f"{title} overview.")
+    p = SRC / f / "data_platforms.docx"
+    write_docx(p, "Data Platforms",
+        [("Architecture",["Lakeshore's analytics platform is a Snowflake medallion (bronze/silver/gold) fed from ADLS gen2 "
+          "landing, transformed with dbt, governed with RBAC + dynamic masking, and consumed by Power BI, Azure AI Search "
+          "(tenant-context-v1), and the Postgres context layer. See `data_platform_architecture.svg`."]),
+         ("Components",[("table",["Layer","Technology","Purpose"],
+            [["Landing/Bronze","ADLS gen2 + Snowpipe","immutable raw ingest"],
+             ["Curated/Silver","Snowflake + dbt","conformed, tested models"],
+             ["Present/Gold","Snowflake marts","domain marts + exposures"],
+             ["Semantic","dbt metrics","certified KPI definitions"],
+             ["Serving","Power BI / AI Search / Postgres","BI + RAG + context"]])]),
+         ("Insight",["~58% of report effort is manual data prep upstream of certified marts; consolidating onto the semantic "
+          "layer is the single largest reporting-rationalization lever."])],
+        meta=M(f,"Aisha Bello","Snowflake"))
+    reg(p, f, "Aisha Bello", "Snowflake", "Data Platforms", "Medallion data platform components and insight.")
     p = SRC / f / "finance_systems.xlsx"
     rows=[["SAP FI","GL/AP/AR","SAP ECC","Migrate"],["Hyperion","Consolidation","Oracle","Tolerate"],
           ["OneStream","FP&A","OneStream","Strategic"],["Blackline","Reconciliation","Blackline","Strategic"],
@@ -843,23 +900,46 @@ def build_it():
     write_xlsx(p, {"Legacy": (["id","application","age_years","risk","disposition"], rows)}, title="Legacy Applications", meta=M(f,owner,"ServiceNow CMDB"))
     reg(p, f, owner, "ServiceNow CMDB", "Legacy Applications", "Legacy application risk inventory.")
     p = SRC / f / "integration_architecture.pdf"
-    write_pdf(p, "Integration Architecture", "Integration patterns and middleware.",
-        [("Patterns",[("bullets",["SAP PI/PO for ERP integration","API gateway for SaaS","Event hub for streaming","Snowflake as data hub"])])],
-        meta=M(f,owner,"SAP PI/PO"))
-    reg(p, f, owner, "SAP PI/PO", "Integration Architecture", "Integration patterns narrative.")
-    p = SRC / f / "current_state_architecture.svg"
-    boxes=""
-    layers=[("Channels",["Web","Mobile","Partner"]),("Apps",["SAP","Workday","Coupa","Kyriba","ServiceNow"]),
-            ("Integration",["PI/PO","API GW","Event Hub"]),("Data",["Snowflake","Power BI"]),("Cloud",["Azure"])]
-    for li,(lname,items) in enumerate(layers):
-        y=120+li*110
-        boxes+=f'<text x="24" y="{y+30}" font-family="monospace" font-size="12" fill="#6b7280">{lname}</text>'
-        for ii,it in enumerate(items):
-            x=180+ii*170
-            boxes+=(f'<rect x="{x}" y="{y}" width="150" height="56" rx="8" fill="#fff" stroke="#1F2A44"/>'
-                    f'<text x="{x+75}" y="{y+33}" font-family="sans-serif" font-size="13" fill="#0c1a3a" text-anchor="middle">{it}</text>')
-    write_svg(p, "Current-State Architecture", boxes, meta=M(f,owner,"Architecture"))
-    reg(p, f, owner, "Architecture", "Current-State Architecture", "Layered architecture diagram.")
+    write_pdf(p, "Integration Architecture Narrative", "Backbone topology, patterns, standards, and the interface estate.",
+        [("Topology", [
+            "Lakeshore runs a hybrid integration backbone: SAP PI/PO (ESB) for ERP-centric A2A/B2B, Azure API Management "
+            "for REST facades to SaaS, Azure Service Bus/Event Grid for event-driven ingestion (including the "
+            "q-context-ingestion-events queue used by the context loader), and a Managed File Transfer tier for bank "
+            "host-to-host. See `integration_architecture_diagram.svg` for the component view and interface inventory."]),
+         ("Patterns & standards", [("table",["Pattern","Where used","Standard/Protocol"],
+            [["Request/response","SaaS lookups via APIM","REST/JSON, OAuth2, mTLS"],
+             ["Async messaging","Context ingestion, eventing","AMQP (Service Bus), pub/sub, DLQ"],
+             ["File-based batch","Bank + ERP bulk","SFTP/MFT, PGP, ISO20022 XML"],
+             ["A2A orchestration","ERP↔TMS↔EPM","IDoc, SOAP, XSLT mapping"],
+             ["CDC/ELT","Source→Snowflake","Snowpipe, log-based CDC"]])]),
+         ("Key end-to-end flows", [("bullets",[
+            "Payments: SAP IDoc → Kyriba → ISO20022 pain.001 → bank → pain.002 ack → camt.053 statement → ERP recon.",
+            "Context load: ZIP → Blob (context-drops) → Service Bus → worker → parse → enterprise_context_chunks → AI Search.",
+            "Analytics: SAP/Workday/Coupa → Snowflake medallion → semantic layer → Power BI + AI Search."])]),
+         ("Resilience & observability", [
+            "Guaranteed-once delivery via Service Bus sessions + idempotent sinks; dead-letter queues with replay; "
+            "interface SLAs monitored in Azure Monitor with incidents routed to ServiceNow. 240+ active interfaces are "
+            "inventoried with owner, criticality, and recovery objectives."]),
+        ], meta=M(f,owner,"SAP PI/PO"))
+    reg(p, f, owner, "SAP PI/PO", "Integration Architecture", "Backbone topology, patterns, standards, end-to-end flows.")
+    # interface inventory (structured)
+    p = SRC / f / "interface_inventory.xlsx"
+    irows=[]
+    systems_pairs=[("SAP ECC","Kyriba"),("SAP ECC","Snowflake"),("Kyriba","JPMorgan"),("Coupa","SAP ECC"),
+                   ("Workday","SAP ECC"),("ServiceNow","Snowflake"),("Salesforce","SAP ECC"),("Snowflake","Power BI"),
+                   ("Snowflake","Azure AI Search"),("Kyriba","Citi")]
+    fmts=["IDoc PEXR2002","ISO20022 pain.001","ISO20022 camt.053","cXML","REST/JSON","OData","Bulk API","Parquet","JDBC upsert","SFTP/PGP"]
+    for i in range(64):
+        a,b=random.choice(systems_pairs)
+        irows.append([f"IF-{i+1:04d}", a, b, random.choice(fmts),
+                      random.choice(["real-time","event","batch","micro-batch"]),
+                      random.choice(["ESB","APIM","Service Bus","MFT","CDC"]),
+                      random.choice(["Critical","High","Medium","Low"]),
+                      random.choice(["1m","15m","1h","4h","24h"]), random.choice(EXECS)[0]])
+    write_xlsx(p, {"Interfaces": (["interface_id","source","target","format_standard","pattern","channel","criticality","rpo","owner"], irows)},
+               title="Interface Inventory", meta=M(f,owner,"SAP PI/PO"))
+    reg(p, f, owner, "SAP PI/PO", "Interface Inventory", "64-row integration interface estate with protocols and RPO.")
+    # current-state architecture SVG built in rich_diagrams()
 
 # ---- 07 data, analytics, reporting ----------------------------------------
 def build_data():
@@ -904,10 +984,22 @@ def build_data():
     write_csv(p, ["source","transform_layer","consumer","flow_id"], rows, meta=M(f,owner,"Snowflake"))
     reg(p, f, owner, "Snowflake", "Lineage Map", "Source-to-consumer lineage edges.")
     p = SRC / f / "semantic_layer_assumptions.docx"
-    write_docx(p, "Semantic Layer Assumptions", [("Assumptions",[("bullets",[
-        "Single conformed dimension set for finance.","Certified metric definitions in dbt semantic layer.",
-        "BI tools consume governed metrics only."])])], meta=M(f,owner,"Snowflake"))
-    reg(p, f, owner, "Snowflake", "Semantic Layer Assumptions", "Semantic layer design assumptions.")
+    write_docx(p, "Semantic Layer Assumptions & Design",
+        [("Design",["A dbt-based semantic layer is the single source of certified metrics for both BI and AI retrieval. "
+          "Conformed dimensions (entity, cost center, GL account, vendor, currency, calendar) and certified metrics "
+          "(revenue, EBITDA, DSO/DPO, cash conversion, forecast accuracy) are defined once and consumed everywhere."]),
+         ("Assumptions",[("bullets",[
+            "Single conformed dimension set across finance, treasury, and procurement marts.",
+            "Certified metric definitions versioned in dbt with tests, ownership, and lineage exposures.",
+            "BI tools and the AI context broker consume governed metrics only (no ad-hoc SQL in reports).",
+            "Row/column access policies enforce tenant and sensitivity scoping at the warehouse.",
+            "Metric changes flow through a governance PR with steward approval."])]),
+         ("Conflicts to resolve",[("table",["Metric","Issue","Resolution"],
+            [["Revenue","3 definitions across BUs","certify single definition"],
+             ["Cash conversion","timing basis differs","standardize on trailing-90"],
+             ["Forecast accuracy","numerator varies","define MAPE basis"]])])],
+        meta=M(f,owner,"Snowflake"))
+    reg(p, f, owner, "Snowflake", "Semantic Layer Assumptions", "Semantic layer design, assumptions, conflict resolution.")
     p = SRC / f / "data_products.xlsx"
     rows=[[f"DP-{i+1:02d}", n, random.choice(EXECS)[0], random.choice(["Live","Build","Concept"])]
           for i,n in enumerate(["Cash 360","Vendor 360","Customer 360","Close cockpit","Spend analytics","Treasury risk","Reporting mart"])]
@@ -1226,6 +1318,391 @@ def build_ai():
     reg(p, f, owner, "AbarVa", "AI Moves Portfolio Summary", "Summary of AI Moves portfolio.")
 
 # ============================================================================
+# SVG ARCHITECTURE TOOLKIT — real, technical diagrams
+# ============================================================================
+PAL = {
+    "ink": "#0c1a3a", "navy": "#1F2A44", "paper": "#f5f1eb", "card": "#ffffff",
+    "line": "#26324f", "muted": "#6b7280", "edge": "#39507e",
+    "z_channel": "#eef2fb", "z_edge": "#fdeef0", "z_app": "#eef7f1",
+    "z_int": "#fff7e8", "z_data": "#eef4fb", "z_cloud": "#f1eefb",
+    "z_sec": "#fdeef0", "z_obs": "#eefbf7",
+    "ac_blue": "#0066CC", "ac_teal": "#0f766e", "ac_amber": "#b45309",
+    "ac_red": "#b91c1c", "ac_purple": "#6d28d9", "ac_green": "#15803d",
+}
+
+def esc(s):
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+def _svg_header(width, height, title, meta, subtitle=""):
+    title = esc(title); subtitle = esc(subtitle)
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" font-family="Inter, Helvetica, Arial, sans-serif">\n'
+        f'<defs>\n'
+        f'<marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">'
+        f'<path d="M0,0 L7,3 L0,6 z" fill="{PAL["edge"]}"/></marker>\n'
+        f'<marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">'
+        f'<path d="M0,0 L7,3 L0,6 z" fill="{PAL["ac_red"]}"/></marker>\n'
+        f'<marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3"><circle cx="3" cy="3" r="2.4" fill="{PAL["edge"]}"/></marker>\n'
+        f'</defs>\n'
+        f'<rect width="{width}" height="{height}" fill="{PAL["paper"]}"/>\n'
+        f'<text x="36" y="34" font-size="12" fill="{PAL["muted"]}" font-family="monospace">{WATERMARK}</text>\n'
+        f'<text x="36" y="64" font-size="23" font-weight="700" fill="{PAL["ink"]}" font-family="Georgia, serif">{title}</text>\n'
+        + (f'<text x="36" y="86" font-size="12.5" fill="{PAL["muted"]}">{subtitle}</text>\n' if subtitle else '')
+        + f'<text x="{width/2}" y="{height/2}" font-size="150" fill="{PAL["ink"]}" opacity="0.045" '
+          f'text-anchor="middle" transform="rotate(-22 {width/2} {height/2})" font-weight="700">SYNTHETIC</text>\n'
+    )
+
+def _svg_footer(width, height, meta):
+    return (f'<text x="36" y="{height-14}" font-size="10.5" fill="{PAL["muted"]}" font-family="monospace">'
+            f'{PACK_ID} · {meta["domain"]} · owner={meta["owner"]} · system={meta["system"]} · {meta["date"]} · {WATERMARK_SHORT}</text>\n</svg>\n')
+
+def _zone(x, y, w, h, label, fill):
+    label = esc(label)
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{PAL["line"]}" '
+            f'stroke-opacity="0.18"/>\n'
+            f'<text x="{x+4}" y="{y-5}" font-size="11" font-weight="700" letter-spacing="1.5" '
+            f'fill="{PAL["navy"]}" font-family="monospace">{label}</text>\n')
+
+def _node(x, y, w, h, title, subs=None, accent=None, mono_tag=None):
+    accent = accent or PAL["navy"]
+    s = (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{PAL["card"]}" stroke="{PAL["line"]}" stroke-width="1.1"/>\n'
+         f'<rect x="{x}" y="{y}" width="5" height="{h}" rx="2" fill="{accent}"/>\n'
+         f'<text x="{x+14}" y="{y+21}" font-size="12.5" font-weight="600" fill="{PAL["ink"]}">{esc(title)}</text>\n')
+    if mono_tag:
+        s += (f'<text x="{x+w-10}" y="{y+18}" font-size="8.5" fill="{accent}" text-anchor="end" '
+              f'font-family="monospace" font-weight="700">{esc(mono_tag)}</text>\n')
+    for i, ln in enumerate(subs or []):
+        s += f'<text x="{x+14}" y="{y+40+i*15}" font-size="10.5" fill="{PAL["muted"]}">{esc(ln)}</text>\n'
+    return s
+
+def _edge(x1, y1, x2, y2, label="", dashed=False, color=None, red=False, curve=0):
+    color = PAL["ac_red"] if red else (color or PAL["edge"])
+    mk = "url(#arwR)" if red else "url(#arw)"
+    dash = 'stroke-dasharray="5 4" ' if dashed else ''
+    if curve:
+        mx = (x1 + x2) / 2
+        path = f'M{x1},{y1} C{mx},{y1+curve} {mx},{y2-curve} {x2},{y2}'
+    else:
+        path = f'M{x1},{y1} L{x2},{y2}'
+    s = f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.6" {dash}marker-end="{mk}"/>\n'
+    if label:
+        lx, ly = (x1 + x2) / 2, (y1 + y2) / 2
+        w = len(label) * 5.4 + 10
+        s += (f'<rect x="{lx-w/2}" y="{ly-9}" width="{w}" height="15" rx="3" fill="{PAL["paper"]}" opacity="0.92"/>'
+              f'<text x="{lx}" y="{ly+2}" font-size="9" fill="{color}" text-anchor="middle" font-family="monospace">{esc(label)}</text>\n')
+    return s
+
+def _legend(x, y, items):
+    s = f'<rect x="{x}" y="{y}" width="250" height="{18+len(items)*16}" rx="8" fill="{PAL["card"]}" stroke="{PAL["line"]}" stroke-opacity="0.3"/>\n'
+    s += f'<text x="{x+12}" y="{y+16}" font-size="10" font-weight="700" font-family="monospace" fill="{PAL["navy"]}">LEGEND</text>\n'
+    for i, (c, t) in enumerate(items):
+        yy = y + 30 + i * 16
+        s += (f'<rect x="{x+12}" y="{yy-8}" width="14" height="9" rx="2" fill="{c}"/>'
+              f'<text x="{x+32}" y="{yy}" font-size="9.5" fill="{PAL["muted"]}">{esc(t)}</text>\n')
+    return s
+
+def write_arch_svg(path, title, subtitle, width, height, inner, meta):
+    svg = _svg_header(width, height, title, meta, subtitle) + inner + _svg_footer(width, height, meta)
+    path.write_text(svg, encoding="utf-8")
+
+# ---- individual diagrams --------------------------------------------------
+def diagram_enterprise_current_state():
+    W, H = 1320, 900
+    inner = ""
+    inner += _zone(36, 110, 1248, 78, "EXPERIENCE / CHANNELS", PAL["z_channel"])
+    chs = [("Employee Web", "SSO · HTTPS"), ("Mobile (iOS/Android)", "MDM · OAuth2"),
+           ("Supplier Portal", "Coupa SAN"), ("Customer EDI", "AS2 · X12"), ("Bank Portals", "2FA")]
+    for i, (t, s) in enumerate(chs):
+        inner += _node(52 + i * 246, 128, 226, 48, t, [s], PAL["ac_blue"])
+    inner += _zone(36, 204, 1248, 70, "EDGE / IDENTITY / SECURITY", PAL["z_edge"])
+    edge = [("Azure Front Door + WAF", "TLS1.2 · DDoS"), ("Entra ID (Azure AD)", "SAML/OIDC · SCIM"),
+            ("Zscaler SSE", "ZTNA"), ("CyberArk PAM", "JIT secrets"), ("API Mgmt Gateway", "OAuth2 · rate-limit")]
+    for i, (t, s) in enumerate(edge):
+        inner += _node(52 + i * 246, 220, 226, 46, t, [s], PAL["ac_red"])
+    inner += _zone(36, 290, 1248, 196, "CORE APPLICATION ESTATE", PAL["z_app"])
+    apps = [
+        ("SAP ECC 6.0 (NA/EU)", ["GL/AP/AR/MM/SD", "IDoc · BAPI · RFC"], PAL["ac_teal"], "ERP"),
+        ("SAP S/4HANA (APAC)", ["Finance · OData", "migration wave 2"], PAL["ac_teal"], "ERP"),
+        ("Workday HCM", ["HR · payroll", "REST · EIB"], PAL["ac_purple"], "HRIS"),
+        ("Coupa", ["P2P · sourcing", "cXML · REST"], PAL["ac_amber"], "P2P"),
+        ("Kyriba TMS", ["cash · payments", "ISO20022 · API"], PAL["ac_blue"], "TMS"),
+        ("ServiceNow", ["ITSM · CMDB", "REST · MID"], PAL["ac_green"], "ITSM"),
+        ("Salesforce", ["O2C · CPQ", "Bulk API"], PAL["ac_blue"], "CRM"),
+        ("Hyperion/OneStream", ["consolidation · FP&A", "Smart View"], PAL["ac_teal"], "EPM"),
+    ]
+    for i, (t, s, a, tag) in enumerate(apps):
+        col = i % 4; row = i // 4
+        inner += _node(52 + col * 312, 312 + row * 86, 292, 74, t, s, a, tag)
+    inner += _zone(36, 502, 1248, 96, "INTEGRATION & EVENTING", PAL["z_int"])
+    integ = [("SAP PI/PO (ESB)", ["IDoc/SOAP", "A2A · B2B"], "ESB"),
+             ("Azure API Mgmt", ["REST facades", "policy/quotas"], "APIM"),
+             ("Azure Service Bus", ["q-context-*", "pub/sub"], "EVENT"),
+             ("MuleSoft iPaaS", ["SaaS connectors", "batch+rt"], "IPAAS"),
+             ("SFTP / MFT", ["bank files", "PGP"], "MFT")]
+    for i, (t, s, tag) in enumerate(integ):
+        inner += _node(52 + i * 246, 520, 226, 70, t, s, PAL["ac_amber"], tag)
+    inner += _zone(36, 614, 858, 150, "DATA & ANALYTICS PLATFORM (Azure + Snowflake)", PAL["z_data"])
+    inner += _node(52, 636, 196, 120, "Snowflake", ["RAW → CURATED →", "PRESENT (medallion)", "Streams · Tasks", "RBAC · masking"], PAL["ac_blue"], "DW")
+    inner += _node(258, 636, 196, 120, "dbt + Semantic Layer", ["certified metrics", "tests · lineage", "exposures"], PAL["ac_teal"], "ELT")
+    inner += _node(464, 636, 196, 120, "Azure Data Lake", ["landing/bronze", "Parquet · ADLS g2"], PAL["ac_purple"], "LAKE")
+    inner += _node(670, 636, 208, 120, "Power BI / AI Search", ["governed datasets", "tenant-context-v1", "vector + BM25"], PAL["ac_green"], "BI/RAG")
+    inner += _zone(912, 614, 372, 150, "PLATFORM / OBSERVABILITY", PAL["z_obs"])
+    inner += _node(928, 636, 168, 120, "Azure Postgres", ["enterprise_context_*", "control plane", "PITR · HA"], PAL["ac_blue"], "OLTP")
+    inner += _node(1104, 636, 164, 120, "Azure Monitor", ["App Insights", "Log Analytics", "Defender"], PAL["ac_amber"], "OBS")
+    # data-flow edges with protocols
+    inner += _edge(165, 176, 165, 220, red=True)  # channel->edge
+    inner += _edge(165, 266, 198, 312, "OIDC", color=PAL["ac_red"])
+    inner += _edge(198, 386, 198, 520, "IDoc", dashed=True)            # SAP->PI/PO
+    inner += _edge(510, 386, 510, 520, "cXML")                         # Coupa->APIM
+    inner += _edge(822, 386, 700, 520, "REST")                         # SFNow->ServiceBus
+    inner += _edge(1134, 386, 600, 520, "ISO20022", color=PAL["ac_blue"])  # Kyriba->MFT
+    inner += _edge(165, 590, 150, 636, "batch")                        # PI/PO->Snowflake
+    inner += _edge(411, 590, 356, 636, "CDC")                          # APIM->dbt
+    inner += _edge(150, 696, 670, 696, "metrics", dashed=True)         # snowflake->BI
+    inner += _edge(880, 690, 928, 690, "JDBC")                         # data->postgres
+    inner += _legend(1040, 110, [(PAL["ac_red"], "identity / security flow"),
+                                 (PAL["edge"], "synchronous API/data flow"),
+                                 (PAL["ac_blue"], "treasury / payment (ISO20022)")])
+    return W, H, inner
+
+def diagram_integration():
+    W, H = 1300, 820
+    inner = _node  # alias unused
+    s = ""
+    s += _zone(36, 110, 1228, 120, "SYSTEMS OF RECORD (producers)", PAL["z_app"])
+    src = [("SAP ECC/S4", "IDoc/BAPI"), ("Workday", "EIB/REST"), ("Coupa", "cXML"),
+           ("Kyriba", "API/ISO20022"), ("ServiceNow", "REST"), ("Salesforce", "Bulk API")]
+    for i, (t, p) in enumerate(src):
+        s += _node(52 + i * 202, 134, 186, 80, t, [p, "real-time + batch"], PAL["ac_teal"])
+    s += _zone(36, 256, 1228, 150, "INTEGRATION BACKBONE", PAL["z_int"])
+    s += _node(60, 282, 270, 110, "SAP PI/PO Enterprise Service Bus", ["A2A orchestration, mapping (XSLT)", "guaranteed delivery, monitoring", "240+ active interfaces"], PAL["ac_amber"], "ESB")
+    s += _node(350, 282, 270, 110, "Azure API Management", ["REST facade + OAuth2 policies", "rate limiting, versioning", "developer portal"], PAL["ac_blue"], "APIM")
+    s += _node(640, 282, 270, 110, "Azure Service Bus / Event Grid", ["q-context-ingestion-events", "pub/sub, dead-letter, sessions", "competing consumers"], PAL["ac_purple"], "EVENT")
+    s += _node(930, 282, 310, 110, "Managed File Transfer (SFTP/MFT)", ["bank host-to-host, PGP encryption", "pain.001 out / pain.002,camt.05x in", "scheduled + event-driven"], PAL["ac_green"], "MFT")
+    s += _zone(36, 432, 1228, 120, "CONSUMERS (subscribers)", PAL["z_data"])
+    con = [("Snowflake (ELT)", "Snowpipe/COPY"), ("Power BI", "DirectQuery"), ("AI Search", "indexers"),
+           ("Azure Postgres", "JDBC"), ("Partner Banks", "ISO20022"), ("Context Loader", "Service Bus")]
+    for i, (t, p) in enumerate(con):
+        s += _node(52 + i * 202, 456, 186, 80, t, [p, "idempotent sink"], PAL["ac_blue"])
+    # flows
+    for i in range(6):
+        s += _edge(145 + i * 202, 214, 195 + (i % 4) * 290, 282, "", dashed=(i % 2 == 0))
+    s += _edge(195, 392, 145, 456, "ELT")
+    s += _edge(485, 392, 700, 456, "events")
+    s += _edge(1085, 392, 1055, 456, "ISO20022", color=PAL["ac_blue"])
+    s += _zone(36, 576, 1228, 168, "INTERFACE PATTERN INVENTORY (illustrative)", PAL["z_obs"])
+    rows = [["IF-ERP-TMS-01", "SAP→Kyriba", "Payment proposals", "ISO20022 pain.001", "event", "hourly"],
+            ["IF-TMS-BANK-02", "Kyriba→Bank", "Outbound payments", "pain.001.001.09", "MFT", "intraday"],
+            ["IF-BANK-TMS-03", "Bank→Kyriba", "Statements", "camt.053/052", "MFT", "daily/intraday"],
+            ["IF-ERP-DW-04", "SAP→Snowflake", "GL/AP/AR extract", "IDoc→Parquet", "batch", "nightly"],
+            ["IF-SNOW-CTX-05", "Snowflake→Postgres", "Context chunks", "JDBC upsert", "batch", "on-load"],
+            ["IF-CTX-SEARCH-06", "Postgres→AI Search", "Index refresh", "REST index API", "event", "on-commit"]]
+    hdr = ["interface_id", "route", "payload", "format/standard", "pattern", "frequency"]
+    colw = [150, 170, 200, 210, 130, 180]
+    x0 = 60
+    cx = x0
+    for j, h in enumerate(hdr):
+        s += f'<text x="{cx}" y="{612}" font-size="10.5" font-weight="700" font-family="monospace" fill="{PAL["navy"]}">{h}</text>'
+        cx += colw[j]
+    for r_i, row in enumerate(rows):
+        cx = x0; yy = 632 + r_i * 18
+        for j, val in enumerate(row):
+            s += f'<text x="{cx}" y="{yy}" font-size="10" fill="{PAL["ink"]}">{val}</text>'
+            cx += colw[j]
+    return W, H, s
+
+def diagram_kyriba():
+    W, H = 1300, 840
+    s = ""
+    s += _zone(36, 110, 600, 150, "ERP / SOURCE", PAL["z_app"])
+    s += _node(56, 134, 270, 110, "SAP ECC / S/4HANA", ["AP proposals, GL postings", "vendor master, bank master", "IDoc PEXR2002 / OData"], PAL["ac_teal"], "ERP")
+    s += _node(346, 134, 270, 110, "Coupa / Concur", ["invoice approvals, expenses", "supplier bank details"], PAL["ac_amber"], "P2P")
+    s += _zone(660, 110, 604, 150, "TREASURY MANAGEMENT (Kyriba SaaS)", PAL["z_data"])
+    s += _node(680, 134, 270, 110, "Kyriba Payments Factory", ["payment workflow + limits", "dual auth, sanctions screen", "format transformation"], PAL["ac_blue"], "PAY")
+    s += _node(970, 134, 274, 110, "Kyriba Cash & Liquidity", ["cash positioning, pooling", "13-week forecast (AI)", "bank fee analysis"], PAL["ac_blue"], "CASH")
+    s += _zone(36, 300, 1228, 130, "CONNECTIVITY LAYER", PAL["z_int"])
+    s += _node(60, 322, 280, 92, "Kyriba Bank Connectivity", ["SWIFT Alliance Lite2 / SCORE", "host-to-host SFTP, EBICS, API", "format library ISO20022"], PAL["ac_purple"], "CONN")
+    s += _node(360, 322, 280, 92, "Sanctions / AML", ["real-time screening", "OFAC/EU lists", "hold & review queue"], PAL["ac_red"], "AML")
+    s += _node(660, 322, 280, 92, "ERP Reconciliation", ["auto-recon statements↔GL", "exception workflow", "fee validation"], PAL["ac_green"], "RECON")
+    s += _node(960, 322, 284, 92, "Treasury Controls", ["segregation of duties", "audit trail (immutable)", "limit & mandate mgmt"], PAL["ac_amber"], "CTRL")
+    s += _zone(36, 470, 1228, 150, "BANKING PARTNERS (10 banks · 4 regions)", PAL["z_channel"])
+    banks = ["JPMorgan", "Citi", "HSBC", "BNP Paribas", "Std Chartered", "BofA", "Deutsche", "DBS", "Santander", "Wells Fargo"]
+    for i, b in enumerate(banks):
+        col = i % 5; row = i // 5
+        s += _node(56 + col * 240, 494 + row * 58, 224, 48, b, ["camt.053 ⇄ pain.001/002"], PAL["ac_blue"])
+    # flow chain
+    s += _edge(326, 188, 680, 188, "pain.001", color=PAL["ac_blue"])
+    s += _edge(815, 244, 200, 322, "proposals", dashed=True)
+    s += _edge(200, 414, 200, 494, "host-to-host", color=PAL["ac_blue"])
+    s += _edge(500, 414, 500, 494, "screened", red=True)
+    s += _edge(500, 552, 800, 414, "camt.05x", curve=40)
+    s += _edge(800, 414, 1100, 244, "recon → cash", dashed=True, curve=-30)
+    s += _zone(36, 632, 1228, 120, "PAYMENT MESSAGE FLOW (end-to-end)", PAL["z_obs"])
+    steps = ["1. ERP raises AP proposal", "2. Kyriba enriches + validates limits", "3. dual authorization",
+             "4. sanctions screening", "5. ISO20022 pain.001 to bank (SFTP/SWIFT)", "6. bank ack pain.002",
+             "7. statement camt.053 inbound", "8. auto-reconciliation to GL", "9. cash position + forecast refresh"]
+    for i, st in enumerate(steps):
+        col = i % 3; row = i // 3
+        x = 60 + col * 400; y = 668 + row * 26
+        s += f'<text x="{x}" y="{y}" font-size="11" fill="{PAL["ink"]}">{st}</text>'
+    return W, H, s
+
+def diagram_data_platform():
+    W, H = 1300, 820
+    s = ""
+    s += _zone(36, 110, 1228, 110, "SOURCES", PAL["z_app"])
+    for i, (t, p) in enumerate([("SAP", "IDoc/CDC"), ("Workday", "EIB"), ("Coupa", "cXML"), ("Kyriba", "API"),
+                                 ("ServiceNow", "REST"), ("Salesforce", "Bulk")]):
+        s += _node(52 + i * 202, 132, 186, 72, t, [p], PAL["ac_teal"])
+    s += _zone(36, 244, 1228, 250, "SNOWFLAKE MEDALLION + GOVERNANCE", PAL["z_data"])
+    s += _node(60, 270, 360, 96, "BRONZE / RAW (ADLS gen2 + ext stages)", ["Snowpipe auto-ingest, Parquet", "immutable landing, schema-on-read", "PII tagging at ingest"], PAL["ac_purple"], "BRONZE")
+    s += _node(60, 376, 360, 96, "SILVER / CURATED (dbt models)", ["conformed dims, SCD2 history", "data quality tests (dbt/Great Exp.)", "deduped, standardized"], PAL["ac_blue"], "SILVER")
+    s += _node(440, 270, 360, 96, "GOLD / PRESENT (marts)", ["finance, treasury, vendor, ITSM", "aggregates + exposures", "row access policies"], PAL["ac_green"], "GOLD")
+    s += _node(440, 376, 360, 96, "SEMANTIC LAYER (dbt metrics)", ["certified KPI definitions", "single source for BI + AI", "lineage + ownership"], PAL["ac_teal"], "SEMANTIC")
+    s += _node(820, 270, 420, 96, "GOVERNANCE", ["RBAC + dynamic data masking", "object tagging, access history", "data contracts, SLAs"], PAL["ac_amber"], "GOV")
+    s += _node(820, 376, 420, 96, "DATA QUALITY & OBSERVABILITY", ["freshness/volume/anomaly monitors", "incident → ServiceNow", "DQ scorecards"], PAL["ac_red"], "DQ")
+    s += _zone(36, 516, 1228, 110, "CONSUMPTION", PAL["z_channel"])
+    for i, (t, p, a) in enumerate([("Power BI (certified)", "governed datasets", PAL["ac_green"]),
+                                    ("Azure AI Search", "tenant-context-v1 (vector+BM25)", PAL["ac_blue"]),
+                                    ("Context Layer (Postgres)", "enterprise_context_chunks", PAL["ac_purple"]),
+                                    ("Reverse ETL", "ops activation", PAL["ac_amber"])]):
+        s += _node(52 + i * 306, 540, 288, 72, t, [p], a)
+    # flows
+    for i in range(6):
+        s += _edge(145 + i * 202, 204, 240, 270, "", dashed=True)
+    s += _edge(240, 366, 240, 376, "")
+    s += _edge(420, 424, 440, 424, "test→")
+    s += _edge(620, 472, 200, 540, "datasets", curve=30)
+    s += _edge(620, 472, 500, 540, "embed→index", color=PAL["ac_blue"], curve=20)
+    s += _edge(620, 472, 800, 540, "chunks", color=PAL["ac_purple"], curve=20)
+    s += _legend(1010, 632, [(PAL["ac_purple"], "raw/landing"), (PAL["ac_blue"], "curated/vector"), (PAL["ac_green"], "gold/BI")])
+    return W, H, s
+
+def diagram_security():
+    W, H = 1300, 800
+    s = ""
+    s += _zone(36, 110, 1228, 110, "IDENTITY-FIRST PERIMETER (Zero Trust)", PAL["z_edge"])
+    for i, (t, p, a) in enumerate([("Entra ID", "SAML/OIDC, MFA, CA policies", PAL["ac_red"]),
+                                    ("Zscaler SSE/ZTNA", "no implicit trust", PAL["ac_red"]),
+                                    ("Front Door + WAF", "OWASP, DDoS", PAL["ac_amber"]),
+                                    ("API Mgmt", "OAuth2, mTLS", PAL["ac_blue"]),
+                                    ("CyberArk PAM", "JIT, vaulting", PAL["ac_purple"])]):
+        s += _node(52 + i * 246, 134, 226, 72, t, [p], a)
+    s += _zone(36, 244, 1228, 150, "PRIVATE DATA PLANE (VNet-isolated, private endpoints)", PAL["z_data"])
+    for i, (t, p, a) in enumerate([("Azure Postgres", "private endpoint, AAD auth, TLS", PAL["ac_blue"]),
+                                    ("Blob Storage", "deny-public, firewall+PE, CMK", PAL["ac_purple"]),
+                                    ("Azure AI Search", "RBAC data-plane, PE", PAL["ac_green"]),
+                                    ("Key Vault", "secrets, RBAC, soft-delete/purge", PAL["ac_amber"])]):
+        s += _node(52 + i * 306, 268, 288, 100, t, [p, "managed identity access", "diagnostic logs → Sentinel"], a)
+    s += _zone(36, 416, 1228, 130, "DETECT & RESPOND", PAL["z_obs"])
+    for i, (t, p, a) in enumerate([("Microsoft Sentinel (SIEM)", "analytics rules, UEBA", PAL["ac_red"]),
+                                    ("Defender for Cloud", "CSPM/CWPP, malware scan", PAL["ac_amber"]),
+                                    ("Purview", "data classification, DLP", PAL["ac_blue"]),
+                                    ("SOAR / Playbooks", "auto-containment", PAL["ac_green"])]):
+        s += _node(52 + i * 306, 440, 288, 86, t, [p, "evidence → audit ledger"], a)
+    s += _zone(36, 568, 1228, 150, "GOVERNANCE & CONTROLS MAPPING", PAL["z_app"])
+    rows = [["SOX ITGC", "access review, change mgmt, SoD", "quarterly attestation"],
+            ["Payment fraud", "dual auth, sanctions, anomaly", "Kyriba + Sentinel"],
+            ["Data privacy", "masking, DLP, residency", "Purview"],
+            ["Responsible AI", "use-case intake, human-in-loop", "AI Governance Board"]]
+    for r_i, row in enumerate(rows):
+        yy = 600 + r_i * 26
+        s += f'<text x="60" y="{yy}" font-size="11" font-weight="600" fill="{PAL["ink"]}">{row[0]}</text>'
+        s += f'<text x="240" y="{yy}" font-size="11" fill="{PAL["muted"]}">{row[1]}</text>'
+        s += f'<text x="760" y="{yy}" font-size="11" fill="{PAL["navy"]}" font-family="monospace">{row[2]}</text>'
+    s += _edge(165, 206, 200, 268, "MI", red=True)
+    s += _edge(200, 368, 200, 440, "logs", dashed=True)
+    return W, H, s
+
+def diagram_ai_reference():
+    W, H = 1300, 800
+    s = ""
+    s += _zone(36, 110, 1228, 96, "EXPERIENCE (governed surfaces)", PAL["z_channel"])
+    for i, (t, p) in enumerate([("Sentinel Advisor (Ask)", "cited Q&A"), ("Nexus Sessions", "guided gates"),
+                                 ("Strategic Moves", "board artifacts"), ("Control Tower", "value tracking")]):
+        s += _node(52 + i * 306, 132, 288, 60, t, [p], PAL["ac_blue"])
+    s += _zone(36, 220, 1228, 150, "ORCHESTRATION & GUARDRAILS", PAL["z_int"])
+    s += _node(60, 244, 380, 110, "Agent Orchestrator", ["planner + tools, retries", "human-in-loop by risk tier", "cost + latency budgets"], PAL["ac_amber"], "ORCH")
+    s += _node(450, 244, 380, 110, "Responsible AI Guardrails", ["PII redaction, grounding check", "evidence-required outputs", "policy: no uncited claims"], PAL["ac_red"], "RAI")
+    s += _node(840, 244, 400, 110, "Evidence & Audit Ledger", ["every claim → source chunk", "immutable, replayable", "evidence_ledger (Postgres)"], PAL["ac_purple"], "AUDIT")
+    s += _zone(36, 384, 1228, 160, "RETRIEVAL (RAG over enterprise context)", PAL["z_data"])
+    s += _node(60, 408, 360, 116, "Context Broker", ["hybrid retrieve (vector+BM25)", "tenant-scoped (client_id)", "rerank + dedupe"], PAL["ac_teal"], "BROKER")
+    s += _node(440, 408, 360, 116, "Azure AI Search", ["tenant-context-v1", "HNSW vector + semantic", "filter: tenant_key"], PAL["ac_blue"], "INDEX")
+    s += _node(820, 408, 420, 116, "Azure Postgres context", ["enterprise_context_chunks", "embeddings (1536-d)", "provenance + metadata"], PAL["ac_green"], "STORE")
+    s += _zone(36, 556, 1228, 110, "MODELS & INGESTION", PAL["z_obs"])
+    s += _node(60, 580, 380, 72, "LLM / Embeddings", ["Claude (reasoning) + OpenAI emb", "text-embedding-3-small 1536-d"], PAL["ac_purple"], "MODEL")
+    s += _node(450, 580, 380, 72, "Setup Admin Loader", ["ZIP→Blob→parse→chunk", "embed→index", "stage_and_process"], PAL["ac_amber"], "LOAD")
+    s += _node(840, 580, 400, 72, "Document Intelligence", ["pdf/docx/xlsx parse", "layout + tables"], PAL["ac_blue"], "PARSE")
+    s += _edge(200, 192, 250, 244, "query")
+    s += _edge(250, 354, 240, 408, "retrieve")
+    s += _edge(420, 466, 440, 466, "hybrid")
+    s += _edge(800, 466, 820, 466, "vectors")
+    s += _edge(640, 652, 240, 524, "embed", color=PAL["ac_purple"], curve=-30)
+    s += _edge(640, 580, 1030, 524, "index", color=PAL["ac_blue"], curve=-30)
+    s += _edge(900, 300, 1040, 192, "cite", dashed=True, color=PAL["ac_purple"])
+    return W, H, s
+
+def rich_diagrams():
+    specs = [
+        ("06_it_systems_architecture", "current_state_architecture.svg", diagram_enterprise_current_state,
+         "Current-State Enterprise Architecture", "Channels → identity/security → core apps → integration → data → platform",
+         "Liam O'Sullivan", "Architecture", "Layered enterprise reference architecture with protocol-labeled data flows."),
+        ("06_it_systems_architecture", "integration_architecture_diagram.svg", diagram_integration,
+         "Integration & Eventing Architecture", "Producers, backbone (ESB/APIM/Service Bus/MFT), consumers, interface inventory",
+         "Liam O'Sullivan", "SAP PI/PO", "Integration backbone with interface pattern inventory."),
+        ("05_treasury_kyriba", "kyriba_connectivity_architecture.svg", diagram_kyriba,
+         "Kyriba Treasury Connectivity Architecture", "ERP → Kyriba payments/cash → bank connectivity → 10 banking partners",
+         "Elena Vasquez", "Kyriba TMS", "End-to-end treasury & ISO20022 payment message architecture."),
+        ("07_data_analytics_reporting", "data_platform_architecture.svg", diagram_data_platform,
+         "Data & Analytics Platform Architecture", "Sources → Snowflake medallion + semantic layer + governance → consumption",
+         "Aisha Bello", "Snowflake", "Medallion data platform with governance, DQ, and AI/BI consumption."),
+        ("11_risk_controls_responsible_ai", "security_zero_trust_architecture.svg", diagram_security,
+         "Security & Zero-Trust Reference Architecture", "Identity perimeter → private data plane → detect/respond → controls mapping",
+         "David Chen", "Microsoft Sentinel", "Zero-trust security architecture with controls mapping."),
+        ("12_ai_use_cases_moves", "ai_agent_reference_architecture.svg", diagram_ai_reference,
+         "Enterprise AI & Agent Reference Architecture", "Governed surfaces → orchestration/guardrails → RAG retrieval → models/ingestion",
+         "Marcus Reilly", "AbarVa", "Reference architecture for governed AI/agents over the enterprise context layer."),
+    ]
+    for folder, fn, builder, title, subtitle, owner, system, desc in specs:
+        W, H, inner = builder()
+        p = SRC / folder / fn
+        write_arch_svg(p, title, subtitle, W, H, inner, M(folder, owner, system))
+        reg(p, folder, owner, system, title, desc)
+    # roadmap (Gantt) — strategy
+    folder = "03_strategy_initiatives"; W, H = 1300, 760
+    inits = ["Kyriba Treasury Modernization", "SOX Controls Uplift", "Reporting Rationalization",
+             "SI/AMS Vendor Optimization", "Snowflake Consolidation", "S/4HANA Migration Wave 2",
+             "Enterprise AI Platform", "Cyber Zero-Trust"]
+    swim = {"Treasury": PAL["ac_blue"], "Finance": PAL["ac_teal"], "Data": PAL["ac_purple"],
+            "Procurement": PAL["ac_amber"], "IT": PAL["ac_green"], "Risk": PAL["ac_red"]}
+    lanes = ["Treasury", "Risk", "Finance", "Procurement", "Data", "IT", "IT", "Risk"]
+    qx = [180, 318, 456, 594, 732, 870, 1008, 1146]
+    qlabels = ["Q1 FY26", "Q2 FY26", "Q3 FY26", "Q4 FY26", "Q1 FY27", "Q2 FY27", "Q3 FY27", "Q4 FY27"]
+    inner = ""
+    for i, q in enumerate(qlabels):
+        inner += f'<line x1="{qx[i]}" y1="120" x2="{qx[i]}" y2="700" stroke="{PAL["line"]}" stroke-opacity="0.15"/>'
+        inner += f'<text x="{qx[i]}" y="138" font-size="10.5" font-family="monospace" fill="{PAL["muted"]}">{q}</text>'
+    milestones = []
+    for i, n in enumerate(inits):
+        y = 168 + i * 62
+        start = random.randint(0, 3); span = random.randint(2, 5)
+        x1 = qx[start]; x2 = qx[min(7, start + span)]
+        c = swim[lanes[i]]
+        inner += f'<text x="36" y="{y+22}" font-size="12" font-weight="600" fill="{PAL["ink"]}">{n}</text>'
+        inner += f'<rect x="{x1}" y="{y}" width="{x2-x1}" height="30" rx="7" fill="{c}" opacity="0.9"/>'
+        inner += f'<text x="{x1+10}" y="{y+20}" font-size="9.5" font-family="monospace" fill="#fff">{lanes[i]} · {span} quarters</text>'
+        # milestone diamond at end
+        inner += f'<path d="M{x2},{y-6} l8,8 l-8,8 l-8,-8 z" fill="{PAL["ink"]}"/>'
+        milestones.append((x2, y))
+    # dependency arrow examples
+    inner += _edge(qx[2], 198, qx[2], 230, "dep", dashed=True)
+    inner += _legend(1010, 600, [(swim["Treasury"], "Treasury"), (swim["Data"], "Data/Analytics"), (swim["Risk"], "Risk/Cyber")])
+    p = SRC / folder / "roadmap_2026_2027.svg"
+    write_arch_svg(p, "Transformation Roadmap FY26–FY27", "Swimlane roadmap with quarter grid, durations, and milestones", W, H, inner, M(folder, "Marcus Reilly", "Corporate Strategy"))
+    reg(p, folder, "Marcus Reilly", "Corporate Strategy", "Transformation Roadmap FY26-27", "Swimlane roadmap with milestones and dependencies.")
+
+# ============================================================================
 # MAIN — build all + manifest + zip + dictionary + index
 # ============================================================================
 def build_root_artifacts():
@@ -1249,6 +1726,7 @@ def main():
     build_vendors()
     build_risk()
     build_ai()
+    rich_diagrams()
 
     # ---- evidence_register.csv (ZIP root + OUT) ----
     ev_rows=[]

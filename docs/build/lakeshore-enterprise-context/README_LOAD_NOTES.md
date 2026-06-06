@@ -17,7 +17,7 @@ evidence_usable: true
 
 Fully synthetic enterprise context pack for **Lakeshore Holdings** (`lakeshore-holdings`).
 
-- **Files:** 127 source documents (excludes root manifest/dictionary/register).
+- **Files:** 133 source documents (excludes root manifest/dictionary/register).
 - **Watermark:** every file carries `SYNTHETIC / LAKESHORE PILOT / NOT REAL DATA` in content + metadata.
 - **manifest.json** at ZIP root carries per-file: context_domain, source_owner,
   source_system, source_date, sensitivity, synthetic_flag, evidence_usable_flag, loader_route.
@@ -34,16 +34,16 @@ Fully synthetic enterprise context pack for **Lakeshore Holdings** (`lakeshore-h
 
 ## Files per domain
 
-- **ai_use_cases_moves**: 10
-- **data_analytics_reporting**: 10
+- **ai_use_cases_moves**: 11
+- **data_analytics_reporting**: 11
 - **enterprise_profile**: 9
 - **finance_performance**: 11
-- **it_systems_architecture**: 12
+- **it_systems_architecture**: 14
 - **manifest**: 4
 - **operations_business_process**: 9
 - **org_decision_rights**: 8
-- **risk_controls_responsible_ai**: 11
+- **risk_controls_responsible_ai**: 12
 - **servicenow_support_workload**: 10
 - **strategy_initiatives**: 9
-- **treasury_kyriba**: 13
+- **treasury_kyriba**: 14
 - **vendors_contracts_source**: 11
