@@ -266,4 +266,123 @@ describe("bulk context upload", () => {
       },
     });
   });
+
+  it("stages document files for Azure worker processing without local row parsing", async () => {
+    const manifest = parseBulkContextUploadManifest(
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "fy26-financial-report.pdf",
+            templateId: "annual-quarterly-reports",
+          },
+        ],
+      }),
+      "meridian-health",
+    );
+    const queued: unknown[] = [];
+
+    const result = await runBulkContextUpload({
+      clientId: "client-meridian",
+      tenantKey: "meridian-health",
+      uploadedBy: "user-meridian",
+      manifest,
+      files: [
+        {
+          name: "fy26-financial-report.pdf",
+          type: "application/pdf",
+          bytes: new TextEncoder().encode("%PDF-1.7 placeholder").buffer,
+        },
+      ],
+      mode: "stage_and_enqueue",
+      uploadedAt: "2026-06-05T22:00:00.000Z",
+      enqueueMessageFn: async (message) => {
+        queued.push(message);
+        return {
+          queueName: "q-context-ingestion-events",
+          messageId: "msg-pdf-1",
+        };
+      },
+      attestation: {
+        version: PILOT_UPLOAD_ATTESTATION_VERSION,
+        accepted: true,
+        acceptedAt: "2026-06-05T22:00:00.000Z",
+        authorityConfirmed: true,
+        dataUseConfirmed: true,
+        sensitiveDataConfirmed: true,
+        note: "CAB-99",
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      mode: "stage_and_enqueue",
+      rowsParsed: 0,
+      chunksQueued: 0,
+      results: [
+        {
+          fileName: "fy26-financial-report.pdf",
+          templateId: "annual-quarterly-reports",
+          queue: {
+            queueName: "q-context-ingestion-events",
+            messageId: "msg-pdf-1",
+          },
+          loadResult: null,
+        },
+      ],
+    });
+    expect(queued[0]).toMatchObject({
+      segmentKey: "enterprise_profile",
+      storage: {
+        contentType: "application/pdf",
+      },
+      metadata: {
+        templateId: "annual-quarterly-reports",
+        originalFileName: "fy26-financial-report.pdf",
+      },
+    });
+  });
+
+  it("blocks document files from stage-and-process so unparsed PDFs do not become grounding rows", async () => {
+    const manifest = parseBulkContextUploadManifest(
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "fy26-financial-report.pdf",
+            templateId: "annual-quarterly-reports",
+          },
+        ],
+      }),
+      "meridian-health",
+    );
+
+    await expect(
+      runBulkContextUpload({
+        clientId: "client-meridian",
+        tenantKey: "meridian-health",
+        uploadedBy: "user-meridian",
+        manifest,
+        files: [
+          {
+            name: "fy26-financial-report.pdf",
+            type: "application/pdf",
+            bytes: new TextEncoder().encode("%PDF-1.7 placeholder").buffer,
+          },
+        ],
+        mode: "stage_and_process",
+        attestation: {
+          version: PILOT_UPLOAD_ATTESTATION_VERSION,
+          accepted: true,
+          acceptedAt: "2026-06-05T22:00:00.000Z",
+          authorityConfirmed: true,
+          dataUseConfirmed: true,
+          sensitiveDataConfirmed: true,
+          note: "CAB-99",
+        },
+      }),
+    ).rejects.toThrow(
+      "bulk_upload_process_requires_structured_file:fy26-financial-report.pdf",
+    );
+  });
 });

@@ -155,9 +155,11 @@ export function BulkContextUploadConnector({
           Stage files to Azure Blob and process through the loader
         </h2>
         <p style={{ margin: "8px 0 0", color: "#5f6673", lineHeight: 1.55 }}>
-          Upload a manifest plus matching template files for {tenantName}. Use
-          validation first; commit mode stages each file to Azure Blob and then
-          writes tenant context through the governed loader.
+          Upload a manifest plus matching template files for {tenantName}, or
+          upload one ZIP that contains a root <code>manifest.json</code> and
+          the referenced files. Use validation first; commit mode stages each
+          file to Azure Blob and then writes tenant context through the
+          governed loader when the format can be processed immediately.
         </p>
       </div>
 
@@ -181,14 +183,21 @@ export function BulkContextUploadConnector({
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontWeight: 700 }}>Files referenced by manifest</span>
+          <span style={{ fontWeight: 700 }}>
+            Files referenced by manifest or one ZIP package
+          </span>
           <input
             type="file"
             multiple
-            accept=".csv,.json,.jsonl,.yaml,.yml"
+            accept=".csv,.json,.jsonl,.yaml,.yml,.xlsx,.pdf,.docx,.pptx,.md,.markdown,.zip"
             onChange={onFilesChange}
             style={inputStyle}
           />
+          <span style={{ color: "#5f6673", fontSize: 13, lineHeight: 1.45 }}>
+            PDF, DOCX, PPTX, XLSX, and Markdown files are staged and queued for
+            Azure processing. Use process-now mode for CSV, JSON, JSONL, and YAML
+            template files.
+          </span>
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>

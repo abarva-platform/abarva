@@ -224,11 +224,30 @@ function sha256(bytes: ArrayBuffer): string {
 function mimeType(file: BulkContextUploadFileInput): string {
   if (file.type?.trim()) return file.type;
   const lower = file.name.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".docx"))
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (lower.endsWith(".pptx"))
+    return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+  if (lower.endsWith(".xlsx"))
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   if (lower.endsWith(".json")) return "application/json";
   if (lower.endsWith(".jsonl")) return "application/x-ndjson";
   if (lower.endsWith(".yaml") || lower.endsWith(".yml"))
     return "application/x-yaml";
+  if (lower.endsWith(".md") || lower.endsWith(".markdown")) return "text/markdown";
   return "text/csv";
+}
+
+function canProcessImmediately(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  return (
+    lower.endsWith(".csv") ||
+    lower.endsWith(".json") ||
+    lower.endsWith(".jsonl") ||
+    lower.endsWith(".yaml") ||
+    lower.endsWith(".yml")
+  );
 }
 
 function metadataValue(value: unknown): string {
@@ -297,6 +316,9 @@ export async function runBulkContextUpload(
 
   for (const manifestFile of input.manifest.files) {
     const uploadFile = filesByName.get(fileKey(manifestFile.path))!;
+    if (input.mode === "stage_and_process" && !canProcessImmediately(uploadFile.name)) {
+      throw new Error(`bulk_upload_process_requires_structured_file:${uploadFile.name}`);
+    }
     const template = getTemplateById(manifestFile.templateId, {
       tenantKey: input.tenantKey,
     });
