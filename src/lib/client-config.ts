@@ -256,6 +256,17 @@ const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
   ["lh+", "lakeshore"],
 ];
 
+const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
+  readonly [string, ClientKey]
+> = [
+  ["anand.sundaram+apex", "apexretail"],
+  ["anand.sundaram+meridian", "meridian"],
+  ["anand.sundaram+firstcapital", "arcturus"],
+  ["anand.sundaram+northstar", "northstar"],
+  ["anand.sundaram+skyharbor", "skyharbor"],
+  ["anand.sundaram+lakeshore", "lakeshore"],
+];
+
 export function inferClientKeyFromEmail(
   email: string | null | undefined,
 ): ClientKey | null {
@@ -277,6 +288,12 @@ export function inferClientKeyFromEmail(
       } else if (localPart.startsWith(token)) {
         return key;
       }
+    }
+  }
+
+  if (domain === "thesundaram.com") {
+    for (const [localPartAlias, key] of THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY) {
+      if (localPart === localPartAlias) return key;
     }
   }
 
