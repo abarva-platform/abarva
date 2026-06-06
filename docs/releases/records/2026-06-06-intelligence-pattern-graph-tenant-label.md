@@ -49,7 +49,9 @@ Revert the PR. Rollback would restore the prior hard-coded Pattern Graph shell l
 
 ## Audit Evidence
 
-- PR URL: https://github.com/abarva-platform/abarva/pull/3175.
+- PR URLs:
+  - https://github.com/abarva-platform/abarva/pull/3175
+  - https://github.com/abarva-platform/abarva/pull/3178
 - Pre-fix proof: `/Users/anand/Projects/nexus/reports/lakeshore-route-module-proof/lakeshore-live-module-crawl-2026-06-06T07-23-11-543Z/LIVE_MODULE_CRAWL_REPORT.md`.
 - Local QA commands listed above.
 
