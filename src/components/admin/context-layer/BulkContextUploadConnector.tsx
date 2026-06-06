@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 
 import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
 
@@ -21,6 +21,12 @@ type BulkResult = {
   workflow?: {
     jobId: string;
     summary: string;
+    status?: {
+      persisted: boolean;
+      bucket: string | null;
+      path: string | null;
+      pollable: boolean;
+    };
     steps: Array<{
       id: string;
       label: string;
@@ -54,6 +60,26 @@ type BulkResult = {
       label: string;
       nextAction: string;
     };
+  }>;
+};
+
+type BulkJobStatus = {
+  jobId: string;
+  status: string;
+  summary: string;
+  updatedAt: string;
+  workflow: NonNullable<BulkResult["workflow"]>;
+  counts: {
+    filesProcessed: number;
+    rowsParsed: number;
+    chunksQueued: number;
+  };
+  files: Array<{
+    fileName: string;
+    templateId: string;
+    queueMessageId: string | null;
+    processingStatus: string;
+    nextAction: string;
   }>;
 };
 
@@ -242,16 +268,72 @@ export function BulkContextUploadConnector({
   const [attestationNote, setAttestationNote] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<BulkResult | null>(null);
+  const [jobStatus, setJobStatus] = useState<BulkJobStatus | null>(null);
+  const [jobStatusError, setJobStatusError] = useState<string | null>(null);
+  const [jobStatusCheckedAt, setJobStatusCheckedAt] = useState<string | null>(
+    null,
+  );
 
   function onFilesChange(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files ?? []));
     setResult(null);
+    setJobStatus(null);
+    setJobStatusError(null);
+    setJobStatusCheckedAt(null);
   }
+
+  useEffect(() => {
+    const jobId = result?.workflow?.jobId;
+    const pollable = result?.workflow?.status?.pollable;
+    if (!jobId || !pollable) return undefined;
+
+    let cancelled = false;
+    async function fetchStatus() {
+      try {
+        const response = await fetch(
+          `/api/admin/context-layer/bulk-upload/status?clientId=${encodeURIComponent(
+            clientId,
+          )}&jobId=${encodeURIComponent(jobId)}`,
+          { cache: "no-store" },
+        );
+        const body = (await response.json()) as {
+          ok?: boolean;
+          status?: BulkJobStatus;
+          detail?: string;
+          error?: string;
+        };
+        if (cancelled) return;
+        if (response.ok && body.status) {
+          setJobStatus(body.status);
+          setJobStatusError(null);
+        } else {
+          setJobStatusError(body.detail ?? body.error ?? "Status check failed");
+        }
+        setJobStatusCheckedAt(new Date().toLocaleTimeString());
+      } catch (error) {
+        if (cancelled) return;
+        setJobStatusError(
+          error instanceof Error ? error.message : "Status check failed",
+        );
+        setJobStatusCheckedAt(new Date().toLocaleTimeString());
+      }
+    }
+
+    void fetchStatus();
+    const interval = window.setInterval(fetchStatus, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [clientId, result?.workflow?.jobId, result?.workflow?.status?.pollable]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setResult(null);
+    setJobStatus(null);
+    setJobStatusError(null);
+    setJobStatusCheckedAt(null);
     const formData = new FormData();
     formData.set("clientId", clientId);
     formData.set("manifestJson", manifestJson);
@@ -471,6 +553,7 @@ export function BulkContextUploadConnector({
               }}
             >
               Job {result.workflow.jobId}
+              {result.workflow.status?.pollable ? " · polling enabled" : ""}
             </p>
           ) : null}
           {typeof result.filesProcessed === "number" ? (
@@ -499,10 +582,33 @@ export function BulkContextUploadConnector({
             <div style={{ marginTop: 12 }}>
               <WorkflowTimeline
                 title="Loader workflow"
-                summary={result.workflow.summary}
-                steps={result.workflow.steps}
+                summary={jobStatus?.summary ?? result.workflow.summary}
+                steps={jobStatus?.workflow.steps ?? result.workflow.steps}
                 framed={false}
               />
+              {result.workflow.status?.pollable ? (
+                <div
+                  style={{
+                    marginTop: 10,
+                    paddingTop: 10,
+                    borderTop: "1px solid #d8d2c4",
+                    color: "#4f5663",
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 800 }}>
+                    Private worker status:{" "}
+                    {jobStatus?.status ?? "checking status"}
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    {jobStatusCheckedAt
+                      ? `Last checked ${jobStatusCheckedAt}`
+                      : "Waiting for first status refresh"}
+                    {jobStatusError ? ` · ${jobStatusError}` : ""}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

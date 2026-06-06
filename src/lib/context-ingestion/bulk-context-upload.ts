@@ -23,6 +23,10 @@ import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
 } from "@/lib/security/sensitive-upload-guard";
+import {
+  bulkContextUploadJobStatusLocation,
+  persistBulkContextUploadJobStatus,
+} from "./bulk-context-upload-status";
 import type { PilotUploadAttestation } from "./upload-attestation";
 
 export interface BulkContextUploadManifestFile {
@@ -117,6 +121,19 @@ export interface BulkContextUploadResult {
   workflow: {
     jobId: string;
     summary: string;
+    status:
+      | {
+          persisted: true;
+          bucket: string;
+          path: string;
+          pollable: true;
+        }
+      | {
+          persisted: false;
+          bucket: null;
+          path: null;
+          pollable: false;
+        };
     steps: BulkContextUploadWorkflowStep[];
   };
   results: BulkContextUploadFileResult[];
@@ -368,6 +385,12 @@ function buildWorkflow(args: {
     return {
       jobId: args.jobId,
       summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+      status: {
+        persisted: false,
+        bucket: null,
+        path: null,
+        pollable: false,
+      },
       steps: [
         ...baseSteps,
         {
@@ -391,6 +414,12 @@ function buildWorkflow(args: {
       jobId: args.jobId,
       summary:
         "Files are staged and queued. Azure private-worker processing is the next handoff.",
+      status: {
+        persisted: false,
+        bucket: null,
+        path: null,
+        pollable: false,
+      },
       steps: [
         ...baseSteps,
         {
@@ -430,6 +459,12 @@ function buildWorkflow(args: {
   return {
     jobId: args.jobId,
     summary: "Structured files were staged and processed through the governed loader.",
+    status: {
+      persisted: false,
+      bucket: null,
+      path: null,
+      pollable: false,
+    },
     steps: [
       ...baseSteps,
       {
@@ -648,7 +683,7 @@ export async function runBulkContextUpload(
     files: results,
   });
 
-  return {
+  const result: BulkContextUploadResult = {
     ok: true,
     mode: input.mode,
     loadName: input.manifest.loadName,
@@ -682,4 +717,25 @@ export async function runBulkContextUpload(
               "Files were staged to Azure Blob and processed through the governed context loader.",
           },
   };
+
+  if (input.mode !== "validate_only") {
+    const statusLocation = bulkContextUploadJobStatusLocation({
+      tenantKey: input.tenantKey,
+      jobId: result.workflow.jobId,
+    });
+    result.workflow.status = {
+      persisted: true,
+      bucket: statusLocation.bucket,
+      path: statusLocation.path,
+      pollable: true,
+    };
+    await persistBulkContextUploadJobStatus({
+      clientId: input.clientId,
+      tenantKey: input.tenantKey,
+      result,
+      updatedAt: uploadedAt,
+    });
+  }
+
+  return result;
 }
