@@ -146,7 +146,8 @@ describe("bulk context upload", () => {
         status: "validation_only",
       },
       workflow: {
-        summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+        summary:
+          "Validation passed. Nothing was written to Azure Blob or tenant context.",
         status: {
           persisted: false,
           pollable: false,
@@ -279,10 +280,7 @@ describe("bulk context upload", () => {
     });
     expect(result.workflow.jobId).toMatch(/^bulk-[a-f0-9]{16}$/);
     expect(result.workflow.status.path).toBe(
-      `${result.workflow.jobId}.json`.replace(
-        /^/,
-        "meridian-health/_jobs/",
-      ),
+      `${result.workflow.jobId}.json`.replace(/^/, "meridian-health/_jobs/"),
     );
     expect(queued).toHaveLength(1);
     expect(queued[0]).toMatchObject({
@@ -309,9 +307,68 @@ describe("bulk context upload", () => {
         templateVersion: "unversioned",
         mappingProfileKey: "enterprise-profile",
         mappingProfileVersion: "unversioned",
+        bulkJobId: result.workflow.jobId,
+        bulkJobStatusPath: `meridian-health/_jobs/${result.workflow.jobId}.json`,
         originalFileName: "enterprise-profile.yaml",
+        manifestPath: "enterprise-profile.yaml",
       },
     });
+  });
+
+  it("matches duplicate basenames by full manifest path when ZIP entries preserve folders", async () => {
+    const manifest = parseBulkContextUploadManifest(
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "reports/context.yaml",
+            templateId: "enterprise-profile",
+          },
+          {
+            path: "contracts/context.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+      "meridian-health",
+    );
+
+    const result = await runBulkContextUpload({
+      clientId: "client-meridian",
+      tenantKey: "meridian-health",
+      uploadedBy: "user-meridian",
+      manifest,
+      files: [
+        {
+          name: "reports/context.yaml",
+          type: "application/x-yaml",
+          bytes: new TextEncoder().encode("items:\n  - metric: report\n")
+            .buffer,
+        },
+        {
+          name: "contracts/context.yaml",
+          type: "application/x-yaml",
+          bytes: new TextEncoder().encode("items:\n  - metric: contract\n")
+            .buffer,
+        },
+      ],
+      mode: "validate_only",
+      attestation: {
+        version: PILOT_UPLOAD_ATTESTATION_VERSION,
+        accepted: true,
+        acceptedAt: "2026-06-05T22:00:00.000Z",
+        authorityConfirmed: true,
+        dataUseConfirmed: true,
+        sensitiveDataConfirmed: true,
+        note: "CAB-99",
+      },
+    });
+
+    expect(result.filesProcessed).toBe(2);
+    expect(result.results.map((item) => item.fileName)).toEqual([
+      "reports/context.yaml",
+      "contracts/context.yaml",
+    ]);
   });
 
   it("stages document files for Azure worker processing without local row parsing", async () => {
@@ -397,6 +454,8 @@ describe("bulk context upload", () => {
       metadata: {
         templateId: "annual-quarterly-reports",
         originalFileName: "fy26-financial-report.pdf",
+        bulkJobId: result.workflow.jobId,
+        manifestPath: "fy26-financial-report.pdf",
       },
     });
   });
