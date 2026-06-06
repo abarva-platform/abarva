@@ -37,6 +37,8 @@ Adds the controlled Supabase-to-Azure drain tooling needed before Supabase can b
 - Pass: `az bicep build-params --file infra/azure/parameters/supabase-drain-dry-run.lab.bicepparam --outfile /tmp/supabase-drain-dry-run.lab.json`.
 - Pass: `npm run release:check -- --base origin/main --head HEAD`.
 - Pass with expected non-zero blocker status: Azure-hosted read-only summary execution `job-supa-drain-sum-eus-axp1kij` connected to Supabase source and Azure private target, then reported Azure-behind and target-missing blockers.
+- Pass: targeted Azure schema unblock execution `job-ec-schema-eus-8vwh99b` applied exactly `20260514100000_enterprise_context_layer.sql`.
+- Pass: Azure target-only schema check execution `job-ec-schema-check-eus-iz7faco` verified all `enterprise_context_*` target tables exist in `abarva_control` at private address `10.43.1.4/32`.
 
 ## Rollout Plan
 
@@ -53,10 +55,12 @@ Revert this PR. No data is modified by default, and the committed Azure job para
 - Release Control Gate output.
 - Azure Container Apps read-only summary execution `job-supa-drain-sum-eus-axp1kij`.
 - Azure Container Apps broader read-only inventory execution `job-supa-drain-ro-eus-ka1a0yr`.
+- Azure Container Apps targeted schema execution `job-ec-schema-eus-8vwh99b`.
+- Azure Container Apps schema verification execution `job-ec-schema-check-eus-iz7faco`.
 
 ## Known Gaps
 
 - This release does not delete, pause, or modify Supabase.
 - This release does not run the apply copy.
-- If Azure is missing target tables, the dry run will report blockers; schema migration must be handled before apply.
+- The `enterprise_context_*` target schema blocker was cleared on 2026-06-06, but the data rows are still pending copy.
 - `infra/azure/parameters/supabase-drain-dry-run.lab.bicepparam` requires a container image that contains this release's script before it can run directly; the 2026-06-06 evidence used an inline read-only command on the existing image.
