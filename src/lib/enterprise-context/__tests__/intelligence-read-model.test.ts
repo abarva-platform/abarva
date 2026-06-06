@@ -1,7 +1,12 @@
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 
-import { getEnterpriseContextOverviewForTenant, summarizeEnterpriseContextRows } from '../intelligence-read-model';
+import {
+  getEnterpriseContextOverviewForTenant,
+  summarizeEnterpriseContextChunks,
+  summarizeEnterpriseContextRows,
+} from '../intelligence-read-model';
 import type {
+  EnterpriseContextChunkRow,
   EnterpriseContextQualityRow,
   EnterpriseContextRecordRow,
   EnterpriseContextSourceRow,
@@ -152,4 +157,93 @@ describe('enterprise context Intelligence read model', () => {
       return { data: rowsByTable[table] ?? [], error: null, count: null };
     }
   });
+
+  it('falls back to Admin-loaded context chunks when normalized records are empty', async () => {
+    const countByTable: Record<string, number> = {
+      enterprise_context_sources: 0,
+      enterprise_context_records: 0,
+      enterprise_context_facts: 0,
+      enterprise_context_relationships: 0,
+      enterprise_context_evidence: 0,
+      enterprise_context_quality_issues: 0,
+      enterprise_context_stewardship_tasks: 0,
+      enterprise_context_chunk_queue: 0,
+    };
+    const rowsByTable: Record<string, unknown[]> = {
+      enterprise_context_chunks: [
+        chunk({ source_doc: '01-org-decision-rights.csv', chunk_id: 'org-1' }),
+        chunk({ source_doc: '03-cmdb-applications-services.csv', chunk_id: 'cmdb-1' }),
+        chunk({ source_doc: '04-ci-relationships-dependencies.csv', chunk_id: 'rel-1' }),
+        chunk({ source_doc: '05-vendors-contract-inventory.csv', chunk_id: 'vendor-1' }),
+        chunk({ source_doc: '09-incidents.csv', chunk_id: 'inc-1', embedding_status: 'pending' }),
+      ],
+    };
+
+    mockGetAzureReadFluentClient.mockReturnValue({
+      from: (table: string) => ({
+        select: (_columns: string, options?: { count?: 'exact'; head?: boolean }) => ({
+          eq: () => ({
+            range: () => {
+              if (options?.head) return Promise.resolve({ data: null, error: null, count: countByTable[table] ?? 0 });
+              return Promise.resolve({ data: rowsByTable[table] ?? [], error: null, count: null });
+            },
+            then: (onfulfilled: (value: unknown) => unknown, onrejected?: (error: unknown) => unknown) => {
+              const result = options?.head
+                ? { data: null, error: null, count: countByTable[table] ?? 0 }
+                : { data: rowsByTable[table] ?? [], error: null, count: null };
+              return Promise.resolve(result).then(onfulfilled, onrejected);
+            },
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof getAzureReadFluentClient>);
+
+    const overview = await getEnterpriseContextOverviewForTenant('meridian-health', 'Meridian Health System');
+
+    expect(overview).not.toBeNull();
+    expect(overview?.counts.sources).toBe(5);
+    expect(overview?.counts.records).toBe(5);
+    expect(overview?.counts.relationships).toBe(1);
+    expect(overview?.counts.stewardshipTasks).toBe(1);
+    expect(overview?.recordTypeCounts.org_decision_rights).toBe(1);
+    expect(overview?.recordTypeCounts.cmdb_applications_services).toBe(1);
+    expect(overview?.cards.map((card) => card.title)).toContain('Embedded evidence coverage');
+    expect(overview?.sentinelFacts.join('\n')).toContain('4 embedded context chunks across 5 Admin-loaded source files');
+    expect(overview?.sentinelFacts.join('\n')).toContain('chunk-backed loader evidence');
+  });
+
+  it('summarizes chunk-backed context with source-doc domain counts', () => {
+    const overview = summarizeEnterpriseContextChunks({
+      tenantKey: 'meridian-health',
+      tenantName: 'Meridian Health System',
+      chunks: [
+        chunk({ source_doc: '13-initiative-portfolio.csv', chunk_id: 'init-1' }),
+        chunk({ source_doc: '14-data-domains-stewardship.csv', chunk_id: 'data-1' }),
+        chunk({ source_doc: '15-risk-compliance-register.csv', chunk_id: 'risk-1', embedding_status: 'failed' }),
+      ],
+    });
+
+    expect(overview.counts.records).toBe(3);
+    expect(overview.evidenceUsableCount).toBe(2);
+    expect(overview.counts.qualityIssues).toBe(1);
+    expect(overview.recordTypeCounts.initiative_portfolio).toBe(1);
+    expect(overview.recordTypeCounts.data_domains_stewardship).toBe(1);
+    expect(overview.recordTypeCounts.risk_compliance_register).toBe(1);
+    expect(overview.sentinelFacts.join('\n')).toContain('initiatives (1)');
+  });
 });
+
+function chunk(overrides: Partial<EnterpriseContextChunkRow>): EnterpriseContextChunkRow {
+  return {
+    source_doc: '03-cmdb-applications-services.csv',
+    source_record_id: 'row-1',
+    chunk_id: 'chunk-1',
+    chunk_text: 'Epic is a Tier 1 clinical platform.',
+    embedding_status: 'embedded',
+    embedding_model: 'text-embedding-3-small',
+    embedded_at: '2026-06-06T05:14:20.608Z',
+    provenance: {},
+    chunk_metadata: {},
+    ...overrides,
+  };
+}
