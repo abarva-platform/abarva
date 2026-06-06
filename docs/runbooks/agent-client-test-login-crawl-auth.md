@@ -96,6 +96,7 @@ test('crawl Meridian signed-in pages', async ({ page }) => {
 - `abarva_active_client` cookie is set to the expected client.
 - `abarva_selected_client` localStorage is set to the expected client.
 - Responsible AI acknowledgment is accepted for that signed-in user when required.
+- Responsible AI training is completed for that signed-in user when required.
 - Probe routes do not redirect to `/sign-in`.
 
 ## Failure Modes
@@ -105,6 +106,7 @@ test('crawl Meridian signed-in pages', async ({ page }) => {
 | `Missing CLERK_SECRET_KEY` | The script cannot mint Clerk sign-in tickets. | Add the local secret to `.env.local`; do not commit it. |
 | `No Clerk user found` | The canonical persona has not been provisioned in Clerk. | Run `scripts/provision-cxo-personas.ts` for that client. |
 | `publicMetadata.clientId=<x>; expected <y>` | The user is mapped to the wrong tenant. | Fix Clerk metadata before crawling. |
+| `Responsible AI training API returned <status>` | The training gate did not record completion for the signed-in user. | Confirm the training ledger is reachable and the acknowledgment was accepted first. |
 | `redirected to sign-in` | Auth state did not work for the target app. | Confirm `BASE_URL`, Clerk keys, deployment, and user status. |
 
 ## Cleanup
