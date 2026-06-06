@@ -26,6 +26,7 @@ export type { DeliverableFormat };
  *   strategy-memo         → d01_strategy_memo
  *   scope-memo            → d05_scope_memo
  *   rfp-package           → d09_rfp_pack
+ *   vendor-response-pack  → d13_vendor_responses
  *   decision-brief        → d24_decision_brief
  *   selection-memo        → d27_selection_memo
  *   app-inventory         → d04_app_inv
@@ -40,6 +41,7 @@ export type SourceDeliverableKind =
   | "strategy-memo"
   | "scope-memo"
   | "rfp-package"
+  | "vendor-response-pack"
   | "decision-brief"
   | "selection-memo"
   | "app-inventory"
@@ -85,6 +87,7 @@ export const ARTIFACT_CODE_TO_KIND: Record<string, SourceDeliverableKind> = {
   d01_strategy_memo: "strategy-memo",
   d05_scope_memo: "scope-memo",
   d09_rfp_pack: "rfp-package",
+  d13_vendor_responses: "vendor-response-pack",
   d24_decision_brief: "decision-brief",
   d27_selection_memo: "selection-memo",
   d04_app_inv: "app-inventory",
@@ -112,6 +115,7 @@ export const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   "strategy-memo": "d01_strategy_memo",
   "scope-memo": "d05_scope_memo",
   "rfp-package": "d09_rfp_pack",
+  "vendor-response-pack": "d13_vendor_responses",
   "decision-brief": "d24_decision_brief",
   "selection-memo": "d27_selection_memo",
   "app-inventory": "d04_app_inv",

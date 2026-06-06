@@ -36,6 +36,7 @@ const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   "strategy-memo": "d01_strategy_memo",
   "scope-memo": "d05_scope_memo",
   "rfp-package": "d09_rfp_pack",
+  "vendor-response-pack": "d13_vendor_responses",
   "decision-brief": "d24_decision_brief",
   "selection-memo": "d27_selection_memo",
   "app-inventory": "d04_app_inv",
@@ -63,6 +64,7 @@ const NARRATIVE_KINDS = new Set<SourceDeliverableKind>([
   "strategy-memo",
   "scope-memo",
   "rfp-package",
+  "vendor-response-pack",
   "decision-brief",
   "selection-memo",
 ]);

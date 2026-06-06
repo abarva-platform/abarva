@@ -25,8 +25,6 @@ describe("Source format router (Slice 8.1 foundations)", () => {
   });
 
   it("throws when the requested format is not in the kind's allowed set", () => {
-    // Structured artifacts do not have an HTML surface — HTML is a
-    // long-form narrative share format, not a structured-grid one.
     expect(() => routeFormat("app-inventory", "html")).toThrow(
       /Format "html" is not allowed for kind "app-inventory"/,
     );
@@ -56,12 +54,13 @@ describe("Source format router (Slice 8.1 foundations)", () => {
 
   it("lists every Source kind", () => {
     const kinds = listAllKinds();
-    // Original 11 kinds (Slices 2-8) plus 7 lifecycle-coverage kinds
+    // Original 12 kinds (Slices 2-8) plus 7 lifecycle-coverage kinds
     // (demand-challenge, sourcing-approach, market-scan, tco-iceberg,
     // ai-clause-gap, vendor-risk-pack, renewal-decision).
-    expect(kinds).toHaveLength(19);
+    expect(kinds).toHaveLength(20);
     expect(kinds).toContain("strategy-memo");
     expect(kinds).toContain("scope-memo");
+    expect(kinds).toContain("vendor-response-pack");
     expect(kinds).toContain("pricing-template");
     expect(kinds).toContain("pricing-comparison");
     expect(kinds).toContain("bafo-question-pack");
@@ -84,6 +83,7 @@ describe("Source format router (Slice 8.1 foundations)", () => {
       "strategy-memo",
       "scope-memo",
       "rfp-package",
+      "vendor-response-pack",
       "decision-brief",
       "selection-memo",
     ];

@@ -41,6 +41,8 @@ import {
   STRATEGY_MEMO_DOCX_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG,
+  PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG,
   DECISION_BRIEF_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
   DEMAND_CHALLENGE_DOCX_CONFIG,
@@ -143,6 +145,7 @@ interface NarrativeBasePayload {
 export type ScopeMemoPayload = NarrativeBasePayload;
 export type StrategyMemoPayload = NarrativeBasePayload;
 export type RfpPackagePayload = NarrativeBasePayload;
+export type VendorResponsePackPayload = NarrativeBasePayload;
 export type DecisionBriefPayload = NarrativeBasePayload;
 export type SelectionMemoPayload = NarrativeBasePayload;
 
@@ -161,6 +164,10 @@ export interface ScopeMemoSpec extends BaseSourceSpec {
 export interface RfpPackageSpec extends BaseSourceSpec {
   kind: "rfp-package";
   payload: RfpPackagePayload;
+}
+export interface VendorResponsePackSpec extends BaseSourceSpec {
+  kind: "vendor-response-pack";
+  payload: VendorResponsePackPayload;
 }
 export interface DecisionBriefSpec extends BaseSourceSpec {
   kind: "decision-brief";
@@ -274,6 +281,14 @@ export async function renderSourceDeliverable(
       return renderNarrative(
         spec,
         RFP_PACK_DOCX_CONFIG,
+        format,
+        filename,
+        generatedAt,
+      );
+    case "vendor-response-pack":
+      return renderNarrative(
+        spec,
+        VENDOR_RESPONSE_PACK_DOCX_CONFIG,
         format,
         filename,
         generatedAt,
@@ -538,6 +553,16 @@ async function renderPricingTemplate(
       await import("./renderers/pricing-template-pdf");
     return pdfResult(buildPricingTemplatePdf(spec.payload), filename);
   }
+  if (format === "html") {
+    const payload = pricingTemplateNarrativePayload(spec.payload);
+    const html = buildNarrativeHtml(payload, PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG);
+    return makeResult(
+      "html",
+      Buffer.from(html, "utf8"),
+      filename,
+      HTML_CONTENT_TYPE,
+    );
+  }
   throw new Error(`pricing-template does not support format "${format}"`);
 }
 
@@ -765,6 +790,8 @@ function artifactCodeForKind(kind: SourceDeliverableKind): string {
       return "d05_scope_memo";
     case "rfp-package":
       return "d09_rfp_pack";
+    case "vendor-response-pack":
+      return "d13_vendor_responses";
     case "decision-brief":
       return "d24_decision_brief";
     case "selection-memo":
@@ -810,6 +837,61 @@ function withAiDecisionSupportExportNote(body: string): string {
   return body.includes(AI_DECISION_SUPPORT_WATERMARK)
     ? body
     : `${body.trimEnd()}${note}`;
+}
+
+function pricingTemplateNarrativePayload(
+  payload: PricingTemplatePayload,
+): NarrativeDocxPayload {
+  const assumptionLines =
+    payload.assumptions.length > 0
+      ? payload.assumptions
+          .map((assumption) => {
+            const rationale = assumption.rationale
+              ? ` — ${assumption.rationale}`
+              : "";
+            return `- **${assumption.key}:** ${assumption.value}${rationale}`;
+          })
+          .join("\n")
+      : "- No locked assumptions are present yet.";
+  const lineItemLines =
+    payload.lineItems.length > 0
+      ? payload.lineItems
+          .map((item) => {
+            const note = item.note ? ` — ${item.note}` : "";
+            return `- **${item.id}:** ${item.category} · ${item.description} · ${item.annualQuantity.toLocaleString()} ${item.unit}${note}`;
+          })
+          .join("\n")
+      : "- No scope-derived pricing line items are present yet.";
+  const escalatorPct = `${(payload.escalator * 100).toFixed(2)}%`;
+  const body = [
+    "# Pricing workbook summary",
+    "",
+    "This HTML view is the buyer-readable companion to the d19 pricing workbook. The xlsx remains the governed vendor-editable surface for unit prices, formulas, and TCO rollup.",
+    "",
+    "## Locked assumptions",
+    assumptionLines,
+    "",
+    "## Scope-derived pricing lines",
+    lineItemLines,
+    "",
+    "## TCO schedule",
+    `- Horizon: **${payload.tcoYears} years**`,
+    `- Annual escalator: **${escalatorPct}**`,
+    "- Year 1 holds at the steady-state base; later years apply the escalator in the workbook.",
+    "",
+    "## Review rule",
+    "Finance should treat the HTML as a review summary and the xlsx as the authoritative pricing artifact. Any realized savings claim still requires CFO or value-office attestation.",
+  ].join("\n");
+
+  return {
+    tenantName: payload.tenantName,
+    eventCode: payload.eventCode,
+    eventName: payload.eventName,
+    issuedBy: payload.issuedBy,
+    generatedAt: payload.generatedAt,
+    body,
+    bodyIsAuthored: true,
+  };
 }
 
 function addAiDecisionSupportWorksheet(workbook: Workbook): void {
