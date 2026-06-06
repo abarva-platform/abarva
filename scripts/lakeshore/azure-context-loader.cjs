@@ -279,6 +279,7 @@
   RESULT.summary = { files: manifest.file_count, blob, parse: { ok: parse.ok, failed: parse.failed }, chunks: chunks.length, committed, embed: emb, search, qa };
   await client.end();
   console.log('RESULT_JSON ' + JSON.stringify(RESULT));
-  // keep replica alive briefly so logs flush, then exit
-  setTimeout(() => process.exit(0), 2000);
-})().catch((e) => { console.error('FATAL', e && e.stack || e); console.log('RESULT_JSON ' + JSON.stringify({ ok: false, fatal: String(e && e.message || e) })); setTimeout(() => process.exit(1), 1500); });
+  // stay alive so the app does not restart and re-run; keeps one clean run + logs
+  console.log('LOAD_COMPLETE_HOLDING');
+  setInterval(() => {}, 1 << 30);
+})().catch((e) => { console.error('FATAL', e && e.stack || e); console.log('RESULT_JSON ' + JSON.stringify({ ok: false, fatal: String(e && e.message || e) })); setInterval(() => {}, 1 << 30); });
