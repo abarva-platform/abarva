@@ -479,6 +479,15 @@ describe("Probe 6 · session role inference", () => {
     ).toBeNull();
   });
 
+  it("infers locked client behavior for Anand single-tenant operator aliases only", () => {
+    expect(
+      inferSessionRoleFromEmail("anand.sundaram+apex@thesundaram.com"),
+    ).toBe("client");
+    expect(
+      inferSessionRoleFromEmail("other+apex@thesundaram.com"),
+    ).toBeNull();
+  });
+
   it("does not infer investor from retired investor emails", () => {
     expect(
       inferSessionRoleFromEmail("investor+clerk_test@abarva.com"),
@@ -560,6 +569,23 @@ describe("Probe 7 · resolvePinnedSessionClientKey", () => {
         email: "anand+apex@abarva.com",
       }),
     ).toBe("apexretail");
+  });
+
+  it("Anand single-tenant operator aliases override stale conflicting metadata", () => {
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "meridian",
+        defaultClientId: "meridian",
+        email: "anand.sundaram+apex@thesundaram.com",
+      }),
+    ).toBe("apexretail");
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: "apexretail",
+        defaultClientId: "apexretail",
+        email: "anand.sundaram+skyharbor@thesundaram.com",
+      }),
+    ).toBe("skyharbor");
   });
 
   it("Lakeshore tenant emails override stale conflicting metadata", () => {

@@ -9,10 +9,10 @@
 //     meetings they attended, programs they sponsor, decisions they
 //     made — all already threaded through the data.
 //
-// Anand (anand.sundaram@thesundaram.com) is not in this roster — he
-// is a platform super-user via PLATFORM_ADMIN_EMAIL_ALLOWLIST in
-// tenant-roles.ts and signs in through normal Clerk flows, not the
-// demo OTP picker.
+// Anand's client-specific operator identities are single-tenant aliases.
+// They intentionally do not grant multi-client access. Each Clerk user is
+// pinned through publicMetadata.clientId and the alias itself is an additional
+// guardrail for routing and demo-ticket sign-in.
 //
 // Persona binding (display name maintained in cxo-personas.ts and
 // in the Clerk user metadata seeded by the CXO provisioning script):
@@ -47,6 +47,15 @@ export const CANONICAL_AUTH_EMAILS = [
   "cio@lakeshore-holdings.example.com", // Meera Rao · Global CIO
   "cfo@lakeshore-holdings.example.com", // Daniel Whitaker · CFO / Treasury Sponsor
   "admin@lakeshore-holdings.example.com", // admin · Lakeshore Holdings
+] as const;
+
+export const ANAND_OPERATOR_AUTH_EMAILS = [
+  "anand.sundaram+apex@thesundaram.com",
+  "anand.sundaram+meridian@thesundaram.com",
+  "anand.sundaram+skyharbor@thesundaram.com",
+  "anand.sundaram+lakeshore@thesundaram.com",
+  "anand.sundaram+firstcapital@thesundaram.com",
+  "anand.sundaram+northstar@thesundaram.com",
 ] as const;
 
 export const CANONICAL_CLIENT_ADMIN_EMAILS = [

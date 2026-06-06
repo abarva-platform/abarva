@@ -22,6 +22,17 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? '';
 }
 
+function isAnandOperatorAlias(normalizedEmail: string): boolean {
+  return (
+    normalizedEmail === 'anand.sundaram+apex@thesundaram.com' ||
+    normalizedEmail === 'anand.sundaram+meridian@thesundaram.com' ||
+    normalizedEmail === 'anand.sundaram+skyharbor@thesundaram.com' ||
+    normalizedEmail === 'anand.sundaram+lakeshore@thesundaram.com' ||
+    normalizedEmail === 'anand.sundaram+firstcapital@thesundaram.com' ||
+    normalizedEmail === 'anand.sundaram+northstar@thesundaram.com'
+  );
+}
+
 export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
@@ -37,7 +48,8 @@ export function hasExplicitTenantAlias(email: string | null | undefined): boolea
     normalized.includes('+firstcapital@abarva.com') ||
     normalized.includes('+northstar@abarva.com') ||
     normalized.includes('+skyharbor@abarva.com') ||
-    normalized.includes('+lakeshore@abarva.com')
+    normalized.includes('+lakeshore@abarva.com') ||
+    isAnandOperatorAlias(normalized)
   );
 }
 
@@ -62,7 +74,8 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.includes('+firstcapital@abarva.com') ||
     normalized.includes('+northstar@abarva.com') ||
     normalized.includes('+skyharbor@abarva.com') ||
-    normalized.includes('+lakeshore@abarva.com')
+    normalized.includes('+lakeshore@abarva.com') ||
+    isAnandOperatorAlias(normalized)
   ) {
     return 'client';
   }
