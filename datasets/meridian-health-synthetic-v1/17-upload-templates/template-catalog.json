@@ -1,6 +1,6 @@
 {
   "tenant": "meridian",
-  "display_name": "Meridian Health System",
+  "display_name": "Healthcare Composite Demo Tenant",
   "version": "1.0.0",
   "minimum_template_count": 20,
   "templates": [

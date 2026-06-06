@@ -1,6 +1,6 @@
 version: 1.0.0
 tenant: meridian
-display_name: Meridian Health System
+display_name: Healthcare Composite Demo Tenant
 files:
   - path: 01-portfolio/application-portfolio.csv
     row_count: 140
