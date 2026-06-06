@@ -78,6 +78,31 @@ export interface BulkContextUploadFileResult {
   };
   queue: BulkContextUploadQueueResult | null;
   loadResult: CsvUploadLoadResult | null;
+  processing: {
+    status:
+      | "validated_only"
+      | "staged_for_worker"
+      | "processed_now"
+      | "blocked";
+    label: string;
+    nextAction: string;
+  };
+}
+
+export interface BulkContextUploadWorkflowStep {
+  id:
+    | "package_received"
+    | "attestation_verified"
+    | "sensitive_data_scan"
+    | "blob_staging"
+    | "worker_queue"
+    | "immediate_processing"
+    | "private_worker"
+    | "operator_review"
+    | "tenant_context_commit";
+  label: string;
+  status: "complete" | "active" | "pending" | "skipped" | "blocked";
+  detail: string;
 }
 
 export interface BulkContextUploadResult {
@@ -89,6 +114,11 @@ export interface BulkContextUploadResult {
   rowsParsed: number;
   chunksQueued: number;
   blobBucket: string;
+  workflow: {
+    jobId: string;
+    summary: string;
+    steps: BulkContextUploadWorkflowStep[];
+  };
   results: BulkContextUploadFileResult[];
   persistence: {
     status: "validation_only" | "staged_and_enqueued" | "staged_and_processed";
@@ -287,6 +317,143 @@ function landingMessage(args: {
   };
 }
 
+function progressJobId(args: {
+  tenantKey: string;
+  loadName: string;
+  uploadedAt: string;
+  files: BulkContextUploadFileResult[];
+}): string {
+  const basis = [
+    args.tenantKey,
+    args.loadName,
+    args.uploadedAt,
+    ...args.files.map((file) => `${file.fileName}:${file.blob.sha256}`),
+  ].join("|");
+  return `bulk-${crypto.createHash("sha256").update(basis).digest("hex").slice(0, 16)}`;
+}
+
+function buildWorkflow(args: {
+  mode: BulkContextUploadInput["mode"];
+  jobId: string;
+  results: BulkContextUploadFileResult[];
+}): BulkContextUploadResult["workflow"] {
+  const files = args.results.length;
+  const plural = files === 1 ? "file" : "files";
+  const queued = args.results.filter((item) => item.queue).length;
+  const processed = args.results.filter((item) => item.loadResult).length;
+  const staged = args.results.filter((item) => item.blob.staged).length;
+
+  const baseSteps: BulkContextUploadWorkflowStep[] = [
+    {
+      id: "package_received",
+      label: "Package received",
+      status: "complete",
+      detail: `${files} ${plural} matched the manifest and tenant boundary.`,
+    },
+    {
+      id: "attestation_verified",
+      label: "Operator attestation verified",
+      status: "complete",
+      detail: "Authority, intended use, and restricted-data review were confirmed before processing.",
+    },
+    {
+      id: "sensitive_data_scan",
+      label: "Sensitive-data scan completed",
+      status: "complete",
+      detail: "Every file passed the pre-storage upload protection gate.",
+    },
+  ];
+
+  if (args.mode === "validate_only") {
+    return {
+      jobId: args.jobId,
+      summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+      steps: [
+        ...baseSteps,
+        {
+          id: "blob_staging",
+          label: "Azure Blob staging",
+          status: "skipped",
+          detail: "Validate-only mode stops before storage writes.",
+        },
+        {
+          id: "tenant_context_commit",
+          label: "Tenant context commit",
+          status: "skipped",
+          detail: "Run stage-and-process for structured files or stage-and-queue for worker processing.",
+        },
+      ],
+    };
+  }
+
+  if (args.mode === "stage_and_enqueue") {
+    return {
+      jobId: args.jobId,
+      summary:
+        "Files are staged and queued. Azure private-worker processing is the next handoff.",
+      steps: [
+        ...baseSteps,
+        {
+          id: "blob_staging",
+          label: "Azure Blob staging completed",
+          status: "complete",
+          detail: `${staged} ${plural} staged in the governed context upload container.`,
+        },
+        {
+          id: "worker_queue",
+          label: "Azure worker queued",
+          status: "complete",
+          detail: `${queued} ${plural} queued for private data-plane extraction and mapping.`,
+        },
+        {
+          id: "private_worker",
+          label: "Private worker processing",
+          status: "active",
+          detail: "Waiting for the Azure worker to extract, classify, map, and return file-level outcomes.",
+        },
+        {
+          id: "operator_review",
+          label: "Operator review",
+          status: "pending",
+          detail: "Review extracted records, warnings, and evidence counts before final tenant-context commit.",
+        },
+        {
+          id: "tenant_context_commit",
+          label: "Tenant context commit",
+          status: "pending",
+          detail: "Commit after worker output and operator review pass.",
+        },
+      ],
+    };
+  }
+
+  return {
+    jobId: args.jobId,
+    summary: "Structured files were staged and processed through the governed loader.",
+    steps: [
+      ...baseSteps,
+      {
+        id: "blob_staging",
+        label: "Azure Blob staging completed",
+        status: "complete",
+        detail: `${staged} ${plural} staged in the governed context upload container.`,
+      },
+      {
+        id: "immediate_processing",
+        label: "Immediate loader processing completed",
+        status: "complete",
+        detail: `${processed} ${plural} processed without waiting for the private worker.`,
+      },
+      {
+        id: "tenant_context_commit",
+        label: "Tenant context commit completed",
+        status: "complete",
+        detail: "Parsed rows were written through the governed tenant-context loader.",
+      },
+    ],
+  };
+}
+
 export async function runBulkContextUpload(
   input: BulkContextUploadInput,
 ): Promise<BulkContextUploadResult> {
@@ -442,6 +609,27 @@ export async function runBulkContextUpload(
       },
       queue,
       loadResult,
+      processing:
+        input.mode === "validate_only"
+          ? {
+              status: "validated_only",
+              label: "Validated only",
+              nextAction:
+                "Run stage-and-queue for Azure extraction or stage-and-process for structured files.",
+            }
+          : input.mode === "stage_and_enqueue"
+            ? {
+                status: "staged_for_worker",
+                label: "Staged and queued",
+                nextAction:
+                  "Wait for Azure private-worker extraction, then review mapped records.",
+              }
+            : {
+                status: "processed_now",
+                label: "Processed now",
+                nextAction:
+                  "Review loaded chunks and evidence counts in Data Trust.",
+              },
     });
   }
 
@@ -453,6 +641,12 @@ export async function runBulkContextUpload(
     (sum, item) => sum + (item.loadResult?.chunksQueued ?? 0),
     0,
   );
+  const jobId = progressJobId({
+    tenantKey: input.tenantKey,
+    loadName: input.manifest.loadName,
+    uploadedAt,
+    files: results,
+  });
 
   return {
     ok: true,
@@ -463,6 +657,11 @@ export async function runBulkContextUpload(
     rowsParsed,
     chunksQueued,
     blobBucket: BULK_CONTEXT_BUCKET,
+    workflow: buildWorkflow({
+      mode: input.mode,
+      jobId,
+      results,
+    }),
     results,
     persistence:
       input.mode === "validate_only"

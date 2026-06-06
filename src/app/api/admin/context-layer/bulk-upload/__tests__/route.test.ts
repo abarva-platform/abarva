@@ -133,6 +133,16 @@ describe("/api/admin/context-layer/bulk-upload", () => {
       persistence: {
         status: "validation_only",
       },
+      workflow: {
+        summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+        steps: [
+          { id: "package_received", status: "complete" },
+          { id: "attestation_verified", status: "complete" },
+          { id: "sensitive_data_scan", status: "complete" },
+          { id: "blob_staging", status: "skipped" },
+          { id: "tenant_context_commit", status: "skipped" },
+        ],
+      },
       results: [
         {
           fileName: "enterprise-profile.yaml",
@@ -192,6 +202,18 @@ describe("/api/admin/context-layer/bulk-upload", () => {
       chunksQueued: 0,
       persistence: {
         status: "staged_and_enqueued",
+      },
+      workflow: {
+        summary:
+          "Files are staged and queued. Azure private-worker processing is the next handoff.",
+        steps: expect.arrayContaining([
+          expect.objectContaining({ id: "private_worker", status: "active" }),
+          expect.objectContaining({ id: "operator_review", status: "pending" }),
+          expect.objectContaining({
+            id: "tenant_context_commit",
+            status: "pending",
+          }),
+        ]),
       },
       results: [
         {
@@ -253,6 +275,11 @@ describe("/api/admin/context-layer/bulk-upload", () => {
       filesProcessed: 1,
       persistence: {
         status: "staged_and_enqueued",
+      },
+      workflow: {
+        steps: expect.arrayContaining([
+          expect.objectContaining({ id: "private_worker", status: "active" }),
+        ]),
       },
       results: [
         {
