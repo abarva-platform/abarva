@@ -58,6 +58,28 @@ export interface SurfaceGroundingUnbound {
 
 export type SurfaceGroundingResult = SurfaceGrounding | SurfaceGroundingUnbound;
 
+/**
+ * Portfolio-level grounding for a CROSS-FUNCTION surface (Atlas/Tower), which
+ * reasons across many functions at once rather than one. A single function-pack
+ * bind would be the wrong model for such a surface; this aggregates the curated
+ * depth of every function in scope — the union of metrics and regulatory
+ * frames, plus the per-function grounding — so the portfolio read inherits real
+ * depth without arbitrarily privileging one function.
+ */
+export interface TenantPortfolioGrounding {
+  industryKey: string;
+  /** The functions that resolved to a curated pack. */
+  groundedFunctions: SurfaceGrounding[];
+  /** Functions in scope with no catalogued pack — surfaced honestly. */
+  unboundFunctions: { functionKey: string; fallbackNote: string }[];
+  /** Union of operating metrics across the grounded functions (deduped by key). */
+  allMetrics: OperatingMetric[];
+  /** Union of regulatory frames across the grounded functions. */
+  allRegulatoryFrames: string[];
+  /** Whether the own-it discipline is present anywhere in the portfolio. */
+  ownItPosture: { hasRentedIntelligenceTheme: boolean; hasOwnershipAnchor: boolean };
+}
+
 function summarize(pack: FunctionPack): SurfaceGrounding {
   return {
     bound: true,
@@ -118,4 +140,46 @@ export function groundSurfaceContext(input: {
     };
   }
   return summarize(pack);
+}
+
+/**
+ * Ground a CROSS-FUNCTION surface (Atlas/Tower) over the set of functions
+ * active in a tenant's portfolio. The correct model for a portfolio-level
+ * agent: aggregate the curated depth of every function in scope rather than
+ * binding one. Functions that resolve are grounded; the rest are surfaced as
+ * honest unbound entries. Pure and deterministic.
+ */
+export function groundTenantPortfolio(input: {
+  industryCode?: string | null;
+  functionKeys: readonly string[];
+}): TenantPortfolioGrounding {
+  const grounded: SurfaceGrounding[] = [];
+  const unbound: { functionKey: string; fallbackNote: string }[] = [];
+  for (const functionKey of input.functionKeys) {
+    const g = groundSurfaceContext({
+      industryCode: input.industryCode,
+      functionPackKey: functionKey,
+    });
+    if (g.bound) grounded.push(g);
+    else unbound.push({ functionKey, fallbackNote: g.fallbackNote });
+  }
+  // Union metrics by key; union regulatory frames; OR the own-it posture.
+  const metricByKey = new Map<string, OperatingMetric>();
+  const frames = new Set<string>();
+  let hasRented = false;
+  let hasOwnership = false;
+  for (const g of grounded) {
+    for (const m of g.operatingMetrics) if (!metricByKey.has(m.key)) metricByKey.set(m.key, m);
+    for (const f of g.regulatoryFrames) frames.add(f);
+    hasRented = hasRented || g.ownItPosture.hasRentedIntelligenceTheme;
+    hasOwnership = hasOwnership || g.ownItPosture.hasOwnershipAnchor;
+  }
+  return {
+    industryKey: grounded[0]?.industryKey ?? '',
+    groundedFunctions: grounded,
+    unboundFunctions: unbound,
+    allMetrics: [...metricByKey.values()],
+    allRegulatoryFrames: [...frames],
+    ownItPosture: { hasRentedIntelligenceTheme: hasRented, hasOwnershipAnchor: hasOwnership },
+  };
 }
