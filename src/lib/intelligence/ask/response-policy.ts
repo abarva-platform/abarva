@@ -76,7 +76,20 @@ export function enforceCxoSectionBreaks(text: string): string {
 }
 
 export function chunkAskText(text: string): string[] {
-  return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
+  if (!text) return [text];
+
+  const chunks: string[] = [];
+  let buffer = '';
+  for (const char of text) {
+    buffer += char;
+    if (buffer.length >= 80 && /\s/.test(char)) {
+      chunks.push(buffer);
+      buffer = '';
+    }
+  }
+
+  if (buffer) chunks.push(buffer);
+  return chunks.length > 0 ? chunks : [text];
 }
 
 export function buildCurrentStateAdvisory(sources: AskSource[]): string | null {

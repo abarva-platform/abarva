@@ -1,6 +1,7 @@
 import {
   applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
+  chunkAskText,
   enforceCxoSectionBreaks,
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
@@ -42,6 +43,18 @@ describe('Ask Intelligence response policy', () => {
 
   it('strips markdown control characters before plain-text dock rendering', () => {
     expect(sanitizeAskSynthesis('Apex has **3 bets** and `F200` active.')).toBe('Apex has 3 bets and F200 active.');
+  });
+
+  it('preserves paragraph breaks when chunking streamed Ask text', () => {
+    const text = [
+      'My read: Meridian should stay in controlled pilot mode.',
+      '',
+      'Evidence: Enterprise Context has loaded records and evidence rows.',
+      '',
+      'Risk / gate: Do not claim full pilot readiness until artifacts are persisted.',
+    ].join('\n');
+
+    expect(chunkAskText(text).join('')).toBe(text);
   });
 
   it('builds an advisor-style current-state answer instead of a metric dump', () => {
