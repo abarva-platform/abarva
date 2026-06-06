@@ -58,27 +58,7 @@ export function ImpactInsightsHome({
   hasTenantKey: boolean;
   brief: HomeBrief;
 }) {
-  const { decision, portfolio, kpis, hasPortfolio } = brief;
-
-  // "What needs attention" rail — derived from REAL rows only (no
-  // fabricated timestamps): the pending decision + at-risk initiatives.
-  const attention = [
-    ...(decision
-      ? [
-          {
-            module: "Decision",
-            text: decision.question.replace(/^Review and decide:\s*/, ""),
-          },
-        ]
-      : []),
-    ...portfolio
-      .filter((row) => row.tone === "risk")
-      .slice(0, 3)
-      .map((row) => ({
-        module: row.stage,
-        text: `${row.name} — ${row.status}`,
-      })),
-  ];
+  const { decision, portfolio, kpis, hasPortfolio, attention } = brief;
 
   return (
     <AppShell
