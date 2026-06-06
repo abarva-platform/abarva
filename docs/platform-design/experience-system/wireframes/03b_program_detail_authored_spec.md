@@ -106,7 +106,7 @@ Every coordinate-labeled element below has explicit visual treatment, data sourc
 A-1 · Canonical AbarVa logo
 Element type: brand/logo.
 Visual treatment: AbarVaLogo SVG, 32px height desktop, 28px mobile; no hand-coded wordmark; color from brand asset.
-Data source: Brand asset public/brand/abarva-logo.svg.
+Data source: Brand asset public/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg.
 Empty state: Text fallback “AbarVa” in near-black/dark-blue only.
 Loading state: Immediate; no skeleton for logo.
 Error state: Show text fallback and do not block page.
