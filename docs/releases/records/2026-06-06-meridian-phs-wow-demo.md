@@ -79,6 +79,11 @@ guidance, which applies to all clients (all clients) but is non-breaking.
   or "reporting tools" question failed the gate, so NO tenant context was
   retrieved and Sentinel answered with aggregate counts instead of naming the
   loaded systems. Unit-tested in `__tests__/tenant-enterprise-context.test.ts`.
+- `src/scripts/meridian-context-inventory.ts`: read-only context-layer inventory
+  (by segment / source_doc / file_type + vendor-AMS and technology evidence)
+  designed to run via the proven Azure private operator runner inside the VNet
+  (`job-abarva-private-operator-eus`) against live `enterprise_context_chunks`.
+  SELECT-only; no writes.
 
 This change touches no pilot CONTEXT side-load path. New pilot/client context
 data must still enter through the Admin Data Loader (no side-load); ingestion
