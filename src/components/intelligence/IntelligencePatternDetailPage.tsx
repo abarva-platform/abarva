@@ -535,7 +535,7 @@ function ActionCanvasSection({
         data-testid="intelligence-action-canvas-disclaimer"
         data-honest-disclaimer="intelligence-action-canvas"
       >
-        Deterministic seed · Action canvas reflects fixture context for the Apex Retail engagement.
+        Deterministic seed · Action canvas reflects fixture context for the active engagement.
         Live action tracking and deadline management are deferred to the programme action management module.
       </div>
     </div>
