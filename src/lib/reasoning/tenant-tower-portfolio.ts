@@ -16,6 +16,10 @@
 // or live adapter (Tower data plane) here.
 
 import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import {
+  LAKESHORE_TOWER_PROGRAM_INSTANCES,
+  LAKESHORE_TOWER_SOURCE_EVENT_INSTANCES,
+} from '@/lib/reasoning/lakeshore-tower-portfolio';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import type { ProgramInstance } from '@/lib/programs/program-instance';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -48,8 +52,11 @@ const EMPTY_PORTFOLIO: TenantTowerPortfolio = {
  *     flag is enabled for the tenant, return the Apex demo fixture.
  *     Otherwise return empty (honest empty-state, no silent fallback).
  *
+ *   - `lakeshore` / `lakeshore-holdings` — return the tenant-scoped
+ *     Lakeshore Kyriba portfolio fixture used by the demo-readiness lane.
+ *
  *   - any other tenant (meridian, arcturus, unknown, …) — always return
- *     empty arrays. NEVER return Apex content as the silent default.
+ *     empty arrays. NEVER return Apex or Lakeshore content as the silent default.
  *
  * The synthesis route gates on the resulting array lengths and tells the
  * model there is nothing to synthesize when both are empty.
@@ -72,6 +79,14 @@ export function loadTenantTowerPortfolio(tenancy: {
     return EMPTY_PORTFOLIO;
   }
 
-  // All non-Apex tenants — empty by construction. No silent fallback.
+  if (tenantKey === 'lakeshore' || tenantKey === 'lakeshore-holdings') {
+    return {
+      programInstances: LAKESHORE_TOWER_PROGRAM_INSTANCES,
+      sourceEventInstances: LAKESHORE_TOWER_SOURCE_EVENT_INSTANCES,
+      fromApexFixture: false,
+    };
+  }
+
+  // All other tenants — empty by construction. No silent fallback.
   return EMPTY_PORTFOLIO;
 }
