@@ -60,6 +60,7 @@ export function buildSourceMultiAgentBriefing(
     recommendedNextSlice: overallReadiness === 'lowContext'
       ? LOW_CONTEXT_RECOMMENDED_SLICE
       : DEFAULT_RECOMMENDED_SLICE,
+    functionGrounding: input.contextBundle.functionGrounding,
   };
 }
 

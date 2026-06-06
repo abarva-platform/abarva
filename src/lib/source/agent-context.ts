@@ -1,3 +1,4 @@
+import type { SurfaceGrounding } from '@/lib/programs/expert-kernel/grounding/surface-grounding';
 import type { SourceAttachment, SourceAttachmentSummary } from './attachments';
 import type { SourceChatIntent, SourceChatMessage, SourceSuggestedAction } from './chat-types';
 import type { SourceContextQualityScore } from './context-quality';
@@ -426,6 +427,13 @@ export interface SourceAgentContextBundle {
   decisionOwner?: string;
   clientItContext?: SourceClientItContextSnapshot;
   liveTenantContext?: SourceLiveTenantContextSnapshot;
+  /**
+   * Optional curated Domain Function Pack grounding for the tenant's
+   * (industry, function) — the same depth Nexus/Moves binds, folded into the
+   * Source surface via `groundSurfaceContext`. Undefined when the assembler
+   * has no industry/function identity (honest curated-depth gap, never faked).
+   */
+  functionGrounding?: SurfaceGrounding;
   dueDate?: string;
   agingDays?: number;
   blockers: string[];
