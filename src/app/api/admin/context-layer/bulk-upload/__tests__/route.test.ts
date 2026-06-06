@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import JSZip from "jszip";
 
 import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
 
@@ -50,6 +51,13 @@ function addUploadAttestation(formData: FormData) {
   formData.set("operatorDataAuthorityConfirmed", "true");
   formData.set("operatorDataUseConfirmed", "true");
   formData.set("operatorSensitiveDataConfirmed", "true");
+}
+
+function bufferBlobPart(buffer: Buffer): ArrayBuffer {
+  return buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength,
+  ) as ArrayBuffer;
 }
 
 describe("/api/admin/context-layer/bulk-upload", () => {
@@ -195,6 +203,106 @@ describe("/api/admin/context-layer/bulk-upload", () => {
           },
         },
       ],
+    });
+  });
+
+  it("accepts a ZIP package with manifest.json and stages files for private worker processing", async () => {
+    const zip = new JSZip();
+    zip.file(
+      "manifest.json",
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "enterprise-profile.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+    );
+    zip.file(
+      "enterprise-profile.yaml",
+      [
+        "enterprise_profile:",
+        "  - metric: headquarters",
+        "    value: Sacramento, California",
+        "    period: FY2026",
+        "    source: enterprise-profile",
+      ].join("\n"),
+    );
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("mode", "stage_and_enqueue");
+    addUploadAttestation(formData);
+    formData.append(
+      "files",
+      new File([bufferBlobPart(buffer)], "meridian-phase-0.zip", {
+        type: "application/zip",
+      }),
+    );
+
+    const response = await POST(bulkRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      mode: "stage_and_enqueue",
+      filesProcessed: 1,
+      persistence: {
+        status: "staged_and_enqueued",
+      },
+      results: [
+        {
+          fileName: "enterprise-profile.yaml",
+          templateId: "enterprise-profile",
+          queue: {
+            queueName: "q-context-ingestion-events",
+            messageId: "msg-route-1",
+          },
+        },
+      ],
+    });
+  });
+
+  it("rejects ZIP packages with unsafe paths before processing files", async () => {
+    const zip = new JSZip();
+    zip.file(
+      "manifest.json",
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "enterprise-profile.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+    );
+    zip.file("../enterprise-profile.yaml", "blocked");
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("mode", "validate_only");
+    addUploadAttestation(formData);
+    formData.append(
+      "files",
+      new File([bufferBlobPart(buffer)], "meridian-phase-0.zip", {
+        type: "application/zip",
+      }),
+    );
+
+    const response = await POST(bulkRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      ok: false,
+      error: "bulk_upload_invalid",
+      detail: expect.stringContaining("bulk_zip_unsafe_path"),
     });
   });
 });
