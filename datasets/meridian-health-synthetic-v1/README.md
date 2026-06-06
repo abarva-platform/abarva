@@ -1,6 +1,6 @@
 # Meridian Health Synthetic Substrate Pack v1
 
-Synthetic healthcare-vertical substrate for Meridian Health System.
+Synthetic healthcare-vertical substrate for Healthcare Composite Demo Tenant.
 
 This scaffold mirrors the existing synthetic data-pack shape with Meridian
 identity, healthcare systems, HIPAA/CMS regulatory overlays, clinical AI
@@ -8,7 +8,7 @@ tooling, application portfolio, vendor contracts, DORA baselines, context
 source files, and Sentinel verification targets.
 
 Tenant key: `meridian`
-Display name: Meridian Health System
+Display name: Healthcare Composite Demo Tenant
 Canonical profile: Sacramento-based integrated delivery network with 30 hospitals,
 280 ambulatory sites, 58,000 employees, and 1.4M covered lives. This profile is
 the loader-facing source of truth for the PHS/Meridian pilot narrative; older
