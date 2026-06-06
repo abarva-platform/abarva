@@ -137,6 +137,7 @@
     "db:verify:p18-apex-truth": "npx tsx src/scripts/verify/p18-apex-truth-reconciliation.ts",
     "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
     "azure:connectivity:smoke": "npx tsx src/scripts/azure-connectivity-smoke.ts",
+    "azure:blob-write:smoke": "npx tsx src/scripts/azure-blob-write-smoke.ts",
     "azure:load:primary-surfaces": "node scripts/load/azure-primary-surfaces.mjs",
     "load:backend-regression:check": "node scripts/load/azure-primary-surfaces.mjs --base-url https://example.com --duration-seconds 1 --concurrency 1 --think-time-ms 0 --p95-target-ms 8000 --dry-run",
     "load:top-journeys": "node scripts/load/top-user-journeys.mjs",
