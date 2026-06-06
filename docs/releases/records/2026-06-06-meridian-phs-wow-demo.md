@@ -71,6 +71,14 @@ guidance, which applies to all clients (all clients) but is non-breaking.
   unbound; gated across healthcare/retail/banking + unbound.
 - `MOVES_DELIVERABLE_STANDARD.md`: per-deliverable Format Matrix (DOCX / XLSX /
   HTML / PPTX by deliverable purpose).
+- `src/lib/knowledge/tenant-enterprise-context.ts`: Sentinel grounding fix —
+  the tenant-retrieval gate (`ENTERPRISE_QUERY_RE`) and the `it_landscape`
+  segment selector now match data-analytics / reporting / BI / warehouse /
+  lakehouse / data-platform / technology vocabulary (and named tools: Tableau,
+  Cognos, Power BI, Clarity, Caboodle). Previously a "data analytics platform"
+  or "reporting tools" question failed the gate, so NO tenant context was
+  retrieved and Sentinel answered with aggregate counts instead of naming the
+  loaded systems. Unit-tested in `__tests__/tenant-enterprise-context.test.ts`.
 
 This change touches no pilot CONTEXT side-load path. New pilot/client context
 data must still enter through the Admin Data Loader (no side-load); ingestion
