@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
@@ -12,6 +13,9 @@ const FPS = 30;
 const WIDTH = 1600;
 const HEIGHT = 900;
 const PAD_SECONDS = 1.15;
+const DEFAULT_VOICE = "nova";
+const VOICE_INSTRUCTIONS =
+  "Warm, empathetic, confident female executive narrator. Pronounce AbarVa as one word, 'uh-BAR-vuh' or 'Abarva'; never say 'A bar V A' or isolate the A. Natural pacing, slight sympathy for implementation risk, no hype.";
 
 const scenes = [
   {
@@ -28,7 +32,7 @@ const scenes = [
     id: "02",
     title: "Lakeshore Operating Profile",
     image: "assets/02-profile.png",
-    text: "AbarVa starts with Lakeshore's facts: companies, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.",
+    text: "Abarva starts with Lakeshore's facts: operating platforms, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.",
     x: 800,
     y: 505,
     zoom: 1.10,
@@ -68,7 +72,7 @@ const scenes = [
     id: "06",
     title: "Kyriba And Treasury Wedge",
     image: "assets/06-treasury-wedge.png",
-    text: "Kyriba fails when bank, ERP, entity, cash, control, and adoption facts surface too late. AbarVa turns them into gates.",
+    text: "Kyriba is a treasury management platform for cash visibility, bank connectivity, payments, liquidity, and forecasting. It fails when bank, ERP, entity, cash, control, and adoption facts surface too late. Abarva turns those risks into gates.",
     x: 900,
     y: 515,
     zoom: 1.18,
@@ -128,7 +132,7 @@ const scenes = [
     id: "12",
     title: "Architecture Trust Layer",
     image: "assets/12-architecture.png",
-    text: "Claude can reason. AbarVa governs what it can see, cite, create, and persist for board and audit use.",
+    text: "Claude can reason. Abarva governs what it can see, cite, create, and persist for board and audit use.",
     x: 800,
     y: 535,
     zoom: 1.10,
@@ -195,8 +199,8 @@ function durationSeconds(file) {
 async function createSpeech(client, scene, outFile) {
   if (fs.existsSync(outFile) && process.env.FORCE_AUDIO !== "1") return;
   const candidates = [
-    { model: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts", voice: process.env.OPENAI_TTS_VOICE || "alloy" },
-    { model: "tts-1", voice: process.env.OPENAI_TTS_VOICE || "alloy" },
+    { model: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts", voice: process.env.OPENAI_TTS_VOICE || DEFAULT_VOICE, instructions: VOICE_INSTRUCTIONS },
+    { model: "tts-1", voice: process.env.OPENAI_TTS_VOICE || DEFAULT_VOICE },
   ];
   let lastError;
   for (const candidate of candidates) {
@@ -206,6 +210,7 @@ async function createSpeech(client, scene, outFile) {
         voice: candidate.voice,
         input: scene.text,
         response_format: "mp3",
+        ...(candidate.instructions ? { instructions: candidate.instructions } : {}),
       });
       const buffer = Buffer.from(await response.arrayBuffer());
       fs.writeFileSync(outFile, buffer);
@@ -319,6 +324,9 @@ async function main() {
     fps: FPS,
     frameSize: { width: WIDTH, height: HEIGHT },
     maxGapAfterVoiceSeconds: PAD_SECONDS,
+    voice: process.env.OPENAI_TTS_VOICE || DEFAULT_VOICE,
+    pronunciation: "AbarVa/Abarva is pronounced as one word: uh-BAR-vuh. Do not say A bar V A.",
+    voiceInstructions: VOICE_INSTRUCTIONS,
     output: path.relative(ROOT, outputFile),
     scenes: timeline,
   }, null, 2) + "\n");

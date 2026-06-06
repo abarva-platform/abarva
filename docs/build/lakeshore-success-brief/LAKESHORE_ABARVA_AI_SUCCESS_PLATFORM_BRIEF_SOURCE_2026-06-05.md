@@ -74,9 +74,12 @@ The first version was too light on the most important buyer points. V2 corrects 
 The brief uses the Lakeshore planning profile as a working baseline:
 
 - Lakeshore Holdings parent / sponsor layer.
-- Initial operating companies: Northline Supply Chain, Brightmark Marketing Services, Forge & Field.
-- Planning scale: ~$3B revenue, ~10k employees, three initial operating companies, and potential 50-country footprint.
-- Strategy: permanent-capital portfolio improvement through treasury discipline, vendor cost optimization, risk controls, modernization, and repeatable AI use cases.
+- Modeled operating platforms: Northshore Supply & Logistics, Northshore BrandWorks, Northshore Consumer Products, Northshore Workplace Services.
+- Planning scale: ~$3B revenue, ~10k employees, four modeled operating platforms, and potential 50-country footprint.
+- Archetype basis: fictionalized Lakeshore/Northshore profile is directionally modeled on the public Chicago private-holdings pattern of supply chain/logistics, packaging/sourcing, brand services, consumer products, and convenience/workplace services. It does not copy or represent any real Morgan Street operating company.
+- Business economics modeled: supply-chain programs make money through distribution margin, packaging/sourcing spread, service fees, and logistics efficiency; brand services through campaign/program fees, fulfillment margin, promotional sourcing, and analytics; consumer products through wholesale/DTC margin, pricing, and inventory turns; workplace services through route density, location profitability, replenishment efficiency, and payment capture.
+- Typical challenges modeled: working-capital drag, transportation cost volatility, supplier concentration, bank fragmentation, ERP/TMS/WMS integration gaps, margin leakage, contract scope creep, route labor cost, cash controls, vendor overlap, customer concentration, and board-grade value proof.
+- Corporate strategy modeled: deepen customer relationships, protect service quality, modernize systems, reduce vendor and banking fragmentation, and turn shared operating capabilities into repeatable AI-enabled value across the portfolio.
 
 During kickoff, confirm or replace: actual company roster, revenue, EBITDA, employees, countries, banking estate, systems, vendors, programs, and board priorities.
 

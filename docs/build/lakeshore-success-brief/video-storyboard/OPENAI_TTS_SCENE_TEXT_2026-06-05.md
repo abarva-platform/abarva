@@ -4,6 +4,8 @@ Created: 2026-06-05
 
 Purpose: clean narration source for OpenAI text-to-speech generation. Pair each scene's audio with the matching screen/page plate in the side-by-side storyboard.
 
+Voice direction: use a warm, empathetic, confident female executive narrator. Pronounce AbarVa as one word: "uh-BAR-vuh" / "Abarva." Do not say "A bar V A" or isolate the A. Keep the tone calm, senior, and sympathetic to implementation risk.
+
 Screen + page storyboard:
 
 - `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_SCREEN_NARRATION_STORYBOARD_2026-06-05.html`
@@ -33,7 +35,7 @@ Screen:
 OpenAI TTS text:
 
 ```text
-AbarVa starts with Lakeshore's facts: companies, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.
+Abarva starts with Lakeshore's facts: operating platforms, revenue baseline, people, systems, vendors, banks, and board priorities. Context comes before AI.
 ```
 
 ## Scene 03 - Federated Complexity
@@ -81,7 +83,7 @@ Screen:
 OpenAI TTS text:
 
 ```text
-Kyriba fails when bank, ERP, entity, cash, control, and adoption facts surface too late. AbarVa turns them into gates.
+Kyriba is a treasury management platform for cash visibility, bank connectivity, payments, liquidity, and forecasting. It fails when bank, ERP, entity, cash, control, and adoption facts surface too late. Abarva turns those risks into gates.
 ```
 
 ## Scene 07 - Beyond Kyriba
@@ -153,7 +155,7 @@ Screen:
 OpenAI TTS text:
 
 ```text
-Claude can reason. AbarVa governs what it can see, cite, create, and persist for board and audit use.
+Claude can reason. Abarva governs what it can see, cite, create, and persist for board and audit use.
 ```
 
 ## Scene 13 - Six-Month Roadmap
