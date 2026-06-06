@@ -188,6 +188,24 @@ export const RFP_PACK_DOCX_CONFIG: NarrativeDocxConfig = {
     "Confidential vendor RFP — do not redistribute outside the named bidder panel",
 };
 
+export const VENDOR_RESPONSE_PACK_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: "d13_vendor_responses",
+  headerLabel: "d13 Vendor Response Pack",
+  eyebrowFor: (tenant) => `d13 · Vendor Response Pack · ${tenant}`,
+  documentTitle: "Vendor Response Pack",
+  confidentialityNote:
+    "Confidential vendor response pack — buyer-side comparison and completeness review only",
+};
+
+export const PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: "d19_pricing_workbook",
+  headerLabel: "d19 Pricing Workbook Summary",
+  eyebrowFor: (tenant) => `d19 · Pricing Workbook Summary · ${tenant}`,
+  documentTitle: "Pricing Workbook Summary",
+  confidentialityNote:
+    "Confidential pricing normalization summary — use the xlsx workbook for vendor-editable pricing inputs",
+};
+
 export const DECISION_BRIEF_DOCX_CONFIG: NarrativeDocxConfig = {
   artifactCode: "d24_decision_brief",
   headerLabel: "d24 Atlas Decision Brief",

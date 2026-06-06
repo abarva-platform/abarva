@@ -4,6 +4,7 @@ import {
   RFP_PACK_DOCX_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
+  VENDOR_RESPONSE_PACK_DOCX_CONFIG,
   buildNarrativeDocx,
   type NarrativeDocxConfig,
   type NarrativeDocxPayload,
@@ -58,6 +59,15 @@ describe('buildNarrativeDocx', () => {
     expect(buf.byteLength).toBeGreaterThan(4000);
   });
 
+  it('produces a packable docx for d13 Vendor Response Pack config', async () => {
+    const doc = buildNarrativeDocx(
+      makePayload(),
+      VENDOR_RESPONSE_PACK_DOCX_CONFIG,
+    );
+    const buf = await Packer.toBuffer(doc);
+    expect(buf.byteLength).toBeGreaterThan(4000);
+  });
+
   it('produces a packable docx for d24 Decision Brief config', async () => {
     const doc = buildNarrativeDocx(makePayload(), DECISION_BRIEF_DOCX_CONFIG);
     const buf = await Packer.toBuffer(doc);
@@ -105,20 +115,22 @@ describe('buildNarrativeDocx', () => {
     const configs = [
       SCOPE_MEMO_DOCX_CONFIG,
       RFP_PACK_DOCX_CONFIG,
+      VENDOR_RESPONSE_PACK_DOCX_CONFIG,
       DECISION_BRIEF_DOCX_CONFIG,
       SELECTION_MEMO_DOCX_CONFIG,
     ];
     const codes = new Set(configs.map((c) => c.artifactCode));
-    expect(codes.size).toBe(4);
+    expect(codes.size).toBe(5);
     const labels = new Set(configs.map((c) => c.headerLabel));
-    expect(labels.size).toBe(4);
+    expect(labels.size).toBe(5);
     const notes = new Set(configs.map((c) => c.confidentialityNote));
-    expect(notes.size).toBe(4);
+    expect(notes.size).toBe(5);
   });
 
   it('eyebrowFor interpolates the tenant name into the eyebrow string', () => {
     expect(SCOPE_MEMO_DOCX_CONFIG.eyebrowFor('ACME Corp')).toContain('ACME Corp');
     expect(RFP_PACK_DOCX_CONFIG.eyebrowFor('ACME Corp')).toContain('RFP');
+    expect(VENDOR_RESPONSE_PACK_DOCX_CONFIG.eyebrowFor('ACME Corp')).toContain('Vendor');
     expect(DECISION_BRIEF_DOCX_CONFIG.eyebrowFor('ACME Corp')).toContain('Decision');
     expect(SELECTION_MEMO_DOCX_CONFIG.eyebrowFor('ACME Corp')).toContain('Selection');
   });
