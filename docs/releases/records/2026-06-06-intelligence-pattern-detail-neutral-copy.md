@@ -46,7 +46,7 @@ Revert the PR. Rollback would restore Apex fixture copy and should only be used 
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3181.
 - Pre-fix proof: `/Users/anand/Projects/nexus/reports/lakeshore-post-3178-intelligence-tenant-sweep/intelligence-tenant-sweep-2026-06-06T08-00-07-520Z-df292c761/README.md`.
 
 ## Known Gaps
