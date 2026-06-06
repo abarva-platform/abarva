@@ -80,12 +80,24 @@ describe('Azure object storage adapter', () => {
     );
 
     expect(createIfNotExists).toHaveBeenCalledTimes(1);
+    expect(exists).not.toHaveBeenCalled();
     expect(uploadData).toHaveBeenCalledTimes(1);
+    expect(uploadData).toHaveBeenCalledWith(
+      Buffer.from('ok'),
+      expect.objectContaining({
+        blobHTTPHeaders: expect.objectContaining({ blobContentType: 'text/csv' }),
+        conditions: { ifNoneMatch: '*' },
+      }),
+    );
   });
 
   it('still surfaces upload authorization failures after container-create fallback', async () => {
     createIfNotExists.mockRejectedValue({ statusCode: 403 });
-    uploadData.mockRejectedValue(new Error('upload_not_authorized'));
+    uploadData.mockRejectedValue({
+      statusCode: 403,
+      code: 'AuthorizationPermissionMismatch',
+      name: 'RestError',
+    });
 
     const { getObjectStorageAdapter, resetObjectStorageAdapterForTests } =
       await import('@/lib/data-plane/objectStorage');
@@ -97,6 +109,29 @@ describe('Azure object storage adapter', () => {
         'meridian-health/load/file.csv',
         'ok',
       ),
-    ).rejects.toThrow('upload_not_authorized');
+    ).rejects.toThrow(
+      'object_upload_failed:code=AuthorizationPermissionMismatch;status=403;name=RestError',
+    );
+  });
+
+  it('uses unconditional upload when upsert is enabled', async () => {
+    createIfNotExists.mockResolvedValue(undefined);
+
+    const { getObjectStorageAdapter, resetObjectStorageAdapterForTests } =
+      await import('@/lib/data-plane/objectStorage');
+    resetObjectStorageAdapterForTests();
+
+    await getObjectStorageAdapter().upload(
+      'context-uploads',
+      'meridian-health/load/file.csv',
+      'ok',
+      { upsert: true },
+    );
+
+    expect(exists).not.toHaveBeenCalled();
+    expect(uploadData).toHaveBeenCalledWith(
+      Buffer.from('ok'),
+      expect.objectContaining({ conditions: undefined }),
+    );
   });
 });

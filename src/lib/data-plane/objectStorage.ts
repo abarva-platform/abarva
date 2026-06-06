@@ -230,6 +230,26 @@ function isAzureAuthorizationFailure(error: unknown): boolean {
   );
 }
 
+function azureErrorSummary(error: unknown): string {
+  if (!error || typeof error !== 'object') return String(error);
+  const candidate = error as {
+    statusCode?: unknown;
+    code?: unknown;
+    details?: { errorCode?: unknown };
+    name?: unknown;
+    message?: unknown;
+  };
+  const parts = [
+    candidate.code || candidate.details?.errorCode
+      ? `code=${String(candidate.code ?? candidate.details?.errorCode)}`
+      : null,
+    candidate.statusCode ? `status=${String(candidate.statusCode)}` : null,
+    candidate.name ? `name=${String(candidate.name)}` : null,
+    candidate.message ? `message=${String(candidate.message)}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(';') : 'unknown_azure_storage_error';
+}
+
 async function createContainerIfAllowed(
   container: ContainerClient,
 ): Promise<void> {
@@ -281,14 +301,16 @@ class AzureBlobObjectStorageAdapter implements ObjectStorageAdapter {
     const { container, blobName } = containerClient(bucket, path);
     await createContainerIfAllowed(container);
     const blob = container.getBlockBlobClient(blobName);
-    if (!options.upsert && await blob.exists()) {
-      throw new Error(`object_exists:${bucket}/${path}`);
-    }
     const bytes = await normalizeBody(body);
-    await blob.uploadData(bytes, {
-      blobHTTPHeaders: headersFromOptions(options),
-      metadata: options.metadata,
-    });
+    try {
+      await blob.uploadData(bytes, {
+        blobHTTPHeaders: headersFromOptions(options),
+        metadata: options.metadata,
+        conditions: options.upsert ? undefined : { ifNoneMatch: '*' },
+      });
+    } catch (error) {
+      throw new Error(`object_upload_failed:${azureErrorSummary(error)}`);
+    }
   }
 
   async remove(bucket: string, paths: string[]): Promise<void> {
