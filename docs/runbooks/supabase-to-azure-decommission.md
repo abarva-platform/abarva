@@ -21,6 +21,16 @@ It proved:
 - Azure private DNS resolved the target to `10.43.1.4`
 - Target database: `abarva_control`
 
+Targeted Azure schema unblock:
+
+- Execution `job-ec-schema-eus-8vwh99b` applied exactly one migration to Azure Postgres:
+  `20260514100000_enterprise_context_layer.sql`.
+- Execution `job-ec-schema-check-eus-iz7faco` then verified `ok: true` for the
+  enterprise context schema on Azure database `abarva_control` at private address
+  `10.43.1.4/32`.
+- All enterprise context target tables now exist. They are ready for reviewed
+  copy, but most are still empty until the drain apply step runs.
+
 Key gaps:
 
 | Table | Supabase rows | Azure rows | Gap | Status |
@@ -33,9 +43,9 @@ Key gaps:
 | `corpus_pattern_relationships` | 27,052 | 117 | 26,935 | Azure behind |
 | `corpus_telemetry` | 9,027 | 39 | 8,988 | Azure behind |
 | `knowledge_sources` | 136 | 20 | 116 | Azure behind |
-| `enterprise_context_records` | 3,503 | missing | n/a | Target missing |
-| `enterprise_context_facts` | 38,640 | missing | n/a | Target missing |
-| `enterprise_context_evidence` | 3,503 | missing | n/a | Target missing |
+| `enterprise_context_records` | 3,503 | 0 | 3,503 | Schema ready, data pending |
+| `enterprise_context_facts` | 38,640 | 0 | 38,640 | Schema ready, data pending |
+| `enterprise_context_evidence` | 3,503 | 0 | 3,503 | Schema ready, data pending |
 | `enterprise_context_chunks` | 15,847 | 9,360 | 6,487 | Azure behind |
 
 Tables already at parity in the compact check:
@@ -47,8 +57,8 @@ Tables already at parity in the compact check:
 
 1. Freeze new Supabase writes.
 2. Run the read-only drain dry-run from Azure Container Apps.
-3. Apply missing Azure schema for target-missing enterprise context tables.
-4. Run the drain with `--apply` from Azure-hosted compute only.
+3. Apply missing Azure schema for target-missing enterprise context tables. Completed for `enterprise_context_*` via `job-ec-schema-eus-8vwh99b`.
+4. Run the drain with `--apply` from Azure-hosted compute only. Pending.
 5. Re-run reconciliation until Azure is at parity or intentionally ahead.
 6. Rebuild search/vector indexes from Azure.
 7. Remove Supabase env vars from production, preview, Azure, and local operator shells.
