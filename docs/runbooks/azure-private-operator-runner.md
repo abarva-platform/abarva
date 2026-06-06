@@ -96,3 +96,21 @@ Supabase was reachable from public networks, so older local workflows could writ
 - Operators run private data-plane jobs from Azure-hosted compute.
 - Logs prove what ran, where it ran, and which database received the work.
 - Cursor, Claude Code, and Codex all follow the same runbook.
+
+## Supabase Drain Before Shutdown
+
+Before deleting or pausing Supabase, run the controlled drain tooling:
+
+```bash
+az deployment sub create \
+  --name az-supabase-drain-dry-run-$(date +%Y%m%d%H%M%S) \
+  --location eastus \
+  --template-file infra/azure/database-migration-foundation.bicep \
+  --parameters infra/azure/parameters/supabase-drain-dry-run.lab.bicepparam
+
+az containerapp job start \
+  --resource-group rg-abarva-controlplane-lab-eastus \
+  --name job-abarva-supabase-drain-dry-run-eus
+```
+
+The drain script defaults to read-only mode. It requires `SOURCE_DATABASE_URL` to point at the legacy Supabase Postgres source and `TARGET_DATABASE_URL` to point at Azure Postgres. It only copies rows when run with `--apply`, and that apply step must not happen until the dry-run evidence is reviewed.
