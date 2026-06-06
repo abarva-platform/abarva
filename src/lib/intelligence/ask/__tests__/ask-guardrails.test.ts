@@ -2,6 +2,7 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
+import { applyPartialEvidencePolicy } from '../response-policy';
 import {
   chunkAskText,
   chooseSynthesisTokenBudget,
@@ -79,6 +80,30 @@ describe('Ask Intelligence guardrails', () => {
     const text = 'Apex data and analytics current state includes Snowflake, Adobe Experience Platform, and Salesforce Marketing Cloud.';
 
     expect(chunkAskText(text).join('')).toBe(text);
+  });
+
+  it('preserves paragraph breaks when applying tenant partial-evidence policy', () => {
+    const answer = [
+      'My read: Meridian should advance the command-center pilot only with gates.',
+      '',
+      'Evidence: The loaded sources show Enterprise Context counts and Epic scope; the remaining field to confirm is exact report retirement count.',
+      '',
+      'Risk / gate: CFO and CIO approval should remain blocked until the funding authority row is cited.',
+    ].join('\n');
+
+    const rewritten = applyPartialEvidencePolicy(answer, [
+      {
+        id: 'surface-meridian',
+        type: 'SURFACE',
+        name: 'Meridian live Intelligence surface',
+        detail: 'Enterprise Context counts are loaded.',
+        confidence: 0.99,
+      },
+    ]);
+
+    expect(rewritten).toContain('My read:');
+    expect(rewritten).toContain('\n\nEvidence:');
+    expect(rewritten).toContain('\n\nRisk / gate:');
   });
 
   // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace regression.
