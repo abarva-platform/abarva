@@ -1,6 +1,7 @@
 
 
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { canonicalTenantKey } from '@/lib/tenant/aliases';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -90,7 +91,7 @@ export async function getEnterpriseContextOverviewForTenant(
   tenantKey: string | null | undefined,
   tenantName: string | null | undefined,
 ): Promise<EnterpriseContextOverview | null> {
-  const normalizedTenantKey = tenantKey?.trim();
+  const normalizedTenantKey = canonicalTenantKey(tenantKey?.trim());
   if (!normalizedTenantKey) return null;
 
   try {
