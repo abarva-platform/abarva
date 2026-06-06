@@ -206,6 +206,10 @@ function cleanManifestPath(value: string): string {
   return normalized;
 }
 
+function pathKey(value: string): string {
+  return cleanManifestPath(value).toLowerCase();
+}
+
 function fileKey(value: string): string {
   return path.posix.basename(value.replace(/\\/g, "/")).toLowerCase();
 }
@@ -247,7 +251,7 @@ export function parseBulkContextUploadManifest(
   const duplicatePaths = new Set<string>();
   const seenPaths = new Set<string>();
   for (const file of files) {
-    const key = fileKey(file.path);
+    const key = pathKey(file.path);
     if (seenPaths.has(key)) duplicatePaths.add(key);
     seenPaths.add(key);
   }
@@ -338,15 +342,82 @@ function progressJobId(args: {
   tenantKey: string;
   loadName: string;
   uploadedAt: string;
-  files: BulkContextUploadFileResult[];
+  files: Array<{ fileName: string; sha256: string }>;
 }): string {
   const basis = [
     args.tenantKey,
     args.loadName,
     args.uploadedAt,
-    ...args.files.map((file) => `${file.fileName}:${file.blob.sha256}`),
+    ...args.files.map((file) => `${file.fileName}:${file.sha256}`),
   ].join("|");
   return `bulk-${crypto.createHash("sha256").update(basis).digest("hex").slice(0, 16)}`;
+}
+
+function matchManifestFiles(args: {
+  manifest: BulkContextUploadManifest;
+  files: BulkContextUploadFileInput[];
+}): Map<string, BulkContextUploadFileInput> {
+  const filesByPath = new Map<string, BulkContextUploadFileInput>();
+  const duplicateUploadPaths = new Set<string>();
+  for (const file of args.files) {
+    const key = pathKey(file.name);
+    if (filesByPath.has(key)) duplicateUploadPaths.add(key);
+    filesByPath.set(key, file);
+  }
+  if (duplicateUploadPaths.size > 0) {
+    throw new Error(
+      `bulk_upload_duplicate_file:${[...duplicateUploadPaths].join(",")}`,
+    );
+  }
+
+  const manifestBaseCounts = new Map<string, number>();
+  for (const file of args.manifest.files) {
+    const key = fileKey(file.path);
+    manifestBaseCounts.set(key, (manifestBaseCounts.get(key) ?? 0) + 1);
+  }
+  const uploadBaseCounts = new Map<string, number>();
+  for (const file of args.files) {
+    const key = fileKey(file.name);
+    uploadBaseCounts.set(key, (uploadBaseCounts.get(key) ?? 0) + 1);
+  }
+
+  const matches = new Map<string, BulkContextUploadFileInput>();
+  const usedUploadPaths = new Set<string>();
+  const missingUploads: string[] = [];
+  for (const manifestFile of args.manifest.files) {
+    const manifestPathKey = pathKey(manifestFile.path);
+    const exact = filesByPath.get(manifestPathKey);
+    if (exact) {
+      matches.set(manifestFile.path, exact);
+      usedUploadPaths.add(manifestPathKey);
+      continue;
+    }
+
+    const baseKey = fileKey(manifestFile.path);
+    if ((manifestBaseCounts.get(baseKey) ?? 0) === 1 && (uploadBaseCounts.get(baseKey) ?? 0) === 1) {
+      const fallback = args.files.find((file) => fileKey(file.name) === baseKey);
+      if (fallback) {
+        matches.set(manifestFile.path, fallback);
+        usedUploadPaths.add(pathKey(fallback.name));
+        continue;
+      }
+    }
+    missingUploads.push(manifestFile.path);
+  }
+  if (missingUploads.length > 0) {
+    throw new Error(`bulk_upload_missing_files:${missingUploads.join(",")}`);
+  }
+
+  const unexpectedUploads = args.files
+    .map((file) => pathKey(file.name))
+    .filter((key) => !usedUploadPaths.has(key));
+  if (unexpectedUploads.length > 0) {
+    throw new Error(
+      `bulk_upload_unmapped_files:${unexpectedUploads.join(",")}`,
+    );
+  }
+
+  return matches;
 }
 
 function buildWorkflow(args: {
@@ -492,32 +563,16 @@ function buildWorkflow(args: {
 export async function runBulkContextUpload(
   input: BulkContextUploadInput,
 ): Promise<BulkContextUploadResult> {
-  const filesByName = new Map(input.files.map((file) => [fileKey(file.name), file]));
-  const manifestByName = new Map(
-    input.manifest.files.map((file) => [fileKey(file.path), file]),
-  );
-  const missingUploads = [...manifestByName.keys()].filter(
-    (key) => !filesByName.has(key),
-  );
-  if (missingUploads.length > 0) {
-    throw new Error(`bulk_upload_missing_files:${missingUploads.join(",")}`);
-  }
-  const unexpectedUploads = [...filesByName.keys()].filter(
-    (key) => !manifestByName.has(key),
-  );
-  if (unexpectedUploads.length > 0) {
-    throw new Error(
-      `bulk_upload_unmapped_files:${unexpectedUploads.join(",")}`,
-    );
-  }
-
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
   const loadSlug = safeLoadSlug(input.manifest.loadName);
-  const results: BulkContextUploadFileResult[] = [];
   const enqueueMessage = input.enqueueMessageFn ?? enqueueAzureLandingZoneMessage;
+  const matchedFiles = matchManifestFiles({
+    manifest: input.manifest,
+    files: input.files,
+  });
 
-  for (const manifestFile of input.manifest.files) {
-    const uploadFile = filesByName.get(fileKey(manifestFile.path))!;
+  const workItems = input.manifest.files.map((manifestFile) => {
+    const uploadFile = matchedFiles.get(manifestFile.path)!;
     if (input.mode === "stage_and_process" && !canProcessImmediately(uploadFile.name)) {
       throw new Error(`bulk_upload_process_requires_structured_file:${uploadFile.name}`);
     }
@@ -539,7 +594,6 @@ export async function runBulkContextUpload(
     if (dataProtection.decision === "quarantine") {
       throw new Error(`bulk_upload_quarantined:${uploadFile.name}`);
     }
-
     const blobPath = [
       safeLoadSlug(input.tenantKey),
       loadSlug,
@@ -547,6 +601,39 @@ export async function runBulkContextUpload(
       cleanManifestPath(manifestFile.path),
     ].join("/");
 
+    return {
+      manifestFile,
+      uploadFile,
+      template,
+      segmentKey,
+      contentType,
+      hash,
+      dataProtection,
+      blobPath,
+    };
+  });
+
+  const jobId = progressJobId({
+    tenantKey: input.tenantKey,
+    loadName: input.manifest.loadName,
+    uploadedAt,
+    files: workItems.map((item) => ({
+      fileName: item.uploadFile.name,
+      sha256: item.hash,
+    })),
+  });
+
+  const results: BulkContextUploadFileResult[] = [];
+
+  for (const {
+    manifestFile,
+    uploadFile,
+    segmentKey,
+    contentType,
+    hash,
+    dataProtection,
+    blobPath,
+  } of workItems) {
     let loadResult: CsvUploadLoadResult | null = null;
     let queue: BulkContextUploadQueueResult | null = null;
     if (input.mode === "stage_and_process" || input.mode === "stage_and_enqueue") {
@@ -568,6 +655,7 @@ export async function runBulkContextUpload(
             templateVersion: "unversioned",
             mappingProfileKey: metadataValue(manifestFile.templateId),
             mappingProfileVersion: "unversioned",
+            bulkJobId: jobId,
             attestationVersion: metadataValue(input.attestation.version),
             declaredClassification: metadataValue(
               manifestFile.dataClassification ?? "confidential_business",
@@ -604,7 +692,13 @@ export async function runBulkContextUpload(
             templateVersion: "unversioned",
             mappingProfileKey: metadataValue(manifestFile.templateId),
             mappingProfileVersion: "unversioned",
+            bulkJobId: jobId,
+            bulkJobStatusPath: bulkContextUploadJobStatusLocation({
+              tenantKey: input.tenantKey,
+              jobId,
+            }).path,
             originalFileName: metadataValue(uploadFile.name),
+            manifestPath: metadataValue(manifestFile.path),
           },
         }),
       );
@@ -676,12 +770,6 @@ export async function runBulkContextUpload(
     (sum, item) => sum + (item.loadResult?.chunksQueued ?? 0),
     0,
   );
-  const jobId = progressJobId({
-    tenantKey: input.tenantKey,
-    loadName: input.manifest.loadName,
-    uploadedAt,
-    files: results,
-  });
 
   const result: BulkContextUploadResult = {
     ok: true,

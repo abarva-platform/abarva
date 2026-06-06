@@ -21,6 +21,11 @@ import {
 } from '@/lib/ingestion/azure-landing-zone-consumer';
 import { normalizeEventGridBlobCreated } from '@/lib/ingestion/event-grid-normalizer';
 import { createDurablePilotLedgerWriter } from '@/lib/ingestion/pilot-ledger-writer';
+import {
+  buildBulkDocumentReviewArtifact,
+  persistBulkDocumentReviewArtifact,
+} from '@/lib/context-ingestion/bulk-document-review';
+import { markBulkContextUploadJobNeedsOperatorReview } from '@/lib/context-ingestion/bulk-context-upload-status';
 
 const execFileAsync = promisify(execFile);
 
@@ -194,9 +199,94 @@ function createAuditWriter(): AuditWriter {
   };
 }
 
+function metadataString(
+  metadata: Record<string, string | number | boolean> | undefined,
+  key: string,
+): string | null {
+  const value = metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function shouldCreateDocumentReview(args: {
+  filename: string;
+  contentType: string;
+  metadata: Record<string, string | number | boolean> | undefined;
+}): boolean {
+  if (metadataString(args.metadata, 'source') !== 'admin_bulk_context_upload') {
+    return false;
+  }
+  const lowerName = args.filename.toLowerCase();
+  const lowerType = args.contentType.toLowerCase();
+  return (
+    lowerName.endsWith('.pdf') ||
+    lowerName.endsWith('.docx') ||
+    lowerName.endsWith('.pptx') ||
+    lowerName.endsWith('.xlsx') ||
+    lowerName.endsWith('.md') ||
+    lowerName.endsWith('.markdown') ||
+    lowerType === 'application/pdf' ||
+    lowerType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    lowerType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+    lowerType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    lowerType === 'text/markdown'
+  );
+}
+
 function createPipeline(): IngestionPipeline {
-  return async ({ message, bytes, document }) => {
+  return async ({ message, bytes, filename, document }) => {
     const mode = process.env.INGESTION_PIPELINE_MODE?.trim() || 'audit_only';
+    if (
+      document &&
+      shouldCreateDocumentReview({
+        filename,
+        contentType: message.storage.contentType,
+        metadata: message.metadata,
+      })
+    ) {
+      const bulkJobId = metadataString(message.metadata, 'bulkJobId');
+      const clientId = metadataString(message.metadata, 'clientId');
+      const templateId = metadataString(message.metadata, 'templateId');
+      if (!bulkJobId || !clientId || !templateId) {
+        throw new Error('bulk_document_review_missing_metadata');
+      }
+      const artifact = buildBulkDocumentReviewArtifact({
+        jobId: bulkJobId,
+        clientId,
+        tenantKey: message.tenantClientKey,
+        fileName: metadataString(message.metadata, 'originalFileName') ?? filename,
+        templateId,
+        segmentKey: message.segmentKey,
+        sha256: message.storage.sha256,
+        blobPath: message.storage.blobPath,
+        dataClassification:
+          message.declaredClassification ?? 'confidential_business',
+        document,
+      });
+      const location = await persistBulkDocumentReviewArtifact(artifact);
+      await markBulkContextUploadJobNeedsOperatorReview({
+        clientId,
+        tenantKey: message.tenantClientKey,
+        jobId: bulkJobId,
+        fileName: artifact.fileName,
+        templateId,
+        reviewArtifact: {
+          bucket: location.bucket,
+          path: location.path,
+          candidateCount: artifact.candidates.length,
+        },
+      });
+      console.log(JSON.stringify({
+        event: 'bulk_document_review_artifact_created',
+        tenantClientKey: message.tenantClientKey,
+        jobId: bulkJobId,
+        fileName: artifact.fileName,
+        reviewPath: location.path,
+        candidateCount: artifact.candidates.length,
+        parseMethod: document.parseMethod,
+      }));
+      return { chunksWritten: 0 };
+    }
+
     if (mode === 'broker_command') {
       const command = readEnv('INGESTION_BROKER_REBUILD_COMMAND');
       const [bin, ...args] = command.split(' ').filter(Boolean);
