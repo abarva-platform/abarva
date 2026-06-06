@@ -7,6 +7,7 @@ const { Resvg } = require("@resvg/resvg-js");
 const OpenAI = require("openai");
 
 const ROOT = path.resolve(__dirname);
+const ASSET_DIR = path.resolve(ROOT, "../assets");
 const OUT = path.join(ROOT, "detailed-render");
 const PLATE_DIR = path.join(OUT, "plates");
 const AUDIO_DIR = path.join(OUT, "audio");
@@ -16,9 +17,10 @@ const FPS = 30;
 const WIDTH = 1600;
 const HEIGHT = 900;
 const PAD_SECONDS = 1.25;
-const DEFAULT_VOICE = "nova";
+const OUTPUT_VERSION = "V3";
+const DEFAULT_VOICE = "shimmer";
 const VOICE_INSTRUCTIONS =
-  "Warm, empathetic, confident female executive narrator. Pronounce AbarVa as one word, 'uh-BAR-vuh' or 'Abarva'; never say 'A bar V A'. Speak with calm conviction, slight sympathy for implementation risk, and no hype.";
+  "Warm, polished, human female advisor voice with gentle energy and real empathy. Pronounce the brand name AbarVa as one natural word: 'uh-BAR-vuh' / 'Abarva'. Never spell it out, never say 'A bar V A', and do not make the first A stand alone. Sound like a trusted senior operator explaining a thoughtful plan to a client, not a commercial narrator. Use calm confidence, natural pauses, and no hype.";
 
 const COLORS = {
   navy: "#111827",
@@ -54,9 +56,9 @@ const scenes = [
     subtitle: "The modeled Northshore profile mirrors the Chicago private-holdings archetype: operating companies, customer programs, vendors, banks, systems, and long-term stewardship.",
     narration:
       "We should orient Lakeshore like an operating-company portfolio, not a financial abstraction. The modeled Northshore profile covers supply chain and logistics, brand services, consumer products, and workplace convenience services. These businesses make money through margin, programs, route density, service quality, and customer depth.",
-    bullets: ["Supply chain / logistics / packaging", "Brand services / promotions / loyalty", "Consumer products / commerce", "Workplace food / vending / micro-markets"],
+    bullets: ["Supply chain", "Brand services", "Consumer products", "Workplace services"],
     highlight: "Money is made in operations, not in a slide.",
-    camera: { x: 790, y: 475, zoom: 1.12 },
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "03",
@@ -89,13 +91,14 @@ const scenes = [
   {
     id: "05",
     eyebrow: "Context layer",
-    title: "The secret sauce is not a document dump.",
-    subtitle: "It is a governed map of who, what, where, evidence, workflow state, and decision rights.",
+    title: "The secret sauce is the living context graph.",
+    subtitle: "AbarVa connects identity, tenant scope, operating facts, evidence, workflow state, corpus doctrine, and value claims.",
     narration:
-      "The context layer is the long-term moat. It connects tenant, persona, holding-company layer, operating company, system, vendor, contract, bank, process, artifact, corpus pattern, and value claim. That is what lets the agent answer like a senior advisor instead of a generic model.",
-    chips: ["Tenant", "Persona", "HoldCo", "PortCo", "System", "Vendor", "Contract", "Bank", "Process", "Artifact", "Pattern", "Value claim"],
-    highlight: "Context dimensions become decision intelligence.",
-    camera: { x: 800, y: 470, zoom: 1.1 },
+      "The secret sauce is not a document dump. It is a living context graph. Abarva connects who is asking, which tenant they belong to, which company and system the fact came from, which artifact supports it, which corpus pattern applies, who owns the next decision, and what value claim is still unproven.",
+    contextGraph: true,
+    screenshot: "../assets/01-setup-cxo-intel-index.png",
+    highlight: "The agent is grounded by relationships, permissions, evidence, and workflow state.",
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "06",
@@ -109,6 +112,40 @@ const scenes = [
     camera: { x: 820, y: 490, zoom: 1.12 },
   },
   {
+    id: "06A",
+    eyebrow: "Product proof",
+    title: "Context becomes workflow in the app.",
+    subtitle: "The demo should show Setup, Intelligence, Moves, Source, and Tower creating persisted artifacts, not just attractive answers.",
+    narration:
+      "This is where Abarva separates from direct model access. Setup loads client context. Intelligence answers with evidence gaps. Moves turns recommendations into gates and artifacts. Source turns insight into buying and vendor decisions. Tower proves the portfolio story across value, risk, and execution state.",
+    screenshot: "../assets/02-moves-kyriba-detail.png",
+    callouts: ["Live Move workspace", "Stage gates and evidence", "Next action is persisted"],
+    highlight: "The product proof is workflow plus evidence, not chat output.",
+    camera: { x: 800, y: 450, zoom: 1.0 },
+  },
+  {
+    id: "06B",
+    eyebrow: "First 90 days",
+    title: "Kyriba is the wedge, not the whole AI strategy.",
+    subtitle: "Northshore should define a corporate AI agenda in parallel: treasury, growth, cost, risk, and modernization.",
+    narration:
+      "Kyriba is the right wedge because treasury modernization exposes operating truth quickly. But the first ninety days should also define Northshore's corporate AI strategy: which use cases create value, which data products are required, which CXO owns each lane, and which artifacts prove progress.",
+    strategy90: true,
+    highlight: "The first 90 days should create an AI operating agenda, not one isolated pilot.",
+    camera: { x: 800, y: 450, zoom: 1.0 },
+  },
+  {
+    id: "06C",
+    eyebrow: "IT and data modernization",
+    title: "AI needs a cleaner operating technology estate.",
+    subtitle: "The context layer should expose modernization work that improves AI quality and lowers execution cost.",
+    narration:
+      "Abarva should use the AI agenda to pull IT and data modernization forward. The early opportunities are application rationalization, CMDB cleanup, ERP and treasury integration, analytics data products, SaaS and SI spend leverage, identity and access controls, and a cleaner contract and vendor spine.",
+    modernization: true,
+    highlight: "Modernization becomes sequenced by AI value and execution risk.",
+    camera: { x: 800, y: 450, zoom: 1.0 },
+  },
+  {
     id: "07",
     eyebrow: "Corpus doctrine",
     title: "The corpus must stay editable.",
@@ -117,7 +154,7 @@ const scenes = [
       "The corpus cannot be set in stone. Lakeshore should be able to approve a treasury rule, localize it for a bank, change the owner from CFO to Treasurer plus CFO, downgrade confidence when evidence is weak, or retire a pattern that no longer fits how the portfolio operates.",
     bullets: ["Approve", "Edit", "Localize", "Retire", "Evidence-tag", "Workflow-link"],
     highlight: "Doctrine becomes a living operating asset.",
-    camera: { x: 780, y: 500, zoom: 1.11 },
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "08",
@@ -133,7 +170,7 @@ const scenes = [
       ["6", "Kyriba failure modes"],
     ],
     highlight: "Modeled now. Editable corpus rows next.",
-    camera: { x: 780, y: 485, zoom: 1.11 },
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "09",
@@ -144,7 +181,7 @@ const scenes = [
       "Kyriba is a treasury management platform. It supports cash visibility, bank connectivity, payments, liquidity planning, cash forecasting, bank account management, risk, and treasury controls. For Lakeshore, the vision is not to install software. The vision is to make treasury operating facts reliable enough for the CFO, Treasurer, audit committee, and board to trust.",
     bullets: ["Cash visibility", "Bank connectivity", "Payments", "Liquidity and forecasting", "Bank account management", "Treasury controls"],
     highlight: "Not software install. Treasury operating transformation.",
-    camera: { x: 780, y: 500, zoom: 1.12 },
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "10",
@@ -155,7 +192,7 @@ const scenes = [
       "The implementation vision is simple but strict. Move Zero de-risks Kyriba readiness: banks, feeds, entities, history, controls, adoption, intercompany, and covenants. Move One puts AI on top only when the foundation is clean enough. Otherwise, AI just makes weak data sound confident.",
     flow: ["Move 0", "Readiness gates", "Evidence pack", "Steering decision", "Move 1", "AI on treasury"],
     highlight: "Foundation before AI. Evidence before confidence.",
-    camera: { x: 820, y: 470, zoom: 1.1 },
+    camera: { x: 800, y: 450, zoom: 1.0 },
   },
   {
     id: "11",
@@ -263,6 +300,8 @@ const scenes = [
     subtitle: "Setup loads the context. Intelligence answers with evidence gaps. Moves owns execution. Source creates decision artifacts. Tower proves the portfolio story.",
     narration:
       "The demo needs to show the work, not just the answer. Setup loads the Lakeshore context. Intelligence explains what is known and missing. Moves runs the Kyriba readiness gates. Source creates commercial decision artifacts. Tower shows the value ledger and risk concentrations without mixing forecast with realized proof.",
+    screenshot: "../assets/05-tower-source-value.png",
+    callouts: ["Value ledger", "Portfolio source events", "Board-ready proof"],
     flow: ["Setup", "Intelligence", "Moves", "Source", "Tower", "Board pack"],
     highlight: "Abarva is persisted workflow, not a nicer chat window.",
     camera: { x: 820, y: 470, zoom: 1.1 },
@@ -339,6 +378,20 @@ function esc(value) {
     .replace(/"/g, "&quot;");
 }
 
+function imageDataUri(relativePath) {
+  const file = path.resolve(ROOT, relativePath);
+  const ext = path.extname(file).slice(1).toLowerCase();
+  const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
+  return `data:${mime};base64,${fs.readFileSync(file).toString("base64")}`;
+}
+
+function assetDataUri(fileName) {
+  const file = path.join(ASSET_DIR, fileName);
+  const ext = path.extname(file).slice(1).toLowerCase();
+  const mime = ext === "svg" ? "image/svg+xml" : ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
+  return `data:${mime};base64,${fs.readFileSync(file).toString("base64")}`;
+}
+
 function wrap(text, maxChars) {
   const words = String(text).split(/\s+/);
   const lines = [];
@@ -369,12 +422,11 @@ function textBlock(text, x, y, opts = {}) {
 }
 
 function logo() {
+  const src = assetDataUri("abarva-nav-dark-compact-28px-2x.png");
   return `
-    <g transform="translate(54 36)">
-      <path d="M0 24 L15 4 L35 36 L51 8" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M51 8 L64 8" stroke="${COLORS.cyan}" stroke-width="7" stroke-linecap="round"/>
-      <text x="84" y="32" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="850" fill="#ffffff">Abar<tspan fill="${COLORS.cyan}">Va</tspan></text>
-      <text x="238" y="32" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="760" fill="rgba(255,255,255,.78)">Lakeshore</text>
+    <g transform="translate(54 27)">
+      <image x="0" y="0" width="124" height="28" href="${src}" xlink:href="${src}" preserveAspectRatio="xMinYMid meet"/>
+      <text x="196" y="25" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="760" fill="rgba(255,255,255,.78)">Lakeshore</text>
     </g>`;
 }
 
@@ -382,8 +434,25 @@ function card(x, y, w, h, title, body, accent = COLORS.blue) {
   return `
     <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="#fff" stroke="${COLORS.line}" />
     <rect x="${x}" y="${y}" width="7" height="${h}" rx="4" fill="${accent}" />
-    <text x="${x + 24}" y="${y + 38}" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="850" fill="${COLORS.ink}">${esc(title)}</text>
-    ${textBlock(body, x + 24, y + 74, { size: 19, maxChars: Math.floor((w - 50) / 10), maxLines: 4, fill: COLORS.muted })}
+    ${textBlock(title, x + 24, y + 36, { size: 23, lineHeight: 27, weight: 850, fill: COLORS.ink, maxChars: Math.max(14, Math.floor((w - 48) / 12)), maxLines: 2 })}
+    ${textBlock(body, x + 24, y + 83, { size: 18, maxChars: Math.floor((w - 50) / 10), maxLines: 3, fill: COLORS.muted })}
+  `;
+}
+
+function imagePanel(scene, x, y, w, h, src, title, body) {
+  const id = `clip-${scene.id.replace(/[^a-zA-Z0-9]/g, "-")}-${Math.round(x)}-${Math.round(y)}`;
+  const image = imageDataUri(src);
+  return `
+    <defs>
+      <clipPath id="${id}">
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18"/>
+      </clipPath>
+    </defs>
+    <rect x="${x - 2}" y="${y - 2}" width="${w + 4}" height="${h + 4}" rx="20" fill="#fff" stroke="${COLORS.line}"/>
+    <image x="${x}" y="${y}" width="${w}" height="${h}" href="${image}" xlink:href="${image}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/>
+    <rect x="${x}" y="${y + h - 88}" width="${w}" height="88" fill="rgba(15,23,42,.88)" clip-path="url(#${id})"/>
+    <text x="${x + 24}" y="${y + h - 51}" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="900" fill="#fff">${esc(title)}</text>
+    ${textBlock(body, x + 24, y + h - 24, { size: 15, lineHeight: 19, weight: 650, fill: "rgba(255,255,255,.84)", maxChars: Math.floor((w - 48) / 8), maxLines: 2 })}
   `;
 }
 
@@ -467,6 +536,148 @@ function renderChips(scene) {
   return out.join("\n");
 }
 
+function renderContextGraph(scene) {
+  if (!scene.contextGraph) return "";
+  const columns = [
+    {
+      x: 120,
+      w: 285,
+      title: "Access frame",
+      color: COLORS.blue,
+      items: ["Tenant boundary", "Persona + role", "Decision rights"],
+    },
+    {
+      x: 455,
+      w: 320,
+      title: "Operating facts",
+      color: COLORS.gold,
+      items: ["HoldCo / PortCo", "Systems + CMDB", "Banks + controls"],
+    },
+    {
+      x: 825,
+      w: 310,
+      title: "Proof spine",
+      color: COLORS.green,
+      items: ["Artifacts + evidence", "Workflow state", "Process owners"],
+    },
+    {
+      x: 1185,
+      w: 285,
+      title: "Decision layer",
+      color: COLORS.rose,
+      items: ["Corpus patterns", "Value claims", "Next action"],
+    },
+  ];
+  let out = `
+    <defs>
+      <linearGradient id="contextFlow" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0%" stop-color="#dbeafe" stop-opacity=".55"/>
+        <stop offset="52%" stop-color="#ccfbf1" stop-opacity=".48"/>
+        <stop offset="100%" stop-color="#fef3c7" stop-opacity=".55"/>
+      </linearGradient>
+      <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L0,6 L9,3 z" fill="${COLORS.line}" />
+      </marker>
+    </defs>
+    <rect x="90" y="455" width="1420" height="278" rx="22" fill="#fff" stroke="${COLORS.line}"/>
+    <path d="M250 630 C430 548 604 548 760 630 C916 712 1100 712 1324 630" fill="none" stroke="url(#contextFlow)" stroke-width="24" stroke-linecap="round"/>
+    <rect x="494" y="478" width="612" height="48" rx="24" fill="${COLORS.ink}"/>
+    <text x="800" y="509" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="950" fill="#fff">AbarVa governed intelligence layer</text>
+  `;
+  columns.forEach((column) => {
+    out += `
+      <rect x="${column.x}" y="542" width="${column.w}" height="158" rx="18" fill="rgba(255,255,255,.95)" stroke="${COLORS.line}"/>
+      <rect x="${column.x}" y="542" width="${column.w}" height="8" rx="4" fill="${column.color}"/>
+      <text x="${column.x + 22}" y="584" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="950" fill="${COLORS.ink}">${esc(column.title)}</text>
+    `;
+    column.items.forEach((item, index) => {
+      const y = 616 + index * 34;
+      out += `
+        <circle cx="${column.x + 30}" cy="${y - 6}" r="6" fill="${column.color}"/>
+        <text x="${column.x + 48}" y="${y}" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="760" fill="${COLORS.muted}">${esc(item)}</text>
+      `;
+    });
+  });
+  out += `
+    <path d="M405 621 L455 621" stroke="${COLORS.line}" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M775 621 L825 621" stroke="${COLORS.line}" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <path d="M1135 621 L1185 621" stroke="${COLORS.line}" stroke-width="2.5" marker-end="url(#arrow)"/>
+  `;
+  return out;
+}
+
+function renderScreenshotScene(scene) {
+  if (!scene.screenshot || scene.contextGraph) return "";
+  const out = [
+    imagePanel(scene, 92, 405, 900, 330, scene.screenshot, "Live product screen", scene.subtitle),
+  ];
+  const callouts = scene.callouts || [];
+  callouts.forEach((item, i) => {
+    const y = 430 + i * 90;
+    const color = [COLORS.blue, COLORS.green, COLORS.gold][i % 3];
+    out.push(`
+      <rect x="1040" y="${y}" width="390" height="64" rx="16" fill="#fff" stroke="${COLORS.line}"/>
+      <circle cx="1073" cy="${y + 32}" r="15" fill="${color}"/>
+      <text x="1073" y="${y + 38}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="#fff">${i + 1}</text>
+      <text x="1102" y="${y + 39}" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="${COLORS.ink}">${esc(item)}</text>
+    `);
+  });
+  return out.join("\n");
+}
+
+function renderStrategy90(scene) {
+  if (!scene.strategy90) return "";
+  const lanes = [
+    ["Treasury / Kyriba", "Bank connectivity, ERP feeds, entity hierarchy, cash history, IC, covenants.", COLORS.blue],
+    ["Growth AI", "Customer programs, pricing, cross-sell, retention, campaign ROI, service recovery.", COLORS.green],
+    ["Cost AI", "Vendor overlap, renewal leverage, SI scope control, audit/advisory, cyber insurance.", COLORS.gold],
+    ["Risk and controls", "BEC controls, access risk, covenant monitoring, policy exceptions, audit evidence.", COLORS.rose],
+    ["IT/data foundation", "CMDB, app rationalization, data products, identity, analytics modernization.", COLORS.cyan],
+  ];
+  let out = `<rect x="90" y="430" width="1420" height="294" rx="22" fill="#fff" stroke="${COLORS.line}"/>`;
+  lanes.forEach(([title, body, color], i) => {
+    const x = 120 + i * 276;
+    out += `
+      <rect x="${x}" y="462" width="242" height="190" rx="18" fill="#f9fafb" stroke="${COLORS.line}"/>
+      <rect x="${x}" y="462" width="242" height="9" rx="5" fill="${color}"/>
+      <text x="${x + 20}" y="510" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="900" fill="${COLORS.ink}">${esc(title)}</text>
+      ${textBlock(body, x + 20, 550, { size: 16, lineHeight: 21, weight: 620, fill: COLORS.muted, maxChars: 24, maxLines: 4 })}
+    `;
+  });
+  out += `
+    <line x1="120" y1="680" x2="1482" y2="680" stroke="${COLORS.ink}" stroke-width="4" opacity=".85"/>
+    <text x="120" y="710" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="900" letter-spacing="2" fill="${COLORS.blue}">30 DAYS: FACT BASE</text>
+    <text x="555" y="710" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="900" letter-spacing="2" fill="${COLORS.green}">60 DAYS: PRIORITIZED USE CASES</text>
+    <text x="1040" y="710" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="900" letter-spacing="2" fill="${COLORS.gold}">90 DAYS: FUNDED ROADMAP</text>
+  `;
+  return out;
+}
+
+function renderModernization(scene) {
+  if (!scene.modernization) return "";
+  const items = [
+    ["CMDB + app rationalization", "Know what exists, who owns it, cost, risk, and duplicate capability."],
+    ["Data products", "Treasury, vendor, customer, contract, entity, and value-ledger domains."],
+    ["Integration spine", "ERP, TMS/Kyriba, WMS, CRM, HCM, bank data, and document evidence."],
+    ["Spend leverage", "SaaS, SI partners, cloud, audit/advisory, cyber, and renewals."],
+    ["Controls foundation", "Identity, access, BEC, signers, RLS, auditability, and exceptions."],
+    ["Analytics modernization", "From static reports to governed decisions and reusable AI patterns."],
+  ];
+  return items.map(([title, body], i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = 92 + col * 472;
+    const y = 430 + row * 126;
+    const color = [COLORS.blue, COLORS.green, COLORS.gold, COLORS.rose, COLORS.cyan, COLORS.slate][i];
+    return `
+      <rect x="${x}" y="${y}" width="438" height="100" rx="18" fill="#fff" stroke="${COLORS.line}"/>
+      <rect x="${x}" y="${y}" width="10" height="100" rx="5" fill="${color}"/>
+      <text x="${x + 30}" y="${y + 40}" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="900" fill="${COLORS.ink}">${esc(title)}</text>
+      ${textBlock(body, x + 30, y + 73, { size: 17, lineHeight: 22, weight: 610, fill: COLORS.muted, maxChars: 43, maxLines: 2 })}
+    `;
+  }).join("\n");
+}
+
 function renderBullets(scene) {
   if (!scene.bullets) return "";
   const cards = scene.bullets.slice(0, 6);
@@ -484,16 +695,16 @@ function renderBullets(scene) {
 }
 
 function svgForScene(scene) {
-  const detail = renderTable(scene) || renderFlow(scene) || renderStats(scene) || renderChips(scene) || renderBullets(scene);
+  const detail = renderContextGraph(scene) || renderScreenshotScene(scene) || renderStrategy90(scene) || renderModernization(scene) || renderTable(scene) || renderFlow(scene) || renderStats(scene) || renderChips(scene) || renderBullets(scene);
   const titleSize = scene.title.length > 44 ? 56 : 64;
   const titleLineHeight = scene.title.length > 44 ? 60 : 68;
-  const titleLines = wrap(scene.title, scene.title.length > 44 ? 38 : 40).slice(0, 2);
+  const titleLines = wrap(scene.title, scene.title.length > 44 ? 30 : 36).slice(0, 2);
   const titleSvg = titleLines
     .map((line, index) => `<text x="90" y="${244 + index * titleLineHeight}" font-family="Georgia, serif" font-size="${titleSize}" font-weight="900" fill="${COLORS.ink}">${esc(line)}</text>`)
     .join("\n");
   const subtitleY = 244 + titleLines.length * titleLineHeight + 24;
   return `
-  <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <rect width="${WIDTH}" height="${HEIGHT}" fill="${COLORS.paper}"/>
     <rect width="${WIDTH}" height="82" fill="#000"/>
     ${logo()}
@@ -554,22 +765,11 @@ async function createSpeech(client, scene, outFile) {
   throw lastError;
 }
 
-function createClip(scene, plateFile, audioFile, clipFile, entry) {
+function createClip(plateFile, audioFile, clipFile, entry) {
   const clipDuration = entry.clipDuration;
-  const frames = Math.ceil(clipDuration * FPS);
-  const holdFrames = Math.round(frames * 0.12);
-  const rampFrames = Math.max(60, Math.round(frames * 0.55));
-  const rampEnd = Math.min(frames - 1, holdFrames + rampFrames);
-  const outStart = Math.min(frames - 2, Math.max(rampEnd + 1, Math.round(entry.audioDuration * FPS)));
-  const z = scene.camera.zoom.toFixed(3);
-  const p = `if(lte(on\\,${holdFrames})\\,0\\,if(lte(on\\,${rampEnd})\\,(on-${holdFrames})/${Math.max(1, rampEnd - holdFrames)}\\,1))`;
-  const settle = `if(lte(on\\,${outStart})\\,1\\,1-0.78*(on-${outStart})/${Math.max(1, frames - outStart)})`;
-  const zoom = `if(lte(on\\,${holdFrames})\\,1\\,if(lte(on\\,${rampEnd})\\,1+(${z}-1)*(on-${holdFrames})/${Math.max(1, rampEnd - holdFrames)}\\,if(lte(on\\,${outStart})\\,${z}\\,${z}-(${z}-1.045)*(on-${outStart})/${Math.max(1, frames - outStart)})))`;
-  const x = `(800+(${scene.camera.x}-800)*${p}*${settle})-iw/zoom/2`;
-  const y = `(450+(${scene.camera.y}-450)*${p}*${settle})-ih/zoom/2`;
   const fadeStart = Math.max(0, clipDuration - 0.25).toFixed(3);
   const filter = [
-    `[0:v]scale=${WIDTH}:${HEIGHT},zoompan=z='${zoom}':x='${x}':y='${y}':d=${frames}:fps=${FPS}:s=${WIDTH}x${HEIGHT},format=yuv420p[v]`,
+    `[0:v]scale=${WIDTH}:${HEIGHT}:flags=lanczos,format=yuv420p[v]`,
     `[1:a]apad=pad_dur=${PAD_SECONDS},atrim=0:${clipDuration.toFixed(3)},afade=t=out:st=${fadeStart}:d=0.2[a]`,
   ].join(";");
   run("ffmpeg", [
@@ -580,6 +780,7 @@ function createClip(scene, plateFile, audioFile, clipFile, entry) {
     "-filter_complex", filter,
     "-map", "[v]",
     "-map", "[a]",
+    "-t", clipDuration.toFixed(3),
     "-r", String(FPS),
     "-c:v", "libx264",
     "-preset", "veryfast",
@@ -600,12 +801,24 @@ function concatClips(clipFiles, outputFile) {
 async function main() {
   loadEnvFile(path.resolve(process.cwd(), ".env.local"));
   loadEnvFile(path.resolve(process.cwd(), ".env.azure.local"));
+  fs.rmSync(PLATE_DIR, { recursive: true, force: true });
+  fs.rmSync(CLIP_DIR, { recursive: true, force: true });
   fs.mkdirSync(PLATE_DIR, { recursive: true });
   fs.mkdirSync(AUDIO_DIR, { recursive: true });
   fs.mkdirSync(CLIP_DIR, { recursive: true });
   fs.mkdirSync(QA_DIR, { recursive: true });
 
   const plateFiles = scenes.map(writePlate);
+  if (process.env.PLATES_ONLY === "1") {
+    fs.writeFileSync(path.join(QA_DIR, `detailed-${OUTPUT_VERSION.toLowerCase()}-scenes.json`), JSON.stringify(scenes.map((scene, index) => ({
+      scene: scene.id,
+      title: scene.title,
+      plate: path.relative(ROOT, plateFiles[index]),
+      narration: scene.narration,
+    })), null, 2) + "\n");
+    console.log(`wrote ${plateFiles.length} plates`);
+    return;
+  }
   const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
   if (!client && process.env.SKIP_AUDIO !== "1") {
     throw new Error("OPENAI_API_KEY was not found. Set SKIP_AUDIO=1 to render plates only.");
@@ -635,16 +848,16 @@ async function main() {
       gapAfterVoice: Number((clipDuration - audioDuration).toFixed(3)),
     };
     process.stdout.write("clip... ");
-    createClip(scene, plateFiles[i], audioFile, clipFile, entry);
+    createClip(plateFiles[i], audioFile, clipFile, entry);
     timeline.push(entry);
     clipFiles.push(clipFile);
     cursor += clipDuration;
     process.stdout.write("done\n");
   }
 
-  const outputFile = path.join(OUT, "LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V2.mp4");
+  const outputFile = path.join(OUT, `LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_${OUTPUT_VERSION}.mp4`);
   concatClips(clipFiles, outputFile);
-  fs.writeFileSync(path.join(OUT, "LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V2_TIMELINE.json"), JSON.stringify({
+  fs.writeFileSync(path.join(OUT, `LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_${OUTPUT_VERSION}_TIMELINE.json`), JSON.stringify({
     created: new Date().toISOString(),
     fps: FPS,
     frameSize: { width: WIDTH, height: HEIGHT },
@@ -657,7 +870,7 @@ async function main() {
 
   const sampleList = path.join(OUT, "contact-sheet-list.txt");
   fs.writeFileSync(sampleList, plateFiles.map((file) => `file '${file.replace(/'/g, "'\\''")}'\nduration 0.1`).join("\n") + `\nfile '${plateFiles[plateFiles.length - 1].replace(/'/g, "'\\''")}'\n`);
-  fs.writeFileSync(path.join(QA_DIR, "detailed-v2-scenes.json"), JSON.stringify(scenes.map((scene, index) => ({
+  fs.writeFileSync(path.join(QA_DIR, `detailed-${OUTPUT_VERSION.toLowerCase()}-scenes.json`), JSON.stringify(scenes.map((scene, index) => ({
     scene: scene.id,
     title: scene.title,
     plate: path.relative(ROOT, plateFiles[index]),

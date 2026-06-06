@@ -8,7 +8,7 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 
 | Client / lane | Status | Percent | Buyer-ready artifact | QA evidence | Blocker / next action |
 |---|---:|---:|---|---|---|
-| Lakeshore | Buyer brief + proof-page ready | 97% | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_2026-06-05.html` | `docs/build/lakeshore-success-brief/qa/header-logo-main-v2.png` | Final human read-through, then optional MP4 render from the storyboard. |
+| Lakeshore | Buyer brief + detailed reading page + MP4 ready for review | 98% | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Final human listen/read-through before sending externally. |
 | Meridian / PHS | Proof-page ready for review | 88% | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_2026-06-05.html` | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_VISUAL_QA_2026-06-05.md` | Package into deeper CDAO/admin training and resolve citation/context gaps before final buyer reliance. |
 | SkyHarbor | Dataset-ready, not live-proofed | 25% | None yet | `reports/2026-06-05-skyharbor-reality/00-before-state.md` | Azure/Postgres host did not resolve; run read-only counts, loader, screenshots, persisted Moves/Source proof after access is restored. |
 
@@ -36,6 +36,10 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 | Detailed MP4 V2 frame samples | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v2-video-samples.png` | Sampled video frame sheet for visual QA of the detailed V2 render. |
 | Success brief header QA | `docs/build/lakeshore-success-brief/qa/header-logo-main-v2.png` | Product-black header and canonical vector logo check after logo correction. |
 | Storyboard header QA | `docs/build/lakeshore-success-brief/video-storyboard/header-logo-storyboard-v2.png` | Storyboard header/logo check after logo correction. |
+| Detailed reading HTML | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | Companion deep-reading artifact with Apple-style left navigation, correct AbarVa nav logo, detailed context/corpus/Kyriba/AI strategy sections, and embedded V3 video. |
+| Detailed reading desktop QA | `docs/build/lakeshore-success-brief/qa/lakeshore-detailed-reading-desktop.png` | Browser-rendered desktop screenshot; local QA found 0 horizontal overflow and verified the 248x56 nav logo asset loaded. |
+| Detailed MP4 V3 render | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V3.mp4` | Current detailed MP4: 9:53, 1600x900, H.264/AAC, no zoom, correct nav logo, product screenshots, expanded context graph, 90-day AI strategy, IT/data modernization, and regenerated OpenAI voiceover with AbarVa pronunciation guidance. |
+| Detailed MP4 V3 frame samples | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Sampled video frame sheet for V3 visual QA. V2 should be treated as superseded. |
 | Desktop screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-desktop.png` | Rendered proof page. |
 | Mobile screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-mobile.png` | Rendered proof page. |
 
