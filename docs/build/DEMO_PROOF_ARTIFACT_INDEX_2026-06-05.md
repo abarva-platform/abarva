@@ -8,7 +8,7 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 
 | Client / lane | Status | Percent | Buyer-ready artifact | QA evidence | Blocker / next action |
 |---|---:|---:|---|---|---|
-| Lakeshore | Proof-page ready | 95% | `docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_PROOF_2026-06-05.html` | `docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_VISUAL_QA_2026-06-05.md` | Optional buyer polish and video/storyboard cuts. |
+| Lakeshore | Buyer brief + proof-page ready | 97% | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_2026-06-05.html` | `docs/build/lakeshore-success-brief/qa/header-logo-main-v2.png` | Final human read-through, then optional MP4 render from the storyboard. |
 | Meridian / PHS | Proof-page ready for review | 88% | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_2026-06-05.html` | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_VISUAL_QA_2026-06-05.md` | Package into deeper CDAO/admin training and resolve citation/context gaps before final buyer reliance. |
 | SkyHarbor | Dataset-ready, not live-proofed | 25% | None yet | `reports/2026-06-05-skyharbor-reality/00-before-state.md` | Azure/Postgres host did not resolve; run read-only counts, loader, screenshots, persisted Moves/Source proof after access is restored. |
 
@@ -21,6 +21,17 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 | Visual QA note | `docs/build/lakeshore-proof/LAKESHORE_ABARVA_VS_RAW_LLM_VISUAL_QA_2026-06-05.md` | Records desktop/mobile QA, image load, console, and overflow checks. |
 | Video storyboard | `docs/build/lakeshore-proof/LAKESHORE_DEMO_VIDEO_STORYBOARD_2026-06-05.md` | 4-6 minute narration plan, scene list, buyer questions, and what-not-to-say guardrails. |
 | Video shot list | `docs/build/lakeshore-proof/LAKESHORE_DEMO_VIDEO_SHOT_LIST_2026-06-05.md` | Recording checklist with exact visuals, framing, narration cues, guardrails, and post-recording QA. |
+| Surekha buyer success brief | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_2026-06-05.html` | Current buyer-facing reading page: Lakeshore operating profile, context layer, editable corpus, Kyriba de-risk, 5-10x value case, architecture trust layer, and six-month roadmap. |
+| Success brief source note | `docs/build/lakeshore-success-brief/LAKESHORE_ABARVA_AI_SUCCESS_PLATFORM_BRIEF_SOURCE_2026-06-05.md` | Editorial source and claim-discipline note for the Lakeshore success brief. |
+| MP4 screen + narration storyboard | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_SCREEN_NARRATION_STORYBOARD_2026-06-05.html` | Side-by-side screen/narration storyboard with 14 page plates, trimmed voiceover copy, camera cues, and logo/header QA. |
+| MP4 executive frame library | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_EXECUTIVE_PLATES_V2_2026-06-05.html` | 14 premium 16:9 plates based on the high-impact MP4 frame-library style; uses simple generated graphics, one idea per frame, and the canonical nav logo. |
+| MP4 executive plates visual QA | `docs/build/lakeshore-success-brief/video-storyboard/LAKESHORE_MP4_EXECUTIVE_PLATES_VISUAL_QA_2026-06-05.md` | QA record for the executive plates, storyboard, logo usage, and scene-image regeneration. |
+| MP4 executive plates contact sheet | `docs/build/lakeshore-success-brief/video-storyboard/qa/v2-contact-sheet.png` | One-page visual scan of all 14 V2 plates for sequence, density, logo, and graphic-accuracy review. |
+| MP4 preview render | `docs/build/lakeshore-success-brief/video-storyboard/render/LAKESHORE_AI_SUCCESS_PLATFORM_PREVIEW_V1.mp4` | OpenAI voiceover preview with scene-level zoom in/out camera moves, sub-2-second post-voice pacing, and synced page targets. |
+| MP4 preview frame samples | `docs/build/lakeshore-success-brief/video-storyboard/render/qa/video-samples.png` | Actual-video sampled frames showing where each camera move lands during narration. |
+| OpenAI TTS scene text | `docs/build/lakeshore-success-brief/video-storyboard/OPENAI_TTS_SCENE_TEXT_2026-06-05.md` | Clean scene-by-scene voiceover text for OpenAI text-to-speech generation. |
+| Success brief header QA | `docs/build/lakeshore-success-brief/qa/header-logo-main-v2.png` | Product-black header and canonical vector logo check after logo correction. |
+| Storyboard header QA | `docs/build/lakeshore-success-brief/video-storyboard/header-logo-storyboard-v2.png` | Storyboard header/logo check after logo correction. |
 | Desktop screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-desktop.png` | Rendered proof page. |
 | Mobile screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-mobile.png` | Rendered proof page. |
 
@@ -92,6 +103,6 @@ Postgres connection failed: getaddrinfo ENOTFOUND pg-abarva-context-lab-001.post
 ## Next Recommended Work
 
 1. Meridian / PHS: review the new HTML training manual, then optionally convert it into Word/deck/video script form.
-2. Lakeshore: record or rehearse the walkthrough using the storyboard and shot list.
+2. Lakeshore: final human read-through of the Surekha success brief, then render or rehearse the MP4 from the side-by-side storyboard.
 3. SkyHarbor: wait for Azure/Postgres reachability, run read-only counts, then load via admin/setup path, create saved Moves/Source artifacts, and capture screenshots before making the KK primer.
 4. Auth/setup: refresh signed-in storage state for each real user/profile once Clerk user mapping is finalized; never grant multi-account access unless explicitly approved.
