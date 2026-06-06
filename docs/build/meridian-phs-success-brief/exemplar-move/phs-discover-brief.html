@@ -1,0 +1,544 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>AI-Enabled Population Health &amp; Clinical Performance Command Center — Discover Brief — Meridian Health System</title><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #e7e3da;
+  color: #070707;
+  font-family: "DM Sans","Inter",system-ui,-apple-system,sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: "Newsreader","Cormorant Garamond","Georgia",serif;
+  font-weight: 500; letter-spacing: -0.01em; margin: 0;
+}
+
+/* === Deck shell — fixed left menu, scrolling right stage. === */
+.deck {
+  display: grid;
+  grid-template-columns: 264px minmax(0,1fr);
+  height: 100vh;
+}
+
+/* --- Left menu rail --- */
+.menu {
+  background: #11100e; color: #e7e3da;
+  height: 100vh; position: sticky; top: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #2a2824;
+}
+.menu-head {
+  padding: 22px 22px 16px; border-bottom: 1px solid #2a2824;
+}
+.menu-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #6ea2dd;
+}
+.menu-title {
+  font-family: "Newsreader","Georgia",serif; font-size: 19px;
+  color: #f8f7f4; margin-top: 8px; line-height: 1.2;
+}
+.menu-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 600; color: #a39d8e; margin-top: 5px;
+}
+.menu-list {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+}
+.menu-item {
+  display: flex; gap: 11px; align-items: flex-start; width: 100%;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 9px 18px 9px 16px; text-align: left;
+  border-left: 3px solid transparent; color: #cdc8bc;
+  font-family: inherit;
+}
+.menu-item:hover { background: #1b1a17; color: #f8f7f4; }
+.menu-item[aria-current="true"] {
+  background: #1f1e1a; border-left-color: #6ea2dd; color: #f8f7f4;
+}
+.menu-num {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; color: #75706320; color: #888273;
+  padding-top: 2px; min-width: 18px;
+}
+.menu-item[aria-current="true"] .menu-num { color: #6ea2dd; }
+.menu-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: -0.005em;
+}
+.menu-sub {
+  font-size: 10.5px; line-height: 1.4; color: #8b8678;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menu-item[aria-current="true"] .menu-sub { color: #b4ae9f; }
+.menu-foot {
+  padding: 14px 18px; border-top: 1px solid #2a2824;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.menu-foot-verdict {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #d8b65a;
+}
+.menu-foot-sub { font-size: 10px; color: #8b8678; }
+
+/* --- Right stage --- */
+.stage {
+  height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 30px 38px 96px;
+}
+
+/* --- Slide — one composed screen. --- */
+.slide { display: none; }
+.slide.is-active { display: block; }
+.slide-inner {
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 8px;
+  max-width: 1080px; margin: 0 auto; width: 100%;
+  min-height: calc(100vh - 130px);
+  padding: 38px 52px 34px;
+  display: flex; flex-direction: column;
+}
+
+/* Slide chrome — slim header rule. */
+.slide-rule {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #8b8678;
+  padding-bottom: 11px; border-bottom: 1px solid #e6e1d5;
+}
+.slide-rule-l { display: flex; gap: 7px; }
+.slide-brand { color: #0b4a91; font-weight: 800; }
+.slide-sep { color: #c9c3b3; }
+.slide-rule-r { color: #8b8678; }
+
+.slide-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #0b4a91; margin: 22px 0 9px;
+}
+.slide-headline {
+  font-size: 30px; line-height: 1.18; max-width: 880px;
+  margin-bottom: 6px; color: #070707;
+}
+
+.slide-stage {
+  flex: 1; padding: 16px 0 6px;
+}
+.slide-lede {
+  font-size: 14.5px; line-height: 1.6; color: #2c2a26;
+  max-width: 720px; margin: 4px 0 20px;
+}
+
+/* --- Hero exhibit — one dominant exhibit per slide. --- */
+.hero { margin: 0 0 6px; }
+.hero-caption {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #070707; margin-bottom: 9px;
+}
+.hero-frame {
+  background: #ffffff; border: 1px solid #e0dbcd; border-radius: 5px;
+  padding: 20px 22px;
+}
+.hero-note {
+  font-size: 11.5px; color: #5b5852; line-height: 1.5;
+  margin: 9px 2px 0; max-width: 760px;
+}
+
+/* --- Quiet footer strip — facts compressed to one thin row. --- */
+.slide-foot {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 0;
+  border-top: 1px solid #e6e1d5; margin-top: 18px; padding-top: 14px;
+}
+.foot-cell {
+  padding: 0 16px 6px 0; border-right: 1px solid #ece7da;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.foot-cell:last-child { border-right: 0; }
+.foot-implication { grid-row: span 1; }
+.foot-key {
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #8b8678;
+}
+.foot-val { font-size: 10.5px; line-height: 1.45; color: #2c2a26; }
+.foot-implication .foot-val { color: #1c1a17; font-weight: 600; }
+
+/* --- Collapsible detail strip — dense tables one click away. --- */
+.slide-detail {
+  margin-top: 16px; border: 1px solid #e0dbcd; border-radius: 5px;
+  background: #f3f0e9;
+}
+.slide-detail-summary {
+  cursor: pointer; list-style: none;
+  display: flex; gap: 9px; align-items: center;
+  padding: 11px 15px; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.03em; text-transform: uppercase; color: #5b5852;
+}
+.slide-detail-summary::-webkit-details-marker { display: none; }
+.detail-chevron {
+  width: 0; height: 0; border-left: 5px solid #8b8678;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.12s ease;
+}
+.slide-detail[open] .detail-chevron { transform: rotate(90deg); }
+.slide-detail-summary:hover { color: #0b4a91; }
+.slide-detail-body { padding: 4px 16px 16px; }
+
+/* --- Cover slide --- */
+.slide-cover .slide-inner { justify-content: center; }
+.cover-inner { padding: 56px 60px; }
+.cover-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5b5852; margin-top: 16px;
+}
+.cover-title {
+  font-size: 54px; line-height: 1.04; margin: 10px 0 14px; max-width: 760px;
+}
+.cover-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 12px; font-weight: 700; color: #070707;
+}
+.cover-lede {
+  max-width: 620px; margin: 22px 0 30px; font-size: 15px;
+  color: #2c2a26; line-height: 1.62;
+}
+.cover-meta {
+  display: flex; gap: 44px; border-top: 1px solid #d8d3c6;
+  padding-top: 20px;
+}
+.cover-meta-label {
+  display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #8b8678;
+}
+.cover-meta-val {
+  display: block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 16px; font-weight: 800; margin-top: 4px;
+}
+.cover-hint {
+  margin-top: 26px; font-size: 11px; color: #8b8678;
+  font-style: italic;
+}
+
+/* --- Chips --- */
+.chip {
+  display: inline-block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid;
+}
+.chip-good { background: #e2efe2; color: #1B5E20; border-color: #1B5E20; }
+.chip-warn { background: #f7ecd6; color: #7A4F01; border-color: #7A4F01; }
+.chip-bad { background: #f4ddd6; color: #8B1F0F; border-color: #8B1F0F; }
+
+/* --- Board card --- */
+.board-card {
+  border-radius: 6px; padding: 20px 24px; margin: 0 0 20px;
+  border: 1px solid;
+}
+.verdict-shape { background: #f7ecd6; border-color: #7A4F01; }
+.verdict-fund { background: #e2efe2; border-color: #1B5E20; }
+.verdict-kill { background: #f4ddd6; border-color: #8B1F0F; }
+.board-card-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7A4F01; margin-bottom: 7px;
+}
+.verdict-fund .board-card-tag { color: #1B5E20; }
+.verdict-kill .board-card-tag { color: #8B1F0F; }
+.board-verdict {
+  font-family: "Newsreader","Georgia",serif; font-size: 23px;
+  line-height: 1.26; color: #070707;
+}
+.board-detail { margin: 9px 0 0; font-size: 12.5px; color: #2c2a26; }
+
+/* --- Board-answer split --- */
+.answer-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 16px 0 16px;
+}
+.answer-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff;
+}
+.answer-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.answer-col ul { margin: 0; padding-left: 17px; }
+.answer-col li { font-size: 11.5px; line-height: 1.5; margin-bottom: 5px; }
+.answer-fund { border-left: 3px solid #1B5E20; }
+.answer-fund .answer-head { color: #1B5E20; }
+.answer-hold { border-left: 3px solid #8B1F0F; }
+.answer-hold .answer-head { color: #8B1F0F; }
+
+/* --- Ask + payback lines --- */
+.ask-line, .payback-line {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 16px; border-radius: 5px; font-size: 12.5px;
+  line-height: 1.5; margin: 0 0 16px;
+}
+.ask-line { background: #e8f0fa; color: #2c2a26; }
+.payback-line { background: #f7ecd6; color: #2c2a26; }
+.ask-line-tag, .payback-line-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; white-space: nowrap; padding-top: 2px;
+}
+.ask-line-tag { color: #0b4a91; }
+.payback-line-tag { color: #7A4F01; }
+
+/* --- Context diagram --- */
+.context-diagram { display: flex; flex-direction: column; gap: 9px; }
+.context-band {
+  display: grid; grid-template-columns: 128px 1fr; gap: 12px;
+  align-items: center;
+}
+.context-band-label {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #8b8678; text-align: right;
+}
+.context-nodes { display: flex; gap: 8px; flex-wrap: wrap; }
+.context-node {
+  flex: 1; min-width: 160px; background: #fff;
+  border: 1px solid #cfc9b9; border-radius: 4px; padding: 9px 11px;
+}
+.context-node-gap { background: #f7ecd6; border-color: #7A4F01; }
+.context-node-title { font-size: 12px; font-weight: 800; }
+.context-node-detail {
+  font-size: 10.5px; color: #5b5852; margin-top: 3px; line-height: 1.42;
+}
+.gap-flag {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 8px; font-weight: 800; color: #7A4F01;
+  background: #fff; border: 1px solid #7A4F01; border-radius: 999px;
+  padding: 1px 5px; text-transform: uppercase;
+}
+
+/* --- Scope triplet --- */
+.scope-triplet {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+  margin: 16px 0 4px;
+}
+.scope-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 15px;
+  background: #fff;
+}
+.scope-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.scope-col ul { margin: 0; padding-left: 16px; }
+.scope-col li { font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+.scope-in { border-left: 3px solid #1B5E20; }
+.scope-in .scope-head { color: #1B5E20; }
+.scope-out { border-left: 3px solid #8B1F0F; }
+.scope-out .scope-head { color: #8B1F0F; }
+.scope-retain { border-left: 3px solid #0b4a91; }
+.scope-retain .scope-head { color: #0b4a91; }
+
+/* --- Tables --- */
+.data-table {
+  width: 100%; border-collapse: collapse; margin: 10px 0 14px;
+  background: #fff; border: 1px solid #e0dbcd; font-size: 11.5px;
+}
+.data-table th {
+  text-align: left; background: #070707; color: #fbfaf7;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 9px 11px;
+}
+.data-table td {
+  padding: 8px 11px; border-top: 1px solid #ece7da;
+  vertical-align: top; line-height: 1.45;
+}
+.data-table tbody tr:nth-child(even) { background: #f7f5ef; }
+.data-table .num {
+  text-align: right; white-space: nowrap;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+}
+.data-table th.num { text-align: right; }
+.data-table tfoot td {
+  background: #ece7da; font-weight: 800; border-top: 2px solid #070707;
+}
+.data-table-ledger td:nth-child(2) { width: 36%; }
+.row-proxy { background: #fdf6e8 !important; }
+.blocked-cell { color: #8B1F0F; font-weight: 800; }
+
+/* --- Assumption cards --- */
+.assume-cards { display: flex; flex-direction: column; gap: 10px; }
+.assume-card {
+  display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff; border-left: 3px solid #0b4a91;
+}
+.assume-proxy { border-left-color: #7A4F01; background: #fdf6e8; }
+.assume-rank {
+  font-family: "Newsreader","Georgia",serif; font-size: 26px;
+  color: #0b4a91; font-weight: 500;
+}
+.assume-proxy .assume-rank { color: #7A4F01; }
+.assume-statement { font-size: 13px; font-weight: 600; color: #1c1a17;
+  line-height: 1.45; }
+.assume-meta {
+  display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+  margin-top: 7px; font-size: 11px; color: #5b5852;
+}
+.assume-dot { color: #c9c3b3; }
+
+/* --- Coverage tiles --- */
+.coverage-tiles {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+}
+.coverage-tile {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 22px 20px;
+  background: #fff; border-top: 3px solid #5b5852;
+}
+.coverage-good { border-top-color: #1B5E20; }
+.coverage-gap { border-top-color: #8B1F0F; }
+.coverage-neutral { border-top-color: #0b4a91; }
+.coverage-num {
+  font-family: "Newsreader","Georgia",serif; font-size: 44px;
+  line-height: 1; color: #070707;
+}
+.coverage-good .coverage-num { color: #1B5E20; }
+.coverage-gap .coverage-num { color: #8B1F0F; }
+.coverage-neutral .coverage-num { color: #0b4a91; }
+.coverage-label {
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; margin-top: 10px;
+}
+.coverage-sub { font-size: 10.5px; color: #5b5852; margin-top: 3px; }
+
+/* --- Checklist --- */
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-row {
+  display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 12px 15px;
+  background: #fff; align-items: start;
+}
+.check-approve { border-left: 3px solid #1B5E20; }
+.check-hold { border-left: 3px solid #8B1F0F; }
+.check-condition { border-left: 3px solid #7A4F01; }
+.check-label { font-weight: 800; font-size: 12.5px; }
+.check-detail {
+  font-size: 11px; color: #5b5852; margin-top: 3px; line-height: 1.5;
+}
+
+/* --- Mini split (detail strip prose) --- */
+.mini-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 12px 0 4px;
+}
+.mini-key {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.mini-key-block { display: block; margin: 14px 0 2px; }
+.mini-key-block:first-child { margin-top: 4px; }
+.mini-key-gap { color: #8B1F0F; }
+.mini-split p { margin: 5px 0 0; font-size: 11.5px; color: #2c2a26;
+  line-height: 1.55; }
+.mini-list { margin: 6px 0 0; padding-left: 16px; }
+.mini-list li { font-size: 11px; line-height: 1.5; margin-bottom: 4px; }
+
+/* --- Deck controls --- */
+.deck-controls {
+  position: fixed; bottom: 22px; right: 30px; z-index: 20;
+  display: flex; gap: 8px; align-items: center;
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 999px;
+  padding: 6px 8px; box-shadow: 0 6px 22px rgba(7,7,7,0.16);
+}
+.deck-btn {
+  background: #11100e; color: #f8f7f4; border: 0; cursor: pointer;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  padding: 7px 13px; border-radius: 999px;
+}
+.deck-btn:hover { background: #2a2824; }
+.deck-counter {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; color: #5b5852; padding: 0 4px;
+}
+
+/* --- Narrow screens — menu collapses to the top. --- */
+@media (max-width: 880px) {
+  .deck { grid-template-columns: 1fr; height: auto; }
+  .menu { height: auto; position: static; }
+  .menu-list { max-height: 220px; }
+  .stage { height: auto; padding: 20px; }
+  .slide-inner { min-height: 0; padding: 26px 22px; }
+  .slide-foot, .answer-split, .scope-triplet, .coverage-tiles,
+  .mini-split, .context-band, .check-row, .assume-card {
+    grid-template-columns: 1fr;
+  }
+  .slide-headline { font-size: 24px; }
+  .cover-title { font-size: 38px; }
+}
+
+/* === Print / PDF — expand EVERY slide, stacked, one page each. === */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff; }
+  .deck { display: block; height: auto; }
+  .menu, .deck-controls { display: none !important; }
+  .stage { display: block; height: auto; overflow: visible; padding: 0; }
+  .slide {
+    display: block !important; page-break-after: always;
+    break-after: page;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .slide[hidden] { display: block !important; }
+  .slide-inner {
+    min-height: 0; border-radius: 0; border: 0;
+    box-shadow: none; padding: 8mm 4mm; max-width: 100%;
+  }
+  /* Print shows the full document — detail strips expanded. */
+  .slide-detail { background: #fff; border-color: #d8d3c6; }
+  .slide-detail-body { display: block !important; }
+  .slide-detail summary { color: #070707; }
+  .detail-chevron { display: none; }
+  .hero-frame, .data-table, .board-card, .answer-col, .scope-col,
+  .context-node, .assume-card, .coverage-tile, .check-row {
+    page-break-inside: avoid;
+  }
+}
+
+/* --- Discover Brief — problem statement callout. --- */
+.brief-problem {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 13px 16px; border-radius: 5px; font-size: 12.5px;
+  line-height: 1.55; margin: 16px 0; background: #fff;
+  border: 1px solid #e0dbcd; border-left: 3px solid #0b4a91;
+}
+.brief-problem-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; white-space: nowrap; padding-top: 2px;
+  color: #0b4a91;
+}
+/* --- Pain theme cards. --- */
+.pain-cards {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+  margin: 8px 0 4px;
+}
+.pain-card {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 15px;
+  background: #fff; border-top: 3px solid #a8533a;
+}
+.pain-theme {
+  font-size: 12px; font-weight: 800; color: #1c1a17; line-height: 1.35;
+}
+.pain-detail {
+  font-size: 11px; color: #5b5852; margin-top: 6px; line-height: 1.5;
+}
+.mini-para {
+  margin: 5px 0 0; font-size: 11.5px; color: #2c2a26; line-height: 1.55;
+}
+@media (max-width: 880px) {
+  .pain-cards { grid-template-columns: 1fr; }
+}
+</style></head><body><div class="deck"><nav class="menu" aria-label="Deck navigation"><div class="menu-head"><div class="menu-brand">AbarVa · Moves</div><div class="menu-title">Discover Brief</div><div class="menu-tenant">Meridian Health System</div></div><div class="menu-list"><button class="menu-item" type="button" data-goto="1" aria-current="true"><span class="menu-num">00</span><span class="menu-text"><span class="menu-label">Cover</span><span class="menu-sub">Discover Brief</span></span></button><button class="menu-item" type="button" data-goto="2"><span class="menu-num">01</span><span class="menu-text"><span class="menu-label">Decision snapshot</span><span class="menu-sub">NO-GO — Discover cannot honestly advance this Move.</span></span></button><button class="menu-item" type="button" data-goto="3"><span class="menu-num">02</span><span class="menu-text"><span class="menu-label">Inherited outline</span><span class="menu-sub">This brief inherits the curated Population health &amp; value-based care Discover outline — 6 sections, structure not improvised.</span></span></button><button class="menu-item" type="button" data-goto="4"><span class="menu-num">03</span><span class="menu-text"><span class="menu-label">Current-state baseline</span><span class="menu-sub">Baseline coverage is 33% — 4 metrics measured and sourced, 8 declared seed gaps, none guessed.</span></span></button><button class="menu-item" type="button" data-goto="5"><span class="menu-num">04</span><span class="menu-text"><span class="menu-label">Pain and opportunity</span><span class="menu-sub">There is real value here — but it can only be stated directionally until the monetisation inputs land.</span></span></button><button class="menu-item" type="button" data-goto="6"><span class="menu-num">05</span><span class="menu-text"><span class="menu-label">Evidence gaps</span><span class="menu-sub">8 expected operating metrics are an open seed gap — closing them is the work that turns this Discover into a fundable Charter.</span></span></button><button class="menu-item" type="button" data-goto="7"><span class="menu-num">06</span><span class="menu-text"><span class="menu-label">Go/no-go gate</span><span class="menu-sub">NO-GO — Discover cannot honestly advance this Move.</span></span></button></div><div class="menu-foot"><span class="menu-foot-verdict">Verdict · NO-GO</span><span class="menu-foot-sub">Opportunity directional — seed gaps</span></div></nav><main class="stage" id="stage"><section class="slide slide-cover" id="cover" data-slide="1" aria-label="Cover"><div class="slide-inner cover-inner"><div class="cover-brand">AbarVa · Moves</div><div class="cover-eyebrow">Discover Brief · Kernel-derived for a real Move</div><h1 class="cover-title">AI-Enabled Population Health &amp; Clinical Performance Command Center</h1><div class="cover-tenant">Meridian Health System · Population health &amp; value-based care</div><p class="cover-lede">A Discover brief produced by the Moves Expert Kernel for this Move. The section structure is <strong>inherited</strong> from the curated Domain Function Pack; every figure is the kernel’s — the baseline is the real recorded / seed-gapped split, unrecorded metrics are named seed gaps, and the verdict is the kernel’s real recommendation, never invented.</p><div class="cover-meta"><div><span class="cover-meta-label">Discover verdict</span><span class="cover-meta-val">NO-GO</span></div><div><span class="cover-meta-label">Opportunity</span><span class="cover-meta-val">Directional — seed gaps</span></div><div><span class="cover-meta-label">Slides</span><span class="cover-meta-val">7</span></div><div><span class="cover-meta-label">Generated</span><span class="cover-meta-val">2026-06-06</span></div></div><div class="cover-hint">Use the menu, the arrows, or ← → keys to move through the deck.</div></div></section><section class="slide" id="decision-snapshot" data-slide="2" aria-label="Decision snapshot"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Decision snapshot</span></div><div class="slide-rule-r">Slide 2 / 7</div></div><div class="slide-eyebrow">Section 1 · Decision snapshot</div><h2 class="slide-headline">NO-GO — Discover cannot honestly advance this Move.</h2><div class="slide-stage"><div class="board-card verdict-kill"><div class="board-card-tag">Discover verdict</div><div class="board-verdict">NO-GO — do not advance</div><p class="board-detail">Base-case net return is not positive — the Move does not pay back on current assumptions.</p><div class="verdict-explainer-chip" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:4px;background:#fdecea;color:#7a1b14;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;line-height:1.45;border:1px solid #f1c0bc;"><span style="font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">Why no-go?</span><span style="font-family:'DM Sans','Inter',system-ui,sans-serif;font-size:12px;line-height:1.45;">Seed gap blocks monetisation — value rests on a planning-range proxy until the missing unit economics are supplied.</span></div></div><figure class="hero"><figcaption class="hero-caption">Exhibit 1 — Discover decision at a glance</figcaption><div class="hero-frame"><svg viewBox="0 0 720 96" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Headline economics" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Headline economics</title><rect x="0" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="0" y="0" width="3" height="96" fill="#8B1F0F"/><text x="14" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">DISCOVER VERDICT</text><text x="14" y="52" font-size="19" font-weight="800" fill="#8B1F0F" text-anchor="start">NO-GO</text><text x="14" y="76" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">Stop the Move</text><rect x="145.6" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="145.6" y="0" width="3" height="96" fill="#7A4F01"/><text x="159.6" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">BASELINE COVERAGE</text><text x="159.6" y="52" font-size="19" font-weight="800" fill="#7A4F01" text-anchor="start">33%</text><text x="159.6" y="76" font-size="8.2" font-weight="600" fill="#5b5852" text-anchor="start">4 recorded · 8 seed gaps</text><rect x="291.2" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="291.2" y="0" width="3" height="96" fill="#8B1F0F"/><text x="305.2" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">SIZING BLOCKERS</text><text x="305.2" y="52" font-size="19" font-weight="800" fill="#8B1F0F" text-anchor="start">8</text><text x="305.2" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Monetisation blocked — seed gap</text><rect x="436.79999999999995" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="436.79999999999995" y="0" width="3" height="96" fill="#7A4F01"/><text x="450.79999999999995" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">OPEN BLOCKERS</text><text x="450.79999999999995" y="52" font-size="19" font-weight="800" fill="#7A4F01" text-anchor="start">2</text><text x="450.79999999999995" y="76" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">2 critic concerns</text><rect x="582.4" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="582.4" y="0" width="3" height="96" fill="#070707"/><text x="596.4" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">NEXT GATE</text><text x="596.4" y="52" font-size="19" font-weight="800" fill="#070707" text-anchor="start">None</text><text x="596.4" y="76" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">Move stops</text></svg></div></figure><div class="brief-problem"><span class="brief-problem-tag">Problem statement</span><span>This Move targets a measured gap in AI-Enabled Population Health &amp; Clinical Performance Command Center: the baseline records Medical loss ratio (MLR) at 120 percent (Plan settlement (individual block, 2024)). 8 further operating metrics are a declared seed gap, so the problem is real but not yet fully measured.</span></div><div class="ask-line"><span class="ask-line-tag">Next evidence request</span><span>Capture the 8 seed-gapped operating metrics — the evidence asks that gate an honest Charter business case.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>How the kernel inputs were derived — honesty notes</span></summary><div class="slide-detail-body"><ul class="mini-list"><li>Baseline: 4 of 12 Function-Pack operating metrics are recorded by this Move (coverage 33%). The remaining 8 are precise, named seed gaps — not fabricated values.</li><li>Assumptions: 13 named assumptions derived from the Function Pack (haircut factors, value narrative, evidence anchors, pain themes); 12 are seed-gap proxies owned by a &quot;to be confirmed with the tenant&quot; placeholder — no human owner is fabricated.</li><li>Value: the gross value range is built from the Function Pack's curated value benchmarks — labelled planning ranges, NOT this tenant's own measured unit economics. It is carried as a proxy, so the kernel honestly blocks a claimable dollar payback until the tenant's spend base and the seed-gapped metrics are supplied.</li><li>Value: 8 operating metric(s) needed to ground the forecast are seed-gapped — the value range is a planning proxy, not a forecast, until they are closed.</li></ul></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">Discover cannot honestly advance this Move — stop it now.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Decide whether the idea is real enough to shape into a Charter.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Blocked · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">No gate — the Move stops here</span></div></div></div></section><section class="slide" id="inherited-outline" data-slide="3" aria-label="Inherited outline"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Inherited outline</span></div><div class="slide-rule-r">Slide 3 / 7</div></div><div class="slide-eyebrow">Section 2 · Inherited outline</div><h2 class="slide-headline">This brief inherits the curated Population health &amp; value-based care Discover outline — 6 sections, structure not improvised.</h2><div class="slide-stage"><p class="slide-lede">This Discover Brief inherits the curated Population health &amp;amp; value-based care Discover outline from the bound Domain Function Pack. The agent does not improvise the structure — every section below is a curated, function-calibrated heading.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 2 — The inherited Population health &amp;amp; value-based care Discover outline</figcaption><div class="hero-frame"><div class="context-diagram"><div class="context-band"><div class="context-band-label">Inherited curated Discover outline</div><div class="context-nodes"><div class="context-node"><div class="context-node-title">01 · Contract and population portfolio</div><div class="context-node-detail">Name the VBC contracts in scope, their risk tracks, benchmarks, attribution rules, quality gates, and the share of revenue under risk. State which payer and CMS feeds are available.</div></div><div class="context-node"><div class="context-node-title">02 · Baseline economics against the operating metrics</div><div class="context-node-detail">Report the current value for each operating metric — MLR, shared-savings rate, RAF accuracy, quality composite, PMPM trend, leakage, attribution stability. For any metric not recorded, name it as a precise seed gap with its data source.</div></div><div class="context-node"><div class="context-node-title">03 · Diagnosed pain themes</div><div class="context-node-detail">Walk the function pain themes — RAF under-capture, mismatched contract risk, fragmented population view, quality drag, leakage, stratification lag, FFS conflict, coding overreach — and state which are present, with detection signal and evidence.</div></div><div class="context-node"><div class="context-node-title">04 · Value-at-stake hypothesis</div><div class="context-node-detail">Frame the opportunity from the value-model benchmark ranges — separating cost-trend savings, RAF accuracy, and quality protection — haircut by contract structure, attribution stability, and data readiness. Every figure a labelled planning range.</div></div><div class="context-node"><div class="context-node-title">05 · Evidence gaps and asks</div><div class="context-node-detail">List the specific data the diagnosis still needs, who owns each source, and what each gap blocks. A missing metric is a named ask.</div></div><div class="context-node"><div class="context-node-title">06 · Recommended Move framing</div><div class="context-node-detail">State which AI use-case archetype(s) the evidence points to and why, and the boundary of the Move.</div></div></div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>The curated outline — every section heading and its guidance</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th class="num">#</th><th>Section heading</th><th>Curated guidance</th></tr></thead><tbody><tr><td class="num">1</td><td><strong>Contract and population portfolio</strong></td><td>Name the VBC contracts in scope, their risk tracks, benchmarks, attribution rules, quality gates, and the share of revenue under risk. State which payer and CMS feeds are available.</td></tr><tr><td class="num">2</td><td><strong>Baseline economics against the operating metrics</strong></td><td>Report the current value for each operating metric — MLR, shared-savings rate, RAF accuracy, quality composite, PMPM trend, leakage, attribution stability. For any metric not recorded, name it as a precise seed gap with its data source.</td></tr><tr><td class="num">3</td><td><strong>Diagnosed pain themes</strong></td><td>Walk the function pain themes — RAF under-capture, mismatched contract risk, fragmented population view, quality drag, leakage, stratification lag, FFS conflict, coding overreach — and state which are present, with detection signal and evidence.</td></tr><tr><td class="num">4</td><td><strong>Value-at-stake hypothesis</strong></td><td>Frame the opportunity from the value-model benchmark ranges — separating cost-trend savings, RAF accuracy, and quality protection — haircut by contract structure, attribution stability, and data readiness. Every figure a labelled planning range.</td></tr><tr><td class="num">5</td><td><strong>Evidence gaps and asks</strong></td><td>List the specific data the diagnosis still needs, who owns each source, and what each gap blocks. A missing metric is a named ask.</td></tr><tr><td class="num">6</td><td><strong>Recommended Move framing</strong></td><td>State which AI use-case archetype(s) the evidence points to and why, and the boundary of the Move.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The artifact’s table of contents is inherited from the curated Function Pack — the agent does not improvise the Discover structure.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the brief follows the curated, function-calibrated structure.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Domain Function Pack (curated)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence High · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Each curated section is answered against the Move’s data</span></div></div></div></section><section class="slide" id="current-state-baseline" data-slide="4" aria-label="Current-state baseline"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Current-state baseline</span></div><div class="slide-rule-r">Slide 4 / 7</div></div><div class="slide-eyebrow">Section 3 · Current-state baseline</div><h2 class="slide-headline">Baseline coverage is 33% — 4 metrics measured and sourced, 8 declared seed gaps, none guessed.</h2><div class="slide-stage"><p class="slide-lede">Baseline coverage is 33% — 4 metrics are measured, sourced and dated; 8 are declared seed gaps. Every recorded metric carries a source and a confidence; no missing metric is left blank.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 3 — Baseline coverage: recorded against seed gaps</figcaption><div class="hero-frame"><svg viewBox="0 0 720 240" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Baseline coverage meter" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Baseline coverage meter</title><rect x="0" y="0" width="720" height="240" fill="#ffffff"/><circle cx="150" cy="120" r="78" fill="none" stroke="#f4ddd6" stroke-width="24"/><circle cx="150" cy="120" r="78" fill="none" stroke="#0b4a91" stroke-width="24" stroke-linecap="butt" stroke-dasharray="163.36 326.73" transform="rotate(-90 150 120)"/><text x="150" y="118" font-size="38" font-weight="800" fill="#070707" text-anchor="middle">33%</text><text x="150" y="140" font-size="9" font-weight="700" fill="#5b5852" text-anchor="middle" letter-spacing="0.5">BASELINE COVERAGE</text><text x="300" y="56" font-size="9" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.5">OF THE METRICS THIS MOVE NEEDS</text><rect x="300" y="74" width="13" height="13" fill="#0b4a91" rx="2"/><text x="322" y="85" font-size="14" font-weight="800" fill="#070707" text-anchor="start">4 recorded</text><text x="322" y="101" font-size="10" font-weight="600" fill="#5b5852" text-anchor="start">Measured · sourced · dated</text><rect x="300" y="120" width="13" height="13" fill="#8B1F0F" rx="2"/><text x="322" y="131" font-size="14" font-weight="800" fill="#8B1F0F" text-anchor="start">8 declared seed gaps</text><text x="322" y="147" font-size="10" font-weight="600" fill="#5b5852" text-anchor="start">Never blank · never invented</text><rect x="300" y="168" width="396" height="34" fill="#f3f0e9" rx="3"/><rect x="300" y="168" width="3" height="34" fill="#7A4F01"/><text x="314" y="189" font-size="11" font-weight="800" fill="#7A4F01" text-anchor="start">Weakest recorded confidence — medium</text></svg></div><p class="hero-note">The recorded arc is the share of the metrics this Move needs that are actually measured; the remainder are declared seed gaps.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Metric source table — every recorded metric and every seed gap</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Metric</th><th class="num">Value</th><th>Source</th><th class="num">As of</th><th class="num">Confidence</th></tr></thead><tbody><tr><td>Medical loss ratio (MLR)</td><td class="num">120 percent</td><td>Plan settlement (individual block, 2024)</td><td class="num">2025-12-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>RAF score capture / accuracy</td><td class="num">88 captured RAF as % of expected</td><td>Risk-adjustment submission reconciliation</td><td class="num">2025-12-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Quality composite / Star rating</td><td class="num">3 CMS Star rating (1-5)</td><td>CMS 2026 Star ratings</td><td class="num">2025-10-01</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Preventable hospitalisation rate</td><td class="num">58 admissions per 1,000 members per year</td><td>Payer claims, preventable-condition set</td><td class="num">2025-12-31</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr class="row-proxy"><td>Shared-savings achievement rate <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Shared-savings achievement rate&quot; is not recorded — this function expects it; it is sourced from CMS or payer benchmark-and-settlement report for the contract.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>Attribution stability / retention <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Attribution stability / retention&quot; is not recorded — this function expects it; it is sourced from Period-over-period payer attribution files.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>Per-member-per-month cost trend <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Per-member-per-month cost trend&quot; is not recorded — this function expects it; it is sourced from Payer claims feed, risk-normalised, compared period over period.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>In-network (leakage) utilisation rate <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;In-network (leakage) utilisation rate&quot; is not recorded — this function expects it; it is sourced from Claims feed classified against the network and preferred-provider directory.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>Annual wellness visit completion rate <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Annual wellness visit completion rate&quot; is not recorded — this function expects it; it is sourced from EHR scheduling and encounter data reconciled against claims.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>Cost concentration in the top risk tier <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Cost concentration in the top risk tier&quot; is not recorded — this function expects it; it is sourced from Claims feed analysed by the risk-stratification model output.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>High-value specialist referral rate <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;High-value specialist referral rate&quot; is not recorded — this function expects it; it is sourced from EHR referral orders and claims, classified against a specialist cost-and-quality profile.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td>Revenue under value-based / risk contracts <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">&quot;Revenue under value-based / risk contracts&quot; is not recorded — this function expects it; it is sourced from Finance contract-mix reporting reconciled against payer contracts.; its absence blocks the baseline and the value forecast.</td><td class="num"><span class="chip chip-bad">none</span></td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The recorded metrics are decision-grade; the seed gaps are the declared limits of what Discover can claim today.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the baseline is real enough to reason from.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the seed-gapped metrics before Charter sizing</span></div></div></div></section><section class="slide" id="pain-and-opportunity" data-slide="5" aria-label="Pain and opportunity"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Pain and opportunity</span></div><div class="slide-rule-r">Slide 5 / 7</div></div><div class="slide-eyebrow">Section 4 · Pain and opportunity</div><h2 class="slide-headline">There is real value here — but it can only be stated directionally until the monetisation inputs land.</h2><div class="slide-stage"><p class="slide-lede">The pain themes below are the curated failure modes the kernel tracks for this function. The value is genuine — but with the monetisation inputs missing it can only be stated directionally, never as a dollar figure.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 4 — Opportunity read: directional only</figcaption><div class="hero-frame"><svg viewBox="0 0 720 210" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Opportunity range" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Opportunity range</title><rect x="0" y="0" width="720" height="210" fill="#ffffff"/><defs><pattern id="dirhatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="7" stroke="#7A4F01" stroke-width="2.4"/></pattern></defs><text x="28" y="34" font-size="10" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.5">VALUE AT STAKE — LOW TO HIGH</text><text x="692" y="34" font-size="10" font-weight="800" fill="#7A4F01" text-anchor="end" letter-spacing="0.4">DIRECTIONAL ONLY</text><rect x="147.51999999999998" y="78" width="424.96000000000004" height="40" fill="url(#dirhatch)" stroke="#7A4F01" stroke-width="1.25" rx="3"/><line x1="147.51999999999998" y1="70" x2="147.51999999999998" y2="126" stroke="#070707" stroke-width="1.5"/><text x="147.51999999999998" y="142" font-size="10" font-weight="800" fill="#070707" text-anchor="middle">Conservative</text><line x1="572.48" y1="70" x2="572.48" y2="126" stroke="#070707" stroke-width="1.5"/><text x="572.48" y="142" font-size="10" font-weight="800" fill="#070707" text-anchor="middle">Upside</text><path d="M 333.44 74 L 342.44 98 L 333.44 122 L 324.44 98 Z" fill="#070707"/><text x="333.44" y="66" font-size="10" font-weight="800" fill="#070707" text-anchor="middle">Base direction</text><rect x="28" y="164" width="664" height="34" fill="#f7ecd6" stroke="#7A4F01" stroke-width="1" rx="3"/><text x="40" y="185" font-size="10" font-weight="700" fill="#7A4F01" text-anchor="start">Caveat — The monetisation inputs for this function are declared seed gaps — no dollar value is shown; the opportunity is directional only.</text></svg></div><p class="hero-note">The band has no dollar axis — it is a directional read of where value is likely to sit, not a sized estimate.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Pain themes and the constraints that bound the solution space</span></summary><div class="slide-detail-body"><div class="pain-cards"><div class="pain-card"><div class="pain-theme">It is assumed the Move design addresses the &quot;RAF under-ca…</div><div class="pain-detail">It is assumed the Move design addresses the &quot;RAF under-capture&quot; failure mode — The population’s documented and coded conditions understate its true clinical burden. Risk-adjusted revenue and the contract benchmark are set too low, and the organisation is judged against a popula… Detection signal: Captured RAF sits well below expected RAF given the population’s claims-evident disease burden; documented conditions are not coded consist…</div></div><div class="pain-card"><div class="pain-theme">It is assumed the Move design addresses the &quot;Mismatched c…</div><div class="pain-detail">It is assumed the Move design addresses the &quot;Mismatched contract risk&quot; failure mode — The organisation has entered a contract whose risk track, benchmark, or attribution rule does not match its operational maturity — taking downside risk before the care-management operation can move c… Detection signal: Downside-risk contracts are held by an organisation with immature care management, or strong care-management performance sits under upside-…</div></div></div><div class="mini-key mini-key-block">Known constraints</div><ul class="mini-list"><li>Downside net value (5.17) is below conservative effort (8447833.32) — in the pessimistic case the Move does not pay back. The CFO will ask what protects the floor.</li><li>3 of the top-3 case-moving assumptions stand in for absent tenant data (baseline_coverage_gap, haircut_0_contract_structure_and_benchmark, haircut_1_attribution_stability). Validating these is the highest-leverage next step.</li><li>The effort and cost are a planning range derived from the Function Pack archetypes and a researched benchmark rate card — not a quote; a client-specific estimate is required before funding.</li><li>The 8 open seed gaps bound how a pilot can be scoped — the solution space narrows until the named metrics land.</li></ul><div class="mini-key mini-key-block">Opportunity statement</div><p class="mini-para">The opportunity for AI-Enabled Population Health &amp; Clinical Performance Command Center rests on the Function Pack’s curated value benchmarks — labelled planning ranges, not this tenant’s own measured economics. Until the seed-gapped monetisation metrics close, the kernel honestly carries the opportunity as a directional read, never a claimable dollar figure.</p></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">A directional opportunity is enough to justify a shaping Charter — it is not enough to justify build funding.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the opportunity is worth shaping, and how honestly it can be expressed.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Low · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the monetisation seed gaps before Charter sizing</span></div></div></div></section><section class="slide" id="evidence-gaps" data-slide="6" aria-label="Evidence gaps"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Evidence gaps</span></div><div class="slide-rule-r">Slide 6 / 7</div></div><div class="slide-eyebrow">Section 5 · Evidence gaps</div><h2 class="slide-headline">8 expected operating metrics are an open seed gap — closing them is the work that turns this Discover into a fundable Charter.</h2><div class="slide-stage"><p class="slide-lede">8 expected operating metrics are an open seed gap. Closing them is the work that converts this Discover into a fundable Charter case — each gap below is named with its source.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 5 — Gap-closure queue: open seed gaps by decision impact</figcaption><div class="hero-frame"><svg viewBox="0 0 860 588" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Gap closure queue" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Gap closure queue</title><rect x="0" y="0" width="860" height="588" fill="#ffffff"/><text x="238" y="24" font-size="9" font-weight="800" fill="#5b5852" text-anchor="end" letter-spacing="0.4">OPEN EVIDENCE GAP</text><text x="250" y="24" font-size="9" font-weight="600" fill="#5b5852" text-anchor="start">Decision impact — widest is the next ask</text><line x1="250" y1="32" x2="250" y2="570" stroke="#070707" stroke-width="1.5"/><circle cx="26" cy="75" r="13" fill="#070707"/><text x="26" y="79" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">1</text><text x="238" y="69.5" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Shared-savings</text><text x="238" y="80.5" font-size="10" font-weight="700" fill="#070707" text-anchor="end">achievement rate</text><rect x="250" y="62" width="364" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="62" width="364" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="622" y="73" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="622" y="86" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="141" r="13" fill="#070707"/><text x="26" y="145" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">2</text><text x="238" y="130" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Attribution</text><text x="238" y="141" font-size="10" font-weight="700" fill="#070707" text-anchor="end">stability /</text><text x="238" y="152" font-size="10" font-weight="700" fill="#070707" text-anchor="end">retention</text><rect x="250" y="128" width="320.32" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="128" width="320.32" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="578.3199999999999" y="139" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="578.3199999999999" y="152" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="207" r="13" fill="#070707"/><text x="26" y="211" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">3</text><text x="238" y="201.5" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Per-member-per-month</text><text x="238" y="212.5" font-size="10" font-weight="700" fill="#070707" text-anchor="end">cost trend</text><rect x="250" y="194" width="276.64" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="194" width="276.64" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="534.64" y="205" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="534.64" y="218" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="273" r="13" fill="#070707"/><text x="26" y="277" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">4</text><text x="238" y="262" font-size="10" font-weight="700" fill="#070707" text-anchor="end">In-network</text><text x="238" y="273" font-size="10" font-weight="700" fill="#070707" text-anchor="end">(leakage)</text><text x="238" y="284" font-size="10" font-weight="700" fill="#070707" text-anchor="end">utilisation rate</text><rect x="250" y="260" width="232.96" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="260" width="232.96" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="490.96000000000004" y="271" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="490.96000000000004" y="284" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="339" r="13" fill="#070707"/><text x="26" y="343" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">5</text><text x="238" y="328" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Annual wellness</text><text x="238" y="339" font-size="10" font-weight="700" fill="#070707" text-anchor="end">visit completion</text><text x="238" y="350" font-size="10" font-weight="700" fill="#070707" text-anchor="end">rate</text><rect x="250" y="326" width="189.28" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="326" width="189.28" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="447.28" y="337" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="447.28" y="350" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="405" r="13" fill="#070707"/><text x="26" y="409" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">6</text><text x="238" y="394" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Cost</text><text x="238" y="405" font-size="10" font-weight="700" fill="#070707" text-anchor="end">concentration in</text><text x="238" y="416" font-size="10" font-weight="700" fill="#070707" text-anchor="end">the top risk</text><rect x="250" y="392" width="145.6" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="392" width="145.6" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="403.6" y="403" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="403.6" y="416" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="471" r="13" fill="#070707"/><text x="26" y="475" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">7</text><text x="238" y="460" font-size="10" font-weight="700" fill="#070707" text-anchor="end">High-value</text><text x="238" y="471" font-size="10" font-weight="700" fill="#070707" text-anchor="end">specialist</text><text x="238" y="482" font-size="10" font-weight="700" fill="#070707" text-anchor="end">referral rate</text><rect x="250" y="458" width="101.92000000000002" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="458" width="101.92000000000002" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="359.92" y="469" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="359.92" y="482" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text><circle cx="26" cy="537" r="13" fill="#070707"/><text x="26" y="541" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">8</text><text x="238" y="526" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Revenue under</text><text x="238" y="537" font-size="10" font-weight="700" fill="#070707" text-anchor="end">value-based /</text><text x="238" y="548" font-size="10" font-weight="700" fill="#070707" text-anchor="end">risk contracts</text><rect x="250" y="524" width="72.8" height="26" fill="#f4ddd6" rx="2"/><rect x="250" y="524" width="72.8" height="26" fill="none" stroke="#8B1F0F" stroke-width="1.25" rx="2"/><text x="330.8" y="535" font-size="8" font-weight="800" fill="#8B1F0F" text-anchor="start" letter-spacing="0.3">BLOCKS SIZING</text><text x="330.8" y="548" font-size="8.5" font-weight="600" fill="#5b5852" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>Move sponsor — TBC with tenant · due Before the Charter gate</text></svg></div><p class="hero-note">The queue is sorted by decision impact — the widest bar is the next evidence ask. Every gap is a curated, expected metric.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Evidence request queue — each seed gap, why it is a gap, and its source</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Open evidence gap</th><th>Why it is a gap</th><th>Expected data source</th></tr></thead><tbody><tr class="row-proxy"><td>Shared-savings achievement rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Shared-savings achievement rate&quot; is not recorded — this function expects it; it is sourced from CMS or payer benchmark-and-settlement report for the contract.; its absence blocks the baseline and the value forecast.</td><td>CMS or payer benchmark-and-settlement report for the contract.</td></tr><tr class="row-proxy"><td>Attribution stability / retention <span class="chip chip-bad">Seed gap</span></td><td>&quot;Attribution stability / retention&quot; is not recorded — this function expects it; it is sourced from Period-over-period payer attribution files.; its absence blocks the baseline and the value forecast.</td><td>Period-over-period payer attribution files.</td></tr><tr class="row-proxy"><td>Per-member-per-month cost trend <span class="chip chip-bad">Seed gap</span></td><td>&quot;Per-member-per-month cost trend&quot; is not recorded — this function expects it; it is sourced from Payer claims feed, risk-normalised, compared period over period.; its absence blocks the baseline and the value forecast.</td><td>Payer claims feed, risk-normalised, compared period over period.</td></tr><tr class="row-proxy"><td>In-network (leakage) utilisation rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;In-network (leakage) utilisation rate&quot; is not recorded — this function expects it; it is sourced from Claims feed classified against the network and preferred-provider directory.; its absence blocks the baseline and the value forecast.</td><td>Claims feed classified against the network and preferred-provider directory.</td></tr><tr class="row-proxy"><td>Annual wellness visit completion rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;Annual wellness visit completion rate&quot; is not recorded — this function expects it; it is sourced from EHR scheduling and encounter data reconciled against claims.; its absence blocks the baseline and the value forecast.</td><td>EHR scheduling and encounter data reconciled against claims.</td></tr><tr class="row-proxy"><td>Cost concentration in the top risk tier <span class="chip chip-bad">Seed gap</span></td><td>&quot;Cost concentration in the top risk tier&quot; is not recorded — this function expects it; it is sourced from Claims feed analysed by the risk-stratification model output.; its absence blocks the baseline and the value forecast.</td><td>Claims feed analysed by the risk-stratification model output.</td></tr><tr class="row-proxy"><td>High-value specialist referral rate <span class="chip chip-bad">Seed gap</span></td><td>&quot;High-value specialist referral rate&quot; is not recorded — this function expects it; it is sourced from EHR referral orders and claims, classified against a specialist cost-and-quality profile.; its absence blocks the baseline and the value forecast.</td><td>EHR referral orders and claims, classified against a specialist cost-and-quality profile.</td></tr><tr class="row-proxy"><td>Revenue under value-based / risk contracts <span class="chip chip-bad">Seed gap</span></td><td>&quot;Revenue under value-based / risk contracts&quot; is not recorded — this function expects it; it is sourced from Finance contract-mix reporting reconciled against payer contracts.; its absence blocks the baseline and the value forecast.</td><td>Finance contract-mix reporting reconciled against payer contracts.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">Every gap is named with its expected source; closing the seed gaps is the condition on the Charter gate.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm every gap is named with a source before Charter sizing.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-06-06 · confidence Blocked · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the seed gaps before Charter sizing</span></div></div></div></section><section class="slide" id="go-no-go-gate" data-slide="7" aria-label="Go/no-go gate"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">AI-Enabled Population Health &amp; Clinical Performance Command Center</span><span class="slide-sep">·</span><span>Go/no-go gate</span></div><div class="slide-rule-r">Slide 7 / 7</div></div><div class="slide-eyebrow">Section 6 · Go/no-go gate</div><h2 class="slide-headline">NO-GO — Discover cannot honestly advance this Move.</h2><div class="slide-stage"><div class="board-card verdict-kill"><div class="board-card-tag">Go/no-go verdict</div><div class="board-verdict">NO-GO — do not advance</div><p class="board-detail">Base-case net return is not positive — the Move does not pay back on current assumptions.</p><div class="verdict-explainer-chip" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:4px;background:#fdecea;color:#7a1b14;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;line-height:1.45;border:1px solid #f1c0bc;"><span style="font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">Why no-go?</span><span style="font-family:'DM Sans','Inter',system-ui,sans-serif;font-size:12px;line-height:1.45;">Seed gap blocks monetisation — value rests on a planning-range proxy until the missing unit economics are supplied.</span></div></div><figure class="hero"><figcaption class="hero-caption">Exhibit 6 — Kill checklist: the kernel kill criteria</figcaption><div class="hero-frame"><div class="checklist"><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Live</span></div><div class="check-body"><div class="check-detail">Net return is negative in the conservative case (-8447828.15). Kill or re-shape if the downside cannot be lifted above zero.</div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Live</span></div><div class="check-body"><div class="check-detail">The baseline seed gap that blocks monetisation is not closed before the gate — without it the return is unverifiable.</div></div></div><div class="check-row check-hold"><div class="check-mark"><span class="chip chip-bad">Live</span></div><div class="check-body"><div class="check-detail">Baseline coverage stays below acceptable level — 8 seed gap(s) remain unresolved at the gate.</div></div></div></div></div></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Fix conditions — what must become true before the Charter gate</span></summary><div class="slide-detail-body"><div class="mini-key mini-key-block mini-key-gap">Fix conditions — must be met before the Charter gate</div><ul class="mini-list"><li>Close the &quot;Shared-savings achievement rate&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;Attribution stability / retention&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;Per-member-per-month cost trend&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;In-network (leakage) utilisation rate&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;Annual wellness visit completion rate&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;Cost concentration in the top risk tier&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;High-value specialist referral rate&quot; seed gap — it gates honest sizing.</li><li>Close the &quot;Revenue under value-based / risk contracts&quot; seed gap — it gates honest sizing.</li><li>Value cannot be monetised to a hard dollar figure — the gross value range rests on a seed-gap proxy. The CFO will not approve a fabricated return; the case must close the baseline gap first.</li><li>8 baseline metric(s) are seed gaps (coverage 33%): Shared-savings achievement rate, Attribution stability / retention, Per-member-per-month cost trend, In-network (leakage) utilisation rate, Annual wellness visit completion rate, Cost concentration in the top risk tier, High-value specialist referral rate, Revenue under value-based / risk contracts. The case is grounded only on what is recorded.</li></ul></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">A kill criterion fired — the Move does not advance.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Decide whether to advance, reshape, or stop the Move now.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Move sponsor (to be confirmed with the tenant)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-06-06 · confidence Blocked · 8 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">No gate — the Move stops here</span></div></div></div></section></main></div><div class="deck-controls" aria-hidden="false"><button class="deck-btn" type="button" id="deck-prev" aria-label="Previous slide">‹ Prev</button><span class="deck-counter" id="deck-counter">1 / 7</span><button class="deck-btn" type="button" id="deck-next" aria-label="Next slide">Next ›</button></div><script>(function(){var total=7;var stage=document.getElementById('stage');var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));var items=Array.prototype.slice.call(document.querySelectorAll('.menu-item'));var cur=1;function show(n){if(n<1)n=1;if(n>total)n=total;cur=n;slides.forEach(function(s){var sn=parseInt(s.getAttribute('data-slide'),10);var on=sn===n;s.classList.toggle('is-active',on);if(on){s.removeAttribute('hidden');}else{s.setAttribute('hidden','');}});items.forEach(function(it){var gn=parseInt(it.getAttribute('data-goto'),10);if(gn===n){it.setAttribute('aria-current','true');}else{it.removeAttribute('aria-current');}});var active=items[n-1];if(active&&active.scrollIntoView){active.scrollIntoView({block:'nearest'});}if(stage){stage.scrollTop=0;}window.scrollTo(0,0);var c=document.getElementById('deck-counter');if(c){c.textContent=n+' / '+total;}}items.forEach(function(it){it.addEventListener('click',function(){show(parseInt(it.getAttribute('data-goto'),10));});});var prev=document.getElementById('deck-prev');var next=document.getElementById('deck-next');if(prev){prev.addEventListener('click',function(){show(cur-1);});}if(next){next.addEventListener('click',function(){show(cur+1);});}document.addEventListener('keydown',function(e){var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;if(e.key==='ArrowRight'||e.key==='PageDown'){show(cur+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){show(cur-1);e.preventDefault();}else if(e.key==='Home'){show(1);e.preventDefault();}else if(e.key==='End'){show(total);e.preventDefault();}});show(1);})();</script></body></html>

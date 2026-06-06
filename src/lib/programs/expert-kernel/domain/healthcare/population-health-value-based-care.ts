@@ -14,7 +14,6 @@
 // is a labelled planning range, never an asserted fact (spec §6 hard fail).
 
 import type { FunctionPack } from '../function-pack-types';
-import { CROSS_CUTTING_ARCHITECTURE_PATTERNS } from '../cross-cutting-architecture-patterns';
 
 export const populationHealthValueBasedCarePack: FunctionPack = {
   industryKey: 'healthcare-provider',
@@ -31,7 +30,7 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
     'program can be excellent and still lose money if this function entered ' +
     'the wrong contract, mis-modelled the risk, or under-captured the ' +
     'population’s acuity.',
-  version: '1.2.0',
+  version: '1.2.1',
   lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
@@ -728,15 +727,15 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'The quality officer accountable for the program quality score.',
       controlPosture: 'human-on-the-loop',
     },
-    // Cross-cutting technical reference patterns — the platform foundation
-    // every population-health Move rests on: landing zone & private data
-    // plane, metadata-driven own-it ingestion, medallion data products,
-    // governed model serving, and the Unity Catalog / HITRUST governance
-    // spine. Authored once in cross-cutting-architecture-patterns.ts and
-    // sourced from the Pattern Pack Bible (docs/build/pattern-packs/). This is
-    // what makes a generated Solution Architecture inherit a landing zone and
-    // an own-it ingestion framework instead of improvising them.
-    ...CROSS_CUTTING_ARCHITECTURE_PATTERNS,
+    // NOTE: the cross-cutting architecture foundation (landing zone, own-it
+    // ingestion, medallion, governed serving, HITRUST governance) is delivered
+    // through the solution_architecture deliverable outline (Layer 7) below —
+    // NOT spread into referenceSolutionPatterns. The architecture renderer
+    // treats referenceSolutionPatterns as a mutually-exclusive option set
+    // (selects the most human-accountable, rejects the rest), so foundation
+    // layers must not live here or they render as "rejected alternatives".
+    // The typed patterns live in cross-cutting-architecture-patterns.ts,
+    // sourced from the Pattern Pack Bible, awaiting a foundation-aware renderer.
   ],
 
   // ── Layer 5 — Value model ─────────────────────────────────────────────────
