@@ -66,10 +66,41 @@ export function applyPartialEvidencePolicy(text: string, sources: AskSource[]): 
 }
 
 export function enforceCxoSectionBreaks(text: string): string {
-  return text
+  const sectioned = text
     .replace(
       /([^\n])\s+(Evidence:|Decision fork:|Risk\s*\/\s*gate:|Risk\/gate:)/g,
       (_match, before: string, marker: string) => `${before}\n\n${normalizeCxoSectionMarker(marker)}`,
+    )
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  const paragraphBreaks = (sectioned.match(/\n\s*\n/g) ?? []).length;
+  if (sectioned.length < 900 || paragraphBreaks >= 2) return sectioned;
+
+  return sectioned
+    .replace(
+      /([^\n])\s+(What I can prove from evidence\b)/gi,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
+    )
+    .replace(
+      /([^\n])\s+(Why:\s+what['’]s proven vs not\b)/gi,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
+    )
+    .replace(
+      /([^\n])\s+(Proven\s+\(in loaded evidence\):)/gi,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
+    )
+    .replace(
+      /([^\n])\s+(Not yet proven\s+\(must be treated as gates\):)/gi,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
+    )
+    .replace(
+      /([^\n])\s+(Evidence checked:)/gi,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
+    )
+    .replace(
+      /([^\n])\s+(\d+\)\s+[A-Z][^:]{4,80})/g,
+      (_match, before: string, marker: string) => `${before}\n\n${marker}`,
     )
     .replace(/\n{3,}/g, '\n\n')
     .trim();

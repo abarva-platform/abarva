@@ -148,4 +148,24 @@ describe('Ask Intelligence response policy', () => {
       'Risk / gate: Do not advance until artifacts and approvals are stored for retrieval.',
     ].join('\n'));
   });
+
+  it('adds evidence-heading breaks for long CXO answers that still compress substructure', () => {
+    const text = [
+      'My read: In the loaded context, Meridian Health System is a synthetic/demo integrated health system tenant, modeled as a sizable multi-facility enterprise with a strong Epic-based clinical footprint, Azure Databricks as the target analytics platform, and an AI-enabled Population Health and Clinical Performance Command Center as the core frame.',
+      'Geography detail is not explicitly named in the evidence; what we can prove is scale, footprint shape, and technology posture.',
+      'The loaded domains include org decision rights, facilities/business units, CMDB applications and services, CI relationships and dependencies, vendors and contracts, renewal calendar, spend baseline, policies and procedures, incidents, problems, changes, SLAs, initiative portfolio, data domains, stewardship, and risk/compliance signals.',
+      'This breadth indicates an enterprise-scale health-system context layer rather than a small single-facility demo note.',
+      'What I can prove from evidence 1) Identity and geography signal Tenant 360 explicitly flags the synthetic/demo health-system tenant.',
+      '2) Scale and complexity Enterprise context proof: 3,503 records, 38,640 facts, 820 relationships, 3,503 evidence rows, 13 sources, and 0 open quality gaps.',
+      'This gives enough evidence for a controlled CDAO/CFO walkthrough, but it still should not be overstated as confidential PHS production data or realized operating performance.',
+      'Evidence checked: intake.tenant_context, selection_memo.decision_rationale, intake.question_scope, telemetry.answer_trace.',
+    ].join(' ');
+
+    const shaped = enforceCxoSectionBreaks(text);
+
+    expect((shaped.match(/\n\s*\n/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(shaped).toContain('\n\nWhat I can prove from evidence');
+    expect(shaped).toContain('\n\n2) Scale and complexity');
+    expect(shaped).toContain('\n\nEvidence checked:');
+  });
 });
