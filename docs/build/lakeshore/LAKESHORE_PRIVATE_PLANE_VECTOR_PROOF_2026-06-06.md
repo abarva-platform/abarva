@@ -95,7 +95,105 @@ Top returned hits:
 | App DB governed loader | Green | Commit-mode loader inserted 12 patterns and 26 edges; ingestion run recorded. |
 | Private job DB | Green for this wave | Private job applied additive schema alignment and loaded the 12-pattern wave. |
 | Azure AI Search | Green for this wave | Private-plane proof returned `count: 12` and Kyriba-ranked hits. |
-| Live product retrieval | Still must be proven | The app must visibly use these private/Search-backed patterns in Lakeshore Intelligence/Moves/Source/Tower flows. |
+| Live Intelligence answer proof | Green for the 12-question production smoke | Signed-in Surekha/Lakeshore run returned 12 pass, 0 watch, 0 fail. |
+| Full product retrieval | Still must be proven across every module | Moves, Source, Tower, and screenshot flows still need the same live proof standard. |
+
+## Signed-In Product Answer Proof
+
+After the private-plane Search proof, a signed-in production QA run was executed against `https://app.abarva.ai` as the Lakeshore user `surekha.durvasula@gmail.com`.
+
+Result:
+
+| Metric | Value |
+|---|---:|
+| Questions | 12 |
+| Pass | 12 |
+| Watch | 0 |
+| Fail | 0 |
+| Average score | 10.0 / 10 |
+
+The live prompts covered:
+
+- Kyriba claim boundaries.
+- Move 0 failure modes.
+- Source artifact truth.
+- AMS demo boundary.
+- Federated tenant posture.
+- Tower value separation.
+- Loaded-data truth.
+- Vector-store truth.
+- Intercompany governance.
+- AbarVa AI success platform loop.
+- Tenant-isolation adversarial behavior.
+- Production-readiness honesty.
+
+Evidence path:
+
+```text
+reports/lakeshore-live-intelligence-proof-post-private-vector/lakeshore-live-intelligence-proof-2026-06-06T12-18-34-992Z-5b9abb071/
+```
+
+## Signed-In Product Flow And Screenshot Proof
+
+A second signed-in production crawl was executed as the same Lakeshore user to prove visible product flow and capture screenshots for demo-video/documentation use.
+
+Result:
+
+| Area | Checks | Pass | Watch | Fail |
+|---|---:|---:|---:|---:|
+| Admin | 2 | 2 | 0 | 0 |
+| Setup | 3 | 3 | 0 | 0 |
+| Source | 14 | 14 | 0 | 0 |
+| Moves | 4 | 4 | 0 | 0 |
+| Tower | 1 | 1 | 0 | 0 |
+| Intelligence | 2 | 2 | 0 | 0 |
+| Total | 26 | 26 | 0 | 0 |
+
+Captured screenshots include:
+
+- Data Trust and Setup.
+- CXO Intel Loader index, CIO bundle, and CFO bundle.
+- Source portfolio, compare isolation, and Kyriba stages from Strategy through Value.
+- AMS evaluation-only boundary.
+- Moves list, Kyriba detail, Kyriba documents, and shared data spine detail.
+- Tower Source Portfolio Value.
+- Intelligence brief and Ask.
+
+Evidence path:
+
+```text
+reports/lakeshore-app-demo-readiness-post-vector/lakeshore-app-demo-readiness-2026-06-06T12-25-14-748Z-a94d862db/
+```
+
+## Tower / Atlas Federated Proof
+
+The Tower-specific QA run was also executed after vector activation. This validates the Tower routes, live Lakeshore DB counts, and Atlas responses for value separation, L0/L1 boundary posture, and Kyriba next-decision framing.
+
+Result:
+
+| Metric | Value |
+|---|---:|
+| Total checks | 10 |
+| Pass | 7 |
+| Watch | 3 |
+| Fail | 0 |
+| Live AI initiatives | 40 |
+| Live AI vendors | 10 |
+| Live engagements | 6 |
+| Live Source events | 2 |
+| Projected high value | $143.5M |
+| Verified realized value | $0 |
+
+Watch items:
+
+- Tenant tower aliases are watch-only route coverage items.
+- Legacy Tower synthesis route is tenant-safe and honest but does not yet synthesize Lakeshore DB portfolio instances.
+
+Evidence path:
+
+```text
+reports/lakeshore-tower-atlas-post-vector/lakeshore-tower-atlas-federated-qa-2026-06-06T12-29-02-022Z-895c01b3a/
+```
 
 ## Rerun Standard
 
@@ -125,8 +223,6 @@ This closes the private-plane vector activation gap. It does not by itself prove
 
 Remaining finish gates:
 
-1. Signed-in Lakeshore product routes must retrieve and cite this context.
-2. Agent answers must use the CXO response shape and evidence-gap discipline.
-3. Source/Moves/Tower screenshots must show persisted workflow artifacts, not just chat output.
-4. The 100-question CXO QA report must open cleanly from the HTML proof page.
-5. The MP4 and detailed HTML must label seeded/demo versus live-loader-backed proof.
+1. Tower synthesis should graduate the legacy route watch by using the Lakeshore DB portfolio instances directly.
+2. The MP4 and detailed HTML must label seeded/demo versus live-loader-backed proof.
+3. Corpus expansion remains last unless another live answer gap appears.
