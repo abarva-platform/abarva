@@ -168,7 +168,7 @@ const TENANTS: Record<string, TenantConfig> = {
   },
   meridian: {
     key: 'meridian',
-    clientId: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff',
+    clientId: '6e419b6e-950d-4d34-a4fc-06c3e451a6c4',
     tenantKey: 'meridian-health',
     datasetRoot: 'datasets/meridian-health-synthetic-v1',
     profileYaml: '00-profile/enterprise-profile.yaml',
