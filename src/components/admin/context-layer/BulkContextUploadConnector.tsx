@@ -287,13 +287,16 @@ export function BulkContextUploadConnector({
     const pollable = result?.workflow?.status?.pollable;
     if (!jobId || !pollable) return undefined;
 
+    const pollJobId = jobId;
     let cancelled = false;
     async function fetchStatus() {
       try {
+        const params = new URLSearchParams({
+          clientId,
+          jobId: pollJobId,
+        });
         const response = await fetch(
-          `/api/admin/context-layer/bulk-upload/status?clientId=${encodeURIComponent(
-            clientId,
-          )}&jobId=${encodeURIComponent(jobId)}`,
+          `/api/admin/context-layer/bulk-upload/status?${params.toString()}`,
           { cache: "no-store" },
         );
         const body = (await response.json()) as {
