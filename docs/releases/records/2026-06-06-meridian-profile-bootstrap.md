@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds the missing Meridian Health System synthetic enterprise profile file that the tenant substrate loader reads before inserting context chunks, applications, initiatives, and vendor contracts. Without this profile, the Azure/Postgres load cannot create or update the `clients` row, so every later Meridian insert fails on the `client_id` foreign key.
+Adds the missing Meridian synthetic healthcare enterprise profile file that the tenant substrate loader reads before inserting context chunks, applications, initiatives, and vendor contracts. Without this profile, the Azure/Postgres load cannot create or update the `clients` row, so every later Meridian insert fails on the `client_id` foreign key. The display name is intentionally neutralized as `Healthcare Composite Demo Tenant` so the live naming-policy guard treats it as synthetic demo data, not a real client or protected organization name.
 
 ## Layer Impact
 

@@ -1,8 +1,8 @@
 client_id: a20ecef5-f0ea-4890-b9d5-7375fab223ff
 client_key: meridian-health
 tenant_key: meridian-health
-name: Meridian Health System
-legal_name: Meridian Health System
+name: Healthcare Composite Demo Tenant
+legal_name: Healthcare Composite Demo Tenant
 industry: healthcare_provider
 revenue_usd: 11200000000
 employees: 52000
@@ -11,4 +11,4 @@ covered_lives: 1800000
 it_budget_usd: 1720000000
 modernization_spend_3yr_usd: 850000000
 strategic_posture: CDAO-led AI strategy and modernization planning across Azure, Databricks, Epic, clinical workflow, revenue integrity, interoperability, sourcing, and value realization.
-data_policy: De-identified synthetic healthcare tenant shaped by public health-system modernization patterns and AbarVa demo requirements; no confidential PHS data is included.
+data_policy: De-identified synthetic healthcare tenant shaped by public modernization patterns and AbarVa demo requirements; no confidential PHS data is included.
