@@ -65,11 +65,46 @@ cross-phase assembled book that links every deck.
 
 **Master Dossier**: Executive answer · Board memo · Decision timeline · Evidence & gap matrix · Solution & delivery model · Economics (waterfall/tornado/scenario/bridge) · Roadmap & 30/60/90 · Tower measurement · Downloads & signoff.
 
-## Layer 4 — Format standard
+## Layer 4 — Format standard & per-deliverable Format Matrix
 
-- **HTML**: self-contained (CSS inlined, exhibits inline SVG, no external assets); `?download=1` serves an attachment.
-- **PPTX**: editable 16:9; native text objects + rasterized SVG exhibits; **measured autofit** (wrap + dynamic font-step + per-shape capacity); a slide that overflows fails the gate rather than shipping.
-- **PDF**: via the HTML deck's print expansion.
+Format follows the deliverable's job, not a single default. Each deliverable has
+a **primary** format (what the buyer receives) and optional **also** formats.
+
+| Phase | Deliverable                | Primary           | Also           | Why                                                                         |
+| ----- | -------------------------- | ----------------- | -------------- | --------------------------------------------------------------------------- |
+| P0    | Originate Brief            | **PPTX**          | HTML           | board-facing decision-to-charter                                            |
+| P1    | Charter                    | **DOCX**          | PPTX           | a signed narrative agreement, not slides                                    |
+| P2    | Discover Brief             | **PPTX**          | HTML           | board read + HTML when they want the detail                                 |
+| P3    | Solution Architecture      | **HTML**          | PPTX (summary) | depth, density, and clarity are best in HTML for engineers who want details |
+| P4    | Costed Business Case       | **PPTX (always)** | —              | board artifact — always a deck                                              |
+| P4    | Estimate / Financial Model | **XLSX**          | HTML           | it is a model — numbers must be editable/auditable                          |
+| P4    | CFO Pack                   | **PPTX**          | XLSX           | CFO board read + the underlying model                                       |
+| P5    | Mobilize Packet (plan)     | **DOCX**          | PPTX           | a mobilization plan is a document                                           |
+| P5    | RACI / milestones          | **XLSX**          | —              | an editable matrix/grid                                                     |
+| P5    | Value-Measurement Contract | **DOCX**          | XLSX           | a contract document + its metric grid                                       |
+| X     | Master Move Dossier        | **PPTX**          | HTML           | the board book                                                              |
+
+Format rules:
+
+- **PPTX**: editable 16:9; native text objects + rasterized SVG exhibits;
+  **shrink-to-fit autofit** (`fit: 'shrink'`) so no text overruns its box — a
+  deck that drops autofit fails `pptx-autofit-gate`. Mandatory for board +
+  business case + master dossier.
+- **HTML**: self-contained (CSS inlined, exhibits inline SVG, no external
+  assets); `?download=1` serves an attachment. Canonical for architecture (the
+  density/detail surface) and the "also" detail view of any deck.
+- **XLSX**: editable workbook with an Assumptions tab, driver build-up,
+  scenario/sensitivity, and a Sources tab. Canonical for estimate/financial
+  models and RACI/milestone grids.
+- **DOCX**: structured narrative document (headings, action titles, tables).
+  Canonical for the charter, the mobilization plan, and the value-measurement
+  contract.
+- **PDF**: via the HTML deck's print expansion (read-only share).
+
+Build status: HTML exists for all 8 decks; PPTX exists for the Apex reference
+business case and (this increment) the generic Move costed business case;
+DOCX/XLSX generic-Move renderers and the remaining generic PPTX decks are
+tracked build increments.
 
 ## Client applicability
 

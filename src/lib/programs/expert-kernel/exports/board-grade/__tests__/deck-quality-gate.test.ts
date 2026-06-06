@@ -20,7 +20,7 @@ import {
   renderMoveCfoPackHtml,
   renderMoveMasterDossierHtml,
 } from "../index";
-import type { MoveBusinessCaseInput } from "../../../move-business-case";
+import type { MoveBusinessCaseInput } from "../../../../move-business-case";
 
 const GENERATED_ON = "2026-06-06";
 

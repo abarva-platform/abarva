@@ -65,6 +65,12 @@ guidance, which applies to all clients (all clients) but is non-breaking.
 - `src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts`: apply
   shrink-to-fit autofit (`fit: 'shrink'`) to prose boxes (fixes text-overrun);
   `__tests__/pptx-autofit-gate.test.ts` guards it; regenerated reference PPTX.
+- `src/lib/programs/expert-kernel/exports/board-grade/move-pptx-renderer.ts`:
+  new generic Move costed business-case PPTX (`renderMoveCostedBusinessCasePptx`,
+  the "always PPTX" board deliverable) — autofit, kernel-bound exhibits, honest
+  unbound; gated across healthcare/retail/banking + unbound.
+- `MOVES_DELIVERABLE_STANDARD.md`: per-deliverable Format Matrix (DOCX / XLSX /
+  HTML / PPTX by deliverable purpose).
 
 This change touches no pilot CONTEXT side-load path. New pilot/client context
 data must still enter through the Admin Data Loader (no side-load); ingestion
