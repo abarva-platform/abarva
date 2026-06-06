@@ -38,16 +38,20 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 | Storyboard header QA | `docs/build/lakeshore-success-brief/video-storyboard/header-logo-storyboard-v2.png` | Storyboard header/logo check after logo correction. |
 | Detailed reading HTML | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | Companion deep-reading artifact with Apple-style left navigation, correct AbarVa nav logo, detailed context/corpus/Kyriba/AI strategy sections, and embedded V3 video. |
 | Detailed reading desktop QA | `docs/build/lakeshore-success-brief/qa/lakeshore-detailed-reading-desktop.png` | Browser-rendered desktop screenshot; local QA found 0 horizontal overflow and verified the 248x56 nav logo asset loaded. |
-| Detailed MP4 V3 render | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V3.mp4` | Current detailed MP4: 9:53, 1600x900, H.264/AAC, no zoom, correct nav logo, product screenshots, expanded context graph, 90-day AI strategy, IT/data modernization, and regenerated OpenAI voiceover with AbarVa pronunciation guidance. |
+| Detailed MP4 V3 render | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_V3.mp4` | Current detailed MP4: 10:30, 1600x900, H.264/AAC, no zoom, correct nav logo, product screenshots, expanded context graph, 90-day AI strategy, IT/data modernization, captured-interaction QA proof, and regenerated OpenAI voiceover with AbarVa pronunciation guidance. |
 | Detailed MP4 V3 frame samples | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Sampled video frame sheet for V3 visual QA. V2 should be treated as superseded. |
+| CXO hard-question QA report | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/report.html` | 100 captured OpenAI-only Lakeshore hard-question answers with question pack, answer JSONL, scoring JSONL, issue counts, and HTML review report. |
+| CXO hard-question answer JSONL | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/answers.jsonl` | Captured answer payloads used by the QA report. |
+| Source/Kyriba live-route QA | `reports/2026-06-05-agent-a-source-kyriba-qa/AGENT_A_SOURCE_KYRIBA_QA_SUMMARY.md` | 26/26 live route checks plus API/export checks for the Lakeshore Kyriba Source event and artifacts. |
+| Moves evidence QA | `reports/2026-06-05-lakeshore-agent-b-moves-evidence/lakeshore-app-demo-readiness-2026-06-05T18-42-07-086Z-a879c5bc4/report.html` | Live app readiness evidence for Lakeshore Moves/Setup surfaces captured by Agent B. |
 | Desktop screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-desktop.png` | Rendered proof page. |
 | Mobile screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-mobile.png` | Rendered proof page. |
 
 Evidence basis:
 
-- Live production screenshot pack: 26/26 pass, 0 watch, 0 fail.
-- Final4 CXO hard-question QA: 100 questions, 88 pass, 12 watch, 0 fail.
-- Known watch themes are intentionally preserved: missing evidence reference and weaker finance depth in some answers.
+- Live Source/Kyriba route screenshot/API pack: 26/26 route checks pass, 7/7 API/export checks pass, 0 fail.
+- Lakeshore CXO hard-question QA: 100 questions, 60 pass, 40 watch, 0 fail, average score 4.53 / 5.
+- Known watch themes are intentionally preserved: sharper owner/action specificity, weaker finance depth in 7 answers, missing evidence reference in 3 answers, no next action in 3 answers, and 1 overclaim-completion warning.
 
 ## Meridian / PHS Proof Packet
 

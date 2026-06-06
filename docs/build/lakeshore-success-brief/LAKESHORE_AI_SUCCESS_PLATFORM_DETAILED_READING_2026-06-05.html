@@ -265,6 +265,63 @@
       background: #fff;
       box-shadow: var(--shadow);
     }
+    .qa-summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .qa-metric {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .qa-metric strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+    }
+    .qa-card {
+      margin-top: 14px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--teal);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .qa-card.watch { border-left-color: var(--gold); }
+    .qa-card h3 {
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size: 19px;
+      line-height: 1.25;
+    }
+    .qa-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 820;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .qa-answer {
+      margin-top: 10px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .qa-answer b { color: var(--ink); }
+    .qa-card details { margin-top: 10px; }
+    .qa-card summary { cursor: pointer; font-weight: 850; }
+    .link-button {
+      display: inline-flex;
+      margin-top: 18px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #fff;
+      background: #0f172a;
+      font-size: 13px;
+      font-weight: 900;
+    }
     footer {
       padding: 34px 0 0;
       color: var(--muted);
@@ -299,6 +356,7 @@
         <a href="#modernization">IT/Data Modernization</a>
         <a href="#value">Value Case</a>
         <a href="#product">Product Proof</a>
+        <a href="#qa">Captured Q&A Proof</a>
         <a href="#roadmap">Six-Month Roadmap</a>
         <a href="#video">Video Companion</a>
       </nav>
@@ -481,6 +539,62 @@
           <img src="assets/05-tower-source-value.png" alt="Tower Source value screenshot" />
           <div class="caption">Product proof: Tower should roll up the value story without mixing forecast, approved, negotiated, and realized proof.</div>
         </div>
+      </section>
+
+      <section id="qa">
+        <span class="kicker">Captured Q&A Proof</span>
+        <h2>The hard-question pack shows how context and patterns change answer quality.</h2>
+        <p>
+          The HTML can carry the detailed proof that would make the MP4 too dense: actual CXO questions, captured agent answers, evidence references, scores, and issues. This is the clearest way to show that AbarVa is not raw Claude with a nicer skin. The model is being forced through Lakeshore context, treasury doctrine, evidence boundaries, tenant scope, and workflow action.
+        </p>
+        <div class="qa-summary">
+          <div class="qa-metric"><strong>100</strong><span>hard questions</span></div>
+          <div class="qa-metric"><strong>60</strong><span>pass</span></div>
+          <div class="qa-metric"><strong>40</strong><span>watch</span></div>
+          <div class="qa-metric"><strong>0</strong><span>hard fail</span></div>
+          <div class="qa-metric"><strong>4.53</strong><span>average / 5</span></div>
+        </div>
+        <div class="grid three">
+          <div class="card blue"><h3>Context effect</h3><p>The answer knows what is loaded, what is synthetic, what remains in review, and what value cannot be claimed yet.</p></div>
+          <div class="card teal"><h3>Pattern effect</h3><p>Treasury and Kyriba doctrine turns broad advice into rollout gates: banks, feeds, entities, history, adoption, and IC controls.</p></div>
+          <div class="card gold"><h3>Workflow effect</h3><p>The answer points to an artifact, owner, Source event, Move gate, or evidence gap instead of ending as chat text.</p></div>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-001 · CFO · finance / treasury · PASS</div>
+          <h3>If Kyriba is not live yet, what exactly can Lakeshore claim today without overstating value?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests honesty. AbarVa should say the rollout is artifact-backed and in progress, while refusing to imply live production or realized savings.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent correctly separates approved Strategy-through-BAFO artifacts from Executive Decision, Selection, Transition, and Value items still in review. It also flags that full setup/admin approval ledger rows are not complete and that realized savings should not be claimed yet.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-005 · Audit Committee · value proof · PASS</div>
+          <h3>What would make the Kyriba value ledger audit-defensible versus a consulting estimate?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests whether AbarVa can protect the CFO from inflated value claims.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent ties value claims to concrete artifacts: business case, financial KPI workbook, integration pathways, conservative estimates, documented decision process, and final executive-decision artifacts.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-008 · CFO · board value language · PASS</div>
+          <h3>How should the board distinguish projected, committed, measuring, and realized Kyriba value?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It tests the difference between a sales story and finance-grade governance.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The answer creates separate definitions for projected, committed, measuring, and realized value, then assigns CFO ownership and quarterly reporting as the decision rhythm.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-013 · Controller · ERP feed risk · WATCH</div>
+          <h3>What ERP feed defects would break Kyriba reconciliation even if the treasury tool is configured correctly?</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It shows why Kyriba success is an operating-data problem, not just configuration.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The agent names GL/AP/AR defects, data completeness, variance above target, and manual intercompany eliminations. This is useful, but it belongs in watch until the owner/action specificity is sharper.</p></details>
+        </div>
+        <div class="qa-card">
+          <div class="qa-meta">LSH-CXO-021 · CFO · Source event truth · PASS</div>
+          <h3>Show the current Source truth for LSH-KYRIBA-TREASURY-2026 by stage, including what remains in review.</h3>
+          <p class="qa-answer"><b>Why this matters:</b> It proves the agent can distinguish stage truth, artifact truth, and review status.</p>
+          <details open><summary>Captured answer excerpt</summary><p>The answer identifies Executive Decision as current and still under review, while Selection, Transition, and Value are artifact-backed continuity proof but not complete decisions.</p></details>
+        </div>
+        <div class="qa-card watch">
+          <div class="qa-meta">Issue taxonomy · training loop</div>
+          <h3>The watch items are not a weakness to hide; they are the training agenda.</h3>
+          <p class="qa-answer">The main watch themes were missing owner specificity, weaker finance depth in 7 answers, missing evidence references in 3 answers, no next action in 3 answers, and one overclaim warning. That is exactly why the corpus should remain editable and why QA should feed back into prompts, patterns, and workflow rules.</p>
+        </div>
+        <a class="link-button" href="../../../reports/2026-06-05-lakeshore-cxo-hard-question-qa/report.html">Open full 100-question QA report</a>
       </section>
 
       <section id="roadmap">

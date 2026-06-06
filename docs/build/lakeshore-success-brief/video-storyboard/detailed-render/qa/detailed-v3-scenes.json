@@ -139,20 +139,26 @@
   },
   {
     "scene": "21",
-    "title": "Claude can reason. AbarVa governs the operating frame.",
-    "plate": "detailed-render/plates/21-why-not-raw-claude.png",
-    "narration": "Claude can reason. Abarva governs what Claude can see, cite, create, and persist. That is the buyer proof. The answer is shaped by Lakeshore context, role and persona, corpus doctrine, evidence gaps, tenant boundaries, and the workflow artifact that follows from the recommendation."
+    "title": "The answers improve because the agent has operating memory.",
+    "plate": "detailed-render/plates/21-captured-interactions.png",
+    "narration": "The most interesting proof is the interaction quality. A raw model can produce plausible treasury advice. Abarva answers inside a governed frame: what Lakeshore context is loaded, which Kyriba artifact is still in review, what evidence reference supports the answer, what value claim is not yet realized, and what workflow action should follow. The current hard-question pack captured one hundred answers: sixty pass, forty watch, zero fail. The watch items are useful because they show exactly where owner specificity, finance depth, or evidence references should be improved next."
   },
   {
     "scene": "22",
-    "title": "The engagement should build durable capability.",
-    "plate": "detailed-render/plates/22-six-month-roadmap.png",
-    "narration": "The six-month roadmap should not end with a one-month sales push. Month one loads and validates context. Month two promotes editable corpus doctrine. Month three runs Kyriba and treasury gates. Month four launches Source value events. Month five moves opportunities through execution. Month six publishes the board-ready value ledger, corpus coverage, operating model, and renewal case."
+    "title": "Claude can reason. AbarVa governs the operating frame.",
+    "plate": "detailed-render/plates/22-why-not-raw-claude.png",
+    "narration": "Claude can reason. Abarva governs what Claude can see, cite, create, and persist. That is the buyer proof. The answer is shaped by Lakeshore context, role and persona, corpus doctrine, evidence gaps, tenant boundaries, and the workflow artifact that follows from the recommendation."
   },
   {
     "scene": "23",
+    "title": "The engagement should build durable capability.",
+    "plate": "detailed-render/plates/23-six-month-roadmap.png",
+    "narration": "The six-month roadmap should not end with a one-month sales push. Month one loads and validates context. Month two promotes editable corpus doctrine. Month three runs Kyriba and treasury gates. Month four launches Source value events. Month five moves opportunities through execution. Month six publishes the board-ready value ledger, corpus coverage, operating model, and renewal case."
+  },
+  {
+    "scene": "24",
     "title": "What a real win looks like.",
-    "plate": "detailed-render/plates/23-success-standard.png",
+    "plate": "detailed-render/plates/24-success-standard.png",
     "narration": "The success standard is practical. Lakeshore can see what is loaded, what is missing, what decision is next, who owns it, what evidence supports it, what artifact gets created, and how value will be proven. That is the difference between AI theater and an AI success platform."
   }
 ]

@@ -57,6 +57,12 @@ const scenes = [
     narration:
       "We should orient Lakeshore like an operating-company portfolio, not a financial abstraction. The modeled Northshore profile covers supply chain and logistics, brand services, consumer products, and workplace convenience services. These businesses make money through margin, programs, route density, service quality, and customer depth.",
     bullets: ["Supply chain", "Brand services", "Consumer products", "Workplace services"],
+    bulletBodies: [
+      "Program margin, sourcing spread, inventory turns, freight discipline.",
+      "Fees, fulfillment margin, analytics, renewal scope control.",
+      "Retail/DTC margin, promotion ROI, turns, return-rate control.",
+      "Route density, uptime, cash capture, labor productivity.",
+    ],
     highlight: "Money is made in operations, not in a slide.",
     camera: { x: 800, y: 450, zoom: 1.0 },
   },
@@ -115,11 +121,12 @@ const scenes = [
     id: "06A",
     eyebrow: "Product proof",
     title: "Context becomes workflow in the app.",
-    subtitle: "The demo should show Setup, Intelligence, Moves, Source, and Tower creating persisted artifacts, not just attractive answers.",
+    subtitle: "Every answer should land somewhere: a gate, artifact, owner, Source event, or value-ledger entry.",
     narration:
       "This is where Abarva separates from direct model access. Setup loads client context. Intelligence answers with evidence gaps. Moves turns recommendations into gates and artifacts. Source turns insight into buying and vendor decisions. Tower proves the portfolio story across value, risk, and execution state.",
-    screenshot: "../assets/02-moves-kyriba-detail.png",
-    callouts: ["Live Move workspace", "Stage gates and evidence", "Next action is persisted"],
+    screenshot: "../assets/03-moves-kyriba-documents.png",
+    workflowProof: true,
+    callouts: ["Context loaded", "Evidence gap named", "Move gate created", "Artifact persisted", "Tower proof updated"],
     highlight: "The product proof is workflow plus evidence, not chat output.",
     camera: { x: 800, y: 450, zoom: 1.0 },
   },
@@ -290,6 +297,14 @@ const scenes = [
     narration:
       "Abarva should turn context-layer insights into Source events. Bank consolidation when connectivity blocks Kyriba. SI scope control when implementation risk rises. Vendor leverage when multiple platforms buy the same services separately. Audit, advisory, cyber insurance, and software renewals all become governed decision paths with artifacts.",
     bullets: ["Banking consolidation", "Kyriba SI scope control", "Microsoft / software leverage", "Audit and advisory rationalization", "Cyber insurance consolidation", "Renewal optimization"],
+    bulletBodies: [
+      "Reduce bank sprawl, improve H2H readiness, compress fees.",
+      "Control integration scope, acceptance criteria, change orders.",
+      "Unify entitlements, renewals, utilization, enterprise terms.",
+      "Benchmark fees, standardize scope, rationalize advisors.",
+      "Reduce concentration risk while improving coverage evidence.",
+      "Turn renewal calendar into negotiated savings and risk control.",
+    ],
     highlight: "Source turns intelligence into buying power.",
     camera: { x: 800, y: 500, zoom: 1.12 },
   },
@@ -297,17 +312,34 @@ const scenes = [
     id: "20",
     eyebrow: "Product proof flow",
     title: "The app must show the actual work.",
-    subtitle: "Setup loads the context. Intelligence answers with evidence gaps. Moves owns execution. Source creates decision artifacts. Tower proves the portfolio story.",
+    subtitle: "The buyer should see the chain from loaded context to answer, artifact, decision, and proof.",
     narration:
       "The demo needs to show the work, not just the answer. Setup loads the Lakeshore context. Intelligence explains what is known and missing. Moves runs the Kyriba readiness gates. Source creates commercial decision artifacts. Tower shows the value ledger and risk concentrations without mixing forecast with realized proof.",
-    screenshot: "../assets/05-tower-source-value.png",
-    callouts: ["Value ledger", "Portfolio source events", "Board-ready proof"],
+    screenshot: "../assets/10-source-decision-artifacts-focus.png",
+    workProof: true,
+    callouts: ["Context", "Answer", "Artifact", "Decision", "Proof"],
     flow: ["Setup", "Intelligence", "Moves", "Source", "Tower", "Board pack"],
     highlight: "Abarva is persisted workflow, not a nicer chat window.",
     camera: { x: 820, y: 470, zoom: 1.1 },
   },
   {
     id: "21",
+    eyebrow: "Captured interactions",
+    title: "The answers improve because the agent has operating memory.",
+    subtitle: "The proof pack captured 100 hard questions with answers, evidence references, scores, and issue taxonomy.",
+    narration:
+      "The most interesting proof is the interaction quality. A raw model can produce plausible treasury advice. Abarva answers inside a governed frame: what Lakeshore context is loaded, which Kyriba artifact is still in review, what evidence reference supports the answer, what value claim is not yet realized, and what workflow action should follow. The current hard-question pack captured one hundred answers: sixty pass, forty watch, zero fail. The watch items are useful because they show exactly where owner specificity, finance depth, or evidence references should be improved next.",
+    stats: [
+      ["100", "captured CXO hard questions"],
+      ["60", "pass"],
+      ["40", "watch items to improve"],
+      ["0", "hard fails"],
+    ],
+    highlight: "The QA pack turns answer quality into an improvable operating system.",
+    camera: { x: 800, y: 450, zoom: 1.0 },
+  },
+  {
+    id: "22",
     eyebrow: "Why not raw Claude",
     title: "Claude can reason. AbarVa governs the operating frame.",
     subtitle: "Client context, corpus patterns, role/persona framing, evidence gaps, tenant boundaries, and persisted artifacts.",
@@ -318,7 +350,7 @@ const scenes = [
     camera: { x: 820, y: 500, zoom: 1.12 },
   },
   {
-    id: "22",
+    id: "23",
     eyebrow: "Six-month roadmap",
     title: "The engagement should build durable capability.",
     subtitle: "Month by month: context, corpus, treasury proof, Source value events, execution rhythm, and board-ready renewal case.",
@@ -329,7 +361,7 @@ const scenes = [
     camera: { x: 800, y: 480, zoom: 1.1 },
   },
   {
-    id: "23",
+    id: "24",
     eyebrow: "Success standard",
     title: "What a real win looks like.",
     subtitle: "Lakeshore should be able to decide faster, execute cleaner, reduce failure risk, and prove value with evidence.",
@@ -431,11 +463,12 @@ function logo() {
 }
 
 function card(x, y, w, h, title, body, accent = COLORS.blue) {
+  const compact = h <= 110;
   return `
     <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="#fff" stroke="${COLORS.line}" />
     <rect x="${x}" y="${y}" width="7" height="${h}" rx="4" fill="${accent}" />
-    ${textBlock(title, x + 24, y + 36, { size: 23, lineHeight: 27, weight: 850, fill: COLORS.ink, maxChars: Math.max(14, Math.floor((w - 48) / 12)), maxLines: 2 })}
-    ${textBlock(body, x + 24, y + 83, { size: 18, maxChars: Math.floor((w - 50) / 10), maxLines: 3, fill: COLORS.muted })}
+    ${textBlock(title, x + 24, y + 36, { size: compact ? 21 : 23, lineHeight: compact ? 24 : 27, weight: 850, fill: COLORS.ink, maxChars: Math.max(14, Math.floor((w - 48) / 12)), maxLines: 2 })}
+    ${textBlock(body, x + 24, y + (compact ? 75 : 83), { size: compact ? 15 : 18, lineHeight: compact ? 18 : 22, maxChars: Math.floor((w - 50) / (compact ? 8.3 : 10)), maxLines: compact ? 2 : 3, fill: COLORS.muted })}
   `;
 }
 
@@ -453,6 +486,21 @@ function imagePanel(scene, x, y, w, h, src, title, body) {
     <rect x="${x}" y="${y + h - 88}" width="${w}" height="88" fill="rgba(15,23,42,.88)" clip-path="url(#${id})"/>
     <text x="${x + 24}" y="${y + h - 51}" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="900" fill="#fff">${esc(title)}</text>
     ${textBlock(body, x + 24, y + h - 24, { size: 15, lineHeight: 19, weight: 650, fill: "rgba(255,255,255,.84)", maxChars: Math.floor((w - 48) / 8), maxLines: 2 })}
+  `;
+}
+
+function plainImagePanel(scene, x, y, w, h, src, title, fit = "meet") {
+  const id = `plain-clip-${scene.id.replace(/[^a-zA-Z0-9]/g, "-")}-${Math.round(x)}-${Math.round(y)}`;
+  const image = imageDataUri(src);
+  return `
+    <defs>
+      <clipPath id="${id}">
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18"/>
+      </clipPath>
+    </defs>
+    <rect x="${x - 2}" y="${y - 2}" width="${w + 4}" height="${h + 4}" rx="20" fill="#fff" stroke="${COLORS.line}"/>
+    <image x="${x}" y="${y}" width="${w}" height="${h}" href="${image}" xlink:href="${image}" preserveAspectRatio="xMidYMid ${fit}" clip-path="url(#${id})"/>
+    ${title ? `<text x="${x}" y="${y - 18}" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="950" letter-spacing="2" fill="${COLORS.blue}">${esc(title).toUpperCase()}</text>` : ""}
   `;
 }
 
@@ -607,7 +655,7 @@ function renderContextGraph(scene) {
 }
 
 function renderScreenshotScene(scene) {
-  if (!scene.screenshot || scene.contextGraph) return "";
+  if (!scene.screenshot || scene.contextGraph || scene.workflowProof || scene.workProof) return "";
   const out = [
     imagePanel(scene, 92, 405, 900, 330, scene.screenshot, "Live product screen", scene.subtitle),
   ];
@@ -623,6 +671,70 @@ function renderScreenshotScene(scene) {
     `);
   });
   return out.join("\n");
+}
+
+function renderWorkflowProof(scene) {
+  if (!scene.workflowProof || !scene.screenshot) return "";
+  const steps = [
+    ["Context loaded", "Tenant, persona, HoldCo facts, systems, banks, contracts, and artifacts."],
+    ["Evidence gap named", "The agent says what is still missing before anyone relies on the answer."],
+    ["Move gate created", "Recommendation becomes owner, phase, readiness criteria, and next gate."],
+    ["Artifact persisted", "Strategy memo, decision dossier, checklist, or steering pack is saved."],
+    ["Tower proof updated", "Status, risk, and value proof roll up without counting unsupported claims."],
+  ];
+  let out = plainImagePanel(scene, 92, 422, 600, 292, scene.screenshot, "live move document workspace");
+  out += `
+    <rect x="92" y="728" width="600" height="32" rx="16" fill="#fff" stroke="${COLORS.line}"/>
+    <text x="120" y="750" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" fill="${COLORS.ink}">Actual work: generated artifacts stay human-reviewed and gate-bound.</text>
+  `;
+  steps.forEach(([title, body], i) => {
+    const x = 746;
+    const y = 414 + i * 66;
+    const color = [COLORS.blue, COLORS.green, COLORS.gold, COLORS.rose, COLORS.cyan][i];
+    out += `
+      <rect x="${x}" y="${y}" width="676" height="54" rx="15" fill="#fff" stroke="${COLORS.line}"/>
+      <circle cx="${x + 28}" cy="${y + 27}" r="15" fill="${color}"/>
+      <text x="${x + 28}" y="${y + 33}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="950" fill="#fff">${i + 1}</text>
+      <text x="${x + 56}" y="${y + 24}" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="920" fill="${COLORS.ink}">${esc(title)}</text>
+      ${textBlock(body, x + 56, y + 43, { size: 13, lineHeight: 16, weight: 640, fill: COLORS.muted, maxChars: 82, maxLines: 1 })}
+    `;
+    if (i < steps.length - 1) {
+      out += `<line x1="${x + 28}" y1="${y + 54}" x2="${x + 28}" y2="${y + 66}" stroke="${color}" stroke-width="3" opacity=".34"/>`;
+    }
+  });
+  return out;
+}
+
+function renderWorkProof(scene) {
+  if (!scene.workProof || !scene.screenshot) return "";
+  const proof = [
+    ["1", "Setup", "CXO bundles, systems, banks, contracts, CMDB, artifacts loaded."],
+    ["2", "Intelligence", "Answer names known facts, missing proof, and relevant pattern."],
+    ["3", "Moves", "Recommendation becomes gates, owners, checklist, decision record."],
+    ["4", "Source", "Vendor action becomes RFP, BAFO, negotiation, selection, proof."],
+    ["5", "Tower", "Forecast, approved, negotiated, realized value stay separate."],
+  ];
+  let out = `
+    <rect x="90" y="420" width="610" height="302" rx="22" fill="#fff" stroke="${COLORS.line}"/>
+    <text x="122" y="464" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="950" fill="${COLORS.ink}">What the demo has to prove</text>
+    <text x="122" y="496" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="680" fill="${COLORS.muted}">Not a nicer answer. A persisted operating loop.</text>
+  `;
+  proof.forEach(([number, title, body], i) => {
+    const y = 535 + i * 34;
+    const color = [COLORS.blue, COLORS.green, COLORS.gold, COLORS.rose, COLORS.cyan][i];
+    out += `
+      <circle cx="130" cy="${y - 5}" r="13" fill="${color}"/>
+      <text x="130" y="${y}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="950" fill="#fff">${number}</text>
+      <text x="158" y="${y}" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="920" fill="${COLORS.ink}">${esc(title)}</text>
+      ${textBlock(body, 258, y, { size: 13, lineHeight: 15, weight: 620, fill: COLORS.muted, maxChars: 58, maxLines: 1 })}
+    `;
+  });
+  out += plainImagePanel(scene, 760, 430, 680, 280, scene.screenshot, "live source decision screen", "slice");
+  out += `
+    <rect x="760" y="726" width="680" height="34" rx="17" fill="#fff" stroke="${COLORS.line}"/>
+    <text x="790" y="748" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="900" fill="${COLORS.ink}">The screen should show artifacts, gates, evidence status, and value state.</text>
+  `;
+  return out;
 }
 
 function renderStrategy90(scene) {
@@ -690,19 +802,21 @@ function renderBullets(scene) {
     const x = 90 + col * (w + 24);
     const y = 430 + row * (h + 22);
     const accent = [COLORS.blue, COLORS.green, COLORS.gold, COLORS.rose, COLORS.cyan, COLORS.slate][i % 6];
-    return card(x, y, w, h, item, scene.id === "17" ? "Treasury pattern to promote into editable doctrine." : "Decision-grade context for the Lakeshore operating model.", accent);
+    const body = scene.bulletBodies?.[i] || (scene.id === "17" ? "Treasury pattern to promote into editable doctrine." : "Decision-grade context for the Lakeshore operating model.");
+    return card(x, y, w, h, item, body, accent);
   }).join("\n");
 }
 
 function svgForScene(scene) {
-  const detail = renderContextGraph(scene) || renderScreenshotScene(scene) || renderStrategy90(scene) || renderModernization(scene) || renderTable(scene) || renderFlow(scene) || renderStats(scene) || renderChips(scene) || renderBullets(scene);
-  const titleSize = scene.title.length > 44 ? 56 : 64;
-  const titleLineHeight = scene.title.length > 44 ? 60 : 68;
-  const titleLines = wrap(scene.title, scene.title.length > 44 ? 30 : 36).slice(0, 2);
+  const detail = renderContextGraph(scene) || renderWorkflowProof(scene) || renderWorkProof(scene) || renderScreenshotScene(scene) || renderStrategy90(scene) || renderModernization(scene) || renderTable(scene) || renderFlow(scene) || renderStats(scene) || renderChips(scene) || renderBullets(scene);
+  const titleSize = scene.title.length > 44 ? 50 : 58;
+  const titleLineHeight = scene.title.length > 44 ? 54 : 62;
+  const titleTop = 222;
+  const titleLines = wrap(scene.title, scene.title.length > 44 ? 34 : 39).slice(0, 2);
   const titleSvg = titleLines
-    .map((line, index) => `<text x="90" y="${244 + index * titleLineHeight}" font-family="Georgia, serif" font-size="${titleSize}" font-weight="900" fill="${COLORS.ink}">${esc(line)}</text>`)
+    .map((line, index) => `<text x="90" y="${titleTop + index * titleLineHeight}" font-family="Georgia, serif" font-size="${titleSize}" font-weight="900" fill="${COLORS.ink}">${esc(line)}</text>`)
     .join("\n");
-  const subtitleY = 244 + titleLines.length * titleLineHeight + 24;
+  const subtitleY = titleTop + titleLines.length * titleLineHeight + 22;
   return `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <rect width="${WIDTH}" height="${HEIGHT}" fill="${COLORS.paper}"/>
@@ -711,7 +825,7 @@ function svgForScene(scene) {
     <text x="1480" y="50" text-anchor="end" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="900" letter-spacing="4" fill="rgba(255,255,255,.78)">${scene.id} · DETAILED</text>
     <text x="90" y="172" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="900" letter-spacing="4" fill="${COLORS.blue}">${esc(scene.eyebrow).toUpperCase()}</text>
     ${titleSvg}
-    ${textBlock(scene.subtitle, 92, subtitleY, { size: 23, lineHeight: 31, maxChars: 94, maxLines: 2, fill: "#3c485a", weight: 550 })}
+    ${textBlock(scene.subtitle, 92, subtitleY, { size: 21, lineHeight: 29, maxChars: 98, maxLines: 2, fill: "#3c485a", weight: 550 })}
     ${detail}
     <rect x="90" y="762" width="1420" height="78" rx="16" fill="#0f172a"/>
     <text x="120" y="810" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="900" fill="#fff">${esc(scene.highlight)}</text>
