@@ -13,6 +13,7 @@
 // Pure, deterministic, typed module — no I/O, no fabrication. Every benchmark
 // is a labelled planning range, never an asserted fact (spec §6 hard fail).
 
+import { CROSS_CUTTING_ARCHITECTURE_PATTERNS } from '../cross-cutting-architecture-patterns';
 import type { FunctionPack } from '../function-pack-types';
 
 export const populationHealthValueBasedCarePack: FunctionPack = {
@@ -30,7 +31,7 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
     'program can be excellent and still lose money if this function entered ' +
     'the wrong contract, mis-modelled the risk, or under-captured the ' +
     'population’s acuity.',
-  version: '1.2.1',
+  version: '1.3.0',
   lastReviewed: '2026-06-06',
 
   // ── Layer 1 — Operating metrics ───────────────────────────────────────────
@@ -727,15 +728,15 @@ export const populationHealthValueBasedCarePack: FunctionPack = {
         'The quality officer accountable for the program quality score.',
       controlPosture: 'human-on-the-loop',
     },
-    // NOTE: the cross-cutting architecture foundation (landing zone, own-it
-    // ingestion, medallion, governed serving, HITRUST governance) is delivered
-    // through the solution_architecture deliverable outline (Layer 7) below —
-    // NOT spread into referenceSolutionPatterns. The architecture renderer
-    // treats referenceSolutionPatterns as a mutually-exclusive option set
-    // (selects the most human-accountable, rejects the rest), so foundation
-    // layers must not live here or they render as "rejected alternatives".
-    // The typed patterns live in cross-cutting-architecture-patterns.ts,
-    // sourced from the Pattern Pack Bible, awaiting a foundation-aware renderer.
+    // The cross-cutting architecture foundation (landing zone, own-it
+    // ingestion, medallion, governed serving, HITRUST governance) is now
+    // included here. Each is tagged `dispositionKind: 'foundation'`, so the
+    // foundation-aware solution-architecture renderer presents them in the
+    // "Adopted platform foundation" exhibit — adopted, never ranked or
+    // rejected — while the option scorecard runs only over the competing
+    // options above. The typed patterns are the single source of truth in
+    // cross-cutting-architecture-patterns.ts, sourced from the Pattern Pack Bible.
+    ...CROSS_CUTTING_ARCHITECTURE_PATTERNS,
   ],
 
   // ── Layer 5 — Value model ─────────────────────────────────────────────────

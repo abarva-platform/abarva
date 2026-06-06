@@ -240,6 +240,14 @@ export interface ReferenceSolutionPattern {
   controlPosture: ControlPosture;
   /** Cross-reference to an existing canonical AI pattern, where one fits. */
   relatedCanonicalPatternId?: string;
+  /**
+   * How this pattern participates in the solution-architecture option
+   * scorecard. Omitted/`'option'` = a competing architecture option (ranked;
+   * one selected, the rest named as alternatives). `'foundation'` = an adopted
+   * platform-foundation component (landing zone, ingestion, governance) shown
+   * as adopted, never ranked or rejected.
+   */
+  dispositionKind?: 'option' | 'foundation';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
