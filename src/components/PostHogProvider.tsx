@@ -10,10 +10,11 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
     posthog.init(key, {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
       person_profiles: 'identified_only',
+      autocapture: false,
       capture_pageview: false,
       capture_pageleave: true,
       session_recording: {
-        maskAllInputs: false,
+        maskAllInputs: true,
         maskInputOptions: { password: true },
       },
     })

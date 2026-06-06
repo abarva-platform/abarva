@@ -28,6 +28,7 @@ jest.mock('@clerk/nextjs/server', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete process.env.ABARVA_ENABLE_TENANT_SWITCHER;
 });
 
 async function callCanSwitch(): Promise<boolean> {
@@ -36,12 +37,25 @@ async function callCanSwitch(): Promise<boolean> {
 }
 
 describe('canSwitchActiveTenant', () => {
+  it('returns false by default even for founder/admin candidates', async () => {
+    mockCurrentUser.mockResolvedValue({
+      publicMetadata: { role: 'admin' },
+      primaryEmailAddress: {
+        emailAddress: 'anand.sundaram@thesundaram.com',
+      },
+      emailAddresses: [],
+    });
+    await expect(callCanSwitch()).resolves.toBe(false);
+  });
+
   it('returns false when there is no Clerk user', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockResolvedValue(null);
     await expect(callCanSwitch()).resolves.toBe(false);
   });
 
   it('returns true for publicMetadata.role === admin', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockResolvedValue({
       publicMetadata: { role: 'admin' },
       primaryEmailAddress: { emailAddress: 'random@example.com' },
@@ -51,6 +65,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns true for the founder via primary email (exact case)', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockResolvedValue({
       publicMetadata: {},
       primaryEmailAddress: {
@@ -62,6 +77,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns true for the founder via primary email (mixed case)', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     // Clerk does NOT normalize email case on the session object.
     mockCurrentUser.mockResolvedValue({
       publicMetadata: {},
@@ -74,6 +90,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns true when the founder address is a verified secondary email', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockResolvedValue({
       publicMetadata: {},
       primaryEmailAddress: { emailAddress: 'corp@example.com' },
@@ -92,6 +109,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns false when the founder address is an UNVERIFIED secondary', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     // Critical: unverified secondaries are attacker-controlled and
     // must never gate authority.
     mockCurrentUser.mockResolvedValue({
@@ -112,6 +130,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns false for a non-founder, non-admin user', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockResolvedValue({
       publicMetadata: { role: 'editor' },
       primaryEmailAddress: { emailAddress: 'cio@apex-retail.demo' },
@@ -121,6 +140,7 @@ describe('canSwitchActiveTenant', () => {
   });
 
   it('returns false when currentUser throws', async () => {
+    process.env.ABARVA_ENABLE_TENANT_SWITCHER = '1';
     mockCurrentUser.mockRejectedValue(new Error('clerk timeout'));
     await expect(callCanSwitch()).resolves.toBe(false);
   });

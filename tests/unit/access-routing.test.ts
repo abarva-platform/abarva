@@ -36,6 +36,11 @@ describe('access-routing', () => {
   test('strict pinned client resolver never falls back to the global default', () => {
     expect(resolvePinnedSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBeNull();
     expect(resolvePinnedSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
+    expect(resolvePinnedSessionClientKey({ email: 'anand.sundaram@thesundaram.com' })).toBeNull();
+  });
+
+  test('founder domain does not implicitly resolve to a client workspace', () => {
+    expect(resolveSessionClientKey({ email: 'anand.sundaram@thesundaram.com' })).toBe('apexretail');
   });
 
   test('infers roles for canonical client logins only', () => {
