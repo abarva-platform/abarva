@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lakeshore Capital x AbarVa - AI Success Platform Brief</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #5d6678;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --line: #d9d4ca;
+      --nav: #000000;
+      --blue: #2457d6;
+      --teal: #0f766e;
+      --gold: #9a5b00;
+      --rose: #9f1239;
+      --blue-soft: #e9f0ff;
+      --teal-soft: #e7f6f2;
+      --gold-soft: #fff4d6;
+      --rose-soft: #fff0f3;
+      --gray-soft: #f0eee8;
+      --shadow: 0 18px 38px rgba(15, 23, 42, .10);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.48;
+      font-size: 15px;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; width: 100%; height: auto; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      color: #fff;
+      background: var(--nav);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .topbar {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 235px;
+      font-weight: 850;
+    }
+    .brand-logo {
+      width: 124px;
+      height: 28px;
+      display: block;
+      object-fit: contain;
+    }
+    .brand-client {
+      padding-left: 12px;
+      border-left: 1px solid rgba(255,255,255,.22);
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      font-weight: 760;
+    }
+    nav a { padding: 8px 9px; border-radius: 7px; }
+    nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 34px 24px 74px;
+    }
+    section { margin-top: 42px; }
+    h1, h2, h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: clamp(40px, 5.3vw, 70px);
+      line-height: .96;
+      max-width: 1050px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 3vw, 38px);
+      line-height: 1.06;
+      max-width: 920px;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.14;
+    }
+    p { margin: 0 0 12px; color: #283246; }
+    .kicker {
+      display: inline-flex;
+      margin-bottom: 12px;
+      color: #4c5a73;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      font-size: 11px;
+      font-weight: 860;
+    }
+    .hero {
+      max-width: 1080px;
+    }
+    .lead {
+      max-width: 920px;
+      color: #40506a;
+      font-size: 19px;
+    }
+    .hero-proof {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .thesis-card {
+      margin-top: 22px;
+      border: 1px solid #cbd5e1;
+      border-left: 5px solid var(--blue);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 18px 20px;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, .06);
+    }
+    .thesis-card b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+    .proof-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .metric {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 102px;
+    }
+    .metric strong {
+      display: block;
+      margin-bottom: 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      line-height: 1;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .band {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .band.tinted { background: linear-gradient(180deg, #ffffff 0%, #f7f5ef 100%); }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .mini {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 15px;
+    }
+    .mini b { display: block; margin-bottom: 7px; color: #172033; }
+    .mini p { margin: 0; color: var(--muted); font-size: 14px; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #49546a;
+      font-size: 12px;
+      font-weight: 770;
+    }
+    .blue { background: var(--blue-soft); border-color: #c7d6ff; color: #1e3a8a; }
+    .teal { background: var(--teal-soft); border-color: #bfe8dd; color: #0f5b4f; }
+    .gold { background: var(--gold-soft); border-color: #ecd38b; color: var(--gold); }
+    .rose { background: var(--rose-soft); border-color: #fecdd3; color: var(--rose); }
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .split.flip { grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); }
+    .treasury-plate,
+    .proof-plate.split,
+    .proof-plate.split.flip {
+      display: block;
+    }
+    .treasury-plate > div + div,
+    .proof-plate > div + div {
+      margin-top: 18px;
+    }
+    .treasury-plate .shot,
+    .proof-plate .shot {
+      width: 100%;
+    }
+    .shot {
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid #c9c2b8;
+      background: #0f172a;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, .13);
+    }
+    .shot.tall {
+      max-height: 720px;
+      overflow-y: auto;
+    }
+    .shot.page-plate img {
+      height: 520px;
+      object-fit: cover;
+      object-position: top center;
+    }
+    .proof-plate {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid var(--line);
+    }
+    .proof-plate:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .caption {
+      margin-top: 9px;
+      color: #667085;
+      font-size: 12px;
+      font-weight: 680;
+    }
+    .map {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .map-row {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1.2fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .map-node {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+      min-height: 112px;
+    }
+    .map-node.dark {
+      background: #111827;
+      border-color: #111827;
+      color: #fff;
+    }
+    .map-node.dark p, .map-node.dark small { color: rgba(255,255,255,.76); }
+    .map-node h3 { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 15px; margin-bottom: 7px; }
+    .map-node p { margin: 0; font-size: 13px; color: #5f6878; }
+    .map-node small {
+      display: block;
+      margin-top: 9px;
+      color: #667085;
+      font-size: 11px;
+      font-weight: 780;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .connector {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .connector div {
+      border: 1px solid #d6d3cd;
+      border-radius: var(--radius);
+      background: var(--gray-soft);
+      padding: 10px;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 760;
+      text-align: center;
+    }
+    .layer-stack {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+    }
+    .layer b { display: block; margin-bottom: 6px; }
+    .layer p { margin: 0; color: var(--muted); font-size: 13px; }
+    .deep-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .rule {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 13px;
+    }
+    .rule b { display: block; margin-bottom: 5px; color: #172033; }
+    .rule p { margin: 0; color: var(--muted); font-size: 13px; }
+    .gate-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .gate-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 15px;
+      min-height: 246px;
+    }
+    .gate-card strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--blue);
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .gate-card h4 {
+      margin: 0 0 9px;
+      color: #172033;
+      font-size: 17px;
+      line-height: 1.18;
+    }
+    .gate-card p {
+      margin: 0 0 9px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .gate-card em {
+      display: block;
+      margin-top: 10px;
+      color: #374151;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 760;
+    }
+    .quote {
+      border-left: 5px solid var(--teal);
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, .06);
+    }
+    .quote p {
+      margin: 0;
+      color: #1f2937;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+      line-height: 1.28;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--radius);
+    }
+    .table th, .table td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .table th {
+      background: #f0eee8;
+      color: #667085;
+      font-size: 11px;
+      font-weight: 860;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    .table tr:last-child td { border-bottom: 0; }
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .month {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 13px;
+    }
+    .month strong { display: block; margin-bottom: 7px; color: var(--blue); }
+    .month p { margin: 0; color: var(--muted); font-size: 13px; }
+    .truth {
+      border: 1px solid #f2d891;
+      background: #fff8e7;
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .truth b { color: var(--gold); }
+    footer {
+      margin-top: 44px;
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+    @media (max-width: 980px) {
+      .hero, .split, .split.flip, .map-row { grid-template-columns: 1fr; }
+      .proof-row, .grid-4, .timeline, .layer-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-3, .connector, .gate-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      main { padding: 26px 16px 54px; }
+      .topbar { padding: 12px 16px; align-items: flex-start; flex-direction: column; }
+      .brand { min-width: 0; }
+      .proof-row, .grid-2, .grid-4, .timeline, .layer-stack, .deep-list { grid-template-columns: 1fr; }
+      .table { min-width: 760px; }
+      .shot.page-plate img { height: 360px; }
+      h1 { font-size: 40px; }
+      .lead { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <a class="brand" href="#top" aria-label="Back to top">
+        <img class="brand-logo" src="assets/abarva-nav-dark-compact-28px-2x.png" alt="AbarVa" />
+        <span class="brand-client">Lakeshore</span>
+      </a>
+      <nav aria-label="Page sections">
+        <a href="#operating-map">Operating Map</a>
+        <a href="#profile">Profile</a>
+        <a href="#intelligence-layer">Intelligence Layer</a>
+        <a href="#treasury">Treasury</a>
+        <a href="#platform">AI Success</a>
+        <a href="#value-case">Value Case</a>
+        <a href="#proof">Proof</a>
+        <a href="#plan">6 Months</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-label="Executive opening">
+      <div>
+        <span class="kicker">Buyer reading brief - Lakeshore Capital - June 2026</span>
+        <h1>AI success for a holdings company is not a chatbot problem.</h1>
+        <p class="lead">
+          Lakeshore does not need another generic AI answer engine. It needs a governed operating system that understands HoldCos, PortCos, CXO owners, banking relationships, ERP feeds, vendor contracts, board decisions, rollout gates, and value proof.
+        </p>
+        <div class="thesis-card">
+          <b>My read</b>
+          <p>
+            AbarVa should start with Kyriba and treasury because the work is urgent, finance-owned, measurable, and failure-prone. But the bigger six-month win is building Lakeshore's reusable AI Success Platform: a living intelligence layer that helps the portfolio find, govern, execute, and prove AI-enabled growth, cost, risk, and operating improvements.
+          </p>
+        </div>
+        <div class="proof-row">
+          <div class="metric"><strong>26/26</strong><span>live demo screenshots passed</span></div>
+          <div class="metric"><strong>100</strong><span>CXO hard questions captured</span></div>
+          <div class="metric"><strong>8,987</strong><span>published corpus patterns</span></div>
+          <div class="metric"><strong>5</strong><span>working product surfaces</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="profile" class="band">
+      <span class="kicker">Who Lakeshore is - operating profile to validate</span>
+      <h2>AbarVa should begin with Lakeshore's corporate facts, portfolio shape, and strategy - not with a blank chat box.</h2>
+      <p>
+        Lakeshore is represented here as a diversified private holdings company with a parent sponsor, multiple operating platforms, portfolio-wide treasury exposure, and a practical mandate: make AI useful by improving cost, growth, risk, working capital, and execution discipline. The modeled operating mix intentionally resembles the public Chicago private-holdings archetype: supply chain and logistics, brand services, consumer products, and workplace convenience services. During the first 30 days, AbarVa would validate the revenue profile, company roster, countries, systems, vendors, banking estate, and board priorities with Lakeshore leadership.
+      </p>
+      <div class="proof-row">
+        <div class="metric"><strong>~$3B</strong><span>planning revenue baseline</span></div>
+        <div class="metric"><strong>~10k</strong><span>planning employee footprint</span></div>
+        <div class="metric"><strong>4</strong><span>modeled operating platforms</span></div>
+        <div class="metric"><strong>50</strong><span>potential country footprint</span></div>
+      </div>
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table class="table" aria-label="Lakeshore modeled operating companies">
+          <thead>
+            <tr>
+              <th>Company / layer</th>
+              <th>What it does</th>
+              <th>Planning scale</th>
+              <th>Why it matters to AbarVa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Lakeshore Holdings</b></td>
+              <td>Parent holdings company with portfolio governance, treasury oversight, board reporting, and cross-company value creation mandate.</td>
+              <td>~$3B revenue, ~10k employees across modeled portfolio.</td>
+              <td>Needs Tower-level visibility into value, risk, vendor leverage, AI portfolio, and treasury readiness.</td>
+            </tr>
+            <tr>
+              <td><b>Northshore Supply &amp; Logistics</b></td>
+              <td>Foodservice, packaging, sourcing, distribution, and supply-chain services platform with WMS/TMS complexity and working-capital sensitivity.</td>
+              <td>~$1.25B revenue, ~4.8k employees.</td>
+              <td>Creates bank connectivity, cash forecasting, inventory, transportation, supplier, and operational AI opportunities.</td>
+            </tr>
+            <tr>
+              <td><b>Northshore BrandWorks</b></td>
+              <td>Brand-defining marketing, promotions, loyalty, packaging, and commercial-services platform for large customer programs.</td>
+              <td>~$0.65B revenue, ~2.0k employees.</td>
+              <td>Creates sourcing, contract-review, creative operations, margin, vendor rationalization, and AI-enabled service productivity opportunities.</td>
+            </tr>
+            <tr>
+              <td><b>Northshore Consumer Products</b></td>
+              <td>Premium consumer-products platform with direct-to-consumer, retail, commerce, inventory, customer, and marketing-data needs.</td>
+              <td>~$0.7B revenue, ~1.4k employees.</td>
+              <td>Creates growth AI, digital operations, fraud/risk, data governance, and customer-insight opportunities.</td>
+            </tr>
+            <tr>
+              <td><b>Northshore Workplace Services</b></td>
+              <td>Convenience, vending, micro-market, coffee, and workplace food-services platform with route density, cash controls, and service operations.</td>
+              <td>~$0.4B revenue, ~1.8k employees.</td>
+              <td>Creates route optimization, field service, cash handling, vendor, pricing, payroll, and treasury-control opportunities.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table class="table" aria-label="Lakeshore modeled business economics and operating challenges">
+          <thead>
+            <tr>
+              <th>Business type</th>
+              <th>How it makes money</th>
+              <th>Typical operating challenges</th>
+              <th>What AbarVa should help optimize</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Supply chain, logistics, packaging, and sourcing</b></td>
+              <td>Multi-year customer programs, distribution margin, packaging and sourcing spread, service fees, logistics efficiency, and supplier leverage.</td>
+              <td>Working-capital drag, transportation cost volatility, supplier concentration, inventory visibility, bank connectivity, and customer profitability by lane or program.</td>
+              <td>Cash forecasting, supplier and carrier rationalization, SKU and customer margin insight, inventory-to-cash cycle, bank rationalization, and treasury readiness.</td>
+            </tr>
+            <tr>
+              <td><b>Brand services, promotions, loyalty, and commercial programs</b></td>
+              <td>Agency/service fees, campaign execution margin, creative production, promotional sourcing, fulfillment, analytics, and customer program renewals.</td>
+              <td>Margin leakage, contract scope creep, vendor overlap, creative/fulfillment handoffs, inconsistent program economics, and renewal timing risk.</td>
+              <td>Contract intelligence, pricing discipline, vendor consolidation, margin analytics, and reusable AI for briefs, RFPs, responses, and campaign operations.</td>
+            </tr>
+            <tr>
+              <td><b>Consumer products and commerce</b></td>
+              <td>Wholesale and direct-to-consumer product margin, channel expansion, inventory turns, brand equity, pricing, and repeat customer economics.</td>
+              <td>Demand volatility, promotion ROI, returns, inventory obsolescence, PCI and customer-data risk, and fragmented commerce / marketing systems.</td>
+              <td>Demand signals, pricing and promotion guardrails, customer insight, fraud/risk controls, product profitability, and data governance.</td>
+            </tr>
+            <tr>
+              <td><b>Workplace food, vending, micro-markets, and convenience services</b></td>
+              <td>Route density, machine and location profitability, food and beverage margin, service contracts, replenishment efficiency, and payment capture.</td>
+              <td>Route labor cost, shrink / cash handling, machine uptime, location-level profitability, supplier pricing, field-service quality, and local bank deposits.</td>
+              <td>Route optimization, cash controls, field-service productivity, vendor leverage, location profitability, treasury controls, and exception workflows.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-3" style="margin-top: 16px;">
+        <div class="mini">
+          <b>Corporate strategy AbarVa should model</b>
+          <p>Permanent-capital operating improvement: deepen customer relationships, protect service quality, modernize core systems, reduce vendor and bank fragmentation, and compound shared capabilities across operating platforms.</p>
+        </div>
+        <div class="mini">
+          <b>Vision to make practical</b>
+          <p>Turn a family/founder-anchored portfolio into an AI-enabled operating network where treasury, sourcing, vendors, risk, and customer economics improve without stripping autonomy from the businesses.</p>
+        </div>
+        <div class="mini">
+          <b>Key facts to confirm and load</b>
+          <p>Actual company roster, revenue, EBITDA, customer concentration, geographies, bank estate, ERP/TMS/WMS/CRM stack, vendor contracts, CMDB, risk register, and board priorities.</p>
+        </div>
+      </div>
+      <div class="truth" style="margin-top: 16px;">
+        <b>Validation note</b>
+        <p>These values are a planning baseline for discussion, shaped by the public archetype of a Chicago private holdings group with logistics, marketing services, consumer products, and convenience/workplace-services businesses. The kickoff should replace them with Lakeshore-approved facts from the enterprise profile, org structure, finance systems, banking matrix, CMDB, vendor contracts, and board priority pack.</p>
+      </div>
+    </section>
+
+    <section id="operating-map" class="band tinted">
+      <span class="kicker">The real complexity AbarVa must absorb</span>
+      <h2>Lakeshore is a federated operating system, not one clean company chart.</h2>
+      <p>
+        The hardest part is not asking a model a treasury question. The hard part is giving the model the operating reality: parent sponsor visibility, HoldCo autonomy, PortCo systems, CXO accountability, legacy process variation, contract terms, vendor overlap, banking fragmentation, and governance rights. That is where AbarVa becomes different from a raw model.
+      </p>
+
+      <div class="map" aria-label="Lakeshore federated operating map">
+        <div class="map-row">
+          <div class="map-node dark">
+            <h3>L0 - Lakeshore sponsor</h3>
+            <p>Portfolio-wide visibility, value ledger, risk concentrations, cross-HoldCo opportunities, board and owner reporting.</p>
+            <small>Aggregate command</small>
+          </div>
+          <div class="map-node">
+            <h3>L1 - HoldCos</h3>
+            <p>Lakeshore operating companies and holding structures each keep their own CXO bench, systems, vendor contracts, banks, operating processes, and approval culture.</p>
+            <small>Federated autonomy</small>
+          </div>
+          <div class="map-node">
+            <h3>L2 - PortCos</h3>
+            <p>Operating companies contribute ERP extracts, KPIs, contract metadata, workforce data, treasury feeds, risk issues, and process evidence.</p>
+            <small>Source of operational truth</small>
+          </div>
+        </div>
+
+        <div class="connector">
+          <div>CFO bundle</div>
+          <div>CIO bundle</div>
+          <div>COO bundle</div>
+          <div>CHRO bundle</div>
+          <div>GC / CCO bundle</div>
+        </div>
+
+        <div class="map-row">
+          <div class="map-node">
+            <h3>Systems and process layer</h3>
+            <p>ERP, TMS, AP/AR, EPM, HRIS, CRM, ITSM, CMDB, cloud cost, reporting packs, close calendar, controls, and exception workflow.</p>
+            <small>How work actually runs</small>
+          </div>
+          <div class="map-node">
+            <h3>Contracts and vendors</h3>
+            <p>Banking, audit, advisory, SI, software, cyber insurance, benefits, telecom, cloud, managed services, and renewal calendars.</p>
+            <small>Where leverage hides</small>
+          </div>
+          <div class="map-node">
+            <h3>Evidence and artifacts</h3>
+            <p>Strategy briefs, scope packs, RFPs, vendor responses, board materials, implementation gates, risk registers, approvals, and value claims.</p>
+            <small>What makes AI auditable</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="intelligence-layer">
+      <div class="split">
+        <div>
+          <span class="kicker">The secret sauce over time</span>
+          <h2>AbarVa turns messy context into a living Lakeshore Intelligence Layer.</h2>
+          <p>
+            This is not a static corpus bolted onto a chat window. It is a governed intelligence asset that gets deeper every time Lakeshore loads a CXO bundle, runs a Move, creates a Source event, challenges a recommendation, approves a pattern, or marks an evidence gap.
+          </p>
+          <div class="quote">
+            <p>AbarVa helps Lakeshore decide which AI opportunities matter, execute them with evidence and controls, and prove which ones create real value.</p>
+          </div>
+        </div>
+        <div>
+          <div class="shot">
+            <img src="assets/01-setup-cxo-intel-index.png" alt="AbarVa setup CXO intelligence index screenshot" />
+          </div>
+          <p class="caption">Plate 1 - Setup/Admin: the CXO intelligence index is where the portfolio operating picture starts.</p>
+        </div>
+      </div>
+
+      <div class="layer-stack">
+        <div class="layer"><b>1. Tenant and role</b><p>Who is asking, which HoldCo/PortCo they can see, and what persona lens is active.</p></div>
+        <div class="layer"><b>2. Operating data</b><p>Systems, vendors, contracts, financial baselines, KPIs, risk, processes, and CMDB.</p></div>
+        <div class="layer"><b>3. Doctrine corpus</b><p>Decision-grade patterns for treasury, governance, IT, vendors, tax, risk, and operations.</p></div>
+        <div class="layer"><b>4. Workflow state</b><p>Move phase, Source stage, approval posture, artifact status, and missing evidence.</p></div>
+        <div class="layer"><b>5. Value ledger</b><p>Baseline, forecast, realized value, owner, confidence, and board-ready explanation.</p></div>
+      </div>
+      <div class="deep-list">
+        <div class="rule"><b>Organization</b><p>L0 sponsor, L1 HoldCos, L2 PortCos, CXO owners, decision rights, and approval exceptions.</p></div>
+        <div class="rule"><b>Systems</b><p>ERP, TMS, ITSM, CMDB, EPM, HRIS, CRM, bank portals, and data feed owners.</p></div>
+        <div class="rule"><b>Process</b><p>Close calendar, cash positioning, procurement gates, board cadence, risk workflow, and implementation rituals.</p></div>
+        <div class="rule"><b>Commercial truth</b><p>Vendor contracts, renewal dates, pricing leverage, audit/advisory scope, and value baselines.</p></div>
+      </div>
+    </section>
+
+    <section id="corpus" class="band">
+      <span class="kicker">Corpus is not set in stone</span>
+      <h2>The corpus must be editable, governed, and local to Lakeshore's doctrine.</h2>
+      <p>
+        AbarVa should not pretend the first generated pattern is the truth forever. The right product stance is editorial control. Lakeshore's CFO, Treasurer, CIO, GC, and operating partners should be able to approve, refine, retire, or localize doctrine as the system learns what matters in their portfolio.
+      </p>
+      <div class="grid-3">
+        <div class="mini">
+          <b>Approve or edit doctrine</b>
+          <p>Promote a pattern from generated draft to approved Lakeshore operating doctrine, with owner and vintage.</p>
+        </div>
+        <div class="mini">
+          <b>Localize by HoldCo</b>
+          <p>Capture Lakeshore-specific exceptions, bank-specific rules, PortCo system realities, and informal approval patterns.</p>
+        </div>
+        <div class="mini">
+          <b>Retire weak assumptions</b>
+          <p>Flag bad patterns, downgrade confidence, attach the evidence gap, or kill patterns that would mislead executives.</p>
+        </div>
+      </div>
+      <div class="deep-list">
+        <div class="rule"><b>Corpus edit action</b><p>Change the decision owner from "CFO" to "Treasurer + CFO approval" when the pattern touches bank connectivity or intercompany lending.</p></div>
+        <div class="rule"><b>Corpus evidence action</b><p>Attach a board pack, bank matrix, ERP feed audit, or implementation gate as the proof behind the pattern.</p></div>
+        <div class="rule"><b>Corpus workflow action</b><p>Link a pattern to a Move phase or Source stage so the answer becomes an artifact, not just advice.</p></div>
+        <div class="rule"><b>Corpus value action</b><p>Tie a pattern to forecast and realized savings so Tower can separate thesis from proof.</p></div>
+      </div>
+    </section>
+
+    <section id="treasury">
+      <div class="split flip treasury-plate">
+        <div>
+          <div class="shot">
+            <img src="assets/09-kyriba-strategy.png" alt="AbarVa Kyriba treasury strategy Source screenshot" />
+          </div>
+          <p class="caption">Plate 2 - Source Strategy: the Kyriba event begins with strategy, scope, readiness, and value guardrails.</p>
+        </div>
+        <div>
+          <span class="kicker">Why Kyriba is the right wedge</span>
+          <h2>Treasury modernization fails when the operating facts are discovered too late.</h2>
+          <p>
+            Kyriba is not just a software rollout. It depends on bank connectivity, ERP feed quality, entity hierarchy, historical cash data, adoption discipline, intercompany controls, and board-grade value proof. AbarVa turns those failure points into gates, artifacts, owners, and decisions before the rollout burns time.
+          </p>
+          <p>
+            The value of AbarVa is that it does not wait for a steering committee to discover the gaps in month four. It asks for the bank matrix, ERP feed evidence, entity map, cash history, control design, and owner decisions up front, then converts the weak spots into Source events, Move gates, and board-ready action.
+          </p>
+          <div class="pill-row">
+            <span class="pill blue">Bank connectivity</span>
+            <span class="pill teal">ERP feed quality</span>
+            <span class="pill gold">Entity hierarchy</span>
+            <span class="pill rose">Intercompany controls</span>
+            <span class="pill blue">Covenant headroom</span>
+            <span class="pill teal">BEC controls</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="band" style="margin-top: 22px;">
+        <h3>Move 0 readiness gates: what AbarVa should force into the open</h3>
+        <p>
+          These are not checklist slogans. Each gate is a decision package with a named owner, evidence artifact, pass/fail rule, and failure mode. This is how AbarVa de-risks the rollout before Kyriba becomes an expensive implementation drag.
+        </p>
+        <div class="gate-grid">
+          <div class="gate-card">
+            <strong>Gate 1</strong>
+            <h4>Bank inventory and connectivity</h4>
+            <p><b>Checks:</b> each bank, account, entity, currency, balance type, protocol, portal dependency, H2H/SWIFT/BAI2/MT940 path, timeline, and bank owner.</p>
+            <p><b>Artifact:</b> bank connectivity matrix and sequencing plan.</p>
+            <em>Prevents: tail banks delaying the core cash-visibility rollout.</em>
+          </div>
+          <div class="gate-card">
+            <strong>Gate 2</strong>
+            <h4>ERP, AP, AR, and GL feed quality</h4>
+            <p><b>Checks:</b> chart-of-accounts mapping, AP/AR extracts, cash-vs-GL variance, file cadence, exception queue, and reconciliation ownership.</p>
+            <p><b>Artifact:</b> finance feed scorecard with remediation owners.</p>
+            <em>Prevents: Kyriba going live while reconciliation remains manual.</em>
+          </div>
+          <div class="gate-card">
+            <strong>Gate 3</strong>
+            <h4>Entity and account hierarchy</h4>
+            <p><b>Checks:</b> HoldCo, PortCo, trust, family-office, lender, bank-account, intercompany, tax, and reporting hierarchy alignment.</p>
+            <p><b>Artifact:</b> canonical treasury entity registry.</p>
+            <em>Prevents: wrong rollups, failed eliminations, and bad board reporting.</em>
+          </div>
+          <div class="gate-card">
+            <strong>Gate 4</strong>
+            <h4>Historical cash reconstruction</h4>
+            <p><b>Checks:</b> 12-24 months of daily positions where available, missing banks, stale statements, currency gaps, and forecast-driver quality.</p>
+            <p><b>Artifact:</b> Bronze/Silver historical cash data set.</p>
+            <em>Prevents: predictive forecasting becoming a weak demo with no training base.</em>
+          </div>
+          <div class="gate-card">
+            <strong>Gate 5</strong>
+            <h4>Controls, adoption, and fraud posture</h4>
+            <p><b>Checks:</b> wire approval matrix, first-time payee callback, BEC controls, segregation of duties, role dashboards, and Excel-elimination plan.</p>
+            <p><b>Artifact:</b> treasury controls and adoption playbook.</p>
+            <em>Prevents: users staying in bank portals and Excel after go-live.</em>
+          </div>
+          <div class="gate-card">
+            <strong>Gate 6</strong>
+            <h4>Intercompany and covenant discipline</h4>
+            <p><b>Checks:</b> promissory notes, AFR-or-above rates, monthly true-up, IC journals, TTM EBITDA, leverage, FCCR, and covenant headroom.</p>
+            <p><b>Artifact:</b> IC reconciliation and covenant forecast pack.</p>
+            <em>Prevents: audit/tax exposure and board surprise on covenant pressure.</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="band" style="margin-top: 22px;">
+        <h3>What Lakeshore would load before the first Kyriba steering decision</h3>
+        <div class="table-wrap">
+          <table class="table" aria-label="Kyriba readiness data to load">
+            <thead>
+              <tr>
+                <th>Context dimension</th>
+                <th>Example files or fields</th>
+                <th>What AbarVa can answer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Banking estate</b></td>
+                <td>Bank matrix, account list, signers, balances, services, pricing, connectivity status.</td>
+                <td>Which banks must go first, which can lag, and where consolidation creates leverage.</td>
+              </tr>
+              <tr>
+                <td><b>Finance systems</b></td>
+                <td>ERP instances, AP/AR exports, GL mappings, close calendar, reconciliation owners.</td>
+                <td>Which feeds are ready for Kyriba and which require remediation before go-live.</td>
+              </tr>
+              <tr>
+                <td><b>Entity structure</b></td>
+                <td>Legal entity registry, tax classification, HoldCo/PortCo map, IC loan schedule.</td>
+                <td>Whether treasury reporting will roll up correctly across Lakeshore, HoldCos, and PortCos.</td>
+              </tr>
+              <tr>
+                <td><b>Controls and adoption</b></td>
+                <td>Wire matrix, approval thresholds, callback policy, user roster, training plan.</td>
+                <td>Where fraud risk, segregation gaps, and user adoption risk will stall value realization.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="band" style="margin-top: 22px;">
+        <h3>Treasury doctrine AbarVa should know before it answers</h3>
+        <div class="deep-list">
+          <div class="rule"><b>Daily cash position</b><p>The Treasurer pre-walks position by 9am Central. More than 5% surprise requires same-day reconciliation.</p></div>
+          <div class="rule"><b>Bank connectivity matrix</b><p>H2H, SWIFT, BAI2, MT940/MT942, portal-only banks, owners, and timeline risk must be known before Kyriba sequencing.</p></div>
+          <div class="rule"><b>ERP and GL feed audit</b><p>Cash-vs-GL variance, AP/AR feed reliability, chart-of-accounts mapping, and exception workflow define the real rollout path.</p></div>
+          <div class="rule"><b>Entity hierarchy</b><p>HoldCo, PortCo, trust, family-office, bank-account, and intercompany structure must be canonical before treasury automation.</p></div>
+          <div class="rule"><b>Intercompany lending</b><p>Promissory notes, AFR-or-above rates, arms-length terms, monthly true-up, and tax/accounting review are not optional.</p></div>
+          <div class="rule"><b>Covenant forecasting</b><p>TTM EBITDA, leverage, fixed-charge coverage, and interest coverage should be forecast at least 12 weeks ahead.</p></div>
+          <div class="rule"><b>Payment controls</b><p>Wire approval matrices, first-time payee callback, dollar-threshold escalation, and BEC controls belong in the workflow.</p></div>
+          <div class="rule"><b>Cash pooling and FX</b><p>Physical vs notional pooling, tax consequences, natural hedges, forwards, and ASC 815 reporting should be surfaced clearly.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="platform" class="band tinted">
+      <span class="kicker">More than Kyriba</span>
+      <h2>AbarVa is an AI Success Platform for growth, cost, risk, and execution across the portfolio.</h2>
+      <p>
+        Kyriba is the opening proof because it is a crisp, finance-owned use case. The platform value is broader: every loaded CXO bundle lets AbarVa find portfolio-wide leverage, turn ideas into governed Moves, create Source events, and track value in Tower.
+      </p>
+      <div class="table-wrap">
+        <table class="table" aria-label="AI success lanes">
+          <thead>
+            <tr>
+              <th>Lane</th>
+              <th>What AbarVa can find</th>
+              <th>What it creates</th>
+              <th>Decision owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Treasury and Kyriba</b></td>
+              <td>Connectivity gaps, forecast readiness, bank consolidation, IC reconciliation pain.</td>
+              <td>Move gates, banking Source event, evidence pack, value ledger.</td>
+              <td>CFO / Treasurer</td>
+            </tr>
+            <tr>
+              <td><b>Vendor cost</b></td>
+              <td>Duplicate contracts, renewal leverage, Microsoft/AWS/SI overlap, audit fee scope creep.</td>
+              <td>Consolidation slate, RFP/RFI, negotiation packet, savings forecast.</td>
+              <td>CFO / CIO / Procurement</td>
+            </tr>
+            <tr>
+              <td><b>IT and data</b></td>
+              <td>App sprawl, CMDB gaps, shadow systems, TBM/showback opportunities, modernization collisions.</td>
+              <td>Portfolio IT map, application rationalization Move, data readiness sprint.</td>
+              <td>CIO / CFO</td>
+            </tr>
+            <tr>
+              <td><b>Cyber and risk</b></td>
+              <td>Vendor concentration, cyber insurance leverage, weak controls, BEC exposure.</td>
+              <td>Risk register, remediation Move, insurance Source event, board pack.</td>
+              <td>GC / CISO / Audit Committee</td>
+            </tr>
+            <tr>
+              <td><b>Growth AI</b></td>
+              <td>Reusable AI use cases across HoldCos: contract review, sales ops, pricing, service productivity.</td>
+              <td>AI use-case marketplace, pilot charter, KPI baseline, rollout artifact set.</td>
+              <td>Operating Partner / CXO sponsor</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="value-case" class="band">
+      <span class="kicker">Why a $500K / six-month investment is rational</span>
+      <h2>The business case is not "buy AI." It is "turn portfolio complexity into signed decisions and measurable value."</h2>
+      <p>
+        AbarVa should justify the first six months by producing a small number of board-grade decisions with evidence, owners, artifacts, and value tracking. The target is not to claim every dollar on day one. The target is to build a governed value pipeline where finance can distinguish baseline, forecast, negotiated outcome, realized savings, and evidence gaps.
+      </p>
+      <div class="proof-row">
+        <div class="metric"><strong>$500K</strong><span>six-month investment to justify</span></div>
+        <div class="metric"><strong>$60M</strong><span>current Source value pipeline shown in product</span></div>
+        <div class="metric"><strong>3-5</strong><span>board-grade decisions to force</span></div>
+        <div class="metric"><strong>1x</strong><span>payback requires one modest win</span></div>
+      </div>
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table class="table" aria-label="AbarVa six-month value examples">
+          <thead>
+            <tr>
+              <th>Value example</th>
+              <th>What AbarVa does</th>
+              <th>Evidence required</th>
+              <th>Six-month value logic</th>
+              <th>Proof artifact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Kyriba rollout de-risk</b></td>
+              <td>Turns bank connectivity, ERP feed quality, entity hierarchy, adoption, and IC reconciliation into gates before implementation stalls.</td>
+              <td>Bank matrix, ERP feed audit, entity registry, SI SOW, Kyriba order form, steering plan.</td>
+              <td>Avoiding even a 10-20% change-order / delay tax on a multi-million-dollar treasury rollout can cover a meaningful share of the engagement.</td>
+              <td>Move 0 readiness pack + Source event for bank/SI actions.</td>
+            </tr>
+            <tr>
+              <td><b>Banking and treasury rationalization</b></td>
+              <td>Ranks banks by cash visibility, connectivity, fee leakage, service overlap, signer/control risk, and consolidation leverage.</td>
+              <td>Account list, balances, fees, services, signers, treasury workflow, connectivity status.</td>
+              <td>One banking consolidation or fee renegotiation can create six-figure annual savings while improving cash visibility and controls.</td>
+              <td>Banking consolidation Source event + CFO decision memo.</td>
+            </tr>
+            <tr>
+              <td><b>Vendor overlap and renewal leverage</b></td>
+              <td>Finds duplicate software/SI/advisory contracts, renewal windows, underused licenses, pricing outliers, and cross-HoldCo leverage.</td>
+              <td>Vendor contracts, renewal dates, spend by vendor, usage, owners, termination notice windows.</td>
+              <td>A 5-10% improvement on only $10M of addressable vendor spend creates $500K-$1M annual value.</td>
+              <td>Vendor rationalization slate + negotiation packet.</td>
+            </tr>
+            <tr>
+              <td><b>IT cost and application rationalization</b></td>
+              <td>Maps CMDB, app criticality, run/change spend, cloud cost, integration debt, and modernization priority across operating companies.</td>
+              <td>CMDB, IT financials, cloud export, app owners, incident history, integration inventory.</td>
+              <td>Retiring or renegotiating a small set of low-value apps can create enough recurring savings to fund the first six months.</td>
+              <td>Application value map + CIO/CFO action list.</td>
+            </tr>
+            <tr>
+              <td><b>Risk, cyber, and BEC control uplift</b></td>
+              <td>Connects treasury payment controls, cyber insurance, vendor concentration, incident history, and board risk reporting.</td>
+              <td>Wire matrix, callback policy, cyber policy, insurance program, risk register, vendor access inventory.</td>
+              <td>This is not only savings; it reduces avoidable loss exposure and improves board defensibility around treasury and cyber controls.</td>
+              <td>Risk-control Move + audit committee brief.</td>
+            </tr>
+            <tr>
+              <td><b>Reusable AI use-case marketplace</b></td>
+              <td>Identifies use cases that can be built once and reused across operating companies: contract review, service productivity, pricing, sourcing, finance ops.</td>
+              <td>Program inventory, process maps, role volumes, KPIs, vendor tools, data readiness.</td>
+              <td>One repeatable use case across two or three companies is more valuable than isolated pilots that never scale.</td>
+              <td>AI use-case slate + pilot charter + value ledger.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="truth" style="margin-top: 16px;">
+        <b>Decision standard</b>
+        <p>Public TMS buyer guidance indicates commercial treasury software plus implementation can range from hundreds of thousands into multi-million-dollar first-year programs depending on modules, bank connectivity, integrations, geographies, and services. AbarVa should calculate Lakeshore's real exposure from the Kyriba order form, SI SOW, bank matrix, and ERP integration plan, then show where failure avoidance, vendor leverage, and execution-cost reduction create 5-10x value potential.</p>
+      </div>
+    </section>
+
+    <section id="proof">
+      <span class="kicker">Live product proof plates</span>
+      <h2>Show the process flow one screen at a time.</h2>
+      <p>
+        Screenshots are useful when they show the buyer how the work moves through the product. The rule is one screen per proof plate: setup context, strategy, Move execution, Source decision, and Tower value proof.
+      </p>
+
+      <div class="split proof-plate">
+        <div>
+          <h3>Move: Kyriba rollout de-risk</h3>
+          <p>
+            The Move view keeps the program from becoming a loose advisory thread. It shows phase, owner, value-at-stake, artifacts, evidence, and next action.
+          </p>
+          <div class="deep-list">
+            <div class="rule"><b>Decision artifact</b><p>Move charter and gate checklist.</p></div>
+            <div class="rule"><b>Evidence gap</b><p>Which bank, ERP, entity, or data item still needs proof.</p></div>
+          </div>
+        </div>
+        <div>
+          <div class="shot">
+            <img src="assets/02-moves-kyriba-detail.png" alt="AbarVa Moves Kyriba rollout detail screenshot" />
+          </div>
+          <p class="caption">Plate 3 - Move Detail: the rollout becomes owned work with phase, evidence, value, and next action.</p>
+        </div>
+      </div>
+
+      <div class="split flip proof-plate">
+        <div>
+          <div class="shot page-plate">
+            <img src="assets/04-source-kyriba-executive-decision.png" alt="AbarVa Source Kyriba executive decision screenshot cropped to the decision page" />
+          </div>
+          <p class="caption">Plate 4 - Source Decision: cropped to one readable page plate. The full long-scroll capture stays in the QA appendix.</p>
+        </div>
+        <div>
+          <h3>Source: executive decision</h3>
+          <p>
+            The Source surface is where procurement, finance, and executive judgment meet. For Kyriba, it can show bank/SI selection, readiness issues, value guardrails, and the decision fork: move now on critical banks or expand scope once evidence improves.
+          </p>
+          <div class="truth">
+            <b>Decision discipline</b>
+            <p>Forecast value should stay separate from realized value. AbarVa should show the evidence, owner, approval state, and next artifact required before any claim becomes finance-attested.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="split proof-plate">
+        <div>
+          <h3>Value pipeline: proof before realized savings</h3>
+          <p>
+            The right buyer story is not "$0 realized value." It is a controlled value pipeline: opportunities are visible, forecast value is tracked, and realized savings only count after baseline evidence, intervention record, negotiated outcome, and finance attestation.
+          </p>
+          <div class="deep-list">
+            <div class="rule"><b>Baseline</b><p>What finance accepts as current truth.</p></div>
+            <div class="rule"><b>Forecast</b><p>What the Move expects to improve.</p></div>
+            <div class="rule"><b>Realized</b><p>What is proven after action.</p></div>
+            <div class="rule"><b>Gap</b><p>What still blocks the claim.</p></div>
+          </div>
+        </div>
+        <div>
+          <div class="shot">
+            <img src="assets/07-source-portfolio.png" alt="AbarVa Source portfolio value pipeline screenshot" />
+          </div>
+          <p class="caption">Plate 5 - Source Portfolio: $60M pipeline value is visible while realized savings remain finance-attested.</p>
+        </div>
+      </div>
+
+      <div class="band proof-plate">
+        <h3>Where the full screenshot set goes</h3>
+        <p>
+          The long Source route, documents tab, setup/admin crawl, and Intelligence ask screenshots stay in the evidence packet and demo-video shot list. They are still valuable; they just should not be stacked on top of each other inside the main buyer page.
+        </p>
+        <div class="pill-row">
+          <span class="pill blue">Full QA screenshots</span>
+          <span class="pill teal">Demo video shot list</span>
+          <span class="pill gold">Appendix evidence</span>
+          <span class="pill rose">Not main narrative clutter</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="band">
+      <span class="kicker">Architecture trust layer</span>
+      <h2>Claude can reason. AbarVa decides what Claude is allowed to see, cite, create, and persist.</h2>
+      <div class="grid-4">
+        <div class="mini"><b>Application plane</b><p>Setup, Intelligence, Moves, Source, Tower, personas, approvals, and artifact UX.</p></div>
+        <div class="mini"><b>Orchestration plane</b><p>Context envelope, retrieval scope, tools, answer shape, evidence gaps, and workflow creation.</p></div>
+        <div class="mini"><b>Private data plane</b><p>Azure/Postgres, Azure AI Search, tenant-scoped storage, loaded files, artifacts, and audit records.</p></div>
+        <div class="mini"><b>Model boundary</b><p>Claude or OpenAI provides reasoning. The client data, approvals, and durable artifacts remain in AbarVa-controlled systems.</p></div>
+      </div>
+    </section>
+
+    <section id="plan" class="band tinted">
+      <span class="kicker">Six-month engagement shape</span>
+      <h2>Six months should build the intelligence layer, prove finance/treasury success, and create a reusable AI execution engine.</h2>
+      <div class="timeline">
+        <div class="month"><strong>Month 1</strong><p>Stand up the Lakeshore context layer: enterprise profile, org, systems, CMDB, vendors, contracts, banking, KPIs, risks, and evidence.</p></div>
+        <div class="month"><strong>Month 2</strong><p>Build the editable corpus: treasury, finance, governance, vendor, IT, risk, and operating-company doctrine with approval workflow.</p></div>
+        <div class="month"><strong>Month 3</strong><p>Run Kyriba / treasury readiness gates and produce the CFO/Treasurer evidence pack for bank, ERP, entity, cash, control, and IC gaps.</p></div>
+        <div class="month"><strong>Month 4</strong><p>Launch Source value events: bank rationalization, SI readiness, audit/advisory leverage, vendor overlap, and renewal optimization.</p></div>
+        <div class="month"><strong>Month 5</strong><p>Move 3-5 opportunities through execution with artifacts, owners, approval state, and finance-reviewed value logic.</p></div>
+        <div class="month"><strong>Month 6</strong><p>Publish the board-ready AI Success Platform pack: value ledger, corpus coverage, operating model, roadmap, and renewal case.</p></div>
+      </div>
+    </section>
+
+    <section class="band">
+      <span class="kicker">Six-month success standard</span>
+      <h2>The program should earn renewal by showing 5-10x value potential with finance-defensible proof.</h2>
+      <p>
+        The renewal case should not be a polished demo. It should be a board-grade evidence package showing what context was loaded, what corpus doctrine was approved, which treasury and sourcing risks were avoided, which vendor or implementation costs were optimized, and which AI use cases can now be executed at lower cost and higher control.
+      </p>
+      <div class="grid-3">
+        <div class="mini"><b>Context and corpus proof</b><p>Coverage of Lakeshore entities, systems, vendors, contracts, banking, KPIs, risks, artifacts, and approved doctrine.</p></div>
+        <div class="mini"><b>Finance / treasury proof</b><p>Kyriba readiness gates, failure-cost avoidance, bank/ERP/entity gaps, IC/covenant controls, and CFO-owned decisions.</p></div>
+        <div class="mini"><b>ROI proof</b><p>5-10x value potential shown through Source pipeline, vendor optimization, execution-cost reduction, and finance-attested value ledger.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Claim discipline: screenshots are product proof from the Lakeshore demo packet; planning baselines should be validated with Lakeshore before being treated as client-approved facts; generated artifacts remain drafts until reviewed; forecast value is not realized value.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>
