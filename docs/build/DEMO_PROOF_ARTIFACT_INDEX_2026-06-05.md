@@ -8,7 +8,7 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 
 | Client / lane | Status | Percent | Buyer-ready artifact | QA evidence | Blocker / next action |
 |---|---:|---:|---|---|---|
-| Lakeshore | Buyer brief + detailed reading page + MP4 ready for review | 98% | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | `docs/build/lakeshore-success-brief/video-storyboard/detailed-render/qa/detailed-v3-video-samples.png` | Final human listen/read-through before sending externally. |
+| Lakeshore | Buyer brief + detailed reading page + MP4 ready for review; live app proof refreshed after PR #3181 | 99% | `docs/build/lakeshore-success-brief/LAKESHORE_AI_SUCCESS_PLATFORM_DETAILED_READING_2026-06-05.html` | `docs/build/lakeshore-proof/live-walkthrough/post-3181-authenticated/README.md` | Final human listen/read-through before sending externally; Azure/private-plane-specific health endpoints still need proof. |
 | Meridian / PHS | Proof-page ready for review | 88% | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_2026-06-05.html` | `docs/build/meridian-phs-proof/MERIDIAN_PHS_CDAO_PROOF_VISUAL_QA_2026-06-05.md` | Package into deeper CDAO/admin training and resolve citation/context gaps before final buyer reliance. |
 | SkyHarbor | Dataset-ready, not live-proofed | 25% | None yet | `reports/2026-06-05-skyharbor-reality/00-before-state.md` | Azure/Postgres host did not resolve; run read-only counts, loader, screenshots, persisted Moves/Source proof after access is restored. |
 
@@ -43,6 +43,10 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 | CXO hard-question QA report | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/report.html` | 100 captured OpenAI-only Lakeshore hard-question answers with question pack, answer JSONL, scoring JSONL, issue counts, and HTML review report. |
 | Packaged CXO hard-question QA report | `docs/build/lakeshore-success-brief/cxo-hard-question-qa/report.html` | Same 100-question QA report copied inside the Lakeshore success-brief folder so the detailed HTML can open it directly. |
 | CXO hard-question answer JSONL | `reports/2026-06-05-lakeshore-cxo-hard-question-qa/answers.jsonl` | Captured answer payloads used by the QA report. |
+| Post-3178 app readiness QA | `reports/lakeshore-post-3178-demo-readiness/lakeshore-app-demo-readiness-2026-06-06T07-57-15-585Z-df292c761/README.md` | Live production app walkthrough at `https://app.abarva.ai`: 26 checks, 26 pass, 0 watch, 0 fail across Admin, Setup, Source, Moves, Tower, and Intelligence. |
+| Post-3178 Source/Moves retrieval QA | `reports/lakeshore-post-3178-source-moves-retrieval/lakeshore-source-moves-retrieval-qa-2026-06-06T07-57-15-584Z-df292c761/README.md` | Live production retrieval proof: 8 checks, 8 pass, 0 fail for Source/Moves artifacts and retrieval paths. |
+| Post-3181 Intelligence tenant sweep | `reports/lakeshore-post-3181-intelligence-tenant-sweep/intelligence-tenant-sweep-2026-06-06T08-17-49-932Z-2a869623/README.md` | Live production tenant-copy proof after PR #3181 and deploy `dpl_6bYhy85nRq6rWCA69eepCZuePueT`: 9 routes, 9 pass, 0 forbidden hits for Apex Retail, Meridian Health, or SkyHarbor. |
+| Post-3181 authenticated walkthrough screenshots | `docs/build/lakeshore-proof/live-walkthrough/post-3181-authenticated/README.md` | Signed-in live production walkthrough using freshly regenerated Lakeshore CFO/CIO Clerk sessions: 28 route screenshots, 28 pass, 0 sign-in fallbacks, 0 forbidden-client hits, and Lakeshore label present on every captured route. |
 | Source/Kyriba live-route QA | `reports/2026-06-05-agent-a-source-kyriba-qa/AGENT_A_SOURCE_KYRIBA_QA_SUMMARY.md` | 26/26 live route checks plus API/export checks for the Lakeshore Kyriba Source event and artifacts. |
 | Moves evidence QA | `reports/2026-06-05-lakeshore-agent-b-moves-evidence/lakeshore-app-demo-readiness-2026-06-05T18-42-07-086Z-a879c5bc4/report.html` | Live app readiness evidence for Lakeshore Moves/Setup surfaces captured by Agent B. |
 | Desktop screenshot | `docs/build/lakeshore-proof/qa/lakeshore-proof-desktop.png` | Rendered proof page. |
@@ -51,8 +55,14 @@ Purpose: single navigation point for current AbarVa buyer-proof artifacts, QA ev
 Evidence basis:
 
 - Live Source/Kyriba route screenshot/API pack: 26/26 route checks pass, 7/7 API/export checks pass, 0 fail.
+- Live post-3178 production app readiness: 26/26 checks pass across Admin, Setup, Source, Moves, Tower, and Intelligence.
+- Live post-3178 Source/Moves retrieval: 8/8 checks pass.
+- Live post-3181 Intelligence tenant sweep: 9/9 routes pass, including `/intelligence/t3-h01?client=lakeshore`, with no Apex Retail, Meridian Health, or SkyHarbor tenant-copy hits.
+- Live post-3181 authenticated walkthrough screenshots: 28/28 signed-in production pages pass, no Clerk sign-in fallbacks, no forbidden-client hits, and Lakeshore label present on every captured page.
+- Current production deploy for the post-3181 tenant-copy proof: `dpl_6bYhy85nRq6rWCA69eepCZuePueT`, aliased to `https://app.abarva.ai`.
 - Lakeshore CXO hard-question QA: 100 questions, 60 pass, 40 watch, 0 fail, average score 4.53 / 5.
 - Known watch themes are intentionally preserved: sharper owner/action specificity, weaker finance depth in 7 answers, missing evidence reference in 3 answers, no next action in 3 answers, and 1 overclaim-completion warning.
+- Azure/private-plane truth boundary: the main `/api/health` endpoint is green for Postgres/direct Postgres, but `/api/health/azure-connectivity` and `/api/health/postgres-disruption` still return 404; keep Azure substrate below 100% until equivalent private-plane runtime proof exists.
 
 ## Meridian / PHS Proof Packet
 
