@@ -91,10 +91,39 @@ battery already proves the depth those surfaces would inherit is present.
 
 ---
 
+## Grounding model — final per-surface resolution
+
+Grounding is per-`(industry, function)`. The honest answer differs by surface
+because the surfaces differ in shape — forcing a single-function bind onto a
+cross-function surface would be fabrication, not grounding.
+
+| Surface | Shape | Grounding model | State |
+|---|---|---|---|
+| **Nexus / Moves** | Single-function (a Move *is* a function) | `bindMoveFunctionPack` — binds the one pack | ✅ Wired + grounded + CI-proven |
+| **Sentinel / Source** | Event-scoped | `groundSurfaceContext` — bind when the event resolves a `(industry, function)` | Seam + optional carrier + pass-through shipped (#3225); live population needs `(industry, function)` threaded in |
+| **Atlas / Tower** | Cross-function (the whole portfolio) | `groundTenantPortfolio` — **aggregate** over the portfolio's functions; a single bind would be wrong | Aggregate primitive shipped + tested; live wiring needs `ProgramInstance` to carry function identity |
+| **Steward / Setup** | Config / loader (admin, ingestion, readiness) | **No function bind by design** — Setup *enables* grounding by loading the data; it is not a function-reasoning surface | ✅ Correct as-is (not a gap) |
+
+### Grounding API — now complete for both shapes
+
+- `groundSurfaceContext({ industryCode, functionPackKey })` → single-function grounding (Moves, Source).
+- `groundTenantPortfolio({ industryCode, functionKeys })` → aggregate grounding for cross-function surfaces (Tower): union of metrics + regulatory frames + per-function grounding, unbound functions surfaced honestly.
+
+### The one honest remaining step
+
+Both live populations (Source, Tower) are blocked on the same thing, stated
+plainly: **the surfaces' in-memory context objects do not yet carry the
+tenant's `(industry, function)` identity** (`SourceTenantContext` has no
+industry; `ProgramInstance` has `patternId`/`tenantId` but no function key).
+The tenant's industry is resolvable via `resolveTenant` (`industry_code`); the
+function must be threaded from the event/program. Wiring that typed identity
+through these heavily-tested surfaces is a bounded plumbing follow-up —
+deliberately not faked here as "done."
+
 ## Follow-on
 
-1. Wire Sentinel/Source, Atlas/Tower, Steward/Setup to bind the registry for
-   their context (close the wiring gap).
-2. Grow the battery as packs deepen (tranche 1b/2 packs, more hero probes).
+1. Thread `(industry, function)` identity into the Source bundle + `ProgramInstance`
+   so the shipped seams populate live.
+2. Grow the battery as packs deepen (it auto-covers each new catalogued pack).
 3. When the deployed app + credentials are available, add a thin live-LLM
    smoke layer on top of this deterministic battery.

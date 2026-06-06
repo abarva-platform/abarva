@@ -6,6 +6,7 @@
 import { listFunctionPackCoverage } from '../domain/function-pack-registry';
 import {
   groundSurfaceContext,
+  groundTenantPortfolio,
   type SurfaceGrounding,
 } from '../grounding/surface-grounding';
 
@@ -61,5 +62,39 @@ describe('groundSurfaceContext (shared surface grounding seam)', () => {
           sg.ownItPosture.hasOwnershipAnchor,
       ).toBe(true);
     }
+  });
+});
+
+describe('groundTenantPortfolio (cross-function / Atlas-Tower grounding)', () => {
+  it('aggregates curated depth across a portfolio of functions', () => {
+    const portfolio = groundTenantPortfolio({
+      industryCode: 'healthcare_idn',
+      functionKeys: [
+        'population_health_value_based_care',
+        'clinical_operations_documentation',
+        'payer_claims_operations',
+      ],
+    });
+    expect(portfolio.groundedFunctions.length).toBe(3);
+    expect(portfolio.unboundFunctions.length).toBe(0);
+    expect(portfolio.industryKey).toBe('healthcare-provider');
+    // Union of metrics across 3 packs (>=10 each) must exceed any single pack.
+    expect(portfolio.allMetrics.length).toBeGreaterThan(10);
+    expect(portfolio.allRegulatoryFrames.length).toBeGreaterThan(0);
+    // The own-it discipline is present somewhere in the portfolio.
+    expect(
+      portfolio.ownItPosture.hasRentedIntelligenceTheme ||
+        portfolio.ownItPosture.hasOwnershipAnchor,
+    ).toBe(true);
+  });
+
+  it('surfaces unbound functions honestly without dropping the grounded ones', () => {
+    const portfolio = groundTenantPortfolio({
+      industryCode: 'healthcare_idn',
+      functionKeys: ['population_health_value_based_care', 'nonexistent_function'],
+    });
+    expect(portfolio.groundedFunctions.length).toBe(1);
+    expect(portfolio.unboundFunctions.length).toBe(1);
+    expect(portfolio.unboundFunctions[0].functionKey).toBe('nonexistent_function');
   });
 });
