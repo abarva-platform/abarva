@@ -2,6 +2,11 @@ import 'server-only';
 
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { selectRelevantPatternRows } from '@/lib/intelligence-v3/pattern-relevance';
+import {
+  requiredGroundingForText,
+  selectGroundedPattern,
+  warnDroppedPatterns,
+} from '@/lib/intelligence-v3/pattern-grounding';
 import type {
   AntiPattern,
   BriefData,
@@ -28,6 +33,30 @@ interface CorpusPatternRow {
   vertical_overlays: string[] | null;
   region_overlays: string[] | null;
   published_at: string | null;
+}
+
+/** Treasury registry row from genome_patterns (LSH-TMS-* namespace). */
+interface GenomeTreasuryRow {
+  code: string;
+  name: string;
+  summary: string | null;
+  confidence: string | number | null;
+}
+
+/** Map a treasury genome row into the CorpusPatternRow shape so the shared
+ *  builders/relevance scoring work uniformly. slug = lowercased code, so
+ *  buildPattern() emits the registry id (e.g. `LSH-TMS-002`). */
+function treasuryRowToPatternRow(row: GenomeTreasuryRow): CorpusPatternRow {
+  return {
+    slug: row.code.toLowerCase(),
+    title: row.name,
+    category: 'treasury',
+    confidence: row.confidence ?? null,
+    depth_score: row.confidence ?? null,
+    vertical_overlays: ['treasury', 'kyriba'],
+    region_overlays: null,
+    published_at: null,
+  };
 }
 
 interface InitiativeRow {
@@ -246,7 +275,7 @@ const GOVERNANCE_REGULATORY: Regulatory = {
 };
 
 export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<{ mapData: MapData; briefData: BriefData } | null> {
-  const [patternRows, initiativeRows] = await Promise.all([
+  const [patternRows, treasuryPatternRows, initiativeRows] = await Promise.all([
     azureRead.query<CorpusPatternRow>(
       `SELECT slug, title, category, confidence, depth_score, vertical_overlays, region_overlays, published_at
        FROM corpus_patterns
@@ -256,6 +285,18 @@ export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<
        ORDER BY depth_score DESC NULLS LAST, published_at DESC NULLS LAST, slug ASC
        LIMIT 24`,
     ),
+    // Treasury grounding namespace: the LSH-TMS-* registry lives in genome_patterns
+    // (and Azure Search lakeshore-patterns-v1), NOT in the corpus 'pat-lsh-%' set.
+    // Treasury/Kyriba decision cards must bind from THIS namespace.
+    azureRead
+      .query<GenomeTreasuryRow>(
+        `SELECT code, name, summary, confidence
+         FROM genome_patterns
+         WHERE code LIKE 'LSH-TMS-%'
+         ORDER BY confidence DESC NULLS LAST, code ASC
+         LIMIT 24`,
+      )
+      .catch(() => [] as GenomeTreasuryRow[]),
     azureRead.query<InitiativeRow>(
       `SELECT initiative_id, display_id, name, description, stage, owner_title,
               committed_annual_usd, measured_value_usd, status_flag, status_summary, confidence_level
@@ -268,6 +309,9 @@ export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<
   ]);
 
   if (patternRows.length === 0 || initiativeRows.length === 0) return null;
+
+  // Candidate rows mapped into the treasury grounding namespace.
+  const treasuryRows = treasuryPatternRows.map(treasuryRowToPatternRow);
 
   const seedUseCaseIds = initiativeRows.slice(0, 6).map((_, index) => `UC-LSH-${String(index + 1).padStart(3, '0')}`);
   const patterns = patternRows.slice(0, 6).map((row) => buildPattern(row, seedUseCaseIds));
@@ -358,25 +402,36 @@ export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<
         label: index === 0 ? 'Gate on treasury proof' : 'Evaluate with evidence',
         reason: 'Advance only where Source/Tower evidence and accountable owner are visible.',
       },
-      // Relevance-bound + fail-closed: pick the pattern actually about this
-      // bet's use case, not the one at array position `index`. Empty when no
-      // candidate clears MIN_PATTERN_RELEVANCE — the card then has no
-      // off-domain pattern to cite.
-      bindingPatterns: selectRelevantPatternRows(
-        `${initiativeRows[index]?.name ?? useCase.name} ${initiativeRows[index]?.description ?? ''}`,
-        patternRows,
-      ).map((row) => {
-        const pattern = buildPattern(row, seedUseCaseIds);
-        return {
-          pattern,
-          quantifiedRow: {
-            withLabel: '+ Pattern applied',
-            withoutLabel: '- Decision theater',
-            description: pattern.description,
-            source: pattern.provenance.primarySources[0]?.source ?? 'lakeshore corpus',
-          },
-        };
-      }),
+      // Relevance-bound + grounding-namespace validated + fail-closed: pick the
+      // pattern actually about this bet's use case AND in the namespace the card
+      // requires. A treasury/Kyriba bet binds only the treasury (LSH-TMS-*)
+      // namespace; a corpus pattern like PAT-LSH-D18-00479 can never land on it.
+      // Empty when nothing clears relevance + grounding — no off-namespace cite.
+      bindingPatterns: (() => {
+        const useCaseText = `${initiativeRows[index]?.name ?? useCase.name} ${initiativeRows[index]?.description ?? ''}`;
+        const required = requiredGroundingForText(useCaseText);
+        const pool = required === 'treasury' ? treasuryRows : patternRows;
+        const relevant = selectRelevantPatternRows(useCaseText, pool, 3);
+        const decision = selectGroundedPattern({
+          required,
+          candidates: relevant,
+          idOf: (row) => row.slug,
+        });
+        warnDroppedPatterns(`brief bet "${useCase.name}"`, decision.dropped);
+        const boundRows = decision.bound ? [decision.bound] : [];
+        return boundRows.map((row) => {
+          const pattern = buildPattern(row, seedUseCaseIds);
+          return {
+            pattern,
+            quantifiedRow: {
+              withLabel: '+ Pattern applied',
+              withoutLabel: '- Decision theater',
+              description: pattern.description,
+              source: pattern.provenance.primarySources[0]?.source ?? 'lakeshore corpus',
+            },
+          };
+        });
+      })(),
       antiPatterns: antiPatterns.slice(index, index + 1).map((antiPattern) => ({
         antiPattern,
         description: antiPattern.description,

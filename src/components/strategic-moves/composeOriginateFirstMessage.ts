@@ -11,6 +11,10 @@
 
 import type { TenancyCtx } from '@/lib/programs/types.db';
 import { getOpenDraft } from '@/lib/programs/origination-drafts';
+import {
+  isPatternBindable,
+  requiredGroundingForText,
+} from '@/lib/intelligence-v3/pattern-grounding';
 
 export interface OriginateFirstMessage {
   role: 'assistant';
@@ -130,18 +134,36 @@ function composeFromIntelligenceMessage(from: FromIntelligenceCtx): OriginateFir
       ? `The linked Genome pattern carries an estimated ${Math.round(from.failureRatePct)}% failure risk without controls.`
       : 'The linked Genome pattern has a material failure risk without controls.';
 
+  // Grounding-namespace guard (fail closed). A treasury/Kyriba Move must bind a
+  // treasury pattern (LSH-TMS-*); a corpus id like PAT-LSH-D18-00479 is dropped.
+  // The dropped id is NEVER echoed into the Move text — only into a diagnostic.
+  const grounding = requiredGroundingForText(from.useCaseName);
+  const patternBindable = isPatternBindable(from.patternId, grounding);
+  if (!patternBindable) {
+    console.warn(
+      `[pattern-grounding] originate: dropped off-namespace pattern "${from.patternId}" ` +
+        `for use case "${from.useCaseName}" (required ${grounding}); not citing it in the Move.`,
+    );
+  }
+  const bindingLine = patternBindable
+    ? `Binding pattern: ${from.patternId} — ${from.patternName}. ${failureLine}`
+    : `Binding pattern: I'll bind a validated ${grounding} pattern from the registry — the inbound reference was off-namespace for this card and was dropped, so the Move will not cite it.`;
+  const idSuffix = (patternBindable ? from.patternId : `${grounding}-unbound`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-');
+
   return {
     role: 'assistant',
     agentName: 'Nexus',
     text: `You're shaping a Strategic Move from Intelligence: ${from.useCaseName}.
 
-Binding pattern: ${from.patternId} — ${from.patternName}. ${failureLine}
+${bindingLine}
 
 ${sourceLine}
 ${contradictionLine}
 
 To turn this into a Move, I need to lock four things: the business outcome, the executive sponsor, the scope boundary, and the first evidence gate. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
-    id: `originate-open-intelligence-${from.patternId.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+    id: `originate-open-intelligence-${idSuffix}`,
   };
 }
 
