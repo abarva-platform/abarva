@@ -51,9 +51,8 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 
 - Recreated cleanly on `cursor/anthropic-provider-qa-cutover-a092` from latest
   `main` (`54f5cab2f`) after PR #3243 was closed/conflicting.
-- `npx jest provider-audit / openai-runtime-contract / sentinel-chat-llm` — passed (10).
-- Pending this update: rerun provider-audit after adding Sentinel Ask audit
-  envelope assertions.
+- `npx jest src/lib/intelligence/ask/__tests__/provider-audit.test.ts src/lib/intelligence/ask/__tests__/openai-runtime-contract.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts --runInBand`
+  — passed (12).
 - `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
 - Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
 - **Azure Container Apps test revision staged safely:** `provqa` is healthy and
