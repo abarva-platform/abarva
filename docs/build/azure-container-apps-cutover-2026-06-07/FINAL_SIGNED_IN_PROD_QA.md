@@ -1,22 +1,32 @@
 # Final Signed-In Production QA — `app.abarva.ai` (2026-06-07)
 
-Status: **BLOCKED — cannot run signed-in QA on `app.abarva.ai` yet.** Two
-preconditions are unmet in this environment:
-
-1. **`app.abarva.ai` still serves Vercel** (HTTP 503), because the DNS cutover
-   is blocked on manual Namecheap registrar action — see
-   `FINAL_DNS_CUTOVER.md`. Signed-in QA against the production hostname is
-   meaningless until it resolves to Azure.
-2. **No Clerk session is available** in this headless agent. Signed-in QA of
-   Home / Intelligence (Sentinel) / Moves / Source / Tower / Setup-Admin
-   requires an authenticated browser session and a known tenant.
-
-This document records the Azure-target health that **was** provable without a
-session, plus the exact signed-in QA script for the operator to run once DNS
-is cut over.
+Status: **DNS cutover is COMPLETE — `app.abarva.ai` now serves Azure.**
+Unauthenticated production proof on the live hostname is done (Azure-backed,
+no Vercel, correct auth gating, no 5xx). The remaining **signed-in** checklist
+(tenant isolation + LLM audit provider rows across the six surfaces) requires
+an authenticated Clerk session, which is not available to this headless agent,
+so it is left as an operator step with the exact script below.
 
 > Guardrails held: no secrets printed; only env/secret **names** inspected;
-> no Supabase reintroduced; no Azure resources changed.
+> no Supabase reintroduced; no Azure resources changed; Vercel not removed
+> (signed-in QA gate still open).
+
+## 0. Live production proof on `https://app.abarva.ai` (verified ~06:19Z)
+
+| Surface | Route | Result (unauthenticated) |
+| --- | --- | --- |
+| Home | `/` | **200**, `x-powered-by: Next.js`, no Vercel headers |
+| Health | `/api/health` | **200**, `postgres/direct_postgres=true`, `azure_graph=postgres` |
+| Intelligence/Sentinel | `/intelligence` | **307 → `/sign-in?redirect=%2Fintelligence`** (Clerk auth gate) |
+| Moves | `/strategic-moves` | **307** → Clerk sign-in |
+| Source | `/source` | **307** → Clerk sign-in |
+| Tower | `/tower` | **307** → Clerk sign-in |
+| Setup/Admin | `/setup` | **301 → `/admin`** (then Clerk auth gate) |
+| Sign-in | `/sign-in` | **200** |
+
+No surface returned a 5xx. Protected routes correctly redirect unauthenticated
+requests to Clerk sign-in — proper auth gating, served by Azure. The TLS cert
+is `CN=app.abarva.ai` (DigiCert/GeoTrust), validated without `-k`.
 
 ## A. Azure-backed runtime proof (no session required) — ✅ verified
 
@@ -100,11 +110,13 @@ For every surface confirm:
 
 | Gate | Status |
 | --- | --- |
-| Azure target healthy + Azure-backed (no session) | ✅ verified |
+| `app.abarva.ai` cut over to Azure (off Vercel) | ✅ verified ~06:19Z |
+| Azure target healthy + Azure-backed | ✅ verified |
+| Unauthenticated route proof (6 surfaces, no 5xx, auth gated) | ✅ verified on `app.abarva.ai` |
 | No Supabase env/secret references | ✅ verified |
 | Anthropic provider configured | ✅ verified (env/secret/image) |
-| Signed-in QA on `app.abarva.ai` (all 6 surfaces) | ⛔ BLOCKED — DNS not cut over + no session |
-| LLM audit `provider=anthropic` row proof | ⛔ BLOCKED — needs session |
-| Cross-tenant isolation proof | ⛔ BLOCKED — needs session |
+| Signed-in QA on `app.abarva.ai` (all 6 surfaces) | ⏳ PENDING — needs Clerk session |
+| LLM audit `provider=anthropic` row proof | ⏳ PENDING — needs session |
+| Cross-tenant isolation proof | ⏳ PENDING — needs session |
 
 Until Section B passes, Vercel must **not** be removed.

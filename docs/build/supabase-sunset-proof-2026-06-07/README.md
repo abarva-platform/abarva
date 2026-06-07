@@ -65,14 +65,16 @@ names remain as compatibility-era residue and are not injected as runtime env.
    `anthropic-api-key` secret + image tag `…provider-anthropic…`).
    Row-level `ai_egress_audit.provider=anthropic` proof still needs a signed-in
    session (see QA doc).
-2. ⛔ **DNS cutover of `app.abarva.ai` → Azure** — BLOCKED on manual Namecheap
-   registrar action. Exact records in
+2. ✅ **DNS cutover of `app.abarva.ai` → Azure** — DONE (verified ~06:19Z).
+   CNAME points to Azure, custom domain bound `SniEnabled`, managed cert
+   `Succeeded`, `/api/health` 200 Azure-backed, no Vercel headers. Evidence in
    `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`.
-3. ⛔ Signed-in production QA on `app.abarva.ai` — BLOCKED until DNS cutover +
+3. ⏳ Signed-in production QA on `app.abarva.ai` — unauthenticated route proof
+   done (no 5xx, correct Clerk auth gating); signed-in checklist pending a
    session. Script in
    `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_SIGNED_IN_PROD_QA.md`.
 4. ⛔ Remove Vercel production (alias/domain, auto-deploys, env, project) — only
-   after DNS + QA pass.
+   after signed-in QA passes (no Vercel credentials in this environment).
 5. Only after all of the above: run the Supabase freeze, then sunset.
 
 Supabase has NOT been paused, frozen, or deleted.

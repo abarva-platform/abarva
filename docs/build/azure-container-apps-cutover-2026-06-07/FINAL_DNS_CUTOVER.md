@@ -1,15 +1,32 @@
 # Final DNS Cutover — Vercel → Azure Container Apps (2026-06-07)
 
-Status: **Azure target confirmed healthy. DNS cutover BLOCKED on manual
-registrar action at Namecheap.** No DNS records were changed by this agent —
-the `abarva.ai` zone is hosted at Namecheap (`registrar-servers.com`
-nameservers) and no registrar/DNS-provider credentials are available in this
-environment. Per the cutover guardrail, this document records the exact
-records an operator must apply at the registrar, then stops.
+Status: **✅ COMPLETE — `app.abarva.ai` is now served by Azure Container Apps,
+off Vercel, with a valid managed certificate.** The operator applied the DNS
+records at Namecheap; the `app` CNAME now points to the Azure environment and
+the custom domain is bound (`SniEnabled`) with an Azure-managed certificate
+(`Succeeded`). Verified `~06:19Z`: `app.abarva.ai/` and `/api/health` return
+200 from Azure with no Vercel headers.
 
-> Guardrails held: no DNS changed without proof, no Supabase reintroduced, no
-> Azure resource deleted, no Vercel removal (DNS + QA gates not yet passed),
-> no secrets printed.
+> Guardrails held: DNS records applied by the operator at the registrar (this
+> agent has no registrar credentials and changed no DNS itself); no Supabase
+> reintroduced; no Azure resource deleted; no Vercel removal yet (signed-in QA
+> gate still pending — see `FINAL_SIGNED_IN_PROD_QA.md`); no secrets printed.
+
+## 0. Cutover result (verified 2026-06-07 ~06:19Z)
+
+| Task 3 check | Result |
+| --- | --- |
+| `dig +short CNAME app.abarva.ai` no longer `vercel-dns` | ✅ `ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io.` |
+| `curl -I https://app.abarva.ai` has no `server: Vercel` / `x-vercel-id` | ✅ only `x-powered-by: Next.js` |
+| `https://app.abarva.ai/api/health` → 200, postgres/direct_postgres true | ✅ `{ ok:true, postgres:true, direct_postgres:true, azure_graph:"postgres" }` |
+| TLS cert for `app.abarva.ai` | ✅ `CN=app.abarva.ai` (DigiCert/GeoTrust), valid (no `-k` needed) |
+| Container App custom domain | ✅ `app.abarva.ai` bound `SniEnabled` |
+| Managed certificate | ✅ `mc-cae-abarva-sca-app-abarva-ai-8374`, subject `app.abarva.ai`, status `Succeeded` |
+
+Note: the `asuid.app` TXT validation record did not need to propagate — once the
+`app` CNAME resolved to the Azure environment, CNAME-based domain-control
+validation satisfied the managed-certificate issuance. The `asuid.app` TXT
+remains optional belt-and-suspenders for future re-validation.
 
 ## 1. Azure target confirmed
 
@@ -175,11 +192,11 @@ Expected healthy response (matches the Azure FQDN today):
 | --- | --- |
 | Azure target healthy (FQDN `/` + `/api/health` 200, Azure-backed) | ✅ verified |
 | Custom-domain validation requirement captured | ✅ verified |
-| Registrar records published at Namecheap | ⛔ BLOCKED — manual operator action |
-| Azure hostname bind + managed cert | ⛔ BLOCKED — depends on DNS |
-| `app.abarva.ai` off Vercel and healthy on Azure | ⛔ BLOCKED — depends on DNS |
-| Signed-in production QA on `app.abarva.ai` | ⛔ BLOCKED — see `FINAL_SIGNED_IN_PROD_QA.md` |
-| Vercel shutdown | ⛔ BLOCKED — gated on DNS + QA |
+| Registrar records published at Namecheap (`app` CNAME → Azure) | ✅ done (operator) |
+| Azure hostname bind + managed cert | ✅ bound `SniEnabled`, cert `Succeeded` |
+| `app.abarva.ai` off Vercel and healthy on Azure | ✅ verified ~06:19Z |
+| Signed-in production QA on `app.abarva.ai` | ⏳ unauth proof done; signed-in checklist pending — see `FINAL_SIGNED_IN_PROD_QA.md` |
+| Vercel shutdown | ⛔ pending — no Vercel creds + signed-in QA gate |
 
 Cross-reference: `docs/build/cutover/AZURE_CUTOVER_PROOF_2026-06-07.md`,
 `docs/build/supabase-sunset-proof-2026-06-07/README.md`.

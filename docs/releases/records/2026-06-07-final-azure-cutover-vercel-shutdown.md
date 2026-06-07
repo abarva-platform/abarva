@@ -11,15 +11,17 @@
 ## Plain-English Summary
 
 This is the final step of moving `app.abarva.ai` off Vercel and onto Azure
-Container Apps. We confirmed the Azure target is healthy and Azure-backed,
-attempted the custom-domain binding, and captured the exact DNS records needed
-to repoint the domain. The actual DNS change could not be made automatically:
-`abarva.ai` is hosted at Namecheap and this environment has no registrar
-credentials, so the cutover is blocked on a manual operator action at the
-registrar. Because the domain has not yet moved and no signed-in QA against the
-production hostname was possible, **Vercel has not been touched** — that is the
-correct, guardrail-compliant outcome. This change is documentation/evidence
-only; it adds no runtime code.
+Container Apps. We confirmed the Azure target is healthy and Azure-backed and
+captured the exact DNS records needed. The operator then applied those records
+at Namecheap; the `app` CNAME now points to the Azure environment, the custom
+domain is bound (`SniEnabled`) and an Azure-managed certificate issued
+(`Succeeded`). As of ~06:19Z, `https://app.abarva.ai` and `/api/health` return
+200 from Azure with no Vercel headers — **the production cutover is complete**.
+Unauthenticated production QA across all six surfaces passed (no 5xx, correct
+Clerk auth gating). The remaining signed-in QA (tenant isolation + LLM audit
+provider rows) needs an authenticated session and is left as an operator step;
+until it passes, **Vercel is intentionally left intact**. This change is
+documentation/evidence only; it adds no runtime code.
 
 ## Layer Impact
 
@@ -65,31 +67,41 @@ only; it adds no runtime code.
   traffic, `/` and `/api/health` return 200 with
   `postgres/direct_postgres=true` and `azure_graph=postgres`.
 - Verified: custom-domain verification ID
-  `A8078EFAA2EC5EE0EBD7683E57858C95FFD118925265A1C3059FDB9865982C7A`; binding
-  attempt returned `InvalidCustomHostNameValidation` requiring TXT
-  `asuid.app.abarva.ai`, as expected (DNS still on Vercel).
+  `A8078EFAA2EC5EE0EBD7683E57858C95FFD118925265A1C3059FDB9865982C7A`; initial
+  binding attempt returned `InvalidCustomHostNameValidation` (DNS still on
+  Vercel at that time), as expected.
+- Pass (post-cutover, ~06:19Z): `dig +short CNAME app.abarva.ai` →
+  Azure FQDN (no `vercel-dns`); `curl -I https://app.abarva.ai` has no
+  `server: Vercel` / `x-vercel-id`; `https://app.abarva.ai/api/health` → 200
+  with `postgres/direct_postgres=true`, `azure_graph=postgres`; TLS cert
+  `CN=app.abarva.ai` valid; custom domain bound `SniEnabled`; managed cert
+  `mc-cae-abarva-sca-app-abarva-ai-8374` status `Succeeded`.
+- Pass (post-cutover unauthenticated route probe): `/` 200; `/intelligence`,
+  `/strategic-moves`, `/source`, `/tower` 307 → Clerk `/sign-in`; `/setup` 301
+  → `/admin`; `/sign-in` 200 — no 5xx on any surface.
 - Verified: no Supabase env var or secret on the active container; `DATABASE_URL`
   points to Azure Postgres secret.
-- Blocked: DNS cutover (no Namecheap credentials), signed-in production QA (no
-  session + domain still on Vercel), Vercel shutdown (no Vercel credentials and
-  gated on DNS+QA).
+- Pending: signed-in production QA (no Clerk session in this agent); Vercel
+  shutdown (no Vercel credentials and gated on signed-in QA).
 
 ## Rollout Plan
 
-No runtime rollout. Merge to `main` to land the evidence and operator runbook.
-The production cutover itself is an out-of-band operator action: (1) add the
-TXT `asuid.app` + repoint the `app` record at Namecheap per
-`FINAL_DNS_CUTOVER.md`; (2) run `az containerapp hostname add` then
-`az containerapp hostname bind --validation-method CNAME` to provision the
-managed certificate; (3) run signed-in QA; (4) only then remove Vercel.
+No runtime rollout from this PR. The production cutover itself was an
+out-of-band operator action that is now **done**: the `app` CNAME was repointed
+at Namecheap to the Azure environment, the custom domain was bound and an
+Azure-managed certificate issued. Remaining operator steps: (1) run signed-in
+QA across the six surfaces; (2) only after QA passes, remove Vercel
+(production alias/domain, GitHub auto-deploys, env/secrets, then pause/delete
+the project). Merge this PR to land the evidence and runbook.
 
 ## Rollback Plan
 
 Documentation-only change — revert this PR to remove the docs; nothing in the
-runtime or DNS is altered by merging. If the operator-side DNS cutover is later
-performed and must be rolled back, restore the `app` CNAME to the Vercel target
-`20a2a769684e17ea.vercel-dns-017.com` (Vercel project still intact because it is
-not removed here).
+runtime is altered by merging. To roll back the live cutover itself, restore the
+`app` CNAME at Namecheap to the Vercel target
+`20a2a769684e17ea.vercel-dns-017.com` — this is fast and safe because the Vercel
+project, domain, and env are still intact (not removed here). Optionally unbind
+the Azure custom domain afterward.
 
 ## Audit Evidence
 
@@ -105,13 +117,18 @@ not removed here).
 
 ## Known Gaps
 
-- DNS cutover is **not** performed — blocked on manual Namecheap registrar
-  action. Exact records are recorded for the operator.
-- Signed-in production QA on `app.abarva.ai` is **not** performed — domain still
-  resolves to Vercel and no Clerk session is available.
-- Vercel shutdown is **not** performed (no Vercel credentials; gated on DNS+QA).
-  Exact Vercel action taken: **none** — Vercel project, alias/domain,
-  auto-deploys, env, and secrets are all left intact, as required until the
-  Azure path is proven healthy.
-- No Azure resources were created or deleted; no DNS records changed; no
-  secrets printed.
+- DNS cutover is **done and verified** (operator applied the records; agent
+  verified). The `asuid.app` TXT never propagated but was not required —
+  CNAME-based validation satisfied managed-certificate issuance.
+- Signed-in production QA on `app.abarva.ai` is **not yet** performed — no Clerk
+  session is available to this headless agent. Unauthenticated route proof
+  (no 5xx, correct auth gating) is done; the signed-in checklist (tenant
+  isolation, `ai_egress_audit.provider=anthropic` rows, current-state grounding)
+  remains an operator step.
+- Vercel shutdown is **not** performed (no Vercel credentials; gated on
+  signed-in QA). Exact Vercel action taken: **none** — Vercel project,
+  alias/domain, auto-deploys, env, and secrets are all left intact, as required
+  until signed-in QA passes. The runbook for removal is in `FINAL_DNS_CUTOVER.md`.
+- No Azure resources were created or deleted by this agent; the custom-domain
+  binding + managed cert were created on the operator's cutover; no secrets
+  printed.
