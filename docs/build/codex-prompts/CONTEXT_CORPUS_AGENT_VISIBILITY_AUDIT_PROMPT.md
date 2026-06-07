@@ -137,3 +137,36 @@ If safe and in scope:
 No client is called "loaded" unless **files, parse, facts/chunks, indexes, retrieval, citations, correct read-store, and signed-in answer QA are each proven separately.** Sentinel/Nexus must answer current-state questions with **concrete named client facts + citations** (not aggregate counts or inference). Production reasoning must prove **Claude/Anthropic, not OpenAI**. Any new/missing data is loaded **only** through the governed bulk/zip loader with blob staging and agent-availability proof — **no shortcuts.**
 
 Each in-scope dimension reaches at least **T3 (pilot-grade)** for pilot clients, benchmarked to the bound function pack; every dimension below T4 carries a documented depth gap and a **governed-loader plan** to close it. The depth/answerability matrix must make explicit, per client per dimension, **what can be answered today vs. what best-in-class would answer** — so "load more data" is always specified as concrete files/fields through the loader, never a vague ask.
+
+---
+
+## Appendix A — Worked example row (mirror this exact shape and rigor)
+
+**Client: Meridian · Dimension: Data-platform / analytics inventory**
+- `store = supabase` · `prod_reads_this_store = yes`
+- **Depth tier: T2 (partial-real).** `enterprise_context_facts` has real named CIs — **Epic Clarity, Epic Caboodle, Databricks Lakehouse** — in the CMDB with owners/contracts/spend. But the `applications` table for this dimension is **T1 synthetic** (`is_demo_data=true`: Cogito/Power BI) and must not override the facts; and tools the operator expects (SQL Server, Tableau, SAS) are **absent**.
+- **Answerable today:** "Do we run Epic Clarity/Caboodle?" · "Who owns the Caboodle→Lakehouse integration?" · "What's our warehouse/lakehouse?"
+- **Not yet answerable:** "Full BI/reporting tool list incl. SQL Server/Tableau/SAS?" (absent) · "Per-platform cost/criticality/SLA trend?" (partial) · "Data-product catalog?" (not loaded).
+- **Best-in-class target (benchmarked to the healthcare function pack + `MODEL`/`INGEST`/`GOV` packs):** complete application/CMDB inventory (vendor, owner, criticality, environment, annual cost, lifecycle) + the named analytics stack (warehouse, lakehouse, BI, ELT, catalog, governance) + data-product catalog + integration map, cross-linked to KPIs + contracts + spend, every row source-cited + fresh. *This is the dataset that lets Meridian's bound function pack answer its full Layer-1/Layer-6/Layer-8 surface.*
+- **Gap-closing load (governed bulk loader only):** a real application/CMDB export (CSV/XLSX) with the fields above + a BI/reporting tool inventory + a data-product catalog → blob → parse → commit → index → retrieval-proof. Promotes T2 → T3/T4.
+
+## Appendix B — Exact read-only commands per matrix cell (reproducible; never print secret values)
+
+**Client IDs:** Meridian `a20ecef5-f0ea-4890-b9d5-7375fab223ff` · Apex `bb8ed961-a049-4d0c-a38f-f8912138fceb` · Lakeshore `f2ef0b6a-9f20-4d3d-9dd9-8f8ec01f2a61` · Morgan Street `830de810-0011-4c9e-8f59-000000000101` · SkyHarbor `6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301` · (resolve others from `select id,name from clients`).
+
+**Supabase (`DATABASE_URL`, reachable):**
+- Rows per client per table: `select client_id, count(*) from enterprise_context_facts group by 1;` (repeat for `enterprise_context_records`, `enterprise_context_chunks`, `applications`, `corpus_patterns`, `intelligence_graph_edges`).
+- Fact types loaded: `select fact_type, count(*) from enterprise_context_facts where client_id='<id>' group by 1 order by 2 desc;`
+- Named-tool presence (note `fact_value` is **jsonb** → cast `::text`): `select count(*) from enterprise_context_facts where client_id='<id>' and lower(coalesce(fact_text,'')||' '||coalesce(fact_value::text,'')) like '%clarity%';`
+- Provenance %: `select round(100.0*count(*) filter (where source_file is not null)/nullif(count(*),0),1) from enterprise_context_facts where client_id='<id>';`
+- Freshness: `select max(last_synced_at), max(last_validated_at) from enterprise_context_facts where client_id='<id>';`
+- Demo flag: `select is_demo_data, count(*) from applications where client_id='<id>' group by 1;`
+- Tech-bearing chunks: `select count(*) from enterprise_context_chunks where client_id='<id>' and lower(chunk_text) ~ 'kyriba|sap|oracle|tableau|databricks|sql|warehouse';`
+
+**Azure (`ABARVA_AZURE_DATABASE_URL`, PRIVATE — NOT reachable from a laptop):** run the *same* queries from inside the VNet via an operator job, e.g. `az containerapp job start -n job-abarva-db-copy-lab-eastus -g rg-abarva-controlplane-lab-eastus …` (or the dedicated query/migrate job), and read the job logs. Never echo the connection string.
+
+**Read-store-for-prod check (names only):** `vercel env ls production | grep -iE 'ABARVA_AZURE_DATABASE_URL|DATABASE_URL|SUPABASE|ALLOW_LEGACY_SUPABASE_CORPUS|ANTHROPIC|OPENAI'` — assert presence/absence, never values. (If `ABARVA_AZURE_DATABASE_URL` is absent in Production, prod reads Supabase.)
+
+**Index ↔ DB reconciliation:** get Azure AI Search doc counts per index/client (search REST `$count` or `az search`) and compare to the DB row counts above; report deltas.
+
+**Provider audit:** grep synthesis paths for `openai` vs `anthropic`/`claude`; inspect runtime audit rows for `provider, route, model, workflow, tenant_id, user_id`. Expected: `provider=anthropic`, `model` ~ `claude*`, route `anthropic-direct` | `azure-foundry-private`.
