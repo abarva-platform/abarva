@@ -110,6 +110,23 @@ jobs would still fail if re-run against the current image:
   and the Azure-only soak gate are still pending; Supabase remains live and unfrozen;
   DNS unchanged; Vercel production intact.
 
+## Step 10 — Env/secret-injection repo proof (static, redacted)
+
+Added deterministic verifier:
+
+- Command: `npm run azure:env-secret-injection:verify`
+- Result: **PASS** (`68` pass, `0` fail)
+- Proof class: static repository proof over committed Azure Bicep/parameter
+  files; no Key Vault values are read or printed.
+- Evidence: `docs/build/cutover/ENV_SECRET_INJECTION_PROOF_2026-06-07.md`
+
+This proves the committed app/runtime/job definitions inject secret env vars
+through Container Apps `secretRef` entries backed by Key Vault URLs and managed
+identity, and that required secret env vars are not present as plain runtime
+values in the lab app parameters. It is **not** a live Azure observation because
+this agent image does not include `az`; a live operator should still inspect the
+deployed revision's env/secretRef metadata with values redacted.
+
 ## Step 8 — b1 image rebuild from merged main (2026-06-07 ~03:15Z)
 
 PR #3242 merged to `main` (gate fixes + Azure-only guard present). Started
