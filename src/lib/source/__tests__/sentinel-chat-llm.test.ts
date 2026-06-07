@@ -8,15 +8,34 @@ import type { SourceLiveTenantContextSnapshot } from "../agent-context";
 import type { SourceNexusApiStubResponse } from "../nexus-api";
 import type { SourcingEventDetail } from "../types";
 
-jest.mock("@/lib/integrations/ai-egress", () => ({
-  preflightOpenAIDirectClient: jest.fn(),
+jest.mock("@/lib/agent/stream", () => ({
+  getAuditedAnthropicClient: jest.fn(),
 }));
 
-const { preflightOpenAIDirectClient } = jest.requireMock(
-  "@/lib/integrations/ai-egress",
+const { getAuditedAnthropicClient } = jest.requireMock(
+  "@/lib/agent/stream",
 ) as {
-  preflightOpenAIDirectClient: jest.Mock;
+  getAuditedAnthropicClient: jest.Mock;
 };
+
+function anthropicResult(
+  text: string,
+  usage: { input_tokens: number; output_tokens: number },
+) {
+  return {
+    auditId: "audit-test",
+    dataClass: "confidential",
+    client: {
+      messages: {
+        create: jest.fn().mockResolvedValue({
+          model: SOURCE_SENTINEL_CHAT_DEFAULT_MODEL,
+          usage,
+          content: [{ type: "text", text }],
+        }),
+      },
+    },
+  };
+}
 
 const event = {
   id: "apex-retail-ams-outsourcing-2026",
@@ -133,7 +152,7 @@ const fallbackResponse = {
 
 describe("Source Sentinel chat LLM helper", () => {
   beforeEach(() => {
-    preflightOpenAIDirectClient.mockReset();
+    getAuditedAnthropicClient.mockReset();
   });
 
   it("keeps deterministic chat disabled unless the feature flag is explicit", () => {
@@ -189,19 +208,12 @@ describe("Source Sentinel chat LLM helper", () => {
   });
 
   it("upgrades the deterministic response with a cited model answer when enabled", async () => {
-    preflightOpenAIDirectClient.mockResolvedValue({
-      ok: true,
-      client: {
-        responses: {
-          create: jest.fn().mockResolvedValue({
-            model: SOURCE_SENTINEL_CHAT_DEFAULT_MODEL,
-            usage: { input_tokens: 2100, output_tokens: 220 },
-            output_text:
-              "Use the strategy memo to frame incumbent pressure around the $32M Wipro baseline [E1] and the SAP ECC / Sterling OMS / NCR POS scope [E2]. Next, press Wipro on renewal leverage before BAFO.",
-          }),
-        },
-      },
-    });
+    getAuditedAnthropicClient.mockResolvedValue(
+      anthropicResult(
+        "Use the strategy memo to frame incumbent pressure around the $32M Wipro baseline [E1] and the SAP ECC / Sterling OMS / NCR POS scope [E2]. Next, press Wipro on renewal leverage before BAFO.",
+        { input_tokens: 2100, output_tokens: 220 },
+      ),
+    );
 
     const response = await maybeCreateSourceSentinelChatLlmResponse({
       fallbackResponse,
@@ -212,11 +224,11 @@ describe("Source Sentinel chat LLM helper", () => {
       liveTenantContext,
       env: {
         SENTINEL_CHAT_USE_LLM: "true",
-        OPENAI_API_KEY: "sk-test",
+        ANTHROPIC_API_KEY: "sk-ant-test",
       } as unknown as NodeJS.ProcessEnv,
     });
 
-    expect(preflightOpenAIDirectClient).toHaveBeenCalledWith(
+    expect(getAuditedAnthropicClient).toHaveBeenCalledWith(
       expect.objectContaining({
         workflow: "source-sentinel-chat",
         model: SOURCE_SENTINEL_CHAT_DEFAULT_MODEL,
@@ -251,25 +263,18 @@ describe("Source Sentinel chat LLM helper", () => {
 
     expect(response.noModel).toBe(true);
     expect(response.warnings).toContain(
-      "Sentinel chat LLM is enabled but OPENAI_API_KEY is not configured; returned deterministic fallback.",
+      "Sentinel chat LLM is enabled but ANTHROPIC_API_KEY is not configured; returned deterministic fallback.",
     );
-    expect(preflightOpenAIDirectClient).not.toHaveBeenCalled();
+    expect(getAuditedAnthropicClient).not.toHaveBeenCalled();
   });
 
   it("flags model answers that do not cite loaded evidence", async () => {
-    preflightOpenAIDirectClient.mockResolvedValue({
-      ok: true,
-      client: {
-        responses: {
-          create: jest.fn().mockResolvedValue({
-            model: SOURCE_SENTINEL_CHAT_DEFAULT_MODEL,
-            usage: { input_tokens: 2000, output_tokens: 120 },
-            output_text:
-              "Use BAFO to press the incumbent and keep the strategy memo brief.",
-          }),
-        },
-      },
-    });
+    getAuditedAnthropicClient.mockResolvedValue(
+      anthropicResult(
+        "Use BAFO to press the incumbent and keep the strategy memo brief.",
+        { input_tokens: 2000, output_tokens: 120 },
+      ),
+    );
 
     const response = await maybeCreateSourceSentinelChatLlmResponse({
       fallbackResponse,
@@ -280,7 +285,7 @@ describe("Source Sentinel chat LLM helper", () => {
       liveTenantContext,
       env: {
         SENTINEL_CHAT_USE_LLM: "true",
-        OPENAI_API_KEY: "sk-test",
+        ANTHROPIC_API_KEY: "sk-ant-test",
       } as unknown as NodeJS.ProcessEnv,
     });
 

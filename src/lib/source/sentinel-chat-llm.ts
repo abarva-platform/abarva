@@ -1,12 +1,26 @@
 import { composeRuntimeOutputDisciplineBlock } from "@/lib/agent/output-discipline/prompt-contract";
-import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
+import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { SOURCE_STAGE_LABELS } from "./constants";
 import type { SourceLiveTenantContextSnapshot } from "./agent-context";
 import type { SourceNexusApiStubResponse } from "./nexus-api";
 import type { SourceAnswerEvidenceCitation } from "./source-answer-engine";
 import type { SourcingEventDetail } from "./types";
 
-export const SOURCE_SENTINEL_CHAT_DEFAULT_MODEL = "gpt-5.1";
+export const SOURCE_SENTINEL_CHAT_DEFAULT_MODEL = "claude-opus-4-7";
+
+/** Concatenate the text blocks of an Anthropic Messages response. */
+function extractAnthropicText(response: unknown): string {
+  const content = (response as { content?: unknown }).content;
+  if (!Array.isArray(content)) return "";
+  const chunks: string[] = [];
+  for (const block of content) {
+    const typed = block as { type?: unknown; text?: unknown };
+    if (typed.type === "text" && typeof typed.text === "string") {
+      chunks.push(typed.text);
+    }
+  }
+  return chunks.join("");
+}
 const MAX_EVIDENCE_ITEMS = 12;
 const MAX_TOKENS = 900;
 const CITATION_RE = /\[E(\d{1,2})\]/gi;
@@ -42,10 +56,10 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
   if (!shouldUseSourceSentinelChatLlm(env)) {
     return input.fallbackResponse;
   }
-  if (!env.OPENAI_API_KEY) {
+  if (!env.ANTHROPIC_API_KEY) {
     return withLlmFallbackWarning(
       input.fallbackResponse,
-      "Sentinel chat LLM is enabled but OPENAI_API_KEY is not configured; returned deterministic fallback.",
+      "Sentinel chat LLM is enabled but ANTHROPIC_API_KEY is not configured; returned deterministic fallback.",
     );
   }
   if (!input.event || !input.liveTenantContext) {
@@ -69,7 +83,7 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
     env.SENTINEL_CHAT_MODEL?.trim() || SOURCE_SENTINEL_CHAT_DEFAULT_MODEL;
 
   try {
-    const preflight = await preflightOpenAIDirectClient({
+    const { client } = await getAuditedAnthropicClient({
       tenantId: input.tenantId,
       userId: input.userId,
       workflow: "source-sentinel-chat",
@@ -84,26 +98,16 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
         route: "/api/v1/source/[eventId]/nexus/ask",
       },
     });
-    if (!preflight.ok) {
-      return withLlmFallbackWarning(
-        input.fallbackResponse,
-        `Sentinel chat LLM egress denied: ${preflight.reason}; returned deterministic fallback.`,
-      );
-    }
 
-    const response = await preflight.client.responses.create({
+    const response = await client.messages.create({
       model,
-      instructions: systemPrompt,
-      input: input.prompt,
-      max_output_tokens: MAX_TOKENS,
-      store: false,
-      metadata: {
-        workflow: "source-sentinel-chat",
-        eventId: input.event.id,
-        eventCode: input.event.code,
-      },
+      max_tokens: MAX_TOKENS,
+      system: systemPrompt,
+      messages: [
+        { role: "user", content: [{ type: "text", text: input.prompt }] },
+      ],
     });
-    const answerText = response.output_text.trim();
+    const answerText = extractAnthropicText(response).trim();
 
     if (!answerText) {
       return withLlmFallbackWarning(
