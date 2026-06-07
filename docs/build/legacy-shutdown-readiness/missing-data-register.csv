@@ -1,0 +1,13 @@
+table,in_supabase,in_azure_abarva_control,classification,note
+enterprise_context_source_files,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer; absent in abarva_control
+enterprise_context_records,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer; absent in abarva_control
+enterprise_context_chunks,assumed_yes,no,AZURE_MISSING_TABLE,verify-azure-postgres-schema reported null
+enterprise_context_facts,yes(historical ~38640 Meridian),no,AZURE_MISSING_TABLE,"read from Supabase earlier; absent in abarva_control now"
+enterprise_context_evidence,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
+enterprise_context_template_runs,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
+enterprise_context_chunk_queue,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
+corpus_patterns,yes,yes(9026),PARITY_OR_AHEAD,present in Azure
+genome_patterns,yes,yes(43436),PARITY_OR_AHEAD,present in Azure
+intelligence_graph_edges,yes,yes(93743),PARITY_OR_AHEAD,present in Azure
+applications,yes,yes(232 likely demo),NEEDS_REVIEW,is_demo_data likely true
+ALL_enterprise_context_star,yes,no,BLOCKER,"entire fact layer absent in Azure; reconcile blocked on Supabase source connectivity"
