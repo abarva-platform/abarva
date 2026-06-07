@@ -20,7 +20,7 @@ cross-namespace mis-binding, not a missing id).
 
 ## Layer Impact
 
-- **internal-admin:** an ops verification script + a runbook. No app/runtime/schema/data changes.
+- **internal-admin lane:** an ops verification script + a runbook. No app/runtime/schema/data changes.
 
 ## Client Applicability
 
@@ -37,8 +37,9 @@ cross-namespace mis-binding, not a missing id).
 
 ## QA / Validation
 
-- Executed read-only from the private Azure VNet runtime (Postgres private `10.43.1.4`); evidence in
-  the runbook. No mutations; worker app restored to original state afterward.
+- Status: **passed** (read-only verification executed successfully). Run from the private Azure VNet
+  runtime (Postgres private `10.43.1.4`); evidence in the runbook. No mutations; worker app restored
+  to original state afterward.
 
 ## Rollout Plan
 
