@@ -1,5 +1,34 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~05:08Z — retried after "fresh VM"; still same VM, secrets absent
+
+Operator reported Clerk prereqs available in a fresh VM and asked to mint + QA.
+Re-checked and re-attempted; **secrets are still absent and this is NOT a fresh VM.**
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`:
+  absent in `printenv`, login shell, and all `.env*` files.
+- VM boot time: **2026-06-06 02:57 UTC** (`uptime` shows up 1 day, 2:10) — i.e. the
+  same VM that has run since before the secrets were added. Prior-session
+  `node_modules` and branch HEAD (`71dd1d42a`) are still present. Cursor Cloud Agent
+  secrets are injected only at **VM provisioning**, so a long-running VM never picks
+  up secrets added afterward.
+- Mint attempt: `npm run auth:agent-client-states -- --client lakeshore --refresh`
+  against `provqa` → both personas FAIL with
+  `Missing CLERK_SECRET_KEY. Use a local .env.local; never commit it.`
+  - Clerk users used: `cfo@lakeshore-holdings.example.com`,
+    `cio@lakeshore-holdings.example.com`. Route tested: none (fails before HTTP).
+
+**Remediation:** the secrets must be present when the VM is **provisioned**. Either
+start a genuinely new Cloud Agent run on this branch _after_ the secrets are saved
+(a new run that does `npm ci` from a clean checkout), or confirm the Clerk secrets
+are scoped to repo `abarva-platform/abarva` and that secret injection is enabled for
+this run. I cannot self-inject secrets into a running VM.
+
+Guardrails held: `provqa` still 0% traffic (`--0000051=100`); no DNS/Vercel/Supabase
+change; no `.auth` committed.
+
+---
+
 ## UPDATE 2026-06-07 ~04:40Z — Clerk mint attempted; secrets not in this VM
 
 Operator opted to provide Clerk auth via Cursor secrets and asked to mint sign-in
