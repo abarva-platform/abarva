@@ -47,13 +47,19 @@ e2e/
 playwright-report/
 test-results/
 
-# Docs (not shipped in the runtime image), except design tokens imported by app CSS.
+# Docs (not shipped in the runtime image), except design tokens imported by app
+# CSS and the enterprise-context template manifests imported at BUILD time by
+# src/lib/admin/setup-data-load-center.ts (apexretail/meridian/arcturus). Those
+# must be in the build context or `next build` fails type-check (added #2727).
 docs/*
 !docs/design/
 docs/design/*
 !docs/design/strategic-moves/
 docs/design/strategic-moves/*
 !docs/design/strategic-moves/tokens.css
+!docs/enterprise-context/
+docs/enterprise-context/*
+!docs/enterprise-context/templates/
 tower-mockups/
 updates/
 

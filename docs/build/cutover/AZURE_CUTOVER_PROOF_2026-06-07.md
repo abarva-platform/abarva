@@ -69,6 +69,30 @@ jobs would still fail if re-run against the current image:
   in PR #3240 (Nexus already Claude). **QA-gated:** signed-in validation required
   before prod (no Clerk session available here).
 
+## Step 8 — b1 image rebuild from merged main (2026-06-07 ~03:15Z)
+
+PR #3242 merged to `main` (gate fixes + Azure-only guard present). Started
+`az acr build` of `abarva/web` from merged main (Contributor + AcrPush).
+
+**BLOCKER FOUND — pre-existing broken `main` image build (not from this work):**
+
+- `az acr build` compiled but `next build` type-check failed:
+  `Cannot find module '../../../docs/enterprise-context/templates/apexretail/manifest.json'`.
+- Root cause: `src/lib/admin/setup-data-load-center.ts` imports three manifest
+  JSONs from `docs/enterprise-context/templates/{apexretail,meridian,arcturus}/`
+  at **build time** (added 2026-06-01, #2727), but `.dockerignore` `docs/*`
+  strips `docs/` from the build context. The deployed image (`…20260522…`)
+  predates #2727, so **no image has built from `main` since 2026-06-01.**
+- Fix (`cursor/fix-dockerignore-build-manifests-a092` → PR): re-include
+  `docs/enterprise-context/templates/` in the build context (mirrors the existing
+  `docs/design/strategic-moves/tokens.css` negation). Build-context only — no
+  runtime/script/DB-logic change; the gate scripts remain exactly merged `main`.
+- Rebuild re-run from main + this fix → image `abarva/web:cutover-main-20260607-bea996676`.
+
+Per the merged-main rule, the live gate runs (drain-apply/search-verify/final)
+will use this image only after the `.dockerignore` fix is merged to main (the
+image's delta vs merged main is build-context inclusion only).
+
 ## Step 7 — RBAC applied by owner; access now works (2026-06-07 ~02:50Z)
 
 Owner granted the cutover SP: **Contributor** (rg-abarva-controlplane-lab-eastus),
