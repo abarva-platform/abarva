@@ -57,6 +57,23 @@ As of 2026-06-07 ~05:15Z, this VM still cannot complete signed-in runtime QA:
 `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`
 built from merged main + this provider branch (after tests passed).
 
+## Runtime/env var contract
+
+- Required for these provider QA calls to exercise Claude:
+  `ANTHROPIC_API_KEY`.
+- Optional model overrides, not required because code has Claude defaults:
+  `INTELLIGENCE_ASK_ANTHROPIC_SYNTHESIS_MODEL`,
+  `INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_MODEL`,
+  `ANTHROPIC_MINI_MODEL`, `SENTINEL_CHAT_MODEL`.
+- Required to mint a Clerk ticket from an agent VM:
+  `CLERK_SECRET_KEY` (helper hard-fails if absent) and
+  `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (browser-side Clerk runtime).
+- Demo-login fallback, if used instead of ticket minting:
+  `DEMO_LOGIN_PASSWORD`.
+- Direct session-cookie fallback:
+  provide a Clerk `__session` cookie out-of-band; there is no repo-defined env var
+  for this path, and `.auth/` storage state must stay uncommitted.
+
 ## Remaining (runtime) acceptance — requires signed-in QA
 
 - Confirm live `ai_egress_audit.provider=anthropic` for the two workflows.

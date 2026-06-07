@@ -62,9 +62,11 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   (Home/sign-in 200, no Supabase refs). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
 - **Signed-in Azure Container Apps QA — BLOCKED/not run:** this agent VM still
-  has no Clerk session/secrets or demo-login password, and repeated mint attempts
-  fail before HTTP with missing `CLERK_SECRET_KEY`. Protected Sentinel/Source
-  paths still cannot be exercised from here.
+  has no Clerk auth material (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+  `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie are
+  absent), and repeated mint attempts fail before HTTP with missing
+  `CLERK_SECRET_KEY`. Protected Sentinel/Source paths still cannot be exercised
+  from here.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX
@@ -76,8 +78,14 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 ## Rollout Plan
 
 Reviewed PR, **do not auto-deploy.** Merge only after the signed-in QA gate
-passes. Requires `ANTHROPIC_API_KEY` in the runtime (already present); the legacy
-`OPENAI_API_KEY` is no longer used by these two paths.
+passes. Requires `ANTHROPIC_API_KEY` in the target runtime for the Sentinel Ask and
+Source chat provider check. Ticket-mint QA from an agent VM requires
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`; demo-login fallback, if
+enabled, requires `DEMO_LOGIN_PASSWORD`. Optional model override env vars are
+`INTELLIGENCE_ASK_ANTHROPIC_SYNTHESIS_MODEL`,
+`INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_MODEL`,
+`ANTHROPIC_MINI_MODEL`, and `SENTINEL_CHAT_MODEL` (safe Claude defaults exist).
+The legacy `OPENAI_API_KEY` is no longer used by these two reasoning paths.
 
 ## Rollback Plan
 
@@ -98,5 +106,5 @@ sentinel-chat-llm.ts are independent).
   still use the OpenAI small-model utility path — tracked as the remaining
   Anthropic-only cleanup (non-reasoning utilities).
 - Signed-in live QA not performed in this environment (no Clerk
-  session/secrets), although the `provqa` test revision is healthy at 0% traffic
-  and production remains at 100% traffic on the existing revision.
+  env/session names listed above), although the `provqa` test revision is healthy
+  at 0% traffic and production remains at 100% traffic on the existing revision.

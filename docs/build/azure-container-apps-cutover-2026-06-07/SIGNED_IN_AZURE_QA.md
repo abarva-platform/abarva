@@ -119,6 +119,16 @@ Re-checked and re-attempted; **secrets are still absent and this is NOT a fresh 
   - Clerk users used: `cfo@lakeshore-holdings.example.com`,
     `cio@lakeshore-holdings.example.com`. Route tested: none (fails before HTTP).
 
+### Exact environment variable names required for the next run
+
+| Purpose | Required names | Notes |
+| --- | --- | --- |
+| Clerk app runtime + browser sign-in | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Must be present when the fresh VM/process starts. The ticket-mint helper fails first on `CLERK_SECRET_KEY`; the app shell still needs the publishable key to load Clerk in-browser. |
+| Demo-login fallback, if used instead of ticket minting | `DEMO_LOGIN_PASSWORD` | Only useful if the demo-login route is enabled for the target Clerk instance. |
+| Provider runtime confirmation | `ANTHROPIC_API_KEY` | Required so Sentinel Ask and Source chat exercise Claude instead of deterministic/no-model fallback. |
+| Optional Claude model overrides | `INTELLIGENCE_ASK_ANTHROPIC_SYNTHESIS_MODEL`, `INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_MODEL`, `ANTHROPIC_MINI_MODEL`, `SENTINEL_CHAT_MODEL` | Not blockers because code has safe Claude defaults, but name them explicitly if an operator expects non-default models. |
+| Direct cookie handoff alternative | no repo-defined env var; provide a Clerk `__session` cookie out-of-band | If using this route, keep the cookie local only; do not commit `.auth/` or reports containing storage state. |
+
 **Remediation:** the secrets must be present when the VM is **provisioned**. Either
 start a genuinely new Cloud Agent run on this branch _after_ the secrets are saved
 (a new run that does `npm ci` from a clean checkout), or confirm the Clerk secrets
@@ -148,11 +158,13 @@ tickets with the repo helper (`scripts/auth/prime-agent-client-auth-states.ts`,
 read `absent`. Cursor Cloud Agent secrets are injected into a **new** agent VM at
 startup; adding them mid-session does **not** propagate into the current VM.
 
-**To complete signed-in QA, two prerequisites in the VM that runs the mint:**
+**To complete signed-in QA, prerequisites in the VM that runs the mint:**
 
 1. `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` present at VM start
    (start a **fresh agent run** after adding the Cursor secrets), and
-2. Playwright chromium installed (`npx playwright install chromium` — not currently
+2. `ANTHROPIC_API_KEY` present in the target runtime so the QA calls exercise Claude,
+   not deterministic/no-model fallback, and
+3. Playwright chromium installed (`npx playwright install chromium` — not currently
    cached here). The helper launches headless chromium for ticket sign-in.
 
 Personas ready in the helper: `lakeshore-cfo` (`cfo@lakeshore-holdings.example.com`),
@@ -200,9 +212,16 @@ Supabase change; no `.auth` files committed (`.auth/` is gitignored).
 One of the following for the Clerk instance **`boss-griffon-61.accounts.dev`**:
 
 1. An authenticated **Clerk session cookie** (e.g. `__session` JWT) for a tenant
-   test user (meridian-cdao / a lakeshore persona), provided to this environment; OR
-2. **Test-user credentials** (email + password) for that Clerk instance; OR
-3. The `DEMO_LOGIN_PASSWORD` value + demo-login flow (if demo auth is enabled).
+   test user (meridian-cdao / a lakeshore persona), provided out-of-band to this
+   environment (no repo-defined env var exists for this); OR
+2. **Ticket-mint env vars**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and
+   `CLERK_SECRET_KEY`, plus the existing Clerk test users for that instance; OR
+3. The `DEMO_LOGIN_PASSWORD` env var + demo-login flow (if demo auth is enabled).
+
+The provider check also requires `ANTHROPIC_API_KEY` in the target runtime. Optional
+model override env vars are `INTELLIGENCE_ASK_ANTHROPIC_SYNTHESIS_MODEL`,
+`INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_MODEL`, `ANTHROPIC_MINI_MODEL`,
+and `SENTINEL_CHAT_MODEL`; defaults are acceptable if these are absent.
 
 The test revision `…--provqa` is left deployed at 0% traffic, ready for a
 Clerk-capable operator to QA immediately (sign in against its revision FQDN, run
@@ -218,7 +237,8 @@ Per the cutover guardrail ("stop and report if signed-in QA cannot be
 completed"), this is a stop-and-report. Two hard blockers:
 
 1. **No Clerk session/credentials in this environment** (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
-   `CLERK_SECRET_KEY`, and any session cookie are all absent). All authenticated
+   `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any `__session` cookie are all absent).
+   All authenticated
    surfaces (Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin) redirect
    to Clerk sign-in, so they cannot be exercised.
 2. **`ca-abarva-web-lab-eastus` is in Single revision mode** and already runs the
