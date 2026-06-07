@@ -13,7 +13,7 @@
 // fallback. See the context-ingestion truth standard in AGENTS.md: this adapter
 // only reports what it can actually extract.
 
-import type { ParsedContent } from '../mapping-proposal';
+import type { ParsedContent } from './mapping-proposal';
 
 /** Whether parsed content is row/column structured or free text. */
 export type ParseKind = 'tabular' | 'document';

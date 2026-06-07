@@ -182,7 +182,7 @@ describe('parseUpload — byte normalization', () => {
     const arrayBuffer = buf.buffer.slice(
       buf.byteOffset,
       buf.byteOffset + buf.byteLength,
-    );
+    ) as ArrayBuffer;
     const result = await parseUpload({ filename: 'x.csv', bytes: arrayBuffer });
     expect(result.columns).toEqual(['a', 'b']);
     expect(result.sampleRows).toEqual([{ a: '1', b: '2' }]);

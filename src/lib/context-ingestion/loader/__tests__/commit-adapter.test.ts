@@ -88,6 +88,7 @@ describe("LOADER_DIMENSION_TO_CONTEXT", () => {
   it("maps every non-unknown loader dimension to a registered context dimension", () => {
     // Every loader dimension (except 'unknown') has an entry…
     for (const dim of LOADER_DIMENSIONS) {
+      if (dim === "unknown") continue;
       expect(LOADER_DIMENSION_TO_CONTEXT[dim]).toBeTruthy();
     }
     // …and every mapped context dimension is a real, template-backed member of
