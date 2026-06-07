@@ -32,7 +32,9 @@ Strategic Moves origination now requires the full seven-section P0 scaffold befo
 
 ## QA / Validation
 
-- Pending first-pass validation before PR update.
+- `npx jest src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx --runInBand` passed. Jest reported pre-existing duplicate manual mock warnings for markdown/GFM mocks, but the focused suite passed.
+- `npx eslint src/components/strategic-moves/StrategicMoveOriginateClient.tsx src/components/strategic-moves/composeOriginateFirstMessage.ts src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx` passed.
+- `npm run release:check` passed.
 
 ## Rollout Plan
 
@@ -44,9 +46,9 @@ Revert the application commit or rollback the Vercel deployment. No migration ro
 
 ## Audit Evidence
 
-- PR: TBD.
-- Local validation: TBD.
+- PR: https://github.com/abarva-platform/abarva/pull/3249
+- Local validation: focused Jest suite, touched-file ESLint, and release control gate listed above.
 
 ## Known Gaps
 
-None known.
+No data-plane or server-side promote-contract changes are included. This release only changes the client-side Originate gate and copy, so any future server-side enforcement of the seven-section P0 doctrine should be tracked separately if product requires API-level rejection of incomplete submissions.

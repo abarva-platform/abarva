@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // StrategicMoveOriginateClient · Strategic Moves Originate (P0)
 //
@@ -10,31 +10,37 @@
 // agent route system prompt. First-message variant (2A/2B) is composed
 // server-side and passed in as `initialTurns`.
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifacts';
-import type { BriefProgressArtifact, Artifact } from '@/lib/agent/artifacts';
-import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
-import styles from './StrategicMoves.module.css';
-import { PhaseRail } from './PhaseRail';
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  extractArtifacts,
+  visibleArtifactPendingText,
+} from "@/lib/agent/artifacts";
+import type { BriefProgressArtifact, Artifact } from "@/lib/agent/artifacts";
+import {
+  shapeAgentResponseForSurface,
+  shapeStreamingAgentTextForSurface,
+} from "@/lib/agent/response-shape";
+import styles from "./StrategicMoves.module.css";
+import { PhaseRail } from "./PhaseRail";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ChatTurn = {
   id: string;
-  role: 'user' | 'assistant';
-  agentName?: 'Nexus';
+  role: "user" | "assistant";
+  agentName?: "Nexus";
   text: string;
 };
 
 type ScaffoldFieldId =
-  | 'problem-statement'
-  | 'archetype'
-  | 'sponsor-candidate'
-  | 'scope-boundary'
-  | 'evidence-family'
-  | 'value-hypothesis'
-  | 'foundation-readiness';
+  | "problem-statement"
+  | "archetype"
+  | "sponsor-candidate"
+  | "scope-boundary"
+  | "evidence-family"
+  | "value-hypothesis"
+  | "foundation-readiness";
 
 interface BriefState {
   programName: string;
@@ -42,25 +48,29 @@ interface BriefState {
 }
 
 const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
-  'problem-statement': '',
-  'archetype': '',
-  'sponsor-candidate': '',
-  'scope-boundary': '',
-  'evidence-family': '',
-  'value-hypothesis': '',
-  'foundation-readiness': '',
+  "problem-statement": "",
+  archetype: "",
+  "sponsor-candidate": "",
+  "scope-boundary": "",
+  "evidence-family": "",
+  "value-hypothesis": "",
+  "foundation-readiness": "",
 };
 
 const REQUIRED_FIELD_COUNT = Object.keys(INITIAL_FIELDS).length;
 
-const SCAFFOLD_DEFS: Array<{ id: ScaffoldFieldId; label: string; step: number }> = [
-  { id: 'problem-statement', label: "What's the bet / hypothesis", step: 1 },
-  { id: 'archetype', label: 'Archetype classification', step: 2 },
-  { id: 'sponsor-candidate', label: 'Sponsor candidate', step: 3 },
-  { id: 'scope-boundary', label: 'Scope / boundary', step: 4 },
-  { id: 'evidence-family', label: 'Evidence family selection', step: 5 },
-  { id: 'value-hypothesis', label: 'Value hypothesis seed', step: 6 },
-  { id: 'foundation-readiness', label: 'Foundation readiness', step: 7 },
+const SCAFFOLD_DEFS: Array<{
+  id: ScaffoldFieldId;
+  label: string;
+  step: number;
+}> = [
+  { id: "problem-statement", label: "What's the bet / hypothesis", step: 1 },
+  { id: "archetype", label: "Archetype classification", step: 2 },
+  { id: "sponsor-candidate", label: "Sponsor candidate", step: 3 },
+  { id: "scope-boundary", label: "Scope / boundary", step: 4 },
+  { id: "evidence-family", label: "Evidence family selection", step: 5 },
+  { id: "value-hypothesis", label: "Value hypothesis seed", step: 6 },
+  { id: "foundation-readiness", label: "Foundation readiness", step: 7 },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -76,7 +86,7 @@ function applyBriefProgressArtifact(
   const next = { ...fields };
   for (const f of artifact.fields) {
     const id = f.id as ScaffoldFieldId;
-    if (f.status !== 'empty' && f.value && id in next) {
+    if (f.status !== "empty" && f.value && id in next) {
       next[id] = f.value;
     }
   }
@@ -100,18 +110,18 @@ export function StrategicMoveOriginateClient({
   const [turns, setTurns] = useState<ChatTurn[]>(
     initialTurns ?? [
       {
-        id: 'nexus-open-2a',
-        role: 'assistant',
-        agentName: 'Nexus',
-        text: `To start a new Strategic Move, I need four things from you: the outcome you're targeting, who cares about it, what evidence you have, and a rough sense of what value is at stake. Where do you want to start?`,
+        id: "nexus-open-2a",
+        role: "assistant",
+        agentName: "Nexus",
+        text: `To start a new Strategic Move, I need the seven-section P0 scaffold: the hypothesis, archetype, sponsor candidate, scope boundary, evidence family, value hypothesis, and foundation readiness. Where do you want to start?`,
       },
     ],
   );
   const [brief, setBrief] = useState<BriefState>({
-    programName: '',
+    programName: "",
     fields: { ...INITIAL_FIELDS },
   });
-  const [composer, setComposer] = useState('');
+  const [composer, setComposer] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [scaffoldOpen, setScaffoldOpen] = useState(false);
@@ -132,23 +142,28 @@ export function StrategicMoveOriginateClient({
   // Debounced draft persistence
   useEffect(() => {
     const handle = setTimeout(() => {
-      void fetch('/api/programs/origination-draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      void fetch("/api/programs/origination-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          surface: '/strategic-moves/new',
+          surface: "/strategic-moves/new",
           state: {
             turns: turns
               .filter((t) => t.text.trim().length > 0)
-              .map((t) => ({ id: t.id, role: t.role, agentName: t.agentName, text: t.text })),
+              .map((t) => ({
+                id: t.id,
+                role: t.role,
+                agentName: t.agentName,
+                text: t.text,
+              })),
             brief: {
               programName: brief.programName || null,
-              problemStatement: brief.fields['problem-statement'] || null,
-              targetOutcome: brief.fields['value-hypothesis'] || null,
+              problemStatement: brief.fields["problem-statement"] || null,
+              targetOutcome: brief.fields["value-hypothesis"] || null,
               timeline: null,
-              classification: brief.fields['archetype'] || null,
+              classification: brief.fields["archetype"] || null,
               matchedPatternId: null,
-              sponsor: brief.fields['sponsor-candidate'] || null,
+              sponsor: brief.fields["sponsor-candidate"] || null,
               lead: null,
               crossProgramDependencies: [],
             },
@@ -162,7 +177,8 @@ export function StrategicMoveOriginateClient({
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
-      const next = typeof updater === 'function' ? updater(turnsRef.current) : updater;
+      const next =
+        typeof updater === "function" ? updater(turnsRef.current) : updater;
       turnsRef.current = next;
       setTurns(next);
     },
@@ -170,10 +186,13 @@ export function StrategicMoveOriginateClient({
   );
 
   const handleArtifact = useCallback((artifact: Artifact) => {
-    if (artifact.type === 'brief-progress') {
+    if (artifact.type === "brief-progress") {
       setBrief((prev) => ({
         ...prev,
-        fields: applyBriefProgressArtifact(prev.fields, artifact as BriefProgressArtifact),
+        fields: applyBriefProgressArtifact(
+          prev.fields,
+          artifact as BriefProgressArtifact,
+        ),
       }));
     }
   }, []);
@@ -186,28 +205,35 @@ export function StrategicMoveOriginateClient({
       const assistantTurnId = generateTurnId();
       updateTurns((prev) => [
         ...prev,
-        { id: generateTurnId(), role: 'user', text: message },
-        { id: assistantTurnId, role: 'assistant', agentName: 'Nexus', text: '' },
+        { id: generateTurnId(), role: "user", text: message },
+        {
+          id: assistantTurnId,
+          role: "assistant",
+          agentName: "Nexus",
+          text: "",
+        },
       ]);
-      if (!messageOverride) setComposer('');
+      if (!messageOverride) setComposer("");
       setStreaming(true);
       setSubmitError(null);
 
       try {
         const conversationHistory = turnsRef.current
           .filter(
-            (t) => t.role === 'user' || (t.role === 'assistant' && t.text.trim().length > 0),
+            (t) =>
+              t.role === "user" ||
+              (t.role === "assistant" && t.text.trim().length > 0),
           )
           .map((t) => ({ role: t.role, content: t.text }));
 
-        const res = await fetch('/api/chat/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/chat/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message,
             tenantName,
-            agentName: 'Nexus',
-            surface: '/strategic-moves/new',
+            agentName: "Nexus",
+            surface: "/strategic-moves/new",
             conversationHistory,
             surfaceContext: { programName: brief.programName || null },
           }),
@@ -219,15 +245,16 @@ export function StrategicMoveOriginateClient({
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let pendingBuffer = '';
-        let committedVisible = '';
+        let pendingBuffer = "";
+        let committedVisible = "";
         const seenArtifacts = new Set<string>();
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           pendingBuffer += decoder.decode(value, { stream: true });
-          const { visibleText, artifacts, remaining } = extractArtifacts(pendingBuffer);
+          const { visibleText, artifacts, remaining } =
+            extractArtifacts(pendingBuffer);
           committedVisible += visibleText;
           pendingBuffer = remaining;
 
@@ -240,11 +267,13 @@ export function StrategicMoveOriginateClient({
           }
 
           const display = shapeStreamingAgentTextForSurface(
-            '/strategic-moves/new',
+            "/strategic-moves/new",
             committedVisible + visibleArtifactPendingText(pendingBuffer),
           ).trimEnd();
           updateTurns((prev) =>
-            prev.map((t) => (t.id === assistantTurnId ? { ...t, text: display } : t)),
+            prev.map((t) =>
+              t.id === assistantTurnId ? { ...t, text: display } : t,
+            ),
           );
         }
 
@@ -253,7 +282,9 @@ export function StrategicMoveOriginateClient({
           const final = extractArtifacts(pendingBuffer);
           committedVisible +=
             final.visibleText +
-            (final.remaining.length > 0 ? visibleArtifactPendingText(final.remaining) : '');
+            (final.remaining.length > 0
+              ? visibleArtifactPendingText(final.remaining)
+              : "");
           for (const a of final.artifacts) {
             const key = JSON.stringify(a);
             if (!seenArtifacts.has(key)) {
@@ -266,16 +297,25 @@ export function StrategicMoveOriginateClient({
         updateTurns((prev) =>
           prev.map((t) =>
             t.id === assistantTurnId
-              ? { ...t, text: shapeAgentResponseForSurface('/strategic-moves/new', committedVisible) }
+              ? {
+                  ...t,
+                  text: shapeAgentResponseForSurface(
+                    "/strategic-moves/new",
+                    committedVisible,
+                  ),
+                }
               : t,
           ),
         );
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Agent error';
+        const msg = err instanceof Error ? err.message : "Agent error";
         updateTurns((prev) =>
           prev.map((t) =>
             t.id === assistantTurnId
-              ? { ...t, text: `I encountered an issue: ${msg}. Please try again.` }
+              ? {
+                  ...t,
+                  text: `I encountered an issue: ${msg}. Please try again.`,
+                }
               : t,
           ),
         );
@@ -283,16 +323,28 @@ export function StrategicMoveOriginateClient({
         setStreaming(false);
       }
     },
-    [composer, streaming, tenantName, brief.programName, updateTurns, handleArtifact],
+    [
+      composer,
+      streaming,
+      tenantName,
+      brief.programName,
+      updateTurns,
+      handleArtifact,
+    ],
   );
 
-  const filledCount = Object.values(brief.fields).filter((v) => v.trim().length > 0).length;
-  const requiredFilled = SCAFFOLD_DEFS.filter(({ id }) => brief.fields[id].trim().length > 0).length;
-  const canPromote = requiredFilled >= REQUIRED_FIELD_COUNT && !isPending && !streaming;
+  const filledCount = Object.values(brief.fields).filter(
+    (v) => v.trim().length > 0,
+  ).length;
+  const requiredFilled = SCAFFOLD_DEFS.filter(
+    ({ id }) => brief.fields[id].trim().length > 0,
+  ).length;
+  const canPromote =
+    requiredFilled >= REQUIRED_FIELD_COUNT && !isPending && !streaming;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return;
+      if (e.key !== "Escape") return;
       e.preventDefault();
       if (showConfirm) {
         setShowConfirm(false);
@@ -300,14 +352,14 @@ export function StrategicMoveOriginateClient({
         cancelFlow();
       }
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showConfirm]);
 
   function cancelFlow() {
     if (filledCount === 0 && !brief.programName.trim()) {
-      router.push('/strategic-moves');
+      router.push("/strategic-moves");
       return;
     }
     setShowConfirm(true);
@@ -317,8 +369,8 @@ export function StrategicMoveOriginateClient({
     setSubmitError(null);
     const finalName =
       brief.programName.trim() ||
-      brief.fields['problem-statement'].slice(0, 100) ||
-      'Untitled Strategic Move';
+      brief.fields["problem-statement"].slice(0, 100) ||
+      "Untitled Strategic Move";
     startTransition(() => {
       void (async () => {
         // Snapshot origination turns before submit (filter empty turns, cap at 40)
@@ -327,28 +379,28 @@ export function StrategicMoveOriginateClient({
           .slice(-40)
           .map((t) => ({ role: t.role, text: t.text }));
 
-        const res = await fetch('/api/programs/origination-submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/programs/origination-submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            surface: '/strategic-moves/new',
+            surface: "/strategic-moves/new",
             programName: finalName,
-            problemStatement: brief.fields['problem-statement'],
-            targetOutcome: brief.fields['value-hypothesis'],
-            timeline: brief.fields['foundation-readiness'],
-            classification: brief.fields['archetype'],
-            sponsor: brief.fields['sponsor-candidate'],
-            lead: brief.fields['sponsor-candidate'],
+            problemStatement: brief.fields["problem-statement"],
+            targetOutcome: brief.fields["value-hypothesis"],
+            timeline: brief.fields["foundation-readiness"],
+            classification: brief.fields["archetype"],
+            sponsor: brief.fields["sponsor-candidate"],
+            lead: brief.fields["sponsor-candidate"],
             matchedPatternId: null,
             // Extended scaffold fields
-            scopeBoundary: brief.fields['scope-boundary'] || null,
-            evidenceFamily: brief.fields['evidence-family'] || null,
+            scopeBoundary: brief.fields["scope-boundary"] || null,
+            evidenceFamily: brief.fields["evidence-family"] || null,
             // Origination chat transcript → persisted to turns table
             originationTurns,
             // Packet 22: bind Intelligence -> Move handoff into a Decision Dossier.
             originatingIntelligenceSessionId,
             decisionThreadTitle: finalName,
-            decisionThreadOwnerRole: brief.fields['sponsor-candidate'] || null,
+            decisionThreadOwnerRole: brief.fields["sponsor-candidate"] || null,
           }),
         });
         const payload = (await res.json()) as {
@@ -360,7 +412,7 @@ export function StrategicMoveOriginateClient({
           error?: string;
         };
         if (!res.ok || !payload.engagementId) {
-          setSubmitError(payload.message ?? payload.error ?? 'Submit failed.');
+          setSubmitError(payload.message ?? payload.error ?? "Submit failed.");
           return;
         }
         router.push(`/strategic-moves/${payload.engagementId}`);
@@ -373,25 +425,35 @@ export function StrategicMoveOriginateClient({
       {/* orig-identity */}
       <div id="orig-identity" className={styles.originContextBar}>
         <div className={styles.originContextLeft}>
-          <span className={styles.originBranch} aria-hidden>&#8627;</span>
+          <span className={styles.originBranch} aria-hidden>
+            &#8627;
+          </span>
           <span className={styles.originLabel}>Originating new move</span>
           <span id="orig-identity-title" className={styles.originDraftBadge}>
-            {brief.programName.trim() ? brief.programName.toUpperCase() : 'UNTITLED'} &middot; DRAFT
+            {brief.programName.trim()
+              ? brief.programName.toUpperCase()
+              : "UNTITLED"}{" "}
+            &middot; DRAFT
           </span>
         </div>
-        <button className={styles.originCancel} onClick={cancelFlow} type="button">
+        <button
+          className={styles.originCancel}
+          onClick={cancelFlow}
+          type="button"
+        >
           &#10005; Cancel
         </button>
       </div>
 
       {/* orig-grid */}
       <section id="orig-grid" className={styles.detailShell}>
-
         {/* orig-chat */}
         <aside id="orig-chat" className={styles.chatPane}>
           <div className={styles.chatHead}>
             <div className={styles.agentRow}>
-              <div className={styles.agentAvatar} aria-hidden>&#10022;</div>
+              <div className={styles.agentAvatar} aria-hidden>
+                &#10022;
+              </div>
               <div>
                 <div className={styles.agentName}>Nexus</div>
                 <div className={styles.agentStatus}>
@@ -403,13 +465,22 @@ export function StrategicMoveOriginateClient({
           </div>
 
           {/* orig-chat-message-list */}
-          <div id="orig-chat-message-list" className={styles.chatThread} ref={threadRef}>
+          <div
+            id="orig-chat-message-list"
+            className={styles.chatThread}
+            ref={threadRef}
+          >
             {turns.map((turn) => (
               <div
                 key={turn.id}
-                className={turn.role === 'assistant' ? styles.bubbleNexus : styles.bubbleUser}
+                className={
+                  turn.role === "assistant"
+                    ? styles.bubbleNexus
+                    : styles.bubbleUser
+                }
               >
-                {turn.text || (streaming && turn.role === 'assistant' ? '…' : '')}
+                {turn.text ||
+                  (streaming && turn.role === "assistant" ? "…" : "")}
               </div>
             ))}
           </div>
@@ -429,28 +500,37 @@ export function StrategicMoveOriginateClient({
                 {requiredFilled}/{REQUIRED_FIELD_COUNT} req.
               </span>
               <span className={styles.scaffoldToggleIcon} aria-hidden>
-                {scaffoldOpen ? '▴' : '▾'}
+                {scaffoldOpen ? "▴" : "▾"}
               </span>
             </button>
             {scaffoldOpen && (
-              <div id="orig-chat-scaffold-grid" className={styles.startChipGrid}>
+              <div
+                id="orig-chat-scaffold-grid"
+                className={styles.startChipGrid}
+              >
                 {SCAFFOLD_DEFS.map(({ id, label, step }) => {
                   const filled = brief.fields[id].trim().length > 0;
                   return (
                     <button
                       key={id}
                       id={`orig-chat-scaffold-step-${step}`}
-                      className={`${styles.startChipCompact} ${filled ? styles.startChipUsed : ''}`}
-                      onClick={() => void send(`Let's work on step ${step}: ${label}.`)}
+                      className={`${styles.startChipCompact} ${filled ? styles.startChipUsed : ""}`}
+                      onClick={() =>
+                        void send(`Let's work on step ${step}: ${label}.`)
+                      }
                       type="button"
                       disabled={streaming}
-                      aria-label={`${label}${filled ? ' — captured' : ''}`}
+                      aria-label={`${label}${filled ? " — captured" : ""}`}
                       title={label}
                     >
-                      <span className={styles.chipStepNum} aria-hidden>{step}</span>
+                      <span className={styles.chipStepNum} aria-hidden>
+                        {step}
+                      </span>
                       <span className={styles.chipLabel}>{label}</span>
                       {filled ? (
-                        <span className={styles.startChipArrow} aria-hidden>&#10003;</span>
+                        <span className={styles.startChipArrow} aria-hidden>
+                          &#10003;
+                        </span>
                       ) : null}
                     </button>
                   );
@@ -468,11 +548,11 @@ export function StrategicMoveOriginateClient({
                 value={composer}
                 onChange={(e) => {
                   setComposer(e.target.value);
-                  e.target.style.height = 'auto';
+                  e.target.style.height = "auto";
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     void send();
                   }
@@ -480,7 +560,7 @@ export function StrategicMoveOriginateClient({
                 placeholder="Describe the outcome or pick a step above…"
                 disabled={streaming}
                 spellCheck
-                style={{ overflowY: 'hidden', maxHeight: '120px' }}
+                style={{ overflowY: "hidden", maxHeight: "120px" }}
               />
               <button
                 id="orig-chat-send-btn"
@@ -502,7 +582,11 @@ export function StrategicMoveOriginateClient({
             <div className={styles.detailHeadTop}>
               <div className={styles.detailHeadLeft}>
                 <div className={styles.detailBreadcrumb}>
-                  <button className={styles.detailCrumb} onClick={cancelFlow} type="button">
+                  <button
+                    className={styles.detailCrumb}
+                    onClick={cancelFlow}
+                    type="button"
+                  >
                     Strategic Moves
                   </button>
                   <span aria-hidden>&rsaquo;</span>
@@ -510,8 +594,12 @@ export function StrategicMoveOriginateClient({
                   <span aria-hidden>&rsaquo;</span>
                   <span>NEW</span>
                 </div>
-                <h1 className={styles.detailTitle}>Originate a strategic move</h1>
-                <div className={styles.detailId}>P0 Originate &middot; Drafting</div>
+                <h1 className={styles.detailTitle}>
+                  Originate a strategic move
+                </h1>
+                <div className={styles.detailId}>
+                  P0 Originate &middot; Drafting
+                </div>
               </div>
             </div>
             <PhaseRail current={0} status="teal" />
@@ -522,18 +610,16 @@ export function StrategicMoveOriginateClient({
             {SCAFFOLD_DEFS.map(({ id, label, step }) => {
               const value = brief.fields[id];
               const filled = value.trim().length > 0;
-              const num = String(step).padStart(2, '0');
+              const num = String(step).padStart(2, "0");
               return (
                 <section
                   id={`orig-canvas-brief-section-${step}`}
-                  className={`${styles.scaffoldRow} ${filled ? styles.scaffoldRowFilled : ''}`}
+                  className={`${styles.scaffoldRow} ${filled ? styles.scaffoldRowFilled : ""}`}
                   key={id}
                 >
                   <div className={styles.scaffoldNum}>{num}</div>
                   <div className={styles.scaffoldBody}>
-                    <div className={styles.scaffoldLabel}>
-                      {label}
-                    </div>
+                    <div className={styles.scaffoldLabel}>{label}</div>
                     {filled ? (
                       <div
                         id={`orig-canvas-brief-section-${step}-content`}
@@ -543,7 +629,8 @@ export function StrategicMoveOriginateClient({
                       </div>
                     ) : (
                       <div className={styles.scaffoldEmpty}>
-                        Nexus will capture {label.toLowerCase()} from your conversation.
+                        Nexus will capture {label.toLowerCase()} from your
+                        conversation.
                       </div>
                     )}
                   </div>
@@ -576,17 +663,29 @@ export function StrategicMoveOriginateClient({
               aria-disabled={!canPromote}
             >
               <span>Promote to P1 Charter</span>
-              <span className={styles.btnPromoteArrow} aria-hidden>&rarr;</span>
+              <span className={styles.btnPromoteArrow} aria-hidden>
+                &rarr;
+              </span>
             </button>
-            <div id="orig-promote-bar-gate-summary" className={styles.promoteHelper}>
-              {canPromote ? 'Ready to promote' : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} required sections complete`}
+            <div
+              id="orig-promote-bar-gate-summary"
+              className={styles.promoteHelper}
+            >
+              {canPromote
+                ? "Ready to promote"
+                : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} required sections complete`}
             </div>
             {!canPromote ? (
-              <div id="orig-promote-bar-status-text" className={styles.promoteHelper}>
+              <div
+                id="orig-promote-bar-status-text"
+                className={styles.promoteHelper}
+              >
                 Complete all 7 scaffold sections to promote.
               </div>
             ) : null}
-            {submitError ? <div className={styles.submitError}>{submitError}</div> : null}
+            {submitError ? (
+              <div className={styles.submitError}>{submitError}</div>
+            ) : null}
           </footer>
         </article>
       </section>
@@ -603,22 +702,30 @@ export function StrategicMoveOriginateClient({
             aria-modal="true"
             aria-labelledby="confirm-discard-title"
           >
-            <h3 id="confirm-discard-title" className={styles.confirmDialogTitle}>
+            <h3
+              id="confirm-discard-title"
+              className={styles.confirmDialogTitle}
+            >
               Discard this move?
             </h3>
             <p className={styles.confirmDialogBody}>
-              You&rsquo;ve captured {filledCount} of 7 sections. Save as a draft to come back, or discard and start fresh.
+              You&rsquo;ve captured {filledCount} of 7 sections. Save as a draft
+              to come back, or discard and start fresh.
             </p>
             <div className={styles.confirmActions}>
-              <button className={styles.confirmBtn} onClick={() => setShowConfirm(false)} type="button">
+              <button
+                className={styles.confirmBtn}
+                onClick={() => setShowConfirm(false)}
+                type="button"
+              >
                 Continue working
               </button>
               <button
                 className={`${styles.confirmBtn} ${styles.confirmBtnDanger}`}
                 onClick={() => {
                   setShowConfirm(false);
-                  setBrief({ programName: '', fields: { ...INITIAL_FIELDS } });
-                  router.push('/strategic-moves');
+                  setBrief({ programName: "", fields: { ...INITIAL_FIELDS } });
+                  router.push("/strategic-moves");
                 }}
                 type="button"
               >
@@ -628,7 +735,7 @@ export function StrategicMoveOriginateClient({
                 className={`${styles.confirmBtn} ${styles.confirmBtnPrimary}`}
                 onClick={() => {
                   setShowConfirm(false);
-                  router.push('/strategic-moves');
+                  router.push("/strategic-moves");
                 }}
                 type="button"
               >
