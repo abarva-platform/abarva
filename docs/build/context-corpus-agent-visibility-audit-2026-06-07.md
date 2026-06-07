@@ -141,6 +141,33 @@ npx tsx src/scripts/meridian-context-inventory.ts --tenant meridian-health
 # repeat per client; compare index doc counts (az search $count) to DB rows
 ```
 
+## 7b. Failed decommission/proof gates — root-cause diagnosis (from Log Analytics)
+
+Diagnosed read-only from operator job logs. These are the in-flight Azure
+migration thread's jobs, so this is a fix spec (not a blind patch underneath them).
+
+**`job-supa-drain-apply-eus` (FAILED 2026-06-06 23:34) — DEFINITIVE**
+
+- Error: `clients: duplicate key value violates unique constraint "clients_name_key"` in `copyTable` (`scripts/data-plane/drain-supabase-to-azure.ts`).
+- Cause: the Supabase→Azure copy does a plain INSERT of `clients`; a client with that `name` already exists in Azure → unique-key collision. The copy is **not idempotent**.
+- Fix: upsert `clients` with `ON CONFLICT (name) DO UPDATE` (or `DO NOTHING` + id remap), so re-runs and pre-existing Azure clients don't collide. Re-run drain after.
+
+**`job-a24-search-verify-eus` (FAILED 2026-06-07 00:19) — off by 7**
+
+- Error: `azure_search_backfill_count_mismatch:meridian-health: expected 4376, got 4369` (`src/scripts/azure-ai-search-backfill.ts:167`).
+- Body is already truncated to 30 KB (`safeSearchBody` in `tenant-context-backfill.ts`), so this is **not** the old `>32766`-byte term error. Two candidate causes:
+  1. **Silent per-doc index failures (most likely):** `uploadBatch` (line 124) only checks `res.ok` (HTTP 200). Azure Search's `/docs/index` returns **200 even when individual documents fail** — the per-doc outcome is in `value[].status`/`errorMessage`. 7 docs can be rejected while the batch reports 200, so the index ends up 7 short.
+  2. **Verify-before-commit race:** Azure Search `$count` is eventually consistent; `verify()` runs immediately after upload and can undercount.
+- Fix: in `uploadBatch`, parse the 200 response body and fail (or log+collect) any `value[].status === false` with its `errorMessage`; and add a bounded poll/retry in `verify()` before asserting equality. That both fixes a real silent-failure bug and disambiguates the cause.
+
+**`job-supa-final-eus` (FAILED 2026-06-07 00:55) — downstream**
+
+- Logs show it completing per-table Supabase final backups (export manifest with row counts + sha256), no clean error line in the captured window.
+- Most likely blocked by / dependent on the drain-apply failure (clients not fully migrated) or a final source==target reconcile assertion that can't pass while drain-apply is red.
+- Fix: land the drain-apply idempotency fix, re-run drain → search-verify → final in order; capture the proof pack only after all three are green.
+
+Note: `azure-ai-search-backfill.ts` keys its DB pool off `DATABASE_URL` (line 76). That is correct **only inside the operator**, where `DATABASE_URL` maps to the Azure Key Vault secret. Run behind `assert-azure-db-target` so it can never backfill from Supabase by accident.
+
 ## 8. Top recommendations (priority order)
 
 1. **P0 — migrate Sentinel Ask synthesis + Source chat off OpenAI to the audited
