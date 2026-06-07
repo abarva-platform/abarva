@@ -1,0 +1,15 @@
+person_name,title,function,role_level,reports_to,entity,location,team_fte,budget_owned_usd,decision_rights,source
+Maria Alvarez,Chief Executive Officer,Executive,C-suite,Board,System,HQ,11000,2000000000,Final approver: strategy/M&A/capital >$10M,exec-roster.csv
+David Chen,Chief Financial Officer,Finance,C-suite,Maria Alvarez,System,HQ,420,90000000,Approves budgets/capital plan/contracts >$1M,exec-roster.csv
+Priya Nair,Chief Operating Officer,Operations,C-suite,Maria Alvarez,System,HQ,7800,,Owns throughput/labor/facilities,exec-roster.csv
+Dr. James Okafor,Chief Medical Officer,Clinical,C-suite,Maria Alvarez,System,HQ,,,Owns quality/safety/clinical policy,exec-roster.csv
+Susan Park,Chief Nursing Officer,Nursing,C-suite,Priya Nair,System,HQ,5200,,Owns nursing practice/staffing,exec-roster.csv
+Robert Lee,Chief Information Officer,IT,C-suite,David Chen,System,HQ,310,76000000,Owns IT strategy/EHR/infrastructure,exec-roster.csv
+Anita Desai,Chief Data & Analytics Officer,Data,C-suite,Robert Lee,System,HQ,48,9000000,Owns analytics/AI/data governance,exec-roster.csv
+Mark Stevens,Chief Strategy Officer,Strategy,C-suite,Maria Alvarez,System,HQ,22,,Owns growth/partnerships,exec-roster.csv
+Karen White,Chief Human Resources Officer,HR,C-suite,Maria Alvarez,System,HQ,140,,Owns workforce/labor relations,exec-roster.csv
+Tom Bradley,General Counsel,Legal,C-suite,Maria Alvarez,System,HQ,30,,Owns legal/compliance/risk,exec-roster.csv
+Dr. Helen Cho,Hospital CEO,Operations,EVP,Priya Nair,Meridian Central Hospital,Central,3200,650000000,Owns hospital P&L,exec-roster.csv
+Dr. Omar Farouk,Hospital CEO,Operations,EVP,Priya Nair,Meridian West Hospital,West,2400,480000000,Owns hospital P&L,exec-roster.csv
+Grace Liu,VP Revenue Cycle,Finance,VP,David Chen,System,HQ,260,,Owns AR/denials/collections,exec-roster.csv
+Daniel Reyes,VP Information Security (CISO),IT,VP,Robert Lee,System,HQ,28,8500000,Owns cyber/IR/identity,exec-roster.csv

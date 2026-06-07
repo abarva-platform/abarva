@@ -1,0 +1,10 @@
+attribute,value,unit,notes
+industry,healthcare,,provider | payer | retail | finserv | airline
+sub_vertical,integrated_delivery_network,,provider: IDN/AMC/community; payer: commercial/MA/medicaid
+annual_revenue,2000000000,USD,drives exec count + IT budget bands
+total_headcount,11000,FTE,
+operating_entities,4,count,hospitals (provider) or plans/markets (payer)
+staffed_beds,900,beds,provider only
+covered_members,,members,payer only
+it_budget_pct,3.8,percent_of_revenue,typical provider 3-5%
+fiscal_year,FY26,,
