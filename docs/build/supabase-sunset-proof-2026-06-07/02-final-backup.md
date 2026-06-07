@@ -12,30 +12,30 @@ No destructive Supabase action should occur from this document.
 
 ## Required backup evidence
 
-| Control                        | Required evidence                                                                                                        | Current evidence                                                                                                                         | Status  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| Full Postgres dump             | Backup object path, dump format, timestamp, source project id/name, operator                                             | `job-supa-final-eus-6kbty9s` exported 337 public tables as JSONL and wrote a manifest; this is not a native `pg_dump` custom-format dump | PARTIAL |
-| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used                            | Not recorded in this proof pack                                                                                                          | BLOCKED |
-| Backup checksum                | SHA-256 or stronger checksum for each backup artifact                                                                    | Per-table SHA-256 checksums recorded in manifest and table-upload logs                                                                   | PARTIAL |
-| Restore test                   | Temporary database restore log and validation query output, or approved exception documenting why restore was not run    | Not recorded in this proof pack                                                                                                          | BLOCKED |
-| Secret hygiene                 | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack                                                                                                          | BLOCKED |
+| Control                        | Required evidence                                                                                                        | Current evidence                                                                                                              | Status  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Full Postgres dump             | Backup object path, dump format, timestamp, source project id/name, operator                                             | Native `pg_dump` completed locally at `/Users/anand/Downloads/abarva-supabase-native-pgdump-20260607-001/supabase-final.dump` | PASS    |
+| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used                            | Not recorded in this proof pack                                                                                               | BLOCKED |
+| Backup checksum                | SHA-256 or stronger checksum for each backup artifact                                                                    | Native dump SHA-256 `302ccb962614ac9a1ac6ab672838c06d1299aa181a1f0b13be943bf63f77ac8b`                                        | PASS    |
+| Restore test                   | Temporary database restore log and validation query output, or approved exception documenting why restore was not run    | Restore test passed for AbarVa app/corpus data; only Supabase-managed Vault extension objects excluded                        | PASS    |
+| Secret hygiene                 | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack                                                                                               | BLOCKED |
 
 ## Backup record
 
 Fill only after the final backup is complete.
 
-| Field                           | Value                                                                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase project id/name        | `PENDING`                                                                                                                       |
-| Freeze timestamp covered        | `PENDING`                                                                                                                       |
-| Backup timestamp UTC            | `PENDING`                                                                                                                       |
-| Postgres dump artifact location | `supabase-final-backups/supabase-final-20260607-001` in Azure Blob account `stabarvaprivatedplab001`, container `context-drops` |
-| Postgres dump checksum          | Per-table SHA-256 values in `manifest.json`; no single native dump checksum                                                     |
-| Storage/object export location  | `PENDING`                                                                                                                       |
-| Storage/object export checksum  | `PENDING`                                                                                                                       |
-| Restore-test database           | `PENDING`                                                                                                                       |
-| Restore-test result             | `PENDING`                                                                                                                       |
-| Operator                        | `PENDING`                                                                                                                       |
+| Field                           | Value                                                                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase project id/name        | `xtbymdryojmvoulaotce` / `abarva`                                                                                                   |
+| Freeze timestamp covered        | Dashboard showed read-only mode before deletion; exact freeze timestamp not recorded here                                           |
+| Backup timestamp UTC            | 2026-06-07                                                                                                                          |
+| Postgres dump artifact location | `/Users/anand/Downloads/abarva-supabase-native-pgdump-20260607-001/supabase-final.dump`                                             |
+| Postgres dump checksum          | `302ccb962614ac9a1ac6ab672838c06d1299aa181a1f0b13be943bf63f77ac8b`                                                                  |
+| Storage/object export location  | `PENDING`                                                                                                                           |
+| Storage/object export checksum  | `PENDING`                                                                                                                           |
+| Restore-test database           | Operator local restore test                                                                                                         |
+| Restore-test result             | Passed: `publicTables=341`, `clientsRows=9`, `enterpriseContextChunksRows=15847`, `corpusPatternsRows=8987`; Vault objects excluded |
+| Operator                        | External operator                                                                                                                   |
 
 ## Local execution attempt
 
@@ -89,13 +89,11 @@ Run validation against the temporary restored database, not production.
 - Random spot-check hashes match source query output.
 - No secret values appear in the restore logs.
 
-## Blockers
+## Remaining blockers
 
-1. Final full Postgres dump is not attached.
-2. Supabase storage/object usage is not inventoried.
-3. No checksum is recorded.
-4. No restore-test or approved restore-test exception exists.
-5. This shell has no `pg_dump`, `psql`, or source database secret reference.
+1. Supabase storage/object usage is not inventoried in this proof pack.
+2. Backup retention window is not recorded in this proof pack.
+3. Restore-test transcript is operator-reported but not attached as raw logs.
 
 ## 2026-06-07 Azure operator attempt
 
@@ -133,7 +131,7 @@ been run.
 | Observed progress | Exported multiple large tables including `corpus_patterns`, `corpus_telemetry`, `enterprise_context_chunk_queue`, `enterprise_context_chunks`, `engagements`, and related tables with per-table SHA-256 log lines |
 | Manifest re-read  | Blocked during evidence capture because Container Apps exec returned 404 for revision `0000051`; local storage data-plane listing remains blocked by storage network rules                                        |
 
-The merged-main rerun does not close the final backup gate. The prior fixed-root
-manifest confirms JSONL export artifacts exist under
-`supabase-final-backups/supabase-final-20260607-001`, but a native `pg_dump`,
-restore-test, and successful final backup/freeze job are still missing.
+The merged-main JSONL rerun did not close the final backup/freeze job gate, but
+the operator later completed a native `pg_dump` and restore-test outside this
+agent. See the backup record above for the native dump path, checksum, and
+restore counts.

@@ -52,6 +52,9 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Adds `src/lib/runtime/supabaseBootGuard.ts`.
 - Adds `src/lib/runtime/__tests__/supabaseBootGuard.test.ts`.
 - Adds `src/instrumentation.ts`.
+- Adds `docs/build/supabase-sunset-proof-2026-06-07/09-post-delete-cleanup.md`.
+- Updates Supabase decommission runbooks so deleted Supabase is no longer
+  documented as an active source.
 - Updates `.dockerignore` so Docker/ACR builds include required
   `docs/enterprise-context/templates/*/manifest.json` files imported at build
   time.
@@ -132,6 +135,36 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Partial: merged-main `job-supa-final-eus-0k0143f` failed overall after
   emitting table export/checksum progress; final manifest re-read was blocked by
   Container Apps exec 404 during evidence capture.
+- Reported external action: Supabase project `abarva` /
+  `xtbymdryojmvoulaotce` was deleted through the Supabase dashboard at/just
+  before 2026-06-07T05:06Z after the operator reported fresh Azure DB proof,
+  drain parity, Azure Search verify, smoke/retrieval, read-only dashboard state,
+  native `pg_dump`, and restore-test success.
+- Pass: native backup path reported as
+  `/Users/anand/Downloads/abarva-supabase-native-pgdump-20260607-001/supabase-final.dump`
+  with SHA-256
+  `302ccb962614ac9a1ac6ab672838c06d1299aa181a1f0b13be943bf63f77ac8b`.
+- Pass: restore test reported for AbarVa app/corpus data with
+  `publicTables=341`, `clientsRows=9`,
+  `enterpriseContextChunksRows=15847`, `corpusPatternsRows=8987`; only
+  Supabase-managed Vault extension objects were excluded.
+- Pass: post-delete Azure cleanup removed stale app secret
+  `supabase-service-role-key`, removed `SOURCE_DATABASE_URL` from historical
+  Supabase/drain/final jobs, and removed their `source-postgres-database-url`
+  Container Apps job secrets.
+- Pass: post-delete Azure app/job config inventory found no Supabase/source
+  runtime env/secret references.
+- Pass: post-delete public `/`, `/api/health`, and signed-in QA across Home,
+  Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin passed.
+- Pass: post-delete app and sampled job logs had no matches for `supabase.co`,
+  `pooler.supabase.com`, `NEXT_PUBLIC_SUPABASE_URL`, or
+  `SUPABASE_SERVICE_ROLE_KEY`.
+- Blocked: Key Vault historical secrets `source-postgres-database-url` and
+  `supabase-service-role-key` still exist; local data-plane access is
+  private-link blocked and Azure runtime managed identity delete attempts
+  returned `403`. These secrets are no longer projected into runtime/jobs.
+- Blocked: Vercel env cleanup could not be verified from this agent because no
+  Vercel CLI/token/project identifiers are available.
 - Not run: formal production Supabase freeze timestamp/log export, native
   `pg_dump` restore-test, 24-72 hour Azure-only soak, pause QA, and deletion
   approval.
@@ -166,14 +199,18 @@ as rollback unless explicitly approved.
 
 ## Known Gaps
 
-- Supabase freeze timestamp has not been recorded; `supa-final` freeze attempt
-  failed and must not be treated as a completed freeze.
-- Final backup JSONL export/manifest exists, but native `pg_dump` and
-  restore-test evidence are not attached.
+- Supabase deletion was performed externally through the dashboard; exact
+  dashboard deletion timestamp beyond the 2026-06-07T05:06Z report is not
+  recorded in this proof pack.
+- Backup retention window is not recorded in this proof pack.
+- Vercel env cleanup remains unverified from this agent.
+- Key Vault historical Supabase/source secrets remain present but unprojected.
 - Azure parity checksums and several required table families remain unproven.
 - Fresh Azure Search verify/retrieval smoke passed for six tenants on merged
   main, but Morgan Street/Northshore golden retrieval is not attached.
 - Production Azure-only 24-72 hour soak has not run.
-- Pause-before-delete QA has not been run; Supabase was not paused.
-- Explicit deletion approval is not recorded; Supabase was not deleted.
+- Pause-before-delete QA was superseded by external deletion; post-delete Azure
+  QA passed.
+- Anthropic Sentinel/Source provider migration remains separate in #3246 and is
+  not completed by this proof.
 - DNS was not changed and Vercel production was not removed.
