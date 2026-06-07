@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AbarVa/Nexus — Context, Corpus &amp; Reasoning (Full-Stack Report)</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>window.addEventListener('load',()=>{if(window.mermaid)mermaid.initialize({startOnLoad:true,theme:'neutral'});});</script>
+<style>
+  :root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#5b5b5b;--line:#e3e0d8;--accent:#2563EB;--good:#0f766e;--bad:#b91c1c;--warn:#b45309;--card:#fff;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 24px 80px;}
+  h1,h2,h3{font-family:Georgia,'Times New Roman',serif;font-weight:400;line-height:1.2;}
+  h1{font-size:34px;margin:0 0 6px;}
+  h2{font-size:25px;margin:48px 0 8px;padding-top:16px;border-top:1px solid var(--line);}
+  h3{font-size:19px;margin:26px 0 6px;}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 8px;}
+  p{margin:10px 0;} code{background:#efede7;padding:1px 5px;border-radius:4px;font-size:13px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0;}
+  .lay{background:#eef6ff;border-left:4px solid var(--accent);padding:10px 14px;border-radius:6px;margin:10px 0;}
+  .hood{background:#f3f1ea;border-left:4px solid #999;padding:10px 14px;border-radius:6px;margin:10px 0;font-size:14px;}
+  .lay b,.hood b{display:inline-block;margin-right:6px;}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0;}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;}
+  th{background:#efeae0;font-weight:600;}
+  .y{color:var(--good);font-weight:600;} .n{color:var(--bad);font-weight:600;} .w{color:var(--warn);font-weight:600;}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;}
+  .mermaid{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0;text-align:center;}
+  .toc a{color:var(--accent);text-decoration:none;} .toc li{margin:3px 0;}
+  .small{font-size:12.5px;color:var(--muted);}
+  ol li,ul li{margin:5px 0;}
+  .kpi{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;}
+  .kpi div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;min-width:150px;}
+  .kpi b{font-size:22px;display:block;font-family:Georgia,serif;}
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>Context, Corpus &amp; Reasoning</h1>
+<p class="sub">How AbarVa/Nexus knows what it knows — and how Sentinel &amp; Nexus answer. Full-stack, two altitudes. <span class="pill">Live data: 2026-06-07 · DB <code>abarva_control</code>@10.43.1.4 (Azure private)</span></p>
+
+<div class="card toc">
+<b>Contents</b>
+<ol>
+<li><a href="#s1">Executive summary</a></li>
+<li><a href="#s2">The data, by layer &amp; dimension (live)</a></li>
+<li><a href="#s3">Ingestion pipeline: parse → chunk → registry → db → graph → index</a></li>
+<li><a href="#s4">How Sentinel/Nexus are "made aware" at request time</a></li>
+<li><a href="#s5">No-context fallback &amp; the reasoning layer</a></li>
+<li><a href="#s6">End-to-end worked examples</a></li>
+<li><a href="#s7">Full-stack picture (how it all comes together)</a></li>
+<li><a href="#s8">How to train / improve Sentinel &amp; Nexus</a></li>
+<li><a href="#s9">Glossary</a></li>
+</ol>
+</div>
+
+<h2 id="s1">1 · Executive summary</h2>
+<p><b>Mental model (one line):</b> <em>retrieve grounded tenant context → reason over it with Claude → answer with citations; if the context isn't loaded, fall back to Claude's general expertise, clearly labeled — never fabricate.</em></p>
+<div class="lay"><b>Plain English:</b> Nexus does not "memorize" your company. Every time you ask, it looks up <em>your tenant's</em> facts and patterns from a database + a search index, hands those to Claude as reading material, and Claude writes the answer citing them. If the lookup finds nothing, it says so instead of guessing.</div>
+<div class="hood"><b>Under the hood:</b> The orchestrator is <code>askIntelligence()</code> (<code>src/lib/intelligence/ask/index.ts</code>) — an async generator emitting <code>classified → sources → delta → followups → done</code>. Reasoning is Anthropic/Claude only via the audited egress client (<code>getAuditedAnthropicClient</code>, <code>src/lib/agent/stream.ts</code>); provider is proven in <code>ai_egress_audit</code>.</div>
+<div class="kpi">
+<div><b>9,026</b><span class="small">corpus_patterns</span></div>
+<div><b>43,436</b><span class="small">genome_patterns</span></div>
+<div><b>93,743</b><span class="small">graph edges</span></div>
+<div><b>0</b><span class="small">enterprise_context_* in Azure</span></div>
+</div>
+<p><b>What it knows today:</b> decision/treasury <em>patterns</em> (Lakeshore strong). <b>What it can't answer yet:</b> the "CXO fact" layer (execs, org, current data/analytics stack, systems, vendors, KPIs) — those live in <code>enterprise_context_*</code>, which is <span class="n">absent from the Azure runtime DB</span> (present only in legacy Supabase). That gap is an <em>ingestion/migration</em> issue, not a model issue.</p>
+
+<h2 id="s2">2 · The data, by layer &amp; dimension (live)</h2>
+<p class="small">Counts pulled read-only from <code>abarva_control</code> via the private operator job on 2026-06-07. "unverified" = not separately counted.</p>
+
+<h3>Layer totals (verified)</h3>
+<table>
+<tr><th>Store</th><th>What it holds</th><th>In Azure runtime?</th><th>Live count</th><th>Provenance</th></tr>
+<tr><td><code>corpus_patterns</code></td><td>Decision patterns (incl. Lakeshore <code>pat-lsh-*</code>)</td><td class="y">yes</td><td>9,026 <span class="small">(lsh 8,987 · it 34 · src 5)</span></td><td>loader (<code>primary_author_id</code> = <code>*-corpus-loader</code>)</td></tr>
+<tr><td><code>genome_patterns</code></td><td>Industry pattern genome (incl. <code>LSH-TMS-*</code> treasury)</td><td class="y">yes</td><td>43,436</td><td>seeded/generated</td></tr>
+<tr><td><code>intelligence_graph_edges</code></td><td>Relationships between entities/patterns</td><td class="y">yes</td><td>93,743</td><td>derived</td></tr>
+<tr><td><code>applications</code></td><td>App/systems inventory</td><td class="w">yes (synthetic)</td><td>232 — <span class="n">all <code>is_demo_data=true</code></span></td><td>demo</td></tr>
+<tr><td><code>enterprise_context_*</code></td><td><b>The CXO fact layer</b>: records, facts, chunks, sources, evidence</td><td class="n">NO — absent</td><td>0 tables present (Supabase-only)</td><td>—</td></tr>
+</table>
+
+<h3>genome_patterns by vertical (verified)</h3>
+<table>
+<tr><th>airline</th><th>healthcare_provider</th><th>retail</th><th>banking</th><th>medtech</th><th>cross_industry</th><th>diversified_holdco</th></tr>
+<tr><td>12,689</td><td>11,825</td><td>11,440</td><td>4,680</td><td>2,490</td><td>300</td><td>12</td></tr>
+</table>
+
+<h3>Dimension × availability heatmap</h3>
+<p class="small">"Answerable" = the data is in the Azure runtime so Sentinel/Nexus can retrieve+cite it.</p>
+<table>
+<tr><th>Dimension</th><th>Lives in</th><th>In Azure runtime?</th><th>Answerable now?</th></tr>
+<tr><td>Corpus / decision patterns</td><td><code>corpus_patterns</code></td><td class="y">yes</td><td class="y">YES (Lakeshore strong)</td></tr>
+<tr><td>Treasury/Kyriba patterns</td><td><code>genome_patterns</code> (LSH-TMS) + index</td><td class="y">yes</td><td class="y">YES (Lakeshore)</td></tr>
+<tr><td>Leadership / named execs</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Org structure (IT/supply-chain/finance)</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Business units / segments / geographies</td><td><code>enterprise_context_records</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Current data &amp; analytics stack</td><td><code>enterprise_context_facts</code> (CMDB)</td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>ERP/treasury/HR/reporting platforms</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Applications / systems</td><td><code>applications</code> (demo) + context</td><td class="w">demo only</td><td class="w">demo only</td></tr>
+<tr><td>Vendors / contracts / renewals</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>KPIs / metrics by function</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Initiatives / roadmap / risks / controls</td><td><code>enterprise_context_*</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+</table>
+<div class="lay"><b>Plain English:</b> The "playbook" knowledge (patterns) is loaded and works. The "about <em>your</em> company" knowledge (who runs it, what systems you use, your KPIs) is not in the live system yet — it's stranded in the old database. That's why a treasury-pattern question gets a great answer but "who's our CFO?" honestly says "not loaded."</div>
+
+<h2 id="s3">3 · Ingestion pipeline: parse → chunk → registry → db → graph → index</h2>
+<div class="mermaid">
+flowchart LR
+  U[Doc upload<br/>CSV/PDF/XLSX] --> B[Azure Blob<br/>staging]
+  B --> P[Parse / extract]
+  P --> SF[(enterprise_context<br/>_source_files)]
+  SF --> R[(records)]
+  R --> C[(chunks)]
+  C --> E[Embeddings<br/>vector]
+  R --> F[(facts<br/>structured)]
+  R --> G[(intelligence_<br/>graph_edges)]
+  E --> IDX[(Azure AI Search<br/>tenant-context-v1)]
+  F --> IDX
+  C --> Q[(chunk_queue)]
+</div>
+<div class="lay"><b>Plain English:</b> A document is uploaded, saved, and read. It's split into small passages ("chunks"), turned into structured "facts," linked into a relationship "graph," and converted into math vectors so it's searchable by meaning. Each of those is a <em>separate</em> step — "uploaded" is not "searchable."</div>
+<div class="hood"><b>Under the hood:</b> Governed Admin bulk loader → Blob → parse → <code>enterprise_context_source_files</code> (lineage) → <code>enterprise_context_records</code> → <code>enterprise_context_chunks</code> (+ <code>chunk_queue</code>) → embeddings (OpenAI/Azure Foundry, an allowlisted non-reasoning utility) → <code>enterprise_context_facts</code> → <code>intelligence_graph_edges</code> → Azure AI Search index <code>tenant-context-v1</code>. Per <code>AGENTS.md</code> "Context ingestion truth standard," each state is reported separately — "loaded" ≠ "committed + retrievable."</div>
+<p class="w"><b>Current reality:</b> on the Azure runtime DB, this pipeline's <code>enterprise_context_*</code> outputs are absent — the layer was never migrated from Supabase. Only the corpus/genome/graph tables are present.</p>
+
+<h2 id="s4">4 · How Sentinel/Nexus are "made aware" at request time</h2>
+<div class="mermaid">
+flowchart TD
+  Q[User question] --> T[Tenant resolve<br/>active-client + aliases + RLS]
+  T --> CL[Intent classify<br/>Claude · classifier.ts]
+  CL --> RET{Multi-retriever fan-out}
+  RET --> R1[enterprise facts]
+  RET --> R2[technology]
+  RET --> R3[structured]
+  RET --> R4[graph · genome-query-broker]
+  RET --> R5[vector · context-broker]
+  RET --> R6[Azure Search]
+  R1 & R2 & R3 & R4 & R5 & R6 --> EV[Evidence assembly<br/>+ grounding/relevance<br/>+ namespace validation]
+  EV --> SP[System-prompt build<br/>module-context-contract<br/>+ four-layer instructions]
+  SP --> LLM[Claude synthesis<br/>audited egress]
+  LLM --> CIT[Answer + citations]
+  CIT --> FU[Followups]
+</div>
+<div class="lay"><b>Plain English:</b> The "intelligence" that makes Sentinel aware is <em>not</em> inside the AI model — it's the <b>retrievers + the prompt builder</b>. They fetch your tenant's relevant rows and paste them into the question as reading material, fresh, every single request. Nothing about your company is baked into Claude.</div>
+<div class="hood"><b>Under the hood:</b> <code>askIntelligence()</code> resolves tenant (<code>active-client.ts</code> + <code>tenant/aliases.ts</code>, RLS-scoped), classifies intent (Claude, <code>classifier.ts</code>), fans out to retrievers (<code>ask/retrievers/*</code>, <code>knowledge/context-broker/broker.ts</code> for vectors, <code>graph/retrieval.ts</code> + <code>genome-query-broker.ts</code> for graph, <code>corpus/azure-search.ts</code> for search), validates pattern IDs against the decision's <b>grounding namespace</b> (<code>pattern-grounding.ts</code>), then <code>synthesizer.ts</code> injects the retrieved evidence into the system prompt (<code>module-context-contract.ts</code> + <code>FOUR_LAYER_REASONING_INSTRUCTIONS</code>) and streams Claude's answer.</div>
+<table>
+<tr><th>Question</th><th>Answer</th></tr>
+<tr><td>Which component holds the "awareness"?</td><td>The <b>retrievers + prompt assembler</b> in <code>src/lib/intelligence/ask/</code> — not the model.</td></tr>
+<tr><td>Where is context stored / accessed?</td><td>Azure Postgres (<code>abarva_control</code>, tenant-scoped + RLS) and Azure AI Search — read at request time.</td></tr>
+<tr><td>How does binding happen in real time?</td><td>Retrieved rows → an evidence block inside the per-request system prompt. Ephemeral; recomputed each call. <b>No training/no memory of your data in the model.</b></td></tr>
+<tr><td>What's the configuration?</td><td>Env: <code>AZURE_SEARCH_SERVICE_NAME</code>, <code>AZURE_CONNECTIVITY_SEARCH_INDEX_NAME</code>, <code>ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS</code>; per-tenant <code>clients.ai_policy</code> (the egress gate that allows Claude).</td></tr>
+</table>
+
+<h2 id="s5">5 · No-context fallback &amp; the reasoning layer</h2>
+<div class="mermaid">
+flowchart TD
+  R[Retrieval result] -->|grounded rows found| A[Answer FROM context<br/>+ citations]
+  R -->|nothing relevant| B[response-policy:<br/>state what's missing]
+  B --> C[Claude general expertise<br/>clearly labeled<br/>'not a loaded corpus match']
+  B --> D{Fabricate?}
+  D -->|NO — fail closed| E[Refuse to invent<br/>execs/systems/numbers]
+</div>
+<div class="lay"><b>Plain English:</b> When the lookup finds nothing, Nexus is allowed to give general expert advice from Claude — but it must <em>say</em> it's general, and it must <b>never</b> invent your specific facts (names, systems, dollar figures). "Grounded in your data" and "the model happens to know" are deliberately kept distinct.</div>
+<div class="hood"><b>Under the hood:</b> <code>response-policy.ts</code> governs the partial/empty-evidence path; the reasoning layer is Claude via <code>getAuditedAnthropicClient</code> (Anthropic-only, gated by <code>clients.ai_policy.allowClaude</code>). Every call is logged to <code>ai_egress_audit</code> (provider=anthropic). The grounding guard (<code>pattern-grounding.ts</code>) prevents a valid-but-off-namespace pattern ID from being cited.</div>
+<table>
+<tr><th>Real case</th><th>Behavior</th></tr>
+<tr><td>Lakeshore — "Kyriba modernization patterns?"</td><td class="y">FULLY_ANSWERABLE — 8 grounded sources (real treasury patterns), cited.</td></tr>
+<tr><td>Meridian — "Who is our CFO / our stack?"</td><td class="n">NOT_LOADED — refused to name a CFO or invent "Epic Cogito/Snowflake." (Correct, honest.)</td></tr>
+</table>
+
+<h2 id="s6">6 · End-to-end worked examples</h2>
+<h3>(a) Grounded hit — Lakeshore Kyriba</h3>
+<ol>
+<li>Tenant resolved → Lakeshore (RLS-scoped).</li>
+<li>Intent classify (Claude) → treasury/decision-pattern.</li>
+<li>Retrievers fetch real <code>genome</code> LSH-TMS + corpus treasury patterns (e.g. "Kyriba-to-bank cutover dual-run", "Daily cash position originates in Kyriba").</li>
+<li>Grounding namespace = treasury → validates the cited IDs belong there.</li>
+<li>Claude synthesizes an answer <b>citing 8 sources</b>; followups offered.</li>
+</ol>
+<h3>(b) Not loaded — "Who is our CFO?"</h3>
+<ol>
+<li>Retrievers query <code>enterprise_context_facts</code> → <span class="n">table absent in Azure</span> → 0 evidence.</li>
+<li><code>response-policy</code> → state the gap; reasoning layer must not fabricate.</li>
+<li>Answer: "the exec bench isn't in the loaded tenant data — I won't guess." (Correct.)</li>
+</ol>
+<h3>(c) Cross-namespace guard — why <code>PAT-LSH-D18-00479</code> ≠ Kyriba</h3>
+<ol>
+<li><code>PAT-LSH-D18-00479</code> is a <em>real</em> procurement pattern in <code>corpus_patterns</code> — but a different namespace than the treasury card's grounding set (<code>genome</code>/LSH-TMS).</li>
+<li><code>pattern-grounding.ts</code> rejects it for the Kyriba card even though the ID is valid elsewhere — preventing a confident-but-wrong citation.</li>
+</ol>
+
+<h2 id="s7">7 · Full-stack picture (how it all comes together)</h2>
+<div class="mermaid">
+flowchart LR
+  BR[Browser<br/>Next.js App Router<br/>Clerk auth] --> API[API route]
+  API --> ASK[askIntelligence]
+  ASK --> DP[(Azure Postgres<br/>private 10.43.1.4)]
+  ASK --> SR[(Azure AI Search)]
+  ASK --> CL[Claude<br/>audited egress]
+  CL --> ASK
+  DP --> ASK
+  SR --> ASK
+  ASK --> BR
+</div>
+<div class="mermaid">
+flowchart LR
+  CORP[Corpus / Context<br/>what we know] --- RET[Retrieval<br/>find the relevant bits]
+  RET --- LLM[LLM / Claude<br/>reason + write]
+  LLM --- CORP
+</div>
+<div class="lay"><b>Plain English (the RAG triangle):</b> three parts working together — <b>what we know</b> (corpus + your context), <b>retrieval</b> (finding the right bits for this question), and <b>the LLM</b> (reasoning over those bits into an answer). Weakness in any corner shows up as a weak answer. Today our weak corner is the "context" side for fact questions.</div>
+<div class="hood"><b>Under the hood:</b> Runtime is Azure Container Apps (no Vercel); data plane is Azure private Postgres + Azure AI Search; reasoning is Anthropic-only. Auth = Clerk; tenant scoping + RLS enforce isolation.</div>
+
+<h2 id="s8">8 · How to train / improve Sentinel &amp; Nexus</h2>
+<p><b>Key reframe:</b> "training" here is mostly <b>data + retrieval + prompt</b>, not fine-tuning the base model. Ranked by impact:</p>
+<div class="mermaid">
+flowchart LR
+  L[Load substrate<br/>enterprise_context_*] --> RT[Retrieval quality<br/>embeddings/recall@k/hybrid]
+  RT --> CP[Corpus/pattern depth<br/>packs + per-tenant]
+  CP --> PR[Prompt/instruction tuning]
+  PR --> EV[Eval loop<br/>golden-QA + feedback]
+  EV --> L
+</div>
+<ol>
+<li><b>Load the missing substrate (the #1 lever).</b> Migrate/re-ingest <code>enterprise_context_*</code> to Azure and promote chunks → facts. Without this, fact questions stay NOT_LOADED no matter how good the model is.</li>
+<li><b>Retrieval quality.</b> Per-tenant embedding/index coverage; measure <b>recall@k</b> (was the right evidence in the top results?); hybrid retrieval (vector + keyword + graph); correct grounding namespaces.</li>
+<li><b>Corpus / pattern depth.</b> Pattern packs, genome packs, and function packs define "what good looks like"; deepen per-tenant corpus (Meridian/Apex are thin vs Lakeshore).</li>
+<li><b>Prompt / instruction tuning.</b> The four-layer reasoning instructions, <code>response-policy</code>, and citation discipline — tune wording, not the model.</li>
+<li><b>Evaluation loop.</b> Golden-QA per tenant + recall@k; reuse the eval harnesses (<code>src/__tests__/atlas-eval</code>, <code>scripts/qa/agent-grounding-runner.ts</code>); capture outcomes (<code>outcome_pattern_feedback</code>) and iterate.</li>
+</ol>
+<div class="lay"><b>Plain English:</b> You make Nexus smarter mostly by feeding it your real data and making the lookup sharper — not by "retraining the brain." Base-model fine-tuning is rarely the right first move; better data + better retrieval almost always wins.</div>
+
+<h2 id="s9">9 · Glossary</h2>
+<table>
+<tr><td><b>RAG</b></td><td>Retrieval-Augmented Generation — look up relevant facts, then let the LLM write using them.</td></tr>
+<tr><td><b>Embedding</b></td><td>A passage turned into numbers so similar meanings sit near each other for search.</td></tr>
+<tr><td><b>Chunk</b></td><td>A small slice of a document, sized for retrieval.</td></tr>
+<tr><td><b>Vector index</b></td><td>A search engine over embeddings (Azure AI Search here).</td></tr>
+<tr><td><b>Grounding</b></td><td>Tying an answer to real retrieved evidence (and the right namespace).</td></tr>
+<tr><td><b>Citation</b></td><td>The specific source rows an answer points to.</td></tr>
+<tr><td><b>Reasoning layer</b></td><td>The LLM (Claude) that reasons over the evidence into prose.</td></tr>
+<tr><td><b>Corpus vs genome</b></td><td>Corpus = client/decision patterns (<code>corpus_patterns</code>); genome = the broad industry pattern library (<code>genome_patterns</code>).</td></tr>
+<tr><td><b>Tenant scoping</b></td><td>Every read is filtered to one client (tenant_key/client_id + RLS) so no cross-tenant leakage.</td></tr>
+</table>
+
+<p class="small" style="margin-top:40px;border-top:1px solid var(--line);padding-top:14px;">Generated 2026-06-07. Live counts from <code>abarva_control</code>@10.43.1.4 via read-only operator job. Architecture cited from <code>src/lib/intelligence/ask/*</code>, <code>src/lib/agent/*</code>, <code>src/lib/knowledge/*</code>, <code>src/lib/corpus/*</code>, <code>src/lib/graph/*</code>. No secrets included.</p>
+
+</div></body></html>
