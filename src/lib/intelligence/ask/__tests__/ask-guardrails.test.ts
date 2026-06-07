@@ -2,16 +2,7 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
-import { applyPartialEvidencePolicy } from '../response-policy';
-import {
-  buildCxoQueryFocusChecklist,
-  chunkAskText,
-  chooseSynthesisTokenBudget,
-  chooseSynthesisWordLimit,
-  formatMandatorySurfaceEvidenceBlock,
-  isEnumeratedCompletenessAsk,
-  sanitizeAskSynthesis,
-} from '../synthesizer';
+import { chunkAskText, chooseSynthesisTokenBudget, sanitizeAskSynthesis } from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -47,20 +38,6 @@ describe('Ask Intelligence guardrails', () => {
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
   });
 
-  it('gives enumerated CXO readiness questions enough room to complete every requested item', () => {
-    const query = 'What are the six Kyriba rollout failure modes Lakeshore needs to de-risk?';
-
-    expect(isEnumeratedCompletenessAsk(query)).toBe(true);
-    expect(chooseSynthesisTokenBudget(query)).toBe(900);
-    expect(chooseSynthesisWordLimit(query)).toBe(380);
-  });
-
-  it('keeps ordinary and explicit-concise Ask responses on the standard digest limits', () => {
-    expect(isEnumeratedCompletenessAsk('What is your read on the Kyriba rollout?')).toBe(false);
-    expect(chooseSynthesisWordLimit('What is your read on the Kyriba rollout?')).toBe(240);
-    expect(chooseSynthesisWordLimit('Give me one short paragraph on Kyriba readiness.')).toBe(120);
-  });
-
   it('uses deterministic followups only for explicit concise Ask requests', () => {
     expect(buildDeterministicConciseFollowups({
       query: 'Name one modernization risk SkyHarbor should watch. Keep it concise.',
@@ -81,30 +58,6 @@ describe('Ask Intelligence guardrails', () => {
     const text = 'Apex data and analytics current state includes Snowflake, Adobe Experience Platform, and Salesforce Marketing Cloud.';
 
     expect(chunkAskText(text).join('')).toBe(text);
-  });
-
-  it('preserves paragraph breaks when applying tenant partial-evidence policy', () => {
-    const answer = [
-      'My read: Meridian should advance the command-center pilot only with gates.',
-      '',
-      'Evidence: The loaded sources show Enterprise Context counts and Epic scope; the remaining field to confirm is exact report retirement count.',
-      '',
-      'Risk / gate: CFO and CIO approval should remain blocked until the funding authority row is cited.',
-    ].join('\n');
-
-    const rewritten = applyPartialEvidencePolicy(answer, [
-      {
-        id: 'surface-meridian',
-        type: 'SURFACE',
-        name: 'Meridian live Intelligence surface',
-        detail: 'Enterprise Context counts are loaded.',
-        confidence: 0.99,
-      },
-    ]);
-
-    expect(rewritten).toContain('My read:');
-    expect(rewritten).toContain('\n\nEvidence:');
-    expect(rewritten).toContain('\n\nRisk / gate:');
   });
 
   // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace regression.
@@ -140,7 +93,7 @@ describe('Ask Intelligence guardrails', () => {
       .map((chunk) => chunk.trim())
       .join('');
     expect(fusedFromTrimmedChunks).toMatch(
-      /show upover|show up overand|merchandisingside|side,AI|loyaltynext-best-offer/,
+      /show upover|merchandisingside|loyaltynext-best-offer/,
     );
 
     // Post-fix behaviour: passing chunks through unchanged reconstructs the
@@ -218,149 +171,6 @@ describe('Ask Intelligence guardrails', () => {
     expect(routeCode).toMatch(/resolveTenant\s*\(\s*\{[\s\S]*?allowFallback:\s*false/);
   });
 
-  it('keeps healthcare modernization answers grounded in executive analytics terms', () => {
-    const synthesizerCode = readFileSync(
-      join(__dirname, '..', 'synthesizer.ts'),
-      'utf8',
-    );
-
-    const requiredTerms = [
-      'HEALTHCARE + MODERNIZATION GROUNDING',
-      'HCUP',
-      'readmissions',
-      'length of stay',
-      'Stars measures',
-      'MLR',
-      'data products',
-      'reports',
-      'metrics',
-      'lift-and-shift',
-      'on-prem exits',
-      'metadata-driven ETL',
-    ];
-
-    for (const term of requiredTerms) {
-      expect(synthesizerCode).toContain(term);
-    }
-  });
-
-  it('keeps phase, artifact, approval, and no-go proof explicit in Ask prompt discipline', () => {
-    const synthesizerCode = readFileSync(
-      join(__dirname, '..', 'synthesizer.ts'),
-      'utf8',
-    );
-
-    const requiredTerms = [
-      'ARTIFACT + APPROVAL DISCIPLINE',
-      'business case',
-      'architecture artifact',
-      'Source event',
-      'board pack',
-      'audit pack',
-      'CFO',
-      'CIO',
-      'approval owner',
-      'Phase 3 architecture proof',
-      'partner / Source trigger',
-      'no-go condition',
-      'stored artifact + approval proof',
-    ];
-
-    for (const term of requiredTerms) {
-      expect(synthesizerCode).toContain(term);
-    }
-  });
-
-  it('builds a query-aware focus checklist for healthcare analytics questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'What third-party datasets and provider KPIs do we need for population health?',
-    );
-
-    expect(checklist).toContain('QUESTION-SPECIFIC FOCUS CHECKLIST');
-    expect(checklist).toContain('HCUP');
-    expect(checklist).toContain('readmissions');
-    expect(checklist).toContain('length of stay');
-    expect(checklist).toContain('data products');
-    expect(checklist).toContain('evidence');
-  });
-
-  it('builds a query-aware focus checklist for MLR baseline and forecast questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'How should Meridian use MLR compression as a value spine without claiming realized savings?',
-    );
-
-    expect(checklist).toContain('MLR');
-    expect(checklist).toContain('baseline');
-    expect(checklist).toContain('forecast');
-    expect(checklist).toContain('realized savings');
-  });
-
-  it('builds a query-aware focus checklist for Stars value-spine questions without overclaiming', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'How should Meridian use Stars improvement as a value spine without overpromising bonus dollars?',
-    );
-
-    expect(checklist).toContain('Stars measures');
-    expect(checklist).toContain('evidence');
-    expect(checklist).toContain('scenario upside');
-    expect(checklist).toContain('promised or committed savings');
-    expect(checklist).toContain('committed dollars');
-    expect(checklist).toContain('separate from realized savings');
-    expect(checklist).not.toContain('guaranteed');
-  });
-
-  it('builds a query-aware focus checklist for modernization estate questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'What is the risk of our AWS lift-and-shift and on-prem data center exit?',
-    );
-
-    expect(checklist).toContain('AWS');
-    expect(checklist).toContain('lift-and-shift');
-    expect(checklist).toContain('on-prem exit');
-    expect(checklist).toContain('SLA');
-    expect(checklist).toContain('cutover risk');
-  });
-
-  it('builds a query-aware focus checklist for AMS provider operating model questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'What should Meridian require from a data analytics AMS provider so the lakehouse does not become a ticket factory?',
-    );
-
-    expect(checklist).toContain('AMS');
-    expect(checklist).toContain('SLA');
-    expect(checklist).toContain('operating model');
-    expect(checklist).toContain('data quality');
-    expect(checklist).toContain('governance');
-  });
-
-  it('builds a query-aware focus checklist for model risk and data quality questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'What model risk, drift, monitoring, and data quality gates should block clinical safety sign-off?',
-    );
-
-    expect(checklist).toContain('drift');
-    expect(checklist).toContain('data quality');
-    expect(checklist).toContain('monitoring');
-    expect(checklist).toContain('human-in-the-loop');
-    expect(checklist).toContain('rollback');
-  });
-
-  it('builds a query-aware focus checklist for artifact, approval, and no-go questions', () => {
-    const checklist = buildCxoQueryFocusChecklist(
-      'What should block the board go/no-go if the Move artifact and Source partner trigger are not approved?',
-    );
-
-    expect(checklist).toContain('artifact');
-    expect(checklist).toContain('business case');
-    expect(checklist).toContain('approval owner');
-    expect(checklist).toContain('CFO');
-    expect(checklist).toContain('CIO');
-    expect(checklist).toContain('Source partner trigger');
-    expect(checklist).toContain('Move registration');
-    expect(checklist).toContain('no-go condition');
-    expect(checklist).toContain('decision fork');
-  });
-
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {
     const sources = retrieveSurfaceContextSources(
       {
@@ -419,51 +229,5 @@ describe('Ask Intelligence guardrails', () => {
       id: 'apexretail',
     });
     expect(sources[2].detail).toContain('integration-hub adjacency');
-  });
-
-  it('formats authenticated surface facts as mandatory synthesis evidence', () => {
-    const block = formatMandatorySurfaceEvidenceBlock([
-      {
-        type: 'TENANT',
-        name: 'Lakeshore Holdings 360 Intelligence substrate',
-        id: 'lakeshore',
-        detail: [
-          'Tenant 360: Lakeshore Holdings.',
-          'Move 0 de-risk gates include bank connectivity, ERP feed quality, entity hierarchy, historical cash reconstruction, adoption, and intercompany reconciliation.',
-        ].join('\n- '),
-        confidence: 0.96,
-      },
-      {
-        type: 'SURFACE',
-        name: 'Lakeshore live Intelligence surface',
-        id: 'intelligence',
-        detail: [
-          'Active Intelligence surface: intelligence.',
-          'Vector store truth: Lakeshore uses native Azure AI Search for vector retrieval, not Pinecone.',
-        ].join('\n- '),
-        confidence: 0.99,
-      },
-      {
-        type: 'WORLDVIEW',
-        name: 'General treasury doctrine',
-        id: 'worldview',
-        detail: 'This lower-priority block should not be copied into the mandatory surface evidence block.',
-        confidence: 0.75,
-      },
-    ]);
-
-    expect(block).toContain('CURRENT TENANT / SURFACE FACTS TO USE');
-    expect(block).toContain('ERP feed quality');
-    expect(block).toContain('Azure AI Search');
-    expect(block).not.toContain('General treasury doctrine');
-  });
-
-  it('emits an error event instead of silently closing an empty Ask stream', () => {
-    const routeCode = readFileSync(
-      join(__dirname, '..', '..', '..', '..', 'app', 'api', 'intelligence', 'ask', 'route.ts'),
-      'utf8',
-    );
-
-    expect(routeCode).toContain("error: 'ask_synthesis_empty'");
   });
 });

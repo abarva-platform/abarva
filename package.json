@@ -49,6 +49,7 @@
     "db:assert-azure-target": "node scripts/data-plane/assert-azure-db-target.mjs",
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
+    "guard:reasoning": "node scripts/guardrails/anthropic-only-reasoning.mjs",
     "scaffold:release": "node scripts/scaffold/release-record.mjs",
     "scaffold:adr": "node scripts/scaffold/adr.mjs",
     "scaffold:smoke": "node scripts/scaffold/smoke.mjs",
