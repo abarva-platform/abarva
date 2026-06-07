@@ -168,16 +168,21 @@ done
 
 First documented hit: 2026-04-21 · `migration-audit-013-020` preview branch during Tower W3 schema push.
 
-## Testing your migration on a preview branch
+## Testing your migration on Azure/Postgres
 
-Every PR that touches `supabase/migrations/**` triggers a Supabase preview branch deploy. Watch the logs:
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` has been deleted.
+Do not use Supabase preview branches for new migration validation.
 
-1. Open the PR
-2. Go to https://supabase.com/dashboard/project/xtbymdryojmvoulaotce/branches
-3. Click the preview branch → View Logs
-4. Look for `✓` on every migration or a specific error
+For new migrations:
 
-If a migration fails on preview but works on prod, your migration is non-idempotent. Fix per the four rules above, push, watch the preview re-run. Iterate until green.
+1. Run `npm run db:migrate:dry` against an approved Azure/Postgres-compatible
+   test database.
+2. Run `npm run db:migrate -- --ci` only when the connection string points at
+   the approved migration target.
+3. Inspect the migration runner output for pending/applied counts and any
+   destructive guard failures.
+4. If a migration fails on the test target but works locally, make it idempotent
+   per the four rules above, push, and re-run against the approved target.
 
 ## When you legitimately can't be idempotent
 

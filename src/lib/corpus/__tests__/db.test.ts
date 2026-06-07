@@ -32,7 +32,7 @@ describe('corpus database connection resolution', () => {
 
   it('recognizes Supabase pooler and project hosts', () => {
     expect(isLegacySupabaseCorpusUrl('postgres://u:p@aws-1-us-east-2.pooler.supabase.com/postgres')).toBe(true);
-    expect(isLegacySupabaseCorpusUrl('postgres://u:p@db.xtbymdryojmvoulaotce.supabase.co/postgres')).toBe(true);
+    expect(isLegacySupabaseCorpusUrl('postgres://u:p@db.exampleprojectref.supabase.co/postgres')).toBe(true);
     expect(isLegacySupabaseCorpusUrl('postgres://u:p@pg-abarva-context-lab-001.postgres.database.azure.com/abarva_control')).toBe(false);
   });
 });

@@ -1,22 +1,23 @@
 # Supabase Sunset Proof - 06 Pause QA
 
 Date: 2026-06-07
-Status: HOLD - Supabase pause QA not run
+Status: NOT RUN - source project deleted before pause QA
 Scope: Re-run core app QA while Supabase is paused
 
 ## Gate verdict
 
-Supabase must be paused before it is deleted. Supabase is **not sunset-ready**
-until the core production app QA suite passes while Supabase is paused. If any
-surface fails because Supabase is paused, deletion is blocked until the
-dependency is removed or an approved rollback decision is made.
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted through
+the dashboard before pause QA was recorded in this proof pack. The original
+pause-before-delete control can no longer be executed against that project; keep
+this file as an audit gap and run Azure-only QA/restore drills against approved
+Postgres backup targets instead.
 
 ## Pause record
 
 | Field                                     | Value     |
 | ----------------------------------------- | --------- |
-| Supabase project id/name                  | `PENDING` |
-| Pause timestamp UTC                       | `PENDING` |
+| Supabase project id/name                  | `abarva` / `xtbymdryojmvoulaotce` |
+| Pause timestamp UTC                       | `NOT RECORDED BEFORE DELETION` |
 | Pause operator                            | `PENDING` |
 | Azure-only production revision under test | `PENDING` |
 | Rollback window / restore option          | `PENDING` |
@@ -34,14 +35,15 @@ dependency is removed or an approved rollback decision is made.
 
 ## Failure policy
 
-Any pause-window failure that is caused by Supabase being unavailable blocks
-deletion. The approved response is:
+Historically, any pause-window failure caused by Supabase being unavailable
+would have blocked deletion. Post-deletion, use this response pattern for any
+Azure-only or restore-drill failure:
 
-1. Leave Supabase paused if the failure is non-production-impacting and can be
-   fixed safely while paused.
-2. Unpause Supabase only if production impact requires rollback.
+1. Keep runtime pointed at Azure/Postgres or the approved restore target.
+2. Do not attempt rollback to the deleted `xtbymdryojmvoulaotce` project.
 3. Record the failure, root cause, fix PR, validation, and rollback decision.
-4. Re-run the full pause QA matrix before requesting deletion approval again.
+4. Re-run the full Azure-only QA matrix before changing DNS or removing Vercel
+   production.
 
 ## Command patterns
 
@@ -59,6 +61,7 @@ that redact tokens and session identifiers.
 
 ## Blockers
 
-1. Supabase has not been paused for this proof.
-2. Core QA has not been rerun while Supabase is paused.
-3. No failure/rollback record exists because the pause test has not occurred.
+1. Supabase was not paused for this proof before deletion.
+2. Core QA was not rerun while Supabase was paused.
+3. No failure/rollback record exists because the pause test did not occur.
+4. The deleted project is no longer available as a live pause/rollback target.

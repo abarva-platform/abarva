@@ -1,15 +1,16 @@
 # Supabase Sunset Proof - 05 Azure-Only Runtime Soak
 
 Date: 2026-06-07
-Status: HOLD - smoke passed on candidate image; 24-72 hour production soak not complete
+Status: HOLD - smoke passed; source project deleted before full soak evidence
 Scope: Production app served only by Azure Container Apps with Azure Postgres
 
 ## Gate verdict
 
-Supabase is **not sunset-ready** until production has served the app from Azure
-Container Apps only for an approved 24-72 hour soak window, with no Supabase
-runtime env vars, no Supabase strings in application logs, zero Supabase
-production app reads/writes, and confirmed Azure Postgres production traffic.
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted before
+the full 24-72 hour production soak evidence was recorded. Future soak evidence
+must prove Azure Container Apps/Azure Postgres operation, absence of Supabase
+env vars and strings in app logs, and no runtime references to the deleted
+project ref.
 
 ## Soak window
 
@@ -30,7 +31,7 @@ production app reads/writes, and confirmed Azure Postgres production traffic.
 | Azure Container Apps only                      | Routing/DNS/deployment proof that production traffic is served by Azure Container Apps for the full window                 | Not attached                                                     | BLOCKED |
 | No Supabase env vars                           | Env-name proof for each production revision in the soak window                                                             | 2026-06-06 lab evidence exists; production evidence not attached | PARTIAL |
 | No Supabase strings in app logs                | Log query over full soak for `supabase.co`, `pooler.supabase.com`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Not attached                                                     | BLOCKED |
-| Supabase logs show zero app reads/writes       | Supabase log export filtered to production app identities/user agents over the full window                                 | Not attached                                                     | BLOCKED |
+| Supabase logs show zero app reads/writes       | Historical Supabase log export filtered to production app identities/user agents over the full window, if already captured | Not attached before deletion                                    | BLOCKED |
 | Azure Postgres receives production app traffic | Azure Postgres connection/query metrics and app log correlation over the soak window                                       | Not attached                                                     | BLOCKED |
 | Core app smoke passes during soak              | Home, Intelligence/Sentinel, Nexus/Moves, Source, Tower, Setup/Admin QA evidence                                           | Not attached                                                     | BLOCKED |
 
@@ -73,7 +74,7 @@ No production soak was started or claimed from this environment.
 | Signed-in QA                          | PASS on candidate image for Apex CDO and Meridian CDAO across Home, Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin |
 | App log deny-list                     | PASS on candidate revision tail; no Supabase host/env deny-list matches                                                      |
 | Azure-only smoke job                  | PASS: `job-a24-azure-soak-eus-4pn97f4`; runtime smoke `9 pass / 0 fail`; retrieval smoke passed for six tenants              |
-| Supabase project zero-read/write logs | NOT CAPTURED                                                                                                                 |
+| Supabase project zero-read/write logs | NOT CAPTURED before dashboard deletion                                                                                       |
 | Duration                              | NOT A SOAK: this was a candidate smoke attempt, not a 24-72 hour soak                                                        |
 
 The Azure-only soak can now be scheduled against the merged-main Azure runtime,
@@ -108,9 +109,12 @@ soak window:
 - `pooler.supabase.com`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `xtbymdryojmvoulaotce`
 
-The soak also fails if Supabase project logs show production app reads or writes
-during the window.
+If historical Supabase project logs were already exported before deletion, the
+soak also fails if those logs show production app reads or writes during the
+window. New project-side log collection is no longer possible from the deleted
+project.
 
 ## Command patterns
 

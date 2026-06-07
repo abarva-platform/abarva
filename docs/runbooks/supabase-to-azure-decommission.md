@@ -1,15 +1,30 @@
 # Supabase To Azure Decommission Runbook
 
-Status: migrated, shutdown gated
+Status: migrated, Supabase project deleted
 Owner: AbarVa operators  
 Created: 2026-06-06
-Last updated: 2026-06-06
+Last updated: 2026-06-07
 
 ## Rule
 
-Do not pause, delete, or close the Supabase account until Azure has parity and the app has run Azure-only without fallback.
+The former Supabase source project `abarva` / `xtbymdryojmvoulaotce` has been
+deleted through the Supabase dashboard. Do not reintroduce this project as a
+runtime dependency, migration target, seed target, or rollback prerequisite.
 
-Supabase is now a legacy source system to drain. It is not safe to treat it as disposable because it still contains corpus, pattern, graph, and context assets that cost time and money to create.
+Before the deletion, Supabase was a legacy source system to drain. Post-deletion,
+the recoverable state is the Azure Postgres target plus the recorded final export
+artifacts; rollback cannot depend on the deleted Supabase project being paused,
+unpaused, queried, or restored in-place.
+
+## Deletion Event
+
+| Field | Value |
+| --- | --- |
+| Supabase project name | `abarva` |
+| Supabase project ref | `xtbymdryojmvoulaotce` |
+| Deletion mechanism | Supabase dashboard |
+| Deletion date recorded | 2026-06-07 |
+| Source | Operator/user note in Cursor task |
 
 ## Current Evidence
 
@@ -96,8 +111,8 @@ and `enterprise_context_snapshots`.
 7. Remove Supabase env vars from production, preview, Azure, and local operator shells. Pending.
 8. Run Azure-only app and retrieval soak. Pending.
 9. Take final off-platform backup/export. Pending.
-10. Pause Supabase first. Pending.
-11. Delete Supabase only after the retention window. Pending.
+10. Pause Supabase first. Superseded by dashboard deletion on 2026-06-07.
+11. Delete Supabase only after the retention window. Completed via dashboard on 2026-06-07.
 
 ## Commands
 
@@ -133,11 +148,18 @@ committed script after a fresh app image is built.
 
 ## Shutdown Gate
 
-Supabase can be shut down only when all are true:
+Supabase has already been shut down via dashboard deletion. Treat the former
+pre-delete shutdown gate as an audit checklist for evidence review, not as an
+available operational sequence:
 
 - Read-only reconcile shows no Azure-behind required tables.
 - Target-missing schema blockers are resolved.
 - The app runs with Azure DB envs and no Supabase fallback.
 - Search/vector indexes are rebuilt from Azure.
 - A final off-platform backup exists.
-- Supabase is paused before delete.
+- Supabase was intended to be paused before delete, but the project is now
+  deleted and cannot serve as a live rollback source.
+
+Any rollback or restore drill must use the Azure Blob final export artifacts or a
+separately approved backup target. Do not point runtime configuration back to
+`xtbymdryojmvoulaotce`.

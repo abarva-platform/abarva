@@ -11,12 +11,13 @@
 ## Plain-English Summary
 
 Adds the required evidence pack for deciding when Supabase can be frozen,
-paused, and eventually deleted after Azure-only production cutover. The pack does
-not claim Supabase is sunset-ready. It records the gates that remain blocked,
-the prior Azure/Supabase evidence that can be reused, and the exact evidence
-operators must attach before deletion can be approved. It also adds a production
-boot guard that fails fast when the Azure Postgres runtime is accidentally
-configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
+paused, and eventually deleted after Azure-only production cutover. Post-update:
+the former Supabase project `abarva` / `xtbymdryojmvoulaotce` has been deleted
+through the Supabase dashboard. The pack now records that deletion event, the
+prior Azure/Supabase evidence that can be reused, and the evidence gaps that
+remain unresolved after deletion. It also adds a production boot guard that fails
+fast when the Azure Postgres runtime is accidentally configured with Supabase env
+vars, a Supabase-hosted `DATABASE_URL`, or the deleted Supabase project ref.
 
 ## Layer Impact
 
@@ -77,6 +78,8 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Blocked locally: direct Key Vault secret reads are blocked by private-link
   policy; database proof must run inside Azure Container Apps jobs/runtime.
 - Pass: Azure CLI installed and authenticated to `abarva-lab-sub`.
+- Recorded: Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted
+  through the Supabase dashboard on 2026-06-07.
 - Pass: command-level boot guard deployed first to `0000049`, then candidate
   image revision `ca-abarva-web-lab-eastus--0000050`; startup log emitted
   `supabase_boot_guard_passed`; candidate revision healthy with 100% traffic.
@@ -132,7 +135,7 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Partial: merged-main `job-supa-final-eus-0k0143f` failed overall after
   emitting table export/checksum progress; final manifest re-read was blocked by
   Container Apps exec 404 during evidence capture.
-- Not run: formal production Supabase freeze timestamp/log export, native
+- Not run before deletion: formal production Supabase freeze timestamp/log export, native
   `pg_dump` restore-test, 24-72 hour Azure-only soak, pause QA, and deletion
   approval.
 - Production operations performed: Azure Container Apps command-level guard
@@ -140,6 +143,7 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
   drain/reconcile/search/final-export jobs, and Clerk unban for two demo QA
   users. Supabase was not paused, deleted, or modified beyond the failed
   read-only freeze attempt; DNS was not changed; Vercel was not removed.
+  Supabase dashboard deletion was later recorded from the operator/user note.
 
 ## Rollout Plan
 
@@ -174,6 +178,8 @@ as rollback unless explicitly approved.
 - Fresh Azure Search verify/retrieval smoke passed for six tenants on merged
   main, but Morgan Street/Northshore golden retrieval is not attached.
 - Production Azure-only 24-72 hour soak has not run.
-- Pause-before-delete QA has not been run; Supabase was not paused.
-- Explicit deletion approval is not recorded; Supabase was not deleted.
+- Pause-before-delete QA has not been run; Supabase was not paused before the
+  dashboard deletion was recorded.
+- Explicit deletion approval is not recorded; Supabase has now been deleted
+  through the dashboard.
 - DNS was not changed and Vercel production was not removed.

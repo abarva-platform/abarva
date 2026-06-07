@@ -10,11 +10,20 @@ const SUPABASE_ENV_NAMES = [
 ] as const;
 
 const SUPABASE_HOST_MARKERS = ["supabase.co", "pooler.supabase.com"] as const;
+const DELETED_SUPABASE_PROJECT_REFS = ["xtbymdryojmvoulaotce"] as const;
 
 function valueContainsSupabaseHost(value: string | undefined): boolean {
   if (!value) return false;
   const normalized = value.toLowerCase();
   return SUPABASE_HOST_MARKERS.some((marker) => normalized.includes(marker));
+}
+
+function valueContainsDeletedSupabaseProject(value: string | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.toLowerCase();
+  return DELETED_SUPABASE_PROJECT_REFS.some((projectRef) =>
+    normalized.includes(projectRef),
+  );
 }
 
 export function evaluateSupabaseBootGuard(
@@ -30,6 +39,15 @@ export function evaluateSupabaseBootGuard(
 
   if (valueContainsSupabaseHost(env.DATABASE_URL)) {
     violations.push("DATABASE_URL points at a Supabase host");
+  }
+
+  const deletedProjectEnvNames = Object.entries(env)
+    .filter(([, value]) => valueContainsDeletedSupabaseProject(value))
+    .map(([name]) => name)
+    .sort();
+
+  for (const name of deletedProjectEnvNames) {
+    violations.push(`env var references deleted Supabase project: ${name}`);
   }
 
   return {

@@ -1,6 +1,6 @@
 -- AbarVa: dataset_files table
--- Run once in Supabase SQL editor:
--- https://supabase.com/dashboard/project/xtbymdryojmvoulaotce/sql
+-- Legacy reference only. The former Supabase project was deleted on 2026-06-07;
+-- apply this schema only to an approved replacement Postgres database.
 
 CREATE TABLE IF NOT EXISTS dataset_files (
   id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,

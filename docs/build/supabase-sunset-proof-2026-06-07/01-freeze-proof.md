@@ -1,25 +1,26 @@
 # Supabase Sunset Proof - 01 Freeze Proof
 
 Date: 2026-06-07
-Status: HOLD - freeze not yet proven
+Status: PARTIAL - source project deleted before full freeze proof
 Scope: Production Supabase sunset after Azure-only Container Apps cutover
 
 ## Gate verdict
 
-Supabase is **not sunset-ready**. This freeze gate remains blocked until the
-production runtime has no Supabase environment variables, production write paths
-to Supabase are blocked, code-level write paths are proven absent, and Supabase
-project logs show zero app-originated writes after the freeze timestamp.
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted through
+the dashboard before a full freeze timestamp and Supabase log export were
+recorded. The runtime/code controls below remain useful evidence; project-side
+freeze and log controls are now audit gaps, not executable steps against the
+deleted project.
 
 ## Required freeze evidence
 
 | Control                                                 | Required evidence                                                                                                                                                                        | Current evidence                                                                                                                                                                                 | Status                                                  |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| Freeze timestamp marked                                 | UTC timestamp, operator, and change ticket for the start of the write freeze                                                                                                             | Not recorded in this proof pack                                                                                                                                                                  | BLOCKED                                                 |
+| Freeze timestamp marked                                 | UTC timestamp, operator, and change ticket for the start of the write freeze                                                                                                             | Not recorded before dashboard deletion                                                                                                                                                           | BLOCKED                                                 |
 | Supabase env vars removed from Azure production runtime | Azure Container Apps revision/env dump showing no `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, Supabase pooler host, or Supabase direct URL | 2026-06-07 revision `ca-abarva-web-lab-eastus--0000049` env-name proof shows no Supabase env vars projected                                                                                      | PASS for Azure runtime env names                        |
 | Production write paths disabled or blocked              | Runtime guard, network egress rule, or service-role removal proving app writes to Supabase cannot succeed                                                                                | Command-level boot guard deployed on revision `0000049`; log event `supabase_boot_guard_passed`; stale Container Apps secret `supabase-service-role-key` remains configured but is not projected | PARTIAL                                                 |
 | No app module can write to Supabase                     | Runtime import census plus write-path audit showing no production module imports Supabase clients or calls Supabase mutation helpers                                                     | 2026-06-07 local code proof passed; see "Code-level write-path evidence" below                                                                                                                   | PASS for code-level direct Supabase SDK/env write proof |
-| Supabase logs show zero writes after freeze             | Supabase database/API log export filtered after freeze timestamp, with app identities and user agents identified                                                                         | Not recorded in this proof pack                                                                                                                                                                  | BLOCKED                                                 |
+| Supabase logs show zero writes after freeze             | Supabase database/API log export filtered after freeze timestamp, with app identities and user agents identified                                                                         | Not recorded before deletion; source project logs are no longer available from the deleted project                                  | BLOCKED                                                 |
 
 ## Freeze timestamp
 
@@ -27,8 +28,9 @@ Freeze timestamp: `PENDING`
 Operator: `PENDING`
 Approval/change record: `PENDING`
 
-Do not fill this field until the operator has frozen production writes and
-captured logs without printing secrets.
+Do not fill this field retroactively unless an external approval/change record
+and log export already exist. The deleted Supabase project cannot be queried to
+create new freeze evidence.
 
 ## Code-level write-path evidence
 
@@ -42,10 +44,10 @@ Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
 | `src/lib/supabase-server.ts` review            | PASS   | `getServerSupabase()` is a compatibility alias that returns `getAzureReadFluentClient()` and explicitly does not create or depend on a Supabase client, URL, anon key, service-role key, or JWT.                                                                                                                                 |
 
 This proves the shipped `src/app` and `src/lib` runtime has no direct Supabase
-SDK/env write path. It does **not** replace production runtime freeze proof:
-operators still need to remove production Supabase env vars, block service-role
-credentials, and capture Supabase logs showing zero app-originated writes after
-the freeze timestamp.
+SDK/env write path. It does **not** replace production runtime freeze proof.
+Because the source project is deleted, any remaining validation must focus on
+Azure/Postgres env-name proof, app log deny-list proof, and restore-drill
+evidence rather than new Supabase project log exports.
 
 ## Commands to capture evidence
 

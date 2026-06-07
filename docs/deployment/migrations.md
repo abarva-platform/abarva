@@ -180,9 +180,13 @@ auto-apply to work:
 | `ABARVA_AZURE_DATABASE_URL` | `run-migrations.ts` (preferred migration connection) | recommended |
 | `AZURE_DATABASE_URL` | `run-migrations.ts` (fallback migration connection) | optional |
 | `DATABASE_URL` | `run-migrations.ts` (final fallback Postgres connection) | yes — required for runtime DB access |
-| `NEXT_PUBLIC_SUPABASE_URL` | runtime | yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | runtime | yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | runtime | yes |
+
+Do not configure `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, or `SUPABASE_SERVICE_ROLE_KEY` for the
+Azure/Postgres runtime. The former Supabase project `abarva` /
+`xtbymdryojmvoulaotce` was deleted on 2026-06-07, and production startup guards
+fail closed when Supabase runtime env vars, Supabase hosts, or that deleted
+project ref are present.
 
 The runner resolves `ABARVA_AZURE_DATABASE_URL`, then `AZURE_DATABASE_URL`,
 then `DATABASE_URL`. It uses `pg`, not the Supabase JS client. If none of
@@ -197,8 +201,7 @@ connection strings in the project's production environment and redeploy.
 
 > **Tip:** For migrations specifically, prefer the Azure/Postgres direct
 > migration URL. Do not point Vercel build-time migration env vars at a
-> Supabase session-mode pooler; parallel deploys can exhaust session-mode
-> clients before `next build` starts.
+> Supabase session-mode pooler or the deleted `xtbymdryojmvoulaotce` project.
 
 ---
 

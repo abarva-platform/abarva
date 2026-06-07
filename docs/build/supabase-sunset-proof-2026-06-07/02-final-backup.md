@@ -1,14 +1,16 @@
 # Supabase Sunset Proof - 02 Final Backup
 
 Date: 2026-06-07
-Status: HOLD - final backup not yet captured
+Status: PARTIAL BACKUP RECORDED - source project deleted
 Scope: Final Supabase backup and restore proof before pause/delete
 
 ## Gate verdict
 
-Supabase is **not sunset-ready** until a final full Postgres dump, storage/object
-export if applicable, checksum, backup location, and restore-test evidence exist.
-No destructive Supabase action should occur from this document.
+The former Supabase source project `abarva` / `xtbymdryojmvoulaotce` has been
+deleted through the dashboard. The JSONL/table export evidence below is now the
+only recorded source backup path in this proof pack; native `pg_dump`,
+storage/object export inventory, and restore-test evidence are still not
+attached.
 
 ## Required backup evidence
 
@@ -26,7 +28,7 @@ Fill only after the final backup is complete.
 
 | Field                           | Value                                                                                                                           |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase project id/name        | `PENDING`                                                                                                                       |
+| Supabase project id/name        | `abarva` / `xtbymdryojmvoulaotce` - deleted through dashboard on 2026-06-07                                                     |
 | Freeze timestamp covered        | `PENDING`                                                                                                                       |
 | Backup timestamp UTC            | `PENDING`                                                                                                                       |
 | Postgres dump artifact location | `supabase-final-backups/supabase-final-20260607-001` in Azure Blob account `stabarvaprivatedplab001`, container `context-drops` |
@@ -121,7 +123,9 @@ Run validation against the temporary restored database, not production.
 
 This export is useful final-backup evidence but does not fully satisfy the
 original native full Postgres dump/restore-test gate. A restore-test has not
-been run.
+been run. Because the source Supabase project is now deleted, any future
+restore-test must use these Azure Blob artifacts or another approved off-platform
+backup, not the deleted Supabase project.
 
 ## 2026-06-07 merged-main supa-final rerun
 
@@ -136,4 +140,6 @@ been run.
 The merged-main rerun does not close the final backup gate. The prior fixed-root
 manifest confirms JSONL export artifacts exist under
 `supabase-final-backups/supabase-final-20260607-001`, but a native `pg_dump`,
-restore-test, and successful final backup/freeze job are still missing.
+restore-test, and successful final backup/freeze job are still missing. The
+dashboard deletion means this gap is no longer recoverable by re-querying the
+source Supabase project.

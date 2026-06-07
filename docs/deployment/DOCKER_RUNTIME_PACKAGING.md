@@ -68,9 +68,16 @@ no real values are committed.
 
 ### Supabase
 
-- `NEXT_PUBLIC_SUPABASE_URL` — public project URL.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public anon key.
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only.
+Do not project Supabase env vars into Azure/Postgres production runtime:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted on
+2026-06-07. Runtime data access uses Azure/Postgres `DATABASE_URL`; the boot
+guard fails closed if Supabase env vars, Supabase hosts, or the deleted project
+ref are present in the Azure production runtime.
 
 ### Auth (Clerk)
 

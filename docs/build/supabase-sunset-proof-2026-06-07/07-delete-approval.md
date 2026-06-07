@@ -1,33 +1,31 @@
 # Supabase Sunset Proof - 07 Delete Approval
 
 Date: 2026-06-07
-Status: HOLD - deletion not approved
+Status: DELETED - dashboard deletion recorded after incomplete gate sequence
 Scope: Retention, rollback, and explicit approval before Supabase deletion
 
 ## Gate verdict
 
-Do **not** delete Supabase from this proof pack. Deletion is allowed only after
-all prior gates pass, the final backup retention window is agreed and recorded,
-rollback instructions are preserved, Supabase has been paused and QA has passed,
-and an explicit final approver authorizes deletion.
+The former Supabase project `abarva` / `xtbymdryojmvoulaotce` has been deleted
+through the Supabase dashboard. This document no longer functions as a pre-delete
+approval gate for that project; it records the deletion event and the evidence
+gaps that remained open when the event was reported.
 
 ## Deletion approval record
 
-Fill only after every prior file in this proof pack is PASS.
-
-| Field                           | Value          |
-| ------------------------------- | -------------- |
-| Final approval status           | `NOT APPROVED` |
-| Final approver                  | `PENDING`      |
-| Approval timestamp UTC          | `PENDING`      |
-| Supabase project id/name        | `PENDING`      |
-| Supabase pause timestamp UTC    | `PENDING`      |
-| Supabase deletion timestamp UTC | `PENDING`      |
-| Final backup location           | `PENDING`      |
-| Final backup checksum           | `PENDING`      |
-| Backup retention window         | `PENDING`      |
-| Restore-test evidence           | `PENDING`      |
-| Rollback instructions location  | `PENDING`      |
+| Field                           | Value                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| Final approval status           | `DELETED VIA DASHBOARD - APPROVAL ARTIFACT NOT ATTACHED`                                       |
+| Final approver                  | `PENDING`                                                                                     |
+| Approval timestamp UTC          | `PENDING`                                                                                     |
+| Supabase project id/name        | `abarva` / `xtbymdryojmvoulaotce`                                                             |
+| Supabase pause timestamp UTC    | `NOT RECORDED BEFORE DELETION`                                                                |
+| Supabase deletion timestamp UTC | `2026-06-07 - exact dashboard timestamp not attached`                                         |
+| Final backup location           | `supabase-final-backups/supabase-final-20260607-001` in Azure Blob `context-drops`             |
+| Final backup checksum           | `Per-table SHA-256 values in manifest/table logs; no single native pg_dump checksum attached` |
+| Backup retention window         | `PENDING`                                                                                     |
+| Restore-test evidence           | `PENDING`                                                                                     |
+| Rollback instructions location  | `docs/runbooks/supabase-to-azure-decommission.md`                                             |
 
 ## Required pre-delete conditions
 
@@ -43,7 +41,9 @@ Fill only after every prior file in this proof pack is PASS.
 
 ## Rollback instructions
 
-Before deletion approval, record the precise rollback path:
+Because the source project has been deleted, rollback must not require the
+original Supabase project to exist. Any rollback drill must record the precise
+path:
 
 1. How to restore the final Supabase Postgres dump into a temporary database.
 2. How to rehydrate any Supabase storage/object content if used.
@@ -54,6 +54,7 @@ Before deletion approval, record the precise rollback path:
 
 Rollback must not depend on deleted-only metadata. Keep the backup checksum,
 project id/name, and restore commands outside the deleted Supabase project.
+Do not point runtime configuration back to `xtbymdryojmvoulaotce`.
 
 ## Retention requirement
 
@@ -63,7 +64,7 @@ deletion.
 
 ## Final approval statement
 
-`PENDING - Supabase deletion is not approved.`
+`RECORDED - Supabase project abarva / xtbymdryojmvoulaotce was deleted through the dashboard on 2026-06-07; explicit approval artifact, pause QA, restore-test evidence, and retention window remain pending.`
 
 When approved, replace the line above with:
 
@@ -74,18 +75,21 @@ Final backup checksum: <sha256>.
 Retention window: <duration and storage location>.
 ```
 
-## Blockers
+## Remaining evidence gaps
 
-All sunset gates are currently blocked or partial. Supabase must remain available
-for rollback until the proof pack is completed and explicit deletion approval is
-recorded.
+- Explicit approval artifact is not attached.
+- Pause-before-delete QA was not recorded.
+- Native `pg_dump`/restore-test evidence is not attached.
+- Backup retention window is not recorded.
+- Supabase can no longer remain available for rollback because the project was
+  deleted.
 
-## 2026-06-07 stop condition
+## 2026-06-07 stop condition update
 
-Do not pause or delete Supabase. Do not change DNS. Do not remove Vercel
-production. The merged-main Azure Container Apps revision now passes public
-health, signed-in smoke QA, runtime DB proof, Anthropic proof, and six-tenant
-Search retrieval smoke, but no 24-72 hour soak has run, Supabase
-zero-read/write logs are not attached, native `pg_dump`/restore-test evidence is
-incomplete, `supa-final` still failed overall, and explicit deletion approval is
-not recorded.
+Supabase deletion has already occurred through the dashboard. Do not change DNS
+or remove Vercel production as part of this record. The merged-main Azure
+Container Apps revision passed public health, signed-in smoke QA, runtime DB
+proof, Anthropic proof, and six-tenant Search retrieval smoke, but no 24-72 hour
+soak has run, Supabase zero-read/write logs are not attached, native
+`pg_dump`/restore-test evidence is incomplete, `supa-final` still failed
+overall, and explicit deletion approval is not recorded.

@@ -23,6 +23,7 @@
 const { createClient } = require('@supabase/supabase-js')
 const fs   = require('fs')
 const path = require('path')
+const DELETED_SUPABASE_PROJECT_REF = 'xtbymdryojmvoulaotce'
 
 // ── env ───────────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,10 @@ async function main () {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) {
     console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local')
+    process.exit(1)
+  }
+  if (url.toLowerCase().includes(DELETED_SUPABASE_PROJECT_REF)) {
+    console.error('The configured Supabase project was deleted on 2026-06-07; use an approved replacement Postgres/data-plane path.')
     process.exit(1)
   }
 
@@ -210,7 +215,7 @@ async function main () {
 if (process.argv.includes('--setup')) {
   loadEnv()
   const sqlPath = path.join(__dirname, 'setup-db.sql')
-  console.log('\nPaste this SQL into: https://supabase.com/dashboard/project/xtbymdryojmvoulaotce/sql\n')
+  console.log('\nLegacy setup SQL follows. Apply it only to an approved replacement Postgres database; the former Supabase project was deleted on 2026-06-07.\n')
   if (fs.existsSync(sqlPath)) console.log(fs.readFileSync(sqlPath, 'utf8'))
   process.exit(0)
 }

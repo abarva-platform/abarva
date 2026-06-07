@@ -45,6 +45,22 @@ describe("supabaseBootGuard", () => {
     ]);
   });
 
+  it("blocks references to the deleted Supabase project without logging values", () => {
+    const result = evaluateSupabaseBootGuard({
+      ...process.env,
+      SOURCE_DATABASE_URL:
+        "postgresql://redacted@db.xtbymdryojmvoulaotce.supabase.co/postgres",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      violations: [
+        "env var references deleted Supabase project: SOURCE_DATABASE_URL",
+      ],
+    });
+    expect(result.violations.join("\n")).not.toContain("redacted@db.");
+  });
+
   it("throws only for production Azure Postgres runtime violations", () => {
     process.env = {
       ...ORIGINAL_ENV,

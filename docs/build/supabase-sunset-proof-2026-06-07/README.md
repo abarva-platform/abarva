@@ -1,11 +1,14 @@
 # Supabase Sunset Proof — 2026-06-07
 
-Evidence for the Supabase → Azure cutover (b1). **NOT sunset-ready** — Supabase is
-live and unfrozen; this records the data/index parity + final backup gates that
-have passed, and the gates still pending.
+Evidence for the Supabase -> Azure cutover (b1). **POST-DELETION UPDATE**: the
+former Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted through the
+Supabase dashboard on 2026-06-07. This proof pack now records both the gates that
+passed before deletion and the gates that were still incomplete when deletion was
+recorded.
 
-> Guardrails held throughout: no Supabase pause/delete, no DNS change, no Vercel
-> removal, no sunset-ready claim until signed-in QA + soak gates pass.
+> Guardrail deviation: earlier evidence was collected under a no-pause/no-delete
+> rule. The dashboard deletion has now occurred, so rollback cannot depend on the
+> former Supabase project remaining available.
 
 ## Image under test
 
@@ -22,9 +25,10 @@ digest onto all 4 cutover jobs.
 | **Data drain parity** (Supabase→Azure) | ✅          | drain-apply `ok:true`; all tables `skipped-parity-or-ahead`             |
 | **Search index parity**                | ✅          | search-verify `azure_search_backfill_verified`, all tenants match       |
 | **Supabase final backup**              | ✅          | all tables → blob `supabase-final-backups/supabase-final-20260607-001/` |
-| Supabase freeze (read-only)            | ⏸️ DEFERRED | guardrail: a pause-equivalent; not run until QA/soak pass               |
+| Supabase freeze (read-only)            | ⚠️ BYPASSED | dashboard deletion occurred before a recorded pause QA pass             |
 | Signed-in Claude QA (PR #3243)         | ⛔ PENDING  | needs Clerk session; `ai_egress_audit.provider=anthropic`               |
 | Azure-only soak                        | ⛔ PENDING  | not started                                                             |
+| Supabase project deletion              | ✅ RECORDED | project `abarva` / `xtbymdryojmvoulaotce` deleted through dashboard     |
 
 ## Parity snapshot (Azure `abarva_control`, drain-confirmed)
 
@@ -46,9 +50,11 @@ meridian-health **4,376** · northstar-clinical 878 · skyharbor-air 3,240.
    confirm Claude Sentinel/Source answers + `ai_egress_audit.provider=anthropic`.
 2. Azure Container Apps smoke + signed-in QA pass → only then DNS.
 3. Azure-only soak pass → only then remove Vercel production.
-4. Only after all of the above: run the Supabase freeze, then sunset.
+4. Review the dashboard deletion as a post-gate deviation and verify that no
+   runtime/env/rollback path still depends on `xtbymdryojmvoulaotce`.
 
-Supabase has NOT been paused, frozen, or deleted.
+Supabase has been deleted. It was not available in this proof pack as a paused
+rollback source after the deletion event was recorded.
 
 ## Cross-reference
 
