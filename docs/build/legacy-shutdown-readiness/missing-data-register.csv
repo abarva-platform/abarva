@@ -1,13 +1,17 @@
-table,in_supabase,in_azure_abarva_control,classification,note
-enterprise_context_source_files,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer; absent in abarva_control
-enterprise_context_records,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer; absent in abarva_control
-enterprise_context_chunks,assumed_yes,no,AZURE_MISSING_TABLE,verify-azure-postgres-schema reported null
-enterprise_context_facts,yes(historical ~38640 Meridian),no,AZURE_MISSING_TABLE,"read from Supabase earlier; absent in abarva_control now"
-enterprise_context_evidence,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
-enterprise_context_template_runs,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
-enterprise_context_chunk_queue,assumed_yes,no,AZURE_MISSING_TABLE,fact-layer
-corpus_patterns,yes,yes(9026),PARITY_OR_AHEAD,present in Azure
-genome_patterns,yes,yes(43436),PARITY_OR_AHEAD,present in Azure
-intelligence_graph_edges,yes,yes(93743),PARITY_OR_AHEAD,present in Azure
-applications,yes,yes(232 likely demo),NEEDS_REVIEW,is_demo_data likely true
-ALL_enterprise_context_star,yes,no,BLOCKER,"entire fact layer absent in Azure; reconcile blocked on Supabase source connectivity"
+table,backup_rows,azure_rows_after_restore,classification,note
+enterprise_context_sources,13,13,RESTORED_FROM_FINAL_BACKUP,client_id canonicalized to live clients
+enterprise_context_source_files,57,57,RESTORED_FROM_FINAL_BACKUP,Apex and Meridian source files restored
+enterprise_context_records,3503,3503,RESTORED_FROM_FINAL_BACKUP,Meridian structured records restored
+enterprise_context_facts,38640,38640,RESTORED_FROM_FINAL_BACKUP,Meridian structured facts restored
+enterprise_context_relationships,820,820,RESTORED_FROM_FINAL_BACKUP,Meridian relationships restored
+enterprise_context_evidence,3503,3503,RESTORED_FROM_FINAL_BACKUP,evidence rows restored
+enterprise_context_quality_issues,0,0,EMPTY_IN_FINAL_BACKUP,no missing rows
+enterprise_context_stewardship_tasks,0,0,EMPTY_IN_FINAL_BACKUP,no missing rows
+enterprise_context_snapshots,0,0,EMPTY_IN_FINAL_BACKUP,no missing rows
+enterprise_context_template_runs,2,2,RESTORED_FROM_FINAL_BACKUP,template runs restored
+enterprise_context_chunk_queue,3503,3503,RESTORED_FROM_FINAL_BACKUP,queue rows restored
+enterprise_context_chunks,15847,15847,RESTORED_FROM_FINAL_BACKUP,"chunks restored and tenant keys canonicalized; search rebuilt to 15847 docs"
+corpus_patterns,,9026,PRESENT_IN_AZURE,unchanged
+genome_patterns,,43436,PRESENT_IN_AZURE,unchanged
+intelligence_graph_edges,,93743,PRESENT_IN_AZURE,unchanged
+ALL_enterprise_context_star,15847_chunks_plus_fact_layer,restored,DELETE_GATED,"missing layer recovered from final backup; Supabase source secret still absent; no pause/freeze/delete performed"
