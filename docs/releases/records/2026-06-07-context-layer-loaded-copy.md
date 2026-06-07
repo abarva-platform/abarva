@@ -33,7 +33,9 @@ Sentinel and the Enterprise Context canvas now state clearly that the Enterprise
 
 ## QA / Validation
 
-- Pre-test candidate revision created before validation per cloud-agent workflow.
+- Pass: `npx jest "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts" "src/lib/pilot-dashboard/__tests__/aggregates.test.ts" --runInBand` (2 suites, 16 tests).
+- Pass: `npx eslint "src/lib/enterprise-context/intelligence-read-model.ts" "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts" "src/components/intelligence-v3/EnterpriseContextCanvas.tsx" "src/lib/pilot-dashboard/aggregates.ts" "src/lib/pilot-dashboard/__tests__/aggregates.test.ts"`.
+- Not run: full app build and full test suite; change is scoped to copy/read-model facts and focused aggregate/read-model tests.
 
 ## Rollout Plan
 
@@ -45,9 +47,9 @@ Revert the PR commit to restore the prior Enterprise Context wording and domain-
 
 ## Audit Evidence
 
-- PR URL: pending.
-- Local validation output: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3255.
+- Local validation output from the focused Jest and ESLint commands listed above.
 
 ## Known Gaps
 
-None known.
+Full end-to-end browser verification was not run because the change does not alter routing, data writes, authentication, or interactive behavior. The remaining risk is limited to adjacent surfaces that may consume the Enterprise Context facts without rendering the new sentence, which is covered by the focused read-model assertions.
