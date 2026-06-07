@@ -73,4 +73,38 @@ describe('tenant fact availability no-fabrication guard', () => {
     });
     expect(fingerprint?.namedEntityClasses).toEqual(['executives', 'apps', 'vendors', 'initiatives', 'financials', 'board']);
   });
+
+  it('resolves Lakeshore app keys to the Azure broker tenant aliases', async () => {
+    mockRun.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (/FROM clients[\s\S]+tenant_key/.test(sql)) {
+        expect(params[0]).toEqual(['lakeshore-holdings', 'lakeshore']);
+        return [{ id: 'lakeshore-client-id' }];
+      }
+      if (/FROM applications/.test(sql)) return [{ count: 18 }];
+      if (/FROM vendor_contracts/.test(sql)) return [{ count: 82 }];
+      if (/FROM ai_initiatives/.test(sql)) return [{ count: 40 }];
+      if (/SELECT annual_revenue_usd/.test(sql)) {
+        expect(params[0]).toBe('lakeshore-client-id');
+        return [{ annual_revenue_usd: null, it_budget_usd: 1_200_000_000, ai_budget_usd: null }];
+      }
+      if (/FROM enterprise_context_chunks/.test(sql)) {
+        const segments = params[1] as string[];
+        if (segments.includes('org_structure')) return [{ chunk_text: 'Quinn Chen treasury executive' }];
+        if (segments.includes('enterprise_profile')) return [{ chunk_text: 'board modernization update' }];
+      }
+      return [];
+    });
+
+    const fingerprint = await getTenantFactFingerprint({ tenantInventoryKey: 'lakeshore' });
+
+    expect(fingerprint).toMatchObject({
+      hasExecutiveBios: true,
+      hasApplicationPortfolio: true,
+      hasVendorContracts: true,
+      hasInitiatives: true,
+      hasFinancials: true,
+      hasBoardMinutes: true,
+    });
+    expect(fingerprint?.namedEntityClasses).toEqual(['executives', 'apps', 'vendors', 'initiatives', 'financials', 'board']);
+  });
 });

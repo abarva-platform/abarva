@@ -244,6 +244,30 @@ describe('Ask Intelligence guardrails', () => {
     }
   });
 
+  it('keeps Lakeshore Kyriba answers grounded in loaded treasury context', () => {
+    const synthesizerCode = readFileSync(
+      join(__dirname, '..', 'synthesizer.ts'),
+      'utf8',
+    );
+
+    const requiredTerms = [
+      'LAKESHORE + TREASURY GROUNDING',
+      'Kyriba',
+      'bank connectivity',
+      'ERP feeds',
+      'cash forecasting',
+      'payment controls',
+      'readiness gates',
+      'failure modes',
+      'loader provenance',
+      'synthetic/demo labels',
+    ];
+
+    for (const term of requiredTerms) {
+      expect(synthesizerCode).toContain(term);
+    }
+  });
+
   it('keeps phase, artifact, approval, and no-go proof explicit in Ask prompt discipline', () => {
     const synthesizerCode = readFileSync(
       join(__dirname, '..', 'synthesizer.ts'),

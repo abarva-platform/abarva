@@ -30,6 +30,9 @@ type TenantLookupInput = string | CanonicalTenant | null | undefined;
 const ENTERPRISE_QUERY_RE =
   /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
 
+const LAKESHORE_GOLDEN_QUERY_RE =
+  /\b(business\s+units?|operating\s+companies|opcos?|owners?|kpis?|metrics?|evidence|source\s+evidence|loader|loader[-\s]?backed|live[-\s]?loader|synthetic|demo|provenance|source\s+files?|readiness|gates?|failure\s+modes?|treasury|kyriba|bank\s+connectivity|cash\s+forecast|payment\s+controls?)\b/i;
+
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
 
@@ -38,7 +41,12 @@ const SEGMENT_LABELS: Record<string, string> = {
   org_structure: "Org structure and leadership",
   it_financials: "IT financials and funding authority",
   it_landscape: "IT landscape",
+  kpi_dictionary: "KPI dictionary",
   program_inventory: "Program inventory",
+  evidence_ledger: "Evidence ledger",
+  vendor_contracts: "Vendor contracts",
+  data_estate: "Data estate",
+  cross_program_signals: "Cross-program signals",
 };
 
 const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
@@ -46,7 +54,12 @@ const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
   org_structure: 36,
   it_financials: 48,
   it_landscape: 32,
+  kpi_dictionary: 40,
   program_inventory: 12,
+  evidence_ledger: 48,
+  vendor_contracts: 36,
+  data_estate: 32,
+  cross_program_signals: 24,
 };
 
 const structuredFactSession = createDefaultSession(
@@ -87,7 +100,7 @@ const STOPWORDS = new Set([
 export function isTenantEnterpriseQuestion(query: string): boolean {
   const trimmed = query.trim();
   if (OFF_DOMAIN_GENERAL_KNOWLEDGE_RE.test(trimmed)) return false;
-  return ENTERPRISE_QUERY_RE.test(trimmed);
+  return ENTERPRISE_QUERY_RE.test(trimmed) || LAKESHORE_GOLDEN_QUERY_RE.test(trimmed);
 }
 
 export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
@@ -128,6 +141,40 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
     )
   ) {
     segments.push("program_inventory");
+  }
+  if (
+    /\b(kpis?|metrics?|scorecard|measure|readiness|cash\s+forecast|working\s+capital|treasury)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("kpi_dictionary");
+  }
+  if (
+    /\b(evidence|source\s+evidence|loader|loader[-\s]?backed|live[-\s]?loader|synthetic|demo|provenance|source\s+files?|audit|proof)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("enterprise_profile", "evidence_ledger");
+  }
+  if (
+    /\b(vendor|vendors?|contract|contracts?|renewal|renewals?|kyriba|treasury|deloitte|snowflake|databricks)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("vendor_contracts");
+  }
+  if (
+    /\b(data\s+estate|data\s+architecture|lineage|integration\s+topology|source\s+system|source\s+systems)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("data_estate");
+  }
+  if (/\b(business\s+units?|operating\s+companies|opcos?|owners?)\b/.test(normalized)) {
+    segments.push("enterprise_profile", "org_structure", "it_landscape");
+  }
+  if (/\b(readiness|gates?|failure\s+modes?|kyriba|treasury)\b/.test(normalized)) {
+    segments.push("it_landscape", "program_inventory", "cross_program_signals");
   }
 
   if (segments.length === 0 && isTenantEnterpriseQuestion(query)) {
@@ -287,19 +334,19 @@ async function retrieveStructuredTenantSources(
 ): Promise<TenantEnterpriseSource[]> {
   const normalized = query.toLowerCase();
   const wantsProfile =
-    /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?|five\s+years?|progress|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity)\b/.test(
+    /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?|five\s+years?|progress|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity|business\s+units?|operating\s+companies|opcos?|loader[-\s]?backed|live[-\s]?loader|synthetic|demo|provenance)\b/.test(
       normalized,
     );
   const wantsApps =
-    /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(
+    /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity|kyriba|treasury|snowflake|databricks)\b/.test(
       normalized,
     );
   const wantsVendors =
-    /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+    /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|kyriba|treasury|deloitte|cyber|security\s+stack|ai\s+tooling)\b/.test(
       normalized,
     );
   const wantsInitiatives =
-    /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(
+    /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|readiness|gates?|failure\s+modes?|kyriba|treasury|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(
       normalized,
     );
   const wantsEngineeringProductivity =
@@ -429,10 +476,7 @@ async function readKeywordContextChunkSource(
   clientId: string,
   query: string,
 ): Promise<TenantEnterpriseSource | null> {
-  const patterns = tokenize(query)
-    .filter((term) => term.length >= 5)
-    .slice(0, 8)
-    .map((term) => `%${term}%`);
+  const patterns = buildQuestionKeywordPatterns(query);
   if (patterns.length === 0) return null;
 
   const rows = await run<EnterpriseContextChunkRow>(
@@ -466,12 +510,59 @@ async function readKeywordContextChunkSource(
     name: `Loaded context chunks matching the question (${tenantKey})`,
     id: `${tenantKey}:context:keyword:${tokenize(query).slice(0, 3).join("-") || "query"}`,
     detail: [
-      `Question-matched chunks from public.enterprise_context_chunks for ${tenantKey}.`,
+      `Question-matched chunks from Azure-backed public.enterprise_context_chunks for ${tenantKey}.`,
       "Use these loaded tenant chunks before saying application, vendor, initiative, or finance evidence has not been ingested.",
       ...ranked.map(formatChunk),
     ].join("\n- "),
     confidence: 0.96,
   };
+}
+
+function buildQuestionKeywordPatterns(query: string): string[] {
+  const normalized = query.toLowerCase();
+  const terms = tokenize(query)
+    .filter((term) => term.length >= 5)
+    .slice(0, 8);
+  const supplemental: string[] = [];
+
+  if (/\b(data|analytics|technology|technologies|tech\s+stack|current\s+state)\b/.test(normalized)) {
+    supplemental.push(
+      "Snowflake",
+      "Databricks",
+      "Power BI",
+      "Tableau",
+      "data architecture",
+      "integration topology",
+      "application portfolio",
+    );
+  }
+  if (/\b(kyriba|treasury|readiness|gates?|failure\s+modes?)\b/.test(normalized)) {
+    supplemental.push(
+      "Kyriba",
+      "treasury",
+      "bank connectivity",
+      "ERP feed",
+      "cash forecast",
+      "readiness gate",
+      "failure mode",
+      "payment control",
+    );
+  }
+  if (/\b(evidence|loader|loader[-\s]?backed|live[-\s]?loader|synthetic|demo|provenance|source\s+files?)\b/.test(normalized)) {
+    supplemental.push(
+      "source_root",
+      "loader",
+      "synthetic",
+      "SYNTHETIC / ILLUSTRATIVE",
+      "source_doc",
+      "ingestion",
+      "commit",
+    );
+  }
+
+  return Array.from(new Set([...terms, ...supplemental]))
+    .slice(0, 16)
+    .map((term) => `%${term}%`);
 }
 
 interface DoraScorecard {
@@ -525,7 +616,7 @@ export async function retrieveTenantStructuredFacts(
   if (!canonicalTenantKey) return [];
   const normalized = query.toLowerCase();
   const wantsTopApps =
-    /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(
+    /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality|(?:systems?|applications?|apps?).*(?:context\s+layer|loaded|inventory)|\b(?:kyriba|snowflake|databricks)\b/.test(
       normalized,
     );
   const wantsRetiringApps =
@@ -533,15 +624,15 @@ export async function retrieveTenantStructuredFacts(
       normalized,
     );
   const wantsTopVendors =
-    /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(
+    /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|(?:contracts?|vendors?).*(?:context\s+layer|loaded|inventory)|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|kyriba|treasury|deloitte|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(
       normalized,
     );
   const wantsVendorRenewals =
-    /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)|sourcing\s+events?|restructure\s+window|contract\s+restructure|edp|true[-\s]?up/.test(
+    /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)|sourcing\s+events?|restructure\s+window|contract\s+restructure|edp|true[-\s]?up|kyriba|treasury/.test(
       normalized,
     );
   const wantsActiveInitiatives =
-    /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(
+    /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected|readiness|gates?|failure\s+modes?|kyriba|treasury/.test(
       normalized,
     );
   const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(
@@ -1345,6 +1436,7 @@ function tenantRecordPrefix(tenantKey: string): string {
   if (normalized.includes("first") || normalized.includes("arcturus"))
     return "FCF";
   if (normalized.includes("skyharbor")) return "SHA";
+  if (normalized.includes("lakeshore")) return "LSH";
   return (
     normalized
       .replace(/[^a-z0-9]/g, "")
@@ -1445,11 +1537,41 @@ function scoreChunk(
   }
   if (
     segmentId === "it_landscape" &&
-    /\b(data|analytics|technology|system|platform|cloud|vendor)\b/.test(
+    /\b(data|analytics|technology|system|platform|cloud|vendor|kyriba|treasury)\b/.test(
       normalizedQuery,
     )
   ) {
     score += 6;
+  }
+  if (
+    /\b(data|analytics|technology|technologies|tech\s+stack|current\s+state)\b/.test(
+      normalizedQuery,
+    ) &&
+    /\b(snowflake|databricks|power\s*bi|tableau|kyriba|data architecture|integration topology|application portfolio)\b/.test(
+      haystack,
+    )
+  ) {
+    score += 8;
+  }
+  if (
+    /\b(kyriba|treasury|readiness|gates?|failure\s+modes?)\b/.test(
+      normalizedQuery,
+    ) &&
+    /\b(kyriba|treasury|bank connectivity|erp feed|cash forecast|readiness gate|failure mode|payment control)\b/.test(
+      haystack,
+    )
+  ) {
+    score += 10;
+  }
+  if (
+    /\b(evidence|loader|loader[-\s]?backed|live[-\s]?loader|synthetic|demo|provenance|source\s+files?)\b/.test(
+      normalizedQuery,
+    ) &&
+    /\b(source_root|loader|synthetic|illustrative|source_doc|ingestion|commit|data_ingestion_runs)\b/.test(
+      haystack,
+    )
+  ) {
+    score += 10;
   }
 
   if (/\b(cio|cdio|cto|cmio|cfo)\b/.test(haystack)) score += 2;

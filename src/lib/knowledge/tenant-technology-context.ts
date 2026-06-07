@@ -2,6 +2,7 @@ import 'server-only';
 
 import { getTenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type { TenantRecord } from '@/lib/knowledge/tenant-data/types';
+import { canonicalTenantKey, tenantAliasesFor } from '@/lib/tenant/aliases';
 
 export interface TenantTechnologySource {
   type: 'TENANT';
@@ -94,6 +95,11 @@ export function formatTenantTechnologySource(record: TenantRecord): TenantTechno
     readString(payload.it_owner);
   const businessOwner = readString(payload.business_owner);
   const notes = readString(payload.notes) ?? readString(payload.description);
+  const sourceBasis = record.sourceBasis ?? readString(payload.source_basis);
+  const classification =
+    record.classification ?? readString(payload.classification);
+  const isDemoData = readScalar(payload.is_demo_data);
+  const syntheticLabel = readString(payload.synthetic_label);
 
   const detail = [
     id,
@@ -107,6 +113,10 @@ export function formatTenantTechnologySource(record: TenantRecord): TenantTechno
     techDebt ? `technical debt ${techDebt}` : null,
     owner ? `owner ${owner}` : null,
     businessOwner ? `business owner ${businessOwner}` : null,
+    sourceBasis ? `source basis ${sourceBasis}` : null,
+    classification ? `classification ${classification}` : null,
+    isDemoData !== undefined ? `demo data ${String(isDemoData)}` : null,
+    syntheticLabel ? `synthetic label ${syntheticLabel}` : null,
     notes ? `note ${notes}` : null,
   ]
     .filter((piece): piece is string => Boolean(piece))
@@ -129,15 +139,38 @@ export async function retrieveTenantTechnologySources(
   if (!tenantKey || !isTenantTechnologyQuestion(query)) return [];
 
   try {
-    const records = await getTenantDataAdapter().listRecords(tenantKey, 'it_landscape', {
-      limit: 120,
-    });
-    return selectTenantTechnologyRecords(records, query, opts.limit ?? 8).map(
-      formatTenantTechnologySource,
-    );
+    const adapter = getTenantDataAdapter();
+    const recordsById = new Map<string, TenantRecord>();
+    for (const lookupKey of tenantTechnologyLookupKeys(tenantKey)) {
+      const records = await adapter
+        .listRecords(lookupKey, 'it_landscape', {
+          limit: 160,
+        })
+        .catch(() => []);
+      for (const record of records) {
+        recordsById.set(record.recordId, record);
+      }
+    }
+    return selectTenantTechnologyRecords(
+      Array.from(recordsById.values()),
+      query,
+      opts.limit ?? 12,
+    ).map(formatTenantTechnologySource);
   } catch {
     return [];
   }
+}
+
+function tenantTechnologyLookupKeys(tenantKey: string): string[] {
+  const canonical = canonicalTenantKey(tenantKey.trim().toLowerCase());
+  return Array.from(
+    new Set([
+      canonical,
+      tenantKey.trim(),
+      ...tenantAliasesFor(canonical),
+      ...tenantAliasesFor(tenantKey),
+    ]),
+  ).filter((key) => key.length > 0);
 }
 
 export async function buildTenantTechnologyContextBlock(

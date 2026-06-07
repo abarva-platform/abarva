@@ -121,6 +121,8 @@ const TENANT_KEY_ALIASES: Record<string, string[]> = {
   arcturus: ["first-capital", "firstcapital"],
   skyharbor: ["skyharbor-air", "skyharbor"],
   "skyharbor-air": ["skyharbor-air", "skyharbor"],
+  lakeshore: ["lakeshore-holdings", "lakeshore"],
+  "lakeshore-holdings": ["lakeshore-holdings", "lakeshore"],
 };
 
 async function resolveFingerprintClientId(args: {

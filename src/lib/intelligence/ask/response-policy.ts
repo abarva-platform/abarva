@@ -179,7 +179,7 @@ export function buildCurrentStateTechnologyAdvisory(
   if (facts.length === 0) return null;
 
   return [
-    "My read: you asked for the current-state data and technology baseline, not a generic AI-bet sequencing answer. I would ground this in the loaded enterprise context first.",
+    "My read: the current-state data and technology baseline should be grounded in the loaded Azure-backed enterprise context first.",
     [
       "Current state I can see:",
       ...facts.map((fact, index) => `${index + 1}. ${fact}`),
@@ -203,7 +203,9 @@ function collectCurrentStateTechnologyFacts(sources: AskSource[]): string[] {
       if (
         !line ||
         /^Use these\b/i.test(line) ||
-        /^Active Intelligence surface\b/i.test(line)
+        /^Active Intelligence surface\b/i.test(line) ||
+        /^Question-matched chunks\b/i.test(line) ||
+        /\brecords for\b/i.test(line)
       )
         continue;
       if (

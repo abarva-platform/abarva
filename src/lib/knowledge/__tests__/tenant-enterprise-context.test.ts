@@ -157,6 +157,59 @@ describe('tenant enterprise context retrieval', () => {
     );
   });
 
+  it('selects named Lakeshore golden-question segments instead of profile-only context', () => {
+    expect(
+      selectTenantEnterpriseSegments(
+        'What do we know about Kyriba, treasury modernization, readiness gates, and failure modes?',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        'it_landscape',
+        'program_inventory',
+        'kpi_dictionary',
+        'vendor_contracts',
+        'cross_program_signals',
+      ]),
+    );
+    expect(
+      selectTenantEnterpriseSegments(
+        'What evidence is live-loader-backed versus synthetic/demo?',
+      ),
+    ).toEqual(expect.arrayContaining(['enterprise_profile', 'evidence_ledger']));
+  });
+
+  it('retrieves named Azure-backed Lakeshore chunks for Kyriba golden questions', async () => {
+    mockPostgresTables({
+      enterprise_context_chunks: [
+        {
+          chunk_id: 'LSH-CHUNK-KYRIBA-001',
+          source_segment_id: 'vendor_contracts',
+          source_doc: 'source_uploads/vendor-contracts.csv',
+          chunk_text:
+            'Kyriba contract CON-LSH-001. Key facts: vendor_id=VEN-KYRIBA; treasury modernization; bank connectivity gate; ERP feed quality failure mode; payment controls owner Quinn Chen.',
+        },
+        {
+          chunk_id: 'LSH-CHUNK-LOAD-001',
+          source_segment_id: 'evidence_ledger',
+          source_doc: 'source_uploads/lakeshore-governed-load-commit-latest.json',
+          chunk_text:
+            'source_root=admin/context-layer/csv-upload; loader=c5-csv-upload-connector; synthetic_label=SYNTHETIC / ILLUSTRATIVE; commit evidence exists.',
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'lakeshore',
+      'What do we know about Kyriba, treasury modernization, readiness gates, and failure modes?',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('Question-matched chunks from Azure-backed public.enterprise_context_chunks');
+    expect(detail).toContain('CON-LSH-001');
+    expect(detail).toContain('bank connectivity gate');
+    expect(detail).toContain('ERP feed quality failure mode');
+  });
+
   it('retrieves persisted org and budget chunks for any tenant key before Sentinel says data is unavailable', async () => {
     const sources = await retrieveTenantEnterpriseSources(
       'meridian-health',
