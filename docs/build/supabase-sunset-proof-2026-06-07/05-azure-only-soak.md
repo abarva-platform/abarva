@@ -13,26 +13,26 @@ production app reads/writes, and confirmed Azure Postgres production traffic.
 
 ## Soak window
 
-| Field | Value |
-| --- | --- |
-| Soak start UTC | `PENDING` |
-| Soak end UTC | `PENDING` |
-| Duration | `PENDING` |
+| Field                               | Value     |
+| ----------------------------------- | --------- |
+| Soak start UTC                      | `PENDING` |
+| Soak end UTC                        | `PENDING` |
+| Duration                            | `PENDING` |
 | Azure Container Apps production app | `PENDING` |
-| Revision(s) | `PENDING` |
-| Azure Postgres database | `PENDING` |
-| Operator | `PENDING` |
+| Revision(s)                         | `PENDING` |
+| Azure Postgres database             | `PENDING` |
+| Operator                            | `PENDING` |
 
 ## Required soak controls
 
-| Control | Required evidence | Current evidence | Status |
-| --- | --- | --- | --- |
-| Azure Container Apps only | Routing/DNS/deployment proof that production traffic is served by Azure Container Apps for the full window | Not attached | BLOCKED |
-| No Supabase env vars | Env-name proof for each production revision in the soak window | 2026-06-06 lab evidence exists; production evidence not attached | PARTIAL |
-| No Supabase strings in app logs | Log query over full soak for `supabase.co`, `pooler.supabase.com`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Not attached | BLOCKED |
-| Supabase logs show zero app reads/writes | Supabase log export filtered to production app identities/user agents over the full window | Not attached | BLOCKED |
-| Azure Postgres receives production app traffic | Azure Postgres connection/query metrics and app log correlation over the soak window | Not attached | BLOCKED |
-| Core app smoke passes during soak | Home, Intelligence/Sentinel, Nexus/Moves, Source, Tower, Setup/Admin QA evidence | Not attached | BLOCKED |
+| Control                                        | Required evidence                                                                                                          | Current evidence                                                 | Status  |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------- |
+| Azure Container Apps only                      | Routing/DNS/deployment proof that production traffic is served by Azure Container Apps for the full window                 | Not attached                                                     | BLOCKED |
+| No Supabase env vars                           | Env-name proof for each production revision in the soak window                                                             | 2026-06-06 lab evidence exists; production evidence not attached | PARTIAL |
+| No Supabase strings in app logs                | Log query over full soak for `supabase.co`, `pooler.supabase.com`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Not attached                                                     | BLOCKED |
+| Supabase logs show zero app reads/writes       | Supabase log export filtered to production app identities/user agents over the full window                                 | Not attached                                                     | BLOCKED |
+| Azure Postgres receives production app traffic | Azure Postgres connection/query metrics and app log correlation over the soak window                                       | Not attached                                                     | BLOCKED |
+| Core app smoke passes during soak              | Home, Intelligence/Sentinel, Nexus/Moves, Source, Tower, Setup/Admin QA evidence                                           | Not attached                                                     | BLOCKED |
 
 ## Known prior evidence
 
@@ -53,14 +53,29 @@ This prior evidence is not a substitute for the production 24-72 hour soak.
 Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
 `02:24 UTC`.
 
-| Check | Result | Impact |
-| --- | --- | --- |
+| Check                         | Result                                  | Impact                                                                                              |
+| ----------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Azure CLI (`az account show`) | NOT AVAILABLE (`az: command not found`) | Cannot query Container Apps production revisions, env names, or Azure Monitor logs from this shell. |
-| `DATABASE_URL` | NOT AVAILABLE | Cannot run `npm run azure:cutover:runtime-smoke` against production Azure Postgres from this shell. |
-| `ABARVA_AZURE_DATABASE_URL` | NOT AVAILABLE | Cannot substitute the Azure Postgres candidate URL for local smoke. |
-| Azure Search env vars | NOT AVAILABLE | Cannot couple runtime soak with retrieval smoke from this shell. |
+| `DATABASE_URL`                | NOT AVAILABLE                           | Cannot run `npm run azure:cutover:runtime-smoke` against production Azure Postgres from this shell. |
+| `ABARVA_AZURE_DATABASE_URL`   | NOT AVAILABLE                           | Cannot substitute the Azure Postgres candidate URL for local smoke.                                 |
+| Azure Search env vars         | NOT AVAILABLE                           | Cannot couple runtime soak with retrieval smoke from this shell.                                    |
 
 No production soak was started or claimed from this environment.
+
+## 2026-06-07 Azure runtime attempt
+
+| Control                               | Result                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Guarded Azure revision                | PASS: `ca-abarva-web-lab-eastus--0000049` healthy with 100% traffic                                       |
+| Public home                           | PASS: HTTP 200                                                                                            |
+| Azure runtime DB proof                | PASS: connected to `abarva_control` at `10.43.1.4/32`                                                     |
+| Signed-in QA                          | FAIL: only Intelligence/Sentinel passed; Home, Moves, Source, Tower, Setup/Admin returned HTTP 500        |
+| App log deny-list                     | FAIL: logs contain `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in old-image error messages |
+| Supabase project zero-read/write logs | NOT CAPTURED                                                                                              |
+| Duration                              | NOT A SOAK: this was a smoke attempt, not a 24-72 hour soak                                               |
+
+The Azure-only soak cannot start until signed-in QA passes and the app log
+deny-list is clean.
 
 ## Log deny-list
 
@@ -103,4 +118,7 @@ az monitor log-analytics query \
 3. No production app log deny-list proof is attached.
 4. No Supabase zero-read/write soak proof is attached.
 5. No Azure Postgres production traffic proof is attached.
-6. This shell has no Azure CLI or production data-plane environment variables.
+6. This shell still has no direct production data-plane environment variables;
+   Azure DB proof was correctly gathered from Azure runtime instead.
+7. 2026-06-07 signed-in QA failed and app logs contain denied Supabase env-name
+   strings from the active image.

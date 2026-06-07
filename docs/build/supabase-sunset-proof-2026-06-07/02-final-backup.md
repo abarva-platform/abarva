@@ -12,40 +12,40 @@ No destructive Supabase action should occur from this document.
 
 ## Required backup evidence
 
-| Control | Required evidence | Current evidence | Status |
-| --- | --- | --- | --- |
-| Full Postgres dump | Backup object path, dump format, timestamp, source project id/name, operator | Not recorded in this proof pack | BLOCKED |
-| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used | Not recorded in this proof pack | BLOCKED |
-| Backup checksum | SHA-256 or stronger checksum for each backup artifact | Not recorded in this proof pack | BLOCKED |
-| Restore test | Temporary database restore log and validation query output, or approved exception documenting why restore was not run | Not recorded in this proof pack | BLOCKED |
-| Secret hygiene | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack | BLOCKED |
+| Control                        | Required evidence                                                                                                        | Current evidence                | Status  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ------- |
+| Full Postgres dump             | Backup object path, dump format, timestamp, source project id/name, operator                                             | Not recorded in this proof pack | BLOCKED |
+| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used                            | Not recorded in this proof pack | BLOCKED |
+| Backup checksum                | SHA-256 or stronger checksum for each backup artifact                                                                    | Not recorded in this proof pack | BLOCKED |
+| Restore test                   | Temporary database restore log and validation query output, or approved exception documenting why restore was not run    | Not recorded in this proof pack | BLOCKED |
+| Secret hygiene                 | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack | BLOCKED |
 
 ## Backup record
 
 Fill only after the final backup is complete.
 
-| Field | Value |
-| --- | --- |
-| Supabase project id/name | `PENDING` |
-| Freeze timestamp covered | `PENDING` |
-| Backup timestamp UTC | `PENDING` |
+| Field                           | Value     |
+| ------------------------------- | --------- |
+| Supabase project id/name        | `PENDING` |
+| Freeze timestamp covered        | `PENDING` |
+| Backup timestamp UTC            | `PENDING` |
 | Postgres dump artifact location | `PENDING` |
-| Postgres dump checksum | `PENDING` |
-| Storage/object export location | `PENDING` |
-| Storage/object export checksum | `PENDING` |
-| Restore-test database | `PENDING` |
-| Restore-test result | `PENDING` |
-| Operator | `PENDING` |
+| Postgres dump checksum          | `PENDING` |
+| Storage/object export location  | `PENDING` |
+| Storage/object export checksum  | `PENDING` |
+| Restore-test database           | `PENDING` |
+| Restore-test result             | `PENDING` |
+| Operator                        | `PENDING` |
 
 ## Local execution attempt
 
 Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
 `02:24 UTC`.
 
-| Check | Result | Impact |
-| --- | --- | --- |
-| `command -v pg_dump` | NOT AVAILABLE | This machine cannot take the required final Postgres dump. |
-| `command -v psql` | NOT AVAILABLE | This machine cannot run a local restore-test with standard Postgres CLI tooling. |
+| Check                                                                     | Result        | Impact                                                                                                          |
+| ------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `command -v pg_dump`                                                      | NOT AVAILABLE | This machine cannot take the required final Postgres dump.                                                      |
+| `command -v psql`                                                         | NOT AVAILABLE | This machine cannot run a local restore-test with standard Postgres CLI tooling.                                |
 | `SUPABASE_DATABASE_URL` / `SOURCE_DATABASE_URL` / `DATABASE_URL` presence | NOT AVAILABLE | No source database URL is available in this shell; no backup can be taken without an approved secret reference. |
 
 This is not an approved restore-test exception. The final backup gate remains
@@ -96,3 +96,18 @@ Run validation against the temporary restored database, not production.
 3. No checksum is recorded.
 4. No restore-test or approved restore-test exception exists.
 5. This shell has no `pg_dump`, `psql`, or source database secret reference.
+
+## 2026-06-07 Azure operator attempt
+
+| Check                                | Result                                                                                       | Impact                                                                                                                                   |
+| ------------------------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `job-supa-final-eus` configuration   | Present; references Key Vault secret `source-postgres-database-url` as `SOURCE_DATABASE_URL` | A preconfigured Azure-hosted backup path exists.                                                                                         |
+| Start `job-supa-final-eus`           | NOT RUN                                                                                      | The operator identity cannot start Container Apps jobs; prior execution `job-supa-final-eus-z9n1k9e` failed before this run.             |
+| Azure runtime Key Vault access       | PASS                                                                                         | Active app managed identity can obtain a Key Vault token and can reach secret `source-postgres-database-url` without printing the value. |
+| Azure runtime `pg_dump` availability | FAIL                                                                                         | Active app runtime does not include `pg_dump`, so it cannot produce the required full Postgres dump from `az containerapp exec`.         |
+
+The final backup gate remains blocked. A full `pg_dump` must run from an
+approved Azure-hosted environment with the source database secret and Postgres
+client tooling, or the existing `job-supa-final-eus` must be fixed and started
+by an identity with `Microsoft.App/jobs/start/action`. Do not use that job's
+freeze path without explicit approval.

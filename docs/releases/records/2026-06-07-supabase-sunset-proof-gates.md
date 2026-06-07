@@ -67,18 +67,36 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
   values returned no matches.
 - Blocked: `npm run secrets:scan` could not start because `gitleaks` is not
   installed in this environment (`sh: 1: gitleaks: not found`).
-- Pending: ACR remote image build and Azure Container Apps deployment of the
-  boot guard.
-- Pending: Azure runtime smoke, signed-in QA, Azure Search rebuild/verification,
-  Anthropic reasoning proof, zero Supabase runtime calls proof, final backup,
-  and pause/delete approval packet completion.
 - Blocked locally: direct Key Vault secret reads are blocked by private-link
   policy; database proof must run inside Azure Container Apps jobs/runtime.
-- Not run: production Supabase freeze, backup, restore-test, Azure-only soak,
-  pause QA, and deletion approval. These are intentionally left as blocked
-  operator gates in the proof pack.
-- No production operations were performed by this change. Supabase was not
-  paused, deleted, or modified.
+- Pass: Azure CLI installed and authenticated to `abarva-lab-sub`.
+- Pass: command-level boot guard deployed to
+  `ca-abarva-web-lab-eastus--0000049`; startup log emitted
+  `supabase_boot_guard_passed`; revision healthy with 100% traffic.
+- Pass: unauthenticated Azure Home smoke returned HTTP 200.
+- Pass: Azure-runtime Postgres proof ran from Container Apps revision `0000049`
+  and connected to `abarva_control` at private address `10.43.1.4/32`.
+- Fail: `/api/health` returned HTTP 503 (`postgres:false`,
+  `direct_postgres:true`).
+- Fail: signed-in QA passed only Intelligence/Sentinel; Home, Moves, Source,
+  Tower, and Setup/Admin returned HTTP 500 for Apex CDO and Meridian CDAO.
+- Fail: app log deny-list found `NEXT_PUBLIC_SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` in old-image runtime error messages.
+- Blocked: ACR remote build failed because the operator identity lacks
+  `Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action`.
+- Blocked: Container Apps job starts failed because the operator identity lacks
+  `Microsoft.App/jobs/start/action`.
+- Blocked: final full Supabase backup could not run; active Azure runtime can
+  reach the source Key Vault secret but does not include `pg_dump`.
+- Blocked: direct runtime Anthropic proof attempt hit Container Apps exec
+  throttling (`429 Too Many Requests`, retry-after 600s) after earlier exec
+  probes succeeded.
+- Not run: formal production Supabase freeze, final backup, restore-test,
+  24-72 hour Azure-only soak, pause QA, and deletion approval. These are
+  intentionally left as blocked operator gates in the proof pack.
+- Production operations performed: Azure Container Apps command-level guard
+  revision deployment and Clerk unban for two demo QA users. Supabase was not
+  paused, deleted, or modified; DNS was not changed; Vercel was not removed.
 
 ## Rollout Plan
 
@@ -108,7 +126,9 @@ as rollback unless explicitly approved.
 - Supabase freeze timestamp has not been recorded.
 - Final backup, checksum, and restore-test evidence are not attached.
 - Azure parity checksums and several required table families remain unproven.
-- Production golden retrieval across the named tenant set is not attached.
-- Production Azure-only 24-72 hour soak is not attached.
-- Pause-before-delete QA has not been run.
-- Explicit deletion approval is not recorded.
+- Fresh Azure Search rebuild and production golden retrieval across the named
+  tenant set are not attached.
+- Production Azure-only 24-72 hour soak is blocked by signed-in QA failures.
+- Pause-before-delete QA has not been run; Supabase was not paused.
+- Explicit deletion approval is not recorded; Supabase was not deleted.
+- DNS was not changed and Vercel production was not removed.

@@ -16,14 +16,14 @@ tenants.
 The release record `docs/releases/records/2026-06-06-azure-search-canonical-rebuild.md`
 records a successful lab rebuild of `tenant-context-v1` from Azure Postgres:
 
-| Tenant | Expected Azure source rows | Observed Azure Search docs | Status |
-| --- | ---: | ---: | --- |
-| `apex-retail` | 6,497 | 6,497 | PASS for lab count |
-| `first-capital` | 400 | 400 | PASS for lab count |
-| `lakeshore-holdings` | 6,576 | 6,576 | PASS for lab count |
-| `meridian-health` | 4,376 | 4,376 | PASS for lab count |
-| `northstar-clinical` | 878 | 878 | PASS for lab count |
-| `skyharbor-air` | 3,240 | 3,240 | PASS for lab count |
+| Tenant               | Expected Azure source rows | Observed Azure Search docs | Status             |
+| -------------------- | -------------------------: | -------------------------: | ------------------ |
+| `apex-retail`        |                      6,497 |                      6,497 | PASS for lab count |
+| `first-capital`      |                        400 |                        400 | PASS for lab count |
+| `lakeshore-holdings` |                      6,576 |                      6,576 | PASS for lab count |
+| `meridian-health`    |                      4,376 |                      4,376 | PASS for lab count |
+| `northstar-clinical` |                        878 |                        878 | PASS for lab count |
+| `skyharbor-air`      |                      3,240 |                      3,240 | PASS for lab count |
 
 The same release record cites Azure Container Apps execution
 `job-a24-search-canon-eus-ac5kk3z`, with `21,967` source rows uploaded and
@@ -37,28 +37,42 @@ for the named tenant set below.
 
 ## Required production proof
 
-| Control | Required evidence | Current status |
-| --- | --- | --- |
-| Rebuild from Azure Postgres | Production index rebuild job ID, source Azure database host/name, source row count, index name/version, upload success count, failure count | PARTIAL - lab rebuild evidence exists; production-cutover rebuild evidence not attached |
-| Index count parity | Per-tenant expected Azure source rows equal observed index docs | PARTIAL - lab counts pass for six tenants; production proof pending |
-| No legacy vector fallback | Runtime env/log proof showing no Pinecone, Supabase, or Neo4j fallback for production retrieval | PARTIAL - lab env removal recorded; production proof pending |
-| Golden retrieval specificity | Golden questions produce grounded, tenant-specific answers where facts exist | BLOCKED - not attached |
-| Generic-answer block | Any generic answer where loaded facts exist blocks sunset | BLOCKED until golden answers are reviewed |
+| Control                      | Required evidence                                                                                                                           | Current status                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Rebuild from Azure Postgres  | Production index rebuild job ID, source Azure database host/name, source row count, index name/version, upload success count, failure count | PARTIAL - lab rebuild evidence exists; production-cutover rebuild evidence not attached |
+| Index count parity           | Per-tenant expected Azure source rows equal observed index docs                                                                             | PARTIAL - lab counts pass for six tenants; production proof pending                     |
+| No legacy vector fallback    | Runtime env/log proof showing no Pinecone, Supabase, or Neo4j fallback for production retrieval                                             | PARTIAL - lab env removal recorded; production proof pending                            |
+| Golden retrieval specificity | Golden questions produce grounded, tenant-specific answers where facts exist                                                                | BLOCKED - not attached                                                                  |
+| Generic-answer block         | Any generic answer where loaded facts exist blocks sunset                                                                                   | BLOCKED until golden answers are reviewed                                               |
 
 ## Local execution attempt
 
 Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
 `02:24 UTC`.
 
-| Check | Result | Impact |
-| --- | --- | --- |
-| `AZURE_SEARCH_ENDPOINT` | NOT AVAILABLE | Direct Azure Search count/query proof cannot run from this shell. |
+| Check                    | Result        | Impact                                                                                                            |
+| ------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `AZURE_SEARCH_ENDPOINT`  | NOT AVAILABLE | Direct Azure Search count/query proof cannot run from this shell.                                                 |
 | `AZURE_SEARCH_ADMIN_KEY` | NOT AVAILABLE | Index rebuild/count proof cannot run from this shell unless managed identity is available in an Azure-hosted job. |
-| `AZURE_SEARCH_QUERY_KEY` | NOT AVAILABLE | Query-only golden retrieval proof cannot run from this shell. |
-| Azure CLI (`az`) | NOT AVAILABLE | Container Apps Search rebuild/soak job logs cannot be queried from this shell. |
+| `AZURE_SEARCH_QUERY_KEY` | NOT AVAILABLE | Query-only golden retrieval proof cannot run from this shell.                                                     |
+| Azure CLI (`az`)         | NOT AVAILABLE | Container Apps Search rebuild/soak job logs cannot be queried from this shell.                                    |
 
 No Azure Search/vector mutation was attempted. Production golden retrieval
 remains blocked until run from an approved Azure/operator environment.
+
+## 2026-06-07 operator attempt
+
+- Azure CLI was installed and authenticated for subscription `abarva-lab-sub`.
+- Existing prior Search rebuild evidence still shows
+  `job-a24-search-canon-eus-ac5kk3z` succeeded with `21,967` source rows and no
+  count mismatches.
+- Fresh rebuild attempt was blocked:
+  `Microsoft.App/jobs/start/action` is denied for `job-a24-search-canon-eus`.
+- Direct runtime golden retrieval proof was not completed because Container Apps
+  exec later hit `429 Too Many Requests` with `retry-after: 600`.
+
+Status remains PARTIAL/BLOCKED for final sunset because the requested fresh
+production golden retrieval run across all named tenants was not completed.
 
 ## Golden retrieval matrix
 
@@ -66,12 +80,12 @@ The following tenant set must be run against the Azure-only production runtime
 and/or the same Azure Search index used by production retrieval. Record the
 question, expected loaded fact, answer excerpt, citations/chunk IDs, and verdict.
 
-| Tenant / account | Required golden retrieval result | Evidence | Status |
-| --- | --- | --- | --- |
-| Lakeshore Holdings | Answers must cite loaded Lakeshore facts, including Kyriba/treasury and AMS modernization context where relevant | Not attached | BLOCKED |
-| Meridian Health | Answers must cite loaded Meridian facts and avoid generic healthcare transformation language when specific facts exist | Not attached | BLOCKED |
-| Apex Retail | Answers must cite loaded Apex Retail facts and preserve tenant scope | Not attached | BLOCKED |
-| SkyHarbor Air | Answers must cite loaded SkyHarbor airline facts and preserve tenant scope | Not attached | BLOCKED |
+| Tenant / account           | Required golden retrieval result                                                                                                                                | Evidence     | Status  |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------- |
+| Lakeshore Holdings         | Answers must cite loaded Lakeshore facts, including Kyriba/treasury and AMS modernization context where relevant                                                | Not attached | BLOCKED |
+| Meridian Health            | Answers must cite loaded Meridian facts and avoid generic healthcare transformation language when specific facts exist                                          | Not attached | BLOCKED |
+| Apex Retail                | Answers must cite loaded Apex Retail facts and preserve tenant scope                                                                                            | Not attached | BLOCKED |
+| SkyHarbor Air              | Answers must cite loaded SkyHarbor airline facts and preserve tenant scope                                                                                      | Not attached | BLOCKED |
 | Morgan Street / Northshore | Answers must cite the loaded facts for the Morgan Street/Northshore account name used in production; if this maps to an existing tenant key, document the alias | Not attached | BLOCKED |
 
 ## Command patterns
