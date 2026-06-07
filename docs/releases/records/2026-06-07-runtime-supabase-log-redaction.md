@@ -46,11 +46,17 @@ path and the Supabase-to-Azure drain script now redact `supabase.co` and
 
 ## QA / Validation
 
-- Not run in this VM; planned before release:
-  `npx jest src/lib/observability/__tests__/runtime-log-redaction.test.ts src/lib/corpus/__tests__/db.test.ts --runInBand`.
-- Not run in this VM: `npx eslint` on changed TypeScript files.
-- Not run in this VM before this record was patched:
-  `npm run release:check -- --base origin/main --head HEAD`.
+- PASS:
+  `npx jest src/lib/observability/__tests__/runtime-log-redaction.test.ts src/lib/corpus/__tests__/db.test.ts --runInBand`
+  (2 suites, 9 tests passed; Jest emitted pre-existing duplicate manual mock
+  warnings).
+- PASS:
+  `npx eslint "src/lib/observability/runtime-log-redaction.ts" "src/lib/observability/__tests__/runtime-log-redaction.test.ts" "src/lib/corpus/db.ts" "src/lib/corpus/__tests__/db.test.ts" "scripts/data-plane/drain-supabase-to-azure.ts"`.
+- PASS:
+  `npm run release:check -- --base origin/main --head HEAD` passed after this
+  record was updated with explicit validation status language. Initial run
+  failed because the record used planned validation language instead of
+  pass/fail status language.
 
 ## Rollout Plan
 
