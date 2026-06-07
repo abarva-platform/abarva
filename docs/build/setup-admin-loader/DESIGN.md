@@ -13,6 +13,14 @@ corner of the RAG triangle is the **data**. Highest leverage = the loader.
 Every template ships a golden-question set; a dimension is *done* only when:
 `load template → ask the golden questions → grounded, cited answers` (the retrieval-proof loop).
 
+**Templates are a TARGET schema, not a required upload format (not rigid).** Clients won't
+fill our columns — they'll upload their ServiceNow CMDB export, a Workday org chart, a board
+PDF, an Excel finance pack, each in its own shape. The template defines *what we want to end
+up with* (the canonical fact schema + realism rules + golden questions); an **intelligent
+mapping layer** (§4) bridges any input format to it, using Azure Document Intelligence + Claude,
+and **asks clarifying questions** when the mapping is ambiguous. The template is the goal, not
+the gate.
+
 ---
 
 ## 1. Anatomy of a dimension template (every dimension gets all 5)
@@ -21,7 +29,7 @@ Every template ships a golden-question set; a dimension is *done* only when:
 2. **How-to-fill page** — plain-language, field-by-field, with good/bad examples + the
    realism guidance for this dimension.
 3. **Realism / proportionality** — reference ranges keyed to the tenant's **org profile**
-   (see §3), so entries are plausible *and* internally consistent (e.g. exec count, IT
+   (see §5), so entries are plausible *and* internally consistent (e.g. exec count, IT
    budget %, team sizes, KPI targets all align to org size + industry).
 4. **Validation** — schema (required/typed), cross-field, and proportionality checks at
    upload. Fail loud with specific messages; offer a "this looks low/high for an org your
@@ -77,7 +85,53 @@ flowchart LR
   IDX --> Q[Golden-question proof]
 ```
 
-## 4. The proportionality engine (the realism backbone)
+## 4. Intelligent ingestion — any format → canonical, with clarification
+
+The loader does **not** require our column layout. It accepts whatever the client has and
+*maps* it to the canonical schema, asking questions only when it's unsure.
+
+Flow (after Gate 0 has preserved the original in Blob):
+1. **Parse** — tabular (CSV/XLSX) read natively; documents (PDF/PPTX/DOCX/scans) via **Azure
+   Document Intelligence** (`src/lib/ingestion/document-intelligence-layout.ts`) for layout/
+   tables/text with page/cell coordinates.
+2. **Propose a mapping** — **Claude** (audited egress) reads the parsed content + the target
+   dimension schema and proposes: which source column/section → which canonical field, the
+   dimension/fact-type, units, and a **per-field confidence**. (e.g. ServiceNow `u_business_service`
+   → `application.name`; "Cogito" → analytics platform; an Excel column "FY25 Run Rate" → `spend.run_rate_usd`.)
+3. **Clarify when low-confidence** — if a mapping is ambiguous, the loader **asks the user a
+   targeted question** rather than guessing: *"Is the column 'Amount' annual contract value or
+   monthly run-rate?"*, *"This sheet has people + titles — load as the org/leadership dimension?"*,
+   *"'EDW' — is that your enterprise data warehouse (analytics stack)?"* High-confidence,
+   deterministic mappings proceed without a question.
+4. **Confirm + commit** — the user approves the proposed mapping (a diff/preview); facts commit
+   with provenance + citation back to the preserved original (file + page/row/cell).
+
+```mermaid
+flowchart LR
+  B[(Blob: preserved original)] --> PA[Parse: native CSV/XLSX or Azure Document Intelligence]
+  PA --> MAP[Claude: propose mapping -> canonical schema + confidence]
+  MAP --> C{Confidence}
+  C -->|high / deterministic| PV[Preview + confirm]
+  C -->|low / ambiguous| ASK[Ask clarifying question] --> PV
+  PV --> F[(facts + citations)]
+```
+
+**Guardrails (this is mapping, not invention):**
+- Clarifying questions are only ever about **mapping/interpretation** (which column means what),
+  never about supplying missing data — the model must not fabricate values it didn't read.
+- **Document-derived facts stay review-required** (per the truth standard); the mapping layer
+  raises confidence and proposes, a human still approves.
+- **Proportionality validation (§5) still runs** on the mapped result — a parsed "IT budget"
+  that's 0.2% of revenue still gets flagged.
+- Every committed fact keeps a **citation to the preserved original** (Gate 0), so "show source"
+  works regardless of the input format.
+- The mapping proposal + the user's clarifications are stored as provenance (auditable: how this
+  fact came to be).
+
+> Net: the template is the destination; Azure DI + Claude + a short clarification loop are the
+> on-ramp from any real-world file. This is what makes the loader feel effortless *and* stay governed.
+
+## 5. The proportionality engine (the realism backbone)
 
 One **org profile** per tenant drives expected ranges everywhere, so an $11.2B health system
 like Meridian never shows "2 executives" or a "$50K IT budget." Profile attributes (see
@@ -99,13 +153,13 @@ The engine produces, per dimension, an **expected band** and flags out-of-band e
 > Anchors are *reference ranges to sanity-check input*, not hard limits — a client can
 > override with a justification (kept as provenance).
 
-## 5. Visible intake state machine (the user must SEE each state)
+## 6. Visible intake state machine (the user must SEE each state)
 
 `uploaded → blob-staged → parsed → validated → committed (facts) → embedded → indexed →
 retrieval-proven`. Never collapse these into "loaded." The UI shows where each file is and
 what's left. "Available to the agent" = the last state (retrieval-proven), not the first.
 
-## 6. Retrieval-proof loop (definition of done per dimension)
+## 7. Retrieval-proof loop (definition of done per dimension)
 
 Each template ships ~10 golden questions (6 positive / 2 partial / 2 negative). After load:
 run them headless via the real `askIntelligence` and grade: **recall@5 ≥ 0.90,
@@ -113,12 +167,12 @@ citation-support ≥ 0.95, completeness ≥ 0.85, hallucination = 0, tenant-leak
 (the §8.4 battery). A dimension reaches **L3 Answerable** only when these pass; **L4
 Best-in-class** when benchmarked to function-pack depth + monitored nightly.
 
-## 7. Rollout
+## 8. Rollout
 Build the framework on the exemplar (Leadership/Org + KPIs) end-to-end → prove via the
 loop → replicate the anatomy to the remaining ~22 dimensions. Do not mass-produce
 templates before the exemplar passes the loop.
 
-## 8. Pressure-testing the Admin load page (must pass before "go")
+## 9. Pressure-testing the Admin load page (must pass before "go")
 
 The governed path is only real if the **Admin load UI** actually does Gate 0. Test matrix:
 
@@ -138,7 +192,7 @@ The governed path is only real if the **Admin load UI** actually does Gate 0. Te
 Definition of go-live for the Admin loader: **all rows pass** + the dimension's golden
 questions answer grounded+cited (§5/§6). Capture evidence (blob URIs, hashes, screenshots).
 
-## 9. Current state (2026-06-07) — preservation GAP to remediate
+## 10. Current state (2026-06-07) — preservation GAP to remediate
 
 Verified on the live Azure DB: Meridian's 15 `enterprise_context_source_files` rows have
 `file_hash = NULL`, `source_path` = a **dead local `/private/tmp/...` laptop path**, and
