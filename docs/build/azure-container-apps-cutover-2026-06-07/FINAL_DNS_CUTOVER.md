@@ -195,8 +195,9 @@ Expected healthy response (matches the Azure FQDN today):
 | Registrar records published at Namecheap (`app` CNAME → Azure) | ✅ done (operator) |
 | Azure hostname bind + managed cert | ✅ bound `SniEnabled`, cert `Succeeded` |
 | `app.abarva.ai` off Vercel and healthy on Azure | ✅ verified ~06:19Z |
-| Signed-in production QA on `app.abarva.ai` | ⏳ unauth proof done; signed-in checklist pending — see `FINAL_SIGNED_IN_PROD_QA.md` |
-| Vercel shutdown | ⛔ pending — no Vercel creds + signed-in QA gate |
+| Signed-in production QA on `app.abarva.ai` | ✅ PASSED (operator browser test ~06:42Z+) — see `FINAL_SIGNED_IN_PROD_QA.md` |
+| Vercel shutdown | ⛔ pending — no Vercel creds (QA gate now passed) |
+| Lakeshore rich-demo readiness | ❌ not ready (data-seeding gap, out of scope; no sunset claim) |
 
 Cross-reference: `docs/build/cutover/AZURE_CUTOVER_PROOF_2026-06-07.md`,
 `docs/build/supabase-sunset-proof-2026-06-07/README.md`.

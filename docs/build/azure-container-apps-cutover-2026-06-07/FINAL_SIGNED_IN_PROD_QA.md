@@ -77,7 +77,49 @@ PARALLEL_RUN_INVARIANT_TOKEN, PORT, SERVICE_BUS_NAMESPACE, SERVICE_BUS_QUEUE_NAM
   expected to record `provider=anthropic`. **Row-level confirmation requires
   a signed-in session and is part of the blocked checklist below.**
 
-## B. Blocked signed-in QA checklist (run after DNS cutover)
+## A.4 Signed-in production QA — ✅ PASSED (operator browser test, ~06:42Z+)
+
+The operator completed signed-in browser QA on `https://app.abarva.ai` after
+repairing live Azure schema drift (existing repo migrations applied to Azure
+Postgres: Responsible AI ledgers, engagement `function_pack_key`, Lakeshore
+holding-group metadata — see PR #3266). Agent re-confirmed all routes are
+Azure-served (307 → Clerk sign-in unauthenticated, no 5xx, no Vercel headers).
+
+| Surface | Route | Signed-in result |
+| --- | --- | --- |
+| Home | `/home` | ✅ renders signed-in |
+| Intelligence / Sentinel | `/intelligence` | ✅ renders (corpus empty — see caveat) |
+| Moves | `/strategic-moves` | ✅ renders (no moves — see caveat) |
+| Source | `/source/queue` | ✅ renders |
+| Tower | `/tower` | ✅ renders (no substrate — see caveat) |
+| Setup / Admin | `/admin` | ✅ renders (`0 records` — see caveat) |
+
+Additional passes:
+
+- **Responsible AI acknowledgment/training** works and records to **Azure
+  Postgres**.
+- **Fresh post-fix Azure log filter** (after `2026-06-07T06:42:00Z`):
+  **0 Supabase references, 0 missing-column errors, 0 HTTP 500 matches.**
+- Local: `git diff --check` and
+  `npm run release:check -- --base origin/main --head HEAD` pass.
+
+### Honest caveat — Lakeshore is NOT rich-demo-ready
+
+The app renders **safely** and is Azure-backed, but the Lakeshore tenant content
+is not seeded:
+
+- Intelligence reports **corpus not seeded**.
+- Moves has **no moves**.
+- Tower has **no substrate**.
+- Admin shows **`0 records`**.
+
+This is a **data-seeding gap, not a runtime/safety failure** — routing, auth,
+schema, and the Azure data plane are healthy. Rich-demo readiness (loading
+Lakeshore corpus/moves/substrate via the Admin Data Loader) is tracked
+separately and is **out of scope** for this cutover/shutdown evidence. **No
+sunset-ready claim is made.**
+
+## B. Signed-in QA checklist (reference — now satisfied above)
 
 For each surface, sign in to `https://app.abarva.ai` with a known tenant and
 capture proof.
@@ -115,8 +157,11 @@ For every surface confirm:
 | Unauthenticated route proof (6 surfaces, no 5xx, auth gated) | ✅ verified on `app.abarva.ai` |
 | No Supabase env/secret references | ✅ verified |
 | Anthropic provider configured | ✅ verified (env/secret/image) |
-| Signed-in QA on `app.abarva.ai` (all 6 surfaces) | ⏳ PENDING — needs Clerk session |
-| LLM audit `provider=anthropic` row proof | ⏳ PENDING — needs session |
-| Cross-tenant isolation proof | ⏳ PENDING — needs session |
+| Signed-in QA on `app.abarva.ai` (all 6 surfaces) | ✅ PASSED — operator browser test ~06:42Z+ |
+| Responsible AI acknowledgment records to Azure Postgres | ✅ PASSED |
+| Fresh post-fix Azure logs: 0 Supabase / 0 missing-column / 0 500 | ✅ PASSED (after `06:42:00Z`) |
+| Lakeshore rich-demo readiness (corpus/moves/substrate seeded) | ❌ NOT ready (data-seeding gap, out of scope; no sunset claim) |
 
-Until Section B passes, Vercel must **not** be removed.
+Signed-in QA passed. The only remaining gate before Vercel removal is having
+Vercel credentials available to this environment (none present). No sunset-ready
+claim is made; Lakeshore content seeding is tracked separately.

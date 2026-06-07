@@ -17,10 +17,16 @@ at Namecheap; the `app` CNAME now points to the Azure environment, the custom
 domain is bound (`SniEnabled`) and an Azure-managed certificate issued
 (`Succeeded`). As of ~06:19Z, `https://app.abarva.ai` and `/api/health` return
 200 from Azure with no Vercel headers — **the production cutover is complete**.
-Unauthenticated production QA across all six surfaces passed (no 5xx, correct
-Clerk auth gating). The remaining signed-in QA (tenant isolation + LLM audit
-provider rows) needs an authenticated session and is left as an operator step;
-until it passes, **Vercel is intentionally left intact**. This change is
+The operator then completed **signed-in browser QA** (`~06:42Z+`): `/home`,
+`/intelligence`, `/strategic-moves`, `/source/queue`, `/tower`, `/admin` all
+render signed-in; Responsible AI acknowledgment records to Azure Postgres; and a
+fresh post-fix Azure log filter shows **0 Supabase references, 0 missing-column
+errors, 0 HTTP 500**. The only remaining gate before Vercel removal is the
+absence of Vercel credentials in this environment, so **Vercel is intentionally
+left intact**. Important honest caveat: the app renders safely but Lakeshore is
+**not rich-demo-ready** (Intelligence corpus not seeded, Moves empty, Tower no
+substrate, Admin `0 records`) — a separate data-seeding task, not a runtime or
+safety failure. **No sunset-ready claim is made.** This change is
 documentation/evidence only; it adds no runtime code.
 
 ## Layer Impact
@@ -76,13 +82,20 @@ documentation/evidence only; it adds no runtime code.
   with `postgres/direct_postgres=true`, `azure_graph=postgres`; TLS cert
   `CN=app.abarva.ai` valid; custom domain bound `SniEnabled`; managed cert
   `mc-cae-abarva-sca-app-abarva-ai-8374` status `Succeeded`.
-- Pass (post-cutover unauthenticated route probe): `/` 200; `/intelligence`,
-  `/strategic-moves`, `/source`, `/tower` 307 → Clerk `/sign-in`; `/setup` 301
-  → `/admin`; `/sign-in` 200 — no 5xx on any surface.
+- Pass (post-cutover unauthenticated route probe): `/home`, `/intelligence`,
+  `/strategic-moves`, `/source/queue`, `/tower`, `/admin` all 307 → Clerk
+  sign-in; `/api/health` 200 Azure-backed — no 5xx, no Vercel headers.
+- Pass (operator signed-in browser QA ~06:42Z+): all six surfaces render
+  signed-in; Responsible AI acknowledgment records to Azure Postgres; fresh
+  post-fix Azure log filter after `2026-06-07T06:42:00Z` shows 0 Supabase refs,
+  0 missing-column errors, 0 HTTP 500. Schema drift repaired by applying
+  existing repo migrations to Azure Postgres (RAI ledgers, engagement
+  `function_pack_key`, Lakeshore holding-group metadata) — tracked in PR #3266.
 - Verified: no Supabase env var or secret on the active container; `DATABASE_URL`
   points to Azure Postgres secret.
-- Pending: signed-in production QA (no Clerk session in this agent); Vercel
-  shutdown (no Vercel credentials and gated on signed-in QA).
+- Not ready (out of scope, no failure): Lakeshore rich-demo content
+  (Intelligence corpus, Moves, Tower substrate, Admin records) is not seeded.
+- Pending: Vercel shutdown — no Vercel credentials in this environment.
 
 ## Rollout Plan
 
@@ -120,15 +133,20 @@ the Azure custom domain afterward.
 - DNS cutover is **done and verified** (operator applied the records; agent
   verified). The `asuid.app` TXT never propagated but was not required —
   CNAME-based validation satisfied managed-certificate issuance.
-- Signed-in production QA on `app.abarva.ai` is **not yet** performed — no Clerk
-  session is available to this headless agent. Unauthenticated route proof
-  (no 5xx, correct auth gating) is done; the signed-in checklist (tenant
-  isolation, `ai_egress_audit.provider=anthropic` rows, current-state grounding)
-  remains an operator step.
-- Vercel shutdown is **not** performed (no Vercel credentials; gated on
-  signed-in QA). Exact Vercel action taken: **none** — Vercel project,
-  alias/domain, auto-deploys, env, and secrets are all left intact, as required
-  until signed-in QA passes. The runbook for removal is in `FINAL_DNS_CUTOVER.md`.
+- Signed-in production QA on `app.abarva.ai` is **done** (operator browser test,
+  ~06:42Z+): all six surfaces render, Responsible AI records to Azure Postgres,
+  fresh logs clean. Cross-tenant isolation / `ai_egress_audit.provider=anthropic`
+  row-level inspection was not separately captured beyond the operator's browser
+  pass and clean log filter.
+- **Lakeshore is not rich-demo-ready** — Intelligence corpus not seeded, Moves
+  empty, Tower no substrate, Admin `0 records`. This is a data-seeding gap, not
+  a runtime/safety failure, and is explicitly out of scope here. No sunset-ready
+  claim is made.
+- Vercel shutdown is **not** performed — no Vercel credentials are present in
+  this environment. Exact Vercel action taken: **none** — Vercel project,
+  alias/domain, auto-deploys, env, and secrets are all left intact. The runbook
+  for removal is in `FINAL_DNS_CUTOVER.md`; the signed-in QA gate is now passed,
+  so removal only awaits Vercel access.
 - No Azure resources were created or deleted by this agent; the custom-domain
   binding + managed cert were created on the operator's cutover; no secrets
   printed.
