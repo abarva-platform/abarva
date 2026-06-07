@@ -54,6 +54,9 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 - `npx jest src/lib/intelligence/ask/__tests__/provider-audit.test.ts src/lib/intelligence/ask/__tests__/openai-runtime-contract.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts --runInBand`
   — passed (12).
 - `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
+- Env-var blocker documentation follow-up: `npm run release:check` and
+  `npm run audit:provider-proof` — passed in this VM; Jest not rerun here because
+  `node_modules/` is absent.
 - Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
 - **Azure Container Apps test revision staged safely:** `provqa` is healthy and
   held at **0% traffic**; the existing production revision remains pinned at
