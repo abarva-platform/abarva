@@ -2,7 +2,7 @@
 //
 // Anything that touches Supabase, Clerk session, or other server-only
 // APIs lives here so it never gets pulled into a client bundle. The
-// API route at /artifacts/[code]/generate-from-openai imports from
+// API route at /artifacts/[code]/generate imports from
 // this file; the canvas (`UniversalCanvasShell`) imports only from
 // `./index.ts`.
 

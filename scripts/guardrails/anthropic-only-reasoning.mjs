@@ -45,8 +45,8 @@ const ALLOWED_OPENAI_PATHS = [
 // Reasoning paths NOT YET converted to Anthropic. MUST shrink to zero. Each entry
 // is tracked debt; a new reasoning file using OpenAI is NOT allowed here.
 const KNOWN_LEGACY_REASONING = [
-  'src/lib/source/sentinel-chat-llm.ts',
-  'src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-openai/route.ts',
+  // Empty — every reasoning path is Anthropic-only. Do NOT add entries here;
+  // convert the reasoning to the audited Anthropic client instead.
 ];
 
 function walk(dir, out = []) {
