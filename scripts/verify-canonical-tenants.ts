@@ -68,6 +68,20 @@ function fail(message: string): never {
   process.exit(1);
 }
 
+function assertAzureDatabaseUrl(connectionString: string): void {
+  let host = '';
+  try {
+    host = new URL(connectionString).hostname.toLowerCase();
+  } catch {
+    fail('DATABASE_URL is not a valid Postgres URL');
+  }
+
+  const supabaseMarkers = ['supabase.co', 'supabase.com', 'pooler.supabase.com', 'xtbymdryojmvoulaotce'];
+  if (supabaseMarkers.some((marker) => host.includes(marker))) {
+    fail('DATABASE_URL points at Supabase; canonical tenant drift must run against Azure/Postgres only');
+  }
+}
+
 function validateStaticAllowlist() {
   const keys = CANONICAL_TENANTS.map((tenant) => tenant.key);
   const unique = new Set(keys);
@@ -215,6 +229,8 @@ async function main(): Promise<number> {
     console.log('verify-canonical-tenants: static allowlist clean; DATABASE_URL absent, skipping live drift check.');
     return 0;
   }
+
+  assertAzureDatabaseUrl(process.env.DATABASE_URL);
 
   await runLiveDriftCheckWithRetry();
 

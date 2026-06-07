@@ -18,6 +18,7 @@ const RUNTIME_RE = /^(src\/app|src\/components|src\/lib|src\/middleware|middlewa
 const ANSWER_GENERATION_RE =
   /^(src\/app\/api\/chat|src\/app\/api\/reasoning|src\/app\/api\/programs|src\/app\/api\/tower|src\/app\/api\/v1\/source|src\/lib\/intelligence|src\/lib\/sentinel|src\/lib\/nexus|src\/lib\/agents|src\/lib\/programs|src\/components\/intelligence|src\/components\/strategic-moves)/;
 const MODEL_GATEWAY_ALLOW_RE = /^src\/lib\/integrations\/ai-egress\/(anthropic-direct|anthropic-prompt-cache|types|policy|tenant-policy|audit|index)\.ts$/;
+const SUPABASE_DENYLIST_ALLOW_RE = /^scripts\/verify-canonical-tenants\.ts$/;
 
 const RULES = [
   {
@@ -185,6 +186,7 @@ function evaluate(rows) {
     for (const rule of RULES) {
       if (!rule.appliesTo(file)) continue;
       if (!rule.matches(row.text)) continue;
+      if (rule.id === 'NO_SUPABASE_RUNTIME' && SUPABASE_DENYLIST_ALLOW_RE.test(file)) continue;
       violations.push({
         rule: rule.id,
         description: rule.description,
