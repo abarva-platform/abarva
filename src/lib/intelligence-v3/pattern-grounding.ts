@@ -1,109 +1,125 @@
-// Grounding-scoped pattern guard — pure, deterministic, no I/O (no server-only,
-// no data-plane imports) so it is unit-testable in isolation.
+// Pattern grounding-namespace validation — pure, deterministic, no I/O (no
+// server-only, no data-plane imports) so it is unit-testable and safe to import
+// from both server builders and client components.
 //
-// Why this exists: pattern IDs live in two parallel namespaces —
-//   • corpus_patterns   → slugs like `pat-lsh-d18-00479`  (emitted UPPERCASE: PAT-LSH-*)
-//   • genome_patterns   → codes like `LSH-TMS-002`        (served by the runtime
-//                          Azure Search index `lakeshore-patterns-v1`)
-// A *valid* corpus id (PAT-LSH-D18-00479, a public-sector procurement pattern)
-// leaked onto a Kyriba/treasury decision card whose grounding set is the
-// genome / LSH-TMS namespace. A generic "reject ids absent from all tables"
-// guard would NOT catch this — PAT-LSH-D18-00479 is a real id, just in the wrong
-// namespace. The guard here is GROUNDING-SCOPED: each decision/card has an active
-// grounding namespace, and a pattern id is valid for that card only if it belongs
-// to that namespace — even if it is a perfectly valid id somewhere else.
+// Why this exists: a pattern id can be VALID in one registry namespace yet WRONG
+// for the card it is bound to. `PAT-LSH-D18-00479` is a real Lakeshore *corpus*
+// slug (a public-sector procurement pattern in `corpus_patterns`), but it is not
+// part of the *treasury* registry (`genome_patterns` / `lakeshore-patterns-v1`,
+// ids like `LSH-TMS-002`). Binding it to a Kyriba/treasury decision card is a
+// CROSS-NAMESPACE mis-binding — not a generic "does not exist" error.
+//
+// These helpers classify a pattern id's namespace, derive the grounding a card
+// requires from its text, and FAIL CLOSED: a treasury card binds only a treasury
+// pattern (or none), never an off-namespace one. Generic global existence is NOT
+// sufficient — grounding namespace must match.
 
-export type PatternNamespace = 'corpus-pat-lsh' | 'genome-lsh-tms';
+export type PatternGroundingNamespace = 'treasury' | 'lakeshore-corpus' | 'unknown';
 
-/**
- * Classify an emitted pattern id by its shape (case-insensitive).
- * Returns 'unknown' for ids that match no known namespace — those fail closed.
- */
-export function classifyPatternId(id: string | null | undefined): PatternNamespace | 'unknown' {
-  const v = (id ?? '').trim().toUpperCase();
-  if (/^LSH-TMS-\d+/.test(v)) return 'genome-lsh-tms';
-  if (/^PAT-LSH-/.test(v)) return 'corpus-pat-lsh';
+/** Treasury registry ids: `LSH-TMS-002` (genome_patterns.code / lakeshore-patterns-v1). */
+const TREASURY_ID = /^lsh-tms-\d+$/i;
+/** General Lakeshore corpus slugs: `PAT-LSH-D18-00479` / `pat-lsh-...` (corpus_patterns). */
+const LAKESHORE_CORPUS_ID = /^pat-lsh-[a-z0-9][a-z0-9-]*$/i;
+
+/** Classify a pattern id/slug into its registry namespace. Unknown shapes fail closed. */
+export function classifyPatternNamespace(
+  idOrSlug: string | null | undefined,
+): PatternGroundingNamespace {
+  const v = (idOrSlug ?? '').trim();
+  if (!v) return 'unknown';
+  if (TREASURY_ID.test(v)) return 'treasury';
+  if (LAKESHORE_CORPUS_ID.test(v)) return 'lakeshore-corpus';
   return 'unknown';
 }
 
-/** True iff the id belongs to the given grounding namespace (case-insensitive). */
-export function isIdInNamespace(id: string | null | undefined, ns: PatternNamespace): boolean {
-  return classifyPatternId(id) === ns;
-}
-
-// Terms that put a decision/card in the genome LSH-TMS (treasury/Kyriba) grounding
-// namespace. Keyword-driven so it is data-derived per card, NOT a hardcoded id map.
-const TMS_GROUNDING_TERMS = [
-  'kyriba', 'treasury', 'tms', 'cash management', 'liquidity', 'bank connectivity',
-  'bank-connectivity', 'payment', 'payments', 'bec', 'intercompany', 'covenant',
-  'banking consolidation',
+/** Terms that mark a card/use-case as requiring TREASURY grounding. */
+const TREASURY_GROUNDING_TERMS = [
+  'kyriba', 'treasury', 'cash', 'liquidity', 'payment', 'bank connectivity',
+  'bank', 'intercompany', 'covenant', 'reconciliation', 'fx', 'hedge', 'tms',
+  'payments factory', 'forecasting',
 ];
 
 /**
- * Determine the active grounding namespace for a decision/card from its text
- * (use case name + problem statement + decision label). Treasury/Kyriba/TMS
- * decisions ground in the genome LSH-TMS namespace; everything else defaults to
- * the Lakeshore corpus pat-lsh namespace.
+ * Derive the grounding namespace a card/use-case requires from its text. Treasury
+ * terms → 'treasury'; otherwise the general Lakeshore corpus namespace.
  */
-export function groundingNamespaceForText(text: string | null | undefined): PatternNamespace {
+export function requiredGroundingForText(
+  text: string | null | undefined,
+): PatternGroundingNamespace {
   const t = (text ?? '').toLowerCase();
-  return TMS_GROUNDING_TERMS.some((term) => t.includes(term)) ? 'genome-lsh-tms' : 'corpus-pat-lsh';
-}
-
-export interface GroundingDiagnostic {
-  rejectedId: string;
-  rejectedNamespace: PatternNamespace | 'unknown';
-  grounding: PatternNamespace;
-  reason: string;
+  return TREASURY_GROUNDING_TERMS.some((term) => t.includes(term))
+    ? 'treasury'
+    : 'lakeshore-corpus';
 }
 
 /**
- * Keep only id-bearing items whose id is in the grounding namespace. Cross-
- * namespace ids (valid elsewhere) and unknown ids are dropped and reported into
- * `diagnostics`. This is the backstop guard applied at every emission point
- * (binding patterns, citations, evidence, score basis, anti-patterns).
+ * True only when the pattern id is in the namespace the card requires. Unknown
+ * ids and cross-namespace ids fail closed (false). This is grounding-namespace
+ * validation, NOT global existence.
  */
-export function filterToGrounding<T>(
-  items: readonly T[],
-  getId: (item: T) => string,
-  grounding: PatternNamespace,
-  diagnostics?: GroundingDiagnostic[],
-): T[] {
-  const kept: T[] = [];
-  for (const item of items) {
-    const id = getId(item);
-    const ns = classifyPatternId(id);
-    if (ns === grounding) {
-      kept.push(item);
-      continue;
+export function isPatternBindable(
+  idOrSlug: string | null | undefined,
+  required: PatternGroundingNamespace,
+): boolean {
+  if (required === 'unknown') return false;
+  const ns = classifyPatternNamespace(idOrSlug);
+  if (ns === 'unknown') return false;
+  return ns === required;
+}
+
+export interface DroppedPattern {
+  id: string;
+  namespace: PatternGroundingNamespace;
+  reason: string;
+}
+
+export interface GroundingDecision<T> {
+  bound: T | null;
+  boundNamespace: PatternGroundingNamespace;
+  required: PatternGroundingNamespace;
+  dropped: DroppedPattern[];
+}
+
+/**
+ * From relevance-ranked candidates, bind the first whose namespace matches the
+ * required grounding; record every cross-namespace/unknown candidate dropped.
+ * Returns `bound: null` (fail closed) when no candidate matches.
+ */
+export function selectGroundedPattern<T>(opts: {
+  required: PatternGroundingNamespace;
+  candidates: readonly T[];
+  idOf: (row: T) => string;
+}): GroundingDecision<T> {
+  const dropped: DroppedPattern[] = [];
+  for (const row of opts.candidates) {
+    const id = opts.idOf(row);
+    const ns = classifyPatternNamespace(id);
+    if (ns === opts.required && opts.required !== 'unknown') {
+      return { bound: row, boundNamespace: ns, required: opts.required, dropped };
     }
-    diagnostics?.push({
-      rejectedId: id,
-      rejectedNamespace: ns,
-      grounding,
-      reason: `pattern id "${id}" (${ns}) is outside this card's grounding namespace "${grounding}"`,
+    dropped.push({
+      id,
+      namespace: ns,
+      reason: ns === 'unknown' ? 'unknown-namespace' : `cross-namespace:${ns}!=${opts.required}`,
     });
   }
-  return kept;
+  return { bound: null, boundNamespace: 'unknown', required: opts.required, dropped };
 }
 
-/** Split a list of raw ids into those valid for the grounding namespace and the rest. */
-export function partitionIdsByGrounding(
-  ids: readonly string[],
-  grounding: PatternNamespace,
-): { valid: string[]; rejected: string[] } {
-  const valid: string[] = [];
-  const rejected: string[] = [];
-  for (const id of ids) {
-    if (classifyPatternId(id) === grounding) valid.push(id);
-    else rejected.push(id);
-  }
-  return { valid, rejected };
+/** Keep only citations grounded in the required namespace (fail closed on the rest). */
+export function filterCitationsToGrounding<T>(
+  citations: readonly T[],
+  required: PatternGroundingNamespace,
+  idOf: (row: T) => string,
+): T[] {
+  return citations.filter((c) => isPatternBindable(idOf(c), required));
 }
 
-/** Emit grounding diagnostics to the server log (one structured line each). */
-export function recordGroundingDiagnostics(context: string, diagnostics: readonly GroundingDiagnostic[]): void {
-  for (const d of diagnostics) {
-    console.warn(JSON.stringify({ event: 'pattern_grounding_reject', context, ...d }));
-  }
+/** Emit a single diagnostic line when off-namespace pattern ids are dropped. */
+export function warnDroppedPatterns(context: string, dropped: readonly DroppedPattern[]): void {
+  if (dropped.length === 0) return;
+  console.warn(
+    `[pattern-grounding] ${context}: dropped ${dropped.length} off-namespace pattern id(s): ` +
+      dropped.map((d) => `${d.id}(${d.namespace})`).join(', '),
+  );
 }

@@ -19,6 +19,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { BelowTheLineBet, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
+import {
+  isPatternBindable,
+  requiredGroundingForText,
+} from '@/lib/intelligence-v3/pattern-grounding';
 import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
 import type { ChatMessage } from '@/components/intelligence-v3/types';
 
@@ -98,17 +102,29 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
 
   const leadBet = data.bets[0];
   const leadDecision = leadBet ? decisionCtaLabel(leadBet) : 'Review first';
-  const leadPattern = leadBet?.bindingPatterns[0]?.pattern.id ?? data.patternsTriggered[0]?.pattern.id ?? 'Pattern bound';
-  const leadPatternName = leadBet?.bindingPatterns[0]?.pattern.name ?? data.patternsTriggered[0]?.pattern.name ?? leadPattern;
-  const shapeMoveHref = leadBet
-    ? `/strategic-moves/new?${new URLSearchParams({
-        fromIntelligence: '1',
-        patternId: leadPattern,
-        patternName: leadPatternName,
-        useCaseName: leadBet.useCase.name,
-        intelligenceSessionId: `intelligence-brief:${leadPattern}:${leadBet.useCase.name}`.toLowerCase().replace(/[^a-z0-9:.-]+/g, '-'),
-      }).toString()}`
-    : '/strategic-moves/new';
+  // Decision card binds a pattern only if it is in the namespace the card's
+  // grounding requires (treasury card → LSH-TMS-*, never a corpus PAT-LSH-* id).
+  // Fail closed: if no grounded pattern, the card shows none and Shape-as-Move
+  // omits the patternId so originate resolves a real one from the registry.
+  const leadGrounding = leadBet ? requiredGroundingForText(leadBet.useCase.name) : 'unknown';
+  const leadBound =
+    leadBet?.bindingPatterns.find((bp) => isPatternBindable(bp.pattern.id, leadGrounding))?.pattern ??
+    data.patternsTriggered.find((pt) => isPatternBindable(pt.pattern.id, leadGrounding))?.pattern ??
+    null;
+  const leadPattern = leadBound?.id ?? 'Pattern resolving';
+  const shapeMoveParams = new URLSearchParams({
+    fromIntelligence: '1',
+    useCaseName: leadBet?.useCase.name ?? '',
+  });
+  if (leadBet && leadBound) {
+    shapeMoveParams.set('patternId', leadBound.id);
+    shapeMoveParams.set('patternName', leadBound.name);
+    shapeMoveParams.set(
+      'intelligenceSessionId',
+      `intelligence-brief:${leadBound.id}:${leadBet.useCase.name}`.toLowerCase().replace(/[^a-z0-9:.-]+/g, '-'),
+    );
+  }
+  const shapeMoveHref = leadBet ? `/strategic-moves/new?${shapeMoveParams.toString()}` : '/strategic-moves/new';
   // L11 fix (2026-05-13): hero title now uses the live tenant name on every
   // tenant. The earlier "Apex has three AI bets…" literal was retail-only
   // and was paired with the broken Value/Tensions panels — a CDIO at
