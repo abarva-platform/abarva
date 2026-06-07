@@ -85,7 +85,10 @@ describe('enterprise context Intelligence read model', () => {
       'Contract renewal exposure',
       'Spend baseline confidence',
     ]));
-    expect(overview.sentinelFacts.join('\n')).toContain('Enterprise Context: 12 records');
+    expect(overview.sentinelFacts.join('\n')).toContain('Enterprise Context layer: 12 records');
+    expect(overview.sentinelFacts.join('\n')).toContain(
+      'systems, vendors, contracts, KPIs, owners, and evidence are loaded in the context',
+    );
     expect(overview.sentinelFacts.join('\n')).toContain('Operational posture');
     expect(overview.sentinelFacts.join('\n')).toContain('$55.2M estimated renewal exposure');
   });
@@ -174,6 +177,7 @@ describe('enterprise context Intelligence read model', () => {
         chunk({ source_doc: '01-org-decision-rights.csv', chunk_id: 'org-1' }),
         chunk({ source_doc: '03-cmdb-applications-services.csv', chunk_id: 'cmdb-1' }),
         chunk({ source_doc: '04-ci-relationships-dependencies.csv', chunk_id: 'rel-1' }),
+        chunk({ source_doc: '05-kpi-dictionary.csv', chunk_id: 'kpi-1' }),
         chunk({ source_doc: '05-vendors-contract-inventory.csv', chunk_id: 'vendor-1' }),
         chunk({ source_doc: '09-incidents.csv', chunk_id: 'inc-1', embedding_status: 'pending' }),
       ],
@@ -201,14 +205,19 @@ describe('enterprise context Intelligence read model', () => {
     const overview = await getEnterpriseContextOverviewForTenant('meridian-health', 'Meridian Health System');
 
     expect(overview).not.toBeNull();
-    expect(overview?.counts.sources).toBe(5);
-    expect(overview?.counts.records).toBe(5);
+    expect(overview?.counts.sources).toBe(6);
+    expect(overview?.counts.records).toBe(6);
     expect(overview?.counts.relationships).toBe(1);
     expect(overview?.counts.stewardshipTasks).toBe(1);
     expect(overview?.recordTypeCounts.org_decision_rights).toBe(1);
     expect(overview?.recordTypeCounts.cmdb_applications_services).toBe(1);
+    expect(overview?.recordTypeCounts.kpi_dictionary).toBe(1);
     expect(overview?.cards.map((card) => card.title)).toContain('Embedded evidence coverage');
-    expect(overview?.sentinelFacts.join('\n')).toContain('4 embedded context chunks across 5 Admin-loaded source files');
+    expect(overview?.sentinelFacts.join('\n')).toContain('5 embedded context chunks across 6 Admin-loaded source files');
+    expect(overview?.sentinelFacts.join('\n')).toContain(
+      'systems, vendors, contracts, KPIs, owners, and evidence are loaded in the context',
+    );
+    expect(overview?.sentinelFacts.join('\n')).toContain('KPIs (1)');
     expect(overview?.sentinelFacts.join('\n')).toContain('chunk-backed loader evidence');
   });
 

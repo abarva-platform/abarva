@@ -13,6 +13,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   cmdb_applications_services: 'Systems & services',
   ci_relationships_dependencies: 'CI relationships',
   vendors_contract_inventory: 'Vendors & contracts',
+  kpi_dictionary: 'KPIs',
   renewal_calendar: 'Renewals',
   spend_baseline: 'Spend baseline',
   policies_procedures: 'Policies & controls',
@@ -43,7 +44,7 @@ export function EnterpriseContextCanvas({ overview, tenantName }: Props) {
             <p style={eyebrowStyle}>Enterprise Context</p>
             <h1 style={titleStyle}>{tenantName} context fabric</h1>
             <p style={subtitleStyle}>
-              Internal client context has not been loaded for this tenant yet. Day One templates can still be used to seed org, systems, vendors, incidents, policies, spend, and stewardship data.
+              Internal client context has not been loaded for this tenant yet. Day One templates can still be used to seed org, systems, vendors, contracts, KPIs, owners, evidence, and stewardship data.
             </p>
           </div>
         </header>
@@ -58,7 +59,7 @@ export function EnterpriseContextCanvas({ overview, tenantName }: Props) {
           <p style={eyebrowStyle}>Enterprise Context</p>
           <h1 style={titleStyle}>{tenantName} context fabric</h1>
           <p style={subtitleStyle}>
-            Internal context only: org, systems, CMDB, vendors, contracts, spend, policies, incidents, changes, initiatives, risks, evidence, and stewardship.
+            Internal context only: systems, vendors, contracts, KPIs, owners, and evidence are loaded in the context layer, with spend, policies, incidents, changes, initiatives, risks, and stewardship alongside them.
           </p>
         </div>
         <div style={statusPanelStyle} aria-label="Enterprise context coverage">

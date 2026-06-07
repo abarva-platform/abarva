@@ -29,6 +29,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   cmdb_applications_services: 'Systems & services',
   ci_relationships_dependencies: 'CI relationships',
   vendors_contract_inventory: 'Vendors & contracts',
+  kpi_dictionary: 'KPIs',
   renewal_calendar: 'Renewals',
   spend_baseline: 'Spend baseline',
   policies_procedures: 'Policies & controls',

@@ -68,9 +68,9 @@ describe('C5 · pilot-dashboard aggregates', () => {
   });
 
   describe('toSubstrateSnapshot', () => {
-    it('emits 15 coverage tiles with zero counts when overview is null', () => {
+    it('emits 16 coverage tiles with zero counts when overview is null', () => {
       const s = toSubstrateSnapshot(null);
-      expect(s.coverageTiles).toHaveLength(15);
+      expect(s.coverageTiles).toHaveLength(16);
       expect(s.coverageTiles.every((t) => t.rowCount === 0)).toBe(true);
       expect(s.contextCards).toEqual([]);
       expect(s.totalEvidence).toBe(0);
@@ -92,6 +92,7 @@ describe('C5 · pilot-dashboard aggregates', () => {
         },
         recordTypeCounts: {
           org_decision_rights: 40,
+          kpi_dictionary: 12,
           renewal_calendar: 24,
           incidents: 180,
         },
@@ -118,11 +119,14 @@ describe('C5 · pilot-dashboard aggregates', () => {
       };
 
       const s = toSubstrateSnapshot(overview);
-      expect(s.coverageTiles).toHaveLength(15);
+      expect(s.coverageTiles).toHaveLength(16);
       const orgTile = s.coverageTiles.find((t) => t.domain === 'org_decision_rights');
       expect(orgTile?.rowCount).toBe(40);
       const renewals = s.coverageTiles.find((t) => t.domain === 'renewal_calendar');
       expect(renewals?.rowCount).toBe(24);
+      const kpis = s.coverageTiles.find((t) => t.domain === 'kpi_dictionary');
+      expect(kpis?.label).toBe('KPIs');
+      expect(kpis?.rowCount).toBe(12);
       const spend = s.coverageTiles.find((t) => t.domain === 'spend_baseline');
       expect(spend?.rowCount).toBe(0); // not in recordTypeCounts
       expect(s.contextCards).toHaveLength(1);
