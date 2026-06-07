@@ -47,6 +47,12 @@ Confirm all of the above against both stores and treat any drift as a finding.
 4. **Production reasoning = Claude/Anthropic, never OpenAI.** Sentinel, Nexus, Source, Tower, Atlas, and chat/agent synthesis must use Claude. OpenAI only for explicitly approved non-reasoning utilities (embeddings, demo audio). Any answer-generation path on OpenAI = **P0**.
 5. **Never print secret values.** Verify env var *names* and presence via Vercel/Azure CLI only.
 6. **Tenant isolation is absolute.** No cross-tenant leakage; verify by adversarial test (ask as client X, confirm zero client-Y rows).
+7. **Audit BOTH stores. "Azure unreachable" is NEVER "Azure empty."** The Azure Postgres (`ABARVA_AZURE_DATABASE_URL` → `pg-abarva-context-lab-001…`) is **private (`publicNetworkAccess: Disabled`, VNet-only, e.g. `10.43.1.4`)**. A developer laptop — and any agent (Cursor/Codex/Claude) running on it — has **no network route** to it; DNS will not even resolve (`ENOTFOUND`). **`az`/`vercel` CLI being authenticated does NOT give a network path** (subscription auth ≠ TCP route into the VNet). Only **Supabase (`DATABASE_URL`) is directly reachable from the laptop.** Therefore:
+   - **(a)** Every Azure-side count MUST be obtained **from inside the VNet** via the operator job (`az containerapp job start job-abarva-private-operator-eus …`, see Appendix B), **never** a direct `psql`/`pg` connection from the run host.
+   - **(b)** If an Azure cell cannot be executed in this run, record it as **`UNVERIFIED-AZURE`** — **never** `0`, `absent`, `missing`, or "not loaded." Unverified ≠ empty.
+   - **(c)** **A Supabase-only read may NOT conclude a client "has no data"** — its corpus may live in Azure (this is exactly Lakeshore's case: facts in Azure, prod reads Supabase). Drawing an "empty/incomplete" verdict from one store is a **reporting error**, not a finding.
+   - **(d)** Every count in every matrix cell MUST carry **`store`** (`supabase` | `azure`) **and `access_method`** (`direct` | `operator-job`). A run that touched only Supabase is an **INCOMPLETE audit** and must be labeled so in the executive summary — not presented as the full picture.
+   - **(e)** The clean way to fully cover Azure is to run this audit (or at least its Azure cells) from the **deployed/VNet environment**. If you cannot, say so explicitly and list every `UNVERIFIED-AZURE` cell as outstanding work — do not silently substitute Supabase numbers.
 
 ---
 
