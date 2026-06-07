@@ -69,6 +69,47 @@ jobs would still fail if re-run against the current image:
   in PR #3240 (Nexus already Claude). **QA-gated:** signed-in validation required
   before prod (no Clerk session available here).
 
+## Step 9 — b1 gate runs on the new image (2026-06-07 ~03:50Z)
+
+#3244 merged (`main` @ `43839a41c`). Image `abarva/web:cutover-main-20260607-43839a41c`
+(digest `sha256:9c5bf5db…`, built from merged main) was pinned by digest onto all
+4 jobs. Ran the gate sequence (Contributor → `jobs/start` works):
+
+| Gate          | Job execution                    | Result                                                                                                                                                                                            |
+| ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DB proof      | `…private-operator-eus-511wfrc`  | **Succeeded** — private DNS `10.43.1.4`, `abarva_control` reachable on new image                                                                                                                  |
+| drain-apply   | `…supa-drain-apply-eus-xgzl0d8`  | **Succeeded** — `ok:true`; every table `skipped-parity-or-ahead` (Azure ≥ Supabase: facts 38,640, records 3,503, relationships 820, chunks 21,967≥15,847)                                         |
+| search-verify | `…a24-search-verify-eus-kn88y7p` | **Succeeded** — `azure_search_backfill_verified`, all tenants match: apex 6497, first-capital 400, lakeshore 6576, **meridian-health 4376/4376** (off-by-7 closed), northstar 878, skyharbor 3240 |
+| supa-final    | `…supa-final-eus-jb3yk3x`        | **Backup complete; freeze step Failed (intentionally not forced)** — see below                                                                                                                    |
+
+### supa-final detail (guardrail-respecting)
+
+- The Supabase **final backup** completed: all tables exported to blob
+  `supabase-final-backups/supabase-final-20260607-001/…` (sha256 per table).
+- The `supabase_final_backup_freeze` step then attempted `ALTER DATABASE … read-only`
+  on Supabase and errored: `cannot execute ALTER DATABASE in a read-only transaction`.
+- **This is the Supabase freeze (a pause-equivalent).** Per the guardrails — no
+  Supabase pause/delete, no sunset-ready claim until signed-in QA + soak pass —
+  this step must NOT run yet. The failure left Supabase unfrozen, which is the
+  desired state. **Not fixed/forced by design.**
+
+### Honest notes
+
+- **drain-apply** went green because the live job runs an _inline_ drain with a
+  `skipped-parity-or-ahead` guard and Azure had already reached parity — not
+  because of the repo `drain-supabase-to-azure.ts` fix (that script path is not
+  what the job invokes). The repo fix remains correct for the script path.
+- **search-verify** uses the repo `azure-ai-search-backfill.ts` (via the new
+  image), so the verify-poll fix is live; meridian now verifies 4376/4376.
+
+### Cutover gate state
+
+- Azure data parity: **GREEN** (drain) · Search index parity: **GREEN** (verify)
+  · Supabase final backup: **GREEN** · Supabase freeze: **DEFERRED (guardrail)**.
+- **NOT sunset-ready** — signed-in (Clerk) QA of Claude Sentinel/Source (PR #3243)
+  and the Azure-only soak gate are still pending; Supabase remains live and unfrozen;
+  DNS unchanged; Vercel production intact.
+
 ## Step 8 — b1 image rebuild from merged main (2026-06-07 ~03:15Z)
 
 PR #3242 merged to `main` (gate fixes + Azure-only guard present). Started
