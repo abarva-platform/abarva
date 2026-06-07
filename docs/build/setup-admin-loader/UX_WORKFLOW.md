@@ -95,3 +95,44 @@ committing · loaded · partial (some skipped) · error (per-file, specific, res
 ## Non-negotiables carried through every on-ramp
 Blob preservation (Gate 0) · document facts review-required · proportionality validation · citation to
 the preserved original · provenance (mapping proposal + user clarifications stored) · tenant scoping/RLS.
+
+## Agent-assisted validation — Steward (workflow-anchored)
+
+Validation is open-ended, so the loader's ask/validate/confirm brain is the Setup/Admin agent
+**Steward** (Claude, Anthropic-only, audited egress). It assists **inside** the drop→review→confirm
+spine — it is *not* a chatbot front door. Conversation is the exception path, surfaced only when
+the structured flow can't resolve something.
+
+### Hybrid: deterministic for the knowable, agent for the open-ended
+- **Deterministic checks** (fast, free): schema types/required, value ranges, **proportionality bands**
+  (org profile), FK/orphan resolution, duplicate-by-hash, units.
+- **Steward (agent) checks** (open-ended): semantic mapping, **conflicts** ("two people titled CFO —
+  which is current?"), **implied gaps** ("deck cites a 24th hospital not in your profile — add it?"),
+  realism judgment ("IT budget reads 0.3% of revenue — typo or just the security slice?"),
+  format weirdness. The agent only reasons where rules can't reach.
+
+### Four touchpoints (mapped to the wireframe)
+1. **Classification + mapping** — Steward proposes file→dimension and column→field with confidence.
+2. **Inline clarification cards** (Screen 4) — the batched questions *are* Steward; best-guess pre-selected, one tap.
+3. **Open-ended validation flags** (Screen 3 rows) — calm row-level flags (⚠ confirm / ➕ add) — confirm/correct, not free typing.
+4. **"Ask Steward" dock** (scoped) — a side panel for the genuinely messy file; full conversation, **scoped to that file/upload**, never global.
+
+### Boundary rule — inline flag vs escalate to conversation
+- **Inline flag (default):** a single-row/single-field issue resolvable in ≤1 decision (pick/confirm/correct).
+  Stays in the table. ~90% of cases.
+- **Escalate to the scoped Ask-Steward dock when:** multi-step ambiguity; a conflict needing context;
+  the user taps "why?/what is this?"; or a file stays low-confidence after one question. The dock is
+  scoped to that file/upload, carries its parsed preview, and writes back the resolved mapping.
+- **Never** open a global chatbot; never make a clean upload require conversation.
+
+### Governance (the agent makes lineage *better*, not riskier)
+- **Steward proposes/asks; the human confirms.** No auto-commit — document-derived facts stay review-required.
+- **Anthropic-only**, audited via `ai_egress_audit` (provider=anthropic), `clients.ai_policy` gate.
+- **The Q&A is stored as provenance** — the proposal, the flag, and the user's answer are saved, so
+  "how this fact came to be" is fully auditable (an upgrade over silent rules).
+- Every committed fact still cites the Blob-preserved original (Gate 0).
+
+### Apple guardrail
+Steward must make the user **talk less, not more.** Target: most uploads = **zero** conversation;
+the agent earns its keep on the messy ~10%. If users feel like they're chatting to load data, we've
+over-rotated — tighten the confidence thresholds and default to confident proposals.
