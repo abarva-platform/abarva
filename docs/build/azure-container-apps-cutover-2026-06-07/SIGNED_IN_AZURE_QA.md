@@ -1,5 +1,41 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~04:40Z — Clerk mint attempted; secrets not in this VM
+
+Operator opted to provide Clerk auth via Cursor secrets and asked to mint sign-in
+tickets with the repo helper (`scripts/auth/prime-agent-client-auth-states.ts`,
+`npm run auth:agent-client-states`). Attempted against the 0-traffic test revision.
+
+**Mint attempt — FAILED (exact, non-secret):**
+
+- Command: `BASE_URL=https://ca-abarva-web-lab-eastus--provqa…azurecontainerapps.io npm run auth:agent-client-states -- --persona lakeshore-cfo --refresh`
+- Clerk user identifier used: `cfo@lakeshore-holdings.example.com` (persona `lakeshore-cfo`)
+- Route tested: none reached — failed before any HTTP call (secret check is first).
+- **Exact non-secret error:** `Missing CLERK_SECRET_KEY. Use a local .env.local; never commit it.`
+
+**Root cause:** the Clerk env vars are **absent in this already-running agent VM**.
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD` all
+read `absent`. Cursor Cloud Agent secrets are injected into a **new** agent VM at
+startup; adding them mid-session does **not** propagate into the current VM.
+
+**To complete signed-in QA, two prerequisites in the VM that runs the mint:**
+
+1. `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` present at VM start
+   (start a **fresh agent run** after adding the Cursor secrets), and
+2. Playwright chromium installed (`npx playwright install chromium` — not currently
+   cached here). The helper launches headless chromium for ticket sign-in.
+
+Personas ready in the helper: `lakeshore-cfo` (`cfo@lakeshore-holdings.example.com`),
+`lakeshore-cio` (`cio@lakeshore-holdings.example.com`), `meridian-cdao`
+(`cdao@meridian-health.example.com`). Note: there is **no Apex _CDO_** persona — the
+closest is `apexretail-cio` (`cio@apex-retail.example.com`); provision an Apex CDO
+via `auth:provision-cxo-personas` if specifically required.
+
+Guardrails held: `provqa` still 0% traffic (`--0000051=100`); no DNS / Vercel /
+Supabase change; no `.auth` files committed (`.auth/` is gitignored).
+
+---
+
 ## UPDATE 2026-06-07 ~04:30Z — test revision deployed; signed-in QA still BLOCKED
 
 **0-traffic test revision deployed safely (production traffic untouched):**
