@@ -68,3 +68,15 @@ Captured from Azure runtime using managed identity; no secret values printed.
 
 The final export artifacts exist, but the job returned failed because the
 reversible freeze step did not complete. This is not a Supabase pause or delete.
+
+## Merged-main rerun
+
+| Field               | Value                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Execution           | `job-supa-final-eus-0k0143f`                                                                                                                          |
+| Image               | `acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-43839a41`                                                                                |
+| Status              | Failed                                                                                                                                                |
+| Observed progress   | Table exports continued through large tables including `enterprise_context_chunks` and `engagements`; per-table SHA-256 upload log lines were emitted |
+| Final manifest read | Not captured for this rerun because Container Apps exec returned 404 during the post-run evidence read                                                |
+
+The merged-main rerun did not close the final backup/freeze gate.

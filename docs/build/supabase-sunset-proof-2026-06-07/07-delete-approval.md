@@ -83,9 +83,9 @@ recorded.
 ## 2026-06-07 stop condition
 
 Do not pause or delete Supabase. Do not change DNS. Do not remove Vercel
-production. The candidate Azure Container Apps revision now passes public
+production. The merged-main Azure Container Apps revision now passes public
 health, signed-in smoke QA, runtime DB proof, Anthropic proof, and six-tenant
-Search retrieval smoke, but PR #3240 remains draft/unmerged from this agent's
-perspective, no 24-72 hour soak has run, Supabase zero-read/write logs are not
-attached, native `pg_dump`/restore-test evidence is incomplete, and explicit
-deletion approval is not recorded.
+Search retrieval smoke, but no 24-72 hour soak has run, Supabase
+zero-read/write logs are not attached, native `pg_dump`/restore-test evidence is
+incomplete, `supa-final` still failed overall, and explicit deletion approval is
+not recorded.

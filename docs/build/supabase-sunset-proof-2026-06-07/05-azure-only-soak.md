@@ -76,9 +76,28 @@ No production soak was started or claimed from this environment.
 | Supabase project zero-read/write logs | NOT CAPTURED                                                                                                                 |
 | Duration                              | NOT A SOAK: this was a candidate smoke attempt, not a 24-72 hour soak                                                        |
 
-The Azure-only soak can be scheduled only after PR #3240 is merged or the team
-explicitly approves soaking the candidate image. This proof does not claim the
-24-72 hour soak is complete.
+The Azure-only soak can now be scheduled against the merged-main Azure runtime,
+but this proof does not claim the 24-72 hour soak is complete.
+
+## 2026-06-07 merged-main smoke
+
+After #3242/#3244 were merged, image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-43839a41` was built
+from `main` and deployed as revision `ca-abarva-web-lab-eastus--0000051`.
+
+| Control                | Result                                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Revision               | PASS: `0000051`, healthy, 100% traffic                                                                          |
+| Boot guard             | PASS: `supabase_boot_guard_passed`, `dataPlane=azure-postgres`                                                  |
+| Public `/`             | PASS: HTTP 200                                                                                                  |
+| `/api/health`          | PASS: HTTP 200 with Postgres checks green                                                                       |
+| Azure runtime DB proof | PASS: connected to `abarva_control` at `10.43.1.4/32`                                                           |
+| Signed-in QA           | PASS for Apex CDO and Meridian CDAO across Home, Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin       |
+| App log deny-list      | PASS on revision `0000051` tail; no Supabase host/env deny-list matches                                         |
+| Anthropic proof        | PASS: `claude-opus-4-7` runtime request succeeded                                                               |
+| Azure-only smoke job   | PASS: `job-a24-azure-soak-eus-rtthqal`; runtime smoke `9 pass / 0 fail`; retrieval smoke passed for six tenants |
+
+This is still a smoke run, not the required 24-72 hour soak.
 
 ## Log deny-list
 
@@ -123,7 +142,5 @@ az monitor log-analytics query \
 5. No Azure Postgres production traffic proof is attached.
 6. This shell still has no direct production data-plane environment variables;
    Azure DB proof was correctly gathered from Azure runtime instead.
-7. PR #3240 remains unmerged/draft from this agent's perspective; the current
-   passing runtime is a candidate image.
-8. No 24-72 hour soak window or Supabase project zero-read/write log export is
+7. No 24-72 hour soak window or Supabase project zero-read/write log export is
    attached.

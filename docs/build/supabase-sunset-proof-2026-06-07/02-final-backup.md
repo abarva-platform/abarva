@@ -122,3 +122,18 @@ Run validation against the temporary restored database, not production.
 This export is useful final-backup evidence but does not fully satisfy the
 original native full Postgres dump/restore-test gate. A restore-test has not
 been run.
+
+## 2026-06-07 merged-main supa-final rerun
+
+| Field             | Value                                                                                                                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Execution         | `job-supa-final-eus-0k0143f`                                                                                                                                                                                      |
+| Image             | `acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-43839a41`                                                                                                                                            |
+| Execution status  | Failed                                                                                                                                                                                                            |
+| Observed progress | Exported multiple large tables including `corpus_patterns`, `corpus_telemetry`, `enterprise_context_chunk_queue`, `enterprise_context_chunks`, `engagements`, and related tables with per-table SHA-256 log lines |
+| Manifest re-read  | Blocked during evidence capture because Container Apps exec returned 404 for revision `0000051`; local storage data-plane listing remains blocked by storage network rules                                        |
+
+The merged-main rerun does not close the final backup gate. The prior fixed-root
+manifest confirms JSONL export artifacts exist under
+`supabase-final-backups/supabase-final-20260607-001`, but a native `pg_dump`,
+restore-test, and successful final backup/freeze job are still missing.

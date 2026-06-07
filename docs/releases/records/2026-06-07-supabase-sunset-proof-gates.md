@@ -108,6 +108,26 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
   `supabase-final-backups/supabase-final-20260607-001/manifest.json`; overall
   job failed because the reversible freeze step failed with
   `cannot execute ALTER DATABASE in a read-only transaction`.
+- Pass: after #3242/#3244 merged, image
+  `acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-43839a41` was
+  built from merged `main` commit `43839a41c71217f61ea165eff3071f70df5f4af7`
+  and deployed as `ca-abarva-web-lab-eastus--0000051`.
+- Pass: merged-main revision `0000051` is healthy with 100% traffic, boot guard
+  passed, public `/` and `/api/health` returned HTTP 200, and `/api/health`
+  reported Postgres/direct Postgres green.
+- Pass: merged-main signed-in QA passed for Apex CDO and Meridian CDAO across
+  Home, Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin.
+- Pass: merged-main runtime Anthropic proof succeeded with `claude-opus-4-7`.
+- Pass: merged-main app log deny-list tail had no Supabase host/env-name
+  matches.
+- Pass: merged-main `job-supa-drain-apply-eus-bcvp371` succeeded.
+- Pass: merged-main `job-a24-search-verify-eus-v4xv4gp` succeeded with expected
+  Search counts.
+- Pass: merged-main `job-a24-azure-soak-eus-rtthqal` succeeded as smoke:
+  runtime smoke `9 pass / 0 fail`, retrieval smoke passed for six tenants.
+- Partial: merged-main `job-supa-final-eus-0k0143f` failed overall after
+  emitting table export/checksum progress; final manifest re-read was blocked by
+  Container Apps exec 404 during evidence capture.
 - Not run: formal production Supabase freeze timestamp/log export, native
   `pg_dump` restore-test, 24-72 hour Azure-only soak, pause QA, and deletion
   approval.
@@ -147,8 +167,8 @@ as rollback unless explicitly approved.
 - Final backup JSONL export/manifest exists, but native `pg_dump` and
   restore-test evidence are not attached.
 - Azure parity checksums and several required table families remain unproven.
-- Fresh Azure Search verify/retrieval smoke passed for six tenants, but Morgan
-  Street/Northshore golden retrieval is not attached.
+- Fresh Azure Search verify/retrieval smoke passed for six tenants on merged
+  main, but Morgan Street/Northshore golden retrieval is not attached.
 - Production Azure-only 24-72 hour soak has not run.
 - Pause-before-delete QA has not been run; Supabase was not paused.
 - Explicit deletion approval is not recorded; Supabase was not deleted.

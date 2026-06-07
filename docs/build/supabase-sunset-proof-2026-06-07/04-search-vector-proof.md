@@ -98,6 +98,35 @@ Meridian, First Capital, Lakeshore, SkyHarbor, and Northstar.
 Remaining gap: Morgan Street/Northshore golden retrieval is still not mapped or
 captured in this proof pack.
 
+## 2026-06-07 merged-main verification
+
+After PR #3242/#3244 were merged to `main`, image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-43839a41` was built
+and deployed to Azure Container Apps jobs.
+
+`job-a24-search-verify-eus-v4xv4gp` succeeded and emitted:
+
+```json
+{
+  "event": "azure_search_backfill_verified",
+  "observed": {
+    "apex-retail": 6497,
+    "first-capital": 400,
+    "lakeshore-holdings": 6576,
+    "meridian-health": 4376,
+    "northstar-clinical": 878,
+    "skyharbor-air": 3240
+  }
+}
+```
+
+`job-a24-azure-soak-eus-rtthqal` also ran retrieval smoke and returned three
+hits for each of Apex, Meridian, First Capital, Lakeshore, SkyHarbor, and
+Northstar.
+
+Remaining gap: Morgan Street/Northshore golden retrieval is still not mapped or
+captured in this proof pack.
+
 ## Golden retrieval matrix
 
 The following tenant set must be run against the Azure-only production runtime
