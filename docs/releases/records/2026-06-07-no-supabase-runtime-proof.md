@@ -45,6 +45,15 @@ instrumentation.
 ## QA / Validation
 
 - Pass: `npm run audit:no-supabase-runtime-proof`
+- Pass: `node --check scripts/audit/no-supabase-runtime-proof.mjs`
+- Pass: `npx eslint scripts/audit/no-supabase-runtime-proof.mjs`
+- Pass: `npm run audit:runtime-supabase-imports:guard`
+- Pass: `npm run release:check -- --base origin/main --head HEAD`
+- Pass: `git diff --check`
+- Environment note: local validation required `npm ci` because `node_modules`
+  was absent. `npm ci` completed with a pre-existing Node engine warning for
+  `lint-staged` under Node 22 and existing npm audit findings; no dependency
+  files were changed.
 
 ## Rollout Plan
 
