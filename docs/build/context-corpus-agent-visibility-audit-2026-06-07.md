@@ -143,8 +143,9 @@ npx tsx src/scripts/meridian-context-inventory.ts --tenant meridian-health
 
 ## 7b. Failed decommission/proof gates — root-cause diagnosis (from Log Analytics)
 
-Diagnosed read-only from operator job logs. These are the in-flight Azure
-migration thread's jobs, so this is a fix spec (not a blind patch underneath them).
+Diagnosed read-only from operator job logs. **Fixes implemented in this PR**
+(pure helpers + unit tests; coordinate the merge with the migration thread so the
+job scripts aren't double-edited).
 
 **`job-supa-drain-apply-eus` (FAILED 2026-06-06 23:34) — DEFINITIVE**
 
