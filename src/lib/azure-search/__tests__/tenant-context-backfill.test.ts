@@ -42,10 +42,33 @@ describe('tenant context search backfill mapping', () => {
     expect(tenantContextSearchId('first-capital', 'chunk/with:chars')).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
+  it('keeps oversized chunk bodies within Azure Search term limits', () => {
+    const doc = toTenantContextSearchDocument({
+      tenant_key: 'meridian',
+      chunk_id: 'long-chunk',
+      source_segment_id: 'large_extract',
+      source_record_id: null,
+      source_doc: null,
+      source_path: null,
+      chunk_index: 0,
+      chunk_text: 'x'.repeat(40_000),
+      embedded_at: null,
+      provenance: null,
+      chunk_metadata: null,
+    });
+
+    expect(Buffer.byteLength(String(doc.body), 'utf8')).toBeLessThanOrEqual(30_000);
+  });
+
   it('normalizes known legacy tenant aliases and can delete stale alias documents', () => {
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
+    expect(canonicalTenantKey('firstcapital')).toBe('first-capital');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
+    expect(canonicalTenantKey('meridian_healthcare')).toBe('meridian-health');
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
+    expect(canonicalTenantKey('lakeshore')).toBe('lakeshore-holdings');
+    expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
+    expect(canonicalTenantKey('northstar')).toBe('northstar-clinical');
     expect(toTenantContextSearchDocument({
       tenant_key: 'arcturus',
       chunk_id: 'chunk-1',

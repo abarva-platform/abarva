@@ -15,9 +15,18 @@ export type EnterpriseContextChunkRow = {
 };
 
 const TENANT_KEY_ALIASES: Record<string, string> = {
+  'apex-retail-group': 'apex-retail',
   apexretail: 'apex-retail',
   arcturus: 'first-capital',
+  firstcapital: 'first-capital',
+  'first-capital-bank': 'first-capital',
+  lakeshore: 'lakeshore-holdings',
+  'lakeshore-holding': 'lakeshore-holdings',
   meridian: 'meridian-health',
+  'meridian-healthcare': 'meridian-health',
+  northstar: 'northstar-clinical',
+  skyharbor: 'skyharbor-air',
+  'skyharbor-airlines': 'skyharbor-air',
 };
 
 function safeString(value: unknown, fallback: string): string {
@@ -33,12 +42,29 @@ function safeNumber(value: unknown, fallback: number): number {
   return fallback;
 }
 
+function truncateUtf8(value: string, maxBytes: number): string {
+  let bytes = 0;
+  let output = '';
+  for (const char of value) {
+    const charBytes = Buffer.byteLength(char, 'utf8');
+    if (bytes + charBytes > maxBytes) break;
+    output += char;
+    bytes += charBytes;
+  }
+  return output;
+}
+
+function safeSearchBody(value: string): string {
+  return truncateUtf8(value, 30_000);
+}
+
 export function tenantContextSearchId(tenantKey: string, chunkId: string): string {
   return Buffer.from(`${tenantKey}:${chunkId}`, 'utf-8').toString('base64url');
 }
 
 export function canonicalTenantKey(tenantKey: string): string {
-  return TENANT_KEY_ALIASES[tenantKey] ?? tenantKey;
+  const normalized = tenantKey.trim().toLowerCase().replace(/_/g, '-');
+  return TENANT_KEY_ALIASES[normalized] ?? normalized;
 }
 
 export function toTenantContextDeleteDocument(tenantKey: string, chunkId: string): SearchDocument {
@@ -71,7 +97,7 @@ export function toTenantContextSearchDocument(
     record_id: safeString(row.source_record_id, row.chunk_id),
     chunk_id: row.chunk_id,
     title: sourceDoc,
-    body: row.chunk_text,
+    body: safeSearchBody(row.chunk_text),
     source_uri: sourcePath,
     confidence: safeNumber(metadata.confidence ?? provenance.confidence, 0.8),
     sensitivity,
