@@ -32,10 +32,10 @@ Legacy engagement URLs now resolve engagements only inside the signed-in user's 
 
 ## QA / Validation
 
-- Pending in this candidate before final summary:
-  - Focused Jest test for `src/lib/db/__tests__/engagement-tenant-scope.test.ts`.
-  - Focused ESLint check for touched TypeScript/TSX files.
-  - `npm run release:check`.
+- Blocked: Initial focused Jest and ESLint attempts could not run because this cloud workspace did not have `node_modules`; transient `npx` installs could not load the repo TypeScript/Jest/ESLint config.
+- Passed: `npx jest "src/lib/db/__tests__/engagement-tenant-scope.test.ts" --runInBand` (3 tests passed; Jest reported pre-existing duplicate manual mock warnings for mdast/micromark mocks).
+- Passed: `npx eslint` on all touched TypeScript/TSX source and test files.
+- Passed: `npm run release:check` after adding explicit QA statuses.
 
 ## Rollout Plan
 
