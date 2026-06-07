@@ -27,7 +27,13 @@ import type {
   LoaderStageStatus,
 } from "@/components/setup/loader";
 
-type Phase = "idle" | "understanding" | "review" | "committing" | "done" | "error";
+type Phase =
+  | "idle"
+  | "understanding"
+  | "review"
+  | "committing"
+  | "done"
+  | "error";
 
 interface UnderstoodOk {
   ok: true;
@@ -58,19 +64,27 @@ const ACCEPT = ".csv,.json,.jsonl,.yaml,.yml,.xlsx,.pdf,.docx,.pptx";
  * Every network call hits the governed loader routes; nothing commits until
  * the operator confirms.
  */
-export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientProps) {
+export function AdminLoaderClient({
+  clientId,
+  tenantName,
+}: AdminLoaderClientProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [files, setFiles] = useState<File[]>([]);
   const [understood, setUnderstood] = useState<Understood[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [rowDecisions, setRowDecisions] = useState<Record<string, ReviewRowAction>>({});
-  const [dimensionOverrides, setDimensionOverrides] = useState<Record<string, LoaderDimension>>({});
+  const [rowDecisions, setRowDecisions] = useState<
+    Record<string, ReviewRowAction>
+  >({});
+  const [dimensionOverrides, setDimensionOverrides] = useState<
+    Record<string, LoaderDimension>
+  >({});
   const [busyKeys] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [landingCount, setLandingCount] = useState<number | null>(null);
   const [landingPath, setLandingPath] = useState<string>("context-landing");
   const [dockFile, setDockFile] = useState<PreservedSourceFile | null>(null);
   const [dockMessages, setDockMessages] = useState<StewardMessage[]>([]);
+  const [dockPending, setDockPending] = useState(false);
 
   // ── Landing-zone scan on mount (IT direct-upload exception). ──────────────
   useEffect(() => {
@@ -80,7 +94,8 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
       .then((data) => {
         if (cancelled || !data?.ok) return;
         setLandingCount(Array.isArray(data.objects) ? data.objects.length : 0);
-        if (typeof data.container === "string") setLandingPath(`${data.container}/${data.prefix ?? ""}`);
+        if (typeof data.container === "string")
+          setLandingPath(`${data.container}/${data.prefix ?? ""}`);
       })
       .catch(() => void 0);
     return () => {
@@ -97,7 +112,9 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
     () =>
       okResults.map((u) => {
         const override = dimensionOverrides[u.result.preserved.objectKey];
-        return override ? { ...u.result.proposal, dimension: override } : u.result.proposal;
+        return override
+          ? { ...u.result.proposal, dimension: override }
+          : u.result.proposal;
       }),
     [okResults, dimensionOverrides],
   );
@@ -115,12 +132,19 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
     [okResults],
   );
 
-  const understandingPhase: UnderstandingPhase = phase === "understanding" ? "mapping" : "done";
+  const understandingPhase: UnderstandingPhase =
+    phase === "understanding" ? "mapping" : "done";
 
-  const stages = useMemo<Partial<Record<LoaderLifecycleStage, LoaderStageStatus>>>(() => {
+  const stages = useMemo<
+    Partial<Record<LoaderLifecycleStage, LoaderStageStatus>>
+  >(() => {
     const preserved: LoaderStageStatus = phase === "idle" ? "pending" : "done";
     const parsed: LoaderStageStatus =
-      phase === "idle" ? "pending" : phase === "understanding" ? "active" : "done";
+      phase === "idle"
+        ? "pending"
+        : phase === "understanding"
+          ? "active"
+          : "done";
     const committed: LoaderStageStatus =
       phase === "committing" ? "active" : phase === "done" ? "done" : "pending";
     const indexed: LoaderStageStatus = phase === "done" ? "active" : "pending";
@@ -128,25 +152,32 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
   }, [phase]);
 
   // ── Understand ────────────────────────────────────────────────────────────
-  const handleFiles = useCallback(async (picked: File[]) => {
-    if (picked.length === 0) return;
-    setFiles(picked);
-    setPhase("understanding");
-    setErrorMsg(null);
-    try {
-      const fd = new FormData();
-      fd.set("clientId", clientId);
-      for (const f of picked) fd.append("files", f);
-      const res = await fetch("/api/admin/context-layer/loader/understand", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.detail || data?.error || "understand_failed");
-      setUnderstood(data.understood as Understood[]);
-      setPhase("review");
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : String(err));
-      setPhase("error");
-    }
-  }, [clientId]);
+  const handleFiles = useCallback(
+    async (picked: File[]) => {
+      if (picked.length === 0) return;
+      setFiles(picked);
+      setPhase("understanding");
+      setErrorMsg(null);
+      try {
+        const fd = new FormData();
+        fd.set("clientId", clientId);
+        for (const f of picked) fd.append("files", f);
+        const res = await fetch("/api/admin/context-layer/loader/understand", {
+          method: "POST",
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.ok)
+          throw new Error(data?.detail || data?.error || "understand_failed");
+        setUnderstood(data.understood as Understood[]);
+        setPhase("review");
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : String(err));
+        setPhase("error");
+      }
+    },
+    [clientId],
+  );
 
   // ── Commit ──────────────────────────────────────────────────────────────
   const handleCommit = useCallback(async () => {
@@ -157,7 +188,9 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
       .map((u) => {
         const key = u.result.preserved.objectKey;
         const override = dimensionOverrides[key];
-        return override ? { ...u.result.proposal, dimension: override } : u.result.proposal;
+        return override
+          ? { ...u.result.proposal, dimension: override }
+          : u.result.proposal;
       });
 
     if (accepted.length === 0) {
@@ -180,25 +213,143 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
       fd.set("operatorDataUseConfirmed", "true");
       fd.set("operatorSensitiveDataConfirmed", "true");
       for (const f of files) fd.append("files", f);
-      const res = await fetch("/api/admin/context-layer/loader/commit", { method: "POST", body: fd });
+      const res = await fetch("/api/admin/context-layer/loader/commit", {
+        method: "POST",
+        body: fd,
+      });
       const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.detail || data?.error || "commit_failed");
+      if (!res.ok || !data?.ok)
+        throw new Error(data?.detail || data?.error || "commit_failed");
       setPhase("done");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
       setPhase("error");
     }
-  }, [okResults, rowDecisions, dimensionOverrides, files, clientId, tenantName]);
+  }, [
+    okResults,
+    rowDecisions,
+    dimensionOverrides,
+    files,
+    clientId,
+    tenantName,
+  ]);
 
-  const onRowAction = useCallback((objectKey: string, action: ReviewRowAction) => {
-    setRowDecisions((prev) => ({ ...prev, [objectKey]: action }));
-  }, []);
-  const onDimensionChange = useCallback((objectKey: string, dimension: LoaderDimension) => {
-    setDimensionOverrides((prev) => ({ ...prev, [objectKey]: dimension }));
-  }, []);
+  const onRowAction = useCallback(
+    (objectKey: string, action: ReviewRowAction) => {
+      setRowDecisions((prev) => ({ ...prev, [objectKey]: action }));
+    },
+    [],
+  );
+  const onDimensionChange = useCallback(
+    (objectKey: string, dimension: LoaderDimension) => {
+      setDimensionOverrides((prev) => ({ ...prev, [objectKey]: dimension }));
+    },
+    [],
+  );
   const onAnswer = useCallback((questionKey: string, optionIndex: number) => {
     setAnswers((prev) => ({ ...prev, [questionKey]: optionIndex }));
   }, []);
+
+  // ── Ask Steward — open the scoped dock for one escalated file. ─────────────
+  const onAskSteward = useCallback(
+    (objectKey: string) => {
+      const match = okResults.find(
+        (u) => u.result.preserved.objectKey === objectKey,
+      );
+      if (!match) return;
+      setDockFile(match.result.preserved);
+      setDockMessages([]);
+    },
+    [okResults],
+  );
+
+  // ── Ask Steward — send a question for the docked file (live round-trip). ───
+  const onDockSend = useCallback(
+    async (body: string) => {
+      if (!dockFile) return;
+      const match = okResults.find(
+        (u) => u.result.preserved.objectKey === dockFile.objectKey,
+      );
+      if (!match) return;
+
+      const override = dimensionOverrides[dockFile.objectKey];
+      const proposal = override
+        ? { ...match.result.proposal, dimension: override }
+        : match.result.proposal;
+      const findings = findingsByObjectKey[dockFile.objectKey] ?? [];
+
+      // Snapshot prior turns as plain history BEFORE appending the new message.
+      const history = dockMessages.map((m) => ({
+        author: m.author,
+        body: m.body,
+      }));
+
+      const operatorMessage: StewardMessage = {
+        id: `${dockFile.objectKey}:op:${dockMessages.length}`,
+        author: "operator",
+        body,
+      };
+      setDockMessages((prev) => [...prev, operatorMessage]);
+      setDockPending(true);
+      try {
+        const res = await fetch(
+          "/api/admin/context-layer/loader/steward-chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              proposal,
+              findings,
+              history,
+              question: body,
+              clientId,
+            }),
+          },
+        );
+        const data = await res.json();
+        const reply =
+          res.ok && data?.ok && typeof data.reply === "string"
+            ? (data.reply as string)
+            : "I couldn't reach the reasoning service just now — your file and proposal are preserved; try again.";
+        setDockMessages((prev) => [
+          ...prev,
+          {
+            id: `${dockFile.objectKey}:st:${prev.length}`,
+            author: "steward",
+            body: reply,
+          },
+        ]);
+      } catch {
+        setDockMessages((prev) => [
+          ...prev,
+          {
+            id: `${dockFile.objectKey}:st:${prev.length}`,
+            author: "steward",
+            body: "I couldn't reach the reasoning service just now — your file and proposal are preserved; try again.",
+          },
+        ]);
+      } finally {
+        setDockPending(false);
+      }
+    },
+    [
+      dockFile,
+      dockMessages,
+      okResults,
+      dimensionOverrides,
+      findingsByObjectKey,
+      clientId,
+    ],
+  );
+
+  // Files whose validation escalated to a scoped conversation.
+  const escalatedFiles = useMemo(
+    () =>
+      okResults
+        .filter((u) => u.result.validation.escalateToConversation)
+        .map((u) => u.result.preserved),
+    [okResults],
+  );
 
   const containerStyle: React.CSSProperties = {
     backgroundColor: COLORS.cream,
@@ -212,8 +363,9 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
           Load context
         </h1>
         <p className="text-sm opacity-70">
-          Drop anything — a CSV, an org chart, a financial pack, a PDF. The loader preserves the original,
-          understands it, and asks before it commits. {tenantName}.
+          Drop anything — a CSV, an org chart, a financial pack, a PDF. The
+          loader preserves the original, understands it, and asks before it
+          commits. {tenantName}.
         </p>
       </header>
 
@@ -235,7 +387,10 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
       )}
 
       {phase === "understanding" && (
-        <UnderstandingProgress phase={understandingPhase} fileCount={files.length} />
+        <UnderstandingProgress
+          phase={understandingPhase}
+          fileCount={files.length}
+        />
       )}
 
       {(phase === "review" || phase === "committing" || phase === "done") && (
@@ -255,9 +410,33 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
             onRowAction={onRowAction}
             busyObjectKeys={busyKeys}
           />
+          {escalatedFiles.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs opacity-60">
+                Some files need a judgement call:
+              </span>
+              {escalatedFiles.map((preserved) => (
+                <button
+                  key={preserved.objectKey}
+                  type="button"
+                  onClick={() => onAskSteward(preserved.objectKey)}
+                  className="rounded-md px-3 py-1.5 text-xs"
+                  style={{
+                    border: `1px solid ${COLORS.ink}33`,
+                    background: "transparent",
+                    color: COLORS.ink,
+                    fontFamily: TYPOGRAPHY.sans,
+                  }}
+                >
+                  Ask Steward · {preserved.filename}
+                </button>
+              ))}
+            </div>
+          )}
           {understood.some((u) => !u.ok) && (
             <p className="text-sm" style={{ color: COLORS.coralInk }}>
-              {understood.filter((u) => !u.ok).length} file(s) could not be understood and were skipped.
+              {understood.filter((u) => !u.ok).length} file(s) could not be
+              understood and were skipped.
             </p>
           )}
           {phase !== "done" && (
@@ -277,7 +456,8 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
           )}
           {phase === "done" && (
             <p className="text-sm" style={{ color: COLORS.mintInk }}>
-              Committed to the governed pipeline. Retrieval index refresh runs next.
+              Committed to the governed pipeline. Retrieval index refresh runs
+              next.
             </p>
           )}
         </>
@@ -293,13 +473,9 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
         <AskStewardDock
           file={dockFile}
           messages={dockMessages}
-          onSend={(body) =>
-            setDockMessages((prev) => [
-              ...prev,
-              { id: `${dockFile.objectKey}:${prev.length}`, author: "operator", body },
-            ])
-          }
+          onSend={(body) => void onDockSend(body)}
           onClose={() => setDockFile(null)}
+          disabled={dockPending}
         />
       )}
     </section>
