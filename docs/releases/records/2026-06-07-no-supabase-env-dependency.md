@@ -52,10 +52,14 @@ Azure/Postgres data-plane adapters.
 
 ## QA / Validation
 
-Pending in this worktree:
-
-- `npx jest src/__tests__/integration/deployment/docker-runtime-packaging.test.ts src/__tests__/integration/admin/data11-live-adapters.test.ts`
-- `npm run release:check -- --base origin/main --head HEAD`
+- Pass — `npx jest src/__tests__/integration/deployment/docker-runtime-packaging.test.ts src/__tests__/integration/admin/data11-live-adapters.test.ts`
+  - Result: 2 suites passed, 37 tests passed.
+  - Note: Jest emitted existing duplicate manual mock warnings for
+    `mdast-util-from-markdown`, `mdast-util-gfm`, and
+    `micromark-extension-gfm`; the targeted suites still passed.
+- Pass — `npm run release:check -- --base origin/main --head HEAD`
+  - Result recorded after this release record was updated with explicit QA
+    status.
 
 ## Rollout Plan
 
