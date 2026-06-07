@@ -34,10 +34,11 @@ The Source E2E auth helper now recognizes the Meridian CDAO persona key used by 
 
 ## QA / Validation
 
-- Pending local validation on this branch:
-  - `npm run smoke:p21-post-deploy-crawl` or equivalent script invocation.
-  - Targeted Jest coverage for `src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts`.
-  - Type/lint validation for `tests/e2e/source/_auth.ts`.
+- PASS: `npm run smoke:p21-post-deploy-crawl`
+- PASS: `npx jest src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts --runInBand`
+- PASS: `npx eslint tests/e2e/source/_auth.ts src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts scripts/smoke/p21-post-deploy-crawl.spec.ts`
+- BLOCKED then fixed: first validation attempt failed because `node_modules` was absent in this cloud workspace; `npm ci` installed lockfile dependencies and the targeted checks above then passed.
+- NOT RUN: full Playwright E2E; this change only adds a helper persona key and requires live Clerk/test credentials for browser sign-in coverage.
 
 ## Rollout Plan
 
