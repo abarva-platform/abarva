@@ -1,7 +1,7 @@
 # Azure Container Apps Cutover - Operator Checkpoint
 
-Date: 2026-06-07  
-Status: CHECKPOINT RECORDED - runtime deployment may proceed  
+Date: 2026-06-07
+Status: CHECKPOINT RECORDED - runtime deployment may proceed
 Operator branch: `cursor/supabase-sunset-proof-96c4`
 
 ## Guardrails

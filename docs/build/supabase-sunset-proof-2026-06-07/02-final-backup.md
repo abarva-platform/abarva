@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 02 Final Backup
 
-Date: 2026-06-07  
-Status: HOLD - final backup not yet captured  
+Date: 2026-06-07
+Status: HOLD - final backup not yet captured
 Scope: Final Supabase backup and restore proof before pause/delete
 
 ## Gate verdict

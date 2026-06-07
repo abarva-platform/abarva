@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 04 Azure Search / Vector Proof
 
-Date: 2026-06-07  
-Status: HOLD - production golden retrieval proof not complete  
+Date: 2026-06-07
+Status: HOLD - production golden retrieval proof not complete
 Scope: Azure search/vector indexes rebuilt from Azure Postgres data
 
 ## Gate verdict

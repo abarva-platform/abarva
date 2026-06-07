@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 01 Freeze Proof
 
-Date: 2026-06-07  
-Status: HOLD - freeze not yet proven  
+Date: 2026-06-07
+Status: HOLD - freeze not yet proven
 Scope: Production Supabase sunset after Azure-only Container Apps cutover
 
 ## Gate verdict
@@ -23,8 +23,8 @@ project logs show zero app-originated writes after the freeze timestamp.
 
 ## Freeze timestamp
 
-Freeze timestamp: `PENDING`  
-Operator: `PENDING`  
+Freeze timestamp: `PENDING`
+Operator: `PENDING`
 Approval/change record: `PENDING`
 
 Do not fill this field until the operator has frozen production writes and

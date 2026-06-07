@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 07 Delete Approval
 
-Date: 2026-06-07  
-Status: HOLD - deletion not approved  
+Date: 2026-06-07
+Status: HOLD - deletion not approved
 Scope: Retention, rollback, and explicit approval before Supabase deletion
 
 ## Gate verdict

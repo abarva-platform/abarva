@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 06 Pause QA
 
-Date: 2026-06-07  
-Status: HOLD - Supabase pause QA not run  
+Date: 2026-06-07
+Status: HOLD - Supabase pause QA not run
 Scope: Re-run core app QA while Supabase is paused
 
 ## Gate verdict
