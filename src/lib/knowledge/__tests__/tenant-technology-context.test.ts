@@ -28,6 +28,7 @@ function systemRecord(
 describe('tenant technology context', () => {
   it('detects current-state analytics technology questions', () => {
     expect(isTenantTechnologyQuestion('what do we have today for data analytics- what technologies?')).toBe(true);
+    expect(isTenantTechnologyQuestion('What is our current analytics stack, and where do Epic Clarity, Caboodle, SQL Server, Tableau, SAS, Cogito, and Power BI appear or not appear?')).toBe(true);
     expect(isTenantTechnologyQuestion('which phase gate is blocked?')).toBe(false);
   });
 
@@ -71,12 +72,19 @@ describe('tenant technology context', () => {
         domain: 'Analytics',
         annual_cost_usd: 180000,
       }),
+      systemRecord('it_landscape:sys:apex:clarity', 'Epic Clarity', {
+        system_id: 'sys:apex:clarity',
+        vendor: 'Epic',
+        category: 'Clinical Analytics',
+        domain: 'Data',
+        business_criticality: 'Critical',
+      }),
     ];
 
     const selected = selectTenantTechnologyRecords(
       records,
-      'what technologies do we have today for data analytics?',
-      4,
+      'what technologies do we have today for data analytics, Epic Clarity, Tableau, and Power BI?',
+      5,
     );
 
     expect(selected.map((record) => record.title)).toEqual(
@@ -85,6 +93,7 @@ describe('tenant technology context', () => {
         'Databricks',
         'Tableau',
         'Microsoft Power BI',
+        'Epic Clarity',
       ]),
     );
     expect(selected.map((record) => record.title)).not.toContain('SAP S/4HANA');

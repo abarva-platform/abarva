@@ -9,6 +9,39 @@ const BROAD_CURRENT_STATE_RE =
 const TECHNOLOGY_CONTEXT_LINE_RE =
   /\b(data|analytics|technology|technologies|tech stack|system|systems|platform|warehouse|lakehouse|bi|business intelligence|reporting|tableau|power\s*bi|sas|sql\s*server|clarity|caboodle|epic|kyriba|erp|cmdb|integration|vendor|deployment|owner|criticality|annual cost|renewal|domain|category)\b/i;
 
+const MERIDIAN_ANALYTICS_PLATFORMS = [
+  {
+    label: "Epic Clarity",
+    aliases: [/\bEpic\s+Clarity\b/i, /\bClarity\b/i],
+  },
+  {
+    label: "Epic Caboodle",
+    aliases: [/\bEpic\s+Caboodle\b/i, /\bCaboodle\b/i],
+  },
+  {
+    label: "SQL Server",
+    aliases: [/\bSQL\s*Server\b/i, /\bMicrosoft\s+SQL\b/i, /\bMSSQL\b/i],
+  },
+  { label: "Tableau", aliases: [/\bTableau\b/i] },
+  { label: "SAS", aliases: [/\bSAS\b/i] },
+  {
+    label: "Epic Cogito",
+    aliases: [/\bEpic\s+Cogito\b/i, /\bCogito\b/i],
+  },
+  {
+    label: "Power BI",
+    aliases: [/\bPower\s*BI\b/i, /\bPowerBI\b/i],
+  },
+] as const;
+
+type MeridianAnalyticsStatus = "loaded" | "demo" | "missing";
+
+interface MeridianAnalyticsCoverage {
+  label: (typeof MERIDIAN_ANALYTICS_PLATFORMS)[number]["label"];
+  status: MeridianAnalyticsStatus;
+  evidence: string[];
+}
+
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
 }
@@ -175,6 +208,9 @@ export function buildCurrentStateAdvisory(sources: AskSource[]): string | null {
 export function buildCurrentStateTechnologyAdvisory(
   sources: AskSource[],
 ): string | null {
+  const meridianCoverage = buildMeridianAnalyticsStackAdvisory(sources);
+  if (meridianCoverage) return meridianCoverage;
+
   const facts = collectCurrentStateTechnologyFacts(sources).slice(0, 6);
   if (facts.length === 0) return null;
 
@@ -223,6 +259,109 @@ function collectCurrentStateTechnologyFacts(sources: AskSource[]): string[] {
   }
 
   return facts;
+}
+
+function buildMeridianAnalyticsStackAdvisory(
+  sources: AskSource[],
+): string | null {
+  const coverage = collectMeridianAnalyticsCoverage(sources);
+  if (!coverage) return null;
+
+  const loaded = coverage.filter((item) => item.status === "loaded");
+  const demo = coverage.filter((item) => item.status === "demo");
+  const missing = coverage.filter((item) => item.status === "missing");
+
+  return [
+    "My read: for Meridian's analytics stack, the Azure-backed tenant context is partial but specific enough to separate loaded facts from demo rows and true gaps.",
+    [
+      "Current state I can see:",
+      `1. Present in loaded Enterprise Context / CMDB: ${formatCoverageList(loaded)}.`,
+      `2. Present only in the synthetic/demo application portfolio: ${formatCoverageList(demo)}.`,
+      `3. Missing as named platforms in the loaded Meridian context: ${formatCoverageList(missing)}.`,
+    ].join("\n"),
+    "Decision implication: treat the missing list as a context-layer gap to close through the governed loader, not as proof Meridian does not own those tools. The demo rows can inform the walkthrough, but they should not override loaded enterprise-context facts.",
+  ].join("\n\n");
+}
+
+function collectMeridianAnalyticsCoverage(
+  sources: AskSource[],
+): MeridianAnalyticsCoverage[] | null {
+  const sourceText = sources
+    .map((source) => `${source.name} ${source.id ?? ""} ${source.detail}`)
+    .join("\n");
+  if (!/\bMeridian\b/i.test(sourceText)) return null;
+
+  const coverage = MERIDIAN_ANALYTICS_PLATFORMS.map((platform) => ({
+    label: platform.label,
+    status: "missing" as MeridianAnalyticsStatus,
+    evidence: [] as string[],
+  }));
+
+  for (const source of sources) {
+    if (!["TENANT", "SURFACE", "GRAPH"].includes(source.type)) continue;
+    const sourceContext = `${source.name} ${source.id ?? ""}`;
+    const lines = source.detail.split("\n").map(cleanFact);
+
+    for (const line of lines) {
+      if (!line) continue;
+      for (const platform of MERIDIAN_ANALYTICS_PLATFORMS) {
+        if (!platform.aliases.some((alias) => alias.test(line))) continue;
+
+        const item = coverage.find((entry) => entry.label === platform.label);
+        if (!item) continue;
+        const evidenceClass = classifyMeridianAnalyticsEvidence(
+          sourceContext,
+          line,
+        );
+        if (evidenceClass === "missing") {
+          item.evidence.push(line);
+          continue;
+        }
+        if (evidenceClass === "loaded" || item.status !== "loaded") {
+          item.status = evidenceClass;
+        }
+        item.evidence.push(line);
+      }
+    }
+  }
+
+  const evidenceCount = coverage.filter((item) => item.evidence.length > 0);
+  const hasMeridianAnalyticsSignal =
+    evidenceCount.length >= 2 ||
+    /\b(Epic\s+Clarity|Epic\s+Caboodle|Epic\s+Cogito|Power\s*BI|enterprise_context|public\.applications|CMDB)\b/i.test(
+      sourceText,
+    );
+  return hasMeridianAnalyticsSignal ? coverage : null;
+}
+
+function classifyMeridianAnalyticsEvidence(
+  sourceContext: string,
+  line: string,
+): Exclude<MeridianAnalyticsStatus, never> {
+  const haystack = `${sourceContext} ${line}`;
+  if (
+    /\b(absent|missing|not\s+(?:loaded|present|available)|does\s+not\s+appear|do\s+not\s+appear|unavailable|gap)\b/i.test(
+      line,
+    )
+  ) {
+    return "missing";
+  }
+  if (
+    /\b(is_demo_data\s*=?\s*true|data_basis\s+(?:synthetic\/demo|demo)|synthetic\/demo|demo\s+row|T1\s+synthetic)\b/i.test(
+      haystack,
+    ) ||
+    /\b(public\.applications|Structured application portfolio)\b/i.test(
+      sourceContext,
+    )
+  ) {
+    return "demo";
+  }
+  return "loaded";
+}
+
+function formatCoverageList(items: MeridianAnalyticsCoverage[]): string {
+  if (items.length === 0) return "none surfaced";
+  return items.map((item) => item.label).join(", ");
 }
 
 function normalizeTechnologyFact(line: string, source: AskSource): string {

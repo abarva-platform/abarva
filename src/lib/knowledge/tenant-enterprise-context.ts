@@ -28,7 +28,7 @@ export type TenantStructuredSource = TenantEnterpriseSource & {
 type TenantLookupInput = string | CanonicalTenant | null | undefined;
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|clarity|caboodle|cogito|tableau|power\s*bi|sql\s*server|\bsas\b|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -95,7 +95,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   const segments: SegmentId[] = [];
 
   if (
-    /\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure|operating\s+model|target\s+operating\s+model|\btom\b|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+    /\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure|operating\s+model|target\s+operating\s+model|\btom\b|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|clarity|caboodle|cogito|tableau|power\s*bi|sql\s*server|\bsas\b|cyber|security\s+stack|ai\s+tooling)\b/.test(
       normalized,
     )
   ) {
@@ -116,7 +116,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
     segments.push("it_financials");
   }
   if (
-    /\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|sdlc|cobol|edp|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(
+    /\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|sdlc|cobol|edp|snowflake|databricks|clarity|caboodle|cogito|tableau|power\s*bi|sql\s*server|\bsas\b|cyber|security\s+stack|ai\s+tooling)\b/.test(
       normalized,
     )
   ) {
@@ -240,6 +240,7 @@ interface ApplicationRow {
   criticality: string | null;
   status: string | null;
   annual_cost_usd: number | string | null;
+  is_demo_data?: boolean | null;
 }
 
 interface InitiativeRow {
@@ -291,7 +292,7 @@ async function retrieveStructuredTenantSources(
       normalized,
     );
   const wantsApps =
-    /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(
+    /\b(application|applications|apps?|systems?|portfolio|criticality|analytics\s+stack|data\s+stack|bi|business\s+intelligence|clarity|caboodle|cogito|tableau|power\s*bi|sql\s*server|\bsas\b|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(
       normalized,
     );
   const wantsVendors =
@@ -633,7 +634,7 @@ async function readStructuredTopApplicationsSource(
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
   const data = await run<ApplicationRow>(
-    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd, is_demo_data
        FROM applications
       WHERE client_id = $1
       ORDER BY criticality ASC NULLS LAST, annual_cost_usd DESC NULLS LAST
@@ -656,7 +657,7 @@ async function readStructuredTopApplicationsSource(
       `Top ${rows.length} applications by criticality from public.applications for ${tenantKey}.`,
       ...rows.map((row) => {
         const appRef = deriveAppRef(prefix, row.name, row.id);
-        return `${appRef} · ${row.name} · ${row.criticality ?? "unknown"} · ${formatUsd(row.annual_cost_usd) ?? "unknown"}/yr · ${row.vendor ?? "unknown"} · ${row.deployment_model ?? "unknown"} · ${row.business_function ?? "unknown"}-owned`;
+        return `${appRef} · ${row.name} · ${row.criticality ?? "unknown"} · ${formatUsd(row.annual_cost_usd) ?? "unknown"}/yr · ${row.vendor ?? "unknown"} · ${row.deployment_model ?? "unknown"} · ${row.business_function ?? "unknown"}-owned · data_basis ${formatApplicationDataBasis(row)}`;
       }),
       "Do not substitute industry-typical provider EHR or interoperability systems unless they appear in these tenant rows.",
     ].join("\n- "),
@@ -670,7 +671,7 @@ async function readStructuredRetiringApplicationsSource(
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
   const data = await run<ApplicationRow>(
-    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd, is_demo_data
        FROM applications
       WHERE client_id = $1
       ORDER BY annual_cost_usd DESC NULLS LAST
@@ -917,7 +918,7 @@ async function readApplicationPortfolioSource(
   clientId: string,
 ): Promise<TenantEnterpriseSource | null> {
   const rows = await run<ApplicationRow>(
-    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd, is_demo_data
        FROM applications
       WHERE client_id = $1
       ORDER BY criticality ASC NULLS LAST, annual_cost_usd DESC NULLS LAST
@@ -932,10 +933,10 @@ async function readApplicationPortfolioSource(
     id: `${tenantKey}:structured:applications`,
     detail: [
       `Top critical applications from public.applications for ${tenantKey}.`,
-      "Answer app-portfolio and criticality questions from these rows before using generic industry systems.",
+      "Answer app-portfolio and criticality questions from these rows before using generic industry systems. Rows marked is_demo_data are synthetic/demo and must not override loaded enterprise_context facts.",
       ...rows.map((row) => {
         const appRef = deriveAppRef(prefix, row.name, row.id);
-        return `${appRef} ${row.name} — criticality ${row.criticality ?? "unknown"}, status ${row.status ?? "unknown"}, vendor/AMS ${row.vendor ?? "unknown"}, business_unit ${row.business_function ?? "unknown"}, deployment ${row.deployment_model ?? "unknown"}, annual_run_cost ${formatUsd(row.annual_cost_usd) ?? "unknown"}`;
+        return `${appRef} ${row.name} — criticality ${row.criticality ?? "unknown"}, status ${row.status ?? "unknown"}, vendor/AMS ${row.vendor ?? "unknown"}, business_unit ${row.business_function ?? "unknown"}, deployment ${row.deployment_model ?? "unknown"}, annual_run_cost ${formatUsd(row.annual_cost_usd) ?? "unknown"}, data_basis ${formatApplicationDataBasis(row)}`;
       }),
     ].join("\n- "),
     confidence: 0.97,
@@ -1361,6 +1362,10 @@ function deriveAppRef(
   const match = name.match(/\bCapability\s+(\d+)\b/i);
   if (match) return `${prefix}-APP-${match[1].padStart(3, "0")}`;
   return `${prefix}-APP-${fallbackId.slice(0, 8)}`;
+}
+
+function formatApplicationDataBasis(row: Pick<ApplicationRow, "is_demo_data">): string {
+  return row.is_demo_data ? "synthetic/demo" : "loaded";
 }
 
 function formatUsd(value: number | string | null | undefined): string | null {

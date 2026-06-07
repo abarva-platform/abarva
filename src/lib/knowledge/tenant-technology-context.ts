@@ -13,8 +13,8 @@ export interface TenantTechnologySource {
 
 const TECHNOLOGY_QUESTION_PATTERNS = [
   /\b(current state|today|what do we have|what technologies|tech stack|technology inventory|systems inventory)\b/i,
-  /\b(data analytics|analytics platform|data platform|data stack|bi|business intelligence)\b/i,
-  /\b(warehouse|lakehouse|snowflake|databricks|tableau|power bi|dbt|fivetran|etl|elt)\b/i,
+  /\b(data analytics|analytics stack|analytics platform|data platform|data stack|bi|business intelligence)\b/i,
+  /\b(warehouse|lakehouse|snowflake|databricks|clarity|caboodle|cogito|tableau|power bi|sql server|sas|dbt|fivetran|etl|elt)\b/i,
   /\b(ml platform|ai platform|vector database|model platform|activation stack)\b/i,
 ];
 
@@ -35,6 +35,13 @@ const ANALYTICS_TERMS = [
   'cdp',
   'measurement',
   'reporting',
+  'clarity',
+  'caboodle',
+  'cogito',
+  'tableau',
+  'power bi',
+  'sql server',
+  'sas',
 ];
 
 const DETAIL_KEYS = [
@@ -179,7 +186,7 @@ function scoreTechnologyRecord(record: TenantRecord, query: string): number {
   if (criticality === 'high') score += 1;
 
   const title = record.title.toLowerCase();
-  if (/(snowflake|databricks|tableau|power bi|dbt|fivetran|airbyte|pinecone|segment|tealium|analytics)/i.test(title)) {
+  if (/(snowflake|databricks|clarity|caboodle|cogito|tableau|power bi|sql server|\bsas\b|dbt|fivetran|airbyte|pinecone|segment|tealium|analytics)/i.test(title)) {
     score += 4;
   }
 

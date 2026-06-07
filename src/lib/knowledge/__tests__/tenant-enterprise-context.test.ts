@@ -401,6 +401,64 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).not.toContain('Meditech');
   });
 
+  it('adds Meridian analytics stack chunks and demo application rows for present-missing answers', async () => {
+    mockPostgresTables({
+      applications: [
+        {
+          id: 'app-cogito',
+          name: 'Epic Cogito',
+          vendor: 'Epic',
+          business_function: 'Clinical Analytics',
+          deployment_model: 'SaaS',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 820000,
+          is_demo_data: true,
+        },
+        {
+          id: 'app-power-bi-enterprise',
+          name: 'Microsoft Power BI Enterprise',
+          vendor: 'Microsoft',
+          business_function: 'Enterprise Analytics',
+          deployment_model: 'SaaS',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 610000,
+          is_demo_data: true,
+        },
+      ],
+      enterprise_context_chunks: [
+        {
+          chunk_id: 'MER-CHUNK-CLARITY',
+          source_segment_id: 'it_landscape',
+          source_doc: 'source_uploads/03-cmdb-applications-services.csv',
+          chunk_text: 'Meridian CMDB row CI-APP-EPIC-CLARITY: Epic Clarity reporting database supports clinical and finance analytics.',
+        },
+        {
+          chunk_id: 'MER-CHUNK-CABOODLE',
+          source_segment_id: 'it_landscape',
+          source_doc: 'source_uploads/03-cmdb-applications-services.csv',
+          chunk_text: 'Meridian CMDB row CI-APP-EPIC-CABOODLE: Epic Caboodle supports clinical analytics and lakehouse integration.',
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'meridian-health',
+      'What is our current analytics stack, and where do Epic Clarity, Caboodle, SQL Server, Tableau, SAS, Cogito, and Power BI appear or not appear?',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(sources.map((source) => source.id)).toContain('meridian-health:structured:applications');
+    expect(detail).toContain('Question-matched chunks from public.enterprise_context_chunks');
+    expect(detail).toContain('Epic Clarity');
+    expect(detail).toContain('Epic Caboodle');
+    expect(detail).toContain('Epic Cogito');
+    expect(detail).toContain('Microsoft Power BI Enterprise');
+    expect(detail).toContain('data_basis synthetic/demo');
+    expect(detail).toContain('must not override loaded enterprise_context facts');
+  });
+
   it('adds Northstar structured vendor contract rows with renewal and exit terms', async () => {
     mockPostgresTables({
       vendor_contracts: [

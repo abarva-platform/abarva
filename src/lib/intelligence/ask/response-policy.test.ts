@@ -107,6 +107,45 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).not.toContain("CFO value lens");
   });
 
+  it("separates Meridian analytics platforms into loaded, demo, and missing buckets", () => {
+    const answer = buildCurrentStateTechnologyAdvisory([
+      {
+        type: "TENANT",
+        name: "Loaded context chunks matching the question (meridian-health)",
+        id: "meridian-health:context:keyword:analytics-stack",
+        confidence: 0.96,
+        detail: [
+          "Question-matched chunks from public.enterprise_context_chunks for meridian-health.",
+          "- CMDB application service: CI-APP-EPIC-CLARITY Epic Clarity reporting database supports clinical and finance analytics.",
+          "- CMDB application service: CI-APP-EPIC-CABOODLE Epic Caboodle supports clinical analytics and lakehouse integration.",
+        ].join("\n"),
+      },
+      {
+        type: "TENANT",
+        name: "Structured application portfolio (meridian-health)",
+        id: "meridian-health:structured:applications",
+        confidence: 0.97,
+        detail: [
+          "Top critical applications from public.applications for meridian-health.",
+          "- MR-APP-COGITO Epic Cogito — criticality tier1, status active, data_basis synthetic/demo",
+          "- MR-APP-POWER-BI-ENTERPRISE Microsoft Power BI Enterprise — criticality tier1, status active, data_basis synthetic/demo",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(answer).toContain("Azure-backed tenant context");
+    expect(answer).toContain(
+      "Present in loaded Enterprise Context / CMDB: Epic Clarity, Epic Caboodle.",
+    );
+    expect(answer).toContain(
+      "Present only in the synthetic/demo application portfolio: Epic Cogito, Power BI.",
+    );
+    expect(answer).toContain(
+      "Missing as named platforms in the loaded Meridian context: SQL Server, Tableau, SAS.",
+    );
+    expect(answer).toContain("governed loader");
+  });
+
   it("turns tenant-backed missing sub-fields into partial-evidence wording", () => {
     const text = [
       "The loaded sources give you the structural picture but don't contain a specific EDP commitment tranche or true-up delta figure — that number would live in the AWS contract schedule itself, which hasn't been ingested. Here's what I can ground firmly.",

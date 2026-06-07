@@ -16,6 +16,7 @@ const REQUIRED_CATEGORIES = [
   'plain-english',
 ] as const;
 const DATABRICKS_GOLDEN_FILE = 'databricks-modernization-golden.jsonl';
+const MERIDIAN_ANALYTICS_STACK_GOLDEN_FILE = 'meridian-analytics-stack-golden.jsonl';
 const REQUIRED_DATABRICKS_TERMS = [
   'Databricks',
   'Unity Catalog',
@@ -98,5 +99,26 @@ describe('agent grounding curriculum', () => {
     for (const term of REQUIRED_DATABRICKS_TERMS) {
       expect(serialized).toContain(term.toLowerCase());
     }
+  });
+
+  it('pins the Meridian analytics-stack present-missing golden question', () => {
+    const analyticsCases = readCurriculumFile(MERIDIAN_ANALYTICS_STACK_GOLDEN_FILE);
+    const analyticsCase = analyticsCases.find((testCase) => testCase.id === 'meridian-analytics-stack-001');
+
+    expect(analyticsCases).toHaveLength(1);
+    expect(analyticsCase?.prompt).toContain('Epic Clarity, Caboodle, SQL Server, Tableau, SAS, Cogito, and Power BI');
+    expect(analyticsCase?.expected.requiredTerms).toEqual(expect.arrayContaining([
+      'Azure-backed',
+      'Epic Clarity',
+      'Epic Caboodle',
+      'SQL Server',
+      'Tableau',
+      'SAS',
+      'Epic Cogito',
+      'Power BI',
+      'synthetic/demo',
+      'missing',
+    ]));
+    expect(analyticsCase?.expected.requiresDataGap).toBe(true);
   });
 });
