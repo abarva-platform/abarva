@@ -2,7 +2,7 @@
 //
 // Body: {} (no inputs — context is bound server-side)
 //
-// Generates an artifact body via OpenAI using bound tenant + event +
+// Generates an artifact body via Anthropic using bound tenant + event +
 // upstream-artifact context. Persists the body to
 // source_event_artifact_states.body and an audit receipt to
 // body_generation_metadata.
@@ -16,7 +16,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { preflightOpenAIDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -67,6 +67,19 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 type RouteCtx = { params: Promise<{ eventId: string; artifactCode: string }> };
+
+function extractAnthropicMessageText(response: {
+  content?: Array<{ type?: string; text?: string }>;
+}): string {
+  return (
+    response.content
+      ?.filter(
+        (block) => block.type === "text" && typeof block.text === "string",
+      )
+      .map((block) => block.text)
+      .join("\n") ?? ""
+  );
+}
 
 function isCanonicalClientAdminEmail(
   email: string | null | undefined,
@@ -233,7 +246,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   ]);
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
 
-  // Call OpenAI when configured. If OPENAI_API_KEY is absent, write a
+  // Call Anthropic when configured. If ANTHROPIC_API_KEY is absent, write a
   // deterministic Source draft so the canvas remains useful in local/dev
   // environments without silently routing to another provider.
   const startedAt = Date.now();
@@ -246,16 +259,16 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     if (!tenancy) {
       return tenancyErrorResponse(tenancyError);
     }
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       model = "source-deterministic-fallback";
-      stopReason = "missing_openai_api_key";
+      stopReason = "missing_anthropic_api_key";
       body = buildDeterministicFallbackBody({
         artifactCode,
         ctx,
         upstreamBound,
       });
     } else {
-      const preflight = await preflightOpenAIDirectClient({
+      const preflight = await preflightAnthropicDirectClient({
         tenantId: tenancy.clientId,
         userId: tenancy.userId,
         workflow: "source-artifact-generate",
@@ -280,34 +293,27 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
           { status: 403 },
         );
       }
-      const response = await preflight.client.responses.create({
+      const response = await preflight.client.messages.create({
         model: template.model,
-        instructions: template.systemPrompt,
-        input: userMessage,
-        max_output_tokens: template.maxTokens,
-        store: false,
-        metadata: {
-          workflow: "source-artifact-generate",
-          eventId: ctx.event.id,
-          artifactCode,
-        },
+        max_tokens: template.maxTokens,
+        system: template.systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
       });
-      body = response.output_text.trim();
+      body = extractAnthropicMessageText(response).trim();
       model = response.model ?? template.model;
-      stopReason =
-        response.incomplete_details?.reason ?? response.status ?? null;
+      stopReason = response.stop_reason ?? null;
       tokensIn = response.usage?.input_tokens ?? null;
       tokensOut = response.usage?.output_tokens ?? null;
     }
   } catch (err) {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] OpenAI error",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] Anthropic error",
       err,
     );
     return Response.json(
       {
         error: "generation_failed",
-        detail: err instanceof Error ? err.message : "OpenAI call failed",
+        detail: err instanceof Error ? err.message : "Anthropic call failed",
       },
       { status: 502 },
     );
@@ -318,7 +324,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       {
         error: "empty_generation",
         detail:
-          "OpenAI returned an empty body. Retry, or surface a gap in the upstream context.",
+          "Anthropic returned an empty body. Retry, or surface a gap in the upstream context.",
       },
       { status: 502 },
     );
@@ -352,7 +358,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   if (artifactRow.tier === "stub") update.tier = "outline";
 
   // DB write routed through the data-plane write seam (Slice 3b). The
-  // OpenAI call above stays route-side; the seam owns only the body persist.
+  // Anthropic call above stays route-side; the seam owns only the body persist.
   const sourceWrite = selectSourceWriteAdapter(undefined, ctx.tenantKey);
   const bodyWrite = await sourceWrite.updateArtifactBody({
     artifactRowId: artifactRow.id,
@@ -461,7 +467,7 @@ function buildDeterministicFallbackBody(args: {
     `# ${event.name} · ${args.artifactCode}`,
     "",
     "## §1 · Deterministic Source draft",
-    "OPENAI_API_KEY is not configured, so Source produced this deterministic draft from the tenant-scoped event substrate instead of calling a model.",
+    "ANTHROPIC_API_KEY is not configured, so Source produced this deterministic draft from the tenant-scoped event substrate instead of calling a model.",
     "",
     "## §2 · Event facts",
     `- Tenant: ${args.ctx.tenantName} (${args.ctx.tenantKey})`,
@@ -482,6 +488,6 @@ function buildDeterministicFallbackBody(args: {
       : "No upstream artifact bodies were bound for this draft.",
     "",
     "## §4 · Human review required",
-    "This fallback is decision-support scaffolding only. Configure OPENAI_API_KEY and regenerate before treating the artifact as a model-authored Source draft.",
+    "This fallback is decision-support scaffolding only. Configure ANTHROPIC_API_KEY and regenerate before treating the artifact as a model-authored Source draft.",
   ].join("\n");
 }

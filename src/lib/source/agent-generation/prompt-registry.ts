@@ -14,7 +14,7 @@ import type {
   SourceGenerationContext,
 } from "./types";
 
-const DEFAULT_MODEL = "gpt-5.1";
+const DEFAULT_MODEL = "claude-sonnet-4-6";
 // Practical ceiling — 4000 output tokens produces ~10–12 pages
 // of polished markdown in ~30–45s wall-clock. Above 4000 the marginal
 // quality is small and the wall-clock blows past Vercel function
