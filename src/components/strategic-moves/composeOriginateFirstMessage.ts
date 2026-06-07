@@ -140,7 +140,7 @@ Binding pattern: ${from.patternId} — ${from.patternName}. ${failureLine}
 ${sourceLine}
 ${contradictionLine}
 
-To turn this into a Move, I need to lock four things: the business outcome, the executive sponsor, the scope boundary, and the first evidence gate. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
+To turn this into a Move, I need to lock the full seven-section P0 scaffold: hypothesis, archetype, sponsor, scope boundary, evidence family, value hypothesis, and foundation readiness. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
     id: `originate-open-intelligence-${from.patternId.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
   };
 }
@@ -195,7 +195,7 @@ export async function composeOriginateFirstMessage(
   return {
     role: 'assistant',
     agentName: 'Nexus',
-    text: `To start a new Strategic Move, I need four things from you: the outcome you're targeting, who cares about it, what evidence you have, and a rough sense of what value is at stake. You can type a description or paste something — a CEO note, email thread, board memo, or problem statement. Where do you want to start?`,
+    text: `To start a new Strategic Move, I need the seven-section P0 scaffold: the hypothesis, archetype, sponsor candidate, scope boundary, evidence family, value hypothesis, and foundation readiness. You can type a description or paste something — a CEO note, email thread, board memo, or problem statement. Where do you want to start?`,
     id: 'originate-open-2a',
   };
 }
