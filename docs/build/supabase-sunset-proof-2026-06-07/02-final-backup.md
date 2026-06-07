@@ -37,6 +37,21 @@ Fill only after the final backup is complete.
 | Restore-test result | `PENDING` |
 | Operator | `PENDING` |
 
+## Local execution attempt
+
+Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
+`02:24 UTC`.
+
+| Check | Result | Impact |
+| --- | --- | --- |
+| `command -v pg_dump` | NOT AVAILABLE | This machine cannot take the required final Postgres dump. |
+| `command -v psql` | NOT AVAILABLE | This machine cannot run a local restore-test with standard Postgres CLI tooling. |
+| `SUPABASE_DATABASE_URL` / `SOURCE_DATABASE_URL` / `DATABASE_URL` presence | NOT AVAILABLE | No source database URL is available in this shell; no backup can be taken without an approved secret reference. |
+
+This is not an approved restore-test exception. The final backup gate remains
+blocked until an operator runs the dump and restore-test from an approved
+environment with Postgres tooling and secret-backed connection strings.
+
 ## Safe command pattern
 
 Use environment variables or secret references; do not echo connection strings.
@@ -80,3 +95,4 @@ Run validation against the temporary restored database, not production.
 2. Supabase storage/object usage is not inventoried.
 3. No checksum is recorded.
 4. No restore-test or approved restore-test exception exists.
+5. This shell has no `pg_dump`, `psql`, or source database secret reference.

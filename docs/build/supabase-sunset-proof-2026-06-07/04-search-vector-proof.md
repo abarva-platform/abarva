@@ -45,6 +45,21 @@ for the named tenant set below.
 | Golden retrieval specificity | Golden questions produce grounded, tenant-specific answers where facts exist | BLOCKED - not attached |
 | Generic-answer block | Any generic answer where loaded facts exist blocks sunset | BLOCKED until golden answers are reviewed |
 
+## Local execution attempt
+
+Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
+`02:24 UTC`.
+
+| Check | Result | Impact |
+| --- | --- | --- |
+| `AZURE_SEARCH_ENDPOINT` | NOT AVAILABLE | Direct Azure Search count/query proof cannot run from this shell. |
+| `AZURE_SEARCH_ADMIN_KEY` | NOT AVAILABLE | Index rebuild/count proof cannot run from this shell unless managed identity is available in an Azure-hosted job. |
+| `AZURE_SEARCH_QUERY_KEY` | NOT AVAILABLE | Query-only golden retrieval proof cannot run from this shell. |
+| Azure CLI (`az`) | NOT AVAILABLE | Container Apps Search rebuild/soak job logs cannot be queried from this shell. |
+
+No Azure Search/vector mutation was attempted. Production golden retrieval
+remains blocked until run from an approved Azure/operator environment.
+
 ## Golden retrieval matrix
 
 The following tenant set must be run against the Azure-only production runtime

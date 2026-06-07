@@ -18,7 +18,7 @@ project logs show zero app-originated writes after the freeze timestamp.
 | Freeze timestamp marked | UTC timestamp, operator, and change ticket for the start of the write freeze | Not recorded in this proof pack | BLOCKED |
 | Supabase env vars removed from Azure production runtime | Azure Container Apps revision/env dump showing no `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, Supabase pooler host, or Supabase direct URL | 2026-06-06 lab evidence removed Supabase/Pinecone/Neo4j env projection from `ca-abarva-web-lab-eastus--0000048`; production proof is not attached here | PARTIAL |
 | Production write paths disabled or blocked | Runtime guard, network egress rule, or service-role removal proving app writes to Supabase cannot succeed | Not recorded in this proof pack | BLOCKED |
-| No app module can write to Supabase | Runtime import census plus write-path audit showing no production module imports Supabase clients or calls Supabase mutation helpers | `npm run audit:runtime-supabase-imports:guard` is the required repo-native code audit; fresh output must be attached before freeze completion | BLOCKED |
+| No app module can write to Supabase | Runtime import census plus write-path audit showing no production module imports Supabase clients or calls Supabase mutation helpers | 2026-06-07 local code proof passed; see "Code-level write-path evidence" below | PASS for code-level direct Supabase SDK/env write proof |
 | Supabase logs show zero writes after freeze | Supabase database/API log export filtered after freeze timestamp, with app identities and user agents identified | Not recorded in this proof pack | BLOCKED |
 
 ## Freeze timestamp
@@ -29,6 +29,23 @@ Approval/change record: `PENDING`
 
 Do not fill this field until the operator has frozen production writes and
 captured logs without printing secrets.
+
+## Code-level write-path evidence
+
+Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
+`02:23 UTC`.
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| `npm run audit:runtime-supabase-imports:guard` | PASS | Guard allowed exactly one compatibility helper, `src/lib/supabase-server.ts`, with `filesWithImportMatches=1` and `importMatches=1`. |
+| Narrow runtime Supabase reference scan | PASS | `rg` over `src/app` and `src/lib`, excluding tests/mocks/specs, found no direct `@supabase`, `supabase-js`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `createClient`, `createServiceRoleClient`, or `createServerSupabase` runtime usage. Matches were limited to `src/lib/supabase-server.ts` plus two comments. |
+| `src/lib/supabase-server.ts` review | PASS | `getServerSupabase()` is a compatibility alias that returns `getAzureReadFluentClient()` and explicitly does not create or depend on a Supabase client, URL, anon key, service-role key, or JWT. |
+
+This proves the shipped `src/app` and `src/lib` runtime has no direct Supabase
+SDK/env write path. It does **not** replace production runtime freeze proof:
+operators still need to remove production Supabase env vars, block service-role
+credentials, and capture Supabase logs showing zero app-originated writes after
+the freeze timestamp.
 
 ## Commands to capture evidence
 
@@ -66,4 +83,4 @@ az monitor log-analytics query \
 1. Freeze timestamp is not recorded.
 2. Azure Container Apps **production** env removal is not proven in this pack.
 3. Supabase logs after freeze are not attached.
-4. Code-level write-path proof has not been freshly run on this branch.
+4. Production runtime credential/network blocking proof is not attached.

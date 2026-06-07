@@ -48,10 +48,19 @@ operators must attach before deletion can be approved.
 
 - Pass: `git diff --check`.
 - Pass: `npm run release:check -- --base origin/main --head HEAD`.
+- Pass: `npm run audit:runtime-supabase-imports:guard` on 2026-06-07. The
+  guard allowed exactly one compatibility helper,
+  `src/lib/supabase-server.ts`.
+- Pass: narrowed `rg` scan over `src/app` and `src/lib`, excluding tests/mocks,
+  found no direct runtime Supabase SDK/env usage beyond the compatibility alias
+  and comments.
 - Pass: targeted `rg` scan of the added proof files for common secret-shaped
   values returned no matches.
 - Blocked: `npm run secrets:scan` could not start because `gitleaks` is not
   installed in this environment (`sh: 1: gitleaks: not found`).
+- Blocked: production freeze/log/backup/search/soak evidence collection from
+  this shell because Azure CLI, Supabase CLI, `psql`, `pg_dump`, production
+  database URLs, and Azure Search env vars are not available.
 - Not run: production Supabase freeze, backup, restore-test, Azure-only soak,
   pause QA, and deletion approval. These are intentionally left as blocked
   operator gates in the proof pack.

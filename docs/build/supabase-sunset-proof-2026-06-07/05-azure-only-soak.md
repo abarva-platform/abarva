@@ -48,6 +48,20 @@ lab Azure-only runtime/retrieval smoke execution:
 
 This prior evidence is not a substitute for the production 24-72 hour soak.
 
+## Local execution attempt
+
+Captured from branch `cursor/supabase-sunset-proof-96c4` on 2026-06-07 at
+`02:24 UTC`.
+
+| Check | Result | Impact |
+| --- | --- | --- |
+| Azure CLI (`az account show`) | NOT AVAILABLE (`az: command not found`) | Cannot query Container Apps production revisions, env names, or Azure Monitor logs from this shell. |
+| `DATABASE_URL` | NOT AVAILABLE | Cannot run `npm run azure:cutover:runtime-smoke` against production Azure Postgres from this shell. |
+| `ABARVA_AZURE_DATABASE_URL` | NOT AVAILABLE | Cannot substitute the Azure Postgres candidate URL for local smoke. |
+| Azure Search env vars | NOT AVAILABLE | Cannot couple runtime soak with retrieval smoke from this shell. |
+
+No production soak was started or claimed from this environment.
+
 ## Log deny-list
 
 The soak fails if production app logs contain any of the following during the
@@ -89,3 +103,4 @@ az monitor log-analytics query \
 3. No production app log deny-list proof is attached.
 4. No Supabase zero-read/write soak proof is attached.
 5. No Azure Postgres production traffic proof is attached.
+6. This shell has no Azure CLI or production data-plane environment variables.

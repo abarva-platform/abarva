@@ -33,7 +33,7 @@ Fill only after every prior file in this proof pack is PASS.
 
 | Condition | Source file | Current status |
 | --- | --- | --- |
-| Freeze timestamp recorded and Supabase writes blocked | `01-freeze-proof.md` | BLOCKED |
+| Freeze timestamp recorded and Supabase writes blocked | `01-freeze-proof.md` | PARTIAL - code-level runtime Supabase write proof passed; production freeze/log proof remains blocked |
 | Final backup, checksum, and restore-test evidence exist | `02-final-backup.md` | BLOCKED |
 | Azure parity table has no unexplained mismatch and checksum proof is attached | `03-azure-parity.csv` | BLOCKED |
 | Azure search/vector production proof and golden retrieval pass | `04-search-vector-proof.md` | BLOCKED |
