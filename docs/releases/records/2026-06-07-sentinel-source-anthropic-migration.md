@@ -58,18 +58,24 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   `npm run audit:provider-proof` — passed in this VM; Jest not rerun here because
   `node_modules/` is absent.
 - Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
-- **Azure Container Apps test revision staged safely:** `provqa` is healthy and
-  held at **0% traffic**; the existing production revision remains pinned at
-  **100% traffic**. Unauthenticated liveness on the revision-scoped FQDN passed
-  (Home/sign-in 200, no Supabase refs). See
+- Azure Container Apps provider-image proof: deployed as test revision
+  `ca-abarva-web-lab-eastus--provqa`; it is healthy and held at **0% traffic**
+  after pinning the existing production revision at **100% traffic**. DNS and
+  production traffic were unchanged. Unauthenticated liveness on `--provqa`
+  passed (`/` and `/sign-in` HTTP 200; no `supabase.co` /
+  `pooler.supabase.com` references in public HTML). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
-- **Signed-in Azure Container Apps QA — BLOCKED/not run:** this agent VM still
-  has no Clerk auth material (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+- **Signed-in Azure Container Apps QA — BLOCKED/not run:** protected routes on
+  `--provqa` redirect to Clerk (`boss-griffon-61.accounts.dev`). The agent
+  environment has no Clerk session or credentials, and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
   `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie are
   absent). After `npm ci`, the 05:16Z auth-state mint reached the canonical
   helper, but both Lakeshore CFO/CIO states failed before route probes with
   `Missing CLERK_SECRET_KEY`; no `.auth/*.json` files were created. Protected
-  Sentinel/Source paths still cannot be exercised from here.
+  Sentinel/Source paths still cannot be exercised from here. Guardrails held
+  (`--provqa` remains 0% traffic; no DNS / Vercel / Supabase change; no `.auth`
+  committed). See
+  `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX
@@ -81,10 +87,11 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 ## Rollout Plan
 
 Reviewed PR, **do not auto-deploy.** Merge only after the signed-in QA gate
-passes. Requires `ANTHROPIC_API_KEY` in the target runtime for the Sentinel Ask and
-Source chat provider check. Ticket-mint QA from an agent VM requires
-`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`; demo-login fallback, if
-enabled, requires `DEMO_LOGIN_PASSWORD`. Optional model override env vars are
+passes on the 0-traffic `--provqa` revision. Requires `ANTHROPIC_API_KEY` in the
+target runtime for the Sentinel Ask and Source chat provider check. Ticket-mint
+QA from an agent VM requires `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and
+`CLERK_SECRET_KEY`; demo-login fallback, if enabled, requires
+`DEMO_LOGIN_PASSWORD`. Optional model override env vars are
 `INTELLIGENCE_ASK_ANTHROPIC_SYNTHESIS_MODEL`,
 `INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_MODEL`,
 `ANTHROPIC_MINI_MODEL`, and `SENTINEL_CHAT_MODEL` (safe Claude defaults exist).
@@ -100,6 +107,13 @@ sentinel-chat-llm.ts are independent).
 
 - `provider-audit.test.ts` wiring and audit-envelope assertions; jest outputs
   on the branch.
+- `docs/build/azure-container-apps-cutover-2026-06-07/ANTHROPIC_PROVIDER_QA.md`
+  records the static provider proof, image, and validation commands.
+- `docs/build/azure-container-apps-cutover-2026-06-07/PROVIDER_AUDIT_PROOF.md`
+  records provider audit proof output for Sentinel Ask, Source chat, and Nexus.
+- `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`
+  records the Azure 0-traffic revision proof, unauthenticated liveness, Clerk
+  redirect blocker, and failed auth-state mint/retry evidence.
 - `ai_egress_audit` rows for `intelligence-ask-synthesis` and
   `source-sentinel-chat` should read `provider=anthropic` once exercised live.
 
@@ -108,8 +122,8 @@ sentinel-chat-llm.ts are independent).
 - Intent classifier (`classifier.ts`) and follow-up suggestions (`followups.ts`)
   still use the OpenAI small-model utility path — tracked as the remaining
   Anthropic-only cleanup (non-reasoning utilities).
-- Signed-in live QA not performed in this environment (no Clerk
-  env/session names listed above), although the `provqa` test revision is healthy
+- Signed-in live QA not performed in this environment (no Clerk env/session
+  names listed above), although the `provqa` test revision is healthy
   at 0% traffic and production remains at 100% traffic on the existing revision.
   The 2026-06-07 05:16Z auth-state mint proof is recorded in
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
