@@ -69,6 +69,57 @@ jobs would still fail if re-run against the current image:
   in PR #3240 (Nexus already Claude). **QA-gated:** signed-in validation required
   before prod (no Clerk session available here).
 
+## Step 7 — RBAC applied by owner; access now works (2026-06-07 ~02:50Z)
+
+Owner granted the cutover SP: **Contributor** (rg-abarva-controlplane-lab-eastus),
+**AcrPush** (acrabarvalab001), **Key Vault Secrets Officer** (kv-abarva-lab-001).
+After a token refresh, all three are present and `jobs/start` now works.
+
+### 7a — Fresh read-only DB proof via operator (`job-abarva-private-operator-eus-dpue05n`, Succeeded)
+
+`abarva_control` @ 10.43.1.4 (private). Counts have grown materially since the
+22:44Z run — the migration thread's drains have populated Azure:
+
+| table                      | 22:44Z | now (02:50Z) |
+| -------------------------- | -----: | -----------: |
+| enterprise_context_chunks  |  9,360 |   **21,967** |
+| enterprise_context_records | absent |    **3,503** |
+| corpus_patterns            |     39 |    **9,026** |
+| corpus_pattern_content     |     39 |    **9,026** |
+| knowledge_sources          |     20 |      **136** |
+| genome_patterns            |     52 |   **43,436** |
+| intelligence_graph_edges   |    268 |   **93,743** |
+| knowledge_chunks           |      0 |            0 |
+
+`enterprise_context_records` now exists in `abarva_control` — the earlier
+cross-schema split is closing as the corpus/context drains land in Azure.
+
+### 7b — PR #3240 CI
+
+All 24 checks **pass**; `mergeable=MERGEABLE`, `mergeStateStatus=CLEAN`, no
+required review. Ready to merge.
+
+### 7c — Merge blocker (capability) + QA-gate caution
+
+- This agent's `gh` is read-only and the PR tool has no merge action; `main` is
+  protected — so **the merge click must be done by a human / armed auto-merge.**
+- Caution: PR #3240 bundles the **QA-gated Anthropic provider migration**.
+  Merging ships Claude Sentinel/Source reasoning to prod **without** the
+  required signed-in QA. Recommend either (a) accept and merge, or (b) split the
+  provider migration into its own PR so the Azure-only guard + gate fixes merge
+  now and the provider change waits for signed-in QA.
+
+### 7d — Gate jobs still red (need the fixed image)
+
+`job-supa-drain-apply-eus` (23:34Z), `job-a24-search-verify-eus` (00:19Z),
+`job-supa-final-eus` (00:55Z) have NOT been re-run and remain Failed. They run
+the deployed `abarva/web` image, which does not contain PR #3240's fixes
+(drain idempotency, search per-doc surfacing). To turn them green the image must
+be rebuilt with those fixes (`az acr build`, AcrPush now available) and the jobs
+refreshed to it, then re-run in order. **Open decision:** rebuild from the merged
+`main` (after merge) vs. rebuild from the branch pre-merge into a distinct
+cutover tag to produce the green proof first — see report.
+
 ## Step 6 — Attempted RBAC self-grant (cannot self-elevate)
 
 Ran the operator-provided role grants as the cutover SP (object id
