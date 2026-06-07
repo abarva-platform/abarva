@@ -55,12 +55,13 @@ Per the broker-boundary rule
 data-room / vector / graph), the app render-path should not import that
 fixture unconditionally.
 
-This slice does not delete the fixture (it underpins
-`docs/strategy/scenarios/APEX-LOOP-WIRING-GAPS.md` GAP-4) but gates it behind
-`TOWER_APEX_FIXTURE_ENABLED=1`. The pilot default leaves the flag off, so
-Tower renders the honest empty state from `MovePortfolioCardPanel` until a
-broker-backed portfolio read is wired through `AgentContextBroker`. The flag
-is a temporary affordance for demo walkthroughs.
+The authenticated Tower render path now leaves the fixture out entirely. Move
+portfolio cards are assembled through `AgentContextBroker` persisted tenant
+context plus the outcome-ledger read adapter. If either persisted broker context
+or Move-subject outcome ledger rows are absent, Tower renders the honest empty
+state from `MovePortfolioCardPanel`.
 
-Follow-up: replace the fixture with a broker-backed query through the
-`AgentContextBroker` contract and remove the env flag entirely.
+The Apex fixture remains in `src/lib/tower/apex-contact-center-portfolio-fixture.ts`
+only as historical/demo source material for tests or offline review; `/tower`
+does not import it and the `TOWER_APEX_FIXTURE_ENABLED` runtime gate has been
+removed.

@@ -39,15 +39,23 @@ describe('Tower invariants — Apple-grade polish slice', () => {
     });
   });
 
-  describe('fixture strip (Apex contact-centre card)', () => {
+  describe('broker-bound portfolio cards', () => {
     const towerPageSource = readFileSync(`${TOWER_ROUTES_DIR}/page.tsx`, 'utf8');
+    const brokerSource = readFileSync('src/lib/tower/move-portfolio-broker.ts', 'utf8');
 
-    it('gates buildApexPortfolioCards behind TOWER_APEX_FIXTURE_ENABLED', () => {
-      // Per the broker-boundary memory the app-tier must not directly
-      // surface hardcoded fixtures without an explicit opt-in. The fixture
-      // import is only safe to call when the env flag is set.
-      expect(towerPageSource).toContain('TOWER_APEX_FIXTURE_ENABLED');
-      expect(towerPageSource).toContain('apexFixtureEnabled');
+    it('uses the broker-backed Tower portfolio reader instead of an Apex fixture gate', () => {
+      expect(towerPageSource).toContain('readBrokerMovePortfolioCards');
+      expect(towerPageSource).not.toContain('TOWER_APEX_FIXTURE_ENABLED');
+      expect(towerPageSource).not.toContain('buildApexPortfolioCards');
+      expect(towerPageSource).not.toContain('apexFixtureEnabled');
+    });
+
+    it('requires persisted AgentContextBroker context before rendering portfolio cards', () => {
+      expect(brokerSource).toContain('buildEnterpriseAgentContextBundleAsync');
+      expect(brokerSource).toContain('TENANT_DATA_PERSISTED_WARNING');
+      expect(brokerSource).toContain("agentName: 'Atlas'");
+      expect(brokerSource).toContain("surface: 'tower'");
+      expect(brokerSource).toContain('readOutcomeLedger');
     });
 
     it('does not surface a hardcoded "Apex Contact Center" string on any non-fixture Tower render-path file', () => {

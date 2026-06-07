@@ -3,11 +3,7 @@ import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/To
 import { PortfolioSequenceView } from '@/components/admin/tower/PortfolioSequenceView';
 import { MovePortfolioCardPanel } from '@/components/tower/MovePortfolioCardPanel';
 import { TowerOutcomeReportDownload } from '@/components/tower/TowerOutcomeReportDownload';
-import {
-  APEX_TENANT_KEY,
-  buildApexPortfolioCards,
-} from '@/lib/tower/apex-contact-center-portfolio-fixture';
-import type { MovePortfolioCard } from '@/lib/tower/move-portfolio-card';
+import { readBrokerMovePortfolioCards } from '@/lib/tower/move-portfolio-broker';
 import { selectTowerPageReadAdapter } from '@/lib/data-plane/read-adapters/towerPageReadAdapter';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -522,20 +518,11 @@ export default async function TowerPage({
   const activeClientId = activeClient?.id ?? null;
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
-  // GAP-4 — render loop-completed Moves as first-class Tower portfolio
-  // cards. The Apex contact-centre Move card is a hardcoded fixture
-  // (see `apex-contact-center-portfolio-fixture.ts`) and is therefore
-  // gated behind `TOWER_APEX_FIXTURE_ENABLED=1`. With the flag off
-  // (the pilot default), Tower renders the honest empty state from
-  // `MovePortfolioCardPanel` until a real loop-completed Move lands
-  // through the broker. The flag is a temporary affordance for demo
-  // walkthroughs while broker-backed portfolio reads are wired up;
-  // see `docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md`.
-  const apexFixtureEnabled = process.env.TOWER_APEX_FIXTURE_ENABLED === '1';
-  const movePortfolioCards: readonly MovePortfolioCard[] =
-    apexFixtureEnabled && activeClient?.key === APEX_TENANT_KEY
-      ? buildApexPortfolioCards()
-      : [];
+  // GAP-4 follow-through — loop-completed Moves now reach Tower through
+  // AgentContextBroker plus the outcome-ledger read adapter. Synthetic Apex
+  // fixtures no longer sit on the authenticated render path; no persisted
+  // context/ledger rows means the portfolio panel renders its empty state.
+  const movePortfolio = await readBrokerMovePortfolioCards(activeClient?.key);
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
@@ -640,7 +627,7 @@ export default async function TowerPage({
       towerHandoffSlot={
         <>
           <MovePortfolioCardPanel
-            cards={movePortfolioCards}
+            cards={movePortfolio.cards}
             tenantName={towerSetupInitiativesFeed.tenantName}
           />
           <TowerSetupInitiativesPanel feed={towerSetupInitiativesFeed} />
