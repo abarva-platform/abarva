@@ -30,13 +30,17 @@ The authenticated Tower portfolio no longer uses the temporary Apex contact-cent
 - `src/lib/tower/move-portfolio-broker.ts`: new broker-backed portfolio card reader.
 - `src/app/(maestro)/tower/page.tsx`: routes Move portfolio cards through the broker reader and removes Apex fixture imports.
 - `src/__tests__/integration/tower/tower-invariants.test.ts`: guardrails for broker-backed cards and no fixture gate.
+- Removed stale `/tower/activity`, `/tower/outcomes`, `/tower/projects`, `/tower/staff-aug`, `/tower/tech-stack`, `/tower/volumetrics`, and `/tower/preview` redirect-shell pages that the Tower invariant suite and decision record already classify as deleted surface.
 - `docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md`: updates the Tower fixture decision note.
 
 ## QA / Validation
 
-- Pending local validation before merge:
-  - `npm run test:integration -- src/__tests__/integration/tower/tower-invariants.test.ts`
-  - `npm run release:check`
+- Blocked before dependency install: `npx jest "src/__tests__/integration/tower/tower-invariants.test.ts" --runInBand` could not load the repo Jest config because local `node_modules` was absent.
+- Blocked before dependency install: `npx eslint "src/lib/tower/move-portfolio-broker.ts" "src/app/(maestro)/tower/page.tsx" "src/__tests__/integration/tower/tower-invariants.test.ts"` could not load the repo ESLint config because local `node_modules` was absent.
+- Failed then fixed: `npm run release:check` initially failed because this release record did not state explicit pass/fail/blocked status.
+- Pass after dependency install: `npx jest "src/__tests__/integration/tower/tower-invariants.test.ts" --runInBand` (23 tests passed; Jest emitted existing duplicate manual mock warnings for markdown mocks).
+- Pass after dependency install: `npx eslint "src/lib/tower/move-portfolio-broker.ts" "src/app/(maestro)/tower/page.tsx" "src/__tests__/integration/tower/tower-invariants.test.ts"`.
+- Pass after dependency install: `npm run release:check`.
 
 ## Rollout Plan
 
