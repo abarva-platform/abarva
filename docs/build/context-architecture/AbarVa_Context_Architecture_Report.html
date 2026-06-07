@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AbarVa — Context Layer, Corpus & RAG Architecture (Plain-English Report)</title>
+<style>
+  :root{
+    --paper:#f5f1eb; --card:#ffffff; --ink:#0c1a3a; --navy:#1F2A44; --muted:#6b7280;
+    --line:#d8dee9; --blue:#0066CC; --teal:#0f766e; --amber:#b45309; --red:#b91c1c;
+    --purple:#6d28d9; --green:#15803d; --soft:#eef2fb;
+    --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+    --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:15.5px}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+  header.hero{background:linear-gradient(180deg,#0c1a3a 0%,#16264a 100%);color:#fff;padding:48px 0 40px}
+  header.hero .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9fb3d6}
+  header.hero h1{font-family:var(--serif);font-weight:700;font-size:34px;margin:10px 0 8px;line-height:1.15}
+  header.hero p{color:#c9d4ea;max-width:820px;margin:6px 0 0}
+  .badge{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#dce6f7;
+    font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;margin:14px 6px 0 0}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:26px 0;
+    column-count:2;column-gap:28px}
+  nav.toc a{display:block;color:var(--navy);text-decoration:none;padding:4px 0;font-size:14px;break-inside:avoid}
+  nav.toc a:hover{color:var(--blue)}
+  nav.toc .n{font-family:var(--mono);color:var(--muted);font-size:12px;margin-right:8px}
+  section{margin:38px 0;scroll-margin-top:18px}
+  h2{font-family:var(--serif);font-size:25px;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:8px;margin:0 0 8px}
+  h3{font-size:18px;color:var(--navy);margin:22px 0 6px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .plain{background:#eef7f1;border-left:4px solid var(--green);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14.5px}
+  .plain b{color:var(--green)}
+  .note{background:#fff7e8;border-left:4px solid var(--amber);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.8px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#1F2A44;color:#fff;font-weight:600;font-size:12.5px}
+  tr:nth-child(even) td{background:#f3f4f7}
+  code,.mono{font-family:var(--mono);font-size:12.5px;background:#eef2fb;color:#23314f;padding:1px 5px;border-radius:4px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .stat .big{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--blue)}
+  .stat .lbl{font-size:12.5px;color:var(--muted)}
+  .svgbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;margin:16px 0;overflow-x:auto}
+  .svgcap{font-size:12.5px;color:var(--muted);font-family:var(--mono);padding:4px 10px 8px}
+  ul.tight li{margin:3px 0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--navy);background:#fff;margin:2px}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);margin-top:40px;padding:18px 0 50px;font-family:var(--mono)}
+  @media(max-width:760px){nav.toc{column-count:1}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">AbarVa / Nexus · Engineering &amp; Product Reference</div>
+    <h1>How the Context Layer, Corpus &amp; RAG actually work</h1>
+    <p>A plain-English, full-stack walk-through: what data lives in the context layer, how documents become
+    searchable chunks, how Sentinel and Nexus become "context-aware" in real time, what happens when there is
+    no context (and Claude answers from its own memory), the role of the reasoning layer — and how we make these
+    agents answer better over time. Grounded in the live lab data plane.</p>
+    <span class="badge">live counts: 2026-06-07</span>
+    <span class="badge">DB: abarva_control (Azure Postgres)</span>
+    <span class="badge">Search: srch-abarva-context-lab-eastus</span>
+    <span class="badge">LLM: Claude · Embeddings: OpenAI</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+<nav class="toc">
+  <a href="#tldr"><span class="n">00</span>TL;DR for a layman</a>
+  <a href="#inventory"><span class="n">01</span>What's in the context layer (by dimension)</a>
+  <a href="#corpus"><span class="n">02</span>Corpus &amp; patterns inventory</a>
+  <a href="#pipeline"><span class="n">03</span>Pipeline: file → chunk → DB → graph → index</a>
+  <a href="#stores"><span class="n">04</span>Where context is stored (the 4 stores)</a>
+  <a href="#binding"><span class="n">05</span>Real-time binding: how Sentinel/Nexus get context</a>
+  <a href="#config"><span class="n">06</span>Which component holds the "intelligence" (config)</a>
+  <a href="#example"><span class="n">07</span>Worked example: the Kyriba question</a>
+  <a href="#nocontext"><span class="n">08</span>No context? The Claude-only fallback</a>
+  <a href="#reasoning"><span class="n">09</span>The reasoning layer</a>
+  <a href="#training"><span class="n">10</span>How to train Sentinel &amp; Nexus to answer better</a>
+  <a href="#glossary"><span class="n">11</span>Glossary</a>
+</nav>
+
+<!-- 00 -->
+<section id="tldr">
+  <div class="eyebrow">00 · Start here</div>
+  <h2>TL;DR for a layman</h2>
+  <div class="plain">
+    <b>The 30-second version.</b> AbarVa keeps a private "memory" for each client (the <b>context layer</b>) plus a
+    shared library of reusable "what works / what fails" lessons (the <b>corpus / patterns</b>). When you ask
+    Sentinel or Nexus a question, the system first <b>retrieves</b> the most relevant pieces of that memory, pastes
+    them into the question, and only then asks <b>Claude</b> (the large language model) to write the answer — so the
+    answer is grounded in your real data with citations. This technique is called <b>RAG</b> (Retrieval-Augmented
+    Generation). If there is no relevant context, Claude still answers from its own general training, but the
+    system marks it as lower-confidence and the <b>reasoning layer</b> adds guardrails (e.g., "don't claim a number
+    you can't cite").
+  </div>
+  <div class="grid3">
+    <div class="stat"><div class="big">5,247</div><div class="lbl">Lakeshore context chunks (live, embedded)</div></div>
+    <div class="stat"><div class="big">43,436</div><div class="lbl">genome_patterns rows (shared lessons)</div></div>
+    <div class="stat"><div class="big">9,026</div><div class="lbl">corpus_patterns rows</div></div>
+  </div>
+  <p style="margin-top:14px"><b>Four moving parts to remember:</b>
+    <span class="pill">1 · Ingestion (files → chunks)</span>
+    <span class="pill">2 · Stores (DB + graph + vector + blob)</span>
+    <span class="pill">3 · Retrieval &amp; binding (context broker)</span>
+    <span class="pill">4 · Generation (Claude) + reasoning guardrails</span>
+  </p>
+</section>
+
+<!-- 01 -->
+<section id="inventory">
+  <div class="eyebrow">01 · The client's private memory</div>
+  <h2>What's in the context layer, by dimension</h2>
+  <p>The context layer is <b>per-client (tenant-scoped)</b>. Every row carries a <code>tenant_key</code> (e.g.
+  <code>lakeshore-holdings</code>) and a <code>client_id</code>, so one client can never see another's data. The
+  main table is <code>enterprise_context_chunks</code> in Azure Postgres <code>abarva_control</code>.</p>
+
+  <h3>Tenants currently loaded (live)</h3>
+  <table>
+    <tr><th>Tenant</th><th>Context chunks</th><th>Notes</th></tr>
+    <tr><td>lakeshore-holdings</td><td>5,247</td><td>Synthetic enterprise data room (V1 load), all embedded 1536-d</td></tr>
+    <tr><td>skyharbor-air</td><td>3,240</td><td>Airline demo tenant</td></tr>
+    <tr><td>meridian-health</td><td>873</td><td>Healthcare demo tenant</td></tr>
+  </table>
+
+  <h3>Lakeshore context by dimension (context_domain)</h3>
+  <p>The 5,247 Lakeshore chunks break down by the 12 enterprise dimensions (plus the manifest). This is the
+  "what the system can answer about" map:</p>
+  <table>
+    <tr><th>Dimension (context_domain)</th><th>Chunks</th><th>What it covers</th></tr>
+    <tr><td>servicenow_support_workload</td><td>3,051</td><td>1,600 incidents + 1,200 events, SLAs, root causes</td></tr>
+    <tr><td>data_analytics_reporting</td><td>575</td><td>320 reports, dashboards, KPI defs, lineage, DQ</td></tr>
+    <tr><td>risk_controls_responsible_ai</td><td>374</td><td>SOX, payment/fraud controls, SoD, audit, AI governance</td></tr>
+    <tr><td>vendors_contracts_source</td><td>312</td><td>SI/AMS contracts, rate cards, BAFO, scorecards</td></tr>
+    <tr><td>it_systems_architecture</td><td>267</td><td>App inventory, ERP, integration, interfaces, diagrams</td></tr>
+    <tr><td>treasury_kyriba</td><td>161</td><td>Kyriba rollout, bank connectivity, payments, controls</td></tr>
+    <tr><td>ai_use_cases_moves</td><td>150</td><td>AI opportunity portfolio, value model</td></tr>
+    <tr><td>org_decision_rights</td><td>116</td><td>Org charts, RACI, steering committees</td></tr>
+    <tr><td>strategy_initiatives</td><td>95</td><td>Roadmap, portfolio, RAID, dependencies</td></tr>
+    <tr><td>finance_performance</td><td>65</td><td>P&amp;L, working capital, KPI catalog, value pools</td></tr>
+    <tr><td>enterprise_profile</td><td>47</td><td>BUs, geographies, operating model</td></tr>
+    <tr><td>operations_business_process</td><td>15</td><td>O2C, P2P, R2R, close, planning</td></tr>
+    <tr><td>manifest</td><td>19</td><td>Pack overview, taxonomy, load control</td></tr>
+  </table>
+  <div class="note">Each chunk also stores <code>source_path</code>, <code>provenance</code> (blob path, source
+  system/owner/date, sha256) and <code>chunk_metadata</code> (sensitivity, evidence_usable, file_type) — that's
+  what makes every answer <b>citable back to a source document</b>.</div>
+</section>
+
+<!-- 02 -->
+<section id="corpus">
+  <div class="eyebrow">02 · The shared library of lessons</div>
+  <h2>Corpus &amp; patterns inventory</h2>
+  <p>Separate from any one client's data, AbarVa keeps a shared library of reusable <b>patterns</b> — codified
+  "what works / what fails, with failure rates and controls." Sentinel uses these to reason like an experienced
+  operator, not just summarize your documents.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">genome_patterns — 43,436 rows</h3>
+      <p style="font-size:14px;color:var(--muted)">Codified decision/failure patterns by industry. Each row has
+      a <code>code</code>, name, doctrine, failure-rate %, anti-patterns.</p>
+      <table>
+        <tr><th>Vertical</th><th>Rows</th></tr>
+        <tr><td>airline</td><td>12,689</td></tr>
+        <tr><td>healthcare_provider</td><td>11,825</td></tr>
+        <tr><td>retail</td><td>11,440</td></tr>
+        <tr><td>banking</td><td>4,680</td></tr>
+        <tr><td>medtech</td><td>2,490</td></tr>
+        <tr><td>cross_industry</td><td>300</td></tr>
+        <tr><td>diversified_holdco (Lakeshore)</td><td>12 (LSH-TMS-*)</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Other shared knowledge</h3>
+      <table>
+        <tr><th>Store</th><th>Size</th><th>Purpose</th></tr>
+        <tr><td><code>corpus_patterns</code></td><td>9,026</td><td>Long-form patterns + content (treasury subset 294)</td></tr>
+        <tr><td>Worldview W1–W5</td><td>5 theses</td><td>Thought-leadership (foundation models, ERP-in-AI, consulting displacement) — 3072-d vectors</td></tr>
+        <tr><td>Move Artifact Bible</td><td>165 patterns</td><td>Authoring doctrine for board-grade Move artifacts</td></tr>
+      </table>
+      <h3>Azure AI Search indexes (live)</h3>
+      <table>
+        <tr><th>Index</th><th>Docs</th><th>Lane</th></tr>
+        <tr><td><code>tenant-context-v1</code></td><td>13,505</td><td>Per-tenant context (vector+BM25)</td></tr>
+        <tr><td><code>lakeshore-patterns-v1</code></td><td>12</td><td>Lakeshore treasury patterns</td></tr>
+        <tr><td><code>corpus-global</code></td><td>39</td><td>Cross-tenant corpus</td></tr>
+        <tr><td><code>evidence-ledger-v1</code></td><td>—</td><td>Citable claims</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note"><b>Two namespaces, don't confuse them.</b> A client's <i>private memory</i>
+  (<code>enterprise_context_chunks</code> / <code>tenant-context-v1</code>) is different from the <i>shared lessons</i>
+  (<code>genome_patterns</code> / <code>corpus_patterns</code>). The treasury pattern <code>LSH-TMS-002</code> lives in
+  the genome registry; a generic corpus slug like <code>PAT-LSH-D18-00479</code> lives in <code>corpus_patterns</code>.
+  Binding the wrong namespace to a card is the class of bug the "fail-closed pattern grounding" fix addresses.</div>
+</section>
+
+<!-- 03 -->
+<section id="pipeline">
+  <div class="eyebrow">03 · Ingestion</div>
+  <h2>How a file becomes searchable: chunk → registry → DB → graph → vector → index</h2>
+  <div class="plain"><b>Plain English:</b> a PDF/Excel/Word file is read, its text is pulled out, sliced into
+  bite-sized "chunks," each chunk is saved as a database row, turned into a list of numbers (an "embedding") that
+  captures its meaning, and copied into a search index so it can be found by meaning, not just keywords.</div>
+  <div class="svgbox">
+    <svg viewBox="0 0 1120 360" width="100%" font-family="Inter, sans-serif">
+      <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker></defs>
+      <!-- nodes -->
+      <g>
+      <rect x="16" y="60" width="150" height="66" rx="9" fill="#fff" stroke="#26324f"/><rect x="16" y="60" width="5" height="66" fill="#0066CC"/>
+      <text x="30" y="86" font-size="13" font-weight="600" fill="#0c1a3a">1 · Upload</text>
+      <text x="30" y="104" font-size="10.5" fill="#6b7280">Setup Admin ZIP /</text><text x="30" y="118" font-size="10.5" fill="#6b7280">bulk loader</text>
+
+      <rect x="186" y="60" width="150" height="66" rx="9" fill="#fff" stroke="#26324f"/><rect x="186" y="60" width="5" height="66" fill="#6d28d9"/>
+      <text x="200" y="86" font-size="13" font-weight="600" fill="#0c1a3a">2 · Azure Blob</text>
+      <text x="200" y="104" font-size="10.5" fill="#6b7280">original bytes kept</text><text x="200" y="118" font-size="10.5" fill="#6b7280">context-drops/…</text>
+
+      <rect x="356" y="60" width="150" height="66" rx="9" fill="#fff" stroke="#26324f"/><rect x="356" y="60" width="5" height="66" fill="#b45309"/>
+      <text x="370" y="86" font-size="13" font-weight="600" fill="#0c1a3a">3 · Parse</text>
+      <text x="370" y="104" font-size="10.5" fill="#6b7280">pdf-parse · exceljs</text><text x="370" y="118" font-size="10.5" fill="#6b7280">mammoth · Doc Intel</text>
+
+      <rect x="526" y="60" width="150" height="66" rx="9" fill="#fff" stroke="#26324f"/><rect x="526" y="60" width="5" height="66" fill="#b45309"/>
+      <text x="540" y="86" font-size="13" font-weight="600" fill="#0c1a3a">4 · Chunk</text>
+      <text x="540" y="104" font-size="10.5" fill="#6b7280">rows: 1/CSV row,</text><text x="540" y="118" font-size="10.5" fill="#6b7280">~1.2k chars/doc</text>
+
+      <rect x="696" y="20" width="160" height="58" rx="9" fill="#fff" stroke="#26324f"/><rect x="696" y="20" width="5" height="58" fill="#0066CC"/>
+      <text x="710" y="44" font-size="12.5" font-weight="600" fill="#0c1a3a">5a · Postgres</text>
+      <text x="710" y="62" font-size="10" fill="#6b7280">enterprise_context_chunks</text>
+
+      <rect x="696" y="86" width="160" height="58" rx="9" fill="#fff" stroke="#26324f"/><rect x="696" y="86" width="5" height="58" fill="#15803d"/>
+      <text x="710" y="110" font-size="12.5" font-weight="600" fill="#0c1a3a">5b · Graph</text>
+      <text x="710" y="128" font-size="10" fill="#6b7280">enterprise_graph_nodes/edges</text>
+
+      <rect x="696" y="152" width="160" height="58" rx="9" fill="#fff" stroke="#26324f"/><rect x="696" y="152" width="5" height="58" fill="#b91c1c"/>
+      <text x="710" y="176" font-size="12.5" font-weight="600" fill="#0c1a3a">5c · Evidence</text>
+      <text x="710" y="194" font-size="10" fill="#6b7280">evidence_ledger</text>
+
+      <rect x="876" y="40" width="150" height="62" rx="9" fill="#fff" stroke="#26324f"/><rect x="876" y="40" width="5" height="62" fill="#6d28d9"/>
+      <text x="890" y="64" font-size="12.5" font-weight="600" fill="#0c1a3a">6 · Embed</text>
+      <text x="890" y="82" font-size="10" fill="#6b7280">OpenAI 1536-d</text><text x="890" y="96" font-size="10" fill="#6b7280">text-embedding-3-small</text>
+
+      <rect x="876" y="118" width="150" height="62" rx="9" fill="#fff" stroke="#26324f"/><rect x="876" y="118" width="5" height="62" fill="#0066CC"/>
+      <text x="890" y="142" font-size="12.5" font-weight="600" fill="#0c1a3a">7 · Index</text>
+      <text x="890" y="160" font-size="10" fill="#6b7280">Azure AI Search</text><text x="890" y="174" font-size="10" fill="#6b7280">tenant-context-v1</text>
+      </g>
+      <!-- arrows -->
+      <g stroke="#39507e" stroke-width="1.6" fill="none" marker-end="url(#a)">
+        <path d="M166,93 L186,93"/><path d="M336,93 L356,93"/><path d="M506,93 L526,93"/>
+        <path d="M676,93 L696,49"/><path d="M676,100 L696,115"/><path d="M676,108 L696,181"/>
+        <path d="M856,49 L876,68"/><path d="M856,115 L876,90"/>
+        <path d="M951,102 L951,118"/>
+      </g>
+      <text x="16" y="250" font-size="11.5" fill="#6b7280" font-family="JetBrains Mono, monospace">Rich docs route: Upload → Blob → Service Bus queue (q-context-ingestion-events) → worker parses → commit. Structured CSV commits inline.</text>
+      <text x="16" y="272" font-size="11.5" fill="#6b7280" font-family="JetBrains Mono, monospace">Code: src/lib/ingestion/document-upload-parser.ts · src/lib/context-ingestion/* · src/scripts/embed-pending-chunks.ts · azure-ai-search-backfill.ts</text>
+    </svg>
+    <div class="svgcap">Figure 1 — Ingestion pipeline. One file fans out to four stores (DB row, graph, evidence) and two search/vector copies.</div>
+  </div>
+  <table>
+    <tr><th>Step</th><th>What happens</th><th>Real component</th></tr>
+    <tr><td>1 Upload</td><td>ZIP/files via Setup Admin</td><td><code>/api/admin/context-layer/bulk-upload</code></td></tr>
+    <tr><td>2 Blob</td><td>Original bytes kept for evidence</td><td><code>objectStorage.ts</code> → <code>context-drops</code></td></tr>
+    <tr><td>3 Parse</td><td>Extract text from pdf/docx/xlsx/pptx</td><td><code>parseIngestionDocument()</code></td></tr>
+    <tr><td>4 Chunk</td><td>Slice into rows (1/CSV row; ~1.2k chars/doc)</td><td>csv-upload-connector / worker</td></tr>
+    <tr><td>5 Commit</td><td>Rows → Postgres; facts → graph; claims → ledger</td><td><code>enterprise_context_chunks</code>, <code>enterprise_graph_*</code>, <code>evidence_ledger</code></td></tr>
+    <tr><td>6 Embed</td><td>Each chunk → 1536-number "meaning vector"</td><td>OpenAI <code>text-embedding-3-small</code></td></tr>
+    <tr><td>7 Index</td><td>Copy text+vector into search</td><td>Azure AI Search <code>tenant-context-v1</code></td></tr>
+  </table>
+</section>
+
+<!-- 04 -->
+<section id="stores">
+  <div class="eyebrow">04 · The four homes of context</div>
+  <h2>Where context is stored (and why four places)</h2>
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:0">① Azure Blob — the originals</h3>
+      <p style="font-size:14px">The untouched source files (the PDF/Excel) so any claim can be traced to the exact
+      document. <code>stabarvaprivatedplab001/context-drops/&lt;tenant&gt;/…</code></p></div>
+    <div class="card"><h3 style="margin-top:0">② Azure Postgres — the chunk registry</h3>
+      <p style="font-size:14px">The system of record: <code>enterprise_context_chunks</code> (text + 1536-d vector +
+      provenance), plus <code>data_ingestion_runs</code> (audit). This is the "truth."</p></div>
+    <div class="card"><h3 style="margin-top:0">③ Graph — the relationships</h3>
+      <p style="font-size:14px"><code>enterprise_graph_nodes/edges</code> connect facts (e.g., "Kyriba → bank →
+      payment file"), so reasoning can follow links, not just match text.</p></div>
+    <div class="card"><h3 style="margin-top:0">④ Azure AI Search — the fast finder</h3>
+      <p style="font-size:14px"><code>tenant-context-v1</code> holds a searchable copy (keyword <b>BM25</b> + vector)
+      so retrieval at question-time is milliseconds. Postgres is truth; Search is speed.</p></div>
+  </div>
+  <div class="note"><b>Why not one store?</b> Postgres is reliable and exact but slow for "find me the 8 most
+  similar paragraphs." Search/vector is fast for similarity. Graph captures relationships. Blob keeps the legal
+  original. Each is best at one job; the broker stitches them together.</div>
+</section>
+
+<!-- 05 -->
+<section id="binding">
+  <div class="eyebrow">05 · The magic moment</div>
+  <h2>Real-time binding: how Sentinel &amp; Nexus become "context-aware"</h2>
+  <div class="plain"><b>Plain English:</b> When you ask a question, a component called the <b>Context Broker</b> runs a
+  search across your private memory (and the shared patterns), picks the most relevant pieces, and pastes them into
+  a hidden "here's what you know" block in front of your question. Claude then answers using that block. The agent
+  isn't "trained on" your data — it's <b>handed</b> the right data, fresh, every single time.</div>
+  <div class="svgbox">
+    <svg viewBox="0 0 1120 430" width="100%" font-family="Inter, sans-serif">
+      <defs><marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker>
+      <marker id="bg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#15803d"/></marker></defs>
+      <rect x="16" y="30" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="16" y="30" width="5" height="60" fill="#0066CC"/>
+      <text x="30" y="55" font-size="13" font-weight="600" fill="#0c1a3a">You ask</text>
+      <text x="30" y="73" font-size="10" fill="#6b7280">Sentinel / Nexus UI</text>
+
+      <rect x="16" y="120" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="16" y="120" width="5" height="60" fill="#b45309"/>
+      <text x="30" y="145" font-size="12.5" font-weight="600" fill="#0c1a3a">API route</text>
+      <text x="30" y="163" font-size="9.5" fill="#6b7280">/api/chat/agent</text>
+
+      <rect x="200" y="70" width="180" height="90" rx="10" fill="#eef2fb" stroke="#26324f"/>
+      <text x="214" y="92" font-size="13" font-weight="700" fill="#1F2A44">CONTEXT BROKER</text>
+      <text x="214" y="112" font-size="10" fill="#6b7280">agent-context-broker.ts</text>
+      <text x="214" y="128" font-size="10" fill="#6b7280">tenant_key scoping</text>
+      <text x="214" y="144" font-size="10" fill="#6b7280">feature flags (config)</text>
+
+      <rect x="430" y="20" width="180" height="48" rx="9" fill="#fff" stroke="#26324f"/><rect x="430" y="20" width="5" height="48" fill="#0066CC"/>
+      <text x="444" y="40" font-size="11.5" font-weight="600" fill="#0c1a3a">Azure AI Search</text>
+      <text x="444" y="56" font-size="9.5" fill="#6b7280">tenant-context-v1 (vector+BM25)</text>
+
+      <rect x="430" y="78" width="180" height="48" rx="9" fill="#fff" stroke="#26324f"/><rect x="430" y="78" width="5" height="48" fill="#0066CC"/>
+      <text x="444" y="98" font-size="11.5" font-weight="600" fill="#0c1a3a">Postgres chunks</text>
+      <text x="444" y="114" font-size="9.5" fill="#6b7280">enterprise_context_chunks</text>
+
+      <rect x="430" y="136" width="180" height="48" rx="9" fill="#fff" stroke="#26324f"/><rect x="430" y="136" width="5" height="48" fill="#15803d"/>
+      <text x="444" y="156" font-size="11.5" font-weight="600" fill="#0c1a3a">Patterns / corpus</text>
+      <text x="444" y="172" font-size="9.5" fill="#6b7280">genome_patterns · searchCorpus</text>
+
+      <rect x="430" y="194" width="180" height="48" rx="9" fill="#fff" stroke="#26324f"/><rect x="430" y="194" width="5" height="48" fill="#6d28d9"/>
+      <text x="444" y="214" font-size="11.5" font-weight="600" fill="#0c1a3a">Worldview W1–W5</text>
+      <text x="444" y="230" font-size="9.5" fill="#6b7280">thought-leadership</text>
+
+      <rect x="660" y="90" width="170" height="80" rx="10" fill="#fff7e8" stroke="#b45309"/>
+      <text x="674" y="112" font-size="12.5" font-weight="700" fill="#b45309">ASSEMBLE</text>
+      <text x="674" y="130" font-size="9.8" fill="#6b7280">rerank + dedupe →</text>
+      <text x="674" y="144" font-size="9.8" fill="#6b7280">"context block" +</text>
+      <text x="674" y="158" font-size="9.8" fill="#6b7280">failure-mode prompt</text>
+
+      <rect x="876" y="80" width="150" height="64" rx="10" fill="#0c1a3a"/>
+      <text x="890" y="106" font-size="13" font-weight="700" fill="#fff">CLAUDE</text>
+      <text x="890" y="124" font-size="9.5" fill="#bcd0f0">streamAgentTurn()</text>
+      <text x="890" y="137" font-size="9.5" fill="#bcd0f0">Anthropic (KV key)</text>
+
+      <rect x="876" y="170" width="150" height="56" rx="10" fill="#fff" stroke="#26324f"/><rect x="876" y="170" width="5" height="56" fill="#15803d"/>
+      <text x="890" y="192" font-size="12" font-weight="600" fill="#0c1a3a">Cited answer</text>
+      <text x="890" y="209" font-size="9.5" fill="#6b7280">→ back to you</text>
+
+      <g stroke="#39507e" stroke-width="1.6" fill="none" marker-end="url(#b)">
+        <path d="M91,90 L91,120"/><path d="M166,150 L200,130"/>
+        <path d="M380,110 L430,44"/><path d="M380,118 L430,102"/>
+        <path d="M380,126 L430,160"/><path d="M380,140 L430,218"/>
+        <path d="M610,44 L660,110"/><path d="M610,102 L660,125"/><path d="M610,160 L660,140"/><path d="M610,218 L660,150"/>
+        <path d="M830,130 L876,118"/>
+      </g>
+      <g stroke="#15803d" stroke-width="1.6" fill="none" marker-end="url(#bg)">
+        <path d="M951,144 L951,170"/>
+      </g>
+      <text x="16" y="280" font-size="11.5" fill="#6b7280" font-family="JetBrains Mono, monospace">Retrieval is filtered: filter=tenant_key eq '&lt;client&gt;'. The agent only ever sees ITS tenant's context.</text>
+      <text x="16" y="302" font-size="11.5" fill="#6b7280" font-family="JetBrains Mono, monospace">Config: features/registry.ts flag retrieval_azure_search decides vector vs text; broker decides which stores to call.</text>
+    </svg>
+    <div class="svgcap">Figure 2 — Real-time binding. The broker retrieves, assembles a context block, and Claude generates a grounded, cited answer — per request, no model retraining.</div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="config">
+  <div class="eyebrow">06 · "Who holds the intelligence?"</div>
+  <h2>Which component is configured to know about context</h2>
+  <p>There isn't one "brain" — the awareness is split across a few well-defined components. This is the part most
+  people get wrong: <b>the LLM (Claude) is stateless</b>; it knows nothing about your data until the broker hands
+  it over. The "knowing where to look" lives in code + configuration:</p>
+  <table>
+    <tr><th>Concern</th><th>Component (the "config" that knows)</th><th>File</th></tr>
+    <tr><td>Which tenant am I?</td><td>Tenant resolver (email/cookie/Clerk → client_id, tenant_key)</td><td><code>resolveTenant.ts</code>, <code>active-client.ts</code></td></tr>
+    <tr><td>Which stores to query &amp; how</td><td>Context Broker</td><td><code>knowledge/agent-context-broker.ts</code></td></tr>
+    <tr><td>Vector vs keyword, on/off per tenant</td><td>Feature flag registry</td><td><code>features/registry.ts</code> (<code>retrieval_azure_search</code>)</td></tr>
+    <tr><td>Where the context lives</td><td>Data-plane adapters</td><td><code>data-plane/azureRead.ts</code>, <code>azure-search/*</code></td></tr>
+    <tr><td>What to inject into the prompt</td><td>Tenant context block builder + phase packs</td><td><code>intelligence/persistence.ts</code> (<code>buildTenantContextBlock</code>)</td></tr>
+    <tr><td>Sentinel "voice" &amp; grounding rules</td><td>Voice doctrine + Ask orchestrator</td><td><code>agent/voice-doctrine/sentinel.ts</code>, <code>intelligence/ask/index.ts</code></td></tr>
+    <tr><td>Nexus per-phase awareness</td><td>Nexus context assembler + phase packs</td><td><code>programs/nexus.ts</code>, <code>programs-broker-adapter.ts</code></td></tr>
+    <tr><td>Guardrails (no uncited claims)</td><td>Failure-mode prompt + guardrail model</td><td><code>programs/failure-mode-prompt.ts</code>, <code>agent/guardrail.ts</code></td></tr>
+  </table>
+  <div class="plain"><b>Plain English:</b> Sentinel and Nexus are the <i>same engine</i> pointed at different jobs.
+  Sentinel = "ask the intelligence anything" (merges your facts + shared patterns + worldview). Nexus = "guide me
+  through building a Move" (adds the current phase's playbook). Both get their awareness from the <b>broker + config</b>,
+  not from any baked-in memory.</div>
+</section>
+
+<!-- 07 -->
+<section id="example">
+  <div class="eyebrow">07 · End to end</div>
+  <h2>Worked example: "Evaluate the Kyriba global treasury rollout"</h2>
+  <table>
+    <tr><th>#</th><th>What happens</th><th>Concretely</th></tr>
+    <tr><td>1</td><td>You ask Sentinel on the Lakeshore tenant</td><td>tenant_key = <code>lakeshore-holdings</code></td></tr>
+    <tr><td>2</td><td>Broker retrieves private context</td><td>Search <code>tenant-context-v1</code> filter <code>tenant_key eq 'lakeshore-holdings'</code> → top treasury chunks (rollout plan, bank connectivity, defects)</td></tr>
+    <tr><td>3</td><td>Broker retrieves shared lessons</td><td><code>genome_patterns</code> treasury → <code>LSH-TMS-002</code> "Bank connectivity matrix clears before rollout"</td></tr>
+    <tr><td>4</td><td>Assemble context block + guardrails</td><td>top chunks + pattern + "cite or don't claim" rule</td></tr>
+    <tr><td>5</td><td>Claude generates</td><td>grounded answer: cash visibility, exception rate, controls — each tied to a source</td></tr>
+    <tr><td>6</td><td>Answer returned with citations</td><td>links back to blob docs + pattern id</td></tr>
+  </table>
+  <div class="note"><b>The grounding bug we fixed (live example).</b> A treasury decision card had bound
+  <code>PAT-LSH-D18-00479</code> — a real <i>corpus</i> slug, but a <b>procurement</b> pattern, not treasury. That's a
+  cross-namespace mis-binding. The fix makes the binder <b>fail closed</b>: a treasury card binds only the treasury
+  namespace (<code>LSH-TMS-*</code>) or nothing — never an off-topic pattern. This is the difference between an answer
+  that "sounds right" and one that's <b>grounded right</b>.</div>
+</section>
+
+<!-- 08 -->
+<section id="nocontext">
+  <div class="eyebrow">08 · When the cupboard is bare</div>
+  <h2>No context? How we still answer (the Claude-only path)</h2>
+  <div class="plain"><b>Plain English:</b> If the broker finds nothing relevant in your memory, Claude answers from
+  its own general training (what it learned from the public internet up to its cutoff). That's still useful — but it
+  is <b>generic, not about your company</b>, and it can be out of date or wrong on specifics. So the system marks it
+  lower-confidence and the reasoning layer forbids inventing precise numbers.</div>
+  <div class="svgbox">
+    <svg viewBox="0 0 1120 220" width="100%" font-family="Inter, sans-serif">
+      <defs><marker id="c" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker></defs>
+      <rect x="16" y="80" width="150" height="56" rx="9" fill="#fff" stroke="#26324f"/><text x="30" y="104" font-size="12.5" font-weight="600" fill="#0c1a3a">Question</text><text x="30" y="121" font-size="9.5" fill="#6b7280">+ broker retrieval</text>
+      <rect x="210" y="70" width="170" height="76" rx="9" fill="#fff7e8" stroke="#b45309"/><text x="224" y="96" font-size="12.5" font-weight="700" fill="#b45309">Context found?</text><text x="224" y="116" font-size="9.8" fill="#6b7280">broker hits &gt; threshold?</text>
+      <rect x="430" y="20" width="200" height="56" rx="9" fill="#eef7f1" stroke="#15803d"/><text x="444" y="44" font-size="12.5" font-weight="600" fill="#15803d">YES → RAG answer</text><text x="444" y="61" font-size="9.5" fill="#6b7280">grounded + cited (high confidence)</text>
+      <rect x="430" y="120" width="200" height="56" rx="9" fill="#fdeef0" stroke="#b91c1c"/><text x="444" y="144" font-size="12.5" font-weight="600" fill="#b91c1c">NO → Claude parametric</text><text x="444" y="161" font-size="9.5" fill="#6b7280">general knowledge (lower confidence)</text>
+      <rect x="680" y="120" width="200" height="56" rx="9" fill="#fff" stroke="#26324f"/><rect x="680" y="120" width="5" height="56" fill="#6d28d9"/><text x="696" y="144" font-size="12" font-weight="600" fill="#0c1a3a">Reasoning layer</text><text x="696" y="161" font-size="9.5" fill="#6b7280">guardrails + failure modes</text>
+      <rect x="930" y="70" width="170" height="56" rx="9" fill="#fff" stroke="#26324f"/><rect x="930" y="70" width="5" height="56" fill="#0066CC"/><text x="946" y="94" font-size="12" font-weight="600" fill="#0c1a3a">Answer + label</text><text x="946" y="111" font-size="9.5" fill="#6b7280">"general guidance"</text>
+      <g stroke="#39507e" stroke-width="1.6" fill="none" marker-end="url(#c)">
+        <path d="M166,108 L210,108"/><path d="M380,96 L430,52"/><path d="M380,120 L430,140"/>
+        <path d="M630,148 L680,148"/><path d="M880,148 L930,110"/><path d="M630,48 L930,90"/>
+      </g>
+    </svg>
+    <div class="svgcap">Figure 3 — The fallback. With context → grounded RAG answer. Without → Claude's general knowledge, gated by the reasoning layer and labeled as generic.</div>
+  </div>
+  <table>
+    <tr><th>Dimension</th><th>With context (RAG)</th><th>Without context (Claude-only)</th></tr>
+    <tr><td>Source</td><td>Your documents + shared patterns</td><td>Claude's training data</td></tr>
+    <tr><td>Specific numbers</td><td>Yes, cited to a file</td><td>Avoided (guardrail blocks fake precision)</td></tr>
+    <tr><td>Confidence label</td><td>High, with evidence</td><td>"General guidance"</td></tr>
+    <tr><td>Risk</td><td>Low (grounded)</td><td>Hallucination if unguarded</td></tr>
+  </table>
+</section>
+
+<!-- 09 -->
+<section id="reasoning">
+  <div class="eyebrow">09 · The thinking in between</div>
+  <h2>The reasoning layer — what it adds beyond "retrieve then generate"</h2>
+  <p>RAG alone is "find text, summarize text." The <b>reasoning layer</b> makes the answer behave like an expert:
+  it checks for contradictions, surfaces known failure modes, evaluates gates, and refuses ungrounded claims.</p>
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:0">What it does</h3>
+      <ul class="tight">
+        <li><b>Contradiction detection</b> — flags when retrieved facts disagree.</li>
+        <li><b>Failure-mode injection</b> — adds the canonical 10 ways these programs fail.</li>
+        <li><b>Gate evaluation</b> — is this Move ready to advance a phase?</li>
+        <li><b>Grounding guard</b> — every claim must map to evidence (or be dropped).</li>
+        <li><b>Honesty</b> — payback = null when monetization is blocked; "shape" not "fund."</li>
+      </ul>
+    </div>
+    <div class="card"><h3 style="margin-top:0">Where it lives</h3>
+      <ul class="tight">
+        <li><code>reasoning/program-synthesis-context-builder.ts</code></li>
+        <li><code>programs/failure-mode-prompt.ts</code></li>
+        <li><code>expert-kernel/critic.ts</code> (CFO/delivery/data lenses)</li>
+        <li><code>expert-kernel/qa-rubric.ts</code> + artifact quality rubric</li>
+        <li><code>intelligence-v3/pattern-grounding.ts</code> (namespace fail-closed)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="plain"><b>Analogy:</b> RAG is the junior analyst who fetches the right files. The reasoning layer is
+  the partner who asks "does this contradict itself? what usually goes wrong here? can you prove this number?"
+  before the answer leaves the room.</div>
+</section>
+
+<!-- 10 -->
+<section id="training">
+  <div class="eyebrow">10 · Getting better over time</div>
+  <h2>How to "train" Sentinel &amp; Nexus to answer better</h2>
+  <div class="note"><b>Key insight:</b> for this system, "training" mostly does <b>not</b> mean fine-tuning the LLM.
+  Claude is fixed; you improve answers by improving <b>what you feed it</b> and <b>how you check it</b>. Fine-tuning
+  is the last lever, not the first.</div>
+  <div class="svgbox">
+    <svg viewBox="0 0 1120 200" width="100%" font-family="Inter, sans-serif">
+      <defs><marker id="d" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#39507e"/></marker></defs>
+      <g>
+      <rect x="16" y="70" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="16" y="70" width="5" height="60" fill="#0066CC"/><text x="30" y="96" font-size="12" font-weight="600" fill="#0c1a3a">1 · Better corpus</text><text x="30" y="113" font-size="9.3" fill="#6b7280">depth-lint, own-it</text>
+      <rect x="196" y="70" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="196" y="70" width="5" height="60" fill="#6d28d9"/><text x="210" y="96" font-size="12" font-weight="600" fill="#0c1a3a">2 · Better retrieval</text><text x="210" y="113" font-size="9.3" fill="#6b7280">hybrid+rerank, grounding</text>
+      <rect x="376" y="70" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="376" y="70" width="5" height="60" fill="#b45309"/><text x="390" y="96" font-size="12" font-weight="600" fill="#0c1a3a">3 · Better prompts</text><text x="390" y="113" font-size="9.3" fill="#6b7280">doctrine + failure modes</text>
+      <rect x="556" y="70" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="556" y="70" width="5" height="60" fill="#15803d"/><text x="570" y="96" font-size="12" font-weight="600" fill="#0c1a3a">4 · Evals</text><text x="570" y="113" font-size="9.3" fill="#6b7280">answer-quality ≥75</text>
+      <rect x="736" y="70" width="150" height="60" rx="9" fill="#fff" stroke="#26324f"/><rect x="736" y="70" width="5" height="60" fill="#b91c1c"/><text x="750" y="96" font-size="12" font-weight="600" fill="#0c1a3a">5 · Expert review</text><text x="750" y="113" font-size="9.3" fill="#6b7280">human calibration</text>
+      <rect x="916" y="70" width="160" height="60" rx="9" fill="#0c1a3a"/><text x="930" y="96" font-size="12" font-weight="600" fill="#fff">6 · Feedback loop</text><text x="930" y="113" font-size="9.3" fill="#bcd0f0">fix → re-eval</text>
+      </g>
+      <g stroke="#39507e" stroke-width="1.6" fill="none" marker-end="url(#d)">
+        <path d="M166,100 L196,100"/><path d="M346,100 L376,100"/><path d="M526,100 L556,100"/><path d="M706,100 L736,100"/><path d="M886,100 L916,100"/>
+        <path d="M996,130 C996,175 90,175 90,132" stroke-dasharray="5 4"/>
+      </g>
+    </svg>
+    <div class="svgcap">Figure 4 — The improvement loop. Six levers, run continuously; fine-tuning the LLM is optional and last.</div>
+  </div>
+  <table>
+    <tr><th>Lever</th><th>What you change</th><th>Concrete actions (this codebase)</th></tr>
+    <tr><td>1 · Corpus quality</td><td>Make the retrieved knowledge deeper/cleaner</td><td>Run <code>depth-lint</code> rubrics; enforce OWN-IT + anti-patterns + evidence anchors; author missing domain packs (e.g., a true corporate-treasury pack); de-duplicate.</td></tr>
+    <tr><td>2 · Retrieval quality</td><td>Find the <i>right</i> chunks, not just similar text</td><td>Turn on hybrid (vector + BM25) + a reranker; tune top-k &amp; thresholds; <b>grounding-namespace validation</b> so off-topic patterns can't bind; add query expansion.</td></tr>
+    <tr><td>3 · Prompt / doctrine</td><td>How the agent is told to reason</td><td>Improve <code>voice-doctrine</code> + <code>failure-mode-prompt</code>; require citations; few-shot exemplars of great answers.</td></tr>
+    <tr><td>4 · Evaluations</td><td>Measure answer quality automatically</td><td>Grow the eval set (<code>eval/answer-quality</code>, pass ≥75; <code>cxo-answer-quality</code>); add Q&amp;A pairs per dimension; track regressions in CI.</td></tr>
+    <tr><td>5 · Human-in-loop</td><td>Calibrate to expert judgment</td><td>Expert-review console (CFO + partner sign-off); capture thumbs-up/down + corrections as labeled data.</td></tr>
+    <tr><td>6 · Feedback loop</td><td>Close the loop continuously</td><td>Log every retrieval + answer; mine failures; feed corrections back into corpus/evals; re-run.</td></tr>
+    <tr><td>7 · Fine-tune (last)</td><td>Change the model's defaults</td><td>Only if 1–6 plateau: fine-tune/distill a smaller model for <i>style/format</i>, never as a substitute for grounding. RAG still supplies the facts.</td></tr>
+  </table>
+  <div class="plain"><b>Rule of thumb:</b> 80% of "make it smarter" is levers 1–4 (corpus + retrieval + prompt + evals).
+  If Sentinel gives a weak answer, the first question is almost always "did it retrieve the right context?" — not
+  "is the model dumb?" The grounding fix in this very project is a textbook lever-2 improvement.</div>
+</section>
+
+<!-- 11 -->
+<section id="glossary">
+  <div class="eyebrow">11 · Plain definitions</div>
+  <h2>Glossary</h2>
+  <table>
+    <tr><th>Term</th><th>In one sentence</th></tr>
+    <tr><td>LLM (Claude)</td><td>A large language model that writes text; it has no memory of your data unless you give it.</td></tr>
+    <tr><td>RAG</td><td>Retrieval-Augmented Generation — fetch relevant facts first, then let the LLM write using them.</td></tr>
+    <tr><td>Context layer</td><td>A client's private, searchable memory built from their uploaded documents.</td></tr>
+    <tr><td>Chunk</td><td>A bite-sized piece of a document (a row) that can be searched and cited.</td></tr>
+    <tr><td>Embedding / vector</td><td>A list of numbers capturing a chunk's meaning, so "similar meaning" = "close numbers."</td></tr>
+    <tr><td>Corpus / patterns</td><td>Shared, reusable lessons ("what works/fails") across clients and industries.</td></tr>
+    <tr><td>Context Broker</td><td>The component that decides what to retrieve and assembles it for the LLM.</td></tr>
+    <tr><td>Sentinel</td><td>The "ask anything" advisor agent (intelligence Q&amp;A, grounded + worldview).</td></tr>
+    <tr><td>Nexus</td><td>The guided agent that helps build a Strategic Move phase by phase.</td></tr>
+    <tr><td>Reasoning layer</td><td>The logic that checks contradictions, failure modes, gates, and enforces grounding.</td></tr>
+    <tr><td>Grounding / namespace</td><td>Making sure a cited pattern actually belongs to the topic (treasury vs procurement).</td></tr>
+    <tr><td>BM25 vs vector</td><td>Keyword match vs meaning match; "hybrid" uses both for best recall.</td></tr>
+  </table>
+</section>
+
+<footer>
+  AbarVa / Nexus · Context Architecture Report · generated 2026-06-07 · live counts from abarva_control + srch-abarva-context-lab-eastus ·
+  Synthetic Lakeshore data used for examples. Component/file references are real paths in this repository.
+</footer>
+
+</div>
+</body>
+</html>
