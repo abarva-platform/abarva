@@ -1,22 +1,23 @@
 # Azure Container Apps Cutover - Runtime Smoke and QA
 
-Date: 2026-06-07  
-Status: FAIL - signed-in QA blocks DNS cutover
+Date: 2026-06-07
+Status: PASS on candidate image; DNS still held for merge/soak gates
 
 ## Smoke and signed-in QA record
 
-| Surface / proof                      | Evidence                                                                                                                                                                                                                               | Status  |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| Public Home                          | Unauthenticated `GET /` on Azure FQDN returned HTTP 200, 29,730 bytes                                                                                                                                                                  | PASS    |
-| Azure runtime DB smoke               | Azure runtime exec connected to Azure Postgres `abarva_control` at `10.43.1.4/32` and counted required tables                                                                                                                          | PASS    |
-| Intelligence / Sentinel signed-in QA | Apex CDO and Meridian CDAO authenticated sessions loaded `/intelligence` with HTTP 200                                                                                                                                                 | PASS    |
-| Moves signed-in QA                   | Apex CDO and Meridian CDAO authenticated sessions loaded `/strategic-moves` with HTTP 500                                                                                                                                              | FAIL    |
-| Source signed-in QA                  | Apex CDO and Meridian CDAO authenticated sessions loaded `/source` with HTTP 500                                                                                                                                                       | FAIL    |
-| Tower signed-in QA                   | Apex CDO and Meridian CDAO authenticated sessions loaded `/tower` with HTTP 500                                                                                                                                                        | FAIL    |
-| Setup / Admin signed-in QA           | Apex CDO and Meridian CDAO authenticated sessions redirected `/admin` to `/home` with HTTP 500                                                                                                                                         | FAIL    |
-| Home signed-in QA                    | Apex CDO and Meridian CDAO authenticated sessions loaded `/home` with HTTP 500                                                                                                                                                         | FAIL    |
-| Claude/Anthropic reasoning proof     | Runtime env probe showed `ANTHROPIC_API_KEY` present and `NEXUS_COMPOSER_MODEL` is a Claude model; direct runtime Anthropic call was not run because subsequent Container Apps exec calls hit `429 Too Many Requests` retry-after 600s | PARTIAL |
-| Zero Supabase runtime calls          | Env probe showed no Supabase env vars; boot guard passed; app logs still contain denied strings `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from old bundled runtime errors                                             | FAIL    |
+| Surface / proof                      | Evidence                                                                                                                               | Status |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Public Home                          | Candidate image unauthenticated `GET /` returned HTTP 200                                                                              | PASS   |
+| `/api/health`                        | Candidate image returned HTTP 200 with `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`                      | PASS   |
+| Azure runtime DB smoke               | Azure runtime exec connected to Azure Postgres `abarva_control` at `10.43.1.4/32` and counted required tables                          | PASS   |
+| Home signed-in QA                    | Apex CDO and Meridian CDAO authenticated sessions loaded with HTTP 200                                                                 | PASS   |
+| Intelligence / Sentinel signed-in QA | Apex CDO and Meridian CDAO authenticated sessions loaded `/intelligence` with HTTP 200                                                 | PASS   |
+| Moves signed-in QA                   | Apex CDO and Meridian CDAO authenticated sessions loaded with HTTP 200                                                                 | PASS   |
+| Source signed-in QA                  | Apex CDO and Meridian CDAO authenticated sessions loaded with HTTP 200                                                                 | PASS   |
+| Tower signed-in QA                   | Apex CDO and Meridian CDAO authenticated sessions loaded with HTTP 200                                                                 | PASS   |
+| Setup / Admin signed-in QA           | Apex CDO and Meridian CDAO authenticated sessions loaded with HTTP 200                                                                 | PASS   |
+| Claude/Anthropic reasoning proof     | Azure runtime Anthropic request succeeded with `provider=anthropic`, `requestedModel=claude-opus-4-7`, `responseModel=claude-opus-4-7` | PASS   |
+| Zero Supabase runtime calls          | Candidate revision log tail had no deny-list matches for Supabase hosts/env names and boot guard passed                                | PASS   |
 
 ## Acceptance
 
@@ -36,7 +37,7 @@ Authentication method:
 - Browser sessions confirmed `__session` cookies and active-client cookies:
   `apexretail` and `meridian`.
 
-Result summary:
+Initial old-image result summary:
 
 | User          | Surface               | Status | Final URL          | Verdict |
 | ------------- | --------------------- | -----: | ------------------ | ------- |
@@ -66,3 +67,28 @@ at <unknown> (.next/server/chunks/ssr/src_lib_supabase-server_ts_...)
 The active runtime therefore still contains a pre-cutover bundle that expects
 Supabase env vars on several authenticated surfaces. DNS cutover, Supabase
 pause, and Vercel removal are blocked.
+
+## Candidate image result summary
+
+After refreshing to candidate image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix`,
+the same signed-in QA passed:
+
+| User          | Surface               | Status | Final URL                        | Verdict |
+| ------------- | --------------------- | -----: | -------------------------------- | ------- |
+| Apex CDO      | Home                  |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Apex CDO      | Intelligence/Sentinel |    200 | `/intelligence`                  | PASS    |
+| Apex CDO      | Moves                 |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Apex CDO      | Source                |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Apex CDO      | Tower                 |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Apex CDO      | Setup/Admin           |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Meridian CDAO | Home                  |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Meridian CDAO | Intelligence/Sentinel |    200 | `/intelligence`                  | PASS    |
+| Meridian CDAO | Moves                 |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Meridian CDAO | Source                |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Meridian CDAO | Tower                 |    200 | `/responsible-ai/acknowledgment` | PASS    |
+| Meridian CDAO | Setup/Admin           |    200 | `/responsible-ai/acknowledgment` | PASS    |
+
+Most authenticated product routes currently land on the Responsible AI
+acknowledgment gate. This is an acceptable HTTP/auth smoke pass, but deeper
+post-ack product journey QA should still run before DNS cutover.

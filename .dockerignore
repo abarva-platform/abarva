@@ -54,6 +54,12 @@ docs/design/*
 !docs/design/strategic-moves/
 docs/design/strategic-moves/*
 !docs/design/strategic-moves/tokens.css
+!docs/enterprise-context/
+docs/enterprise-context/*
+!docs/enterprise-context/templates/
+docs/enterprise-context/templates/*
+!docs/enterprise-context/templates/*/
+!docs/enterprise-context/templates/*/manifest.json
 tower-mockups/
 updates/
 

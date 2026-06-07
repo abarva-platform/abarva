@@ -1,7 +1,7 @@
 # Supabase Sunset Proof - 05 Azure-Only Runtime Soak
 
-Date: 2026-06-07  
-Status: HOLD - 24-72 hour production soak not complete  
+Date: 2026-06-07
+Status: HOLD - smoke passed on candidate image; 24-72 hour production soak not complete
 Scope: Production app served only by Azure Container Apps with Azure Postgres
 
 ## Gate verdict
@@ -64,18 +64,21 @@ No production soak was started or claimed from this environment.
 
 ## 2026-06-07 Azure runtime attempt
 
-| Control                               | Result                                                                                                    |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Guarded Azure revision                | PASS: `ca-abarva-web-lab-eastus--0000049` healthy with 100% traffic                                       |
-| Public home                           | PASS: HTTP 200                                                                                            |
-| Azure runtime DB proof                | PASS: connected to `abarva_control` at `10.43.1.4/32`                                                     |
-| Signed-in QA                          | FAIL: only Intelligence/Sentinel passed; Home, Moves, Source, Tower, Setup/Admin returned HTTP 500        |
-| App log deny-list                     | FAIL: logs contain `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in old-image error messages |
-| Supabase project zero-read/write logs | NOT CAPTURED                                                                                              |
-| Duration                              | NOT A SOAK: this was a smoke attempt, not a 24-72 hour soak                                               |
+| Control                               | Result                                                                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Guarded Azure revision                | PASS: candidate `ca-abarva-web-lab-eastus--0000050` healthy with 100% traffic                                                |
+| Public home                           | PASS: HTTP 200                                                                                                               |
+| `/api/health`                         | PASS: HTTP 200 with Postgres checks green                                                                                    |
+| Azure runtime DB proof                | PASS: connected to `abarva_control` at `10.43.1.4/32`                                                                        |
+| Signed-in QA                          | PASS on candidate image for Apex CDO and Meridian CDAO across Home, Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin |
+| App log deny-list                     | PASS on candidate revision tail; no Supabase host/env deny-list matches                                                      |
+| Azure-only smoke job                  | PASS: `job-a24-azure-soak-eus-4pn97f4`; runtime smoke `9 pass / 0 fail`; retrieval smoke passed for six tenants              |
+| Supabase project zero-read/write logs | NOT CAPTURED                                                                                                                 |
+| Duration                              | NOT A SOAK: this was a candidate smoke attempt, not a 24-72 hour soak                                                        |
 
-The Azure-only soak cannot start until signed-in QA passes and the app log
-deny-list is clean.
+The Azure-only soak can be scheduled only after PR #3240 is merged or the team
+explicitly approves soaking the candidate image. This proof does not claim the
+24-72 hour soak is complete.
 
 ## Log deny-list
 
@@ -120,5 +123,7 @@ az monitor log-analytics query \
 5. No Azure Postgres production traffic proof is attached.
 6. This shell still has no direct production data-plane environment variables;
    Azure DB proof was correctly gathered from Azure runtime instead.
-7. 2026-06-07 signed-in QA failed and app logs contain denied Supabase env-name
-   strings from the active image.
+7. PR #3240 remains unmerged/draft from this agent's perspective; the current
+   passing runtime is a candidate image.
+8. No 24-72 hour soak window or Supabase project zero-read/write log export is
+   attached.

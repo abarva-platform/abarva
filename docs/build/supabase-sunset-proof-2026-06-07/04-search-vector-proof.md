@@ -74,6 +74,30 @@ remains blocked until run from an approved Azure/operator environment.
 Status remains PARTIAL/BLOCKED for final sunset because the requested fresh
 production golden retrieval run across all named tenants was not completed.
 
+## 2026-06-07 candidate image verification
+
+After PR #3240 checks passed and the candidate image was built/deployed,
+`job-a24-search-verify-eus-zxesl2t` succeeded on image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix`.
+
+Observed document counts:
+
+| Tenant               | Observed docs | Status |
+| -------------------- | ------------: | ------ |
+| `apex-retail`        |         6,497 | PASS   |
+| `first-capital`      |           400 | PASS   |
+| `lakeshore-holdings` |         6,576 | PASS   |
+| `meridian-health`    |         4,376 | PASS   |
+| `northstar-clinical` |           878 | PASS   |
+| `skyharbor-air`      |         3,240 | PASS   |
+
+`job-a24-azure-soak-eus-4pn97f4` also ran the Azure Search retriever smoke for
+the treasury/Kyriba query and returned three hits for each tenant: Apex,
+Meridian, First Capital, Lakeshore, SkyHarbor, and Northstar.
+
+Remaining gap: Morgan Street/Northshore golden retrieval is still not mapped or
+captured in this proof pack.
+
 ## Golden retrieval matrix
 
 The following tenant set must be run against the Azure-only production runtime

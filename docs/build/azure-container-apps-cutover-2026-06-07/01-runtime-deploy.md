@@ -1,7 +1,7 @@
 # Azure Container Apps Cutover - Runtime Deploy
 
 Date: 2026-06-07
-Status: PARTIAL - guarded revision deployed, signed-in QA blocked
+Status: PASS on candidate image; merged-main image still blocked by PR draft state
 Container app: `ca-abarva-web-lab-eastus`
 
 ## Target
@@ -14,18 +14,18 @@ Apps secret `azure-postgres-control-database-url`.
 
 | Field                                   | Value                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ACR image tag                           | Existing image retained: `acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260522-88ecab1b1-git1`                                                                                                                                                                                                                                        |
-| Build command                           | Attempted `az acr build --registry acrabarvalab001 --image abarva/web:cutover-supabase-guard-20260607-4d52928de --file Dockerfile .`                                                                                                                                                                                                         |
-| Build result                            | BLOCKED: operator identity lacks `Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action`                                                                                                                                                                                                                                    |
+| ACR image tag                           | Candidate image: `acrabarvalab001.azurecr.io/abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix`                                                                                                                                                                                                                                        |
+| Build command                           | `az acr build --registry acrabarvalab001 --image abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix --file Dockerfile .` from PR #3240 head plus Docker context manifest exception                                                                                                                                                      |
+| Build result                            | PASS after ACR roles were refreshed and `.dockerignore` allowed required enterprise-context manifest files                                                                                                                                                                                                                                   |
 | Deployment command                      | ARM PATCH to set Container Apps command guard: `command=["/bin/sh"]`, `args=["-c", "<supabase guard> && npm run start"]`                                                                                                                                                                                                                     |
 | Deployment result                       | PASS for revision deployment                                                                                                                                                                                                                                                                                                                 |
-| New revision                            | `ca-abarva-web-lab-eastus--0000049`                                                                                                                                                                                                                                                                                                          |
-| Active traffic                          | 100% to `0000049`; previous `0000048` at 0%                                                                                                                                                                                                                                                                                                  |
+| New revision                            | `ca-abarva-web-lab-eastus--0000050`                                                                                                                                                                                                                                                                                                          |
+| Active traffic                          | 100% to `0000050`; previous `0000049` at 0%                                                                                                                                                                                                                                                                                                  |
 | FQDN                                    | `ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io`                                                                                                                                                                                                                                                              |
 | Supabase env names present after deploy | PASS: no `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, or `SUPABASE_SERVICE_ROLE_KEY` env names projected                                                                                                                                                                                                                     |
-| Boot guard log event                    | PASS: `{"event":"supabase_boot_guard_passed","dataPlane":"azure-postgres"}` at 2026-06-07T02:40:34Z                                                                                                                                                                                                                                          |
-| Public home smoke                       | PASS: `GET /` returned HTTP 200, 29,730 bytes                                                                                                                                                                                                                                                                                                |
-| Health endpoint                         | FAIL: `GET /api/health` returned HTTP 503 with `postgres:false`, `direct_postgres:true`                                                                                                                                                                                                                                                      |
+| Boot guard log event                    | PASS: `{"event":"supabase_boot_guard_passed","dataPlane":"azure-postgres"}` on candidate revision                                                                                                                                                                                                                                            |
+| Public home smoke                       | PASS: `GET /` returned HTTP 200                                                                                                                                                                                                                                                                                                              |
+| Health endpoint                         | PASS: `GET /api/health` returned HTTP 200 with `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`                                                                                                                                                                                                                    |
 | Azure-runtime Postgres proof            | PASS: runtime connected to `abarva_control` as `abarvaadmin` at `10.43.1.4/32`; counts included `clients=9`, `enterprise_context_records=3503`, `enterprise_context_facts=38640`, `enterprise_context_chunks=21967`, `corpus_patterns=9026`, `genome_patterns=43436`, `intelligence_graph_edges=93743`, `source_events=42`, `engagements=53` |
 
 ## Acceptance
@@ -36,12 +36,17 @@ Apps secret `azure-postgres-control-database-url`.
 - App starts successfully with `supabase_boot_guard_passed` in logs.
 - No DNS change is made from this deployment step.
 
-## Deployment blocker
+## Historical blocker
 
-The active image is still the prior cutover image because this operator identity
-cannot build/push a fresh ACR image. Runtime logs during signed-in QA show the
-image still contains bundled code that throws `Missing NEXT_PUBLIC_SUPABASE_URL /
-SUPABASE_SERVICE_ROLE_KEY` in several authenticated surfaces after Supabase envs
-were removed. DNS cutover is blocked until a fresh image containing the
-Postgres-compatible `src/lib/supabase-server.ts` path and boot guard source is
-built and deployed.
+The first guarded revision (`0000049`) used the prior cutover image because ACR
+build was initially blocked by missing role assignments. That old image threw
+`Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY` on several
+authenticated surfaces. After roles were refreshed, the candidate PR #3240 image
+was built and deployed as revision `0000050`; the old-image failures no longer
+reproduce on candidate smoke.
+
+## Remaining blocker
+
+The active runtime is a PR-head candidate image, not a merged-main image. PR
+#3240 remains draft/unmerged from this agent's perspective. Do not change DNS or
+remove Vercel until the merge/soak decision is complete.

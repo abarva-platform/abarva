@@ -51,6 +51,9 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Adds `docs/build/azure-container-apps-cutover-2026-06-07/02-runtime-smoke-and-qa.md`.
 - Adds `src/lib/runtime/supabaseBootGuard.ts`.
 - Adds `src/instrumentation.ts`.
+- Updates `.dockerignore` so Docker/ACR builds include required
+  `docs/enterprise-context/templates/*/manifest.json` files imported at build
+  time.
 - Adds this release record.
 
 ## QA / Validation
@@ -70,33 +73,49 @@ configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 - Blocked locally: direct Key Vault secret reads are blocked by private-link
   policy; database proof must run inside Azure Container Apps jobs/runtime.
 - Pass: Azure CLI installed and authenticated to `abarva-lab-sub`.
-- Pass: command-level boot guard deployed to
-  `ca-abarva-web-lab-eastus--0000049`; startup log emitted
-  `supabase_boot_guard_passed`; revision healthy with 100% traffic.
-- Pass: unauthenticated Azure Home smoke returned HTTP 200.
-- Pass: Azure-runtime Postgres proof ran from Container Apps revision `0000049`
+- Pass: command-level boot guard deployed first to `0000049`, then candidate
+  image revision `ca-abarva-web-lab-eastus--0000050`; startup log emitted
+  `supabase_boot_guard_passed`; candidate revision healthy with 100% traffic.
+- Pass: PR #3240 checks completed with `SUCCESS`; GitHub reported
+  `MERGEABLE/CLEAN`, but PR #3240 remains draft/unmerged from this agent's
+  perspective.
+- Pass: ACR candidate image built after `.dockerignore` allowed required
+  enterprise-context manifest files:
+  `acrabarvalab001.azurecr.io/abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix`.
+- Pass: Azure Container Apps web runtime and operator jobs were refreshed to the
+  candidate image.
+- Pass: candidate public Home and `/api/health` returned HTTP 200; health showed
+  `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`.
+- Pass: Azure-runtime Postgres proof ran from Container Apps revision `0000050`
   and connected to `abarva_control` at private address `10.43.1.4/32`.
-- Fail: `/api/health` returned HTTP 503 (`postgres:false`,
-  `direct_postgres:true`).
-- Fail: signed-in QA passed only Intelligence/Sentinel; Home, Moves, Source,
-  Tower, and Setup/Admin returned HTTP 500 for Apex CDO and Meridian CDAO.
-- Fail: app log deny-list found `NEXT_PUBLIC_SUPABASE_URL` and
-  `SUPABASE_SERVICE_ROLE_KEY` in old-image runtime error messages.
-- Blocked: ACR remote build failed because the operator identity lacks
-  `Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action`.
-- Blocked: Container Apps job starts failed because the operator identity lacks
-  `Microsoft.App/jobs/start/action`.
-- Blocked: final full Supabase backup could not run; active Azure runtime can
-  reach the source Key Vault secret but does not include `pg_dump`.
-- Blocked: direct runtime Anthropic proof attempt hit Container Apps exec
-  throttling (`429 Too Many Requests`, retry-after 600s) after earlier exec
-  probes succeeded.
-- Not run: formal production Supabase freeze, final backup, restore-test,
-  24-72 hour Azure-only soak, pause QA, and deletion approval. These are
-  intentionally left as blocked operator gates in the proof pack.
+- Pass: signed-in QA for Apex CDO and Meridian CDAO returned HTTP 200 across
+  Home, Intelligence/Sentinel, Moves, Source, Tower, and Setup/Admin.
+- Pass: candidate app log deny-list tail had no Supabase host/env-name matches.
+- Pass: Azure runtime Anthropic proof succeeded with `provider=anthropic`,
+  `requestedModel=claude-opus-4-7`, `responseModel=claude-opus-4-7`.
+- Pass: `job-supa-drain-apply-eus-ih4x7z2` succeeded; tracked tables were at
+  parity or Azure-ahead.
+- Pass: `job-supa-recon-eus-sl9dz01` succeeded with key parity/Azure-ahead
+  rows including `enterprise_context_records=3503/3503`,
+  `enterprise_context_facts=38640/38640`, and
+  `enterprise_context_chunks=15847/21967`.
+- Pass: `job-a24-search-verify-eus-zxesl2t` succeeded with observed Search doc
+  counts Apex 6,497; First Capital 400; Lakeshore 6,576; Meridian 4,376;
+  Northstar 878; SkyHarbor 3,240.
+- Pass: `job-a24-azure-soak-eus-4pn97f4` succeeded as a smoke job: runtime
+  smoke `9 pass / 0 fail`, retrieval smoke passed for six tenants.
+- Partial: `job-supa-final-eus-6kbty9s` exported 337 tables and wrote
+  `supabase-final-backups/supabase-final-20260607-001/manifest.json`; overall
+  job failed because the reversible freeze step failed with
+  `cannot execute ALTER DATABASE in a read-only transaction`.
+- Not run: formal production Supabase freeze timestamp/log export, native
+  `pg_dump` restore-test, 24-72 hour Azure-only soak, pause QA, and deletion
+  approval.
 - Production operations performed: Azure Container Apps command-level guard
-  revision deployment and Clerk unban for two demo QA users. Supabase was not
-  paused, deleted, or modified; DNS was not changed; Vercel was not removed.
+  revision deployment, candidate image deployment/job refresh, data-plane
+  drain/reconcile/search/final-export jobs, and Clerk unban for two demo QA
+  users. Supabase was not paused, deleted, or modified beyond the failed
+  read-only freeze attempt; DNS was not changed; Vercel was not removed.
 
 ## Rollout Plan
 
@@ -123,12 +142,14 @@ as rollback unless explicitly approved.
 
 ## Known Gaps
 
-- Supabase freeze timestamp has not been recorded.
-- Final backup, checksum, and restore-test evidence are not attached.
+- Supabase freeze timestamp has not been recorded; `supa-final` freeze attempt
+  failed and must not be treated as a completed freeze.
+- Final backup JSONL export/manifest exists, but native `pg_dump` and
+  restore-test evidence are not attached.
 - Azure parity checksums and several required table families remain unproven.
-- Fresh Azure Search rebuild and production golden retrieval across the named
-  tenant set are not attached.
-- Production Azure-only 24-72 hour soak is blocked by signed-in QA failures.
+- Fresh Azure Search verify/retrieval smoke passed for six tenants, but Morgan
+  Street/Northshore golden retrieval is not attached.
+- Production Azure-only 24-72 hour soak has not run.
 - Pause-before-delete QA has not been run; Supabase was not paused.
 - Explicit deletion approval is not recorded; Supabase was not deleted.
 - DNS was not changed and Vercel production was not removed.

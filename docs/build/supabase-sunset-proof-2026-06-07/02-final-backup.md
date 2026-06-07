@@ -12,30 +12,30 @@ No destructive Supabase action should occur from this document.
 
 ## Required backup evidence
 
-| Control                        | Required evidence                                                                                                        | Current evidence                | Status  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ------- |
-| Full Postgres dump             | Backup object path, dump format, timestamp, source project id/name, operator                                             | Not recorded in this proof pack | BLOCKED |
-| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used                            | Not recorded in this proof pack | BLOCKED |
-| Backup checksum                | SHA-256 or stronger checksum for each backup artifact                                                                    | Not recorded in this proof pack | BLOCKED |
-| Restore test                   | Temporary database restore log and validation query output, or approved exception documenting why restore was not run    | Not recorded in this proof pack | BLOCKED |
-| Secret hygiene                 | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack | BLOCKED |
+| Control                        | Required evidence                                                                                                        | Current evidence                                                                                                                         | Status  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Full Postgres dump             | Backup object path, dump format, timestamp, source project id/name, operator                                             | `job-supa-final-eus-6kbty9s` exported 337 public tables as JSONL and wrote a manifest; this is not a native `pg_dump` custom-format dump | PARTIAL |
+| Supabase storage/object export | Bucket inventory and export path, or explicit proof that no Supabase storage buckets are used                            | Not recorded in this proof pack                                                                                                          | BLOCKED |
+| Backup checksum                | SHA-256 or stronger checksum for each backup artifact                                                                    | Per-table SHA-256 checksums recorded in manifest and table-upload logs                                                                   | PARTIAL |
+| Restore test                   | Temporary database restore log and validation query output, or approved exception documenting why restore was not run    | Not recorded in this proof pack                                                                                                          | BLOCKED |
+| Secret hygiene                 | Logs show env names, hosts, artifact IDs, checksums, and counts only; no passwords, tokens, service keys, or signed URLs | Not recorded in this proof pack                                                                                                          | BLOCKED |
 
 ## Backup record
 
 Fill only after the final backup is complete.
 
-| Field                           | Value     |
-| ------------------------------- | --------- |
-| Supabase project id/name        | `PENDING` |
-| Freeze timestamp covered        | `PENDING` |
-| Backup timestamp UTC            | `PENDING` |
-| Postgres dump artifact location | `PENDING` |
-| Postgres dump checksum          | `PENDING` |
-| Storage/object export location  | `PENDING` |
-| Storage/object export checksum  | `PENDING` |
-| Restore-test database           | `PENDING` |
-| Restore-test result             | `PENDING` |
-| Operator                        | `PENDING` |
+| Field                           | Value                                                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase project id/name        | `PENDING`                                                                                                                       |
+| Freeze timestamp covered        | `PENDING`                                                                                                                       |
+| Backup timestamp UTC            | `PENDING`                                                                                                                       |
+| Postgres dump artifact location | `supabase-final-backups/supabase-final-20260607-001` in Azure Blob account `stabarvaprivatedplab001`, container `context-drops` |
+| Postgres dump checksum          | Per-table SHA-256 values in `manifest.json`; no single native dump checksum                                                     |
+| Storage/object export location  | `PENDING`                                                                                                                       |
+| Storage/object export checksum  | `PENDING`                                                                                                                       |
+| Restore-test database           | `PENDING`                                                                                                                       |
+| Restore-test result             | `PENDING`                                                                                                                       |
+| Operator                        | `PENDING`                                                                                                                       |
 
 ## Local execution attempt
 
@@ -102,12 +102,23 @@ Run validation against the temporary restored database, not production.
 | Check                                | Result                                                                                       | Impact                                                                                                                                   |
 | ------------------------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `job-supa-final-eus` configuration   | Present; references Key Vault secret `source-postgres-database-url` as `SOURCE_DATABASE_URL` | A preconfigured Azure-hosted backup path exists.                                                                                         |
-| Start `job-supa-final-eus`           | NOT RUN                                                                                      | The operator identity cannot start Container Apps jobs; prior execution `job-supa-final-eus-z9n1k9e` failed before this run.             |
+| Start `job-supa-final-eus`           | PASS after role refresh                                                                      | Execution `job-supa-final-eus-6kbty9s` ran on candidate image.                                                                           |
 | Azure runtime Key Vault access       | PASS                                                                                         | Active app managed identity can obtain a Key Vault token and can reach secret `source-postgres-database-url` without printing the value. |
 | Azure runtime `pg_dump` availability | FAIL                                                                                         | Active app runtime does not include `pg_dump`, so it cannot produce the required full Postgres dump from `az containerapp exec`.         |
 
-The final backup gate remains blocked. A full `pg_dump` must run from an
-approved Azure-hosted environment with the source database secret and Postgres
-client tooling, or the existing `job-supa-final-eus` must be fixed and started
-by an identity with `Microsoft.App/jobs/start/action`. Do not use that job's
-freeze path without explicit approval.
+## 2026-06-07 supa-final run
+
+| Field              | Value                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| Execution          | `job-supa-final-eus-6kbty9s`                                                         |
+| Image              | `acrabarvalab001.azurecr.io/abarva/web:cutover-pr3240-20260607-7c0f682d-manifestfix` |
+| Export result      | PARTIAL PASS: 337 table JSONL exports, schema export, and manifest written           |
+| Blob root          | `supabase-final-backups/supabase-final-20260607-001`                                 |
+| Blob count         | 339 blobs under the backup root                                                      |
+| Manifest           | Present                                                                              |
+| Freeze result      | FAIL: `cannot execute ALTER DATABASE in a read-only transaction`                     |
+| Overall job status | Failed because freeze result was not `frozen`                                        |
+
+This export is useful final-backup evidence but does not fully satisfy the
+original native full Postgres dump/restore-test gate. A restore-test has not
+been run.
