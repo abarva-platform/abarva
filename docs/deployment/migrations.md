@@ -180,9 +180,6 @@ auto-apply to work:
 | `ABARVA_AZURE_DATABASE_URL` | `run-migrations.ts` (preferred migration connection) | recommended |
 | `AZURE_DATABASE_URL` | `run-migrations.ts` (fallback migration connection) | optional |
 | `DATABASE_URL` | `run-migrations.ts` (final fallback Postgres connection) | yes — required for runtime DB access |
-| `NEXT_PUBLIC_SUPABASE_URL` | runtime | yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | runtime | yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | runtime | yes |
 
 The runner resolves `ABARVA_AZURE_DATABASE_URL`, then `AZURE_DATABASE_URL`,
 then `DATABASE_URL`. It uses `pg`, not the Supabase JS client. If none of

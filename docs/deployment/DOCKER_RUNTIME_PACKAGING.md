@@ -63,14 +63,14 @@ no real values are committed.
 
 ### Database
 
-- `DATABASE_URL` — Postgres connection string (server-only).
+- `ABARVA_AZURE_DATABASE_URL` — preferred Postgres connection string (server-only).
+- `DATABASE_URL` — Postgres fallback / compatibility connection string (server-only).
 - `DIRECT_URL` — optional; bypass pooler for migrations.
 
-### Supabase
-
-- `NEXT_PUBLIC_SUPABASE_URL` — public project URL.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public anon key.
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only.
+Legacy Supabase env names (`NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) are not required
+for the container runtime. Data-backed routes resolve through the
+Azure/Postgres data-plane adapters using the Postgres connection strings above.
 
 ### Auth (Clerk)
 

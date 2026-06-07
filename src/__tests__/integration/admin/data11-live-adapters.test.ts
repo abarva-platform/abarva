@@ -3,7 +3,7 @@
  *
  * Verifies:
  * 1. In fixture mode (default), adapters return fixtures normally.
- * 2. In live mode without DB env vars set, requireClientId throws gracefully.
+ * 2. In live mode without Postgres env vars set, requireClientId throws gracefully.
  * 3. mapDbRung mapping is correct.
  * 4. buildAgentContextAsync falls back to base when in fixture mode.
  */
@@ -109,21 +109,21 @@ describe('DATA11 — fixture mode adapter behavior', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Live mode: requireClientId throws when no DB env vars are set
+// Live mode: requireClientId throws when no Postgres env vars are set
 // ---------------------------------------------------------------------------
 
 describe('DATA11 — live mode without DB: requireClientId throws gracefully', () => {
-  it('requireClientId throws when SUPABASE env vars are missing', async () => {
-    // Temporarily force live mode and clear supabase env vars
+  it('requireClientId throws when Postgres env vars are missing', async () => {
+    // Temporarily force live mode and clear direct Postgres env vars.
     const origMode = process.env.ADMIN_DATA_MODE;
-    const origUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const origKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const origAbarvaUrl = process.env.ABARVA_AZURE_DATABASE_URL;
+    const origDatabaseUrl = process.env.DATABASE_URL;
 
     process.env.ADMIN_DATA_MODE = 'live';
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.ABARVA_AZURE_DATABASE_URL;
+    delete process.env.DATABASE_URL;
 
-    // Reset module cache so getServerSupabase sees the cleared env
+    // Reset module cache so the Postgres adapter sees the cleared env.
     jest.resetModules();
 
     try {
@@ -131,8 +131,10 @@ describe('DATA11 — live mode without DB: requireClientId throws gracefully', (
       await expect(requireClientId('apex-retail')).rejects.toThrow();
     } finally {
       process.env.ADMIN_DATA_MODE = origMode ?? '';
-      if (origUrl !== undefined) process.env.NEXT_PUBLIC_SUPABASE_URL = origUrl;
-      if (origKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = origKey;
+      if (origAbarvaUrl === undefined) delete process.env.ABARVA_AZURE_DATABASE_URL;
+      else process.env.ABARVA_AZURE_DATABASE_URL = origAbarvaUrl;
+      if (origDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = origDatabaseUrl;
       jest.resetModules();
     }
   });

@@ -10,11 +10,9 @@
 # / Secret Manager mount, or platform-managed env). No .env file is copied.
 #
 # Required runtime env vars (NOT baked, supplied at `docker run`):
-#   - DATABASE_URL                     (Postgres connection string)
+#   - ABARVA_AZURE_DATABASE_URL        (preferred Postgres connection string)
+#   - DATABASE_URL                     (Postgres fallback / compatibility)
 #   - DIRECT_URL                       (optional; migration / pooler bypass)
-#   - Do not project NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-#     or SUPABASE_SERVICE_ROLE_KEY into Azure production runtime. Azure Postgres
-#     cutover uses DATABASE_URL from Key Vault instead.
 #   - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 #   - CLERK_SECRET_KEY                 (server-only)
 #   - ANTHROPIC_API_KEY                (server-only; or routed via Model Gateway)
@@ -24,6 +22,11 @@
 #   - NODE_ENV=production
 #   - PORT=3000                        (Next.js listens here)
 #   - HOSTNAME=0.0.0.0                 (bind all interfaces inside the container)
+#
+# Legacy Supabase env names are not required by this runtime image. Do not project
+# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, or
+# SUPABASE_SERVICE_ROLE_KEY into Azure production runtime. Runtime data access
+# resolves through the Azure/Postgres adapters and direct Postgres URLs.
 #
 # Build:  docker build -t abarva:local .
 # Run:    docker run --rm -p 3000:3000 --env-file .env.example abarva:local

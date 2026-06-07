@@ -63,6 +63,19 @@ describe('CLOUD3 · Docker runtime packaging artifacts', () => {
       expect(dockerfile).toMatch(/AS\s+build/i)
       expect(dockerfile).toMatch(/AS\s+runtime/i)
     })
+
+    it('does not require Supabase environment variables at runtime', () => {
+      const requiredEnvBlock = dockerfile.match(
+        /Required runtime env vars[\s\S]*?# Build:/,
+      )?.[0] ?? ''
+
+      expect(requiredEnvBlock).toContain('ABARVA_AZURE_DATABASE_URL')
+      expect(requiredEnvBlock).toContain('DATABASE_URL')
+      expect(requiredEnvBlock).toContain('Legacy Supabase env names are not required')
+      expect(requiredEnvBlock).not.toMatch(/NEXT_PUBLIC_SUPABASE_URL\s+\(/)
+      expect(requiredEnvBlock).not.toMatch(/NEXT_PUBLIC_SUPABASE_ANON_KEY\s+\(/)
+      expect(requiredEnvBlock).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY\s+\(/)
+    })
   })
 
   describe('.dockerignore', () => {

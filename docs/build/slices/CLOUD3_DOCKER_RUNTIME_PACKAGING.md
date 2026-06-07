@@ -35,11 +35,13 @@ future Cloud Run / ECS / AKS slices.
   base, copying built artifacts into a minimal runtime layer that
   drops to the non-root `node` user, exposes port 3000, and
   defaults to `npm run start`. Required runtime env vars are
-  documented in the file header (DATABASE_URL, NEXT_PUBLIC_SUPABASE_*,
-  SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-  CLERK_SECRET_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, PINECONE_API_KEY,
-  PINECONE_INDEX, NODE_ENV, PORT, HOSTNAME). No secret values are
-  baked, no `.env*` is copied, no Vercel-runtime import is required.
+  documented in the file header (ABARVA_AZURE_DATABASE_URL,
+  DATABASE_URL, DIRECT_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  CLERK_SECRET_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY,
+  PINECONE_API_KEY, PINECONE_INDEX, NODE_ENV, PORT, HOSTNAME).
+  Legacy Supabase env names are explicitly not required by the runtime
+  image. No secret values are baked, no `.env*` is copied, no
+  Vercel-runtime import is required.
 - New `.dockerignore` excludes `node_modules`, `.next`, `.git`,
   `.env*` (with an explicit allow for `.env.example`), `coverage`,
   `reports/`, `.claude/`, `.codex-inbox/`, `*.log`, `**/.DS_Store`,
