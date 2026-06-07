@@ -10,7 +10,7 @@
 //   compact       — if true, reduces padding and hides the KPI strip (for tab use)
 //   currentPhase  — highlights the current phase section
 
-import { getServerSupabase } from "@/lib/supabase-server";
+import { azureRead } from "@/lib/data-plane/azureRead";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import {
   DELIVERABLE_REGISTRY,
@@ -19,6 +19,7 @@ import {
   type DeliverableSpec,
   type DeliverableFormat,
 } from "@/lib/programs/deliverable-registry";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import type { AttachmentRecord } from "@/lib/programs/attachments/types";
 import { AI_DECISION_SUPPORT_WATERMARK } from "@/lib/ai-liability/human-decision-controls";
 import {
@@ -40,6 +41,7 @@ interface DbDeliverable {
   current_version: number;
   updated_at: string | null;
   latest_content: string | null;
+  latest_version: number | null;
 }
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
@@ -47,49 +49,51 @@ interface DbDeliverable {
 async function fetchDeliverablesByKey(
   programId: string,
 ): Promise<Map<string, DbDeliverable>> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from("deliverables_v2")
-    .select(
-      `
-      id, deliverable_type_key, title, status, current_version, updated_at,
-      deliverable_versions!inner(content, version)
+  const rows = await azureRead.query<DbDeliverable>(
+    `
+      SELECT
+        d.id,
+        d.deliverable_type_key,
+        d.title,
+        d.status,
+        d.current_version,
+        d.updated_at,
+        v.content AS latest_content,
+        v.version AS latest_version
+      FROM deliverables_v2 d
+      LEFT JOIN LATERAL (
+        SELECT content, version
+        FROM deliverable_versions
+        WHERE deliverable_id = d.id
+        ORDER BY version DESC
+        LIMIT 1
+      ) v ON TRUE
+      WHERE d.engagement_id = $1
+      ORDER BY d.updated_at DESC NULLS LAST
     `,
-    )
-    .eq("engagement_id", programId)
-    .order("updated_at", { ascending: false });
-
-  if (!data) return new Map();
+    [programId],
+  );
 
   const byKey = new Map<string, DbDeliverable>();
-  for (const row of data as Array<{
-    id: string;
-    deliverable_type_key: string;
-    title: string | null;
-    status: string;
-    current_version: number;
-    updated_at: string | null;
-    deliverable_versions: Array<{ content: string | null; version: number }>;
-  }>) {
-    const versions = row.deliverable_versions ?? [];
-    const latest = versions.reduce(
-      (best, v) => (v.version > (best?.version ?? -1) ? v : best),
-      null as { content: string | null; version: number } | null,
-    );
+  for (const row of rows) {
     const existing = byKey.get(row.deliverable_type_key);
+    if (!existing) {
+      byKey.set(row.deliverable_type_key, row);
+      continue;
+    }
+
+    const rowVersion = row.latest_version ?? row.current_version ?? 0;
+    const existingVersion =
+      existing.latest_version ?? existing.current_version ?? 0;
+    const rowUpdatedAt = row.updated_at ? Date.parse(row.updated_at) : 0;
+    const existingUpdatedAt = existing.updated_at
+      ? Date.parse(existing.updated_at)
+      : 0;
     if (
-      !existing ||
-      (latest && latest.version > (existing.current_version ?? 0))
+      rowVersion > existingVersion ||
+      (rowVersion === existingVersion && rowUpdatedAt > existingUpdatedAt)
     ) {
-      byKey.set(row.deliverable_type_key, {
-        id: row.id,
-        deliverable_type_key: row.deliverable_type_key,
-        title: row.title,
-        status: row.status,
-        current_version: row.current_version,
-        updated_at: row.updated_at,
-        latest_content: latest?.content ?? null,
-      });
+      byKey.set(row.deliverable_type_key, row);
     }
   }
   return byKey;
@@ -471,14 +475,6 @@ function AttachmentRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const PHASE_LABELS: Record<number, string> = {
-  1: "P1 Charter",
-  2: "P2 Discover & Diagnose",
-  3: "P3 Design Future State",
-  4: "P4 Roadmap & Business Case",
-  5: "P5 Approval & Mobilization",
-};
-
 export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
@@ -647,7 +643,7 @@ export async function PhaseDocumentsPanel({
                     fontWeight: isCurrent ? "normal" : "normal",
                   }}
                 >
-                  {PHASE_LABELS[phase]}
+                  {getPhaseLabel(phase)}
                 </span>
                 {isCurrent && (
                   <span
