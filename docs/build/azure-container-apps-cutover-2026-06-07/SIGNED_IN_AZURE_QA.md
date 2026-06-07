@@ -1,5 +1,31 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 05:16Z — HTTP 200 / no HTTP 500 public smoke refreshed
+
+Re-checked the revision-scoped provider QA host from this VM:
+`https://ca-abarva-web-lab-eastus--provqa.agreeableocean-2c1472e6.eastus.azurecontainerapps.io`.
+
+**Public/runtime endpoints:**
+
+- `GET /` -> **HTTP 200** (`text/html`, 36,122 bytes).
+- `GET /sign-in` -> **HTTP 200** (`text/html`, 25,866 bytes).
+- `GET /api/health` -> **HTTP 200** (`ok:true`, `postgres:true`,
+  `direct_postgres:true`, `azure_graph:"postgres"`).
+
+**Protected route unauthenticated behavior (no session):**
+
+- `/intelligence`, `/source`, `/tower`, `/admin` -> initial **HTTP 307** to the
+  app sign-in page; following redirects lands on **HTTP 200**.
+- `/strategic-moves` -> initial **HTTP 307** to Clerk hosted sign-in; following
+  redirects lands on **HTTP 200**.
+
+No HTTP 500 was observed in these unauthenticated/public checks. Signed-in
+surface QA remains blocked by the absent Clerk secrets/session documented below;
+this update proves the provider image boots and auth boundaries fail closed
+cleanly, but it does not prove signed-in Sentinel/Source provider behavior.
+
+---
+
 ## UPDATE 2026-06-07 ~05:15Z — rechecked; current VM cannot perform signed-in QA
 
 Operator re-referenced this QA record. Rechecked the current agent VM before any
