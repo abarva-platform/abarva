@@ -58,9 +58,10 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   **100% traffic**. Unauthenticated liveness on the revision-scoped FQDN passed
   (Home/sign-in 200, no Supabase refs). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
-- **Signed-in Azure Container Apps QA — BLOCKED/not run:** no Clerk session or
-  Clerk secrets are available in this VM, so protected Sentinel/Source paths
-  still cannot be exercised from here.
+- **Signed-in Azure Container Apps QA — BLOCKED/not run:** this agent VM still
+  has no Clerk session/secrets or demo-login password, and repeated mint attempts
+  fail before HTTP with missing `CLERK_SECRET_KEY`. Protected Sentinel/Source
+  paths still cannot be exercised from here.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX

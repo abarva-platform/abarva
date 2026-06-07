@@ -36,6 +36,20 @@ latest `main` (`54f5cab2f`), since the prior PR (#3243) was closed/conflicting.
 - `eslint` (changed files) → **passed**.
 - `npm run release:check` → **passed**.
 
+## Runtime QA status — BLOCKED on Clerk-capable environment
+
+As of 2026-06-07 ~05:15Z, this VM still cannot complete signed-in runtime QA:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
+  `DEMO_LOGIN_PASSWORD`, and `DATABASE_URL` are absent from the agent
+  environment.
+- The 0-traffic Azure Container Apps test revision is already deployed and
+  healthy per `SIGNED_IN_AZURE_QA.md`, but protected routes still require a
+  Clerk session for tenant QA and live provider audit confirmation.
+- Cursor Cloud secrets added after this VM was provisioned do not appear in the
+  running VM; signed-in QA must run from a newly provisioned agent or an
+  operator environment that has the Clerk credentials/session.
+
 ## Image
 
 `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`
@@ -45,4 +59,6 @@ built from merged main + this provider branch (after tests passed).
 
 - Confirm live `ai_egress_audit.provider=anthropic` for the two workflows.
 - Confirm Claude answers are advisor-quality and citations intact.
-  See `SIGNED_IN_AZURE_QA.md` for status/blocker.
+- Run the signed-in Lakeshore/Meridian golden-question pass on the `provqa`
+  revision-scoped FQDN. See `SIGNED_IN_AZURE_QA.md` for the current
+  status/blocker and runbook.
