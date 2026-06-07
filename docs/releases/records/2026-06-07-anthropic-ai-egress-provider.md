@@ -35,9 +35,9 @@ Sentinel and Source LLM-backed flows now route their user-facing model generatio
 
 ## QA / Validation
 
-- Not-run in this VM: focused integration validation is pending because
+- Not run in this VM: focused integration validation is pending because
   `node_modules/` is absent in the current agent checkout.
-- Not-run in this VM: live `ai_egress_audit` verification requires configured
+- Not run in this VM: live `ai_egress_audit` verification requires configured
   Anthropic credentials, tenant data, and a signed-in QA path.
 
 ## Rollout Plan
