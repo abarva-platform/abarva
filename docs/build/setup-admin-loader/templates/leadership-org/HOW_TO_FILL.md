@@ -20,11 +20,12 @@
 
 ## Realism (so it matches an org of this size)
 Use the tenant **org profile** (`org-profile.template.csv`) to sanity-check counts:
-- **C-suite count** scales with size: a ~$2B integrated system has roughly **10–15** system
-  C-suite, **plus** a CEO (and usually CMO/CNO) **per hospital/entity**, and **30–60 VPs**.
+- **C-suite count** scales with size. Meridian (the worked example) is **~$11.2B revenue,
+  23 hospitals, 6,800 beds, 42,000 FTE** (`src/data/meridian.ts`) → roughly **14–20** system
+  C-suite, **plus** a CEO (and usually CMO/CNO) **per hospital/entity**, and **60–120 VPs**.
   A single-hospital community provider may have 6–9 C-suite total.
-- **Budgets must align:** IT leader's `budget_owned_usd` ≈ **3–5% of revenue** (≈$60–100M at $2B);
-  CISO/security ≈ a small slice of IT (≈$5–12M, ~15–40 FTE).
+- **Budgets must align:** IT leader's `budget_owned_usd` ≈ **3–5% of revenue** — Meridian's IT
+  budget is **$340M (3.0% of $11.2B)**; CISO/security ≈ **$34M, ~60 FTE**.
 - **Every non-CEO has a `reports_to`** — the chain must resolve to the CEO (no orphans).
 The loader **warns** (not blocks) when counts/budgets fall outside the expected band for the
 org profile; override with a note (kept as provenance).

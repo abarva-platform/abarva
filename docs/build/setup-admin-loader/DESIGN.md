@@ -65,8 +65,8 @@ flowchart LR
 
 ## 3. The proportionality engine (the realism backbone)
 
-One **org profile** per tenant drives expected ranges everywhere, so a $2B health system
-never shows "2 executives" or a "$50K IT budget." Profile attributes (see
+One **org profile** per tenant drives expected ranges everywhere, so an $11.2B health system
+like Meridian never shows "2 executives" or a "$50K IT budget." Profile attributes (see
 `org-profile.template.csv`): industry, sub-vertical (provider vs payer), annual revenue,
 total headcount, # operating entities (hospitals / plans), staffed beds (provider) or
 covered members (payer), IT budget %, fiscal year.
@@ -75,8 +75,8 @@ The engine produces, per dimension, an **expected band** and flags out-of-band e
 
 | Dimension | Proportionality rule (anchor) |
 |---|---|
-| Leadership count | C-suite scales with revenue/entities (≈10–15 system C-suite at ~$2B; + per-entity CEO/CMO/CNO) |
-| IT budget | ≈3–5% of revenue (provider); show $ and % |
+| Leadership count | C-suite scales with revenue/entities (Meridian ~$11.2B → ≈14–20 system C-suite + per-entity CEO/CMO/CNO) |
+| IT budget | ≈3–5% of revenue (Meridian: $340M = 3.0% of $11.2B); show $ and % |
 | Security team | ≈ small % of IT FTE; scales with revenue + risk profile |
 | Applications (CMDB) | hundreds–thousands for an Epic-core system |
 | Vendor contracts | dozens–hundreds; top-N concentration |

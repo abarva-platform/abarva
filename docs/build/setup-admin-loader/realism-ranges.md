@@ -9,6 +9,7 @@ a healthcare provider; payer equivalents in parentheses. Override with a justifi
 | ~$1B (regional, 2–3 hospitals) | 9–12 | CEO/CMO/CNO each | 20–35 | 3–5% (~$30–50M) | 8–20 |
 | ~$2B (IDN, 3–5 hospitals) | 10–15 | CEO/CMO/CNO each | 30–60 | 3–5% (~$60–100M) | 15–40 |
 | ~$5B+ (large system) | 14–20 | + regional presidents | 60–120 | 3–5% (~$150–250M) | 40–100 |
+| ~$11B (Meridian: 23 hospitals, 6,800 beds, 42k FTE) | 14-20 | + regional presidents | 60-120 | ~3.0% (~$340M) | ~60 |
 
 Other anchors:
 - **Applications (CMDB):** Epic-core IDN → hundreds–low-thousands of apps/CIs.

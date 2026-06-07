@@ -2,7 +2,7 @@
 
 ## Positive (6)
 1. What KPIs does the CFO track? → AR days, denial rate, cost/adjusted discharge, clean claim rate … (cite kpi-register).
-2. What is our denial rate vs target? → 7.8% vs 5.0% target (off target).
+2. What is our denial rate vs target? → 18.2% vs 5.0% target (off target).
 3. Which operational metrics are worst vs target? → OR on-time starts 68% vs 85%, contract labor 9.5% vs 4%.
 4. What does the CEO see on the board scorecard? → operating margin, days cash, HCAHPS, serious safety events.
 5. What is our IT spend % of revenue and is it in band? → 3.8% (within 3–5% band).
