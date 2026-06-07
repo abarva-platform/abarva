@@ -76,6 +76,14 @@
  *                        Meridian tenant demo user. Tenant context is correct
  *                        but role-specific assertions may need the canonical
  *                        persona.
+ *
+ *   - meridian-cdao      Meridian Health CDAO.
+ *                        Canonical:  cdao@meridian-health.example.com
+ *                        Fallback:   demo-meridian+clerk_test@abarva.com
+ *                        activeClient: meridian
+ *                        DOCUMENTED GAP: The canonical CDAO persona may not be
+ *                        provisioned in every Clerk environment; fallback keeps
+ *                        tenant context correct for source smoke coverage.
  */
 
 import fs from 'node:fs';
@@ -98,6 +106,7 @@ export type SourcePersonaKey =
   | 'apex-vp-sourcing'
   | 'apex-non-approver'
   | 'meridian-cdio'
+  | 'meridian-cdao'
   | 'apex-cio'
   | 'apex-cfo'
   | 'admin';
@@ -148,6 +157,18 @@ const PERSONAS: Record<SourcePersonaKey, PersonaConfig> = {
       'provisioned; fallback is demo-meridian+clerk_test@abarva.com. Tenant ' +
       'context is correct; role-specific assertions may require the canonical ' +
       'persona via scripts/provision-cxo-personas.ts --apply.',
+  },
+  'meridian-cdao': {
+    email: 'cdao@meridian-health.example.com',
+    fallbackEmail: DEMO_ACCOUNTS.meridian.email,
+    fallbackDemoAccount: 'meridian',
+    activeClient: 'meridian',
+    postLoginProbe: '/source',
+    gapNote:
+      'Canonical cdao@meridian-health.example.com persona may not be ' +
+      'provisioned; fallback is demo-meridian+clerk_test@abarva.com. Tenant ' +
+      'context is correct for source smoke coverage; CDAO-specific assertions ' +
+      'require the canonical persona via scripts/provision-cxo-personas.ts --apply.',
   },
   'apex-cio': {
     email: 'cio@apex-retail.example.com',

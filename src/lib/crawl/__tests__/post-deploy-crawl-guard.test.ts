@@ -30,11 +30,11 @@ function observation(
 }
 
 describe("post-deploy crawl guard", () => {
-  it("includes SkyHarbor personas in the standard production crawl", () => {
+  it("includes required personas in the standard production crawl", () => {
     const personaKeys = resolveCrawlPersonas().map((persona) => persona.key);
 
     expect(personaKeys).toEqual(
-      expect.arrayContaining(["skyharbor-cto", "skyharbor-cio"]),
+      expect.arrayContaining(["meridian-cdao", "skyharbor-cto", "skyharbor-cio"]),
     );
   });
 
