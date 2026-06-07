@@ -1,5 +1,6 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
 import { resolvePostgresPoolMax } from '@/lib/data-plane/postgresCompat';
+import { toRuntimeSafeError } from '@/lib/observability/runtime-log-redaction';
 
 let pool: Pool | null = null;
 
@@ -61,7 +62,12 @@ export function getCorpusPool(): Pool {
 export async function withCorpusClient<T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
-  const client = await getCorpusPool().connect();
+  let client: PoolClient;
+  try {
+    client = await getCorpusPool().connect();
+  } catch (error) {
+    throw toRuntimeSafeError(error, 'Corpus database connection failed.');
+  }
   try {
     return await fn(client);
   } finally {

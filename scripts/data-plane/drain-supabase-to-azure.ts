@@ -6,6 +6,7 @@
 import { Client, type QueryResultRow } from 'pg';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
+import { formatRuntimeSafeError } from '@/lib/observability/runtime-log-redaction';
 import { buildUpdateAssignments } from './upsert-sql';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
@@ -357,6 +358,6 @@ function tableRequired(table: string, plans: TablePlan[]): boolean {
 
 main().catch((error) => {
   console.error('x Supabase to Azure drain failed.');
-  console.error(error);
+  console.error(formatRuntimeSafeError(error, 'Supabase to Azure drain failed.'));
   process.exit(1);
 });
