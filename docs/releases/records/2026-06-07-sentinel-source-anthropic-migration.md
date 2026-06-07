@@ -42,15 +42,18 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   now use the Anthropic runtime; configuration check is `ANTHROPIC_API_KEY`.
 - `src/lib/source/sentinel-chat-llm.ts`: Source chat uses `getAuditedAnthropicClient`
   - `messages.create` (default model `claude-opus-4-7`).
-- Tests: `provider-audit.test.ts` (now asserts Sentinel/Source on Anthropic),
-  `openai-runtime-contract.test.ts` (rescoped to the OpenAI utility paths),
-  `source/__tests__/sentinel-chat-llm.test.ts` (Anthropic mock).
+- Tests: `provider-audit.test.ts` (now asserts Sentinel/Source on Anthropic,
+  Sentinel Ask audit identity payload, and Anthropic preflight provider/route
+  fields), `openai-runtime-contract.test.ts` (rescoped to the OpenAI utility
+  paths), `source/__tests__/sentinel-chat-llm.test.ts` (Anthropic mock).
 
 ## QA / Validation
 
 - Recreated cleanly on `cursor/anthropic-provider-qa-cutover-a092` from latest
   `main` (`54f5cab2f`) after PR #3243 was closed/conflicting.
 - `npx jest provider-audit / openai-runtime-contract / sentinel-chat-llm` — passed (10).
+- Pending this update: rerun provider-audit after adding Sentinel Ask audit
+  envelope assertions.
 - `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
 - Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
 - **Azure Container Apps test revision staged safely:** `provqa` is healthy and
@@ -84,7 +87,8 @@ sentinel-chat-llm.ts are independent).
 
 ## Audit Evidence
 
-- `provider-audit.test.ts` wiring assertions; jest outputs on the branch.
+- `provider-audit.test.ts` wiring and audit-envelope assertions; jest outputs
+  on the branch.
 - `ai_egress_audit` rows for `intelligence-ask-synthesis` and
   `source-sentinel-chat` should read `provider=anthropic` once exercised live.
 
