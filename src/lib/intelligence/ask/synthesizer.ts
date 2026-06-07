@@ -1,26 +1,14 @@
-import type { AskSource, AskIntent } from "./types";
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
+import type { AskSource, AskIntent } from './types';
+import { applyPartialEvidencePolicy, chunkAskText, sanitizeAskSynthesis } from './response-policy';
 import {
-  applyPartialEvidencePolicy,
-  chunkAskText,
-  enforceCxoSectionBreaks,
-  sanitizeAskSynthesis,
-} from "./response-policy";
-import {
-  buildOffTenantMentionFallback,
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
-} from "./tenant-identity-pin";
-import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
-import { composeRuntimeOutputDisciplineBlock } from "@/lib/agent/output-discipline/prompt-contract";
-import {
-  createIntelligenceAskOpenAIText,
-  INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
-  INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL,
-  isIntelligenceAskOpenAIConfigured,
-} from "./openai-runtime";
+} from './tenant-identity-pin';
+import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
 
-export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
+export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
 // SYSTEM_PROMPT · Sentinel Ask Intelligence · INT-VOICE.STRAT-2026-05-10d
 //
@@ -105,37 +93,6 @@ CONVERSE NATURALLY
 You're in a conversation, not generating a report. Length should match the question. A simple question gets a 3-4 sentence answer. A complex strategic question gets 200-400 words. Don't pad. Don't bullet-point everything. Use bullets when they earn their place; otherwise, write in prose.
 
 When the user makes a follow-up, build on the prior turn — don't restart from scratch.
-
-CXO RESPONSE SHAPE
-Make substantial answers easy to scan. Avoid one large paragraph. For complex CXO, audit, architecture, funding, data, or go/no-go questions, use short plain-text sections separated by blank lines:
-
-My read: one direct recommendation or judgment.
-
-Evidence: the loaded tenant facts, source handles, counts, systems, owners, dates, or corpus patterns that make the view credible.
-
-Decision fork: when the answer would change by stakeholder priority, show the two paths explicitly, e.g. "If the CFO is optimizing MLR..." versus "If the CMO is optimizing access/quality...".
-
-Risk / gate: the one thing that must be proven, approved, or loaded before the recommendation should advance.
-
-Do not force this structure onto tiny answers, but never return a dense 250+ word block for strategic questions.
-
-HEALTHCARE + MODERNIZATION GROUNDING
-For healthcare integrated-system questions, be concrete about the payer-provider operating model when the question asks for it. Use the terms that make the answer decision-grade:
-
-- External datasets: name HCUP where relevant, along with CMS quality / Stars, SDOH, claims, eligibility, provider directory, formulary, pharmacy, and market / benchmark sources when those are the right inputs.
-- Provider KPIs: include readmissions, length of stay, avoidable ED use, referral leakage, access, care-gap closure, productivity, quality, and safety measures when relevant.
-- Plan KPIs: include MLR, Stars measures, risk adjustment, HEDIS-like quality measures, retention, prior authorization cycle time, claims accuracy, and member experience when relevant.
-- Databricks / lakehouse answers: name bronze / silver / gold, data products, reports, metrics, lineage, Unity Catalog, PHI governance, FHIR / HL7, Epic, ERP, and metadata-driven ETL when relevant.
-- Modernization estate answers: explicitly address lift-and-shift, on-prem exits, rehost vs refactor, integration count, report count, table/domain scope, and cutover risk when the user's question raises them.
-
-ARTIFACT + APPROVAL DISCIPLINE
-For pilot, board, phase, Move, Source, go/no-go, or audit questions, make the operational proof explicit. Name the artifact, approval owner, and gate when relevant:
-
-- Artifacts: discovery brief, architecture artifact, business case, portfolio scorecard, 30/60/90 plan, RACI, Source event, board pack, audit pack.
-- Approvals: CFO, CIO, CDAO, CTO, CMO, compliance, AI Governance Council, data steward, and business sponsor depending on the decision.
-- Gates: Phase 3 architecture proof, data-load evidence, stored artifact, download/export proof, partner / Source trigger, no-go condition, and rollback / remediation path.
-
-Do not present a phase as complete without stored artifact + approval proof. If the evidence is partial, say what is proven and what still blocks advancement.
 
 WHEN A QUESTION IS GENUINELY OUTSIDE YOUR DOMAIN
 
@@ -278,99 +235,25 @@ For explicit concise requests:
 - Use plain text only; no markdown headings or formal report structure.
 - Lead with a recommendation or judgment, not a summary.
 - Use tenant evidence when supplied. If one detail is missing, state only that remaining field briefly after the useful facts.
-- For non-concise strategic questions, the full Sentinel prompt uses short sections and decision forks; concise mode stays one paragraph only because the user explicitly asked for brevity.
 - Do not invent tenant facts, peer statistics, dates, dollars, vendors, or rankings.
 - Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
 
 export function isExplicitConciseAsk(query: string): boolean {
-  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(
-    query.toLowerCase(),
-  );
-}
-
-export function isEnumeratedCompletenessAsk(query: string): boolean {
-  const normalized = query.toLowerCase();
-  const countPattern =
-    /\b(?:three|four|five|six|seven|eight|nine|ten|3|4|5|6|7|8|9|10)\b/;
-  const listPattern =
-    /\b(?:failure modes?|risks?|reasons?|gates?|steps?|workstreams?|items?|controls?|dependencies|questions|findings|proof points?)\b/;
-
-  return countPattern.test(normalized) && listPattern.test(normalized);
+  return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(query.toLowerCase());
 }
 
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
-    return INTELLIGENCE_ASK_OPENAI_SMALL_MODEL;
+    return 'claude-haiku-4-5-20251001';
   }
-  if (
-    intent === "vendor_comparison" ||
-    intent === "topic_synthesis" ||
-    intent === "general_synthesis"
-  ) {
-    return INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL;
+  if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
+    return 'claude-opus-4-7';
   }
-  return INTELLIGENCE_ASK_OPENAI_SYNTHESIS_MODEL;
+  return 'claude-sonnet-4-6';
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  if (isExplicitConciseAsk(query)) return 160;
-  if (isEnumeratedCompletenessAsk(query)) return 900;
-  return 600;
-}
-
-export function chooseSynthesisWordLimit(query: string): number {
-  if (isExplicitConciseAsk(query)) return 120;
-  if (isEnumeratedCompletenessAsk(query)) return 380;
-  return 240;
-}
-
-export function buildCxoQueryFocusChecklist(query: string): string {
-  const normalized = query.toLowerCase();
-  const lines: string[] = [];
-
-  if (/\b(?:third[-\s]?party|external|hcup|dataset|benchmark|market data)\b/.test(normalized)) {
-    lines.push("External datasets: explicitly name HCUP when relevant, plus CMS quality / Stars, SDOH, claims, eligibility, provider directory, pharmacy, and benchmark sources.");
-  }
-
-  if (/\b(?:provider|hospital|clinical|readmission|length of stay|los|avoidable|utilization|quality|safety)\b/.test(normalized)) {
-    lines.push("Provider analytics: use the exact terms readmissions, length of stay, avoidable ED use, care-gap closure, access, productivity, quality, safety measures, evidence, and data products when relevant.");
-  }
-
-  if (/\b(?:plan|payer|member|mlr|stars|hedis|risk adjustment|prior authorization|claims)\b/.test(normalized)) {
-    lines.push("Plan analytics: include MLR, baseline, forecast, Stars measures, quality measures, risk adjustment, retention, claims accuracy, prior authorization cycle time, member experience, and evidence when relevant. Keep forecast separate from realized savings. If you mention realized savings, use the exact phrase separate from realized savings. Do not describe projected value as promised or committed dollars.");
-  }
-
-  if (/\bstars\b/.test(normalized)) {
-    lines.push("Stars value spine: use the exact terms Stars measures and evidence; frame bonus dollars as scenario upside or sensitivity, not promised or committed savings. Avoid the term realized savings unless using the exact phrase separate from realized savings.");
-  }
-
-  if (/\b(?:databricks|lakehouse|etl|integration|epic|erp|silver|gold|bronze|report|metric|data product|unity catalog|fhir|hl7)\b/.test(normalized)) {
-    lines.push("Databricks delivery: explicitly address bronze / silver / gold, data products, reports, metrics, lineage, Unity Catalog, PHI governance, FHIR / HL7, Epic, ERP, and metadata-driven ETL when relevant.");
-  }
-
-  if (/\b(?:aws|lift[-\s]?and[-\s]?shift|on[-\s]?prem|data center|rehost|refactor|modernization|cutover|rationalize|rationalization)\b/.test(normalized)) {
-    lines.push("Modernization estate: cover AWS, lift-and-shift, on-prem exit, rehost vs refactor, integration count, report rationalize / rationalization, operating model risk, SLA, and cutover risk when relevant.");
-  }
-
-  if (/\b(?:ams|managed service|provider|vendor|ticket factory|sow|service level|sla)\b/.test(normalized)) {
-    lines.push("Vendor / AMS proof: include SLA, operating model, service credits, governance, data quality, escalation path, and handoff boundaries when relevant.");
-  }
-
-  if (/\b(?:model risk|clinical safety|drift|monitoring|human[-\s]?in[-\s]?the[-\s]?loop|governance|data quality|quality gate|validation)\b/.test(normalized)) {
-    lines.push("Risk controls: include drift, data quality, governance, validation, monitoring, human-in-the-loop review, audit trail, rollback, and evidence when relevant.");
-  }
-
-  if (/\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence|reviewable|slide|synthetic note)\b/.test(normalized)) {
-    lines.push("Artifact / approval proof: use the exact terms artifact, business case, approval owner, CFO, CIO, board / sponsor gate, Source partner trigger, Move registration, no-go condition, stored evidence, and decision fork when relevant.");
-  }
-
-  if (lines.length === 0) return "";
-
-  return [
-    "QUESTION-SPECIFIC FOCUS CHECKLIST:",
-    "The user asked a hard CXO question. Do not mechanically list every term below, but use the exact words from the relevant line when they are material to the answer and do not omit the named proof gates.",
-    ...lines.map((line) => `- ${line}`),
-  ].join("\n");
+  return isExplicitConciseAsk(query) ? 160 : 600;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -379,24 +262,11 @@ function formatSourcesBlock(sources: AskSource[]): string {
     // "answer from domain expertise + tenant context" instruction, NOT a
     // signal to refuse. The system prompt makes this contract explicit; this
     // block keeps the model from inventing a missing-data narrative.
-    return "[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]";
+    return '[no direct corpus matches for this query — answer as a senior advisor from broad domain expertise plus the tenant context block; do not narrate that the sources are empty]';
   }
   return sources
     .map((s, i) => `[SOURCE ${i + 1} · ${s.type} · ${s.name}]\n${s.detail}`)
-    .join("\n\n");
-}
-
-export function formatMandatorySurfaceEvidenceBlock(sources: AskSource[]): string {
-  const prioritySources = sources
-    .filter((source) => source.type === "SURFACE" || source.type === "TENANT" || source.type === "GRAPH")
-    .slice(0, 4);
-  if (prioritySources.length === 0) return "";
-
-  return [
-    "CURRENT TENANT / SURFACE FACTS TO USE:",
-    "These facts come from the authenticated product surface and loaded tenant context. Use the question-relevant facts explicitly before falling back to general doctrine.",
-    ...prioritySources.map((source, index) => `[FACT BLOCK ${index + 1} · ${source.type} · ${source.name}]\n${source.detail}`),
-  ].join("\n\n");
+    .join('\n\n');
 }
 
 export async function* synthesizeStream(args: {
@@ -420,15 +290,15 @@ export async function* synthesizeStream(args: {
    */
   averageConfidence?: number;
 }): AsyncGenerator<string> {
-  if (!isIntelligenceAskOpenAIConfigured() || !args.tenantId) {
-    yield "Sentinel synthesis is not configured in this environment. Set OPENAI_API_KEY to enable advisor-quality answers.";
+  if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
+    yield 'Sentinel synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
     return;
   }
 
   const confidenceHint =
-    typeof args.averageConfidence === "number"
+    typeof args.averageConfidence === 'number'
       ? `\nRETRIEVAL CONFIDENCE (informational, never to be quoted to the user): average source confidence is ${args.averageConfidence.toFixed(2)} on a 0-1 scale. Treat this as private context for calibrating your prose, the same way a senior consultant calibrates against how solid her own evidence base is. Do not narrate this number. Do not say "average confidence is moderate" or anything like it. Use it to decide how confident your verbal framing should be ("high confidence on this," "less sure on the timing," "this is judgment, not benchmark data") — calibration belongs in how you phrase claims, not in a preamble or a footer.`
-      : "";
+      : '';
 
   // STRESS-P0-001 fix (2026-05-24): authoritative tenant-identity pin built
   // dynamically from args.tenantClientKey. Replaces the prior hardcoded
@@ -436,60 +306,58 @@ export async function* synthesizeStream(args: {
   // Meridian-authenticated CDIO sessions to receive responses asserting
   // "you're Apex Retail." The pin block is prepended FIRST (above any other
   // context block) so the model treats it as highest-priority.
-  const tenantIdentityPin = buildTenantIdentityPin(
-    args.tenantClientKey ?? args.tenantId ?? null,
-  );
+  const tenantIdentityPin = buildTenantIdentityPin(args.tenantClientKey ?? args.tenantId ?? null);
   const contextContractBlock = buildAgentContextContractBlock({
-    agent: "sentinel",
-    module: "intelligence",
+    agent: 'sentinel',
+    module: 'intelligence',
     sources: args.sources,
   });
 
   const contextBlocks = [
     tenantIdentityPin,
     contextContractBlock,
-    args.factAvailabilityBlock?.trim() ?? "",
-    args.coverageReportBlock?.trim() ?? "",
-    args.userContextBlock?.trim() ?? "",
-    args.conversationContextBlock?.trim() ?? "",
+    args.factAvailabilityBlock?.trim() ?? '',
+    args.coverageReportBlock?.trim() ?? '',
+    args.userContextBlock?.trim() ?? '',
+    args.conversationContextBlock?.trim() ?? '',
   ].filter(Boolean);
-  const rolePrompt = isExplicitConciseAsk(args.query)
-    ? CONCISE_SYSTEM_PROMPT
-    : SYSTEM_PROMPT;
-  const outputDisciplineBlock = composeRuntimeOutputDisciplineBlock("Sentinel");
-  const system =
-    contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`
-      : `${rolePrompt}\n\n${outputDisciplineBlock}${confidenceHint}`;
-  const mandatorySurfaceEvidenceBlock = formatMandatorySurfaceEvidenceBlock(args.sources);
-  const focusChecklist = buildCxoQueryFocusChecklist(args.query);
-  const prompt = [
-    `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}`,
-    mandatorySurfaceEvidenceBlock,
-    `USER QUESTION:\n${args.query}`,
-    focusChecklist,
-    "Respond with your synthesis. For hard CXO or program-readiness questions, use the CXO digest shape. If current surface facts include a named active client, name that client in the first sentence. If current surface facts include named modules, stores, artifacts, or platforms that match the question, mention those names directly.",
-    isEnumeratedCompletenessAsk(args.query)
-      ? "The user asked for a specific count of items. Answer every requested item before ending. Keep each item short, but do not stop after the first two or three."
-      : "",
-  ].filter(Boolean).join("\n\n");
+  const rolePrompt = isExplicitConciseAsk(args.query) ? CONCISE_SYSTEM_PROMPT : SYSTEM_PROMPT;
+  const system = contextBlocks.length > 0
+    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}`
+    : `${rolePrompt}${confidenceHint}`;
+  const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
-    ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
-    : "";
+    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'
+    : '';
 
   try {
     const model = chooseModel(args.intent, args.query);
-    const text = await createIntelligenceAskOpenAIText({
+    const { client } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
-      workflow: "intelligence-ask-synthesis",
+      workflow: 'intelligence-ask-synthesis',
       model,
-      instructions: `${system}${continuityInstruction}`,
-      input: prompt,
-      dataClass: "confidential",
-      maxOutputTokens: chooseSynthesisTokenBudget(args.query),
+      prompt: [system, prompt].join('\n\n'),
+      dataClass: 'confidential',
       metadata: { intent: args.intent },
     });
+    const stream = await client.messages.create({
+      model,
+      // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
+      // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
+      // mid-list on the new MANDATORY ANSWER SHAPES.
+      max_tokens: chooseSynthesisTokenBudget(args.query),
+      system: `${system}${continuityInstruction}`,
+      messages: [{ role: 'user', content: prompt }],
+      stream: true,
+    });
+
+    let text = '';
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        text += event.delta.text;
+      }
+    }
 
     // STRESS-P0-001 fix (2026-05-24): post-response cross-tenant identity
     // guard. If despite the dynamic tenant pin the model still asserts a
@@ -504,11 +372,11 @@ export async function* synthesizeStream(args: {
     if (leakCheck.leaked) {
       const safeRefusal = [
         `I almost generated a response that misattributed your organization. The retrieved context and/or session memory referenced "${leakCheck.assertedTenant}" but your authenticated session is for a different organization.`,
-        "",
-        "I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.",
-        "",
-        "[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]",
-      ].join("\n");
+        '',
+        'I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.',
+        '',
+        '[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]',
+      ].join('\n');
       yield safeRefusal;
       return;
     }
@@ -519,11 +387,11 @@ export async function* synthesizeStream(args: {
       query: args.query,
     });
     if (offTenantMention.detected) {
-      yield buildOffTenantMentionFallback({
-        clientKey: args.tenantClientKey ?? args.tenantId ?? null,
-        query: args.query,
-        term: offTenantMention.term,
-      });
+      yield [
+        'I detected mixed-tenant language in the draft answer, so I am not going to surface it.',
+        'Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.',
+        '[tenant-isolation guard fired: off-tenant mention blocked]',
+      ].join('\n');
       return;
     }
 
@@ -536,19 +404,12 @@ export async function* synthesizeStream(args: {
     // cap to 240 gives the model headroom to land at 195-220 without clipping
     // and still fences off true runaway responses. The prompt remains the
     // primary length lever; this is a safety net.
-    const sanitized = sanitizeAskSynthesis(
-      text,
-      chooseSynthesisWordLimit(args.query),
-    );
-    const evidenceDisciplined = applyPartialEvidencePolicy(
-      sanitized,
-      args.sources,
-    );
-    const displayDisciplined = enforceCxoSectionBreaks(evidenceDisciplined);
-    for (const chunk of chunkAskText(displayDisciplined)) {
+    const sanitized = sanitizeAskSynthesis(text, 240);
+    const evidenceDisciplined = applyPartialEvidencePolicy(sanitized, args.sources);
+    for (const chunk of chunkAskText(evidenceDisciplined)) {
       yield chunk;
     }
   } catch (err) {
-    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
+    yield `\n\n[synthesis error: ${err instanceof Error ? err.message : 'unknown'}]`;
   }
 }

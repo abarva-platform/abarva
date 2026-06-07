@@ -47,8 +47,6 @@ interface VerticalProfile {
   offLimitsTenantNames: string[];
 }
 
-const NORTHSTAR_DISPLAY_NAME = getClientOption('northstar').name;
-
 // Per-vertical guardrails. Each profile lists the terminology that should NOT
 // surface to a tenant of THIS vertical (drawn from the other verticals). The
 // lists are intentionally generous — false-positives ("regulatory" referring
@@ -110,7 +108,7 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
       'banking', 'core banking', 'FedNow', 'BSA', 'AML', 'SR 11-7',
       'commercial deposit', 'real-time payments rail',
     ],
-    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus', 'Northstar', NORTHSTAR_DISPLAY_NAME],
+    offLimitsTenantNames: ['Apex', 'Apex Retail', 'Apex Retail Group', 'Meridian', 'Meridian Health', 'Meridian Health System', 'First Capital', 'First Capital Financial', 'Arcturus', 'Northstar', 'Northstar Clinical Technologies'],
   },
 };
 
@@ -250,81 +248,13 @@ export function detectOffTenantMention(args: {
 
   const offLimits = [...profile.offLimitsTenantNames].sort((a, b) => b.length - a.length);
   const response = args.response.toLowerCase();
-  const query = args.query ?? '';
   for (const term of offLimits) {
     if (response.includes(term.toLowerCase())) {
-      if (isTenantBoundaryProbe(query, term)) {
-        return { detected: false };
-      }
       return { detected: true, term };
     }
   }
 
   return { detected: false };
-}
-
-export function buildOffTenantMentionFallback(args: {
-  clientKey: string | null | undefined;
-  query?: string | null;
-  term: string;
-}): string {
-  const normalizedClientKey = normalizeTenantPinClientKey(args.clientKey);
-  const activeTenant = normalizedClientKey
-    ? getClientOption(normalizedClientKey).name
-    : 'the active tenant';
-  const query = args.query ?? '';
-
-  if (isArtifactProofQuestion(query)) {
-    return [
-      `My read: For ${activeTenant}, this should stay blocked from board-grade or pilot-ready status until the artifact chain is stored, approved, and reviewable.`,
-      '',
-      `Evidence: I blocked a draft that referenced "${args.term}", which is outside the active tenant boundary. The safe answer must use ${activeTenant} evidence only: stored artifact, business case, data-load evidence, approval trail, board pack or audit pack export, and the telemetry answer trace.`,
-      '',
-      'Decision fork: If the CFO/CIO are deciding funding, the business case must show assumptions, value spine, cost, risk, and approval owner. If Source is needed, the partner trigger must be explicit and tied to a Move, not implied by strategy prose.',
-      '',
-      'Risk / gate: No-go until the Move registration, Phase 3 architecture proof, artifact export, approval record, and rollback or remediation path are all present. Re-ask and I will answer from the active tenant context only.',
-    ].join('\n');
-  }
-
-  if (isTenantBoundaryProbe(query, args.term)) {
-    return [
-      `My read: The active tenant is ${activeTenant}; I will not show or rely on ${args.term} data in this session.`,
-      '',
-      `Evidence: The session is tenant-pinned to ${activeTenant}. Mentioning ${args.term} is only appropriate here as the subject of a boundary, contamination, or access-control probe.`,
-      '',
-      'Decision fork: If you want a cross-tenant comparison, ask for that explicitly. If you want pilot readiness, I will answer from the active tenant evidence only.',
-      '',
-      'Risk / gate: Any off-tenant retrieval is a no-go for pilot evidence until the source scope is corrected and the audit trace proves tenant isolation.',
-    ].join('\n');
-  }
-
-  return [
-    `My read: I detected mixed-tenant language in the draft, so I am not surfacing it. Your session remains pinned to ${activeTenant}.`,
-    '',
-    `Evidence: The blocked draft referenced "${args.term}", which is outside the active tenant boundary.`,
-    '',
-    'Risk / gate: Re-ask the question and I will answer from the active tenant context only.',
-  ].join('\n');
-}
-
-function isTenantBoundaryProbe(query: string, term: string): boolean {
-  const normalizedQuery = query.toLowerCase();
-  const normalizedTerm = term.toLowerCase();
-  const meaningfulTermTokens = normalizedTerm
-    .split(/\s+/)
-    .filter((token) => token.length >= 4);
-  const queryMentionsTerm =
-    normalizedQuery.includes(normalizedTerm) ||
-    meaningfulTermTokens.some((token) => normalizedQuery.includes(token));
-
-  return (
-    queryMentionsTerm &&
-    /\b(?:contamination|leak|bleed|mixed[-\s]?tenant|cross[-\s]?tenant|tenant boundary|tenant isolation|probe|wrong tenant|off[-\s]?tenant|show me|access)\b/i.test(query)
-  );
-}
-
-function isArtifactProofQuestion(query: string): boolean {
-  return /\b(?:artifact|approval|approve|board|business case|move|source|partner|phase|pilot|audit|go[-/\s]?no[-/\s]?go|no[-\s]?go|gate|opportunity|evidence|reviewable)\b/i.test(query);
 }
 
 function normalizeTenantPinClientKey(value: string | null | undefined): ClientKey | null {

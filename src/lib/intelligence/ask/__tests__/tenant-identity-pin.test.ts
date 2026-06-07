@@ -15,7 +15,6 @@
 
 import { describe, expect, it } from '@jest/globals';
 import {
-  buildOffTenantMentionFallback,
   buildTenantIdentityPin,
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
@@ -146,16 +145,6 @@ describe('detectOffTenantMention', () => {
     expect(result.detected).toBe(false);
   });
 
-  it('allows explicit tenant-boundary probes to mention the probed tenant in a refusal', () => {
-    const result = detectOffTenantMention({
-      clientKey: 'meridian',
-      response: 'The active tenant is Meridian Health System; I will not show Apex Retail data from this session.',
-      query: 'Do we have Apex contamination or cross-tenant leakage in this Meridian answer?',
-    });
-
-    expect(result.detected).toBe(false);
-  });
-
   it('does not flag the active tenant name', () => {
     const result = detectOffTenantMention({
       clientKey: 'skyharbor',
@@ -164,38 +153,6 @@ describe('detectOffTenantMention', () => {
     });
 
     expect(result.detected).toBe(false);
-  });
-});
-
-describe('buildOffTenantMentionFallback', () => {
-  it('returns a tenant-pinned artifact proof answer for board-grade questions', () => {
-    const fallback = buildOffTenantMentionFallback({
-      clientKey: 'meridian',
-      query: 'What would make the Meridian business case board-grade rather than just a strategy memo?',
-      term: 'Apex Retail',
-    });
-
-    expect(fallback).toContain('Meridian Health System');
-    expect(fallback).toContain('artifact chain');
-    expect(fallback).toContain('business case');
-    expect(fallback).toContain('approval owner');
-    expect(fallback).toContain('board pack');
-    expect(fallback).toContain('audit pack');
-    expect(fallback).toContain('Phase 3 architecture proof');
-    expect(fallback).toContain('No-go');
-  });
-
-  it('returns a clear tenant-boundary refusal for contamination probes', () => {
-    const fallback = buildOffTenantMentionFallback({
-      clientKey: 'meridian',
-      query: 'Can you prove there is no Apex contamination in this Meridian session?',
-      term: 'Apex Retail',
-    });
-
-    expect(fallback).toContain('active tenant is Meridian Health System');
-    expect(fallback).toContain('Apex Retail');
-    expect(fallback).toContain('cross-tenant comparison');
-    expect(fallback).toContain('no-go for pilot evidence');
   });
 });
 
