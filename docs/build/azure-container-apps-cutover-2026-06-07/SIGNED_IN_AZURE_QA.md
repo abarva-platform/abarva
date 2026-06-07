@@ -26,6 +26,38 @@ cleanly, but it does not prove signed-in Sentinel/Source provider behavior.
 
 ---
 
+## UPDATE 2026-06-07 ~05:16Z — signed-in mint rerun; still blocked on missing Clerk secret
+
+Re-ran the signed-in QA prerequisite against the 0-traffic `provqa` revision from
+this VM. Dependencies were initially absent, so `npm ci` was run first; it completed
+with a Node engine warning (`v22.14.0` here, repo guidance expects Node 24) and the
+existing npm audit findings, but the auth helper then loaded correctly.
+
+- Branch: `cursor/anthropic-provider-qa-cutover-a092`
+- VM boot time: **2026-06-07 05:03 UTC**
+- Target: `https://ca-abarva-web-lab-eastus--provqa.azurecontainerapps.io`
+- Persona attempted: `lakeshore-cfo` (`cfo@lakeshore-holdings.example.com`)
+- Command:
+  `BASE_URL=https://ca-abarva-web-lab-eastus--provqa.azurecontainerapps.io npm run auth:agent-client-states -- --persona lakeshore-cfo --refresh`
+- Result: **FAIL before route QA**
+- Exact non-secret error:
+  `Missing CLERK_SECRET_KEY. Use a local .env.local; never commit it.`
+- Generated evidence:
+  `reports/agent-client-auth/agent-client-auth-2026-06-07T05-16-51-534Z.md`
+
+Environment check immediately before the attempt:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: absent
+- `CLERK_SECRET_KEY`: absent
+- `DEMO_LOGIN_PASSWORD`: absent
+
+Signed-in Azure QA remains **blocked**. No protected surfaces were reached, no golden
+questions were executed, and runtime `ai_egress_audit.provider=anthropic` remains
+unconfirmed. Guardrails held: no production traffic shift, no DNS/Vercel/Supabase
+change, and no `.auth` session state committed.
+
+---
+
 ## UPDATE 2026-06-07 ~05:15Z — rechecked; current VM cannot perform signed-in QA
 
 Operator re-referenced this QA record. Rechecked the current agent VM before any
