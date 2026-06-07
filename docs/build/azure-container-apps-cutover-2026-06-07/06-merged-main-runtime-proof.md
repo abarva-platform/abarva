@@ -49,3 +49,13 @@ Status: MERGED-MAIN RUNTIME REPRODUCIBLE; DNS/VERCEL/SUPABASE SUNSET HELD
 - Run restore-test evidence.
 - Run pause QA only after explicit pause approval.
 - Record explicit deletion approval before any delete.
+
+## Post-delete note
+
+After Supabase deletion was reported at 2026-06-07T05:06Z, the active Azure
+runtime observed by this agent was
+`acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`
+on revision `ca-abarva-web-lab-eastus--provqa`. Post-delete public health and
+signed-in QA still passed, and the app/job runtime configuration had no
+Supabase/source env or secret projections. The Anthropic Sentinel/Source provider
+migration remains separate in #3246 and is not completed by this proof.

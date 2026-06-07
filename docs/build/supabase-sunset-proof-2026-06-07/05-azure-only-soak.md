@@ -99,6 +99,24 @@ from `main` and deployed as revision `ca-abarva-web-lab-eastus--0000051`.
 
 This is still a smoke run, not the required 24-72 hour soak.
 
+## 2026-06-07 post-delete smoke
+
+After Supabase deletion was reported through the dashboard, the active Azure
+runtime was `ca-abarva-web-lab-eastus--provqa` on image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
+
+| Control                          | Result                                                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Public `/`                       | PASS: HTTP 200                                                                                            |
+| `/api/health`                    | PASS: HTTP 200 with Postgres checks green                                                                 |
+| Signed-in QA                     | PASS for Apex CDO and Meridian CDAO across Home, Intelligence/Sentinel, Moves, Source, Tower, Setup/Admin |
+| App runtime config               | PASS: no Supabase env/secret names projected                                                              |
+| Job runtime config               | PASS: no Supabase/source DB env/secret names projected in sampled jobs after cleanup                      |
+| App log deny-list                | PASS: active revision tail had no Supabase host/env deny-list matches                                     |
+| Recent job log deny-list samples | PASS: sampled recent drain/search/smoke/final logs had no deny-list matches                               |
+
+This is still a post-delete smoke, not the required 24-72 hour soak.
+
 ## Log deny-list
 
 The soak fails if production app logs contain any of the following during the

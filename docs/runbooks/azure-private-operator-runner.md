@@ -6,16 +6,16 @@ The Azure Postgres hostname `pg-abarva-context-lab-001.postgres.database.azure.c
 
 ## Current Lab Runner
 
-| Setting | Value |
-| --- | --- |
-| Subscription | `abarva-lab-sub` |
-| Resource group | `rg-abarva-controlplane-lab-eastus` |
-| Container Apps job | `job-abarva-private-operator-eus` |
-| Container Apps environment | `cae-abarva-scale-lab-eastus` |
-| Managed identity | `id-abarva-scale-runtime-lab-eastus` |
-| Key Vault | `kv-abarva-lab-001` |
-| Database secret reference | `azure-postgres-control-database-url` |
-| Parameter file | `infra/azure/parameters/private-operator.lab.bicepparam` |
+| Setting                    | Value                                                    |
+| -------------------------- | -------------------------------------------------------- |
+| Subscription               | `abarva-lab-sub`                                         |
+| Resource group             | `rg-abarva-controlplane-lab-eastus`                      |
+| Container Apps job         | `job-abarva-private-operator-eus`                        |
+| Container Apps environment | `cae-abarva-scale-lab-eastus`                            |
+| Managed identity           | `id-abarva-scale-runtime-lab-eastus`                     |
+| Key Vault                  | `kv-abarva-lab-001`                                      |
+| Database secret reference  | `azure-postgres-control-database-url`                    |
+| Parameter file             | `infra/azure/parameters/private-operator.lab.bicepparam` |
 
 ## Deploy Or Refresh The Runner
 
@@ -86,7 +86,10 @@ Cursor and Claude Code should use this runner for private Azure Postgres work:
 2. Do use `az containerapp job start` and `az containerapp job logs show` with the job above for smoke checks.
 3. For data-copy, corpus-drain, migration, or destructive commands, create a separate reviewed parameter file or one-time command and record the run as release evidence.
 4. Do not print connection strings or Key Vault secret values in logs.
-5. Keep `DATABASE_URL` compatibility only inside the job container. Runtime corpus code should prefer `ABARVA_AZURE_DATABASE_URL` and fail closed on legacy Supabase unless `ALLOW_LEGACY_SUPABASE_CORPUS=1` is intentionally set.
+5. Keep `DATABASE_URL` compatibility only inside the job container. Runtime
+   corpus code should prefer Azure Postgres and fail closed on legacy Supabase
+   hosts. Do not project Supabase source URLs into runtime/jobs after the
+   2026-06-07 deletion.
 
 ## Why This Exists
 
@@ -97,9 +100,14 @@ Supabase was reachable from public networks, so older local workflows could writ
 - Logs prove what ran, where it ran, and which database received the work.
 - Cursor, Claude Code, and Codex all follow the same runbook.
 
-## Supabase Drain Before Shutdown
+## Historical Supabase Drain
 
-Before deleting or pausing Supabase, run the controlled drain tooling:
+Supabase project `abarva` / `xtbymdryojmvoulaotce` was deleted through the
+Supabase dashboard on 2026-06-07. Do not run the historical drain commands
+below after deletion; the Supabase source no longer exists and
+`SOURCE_DATABASE_URL` has been removed from the Azure jobs.
+
+Historical command pattern before deletion:
 
 ```bash
 az deployment sub create \
@@ -113,4 +121,6 @@ az containerapp job start \
   --name job-abarva-supabase-drain-dry-run-eus
 ```
 
-The drain script defaults to read-only mode. It requires `SOURCE_DATABASE_URL` to point at the legacy Supabase Postgres source and `TARGET_DATABASE_URL` to point at Azure Postgres. It only copies rows when run with `--apply`, and that apply step must not happen until the dry-run evidence is reviewed.
+The drain script defaulted to read-only mode. It required `SOURCE_DATABASE_URL`
+to point at the legacy Supabase Postgres source and `TARGET_DATABASE_URL` to
+point at Azure Postgres. This source projection is now retired.

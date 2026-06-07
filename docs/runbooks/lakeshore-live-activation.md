@@ -13,51 +13,50 @@ operator credentials.
 
 ## Tenant Identity
 
-| Field | Value |
-| --- | --- |
-| Display name | Lakeshore Holdings |
-| App client key | `lakeshore` |
-| Broker / substrate key | `lakeshore-holdings` |
-| Industry | Diversified holding company |
-| Demo domain | `lakeshore-holdings.example.com` |
+| Field                  | Value                            |
+| ---------------------- | -------------------------------- |
+| Display name           | Lakeshore Holdings               |
+| App client key         | `lakeshore`                      |
+| Broker / substrate key | `lakeshore-holdings`             |
+| Industry               | Diversified holding company      |
+| Demo domain            | `lakeshore-holdings.example.com` |
 
 ## Source Artifacts
 
-| Artifact | Location | Use |
-| --- | --- | --- |
-| Standup brief | `docs/build/CODEX-LAKESHORE-STANDUP-BRIEF-2026-06-03.md` | Master execution brief |
-| Tenant setup plan | `docs/build/LAKESHORE_HOLDINGS_TENANT_SETUP_PLAN_2026-06-03.md` | Loader-first setup plan |
-| Synthetic generation spec | `docs/build/LAKESHORE_SYNTHETIC_DATA_GENERATION_SPEC_2026-06-03.md` | Per-dimension data requirements |
-| Loaded package | `docs/build/lakeshore/loaded/` | CSVs, documents, workbook, notes, and how-to pages |
-| Offline review ZIP | `docs/build/lakeshore/loaded/review-bundle/lakeshore-offline-review-bundle.zip` | One-time client review bundle |
+| Artifact                  | Location                                                                        | Use                                                |
+| ------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Standup brief             | `docs/build/CODEX-LAKESHORE-STANDUP-BRIEF-2026-06-03.md`                        | Master execution brief                             |
+| Tenant setup plan         | `docs/build/LAKESHORE_HOLDINGS_TENANT_SETUP_PLAN_2026-06-03.md`                 | Loader-first setup plan                            |
+| Synthetic generation spec | `docs/build/LAKESHORE_SYNTHETIC_DATA_GENERATION_SPEC_2026-06-03.md`             | Per-dimension data requirements                    |
+| Loaded package            | `docs/build/lakeshore/loaded/`                                                  | CSVs, documents, workbook, notes, and how-to pages |
+| Offline review ZIP        | `docs/build/lakeshore/loaded/review-bundle/lakeshore-offline-review-bundle.zip` | One-time client review bundle                      |
 
 ## Current Gates
 
-| Gate | Required Evidence | Status Meaning |
-| --- | --- | --- |
-| Synthetic package | `node scripts/lakeshore/verify-synthetic-context.mjs` passes | Data files and offline ZIP are present and internally consistent |
-| Live readiness | `npm run lakeshore:live-activation:verify` | Shows ready items, pending PR artifacts, and missing live env variables |
-| Governed load rehearsal | PR #2997 merged, then load rehearsal evidence exists | Files enter through Data Loads rather than manual DB inserts |
-| CXO corpus activation | PR #2998 merged | Clerk user plan, corpus attachment plan, and agent-grounding validation are available |
-| Production proof | Main post-deploy crawl green after merges | Production route health is not regressed |
+| Gate                    | Required Evidence                                            | Status Meaning                                                                        |
+| ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Synthetic package       | `node scripts/lakeshore/verify-synthetic-context.mjs` passes | Data files and offline ZIP are present and internally consistent                      |
+| Live readiness          | `npm run lakeshore:live-activation:verify`                   | Shows ready items, pending PR artifacts, and missing live env variables               |
+| Governed load rehearsal | PR #2997 merged, then load rehearsal evidence exists         | Files enter through Data Loads rather than manual DB inserts                          |
+| CXO corpus activation   | PR #2998 merged                                              | Clerk user plan, corpus attachment plan, and agent-grounding validation are available |
+| Production proof        | Main post-deploy crawl green after merges                    | Production route health is not regressed                                              |
 
 ## Environment Configuration
 
 Do not print secret values in logs. Confirm presence only.
 
-| Capability | Required Environment |
-| --- | --- |
-| Clerk CXO user creation | `CLERK_SECRET_KEY` |
-| App/data-backed verification | `DATABASE_URL` |
-| Membership provisioning compatibility adapter | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
-| Live embeddings | `OPENAI_API_KEY` |
-| Optional external vector index | `PINECONE_API_KEY`, `PINECONE_INDEX_NAME` |
-| Azure AI Document Intelligence | `DOCUMENT_INTELLIGENCE_ENDPOINT` plus `DOCUMENT_INTELLIGENCE_API_KEY`, or `DOCUMENT_INTELLIGENCE_USE_AAD=true` |
+| Capability                                    | Required Environment                                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Clerk CXO user creation                       | `CLERK_SECRET_KEY`                                                                                             |
+| App/data-backed verification                  | `DATABASE_URL`                                                                                                 |
+| Membership provisioning compatibility adapter | Retired after Supabase deletion; use Azure/Postgres data-plane adapters                                        |
+| Live embeddings                               | `OPENAI_API_KEY`                                                                                               |
+| Optional external vector index                | `PINECONE_API_KEY`, `PINECONE_INDEX_NAME`                                                                      |
+| Azure AI Document Intelligence                | `DOCUMENT_INTELLIGENCE_ENDPOINT` plus `DOCUMENT_INTELLIGENCE_API_KEY`, or `DOCUMENT_INTELLIGENCE_USE_AAD=true` |
 
-Compatibility note: the current membership provisioning adapter still uses
-legacy `SUPABASE_*` environment names. New runtime work should continue to use
-the Azure/Postgres data-plane adapters; do not introduce new direct Supabase
-runtime reads.
+Compatibility note: legacy `SUPABASE_*` runtime names are retired after the
+2026-06-07 Supabase deletion. New runtime work must use Azure/Postgres
+data-plane adapters and must not introduce direct Supabase runtime reads.
 
 ## Step 1: Verify the Offline Package
 
@@ -126,8 +125,8 @@ npx tsx scripts/provision-cxo-personas.ts --client lakeshore --plan-only
 
 Review planned users:
 
-| Persona | Expected Client | Purpose |
-| --- | --- | --- |
+| Persona         | Expected Client    | Purpose                                      |
+| --------------- | ------------------ | -------------------------------------------- |
 | Lakeshore CXO 1 | Lakeshore Holdings | Executive brief, Moves, Source, Tower review |
 | Lakeshore CXO 2 | Lakeshore Holdings | Second-client-leader isolation and role test |
 
@@ -236,14 +235,14 @@ Proof to capture:
 
 Sign in as both Lakeshore CXO personas and verify:
 
-| Surface | Expected Result |
-| --- | --- |
-| `/admin/setup` | Lakeshore Data Loads show loaded/blocked/open-action status for Lakeshore only |
-| `/admin/data-trust` | Record counts, coverage, and last-loaded timestamps reflect Lakeshore commit |
-| `/home` | Executive brief uses Lakeshore client identity and does not show another client |
-| `/strategic-moves` | Moves can retrieve Lakeshore context when relevant |
-| `/source` | Source questions can cite Lakeshore evidence when relevant |
-| `/tower` | Tower surfaces Lakeshore evidence without cross-tenant rows |
+| Surface             | Expected Result                                                                 |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `/admin/setup`      | Lakeshore Data Loads show loaded/blocked/open-action status for Lakeshore only  |
+| `/admin/data-trust` | Record counts, coverage, and last-loaded timestamps reflect Lakeshore commit    |
+| `/home`             | Executive brief uses Lakeshore client identity and does not show another client |
+| `/strategic-moves`  | Moves can retrieve Lakeshore context when relevant                              |
+| `/source`           | Source questions can cite Lakeshore evidence when relevant                      |
+| `/tower`            | Tower surfaces Lakeshore evidence without cross-tenant rows                     |
 
 Isolation checks:
 
@@ -260,12 +259,12 @@ After PR #2998 lands, run its corpus/agent grounding validators.
 
 Minimum prompts to prove grounding:
 
-| Agent/Surface | Prompt | Expected Evidence |
-| --- | --- | --- |
-| Sentinel / Intelligence | "Which Lakeshore operating company has the highest vendor renewal risk?" | Cites Lakeshore vendor-contract rows and contract PDFs |
-| Nexus / Moves | "Which modernization move should Lakeshore prioritize first?" | Uses Lakeshore app portfolio, initiative portfolio, and rate-card/modernization corpus where available |
-| Source | "Prepare sourcing questions for the WMS modernization renewal." | Cites Lakeshore WMS/vendor context, not generic advice |
-| Tower | "What evidence says the treasury modernization is ready?" | Cites Kyriba contract, finance KPI, and initiative records |
+| Agent/Surface           | Prompt                                                                   | Expected Evidence                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Sentinel / Intelligence | "Which Lakeshore operating company has the highest vendor renewal risk?" | Cites Lakeshore vendor-contract rows and contract PDFs                                                 |
+| Nexus / Moves           | "Which modernization move should Lakeshore prioritize first?"            | Uses Lakeshore app portfolio, initiative portfolio, and rate-card/modernization corpus where available |
+| Source                  | "Prepare sourcing questions for the WMS modernization renewal."          | Cites Lakeshore WMS/vendor context, not generic advice                                                 |
+| Tower                   | "What evidence says the treasury modernization is ready?"                | Cites Kyriba contract, finance KPI, and initiative records                                             |
 
 Hallucination guardrails:
 
