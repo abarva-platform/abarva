@@ -85,6 +85,7 @@ When a blocker is fixed, remove the `test.fail()` annotation. Tests flip red →
 - `apex-vp-sourcing` — `cio@apex-retail.example.com` — approver
 - `apex-non-approver` — non-approver in Apex tenant (gap: provision required)
 - `meridian-cdio` — `cdio@meridian-health.example.com` — cross-tenant isolation foil
+- `meridian-cdao` — `cdao@meridian-health.example.com` — Meridian CDAO source smoke persona
 
 CXO personas require `scripts/provision-cxo-personas.ts --apply` before E2E. The helper falls back to demo-account credentials (`Demo2026!` / `424242`) if Clerk testing tokens aren't configured.
 

@@ -14,13 +14,17 @@ import {
   resolveCrawlPersonas,
 } from '../../src/lib/crawl/persona-switcher';
 
-assert.ok(CRAWL_PERSONAS.length >= 5);
+assert.ok(CRAWL_PERSONAS.length >= 7);
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 24);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
 assert.equal(resolveCrawlQuestions('phs-meridian').length, 50);
 assert.equal(resolveCrawlQuestions('unknown').length, 10);
 assert.deepEqual(resolveCrawlPersonas('apex-cio').map((persona) => persona.key), ['apex-cio']);
+assert.deepEqual(
+  resolveCrawlPersonas('meridian-cdao').map((persona) => persona.email),
+  ['cdao@meridian-health.example.com'],
+);
 const postDeployWorkflow = fs.readFileSync('.github/workflows/post-deploy-crawl.yml', 'utf8');
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
