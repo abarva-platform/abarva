@@ -5,7 +5,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 const ROOT = process.cwd();
-const RUNTIME_DIRS = ['src/app', 'src/lib'];
+const RUNTIME_DIRS = ['src/app', 'src/components', 'src/lib'];
 const EXCLUDE_PARTS = new Set(['__tests__', '__mocks__']);
 const IMPORT_RE = /@supabase|supabase-server|createServerSupabase|createServiceRoleClient|createRouteHandlerClient|getServerSupabase/g;
 const BROAD_RE = /@supabase|supabase-js|supabase-server|createServerSupabase|createServiceRoleClient|createRouteHandlerClient|getServerSupabase|\.from\s*\(/g;

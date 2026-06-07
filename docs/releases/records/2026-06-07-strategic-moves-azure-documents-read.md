@@ -41,12 +41,16 @@ label lookup, including the current P5 "Mobilize & Handoff" label.
 - `src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx`
   - Mocks the Azure read client and asserts the Documents panel uses the latest
     version SQL read.
+- `scripts/audit/runtime-supabase-import-census.mjs`
+  - Extends the runtime Supabase helper guard to scan `src/components` in
+    addition to `src/app` and `src/lib`.
 
 ## QA / Validation
 
 - PASS — `npm run audit:runtime-supabase-imports:guard`
   - Result: runtime helper matches remain limited to the single allowlisted
-    compatibility shim, `src/lib/supabase-server.ts`.
+    compatibility shim, `src/lib/supabase-server.ts`, while scanning app,
+    component, and library runtime directories.
 - PASS — `npx jest src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx --no-coverage`
   - Result: 1 suite / 2 tests passed.
   - Note: Jest emitted pre-existing duplicate manual mock warnings for
@@ -81,4 +85,5 @@ local cloud agent does not have authenticated Clerk + tenant credentials for
 the protected Strategic Moves pages. The validated scope is the code path and
 guardrail: the panel no longer imports the Supabase-named helper, the latest
 deliverable read is parameterized through `azureRead`, and the runtime import
-guard permits only the existing compatibility shim.
+guard now scans app, component, and library runtime directories while permitting
+only the existing compatibility shim.
