@@ -53,11 +53,14 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 - `npx jest provider-audit / openai-runtime-contract / sentinel-chat-llm` — passed (10).
 - `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
 - Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
-- **Signed-in Azure Container Apps QA — BLOCKED/not run:** no Clerk session in the
-  cutover environment, and the web Container App is in Single revision mode (can't
-  deploy a 0-traffic test revision of unmerged code). Unauthenticated liveness on
-  the current revision passed (Home/sign-in 200, no Supabase refs). See
+- **Azure Container Apps test revision staged safely:** `provqa` is healthy and
+  held at **0% traffic**; the existing production revision remains pinned at
+  **100% traffic**. Unauthenticated liveness on the revision-scoped FQDN passed
+  (Home/sign-in 200, no Supabase refs). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
+- **Signed-in Azure Container Apps QA — BLOCKED/not run:** no Clerk session or
+  Clerk secrets are available in this VM, so protected Sentinel/Source paths
+  still cannot be exercised from here.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX
@@ -89,4 +92,6 @@ sentinel-chat-llm.ts are independent).
 - Intent classifier (`classifier.ts`) and follow-up suggestions (`followups.ts`)
   still use the OpenAI small-model utility path — tracked as the remaining
   Anthropic-only cleanup (non-reasoning utilities).
-- Signed-in live QA not performed in this environment (no Clerk).
+- Signed-in live QA not performed in this environment (no Clerk
+  session/secrets), although the `provqa` test revision is healthy at 0% traffic
+  and production remains at 100% traffic on the existing revision.

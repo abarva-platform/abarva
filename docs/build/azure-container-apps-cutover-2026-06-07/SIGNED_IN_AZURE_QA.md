@@ -1,5 +1,17 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~05:14Z — provqa healthy, traffic unchanged
+
+Operator status update: the `provqa` test revision is healthy and remains held
+at **0% traffic**. Production traffic remains pinned at **100%** on the existing
+production revision.
+
+This confirms the provider image can remain staged for signed-in QA without
+shifting live traffic. The signed-in Clerk QA gate is still open from this VM
+because Clerk secrets/session material are absent here.
+
+---
+
 ## UPDATE 2026-06-07 ~05:08Z — retried after "fresh VM"; still same VM, secrets absent
 
 Operator reported Clerk prereqs available in a fresh VM and asked to mint + QA.
