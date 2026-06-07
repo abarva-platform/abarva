@@ -12,9 +12,9 @@
 # Required runtime env vars (NOT baked, supplied at `docker run`):
 #   - DATABASE_URL                     (Postgres connection string)
 #   - DIRECT_URL                       (optional; migration / pooler bypass)
-#   - NEXT_PUBLIC_SUPABASE_URL         (public Supabase project URL)
-#   - NEXT_PUBLIC_SUPABASE_ANON_KEY    (public anon key)
-#   - SUPABASE_SERVICE_ROLE_KEY        (server-only; never inline)
+#   - Do not project NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+#     or SUPABASE_SERVICE_ROLE_KEY into Azure production runtime. Azure Postgres
+#     cutover uses DATABASE_URL from Key Vault instead.
 #   - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 #   - CLERK_SECRET_KEY                 (server-only)
 #   - ANTHROPIC_API_KEY                (server-only; or routed via Model Gateway)

@@ -14,12 +14,16 @@ Adds the required evidence pack for deciding when Supabase can be frozen,
 paused, and eventually deleted after Azure-only production cutover. The pack does
 not claim Supabase is sunset-ready. It records the gates that remain blocked,
 the prior Azure/Supabase evidence that can be reused, and the exact evidence
-operators must attach before deletion can be approved.
+operators must attach before deletion can be approved. It also adds a production
+boot guard that fails fast when the Azure Postgres runtime is accidentally
+configured with Supabase env vars or a Supabase-hosted `DATABASE_URL`.
 
 ## Layer Impact
 
 - `client-data-lane`: Governs final parity, backup, restore, search/vector, and
   retention proof for client-scoped data before Supabase retirement.
+- `global-control-lane`: Adds production startup protection for the Azure
+  Postgres runtime so Supabase credentials/hosts cannot silently remain active.
 - `internal-admin`: Adds operator/auditor-facing proof documents and command
   patterns for production freeze, backup, soak, pause QA, and deletion approval.
 
@@ -42,6 +46,11 @@ operators must attach before deletion can be approved.
 - Adds `docs/build/supabase-sunset-proof-2026-06-07/05-azure-only-soak.md`.
 - Adds `docs/build/supabase-sunset-proof-2026-06-07/06-pause-qa.md`.
 - Adds `docs/build/supabase-sunset-proof-2026-06-07/07-delete-approval.md`.
+- Adds `docs/build/azure-container-apps-cutover-2026-06-07/00-operator-checkpoint.md`.
+- Adds `docs/build/azure-container-apps-cutover-2026-06-07/01-runtime-deploy.md`.
+- Adds `docs/build/azure-container-apps-cutover-2026-06-07/02-runtime-smoke-and-qa.md`.
+- Adds `src/lib/runtime/supabaseBootGuard.ts`.
+- Adds `src/instrumentation.ts`.
 - Adds this release record.
 
 ## QA / Validation
@@ -58,9 +67,13 @@ operators must attach before deletion can be approved.
   values returned no matches.
 - Blocked: `npm run secrets:scan` could not start because `gitleaks` is not
   installed in this environment (`sh: 1: gitleaks: not found`).
-- Blocked: production freeze/log/backup/search/soak evidence collection from
-  this shell because Azure CLI, Supabase CLI, `psql`, `pg_dump`, production
-  database URLs, and Azure Search env vars are not available.
+- Pending: ACR remote image build and Azure Container Apps deployment of the
+  boot guard.
+- Pending: Azure runtime smoke, signed-in QA, Azure Search rebuild/verification,
+  Anthropic reasoning proof, zero Supabase runtime calls proof, final backup,
+  and pause/delete approval packet completion.
+- Blocked locally: direct Key Vault secret reads are blocked by private-link
+  policy; database proof must run inside Azure Container Apps jobs/runtime.
 - Not run: production Supabase freeze, backup, restore-test, Azure-only soak,
   pause QA, and deletion approval. These are intentionally left as blocked
   operator gates in the proof pack.
@@ -69,15 +82,17 @@ operators must attach before deletion can be approved.
 
 ## Rollout Plan
 
-Merge to `main` as a documentation/control artifact. Operators use the proof
-pack during the production Azure-only cutover and fill in evidence as each gate
-passes. No runtime deploy, migration, or feature flag is required by this change.
+Merge to `main` after the Azure Container Apps cutover evidence is complete, or
+use the branch image as an operator-controlled cutover candidate. Operators use
+the proof pack during the production Azure-only cutover and fill in evidence as
+each gate passes.
 
 ## Rollback Plan
 
-Revert this PR to remove the proof pack. Reverting does not affect Azure,
-Supabase, backups, indexes, or production runtime because this change is
-documentation-only.
+Revert this PR to remove the proof pack and boot guard source. If an image from
+this branch was deployed to Azure Container Apps, roll the app revision back to
+the previously active image/revision. Do not re-enable Supabase runtime fallback
+as rollback unless explicitly approved.
 
 ## Audit Evidence
 
