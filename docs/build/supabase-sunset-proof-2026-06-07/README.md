@@ -40,6 +40,15 @@ digest onto all 4 cutover jobs.
 apex-retail 6,497 · first-capital 400 · lakeshore-holdings 6,576 ·
 meridian-health **4,376** · northstar-clinical 878 · skyharbor-air 3,240.
 
+## Provider migration (Anthropic) — recreated, QA pending (2026-06-07 ~04:10Z)
+
+The Sentinel/Source → Anthropic migration was recreated cleanly from latest main
+on `cursor/anthropic-provider-qa-cutover-a092` (PR #3243 was closed/conflicting).
+Static validation passed (provider-audit, tsc, eslint, release-check); image
+`abarva/web:cutover-provider-anthropic-20260607-683eb933` built. **Signed-in QA is
+BLOCKED** (no Clerk session; web app in Single revision mode). See
+`docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
+
 ## What remains before sunset-ready
 
 1. Merge + signed-in QA of the Anthropic provider migration (PR #3243):

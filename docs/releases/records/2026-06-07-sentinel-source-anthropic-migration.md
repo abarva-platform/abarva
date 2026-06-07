@@ -48,8 +48,16 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 
 ## QA / Validation
 
-- `npx jest provider-audit / openai-runtime-contract / sentinel-chat-llm` — passed.
-- `tsc --noEmit`, `eslint` — passed.
+- Recreated cleanly on `cursor/anthropic-provider-qa-cutover-a092` from latest
+  `main` (`54f5cab2f`) after PR #3243 was closed/conflicting.
+- `npx jest provider-audit / openai-runtime-contract / sentinel-chat-llm` — passed (10).
+- `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
+- Provider image built: `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`.
+- **Signed-in Azure Container Apps QA — BLOCKED/not run:** no Clerk session in the
+  cutover environment, and the web Container App is in Single revision mode (can't
+  deploy a 0-traffic test revision of unmerged code). Unauthenticated liveness on
+  the current revision passed (Home/sign-in 200, no Supabase refs). See
+  `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX
