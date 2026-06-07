@@ -66,9 +66,10 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
 - **Signed-in Azure Container Apps QA — BLOCKED/not run:** this agent VM still
   has no Clerk auth material (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
   `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie are
-  absent), and repeated mint attempts fail before HTTP with missing
-  `CLERK_SECRET_KEY`. Protected Sentinel/Source paths still cannot be exercised
-  from here.
+  absent). After `npm ci`, the 05:16Z auth-state mint reached the canonical
+  helper, but both Lakeshore CFO/CIO states failed before route probes with
+  `Missing CLERK_SECRET_KEY`; no `.auth/*.json` files were created. Protected
+  Sentinel/Source paths still cannot be exercised from here.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX
@@ -110,3 +111,5 @@ sentinel-chat-llm.ts are independent).
 - Signed-in live QA not performed in this environment (no Clerk
   env/session names listed above), although the `provqa` test revision is healthy
   at 0% traffic and production remains at 100% traffic on the existing revision.
+  The 2026-06-07 05:16Z auth-state mint proof is recorded in
+  `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.

@@ -44,6 +44,12 @@ existing npm audit findings, but the auth helper then loaded correctly.
   `Missing CLERK_SECRET_KEY. Use a local .env.local; never commit it.`
 - Generated evidence:
   `reports/agent-client-auth/agent-client-auth-2026-06-07T05-16-51-534Z.md`
+- Follow-up full-client auth-state proof:
+  `BASE_URL=https://ca-abarva-web-lab-eastus--provqa.whitefield-3390640e.eastus.azurecontainerapps.io npm run auth:agent-client-states -- --client lakeshore --refresh`
+  also failed before route probes for both `lakeshore-cfo` and `lakeshore-cio`
+  with the same missing `CLERK_SECRET_KEY` error. It generated
+  `reports/agent-client-auth/agent-client-auth-2026-06-07T05-16-33-802Z.md`
+  and created no `.auth/*.json` storage-state files.
 
 Environment check immediately before the attempt:
 
