@@ -1,4 +1,4 @@
-# 2026-06-07-binder-fail-closed-pattern-grounding — Fail closed on phantom/cross-namespace pattern IDs in Intelligence/Move binder
+# 2026-06-07-binder-fail-closed-pattern-grounding — Fail closed on cross-namespace pattern IDs in Intelligence/Move binder
 
 ## Release ID
 
@@ -12,7 +12,7 @@
 
 The Intelligence brief could bind a pattern from the wrong namespace onto a decision card and carry
 it into the Move originate flow. Concretely, the Lakeshore "Kyriba global treasury rollout" decision
-card bound `PAT-LSH-D18-00479` — a real Lakeshore **corpus** slug (a public-sector *procurement*
+card bound `PAT-LSH-D18-00479` — a real Lakeshore **corpus** slug (a public-sector _procurement_
 pattern), but **not** part of the **treasury** registry (`genome_patterns` / `LSH-TMS-*` /
 `lakeshore-patterns-v1`). This is a **cross-namespace mis-binding**, not a non-existent id.
 
