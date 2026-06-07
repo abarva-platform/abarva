@@ -324,7 +324,7 @@ export function UniversalCanvasShell({
     Record<string, boolean>
   >({});
   // Stored-documents shelf is server-seeded but mutates client-side when
-  // "Generate with Sentinel" succeeds — the generate-from-openai route now
+  // "Generate with Sentinel" succeeds — the generate route now
   // also writes to the source_artifacts registry and returns the new row.
   // Keeping this in state lets the shelf reflect the persisted document
   // without a full page revalidate.
@@ -499,7 +499,7 @@ export function UniversalCanvasShell({
     setPendingGenerationByCode((prev) => ({ ...prev, [code]: true }));
     try {
       const res = await fetch(
-        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate-from-openai`,
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },

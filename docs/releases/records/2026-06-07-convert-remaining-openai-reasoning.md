@@ -34,9 +34,11 @@ enforcement guard's tracked-legacy list is now empty: zero OpenAI reasoning path
   `preflightAnthropicDirectClient`; `responses.create` → `messages.create`
   (system + user message); `output_text` → text-block extraction; default model
   `gpt-5.1` → `claude-sonnet-4-6`; key check `OPENAI_API_KEY` → `ANTHROPIC_API_KEY`.
-- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-openai/route.ts`:
-  same provider/call/shape conversion; comments + fallback messages updated. Route
-  path name retained (renaming would break callers); Anthropic inside.
+- Source artifact generate route: same provider/call/shape conversion; comments +
+  fallback messages updated. **Renamed the route** `…/artifacts/[artifactCode]/generate-from-openai`
+  → `…/artifacts/[artifactCode]/generate` (provider-neutral, per the standard's
+  architecture-rules guard) and updated its one caller
+  (`src/components/source/canvas/UniversalCanvasShell.tsx`).
 - `src/lib/source/agent-generation/prompt-registry.ts`: `DEFAULT_MODEL` `gpt-5.1` →
   `claude-sonnet-4-6`.
 - `scripts/guardrails/anthropic-only-reasoning.mjs`: `KNOWN_LEGACY_REASONING` emptied
@@ -71,7 +73,7 @@ guard's ratchet would then fail (intended signal). No data/schema state to unwin
 
 ## Known Gaps
 
-- The `generate-from-openai` route keeps its legacy URL path (rename is a separate,
-  caller-coordinated change).
+- The Source artifact generate route was renamed to a provider-neutral path
+  (`/generate`); its single in-app caller was updated in the same change.
 - Guard does not yet block new `@supabase/*` runtime imports / Vercel assumptions
   (follow-on guards, tracked in the standard doc).

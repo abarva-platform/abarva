@@ -1,4 +1,4 @@
-// POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai
+// POST /api/v1/source/:eventId/artifacts/:artifactCode/generate
 //
 // Body: {} (no inputs — context is bound server-side)
 //
@@ -125,7 +125,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     currentUser?.clerkUserId ?? tenancy.userId,
   ).catch((error) => {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] seed materialization failed",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] seed materialization failed",
       error instanceof Error ? error.message : String(error),
     );
     throw error;
@@ -297,7 +297,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     }
   } catch (err) {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] Anthropic error",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] Anthropic error",
       err,
     );
     return Response.json(
@@ -401,7 +401,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     });
   } catch (registryError) {
     console.error(
-      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-openai] registry persist failed",
+      "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] registry persist failed",
       registryError instanceof Error
         ? registryError.message
         : String(registryError),
