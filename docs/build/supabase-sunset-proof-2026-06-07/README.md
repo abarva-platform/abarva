@@ -40,16 +40,58 @@ digest onto all 4 cutover jobs.
 apex-retail 6,497 · first-capital 400 · lakeshore-holdings 6,576 ·
 meridian-health **4,376** · northstar-clinical 878 · skyharbor-air 3,240.
 
+## Runtime Supabase-removal proof (2026-06-07, final cutover prep)
+
+The live Azure Container App `ca-abarva-web-lab-eastus` (active revision
+`--0000051`, 100% traffic, image
+`acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`)
+has **no Supabase in its runtime path**, verified directly against Azure:
+
+| Check | Result |
+| --- | --- |
+| `grep -i supabase` over container env var names | **NONE** |
+| `supabase*` secret on the container app | **NONE** |
+| `DATABASE_URL` binding | secret ref `azure-postgres-control-database-url` (Azure Postgres) |
+| `ABARVA_DATA_PLANE` | `azure-postgres` |
+| `/api/health` (Azure FQDN) | `postgres: true`, `direct_postgres: true`, `azure_graph: "postgres"` |
+
+Supabase is **not** in any runtime env/secret/host reference and `DATABASE_URL`
+is **not** pointed at Supabase. Legacy `neo4j-*` / `pinecone-api-key` secret
+names remain as compatibility-era residue and are not injected as runtime env.
+
 ## What remains before sunset-ready
 
-1. Merge + signed-in QA of the Anthropic provider migration (PR #3243):
-   confirm Claude Sentinel/Source answers + `ai_egress_audit.provider=anthropic`.
-2. Azure Container Apps smoke + signed-in QA pass → only then DNS.
-3. Azure-only soak pass → only then remove Vercel production.
-4. Only after all of the above: run the Supabase freeze, then sunset.
+1. ✅ Anthropic provider configured on the active Azure revision (env +
+   `anthropic-api-key` secret + image tag `…provider-anthropic…`).
+   Row-level `ai_egress_audit.provider=anthropic` proof still needs a signed-in
+   session (see QA doc).
+2. ✅ **DNS cutover of `app.abarva.ai` → Azure** — DONE (verified ~06:19Z).
+   CNAME points to Azure, custom domain bound `SniEnabled`, managed cert
+   `Succeeded`, `/api/health` 200 Azure-backed, no Vercel headers. Evidence in
+   `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`.
+3. ✅ Signed-in production QA on `app.abarva.ai` — PASSED (operator browser test
+   ~06:42Z+): `/home`, `/intelligence`, `/strategic-moves`, `/source/queue`,
+   `/tower`, `/admin` render signed-in; Responsible AI acknowledgment records to
+   Azure Postgres; fresh post-fix Azure logs show **0 Supabase refs, 0
+   missing-column errors, 0 HTTP 500**. Evidence in
+   `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_SIGNED_IN_PROD_QA.md`.
+   Caveat: Lakeshore content is **not rich-demo-ready** (corpus/moves/substrate
+   not seeded; Admin `0 records`) — a data-seeding gap, not a runtime/safety
+   failure, tracked separately.
+4. ⛔ Remove Vercel production (alias/domain, auto-deploys, env, project) — gate
+   now reduced to: no Vercel credentials are present in this environment to
+   perform it. Runbook in `FINAL_DNS_CUTOVER.md`.
+5. Only after all of the above: run the Supabase freeze, then sunset.
 
-Supabase has NOT been paused, frozen, or deleted.
+Supabase has NOT been paused, frozen, or deleted. **No sunset-ready claim is
+made.**
 
 ## Cross-reference
 
-Full step-by-step log: `docs/build/cutover/AZURE_CUTOVER_PROOF_2026-06-07.md`.
+- Full step-by-step log: `docs/build/cutover/AZURE_CUTOVER_PROOF_2026-06-07.md`.
+- Final DNS cutover records + Azure target proof:
+  `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`.
+- Final signed-in prod QA script + Azure-backed runtime proof:
+  `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_SIGNED_IN_PROD_QA.md`.
+- Release record:
+  `docs/releases/records/2026-06-07-final-azure-cutover-vercel-shutdown.md`.
