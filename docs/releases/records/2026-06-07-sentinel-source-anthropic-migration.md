@@ -66,20 +66,21 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   `pooler.supabase.com` references in public HTML). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
 - **Signed-in Azure Container Apps QA — BLOCKED/not run:** protected routes on
-  `--provqa` redirect to Clerk (`boss-griffon-61.accounts.dev`). The agent
-  environment has no Clerk session or credentials, and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
-  `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie are
-  absent). After `npm ci`, the 05:16Z auth-state mint reached the canonical
-  helper, but both Lakeshore CFO/CIO states failed before route probes with
-  `Missing CLERK_SECRET_KEY`; no `.auth/*.json` files were created. Protected
-  Sentinel/Source paths still cannot be exercised from here. Guardrails held
-  (`--provqa` remains 0% traffic; no DNS / Vercel / Supabase change; no `.auth`
-  committed). See
+  `--provqa` redirect to Clerk (`boss-griffon-61.accounts.dev`). Earlier
+  auth-helper attempts from this VM failed before route probes because local
+  Clerk auth material is absent (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+  `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie).
+  A fresh Cursor Cloud VM can mint a remote demo-code ticket from `provqa`, but
+  Clerk rejects ticket-to-session exchange from the Cloud browser with
+  `user_banned`; no protected route or live egress workflow can be exercised
+  from this environment. Guardrails held (`--provqa` remains 0% traffic; no DNS
+  / Vercel / Supabase change; no `.auth` committed). See
   `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
-  session in this environment). This is the gating requirement before production
-  — confirm Claude answers are advisor-quality, citations intact, streaming/UX
-  unaffected, and `ai_egress_audit` shows `provider=anthropic`.
+  session could be established; ticket exchange is blocked by Clerk). This is
+  the gating requirement before production — confirm Claude answers are
+  advisor-quality, citations intact, streaming/UX unaffected, and
+  `ai_egress_audit` shows `provider=anthropic`.
 - Pre-existing unrelated failures in `src/lib/source/exports/*` and
   event-code/artifact-binding suites are present on `main` independent of this
   change (verified by stashing).
@@ -122,8 +123,7 @@ sentinel-chat-llm.ts are independent).
 - Intent classifier (`classifier.ts`) and follow-up suggestions (`followups.ts`)
   still use the OpenAI small-model utility path — tracked as the remaining
   Anthropic-only cleanup (non-reasoning utilities).
-- Signed-in live QA not performed in this environment (no Clerk env/session
-  names listed above), although the `provqa` test revision is healthy
-  at 0% traffic and production remains at 100% traffic on the existing revision.
-  The 2026-06-07 05:16Z auth-state mint proof is recorded in
-  `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
+- Signed-in live QA not performed in this environment. Fresh-VM retry reached
+  the app-level demo-ticket mint endpoint, but Clerk blocked browser session
+  creation with `user_banned`. The `provqa` test revision is healthy at 0%
+  traffic and production remains at 100% traffic on the existing revision.

@@ -38,19 +38,21 @@ latest `main` (`54f5cab2f`), since the prior PR (#3243) was closed/conflicting.
 - `eslint` (changed files) → **passed**.
 - `npm run release:check` → **passed**.
 
-## Runtime QA status — BLOCKED on Clerk-capable environment
+## Runtime QA status — BLOCKED on Clerk session exchange
 
-As of 2026-06-07 ~05:15Z, this VM still cannot complete signed-in runtime QA:
+As of 2026-06-07 ~05:35Z, this VM still cannot complete signed-in runtime QA:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
   `DEMO_LOGIN_PASSWORD`, and `DATABASE_URL` are absent from the agent
   environment.
 - The 0-traffic Azure Container Apps test revision is already deployed and
-  healthy per `SIGNED_IN_AZURE_QA.md`, but protected routes still require a
-  Clerk session for tenant QA and live provider audit confirmation.
-- Cursor Cloud secrets added after this VM was provisioned do not appear in the
-  running VM; signed-in QA must run from a newly provisioned agent or an
-  operator environment that has the Clerk credentials/session.
+  healthy per `SIGNED_IN_AZURE_QA.md`; public liveness and unauthenticated
+  redirect behavior pass without HTTP 500s.
+- The remote `provqa` demo-code endpoint can mint a Clerk ticket, but Clerk
+  rejects ticket-to-session exchange from this Cloud browser with `user_banned`.
+- Signed-in QA must run from a non-blocked Clerk-capable operator/browser, a
+  temporary Clerk allowlist/unblock for this egress environment, or a provided
+  Clerk `__session` cookie for the `provqa` host.
 
 ## Image
 
@@ -80,4 +82,7 @@ built from merged main + this provider branch (after tests passed).
 - Confirm Claude answers are advisor-quality and citations intact.
 - Run the signed-in Lakeshore/Meridian golden-question pass on the `provqa`
   revision-scoped FQDN. See `SIGNED_IN_AZURE_QA.md` for the current
-  status/blocker and runbook.
+  status/blocker and runbook. Fresh-VM retry confirmed the `provqa` demo-code
+  endpoint can mint a Clerk ticket, but Clerk rejects ticket-to-session exchange
+  from the Cloud browser with `user_banned`; protected surfaces and live egress
+  rows remain unverified.

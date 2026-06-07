@@ -1,5 +1,55 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~05:35Z — truly fresh VM; ticket mint works, Clerk session exchange blocked
+
+Retried from a fresh Cursor Cloud Agent VM on PR #3246. This VM did **not** have
+repo dependencies cached (`node_modules` absent before `npm ci`), and the direct
+Cursor environment still did not expose local Clerk/demo secrets:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`:
+  absent from `process.env`.
+- Azure CLI is not installed in this VM (`az: command not found`), so the agent
+  cannot read Container App or Key Vault configuration directly.
+- Installed dependencies with `npm ci` and installed Playwright Chromium with
+  `npx playwright install chromium` for signed-in browser QA.
+
+**Important progress:** the remote `provqa` app's own demo-code endpoint is
+configured and reachable:
+
+- `POST /api/auth/demo-code-sign-in` on the `--provqa` revision with
+  `cfo@lakeshore-holdings.example.com` + the demo code returned **HTTP 200**
+  and a `ticket` key. No ticket value was printed or persisted.
+
+**New blocker:** converting that ticket into a Clerk browser session is blocked
+by Clerk anti-abuse policy from this Cloud browser:
+
+- First Playwright exchange (`Clerk.client.signIn.create({ strategy: "ticket" })`)
+  failed before any protected app route was reached:
+  `You have been banned. If you think this was by mistake, please contact support.`
+- Retried with a normal Chrome user agent and automation-fingerprint reduction;
+  Clerk still returned **HTTP 403** with `code=user_banned` and the same message.
+- Result: no `__session` cookie could be established, so protected routes,
+  Lakeshore/Meridian golden questions, Source Sentinel chat, and live
+  `ai_egress_audit.provider=anthropic` confirmation remain **not run**.
+
+This supersedes the earlier "same VM / missing secrets only" diagnosis: a fresh
+VM can reach the app-level ticket mint path, but Clerk rejects the ticket exchange
+from Cursor Cloud's headless/browser environment. To complete signed-in QA, use
+one of:
+
+1. a Clerk session cookie (`__session`) minted by a non-blocked operator/browser
+   for the `boss-griffon-61.accounts.dev` instance and scoped to the `provqa`
+   host;
+2. Clerk/test-user credentials plus an environment/browser that Clerk does not
+   classify as banned; or
+3. a temporary Clerk allowlist/unblock for the Cloud Agent egress environment.
+
+Guardrails held: `provqa` still addressed only by its revision-scoped FQDN; no
+DNS, Vercel, Supabase, or traffic changes were made; no `.auth` session state was
+created or committed.
+
+---
+
 ## UPDATE 2026-06-07 05:16Z — HTTP 200 / no HTTP 500 public smoke refreshed
 
 Re-checked the revision-scoped provider QA host from this VM:
