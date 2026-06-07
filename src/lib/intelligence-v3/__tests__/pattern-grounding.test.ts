@@ -12,12 +12,24 @@ import {
   filterToGrounding,
   partitionIdsByGrounding,
   type GroundingDiagnostic,
+  type PatternNamespace,
 } from '../pattern-grounding';
 import { selectRelevantPatternRows } from '../pattern-relevance';
 
-// Mirrors the GroundedCandidate shape the binder selects over.
-const TMS_002 = {
-  namespace: 'genome-lsh-tms' as const,
+// Mirrors the GroundedCandidate shape the binder selects over. Typed with the
+// wide PatternNamespace so corpus/genome candidates unify into one array type.
+interface Cand {
+  namespace: PatternNamespace;
+  id: string;
+  title: string;
+  category: string | null;
+  vertical_overlays: string[] | null;
+  depth_score: number;
+  confidence: number;
+}
+
+const TMS_002: Cand = {
+  namespace: 'genome-lsh-tms',
   id: 'LSH-TMS-002',
   title: 'Bank connectivity matrix clears before rollout confidence is claimed',
   category: 'treasury',
@@ -25,8 +37,8 @@ const TMS_002 = {
   depth_score: 70,
   confidence: 0.9,
 };
-const TMS_009 = {
-  namespace: 'genome-lsh-tms' as const,
+const TMS_009: Cand = {
+  namespace: 'genome-lsh-tms',
   id: 'LSH-TMS-009',
   title: 'Payment approval and BEC controls are rollout acceptance criteria',
   category: 'treasury',
@@ -34,8 +46,8 @@ const TMS_009 = {
   depth_score: 65,
   confidence: 0.9,
 };
-const D18_PROCUREMENT = {
-  namespace: 'corpus-pat-lsh' as const,
+const D18_PROCUREMENT: Cand = {
+  namespace: 'corpus-pat-lsh',
   id: 'PAT-LSH-D18-00479',
   title: 'Prioritize City and State Procurement Calendars For Timing Local Bids',
   category: 'D18',
@@ -121,7 +133,7 @@ describe('end-to-end binder simulation (grounding pool + relevance + guard)', ()
     const grounding = groundingNamespaceForText(KYRIBA_TEXT);
     expect(grounding).toBe('genome-lsh-tms');
 
-    const pool = grounding === 'genome-lsh-tms' ? [TMS_002, TMS_009] : [D18_PROCUREMENT];
+    const pool: Cand[] = grounding === 'genome-lsh-tms' ? [TMS_002, TMS_009] : [D18_PROCUREMENT];
     const selected = selectRelevantPatternRows(KYRIBA_TEXT, pool, 2);
     const guarded = filterToGrounding(selected, (c) => c.id, grounding);
 
@@ -134,7 +146,7 @@ describe('end-to-end binder simulation (grounding pool + relevance + guard)', ()
   // pattern, the guard prevents it reaching the card's citations/evidence.
   it('never emits a cross-namespace citation even if the pool is contaminated', () => {
     const grounding = groundingNamespaceForText(KYRIBA_TEXT);
-    const contaminated = [D18_PROCUREMENT, TMS_002]; // procurement first (higher depth)
+    const contaminated: Cand[] = [D18_PROCUREMENT, TMS_002]; // procurement first (higher depth)
     const selected = selectRelevantPatternRows(KYRIBA_TEXT, contaminated, 2);
     const citations = filterToGrounding(selected, (c) => c.id, grounding).map((c) => c.id);
     expect(citations).not.toContain('PAT-LSH-D18-00479');
