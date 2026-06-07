@@ -33,7 +33,12 @@ Tenant membership rows store the client as a database UUID, while tenant guards 
 
 ## QA / Validation
 
-- Pending in this pre-validation checkpoint: targeted Jest and release checks.
+- Blocked in the first validation pass: `npx jest src/lib/auth/__tests__/current-user.test.ts src/lib/auth/__tests__/tenant-isolation-probes.test.ts --runInBand` could not load `jest.config.ts` because local dependencies were not installed and `npx` fetched an isolated Jest without `ts-node`.
+- Blocked in the first validation pass: `npx eslint src/lib/auth/current-user.ts src/lib/auth/tenant-access.ts 'src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/deliverables/[deliverableCode]/page.tsx' src/lib/auth/__tests__/current-user.test.ts` could not load the repo ESLint config because local dependencies were not installed and `npx` fetched an isolated ESLint.
+- Failed in the first validation pass: `npm run release:check` required this release record to state explicit pass/fail/blocked status and a fuller known-gaps audit note.
+- Passed after `npm ci`: `npx jest src/lib/auth/__tests__/current-user.test.ts src/lib/auth/__tests__/tenant-isolation-probes.test.ts --runInBand` (2 suites, 64 tests). Jest emitted existing duplicate manual mock warnings for markdown mocks, but the targeted suites passed.
+- Passed after `npm ci`: `npx eslint src/lib/auth/current-user.ts src/lib/auth/tenant-access.ts 'src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/deliverables/[deliverableCode]/page.tsx' src/lib/auth/__tests__/current-user.test.ts`.
+- Passed after record update: `npm run release:check`.
 
 ## Rollout Plan
 
@@ -51,4 +56,4 @@ Revert the application commit. No persisted data or schema changes need rollback
 
 ## Known Gaps
 
-None known.
+No functional gap is known in the code path being changed. Validation was limited to the tenant/auth unit coverage, changed-file lint, and release gate; full build, integration tests, and authenticated browser walks were not run because this change is scoped to server-side identity mapping and guard comparisons.
