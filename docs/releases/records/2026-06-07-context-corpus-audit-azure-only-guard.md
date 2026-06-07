@@ -42,7 +42,18 @@ migration is flagged as the top fix to be done with signed-in validation.
   `it.failing`.
 - `docs/build/context-corpus-agent-visibility-audit-2026-06-07.md`: the audit
   report (DB-target proof, provider P0, retrieval-path state, Azure operator
-  evidence, credential-blocked runbook).
+  evidence, failed-gate root causes, credential-blocked runbook).
+- **Failed-gate fixes** (root-caused from operator logs, fixed with pure helpers
+  - unit tests):
+  * `scripts/data-plane/drain-supabase-to-azure.ts` + `scripts/data-plane/upsert-sql.ts`:
+    merge `clients` on the natural key `name` (the `clients_name_key` collision)
+    and never rewrite the primary key on conflict. Fixes `job-supa-drain-apply-eus`.
+  * `src/scripts/azure-ai-search-backfill.ts` + `src/lib/azure-search/index-results.ts`:
+    surface Azure Search per-document failures (the API returns 200 even when
+    docs are rejected) and add a bounded verify poll for count eventual
+    consistency. Fixes the `job-a24-search-verify-eus` off-by-7.
+  * Tests: `scripts/data-plane/__tests__/upsert-sql.test.ts`,
+    `src/lib/azure-search/__tests__/index-results.test.ts`.
 
 ## QA / Validation
 
@@ -52,6 +63,9 @@ migration is flagged as the top fix to be done with signed-in validation.
 - `npx jest src/lib/intelligence/ask/__tests__/provider-audit.test.ts` — passed
   (Nexus=Claude; P0 tracked).
 - `npx eslint` on changed files — passed. `npm run release:check` — passed.
+- `npx jest src/lib/azure-search scripts/data-plane/__tests__/upsert-sql.test.ts` —
+  passed (gate-fix helpers: clients merge-on-name without PK rewrite; Azure Search
+  per-doc failure detection + count-mismatch). `tsc --noEmit` — passed.
 - Blocked (no creds in this env): live Supabase is intentionally not queried
   (decommissioned); Vercel prod env check and signed-in golden QA require a
   Clerk + Vercel environment — documented in the audit report with the runbook.

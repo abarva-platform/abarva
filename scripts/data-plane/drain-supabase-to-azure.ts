@@ -6,6 +6,7 @@
 import { Client, type QueryResultRow } from 'pg';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
+import { buildUpdateAssignments } from './upsert-sql';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -33,7 +34,11 @@ type CopyOutcome = {
 
 const DEFAULT_TABLES: TablePlan[] = [
   // Shared client dimension used by client-private patterns and tenant context.
-  { table: 'clients' },
+  // Merge on the natural key `name` (the unique constraint `clients_name_key`):
+  // the same client can already exist in Azure with a different `id`, so a
+  // PK(`id`)-only upsert collides on `name`. The primary key is never rewritten
+  // on conflict (see buildUpdateAssignments / protectedColumns).
+  { table: 'clients', conflictColumns: ['name'] },
 
   // Legacy intelligence/genome substrate.
   { table: 'canonical_industry_ai_patterns', required: false },
@@ -189,14 +194,12 @@ async function upsertRows(
   columns: string[],
   columnTypes: Map<string, string>,
   conflictColumns: string[],
+  protectedColumns: string[] = [],
 ): Promise<void> {
   if (rows.length === 0) return;
   const quotedColumns = columns.map((column) => `"${column}"`).join(', ');
   const quotedConflict = conflictColumns.map((column) => `"${column}"`).join(', ');
-  const updateColumns = columns.filter((column) => !conflictColumns.includes(column));
-  const updateSql = updateColumns.length
-    ? `do update set ${updateColumns.map((column) => `"${column}" = excluded."${column}"`).join(', ')}`
-    : 'do nothing';
+  const updateSql = buildUpdateAssignments(columns, conflictColumns, protectedColumns);
   const values: unknown[] = [];
   const tuples = rows.map((row) => {
     const placeholders = columns.map((column) => {
@@ -264,7 +267,8 @@ async function copyTable(
   const sourceColumns = new Set(sourceMeta.map((column) => column.columnName));
   const columns = targetMeta.map((column) => column.columnName).filter((column) => sourceColumns.has(column));
   const columnTypes = new Map(targetMeta.map((column) => [column.columnName, column.udtName]));
-  const conflictColumns = plan.conflictColumns ?? await getPrimaryKeyColumns(target, plan.table);
+  const primaryKeyColumns = await getPrimaryKeyColumns(target, plan.table);
+  const conflictColumns = plan.conflictColumns ?? primaryKeyColumns;
 
   if (conflictColumns.length === 0 || !conflictColumns.every((column) => columns.includes(column))) {
     return {
@@ -295,7 +299,7 @@ async function copyTable(
   let copied = 0;
   for (let offset = 0; offset < copyTotal; offset += batchSize) {
     const rows = await selectBatch(source, plan.table, columns, conflictColumns, Math.min(batchSize, copyTotal - offset), offset);
-    await upsertRows(target, plan.table, rows, columns, columnTypes, conflictColumns);
+    await upsertRows(target, plan.table, rows, columns, columnTypes, conflictColumns, primaryKeyColumns);
     copied += rows.length;
     console.log(`${plan.table}: copied ${copied}/${copyTotal}`);
   }
