@@ -34,6 +34,15 @@ and in CI via `src/__tests__/guardrails/anthropic-only-reasoning.test.ts`):
 - **Ratchet:** a tracked-legacy file that no longer uses OpenAI fails the guard
   until removed from the list — the debt list can only shrink.
 
+## Anthropic is first-party (egress policy)
+
+Claude is the sanctioned first-party reasoning provider, not "external AI". The AI
+egress policy (`src/lib/integrations/ai-egress/policy.ts`) allows `anthropic` by
+default, gated only by an explicit tenant `allowClaude:false` opt-out and the
+data-class ceiling — it is exempt from the `allowExternalAI` / `kernelOnlyMode`
+controls that govern genuinely external providers (Gamma, etc.). The default tenant
+policy is `allowClaude:true`, `kernelOnlyMode:false`, `maxDataClass:confidential`.
+
 ## Current state (2026-06-07)
 
 **Converted to Anthropic in this change:**

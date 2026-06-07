@@ -5,12 +5,17 @@ import type {
   TenantAiPolicy,
 } from './types';
 
+// Azure-native standard: Anthropic/Claude is the sanctioned FIRST-PARTY reasoning
+// provider, so the platform default permits Claude (gated by data class), while
+// genuinely external providers (Gamma, etc.) stay off by default. `allowClaude`
+// defaults true; `kernelOnlyMode` is off (the platform reasons with Claude);
+// `maxDataClass` permits the confidential tenant context Sentinel/Nexus require.
 export const CONSERVATIVE_TENANT_AI_POLICY: TenantAiPolicy = {
   allowExternalAI: false,
-  kernelOnlyMode: true,
-  allowClaude: false,
+  kernelOnlyMode: false,
+  allowClaude: true,
   allowGamma: false,
-  maxDataClass: 'internal',
+  maxDataClass: 'confidential',
   requireRedaction: true,
   requireHumanApprovalForExports: true,
   promptResponseRetentionDays: 0,
@@ -34,6 +39,24 @@ export function evaluateAiEgressPolicy(request: AiEgressRequest): AiPolicyEvalua
     return { decision: 'allow', reason: 'kernel-only execution has no external AI egress', dataClass };
   }
 
+  // Anthropic/Claude is the sanctioned first-party reasoning provider under the
+  // Azure-native standard — NOT "external AI". It is gated only by the tenant's
+  // allowClaude flag and the data-class ceiling, not by the allowExternalAI /
+  // kernelOnlyMode controls that govern genuinely third-party providers.
+  if (request.provider === 'anthropic') {
+    if (!request.policy.allowClaude) {
+      return { decision: 'deny', reason: 'Claude is disabled by tenant policy', dataClass };
+    }
+    if (DATA_CLASS_RANK[dataClass] > DATA_CLASS_RANK[request.policy.maxDataClass]) {
+      return {
+        decision: 'deny',
+        reason: `data class ${dataClass} exceeds tenant max ${request.policy.maxDataClass}`,
+        dataClass,
+      };
+    }
+    return { decision: 'allow', reason: 'Anthropic is the sanctioned first-party reasoning provider', dataClass };
+  }
+
   if (!request.policy.allowExternalAI || request.policy.kernelOnlyMode) {
     return { decision: 'deny', reason: 'external AI egress disabled by tenant policy', dataClass };
   }
@@ -44,10 +67,6 @@ export function evaluateAiEgressPolicy(request: AiEgressRequest): AiPolicyEvalua
       reason: `data class ${dataClass} exceeds tenant max ${request.policy.maxDataClass}`,
       dataClass,
     };
-  }
-
-  if (request.provider === 'anthropic' && !request.policy.allowClaude) {
-    return { decision: 'deny', reason: 'Claude is disabled by tenant policy', dataClass };
   }
 
   if (request.provider === 'gamma') {
