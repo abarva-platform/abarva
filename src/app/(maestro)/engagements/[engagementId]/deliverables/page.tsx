@@ -2,8 +2,9 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getActiveClientKey } from '@/lib/active-client';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,7 +133,8 @@ export default async function DeliverablesPage({
   if (canonicalProgramPath) {
     redirect(canonicalProgramPath);
   }
-  const engagement = await getEngagementByGraphId(graphId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByGraphIdForClient(graphId, tenancy.clientId);
   if (!engagement) notFound();
 
   const legacyList = (Array.isArray(engagement.deliverables) ? engagement.deliverables : []) as LegacyDeliverable[];

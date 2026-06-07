@@ -1,6 +1,6 @@
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextRequest } from 'next/server';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import { selectEngageTurnWriteAdapter } from '@/lib/data-plane/write-adapters/engageTurnWriteAdapter';
@@ -50,6 +50,7 @@ import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/r
 import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,14 @@ export async function POST(
     return new Response(JSON.stringify({ error: 'userMessage required' }), { status: 400 });
   }
 
-  const engagement = await getEngagementByGraphId(engagementId);
+  let tenancy: Awaited<ReturnType<typeof requireTenancy>>;
+  try {
+    tenancy = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+
+  const engagement = await getEngagementByGraphIdForClient(engagementId, tenancy.clientId);
   if (!engagement) {
     return new Response(JSON.stringify({ error: 'engagement not found' }), { status: 404 });
   }

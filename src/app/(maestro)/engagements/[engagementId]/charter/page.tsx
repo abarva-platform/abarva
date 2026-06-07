@@ -5,7 +5,8 @@ import {
   getStructuredEvidenceRefs,
   getStructuredSections,
 } from '@/lib/deliverables/structured';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,8 @@ export default async function CharterPage({
   params: Promise<{ engagementId: string }>;
 }) {
   const { engagementId: graphId } = await params;
-  const engagement = await getEngagementByGraphId(graphId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByGraphIdForClient(graphId, tenancy.clientId);
   if (!engagement) notFound();
   const sb = getAzureReadFluentClient();
 

@@ -1,9 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { SponsorConsole } from '@/components/sponsor/SponsorConsole';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,8 @@ export default async function SponsorEngagementPage({
   if (!person) redirect('/sign-in');
 
   const { engagementId } = await params;
-  const engagement = await getEngagementByGraphId(engagementId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByGraphIdForClient(engagementId, tenancy.clientId);
   if (!engagement) notFound();
 
   // Role gate: sponsors see only their own engagement; maestros can view any.

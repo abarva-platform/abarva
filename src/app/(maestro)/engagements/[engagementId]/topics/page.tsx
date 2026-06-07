@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import {
   listAllTopics,
   listEngagementTopics,
@@ -9,6 +9,7 @@ import {
   type DiagnosticQuestion,
 } from '@/lib/topics/db';
 import { assignTopicAction, unassignTopicAction, toggleQuestionAction, togglePrimaryAction } from './actions';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,8 @@ export default async function EngagementTopicsPage({
   params: Promise<{ engagementId: string }>;
 }) {
   const { engagementId: graphId } = await params;
-  const engagement = await getEngagementByGraphId(graphId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByGraphIdForClient(graphId, tenancy.clientId);
   if (!engagement) notFound();
 
   const [allTopics, assigned] = await Promise.all([

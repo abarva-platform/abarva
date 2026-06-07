@@ -4,12 +4,13 @@ import { notFound, redirect } from 'next/navigation';
 import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
 import { getActiveClientKey } from '@/lib/active-client';
 import { resolveSeedDeliverablePath } from '@/lib/deliverables/legacy-route-resolver';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import {
   getMissingRequiredSections,
   getStructuredEvidenceRefs,
   getStructuredSections,
 } from '@/lib/deliverables/structured';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,7 +94,8 @@ export default async function DeliverableDetailPage({
   if (canonicalDeliverablePath) {
     redirect(canonicalDeliverablePath);
   }
-  const engagement = await getEngagementByGraphId(graphId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByGraphIdForClient(graphId, tenancy.clientId);
   if (!engagement) notFound();
 
   const sb = getAzureReadFluentClient();

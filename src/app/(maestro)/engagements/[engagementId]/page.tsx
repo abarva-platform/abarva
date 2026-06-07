@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-import { getEngagementByAnyId } from '@/lib/db/engagement';
+import { getEngagementByAnyIdForClient } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import {
@@ -18,6 +18,7 @@ import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 import { getActiveClientKey } from '@/lib/active-client';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 type NormalizedDeliverable = {
   type: string;
@@ -114,7 +115,8 @@ export default async function EngagePage({
     redirect(canonicalProgramPath);
   }
 
-  const engagement = await getEngagementByAnyId(engagementId);
+  const tenancy = await requireTenancy();
+  const engagement = await getEngagementByAnyIdForClient(engagementId, tenancy.clientId);
   if (!engagement) notFound();
 
   // C2-03 · if the engagement resolves to a seeded canonical program path,

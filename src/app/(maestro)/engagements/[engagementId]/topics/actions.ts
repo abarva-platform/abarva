@@ -1,12 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByGraphIdForClient } from '@/lib/db/engagement';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { assignTopic, unassignTopic, toggleQuestionDone, setTopicPrimary } from '@/lib/topics/db';
+import { requireTenancy } from '@/lib/auth/tenancy';
 
 async function resolveEngagementId(graphId: string): Promise<string | null> {
-  const e = await getEngagementByGraphId(graphId);
+  const tenancy = await requireTenancy();
+  const e = await getEngagementByGraphIdForClient(graphId, tenancy.clientId);
   return e?.id ?? null;
 }
 

@@ -2,6 +2,7 @@ import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface EngagementRow {
   id: string;
+  client_id: string | null;
   graph_node_id: string;
   name: string;
   industry_code: string;
@@ -38,6 +39,20 @@ export async function getEngagementByGraphId(graphNodeId: string): Promise<Engag
   return data as EngagementRow | null;
 }
 
+export async function getEngagementByGraphIdForClient(
+  graphNodeId: string,
+  clientId: string,
+): Promise<EngagementRow | null> {
+  const { data, error } = await getAzureWriteFluentClient()
+    .from('engagements')
+    .select('*')
+    .eq('graph_node_id', graphNodeId)
+    .eq('client_id', clientId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as EngagementRow | null;
+}
+
 // Widened lookup · some pressure cards (Tower contradictions) reference an
 // engagement by its primary-key UUID rather than graph_node_id. Try both so
 // the /engagements/{id}/ route resolves for either shape. Fixes the 404 Dr. L
@@ -57,6 +72,28 @@ export async function getEngagementByAnyId(idOrGraphId: string): Promise<Engagem
     .from('engagements')
     .select('*')
     .eq('id', idOrGraphId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as EngagementRow | null;
+}
+
+export async function getEngagementByAnyIdForClient(
+  idOrGraphId: string,
+  clientId: string,
+): Promise<EngagementRow | null> {
+  const byGraph = await getEngagementByGraphIdForClient(idOrGraphId, clientId);
+  if (byGraph) return byGraph;
+
+  // Only attempt primary-key lookup when the input has UUID shape — saves
+  // an extra query for the common graph_node_id miss and avoids a Postgres
+  // UUID cast error on non-UUID inputs.
+  if (!UUID_RE.test(idOrGraphId)) return null;
+
+  const { data, error } = await getAzureWriteFluentClient()
+    .from('engagements')
+    .select('*')
+    .eq('id', idOrGraphId)
+    .eq('client_id', clientId)
     .maybeSingle();
   if (error) throw error;
   return data as EngagementRow | null;
