@@ -86,11 +86,11 @@ describe("Ask Intelligence response policy", () => {
       ...surfaceSources,
       {
         type: "TENANT",
-        name: "IT landscape (meridian-health)",
-        id: "meridian-health:it_landscape",
+        name: "IT landscape (apex-retail)",
+        id: "apex-retail:it_landscape",
         confidence: 0.94,
         detail: [
-          "IT landscape records for meridian-health.",
+          "IT landscape records for apex-retail.",
           "- CMDB extract: Epic Clarity reporting database supports clinical and finance analytics.",
           "- CMDB extract: SQL Server hosts operational marts used by finance and analytics teams.",
           "- systems_inventory.csv: Tableau is the governed BI layer; SAS remains in actuarial and finance analytics.",

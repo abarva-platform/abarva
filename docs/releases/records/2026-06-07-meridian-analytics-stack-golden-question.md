@@ -35,12 +35,10 @@ Sentinel now answers the Meridian analytics-stack golden question by separating 
 
 ## QA / Validation
 
-- Pending local validation on this branch:
-  - `npx jest src/lib/intelligence/ask/response-policy.test.ts --runInBand`
-  - `npx jest src/lib/knowledge/__tests__/tenant-technology-context.test.ts --runInBand`
-  - `npx jest src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts --runInBand`
-  - `npx jest tests/agent-grounding/__tests__/curriculum.test.ts --runInBand`
-  - `npm run release:check`
+- Passed: `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/knowledge/__tests__/tenant-technology-context.test.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts tests/agent-grounding/__tests__/curriculum.test.ts --runInBand`
+- Passed: `npm run release:check`
+- Not run: signed-in live Meridian Sentinel QA, because this branch validation does not have a Clerk session cookie or live Azure operator query session.
+- Note: Jest emitted existing duplicate manual mock warnings for markdown/GFM mocks; the targeted suites passed.
 
 ## Rollout Plan
 
