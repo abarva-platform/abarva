@@ -1,5 +1,36 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~05:15Z — rechecked; current VM cannot perform signed-in QA
+
+Operator re-referenced this QA record. Rechecked the current agent VM before any
+traffic or auth action. Signed-in QA is still **blocked** here.
+
+- Required auth/data env vars are absent in the process environment:
+  `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
+  `DEMO_LOGIN_PASSWORD`, and `DATABASE_URL`.
+- VM boot time is **2026-06-05 09:32 UTC**. This is not a newly provisioned
+  post-secret VM, so Cursor Cloud secrets added later would not be injected.
+- Local tool/dependency state is also insufficient for the mint path:
+  `node_modules/` is absent, local `tsx`/`@clerk/backend`/`@playwright/test`
+  are absent, Node is `v22.14.0`, and `az` is not installed in this VM.
+- Mint retry attempted:
+  `npm run auth:agent-client-states -- --client lakeshore --refresh`.
+  It fails before the helper reaches the secret check because dependencies are
+  not installed: `Cannot find module '@clerk/backend'`.
+- Route tested: none. No Clerk ticket/session could be minted; no authenticated
+  HTTP route could be exercised; no Azure revision state could be queried from
+  this VM because `az` is unavailable.
+
+The underlying acceptance blocker remains unchanged: signed-in QA requires a
+fresh, provisioned environment with Clerk/demo secrets present at startup and
+the repo dependencies/browser tooling installed, or a provided Clerk session
+cookie/test-user credential for `boss-griffon-61.accounts.dev`.
+
+Guardrails held: no DNS/Vercel/Supabase action; no Azure traffic action from
+this VM; no `.auth` committed.
+
+---
+
 ## UPDATE 2026-06-07 ~05:14Z — provqa healthy, traffic unchanged
 
 Operator status update: the `provqa` test revision is healthy and remains held
