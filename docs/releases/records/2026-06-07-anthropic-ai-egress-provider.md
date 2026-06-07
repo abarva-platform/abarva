@@ -35,10 +35,11 @@ Sentinel and Source LLM-backed flows now route their user-facing model generatio
 
 ## QA / Validation
 
-- Not run in this VM: focused integration validation is pending because
-  `node_modules/` is absent in the current agent checkout.
-- Not run in this VM: live `ai_egress_audit` verification requires configured
-  Anthropic credentials, tenant data, and a signed-in QA path.
+- PASS: `npx jest src/__tests__/integration/ai-egress-anthropic-provider-contract.test.ts --runInBand`.
+- PASS: `npx eslint "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-openai/route.ts" "src/lib/source/agent-generation/prompt-registry.ts" "src/lib/source/agent-generation/types.ts" "src/__tests__/integration/ai-egress-anthropic-provider-contract.test.ts"`.
+- PASS: `npx tsc --noEmit --pretty false`.
+- PASS: `npm run release:check`.
+- NOT RUN in this VM: live `ai_egress_audit` verification requires configured Anthropic credentials, tenant data, and a signed-in QA path.
 
 ## Rollout Plan
 
