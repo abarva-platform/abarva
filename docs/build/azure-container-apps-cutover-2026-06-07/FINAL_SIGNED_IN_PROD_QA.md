@@ -1,15 +1,17 @@
 # Final Signed-In Production QA — `app.abarva.ai` (2026-06-07)
 
-Status: **DNS cutover is COMPLETE — `app.abarva.ai` now serves Azure.**
+Status: **COMPLETE for production route QA — `app.abarva.ai` now serves Azure
+and signed-in browser QA passed.**
 Unauthenticated production proof on the live hostname is done (Azure-backed,
-no Vercel, correct auth gating, no 5xx). The remaining **signed-in** checklist
-(tenant isolation + LLM audit provider rows across the six surfaces) requires
-an authenticated Clerk session, which is not available to this headless agent,
-so it is left as an operator step with the exact script below.
+no Vercel, correct auth gating, no 5xx). The operator also completed signed-in
+browser QA across the six core surfaces after repairing live Azure schema drift
+with existing repo migrations. Row-level Anthropic provider audit proof remains
+a separate provider-migration evidence item, not a blocker for the DNS/runtime
+cutover.
 
 > Guardrails held: no secrets printed; only env/secret **names** inspected;
 > no Supabase reintroduced; no Azure resources changed; Vercel not removed
-> (signed-in QA gate still open).
+> (Vercel credentials are not present in this environment).
 
 ## 0. Live production proof on `https://app.abarva.ai` (verified ~06:19Z)
 
@@ -74,8 +76,10 @@ PARALLEL_RUN_INVARIANT_TOKEN, PORT, SERVICE_BUS_NAMESPACE, SERVICE_BUS_QUEUE_NAM
 - `ANTHROPIC_API_KEY` env + `anthropic-api-key` secret are present; the image
   tag is `cutover-provider-anthropic-20260607-683eb933`, consistent with the
   Anthropic provider migration. Sentinel/Source LLM audit rows are therefore
-  expected to record `provider=anthropic`. **Row-level confirmation requires
-  a signed-in session and is part of the blocked checklist below.**
+  expected to record `provider=anthropic`.
+- Row-level `ai_egress_audit.provider=anthropic` confirmation was not separately
+  captured in this PR. Treat that as provider-migration audit evidence still to
+  capture, not as a failure of the Azure DNS/runtime cutover.
 
 ## A.4 Signed-in production QA — ✅ PASSED (operator browser test, ~06:42Z+)
 

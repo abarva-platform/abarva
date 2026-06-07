@@ -102,8 +102,8 @@ documentation/evidence only; it adds no runtime code.
 No runtime rollout from this PR. The production cutover itself was an
 out-of-band operator action that is now **done**: the `app` CNAME was repointed
 at Namecheap to the Azure environment, the custom domain was bound and an
-Azure-managed certificate issued. Remaining operator steps: (1) run signed-in
-QA across the six surfaces; (2) only after QA passes, remove Vercel
+Azure-managed certificate issued, and signed-in production browser QA passed.
+Remaining operator step: remove Vercel once Vercel credentials are available
 (production alias/domain, GitHub auto-deploys, env/secrets, then pause/delete
 the project). Merge this PR to land the evidence and runbook.
 
@@ -120,9 +120,10 @@ the Azure custom domain afterward.
 
 - PR containing this release record.
 - `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`
-  (Azure target, validation error, registrar records, follow-up commands).
+  (Azure target, DNS cutover, managed cert, registrar records, Vercel shutdown
+  runbook).
 - `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_SIGNED_IN_PROD_QA.md`
-  (Azure-backed runtime proof + blocked QA checklist).
+  (Azure-backed runtime proof + signed-in QA pass).
 - `docs/build/supabase-sunset-proof-2026-06-07/README.md` (runtime
   Supabase-removal proof).
 - Azure CLI reads against `abarva-lab-sub` / `rg-abarva-controlplane-lab-eastus`

@@ -10,7 +10,8 @@ the custom domain is bound (`SniEnabled`) with an Azure-managed certificate
 > Guardrails held: DNS records applied by the operator at the registrar (this
 > agent has no registrar credentials and changed no DNS itself); no Supabase
 > reintroduced; no Azure resource deleted; no Vercel removal yet (signed-in QA
-> gate still pending — see `FINAL_SIGNED_IN_PROD_QA.md`); no secrets printed.
+> passed, but Vercel credentials are not present in this environment); no secrets
+> printed.
 
 ## 0. Cutover result (verified 2026-06-07 ~06:19Z)
 
@@ -44,7 +45,7 @@ remains optional belt-and-suspenders for future re-validation.
 | Other revision | `ca-abarva-web-lab-eastus--provqa` (Running, weight 0) |
 | Image on active revision | `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933` |
 | Custom-domain verification ID | `A8078EFAA2EC5EE0EBD7683E57858C95FFD118925265A1C3059FDB9865982C7A` |
-| Custom domains currently bound | none |
+| Custom domains currently bound | `app.abarva.ai` (`SniEnabled`) |
 
 ### Traffic weights (verified)
 
@@ -64,7 +65,9 @@ remains optional belt-and-suspenders for future re-validation.
 { "ok": true, "checks": { "postgres": true, "direct_postgres": true, "azure_graph": "postgres" } }
 ```
 
-## 2. Custom domain binding attempt (proves the validation requirement)
+## 2. Custom domain binding history
+
+### Initial validation attempt
 
 Ran against the live Container App:
 
@@ -85,7 +88,13 @@ was not found.
 
 No partial/broken binding was persisted — the command errors before writing.
 
-## 3. Current DNS state (verified)
+### Final binding result
+
+After the operator updated Namecheap DNS, Azure accepted CNAME-based validation,
+bound `app.abarva.ai` to the Container App, and issued the managed certificate
+`mc-cae-abarva-sca-app-abarva-ai-8374` with status `Succeeded`.
+
+## 3. Final DNS state (verified ~06:19Z)
 
 ```
 $ dig +short NS abarva.ai
@@ -93,31 +102,35 @@ pdns1.registrar-servers.com.
 pdns2.registrar-servers.com.
 
 $ dig +short CNAME app.abarva.ai
-20a2a769684e17ea.vercel-dns-017.com.
+ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io.
 
 $ dig +short app.abarva.ai
-20a2a769684e17ea.vercel-dns-017.com.
-216.150.1.193
-216.150.16.193
+ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io.
+4.255.59.220
 
 $ dig +short TXT asuid.app.abarva.ai
-(empty)
+(empty; not required because CNAME validation satisfied Azure)
 
 $ curl -I https://app.abarva.ai/api/health
-HTTP/2 503
-server: Vercel
-x-vercel-id: pdx1::iad1::4v7sp-…
+HTTP/2 200
+x-powered-by: Next.js
+```
+
+`/api/health` response:
+
+```json
+{ "ok": true, "checks": { "postgres": true, "direct_postgres": true, "azure_graph": "postgres" } }
 ```
 
 DNS provider = **Namecheap BasicDNS** (`registrar-servers.com`). This agent has
-no Namecheap API/registrar credentials, so the cutover requires manual operator
-action.
+no Namecheap API/registrar credentials; the DNS change was applied by the
+operator and verified here.
 
-## 4. ACTION REQUIRED — exact registrar records to apply at Namecheap
+## 4. Registrar records applied at Namecheap
 
-Apply these in the `abarva.ai` zone (Namecheap → Domain List → Manage →
-Advanced DNS). Host values are entered **relative to the zone** (Namecheap
-appends `.abarva.ai` automatically).
+These are the records used in the `abarva.ai` zone (Namecheap → Domain List →
+Manage → Advanced DNS). Host values are entered **relative to the zone**
+(Namecheap appends `.abarva.ai` automatically).
 
 ### Step A — domain-ownership validation (add first; coexists with Vercel)
 
@@ -127,13 +140,13 @@ appends `.abarva.ai` automatically).
 
 ### Step B — repoint traffic (replace the existing Vercel record)
 
-Remove the existing record:
+Removed the previous Vercel record:
 
 | Type | Host | Current value (DELETE) |
 | --- | --- | --- |
 | CNAME | `app` | `20a2a769684e17ea.vercel-dns-017.com` |
 
-Add the Azure record:
+Added the Azure record:
 
 | Type | Host | Value | TTL |
 | --- | --- | --- | --- |
@@ -146,14 +159,12 @@ A record instead (the environment static inbound IP):
 | --- | --- | --- | --- |
 | A | `app` | `4.255.59.220` | Automatic / 60 |
 
-> Note: the A-record path pins to the environment static IP. The CNAME path is
-> preferred so Azure can change the inbound IP without another DNS edit. In
-> either case the `asuid.app` TXT in Step A is mandatory for validation.
+> Note: the A-record path was not needed. The CNAME path was used and Azure
+> accepted CNAME validation for managed-certificate issuance.
 
-## 5. After DNS is applied — operator follow-up (Azure side)
+## 5. Azure follow-up completed
 
-Once `dig +short TXT asuid.app.abarva.ai` returns the verification ID and the
-`app` record points at Azure, complete the binding + managed certificate:
+The following commands were the Azure-side follow-up after DNS pointed at Azure:
 
 ```
 RG=rg-abarva-controlplane-lab-eastus
@@ -169,10 +180,10 @@ az containerapp hostname bind -g $RG -n $APP \
   --validation-method CNAME
 ```
 
-Managed-certificate issuance takes a few minutes after binding; there can be a
-brief TLS window while the cert provisions.
+Managed-certificate issuance completed successfully. The final hostname binding
+is `SniEnabled`.
 
-## 6. Post-cutover verification checklist (run after binding + propagation)
+## 6. Post-cutover verification checklist (completed)
 
 ```
 dig +short CNAME app.abarva.ai          # must NOT contain vercel-dns
@@ -180,7 +191,7 @@ curl -sI https://app.abarva.ai          # must NOT include `server: Vercel` or `
 curl -s  https://app.abarva.ai/api/health   # expect 200 + postgres/direct_postgres true
 ```
 
-Expected healthy response (matches the Azure FQDN today):
+Healthy response:
 
 ```json
 { "ok": true, "checks": { "postgres": true, "direct_postgres": true, "azure_graph": "postgres" } }
