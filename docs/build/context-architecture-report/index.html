@@ -241,7 +241,7 @@ flowchart LR
 <table>
 <tr><th>Gap</th><th>Add this (format)</th><th>Example rows / content</th><th>Becomes</th></tr>
 <tr><td>Named executives + reporting lines</td><td><code>executives.csv</code> (structured)</td><td><code>name,title,function,reports_to</code> → "Jane Doe, CFO, Finance, CEO"</td><td><code>person</code> facts (answer "who is our CFO?")</td></tr>
-<tr><td>KPIs by function with targets</td><td><code>kpi-register.csv</code></td><td><code>function,kpi,current,target,owner,period</code> → "Revenue Cycle, denial rate, 7.8%, &lt;5%, VP RCM, FY26"</td><td><code>kpi</code> facts (answer "KPIs by function?")</td></tr>
+<tr><td>KPIs by function with targets</td><td><code>kpi-register.csv</code></td><td><code>function,kpi,current,target,owner,period</code> → "Revenue Cycle, denial rate, 18.2%, &lt;5%, VP RCM, FY23"</td><td><code>kpi</code> facts (answer "KPIs by function?")</td></tr>
 <tr><td>Current-state stack as a clean narrative</td><td><code>tech-stack-summary.docx/pdf</code> (document)</td><td>1–2 pages: "Analytics = Epic Cogito/Clarity on SQL Server; BI = Tableau; statistical = SAS; …"</td><td>document-backed <code>chunks</code>+<code>facts</code> with page citations</td></tr>
 <tr><td>Strategy / roadmap narrative</td><td><code>strategy-2026.pdf</code></td><td>Board deck / strategy memo</td><td>chunks (answer "what's our AI roadmap?")</td></tr>
 <tr><td>Org chart (full reporting tree)</td><td><code>org-chart.csv</code></td><td><code>person,manager,team,headcount</code></td><td>graph edges + facts (answer "how big is the security team?")</td></tr>
