@@ -1,8 +1,8 @@
 import {
-  createIntelligenceAskOpenAIText,
-  INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
-  isIntelligenceAskOpenAIConfigured,
-} from "./openai-runtime";
+  createIntelligenceAskAnthropicText,
+  INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL,
+  isIntelligenceAskAnthropicConfigured,
+} from "./anthropic-runtime";
 
 export function buildDeterministicConciseFollowups(args: {
   query: string;
@@ -35,7 +35,7 @@ export async function generateFollowups(args: {
   const deterministic = buildDeterministicConciseFollowups(args);
   if (deterministic) return deterministic;
 
-  if (!isIntelligenceAskOpenAIConfigured() || !args.tenantId) return [];
+  if (!isIntelligenceAskAnthropicConfigured() || !args.tenantId) return [];
 
   const prompt = `Given the question and the answer, propose 3 follow-up questions the user is
 likely to ask next. Each should drill deeper OR pivot to an adjacent concern.
@@ -46,11 +46,11 @@ Answer: ${args.answer.slice(0, 2000)}
 Available next-step contexts: ${args.entities.join(", ")}`;
 
   try {
-    const text = await createIntelligenceAskOpenAIText({
+    const text = await createIntelligenceAskAnthropicText({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
       workflow: "intelligence-ask-followups",
-      model: INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
+      model: INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL,
       input: prompt,
       dataClass: "confidential",
       maxOutputTokens: 256,

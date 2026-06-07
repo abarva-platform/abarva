@@ -1,9 +1,9 @@
 import type { IntentClassification, AskIntent } from "./types";
 import {
-  createIntelligenceAskOpenAIText,
-  INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
-  isIntelligenceAskOpenAIConfigured,
-} from "./openai-runtime";
+  createIntelligenceAskAnthropicText,
+  INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL,
+  isIntelligenceAskAnthropicConfigured,
+} from "./anthropic-runtime";
 
 const CATEGORIES: AskIntent[] = [
   "vendor_lookup",
@@ -42,7 +42,7 @@ export async function classifyIntent(
   query: string,
   aiContext: { tenantId?: string | null; userId?: string | null } = {},
 ): Promise<IntentClassification> {
-  if (!isIntelligenceAskOpenAIConfigured() || !aiContext.tenantId) {
+  if (!isIntelligenceAskAnthropicConfigured() || !aiContext.tenantId) {
     return {
       intent: "general_synthesis",
       entities: extractEntitiesHeuristic(query),
@@ -51,11 +51,11 @@ export async function classifyIntent(
   }
   try {
     const prompt = CLASSIFIER_PROMPT(query);
-    const text = await createIntelligenceAskOpenAIText({
+    const text = await createIntelligenceAskAnthropicText({
       tenantId: aiContext.tenantId,
       userId: aiContext.userId ?? undefined,
       workflow: "intelligence-ask-intent-classifier",
-      model: INTELLIGENCE_ASK_OPENAI_SMALL_MODEL,
+      model: INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL,
       input: prompt,
       dataClass: "confidential",
       maxOutputTokens: 256,

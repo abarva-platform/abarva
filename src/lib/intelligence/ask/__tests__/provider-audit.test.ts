@@ -1,11 +1,11 @@
 /**
- * Provider audit regression — production reasoning must be Anthropic/Claude,
- * never OpenAI (Context/Corpus → Agent Visibility audit, hard constraint #4).
+ * Provider audit regression — production Ask/Source model calls must be
+ * Anthropic/Claude, never OpenAI (Context/Corpus → Agent Visibility audit,
+ * hard constraint #4).
  *
- * Wiring audit over the synthesis source files: Nexus, Sentinel Ask, the Ask
- * Anthropic runtime, and Source Sentinel chat must all route reasoning through
- * the audited Anthropic Claude client and must not reference the OpenAI
- * synthesis path.
+ * Wiring audit over Nexus, Sentinel Ask, the Ask Anthropic runtime, Ask utility
+ * calls, and Source Sentinel chat: all must route through the audited Anthropic
+ * Claude client and must not reference the OpenAI runtime path.
  */
 
 import { readFileSync } from "node:fs";
@@ -65,6 +65,18 @@ describe("provider audit — reasoning must be Anthropic, not OpenAI", () => {
     expect(src).toMatch(/getAuditedAnthropicClient/);
     expect(src).toMatch(/claude/i);
     expect(src).not.toMatch(/openai|gpt-/i);
+  });
+
+  it("Sentinel Ask utility calls use the Anthropic runtime, not OpenAI", () => {
+    for (const file of ["classifier.ts", "followups.ts"]) {
+      const src = read(file);
+      expect(src).toMatch(/createIntelligenceAskAnthropicText/);
+      expect(src).toMatch(/INTELLIGENCE_ASK_ANTHROPIC_SMALL_MODEL/);
+      expect(src).toMatch(/anthropic-runtime/);
+      expect(src).not.toMatch(
+        /createIntelligenceAskOpenAIText|INTELLIGENCE_ASK_OPENAI_|openai-runtime/,
+      );
+    }
   });
 
   it("Source Sentinel chat synthesis uses an audited Anthropic Claude client", () => {
