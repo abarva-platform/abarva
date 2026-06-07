@@ -1,4 +1,4 @@
-# 2026-06-07-lakeshore-golden-qa-grounding — Lakeshore golden-question grounding
+# 2026-06-07-lakeshore-golden-qa-grounding - Lakeshore golden-question grounding
 
 ## Release ID
 
@@ -36,7 +36,11 @@ Sentinel now retrieves richer Lakeshore context for the operator golden question
 
 ## QA / Validation
 
-Pre-test candidate revision prepared. Focused Jest and release checks will be recorded after the required pre-test push.
+- PASS: `npx jest src/lib/knowledge/__tests__/tenant-technology-context.test.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts src/lib/intelligence/ask/__tests__/no-fabrication.test.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts src/lib/intelligence/ask/response-policy.test.ts --runInBand` - 5 suites passed, 70 tests passed.
+- PASS: `npm run release:check` - Release Control Gate passed; Pilot Data Loader Gate passed.
+- INFO: first Jest attempt was blocked because this cloud image did not have `node_modules` installed; `npm install` completed and validation then used the repository Jest setup.
+- INFO: first `npm run release:check` attempt failed because this section did not state explicit pass/fail/not-run/blocked status; this release record update closed that gate.
+- BLOCKED pending operator environment: signed-in Azure/Clerk product-route golden QA requires real Clerk and Azure credentials.
 
 ## Rollout Plan
 
@@ -49,7 +53,8 @@ Revert the commit to restore the prior retrieval, response-policy, and prompt be
 ## Audit Evidence
 
 - PR for branch `cursor/lakeshore-golden-qa-6b6f`.
-- Focused test output to be attached in the final PR revision.
+- Focused Jest output: 5 suites passed, 70 tests passed.
+- Release gate output: Release Control Gate passed; Pilot Data Loader Gate passed.
 
 ## Known Gaps
 
