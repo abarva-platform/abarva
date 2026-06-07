@@ -63,9 +63,9 @@
 <div><b>9,026</b><span class="small">corpus_patterns</span></div>
 <div><b>43,436</b><span class="small">genome_patterns</span></div>
 <div><b>93,743</b><span class="small">graph edges</span></div>
-<div><b>0</b><span class="small">enterprise_context_* in Azure</span></div>
+<div><b>38,640</b><span class="small">enterprise_context_facts (restored)</span></div>
 </div>
-<p><b>What it knows today:</b> decision/treasury <em>patterns</em> (Lakeshore strong). <b>What it can't answer yet:</b> the "CXO fact" layer (execs, org, current data/analytics stack, systems, vendors, KPIs) — those live in <code>enterprise_context_*</code>, which is <span class="n">absent from the Azure runtime DB</span> (present only in legacy Supabase). That gap is an <em>ingestion/migration</em> issue, not a model issue.</p>
+<p><b>What it knows today (post 2026-06-07 restore):</b> decision/treasury <em>patterns</em> (Lakeshore strong) <b>and</b> the CXO fact layer — org, current data/analytics stack, systems, vendors, contracts, initiatives — now live in Azure and <span class="y">verified answerable</span> (e.g. Meridian's Epic stack + $28.5M Epic contract; Lakeshore's named execs). <b>Remaining gaps are specific inputs</b> (e.g. Meridian has no named-executive roster, KPI registers are thin) — "add this file" tasks (§8.2), not a layer-wide absence. When a specific fact isn't loaded, it says "not loaded" rather than inventing.</p>
 
 <h2 id="s2">2 · The data, by layer &amp; dimension (live)</h2>
 <p class="small">Counts pulled read-only from <code>abarva_control</code> via the private operator job on 2026-06-07. "unverified" = not separately counted.</p>
@@ -77,8 +77,9 @@
 <tr><td><code>genome_patterns</code></td><td>Industry pattern genome (incl. <code>LSH-TMS-*</code> treasury)</td><td class="y">yes</td><td>43,436</td><td>seeded/generated</td></tr>
 <tr><td><code>intelligence_graph_edges</code></td><td>Relationships between entities/patterns</td><td class="y">yes</td><td>93,743</td><td>derived</td></tr>
 <tr><td><code>applications</code></td><td>App/systems inventory</td><td class="w">yes (synthetic)</td><td>232 — <span class="n">all <code>is_demo_data=true</code></span></td><td>demo</td></tr>
-<tr><td><code>enterprise_context_*</code></td><td><b>The CXO fact layer</b>: records, facts, chunks, sources, evidence</td><td class="n">NO — absent</td><td>0 tables present (Supabase-only)</td><td>—</td></tr>
+<tr><td><code>enterprise_context_*</code></td><td><b>The CXO fact layer</b>: records, facts, chunks, sources, evidence</td><td class="y">YES (restored 2026-06-07)</td><td>records 3,503 · facts 38,640 · chunks 15,847</td><td>loader-backed</td></tr>
 </table>
+<div class="lay" style="border-color:var(--good)"><b>Update — 2026-06-07 restore:</b> the <code>enterprise_context_*</code> fact layer was recovered into Azure <code>abarva_control</code> from the final backup blob (records 3,503 · facts 38,640 · chunks 15,847; client_ids canonicalized, 0 orphans), and Azure Search <code>tenant-context-v1</code> was rebuilt per tenant (Apex 6,497 · First Capital 400 · Lakeshore 1,329 · Meridian 3,503 · Northstar 878 · SkyHarbor 3,240). CXO fact questions are now <b>answerable</b> — verified live (see §5/§6).</div>
 
 <h3>genome_patterns by vertical (verified)</h3>
 <table>
@@ -92,17 +93,17 @@
 <tr><th>Dimension</th><th>Lives in</th><th>In Azure runtime?</th><th>Answerable now?</th></tr>
 <tr><td>Corpus / decision patterns</td><td><code>corpus_patterns</code></td><td class="y">yes</td><td class="y">YES (Lakeshore strong)</td></tr>
 <tr><td>Treasury/Kyriba patterns</td><td><code>genome_patterns</code> (LSH-TMS) + index</td><td class="y">yes</td><td class="y">YES (Lakeshore)</td></tr>
-<tr><td>Leadership / named execs</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>Org structure (IT/supply-chain/finance)</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>Business units / segments / geographies</td><td><code>enterprise_context_records</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>Current data &amp; analytics stack</td><td><code>enterprise_context_facts</code> (CMDB)</td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>ERP/treasury/HR/reporting platforms</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>Applications / systems</td><td><code>applications</code> (demo) + context</td><td class="w">demo only</td><td class="w">demo only</td></tr>
-<tr><td>Vendors / contracts / renewals</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>KPIs / metrics by function</td><td><code>enterprise_context_facts</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
-<tr><td>Initiatives / roadmap / risks / controls</td><td><code>enterprise_context_*</code></td><td class="n">no</td><td class="n">NOT_LOADED</td></tr>
+<tr><td>Leadership / named execs</td><td><code>enterprise_context_facts</code></td><td class="y">yes</td><td class="w">DEPENDS — answerable where a roster was loaded (Lakeshore ✅ named execs); NOT_LOADED where no roster exists (Meridian)</td></tr>
+<tr><td>Org structure (IT/supply-chain/finance)</td><td><code>enterprise_context_facts</code></td><td class="y">yes</td><td class="y">YES (restored)</td></tr>
+<tr><td>Business units / segments / geographies</td><td><code>enterprise_context_records</code></td><td class="y">yes</td><td class="y">YES (restored)</td></tr>
+<tr><td>Current data &amp; analytics stack</td><td><code>enterprise_context_facts</code> (CMDB)</td><td class="y">yes</td><td class="y">YES — verified (Meridian: Epic Cogito/Clarity/Caboodle)</td></tr>
+<tr><td>ERP/treasury/HR/reporting platforms</td><td><code>enterprise_context_facts</code></td><td class="y">yes</td><td class="y">YES (restored)</td></tr>
+<tr><td>Applications / systems</td><td><code>enterprise_context_facts</code> + <code>applications</code></td><td class="y">yes</td><td class="y">YES — real CMDB facts (the standalone <code>applications</code> table is demo)</td></tr>
+<tr><td>Vendors / contracts / renewals</td><td><code>enterprise_context_facts</code></td><td class="y">yes</td><td class="y">YES — verified (Meridian: Epic $28.5M, renewal Jan 2026)</td></tr>
+<tr><td>KPIs / metrics by function</td><td><code>enterprise_context_facts</code></td><td class="w">yes</td><td class="w">PARTIAL — answerable where KPI facts loaded; add a KPI register for full coverage (§8.2)</td></tr>
+<tr><td>Initiatives / roadmap / risks / controls</td><td><code>enterprise_context_*</code></td><td class="y">yes</td><td class="y">YES (restored)</td></tr>
 </table>
-<div class="lay"><b>Plain English:</b> The "playbook" knowledge (patterns) is loaded and works. The "about <em>your</em> company" knowledge (who runs it, what systems you use, your KPIs) is not in the live system yet — it's stranded in the old database. That's why a treasury-pattern question gets a great answer but "who's our CFO?" honestly says "not loaded."</div>
+<div class="lay"><b>Plain English:</b> Both halves are now live — the "playbook" knowledge (patterns) <em>and</em> the "about <em>your</em> company" knowledge (systems, vendors, org, initiatives) were restored to Azure on 2026-06-07. Remaining gaps are specific missing inputs (e.g. Meridian has no named-executive roster, and KPI registers are thin) — not a layer-wide absence. Those are "add this file" tasks (§8.2), and until added the system honestly says "not loaded" rather than inventing.</div>
 
 <h2 id="s3">3 · Ingestion pipeline: parse → chunk → registry → db → graph → index</h2>
 <div class="mermaid">
@@ -121,7 +122,7 @@ flowchart LR
 </div>
 <div class="lay"><b>Plain English:</b> A document is uploaded, saved, and read. It's split into small passages ("chunks"), turned into structured "facts," linked into a relationship "graph," and converted into math vectors so it's searchable by meaning. Each of those is a <em>separate</em> step — "uploaded" is not "searchable."</div>
 <div class="hood"><b>Under the hood:</b> Governed Admin bulk loader → Blob → parse → <code>enterprise_context_source_files</code> (lineage) → <code>enterprise_context_records</code> → <code>enterprise_context_chunks</code> (+ <code>chunk_queue</code>) → embeddings (OpenAI/Azure Foundry, an allowlisted non-reasoning utility) → <code>enterprise_context_facts</code> → <code>intelligence_graph_edges</code> → Azure AI Search index <code>tenant-context-v1</code>. Per <code>AGENTS.md</code> "Context ingestion truth standard," each state is reported separately — "loaded" ≠ "committed + retrievable."</div>
-<p class="w"><b>Current reality:</b> on the Azure runtime DB, this pipeline's <code>enterprise_context_*</code> outputs are absent — the layer was never migrated from Supabase. Only the corpus/genome/graph tables are present.</p>
+<p class="y"><b>Current reality (post 2026-06-07 restore):</b> this pipeline's <code>enterprise_context_*</code> outputs are now present in Azure <code>abarva_control</code> (restored from the final backup blob; records 3,503 · facts 38,640 · chunks 15,847) and the Azure Search index <code>tenant-context-v1</code> was rebuilt per tenant. The corpus/genome/graph tables remain present too.</p>
 
 <h2 id="s4">4 · How Sentinel/Nexus are "made aware" at request time</h2>
 <div class="mermaid">
@@ -165,7 +166,8 @@ flowchart TD
 <table>
 <tr><th>Real case</th><th>Behavior</th></tr>
 <tr><td>Lakeshore — "Kyriba modernization patterns?"</td><td class="y">FULLY_ANSWERABLE — 8 grounded sources (real treasury patterns), cited.</td></tr>
-<tr><td>Meridian — "Who is our CFO / our stack?"</td><td class="n">NOT_LOADED — refused to name a CFO or invent "Epic Cogito/Snowflake." (Correct, honest.)</td></tr>
+<tr><td>Meridian — "our analytics stack / vendors?" (post-restore)</td><td class="y">ANSWERABLE — grounded: "Epic Cogito ($3.4M/yr) on Epic Clarity + Caboodle"; "Epic contract $28.5M, renewal Jan 2026."</td></tr>
+<tr><td>Meridian — "who is our CFO?" (no roster loaded)</td><td class="w">NOT_LOADED — refused to name (Meridian has no exec roster) — correct, honest.</td></tr>
 </table>
 
 <h2 id="s6">6 · End-to-end worked examples</h2>
@@ -177,11 +179,11 @@ flowchart TD
 <li>Grounding namespace = treasury → validates the cited IDs belong there.</li>
 <li>Claude synthesizes an answer <b>citing 8 sources</b>; followups offered.</li>
 </ol>
-<h3>(b) Not loaded — "Who is our CFO?"</h3>
+<h3>(b) Specific input not loaded — Meridian "Who is our CFO?"</h3>
 <ol>
-<li>Retrievers query <code>enterprise_context_facts</code> → <span class="n">table absent in Azure</span> → 0 evidence.</li>
+<li>Retrievers query <code>enterprise_context_facts</code> (now present in Azure) → relevant facts exist (CMDB, vendors, org), but <span class="w">no named-executive roster was ever loaded for Meridian</span> → 0 roster evidence.</li>
 <li><code>response-policy</code> → state the gap; reasoning layer must not fabricate.</li>
-<li>Answer: "the exec bench isn't in the loaded tenant data — I won't guess." (Correct.)</li>
+<li>Answer: "the exec bench isn't in the loaded tenant data — I won't guess." (Correct — and the fix is to add <code>executives.csv</code>, §8.2.)</li>
 </ol>
 <h3>(c) Cross-namespace guard — why <code>PAT-LSH-D18-00479</code> ≠ Kyriba</h3>
 <ol>
@@ -223,7 +225,7 @@ flowchart LR
 </div>
 
 <h3>8.1 · What we have for Meridian today (worked example)</h3>
-<p class="small">Loaded via the governed loader as <b>15 structured files → ~38,640 facts</b>. <span class="w">Note: these currently live in legacy Supabase and are <b>not yet in the Azure runtime DB</b> — so today they are NOT_LOADED for live answers until migrated. The inventory below is what exists to migrate.</span></p>
+<p class="small">Loaded via the governed loader as <b>15 structured files → ~38,640 facts</b>. <span class="y">Now live in Azure <code>abarva_control</code> (restored 2026-06-07) and verified answerable — Meridian's stack &amp; vendor questions ground against these.</span> The one gap is a named-executive roster (not among the 15 files) — see §8.2.</p>
 <table>
 <tr><th>Loaded source file</th><th>Dimension it feeds</th><th>Answerable CXO questions (once in Azure)</th></tr>
 <tr><td><code>03-cmdb-applications-services.csv</code>, <code>04-ci-relationships-dependencies.csv</code></td><td>Applications / systems / data &amp; analytics stack / integrations</td><td>"What is our current analytics stack?" (Epic Clarity, SQL Server, Tableau, SAS live here as <code>business_service</code>/<code>ci_id</code> facts)</td></tr>
