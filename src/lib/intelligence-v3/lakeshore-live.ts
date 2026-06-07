@@ -156,6 +156,85 @@ function buildPattern(row: CorpusPatternRow, useCaseIds: string[]): Pattern {
   };
 }
 
+function corpusCandidate(row: CorpusPatternRow): GroundedCandidate {
+  return {
+    namespace: 'corpus-pat-lsh',
+    id: row.slug.toUpperCase(),
+    title: row.title,
+    category: row.category,
+    vertical_overlays: row.vertical_overlays,
+    depth_score: row.depth_score,
+    confidence: row.confidence,
+  };
+}
+
+function genomeCandidate(row: GenomePatternRow): GroundedCandidate {
+  return {
+    namespace: 'genome-lsh-tms',
+    id: row.code.toUpperCase(),
+    title: row.name,
+    category: row.sub_category,
+    vertical_overlays: row.tags ?? row.keywords ?? null,
+    depth_score: row.confidence,
+    confidence: row.confidence,
+  };
+}
+
+// Build a Pattern from a namespace-tagged candidate. The emitted `id` is the
+// candidate's own namespace id (PAT-LSH-* or LSH-TMS-*) and the provenance names
+// the source table, so a card's citation always traces to the right namespace.
+function buildGroundedPattern(candidate: GroundedCandidate, useCaseIds: string[]): Pattern {
+  const isGenome = candidate.namespace === 'genome-lsh-tms';
+  const domain = isGenome ? 'TMS' : domainFromCategory(candidate.category, candidate.id);
+  const sourceTable = isGenome ? 'genome_patterns' : 'corpus_patterns';
+  const sourceRef = isGenome ? candidate.id : candidate.id.toLowerCase();
+  return {
+    id: candidate.id,
+    name: candidate.title,
+    scope: 'industry_specific',
+    applicableIndustries: ['finserv'],
+    patternType: 'success',
+    description:
+      `${candidate.title}. This is a Lakeshore ${isGenome ? 'treasury/Kyriba (LSH-TMS)' : 'private-holdings'} decision pattern loaded from the governed ${sourceTable} namespace, with category ${candidate.category ?? domain}.`,
+    evidenceBasis: {
+      observedInUseCases: useCaseIds,
+      observationCount: `Live Lakeshore ${sourceTable} row`,
+      confidence: Number(candidate.confidence ?? 0) >= 0.9 ? 'HIGH' : 'MED',
+    },
+    recommendedResponse:
+      'Use this pattern as a decision check before advancing the related portfolio initiative or Source event.',
+    relatedPatterns: [],
+    provenance: provenance(`${sourceTable}:${sourceRef}`),
+    lastRefreshed: '2026-06-04',
+    refreshCadence: 'quarterly',
+  };
+}
+
+/**
+ * Bind the patterns for a single decision card, scoped to that card's grounding
+ * namespace. Picks the relevant candidate(s) from ONLY the grounding namespace's
+ * pool, then applies the grounding guard as a backstop (dropping any id that is
+ * not in the active namespace — even if it is a valid id elsewhere) and records a
+ * diagnostic for each rejection. Returns [] (fail closed) when nothing relevant
+ * clears threshold, so a card binds a real on-namespace pattern or none.
+ */
+function bindGroundedPatterns(
+  cardText: string,
+  corpusPool: readonly GroundedCandidate[],
+  tmsPool: readonly GroundedCandidate[],
+  useCaseIds: string[],
+  limit = 2,
+): { grounding: PatternNamespace; patterns: Pattern[]; diagnostics: GroundingDiagnostic[] } {
+  const grounding = groundingNamespaceForText(cardText);
+  const pool = grounding === 'genome-lsh-tms' ? tmsPool : corpusPool;
+  const selected = selectRelevantPatternRows(cardText, pool, limit);
+  const diagnostics: GroundingDiagnostic[] = [];
+  const patterns = filterToGrounding(selected, (c) => c.id, grounding, diagnostics).map((c) =>
+    buildGroundedPattern(c, useCaseIds),
+  );
+  return { grounding, patterns, diagnostics };
+}
+
 function buildUseCase(row: InitiativeRow, index: number, patterns: Pattern[]): UseCase {
   const committed = money(row.committed_annual_usd);
   const measured = money(row.measured_value_usd);
@@ -315,7 +394,12 @@ export async function loadLakeshoreIntelligenceData(client: ClientRow): Promise<
 
   const seedUseCaseIds = initiativeRows.slice(0, 6).map((_, index) => `UC-LSH-${String(index + 1).padStart(3, '0')}`);
   const patterns = patternRows.slice(0, 6).map((row) => buildPattern(row, seedUseCaseIds));
-  const antiPatterns = patterns.slice(0, 3).map(buildAntiPattern);
+
+  // Namespace-scoped candidate pools for per-card grounding (corpus pat-lsh vs
+  // genome LSH-TMS). Anti-patterns are now derived per card from the bound
+  // grounded pattern, so there is no brief-wide anti-pattern array.
+  const corpusPool = patternRows.map(corpusCandidate);
+  const tmsPool = tmsRows.map(genomeCandidate);
   const useCases = initiativeRows.slice(0, 6).map((row, index) => buildUseCase(row, index, patterns));
   CONTROL_VENDOR.productLines[0]!.servesUseCases = useCases.map((useCase) => useCase.id);
 
