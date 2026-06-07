@@ -69,6 +69,30 @@ jobs would still fail if re-run against the current image:
   in PR #3240 (Nexus already Claude). **QA-gated:** signed-in validation required
   before prod (no Clerk session available here).
 
+## Step 6 — Attempted RBAC self-grant (cannot self-elevate)
+
+Ran the operator-provided role grants as the cutover SP (object id
+`6928d484-…`, app id `419ec65c-…`):
+
+```
+az role assignment create --role Contributor --scope .../rg-abarva-controlplane-lab-eastus …
+→ AuthorizationFailed: client lacks 'Microsoft.Authorization/roleAssignments/write'
+```
+
+- The SP **cannot grant roles to itself** — creating any role assignment
+  requires the caller to already hold **Owner** or **User Access Administrator**.
+  The remaining grants in the script (Key Vault Secrets Officer, AcrPush, and
+  User Access Administrator) all require the same `roleAssignments/write` and
+  fail identically; not retried to avoid noise.
+- **These grants must be executed by a human/identity that already holds Owner
+  or User Access Administrator** on the subscription / control RG. The single
+  unblocker the cutover actually needs is **Contributor on
+  `rg-abarva-controlplane-lab-eastus`** (it includes
+  `Microsoft.App/jobs/start/action`); `AcrPush` if Cursor rebuilds the image;
+  `Key Vault Secrets Officer` for secret refs. Note: granting an automation SP
+  **User Access Administrator** is broad (it can then grant any role) — owner's
+  call; not required just to run operator jobs.
+
 ## What is required to proceed (no DNS/Vercel/Supabase changes made)
 
 1. **Grant the SP `Microsoft.App/jobs/start/action`** (or have a human/CI trigger
