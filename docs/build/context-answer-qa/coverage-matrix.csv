@@ -1,0 +1,20 @@
+client,dimension,layer,in_azure,classification,evidence
+Lakeshore,corpus_patterns_treasury,pattern,yes,FULLY_ANSWERABLE,"8 sources, real Kyriba patterns"
+Lakeshore,executives,enterprise_context,no,NOT_LOADED,"refused to fabricate; fact layer absent"
+Lakeshore,data_analytics_stack,enterprise_context,no,NOT_LOADED,"not in loaded tenant data"
+Lakeshore,org_structure,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Lakeshore,applications_systems,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Lakeshore,vendors_contracts,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Lakeshore,kpis_by_function,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Apex,corpus_patterns,pattern,yes,PARTIALLY_ANSWERABLE,"1 corpus source + model reasoning"
+Apex,executives,enterprise_context,no,NOT_LOADED,"neither org-structure nor systems-inventory ingested"
+Apex,data_analytics_stack,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Apex,vendors_contracts,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Apex,kpis_by_function,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Meridian,corpus_patterns_clinical,pattern,partial,RETRIEVAL_FAILURE,"0 sources; model-reasoning not corpus-grounded"
+Meridian,executives,enterprise_context,no,NOT_LOADED,"refused to name CEO/CFO; fact layer absent"
+Meridian,data_analytics_stack,enterprise_context,no,NOT_LOADED,"Epic Clarity/SQLServer/Tableau/SAS exist in Supabase only"
+Meridian,org_structure,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Meridian,vendors_contracts,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+Meridian,kpis_by_function,enterprise_context,no,NOT_LOADED,enterprise_context_* absent in Azure
+ALL_CLIENTS,enterprise_context_fact_layer,enterprise_context,no,NOT_LOADED,"enterprise_context_* tables do not exist in abarva_control (Supabase-only)"
