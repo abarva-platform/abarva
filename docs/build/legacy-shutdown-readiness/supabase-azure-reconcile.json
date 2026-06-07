@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-06-07T15:48:25Z",
+  "mission": "Supabase retirement readiness for AbarVa/Nexus",
+  "destructiveActionsTaken": false,
+  "shutdownSafe": false,
+  "primaryQuestionAnswer": {
+    "question": "Does Supabase still hold enterprise_context_*, corpus/context data, or client evidence that Azure does not have?",
+    "answer": "Not proven safe. Historical operator evidence shows enterprise_context_* and corpus/genome/context count parity or Azure-ahead for the tables that were included in the drain, but fresh row-level checksum/PK overlap proof could not be run from this environment and several required client-evidence families were never reconciled. Therefore Supabase may still hold required client evidence that Azure has not been proven to have."
+  },
+  "freshRunEvidence": {
+    "runtimeMetadata": {
+      "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+      "containerApp": "ca-abarva-web-lab-eastus",
+      "latestReadyRevision": "ca-abarva-web-lab-eastus--0000052",
+      "traffic": [
+        {
+          "revisionName": "ca-abarva-web-lab-eastus--0000052",
+          "weight": 100
+        }
+      ],
+      "image": "acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-70c4f98bf",
+      "dataPlane": "azure-postgres",
+      "databaseUrlSecretRef": "azure-postgres-control-database-url",
+      "supabaseEnvNameCount": 0,
+      "supabaseSecretNameCount": 0
+    },
+    "health": [
+      {
+        "url": "https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io/api/health",
+        "httpStatus": 200,
+        "ok": true,
+        "checks": {
+          "postgres": true,
+          "direct_postgres": true,
+          "azure_graph": "postgres"
+        }
+      },
+      {
+        "url": "https://app.abarva.ai/api/health",
+        "httpStatus": 200,
+        "ok": true,
+        "checks": {
+          "postgres": true,
+          "direct_postgres": true,
+          "azure_graph": "postgres"
+        }
+      }
+    ],
+    "directReconciliationAttempt": {
+      "attempted": true,
+      "mode": "Node pg client using Key Vault secret references only; no secret values printed",
+      "sourceSecretName": "source-postgres-database-url",
+      "targetSecretName": "azure-postgres-control-database-url",
+      "result": "blocked",
+      "blockedAt": "Key Vault get source-postgres-database-url",
+      "errorClass": "HTTP 403",
+      "secretValuesPrinted": false
+    },
+    "currentContainerAppJobs": {
+      "result": "no reusable source-backed reconciliation job currently available",
+      "matchingJobsSeen": [
+        {
+          "name": "job-supa-drain-ro-eus",
+          "provisioningState": "Succeeded",
+          "sourceDatabaseUrlProjected": false,
+          "targetDatabaseUrlProjected": true
+        },
+        {
+          "name": "job-supa-drain-sum-eus",
+          "provisioningState": "Succeeded",
+          "sourceDatabaseUrlProjected": false,
+          "targetDatabaseUrlProjected": true
+        },
+        {
+          "name": "job-a24-search-backfill-eus",
+          "provisioningState": "Succeeded",
+          "operation": "Azure Search backfill apply job; not a Supabase reconciliation job"
+        }
+      ],
+      "historicalJobsNotPresentInCurrentList": [
+        "job-supa-recon-eus",
+        "job-supa-final-eus",
+        "job-a24-azure-soak-eus",
+        "job-a24-search-verify-eus"
+      ]
+    }
+  },
+  "summary": {
+    "runtimeDependencyProof": "PASS",
+    "dataParityTruth": "BLOCKED",
+    "migrationActionsTaken": "NONE",
+    "searchIndexStatus": "PARTIAL",
+    "signedInQaStatus": "PARTIAL",
+    "backupRestoreStatus": "BLOCKED",
+    "shutdownRecommendation": "DO NOT freeze, pause, or delete Supabase.",
+    "exactNextAction": "Run a source-backed reconciliation job from the private Azure/operator environment that can read source-postgres-database-url, produce PK overlap and row checksums for every required table family, then migrate any missing required rows idempotently and rerun the gates."
+  },
+  "historicalParityRows": {
+    "enterpriseContextCounts": {
+      "enterprise_context_records": { "supabaseRows": 3503, "azureRows": 3503, "classification": "PARITY" },
+      "enterprise_context_facts": { "supabaseRows": 38640, "azureRows": 38640, "classification": "PARITY" },
+      "enterprise_context_evidence": { "supabaseRows": 3503, "azureRows": 3503, "classification": "PARITY" },
+      "enterprise_context_chunk_queue": { "supabaseRows": 3503, "azureRows": 3503, "classification": "PARITY" },
+      "enterprise_context_chunks": { "supabaseRows": 15847, "azureRows": 21967, "classification": "AZURE_AHEAD" }
+    },
+    "corpusGenomeGraphCounts": {
+      "corpus_patterns": { "supabaseRows": 8987, "azureRows": 9026, "classification": "AZURE_AHEAD" },
+      "genome_patterns": { "supabaseRows": 43436, "azureRows": 43436, "classification": "PARITY" },
+      "intelligence_graph_edges": { "supabaseRows": 93743, "azureRows": 93743, "classification": "PARITY" }
+    }
+  },
+  "blockers": [
+    {
+      "gate": "Gate 2",
+      "blocker": "Fresh Supabase-vs-Azure source reconciliation could not run because this service principal receives HTTP 403 when reading source-postgres-database-url from Key Vault."
+    },
+    {
+      "gate": "Gate 2",
+      "blocker": "Current job-supa-drain-ro-eus and job-supa-drain-sum-eus definitions no longer project SOURCE_DATABASE_URL, so they cannot serve as fresh Supabase source reconciliation jobs."
+    },
+    {
+      "gate": "Gate 2",
+      "blocker": "Required table families applications, persons, person_client_memberships, engagements, source_events, source_event_*, generated_artifacts, move_artifact_*, and move_* do not have completed count/PK/checksum evidence."
+    },
+    {
+      "gate": "Gate 4",
+      "blocker": "Azure Search count proof exists historically for six tenants, but this run did not rebuild indexes or capture golden retrieval answers/citations for Lakeshore and Meridian."
+    },
+    {
+      "gate": "Gate 5",
+      "blocker": "Signed-in QA evidence exists historically for production routes, but this run did not capture Lakeshore/Meridian signed-in QA, cross-tenant leakage checks, row-level ai_egress_audit provider proof, or Supabase-free logs for the QA window."
+    },
+    {
+      "gate": "Gate 6",
+      "blocker": "Final backup proof is partial only: JSONL/table manifest exists historically, but native pg_dump, restore-test, and Supabase storage export/inventory remain missing."
+    },
+    {
+      "gate": "Gate 7",
+      "blocker": "Anand has not explicitly approved deletion after a green report, and this report is not green."
+    }
+  ]
+}
