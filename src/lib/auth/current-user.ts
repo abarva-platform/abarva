@@ -2,11 +2,18 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { auth, currentUser as clerkCurrentUser } from '@clerk/nextjs/server';
 import { resolveSessionRole } from '@/lib/auth/access-routing';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import type { ClientKey } from '@/lib/client-config';
+import { appClientKeyForTenant } from '@/lib/tenant/aliases';
 
 export type UserRole = 'maestro' | 'client_viewer' | 'observer';
 
 export interface AccessibleClient {
+  // UUID from the clients table. Keep this for data-plane joins and policy
+  // checks that scope by client_id.
   clientId: string;
+  // App tenant key (for example, "meridian"). Tenant route guards compare
+  // against this value; clientId is a UUID in production membership rows.
+  clientKey: ClientKey | null;
   name: string;
   role: UserRole;
 }
@@ -20,12 +27,27 @@ export interface CurrentUser {
   // Clerk publicMetadata.clientId · the tenant key pinned to the Clerk
   // session (e.g. `meridian`). Used as a client-access fallback when the
   // user has no rows in `person_client_memberships`.
-  metadataClientKey: string | null;
+  metadataClientKey: ClientKey | null;
   name: string;
   email: string | null;
   primaryRole: UserRole;
   accessibleClients: AccessibleClient[];
-  defaultClientId: string | null;
+  defaultClientId: ClientKey | null;
+}
+
+interface ClientMembershipClientRow {
+  id: string;
+  name: string;
+  tenant_key?: string | null;
+  slug?: string | null;
+}
+
+function clientKeyForRow(client: Pick<ClientMembershipClientRow, 'tenant_key' | 'slug' | 'name'>): ClientKey | null {
+  return (
+    appClientKeyForTenant(client.tenant_key) ??
+    appClientKeyForTenant(client.slug) ??
+    appClientKeyForTenant(client.name)
+  );
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
@@ -72,7 +94,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     }
   }
   const legacyRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, fallbackEmail);
-  const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
+  const metadataClientKey = appClientKeyForTenant(claims?.publicMetadata?.clientId);
   const fallbackName =
     [claims?.firstName, claims?.lastName].filter(Boolean).join(' ') ||
     claims?.emailAddress ||
@@ -117,24 +139,30 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   let accessibleClients: AccessibleClient[] = [];
 
   if (primaryRole === 'maestro') {
-    const { data: allClients } = await sb.from('clients').select('id, name').order('name');
-    accessibleClients = ((allClients as Array<{ id: string; name: string }> | null) ?? []).map((c) => ({
+    const { data: allClients } = await sb.from('clients').select('id, name, tenant_key, slug').order('name');
+    accessibleClients = ((allClients as ClientMembershipClientRow[] | null) ?? []).map((c) => ({
       clientId: c.id,
+      clientKey: clientKeyForRow(c),
       name: c.name,
       role: 'maestro',
     }));
   } else {
     const { data: memberships } = await sb
       .from('person_client_memberships')
-      .select('role, client:clients(id, name)')
+      .select('role, client:clients(id, name, tenant_key, slug)')
       .eq('person_id', personId);
-    accessibleClients = ((memberships as Array<{ role: UserRole; client: { id: string; name: string } | null }> | null)
+    accessibleClients = ((memberships as Array<{ role: UserRole; client: ClientMembershipClientRow | null }> | null)
       ?? [])
       .filter((m) => m.client)
-      .map((m) => ({ clientId: m.client!.id, name: m.client!.name, role: m.role }));
+      .map((m) => ({
+        clientId: m.client!.id,
+        clientKey: clientKeyForRow(m.client!),
+        name: m.client!.name,
+        role: m.role,
+      }));
   }
 
-  const defaultClientId = accessibleClients[0]?.clientId ?? null;
+  const defaultClientId = accessibleClients.find((client) => client.clientKey)?.clientKey ?? null;
 
   return {
     personId: (person as { id?: string } | null)?.id ?? resolvedPerson?.id ?? personId,
@@ -151,5 +179,5 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 export function userCanAccessClient(user: CurrentUser | null, clientId: string | null): boolean {
   if (!user || !clientId) return false;
   if (user.primaryRole === 'maestro') return true;
-  return user.accessibleClients.some((c) => c.clientId === clientId);
+  return user.accessibleClients.some((c) => c.clientId === clientId || c.clientKey === clientId);
 }

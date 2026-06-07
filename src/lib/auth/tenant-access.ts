@@ -29,6 +29,7 @@ import { resolvePinnedSessionClientKey, resolveSessionRole, type AppSessionRole 
 import { findTenantByRouteSlug, getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 import { inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import { appClientKeyForTenant } from '@/lib/tenant/aliases';
 
 export interface TenantAccessContext {
   user: CurrentUser;
@@ -71,7 +72,7 @@ function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
   }
 
   return user.accessibleClients
-    .map((client) => (isClientKey(client.clientId) ? client.clientId : null))
+    .map((client) => client.clientKey ?? appClientKeyForTenant(client.clientId))
     .filter((clientId): clientId is ClientKey => clientId !== null);
 }
 

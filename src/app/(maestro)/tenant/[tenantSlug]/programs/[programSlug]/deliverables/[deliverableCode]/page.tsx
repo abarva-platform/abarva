@@ -53,7 +53,7 @@ export default async function TenantDeliverableSeedPage({
   const viewer = await getCurrentUser();
   const canApprove =
     viewer?.primaryRole === 'maestro' ||
-    viewer?.accessibleClients.some((c) => c.clientId === context.tenant.tenantKey) ||
+    viewer?.accessibleClients.some((c) => c.clientKey === context.tenant.tenantKey) ||
     viewer?.metadataClientKey === context.tenant.tenantKey;
   const approveGateReason = !canApprove
     ? `Approval authority on ${context.tenant.displayName} deliverables belongs to members of that tenant.`
