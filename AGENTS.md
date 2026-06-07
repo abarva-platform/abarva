@@ -7,7 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Cursor Cloud specific instructions
 
 ### Stack overview
-Next.js 16.2.2 (App Router + Turbopack), React 19, Tailwind CSS 4, TypeScript 5. Auth via Clerk, data via Azure/Postgres through the data-plane adapters. Optional services degrade gracefully: Anthropic Claude, OpenAI, Stripe, Resend, PostHog. Legacy Supabase/Neo4j/Pinecone names may still exist in compatibility shims, tests, migrations, or deprecation docs; do not introduce new runtime dependencies on them.
+Next.js 16.2.2 (App Router + Turbopack), React 19, Tailwind CSS 4, TypeScript 5. Auth via Clerk, data via Azure/Postgres through the data-plane adapters. Production answer generation uses Anthropic Claude through the audited AI egress path. Optional non-reasoning utilities may degrade gracefully when configured (for example embeddings, Stripe, Resend, PostHog). Legacy Supabase/Neo4j/Pinecone names may still exist in compatibility shims, tests, migrations, or deprecation docs; do not introduce new runtime dependencies on them.
 
 ### Running the dev server
 ```
@@ -37,10 +37,25 @@ Required for data-backed pages:
 - `DATABASE_URL`
 - Any legacy `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, or `SUPABASE_SERVICE_ROLE_KEY` references are compatibility-era residue. New runtime code must use the Azure/Postgres data-plane adapters, not direct Supabase clients.
 
-Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`.
+Required for production answer generation:
+- `ANTHROPIC_API_KEY`
+
+Optional (features degrade gracefully): `STRIPE_SECRET_KEY`, `RESEND_API_KEY`, and explicitly scoped non-reasoning model utilities such as embeddings/demo audio when approved. `OPENAI_API_KEY` must not be required by Sentinel, Nexus, Source chat, Tower synthesis, or any production answer-generation path.
 
 ### Node.js version
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.
+
+## Architecture and provider enforcement
+
+These rules are executable policy, not guidance. Every agent and PR must preserve them:
+
+- Azure/Postgres via `DATABASE_URL` is the runtime data plane. Do not point runtime code, CI checks, or operator jobs at Supabase.
+- Do not add Supabase runtime imports, Supabase env requirements, Supabase host literals, or `ALLOW_LEGACY_SUPABASE_CORPUS` fallbacks.
+- Do not add Pinecone or Neo4j runtime dependencies. Retrieval and graph/data-plane work must use Azure/Postgres/Azure Search unless Anand explicitly opens a migration lane.
+- Production answer generation for Sentinel, Nexus, Source chat, Tower synthesis, CXO answers, and agent reasoning must use Anthropic/Claude through the audited egress path. Do not require `OPENAI_API_KEY` for production answer synthesis.
+- OpenAI may appear only in explicitly scoped non-reasoning utilities (for example embeddings or demo audio) and must not be imported or required by production answer-generation paths.
+- Do not reintroduce Vercel as the production runtime or deployment path. `app.abarva.ai` is Azure Container Apps; Vercel references belong only in deprecation docs or explicit shutdown/runbook work. Tool/plugin availability in a local agent environment does **not** authorize Vercel deploys, Vercel env changes, or Vercel production assumptions.
+- Run `npm run audit:architecture-rules` before opening or updating PRs that touch runtime, provider, data-plane, CI, or config files. The GitHub `Architecture Rules` workflow enforces this on PRs.
 
 ## Release control discipline
 
