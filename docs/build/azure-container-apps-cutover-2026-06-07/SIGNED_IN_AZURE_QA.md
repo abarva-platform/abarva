@@ -1,5 +1,51 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 ~04:30Z — test revision deployed; signed-in QA still BLOCKED
+
+**0-traffic test revision deployed safely (production traffic untouched):**
+
+- `ca-abarva-web-lab-eastus` switched to **multiple** revision mode; traffic pinned
+  to the **named** current revision `…--0000051 = 100%` BEFORE deploying, so the new
+  revision took **0%**.
+- New revision **`ca-abarva-web-lab-eastus--provqa`** running image
+  `cutover-provider-anthropic-20260607-683eb933` (digest `sha256:befdfdd2…`),
+  `runningState=Running`, `traffic=0`.
+- Traffic verified: `…--0000051 = 100`, `provqa = 0`. **DNS unchanged, prod traffic unchanged.**
+
+**Liveness on the provider image (revision-scoped FQDN, unauthenticated):**
+
+- `GET /` → **HTTP 200** (36 KB); **no `supabase.co`/`pooler.supabase.com`/`supabase`** refs.
+- `GET /sign-in` → **HTTP 200**.
+- → The Anthropic provider image **boots healthy on Azure Container Apps**.
+
+**Signed-in QA — STILL BLOCKED (stop-and-report):**
+
+- Protected routes on the test revision (`/intelligence`, `/strategic-moves`,
+  `/source`, `/tower`, `/admin`) all return the Clerk auth wall — e.g.
+  `/strategic-moves` → `https://boss-griffon-61.accounts.dev/sign-in?redirect_url=…`.
+- I have **no Clerk session/credentials**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+  `CLERK_SECRET_KEY`, and `DEMO_LOGIN_PASSWORD` are all **absent** here, and the
+  Key Vault holding them (`kv-abarva-lab-001`) is `publicNetworkAccess=Disabled`
+  (unreachable from Cursor Cloud). So I cannot sign in to QA the 6 surfaces or run
+  the golden questions, and cannot observe runtime `ai_egress_audit`.
+
+### EXACT missing requirement to complete signed-in QA
+
+One of the following for the Clerk instance **`boss-griffon-61.accounts.dev`**:
+
+1. An authenticated **Clerk session cookie** (e.g. `__session` JWT) for a tenant
+   test user (meridian-cdao / a lakeshore persona), provided to this environment; OR
+2. **Test-user credentials** (email + password) for that Clerk instance; OR
+3. The `DEMO_LOGIN_PASSWORD` value + demo-login flow (if demo auth is enabled).
+
+The test revision `…--provqa` is left deployed at 0% traffic, ready for a
+Clerk-capable operator to QA immediately (sign in against its revision FQDN, run
+the 6 surfaces + Lakeshore/Meridian golden questions, confirm
+`ai_egress_audit.provider=anthropic`, then record results here). To roll back the
+revision-mode change: re-pin traffic and `az containerapp revision set-mode … --mode single`.
+
+---
+
 ## Status: BLOCKED — signed-in QA cannot be completed from this environment
 
 Per the cutover guardrail ("stop and report if signed-in QA cannot be
