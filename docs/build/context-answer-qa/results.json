@@ -1,6 +1,7 @@
 {
   "audit": "grounded-cxo-answer-quality",
   "date": "2026-06-07",
+  "status": "PRE_RESTORE_AUDIT_SUPERSEDED_BY_CONTEXT_RESTORE",
   "runtime": {
     "image": "acrabarvalab001.azurecr.io/abarva/web:cutover-main-20260607-70c4f98bf",
     "image_digest": "sha256:4b448827b4067a95a46f953c5e53ae62a6a7bc755e37604137b645f61b35e381",
@@ -8,31 +9,59 @@
     "db": "abarva_control@10.43.1.4",
     "method": "real askIntelligence headless in job-abarva-private-operator-eus; Azure Postgres + Azure Search only"
   },
-  "azure_runtime_inventory": {
+  "restore_supersession": {
+    "restored_at_utc": "2026-06-07T20:12:49Z",
+    "source": "Azure Blob final backup supabase-final-backups/supabase-final-20260607-001",
+    "enterprise_context_sources": 13,
+    "enterprise_context_source_files": 57,
+    "enterprise_context_records": 3503,
+    "enterprise_context_facts": 38640,
+    "enterprise_context_relationships": 820,
+    "enterprise_context_evidence": 3503,
+    "enterprise_context_template_runs": 2,
+    "enterprise_context_chunk_queue": 3503,
+    "enterprise_context_chunks": 15847,
+    "search_rebuild": {
+      "job": "job-a24-search-rebuild-eus-avx6q5m",
+      "verify_job": "job-a24-search-verify-eus-wnqa4j0",
+      "tenant_context_v1_observed": {
+        "apex-retail": 6497,
+        "first-capital": 400,
+        "lakeshore-holdings": 1329,
+        "meridian-health": 3503,
+        "northstar-clinical": 878,
+        "skyharbor-air": 3240
+      }
+    }
+  },
+  "azure_runtime_inventory_after_restore": {
     "corpus_patterns": 9026,
     "genome_patterns": 43436,
     "intelligence_graph_edges": 93743,
     "applications": 232,
-    "enterprise_context_star_tables": "ABSENT (do not exist in abarva_control; Supabase-only)"
+    "enterprise_context_chunks": 15847,
+    "enterprise_context_records": 3503,
+    "enterprise_context_facts": 38640,
+    "orphan_client_ids": 0
   },
-  "provider_proof_ai_egress_audit": [
+  "provider_proof_ai_egress_audit_pre_restore": [
     {"workflow": "intelligence-ask-synthesis", "provider": "anthropic", "route": "anthropic-direct", "decision": "allow"},
     {"workflow": "intelligence-ask-followups", "provider": "anthropic", "route": "anthropic-direct", "decision": "allow"},
     {"workflow": "intelligence-ask-intent-classifier", "provider": "anthropic", "route": "anthropic-direct", "decision": "allow"},
     {"workflow": "intelligence-ask-worldview-embedding", "provider": "openai", "route": "openai-direct", "decision": "mixed-allow-deny", "note": "embedding utility only, not reasoning"}
   ],
-  "probes": [
-    {"client": "Lakeshore", "dimension": "corpus_patterns_treasury", "stub": false, "not_loaded": false, "sources": 8, "classification": "FULLY_ANSWERABLE", "answer_head": "Three patterns apply directly to your Kyriba modernization: cash visibility discipline; bank connectivity matrix; Kyriba-to-bank cutover dual-run."},
-    {"client": "Lakeshore", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 0, "classification": "NOT_LOADED", "answer_head": "Executive rosters and the technology stack aren't in the loaded tenant data for this session. I don't want to fabricate names."},
-    {"client": "Apex", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 4, "classification": "NOT_LOADED", "answer_head": "I don't have your executive bench or your data and analytics stack in the loaded tenant context; neither org-structure nor systems-inventory is ingested."},
-    {"client": "Apex", "dimension": "corpus_patterns", "stub": false, "not_loaded": false, "sources": 1, "classification": "PARTIALLY_ANSWERABLE", "answer_head": "One pattern with strong corpus backing and one from reasoning about your initiative mix."},
-    {"client": "Meridian", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 5, "classification": "NOT_LOADED", "answer_head": "I won't name a CEO/CFO/CIO/CDAO, and I won't invent a stack (Epic Cogito, Snowflake, ...) — those classes haven't been ingested for this session."},
-    {"client": "Meridian", "dimension": "corpus_patterns_clinical", "stub": false, "not_loaded": false, "sources": 0, "classification": "RETRIEVAL_FAILURE", "answer_head": "Reasoning from domain expertise here, not a loaded corpus match."}
+  "pre_restore_probes": [
+    {"client": "Lakeshore", "dimension": "corpus_patterns_treasury", "stub": false, "not_loaded": false, "sources": 8, "classification": "FULLY_ANSWERABLE_PRE_RESTORE", "answer_head": "Three patterns apply directly to your Kyriba modernization: cash visibility discipline; bank connectivity matrix; Kyriba-to-bank cutover dual-run."},
+    {"client": "Lakeshore", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 0, "classification": "SUPERSEDED_BY_RESTORE", "answer_head": "Previously refused because enterprise_context_* was absent at probe time; rerun after restore."},
+    {"client": "Apex", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 4, "classification": "SUPERSEDED_BY_RESTORE", "answer_head": "Previously refused because enterprise_context_* was absent at probe time; rerun after restore."},
+    {"client": "Apex", "dimension": "corpus_patterns", "stub": false, "not_loaded": false, "sources": 1, "classification": "PARTIALLY_ANSWERABLE_PRE_RESTORE", "answer_head": "One pattern with strong corpus backing and one from reasoning about your initiative mix."},
+    {"client": "Meridian", "dimension": "executives_and_stack", "stub": false, "not_loaded": true, "sources": 5, "classification": "SUPERSEDED_BY_RESTORE", "answer_head": "Previously refused because enterprise_context_* was absent at probe time; rerun after restore."},
+    {"client": "Meridian", "dimension": "corpus_patterns_clinical", "stub": false, "not_loaded": false, "sources": 0, "classification": "RETRIEVAL_FAILURE_PRE_RESTORE", "answer_head": "Reasoning from domain expertise here, not a loaded corpus match."}
   ],
   "conclusions": {
-    "synthesis": "Anthropic/Claude only (proven via ai_egress_audit); grounded; fail-closed; no hallucination/SYNTHETIC_MISLABEL observed",
-    "fact_layer": "enterprise_context_* absent in Azure -> ALL CXO fact questions NOT_LOADED for all clients (ingestion/migration gap, not a model bug)",
-    "pattern_layer": "present in Azure; coverage uneven (Lakeshore strong, Apex partial, Meridian weak)",
-    "supabase": "MUST NOT be retired; holds the only copy of enterprise_context_*"
+    "synthesis": "Pre-restore probe proved Anthropic/Claude reasoning and fail-closed behavior.",
+    "fact_layer": "The original absent-fact-layer conclusion is superseded. enterprise_context_* is now restored in Azure from final backup.",
+    "pattern_layer": "present in Azure; coverage uneven and should be retested after restore",
+    "supabase": "No runtime fallback added; Supabase account deletion remains explicit-delete gated after final QA/retention approval."
   }
 }
