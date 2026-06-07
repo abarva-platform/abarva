@@ -44,10 +44,16 @@ label lookup, including the current P5 "Mobilize & Handoff" label.
 
 ## QA / Validation
 
-- Pending local validation:
-  - `npm run audit:runtime-supabase-imports:guard`
-  - `npx jest src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx --no-coverage`
-  - `npm run release:check`
+- PASS — `npm run audit:runtime-supabase-imports:guard`
+  - Result: runtime helper matches remain limited to the single allowlisted
+    compatibility shim, `src/lib/supabase-server.ts`.
+- PASS — `npx jest src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx --no-coverage`
+  - Result: 1 suite / 2 tests passed.
+  - Note: Jest emitted pre-existing duplicate manual mock warnings for
+    `mdast-util-from-markdown`, `mdast-util-gfm`, and
+    `micromark-extension-gfm`; the focused suite still passed.
+- PASS — `npm run release:check`
+  - Result: Release Control Gate passed; Pilot Data Loader Gate passed.
 
 ## Rollout Plan
 
@@ -70,4 +76,9 @@ code revert and redeploy.
 
 ## Known Gaps
 
-None known.
+No runtime smoke was run against a live Azure Container Apps session because the
+local cloud agent does not have authenticated Clerk + tenant credentials for
+the protected Strategic Moves pages. The validated scope is the code path and
+guardrail: the panel no longer imports the Supabase-named helper, the latest
+deliverable read is parameterized through `azureRead`, and the runtime import
+guard permits only the existing compatibility shim.
