@@ -63,7 +63,9 @@ vars, a Supabase-hosted `DATABASE_URL`, or the deleted Supabase project ref.
 - Pass: `git diff --check`.
 - Pass: `npm run release:check -- --base origin/main --head HEAD`.
 - Pass: `npx jest src/lib/runtime/__tests__/supabaseBootGuard.test.ts --runInBand`.
+- Pass: `npx jest src/lib/runtime/__tests__/supabaseBootGuard.test.ts src/lib/corpus/__tests__/db.test.ts --runInBand` on the Supabase deletion cleanup branch. Jest emitted pre-existing duplicate manual mock warnings for `mdast-util-from-markdown`, `mdast-util-gfm`, and `micromark-extension-gfm`; both targeted suites passed.
 - Pass: `npx eslint src/lib/runtime/supabaseBootGuard.ts src/lib/runtime/__tests__/supabaseBootGuard.test.ts src/instrumentation.ts`.
+- Pass: `npx eslint src/lib/runtime/supabaseBootGuard.ts src/lib/runtime/__tests__/supabaseBootGuard.test.ts src/lib/corpus/__tests__/db.test.ts`.
 - Pass: `npx tsc --noEmit --pretty false`.
 - Pass: `npm run audit:runtime-supabase-imports:guard` on 2026-06-07. The
   guard allowed exactly one compatibility helper,
