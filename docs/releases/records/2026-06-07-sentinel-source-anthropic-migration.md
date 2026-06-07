@@ -68,7 +68,10 @@ follow-up and are documented as the remaining Anthropic-only cleanup.
   `CLERK_SECRET_KEY`, `DEMO_LOGIN_PASSWORD`, and any Clerk `__session` cookie are
   absent), and repeated mint attempts fail before HTTP with missing
   `CLERK_SECRET_KEY`. Protected Sentinel/Source paths still cannot be exercised
-  from here.
+  from here. Latest all-persona mint command:
+  `BASE_URL=https://ca-abarva-web-lab-eastus--provqa.agreeableocean-2c1472e6.eastus.azurecontainerapps.io npm run auth:agent-client-states -- --refresh`;
+  blocked for all 8 canonical personas and generated non-secret report
+  `reports/agent-client-auth/agent-client-auth-2026-06-07T05-16-42-634Z.md`.
 - **Blocked / not run:** signed-in live Sentinel Ask + Source chat QA (no Clerk
   session in this environment). This is the gating requirement before production
   — confirm Claude answers are advisor-quality, citations intact, streaming/UX

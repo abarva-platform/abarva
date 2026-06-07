@@ -1,5 +1,26 @@
 # Signed-in Azure Container Apps QA — 2026-06-07
 
+## UPDATE 2026-06-07 05:16Z — all-persona auth-state mint retried against provqa
+
+Re-ran the repo helper against the revision-scoped `provqa` FQDN after installing
+dependencies from `package-lock.json`.
+
+- Command: `BASE_URL=https://ca-abarva-web-lab-eastus--provqa.agreeableocean-2c1472e6.eastus.azurecontainerapps.io npm run auth:agent-client-states -- --refresh`
+- Result: **FAILED before ticket creation / browser sign-in** for all 8 canonical
+  personas (`apexretail-cio`, `meridian-cdao`, `firstcapital-cio`,
+  `northstar-cio`, `skyharbor-cto`, `skyharbor-admin`, `lakeshore-cfo`,
+  `lakeshore-cio`).
+- Exact non-secret error on every persona:
+  `Missing CLERK_SECRET_KEY. Use a local .env.local; never commit it.`
+- Generated report: `reports/agent-client-auth/agent-client-auth-2026-06-07T05-16-42-634Z.md`
+  (no live session cookie was minted).
+
+Conclusion unchanged: this VM still cannot mint Clerk-backed storage states because
+`CLERK_SECRET_KEY` is absent at runtime. A new VM/run with Clerk secrets injected at
+provisioning is required before signed-in QA can proceed.
+
+---
+
 ## UPDATE 2026-06-07 05:16Z — HTTP 200 / no HTTP 500 public smoke refreshed
 
 Re-checked the revision-scoped provider QA host from this VM:
