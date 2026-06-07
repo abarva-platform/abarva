@@ -48,6 +48,9 @@ Static validation passed (provider-audit, tsc, eslint, release-check); image
 `abarva/web:cutover-provider-anthropic-20260607-683eb933` built. **Signed-in QA is
 BLOCKED** (no Clerk session; web app in Single revision mode). See
 `docs/build/azure-container-apps-cutover-2026-06-07/SIGNED_IN_AZURE_QA.md`.
+Repeatable provider/audit proof now lives at
+`docs/build/azure-container-apps-cutover-2026-06-07/PROVIDER_AUDIT_PROOF.md`
+(`npm run audit:provider-proof` plus live `ai_egress_audit` SQL).
 
 ## What remains before sunset-ready
 
