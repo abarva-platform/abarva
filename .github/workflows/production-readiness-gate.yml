@@ -164,8 +164,8 @@ jobs:
       - name: Run production-readiness-validator tests
         run: npx jest src/__tests__/integration/admin/production-readiness-validator.test.ts --no-coverage
 
-      - name: Enforce runtime Supabase import guard
-        run: npm run audit:runtime-supabase-imports:guard
+      - name: Enforce no-Supabase runtime proof
+        run: npm run audit:no-supabase-runtime-proof
 
       - name: Enforce deprecated pattern table write guard
         run: npm run audit:deprecated-pattern-table-writes
