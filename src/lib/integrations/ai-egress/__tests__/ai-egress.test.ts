@@ -41,7 +41,32 @@ describe("AI egress control plane Layer 1", () => {
     expect(classifyAiPayload()).toBe("confidential");
   });
 
-  it("denies external Claude by default and writes an audit record without calling the adapter", async () => {
+  it("allows Claude under the default first-party policy (Anthropic is sanctioned, not external)", async () => {
+    const auditSink = createMemoryAiEgressAuditSink();
+    const adapter = jest.fn(async () => ({ response: "first-party answer" }));
+
+    const result = await callModel({
+      tenantId: "00000000-0000-0000-0000-000000000001",
+      workflow: "unit-test",
+      provider: "anthropic",
+      route: "anthropic-direct",
+      model: "claude-sonnet-4-6",
+      prompt: "confidential prompt",
+      policy: CONSERVATIVE_TENANT_AI_POLICY,
+      adapter,
+      auditSink,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(adapter).toHaveBeenCalledTimes(1);
+    expect(auditSink.records[0]).toMatchObject({
+      policyDecision: "allow",
+      provider: "anthropic",
+      route: "anthropic-direct",
+    });
+  });
+
+  it("denies Claude only when a tenant explicitly disables it (allowClaude:false)", async () => {
     const auditSink = createMemoryAiEgressAuditSink();
     const adapter = jest.fn(async () => ({ response: "should not run" }));
 
@@ -52,7 +77,7 @@ describe("AI egress control plane Layer 1", () => {
       route: "anthropic-direct",
       model: "claude-sonnet-4-6",
       prompt: "confidential prompt",
-      policy: CONSERVATIVE_TENANT_AI_POLICY,
+      policy: { ...CONSERVATIVE_TENANT_AI_POLICY, allowClaude: false },
       adapter,
       auditSink,
     });
@@ -107,7 +132,7 @@ describe("AI egress control plane Layer 1", () => {
     expect(auditSink.records).toHaveLength(2);
     expect(auditSink.records[0]).toMatchObject({
       policyDecision: "allow",
-      decisionReason: "tenant policy allows this AI egress route",
+      decisionReason: "Anthropic is the sanctioned first-party reasoning provider",
     });
     expect(auditSink.records[1].responseHash).toHaveLength(64);
     expect(auditSink.records[1].requestMetadata).toMatchObject({
@@ -351,7 +376,7 @@ describe("AI egress control plane Layer 1", () => {
       route: "anthropic-direct",
       model: "claude-sonnet-4-6",
       prompt: "confidential prompt",
-      policy: CONSERVATIVE_TENANT_AI_POLICY,
+      policy: { ...CONSERVATIVE_TENANT_AI_POLICY, allowClaude: false },
       auditSink,
       clientFactory,
     });
