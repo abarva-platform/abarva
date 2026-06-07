@@ -211,24 +211,81 @@ flowchart LR
 <div class="lay"><b>Plain English (the RAG triangle):</b> three parts working together — <b>what we know</b> (corpus + your context), <b>retrieval</b> (finding the right bits for this question), and <b>the LLM</b> (reasoning over those bits into an answer). Weakness in any corner shows up as a weak answer. Today our weak corner is the "context" side for fact questions.</div>
 <div class="hood"><b>Under the hood:</b> Runtime is Azure Container Apps (no Vercel); data plane is Azure private Postgres + Azure AI Search; reasoning is Anthropic-only. Auth = Clerk; tenant scoping + RLS enforce isolation.</div>
 
-<h2 id="s8">8 · How to train / improve Sentinel &amp; Nexus</h2>
-<p><b>Key reframe:</b> "training" here is mostly <b>data + retrieval + prompt</b>, not fine-tuning the base model. Ranked by impact:</p>
+<h2 id="s8">8 · How to train / improve Sentinel &amp; Nexus (the best-in-class process)</h2>
+<p><b>Key reframe:</b> "training" here is <b>not</b> fine-tuning Claude's brain. It is a repeatable loop of <b>(1) load the right data → (2) make retrieval find it → (3) tune the prompt → (4) measure with a question battery → (5) fix the gaps</b>. Base-model fine-tuning is almost never the first move; better data + better retrieval wins.</p>
 <div class="mermaid">
 flowchart LR
-  L[Load substrate<br/>enterprise_context_*] --> RT[Retrieval quality<br/>embeddings/recall@k/hybrid]
-  RT --> CP[Corpus/pattern depth<br/>packs + per-tenant]
-  CP --> PR[Prompt/instruction tuning]
-  PR --> EV[Eval loop<br/>golden-QA + feedback]
-  EV --> L
+  L[1 · Load substrate<br/>per dimension] --> RT[2 · Retrieval<br/>embeddings · recall@k]
+  RT --> PR[3 · Prompt/instructions]
+  PR --> EV[4 · Question battery<br/>golden-QA + grading]
+  EV --> FX[5 · Fix gaps<br/>+ feedback]
+  FX --> L
 </div>
+
+<h3>8.1 · What we have for Meridian today (worked example)</h3>
+<p class="small">Loaded via the governed loader as <b>15 structured files → ~38,640 facts</b>. <span class="w">Note: these currently live in legacy Supabase and are <b>not yet in the Azure runtime DB</b> — so today they are NOT_LOADED for live answers until migrated. The inventory below is what exists to migrate.</span></p>
+<table>
+<tr><th>Loaded source file</th><th>Dimension it feeds</th><th>Answerable CXO questions (once in Azure)</th></tr>
+<tr><td><code>03-cmdb-applications-services.csv</code>, <code>04-ci-relationships-dependencies.csv</code></td><td>Applications / systems / data &amp; analytics stack / integrations</td><td>"What is our current analytics stack?" (Epic Clarity, SQL Server, Tableau, SAS live here as <code>business_service</code>/<code>ci_id</code> facts)</td></tr>
+<tr><td><code>05-vendors-contract-inventory.csv</code>, <code>06-renewal-calendar.csv</code></td><td>Vendors / contracts / renewals</td><td>"Which contracts renew this quarter? Who are our top vendors?"</td></tr>
+<tr><td><code>01-org-decision-rights.csv</code>, <code>02-facilities-business-units.csv</code></td><td>Org / decision rights / business units / geographies</td><td>"Who approves IT spend? What are our business units?"</td></tr>
+<tr><td><code>13-initiative-portfolio.csv</code></td><td>Initiatives / roadmap</td><td>"What initiatives are active and who owns them?"</td></tr>
+<tr><td><code>15-risk-compliance-register.csv</code>, <code>12-slas.csv</code>, <code>09-11 incidents/problems/changes</code></td><td>Risks / controls / SLAs / operations</td><td>"What are our top risks? Which SLAs are breached?"</td></tr>
+<tr><td><code>07-spend-baseline.csv</code>, <code>08-policies-procedures.csv</code>, <code>14-data-domains-stewardship.csv</code></td><td>Financial baseline / policies / data governance</td><td>"What's our IT spend baseline? Who owns the patient-data domain?"</td></tr>
+</table>
+<div class="lay"><b>Plain English:</b> Meridian already has a rich "factory record" of its systems, vendors, contracts, org, risks and initiatives — 38,640 facts. The blocker is purely that they sit in the old database; once migrated, most CXO questions become answerable. Note the data-and-analytics stack is already in there (inside the CMDB file) — it just needs to be retrievable.</div>
+
+<h3>8.2 · What to ADD for Meridian (concrete gaps + examples)</h3>
+<table>
+<tr><th>Gap</th><th>Add this (format)</th><th>Example rows / content</th><th>Becomes</th></tr>
+<tr><td>Named executives + reporting lines</td><td><code>executives.csv</code> (structured)</td><td><code>name,title,function,reports_to</code> → "Jane Doe, CFO, Finance, CEO"</td><td><code>person</code> facts (answer "who is our CFO?")</td></tr>
+<tr><td>KPIs by function with targets</td><td><code>kpi-register.csv</code></td><td><code>function,kpi,current,target,owner,period</code> → "Revenue Cycle, denial rate, 7.8%, &lt;5%, VP RCM, FY26"</td><td><code>kpi</code> facts (answer "KPIs by function?")</td></tr>
+<tr><td>Current-state stack as a clean narrative</td><td><code>tech-stack-summary.docx/pdf</code> (document)</td><td>1–2 pages: "Analytics = Epic Cogito/Clarity on SQL Server; BI = Tableau; statistical = SAS; …"</td><td>document-backed <code>chunks</code>+<code>facts</code> with page citations</td></tr>
+<tr><td>Strategy / roadmap narrative</td><td><code>strategy-2026.pdf</code></td><td>Board deck / strategy memo</td><td>chunks (answer "what's our AI roadmap?")</td></tr>
+<tr><td>Org chart (full reporting tree)</td><td><code>org-chart.csv</code></td><td><code>person,manager,team,headcount</code></td><td>graph edges + facts (answer "how big is the security team?")</td></tr>
+</table>
+<div class="hood"><b>Under the hood:</b> structured CSV/JSON commits to <code>enterprise_context_facts</code> on schema-validation pass; XLSX/PDF/DOCX extract to <code>enterprise_context_chunks</code> with source-location evidence and enter review-required status unless a tested template parser proves deterministic mapping (per <code>AGENTS.md</code> truth standard).</div>
+
+<h3>8.3 · How to make it available (the governed path)</h3>
 <ol>
-<li><b>Load the missing substrate (the #1 lever).</b> Migrate/re-ingest <code>enterprise_context_*</code> to Azure and promote chunks → facts. Without this, fact questions stay NOT_LOADED no matter how good the model is.</li>
-<li><b>Retrieval quality.</b> Per-tenant embedding/index coverage; measure <b>recall@k</b> (was the right evidence in the top results?); hybrid retrieval (vector + keyword + graph); correct grounding namespaces.</li>
-<li><b>Corpus / pattern depth.</b> Pattern packs, genome packs, and function packs define "what good looks like"; deepen per-tenant corpus (Meridian/Apex are thin vs Lakeshore).</li>
-<li><b>Prompt / instruction tuning.</b> The four-layer reasoning instructions, <code>response-policy</code>, and citation discipline — tune wording, not the model.</li>
-<li><b>Evaluation loop.</b> Golden-QA per tenant + recall@k; reuse the eval harnesses (<code>src/__tests__/atlas-eval</code>, <code>scripts/qa/agent-grounding-runner.ts</code>); capture outcomes (<code>outcome_pattern_feedback</code>) and iterate.</li>
+<li><b>Upload</b> via the Admin bulk/zip loader → <b>Azure Blob</b> staging (lineage in <code>enterprise_context_source_files</code>).</li>
+<li><b>Parse/extract</b> → <code>records</code> → <code>chunks</code> (with source file/page/row citations).</li>
+<li><b>Commit facts</b> (structured) / <b>review-queue</b> (document-derived low-confidence).</li>
+<li><b>Embed</b> chunks (vector) and <b>refresh the Azure AI Search index</b> (<code>tenant-context-v1</code>).</li>
+<li><b>Prove retrieval</b>: signed-in question returns the new evidence, cited. Only then is it "available."</li>
 </ol>
-<div class="lay"><b>Plain English:</b> You make Nexus smarter mostly by feeding it your real data and making the lookup sharper — not by "retraining the brain." Base-model fine-tuning is rarely the right first move; better data + better retrieval almost always wins.</div>
+<p class="small">Each state is reported separately — "uploaded" ≠ "committed" ≠ "retrievable." A dimension is "best-in-class ready" only when step 5 passes.</p>
+
+<h3>8.4 · The question battery — how many tests per topic</h3>
+<p>Define a <b>golden-QA set per dimension</b> with a known correct answer derived from the loaded data (the "golden key"). Recommended cadence:</p>
+<table>
+<tr><th>Per dimension</th><th>Count</th><th>Purpose</th></tr>
+<tr><td>Positive (should answer + cite)</td><td>6</td><td>Confirm grounded retrieval + correct synthesis</td></tr>
+<tr><td>Partial (some evidence)</td><td>2</td><td>Confirm "here's what's known, here's the gap"</td></tr>
+<tr><td>Negative (not loaded)</td><td>2</td><td>Confirm it refuses to fabricate</td></tr>
+<tr><td><b>Per-dimension total</b></td><td><b>10</b></td><td></td></tr>
+</table>
+<p>~24 dimensions → <b>~240 golden questions per client</b>, plus <b>~2 tenant-isolation probes per dimension on a sample</b> (ask Meridian's question scoped as Lakeshore → must return zero Meridian facts).</p>
+<table>
+<tr><th>Metric</th><th>What it measures</th><th>Best-in-class threshold</th></tr>
+<tr><td>recall@5</td><td>Was the gold evidence in the top 5 retrieved?</td><td>≥ 0.90</td></tr>
+<tr><td>citation-support rate</td><td>Do cited sources actually back each claim?</td><td>≥ 0.95</td></tr>
+<tr><td>hallucination rate (negatives)</td><td>Did it invent facts when none were loaded?</td><td><b>0</b> (hard gate)</td></tr>
+<tr><td>answer completeness</td><td>Does the answer cover the golden key?</td><td>≥ 0.85</td></tr>
+<tr><td>tenant-leakage</td><td>Any cross-tenant facts/citations?</td><td><b>0</b> (hard gate)</td></tr>
+</table>
+<p><b>Cadence:</b> per-ingest smoke (1–2 questions/dimension), <b>nightly full battery</b> (~240), and a <b>pre-release gate</b> (battery must pass thresholds). Reuse the harnesses (<code>src/__tests__/atlas-eval</code>, <code>scripts/qa/agent-grounding-runner.ts</code>) and the headless <code>askIntelligence</code> operator-job runner; capture outcomes to <code>outcome_pattern_feedback</code>.</p>
+
+<h3>8.5 · Maturity model (definition of best-in-class)</h3>
+<table>
+<tr><th>Level</th><th>State</th></tr>
+<tr><td>L0 Absent</td><td>Dimension not loaded → NOT_LOADED (Meridian fact layer today)</td></tr>
+<tr><td>L1 Loaded</td><td>Committed to Azure facts/chunks, embedded + indexed</td></tr>
+<tr><td>L2 Retrievable</td><td>recall@5 ≥ 0.90 on the golden set</td></tr>
+<tr><td>L3 Answerable</td><td>completeness ≥ 0.85, citation-support ≥ 0.95, 0 hallucination</td></tr>
+<tr><td>L4 Best-in-class</td><td>L3 + benchmarked to function-pack depth + monitored nightly + feedback-improving</td></tr>
+</table>
+<div class="lay"><b>Plain English:</b> "Trained well" = every topic reaches Level 3+: the data is loaded, the lookup reliably finds it, the answer is complete and cited, and it never makes things up — and we prove it with ~10 test questions per topic, every night.</div>
 
 <h2 id="s9">9 · Glossary</h2>
 <table>
