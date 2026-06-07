@@ -63,10 +63,11 @@ Sentinel Ask / Source chat remain out of scope for this release record.
 - Recreated cleanly on `cursor/anthropic-provider-qa-cutover-a092` from latest
   `main` (`54f5cab2f`) after PR #3243 was closed/conflicting.
 - `npx jest src/lib/intelligence/ask/__tests__/provider-audit.test.ts src/lib/intelligence/ask/__tests__/openai-runtime-contract.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts --runInBand`
-  — passed (12).
-- Pending this update: rerun provider-audit after adding Sentinel Ask audit
-  envelope assertions and Ask utility Anthropic assertions.
-- `tsc --noEmit`, `eslint`, `npm run release:check` — passed.
+  — passed (14) after adding Sentinel Ask utility Anthropic assertions.
+- `npx eslint src/lib/intelligence/ask/classifier.ts src/lib/intelligence/ask/followups.ts src/lib/intelligence/ask/__tests__/provider-audit.test.ts src/lib/intelligence/ask/__tests__/openai-runtime-contract.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts`
+  — passed.
+- `npx tsc --noEmit --pretty false` — passed.
+- `npm run release:check` — passed.
 - Env-var blocker documentation follow-up: `npm run release:check` and
   `npm run audit:provider-proof` — passed in this VM; Jest not rerun here because
   `node_modules/` is absent.

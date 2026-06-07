@@ -46,10 +46,10 @@ path and the Supabase-to-Azure drain script now redact `supabase.co` and
 
 ## QA / Validation
 
-- Planned before release:
+- Not run yet; planned before release:
   `npx jest src/lib/observability/__tests__/runtime-log-redaction.test.ts src/lib/corpus/__tests__/db.test.ts --runInBand`.
-- Planned before release: `npx eslint` on changed TypeScript files.
-- Planned before release: `npm run release:check -- --base origin/main --head HEAD`.
+- Not run yet; planned before release: `npx eslint` on changed TypeScript files.
+- Not run yet; planned before release: `npm run release:check -- --base origin/main --head HEAD`.
 
 ## Rollout Plan
 

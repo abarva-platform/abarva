@@ -35,7 +35,8 @@ Sentinel and Source LLM-backed flows now route their user-facing model generatio
 
 ## QA / Validation
 
-- Pending in this pre-test revision.
+- Not run in the pre-test revision that introduced this record; local validation
+  is tracked by the follow-up branch evidence before release.
 
 ## Rollout Plan
 

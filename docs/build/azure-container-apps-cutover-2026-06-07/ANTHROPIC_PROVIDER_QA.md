@@ -37,7 +37,7 @@ latest `main` (`54f5cab2f`), since the prior PR (#3243) was closed/conflicting.
 
 - `npm run audit:provider-proof` → **passed**. See
   `PROVIDER_AUDIT_PROOF.md` for the repeatable verifier and live audit-row SQL.
-- `npx jest provider-audit.test.ts openai-runtime-contract.test.ts sentinel-chat-llm.test.ts` → **10 passed**.
+- `npx jest provider-audit.test.ts openai-runtime-contract.test.ts sentinel-chat-llm.test.ts` → **14 passed**.
 - `tsc --noEmit` → **passed**.
 - `eslint` (changed files) → **passed**.
 - `npm run release:check` → **passed**.
