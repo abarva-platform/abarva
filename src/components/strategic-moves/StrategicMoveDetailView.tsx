@@ -1,17 +1,17 @@
-import Link from 'next/link';
-import { Suspense } from 'react';
-import styles from './StrategicMoves.module.css';
-import { PhaseRail } from './PhaseRail';
-import { MoveArtifactUpload } from './MoveArtifactUpload';
-import { NexusCurrentStateBriefingPanel } from './NexusCurrentStateBriefingPanel';
-import { StrategicMoveDetailClient } from './StrategicMoveDetailClient';
-import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
-import { BoardArtifactsPanel } from './BoardArtifactsPanel';
-import { MoveToSourceHandoffCta } from './MoveToSourceHandoffCta';
-import type { StrategicMove } from '@/lib/programs/types.ui';
-import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
+import Link from "next/link";
+import { Suspense } from "react";
+import styles from "./StrategicMoves.module.css";
+import { PhaseRail } from "./PhaseRail";
+import { MoveArtifactUpload } from "./MoveArtifactUpload";
+import { NexusCurrentStateBriefingPanel } from "./NexusCurrentStateBriefingPanel";
+import { StrategicMoveDetailClient } from "./StrategicMoveDetailClient";
+import { PhaseDocumentsPanel } from "./PhaseDocumentsPanel";
+import { BoardArtifactsPanel } from "./BoardArtifactsPanel";
+import { MoveToSourceHandoffCta } from "./MoveToSourceHandoffCta";
+import type { StrategicMove } from "@/lib/programs/types.ui";
+import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
-type Tab = 'overview' | 'documents' | 'activity';
+type Tab = "overview" | "documents" | "activity";
 
 /** A Source event already linked back to this Move, when one exists. */
 export interface LinkedSourceEvent {
@@ -31,28 +31,45 @@ interface Props {
   decisionThreadId?: string | null;
   /** Intelligence Ask session that originated this Move, when one exists. */
   originatingIntelligenceSessionId?: string | null;
+  /** Discovery Intake (Tier B): gates the current-state assessment template
+   *  download link. Computed server-side from `discovery_intake_v2`. */
+  discoveryIntakeEnabled?: boolean;
 }
 
 function formatRole(role: string): string {
-  return role.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  return role.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function verifiedFallback(phase: number): string {
-  if (phase >= 5) return '— tracked (pending)';
-  return '— pending verification';
+  if (phase >= 5) return "— tracked (pending)";
+  return "— pending verification";
 }
 
 function primaryAction(move: StrategicMove): { label: string; href: string } {
   const { status, currentPhase, phaseLabel, id } = move;
-  if (status.key === 'gate_blocked') return { label: 'Open gate review', href: `/strategic-moves/${id}?panel=gate` };
-  if (status.key === 'awaiting_decision') return { label: 'Resolve decision', href: '/admin/programs/approvals' };
-  if (status.key === 'validated') return { label: 'Review verification', href: `/tower?move=${id}` };
-  return { label: `Continue ${phaseLabel}`, href: `/strategic-moves/${id}/phase/${currentPhase}` };
+  if (status.key === "gate_blocked")
+    return {
+      label: "Open gate review",
+      href: `/strategic-moves/${id}?panel=gate`,
+    };
+  if (status.key === "awaiting_decision")
+    return { label: "Resolve decision", href: "/admin/programs/approvals" };
+  if (status.key === "validated")
+    return { label: "Review verification", href: `/tower?move=${id}` };
+  return {
+    label: `Continue ${phaseLabel}`,
+    href: `/strategic-moves/${id}/phase/${currentPhase}`,
+  };
 }
 
-function secondaryAction(move: StrategicMove): { label: string; href: string } | null {
-  if (move.status.key === 'awaiting_decision') {
-    return { label: 'Reopen brief', href: `/strategic-moves/${move.id}?panel=brief` };
+function secondaryAction(
+  move: StrategicMove,
+): { label: string; href: string } | null {
+  if (move.status.key === "awaiting_decision") {
+    return {
+      label: "Reopen brief",
+      href: `/strategic-moves/${move.id}?panel=brief`,
+    };
   }
   return null;
 }
@@ -61,19 +78,29 @@ function secondaryAction(move: StrategicMove): { label: string; href: string } |
 
 function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
   const tabs: { key: Tab; label: string; href: string }[] = [
-    { key: 'overview',   label: 'Overview',   href: `/strategic-moves/${moveId}` },
-    { key: 'documents',  label: 'Documents',  href: `/strategic-moves/${moveId}?tab=documents` },
-    { key: 'activity',   label: 'Activity',   href: `/strategic-moves/${moveId}?tab=activity` },
+    { key: "overview", label: "Overview", href: `/strategic-moves/${moveId}` },
+    {
+      key: "documents",
+      label: "Documents",
+      href: `/strategic-moves/${moveId}?tab=documents`,
+    },
+    {
+      key: "activity",
+      label: "Activity",
+      href: `/strategic-moves/${moveId}?tab=activity`,
+    },
   ];
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: 0,
-      borderBottom: '1px solid #e5e5e5',
-      marginBottom: 20,
-      marginTop: 2,
-    }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 0,
+        borderBottom: "1px solid #e5e5e5",
+        marginBottom: 20,
+        marginTop: 2,
+      }}
+    >
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
@@ -81,17 +108,19 @@ function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
             key={tab.key}
             href={tab.href}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '7px 16px',
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "7px 16px",
               fontSize: 12,
               fontWeight: isActive ? 700 : 500,
-              color: isActive ? '#1A1A18' : '#9AA3B2',
-              textDecoration: 'none',
-              borderBottom: isActive ? '2px solid #1B2B5C' : '2px solid transparent',
+              color: isActive ? "#1A1A18" : "#9AA3B2",
+              textDecoration: "none",
+              borderBottom: isActive
+                ? "2px solid #1B2B5C"
+                : "2px solid transparent",
               marginBottom: -1,
-              transition: 'color 0.1s',
-              letterSpacing: isActive ? '0.01em' : undefined,
+              transition: "color 0.1s",
+              letterSpacing: isActive ? "0.01em" : undefined,
             }}
           >
             {tab.label}
@@ -117,16 +146,21 @@ function OverviewContent({
     <div className={styles.detailBody}>
       <div
         className={`${styles.statusBanner} ${
-          move.statusColor === 'red' ? styles.statusBannerRed :
-          move.statusColor === 'amber' ? styles.statusBannerAmber :
-          move.statusColor === 'teal' ? styles.statusBannerTeal :
-          styles.statusBannerGreen
+          move.statusColor === "red"
+            ? styles.statusBannerRed
+            : move.statusColor === "amber"
+              ? styles.statusBannerAmber
+              : move.statusColor === "teal"
+                ? styles.statusBannerTeal
+                : styles.statusBannerGreen
         }`}
       >
         <span className={styles.statusBannerPulse} aria-hidden />
         <div className={styles.statusBannerText}>
           <div className={styles.statusBannerStatus}>{move.status.text}</div>
-          <div className={styles.statusBannerDesc}>{move.status.description}</div>
+          <div className={styles.statusBannerDesc}>
+            {move.status.description}
+          </div>
         </div>
       </div>
 
@@ -137,30 +171,30 @@ function OverviewContent({
           {move.phaseLabel.toUpperCase()} &middot; Gate criteria
         </div>
         {move.gateCriteria.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--abarva-stone)', margin: 0 }}>
-            No outgoing gate for this phase — there are no further gate
-            criteria to evaluate.
+          <p style={{ fontSize: 13, color: "var(--abarva-stone)", margin: 0 }}>
+            No outgoing gate for this phase — there are no further gate criteria
+            to evaluate.
           </p>
         ) : (
           <ul className={styles.critList}>
             {move.gateCriteria.map((criterion) => (
               <li key={criterion.id}>
                 <span
-                  className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
+                  className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ""}`}
                   aria-hidden
                 >
-                  {criterion.completed ? '✓' : ''}
+                  {criterion.completed ? "✓" : ""}
                 </span>
                 <span style={{ flex: 1 }}>{criterion.label}</span>
                 {!criterion.verified && (
                   <span
                     style={{
                       fontSize: 9,
-                      fontFamily: 'var(--abarva-mono)',
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
+                      fontFamily: "var(--abarva-mono)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
                       fontWeight: 700,
-                      color: 'var(--abarva-stone)',
+                      color: "var(--abarva-stone)",
                       flexShrink: 0,
                       marginLeft: 8,
                     }}
@@ -187,7 +221,9 @@ function OverviewContent({
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Sponsor</span>
             <span className={styles.kvV}>
-              {move.sponsor ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}` : 'Unassigned'}
+              {move.sponsor
+                ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}`
+                : "Unassigned"}
             </span>
           </div>
           <div className={styles.kvPair}>
@@ -196,7 +232,9 @@ function OverviewContent({
           </div>
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Archetype</span>
-            <span className={`${styles.kvV} ${styles.kvVMono}`}>{move.archetype}</span>
+            <span className={`${styles.kvV} ${styles.kvVMono}`}>
+              {move.archetype}
+            </span>
           </div>
           {move.participants.slice(0, 3).map((participant) => (
             <div className={styles.kvPair} key={participant.personId}>
@@ -213,18 +251,20 @@ function OverviewContent({
             <span className={styles.kvV}>
               {move.valueAtStake.projected
                 ? `${move.valueAtStake.projected.currency} ${move.valueAtStake.projected.low.toLocaleString()}–${move.valueAtStake.projected.high.toLocaleString()}`
-                : 'Not set'}
+                : "Not set"}
             </span>
           </div>
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Range</span>
             <span className={styles.kvV}>
-              {move.valueAtStake.projected ? 'projected' : 'pending capture'}
+              {move.valueAtStake.projected ? "projected" : "pending capture"}
             </span>
           </div>
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Verified</span>
-            <span className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ''}`}>
+            <span
+              className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ""}`}
+            >
               {move.valueAtStake.verified
                 ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
                 : verifiedFallback(move.currentPhase)}
@@ -238,15 +278,26 @@ function OverviewContent({
 
 // ── Activity tab content ──────────────────────────────────────────────────────
 
-function ActivityContent({ move }: { move: StrategicMove }) {
+function ActivityContent({
+  move,
+  discoveryIntakeEnabled = false,
+}: {
+  move: StrategicMove;
+  discoveryIntakeEnabled?: boolean;
+}) {
   return (
     <div className={styles.detailBody}>
       <section className={styles.detailSection}>
         <div className={styles.detailSectionTitle}>Recent activity</div>
         <div className={styles.timeline}>
           {move.recentActivity.map((activity) => (
-            <div className={styles.tlItem} key={`${activity.at}-${activity.action}`}>
-              <span className={styles.tlTime}>{formatActivityTime(activity.at)}</span>
+            <div
+              className={styles.tlItem}
+              key={`${activity.at}-${activity.action}`}
+            >
+              <span className={styles.tlTime}>
+                {formatActivityTime(activity.at)}
+              </span>
               <span className={styles.tlDot} aria-hidden />
               <span className={styles.tlText}>
                 <strong>{activity.action}</strong> &middot; {activity.summary}
@@ -255,32 +306,69 @@ function ActivityContent({ move }: { move: StrategicMove }) {
           ))}
         </div>
         {move.recentActivity.length >= 3 && (
-          <a className={styles.tlMore} href={`/strategic-moves/${move.id}?panel=activity`}>
+          <a
+            className={styles.tlMore}
+            href={`/strategic-moves/${move.id}?panel=activity`}
+          >
             View all activity &rarr;
           </a>
         )}
       </section>
 
       <section className={styles.detailSection}>
-        <div className={styles.detailSectionTitle}>Evidence from intelligence</div>
+        <div className={styles.detailSectionTitle}>
+          Evidence from intelligence
+        </div>
         <div className={styles.evidenceList}>
           {move.linkedEvidence.length === 0 ? (
             <div className={styles.evEmpty}>No linked evidence yet.</div>
           ) : (
             move.linkedEvidence.map((evidence) => (
-              <a className={styles.evItem} href={evidence.url} key={evidence.id}>
+              <a
+                className={styles.evItem}
+                href={evidence.url}
+                key={evidence.id}
+              >
                 <span className={styles.evNum}>{evidence.anchor}</span>
                 <span className={styles.evText}>{evidence.summary}</span>
-                <span className={styles.evLink} aria-hidden>&#8599;</span>
+                <span className={styles.evLink} aria-hidden>
+                  &#8599;
+                </span>
               </a>
             ))
           )}
         </div>
       </section>
 
-      <section className={styles.detailSection} data-testid="move-artifact-upload-section">
+      <section
+        className={styles.detailSection}
+        data-testid="move-artifact-upload-section"
+      >
         <div className={styles.detailSectionTitle}>Attachments</div>
-        <MoveArtifactUpload programId={move.id} phase={move.currentPhase ?? 0} />
+        <MoveArtifactUpload
+          programId={move.id}
+          phase={move.currentPhase ?? 0}
+        />
+        {/* Discovery Intake (Tier B): current-state assessment template download,
+            flag-gated. The route 404s if no discovery plan is embedded yet. */}
+        {discoveryIntakeEnabled && (
+          <a
+            data-testid="discovery-template-download"
+            href={`/api/programs/${move.id}/discovery/template`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 10,
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#0C1A3A",
+              textDecoration: "none",
+            }}
+          >
+            <span aria-hidden>⬇</span> Download current-state assessment (.xlsx)
+          </a>
+        )}
       </section>
     </div>
   );
@@ -290,15 +378,24 @@ function ActivityContent({ move }: { move: StrategicMove }) {
 
 function DocumentsContent({ move }: { move: StrategicMove }) {
   return (
-    <div style={{ padding: '0 4px' }}>
+    <div style={{ padding: "0 4px" }}>
       {/* Board-grade artifact decks anchored to this Move, when any exist.
           Renders nothing for a Move with no anchored decks. */}
       <BoardArtifactsPanel move={move} />
-      <Suspense fallback={
-        <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 12, color: '#9AA3B2' }}>
-          Loading documents…
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              padding: "32px 0",
+              textAlign: "center",
+              fontSize: 12,
+              color: "#9AA3B2",
+            }}
+          >
+            Loading documents…
+          </div>
+        }
+      >
         <PhaseDocumentsPanel
           moveId={move.id}
           currentPhase={move.currentPhase ?? 1}
@@ -317,12 +414,14 @@ function RightPane({
   handoff,
   linkedSourceEvent,
   decisionThreadId,
+  discoveryIntakeEnabled = false,
 }: {
   move: StrategicMove;
   activeTab: Tab;
   handoff?: MoveToSourceHandoffResult | null;
   linkedSourceEvent?: LinkedSourceEvent | null;
   decisionThreadId?: string | null;
+  discoveryIntakeEnabled?: boolean;
 }) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
@@ -343,12 +442,16 @@ function RightPane({
             </div>
             <h1 className={styles.detailTitle}>{move.name}</h1>
             <div className={styles.detailId}>
-              {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
+              {move.archetype} &middot; Sponsor:{" "}
+              {(move.sponsor?.name ?? "Unassigned").toUpperCase()}
             </div>
           </div>
           <div className={styles.detailHeadActions}>
             {decisionThreadId && (
-              <Link className={styles.btnGhost} href={`/dossier/${decisionThreadId}`}>
+              <Link
+                className={styles.btnGhost}
+                href={`/dossier/${decisionThreadId}`}
+              >
                 View in Dossier
               </Link>
             )}
@@ -358,7 +461,10 @@ function RightPane({
               </Link>
             )}
             <Link className={styles.btnPhase} href={primary.href}>
-              {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
+              {primary.label}{" "}
+              <span className={styles.btnArrow} aria-hidden>
+                &rarr;
+              </span>
             </Link>
           </div>
         </div>
@@ -369,15 +475,20 @@ function RightPane({
         <TabBar moveId={move.id} active={activeTab} />
       </div>
 
-      {activeTab === 'overview'  && (
+      {activeTab === "overview" && (
         <OverviewContent
           move={move}
           handoff={handoff}
           linkedSourceEvent={linkedSourceEvent}
         />
       )}
-      {activeTab === 'documents' && <DocumentsContent move={move} />}
-      {activeTab === 'activity'  && <ActivityContent move={move} />}
+      {activeTab === "documents" && <DocumentsContent move={move} />}
+      {activeTab === "activity" && (
+        <ActivityContent
+          move={move}
+          discoveryIntakeEnabled={discoveryIntakeEnabled}
+        />
+      )}
     </article>
   );
 }
@@ -386,20 +497,21 @@ function RightPane({
 
 export function StrategicMoveDetailView({
   move,
-  activeTab = 'overview',
+  activeTab = "overview",
   handoff = null,
   linkedSourceEvent = null,
   decisionThreadId = null,
   originatingIntelligenceSessionId = null,
+  discoveryIntakeEnabled = false,
 }: Props) {
   return (
     <div className={styles.page}>
       <div
         data-testid="move-detail-splitter-shell"
         style={{
-          height: 'calc(100vh - 220px)',
+          height: "calc(100vh - 220px)",
           minHeight: 620,
-          display: 'flex',
+          display: "flex",
           gap: 0,
         }}
       >
@@ -414,6 +526,7 @@ export function StrategicMoveDetailView({
               handoff={handoff}
               linkedSourceEvent={linkedSourceEvent}
               decisionThreadId={decisionThreadId}
+              discoveryIntakeEnabled={discoveryIntakeEnabled}
             />
           }
         />
@@ -423,7 +536,7 @@ export function StrategicMoveDetailView({
 }
 
 function formatActivityTime(iso: string): string {
-  if (!iso) return '';
+  if (!iso) return "";
   const then = new Date(iso);
   if (Number.isNaN(then.getTime())) return iso;
   const now = Date.now();
