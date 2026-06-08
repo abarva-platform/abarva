@@ -2,7 +2,9 @@
 
 **Goal:** Prove the AbarVa Next.js runtime runs on **Azure Container Apps (ACA)** and can reach the **private Azure data plane** (Postgres / Key Vault / Blob / AI Search) — an Azure runtime migration proof, **not** a Vercel workaround. No Vercel URL is used in any proof below.
 
-**Outcome:** ✅ **Azure runtime migration is PROVEN.** The Next.js app runs on ACA, reaches private Azure Postgres (public network disabled) over VNet peering + private DNS, authenticates via Clerk password sign-in, resolves the signed-in user to the **Meridian** tenant (no Apex bleed), and writes the Responsible-AI acknowledgment to the Azure DB. **7 of 8 pass criteria met.** The one gap (#5, DiscoveryCapturePanel) is a **feature-surface mismatch unrelated to Azure** — see Blockers.
+**Outcome:** ✅ **Azure runtime migration is PROVEN.** The Next.js app runs on ACA, reaches private Azure Postgres (public network disabled) over VNet peering + private DNS, authenticates via Clerk password sign-in, resolves the signed-in user to the **Meridian** tenant (no Apex bleed), and writes the Responsible-AI acknowledgment to the Azure DB. **8 of 8 pass criteria met** (see Addendum — criterion #5 closed by the discovery re-home).
+
+> **Addendum 2026-06-08 (criterion #5 closed):** the DiscoveryCapturePanel gap was a feature-surface mismatch (it was wired to the superseded `/programs/new` / `ProgramOriginationWorkspace`). Fixed in **PR #3315** by re-homing the panel onto the live `StrategicMoveOriginateClient` (`/strategic-moves/new`) as a flag-gated **Brief | Discovery** canvas sub-tab, fed by a new `strategicMoveBriefToDiscoveryShape` adapter. Built image `acrabarvalab001.azurecr.io/abarva/web:rehome-discovery-5d7a44bcbc`, deployed to revision **`ca-abarva-web-lab-eastus--0000061`** (100% traffic; rollback `--0000059`). **Verified live on the ACA URL signed in as Meridian: the DISCOVERY sub-tab renders "Discovery shape · 0 of 8 captured"** (empty brief → empty dimensions, nothing fabricated). `/api/health` still `postgres:true`. Tier B (persist `discoveryShape` on promote + wire upload/receipt/template flows into the live surface) remains open.
 
 ---
 
