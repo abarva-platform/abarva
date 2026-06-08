@@ -12,6 +12,7 @@ import { composeColdOpen } from '@/components/programs/origination/composeColdOp
 import { getUserContext } from '@/lib/agent/userContext';
 import { requireTenancy } from '@/app/api/v1/programs/_auth';
 import { instantiateTemplate } from '@/lib/templates/registry';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 
 export const metadata = {
   title: 'New Program · AbarVa',
@@ -56,10 +57,16 @@ export default async function ProgramsNewPage({
   const user = await getUserContext();
   const greeting = composeColdOpen({ user, variant: 'production' });
 
+  // Discovery Intake (S6): compute the flag server-side; the client workspace
+  // renders the discovery capture panel only when it's on for this tenant.
+  const flagCtx = await requireTenancy();
+  const discoveryIntakeEnabled = isFeatureEnabled(flagCtx, 'discovery_intake_v2');
+
   return (
     <ProgramOriginationWorkspace
       surface="/programs/new"
       tenantName={user?.tenantDisplayName ?? 'AbarVa'}
+      discoveryIntakeEnabled={discoveryIntakeEnabled}
       initialTurns={[
         {
           id: greeting.id,

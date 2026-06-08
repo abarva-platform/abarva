@@ -30,6 +30,8 @@ import {
   type ProgramBriefDraft,
   type PatternMatchCard,
 } from './ProgramBriefPanel';
+import { DiscoveryCapturePanel } from '../discovery/DiscoveryCapturePanel';
+import { briefToDiscoveryShape } from '../discovery/brief-to-shape';
 import { StewardChat, type ChatTurn } from './StewardChat';
 import { buildBriefSnapshot } from './types';
 
@@ -187,6 +189,9 @@ export interface ProgramOriginationWorkspaceProps {
   tenantName: string;
   initialTurns: ChatTurn[];
   originatingIntelligenceSessionId?: string | null;
+  /** Discovery Intake (S6): when true, render the discovery capture panel from
+   *  the brief. Computed server-side from `discovery_intake_v2`. Default off. */
+  discoveryIntakeEnabled?: boolean;
 }
 
 const DRAFT_SESSION_STORAGE_PREFIX = 'abarva.program_origination.session';
@@ -368,6 +373,7 @@ export function ProgramOriginationWorkspace({
   tenantName,
   initialTurns,
   originatingIntelligenceSessionId = null,
+  discoveryIntakeEnabled = false,
 }: ProgramOriginationWorkspaceProps) {
   const router = useRouter();
   const [briefState, setBriefState] = useState<OriginationBriefState>(EMPTY_BRIEF_STATE);
@@ -697,6 +703,12 @@ export function ProgramOriginationWorkspace({
           briefSnapshot={buildBriefSnapshot(briefState.brief)}
           originatingIntelligenceSessionId={originatingIntelligenceSessionId}
         />
+        {/* Discovery Intake (S6) · capture panel from the brief, flag-gated. */}
+        {discoveryIntakeEnabled && (
+          <div style={{ marginBottom: 12 }}>
+            <DiscoveryCapturePanel shape={briefToDiscoveryShape(briefState.brief)} />
+          </div>
+        )}
         {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
         {/* OV2-1b · Brief Progress + Overlap Alerts surface as cards above field rows. */}
         <ProgramBriefPanel
