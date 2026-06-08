@@ -1,0 +1,19 @@
+app_name,vendor,product,capability,deployment_model,architecture,hosting_ref,lifecycle,compliance_scope,annual_tco_usd,users,criticality_tier,business_owner,it_owner,facility,source
+Epic EHR,Epic,Hyperspace/EHR,Clinical (EHR),vendor_hosted,cots_packaged,epic-hosted-odb,invest,HIPAA,28500000,38000,Tier 0,CMIO,VP Clinical Apps,Enterprise (all 23 hospitals),canonical
+Ensemble RCM,Ensemble Health Partners,Ensemble RCM platform,Revenue Cycle,vendor_hosted,cots_packaged,ensemble-cloud,sustain,HIPAA,28000000,1200,Tier 1,CFO,VP Revenue Cycle IT,Enterprise,canonical
+Epic MyChart,Epic,MyChart patient portal,Patient Engagement,vendor_hosted,cots_packaged,epic-hosted-odb,invest,HIPAA,1200000,640000,Tier 1,CMIO,VP Clinical Apps,Enterprise,illustrative
+Intelerad PACS,Intelerad,IntelePACS 8.5,Diagnostic Imaging,on_prem,cots_packaged,dc-charlotte-primary,sustain,HIPAA,3100000,2400,Tier 1,Chief Radiology Officer,VP Infrastructure,Enterprise (excl. acquired sites),illustrative
+Waystar,Waystar,Waystar clearinghouse,Claims & Eligibility,saas,cots_packaged,waystar-cloud,sustain,HIPAA,1900000,800,Tier 1,VP Revenue Cycle,VP Revenue Cycle IT,Enterprise,illustrative
+Workday,Workday,Workday HCM + Financials,ERP / HCM,saas,cots_packaged,workday-cloud,invest,SOX,4200000,42000,Tier 1,CHRO,VP Enterprise Apps,Enterprise,illustrative
+Infor Lawson,Infor,Lawson S3,Legacy Finance/Supply Chain,on_prem,client_server,dc-charlotte-primary,retire,SOX,1800000,900,Tier 2,Controller,VP Enterprise Apps,Enterprise (sunsetting),illustrative
+UKG Kronos,UKG,Workforce Dimensions,Workforce Management,saas,cots_packaged,ukg-cloud,sustain,none,2800000,40000,Tier 2,CHRO,VP Enterprise Apps,Enterprise,illustrative
+ServiceNow,ServiceNow,ITSM,IT Service Management,saas,cots_packaged,servicenow-cloud,invest,none,1400000,3500,Tier 2,CIO (Marcus Webb),VP IT Operations,Enterprise,illustrative
+Genesys Cloud CX,Genesys,Genesys Cloud CX,Patient Access / Contact Center,saas,cots_packaged,genesys-cloud,sustain,HIPAA,1600000,1100,Tier 2,VP Patient Access,VP Enterprise Apps,Enterprise,illustrative
+Cerner Millennium,Oracle Health,Cerner Millennium,Clinical (legacy EHR),on_prem,client_server,dc-asheville,legacy_eol,HIPAA,2400000,2800,Tier 1,CMIO,VP Clinical Apps,2 acquired hospitals (migrating to Epic),illustrative
+Meditech (Blue Ridge),MEDITECH,MEDITECH Expanse,Clinical (legacy EHR — duplicate),on_prem,client_server,dc-blueridge,legacy_eol,HIPAA,14000000,3100,Tier 1,CMIO,VP Clinical Apps,Blue Ridge facilities (consolidation debt),illustrative
+Merge PACS (Blue Ridge),Merative,Merge PACS,Diagnostic Imaging (duplicate),on_prem,client_server,dc-blueridge,retire,HIPAA,900000,420,Tier 2,Chief Radiology Officer,VP Infrastructure,Blue Ridge facilities (duplicate PACS),illustrative
+ADP Payroll (acquired sites),ADP,ADP Vantage,Payroll (duplicate HRIS),saas,cots_packaged,adp-cloud,retire,SOX,800000,3100,Tier 2,CHRO,VP Enterprise Apps,6 Blue Ridge hospitals (duplicate payroll),illustrative
+Epic Willow,Epic,Willow Pharmacy,Pharmacy,vendor_hosted,cots_packaged,epic-hosted-odb,sustain,HIPAA,1100000,1800,Tier 1,Chief Pharmacy Officer,VP Clinical Apps,Enterprise,illustrative
+Epic Beaker,Epic,Beaker Lab,Laboratory,vendor_hosted,cots_packaged,epic-hosted-odb,sustain,HIPAA,950000,1500,Tier 1,Lab Director,VP Clinical Apps,Enterprise,illustrative
+Symantec Endpoint,Broadcom,Symantec Endpoint Protection,Endpoint Security,on_prem,cots_packaged,dc-charlotte-primary,retire,HIPAA,1200000,46000,Tier 1,CISO,VP Security,Enterprise (being replaced),illustrative
+Microsoft 365,Microsoft,M365 E3/E5,Productivity & Collaboration,saas,cots_packaged,m365-cloud,sustain,HIPAA,9800000,42000,Tier 1,CIO (Marcus Webb),VP IT Operations,Enterprise,illustrative
