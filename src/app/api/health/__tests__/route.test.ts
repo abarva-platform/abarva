@@ -19,7 +19,7 @@ describe('GET /api/health read plane', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     delete process.env.DATABASE_URL;
-    mockAzureRead.query.mockResolvedValue([{ id: 'engagement_1' }]);
+    mockAzureRead.query.mockResolvedValue([{ ok: 1 }]);
   });
 
   it('checks Postgres liveness through azureRead', async () => {
@@ -35,7 +35,7 @@ describe('GET /api/health read plane', () => {
         azure_graph: 'postgres',
       },
     });
-    expect(mockAzureRead.query).toHaveBeenCalledWith('SELECT id FROM engagements LIMIT 1');
+    expect(mockAzureRead.query).toHaveBeenCalledWith('SELECT 1 AS ok');
   });
 
   it('keeps health green when direct Postgres succeeds and the read adapter is degraded', async () => {

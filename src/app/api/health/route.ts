@@ -42,7 +42,7 @@ export async function GET() {
   const checks: Record<string, boolean | string> = {};
 
   try {
-    await azureRead.query('SELECT id FROM engagements LIMIT 1');
+    await azureRead.query('SELECT 1 AS ok');
     checks.postgres = true;
   } catch (err) {
     checks.postgres = false;
