@@ -64,9 +64,17 @@ export type FeatureFlagKey =
   | 'first_capital_substrate_overlay'
   | 'retrieval_azure_search'
   | 'graph_neo4j_enabled'
-  | 'tower_synthesis_apex_demo_fixture';
+  | 'tower_synthesis_apex_demo_fixture'
+  | 'discovery_intake_v2';
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: 'discovery_intake_v2',
+    summary:
+      'Discovery Intake — persist DiscoveryShape (P0 Originate) and DiscoveryPlan (P1 Charter) to engagements.charter JSONB and wire the enhanced capture. Tenant opt-in; default off for staged rollout.',
+    policy: 'tenant',
+    includeTenants: [],
+  },
   {
     key: 'intelligence_brief_v4',
     summary:
