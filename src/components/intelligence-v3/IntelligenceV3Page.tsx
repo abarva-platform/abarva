@@ -54,6 +54,7 @@ import {
   APEX_RETAIL_SESSIONS,
   APEX_RETAIL_STRATEGY_BULLETS,
   APEX_RETAIL_VENDOR_SPEND,
+  type VendorSpendRow,
 } from './cxo-fixtures';
 import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
 import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
@@ -149,6 +150,14 @@ export function IntelligenceV3Page({
     normalizedTenantName.includes('meridian health');
   const shouldUseEmptyNonCorpusFixtures =
     !isApexBound && !isFirstCapitalBound && !isMeridianClient;
+  const hasEnterpriseContext =
+    Boolean(enterpriseContextOverview) &&
+    (
+      (enterpriseContextOverview?.counts.records ?? 0) > 0 ||
+      (enterpriseContextOverview?.counts.facts ?? 0) > 0 ||
+      (enterpriseContextOverview?.counts.evidence ?? 0) > 0
+    );
+  const isNonCorpusSubstrateBound = isLiveBound || hasEnterpriseContext;
   const aopBands = isApexBound
     ? APEX_RETAIL_AOP_DEMO
     : isFirstCapitalBound
@@ -171,7 +180,10 @@ export function IntelligenceV3Page({
     ? `Apex Retail intelligence is ready: ${corpusData?.status?.patterns} retail patterns, ${corpusData?.status?.summarizedSources}/${corpusData?.status?.sources} summarized sources, ${corpusData?.status?.useCases} use cases, and ${corpusData?.status?.contradictions} open tensions. Ask me which CXO decision matters first.`
     : hasBoundCorpus
       ? `${activeTenantName}'s Intelligence corpus is ready: ${briefData?.bets.length ?? 0} ranked bets, ${mapData?.totalUseCases ?? 0} mapped use cases, and ${briefData?.patternsTriggered.length ?? 0} triggered patterns. Ask me which CXO decision matters first.`
+    : hasEnterpriseContext
+      ? `${activeTenantName}'s Enterprise Context is loaded: ${enterpriseContextOverview?.counts.records ?? 0} records, ${enterpriseContextOverview?.counts.facts ?? 0} facts, and ${enterpriseContextOverview?.counts.evidence ?? 0} evidence rows. Ask me about the current state, vendors, systems, owners, risks, or gaps visible on this page.`
     : data.sentinelOpener;
+  const enterpriseVendorSpend = mapEnterpriseContextVendors(enterpriseContextOverview);
   const surfaceContext = buildSentinelIntelContext({
     activeClient: activeTenantName,
     clientKey,
@@ -199,7 +211,7 @@ export function IntelligenceV3Page({
     >
       <IntelligenceV3TopNav tenantName={activeTenantName} />
 
-      {!isLiveBound && !isCorpusStage && (
+      {!isNonCorpusSubstrateBound && !isCorpusStage && (
         <div
           role="status"
           style={{
@@ -379,6 +391,8 @@ export function IntelligenceV3Page({
                     spend={
                       isApexBound
                         ? APEX_RETAIL_VENDOR_SPEND
+                        : enterpriseVendorSpend.length > 0
+                          ? enterpriseVendorSpend
                         : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
                           ? []
                           : undefined
@@ -438,6 +452,22 @@ export function IntelligenceV3Page({
       )}
     </div>
   );
+}
+
+function mapEnterpriseContextVendors(
+  overview: EnterpriseContextOverview | null | undefined,
+): ReadonlyArray<VendorSpendRow> {
+  return (overview?.vendorSpendRows ?? []).map((row) => ({
+    vendor: row.vendor,
+    category: row.category,
+    subcategory: row.subcategory,
+    spendUsdM: row.spendUsdM,
+    spendLabel: row.spendLabel,
+    tier: row.tier,
+    health: row.health,
+    renewsInMonths: row.renewsInMonths,
+    takeaway: row.takeaway,
+  }));
 }
 
 function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {

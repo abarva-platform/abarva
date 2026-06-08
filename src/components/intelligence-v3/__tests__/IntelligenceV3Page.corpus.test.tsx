@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO } from '../demo-data';
 import { IntelligenceV3Page } from '../IntelligenceV3Page';
 import type { IntelligenceV3PageData } from '../types';
+import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
 import {
   getMeridianBriefData,
   getMeridianMapData,
@@ -59,6 +60,42 @@ const skyHarborPageData: IntelligenceV3PageData = {
 };
 
 const forbiddenHealthcareTerms = /MH-07|Clinical care|ambient AI|Innovaccer|revenue cycle/i;
+
+const lakeshoreEnterpriseContext: EnterpriseContextOverview = {
+  tenantKey: 'lakeshore',
+  tenantName: 'Lakeshore Holdings',
+  counts: {
+    sources: 13,
+    records: 179,
+    facts: 2949,
+    relationships: 0,
+    evidence: 1542,
+    qualityIssues: 0,
+    stewardshipTasks: 0,
+    chunkQueue: 0,
+  },
+  recordTypeCounts: { vendors_contract_inventory: 1, spend_baseline: 1 },
+  freshnessCounts: { fresh: 179 },
+  sourceSystems: ['admin_bulk_context_upload'],
+  evidenceUsableCount: 1542,
+  confidenceAverage: 0.8,
+  qualitySummary: {},
+  cards: [],
+  sentinelFacts: ['Lakeshore Holdings Enterprise Context is loaded.'],
+  vendorSpendRows: [
+    {
+      vendor: 'Kyriba',
+      category: 'software-saas',
+      subcategory: 'Treasury SaaS',
+      spendUsdM: 1.8,
+      spendLabel: '$1.8M',
+      tier: 'incumbent',
+      health: 'watch',
+      renewsInMonths: 8,
+      takeaway: 'Treasury renewal should force platform clarity.',
+    },
+  ],
+};
 
 function renderStage(stage: string, node: ReactNode) {
   window.history.replaceState(null, '', `/intelligence#${stage}`);
@@ -113,6 +150,28 @@ describe('IntelligenceV3Page tenant corpus rendering', () => {
     );
 
     expect(await screen.findByText(/No tenant-specific vendor spend is loaded yet/i)).toBeInTheDocument();
+    expect(document.body.textContent ?? '').not.toMatch(forbiddenHealthcareTerms);
+  });
+
+  it('renders Enterprise Context vendor rows for a non-corpus tenant', async () => {
+    renderStage(
+      'vendors',
+      <IntelligenceV3Page
+        data={{
+          ...skyHarborPageData,
+          tenantName: 'Lakeshore Holdings',
+          industry: 'diversified holdco',
+          sentinelOpener: 'Lakeshore corpus is not yet seeded.',
+        }}
+        clientKey="lakeshore"
+        enterpriseContextOverview={lakeshoreEnterpriseContext}
+      />,
+    );
+
+    expect((await screen.findAllByText(/Kyriba/i)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$1.8M/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/No tenant-specific vendor spend is loaded yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Demo content shown/i)).not.toBeInTheDocument();
     expect(document.body.textContent ?? '').not.toMatch(forbiddenHealthcareTerms);
   });
 
