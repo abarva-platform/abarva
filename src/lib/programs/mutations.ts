@@ -28,6 +28,8 @@ import {
   selectProgramsWriteAdapter,
   type ProgramsWriteAdapter,
 } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
 import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 
 /**
@@ -257,6 +259,9 @@ export interface AdvancePhaseInput {
   snapshot: Record<string, unknown>;
   approvedByUserId?: string;
   bypassGate?: boolean;
+  // Discovery Intake (S2c): the P1 plan to persist into the charter on advance.
+  // Written only when `discovery_intake_v2` is enabled for the tenant.
+  discoveryPlan?: DiscoveryPlan | null;
 }
 
 export async function advancePhase(
@@ -272,6 +277,14 @@ export async function advancePhase(
   // snapshot insert + engagement update + state-log insert are one unit —
   // atomic on Azure, the same three statements on Supabase. A write error is
   // surfaced as `ok:false` and re-thrown here, exactly as the pre-seam helper.
+  // Discovery Intake (S2c): persist the P1 plan into the charter only when the
+  // tenant has `discovery_intake_v2` enabled. Flag off → null → the adapter's
+  // engagement update is byte-identical to today.
+  const discoveryPlanToWrite =
+    input.discoveryPlan && isFeatureEnabled(ctx, 'discovery_intake_v2')
+      ? input.discoveryPlan
+      : null;
+
   const written = await programsWriteAdapter(opts.supabase).runAdvancePhase({
     programId: input.programId,
     clientId: ctx.clientId,
@@ -281,6 +294,7 @@ export async function advancePhase(
     snapshot: input.snapshot,
     approvedByUserId: input.approvedByUserId,
     bypassGate: input.bypassGate,
+    discoveryPlan: discoveryPlanToWrite,
   });
   if (!written.ok || !written.data) {
     throw new Error(written.error ?? '[advancePhase] write failed');

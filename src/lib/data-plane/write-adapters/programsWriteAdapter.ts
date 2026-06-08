@@ -36,6 +36,8 @@ import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
+import { embedDiscoveryPlanInCharter } from '@/lib/programs/discovery/charter-transformers';
+import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
 
 // --- domain shapes ----------------------------------------------------------
 
@@ -102,6 +104,10 @@ export interface AdvancePhaseTxInput {
   readonly snapshot: Record<string, unknown>;
   readonly approvedByUserId?: string;
   readonly bypassGate?: boolean;
+  // Discovery Intake (S2c): when present, the P1 plan is merged into the
+  // engagements.charter JSONB during the phase advance. Already flag-gated
+  // upstream in mutations.advancePhase — the adapter just persists it.
+  readonly discoveryPlan?: DiscoveryPlan | null;
 }
 
 /** The `requestFounderApproval` insert into `founder_approval_requests`. */
@@ -288,13 +294,28 @@ export function createSupabaseProgramsWriteAdapter(
       if (snapErr) return { ok: false, error: snapErr.message };
       const snapshotId = (snap as { id: string }).id;
 
+      // Discovery Intake (S2c): merge the P1 plan into the charter JSONB on
+      // advance (read-modify-write via the shared, tested planner). No plan →
+      // the update is byte-identical to today's.
+      const engUpdate: Record<string, unknown> = {
+        current_phase: input.toPhase,
+        phase_locked_at: nowIso,
+        phase_locked_by_user_id: input.userId,
+      };
+      if (input.discoveryPlan) {
+        const { data: cur } = await sb
+          .from('engagements')
+          .select('charter')
+          .eq('id', input.programId)
+          .eq('client_id', input.clientId)
+          .maybeSingle();
+        const currentCharter =
+          (cur as { charter: Record<string, unknown> | null } | null)?.charter ?? null;
+        engUpdate.charter = embedDiscoveryPlanInCharter(currentCharter, input.discoveryPlan);
+      }
       const { error: eErr } = await sb
         .from('engagements')
-        .update({
-          current_phase: input.toPhase,
-          phase_locked_at: nowIso,
-          phase_locked_by_user_id: input.userId,
-        })
+        .update(engUpdate)
         .eq('id', input.programId)
         .eq('client_id', input.clientId);
       if (eErr) return { ok: false, error: eErr.message };
@@ -497,13 +518,33 @@ export function createAzureProgramsWriteAdapter(
               input.approvedByUserId ? 'approved' : 'pending',
             ],
           );
-          await run(
-            'UPDATE engagements '
-              + 'SET current_phase = $1, phase_locked_at = now(), '
-              + 'phase_locked_by_user_id = $2 '
-              + 'WHERE id = $3 AND client_id = $4',
-            [input.toPhase, input.userId, input.programId, input.clientId],
-          );
+          // Discovery Intake (S2c): merge the P1 plan into the charter inside
+          // the SAME transaction (read-modify-write via the shared planner).
+          if (input.discoveryPlan) {
+            const curRows = await run<{ charter: Record<string, unknown> | null }>(
+              'SELECT charter FROM engagements WHERE id = $1 AND client_id = $2',
+              [input.programId, input.clientId],
+            );
+            const mergedCharter = embedDiscoveryPlanInCharter(
+              curRows[0]?.charter ?? null,
+              input.discoveryPlan,
+            );
+            await run(
+              'UPDATE engagements '
+                + 'SET current_phase = $1, phase_locked_at = now(), '
+                + 'phase_locked_by_user_id = $2, charter = $3 '
+                + 'WHERE id = $4 AND client_id = $5',
+              [input.toPhase, input.userId, mergedCharter, input.programId, input.clientId],
+            );
+          } else {
+            await run(
+              'UPDATE engagements '
+                + 'SET current_phase = $1, phase_locked_at = now(), '
+                + 'phase_locked_by_user_id = $2 '
+                + 'WHERE id = $3 AND client_id = $4',
+              [input.toPhase, input.userId, input.programId, input.clientId],
+            );
+          }
           await run(
             'INSERT INTO module_state_log '
               + '(engagement_id, module_key, previous_state, new_state, '
