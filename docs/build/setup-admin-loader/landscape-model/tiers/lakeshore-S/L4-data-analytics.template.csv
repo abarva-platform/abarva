@@ -1,0 +1,14 @@
+asset_name,class,engine,host_ref,owner,refresh,data_domains,criticality,source
+S/4HANA Finance OLTP,oltp,SAP HANA,vsphere-clu-chi-01,Holdco Finance Systems,realtime,"finance,gl,ap,ar",1,illustrative-sample
+SQL Server DW (Holdco),warehouse,Microsoft SQL Server 2019,vsphere-clu-chi-01,Holdco BI Team,nightly,"finance,sales,hr",2,illustrative-sample
+Snowflake (early pilot),warehouse,Snowflake,azure-sub-lakeshore-prod,Surekha (VP Innovation/Delivery),daily,"finance,logistics",3,illustrative-sample
+Northline SQL Server DW,warehouse,Microsoft SQL Server 2017,vsphere-clu-chi-02,Northline IT,nightly,"logistics,inventory",2,illustrative-sample
+Treasury Cash Mart,mart,Microsoft SQL Server,vsphere-clu-chi-01,Group Treasury,daily,"treasury,fx,cash",1,illustrative-sample
+Finance Close Excel Mart,mart,Excel + Power Query,netapp-nas-chi-fileshare,Holdco Finance,manual,"finance,consolidation",2,illustrative-sample
+DTC Revenue Mart,mart,Looker (BigQuery-backed),vendor_hosted,Forge & Field Digital,daily,"ecommerce,revenue",2,illustrative-sample
+Holdco Power BI Workspace,bi,Power BI Service,vendor_hosted,Holdco BI Team,daily,"finance,sales,hr",2,illustrative-sample
+Northline Excel BI Pack,bi,Excel + pivot,netapp-nas-chi-fileshare,Northline Ops,weekly,"logistics,service-levels",3,illustrative-sample
+Brightmark Power BI,bi,Power BI Service,vendor_hosted,Brightmark Commercial,weekly,"marketing,campaigns",3,illustrative-sample
+Nightly DW Load (SSIS),etl,SQL Server Integration Services,vsphere-clu-chi-01,Holdco BI Team,nightly,"finance,sales",2,illustrative-sample
+Boomi Integration Flows,etl,Dell Boomi,azure-sub-lakeshore-prod,Surekha (VP Innovation/Delivery),realtime,"finance,orders,hr",2,illustrative-sample
+Snowflake dbt models (pilot),etl,dbt Core,azure-sub-lakeshore-prod,Surekha (VP Innovation/Delivery),daily,"finance,logistics",3,illustrative-sample
