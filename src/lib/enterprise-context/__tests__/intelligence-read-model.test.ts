@@ -64,7 +64,13 @@ describe("enterprise context Intelligence read model", () => {
         title: "Epic contract",
         source_system: "Legal CLM",
         owner: "IT Sourcing",
-        payload: {},
+        payload: {
+          vendor_name: "Epic Systems",
+          annual_spend_usd: "28000000",
+          category: "Software / SaaS",
+          renewal_risk: "High",
+          notes: "EHR renewal creates roadmap leverage.",
+        },
         confidence: 0.83,
       }),
       record({
@@ -185,6 +191,16 @@ describe("enterprise context Intelligence read model", () => {
     expect(overview.sentinelFacts.join("\n")).toContain(
       "$55.2M estimated renewal exposure",
     );
+    expect(overview.sentinelFacts.join("\n")).toContain(
+      "answer Meridian Health current-state questions",
+    );
+    expect(overview.vendorSpendRows[0]).toMatchObject({
+      vendor: "Epic Systems",
+      category: "software-saas",
+      spendUsdM: 28,
+      spendLabel: "$28.0M",
+      health: "risk",
+    });
   });
 
   it("groups Admin-promoted record types into Enterprise Context cards", () => {
@@ -217,6 +233,12 @@ describe("enterprise context Intelligence read model", () => {
       record({
         record_type: "contract",
         title: "Kyriba contract",
+        payload: {
+          vendor_name: "Kyriba",
+          annual_spend_usd: "1800000",
+          category: "Treasury SaaS",
+          renewal_risk: "Medium",
+        },
       }),
       record({
         record_type: "kpi_metric",
@@ -292,6 +314,16 @@ describe("enterprise context Intelligence read model", () => {
     expect(facts).toContain("initiatives (1)");
     expect(facts).toContain("data domains/capabilities (2)");
     expect(facts).toContain("risks/compliance (1)");
+    expect(facts).toContain(
+      "answer Lakeshore Holdings current-state questions",
+    );
+    expect(overview.vendorSpendRows[0]).toMatchObject({
+      vendor: "Kyriba",
+      category: "software-saas",
+      spendUsdM: 1.8,
+      spendLabel: "$1.8M",
+      health: "watch",
+    });
   });
 
   it("loads overview tables sequentially to avoid session-mode pool bursts", async () => {
