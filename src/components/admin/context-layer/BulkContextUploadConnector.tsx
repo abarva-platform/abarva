@@ -17,6 +17,8 @@ type BulkResult = {
   filesProcessed?: number;
   rowsParsed?: number;
   chunksQueued?: number;
+  recordsPromoted?: number;
+  factsPromoted?: number;
   blobBucket?: string;
   workflow?: {
     jobId: string;
@@ -53,6 +55,10 @@ type BulkResult = {
     loadResult?: {
       rowsParsed: number;
       chunksQueued: number;
+      enterpriseContextPromotion?: {
+        recordsPromoted: number;
+        factsPromoted: number;
+      };
       persistence: { status: string };
     } | null;
     processing?: {
@@ -73,6 +79,8 @@ type BulkJobStatus = {
     filesProcessed: number;
     rowsParsed: number;
     chunksQueued: number;
+    recordsPromoted: number;
+    factsPromoted: number;
   };
   files: Array<{
     fileName: string;
@@ -129,25 +137,29 @@ const pendingSteps: TimelineStep[] = [
     id: "attestation_verified",
     label: "Attestation gate",
     status: "pending",
-    detail: "The loader will verify authority, intended use, and restricted-data review.",
+    detail:
+      "The loader will verify authority, intended use, and restricted-data review.",
   },
   {
     id: "sensitive_data_scan",
     label: "Sensitive-data scan",
     status: "pending",
-    detail: "Files must pass the upload protection gate before any storage write.",
+    detail:
+      "Files must pass the upload protection gate before any storage write.",
   },
   {
     id: "blob_staging",
     label: "Azure Blob staging",
     status: "pending",
-    detail: "Commit modes stage files to the governed context upload container.",
+    detail:
+      "Commit modes stage files to the governed context upload container.",
   },
   {
     id: "worker_queue",
     label: "Worker handoff",
     status: "pending",
-    detail: "Document-heavy packages are queued for Azure private-worker extraction.",
+    detail:
+      "Document-heavy packages are queued for Azure private-worker extraction.",
   },
 ];
 
@@ -221,8 +233,7 @@ function WorkflowTimeline({
                 borderRadius: "50%",
                 display: "inline-grid",
                 placeItems: "center",
-                background:
-                  step.status === "complete" ? "#1c6b35" : "#f4efe5",
+                background: step.status === "complete" ? "#1c6b35" : "#f4efe5",
                 color: step.status === "complete" ? "#fff" : "#5f6673",
                 fontSize: 12,
                 fontWeight: 800,
@@ -262,9 +273,7 @@ export function BulkContextUploadConnector({
   const [files, setFiles] = useState<File[]>([]);
   const [mode, setMode] = useState<
     "validate_only" | "stage_and_enqueue" | "stage_and_process"
-  >(
-    "validate_only",
-  );
+  >("validate_only");
   const [attestationAccepted, setAttestationAccepted] = useState(false);
   const [attestationNote, setAttestationNote] = useState("");
   const [pending, setPending] = useState(false);
@@ -414,9 +423,7 @@ export function BulkContextUploadConnector({
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
         <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontWeight: 700 }}>
-            Files or ZIP package
-          </span>
+          <span style={{ fontWeight: 700 }}>Files or ZIP package</span>
           <input
             type="file"
             multiple
@@ -426,8 +433,8 @@ export function BulkContextUploadConnector({
           />
           <span style={{ color: "#5f6673", fontSize: 13, lineHeight: 1.45 }}>
             PDF, DOCX, PPTX, XLSX, and Markdown files are staged and queued for
-            Azure processing. Use process-now mode for CSV, JSON, JSONL, and YAML
-            template files.
+            Azure processing. Use process-now mode for CSV, JSON, JSONL, and
+            YAML template files.
           </span>
         </label>
 
@@ -460,7 +467,9 @@ export function BulkContextUploadConnector({
             }}
           >
             <span>Advanced package mapping</span>
-            <span aria-hidden="true">{showPackageMapping ? "Hide" : "Show"}</span>
+            <span aria-hidden="true">
+              {showPackageMapping ? "Hide" : "Show"}
+            </span>
           </button>
           {showPackageMapping ? (
             <label
@@ -470,7 +479,9 @@ export function BulkContextUploadConnector({
                 padding: "0 14px 14px",
               }}
             >
-              <span style={{ color: "#5f6673", fontSize: 13, lineHeight: 1.45 }}>
+              <span
+                style={{ color: "#5f6673", fontSize: 13, lineHeight: 1.45 }}
+              >
                 Optional operator mapping. Edit only when the package needs
                 explicit file-to-template routing.
               </span>
@@ -536,8 +547,8 @@ export function BulkContextUploadConnector({
           />
           <span>
             I have authority to load this tenant data, I understand it will be
-            processed as pilot context for {tenantName}, and I have reviewed
-            the files for PHI, PII, payment-card, and other restricted data.
+            processed as pilot context for {tenantName}, and I have reviewed the
+            files for PHI, PII, payment-card, and other restricted data.
           </span>
         </label>
 
@@ -613,8 +624,9 @@ export function BulkContextUploadConnector({
           {typeof result.filesProcessed === "number" ? (
             <p style={{ margin: "8px 0 0" }}>
               Files {result.filesProcessed} · Rows {result.rowsParsed ?? 0} ·
-              Chunks {result.chunksQueued ?? 0} · Bucket{" "}
-              {result.blobBucket ?? "not staged"}
+              Chunks {result.chunksQueued ?? 0} · Records{" "}
+              {result.recordsPromoted ?? 0} · Facts {result.factsPromoted ?? 0}{" "}
+              · Bucket {result.blobBucket ?? "not staged"}
             </p>
           ) : null}
           {result.results && result.results.length > 0 ? (
@@ -627,7 +639,9 @@ export function BulkContextUploadConnector({
                     : item.blob.staged
                       ? item.blob.path
                       : "validated only"}
-                  {item.processing ? ` · next: ${item.processing.nextAction}` : ""}
+                  {item.processing
+                    ? ` · next: ${item.processing.nextAction}`
+                    : ""}
                 </li>
               ))}
             </ul>

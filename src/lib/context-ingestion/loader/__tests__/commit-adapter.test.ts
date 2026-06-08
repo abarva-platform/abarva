@@ -71,6 +71,8 @@ function fakeResult(
     filesProcessed: 1,
     rowsParsed: 0,
     chunksQueued: 0,
+    recordsPromoted: 0,
+    factsPromoted: 0,
     blobBucket: "context-uploads",
     workflow: {
       jobId: "job-1",

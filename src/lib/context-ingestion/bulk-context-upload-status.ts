@@ -1,6 +1,4 @@
-import {
-  getObjectStorageAdapter,
-} from "@/lib/data-plane/objectStorage";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import type {
   BulkContextUploadFileResult,
   BulkContextUploadInput,
@@ -38,6 +36,8 @@ export interface BulkContextUploadJobStatus {
     filesProcessed: number;
     rowsParsed: number;
     chunksQueued: number;
+    recordsPromoted: number;
+    factsPromoted: number;
   };
 }
 
@@ -104,6 +104,8 @@ export function buildBulkContextUploadJobStatus(args: {
       filesProcessed: args.result.filesProcessed,
       rowsParsed: args.result.rowsParsed,
       chunksQueued: args.result.chunksQueued,
+      recordsPromoted: args.result.recordsPromoted,
+      factsPromoted: args.result.factsPromoted,
     },
   };
 }
@@ -146,11 +148,10 @@ export async function readBulkContextUploadJobStatus(args: {
     tenantKey: args.tenantKey,
     jobId: args.jobId,
   });
-  const bytes = await getObjectStorageAdapter().download(
-    bucket,
-    path,
-  );
-  const parsed = JSON.parse(bytes.toString("utf8")) as BulkContextUploadJobStatus;
+  const bytes = await getObjectStorageAdapter().download(bucket, path);
+  const parsed = JSON.parse(
+    bytes.toString("utf8"),
+  ) as BulkContextUploadJobStatus;
   if (
     parsed.schema !== "abarva.context-bulk-upload.job-status.v1" ||
     parsed.clientId !== args.clientId ||
