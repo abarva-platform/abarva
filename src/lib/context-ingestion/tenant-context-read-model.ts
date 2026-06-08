@@ -1,14 +1,14 @@
-import { azureRead, type AzureReadSelect } from '@/lib/data-plane/azureRead';
+import { azureRead, type AzureReadSelect } from "@/lib/data-plane/azureRead";
 
 export type IngestionStageName =
-  | 'Upload Received'
-  | 'Classified'
-  | 'Parsed'
-  | 'Mapped'
-  | 'Validated'
-  | 'Awaiting Approval'
-  | 'Committed'
-  | 'Available to Agents';
+  | "Upload Received"
+  | "Classified"
+  | "Parsed"
+  | "Mapped"
+  | "Validated"
+  | "Awaiting Approval"
+  | "Committed"
+  | "Available to Agents";
 
 export interface TenantContextSummary {
   tenantKey: string;
@@ -98,43 +98,43 @@ type AuditRow = {
 };
 
 const CHUNK_COLUMNS = [
-  'chunk_id',
-  'source_doc',
-  'chunk_index',
-  'chunk_text',
-  'embedding_status',
-  'embedding_model',
-  'embedded_at',
-  'embedding_error',
-  'created_at',
-  'updated_at',
-  'provenance',
-  'chunk_metadata',
+  "chunk_id",
+  "source_doc",
+  "chunk_index",
+  "chunk_text",
+  "embedding_status",
+  "embedding_model",
+  "embedded_at",
+  "embedding_error",
+  "created_at",
+  "updated_at",
+  "provenance",
+  "chunk_metadata",
 ] as const;
 
 const AUDIT_COLUMNS = [
-  'id',
-  'artifact_id',
-  'provider',
-  'model',
-  'policy_decision',
-  'created_at',
-  'request_metadata',
+  "id",
+  "artifact_id",
+  "provider",
+  "model",
+  "policy_decision",
+  "created_at",
+  "request_metadata",
 ] as const;
 
 const STAGE_NAMES: IngestionStageName[] = [
-  'Upload Received',
-  'Classified',
-  'Parsed',
-  'Mapped',
-  'Validated',
-  'Awaiting Approval',
-  'Committed',
-  'Available to Agents',
+  "Upload Received",
+  "Classified",
+  "Parsed",
+  "Mapped",
+  "Validated",
+  "Awaiting Approval",
+  "Committed",
+  "Available to Agents",
 ];
 
 function asString(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
+  if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
@@ -148,8 +148,8 @@ function asIsoString(value: unknown): string | null {
 }
 
 function asNumber(value: unknown): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) return parsed;
   }
@@ -157,12 +157,13 @@ function asNumber(value: unknown): number {
 }
 
 function uniqueSorted(values: Array<string | null | undefined>): string[] {
-  return [...new Set(values.filter((value): value is string => Boolean(value)))]
-    .sort((a, b) => a.localeCompare(b));
+  return [
+    ...new Set(values.filter((value): value is string => Boolean(value))),
+  ].sort((a, b) => a.localeCompare(b));
 }
 
 function readMetadataString(
-  row: Pick<ContextChunkRow, 'provenance' | 'chunk_metadata'>,
+  row: Pick<ContextChunkRow, "provenance" | "chunk_metadata">,
   keys: string[],
 ): string | null {
   for (const source of [row.provenance, row.chunk_metadata]) {
@@ -177,18 +178,25 @@ function readMetadataString(
 
 function loadedAt(row: ContextChunkRow): string {
   return (
-    asIsoString(row.created_at)
-    ?? asIsoString(row.embedded_at)
-    ?? readMetadataString(row, ['loaded_at', 'imported_at', 'created_at', 'source_loaded_at'])
-    ?? ''
+    asIsoString(row.created_at) ??
+    asIsoString(row.embedded_at) ??
+    readMetadataString(row, [
+      "loaded_at",
+      "imported_at",
+      "created_at",
+      "source_loaded_at",
+    ]) ??
+    ""
   );
 }
 
 function statusOf(row: ContextChunkRow): string {
-  return asString(row.embedding_status) ?? 'pending';
+  return asString(row.embedding_status) ?? "pending";
 }
 
-function latestIso(values: Array<string | Date | null | undefined>): string | null {
+function latestIso(
+  values: Array<string | Date | null | undefined>,
+): string | null {
   const sorted = values
     .map(asIsoString)
     .filter((value): value is string => Boolean(value))
@@ -196,17 +204,27 @@ function latestIso(values: Array<string | Date | null | undefined>): string | nu
   return sorted[0] ?? null;
 }
 
-async function safeSelect<R = Record<string, unknown>>(request: AzureReadSelect): Promise<R[]> {
+async function safeSelect<R = Record<string, unknown>>(
+  request: AzureReadSelect,
+): Promise<R[]> {
   try {
-    return await azureRead.select<R>({ ...request, missingTable: request.missingTable ?? 'empty' });
+    return await azureRead.select<R>({
+      ...request,
+      missingTable: request.missingTable ?? "empty",
+    });
   } catch {
     return [];
   }
 }
 
-async function safeMaybeSingle<R = Record<string, unknown>>(request: AzureReadSelect): Promise<R | null> {
+async function safeMaybeSingle<R = Record<string, unknown>>(
+  request: AzureReadSelect,
+): Promise<R | null> {
   try {
-    return await azureRead.maybeSingle<R>({ ...request, missingTable: request.missingTable ?? 'empty' });
+    return await azureRead.maybeSingle<R>({
+      ...request,
+      missingTable: request.missingTable ?? "empty",
+    });
   } catch {
     return null;
   }
@@ -214,18 +232,20 @@ async function safeMaybeSingle<R = Record<string, unknown>>(request: AzureReadSe
 
 async function fetchClientRow(clientId: string): Promise<ClientRow | null> {
   return safeMaybeSingle<ClientRow>({
-    table: 'clients',
-    columns: ['id', 'tenant_key', 'slug', 'name'],
+    table: "clients",
+    columns: ["id", "tenant_key", "slug", "name"],
     where: { id: clientId },
   });
 }
 
-async function fetchContextChunks(clientId: string): Promise<ContextChunkRow[]> {
+async function fetchContextChunks(
+  clientId: string,
+): Promise<ContextChunkRow[]> {
   return safeSelect<ContextChunkRow>({
-    table: 'enterprise_context_chunks',
+    table: "enterprise_context_chunks",
     columns: CHUNK_COLUMNS,
     where: { client_id: clientId },
-    orderBy: { column: 'created_at', direction: 'desc' },
+    orderBy: { column: "created_at", direction: "desc" },
   });
 }
 
@@ -234,39 +254,46 @@ async function fetchEmbeddingAudits(
   limit = 100,
 ): Promise<AuditRow[]> {
   return safeSelect<AuditRow>({
-    table: 'ai_egress_audit',
+    table: "ai_egress_audit",
     columns: AUDIT_COLUMNS,
     where: {
       tenant_id: clientId,
-      workflow: 'substrate-loader-embed',
+      workflow: "substrate-loader-embed",
     },
-    orderBy: { column: 'created_at', direction: 'desc' },
+    orderBy: { column: "created_at", direction: "desc" },
     limit,
   });
 }
 
-export async function getTenantContextSummary(clientId: string): Promise<TenantContextSummary> {
+export async function getTenantContextSummary(
+  clientId: string,
+): Promise<TenantContextSummary> {
   const [client, chunks, audits] = await Promise.all([
     fetchClientRow(clientId),
     fetchContextChunks(clientId),
     fetchEmbeddingAudits(clientId, 1000),
   ]);
 
-  const embedded = chunks.filter((row) => statusOf(row) === 'embedded');
-  const pending = chunks.filter((row) => statusOf(row) === 'pending');
-  const failed = chunks.filter((row) => statusOf(row) === 'failed');
-  const sourceDocs = uniqueSorted(chunks.map((row) => asString(row.source_doc)));
+  const embedded = chunks.filter((row) => statusOf(row) === "embedded");
+  const pending = chunks.filter((row) => statusOf(row) === "pending");
+  const failed = chunks.filter((row) => statusOf(row) === "failed");
+  const sourceDocs = uniqueSorted(
+    chunks.map((row) => asString(row.source_doc)),
+  );
 
   return {
-    tenantKey: asString(client?.tenant_key) ?? asString(client?.slug) ?? 'unknown',
-    displayName: asString(client?.name) ?? 'Active client',
+    tenantKey:
+      asString(client?.tenant_key) ?? asString(client?.slug) ?? "unknown",
+    displayName: asString(client?.name) ?? "Active client",
     ingestionFilesCount: sourceDocs.length,
     chunksCount: chunks.length,
     chunksEmbedded: embedded.length,
     chunksPending: pending.length,
     chunksFailed: failed.length,
     lastEmbeddedAt: latestIso(embedded.map((row) => row.embedded_at)),
-    embeddingProviders: uniqueSorted(audits.map((row) => asString(row.provider))),
+    embeddingProviders: uniqueSorted(
+      audits.map((row) => asString(row.provider)),
+    ),
     embeddingModels: uniqueSorted([
       ...chunks.map((row) => asString(row.embedding_model)),
       ...audits.map((row) => asString(row.model)),
@@ -275,21 +302,32 @@ export async function getTenantContextSummary(clientId: string): Promise<TenantC
   };
 }
 
-export async function getTenantIngestionStages(clientId: string): Promise<IngestionStageRow[]> {
+export async function getTenantIngestionStages(
+  clientId: string,
+): Promise<IngestionStageRow[]> {
   const chunks = await fetchContextChunks(clientId);
-  const files = uniqueSorted(chunks.map((row) => asString(row.source_doc))).length;
-  const facts = chunks.length;
-  const issues = chunks.filter((row) => statusOf(row) === 'failed').length;
-  const approved = chunks.filter((row) => statusOf(row) === 'embedded').length;
+  const files = uniqueSorted(
+    chunks.map((row) => asString(row.source_doc)),
+  ).length;
+  // Chunk-backed context is evidence only; structured fact counts come from
+  // enterprise_context_facts and must not be inferred from chunk rows.
+  const facts = 0;
+  const issues = chunks.filter((row) => statusOf(row) === "failed").length;
+  const approved = chunks.filter((row) => statusOf(row) === "embedded").length;
 
   return STAGE_NAMES.map((stage) => ({
     stage,
     files,
     facts,
     issues,
-    approved: stage === 'Upload Received' || stage === 'Classified' || stage === 'Parsed' || stage === 'Mapped' || stage === 'Validated'
-      ? 0
-      : approved,
+    approved:
+      stage === "Upload Received" ||
+      stage === "Classified" ||
+      stage === "Parsed" ||
+      stage === "Mapped" ||
+      stage === "Validated"
+        ? 0
+        : approved,
   }));
 }
 
@@ -301,7 +339,7 @@ export async function getTenantSourceFiles(
   const grouped = new Map<string, TenantSourceFileRow>();
 
   for (const row of chunks) {
-    const sourceDoc = asString(row.source_doc) ?? 'unknown-source';
+    const sourceDoc = asString(row.source_doc) ?? "unknown-source";
     const existing = grouped.get(sourceDoc);
     const rowLoadedAt = loadedAt(row);
     if (!existing) {
@@ -309,18 +347,26 @@ export async function getTenantSourceFiles(
         source_doc: sourceDoc,
         chunk_count: 1,
         first_loaded_at: rowLoadedAt,
-        sample_chunk_id: asString(row.chunk_id) ?? '',
+        sample_chunk_id: asString(row.chunk_id) ?? "",
       });
       continue;
     }
     existing.chunk_count += 1;
-    if (!existing.first_loaded_at || (rowLoadedAt && Date.parse(rowLoadedAt) < Date.parse(existing.first_loaded_at))) {
+    if (
+      !existing.first_loaded_at ||
+      (rowLoadedAt &&
+        Date.parse(rowLoadedAt) < Date.parse(existing.first_loaded_at))
+    ) {
       existing.first_loaded_at = rowLoadedAt;
     }
   }
 
   return [...grouped.values()]
-    .sort((a, b) => b.chunk_count - a.chunk_count || a.source_doc.localeCompare(b.source_doc))
+    .sort(
+      (a, b) =>
+        b.chunk_count - a.chunk_count ||
+        a.source_doc.localeCompare(b.source_doc),
+    )
     .slice(0, opts.limit ?? 50);
 }
 
@@ -330,12 +376,15 @@ export async function getTenantEmbeddingHistory(
 ): Promise<TenantEmbeddingHistoryRow[]> {
   const audits = await fetchEmbeddingAudits(clientId, opts.limit ?? 100);
   return audits.map((row) => ({
-    id: asString(row.id) ?? '',
-    chunk_id: asString(row.request_metadata?.chunk_id) ?? asString(row.artifact_id) ?? '',
-    provider: asString(row.provider) ?? 'unknown',
-    model: asString(row.model) ?? 'unknown',
-    policy_decision: asString(row.policy_decision) ?? 'unknown',
-    created_at: asIsoString(row.created_at) ?? '',
+    id: asString(row.id) ?? "",
+    chunk_id:
+      asString(row.request_metadata?.chunk_id) ??
+      asString(row.artifact_id) ??
+      "",
+    provider: asString(row.provider) ?? "unknown",
+    model: asString(row.model) ?? "unknown",
+    policy_decision: asString(row.policy_decision) ?? "unknown",
+    created_at: asIsoString(row.created_at) ?? "",
   }));
 }
 
@@ -344,19 +393,25 @@ export async function getTenantEvidenceMapForFile(
   sourceDoc: string,
 ): Promise<TenantEvidenceMapRow[]> {
   const rows = await safeSelect<ContextChunkRow>({
-    table: 'enterprise_context_chunks',
-    columns: ['chunk_id', 'chunk_index', 'chunk_text', 'embedding_status', 'embedded_at'],
+    table: "enterprise_context_chunks",
+    columns: [
+      "chunk_id",
+      "chunk_index",
+      "chunk_text",
+      "embedding_status",
+      "embedded_at",
+    ],
     where: {
       client_id: clientId,
       source_doc: sourceDoc,
     },
-    orderBy: { column: 'chunk_index', direction: 'asc' },
+    orderBy: { column: "chunk_index", direction: "asc" },
   });
 
   return rows.map((row) => ({
-    chunk_id: asString(row.chunk_id) ?? '',
+    chunk_id: asString(row.chunk_id) ?? "",
     chunk_index: asNumber(row.chunk_index),
-    chunk_text: asString(row.chunk_text) ?? '',
+    chunk_text: asString(row.chunk_text) ?? "",
     embedding_status: statusOf(row),
     embedded_at: asIsoString(row.embedded_at),
   }));
@@ -367,22 +422,31 @@ export async function getTenantPendingChunks(
   opts: { limit?: number } = {},
 ): Promise<TenantPendingChunkRow[]> {
   const rows = await safeSelect<ContextChunkRow>({
-    table: 'enterprise_context_chunks',
-    columns: ['chunk_id', 'source_doc', 'chunk_index', 'embedding_status', 'embedded_at', 'updated_at', 'embedding_error'],
+    table: "enterprise_context_chunks",
+    columns: [
+      "chunk_id",
+      "source_doc",
+      "chunk_index",
+      "embedding_status",
+      "embedded_at",
+      "updated_at",
+      "embedding_error",
+    ],
     where: {
       client_id: clientId,
-      embedding_status: { op: 'in', value: ['pending', 'failed'] },
+      embedding_status: { op: "in", value: ["pending", "failed"] },
     },
-    orderBy: { column: 'updated_at', direction: 'desc' },
+    orderBy: { column: "updated_at", direction: "desc" },
     limit: opts.limit ?? 100,
   });
 
   return rows.map((row) => ({
-    chunk_id: asString(row.chunk_id) ?? '',
-    source_doc: asString(row.source_doc) ?? 'unknown-source',
+    chunk_id: asString(row.chunk_id) ?? "",
+    source_doc: asString(row.source_doc) ?? "unknown-source",
     chunk_index: asNumber(row.chunk_index),
     embedding_status: statusOf(row),
-    last_attempt_at: asIsoString(row.updated_at) ?? asIsoString(row.embedded_at),
+    last_attempt_at:
+      asIsoString(row.updated_at) ?? asIsoString(row.embedded_at),
     error_message: asString(row.embedding_error),
   }));
 }

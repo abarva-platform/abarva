@@ -101,6 +101,7 @@ export interface BulkContextUploadWorkflowStep {
     | "blob_staging"
     | "worker_queue"
     | "immediate_processing"
+    | "enterprise_context_promotion"
     | "private_worker"
     | "operator_review"
     | "tenant_context_commit";
@@ -117,6 +118,8 @@ export interface BulkContextUploadResult {
   filesProcessed: number;
   rowsParsed: number;
   chunksQueued: number;
+  recordsPromoted: number;
+  factsPromoted: number;
   blobBucket: string;
   workflow: {
     jobId: string;
@@ -176,7 +179,9 @@ function asOptionalStringArray(value: unknown): string[] | undefined {
     .filter(Boolean);
 }
 
-function asOptionalStringMap(value: unknown): Record<string, string> | undefined {
+function asOptionalStringMap(
+  value: unknown,
+): Record<string, string> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return undefined;
   }
@@ -224,25 +229,27 @@ export function parseBulkContextUploadManifest(
     throw new Error(`bulk_manifest_too_many_files:${MAX_BULK_FILES}`);
   }
 
-  const files = rawFiles.map((rawFile, index): BulkContextUploadManifestFile => {
-    const file = asObject(rawFile);
-    const templateId = asString(file.templateId, `files_${index}_templateId`);
-    if (!getTemplateById(templateId, { tenantKey })) {
-      throw new Error(`bulk_manifest_unknown_template:${templateId}`);
-    }
-    return {
-      path: cleanManifestPath(asString(file.path, `files_${index}_path`)),
-      templateId,
-      sourceRecordIdColumn: asOptionalString(file.sourceRecordIdColumn),
-      titleColumn: asOptionalString(file.titleColumn),
-      textColumns: asOptionalStringArray(file.textColumns),
-      fieldMappings: asOptionalStringMap(file.fieldMappings),
-      dataClassification:
-        asOptionalString(file.dataClassification) ??
-        asOptionalString(parsed.defaultDataClassification) ??
-        "confidential_business",
-    };
-  });
+  const files = rawFiles.map(
+    (rawFile, index): BulkContextUploadManifestFile => {
+      const file = asObject(rawFile);
+      const templateId = asString(file.templateId, `files_${index}_templateId`);
+      if (!getTemplateById(templateId, { tenantKey })) {
+        throw new Error(`bulk_manifest_unknown_template:${templateId}`);
+      }
+      return {
+        path: cleanManifestPath(asString(file.path, `files_${index}_path`)),
+        templateId,
+        sourceRecordIdColumn: asOptionalString(file.sourceRecordIdColumn),
+        titleColumn: asOptionalString(file.titleColumn),
+        textColumns: asOptionalStringArray(file.textColumns),
+        fieldMappings: asOptionalStringMap(file.fieldMappings),
+        dataClassification:
+          asOptionalString(file.dataClassification) ??
+          asOptionalString(parsed.defaultDataClassification) ??
+          "confidential_business",
+      };
+    },
+  );
 
   const duplicatePaths = new Set<string>();
   const seenPaths = new Set<string>();
@@ -259,7 +266,9 @@ export function parseBulkContextUploadManifest(
 
   return {
     loadName,
-    defaultDataClassification: asOptionalString(parsed.defaultDataClassification),
+    defaultDataClassification: asOptionalString(
+      parsed.defaultDataClassification,
+    ),
     files,
   };
 }
@@ -282,7 +291,8 @@ function mimeType(file: BulkContextUploadFileInput): string {
   if (lower.endsWith(".jsonl")) return "application/x-ndjson";
   if (lower.endsWith(".yaml") || lower.endsWith(".yml"))
     return "application/x-yaml";
-  if (lower.endsWith(".md") || lower.endsWith(".markdown")) return "text/markdown";
+  if (lower.endsWith(".md") || lower.endsWith(".markdown"))
+    return "text/markdown";
   return "text/csv";
 }
 
@@ -371,7 +381,8 @@ function buildWorkflow(args: {
       id: "attestation_verified",
       label: "Operator attestation verified",
       status: "complete",
-      detail: "Authority, intended use, and restricted-data review were confirmed before processing.",
+      detail:
+        "Authority, intended use, and restricted-data review were confirmed before processing.",
     },
     {
       id: "sensitive_data_scan",
@@ -384,7 +395,8 @@ function buildWorkflow(args: {
   if (args.mode === "validate_only") {
     return {
       jobId: args.jobId,
-      summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+      summary:
+        "Validation passed. Nothing was written to Azure Blob or tenant context.",
       status: {
         persisted: false,
         bucket: null,
@@ -403,7 +415,8 @@ function buildWorkflow(args: {
           id: "tenant_context_commit",
           label: "Tenant context commit",
           status: "skipped",
-          detail: "Run stage-and-process for structured files or stage-and-queue for worker processing.",
+          detail:
+            "Run stage-and-process for structured files or stage-and-queue for worker processing.",
         },
       ],
     };
@@ -438,13 +451,15 @@ function buildWorkflow(args: {
           id: "private_worker",
           label: "Private worker processing",
           status: "active",
-          detail: "Waiting for the Azure worker to extract, classify, map, and return file-level outcomes.",
+          detail:
+            "Waiting for the Azure worker to extract, classify, map, and return file-level outcomes.",
         },
         {
           id: "operator_review",
           label: "Operator review",
           status: "pending",
-          detail: "Review extracted records, warnings, and evidence counts before final tenant-context commit.",
+          detail:
+            "Review extracted records, warnings, and evidence counts before final tenant-context commit.",
         },
         {
           id: "tenant_context_commit",
@@ -458,7 +473,8 @@ function buildWorkflow(args: {
 
   return {
     jobId: args.jobId,
-    summary: "Structured files were staged and processed through the governed loader.",
+    summary:
+      "Structured files were staged and processed through the governed loader.",
     status: {
       persisted: false,
       bucket: null,
@@ -480,10 +496,27 @@ function buildWorkflow(args: {
         detail: `${processed} ${plural} processed without waiting for the private worker.`,
       },
       {
+        id: "enterprise_context_promotion",
+        label: "Structured facts promoted",
+        status: "complete",
+        detail: `${args.results.reduce(
+          (sum, item) =>
+            sum +
+            (item.loadResult?.enterpriseContextPromotion.recordsPromoted ?? 0),
+          0,
+        )} records and ${args.results.reduce(
+          (sum, item) =>
+            sum +
+            (item.loadResult?.enterpriseContextPromotion.factsPromoted ?? 0),
+          0,
+        )} facts were promoted into Enterprise Context.`,
+      },
+      {
         id: "tenant_context_commit",
         label: "Tenant context commit completed",
         status: "complete",
-        detail: "Parsed rows were written through the governed tenant-context loader.",
+        detail:
+          "Parsed rows were written as chunks and normalized records/facts through the governed tenant-context loader.",
       },
     ],
   };
@@ -492,7 +525,9 @@ function buildWorkflow(args: {
 export async function runBulkContextUpload(
   input: BulkContextUploadInput,
 ): Promise<BulkContextUploadResult> {
-  const filesByName = new Map(input.files.map((file) => [fileKey(file.name), file]));
+  const filesByName = new Map(
+    input.files.map((file) => [fileKey(file.name), file]),
+  );
   const manifestByName = new Map(
     input.manifest.files.map((file) => [fileKey(file.path), file]),
   );
@@ -514,18 +549,26 @@ export async function runBulkContextUpload(
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
   const loadSlug = safeLoadSlug(input.manifest.loadName);
   const results: BulkContextUploadFileResult[] = [];
-  const enqueueMessage = input.enqueueMessageFn ?? enqueueAzureLandingZoneMessage;
+  const enqueueMessage =
+    input.enqueueMessageFn ?? enqueueAzureLandingZoneMessage;
 
   for (const manifestFile of input.manifest.files) {
     const uploadFile = filesByName.get(fileKey(manifestFile.path))!;
-    if (input.mode === "stage_and_process" && !canProcessImmediately(uploadFile.name)) {
-      throw new Error(`bulk_upload_process_requires_structured_file:${uploadFile.name}`);
+    if (
+      input.mode === "stage_and_process" &&
+      !canProcessImmediately(uploadFile.name)
+    ) {
+      throw new Error(
+        `bulk_upload_process_requires_structured_file:${uploadFile.name}`,
+      );
     }
     const template = getTemplateById(manifestFile.templateId, {
       tenantKey: input.tenantKey,
     });
     if (!template) {
-      throw new Error(`bulk_manifest_unknown_template:${manifestFile.templateId}`);
+      throw new Error(
+        `bulk_manifest_unknown_template:${manifestFile.templateId}`,
+      );
     }
     const segmentKey = segmentKeyForContextDimension(template.dimension);
     const contentType = mimeType(uploadFile);
@@ -549,7 +592,10 @@ export async function runBulkContextUpload(
 
     let loadResult: CsvUploadLoadResult | null = null;
     let queue: BulkContextUploadQueueResult | null = null;
-    if (input.mode === "stage_and_process" || input.mode === "stage_and_enqueue") {
+    if (
+      input.mode === "stage_and_process" ||
+      input.mode === "stage_and_enqueue"
+    ) {
       await getObjectStorageAdapter().upload(
         BULK_CONTEXT_BUCKET,
         blobPath,
@@ -581,7 +627,10 @@ export async function runBulkContextUpload(
     }
 
     if (input.mode === "stage_and_enqueue") {
-      const location = describeObjectStorageLocation(BULK_CONTEXT_BUCKET, blobPath);
+      const location = describeObjectStorageLocation(
+        BULK_CONTEXT_BUCKET,
+        blobPath,
+      );
       queue = await enqueueMessage(
         landingMessage({
           tenantKey: input.tenantKey,
@@ -640,7 +689,9 @@ export async function runBulkContextUpload(
         bucket: BULK_CONTEXT_BUCKET,
         path: blobPath,
         sha256: hash,
-        staged: input.mode === "stage_and_process" || input.mode === "stage_and_enqueue",
+        staged:
+          input.mode === "stage_and_process" ||
+          input.mode === "stage_and_enqueue",
       },
       queue,
       loadResult,
@@ -661,9 +712,9 @@ export async function runBulkContextUpload(
               }
             : {
                 status: "processed_now",
-                label: "Processed now",
+                label: "Processed and promoted",
                 nextAction:
-                  "Review loaded chunks and evidence counts in Data Trust.",
+                  "Review chunk evidence, structured records, and fact coverage in Data Trust.",
               },
     });
   }
@@ -674,6 +725,16 @@ export async function runBulkContextUpload(
   );
   const chunksQueued = results.reduce(
     (sum, item) => sum + (item.loadResult?.chunksQueued ?? 0),
+    0,
+  );
+  const recordsPromoted = results.reduce(
+    (sum, item) =>
+      sum + (item.loadResult?.enterpriseContextPromotion.recordsPromoted ?? 0),
+    0,
+  );
+  const factsPromoted = results.reduce(
+    (sum, item) =>
+      sum + (item.loadResult?.enterpriseContextPromotion.factsPromoted ?? 0),
     0,
   );
   const jobId = progressJobId({
@@ -691,6 +752,8 @@ export async function runBulkContextUpload(
     filesProcessed: results.length,
     rowsParsed,
     chunksQueued,
+    recordsPromoted,
+    factsPromoted,
     blobBucket: BULK_CONTEXT_BUCKET,
     workflow: buildWorkflow({
       mode: input.mode,
@@ -711,11 +774,11 @@ export async function runBulkContextUpload(
               detail:
                 "Files were staged to Azure Blob and queued for private Azure worker processing.",
             }
-        : {
-            status: "staged_and_processed",
-            detail:
-              "Files were staged to Azure Blob and processed through the governed context loader.",
-          },
+          : {
+              status: "staged_and_processed",
+              detail:
+                "Files were staged to Azure Blob, parsed into chunk evidence, and promoted into structured Enterprise Context records/facts.",
+            },
   };
 
   if (input.mode !== "validate_only") {

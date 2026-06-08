@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -23,6 +24,80 @@ type MeridianCatalogTemplate = {
   owner_role: string;
   refresh_cadence: string;
 };
+
+function createContextPromotionDbMock(
+  calls: Array<{ table: string; operation: string; payload: unknown }>,
+) {
+  const recordIds = new Map<string, string>();
+  return {
+    from(table: string) {
+      return {
+        insert(payload: unknown) {
+          calls.push({ table, operation: "insert", payload });
+          return {
+            select() {
+              const rows = Array.isArray(payload) ? payload : [payload];
+              return Promise.resolve({
+                data: rows.map((_, index) => ({
+                  id: `row-${index}`,
+                  chunk_id: `chunk-${index}`,
+                })),
+                error: null,
+                count: rows.length,
+              });
+            },
+          };
+        },
+        upsert(payload: unknown) {
+          calls.push({ table, operation: "upsert", payload });
+          const rows = Array.isArray(payload) ? payload : [payload];
+          if (table === "enterprise_context_records") {
+            rows.forEach((row, index) => {
+              const record = row as { canonical_record_id?: string };
+              if (record.canonical_record_id) {
+                recordIds.set(record.canonical_record_id, `record-${index}`);
+              }
+            });
+          }
+          return {
+            select() {
+              const idPrefix =
+                table === "enterprise_context_sources"
+                  ? "source"
+                  : table === "enterprise_context_source_files"
+                    ? "source-file"
+                    : "upsert";
+              return Promise.resolve({
+                data: rows.map((_, index) => ({ id: `${idPrefix}-${index}` })),
+                error: null,
+                count: rows.length,
+              });
+            },
+          };
+        },
+        select() {
+          return {
+            eq() {
+              return {
+                in() {
+                  return Promise.resolve({
+                    data: [...recordIds.entries()].map(
+                      ([canonical_record_id, id]) => ({
+                        canonical_record_id,
+                        id,
+                      }),
+                    ),
+                    error: null,
+                  });
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+}
 
 function readMeridianTemplateCatalog(): MeridianCatalogTemplate[] {
   const catalogPath = path.join(
@@ -338,28 +413,7 @@ describe("csv upload connector", () => {
   it("batch inserts prepared chunks without delete or cross-tenant writes", async () => {
     const calls: Array<{ table: string; operation: string; payload: unknown }> =
       [];
-    const db = {
-      from(table: string) {
-        return {
-          insert(payload: unknown) {
-            calls.push({ table, operation: "insert", payload });
-            return {
-              select() {
-                const rows = Array.isArray(payload) ? payload : [payload];
-                return Promise.resolve({
-                  data: rows.map((_, index) => ({
-                    id: `row-${index}`,
-                    chunk_id: `chunk-${index}`,
-                  })),
-                  error: null,
-                  count: rows.length,
-                });
-              },
-            };
-          },
-        };
-      },
-    };
+    const db = createContextPromotionDbMock(calls);
 
     const result = await loadCsvUploadToTenantContext({
       clientId: "client-first-capital",
@@ -377,8 +431,46 @@ describe("csv upload connector", () => {
 
     expect(result.persistence.status).toBe("inserted");
     expect(result.chunksQueued).toBe(1);
-    expect(calls.map((call) => call.operation)).toEqual(["insert", "insert"]);
+    expect(result.enterpriseContextPromotion.recordsPromoted).toBe(1);
+    expect(result.enterpriseContextPromotion.factsPromoted).toBeGreaterThan(0);
+    expect(result.fileHash).toBe(
+      crypto
+        .createHash("sha256")
+        .update(
+          [
+            "vendor_id,vendor_name,annual_value_usd,renewal_date",
+            "ven-1,Finzly,1200000,2026-10-01",
+          ].join("\n"),
+        )
+        .digest("hex"),
+    );
+    expect(calls.map((call) => call.operation)).toEqual([
+      "insert",
+      "insert",
+      "upsert",
+      "upsert",
+      "upsert",
+      "upsert",
+    ]);
     expect(calls.some((call) => call.operation === "delete")).toBe(false);
+    const sourceFileUpsert = calls.find(
+      (call) => call.table === "enterprise_context_source_files",
+    );
+    expect(sourceFileUpsert?.payload).toEqual(
+      expect.objectContaining({
+        source_file: "vendor-contracts.csv",
+        file_hash: result.fileHash,
+      }),
+    );
+    const recordUpsert = calls.find(
+      (call) => call.table === "enterprise_context_records",
+    );
+    expect(recordUpsert?.payload).toEqual([
+      expect.objectContaining({
+        source_id: "source-0",
+        source_file_id: "source-file-0",
+      }),
+    ]);
     const chunkInsert = calls.find(
       (call) => call.table === "enterprise_context_chunks",
     );
@@ -432,28 +524,7 @@ describe("csv upload connector", () => {
     const calls: Array<{ table: string; operation: string; payload: unknown }> =
       [];
     const evidenceInputs: unknown[] = [];
-    const db = {
-      from(table: string) {
-        return {
-          insert(payload: unknown) {
-            calls.push({ table, operation: "insert", payload });
-            return {
-              select() {
-                const rows = Array.isArray(payload) ? payload : [payload];
-                return Promise.resolve({
-                  data: rows.map((_, index) => ({
-                    id: `row-${index}`,
-                    chunk_id: `chunk-${index}`,
-                  })),
-                  error: null,
-                  count: rows.length,
-                });
-              },
-            };
-          },
-        };
-      },
-    };
+    const db = createContextPromotionDbMock(calls);
 
     const result = await loadCsvUploadToTenantContext({
       clientId: "client-meridian",
@@ -484,6 +555,10 @@ describe("csv upload connector", () => {
     expect(calls.map((call) => call.table)).toEqual([
       "data_ingestion_runs",
       "enterprise_context_chunks",
+      "enterprise_context_sources",
+      "enterprise_context_source_files",
+      "enterprise_context_records",
+      "enterprise_context_facts",
     ]);
     expect(evidenceInputs).toEqual([
       expect.objectContaining({

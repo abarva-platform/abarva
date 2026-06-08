@@ -13,6 +13,10 @@ import {
   type RecordEvidenceInput,
 } from "@/lib/evidence/ledger";
 
+import {
+  promoteAdminStructuredRowsToEnterpriseContext,
+  type AdminStructuredContextPromotionResult,
+} from "./admin-structured-context-promotion";
 import { classifyUploadedFile } from "./file-classifier";
 import { buildPHSEvidenceLedgerInputs } from "./phs-evidence-ledger-binding";
 import { buildTemplateSchemaPreflight } from "./schema-preflight";
@@ -85,6 +89,7 @@ export interface PreparedCsvContextChunk {
 
 export interface CsvUploadPreparedBatch {
   uploadId: string;
+  fileHash: string;
   template: ContextTemplateDefinition;
   mapping: CsvMappingSuggestion;
   headers: string[];
@@ -108,6 +113,7 @@ export interface CsvUploadLoadResult extends Omit<
     evidenceIds: string[];
     detail: string;
   };
+  enterpriseContextPromotion: AdminStructuredContextPromotionResult;
   persistence: {
     status: "inserted" | "skipped_no_database_url";
     chunkRowsInserted: number;
@@ -288,8 +294,9 @@ function normalizeScalar(value: unknown): string {
 function rowsFromJsonValue(value: unknown): CsvRow[] {
   if (Array.isArray(value)) {
     return value
-      .filter((item): item is Record<string, unknown> =>
-        Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      .filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
       )
       .map((item) =>
         Object.fromEntries(
@@ -524,13 +531,12 @@ export function prepareCsvUploadForTenantContext(
   const fileHash = crypto
     .createHash("sha256")
     .update(input.csvText)
-    .digest("hex")
-    .slice(0, 12);
+    .digest("hex");
   const uploadId = [
     "csv",
     safeSlug(input.tenantKey),
     safeSlug(input.fileName),
-    fileHash,
+    fileHash.slice(0, 12),
     compactTimestamp(uploadedAt),
   ].join(":");
   const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
@@ -584,6 +590,7 @@ export function prepareCsvUploadForTenantContext(
 
   return {
     uploadId,
+    fileHash,
     template,
     mapping,
     headers: parsed.headers,
@@ -620,6 +627,14 @@ export async function loadCsvUploadToTenantContext(
         evidenceIds: [],
         detail:
           "No database is configured; evidence ledger writes were not attempted.",
+      },
+      enterpriseContextPromotion: {
+        status: "skipped_no_rows",
+        recordsPromoted: 0,
+        factsPromoted: 0,
+        sourceFileId: null,
+        detail:
+          "No database is configured; structured enterprise context promotion was not attempted.",
       },
       persistence: {
         status: "skipped_no_database_url",
@@ -683,6 +698,25 @@ export async function loadCsvUploadToTenantContext(
     }
   }
 
+  const parsedForPromotion = parseStructuredUpload(
+    input.csvText,
+    input.fileName,
+  );
+  const enterpriseContextPromotion =
+    await promoteAdminStructuredRowsToEnterpriseContext({
+      clientId: input.clientId,
+      tenantKey: input.tenantKey,
+      fileName: input.fileName,
+      sourceFileHash: prepared.fileHash,
+      uploadedBy: input.uploadedBy,
+      uploadedAt: input.uploadedAt ?? new Date().toISOString(),
+      uploadId: prepared.uploadId,
+      template: prepared.template,
+      mapping: prepared.mapping,
+      rows: parsedForPromotion.rows,
+      db,
+    });
+
   return {
     ...publicPrepared,
     chunksQueued: chunks.length,
@@ -701,13 +735,14 @@ export async function loadCsvUploadToTenantContext(
             evidenceIds: [],
             detail: "Selected template does not create evidence ledger rows.",
           },
+    enterpriseContextPromotion,
     persistence: {
       status: "inserted",
       chunkRowsInserted: inserted,
       ingestionRunRecorded,
       detail: ingestionRunRecorded
-        ? "CSV rows were written as pending tenant context chunks."
-        : "CSV chunks were inserted; ingestion run audit row was skipped because the table write failed.",
+        ? "CSV rows were written as pending tenant context chunks and promoted into structured Enterprise Context records/facts."
+        : "CSV chunks were inserted and promoted; ingestion run audit row was skipped because the table write failed.",
     },
   };
 }

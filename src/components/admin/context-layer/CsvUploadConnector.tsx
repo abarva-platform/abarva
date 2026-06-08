@@ -36,6 +36,13 @@ type UploadResult = {
     evidenceIds: string[];
     detail: string;
   };
+  enterpriseContextPromotion?: {
+    status: string;
+    recordsPromoted: number;
+    factsPromoted: number;
+    sourceFileId: string | null;
+    detail: string;
+  };
   mode?: string;
   readyForCommit?: boolean;
   validation?: {
@@ -766,6 +773,15 @@ export function CsvUploadConnector({
                 {result.chunksQueued?.toLocaleString()} chunks queued from{" "}
                 {result.rowsParsed?.toLocaleString()} rows.
               </strong>
+              {result.enterpriseContextPromotion ? (
+                <span>
+                  Structured context:{" "}
+                  {result.enterpriseContextPromotion.recordsPromoted.toLocaleString()}{" "}
+                  records and{" "}
+                  {result.enterpriseContextPromotion.factsPromoted.toLocaleString()}{" "}
+                  facts promoted.
+                </span>
+              ) : null}
               <span>{result.persistence?.detail}</span>
               {result.evidenceLedger?.rowsRecorded ? (
                 <span>

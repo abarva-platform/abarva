@@ -50,8 +50,10 @@ function normalizeZipPath(value: string): string {
 }
 
 function zipEntryPath(entry: JSZip.JSZipObject): string {
-  return (entry as JSZip.JSZipObject & { unsafeOriginalName?: string })
-    .unsafeOriginalName ?? entry.name;
+  return (
+    (entry as JSZip.JSZipObject & { unsafeOriginalName?: string })
+      .unsafeOriginalName ?? entry.name
+  );
 }
 
 function isZipFile(file: File): boolean {
@@ -63,12 +65,17 @@ function zipMimeType(fileName: string): string {
   if (lower.endsWith(".csv")) return "text/csv";
   if (lower.endsWith(".json")) return "application/json";
   if (lower.endsWith(".jsonl")) return "application/x-ndjson";
-  if (lower.endsWith(".yaml") || lower.endsWith(".yml")) return "application/x-yaml";
-  if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (lower.endsWith(".yaml") || lower.endsWith(".yml"))
+    return "application/x-yaml";
+  if (lower.endsWith(".xlsx"))
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   if (lower.endsWith(".pdf")) return "application/pdf";
-  if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  if (lower.endsWith(".pptx")) return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-  if (lower.endsWith(".md") || lower.endsWith(".markdown")) return "text/markdown";
+  if (lower.endsWith(".docx"))
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (lower.endsWith(".pptx"))
+    return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+  if (lower.endsWith(".md") || lower.endsWith(".markdown"))
+    return "text/markdown";
   return "application/octet-stream";
 }
 
@@ -83,10 +90,14 @@ async function readZipPackage(file: File): Promise<{
   const entries = Object.values(zip.files).filter((entry) => !entry.dir);
   const manifestEntries = entries.filter((entry) => {
     const normalized = normalizeZipPath(zipEntryPath(entry)).toLowerCase();
-    return normalized === "manifest.json" || normalized === "bulk-manifest.json";
+    return (
+      normalized === "manifest.json" || normalized === "bulk-manifest.json"
+    );
   });
-  if (manifestEntries.length === 0) throw new Error("bulk_zip_missing_manifest");
-  if (manifestEntries.length > 1) throw new Error("bulk_zip_multiple_manifests");
+  if (manifestEntries.length === 0)
+    throw new Error("bulk_zip_missing_manifest");
+  if (manifestEntries.length > 1)
+    throw new Error("bulk_zip_multiple_manifests");
 
   const manifestEntry = manifestEntries[0]!;
   const files: BulkRouteFile[] = [];
@@ -95,7 +106,9 @@ async function readZipPackage(file: File): Promise<{
     if (entry === manifestEntry) continue;
     const bytes = await entry.async("uint8array");
     if (bytes.byteLength > MAX_FILE_BYTES) {
-      throw new Error(`bulk_zip_file_exceeds_${MAX_FILE_BYTES}_bytes:${normalized}`);
+      throw new Error(
+        `bulk_zip_file_exceeds_${MAX_FILE_BYTES}_bytes:${normalized}`,
+      );
     }
     const arrayBuffer = bytes.buffer.slice(
       bytes.byteOffset,
@@ -136,7 +149,7 @@ async function emitBulkUploadSuccessNotification(args: {
       targetResourceId: args.result.workflow.jobId,
       payload: {
         title: "Context load completed",
-        body: `${args.result.loadName} processed ${args.result.filesProcessed} files and ${args.result.rowsParsed} rows.`,
+        body: `${args.result.loadName} processed ${args.result.filesProcessed} files, ${args.result.rowsParsed} rows, ${args.result.recordsPromoted} structured records, and ${args.result.factsPromoted} facts.`,
         href: "/admin/setup",
         segmentId: args.result.loadName,
         segmentLabel: args.result.loadName,
@@ -147,6 +160,8 @@ async function emitBulkUploadSuccessNotification(args: {
         filesProcessed: args.result.filesProcessed,
         rowsParsed: args.result.rowsParsed,
         chunksQueued: args.result.chunksQueued,
+        recordsPromoted: args.result.recordsPromoted,
+        factsPromoted: args.result.factsPromoted,
         blobBucket: args.result.blobBucket,
         workflowStatus: args.result.workflow.status,
         persistence: args.result.persistence,
@@ -217,7 +232,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "files required" }, { status: 400 });
     }
     const zipFiles = rawUploadedFiles.filter(isZipFile);
-    if (zipFiles.length > 1 || (zipFiles.length === 1 && rawUploadedFiles.length > 1)) {
+    if (
+      zipFiles.length > 1 ||
+      (zipFiles.length === 1 && rawUploadedFiles.length > 1)
+    ) {
       return NextResponse.json(
         {
           error: "bulk_upload_invalid",
@@ -242,7 +260,10 @@ export async function POST(request: NextRequest) {
     for (const file of uploadedFiles) {
       if (file.size > MAX_FILE_BYTES) {
         return NextResponse.json(
-          { error: `file exceeds ${MAX_FILE_BYTES} bytes`, fileName: file.name },
+          {
+            error: `file exceeds ${MAX_FILE_BYTES} bytes`,
+            fileName: file.name,
+          },
           { status: 413 },
         );
       }
@@ -271,12 +292,15 @@ export async function POST(request: NextRequest) {
       result,
     });
 
-    return NextResponse.json({
-      ...result,
-      adminNotification: notification,
-    }, {
-      status: mode === "validate_only" ? 202 : 200,
-    });
+    return NextResponse.json(
+      {
+        ...result,
+        adminNotification: notification,
+      },
+      {
+        status: mode === "validate_only" ? 202 : 200,
+      },
+    );
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     const status =
