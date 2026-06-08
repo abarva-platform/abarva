@@ -7,7 +7,9 @@ import {
   planFromShape,
   planGateReady,
   emitDiscoveryHandoff,
+  dimensionsForShape,
   DEFAULT_MATURITY_DIMENSIONS,
+  POINT_USE_CASE_DIMENSIONS,
   type DiscoveryShape,
   type DiscoveryPlan,
 } from '../discovery-intake';
@@ -71,6 +73,39 @@ describe('planFromShape — seeds the matrix from domains', () => {
     expect(plan.domainsXDimensions).toHaveLength(4 * DEFAULT_MATURITY_DIMENSIONS.length);
     expect(plan.maturityTargets).toHaveLength(DEFAULT_MATURITY_DIMENSIONS.length);
     expect(plan.domainsXDimensions.every((c) => c.inScope)).toBe(true);
+  });
+});
+
+describe('dimensionsForShape — discovery breadth flexes by use case', () => {
+  function narrowShape(): DiscoveryShape {
+    const s = meridianShape();
+    s.engagementMode = captureField(s.engagementMode, 'point_use_case', 'chat');
+    s.foundationIntent = captureField(s.foundationIntent, 'rides_existing', 'chat');
+    return s;
+  }
+
+  it('full strategy → the full (broad) dimension set', () => {
+    expect(dimensionsForShape(meridianShape())).toEqual(DEFAULT_MATURITY_DIMENSIONS);
+  });
+
+  it('first-of-kind (foundation build) → broad, even for a point use case', () => {
+    const s = narrowShape();
+    s.foundationIntent = captureField(s.foundationIntent, 'first_of_kind', 'chat');
+    expect(dimensionsForShape(s)).toEqual(DEFAULT_MATURITY_DIMENSIONS);
+  });
+
+  it('point use case riding an existing foundation → the narrower core', () => {
+    expect(dimensionsForShape(narrowShape())).toEqual(POINT_USE_CASE_DIMENSIONS);
+    expect(POINT_USE_CASE_DIMENSIONS.length).toBeLessThan(DEFAULT_MATURITY_DIMENSIONS.length);
+  });
+
+  it('planFromShape uses the use-case-scoped breadth by default', () => {
+    const narrow = planFromShape(narrowShape());
+    expect(narrow.maturityTargets).toHaveLength(POINT_USE_CASE_DIMENSIONS.length);
+    expect(narrow.domainsXDimensions).toHaveLength(4 * POINT_USE_CASE_DIMENSIONS.length);
+
+    const broad = planFromShape(meridianShape());
+    expect(broad.maturityTargets.length).toBeGreaterThan(narrow.maturityTargets.length);
   });
 });
 
