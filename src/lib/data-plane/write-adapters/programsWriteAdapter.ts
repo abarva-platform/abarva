@@ -139,6 +139,13 @@ export interface DraftModuleDeliverableTxInput {
  * participant insert that fails is logged and skipped by the caller; the
  * adapter surfaces the failure and lets the route keep its existing policy.
  */
+/** The `updateEngagementCharter` write: replace an engagement's charter JSONB. */
+export interface UpdateEngagementCharterTxInput {
+  readonly programId: string;
+  readonly clientId: string;
+  readonly charter: Record<string, unknown>;
+}
+
 export interface ProgramsWriteAdapter {
   readonly name: DataPlane;
   /**
@@ -188,6 +195,14 @@ export interface ProgramsWriteAdapter {
    * Supabase they are the same statements the helper issued. On a DB error
    * returns `ok:false` — the helper re-throws.
    */
+  /**
+   * Update an engagement's `charter` JSONB (e.g. merge discovery extraction on
+   * upload). On a DB error returns `ok:false` — the caller surfaces it.
+   */
+  updateEngagementCharter(
+    input: UpdateEngagementCharterTxInput,
+  ): Promise<ProgramsWriteOutcome<{ updated: boolean }>>;
+
   runDraftModuleDeliverable(
     input: DraftModuleDeliverableTxInput,
   ): Promise<ProgramsWriteOutcome<{ deliverableId: string; versionId: string }>>;
@@ -355,6 +370,17 @@ export function createSupabaseProgramsWriteAdapter(
         .single();
       if (error) return { ok: false, error: error.message };
       return { ok: true, data: { approvalId: (data as { id: string }).id } };
+    },
+
+    async updateEngagementCharter(input) {
+      const sb = getClient();
+      const { error } = await sb
+        .from('engagements')
+        .update({ charter: input.charter })
+        .eq('id', input.programId)
+        .eq('client_id', input.clientId);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, data: { updated: true } };
     },
 
     async runDraftModuleDeliverable(input) {
@@ -593,6 +619,21 @@ export function createAzureProgramsWriteAdapter(
         const approvalId = rows[0]?.id;
         if (!approvalId) return { ok: false, error: 'approval insert returned no id' };
         return { ok: true, data: { approvalId } };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+
+    async updateEngagementCharter(input) {
+      try {
+        await session((run) =>
+          run('UPDATE engagements SET charter = $1 WHERE id = $2 AND client_id = $3', [
+            input.charter,
+            input.programId,
+            input.clientId,
+          ]),
+        );
+        return { ok: true, data: { updated: true } };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }

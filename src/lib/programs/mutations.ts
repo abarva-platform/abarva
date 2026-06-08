@@ -30,6 +30,11 @@ import {
 } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
 import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
+import {
+  applyEvidenceToCharter,
+  type ExtractionReceipt,
+} from '@/lib/programs/discovery/extraction-planner';
+import type { ExtractedProgramEvidence } from '@/lib/programs/evidence-ingestion';
 import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 
 /**
@@ -312,6 +317,39 @@ export async function advancePhase(
   });
 
   return { programId: input.programId, newPhase: input.toPhase, snapshotId };
+}
+
+/**
+ * Discovery Intake (S3c): apply a parsed, uploaded evidence item to a Move's
+ * charter — read the current DiscoveryShape, route the evidence in (upload
+ * provenance + review-pending), and persist the updated charter. Returns the
+ * extraction receipt, or `null` when the flag is off or the Move is unreadable.
+ * Flag-gated by `discovery_intake_v2`.
+ */
+export async function applyUploadedEvidenceToMove(
+  ctx: TenancyCtx,
+  input: { programId: string; evidence: ExtractedProgramEvidence; sourceFile: string },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ExtractionReceipt | null> {
+  assertTenancy(ctx);
+  if (!isFeatureEnabled(ctx, 'discovery_intake_v2')) return null;
+
+  const program = await getProgramById(ctx, input.programId, opts);
+  if (!program) return null;
+
+  const { charter, receipt } = applyEvidenceToCharter(program.charter, input.evidence, {
+    sourceFile: input.sourceFile,
+  });
+
+  const written = await programsWriteAdapter(opts.supabase).updateEngagementCharter({
+    programId: input.programId,
+    clientId: ctx.clientId,
+    charter,
+  });
+  if (!written.ok) {
+    throw new Error(written.error ?? '[applyUploadedEvidenceToMove] charter update failed');
+  }
+  return receipt;
 }
 
 /**
