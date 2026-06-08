@@ -80,6 +80,7 @@ export interface EnterpriseContextFactPromotionRow extends Omit<
 
 export interface AdminStructuredContextPromotionPlan {
   source: {
+    id: string;
     client_id: string;
     tenant_key: string;
     source_system: string;
@@ -100,8 +101,10 @@ export interface AdminStructuredContextPromotionPlan {
     metadata: Record<string, unknown>;
   };
   sourceFile: {
+    id: string;
     client_id: string;
     tenant_key: string;
+    source_id: string;
     source_file_id: string;
     source_system: string;
     source_file: string;
@@ -157,6 +160,22 @@ function hashJson(value: unknown): string {
     .createHash("sha256")
     .update(JSON.stringify(value))
     .digest("hex");
+}
+
+function stableUuid(parts: string[]): string {
+  const hex = crypto
+    .createHash("sha256")
+    .update(parts.join("\u0000"))
+    .digest("hex");
+  const version = `5${hex.slice(13, 16)}`;
+  const variant = (Number.parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80;
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    version,
+    variant.toString(16).padStart(2, "0") + hex.slice(18, 20),
+    hex.slice(20, 32),
+  ].join("-");
 }
 
 function normalizeScalar(value: string): string | number | boolean {
@@ -342,6 +361,17 @@ export function buildAdminStructuredContextPromotionPlan(
       rows: input.rows.length,
     });
   const dimension = trueDimension(input.template, input.fileName);
+  const sourceId = stableUuid([
+    "enterprise_context_sources",
+    input.tenantKey,
+    SOURCE_SYSTEM,
+    sourceFileId,
+  ]);
+  const sourceFileRowId = stableUuid([
+    "enterprise_context_source_files",
+    input.tenantKey,
+    sourceFileId,
+  ]);
   const records: EnterpriseContextRecordPromotionRow[] = [];
   const factDrafts: EnterpriseContextFactPromotionDraft[] = [];
 
@@ -447,6 +477,7 @@ export function buildAdminStructuredContextPromotionPlan(
 
   return {
     source: {
+      id: sourceId,
       client_id: input.clientId,
       tenant_key: input.tenantKey,
       source_system: SOURCE_SYSTEM,
@@ -474,8 +505,10 @@ export function buildAdminStructuredContextPromotionPlan(
       },
     },
     sourceFile: {
+      id: sourceFileRowId,
       client_id: input.clientId,
       tenant_key: input.tenantKey,
+      source_id: sourceId,
       source_file_id: sourceFileId,
       source_system: SOURCE_SYSTEM,
       source_file: input.fileName,

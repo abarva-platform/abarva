@@ -70,6 +70,13 @@ describe("admin structured context promotion", () => {
         promoted_dimension: "org_roles_teams",
       }),
     );
+    expect(plan.source.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(plan.sourceFile.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(plan.sourceFile.source_id).toBe(plan.source.id);
     expect(plan.sourceFile.file_hash).toBe("f".repeat(64));
     expect(plan.factDrafts).toEqual(
       expect.arrayContaining([
