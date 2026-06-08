@@ -50,7 +50,7 @@ Scaffolded release record for ${title}. Replace this paragraph with a pilot-buye
 
 ## Rollout Plan
 
-Replace with how this becomes active, such as merge to main, Vercel deploy, manual runbook, migration apply, or no runtime rollout.
+Replace with how this becomes active, such as merge to main, Azure Container Apps deploy, manual runbook, migration apply, or no runtime rollout.
 
 ## Rollback Plan
 

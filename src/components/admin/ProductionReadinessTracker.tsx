@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import type { CSSProperties } from 'react';
+import Link from "next/link";
+import type { CSSProperties } from "react";
 import {
   type ProductMaturityArea,
   type ProductMaturityIndicator,
@@ -13,34 +13,43 @@ import {
   type ProductionReadinessStatus,
   type ProductionReadinessView,
   getEffectiveDisplayStatus,
-} from '@/lib/admin/production-readiness';
-import { BORDER, COLORS, FONT, RADIUS, SPACING, TYPE } from '@/lib/design/abarva-theme';
+} from "@/lib/admin/production-readiness";
+import {
+  BORDER,
+  COLORS,
+  FONT,
+  RADIUS,
+  SPACING,
+  TYPE,
+} from "@/lib/design/abarva-theme";
 
-const PRODUCTION_READINESS_DIMENSION_COLUMNS: ReadonlyArray<ProductionReadinessDimension> = [
-  'functionality',
-  'data_readiness',
-  'agent_readiness',
-  'evidence_audit_readiness',
-  'ui_ux_readiness',
-  'tenant_isolation',
-  'test_coverage',
-  'build_deploy_health',
-  'production_risk',
-];
+const PRODUCTION_READINESS_DIMENSION_COLUMNS: ReadonlyArray<ProductionReadinessDimension> =
+  [
+    "functionality",
+    "data_readiness",
+    "agent_readiness",
+    "evidence_audit_readiness",
+    "ui_ux_readiness",
+    "tenant_isolation",
+    "test_coverage",
+    "build_deploy_health",
+    "production_risk",
+  ];
 
-const PRODUCTION_READINESS_GATE_COLUMNS: ReadonlyArray<ProductionReadinessGate> = [
-  'unit_tests',
-  'integration_tests',
-  'route_smoke',
-  'live_persona_walk',
-  'no_fabrication_check',
-  'tenant_isolation_check',
-  'vercel_build',
-  'security_governance_review',
-];
+const PRODUCTION_READINESS_GATE_COLUMNS: ReadonlyArray<ProductionReadinessGate> =
+  [
+    "unit_tests",
+    "integration_tests",
+    "route_smoke",
+    "live_persona_walk",
+    "no_fabrication_check",
+    "tenant_isolation_check",
+    "azure_build",
+    "security_governance_review",
+  ];
 
 const pageStyle: CSSProperties = {
-  minHeight: '100vh',
+  minHeight: "100vh",
   background: COLORS.surface,
   color: COLORS.ink,
   fontFamily: FONT.body,
@@ -48,9 +57,9 @@ const pageStyle: CSSProperties = {
 
 const shellStyle: CSSProperties = {
   maxWidth: 1480,
-  margin: '0 auto',
+  margin: "0 auto",
   padding: `${SPACING.xxxl}px ${SPACING.xxl}px`,
-  display: 'grid',
+  display: "grid",
   gap: SPACING.xl,
 };
 
@@ -58,19 +67,19 @@ const cardStyle: CSSProperties = {
   background: COLORS.card,
   border: BORDER.hairline,
   borderRadius: RADIUS.md,
-  boxShadow: '0 18px 45px rgba(10, 12, 18, 0.05)',
+  boxShadow: "0 18px 45px rgba(10, 12, 18, 0.05)",
 };
 
 const sectionHeaderStyle: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'end',
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "end",
   gap: SPACING.lg,
 };
 
 const freshnessPanelStyle: CSSProperties = {
   ...cardStyle,
-  display: 'grid',
+  display: "grid",
   gap: SPACING.xs,
   padding: SPACING.md,
   background: COLORS.surface2,
@@ -78,16 +87,16 @@ const freshnessPanelStyle: CSSProperties = {
 
 const tableWrapStyle: CSSProperties = {
   ...cardStyle,
-  overflowX: 'auto',
+  overflowX: "auto",
 };
 
 const thStyle: CSSProperties = {
   ...TYPE.eyebrow,
   padding: `${SPACING.md}px ${SPACING.lg}px`,
-  textAlign: 'left',
+  textAlign: "left",
   borderBottom: BORDER.hairline,
   background: COLORS.surface2,
-  whiteSpace: 'nowrap',
+  whiteSpace: "nowrap",
 };
 
 const tdStyle: CSSProperties = {
@@ -95,30 +104,30 @@ const tdStyle: CSSProperties = {
   color: COLORS.body,
   padding: `${SPACING.md}px ${SPACING.lg}px`,
   borderBottom: BORDER.hairlineSoft,
-  verticalAlign: 'top',
+  verticalAlign: "top",
 };
 
 const dimensionLabels: Record<ProductionReadinessDimension, string> = {
-  functionality: 'Function',
-  data_readiness: 'Data',
-  agent_readiness: 'Agent',
-  evidence_audit_readiness: 'Evidence',
-  ui_ux_readiness: 'UI',
-  tenant_isolation: 'Tenant',
-  test_coverage: 'Tests',
-  build_deploy_health: 'Build',
-  production_risk: 'Risk',
+  functionality: "Function",
+  data_readiness: "Data",
+  agent_readiness: "Agent",
+  evidence_audit_readiness: "Evidence",
+  ui_ux_readiness: "UI",
+  tenant_isolation: "Tenant",
+  test_coverage: "Tests",
+  build_deploy_health: "Build",
+  production_risk: "Risk",
 };
 
 const gateLabels: Record<ProductionReadinessGate, string> = {
-  unit_tests: 'Unit',
-  integration_tests: 'Integration',
-  route_smoke: 'Route',
-  live_persona_walk: 'Persona',
-  no_fabrication_check: 'No fabrication',
-  tenant_isolation_check: 'Tenant',
-  vercel_build: 'Vercel',
-  security_governance_review: 'Security',
+  unit_tests: "Unit",
+  integration_tests: "Integration",
+  route_smoke: "Route",
+  live_persona_walk: "Persona",
+  no_fabrication_check: "No fabrication",
+  tenant_isolation_check: "Tenant",
+  azure_build: "Azure",
+  security_governance_review: "Security",
 };
 
 export function ProductionReadinessTracker({
@@ -126,7 +135,9 @@ export function ProductionReadinessTracker({
 }: {
   view: ProductionReadinessView;
 }) {
-  const startedCount = view.componentProgress.filter((component) => component.started).length;
+  const startedCount = view.componentProgress.filter(
+    (component) => component.started,
+  ).length;
   const fullFlowReady = view.summary.fullFlowReadyCount;
   const pilotReady = view.summary.pilotReadyCount;
   const productionReady = view.summary.productionReadyCount;
@@ -138,14 +149,14 @@ export function ProductionReadinessTracker({
           style={{
             ...cardStyle,
             padding: SPACING.xxl,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
             gap: SPACING.xxl,
           }}
         >
-          <div style={{ display: 'grid', gap: SPACING.lg }}>
+          <div style={{ display: "grid", gap: SPACING.lg }}>
             <div style={TYPE.eyebrow}>Canonical Readiness Spine</div>
-            <div style={{ display: 'grid', gap: SPACING.sm }}>
+            <div style={{ display: "grid", gap: SPACING.sm }}>
               <h1
                 style={{
                   ...TYPE.h1,
@@ -156,14 +167,16 @@ export function ProductionReadinessTracker({
               >
                 {view.stewardBrief.title}
               </h1>
-              <p style={{ ...TYPE.body, margin: 0, maxWidth: 880 }}>{view.stewardBrief.summary}</p>
+              <p style={{ ...TYPE.body, margin: 0, maxWidth: 880 }}>
+                {view.stewardBrief.summary}
+              </p>
             </div>
             <div
               style={{
-                display: 'flex',
+                display: "flex",
                 gap: SPACING.sm,
-                flexWrap: 'wrap',
-                alignItems: 'center',
+                flexWrap: "wrap",
+                alignItems: "center",
               }}
             >
               <StatusPill status={view.overallStatus} />
@@ -177,37 +190,48 @@ export function ProductionReadinessTracker({
                   ...TYPE.caption,
                   color: COLORS.navy,
                   fontWeight: 600,
-                  textDecoration: 'none',
-                  marginLeft: 'auto',
+                  textDecoration: "none",
+                  marginLeft: "auto",
                 }}
               >
                 Build Progress
               </Link>
             </div>
             <div style={freshnessPanelStyle}>
-              <div style={{ display: 'grid', gap: 4 }}>
-                <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>Tracker freshness</span>
+              <div style={{ display: "grid", gap: 4 }}>
+                <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>
+                  Tracker freshness
+                </span>
                 <span style={{ ...TYPE.caption, color: COLORS.body }}>
-                  {formatFreshnessStatus(view.freshness.freshnessStatus)} · {formatUpdateMode(view.freshness.updateMode)}
+                  {formatFreshnessStatus(view.freshness.freshnessStatus)} ·{" "}
+                  {formatUpdateMode(view.freshness.updateMode)}
                 </span>
               </div>
               <div style={{ ...TYPE.caption, color: COLORS.muted }}>
-                Source: {view.freshness.dataSource}. {view.freshness.staleReason}
+                Source: {view.freshness.dataSource}.{" "}
+                {view.freshness.staleReason}
               </div>
               <div style={{ ...TYPE.caption, color: COLORS.muted }}>
                 {view.freshness.nextRefreshRecommendation}
               </div>
-              {view.freshness.updateMode === 'static_manifest'
-                || view.freshness.updateMode === 'repository_snapshot' ? (
-                  <div style={{ ...TYPE.caption, color: COLORS.amber, fontWeight: 700 }}>
-                    This is the unified readiness spine, not live monitoring; GitHub, Vercel, route smoke,
-                    persona crawler, and observability ingestion remain deferred.
-                  </div>
-                ) : null}
+              {view.freshness.updateMode === "static_manifest" ||
+              view.freshness.updateMode === "repository_snapshot" ? (
+                <div
+                  style={{
+                    ...TYPE.caption,
+                    color: COLORS.amber,
+                    fontWeight: 700,
+                  }}
+                >
+                  This is the unified readiness spine, not live monitoring;
+                  GitHub, Azure, route smoke, persona crawler, and observability
+                  ingestion remain deferred.
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: SPACING.md }}>
+          <div style={{ display: "grid", gap: SPACING.md }}>
             <div
               style={{
                 ...cardStyle,
@@ -216,7 +240,9 @@ export function ProductionReadinessTracker({
               }}
             >
               <div style={TYPE.eyebrow}>Overall readiness score</div>
-              <div style={{ display: 'flex', alignItems: 'end', gap: SPACING.sm }}>
+              <div
+                style={{ display: "flex", alignItems: "end", gap: SPACING.sm }}
+              >
                 <div
                   style={{
                     ...TYPE.h1,
@@ -242,42 +268,64 @@ export function ProductionReadinessTracker({
             </div>
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))',
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))",
                 gap: SPACING.sm,
               }}
             >
-              <ReadinessMiniCard label="Started" count={startedCount} total={view.summary.totalComponents} />
+              <ReadinessMiniCard
+                label="Started"
+                count={startedCount}
+                total={view.summary.totalComponents}
+              />
               <ReadinessMiniCard
                 label="Code+"
                 count={view.summary.codeCompleteOrBetterCount}
                 total={view.summary.totalComponents}
               />
-              <ReadinessMiniCard label="Full-flow" count={fullFlowReady} total={view.summary.totalComponents} />
-              <ReadinessMiniCard label="Pilot" count={pilotReady} total={view.summary.totalComponents} />
-              <ReadinessMiniCard label="Production" count={productionReady} total={view.summary.totalComponents} />
+              <ReadinessMiniCard
+                label="Full-flow"
+                count={fullFlowReady}
+                total={view.summary.totalComponents}
+              />
+              <ReadinessMiniCard
+                label="Pilot"
+                count={pilotReady}
+                total={view.summary.totalComponents}
+              />
+              <ReadinessMiniCard
+                label="Production"
+                count={productionReady}
+                total={view.summary.totalComponents}
+              />
             </div>
           </div>
         </header>
 
         <MaturitySnapshotCards indicators={view.maturitySnapshot.indicators} />
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Product maturity by area</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>What is complete, pending, and estimated done</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                What is complete, pending, and estimated done
+              </h2>
             </div>
-            <span style={{ ...TYPE.caption, color: COLORS.muted }}>{view.maturitySnapshot.source}</span>
+            <span style={{ ...TYPE.caption, color: COLORS.muted }}>
+              {view.maturitySnapshot.source}
+            </span>
           </div>
           <ProductMaturityTable areas={view.maturitySnapshot.areas} />
         </section>
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Readiness by segment</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Segments, percent done, and pending work</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Segments, percent done, and pending work
+              </h2>
             </div>
             <span style={{ ...TYPE.caption, color: COLORS.muted }}>
               Derived from the deterministic manifest, not live monitoring.
@@ -288,8 +336,8 @@ export function ProductionReadinessTracker({
 
         <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
             gap: SPACING.lg,
           }}
         >
@@ -297,26 +345,30 @@ export function ProductionReadinessTracker({
             style={{
               ...cardStyle,
               padding: SPACING.xl,
-              display: 'grid',
+              display: "grid",
               gap: SPACING.md,
             }}
           >
             <div style={sectionHeaderStyle}>
               <div>
                 <div style={TYPE.eyebrow}>Top blockers</div>
-                <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>What blocks production readiness</h2>
+                <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                  What blocks production readiness
+                </h2>
               </div>
-              <span style={{ ...TYPE.caption, fontFamily: FONT.mono }}>{view.summary.topBlockers.length} tracked</span>
+              <span style={{ ...TYPE.caption, fontFamily: FONT.mono }}>
+                {view.summary.topBlockers.length} tracked
+              </span>
             </div>
-            <div style={{ display: 'grid', gap: SPACING.sm }}>
+            <div style={{ display: "grid", gap: SPACING.sm }}>
               {view.summary.topBlockers.map((blocker) => (
                 <div
                   key={blocker.id}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '150px minmax(0, 1fr) 120px',
+                    display: "grid",
+                    gridTemplateColumns: "150px minmax(0, 1fr) 120px",
                     gap: SPACING.md,
-                    alignItems: 'start',
+                    alignItems: "start",
                     borderTop: BORDER.hairlineSoft,
                     paddingTop: SPACING.md,
                   }}
@@ -333,7 +385,9 @@ export function ProductionReadinessTracker({
                       {blocker.componentName}
                     </div>
                   </div>
-                  <div style={{ ...TYPE.body, margin: 0 }}>{blocker.description}</div>
+                  <div style={{ ...TYPE.body, margin: 0 }}>
+                    {blocker.description}
+                  </div>
                   <StatusPill status={blocker.unblocks} />
                 </div>
               ))}
@@ -344,15 +398,17 @@ export function ProductionReadinessTracker({
             style={{
               ...cardStyle,
               padding: SPACING.xl,
-              display: 'grid',
+              display: "grid",
               gap: SPACING.md,
             }}
           >
             <div>
               <div style={TYPE.eyebrow}>Next recommended actions</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Fix next</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Fix next
+              </h2>
             </div>
-            <div style={{ display: 'grid', gap: SPACING.sm }}>
+            <div style={{ display: "grid", gap: SPACING.sm }}>
               {view.recommendedActions.slice(0, 5).map((action, index) => (
                 <div
                   key={action.id}
@@ -363,13 +419,15 @@ export function ProductionReadinessTracker({
                 >
                   <div
                     style={{
-                      display: 'flex',
+                      display: "flex",
                       gap: SPACING.sm,
-                      alignItems: 'center',
+                      alignItems: "center",
                       marginBottom: SPACING.xs,
                     }}
                   >
-                    <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>{String(index + 1).padStart(2, '0')}</span>
+                    <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
                     <span
                       style={{
                         ...TYPE.caption,
@@ -380,58 +438,71 @@ export function ProductionReadinessTracker({
                       {action.componentName}
                     </span>
                   </div>
-                  <div style={{ ...TYPE.body, fontSize: 13 }}>{action.label}</div>
+                  <div style={{ ...TYPE.body, fontSize: 13 }}>
+                    {action.label}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Component progress table</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Started, done, pending, and blockers</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Started, done, pending, and blockers
+              </h2>
             </div>
-            <span style={{ ...TYPE.caption, fontFamily: FONT.mono }}>{view.summary.totalComponents} components</span>
+            <span style={{ ...TYPE.caption, fontFamily: FONT.mono }}>
+              {view.summary.totalComponents} components
+            </span>
           </div>
           <ComponentProgressTable components={view.componentProgress} />
         </section>
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Readiness dimensions</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Dimension status by component</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Dimension status by component
+              </h2>
             </div>
           </div>
           <StatusMatrix components={view.components} mode="dimensions" />
         </section>
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Testing gates</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Gate status by component</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Gate status by component
+              </h2>
             </div>
             <span style={{ ...TYPE.caption, color: COLORS.muted }}>
-              Vercel and live persona checks are not marked passing by this tracker.
+              Azure deployment and live persona checks are not marked passing by
+              this tracker.
             </span>
           </div>
           <StatusMatrix components={view.components} mode="gates" />
         </section>
 
-        <section style={{ display: 'grid', gap: SPACING.md }}>
+        <section style={{ display: "grid", gap: SPACING.md }}>
           <div style={sectionHeaderStyle}>
             <div>
               <div style={TYPE.eyebrow}>Blocked and deferred</div>
-              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>Lowest readiness areas</h2>
+              <h2 style={{ ...TYPE.h2, margin: 0, letterSpacing: 0 }}>
+                Lowest readiness areas
+              </h2>
             </div>
           </div>
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               gap: SPACING.md,
             }}
           >
@@ -441,28 +512,36 @@ export function ProductionReadinessTracker({
                 style={{
                   ...cardStyle,
                   padding: SPACING.lg,
-                  display: 'grid',
+                  display: "grid",
                   gap: SPACING.sm,
                 }}
               >
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: "flex",
+                    justifyContent: "space-between",
                     gap: SPACING.sm,
-                    alignItems: 'center',
+                    alignItems: "center",
                   }}
                 >
-                  <div style={{ ...TYPE.h3, margin: 0, letterSpacing: 0 }}>{component.name}</div>
+                  <div style={{ ...TYPE.h3, margin: 0, letterSpacing: 0 }}>
+                    {component.name}
+                  </div>
                   {/* PROD9: effective status enforces red badge when blockers > 0 */}
                   <StatusPill
-                    status={getEffectiveDisplayStatus(component.status, component.blockers.length)}
+                    status={getEffectiveDisplayStatus(
+                      component.status,
+                      component.blockers.length,
+                    )}
                   />
                 </div>
                 <div style={TYPE.caption}>{component.maturity}</div>
-                <div style={{ display: 'grid', gap: SPACING.xs }}>
+                <div style={{ display: "grid", gap: SPACING.xs }}>
                   {component.blockers.map((blocker) => (
-                    <div key={blocker.id} style={{ ...TYPE.caption, color: COLORS.body }}>
+                    <div
+                      key={blocker.id}
+                      style={{ ...TYPE.caption, color: COLORS.body }}
+                    >
                       {blocker.description}
                     </div>
                   ))}
@@ -475,10 +554,10 @@ export function ProductionReadinessTracker({
         <footer
           style={{
             ...TYPE.caption,
-            display: 'flex',
-            justifyContent: 'space-between',
+            display: "flex",
+            justifyContent: "space-between",
             gap: SPACING.md,
-            flexWrap: 'wrap',
+            flexWrap: "wrap",
           }}
         >
           <span>{view.stewardBrief.interpretationBasis}</span>
@@ -487,7 +566,7 @@ export function ProductionReadinessTracker({
             style={{
               color: COLORS.navy,
               fontWeight: 600,
-              textDecoration: 'none',
+              textDecoration: "none",
             }}
           >
             Back to Build Progress
@@ -498,12 +577,16 @@ export function ProductionReadinessTracker({
   );
 }
 
-function MaturitySnapshotCards({ indicators }: { indicators: ReadonlyArray<ProductMaturityIndicator> }) {
+function MaturitySnapshotCards({
+  indicators,
+}: {
+  indicators: ReadonlyArray<ProductMaturityIndicator>;
+}) {
   return (
     <section
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
         gap: SPACING.md,
       }}
     >
@@ -513,12 +596,12 @@ function MaturitySnapshotCards({ indicators }: { indicators: ReadonlyArray<Produ
           style={{
             ...cardStyle,
             padding: SPACING.lg,
-            display: 'grid',
+            display: "grid",
             gap: SPACING.sm,
           }}
         >
           <div style={TYPE.eyebrow}>{indicator.label}</div>
-          <div style={{ display: 'flex', alignItems: 'end', gap: SPACING.sm }}>
+          <div style={{ display: "flex", alignItems: "end", gap: SPACING.sm }}>
             <div
               style={{
                 ...TYPE.h1,
@@ -531,18 +614,31 @@ function MaturitySnapshotCards({ indicators }: { indicators: ReadonlyArray<Produ
               {formatPercentRange(indicator.percentLow, indicator.percentHigh)}
             </div>
           </div>
-          <ReadinessBar percent={getPercentMidpoint(indicator.percentLow, indicator.percentHigh)} />
-          <p style={{ ...TYPE.caption, margin: 0, color: COLORS.body }}>{indicator.interpretation}</p>
+          <ReadinessBar
+            percent={getPercentMidpoint(
+              indicator.percentLow,
+              indicator.percentHigh,
+            )}
+          />
+          <p style={{ ...TYPE.caption, margin: 0, color: COLORS.body }}>
+            {indicator.interpretation}
+          </p>
         </div>
       ))}
     </section>
   );
 }
 
-function ProductMaturityTable({ areas }: { areas: ReadonlyArray<ProductMaturityArea> }) {
+function ProductMaturityTable({
+  areas,
+}: {
+  areas: ReadonlyArray<ProductMaturityArea>;
+}) {
   return (
     <div style={tableWrapStyle}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1180 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", minWidth: 1180 }}
+      >
         <thead>
           <tr>
             <th style={thStyle}>Area</th>
@@ -556,18 +652,27 @@ function ProductMaturityTable({ areas }: { areas: ReadonlyArray<ProductMaturityA
           {areas.map((area) => (
             <tr key={area.id}>
               <td style={{ ...tdStyle, minWidth: 230 }}>
-                <div style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}>{area.area}</div>
+                <div
+                  style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}
+                >
+                  {area.area}
+                </div>
               </td>
               <td style={{ ...tdStyle, minWidth: 330 }}>{area.completed}</td>
               <td style={{ ...tdStyle, minWidth: 330 }}>{area.pending}</td>
               <td style={{ ...tdStyle, minWidth: 160 }}>
                 <PercentCell
-                  percent={getPercentMidpoint(area.percentLow, area.percentHigh)}
+                  percent={getPercentMidpoint(
+                    area.percentLow,
+                    area.percentHigh,
+                  )}
                   label={formatPercentRange(area.percentLow, area.percentHigh)}
                 />
               </td>
               <td style={{ ...tdStyle, minWidth: 230 }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: SPACING.xs }}>
+                <div
+                  style={{ display: "flex", flexWrap: "wrap", gap: SPACING.xs }}
+                >
                   {area.relatedComponentIds.map((componentId) => (
                     <span
                       key={componentId}
@@ -578,8 +683,8 @@ function ProductMaturityTable({ areas }: { areas: ReadonlyArray<ProductMaturityA
                         background: COLORS.navySoft,
                         border: `1px solid ${COLORS.mutedSoft}`,
                         borderRadius: RADIUS.sm,
-                        padding: '3px 6px',
-                        whiteSpace: 'nowrap',
+                        padding: "3px 6px",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {componentId}
@@ -595,10 +700,16 @@ function ProductMaturityTable({ areas }: { areas: ReadonlyArray<ProductMaturityA
   );
 }
 
-function SegmentReadinessTable({ segments }: { segments: ReadonlyArray<ProductionReadinessSegmentSummary> }) {
+function SegmentReadinessTable({
+  segments,
+}: {
+  segments: ReadonlyArray<ProductionReadinessSegmentSummary>;
+}) {
   return (
     <div style={tableWrapStyle}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1320 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", minWidth: 1320 }}
+      >
         <thead>
           <tr>
             <th style={thStyle}>Segment</th>
@@ -619,12 +730,21 @@ function SegmentReadinessTable({ segments }: { segments: ReadonlyArray<Productio
           {segments.map((segment) => (
             <tr key={segment.id}>
               <td style={{ ...tdStyle, minWidth: 230 }}>
-                <div style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}>{segment.name}</div>
-                <div style={{ ...TYPE.caption, color: COLORS.muted }}>{segment.description}</div>
+                <div
+                  style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}
+                >
+                  {segment.name}
+                </div>
+                <div style={{ ...TYPE.caption, color: COLORS.muted }}>
+                  {segment.description}
+                </div>
               </td>
               <td style={tdStyle}>{segment.totalComponents}</td>
               <td style={tdStyle}>
-                <CountCell count={segment.startedCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.startedCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={{ ...tdStyle, minWidth: 150 }}>
                 <PercentCell percent={segment.percentComplete} />
@@ -633,24 +753,44 @@ function SegmentReadinessTable({ segments }: { segments: ReadonlyArray<Productio
                 <PercentCell percent={segment.percentPending} pending />
               </td>
               <td style={tdStyle}>
-                <CountCell count={segment.codeCompleteOrBetterCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.codeCompleteOrBetterCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={tdStyle}>
-                <CountCell count={segment.testReadyCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.testReadyCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={tdStyle}>
-                <CountCell count={segment.fullFlowReadyCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.fullFlowReadyCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={tdStyle}>
-                <CountCell count={segment.pilotReadyCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.pilotReadyCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={tdStyle}>
-                <CountCell count={segment.productionReadyCount} total={segment.totalComponents} />
+                <CountCell
+                  count={segment.productionReadyCount}
+                  total={segment.totalComponents}
+                />
               </td>
               <td style={tdStyle}>
-                <BlockerCount count={segment.blockerCount} critical={segment.criticalBlockerCount} />
+                <BlockerCount
+                  count={segment.blockerCount}
+                  critical={segment.criticalBlockerCount}
+                />
               </td>
-              <td style={{ ...tdStyle, minWidth: 320 }}>{segment.nextAction}</td>
+              <td style={{ ...tdStyle, minWidth: 320 }}>
+                {segment.nextAction}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -659,10 +799,16 @@ function SegmentReadinessTable({ segments }: { segments: ReadonlyArray<Productio
   );
 }
 
-function ComponentProgressTable({ components }: { components: ReadonlyArray<ProductionReadinessComponentProgress> }) {
+function ComponentProgressTable({
+  components,
+}: {
+  components: ReadonlyArray<ProductionReadinessComponentProgress>;
+}) {
   return (
     <div style={tableWrapStyle}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1260 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", minWidth: 1260 }}
+      >
         <thead>
           <tr>
             <th style={thStyle}>Segment</th>
@@ -679,10 +825,18 @@ function ComponentProgressTable({ components }: { components: ReadonlyArray<Prod
         <tbody>
           {components.map((component) => (
             <tr key={component.componentId}>
-              <td style={{ ...tdStyle, minWidth: 190 }}>{component.segmentName}</td>
+              <td style={{ ...tdStyle, minWidth: 190 }}>
+                {component.segmentName}
+              </td>
               <td style={{ ...tdStyle, minWidth: 230 }}>
-                <div style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}>{component.componentName}</div>
-                <div style={{ ...TYPE.caption, fontFamily: FONT.mono }}>{component.componentId}</div>
+                <div
+                  style={{ ...TYPE.body, fontWeight: 700, color: COLORS.ink }}
+                >
+                  {component.componentName}
+                </div>
+                <div style={{ ...TYPE.caption, fontFamily: FONT.mono }}>
+                  {component.componentId}
+                </div>
               </td>
               <td style={tdStyle}>
                 <StartedPill started={component.started} />
@@ -696,7 +850,10 @@ function ComponentProgressTable({ components }: { components: ReadonlyArray<Prod
               <td style={tdStyle}>
                 {/* PROD9: effective status enforces red badge when blockers > 0 */}
                 <StatusPill
-                  status={getEffectiveDisplayStatus(component.status, component.blockerCount)}
+                  status={getEffectiveDisplayStatus(
+                    component.status,
+                    component.blockerCount,
+                  )}
                 />
               </td>
               <td style={tdStyle}>
@@ -705,9 +862,14 @@ function ComponentProgressTable({ components }: { components: ReadonlyArray<Prod
                 </span>
               </td>
               <td style={tdStyle}>
-                <BlockerCount count={component.blockerCount} critical={component.criticalBlockerCount} />
+                <BlockerCount
+                  count={component.blockerCount}
+                  critical={component.criticalBlockerCount}
+                />
               </td>
-              <td style={{ ...tdStyle, minWidth: 320 }}>{component.nextAction}</td>
+              <td style={{ ...tdStyle, minWidth: 320 }}>
+                {component.nextAction}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -721,19 +883,24 @@ function StatusMatrix({
   mode,
 }: {
   components: ReadonlyArray<ProductionReadinessComponent>;
-  mode: 'dimensions' | 'gates';
+  mode: "dimensions" | "gates";
 }) {
-  const columns = mode === 'dimensions' ? PRODUCTION_READINESS_DIMENSION_COLUMNS : PRODUCTION_READINESS_GATE_COLUMNS;
+  const columns =
+    mode === "dimensions"
+      ? PRODUCTION_READINESS_DIMENSION_COLUMNS
+      : PRODUCTION_READINESS_GATE_COLUMNS;
 
   return (
     <div style={tableWrapStyle}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1120 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}
+      >
         <thead>
           <tr>
             <th style={thStyle}>Component</th>
             {columns.map((column) => (
-              <th key={column} style={{ ...thStyle, textAlign: 'center' }}>
-                {mode === 'dimensions'
+              <th key={column} style={{ ...thStyle, textAlign: "center" }}>
+                {mode === "dimensions"
                   ? dimensionLabels[column as ProductionReadinessDimension]
                   : gateLabels[column as ProductionReadinessGate]}
               </th>
@@ -755,11 +922,23 @@ function StatusMatrix({
                 </div>
               </td>
               {columns.map((column) => (
-                <td key={column} style={{ ...tdStyle, textAlign: 'center' }}>
-                  {mode === 'dimensions' ? (
-                    <CompactStatusPill status={component.dimensions[column as ProductionReadinessDimension]} />
+                <td key={column} style={{ ...tdStyle, textAlign: "center" }}>
+                  {mode === "dimensions" ? (
+                    <CompactStatusPill
+                      status={
+                        component.dimensions[
+                          column as ProductionReadinessDimension
+                        ]
+                      }
+                    />
                   ) : (
-                    <GateStatusPill status={component.testingGates[column as ProductionReadinessGate].status} />
+                    <GateStatusPill
+                      status={
+                        component.testingGates[
+                          column as ProductionReadinessGate
+                        ].status
+                      }
+                    />
                   )}
                 </td>
               ))}
@@ -771,7 +950,15 @@ function StatusMatrix({
   );
 }
 
-function ReadinessMiniCard({ label, count, total }: { label: string; count: number; total: number }) {
+function ReadinessMiniCard({
+  label,
+  count,
+  total,
+}: {
+  label: string;
+  count: number;
+  total: number;
+}) {
   return (
     <div style={{ ...cardStyle, padding: SPACING.md, background: COLORS.card }}>
       <div style={TYPE.eyebrow}>{label}</div>
@@ -789,28 +976,41 @@ function ReadinessBar({ percent }: { percent: number }) {
         height: 8,
         borderRadius: RADIUS.pill,
         background: COLORS.border,
-        overflow: 'hidden',
+        overflow: "hidden",
         marginTop: SPACING.md,
       }}
     >
       <div
         style={{
           width: `${percent}%`,
-          height: '100%',
-          background: percent >= 70 ? COLORS.navy : percent >= 45 ? COLORS.amber : COLORS.red,
+          height: "100%",
+          background:
+            percent >= 70
+              ? COLORS.navy
+              : percent >= 45
+                ? COLORS.amber
+                : COLORS.red,
         }}
       />
     </div>
   );
 }
 
-function PercentCell({ percent, pending = false, label }: { percent: number; pending?: boolean; label?: string }) {
+function PercentCell({
+  percent,
+  pending = false,
+  label,
+}: {
+  percent: number;
+  pending?: boolean;
+  label?: string;
+}) {
   return (
-    <div style={{ display: 'grid', gap: SPACING.xs, minWidth: 120 }}>
+    <div style={{ display: "grid", gap: SPACING.xs, minWidth: 120 }}>
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
+          display: "flex",
+          justifyContent: "space-between",
           gap: SPACING.sm,
         }}
       >
@@ -824,21 +1024,27 @@ function PercentCell({ percent, pending = false, label }: { percent: number; pen
         >
           {label ?? `${percent}%`}
         </span>
-        <span style={{ ...TYPE.caption, color: COLORS.muted }}>{pending ? 'pending' : 'done'}</span>
+        <span style={{ ...TYPE.caption, color: COLORS.muted }}>
+          {pending ? "pending" : "done"}
+        </span>
       </div>
       <div
         style={{
           height: 7,
           borderRadius: RADIUS.pill,
           background: COLORS.border,
-          overflow: 'hidden',
+          overflow: "hidden",
         }}
       >
         <div
           style={{
             width: `${Math.max(0, Math.min(100, percent))}%`,
-            height: '100%',
-            background: pending ? COLORS.amber : percent >= 50 ? COLORS.navy : COLORS.amber,
+            height: "100%",
+            background: pending
+              ? COLORS.amber
+              : percent >= 50
+                ? COLORS.navy
+                : COLORS.amber,
           }}
         />
       </div>
@@ -854,7 +1060,7 @@ function CountCell({ count, total }: { count: number; total: number }) {
         fontFamily: FONT.mono,
         fontWeight: 700,
         color: COLORS.ink,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {count}/{total}
@@ -866,28 +1072,34 @@ function StartedPill({ started }: { started: boolean }) {
   return (
     <span
       style={{
-        display: 'inline-flex',
-        width: 'fit-content',
+        display: "inline-flex",
+        width: "fit-content",
         borderRadius: RADIUS.pill,
-        padding: '4px 9px',
+        padding: "4px 9px",
         fontFamily: FONT.mono,
         fontSize: 10,
         fontWeight: 700,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         color: started ? COLORS.navy : COLORS.muted,
-        background: started ? COLORS.navySoft : 'rgba(82, 88, 102, 0.10)',
+        background: started ? COLORS.navySoft : "rgba(82, 88, 102, 0.10)",
         border: `1px solid ${started ? COLORS.navy : COLORS.mutedSoft}`,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
-      {started ? 'started' : 'not started'}
+      {started ? "started" : "not started"}
     </span>
   );
 }
 
-function BlockerCount({ count, critical }: { count: number; critical: number }) {
+function BlockerCount({
+  count,
+  critical,
+}: {
+  count: number;
+  critical: number;
+}) {
   return (
-    <div style={{ display: 'grid', gap: 2 }}>
+    <div style={{ display: "grid", gap: 2 }}>
       <span
         style={{
           ...TYPE.caption,
@@ -899,7 +1111,11 @@ function BlockerCount({ count, critical }: { count: number; critical: number }) 
         {count}
       </span>
       {critical > 0 ? (
-        <span style={{ ...TYPE.caption, fontFamily: FONT.mono, color: COLORS.red }}>{critical} critical</span>
+        <span
+          style={{ ...TYPE.caption, fontFamily: FONT.mono, color: COLORS.red }}
+        >
+          {critical} critical
+        </span>
       ) : null}
     </div>
   );
@@ -910,19 +1126,19 @@ function StatusPill({ status }: { status: ProductionReadinessStatus }) {
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        width: 'fit-content',
+        display: "inline-flex",
+        alignItems: "center",
+        width: "fit-content",
         borderRadius: RADIUS.pill,
-        padding: '4px 9px',
+        padding: "4px 9px",
         fontFamily: FONT.mono,
         fontSize: 10,
         fontWeight: 600,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.ring}`,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {formatStatus(status)}
@@ -930,24 +1146,28 @@ function StatusPill({ status }: { status: ProductionReadinessStatus }) {
   );
 }
 
-function FreshnessPill({ status }: { status: ProductionReadinessFreshnessStatus }) {
+function FreshnessPill({
+  status,
+}: {
+  status: ProductionReadinessFreshnessStatus;
+}) {
   const tone = freshnessTone(status);
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        width: 'fit-content',
+        display: "inline-flex",
+        alignItems: "center",
+        width: "fit-content",
         borderRadius: RADIUS.pill,
-        padding: '4px 9px',
+        padding: "4px 9px",
         fontFamily: FONT.mono,
         fontSize: 10,
         fontWeight: 600,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.ring}`,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       Freshness: {status}
@@ -961,18 +1181,18 @@ function CompactStatusPill({ status }: { status: ProductionReadinessStatus }) {
     <span
       title={formatStatus(status)}
       style={{
-        display: 'inline-flex',
-        justifyContent: 'center',
+        display: "inline-flex",
+        justifyContent: "center",
         minWidth: 78,
         borderRadius: RADIUS.sm,
-        padding: '4px 6px',
+        padding: "4px 6px",
         fontFamily: FONT.mono,
         fontSize: 9,
         fontWeight: 600,
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.ring}`,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {shortStatus(status)}
@@ -986,18 +1206,18 @@ function GateStatusPill({ status }: { status: ProductionReadinessGateStatus }) {
     <span
       title={formatStatus(status)}
       style={{
-        display: 'inline-flex',
-        justifyContent: 'center',
+        display: "inline-flex",
+        justifyContent: "center",
         minWidth: 84,
         borderRadius: RADIUS.sm,
-        padding: '4px 6px',
+        padding: "4px 6px",
         fontFamily: FONT.mono,
         fontSize: 9,
         fontWeight: 600,
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.ring}`,
-        whiteSpace: 'nowrap',
+        whiteSpace: "nowrap",
       }}
     >
       {formatStatus(status)}
@@ -1005,25 +1225,29 @@ function GateStatusPill({ status }: { status: ProductionReadinessGateStatus }) {
   );
 }
 
-function SeverityPill({ severity }: { severity: 'low' | 'medium' | 'high' | 'critical' }) {
+function SeverityPill({
+  severity,
+}: {
+  severity: "low" | "medium" | "high" | "critical";
+}) {
   const tone =
-    severity === 'critical'
+    severity === "critical"
       ? { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red }
-      : severity === 'high'
+      : severity === "high"
         ? { fg: COLORS.amber, bg: COLORS.amberSoft, ring: COLORS.amber }
         : { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
 
   return (
     <span
       style={{
-        display: 'inline-flex',
-        width: 'fit-content',
+        display: "inline-flex",
+        width: "fit-content",
         borderRadius: RADIUS.pill,
-        padding: '3px 8px',
+        padding: "3px 8px",
         fontFamily: FONT.mono,
         fontSize: 9,
         fontWeight: 600,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         color: tone.fg,
         background: tone.bg,
         border: `1px solid ${tone.ring}`,
@@ -1036,20 +1260,20 @@ function SeverityPill({ severity }: { severity: 'low' | 'medium' | 'high' | 'cri
 
 function readinessTone(status: ProductionReadinessStatus) {
   if (
-    status === 'production_ready' ||
-    status === 'pilot_ready' ||
-    status === 'full_flow_ready' ||
-    status === 'tested'
+    status === "production_ready" ||
+    status === "pilot_ready" ||
+    status === "full_flow_ready" ||
+    status === "tested"
   ) {
     return { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
   }
-  if (status === 'blocked') {
+  if (status === "blocked") {
     return { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red };
   }
-  if (status === 'not_started') {
+  if (status === "not_started") {
     return {
       fg: COLORS.muted,
-      bg: 'rgba(82, 88, 102, 0.10)',
+      bg: "rgba(82, 88, 102, 0.10)",
       ring: COLORS.mutedSoft,
     };
   }
@@ -1057,16 +1281,16 @@ function readinessTone(status: ProductionReadinessStatus) {
 }
 
 function gateTone(status: ProductionReadinessGateStatus) {
-  if (status === 'passing') {
+  if (status === "passing") {
     return { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
   }
-  if (status === 'blocked') {
+  if (status === "blocked") {
     return { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red };
   }
-  if (status === 'not_started' || status === 'not_run') {
+  if (status === "not_started" || status === "not_run") {
     return {
       fg: COLORS.muted,
-      bg: 'rgba(82, 88, 102, 0.10)',
+      bg: "rgba(82, 88, 102, 0.10)",
       ring: COLORS.mutedSoft,
     };
   }
@@ -1074,12 +1298,14 @@ function gateTone(status: ProductionReadinessGateStatus) {
 }
 
 function freshnessTone(status: ProductionReadinessFreshnessStatus) {
-  if (status === 'fresh') return { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
-  if (status === 'stale') return { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red };
-  if (status === 'unknown') {
+  if (status === "fresh")
+    return { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
+  if (status === "stale")
+    return { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red };
+  if (status === "unknown") {
     return {
       fg: COLORS.muted,
-      bg: 'rgba(82, 88, 102, 0.10)',
+      bg: "rgba(82, 88, 102, 0.10)",
       ring: COLORS.mutedSoft,
     };
   }
@@ -1087,18 +1313,20 @@ function freshnessTone(status: ProductionReadinessFreshnessStatus) {
 }
 
 function formatStatus(status: string): string {
-  return status.replace(/_/g, ' ');
+  return status.replace(/_/g, " ");
 }
 
-function formatFreshnessStatus(status: ProductionReadinessFreshnessStatus): string {
-  if (status === 'fresh') return 'Fresh manifest';
-  if (status === 'aging') return 'Aging manifest';
-  if (status === 'stale') return 'Stale manifest';
-  return 'Unknown freshness';
+function formatFreshnessStatus(
+  status: ProductionReadinessFreshnessStatus,
+): string {
+  if (status === "fresh") return "Fresh manifest";
+  if (status === "aging") return "Aging manifest";
+  if (status === "stale") return "Stale manifest";
+  return "Unknown freshness";
 }
 
 function formatUpdateMode(updateMode: string): string {
-  return updateMode.replace(/_/g, ' ');
+  return updateMode.replace(/_/g, " ");
 }
 
 function formatPercentRange(low: number, high: number): string {
@@ -1110,9 +1338,9 @@ function getPercentMidpoint(low: number, high: number): number {
 }
 
 function shortStatus(status: ProductionReadinessStatus): string {
-  if (status === 'production_ready') return 'prod';
-  if (status === 'full_flow_ready') return 'flow';
-  if (status === 'code_complete') return 'code';
-  if (status === 'not_started') return 'none';
-  return status.replace(/_/g, ' ');
+  if (status === "production_ready") return "prod";
+  if (status === "full_flow_ready") return "flow";
+  if (status === "code_complete") return "code";
+  if (status === "not_started") return "none";
+  return status.replace(/_/g, " ");
 }

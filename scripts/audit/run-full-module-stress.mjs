@@ -173,7 +173,7 @@ if (!TENANT) {
 const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16); // YYYY-MM-DDTHH-MM
 const AUDIT_DIR = process.env.AUDIT_DIR || path.join(REPO_ROOT, 'audit-artifacts', `full-module-stress-${TENANT_KEY}-${RUN_STAMP}`);
 
-const BASE_URL = process.env.BASE_URL || 'https://nexus-vert-kappa.vercel.app';
+const BASE_URL = process.env.BASE_URL || 'https://app.abarva.ai';
 const BASE_HOST = new URL(BASE_URL).hostname;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const PERSONA_EMAIL = process.env.STRESS_PERSONA_EMAIL || TENANT.personaEmail;

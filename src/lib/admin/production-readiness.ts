@@ -1,107 +1,116 @@
-
 export const PRODUCTION_READINESS_STATUSES = [
-  'not_started',
-  'scaffolded',
-  'code_complete',
-  'tested',
-  'full_flow_ready',
-  'pilot_ready',
-  'production_ready',
-  'blocked',
+  "not_started",
+  "scaffolded",
+  "code_complete",
+  "tested",
+  "full_flow_ready",
+  "pilot_ready",
+  "production_ready",
+  "blocked",
 ] as const;
 
-export type ProductionReadinessStatus = (typeof PRODUCTION_READINESS_STATUSES)[number];
+export type ProductionReadinessStatus =
+  (typeof PRODUCTION_READINESS_STATUSES)[number];
 
 export const PRODUCTION_READINESS_DIMENSIONS = [
-  'functionality',
-  'data_readiness',
-  'agent_readiness',
-  'evidence_audit_readiness',
-  'ui_ux_readiness',
-  'tenant_isolation',
-  'test_coverage',
-  'build_deploy_health',
-  'production_risk',
+  "functionality",
+  "data_readiness",
+  "agent_readiness",
+  "evidence_audit_readiness",
+  "ui_ux_readiness",
+  "tenant_isolation",
+  "test_coverage",
+  "build_deploy_health",
+  "production_risk",
 ] as const;
 
-export type ProductionReadinessDimension = (typeof PRODUCTION_READINESS_DIMENSIONS)[number];
+export type ProductionReadinessDimension =
+  (typeof PRODUCTION_READINESS_DIMENSIONS)[number];
 
 export const PRODUCTION_READINESS_GATES = [
-  'unit_tests',
-  'integration_tests',
-  'route_smoke',
-  'live_persona_walk',
-  'no_fabrication_check',
-  'tenant_isolation_check',
-  'vercel_build',
-  'security_governance_review',
+  "unit_tests",
+  "integration_tests",
+  "route_smoke",
+  "live_persona_walk",
+  "no_fabrication_check",
+  "tenant_isolation_check",
+  "azure_build",
+  "security_governance_review",
 ] as const;
 
-export type ProductionReadinessGate = (typeof PRODUCTION_READINESS_GATES)[number];
+export type ProductionReadinessGate =
+  (typeof PRODUCTION_READINESS_GATES)[number];
 
 export const PRODUCTION_READINESS_GATE_STATUSES = [
-  'not_started',
-  'partial',
-  'passing',
-  'blocked',
-  'not_automated',
-  'not_run',
+  "not_started",
+  "partial",
+  "passing",
+  "blocked",
+  "not_automated",
+  "not_run",
 ] as const;
 
-export type ProductionReadinessGateStatus = (typeof PRODUCTION_READINESS_GATE_STATUSES)[number];
+export type ProductionReadinessGateStatus =
+  (typeof PRODUCTION_READINESS_GATE_STATUSES)[number];
 
 export const PRODUCTION_READINESS_COMPONENT_IDS = [
-  'programs',
-  'program_workshop_mode',
-  'deliverables_artifacts',
-  'intelligence',
-  'ai_control_tower',
-  'admin_setup',
-  'source',
-  'data_evidence_knowledge_fabric',
-  'solution_intelligence',
-  'agent_runtime',
-  'model_gateway',
-  'ingestion_parsing',
-  'audit_governance',
-  'validation_qa',
-  'production_deployment',
+  "programs",
+  "program_workshop_mode",
+  "deliverables_artifacts",
+  "intelligence",
+  "ai_control_tower",
+  "admin_setup",
+  "source",
+  "data_evidence_knowledge_fabric",
+  "solution_intelligence",
+  "agent_runtime",
+  "model_gateway",
+  "ingestion_parsing",
+  "audit_governance",
+  "validation_qa",
+  "production_deployment",
 ] as const;
 
-export type ProductionReadinessComponentId = (typeof PRODUCTION_READINESS_COMPONENT_IDS)[number];
+export type ProductionReadinessComponentId =
+  (typeof PRODUCTION_READINESS_COMPONENT_IDS)[number];
 
 export const PRODUCTION_READINESS_SEGMENTS = [
   {
-    id: 'product_experience',
-    name: 'Product Experience',
-    description: 'User-facing and operator-facing product surfaces.',
+    id: "product_experience",
+    name: "Product Experience",
+    description: "User-facing and operator-facing product surfaces.",
     componentIds: [
-      'programs',
-      'program_workshop_mode',
-      'deliverables_artifacts',
-      'intelligence',
-      'ai_control_tower',
-      'admin_setup',
-      'source',
+      "programs",
+      "program_workshop_mode",
+      "deliverables_artifacts",
+      "intelligence",
+      "ai_control_tower",
+      "admin_setup",
+      "source",
     ],
   },
   {
-    id: 'data_and_evidence',
-    name: 'Data and Evidence',
-    description: 'Evidence fabric, ingestion, and governance foundations.',
-    componentIds: ['data_evidence_knowledge_fabric', 'ingestion_parsing', 'audit_governance'],
+    id: "data_and_evidence",
+    name: "Data and Evidence",
+    description: "Evidence fabric, ingestion, and governance foundations.",
+    componentIds: [
+      "data_evidence_knowledge_fabric",
+      "ingestion_parsing",
+      "audit_governance",
+    ],
   },
   {
-    id: 'runtime_and_intelligence',
-    name: 'Runtime and Intelligence',
-    description: 'Runtime, gateway, and solution intelligence capabilities.',
-    componentIds: ['solution_intelligence', 'agent_runtime', 'model_gateway'],
+    id: "runtime_and_intelligence",
+    name: "Runtime and Intelligence",
+    description: "Runtime, gateway, and solution intelligence capabilities.",
+    componentIds: ["solution_intelligence", "agent_runtime", "model_gateway"],
   },
   {
-    id: 'validation_and_deployment',
-    name: 'Validation and Deployment',
-    description: 'QA gates, release health, and production deployment readiness.',
-    componentIds: ['validation_qa', 'production_deployment'],
+    id: "validation_and_deployment",
+    name: "Validation and Deployment",
+    description:
+      "QA gates, release health, and production deployment readiness.",
+    componentIds: ["validation_qa", "production_deployment"],
   },
 ] as const satisfies ReadonlyArray<{
   id: string;
@@ -110,10 +119,20 @@ export const PRODUCTION_READINESS_SEGMENTS = [
   componentIds: ReadonlyArray<ProductionReadinessComponentId>;
 }>;
 
-export type ProductionReadinessSegmentId = (typeof PRODUCTION_READINESS_SEGMENTS)[number]['id'];
+export type ProductionReadinessSegmentId =
+  (typeof PRODUCTION_READINESS_SEGMENTS)[number]["id"];
 
-export type ProductionReadinessBlockerSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ProductionReadinessRiskLevel = 'low' | 'medium' | 'medium_high' | 'high' | 'critical';
+export type ProductionReadinessBlockerSeverity =
+  | "low"
+  | "medium"
+  | "high"
+  | "critical";
+export type ProductionReadinessRiskLevel =
+  | "low"
+  | "medium"
+  | "medium_high"
+  | "high"
+  | "critical";
 
 export interface ProductionReadinessGateAssessment {
   status: ProductionReadinessGateStatus;
@@ -136,7 +155,10 @@ export interface ProductionReadinessComponent {
   productionRiskLevel?: ProductionReadinessRiskLevel;
   lastVerifiedCommit: string | null;
   dimensions: Record<ProductionReadinessDimension, ProductionReadinessStatus>;
-  testingGates: Record<ProductionReadinessGate, ProductionReadinessGateAssessment>;
+  testingGates: Record<
+    ProductionReadinessGate,
+    ProductionReadinessGateAssessment
+  >;
   blockers: ReadonlyArray<ProductionReadinessBlocker>;
   nextAction: string;
   notes: ReadonlyArray<string>;
@@ -275,15 +297,22 @@ export interface ProductionReadinessView {
   lowestReadinessComponents: ReadonlyArray<ProductionReadinessComponent>;
 }
 
-export type ProductionReadinessRefreshMode = 'api_polling';
-export type ProductionReadinessLiveCiStatus = 'unavailable' | 'configured' | 'error';
-export type ProductionReadinessFreshnessStatus = 'fresh' | 'aging' | 'stale' | 'unknown';
+export type ProductionReadinessRefreshMode = "api_polling";
+export type ProductionReadinessLiveCiStatus =
+  | "unavailable"
+  | "configured"
+  | "error";
+export type ProductionReadinessFreshnessStatus =
+  | "fresh"
+  | "aging"
+  | "stale"
+  | "unknown";
 export type ProductionReadinessUpdateMode =
-  | 'static_manifest'
-  | 'repository_snapshot'
-  | 'github_checks'
-  | 'vercel_deploy'
-  | 'mixed';
+  | "static_manifest"
+  | "repository_snapshot"
+  | "github_checks"
+  | "azure_deploy"
+  | "mixed";
 
 export interface ProductionReadinessFreshnessMetadata {
   lastUpdated: string;
@@ -296,7 +325,7 @@ export interface ProductionReadinessFreshnessMetadata {
 
 export interface ProductionReadinessRefreshMetadata {
   generatedAt: string;
-  source: 'production_readiness_manifest';
+  source: "production_readiness_manifest";
   refreshMode: ProductionReadinessRefreshMode;
   liveCiStatus: ProductionReadinessLiveCiStatus;
   note: string;
@@ -335,7 +364,10 @@ const STATUS_ORDER: Record<ProductionReadinessStatus, number> = {
   production_ready: 7,
 };
 
-const BLOCKER_SEVERITY_ORDER: Record<ProductionReadinessBlockerSeverity, number> = {
+const BLOCKER_SEVERITY_ORDER: Record<
+  ProductionReadinessBlockerSeverity,
+  number
+> = {
   critical: 0,
   high: 1,
   medium: 2,
@@ -357,7 +389,10 @@ export function buildProductionReadinessView(
   const summary = summarizeProductionReadiness(components);
   const componentProgress = getProductionReadinessComponentProgress(components);
   const segments = getProductionReadinessSegments(components);
-  const freshness = getProductionReadinessFreshnessMetadata(loadedManifest, generatedAt);
+  const freshness = getProductionReadinessFreshnessMetadata(
+    loadedManifest,
+    generatedAt,
+  );
 
   return {
     schemaVersion: loadedManifest.schemaVersion,
@@ -383,11 +418,10 @@ export function getProductionReadinessRefreshMetadata(
 ): ProductionReadinessRefreshMetadata {
   return {
     generatedAt,
-    source: 'production_readiness_manifest',
-    refreshMode: 'api_polling',
-    liveCiStatus: 'unavailable',
-    note:
-      'Unified control plane refresh reads the canonical production-readiness manifest through an internal no-store API. This is a repository-backed readiness spine, not true live monitoring; GitHub checks, Vercel deployments, route smoke, persona crawler, and observability ingestion remain deferred.',
+    source: "production_readiness_manifest",
+    refreshMode: "api_polling",
+    liveCiStatus: "unavailable",
+    note: "Unified control plane refresh reads the canonical production-readiness manifest through an internal no-store API. This is a repository-backed readiness spine, not true live monitoring; GitHub checks, Azure deployments, route smoke, persona crawler, and observability ingestion remain deferred.",
   };
 }
 
@@ -399,14 +433,18 @@ export function getProductionReadinessFreshnessMetadata(
   manifest: ProductionReadinessManifest,
   generatedAt: string,
 ): ProductionReadinessFreshnessMetadata {
-  const freshnessStatus = getManifestFreshnessStatus(manifest.lastUpdated, generatedAt);
+  const freshnessStatus = getManifestFreshnessStatus(
+    manifest.lastUpdated,
+    generatedAt,
+  );
   return {
     lastUpdated: manifest.lastUpdated,
-    dataSource: 'docs/build/production-readiness.json',
-    updateMode: 'repository_snapshot',
+    dataSource: "docs/build/production-readiness.json",
+    updateMode: "repository_snapshot",
     freshnessStatus,
     staleReason: getManifestStaleReason(freshnessStatus),
-    nextRefreshRecommendation: getManifestNextRefreshRecommendation(freshnessStatus),
+    nextRefreshRecommendation:
+      getManifestNextRefreshRecommendation(freshnessStatus),
   };
 }
 
@@ -430,11 +468,11 @@ export function summarizeProductionReadiness(
     byStatus,
     gateStatusCounts,
     overallReadinessPercent: computeOverallReadinessPercent(components),
-    scaffoldedOrBetterCount: countAtLeast(components, 'scaffolded'),
-    codeCompleteOrBetterCount: countAtLeast(components, 'code_complete'),
-    testReadyCount: countAtLeast(components, 'tested'),
-    fullFlowReadyCount: countAtLeast(components, 'full_flow_ready'),
-    pilotReadyCount: countAtLeast(components, 'pilot_ready'),
+    scaffoldedOrBetterCount: countAtLeast(components, "scaffolded"),
+    codeCompleteOrBetterCount: countAtLeast(components, "code_complete"),
+    testReadyCount: countAtLeast(components, "tested"),
+    fullFlowReadyCount: countAtLeast(components, "full_flow_ready"),
+    pilotReadyCount: countAtLeast(components, "pilot_ready"),
     productionReadyCount: byStatus.production_ready,
     blockedCount: byStatus.blocked,
     topBlockers,
@@ -447,7 +485,9 @@ export function getProductionReadinessComponentProgress(
   return components.map((component) => {
     const segment = getSegmentDefinitionForComponent(component.id);
     const percentComplete = STATUS_SCORE[component.status];
-    const highestBlockerSeverity = getHighestBlockerSeverity(component.blockers);
+    const highestBlockerSeverity = getHighestBlockerSeverity(
+      component.blockers,
+    );
 
     return {
       componentId: component.id,
@@ -456,13 +496,16 @@ export function getProductionReadinessComponentProgress(
       segmentId: segment.id,
       segmentName: segment.name,
       status: component.status,
-      started: component.status !== 'not_started',
+      started: component.status !== "not_started",
       percentComplete,
       percentPending: 100 - percentComplete,
       blockerCount: component.blockers.length,
-      criticalBlockerCount: component.blockers.filter((blocker) => blocker.severity === 'critical').length,
+      criticalBlockerCount: component.blockers.filter(
+        (blocker) => blocker.severity === "critical",
+      ).length,
       highestBlockerSeverity,
-      productionRiskLevel: component.productionRiskLevel ?? component.dimensions.production_risk,
+      productionRiskLevel:
+        component.productionRiskLevel ?? component.dimensions.production_risk,
       nextAction: component.nextAction,
     };
   });
@@ -474,7 +517,9 @@ export function getProductionReadinessSegments(
   const componentProgress = getProductionReadinessComponentProgress(components);
 
   return PRODUCTION_READINESS_SEGMENTS.map((segment) => {
-    const segmentComponents = componentProgress.filter((component) => component.segmentId === segment.id);
+    const segmentComponents = componentProgress.filter(
+      (component) => component.segmentId === segment.id,
+    );
     const percentComplete = computeProgressAverage(segmentComponents);
 
     return {
@@ -482,18 +527,38 @@ export function getProductionReadinessSegments(
       name: segment.name,
       description: segment.description,
       totalComponents: segmentComponents.length,
-      startedCount: segmentComponents.filter((component) => component.started).length,
-      notStartedCount: segmentComponents.filter((component) => !component.started).length,
+      startedCount: segmentComponents.filter((component) => component.started)
+        .length,
+      notStartedCount: segmentComponents.filter(
+        (component) => !component.started,
+      ).length,
       percentComplete,
       percentPending: 100 - percentComplete,
-      scaffoldedOrBetterCount: countProgressAtLeast(segmentComponents, 'scaffolded'),
-      codeCompleteOrBetterCount: countProgressAtLeast(segmentComponents, 'code_complete'),
-      testReadyCount: countProgressAtLeast(segmentComponents, 'tested'),
-      fullFlowReadyCount: countProgressAtLeast(segmentComponents, 'full_flow_ready'),
-      pilotReadyCount: countProgressAtLeast(segmentComponents, 'pilot_ready'),
-      productionReadyCount: segmentComponents.filter((component) => component.status === 'production_ready').length,
-      blockerCount: segmentComponents.reduce((sum, component) => sum + component.blockerCount, 0),
-      criticalBlockerCount: segmentComponents.reduce((sum, component) => sum + component.criticalBlockerCount, 0),
+      scaffoldedOrBetterCount: countProgressAtLeast(
+        segmentComponents,
+        "scaffolded",
+      ),
+      codeCompleteOrBetterCount: countProgressAtLeast(
+        segmentComponents,
+        "code_complete",
+      ),
+      testReadyCount: countProgressAtLeast(segmentComponents, "tested"),
+      fullFlowReadyCount: countProgressAtLeast(
+        segmentComponents,
+        "full_flow_ready",
+      ),
+      pilotReadyCount: countProgressAtLeast(segmentComponents, "pilot_ready"),
+      productionReadyCount: segmentComponents.filter(
+        (component) => component.status === "production_ready",
+      ).length,
+      blockerCount: segmentComponents.reduce(
+        (sum, component) => sum + component.blockerCount,
+        0,
+      ),
+      criticalBlockerCount: segmentComponents.reduce(
+        (sum, component) => sum + component.criticalBlockerCount,
+        0,
+      ),
       nextAction: getSegmentNextAction(segmentComponents),
       components: segmentComponents,
     };
@@ -505,7 +570,9 @@ export function getProductionReadinessNextActions(
 ): ReadonlyArray<ProductionReadinessRecommendedAction> {
   return collectTopBlockers(components)
     .map((blocker) => {
-      const component = components.find((item) => item.id === blocker.componentId);
+      const component = components.find(
+        (item) => item.id === blocker.componentId,
+      );
       return {
         id: `action:${blocker.id}`,
         componentId: blocker.componentId,
@@ -519,9 +586,14 @@ export function getProductionReadinessNextActions(
     .slice(0, 8);
 }
 
-export function computeOverallReadinessPercent(components: ReadonlyArray<ProductionReadinessComponent>): number {
+export function computeOverallReadinessPercent(
+  components: ReadonlyArray<ProductionReadinessComponent>,
+): number {
   if (components.length === 0) return 0;
-  const totalScore = components.reduce((sum, component) => sum + STATUS_SCORE[component.status], 0);
+  const totalScore = components.reduce(
+    (sum, component) => sum + STATUS_SCORE[component.status],
+    0,
+  );
   return Math.round(totalScore / components.length);
 }
 
@@ -550,9 +622,11 @@ function collectTopBlockers(
       })),
     )
     .sort((a, b) => {
-      const severityDelta = BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity];
+      const severityDelta =
+        BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity];
       if (severityDelta !== 0) return severityDelta;
-      const statusDelta = STATUS_ORDER[a.componentStatus] - STATUS_ORDER[b.componentStatus];
+      const statusDelta =
+        STATUS_ORDER[a.componentStatus] - STATUS_ORDER[b.componentStatus];
       if (statusDelta !== 0) return statusDelta;
       return a.id.localeCompare(b.id);
     })
@@ -563,35 +637,54 @@ function countAtLeast(
   components: ReadonlyArray<ProductionReadinessComponent>,
   status: ProductionReadinessStatus,
 ): number {
-  return components.filter((component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status]).length;
+  return components.filter(
+    (component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status],
+  ).length;
 }
 
 function countProgressAtLeast(
   components: ReadonlyArray<ProductionReadinessComponentProgress>,
   status: ProductionReadinessStatus,
 ): number {
-  return components.filter((component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status]).length;
+  return components.filter(
+    (component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status],
+  ).length;
 }
 
-function computeProgressAverage(components: ReadonlyArray<ProductionReadinessComponentProgress>): number {
+function computeProgressAverage(
+  components: ReadonlyArray<ProductionReadinessComponentProgress>,
+): number {
   if (components.length === 0) return 0;
-  const totalScore = components.reduce((sum, component) => sum + component.percentComplete, 0);
+  const totalScore = components.reduce(
+    (sum, component) => sum + component.percentComplete,
+    0,
+  );
   return Math.round(totalScore / components.length);
 }
 
-function getSegmentDefinitionForComponent(componentId: ProductionReadinessComponentId) {
+function getSegmentDefinitionForComponent(
+  componentId: ProductionReadinessComponentId,
+) {
   const segment = PRODUCTION_READINESS_SEGMENTS.find((item) =>
-    (item.componentIds as ReadonlyArray<ProductionReadinessComponentId>).includes(componentId),
+    (
+      item.componentIds as ReadonlyArray<ProductionReadinessComponentId>
+    ).includes(componentId),
   );
   if (!segment) {
-    throw new Error(`Production readiness component is not assigned to a segment: ${componentId}`);
+    throw new Error(
+      `Production readiness component is not assigned to a segment: ${componentId}`,
+    );
   }
   return segment;
 }
 
-function getSegmentNextAction(components: ReadonlyArray<ProductionReadinessComponentProgress>): string {
+function getSegmentNextAction(
+  components: ReadonlyArray<ProductionReadinessComponentProgress>,
+): string {
   const sorted = [...components].sort((a, b) => {
-    const severityDelta = severityRank(a.highestBlockerSeverity) - severityRank(b.highestBlockerSeverity);
+    const severityDelta =
+      severityRank(a.highestBlockerSeverity) -
+      severityRank(b.highestBlockerSeverity);
     if (severityDelta !== 0) return severityDelta;
 
     const scoreDelta = a.percentComplete - b.percentComplete;
@@ -600,15 +693,17 @@ function getSegmentNextAction(components: ReadonlyArray<ProductionReadinessCompo
     return a.componentName.localeCompare(b.componentName);
   });
 
-  return sorted[0]?.nextAction ?? 'No readiness action recorded.';
+  return sorted[0]?.nextAction ?? "No readiness action recorded.";
 }
 
 function getHighestBlockerSeverity(
   blockers: ReadonlyArray<ProductionReadinessBlocker>,
 ): ProductionReadinessBlockerSeverity | null {
   return (
-    [...blockers].sort((a, b) => BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity])[0]
-      ?.severity ?? null
+    [...blockers].sort(
+      (a, b) =>
+        BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity],
+    )[0]?.severity ?? null
   );
 }
 
@@ -618,41 +713,51 @@ function getManifestFreshnessStatus(
 ): ProductionReadinessFreshnessStatus {
   const lastUpdatedMs = Date.parse(lastUpdated);
   const generatedAtMs = Date.parse(generatedAt);
-  if (Number.isNaN(lastUpdatedMs) || Number.isNaN(generatedAtMs)) return 'unknown';
+  if (Number.isNaN(lastUpdatedMs) || Number.isNaN(generatedAtMs))
+    return "unknown";
 
-  const ageDays = Math.max(0, Math.floor((generatedAtMs - lastUpdatedMs) / 86_400_000));
-  if (ageDays <= 1) return 'fresh';
-  if (ageDays <= 7) return 'aging';
-  return 'stale';
+  const ageDays = Math.max(
+    0,
+    Math.floor((generatedAtMs - lastUpdatedMs) / 86_400_000),
+  );
+  if (ageDays <= 1) return "fresh";
+  if (ageDays <= 7) return "aging";
+  return "stale";
 }
 
-function getManifestStaleReason(status: ProductionReadinessFreshnessStatus): string {
-  if (status === 'fresh') {
-    return 'Manifest was updated within one day of the current view timestamp.';
+function getManifestStaleReason(
+  status: ProductionReadinessFreshnessStatus,
+): string {
+  if (status === "fresh") {
+    return "Manifest was updated within one day of the current view timestamp.";
   }
-  if (status === 'aging') {
-    return 'Manifest is more than one day old. It may be accurate, but should be checked after active build work.';
+  if (status === "aging") {
+    return "Manifest is more than one day old. It may be accurate, but should be checked after active build work.";
   }
-  if (status === 'stale') {
-    return 'Manifest is more than seven days old. Refresh it from validated PR, CI, and deployment evidence before relying on it.';
+  if (status === "stale") {
+    return "Manifest is more than seven days old. Refresh it from validated PR, CI, and deployment evidence before relying on it.";
   }
-  return 'Freshness cannot be determined because the manifest or view timestamp is missing or invalid.';
+  return "Freshness cannot be determined because the manifest or view timestamp is missing or invalid.";
 }
 
-function getManifestNextRefreshRecommendation(status: ProductionReadinessFreshnessStatus): string {
-  if (status === 'fresh') {
-    return 'Keep updating docs/build/production-readiness.json after each validated slice that changes readiness.';
+function getManifestNextRefreshRecommendation(
+  status: ProductionReadinessFreshnessStatus,
+): string {
+  if (status === "fresh") {
+    return "Keep updating docs/build/production-readiness.json after each validated slice that changes readiness.";
   }
-  if (status === 'aging') {
-    return 'Review recently merged PRs and update the manifest if readiness evidence changed.';
+  if (status === "aging") {
+    return "Review recently merged PRs and update the manifest if readiness evidence changed.";
   }
-  if (status === 'stale') {
-    return 'Run a readiness reconciliation slice before using the tracker for release or pilot decisions.';
+  if (status === "stale") {
+    return "Run a readiness reconciliation slice before using the tracker for release or pilot decisions.";
   }
-  return 'Repair the manifest lastUpdated value and rerun the production readiness tracker tests.';
+  return "Repair the manifest lastUpdated value and rerun the production readiness tracker tests.";
 }
 
-function severityRank(severity: ProductionReadinessBlockerSeverity | null): number {
+function severityRank(
+  severity: ProductionReadinessBlockerSeverity | null,
+): number {
   return severity === null ? 99 : BLOCKER_SEVERITY_ORDER[severity];
 }
 
@@ -669,7 +774,10 @@ function createStatusCounts(): Record<ProductionReadinessStatus, number> {
   };
 }
 
-function createGateStatusCounts(): Record<ProductionReadinessGateStatus, number> {
+function createGateStatusCounts(): Record<
+  ProductionReadinessGateStatus,
+  number
+> {
   return {
     not_started: 0,
     partial: 0,
@@ -694,12 +802,13 @@ function createGateStatusCounts(): Record<ProductionReadinessGateStatus, number>
  * If a component with one of these statuses has active blockers,
  * its effective display status is overridden to 'blocked'.
  */
-const PASSING_STATUSES: ReadonlySet<ProductionReadinessStatus> = new Set<ProductionReadinessStatus>([
-  'tested',
-  'full_flow_ready',
-  'pilot_ready',
-  'production_ready',
-]);
+const PASSING_STATUSES: ReadonlySet<ProductionReadinessStatus> =
+  new Set<ProductionReadinessStatus>([
+    "tested",
+    "full_flow_ready",
+    "pilot_ready",
+    "production_ready",
+  ]);
 
 /**
  * Returns the effective display status for a component.
@@ -715,7 +824,7 @@ export function getEffectiveDisplayStatus(
   blockerCount: number,
 ): ProductionReadinessStatus {
   if (blockerCount > 0 && PASSING_STATUSES.has(status)) {
-    return 'blocked';
+    return "blocked";
   }
   return status;
 }

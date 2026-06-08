@@ -1,11 +1,11 @@
 /**
  * PROD4 Deployment Status Ingestion (V1)
  *
- * Honest, deterministic representation of GitHub / Vercel deployment status.
+ * Honest, deterministic representation of GitHub / Azure deployment status.
  *
  * V1 explicitly does NOT:
  *  - call any GitHub provider host
- *  - call any Vercel provider host
+ *  - call any Azure provider host
  *  - read or expose the value of any token
  *  - log, return, or stringify token values
  *  - mutate the production-readiness manifest
@@ -19,25 +19,26 @@
  * `liveStatus` deliberately never takes the value 'live' in V1.
  */
 
-export type DeploymentStatusProvider = 'github' | 'vercel';
+export type DeploymentStatusProvider = "github" | "azure";
 
 export type DeploymentCheckStatus =
-  | 'success'
-  | 'failure'
-  | 'in_progress'
-  | 'queued'
-  | 'cancelled'
-  | 'skipped'
-  | 'unknown';
+  | "success"
+  | "failure"
+  | "in_progress"
+  | "queued"
+  | "cancelled"
+  | "skipped"
+  | "unknown";
 
-export type DeploymentStatusLiveStatus = 'unavailable' | 'configured' | 'error';
+export type DeploymentStatusLiveStatus = "unavailable" | "configured" | "error";
 
-export type DeploymentStatusSourceTag = 'github_vercel_optional';
+export type DeploymentStatusSourceTag = "github_azure_optional";
 
-export type DeploymentStatusCreatedFrom = 'deterministic_deployment_status_ingestion_seed';
+export type DeploymentStatusCreatedFrom =
+  "deterministic_deployment_status_ingestion_seed";
 
 export interface DeploymentStatusError {
-  code: 'token_missing' | 'token_invalid' | 'ingestion_disabled' | 'unknown';
+  code: "token_missing" | "token_invalid" | "ingestion_disabled" | "unknown";
   message: string;
 }
 
@@ -69,19 +70,20 @@ export interface ProductionReadinessDeploymentSignal {
   createdFrom: DeploymentStatusCreatedFrom;
 }
 
-const SOURCE_TAG: DeploymentStatusSourceTag = 'github_vercel_optional';
-const CREATED_FROM: DeploymentStatusCreatedFrom = 'deterministic_deployment_status_ingestion_seed';
+const SOURCE_TAG: DeploymentStatusSourceTag = "github_azure_optional";
+const CREATED_FROM: DeploymentStatusCreatedFrom =
+  "deterministic_deployment_status_ingestion_seed";
 
 /**
  * Canonical token env-var names. These are detected for presence ONLY.
  * The token value itself is never read into a variable, returned, logged, or stringified.
  */
 const PROVIDER_TOKEN_ENV: Record<DeploymentStatusProvider, string> = {
-  github: 'GITHUB_STATUS_TOKEN',
-  vercel: 'VERCEL_STATUS_TOKEN',
+  github: "GITHUB_STATUS_TOKEN",
+  azure: "AZURE_STATUS_TOKEN",
 };
 
-const FALLBACK_GENERATED_AT = '2026-04-26T00:00:00.000Z';
+const FALLBACK_GENERATED_AT = "2026-04-26T00:00:00.000Z";
 
 /**
  * Returns a deterministic generatedAt without invoking new Date() or Date.now().
@@ -89,7 +91,7 @@ const FALLBACK_GENERATED_AT = '2026-04-26T00:00:00.000Z';
  */
 export function getDeploymentStatusGeneratedAt(): string {
   const override = process.env.PROD4_FIXED_GENERATED_AT;
-  if (typeof override === 'string' && override.length > 0) {
+  if (typeof override === "string" && override.length > 0) {
     return override;
   }
   return FALLBACK_GENERATED_AT;
@@ -102,11 +104,14 @@ export function getDeploymentStatusGeneratedAt(): string {
 function isProviderConfigured(provider: DeploymentStatusProvider): boolean {
   const envName = PROVIDER_TOKEN_ENV[provider];
   const raw = process.env[envName];
-  return typeof raw === 'string' && raw.length > 0;
+  return typeof raw === "string" && raw.length > 0;
 }
 
 export function getDeploymentStatusSources(): ReadonlyArray<DeploymentStatusSource> {
-  const providers: ReadonlyArray<DeploymentStatusProvider> = ['github', 'vercel'];
+  const providers: ReadonlyArray<DeploymentStatusProvider> = [
+    "github",
+    "azure",
+  ];
   return providers.map((provider) => ({
     provider,
     envVarName: PROVIDER_TOKEN_ENV[provider],
@@ -124,17 +129,17 @@ export function buildDeploymentStatusUnavailable(
 ): DeploymentStatusResult {
   return {
     provider,
-    liveStatus: 'unavailable',
-    checkStatus: 'unknown',
+    liveStatus: "unavailable",
+    checkStatus: "unknown",
     checkedAt: null,
     generatedAt,
     source: SOURCE_TAG,
     message:
-      provider === 'github'
-        ? 'GitHub deployment status ingestion is unavailable: GITHUB_STATUS_TOKEN is not configured. PROD4 V1 does not call any GitHub provider host.'
-        : 'Vercel deployment status ingestion is unavailable: VERCEL_STATUS_TOKEN is not configured. PROD4 V1 does not call any Vercel provider host.',
+      provider === "github"
+        ? "GitHub deployment status ingestion is unavailable: GITHUB_STATUS_TOKEN is not configured. PROD4 V1 does not call any GitHub provider host."
+        : "Azure deployment status ingestion is unavailable: AZURE_STATUS_TOKEN is not configured. PROD4 V1 does not call any Azure provider host.",
     error: {
-      code: 'token_missing',
+      code: "token_missing",
       message: `Environment variable ${PROVIDER_TOKEN_ENV[provider]} is not set; ingestion is intentionally not invoked.`,
     },
     createdFrom: CREATED_FROM,
@@ -151,15 +156,15 @@ function buildDeploymentStatusConfigured(
 ): DeploymentStatusResult {
   return {
     provider,
-    liveStatus: 'configured',
-    checkStatus: 'unknown',
+    liveStatus: "configured",
+    checkStatus: "unknown",
     checkedAt: null,
     generatedAt,
     source: SOURCE_TAG,
     message:
-      provider === 'github'
-        ? 'GitHub deployment status token is configured. PROD4 V1 does not yet poll any GitHub provider host; live ingestion remains deferred.'
-        : 'Vercel deployment status token is configured. PROD4 V1 does not yet poll any Vercel provider host; live ingestion remains deferred.',
+      provider === "github"
+        ? "GitHub deployment status token is configured. PROD4 V1 does not yet poll any GitHub provider host; live ingestion remains deferred."
+        : "Azure deployment status token is configured. PROD4 V1 does not yet poll any Azure provider host; live ingestion remains deferred.",
     error: null,
     createdFrom: CREATED_FROM,
   };
@@ -172,7 +177,10 @@ function buildDeploymentStatusConfigured(
 export function getDeploymentStatusResults(
   generatedAt: string = getDeploymentStatusGeneratedAt(),
 ): ReadonlyArray<DeploymentStatusResult> {
-  const providers: ReadonlyArray<DeploymentStatusProvider> = ['github', 'vercel'];
+  const providers: ReadonlyArray<DeploymentStatusProvider> = [
+    "github",
+    "azure",
+  ];
   return providers.map((provider) =>
     isProviderConfigured(provider)
       ? buildDeploymentStatusConfigured(provider, generatedAt)
@@ -193,17 +201,20 @@ export function getDeploymentStatusResults(
 export function summarizeDeploymentStatus(
   results: ReadonlyArray<DeploymentStatusResult> = getDeploymentStatusResults(),
 ): ProductionReadinessDeploymentSignal {
-  const generatedAt = results[0]?.generatedAt ?? getDeploymentStatusGeneratedAt();
+  const generatedAt =
+    results[0]?.generatedAt ?? getDeploymentStatusGeneratedAt();
   const sources = getDeploymentStatusSources();
 
-  const hasError = results.some((result) => result.liveStatus === 'error');
-  const hasConfigured = results.some((result) => result.liveStatus === 'configured');
+  const hasError = results.some((result) => result.liveStatus === "error");
+  const hasConfigured = results.some(
+    (result) => result.liveStatus === "configured",
+  );
 
   const liveStatus: DeploymentStatusLiveStatus = hasError
-    ? 'error'
+    ? "error"
     : hasConfigured
-      ? 'configured'
-      : 'unavailable';
+      ? "configured"
+      : "unavailable";
 
   const message = buildSummaryMessage(liveStatus, results);
 
@@ -222,17 +233,17 @@ function buildSummaryMessage(
   liveStatus: DeploymentStatusLiveStatus,
   results: ReadonlyArray<DeploymentStatusResult>,
 ): string {
-  if (liveStatus === 'unavailable') {
-    return 'Deployment status ingestion is unavailable: no provider tokens are configured. PROD4 V1 does not call GitHub or Vercel.';
+  if (liveStatus === "unavailable") {
+    return "Deployment status ingestion is unavailable: no provider tokens are configured. PROD4 V1 does not call GitHub or Azure.";
   }
-  if (liveStatus === 'configured') {
+  if (liveStatus === "configured") {
     const configuredProviders = results
-      .filter((result) => result.liveStatus === 'configured')
+      .filter((result) => result.liveStatus === "configured")
       .map((result) => result.provider)
-      .join(', ');
+      .join(", ");
     return `Deployment status tokens are configured for: ${configuredProviders}. PROD4 V1 still does not poll provider APIs; live ingestion remains deferred.`;
   }
-  return 'Deployment status ingestion reported an error for at least one provider. PROD4 V1 does not call provider APIs; this state is reserved for future ingestion failures.';
+  return "Deployment status ingestion reported an error for at least one provider. PROD4 V1 does not call provider APIs; this state is reserved for future ingestion failures.";
 }
 
 /**
@@ -241,7 +252,9 @@ function buildSummaryMessage(
  * whether to actually surface this in the production-readiness API. This
  * helper does NOT mutate the input view and does NOT change readiness scoring.
  */
-export function mergeDeploymentStatusIntoReadinessView<T extends Record<string, unknown>>(
+export function mergeDeploymentStatusIntoReadinessView<
+  T extends Record<string, unknown>,
+>(
   view: T,
   signal: ProductionReadinessDeploymentSignal,
 ): T & { deploymentStatus: ProductionReadinessDeploymentSignal } {

@@ -30,7 +30,7 @@ import { createClerkClient } from '@clerk/backend';
 const REPO_ROOT = '/Users/anand/Projects/nexus';
 dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
 
-const BASE_URL = process.env.BASE_URL || 'https://nexus-vert-kappa.vercel.app';
+const BASE_URL = process.env.BASE_URL || 'https://app.abarva.ai';
 const BASE_HOST = new URL(BASE_URL).hostname;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const PERSONA_EMAIL = 'cio@northstar-clinical.example.com';
