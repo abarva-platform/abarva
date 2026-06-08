@@ -1,4 +1,24 @@
-import { selectTenantEnterpriseSegments } from "@/lib/knowledge/tenant-enterprise-context";
+import {
+  selectTenantEnterpriseSegments,
+  isTenantEnterpriseQuestion,
+} from "@/lib/knowledge/tenant-enterprise-context";
+
+describe("enterprise-question gate recognizes data + infrastructure vocabulary", () => {
+  it("treats a data/analytics question as a tenant enterprise question", () => {
+    expect(
+      isTenantEnterpriseQuestion(
+        "What is our data and analytics stack — data warehouse, BI tools, reporting?",
+      ),
+    ).toBe(true);
+  });
+  it("treats an infrastructure question as a tenant enterprise question", () => {
+    expect(
+      isTenantEnterpriseQuestion(
+        "What is our infrastructure estate — datacenters, virtualization, storage, network, and cloud accounts?",
+      ),
+    ).toBe(true);
+  });
+});
 
 describe("landscape segment routing (data_estate + infrastructure)", () => {
   it("routes data/analytics questions to data_estate", () => {
