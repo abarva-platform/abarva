@@ -287,6 +287,29 @@ function buildAntiPattern(pattern: Pattern, index: number): AntiPattern {
   };
 }
 
+function buildCorpusBackedCandidateRows(
+  rows: ReadonlyArray<CorpusPatternRow>,
+): InitiativeRow[] {
+  return rows.slice(0, 6).map((row, index) => ({
+    initiative_id: `corpus-backed-${row.slug}`,
+    display_id: `LSH-CORPUS-${String(index + 1).padStart(2, "0")}`,
+    name: row.title,
+    description:
+      `Corpus-backed candidate generated from ${row.slug.toUpperCase()}; ` +
+      "live ai_initiatives substrate is not loaded for this client row yet.",
+    stage: "candidate",
+    owner_title: row.category?.toLowerCase().includes("treasury")
+      ? "CFO / Treasury sponsor"
+      : "Portfolio operating owner",
+    committed_annual_usd: null,
+    measured_value_usd: null,
+    status_flag: "candidate",
+    status_summary:
+      "Candidate surfaced from Lakeshore corpus; convert to a Strategic Move before treating as a funded initiative.",
+    confidence_level: Number(row.confidence ?? 0) >= 0.9 ? "HIGH" : "MED",
+  }));
+}
+
 const CONTROL_VENDOR: Vendor = {
   id: "V-LSH-CONTROL-PLANE",
   name: "Lakeshore governed platform estate",
@@ -367,19 +390,23 @@ export async function loadLakeshoreIntelligenceData(
     ),
   ]);
 
-  if (patternRows.length === 0 || initiativeRows.length === 0) return null;
+  if (patternRows.length === 0) return null;
 
   // Candidate rows mapped into the treasury grounding namespace.
   const treasuryRows = treasuryPatternRows.map(treasuryRowToPatternRow);
+  const hasInitiativeSubstrate = initiativeRows.length > 0;
+  const effectiveInitiativeRows = hasInitiativeSubstrate
+    ? initiativeRows
+    : buildCorpusBackedCandidateRows([...treasuryRows, ...patternRows]);
 
-  const seedUseCaseIds = initiativeRows
+  const seedUseCaseIds = effectiveInitiativeRows
     .slice(0, 6)
     .map((_, index) => `UC-LSH-${String(index + 1).padStart(3, "0")}`);
   const patterns = patternRows
     .slice(0, 6)
     .map((row) => buildPattern(row, seedUseCaseIds));
   const antiPatterns = patterns.slice(0, 3).map(buildAntiPattern);
-  const useCases = initiativeRows
+  const useCases = effectiveInitiativeRows
     .slice(0, 6)
     .map((row, index) => buildUseCase(row, index, patterns));
   CONTROL_VENDOR.productLines[0]!.servesUseCases = useCases.map(
@@ -392,18 +419,18 @@ export async function loadLakeshoreIntelligenceData(
     y: 82 - index * 7,
     r: 18 - Math.min(index, 5),
     engagementState: engagementForStatus(
-      initiativeRows[index]?.status_flag ?? null,
+      effectiveInitiativeRows[index]?.status_flag ?? null,
     ),
-    initiativeDisplayId: initiativeRows[index]?.display_id ?? undefined,
+    initiativeDisplayId: effectiveInitiativeRows[index]?.display_id ?? undefined,
     score: 90 - index * 4,
   }));
 
-  const totalProjected = initiativeRows.reduce(
+  const totalProjected = effectiveInitiativeRows.reduce(
     (sum, row) =>
       sum + money(row.measured_value_usd || row.committed_annual_usd),
     0,
   );
-  const totalCommitted = initiativeRows.reduce(
+  const totalCommitted = effectiveInitiativeRows.reduce(
     (sum, row) => sum + money(row.committed_annual_usd),
     0,
   );
@@ -413,10 +440,10 @@ export async function loadLakeshoreIntelligenceData(
     tenantBrandColor: BRAND,
     industry: "finserv",
     totalUseCases: useCases.length,
-    inFlightCount: useCases.length,
+    inFlightCount: hasInitiativeSubstrate ? useCases.length : 0,
     atRiskCount: nodes.filter((node) => node.engagementState === "at_risk")
       .length,
-    candidateCount: 0,
+    candidateCount: hasInitiativeSubstrate ? 0 : useCases.length,
     refreshedLabel: "2026-Q2",
     whatChanged: patterns.slice(0, 4).map((pattern) => ({
       entityId: pattern.id,
@@ -440,7 +467,9 @@ export async function loadLakeshoreIntelligenceData(
     tenantBrandColor: BRAND,
     industry: "finserv",
     composedAt: "2026-06-04T00:00:00.000Z",
-    synthesis: `Lakeshore's Intelligence brief is now bound to live Lakeshore substrate: ${patternRows.length} high-depth decision patterns in the current view, ${initiativeRows.length} loaded initiatives, and no Apex/Meridian fixture content. The strongest proof points are Treasury/Kyriba, the shared data evidence spine, and portfolio modernization bets that require named owners and evidence before decisions move.`,
+    synthesis: hasInitiativeSubstrate
+      ? `Lakeshore's Intelligence brief is now bound to live Lakeshore substrate: ${patternRows.length} high-depth decision patterns in the current view, ${initiativeRows.length} loaded initiatives, and no Apex/Meridian fixture content. The strongest proof points are Treasury/Kyriba, the shared data evidence spine, and portfolio modernization bets that require named owners and evidence before decisions move.`
+      : `Lakeshore's Intelligence brief is now bound to live Lakeshore corpus patterns, but live ai_initiatives substrate is not loaded for this client row yet. This is a corpus-backed candidate view: it may surface Treasury/Kyriba and HoldCo governance patterns, but funded initiative value and gate status must be created through Strategic Moves before executive action.`,
     valueAtStake: [
       {
         label: "Projected portfolio value",
@@ -484,7 +513,13 @@ export async function loadLakeshoreIntelligenceData(
       useCase,
       score: 90 - index * 4,
       scoreFactors: [
-        { name: "Loaded Lakeshore initiative substrate", delta: 24 },
+        {
+          name: hasInitiativeSubstrate
+            ? "Loaded Lakeshore initiative substrate"
+            : "Corpus-backed candidate; initiative substrate pending",
+          delta: hasInitiativeSubstrate ? 24 : 8,
+          isWarning: !hasInitiativeSubstrate,
+        },
         { name: "Bound to live Lakeshore corpus pattern", delta: 22 },
         {
           name: "Requires named evidence owner before gate movement",
@@ -496,8 +531,8 @@ export async function loadLakeshoreIntelligenceData(
       engagementState: nodes[index]?.engagementState ?? "in_flight",
       initiativeDisplayId: nodes[index]?.initiativeDisplayId,
       measuredVsCommitted: {
-        measured: money(initiativeRows[index]?.measured_value_usd),
-        committed: money(initiativeRows[index]?.committed_annual_usd),
+        measured: money(effectiveInitiativeRows[index]?.measured_value_usd),
+        committed: money(effectiveInitiativeRows[index]?.committed_annual_usd),
       },
       decision: {
         kind: index === 0 ? "approve_scale" : "evaluate",
@@ -512,7 +547,7 @@ export async function loadLakeshoreIntelligenceData(
       // namespace; a corpus pattern like PAT-LSH-D18-00479 can never land on it.
       // Empty when nothing clears relevance + grounding — no off-namespace cite.
       bindingPatterns: (() => {
-        const useCaseText = `${initiativeRows[index]?.name ?? useCase.name} ${initiativeRows[index]?.description ?? ""}`;
+        const useCaseText = `${effectiveInitiativeRows[index]?.name ?? useCase.name} ${effectiveInitiativeRows[index]?.description ?? ""}`;
         const required = requiredGroundingForText(useCaseText);
         const pool = required === "treasury" ? treasuryRows : patternRows;
         const relevant = selectRelevantPatternRows(useCaseText, pool, 3);
@@ -566,8 +601,8 @@ export async function loadLakeshoreIntelligenceData(
       initiativeDisplayId: nodes[index + 3]?.initiativeDisplayId,
       valueLabel: moneyLabel(
         money(
-          initiativeRows[index + 3]?.measured_value_usd ||
-            initiativeRows[index + 3]?.committed_annual_usd,
+          effectiveInitiativeRows[index + 3]?.measured_value_usd ||
+            effectiveInitiativeRows[index + 3]?.committed_annual_usd,
         ),
       ),
       ttvLabel: "6-18 mo",
