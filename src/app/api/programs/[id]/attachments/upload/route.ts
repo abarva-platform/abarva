@@ -51,6 +51,8 @@ import {
   extractProgramEvidenceFromUploadBuffer,
   recordProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
+import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
+import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   evaluateSensitiveUpload,
@@ -304,6 +306,7 @@ export async function POST(
   let evidenceWarning: string | null = null;
   let evidenceParseMethod: string | null = null;
   let evidenceWarnings: string[] = [];
+  let discoveryReceipt: ExtractionReceipt | null = null;
   try {
     const evidence = await extractProgramEvidenceFromUploadBuffer({
       filename,
@@ -321,6 +324,24 @@ export async function POST(
       phase: effectivePhase ?? null,
       stepId: stepId ?? null,
     });
+    // Discovery Intake (S3c): route the parsed evidence into the Move's
+    // discovery shape (flag-gated inside the mutation; null when off). Best-
+    // effort — a failure here never blocks the upload or the evidence capture.
+    try {
+      discoveryReceipt = await applyUploadedEvidenceToMove(ctx, {
+        programId,
+        evidence,
+        sourceFile: filename,
+      });
+    } catch (discErr) {
+      console.error(
+        "[POST /api/programs/:id/attachments/upload] discovery_extraction_failed",
+        {
+          programId,
+          message: discErr instanceof Error ? discErr.message : String(discErr),
+        },
+      );
+    }
   } catch (err) {
     evidenceWarning = err instanceof Error ? err.message : String(err);
     console.error(
@@ -344,6 +365,7 @@ export async function POST(
             warnings: evidenceWarnings,
           }
         : { id: null, status: "not_captured", warning: evidenceWarning },
+      discovery: discoveryReceipt ?? undefined,
       dataProtection,
     },
     { status: 200 },
