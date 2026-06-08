@@ -7,13 +7,22 @@
 > Flexera + Apptio), not hand entry — see `../../discovery-adapters/` for the
 > native-export mappings these CSVs are meant to receive.
 
+## Decision (2026-06-08): Apex is the $80B archetype
+
+Per founder direction, **Apex is the ~$80B+ global omnichannel archetype** for
+the L-tier — this package's framing is the intended one. The reconciliation
+follow-up is to align `src/data/apexretail/*` (which still carries the older
+~$12.4B / ~800-store US figures) up to the $80B global shape so Apex is the $80B
+brand consistently everywhere, or to split the $80B archetype into its own named
+brand if Apex should stay $12.4B.
+
 ## Honesty bar — what is canonical vs illustrative
 
-The repo's canonical Apex Retail Group is a **~$12.4B, ~800-store US retailer**
-(`src/data/apexretail/*`), not an $80B+ global retailer. This L-tier package
-therefore models **"Apex at L-tier scale"**: it reuses the *real* anchors the
-repo establishes and **extrapolates** the rest to the L-tier shape the model
-calls for. Every row's `source` column says which it is.
+The repo's `src/data/apexretail/*` currently still describes a **~$12.4B,
+~800-store US retailer**. This L-tier package models **"Apex at $80B L-tier
+scale"**: it reuses the *real* anchors the repo establishes and **extrapolates**
+the rest to the L-tier shape the model calls for. Every row's `source` column
+says which it is.
 
 **Canonical (from `src/data/apexretail/*` — used verbatim):**
 

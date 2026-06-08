@@ -1,5 +1,17 @@
 # Lakeshore Federated AI Strategy — Design Package
 
+> **⚠️ Canonical-cast divergence (flagged 2026-06-08).** This package describes a
+> *federated PE-fund* Lakeshore — Morgan Street / Roosevelt / Lakefront HoldCos,
+> CFO Sarah Lindqvist, CIO Daniel Okonkwo. That is **NOT** the canonical Lakeshore
+> tenant that is actually loaded. The loaded/canonical Lakeshore is a **diversified
+> holdco** — Holdco (CIO **Meera Rao**, CFO **Daniel Whitaker**) over **Northline,
+> Brightmark, Forge & Field, Great Lakes Pantry** (see
+> `src/scripts/lakeshore/generate-synthetic-context.ts` and
+> `docs/build/LAKESHORE_HOLDINGS_TENANT_SETUP_PLAN_2026-06-03.md`). The two are
+> structurally different (3 PE HoldCos vs 4 operating companies) and must be
+> reconciled before either is demoed; the canonical (Rao/Whitaker) cast wins.
+> Reconciliation is a narrative-rewrite follow-up, not a mechanical rename.
+
 **Tenant:** Lakeshore (L0 sponsor) over Morgan Street Holdings Chicago, Roosevelt Holdings Atlanta, Lakefront Capital Boston (L1 HoldCos)
 **Audience:** Claude design module (review + refine) → Codex (implement) → demo to PE/HoldCo CXO audience
 **Created:** 2026-06-05
