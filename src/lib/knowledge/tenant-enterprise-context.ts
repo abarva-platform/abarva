@@ -39,6 +39,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   it_financials: "IT financials and funding authority",
   it_landscape: "IT landscape",
   program_inventory: "Program inventory",
+  data_estate: "Data and analytics estate",
+  infrastructure: "Infrastructure estate",
 };
 
 const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
@@ -47,6 +49,8 @@ const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
   it_financials: 48,
   it_landscape: 32,
   program_inventory: 12,
+  data_estate: 40,
+  infrastructure: 40,
 };
 
 const structuredFactSession = createDefaultSession(
@@ -128,6 +132,21 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
     )
   ) {
     segments.push("program_inventory");
+  }
+
+  if (
+    /\b(data\s+stack|analytics\s+stack|data\s+and\s+analytics|data\s+platform|data\s+warehouse|warehouse|lakehouse|data\s*lake|\bbi\b|business\s+intelligence|reporting|dashboards?|olap|cube|data\s*marts?|semantic\s+layer|etl|elt|pipelines?|snowflake|databricks|teradata|netezza|power\s*bi|tableau|cognos|microstrategy|clarity|caboodle|informatica|dbt)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("data_estate");
+  }
+  if (
+    /\b(infrastructure|infra|data\s*center|datacenter|datacentre|virtualization|virtualisation|vmware|vsphere|hyper-?v|hyperconverged|nutanix|vxrail|storage|san\b|nas\b|netapp|pure\s+storage|isilon|network(ing)?|cisco|arista|sd-?wan|f5|server|servers|compute|hosting|colo|cloud\s+account|subscription|landing\s+zone|estate)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("infrastructure");
   }
 
   if (segments.length === 0 && isTenantEnterpriseQuestion(query)) {
@@ -1450,6 +1469,22 @@ function scoreChunk(
     )
   ) {
     score += 6;
+  }
+  if (
+    segmentId === "data_estate" &&
+    /\b(data|analytics|warehouse|lakehouse|bi|reporting|dashboard|etl|elt|snowflake|databricks|tableau|power\s*bi|cube|mart)\b/.test(
+      normalizedQuery,
+    )
+  ) {
+    score += 8;
+  }
+  if (
+    segmentId === "infrastructure" &&
+    /\b(infrastructure|infra|data\s*center|datacenter|virtualization|vmware|storage|network|server|compute|hosting|cloud\s+account|colo)\b/.test(
+      normalizedQuery,
+    )
+  ) {
+    score += 8;
   }
 
   if (/\b(cio|cdio|cto|cmio|cfo)\b/.test(haystack)) score += 2;

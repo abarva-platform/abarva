@@ -39,7 +39,11 @@ export type SegmentId =
   | 'initiative_financials'
   | 'regulatory_and_dependency_context'
   | 'vendor_contract'
-  | 'sponsor_signal';
+  | 'sponsor_signal'
+  // Landscape-model dedicated segments (data/analytics + infrastructure layers)
+  // so these questions retrieve from clean segments instead of being starved
+  // inside the overloaded it_landscape segment.
+  | 'infrastructure';
 
 /** Coverage / health status per segment, from segment rollups. See design doc §2. */
 export interface SegmentRollup {

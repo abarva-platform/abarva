@@ -151,7 +151,7 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   regulatory_qms_risk: "program_inventory",
   value_based_care: "program_inventory",
   population_health: "program_inventory",
-  data_platform_lineage: "it_landscape",
+  data_platform_lineage: "data_estate",
   digital_front_door: "it_landscape",
   supply_chain_pharmacy: "it_financials",
   ai_governance_decisions: "program_inventory",
@@ -159,7 +159,7 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   nursing_workload_acuity: "org_structure",
   ai_tooling_model_inventory: "it_landscape",
   incidents_ops_telemetry: "it_landscape",
-  infrastructure_estate: "it_landscape",
+  infrastructure_estate: "infrastructure",
   business_capability: "enterprise_profile",
 };
 
