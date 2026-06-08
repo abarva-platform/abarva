@@ -15,6 +15,7 @@ import type { StrategicMove } from "@/lib/programs/types.ui";
 import { ensureThreadForMove } from "@/lib/decisions/auto-linker";
 import { getAskSessionForMove } from "@/lib/intelligence/ask/session-memory";
 import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,10 @@ export default async function StrategicMoveDetailPage({
 
   const { handoff, linkedSourceEvent } = await resolveHandoff(move);
   const activeClient = await getActiveClientRow().catch(() => null);
+  const discoveryIntakeEnabled = isFeatureEnabled(
+    { clientKey: activeClient?.key ?? null },
+    "discovery_intake_v2",
+  );
   const originatingAskSession = await getAskSessionForMove({
     tenantId: ctx.clientId,
     moveId: move.id,
@@ -128,6 +133,7 @@ export default async function StrategicMoveDetailPage({
         originatingIntelligenceSessionId={
           originatingAskSession?.sessionId ?? null
         }
+        discoveryIntakeEnabled={discoveryIntakeEnabled}
       />
     </AppShell>
   );

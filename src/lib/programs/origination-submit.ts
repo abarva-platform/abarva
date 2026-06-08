@@ -1,40 +1,44 @@
-import 'server-only';
+import "server-only";
 
-import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { getActiveClientRow } from '@/lib/active-client';
-import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { submitForApproval } from '@/lib/programs/approval';
-import { markDraftCommitted } from '@/lib/programs/origination-drafts';
-import type { OriginSource } from '@/lib/programs/types.db';
-import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
-import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
-import { parseUsdRangeFromText } from '@/lib/programs/value-utils';
+import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
+import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { submitForApproval } from "@/lib/programs/approval";
+import { markDraftCommitted } from "@/lib/programs/origination-drafts";
+import type { OriginSource } from "@/lib/programs/types.db";
+import { normalizeProgramArchetype } from "@/lib/programs/archetype-normalization";
+import { buildEngagementGraphNodeId } from "@/lib/programs/mutations";
+import { parseUsdRangeFromText } from "@/lib/programs/value-utils";
 import {
   assessOriginationBrief,
   suitabilityCharterFragment,
-} from '@/lib/programs/suitability/origination-suitability';
-import { originationCharterExtensions } from '@/lib/programs/origination-charter-extensions';
+} from "@/lib/programs/suitability/origination-suitability";
+import { originationCharterExtensions } from "@/lib/programs/origination-charter-extensions";
 import {
   CHARTER_FUNCTION_PACK_CONFIDENCE_KEY,
   CHARTER_FUNCTION_PACK_KEY,
   classifyFunctionKey,
   industryKeyForCode,
-} from '@/lib/programs/function-identity';
-import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
-import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
+} from "@/lib/programs/function-identity";
+import { ensureThreadForMove } from "@/lib/decisions/auto-linker";
+import { linkAskSessionToMove } from "@/lib/intelligence/ask/session-memory";
 import {
   normalizePromotionRationale,
   optionalStringArray,
   validateIntelligencePromotionApproval,
-} from '@/lib/programs/intelligence-promotion-approval';
-import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
-import { applyDiscoveryShapeIfEnabled } from '@/lib/programs/discovery/charter-transformers';
-import type { DiscoveryShape } from '@/lib/programs/discovery/discovery-intake';
+} from "@/lib/programs/intelligence-promotion-approval";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import {
+  applyDiscoveryShapeIfEnabled,
+  embedDiscoveryPlanInCharter,
+} from "@/lib/programs/discovery/charter-transformers";
+import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
+import type { DiscoveryShape } from "@/lib/programs/discovery/discovery-intake";
 
 export interface OriginationTurn {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   text: string;
 }
 
@@ -72,7 +76,7 @@ export interface SubmitOriginationBriefResult {
   engagementId: string;
   approvalRequestId: string;
   programName: string;
-  lifecycleState: 'submitted_for_approval';
+  lifecycleState: "submitted_for_approval";
   redirectTo: string;
   decisionThreadId?: string | null;
   dossierUrl?: string | null;
@@ -85,7 +89,7 @@ export class OriginationSubmitError extends Error {
     public readonly status = 400,
   ) {
     super(message);
-    this.name = 'OriginationSubmitError';
+    this.name = "OriginationSubmitError";
   }
 }
 
@@ -96,8 +100,8 @@ interface ResolvedPerson {
 }
 
 interface Classification {
-  functionCode: 'FRONT_OFFICE' | 'MIDDLE_OFFICE' | 'BACK_OFFICE';
-  objectiveCode: 'GROW' | 'OPTIMISE' | 'CONTROL';
+  functionCode: "FRONT_OFFICE" | "MIDDLE_OFFICE" | "BACK_OFFICE";
+  objectiveCode: "GROW" | "OPTIMISE" | "CONTROL";
   topicCode: string;
 }
 
@@ -110,14 +114,14 @@ interface PersonRow {
 }
 
 function requiredText(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new OriginationSubmitError('missing_field', `${field} is required`);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new OriginationSubmitError("missing_field", `${field} is required`);
   }
   return value.trim();
 }
 
 function optionalText(value: string | null | undefined): string | null {
-  if (typeof value !== 'string') return null;
+  if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
@@ -125,32 +129,32 @@ function optionalText(value: string | null | undefined): string | null {
 function normalizeLabel(value: string): string {
   return value
     .toLowerCase()
-    .replace(/\([^)]*\)/g, ' ')
-    .replace(/[^\p{L}\p{N}@.]+/gu, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^\p{L}\p{N}@.]+/gu, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function personTokens(value: string): string[] {
   const stop = new Set([
-    'the',
-    'a',
-    'an',
-    'is',
-    'as',
-    'sponsor',
-    'lead',
-    'owner',
-    'program',
-    'director',
-    'chief',
-    'officer',
-    'vp',
-    'vice',
-    'president',
+    "the",
+    "a",
+    "an",
+    "is",
+    "as",
+    "sponsor",
+    "lead",
+    "owner",
+    "program",
+    "director",
+    "chief",
+    "officer",
+    "vp",
+    "vice",
+    "president",
   ]);
   return normalizeLabel(value)
-    .split(' ')
+    .split(" ")
     .filter((token) => token.length >= 2 && !stop.has(token))
     .slice(0, 4);
 }
@@ -170,16 +174,20 @@ function scorePersonLabelMatch(row: PersonRow, label: string): number {
       Math.max(0, nameIndex - 24),
       Math.min(labelNorm.length, nameIndex + nameNorm.length + 48),
     );
-    if (/\b(consulted|informed|not co sponsor|not sponsor|not accountable|not responsible)\b/.test(window)) {
+    if (
+      /\b(consulted|informed|not co sponsor|not sponsor|not accountable|not responsible)\b/.test(
+        window,
+      )
+    ) {
       score -= 120;
     }
   }
 
-  for (const token of nameNorm.split(' ').filter((part) => part.length >= 2)) {
+  for (const token of nameNorm.split(" ").filter((part) => part.length >= 2)) {
     if (labelNorm.includes(token)) score += 8;
   }
 
-  const roleNorm = normalizeLabel(row.role ?? '');
+  const roleNorm = normalizeLabel(row.role ?? "");
   if (roleNorm && labelNorm.includes(roleNorm)) score += 12;
 
   return score;
@@ -189,36 +197,52 @@ function slugifyTopicCode(value: string): string {
   const slug = value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
     .slice(0, 80);
-  return slug || 'program_origination';
+  return slug || "program_origination";
 }
 
 function classifyBrief(input: SubmitOriginationBriefInput): Classification {
   const text = [
     input.programName,
     input.problemStatement,
-    input.targetOutcome ?? '',
-    input.timeline ?? '',
-    input.classification ?? '',
-    input.matchedPatternId ?? '',
+    input.targetOutcome ?? "",
+    input.timeline ?? "",
+    input.classification ?? "",
+    input.matchedPatternId ?? "",
   ]
-    .join(' ')
+    .join(" ")
     .toLowerCase();
 
-  let functionCode: Classification['functionCode'] = 'MIDDLE_OFFICE';
-  if (/\b(finance|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(text)) {
-    functionCode = 'BACK_OFFICE';
-  } else if (/\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|store|portal|front[- ]office)\b/.test(text)) {
-    functionCode = 'FRONT_OFFICE';
+  let functionCode: Classification["functionCode"] = "MIDDLE_OFFICE";
+  if (
+    /\b(finance|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(
+      text,
+    )
+  ) {
+    functionCode = "BACK_OFFICE";
+  } else if (
+    /\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|store|portal|front[- ]office)\b/.test(
+      text,
+    )
+  ) {
+    functionCode = "FRONT_OFFICE";
   }
 
-  let objectiveCode: Classification['objectiveCode'] = 'OPTIMISE';
-  if (/\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(text)) {
-    objectiveCode = 'CONTROL';
-  } else if (/\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(text)) {
-    objectiveCode = 'GROW';
+  let objectiveCode: Classification["objectiveCode"] = "OPTIMISE";
+  if (
+    /\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(
+      text,
+    )
+  ) {
+    objectiveCode = "CONTROL";
+  } else if (
+    /\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(
+      text,
+    )
+  ) {
+    objectiveCode = "GROW";
   }
 
   return {
@@ -234,9 +258,10 @@ async function resolvePersonByLabel(input: {
   fallbackUserId: string;
 }): Promise<ResolvedPerson> {
   const sb = getAzureWriteFluentClient();
-  const fallbackLooksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    input.fallbackUserId,
-  );
+  const fallbackLooksLikeUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      input.fallbackUserId,
+    );
 
   const tokens = personTokens(input.label);
   const clauses = tokens.flatMap((token) => [
@@ -245,19 +270,32 @@ async function resolvePersonByLabel(input: {
     `role.ilike.%${token}%`,
   ]);
 
-  const query = clauses.length > 0
-    ? sb.from('persons').select('id, name, role, organization, email').or(clauses.join(',')).limit(25)
-    : sb.from('persons').select('id, name, role, organization, email').eq('id', input.fallbackUserId).limit(25);
+  const query =
+    clauses.length > 0
+      ? sb
+          .from("persons")
+          .select("id, name, role, organization, email")
+          .or(clauses.join(","))
+          .limit(25)
+      : sb
+          .from("persons")
+          .select("id, name, role, organization, email")
+          .eq("id", input.fallbackUserId)
+          .limit(25);
 
   const { data, error } = await query;
   if (error) {
-    throw new OriginationSubmitError('person_lookup_failed', error.message, 500);
+    throw new OriginationSubmitError(
+      "person_lookup_failed",
+      error.message,
+      500,
+    );
   }
 
   const labelNorm = normalizeLabel(input.label);
   const clientNorm = normalizeLabel(input.clientName);
   const rows = ((data ?? []) as PersonRow[]).filter((row) => {
-    const orgNorm = normalizeLabel(row.organization ?? '');
+    const orgNorm = normalizeLabel(row.organization ?? "");
     return orgNorm.includes(clientNorm) || clientNorm.includes(orgNorm);
   });
 
@@ -266,12 +304,14 @@ async function resolvePersonByLabel(input: {
     .map((row) => ({ row, score: scorePersonLabelMatch(row, input.label) }))
     .sort((a, b) => b.score - a.score);
   const contains = exact ?? (scored[0]?.score > 0 ? scored[0].row : undefined);
-  const currentUser = rows.find((row) => fallbackLooksLikeUuid && row.id === input.fallbackUserId);
+  const currentUser = rows.find(
+    (row) => fallbackLooksLikeUuid && row.id === input.fallbackUserId,
+  );
   const picked = contains ?? currentUser ?? rows[0];
 
   if (!picked) {
     throw new OriginationSubmitError(
-      'person_not_found',
+      "person_not_found",
       `Could not resolve "${input.label}" in ${input.clientName}'s people records`,
       422,
     );
@@ -284,7 +324,7 @@ async function insertParticipant(input: {
   programId: string;
   person: ResolvedPerson;
   role: string;
-  approvalAuthority: 'sponsor' | 'contributor';
+  approvalAuthority: "sponsor" | "contributor";
 }): Promise<void> {
   const sb = getAzureWriteFluentClient();
   const basePayload = {
@@ -292,21 +332,28 @@ async function insertParticipant(input: {
     user_id: input.person.id,
     user_name: input.person.name,
     role: input.role,
-    notify_on: ['phase_gate', 'approval'],
+    notify_on: ["phase_gate", "approval"],
     approval_authority: input.approvalAuthority,
     last_touchpoint_at: new Date().toISOString(),
   };
-  const { error } = await sb.from('engagement_participants').insert({
+  const { error } = await sb.from("engagement_participants").insert({
     ...basePayload,
-    program_access_level: 'program_member',
+    program_access_level: "program_member",
     can_view_financial: false,
     can_upload: true,
     can_generate_deliverables: true,
-    can_publish_deliverables: input.approvalAuthority === 'sponsor',
-    can_approve_phase_gates: input.approvalAuthority === 'sponsor',
+    can_publish_deliverables: input.approvalAuthority === "sponsor",
+    can_approve_phase_gates: input.approvalAuthority === "sponsor",
   });
-  if (error && /program_access_level|can_view_financial|can_upload|can_generate_deliverables|can_publish_deliverables|can_approve_phase_gates/i.test(error.message)) {
-    const { error: retryError } = await sb.from('engagement_participants').insert(basePayload);
+  if (
+    error &&
+    /program_access_level|can_view_financial|can_upload|can_generate_deliverables|can_publish_deliverables|can_approve_phase_gates/i.test(
+      error.message,
+    )
+  ) {
+    const { error: retryError } = await sb
+      .from("engagement_participants")
+      .insert(basePayload);
     if (retryError) throw retryError;
     return;
   }
@@ -331,11 +378,11 @@ function deriveFunctionPackIdentity(
   const briefText = [
     input.programName,
     input.problemStatement,
-    input.targetOutcome ?? '',
-    input.classification ?? '',
+    input.targetOutcome ?? "",
+    input.classification ?? "",
   ]
     .filter((part) => part.trim().length > 0)
-    .join(' ');
+    .join(" ");
 
   const classified = classifyFunctionKey(industryKey, briefText);
   if (!classified) return null;
@@ -355,7 +402,10 @@ interface OriginationCharterResult {
    * the caller sets the first-class `engagements.function_pack_key` /
    * `function_pack_confidence` columns from this.
    */
-  functionPackIdentity: { functionPackKey: string; functionPackConfidence: number } | null;
+  functionPackIdentity: {
+    functionPackKey: string;
+    functionPackConfidence: number;
+  } | null;
 }
 
 /** Build the charter JSONB written to engagements.charter at P0 origination. */
@@ -400,7 +450,7 @@ function buildOriginationCharter(
     scaffold: {
       problem_statement: input.problemStatement,
       archetype: programArchetype,
-      sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ''}`,
+      sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ""}`,
       scope_boundary: input.scopeBoundary ?? null,
       evidence_family: input.evidenceFamily ?? null,
       value_hypothesis: input.targetOutcome ?? null,
@@ -447,22 +497,28 @@ async function persistOriginationTurns(
     .map((t) => ({
       engagement_id: programId,
       phase: 0,
-      sender: t.role === 'assistant' ? 'agent' : 'user',
+      sender: t.role === "assistant" ? "agent" : "user",
       text: t.text.trim(),
     }));
   if (!rows.length) return;
-  const { error } = await sb.from('turns').insert(rows);
+  const { error } = await sb.from("turns").insert(rows);
   if (error) {
     // Non-fatal — turns are enrichment. Log and continue.
-    console.error('[origination-submit] turns persist failed', { programId, error: error.message });
+    console.error("[origination-submit] turns persist failed", {
+      programId,
+      error: error.message,
+    });
   }
 }
 
 async function rollbackEngagement(programId: string): Promise<void> {
   try {
-    await getAzureWriteFluentClient().from('engagements').delete().eq('id', programId);
+    await getAzureWriteFluentClient()
+      .from("engagements")
+      .delete()
+      .eq("id", programId);
   } catch (err) {
-    console.error('[origination-submit] rollback failed', {
+    console.error("[origination-submit] rollback failed", {
       programId,
       err: err instanceof Error ? err.message : String(err),
     });
@@ -474,21 +530,30 @@ export async function submitOriginationBrief(
 ): Promise<SubmitOriginationBriefResult> {
   const input: SubmitOriginationBriefInput = {
     ...rawInput,
-    surface: optionalText(rawInput.surface) ?? '/programs/new',
-    programName: requiredText(rawInput.programName, 'programName'),
-    problemStatement: requiredText(rawInput.problemStatement, 'problemStatement'),
+    surface: optionalText(rawInput.surface) ?? "/programs/new",
+    programName: requiredText(rawInput.programName, "programName"),
+    problemStatement: requiredText(
+      rawInput.problemStatement,
+      "problemStatement",
+    ),
     targetOutcome: optionalText(rawInput.targetOutcome),
     timeline: optionalText(rawInput.timeline),
     classification: optionalText(rawInput.classification),
-    sponsor: requiredText(rawInput.sponsor, 'sponsor'),
-    lead: optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, 'sponsor'),
+    sponsor: requiredText(rawInput.sponsor, "sponsor"),
+    lead:
+      optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, "sponsor"),
     matchedPatternId: optionalText(rawInput.matchedPatternId),
     scopeBoundary: optionalText(rawInput.scopeBoundary),
     evidenceFamily: optionalText(rawInput.evidenceFamily),
     fromInitiativeId: optionalText(rawInput.fromInitiativeId),
-    fromGapUsd: typeof rawInput.fromGapUsd === 'number' ? rawInput.fromGapUsd : null,
-    originationTurns: Array.isArray(rawInput.originationTurns) ? rawInput.originationTurns : null,
-    originatingIntelligenceSessionId: optionalText(rawInput.originatingIntelligenceSessionId),
+    fromGapUsd:
+      typeof rawInput.fromGapUsd === "number" ? rawInput.fromGapUsd : null,
+    originationTurns: Array.isArray(rawInput.originationTurns)
+      ? rawInput.originationTurns
+      : null,
+    originatingIntelligenceSessionId: optionalText(
+      rawInput.originatingIntelligenceSessionId,
+    ),
     decisionThreadTitle: optionalText(rawInput.decisionThreadTitle),
     decisionThreadOwnerRole: optionalText(rawInput.decisionThreadOwnerRole),
     humanPromotionAccepted: rawInput.humanPromotionAccepted === true,
@@ -501,7 +566,7 @@ export async function submitOriginationBrief(
   const promotionApproval = validateIntelligencePromotionApproval(input);
   if (promotionApproval.error) {
     throw new OriginationSubmitError(
-      'intelligence_promotion_approval_required',
+      "intelligence_promotion_approval_required",
       promotionApproval.error,
       400,
     );
@@ -512,23 +577,33 @@ export async function submitOriginationBrief(
     tenancy = await requireTenancy();
   } catch (err) {
     if (err instanceof TenancyError) {
-      throw new OriginationSubmitError(err.code, err.code, err.code === 'unauthenticated' ? 401 : 403);
+      throw new OriginationSubmitError(
+        err.code,
+        err.code,
+        err.code === "unauthenticated" ? 401 : 403,
+      );
     }
     throw err;
   }
 
-  const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(() => null);
+  const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(
+    () => null,
+  );
   if (!accessPolicy?.canCreatePrograms) {
     throw new OriginationSubmitError(
-      'forbidden',
-      'Your Programs access does not allow creating new programs for this client.',
+      "forbidden",
+      "Your Programs access does not allow creating new programs for this client.",
       403,
     );
   }
 
   const activeClient = await getActiveClientRow();
   if (!activeClient || activeClient.id !== tenancy.clientId) {
-    throw new OriginationSubmitError('tenant_resolution_failed', 'Active client does not match tenancy.', 403);
+    throw new OriginationSubmitError(
+      "tenant_resolution_failed",
+      "Active client does not match tenancy.",
+      403,
+    );
   }
 
   const sponsor = await resolvePersonByLabel({
@@ -547,40 +622,48 @@ export async function submitOriginationBrief(
   const sb = getAzureWriteFluentClient();
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
   const { data: existing } = await sb
-    .from('engagements')
-    .select('id, name, lifecycle_state, created_at')
-    .eq('client_id', tenancy.clientId)
-    .eq('name', input.programName)
-    .gte('created_at', fiveMinutesAgo)
-    .order('created_at', { ascending: false })
+    .from("engagements")
+    .select("id, name, lifecycle_state, created_at")
+    .eq("client_id", tenancy.clientId)
+    .eq("name", input.programName)
+    .gte("created_at", fiveMinutesAgo)
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (existing) {
-    const row = existing as { id: string; name: string; lifecycle_state: string | null };
+    const row = existing as {
+      id: string;
+      name: string;
+      lifecycle_state: string | null;
+    };
     const { data: approval } = await sb
-      .from('program_approval_requests')
-      .select('id')
-      .eq('program_id', row.id)
-      .eq('request_status', 'pending')
-      .order('requested_at', { ascending: false })
+      .from("program_approval_requests")
+      .select("id")
+      .eq("program_id", row.id)
+      .eq("request_status", "pending")
+      .order("requested_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     const decisionThread = await ensureThreadForMove({
       clientId: activeClient.key,
       moveId: row.id,
       title: input.decisionThreadTitle ?? row.name,
-      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? 'CIO',
-      intelligenceSessionId: input.originatingIntelligenceSessionId ?? undefined,
+      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? "CIO",
+      intelligenceSessionId:
+        input.originatingIntelligenceSessionId ?? undefined,
       linkedBy: tenancy.userId,
       linkReason: input.originatingIntelligenceSessionId
-        ? 'Move reused from Intelligence Shape Move handoff'
-        : 'Move reused from origination submit',
+        ? "Move reused from Intelligence Shape Move handoff"
+        : "Move reused from origination submit",
     }).catch((err) => {
-      console.error('[origination-submit] decision thread link failed for existing move', {
-        programId: row.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
+      console.error(
+        "[origination-submit] decision thread link failed for existing move",
+        {
+          programId: row.id,
+          err: err instanceof Error ? err.message : String(err),
+        },
+      );
       return null;
     });
     await linkAskSessionToMove({
@@ -588,16 +671,19 @@ export async function submitOriginationBrief(
       tenantId: tenancy.clientId,
       moveId: row.id,
     }).catch((err) => {
-      console.error('[origination-submit] Intelligence ask session link failed for existing move', {
-        programId: row.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
+      console.error(
+        "[origination-submit] Intelligence ask session link failed for existing move",
+        {
+          programId: row.id,
+          err: err instanceof Error ? err.message : String(err),
+        },
+      );
     });
     return {
       engagementId: row.id,
-      approvalRequestId: (approval as { id: string } | null)?.id ?? '',
+      approvalRequestId: (approval as { id: string } | null)?.id ?? "",
       programName: row.name,
-      lifecycleState: 'submitted_for_approval',
+      lifecycleState: "submitted_for_approval",
       redirectTo: `/programs/${row.id}`,
       decisionThreadId: decisionThread?.id ?? null,
       dossierUrl: decisionThread ? `/dossier/${decisionThread.id}` : null,
@@ -609,12 +695,13 @@ export async function submitOriginationBrief(
   const parsedValueRange = parseUsdRangeFromText(input.targetOutcome);
   const valueAssumptions = input.targetOutcome
     ? {
-        source: 'origination_scaffold',
+        source: "origination_scaffold",
         captured_text: input.targetOutcome,
       }
     : null;
   const industryCode = (
-    activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
+    activeClient.industry_code?.trim() ||
+    CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
   ).toUpperCase();
   const graphNodeId = buildEngagementGraphNodeId(input.programName);
   // Charter JSONB: persists all 7 scaffold fields + classification + initiative
@@ -634,14 +721,27 @@ export async function submitOriginationBrief(
   // Discovery Intake (S2b): embed the captured P0 shape into the charter when
   // `discovery_intake_v2` is enabled for this tenant. Default-off flag → no-op,
   // so the charter written is byte-identical to today's behaviour.
-  const charterToWrite = applyDiscoveryShapeIfEnabled(
+  const discoveryFlagEnabled = isFeatureEnabled(
+    { clientKey: activeClient.key },
+    "discovery_intake_v2",
+  );
+  let charterToWrite = applyDiscoveryShapeIfEnabled(
     charter,
     input.discoveryShape,
-    isFeatureEnabled({ clientKey: activeClient.key }, 'discovery_intake_v2'),
+    discoveryFlagEnabled,
   );
+  // Discovery Intake (Tier B): also embed the derived discovery plan so the
+  // current-state assessment template is downloadable from the Move surface
+  // post-promote. Default-off flag → no-op (no plan written, route stays 404).
+  if (discoveryFlagEnabled && input.discoveryShape) {
+    charterToWrite = embedDiscoveryPlanInCharter(
+      charterToWrite,
+      planFromShape(input.discoveryShape),
+    );
+  }
 
   const { data: inserted, error: insertError } = await sb
-    .from('engagements')
+    .from("engagements")
     .insert({
       graph_node_id: graphNodeId,
       client_id: tenancy.clientId,
@@ -656,18 +756,18 @@ export async function submitOriginationBrief(
       solution: input.programName,
       sponsor_person_id: sponsor.id,
       maestro_person_id: lead.id,
-      status: 'draft',
-      lifecycle_state: 'submitted_for_approval',
+      status: "draft",
+      lifecycle_state: "submitted_for_approval",
       current_phase: 0,
       value_projected_low_usd: parsedValueRange?.low ?? null,
       value_projected_high_usd: parsedValueRange?.high ?? null,
-      value_verified_status: parsedValueRange ? 'pending' : null,
-      value_currency: 'USD',
+      value_verified_status: parsedValueRange ? "pending" : null,
+      value_currency: "USD",
       value_assumptions_jsonb: valueAssumptions,
       program_archetype: programArchetype,
-      origin_source: 'user_initiated' as OriginSource,
+      origin_source: "user_initiated" as OriginSource,
       origin_source_ref: null,
-      maestro_oversight_level: 'partial',
+      maestro_oversight_level: "partial",
       founder_approval_required: false,
       data_residency_region: null,
       retention_policy_years: 7,
@@ -680,13 +780,13 @@ export async function submitOriginationBrief(
       function_pack_confidence:
         functionPackIdentity?.functionPackConfidence ?? null,
     })
-    .select('id, name')
+    .select("id, name")
     .single();
 
   if (insertError || !inserted) {
     throw new OriginationSubmitError(
-      'engagement_insert_failed',
-      insertError?.message ?? 'Unknown engagement insert failure',
+      "engagement_insert_failed",
+      insertError?.message ?? "Unknown engagement insert failure",
       500,
     );
   }
@@ -711,14 +811,14 @@ export async function submitOriginationBrief(
     };
     if (promotionApproval.required) {
       briefSnapshot.intelligence_promotion_gate = {
-        source: 'intelligence_thread',
+        source: "intelligence_thread",
         source_thread_id: input.originatingIntelligenceSessionId,
         selected_pattern_key: input.matchedPatternId,
         human_promotion_accepted: input.humanPromotionAccepted === true,
         human_promotion_rationale: promotionApproval.rationale,
         evidence_refs: promotionApproval.evidenceRefs,
         decision_support_warning:
-          'Pattern matches are AI-assisted decision support; a human owner reviewed evidence before Move promotion.',
+          "Pattern matches are AI-assisted decision support; a human owner reviewed evidence before Move promotion.",
         accepted_at: new Date().toISOString(),
         accepted_by_user_id: tenancy.userId,
       };
@@ -736,18 +836,20 @@ export async function submitOriginationBrief(
     await insertParticipant({
       programId,
       person: sponsor,
-      role: 'Sponsor',
-      approvalAuthority: 'sponsor',
+      role: "Sponsor",
+      approvalAuthority: "sponsor",
     });
     if (lead.id !== sponsor.id) {
       await insertParticipant({
         programId,
         person: lead,
-        role: 'Program Lead',
-        approvalAuthority: 'contributor',
+        role: "Program Lead",
+        approvalAuthority: "contributor",
       });
     }
-    await markDraftCommitted(tenancy, input.surface, programId).catch(() => undefined);
+    await markDraftCommitted(tenancy, input.surface, programId).catch(
+      () => undefined,
+    );
 
     // Persist origination chat turns (best-effort — non-fatal).
     if (input.originationTurns?.length) {
@@ -758,29 +860,33 @@ export async function submitOriginationBrief(
       clientId: activeClient.key,
       moveId: programId,
       title: input.decisionThreadTitle ?? programName,
-      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? 'CIO',
-      intelligenceSessionId: input.originatingIntelligenceSessionId ?? undefined,
+      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? "CIO",
+      intelligenceSessionId:
+        input.originatingIntelligenceSessionId ?? undefined,
       linkedBy: tenancy.userId,
       linkReason: input.originatingIntelligenceSessionId
-        ? 'Move created from Intelligence Shape Move handoff'
-        : 'Move created from origination submit',
+        ? "Move created from Intelligence Shape Move handoff"
+        : "Move created from origination submit",
     });
     await linkAskSessionToMove({
       sessionId: input.originatingIntelligenceSessionId,
       tenantId: tenancy.clientId,
       moveId: programId,
     }).catch((err) => {
-      console.error('[origination-submit] Intelligence ask session link failed', {
-        programId,
-        err: err instanceof Error ? err.message : String(err),
-      });
+      console.error(
+        "[origination-submit] Intelligence ask session link failed",
+        {
+          programId,
+          err: err instanceof Error ? err.message : String(err),
+        },
+      );
     });
 
     return {
       engagementId: programId,
       approvalRequestId: approval.id,
       programName,
-      lifecycleState: 'submitted_for_approval',
+      lifecycleState: "submitted_for_approval",
       redirectTo: `/programs/${programId}`,
       decisionThreadId: decisionThread.id,
       dossierUrl: `/dossier/${decisionThread.id}`,
