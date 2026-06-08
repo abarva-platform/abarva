@@ -1,5 +1,6 @@
-import { emptyDiscoveryShape } from '../discovery-intake';
-import { planDiscoveryExtraction } from '../extraction-planner';
+import { emptyDiscoveryShape, captureField } from '../discovery-intake';
+import { planDiscoveryExtraction, applyEvidenceToCharter } from '../extraction-planner';
+import { embedDiscoveryShapeInCharter, readDiscoveryShapeFromCharter } from '../charter-transformers';
 import type { ExtractedProgramEvidence } from '../../evidence-ingestion';
 
 function evidence(partial: Partial<ExtractedProgramEvidence> = {}): ExtractedProgramEvidence {
@@ -106,5 +107,35 @@ describe('planDiscoveryExtraction — route evidence into the shape + receipt', 
     expect(second.shape.landscape.value?.length).toBe(1 + 3);
     expect(second.shape.landscape.sources).toEqual(['upload']);
     expect(second.shape.landscape.provenance).toBe('b.xlsx');
+  });
+});
+
+describe('applyEvidenceToCharter — orchestration over the charter JSONB (S3b)', () => {
+  it('starts from empty when the charter has no shape, embeds the routed shape', () => {
+    const { charter, receipt } = applyEvidenceToCharter({ version: 1 }, evidence(), {
+      sourceFile: 'inv.xlsx',
+    });
+    expect(charter.version).toBe(1); // preserves existing charter keys
+    const shape = readDiscoveryShapeFromCharter(charter);
+    expect(shape?.landscape.value).toHaveLength(3);
+    expect(receipt.routed[0]).toMatchObject({ field: 'landscape', count: 3 });
+  });
+
+  it('reads an existing shape from the charter and appends (preserves prior fields)', () => {
+    // seed a charter with a shape that already has a confirmed problem
+    const shape = emptyDiscoveryShape();
+    shape.problem = captureField(shape.problem, 'reduce admissions', 'chat');
+    const seeded = embedDiscoveryShapeInCharter({ version: 1 }, shape);
+
+    const { charter } = applyEvidenceToCharter(seeded, evidence(), { sourceFile: 'inv.xlsx' });
+    const out = readDiscoveryShapeFromCharter(charter);
+    expect(out?.problem.value).toBe('reduce admissions'); // prior field preserved
+    expect(out?.problem.review).toBe('confirmed');
+    expect(out?.landscape.value).toHaveLength(3); // evidence routed in
+  });
+
+  it('handles a null charter by creating one', () => {
+    const { charter } = applyEvidenceToCharter(null, evidence(), { sourceFile: 'inv.xlsx' });
+    expect(readDiscoveryShapeFromCharter(charter)?.landscape.value).toHaveLength(3);
   });
 });

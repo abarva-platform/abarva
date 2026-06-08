@@ -17,10 +17,15 @@
 import type { ExtractedProgramEvidence } from '../evidence-ingestion';
 import {
   captureField,
+  emptyDiscoveryShape,
   type DiscoveryShape,
   type LandscapeFact,
   type Confidence,
 } from './discovery-intake';
+import {
+  readDiscoveryShapeFromCharter,
+  embedDiscoveryShapeInCharter,
+} from './charter-transformers';
 
 export type StageStatus = 'done' | 'partial' | 'skipped' | 'failed';
 
@@ -160,4 +165,22 @@ export function planDiscoveryExtraction(
   };
 
   return { shape: nextShape, receipt };
+}
+
+/**
+ * Orchestration (S3b): apply a parsed evidence item to a Move's charter JSONB.
+ * Reads the current DiscoveryShape from the charter (or starts empty), routes
+ * the evidence through `planDiscoveryExtraction`, and embeds the updated shape
+ * back — returning the new charter + the receipt. Pure: the route (S3c) does the
+ * load/parse/persist around this; this is the deterministic, testable middle.
+ */
+export function applyEvidenceToCharter(
+  charter: Record<string, unknown> | null,
+  evidence: ExtractedProgramEvidence,
+  opts: { sourceFile: string },
+): { charter: Record<string, unknown>; receipt: ExtractionReceipt } {
+  const currentShape = readDiscoveryShapeFromCharter(charter) ?? emptyDiscoveryShape();
+  const { shape, receipt } = planDiscoveryExtraction(evidence, currentShape, opts);
+  const updatedCharter = embedDiscoveryShapeInCharter(charter ?? {}, shape);
+  return { charter: updatedCharter, receipt };
 }
