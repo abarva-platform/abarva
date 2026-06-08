@@ -613,10 +613,12 @@ function buildVendorSpendRows(input: {
         contract.payload.ttm_spend_usd,
         contract.payload.run_rate_usd,
         contract.payload.contract_value_usd,
+        contract.payload.annual_value_usd,
         contract.payload.estimated_annual_value_usd,
         contract.payload.estimated_value_usd,
         renewal?.payload.estimated_value_usd,
         renewal?.payload.contract_value_usd,
+        renewal?.payload.annual_value_usd,
       );
       const health = healthFor(contract, renewal);
       return {
