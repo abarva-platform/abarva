@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // Intelligence v3 · Sentinel chat shell — migrated to the shared
 // <AgentDock> foundation (PR #1764).
@@ -24,22 +24,23 @@
 // The runtime (LLM call · evidence binding · brief composition) is
 // unchanged — this is a surface-widget swap only, per AGENT_DOCK.md.
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AgentDock,
   modeStorageKey,
   type AttachmentRef,
   type ChatMessage as DockMessage,
   type DockMode,
-} from '@/components/agent/AgentDock';
-import type { ChatMessage } from './types';
+} from "@/components/agent/AgentDock";
+import type { ChatMessage } from "./types";
+import type { AskSource } from "@/lib/intelligence/ask/types";
 
-const LEGACY_STORAGE_KEY = 'abarva.intelligence.chat-mode';
-const LEGACY_MIGRATED_FLAG = 'abarva.intelligence.chat-mode.migrated';
+const LEGACY_STORAGE_KEY = "abarva.intelligence.chat-mode";
+const LEGACY_MIGRATED_FLAG = "abarva.intelligence.chat-mode.migrated";
 
 // AgentDock surface · the same string is the localStorage namespace
 // AND the telemetry key sent to /api/v1/agent/attachments.
-const SURFACE = 'intelligence';
+const SURFACE = "intelligence";
 
 interface Props {
   /** Display name shown in the dock header. */
@@ -73,7 +74,7 @@ interface Props {
  * - localStorage migrates legacy 3-mode pref onto new dock keys once.
  */
 export function SentinelChat({
-  agentName = 'Sentinel Intel',
+  agentName = "Sentinel Intel",
   scopeLabel,
   opener,
   conversation,
@@ -84,10 +85,10 @@ export function SentinelChat({
   // the migrated flag prevents repeated overwrites if the user later
   // changes mode and we don't want to clobber their new preference.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     try {
       const alreadyMigrated = window.localStorage.getItem(LEGACY_MIGRATED_FLAG);
-      if (alreadyMigrated === '1') return;
+      if (alreadyMigrated === "1") return;
       const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
       const newKey = modeStorageKey(SURFACE);
       const newCurrent = window.localStorage.getItem(newKey);
@@ -97,7 +98,7 @@ export function SentinelChat({
         const mapped = mapLegacyMode(legacy);
         if (mapped) window.localStorage.setItem(newKey, mapped);
       }
-      window.localStorage.setItem(LEGACY_MIGRATED_FLAG, '1');
+      window.localStorage.setItem(LEGACY_MIGRATED_FLAG, "1");
     } catch {
       /* localStorage unavailable — non-fatal. */
     }
@@ -110,13 +111,14 @@ export function SentinelChat({
     const turns: DockMessage[] = [];
     if (opener) {
       turns.push({
-        id: 'sentinel-opener',
-        role: 'agent',
+        id: "sentinel-opener",
+        role: "agent",
         body: opener,
       });
     }
     conversation.forEach((m, i) => {
-      const refsSuffix = m.refs && m.refs.length > 0 ? `\n\nrefs: ${m.refs.join(' · ')}` : '';
+      const refsSuffix =
+        m.refs && m.refs.length > 0 ? `\n\nrefs: ${m.refs.join(" · ")}` : "";
       turns.push({
         id: `sentinel-${i}`,
         role: m.role,
@@ -139,27 +141,34 @@ export function SentinelChat({
     const body =
       attachments.length > 0
         ? text
-          ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(', ')}]`
-          : `[attached: ${attachments.map((a) => a.file_name).join(', ')}]`
+          ? `${text}\n\n[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
+          : `[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
         : text;
     setLocalTurns((prev) => [
       ...prev,
-      { id: `local-${Date.now()}`, role: 'user', body },
+      { id: `local-${Date.now()}`, role: "user", body },
     ]);
 
     const agentTurnId = `local-agent-${Date.now()}`;
     setLocalTurns((prev) => [
       ...prev,
-      { id: agentTurnId, role: 'agent', body: 'Reading the Intelligence substrate...' },
+      {
+        id: agentTurnId,
+        role: "agent",
+        body: "Reading the Intelligence substrate...",
+      },
     ]);
 
     try {
-      const clientKey = typeof surfaceContext?.clientKey === 'string' ? surfaceContext.clientKey : null;
-      const response = await fetch('/api/intelligence/ask', {
-        method: 'POST',
+      const clientKey =
+        typeof surfaceContext?.clientKey === "string"
+          ? surfaceContext.clientKey
+          : null;
+      const response = await fetch("/api/intelligence/ask", {
+        method: "POST",
         headers: {
-          Accept: 'application/x-ndjson',
-          'Content-Type': 'application/json',
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           q: text || body,
@@ -173,16 +182,16 @@ export function SentinelChat({
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
-      let answer = '';
+      let buffer = "";
+      let answer = "";
       let sawDelta = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.trim()) continue;
           const event = JSON.parse(line) as {
@@ -191,9 +200,27 @@ export function SentinelChat({
             text?: string;
             error?: string;
             telemetryEventId?: string;
+            sources?: AskSource[];
           };
           const delta = event.delta ?? event.text;
-          if (event.type === 'delta' && delta) {
+          if (
+            event.type === "sources" &&
+            Array.isArray(event.sources) &&
+            event.sources.length > 0
+          ) {
+            // Evidence basis the server already retrieved (tenant-scoped). Bind it
+            // to the in-flight agent turn so the UI can show citations and suppress
+            // the citation-gap warning. We never synthesize sources here.
+            const sources = event.sources;
+            setLocalTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === agentTurnId
+                  ? { ...turn, citations: sources }
+                  : turn,
+              ),
+            );
+          }
+          if (event.type === "delta" && delta) {
             sawDelta = true;
             answer += delta;
             setLocalTurns((prev) =>
@@ -202,8 +229,9 @@ export function SentinelChat({
               ),
             );
           }
-          if (event.type === 'error') throw new Error(event.error ?? 'Sentinel stream error');
-          if (event.type === 'done' && event.telemetryEventId) {
+          if (event.type === "error")
+            throw new Error(event.error ?? "Sentinel stream error");
+          if (event.type === "done" && event.telemetryEventId) {
             setLocalTurns((prev) =>
               prev.map((turn) =>
                 turn.id === agentTurnId
@@ -219,7 +247,10 @@ export function SentinelChat({
         setLocalTurns((prev) =>
           prev.map((turn) =>
             turn.id === agentTurnId
-              ? { ...turn, body: 'I did not find enough indexed Intelligence evidence to answer that yet.' }
+              ? {
+                  ...turn,
+                  body: "I did not find enough indexed Intelligence evidence to answer that yet.",
+                }
               : turn,
           ),
         );
@@ -230,9 +261,10 @@ export function SentinelChat({
           turn.id === agentTurnId
             ? {
                 ...turn,
-                body: error instanceof Error
-                  ? `Sentinel could not complete that request: ${error.message}`
-                  : 'Sentinel could not complete that request.',
+                body:
+                  error instanceof Error
+                    ? `Sentinel could not complete that request: ${error.message}`
+                    : "Sentinel could not complete that request.",
               }
             : turn,
         ),
@@ -245,22 +277,21 @@ export function SentinelChat({
   // Without a workspace, the dock has nothing to dock against — render
   // it alone in side-rail mode (back-compat for any caller still on
   // the old API). New code should always pass workspace.
-  const safeWorkspace =
-    workspace ?? (
-      <div
-        style={{
-          padding: 32,
-          color: '#5b6c8a',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 13,
-        }}
-        aria-hidden="true"
-      />
-    );
+  const safeWorkspace = workspace ?? (
+    <div
+      style={{
+        padding: 32,
+        color: "#5b6c8a",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 13,
+      }}
+      aria-hidden="true"
+    />
+  );
 
   return (
     <AgentDock
-      agent={{ initials: 'SI', name: agentName, role }}
+      agent={{ initials: "SI", name: agentName, role }}
       surface={SURFACE}
       defaultMode="side-rail"
       defaultLeftPercent={30}
@@ -277,12 +308,12 @@ export function SentinelChat({
 
 function mapLegacyMode(value: string): DockMode | null {
   switch (value) {
-    case 'side-rail':
-      return 'side-rail';
-    case 'dock-expanded':
-      return 'pin-bottom';
-    case 'dock-collapsed':
-      return 'collapsed';
+    case "side-rail":
+      return "side-rail";
+    case "dock-expanded":
+      return "pin-bottom";
+    case "dock-collapsed":
+      return "collapsed";
     default:
       return null;
   }
