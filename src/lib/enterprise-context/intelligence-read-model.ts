@@ -578,6 +578,11 @@ async function countEnterpriseContextRows(
       tenantKey,
     );
   }
+
+  if ((counts.records ?? 0) > 0 && (counts.evidence ?? 0) === 0) {
+    counts.evidence = await countRows("enterprise_context_chunks", tenantKey);
+  }
+
   return counts as EnterpriseContextOverview["counts"];
 }
 
