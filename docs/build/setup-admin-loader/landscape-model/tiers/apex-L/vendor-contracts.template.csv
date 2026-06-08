@@ -1,0 +1,20 @@
+vendor,product,contract_type,annual_spend_usd,renewal_date,support_tier,owner,notes,source
+SAP,S/4HANA (finance + supply chain),MSA + subscription,illustrative,illustrative,Premium / MaxAttention,Nathan Kohl (VP IT Proc),Largest vendor by risk; canonical ECC 6.0 EoS 2027 with 8400 customizations,canonical: vendors.ts ($42M ECC) + technology_inventory.ts
+Blue Yonder (JDA),Luminate Merchandising & Planning,subscription,illustrative,illustrative,Standard,Nathan Kohl (VP IT Proc),Merchandising/planning at L-tier,illustrative
+Manhattan Associates,Active Warehouse Management,subscription,illustrative,2025,Standard,Nathan Kohl (VP IT Proc),Best-implemented system; SAP integration is the constraint,canonical: vendors.ts ($14M Manhattan WMS)
+IBM,Sterling OMS + mainframe,extended support,illustrative,illustrative,Extended (EoL),Nathan Kohl (VP IT Proc),Sterling EoL already extended; replacement urgent,canonical: vendors.ts ($6M IBM Sterling EoL)
+Salesforce,Commerce + Sales/Service + Einstein + Tableau,MSA + subscription,illustrative,illustrative,Premier,Nathan Kohl (VP IT Proc),Einstein purchased not activated; $248M idle value,canonical: vendors.ts ($34M Salesforce)
+Oracle,Retail RMS (legacy),license + support,illustrative,illustrative,Standard,Nathan Kohl (VP IT Proc),Legacy; tied to SAP migration,canonical: vendors.ts ($8M Oracle RMS)
+o9 Solutions,o9 demand planning platform,subscription,illustrative,2027,Standard,Nathan Kohl (VP IT Proc),40% implemented,canonical: technology_inventory.ts
+Workday,Workday HCM,subscription,illustrative,illustrative,Standard,Nathan Kohl (VP IT Proc),HR SaaS at L-tier,illustrative
+Adobe,Experience Cloud,enterprise term license,illustrative,illustrative,Standard,Nathan Kohl (VP IT Proc),Marketing/content,illustrative
+Twilio Segment,Segment CDP,subscription,illustrative,2026,Standard,Nathan Kohl (VP IT Proc),CDP fragmented; identity resolution needed,canonical: technology_inventory.ts
+Amazon Web Services,Cloud (EDP / committed spend),enterprise discount program,illustrative,illustrative,Enterprise,Raj Patel (VP Infra),Multi-cloud at L-tier,illustrative
+Microsoft Azure,Cloud + Power BI,enterprise agreement,illustrative,illustrative,Enterprise,Raj Patel (VP Infra),Multi-cloud at L-tier,illustrative
+Google Cloud,Cloud (committed use),committed-use discount,illustrative,illustrative,Enterprise,Raj Patel (VP Infra),Canonical primary cloud,canonical: technology.ts (GCP primary)
+Teradata,Vantage EDW,license + support,illustrative,illustrative,Standard,Nathan Kohl (VP IT Proc),Enterprise data warehouse,illustrative
+Databricks,Databricks platform,subscription,illustrative,2027,Standard,Nathan Kohl (VP IT Proc),Underutilized; 3 models in prod,canonical: technology_inventory.ts
+Snowflake,Cloud data warehouse,subscription,illustrative,2027,Standard,Nathan Kohl (VP IT Proc),40% migrated,canonical: technology_inventory.ts
+ServiceNow,ITSM + CMDB,subscription,illustrative,illustrative,Standard,Carlos Rivera (CIO),Discovery source of record for the estate,illustrative
+NCR,Counterpoint POS + hardware,license + maintenance,illustrative,2026,Standard,Brandon Hayes (Acting VP Store Tech),POS across stores,canonical: technology_inventory.ts
+Shadow IT (aggregate),847 unmanaged SaaS subscriptions,untracked,illustrative,untracked,none,Nathan Kohl (VP IT Proc),$38M untracked; 23 duplicate tools; governance gap,canonical: vendors.ts

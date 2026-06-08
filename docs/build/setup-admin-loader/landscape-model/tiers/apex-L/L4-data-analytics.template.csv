@@ -1,0 +1,19 @@
+asset_name,class,engine,host_ref,owner,refresh,data_domains,criticality,source
+Enterprise Data Warehouse,warehouse,Teradata Vantage,dc-columbus,James Wright (VP Data Eng),batch_nightly,"Finance, Sales, Inventory",Tier 1,illustrative (Teradata EDW per 00-MODEL.md Apex row)
+Snowflake Cloud DW,warehouse,Snowflake,aws-prod-data,James Wright (VP Data Eng),near_realtime,"Finance, Operational",Tier 1,canonical: technology_inventory.ts (Snowflake 40% migrated)
+Hadoop Data Lake,lake,Cloudera CDP / HDFS,dc-dallas,James Wright (VP Data Eng),streaming,"Clickstream, Logs, IoT",Tier 2,illustrative (Hadoop lake per 00-MODEL.md Apex row)
+Databricks Lakehouse,lakehouse,Databricks / Delta Lake,azure-prod-data,Lynne Stratham (CDO),streaming,"Customer, ML features",Tier 2,canonical: technology_inventory.ts (Databricks)
+Customer event stream,stream,Apache Kafka,gcp-prod-data,James Wright (VP Data Eng),realtime,"Clickstream, Orders",Tier 1,illustrative (Kafka real-time per 00-MODEL.md Apex row)
+Store transactions OLTP,oltp,Microsoft SQL Server,dc-columbus,Carlos Rivera (CIO),realtime,"POS, Payments",Tier 0,canonical gap: store txn data still on-prem SQL Server (technology_inventory.ts)
+Merchandising mart,mart,Snowflake,aws-prod-data,Angela Foster (CMerchO),batch_daily,"Assortment, Pricing",Tier 2,illustrative (hundreds of marts at L-tier)
+Supply chain mart,mart,Teradata Vantage,dc-columbus,Michael Tanaka (CSCO),batch_daily,"Inventory, Logistics",Tier 2,illustrative
+Loyalty / CRM mart,mart,Snowflake,aws-prod-data,Jennifer Park (CMO),batch_hourly,"Customer, Loyalty",Tier 2,illustrative
+Finance OLAP cube,cube,Microsoft SSAS,dc-columbus,Margaret Chen (CFO),batch_nightly,"GL, P&L",Tier 2,illustrative
+Tableau BI,bi,Tableau Server,gcp-prod-bi,Lynne Stratham (CDO),on_query,"Cross-domain",Tier 2,canonical: technology.ts (Tableau)
+Power BI,bi,Microsoft Power BI,azure-prod-bi,Lynne Stratham (CDO),on_query,"Cross-domain",Tier 2,illustrative (Power BI per 00-MODEL.md Apex row)
+MicroStrategy,bi,MicroStrategy,dc-columbus,Lynne Stratham (CDO),batch_daily,"Merchandising, Finance",Tier 3,illustrative
+Cognos (legacy),bi,IBM Cognos,dc-columbus,Lynne Stratham (CDO),batch_daily,"Finance (legacy)",Tier 3,illustrative (legacy Cognos slated retire)
+SSRS (legacy),bi,SQL Server Reporting Services,dc-columbus,Carlos Rivera (CIO),batch_daily,"Store ops (legacy)",Tier 3,illustrative
+Informatica ETL,etl,Informatica PowerCenter,dc-columbus,James Wright (VP Data Eng),batch_nightly,"Cross-domain ingest",Tier 2,illustrative
+dbt transforms,etl,dbt Cloud,aws-prod-data,James Wright (VP Data Eng),batch_hourly,"Snowflake models",Tier 2,illustrative
+Demand forecasting model,ml,Databricks MLflow,azure-prod-data,Michael Tanaka (CSCO),batch_daily,"Demand, Inventory",Tier 2,"canonical: technology_inventory.ts (3 models in prod, churn validated not deployed)"
