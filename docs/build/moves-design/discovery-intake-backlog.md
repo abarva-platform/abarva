@@ -26,3 +26,33 @@
 **Deploy checkpoints:** after S5 (engine complete, no UI), and after S8 (full intake). Not per-slice.
 
 **Risk hotspots & de-risk:** extraction hallucination → review-gating + provenance + adversarial verify · left/right drift → single server source of truth · backward-compat → flag + null-safe fields · tenancy → reuse scoping + RLS test · broken continuity → dedicated handoff test.
+
+---
+
+## Final status — 2026-06-08 (this session)
+
+**15 PRs merged to `main`, all flag-gated (`discovery_intake_v2`, default off), zero migrations, ~46 unit/render tests.**
+
+| Item | PR | Status |
+|---|---|---|
+| S1 contract | #3290 | ✅ |
+| S2a transformers + flag | #3291 | ✅ |
+| S2b P0 shape wiring | #3292 | ✅ |
+| S2c P1 plan wiring (both adapters) | #3294 | ✅ |
+| S3a extraction planner + receipt | #3295 | ✅ |
+| S3b applyEvidenceToCharter | #3297 | ✅ |
+| S3c upload-route charter-update seam | #3299 | ✅ |
+| adaptive discovery scope (use-case breadth) | #3301 | ✅ |
+| S4a context-prefill mapper | #3302 | ✅ |
+| S6a DiscoveryCapturePanel | #3303 | ✅ |
+| S6b panel wired into /programs/new | #3304 | ✅ |
+| S8a assessment-template spec | #3305 | ✅ |
+| S8b template → XLSX render | #3306 | ✅ |
+| S8c template download route | #3307 | ✅ |
+| S7 DiscoveryReceiptCard | #3308 | ✅ |
+
+**End-to-end paths live (behind the flag):** capture (P0 shape / P1 plan persisted) · upload→parse→extract→route-to-fields-with-provenance→persist→receipt · use-case-scoped breadth · context-prefill mapper · template generate→XLSX→download.
+
+**Remaining (environment-gated, not skipped):**
+- **Mount `DiscoveryReceiptCard` into `StewardChat`** + **browser-verify the wired UI** with screenshots — needs a dev server with real Clerk creds (per AGENTS.md).
+- **S4b** — broker adapter (`EnterpriseAgentContextBundle` → `ContextFact[]`); the S4a mapper consumes it. Needs the bundle-shape grounded, not invented.
