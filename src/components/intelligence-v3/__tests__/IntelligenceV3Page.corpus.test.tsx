@@ -171,6 +171,7 @@ describe('IntelligenceV3Page tenant corpus rendering', () => {
     expect((await screen.findAllByText(/Kyriba/i)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$1.8M/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/No tenant-specific vendor spend is loaded yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$0\.0M/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Demo content shown/i)).not.toBeInTheDocument();
     expect(document.body.textContent ?? '').not.toMatch(forbiddenHealthcareTerms);
   });
