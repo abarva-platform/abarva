@@ -1,0 +1,13 @@
+attribute,value,unit,notes
+brand,Meridian Health System,,canonical profile: src/data/meridian.ts
+industry,healthcare,,provider + payer (IDN with a health plan)
+sub_vertical,integrated_delivery_network,,also operates a Medicare Advantage plan
+headquarters,"Charlotte, NC",,states: NC/SC/VA/TN
+annual_revenue,11200000000,USD,$11.2B (FY2023)
+operating_margin,1.8,percent,target 4.0%
+total_headcount,42000,FTE,
+operating_entities,23,count,hospitals
+staffed_beds,6800,beds,occupancy 71%; ~210k annual discharges
+covered_members,187000,members,health plan (incl. 61k Medicare Advantage, Star 3.5)
+it_budget,340000000,USD,~3.0% of revenue (infra 98 / apps 124 / security 34 / projects 84, $M)
+fiscal_year,FY26,,

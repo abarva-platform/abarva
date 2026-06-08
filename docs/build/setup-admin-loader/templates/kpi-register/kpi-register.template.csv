@@ -1,0 +1,19 @@
+function,owner_role,kpi_name,definition,current_value,unit,target_value,benchmark,period,frequency,data_source,source
+Enterprise,CEO,Operating margin,Operating income / net revenue,1.8,percent,4.0,3.5 (median IDN),FY23,monthly,Finance close,meridian.ts financials
+Enterprise,CEO,HCAHPS top-box,% top-box overall rating,71,percent,76,74 (75th pct),FY26 YTD,monthly,Press Ganey,kpi-register.csv
+Enterprise,CEO,Inpatient occupancy,Avg staffed-bed occupancy,71,percent,78,,FY23,monthly,EHR,meridian.ts hospitals
+Finance,CFO,Net days in AR,AR / avg daily net revenue,52,days,42,45 (median),FY23,monthly,EHR/PFS,meridian.ts rcm
+Finance,CFO,Denial rate,Denied $ / billed $,18.2,percent,5.0,6.0 (top quartile),FY23,monthly,Revenue Cycle,meridian.ts rcm
+Finance,CFO,Clean claim rate,Claims passing first submission,87,percent,97,95,FY23,weekly,Revenue Cycle,meridian.ts rcm
+Finance,CFO,Prior-auth overturn rate,% denials overturned on appeal,61,percent,30,,FY23,monthly,Revenue Cycle,meridian.ts rcm
+Finance,CFO,Denial write-off,Annual denied $ written off,94,USD_millions,40,,FY23,annual,Finance,meridian.ts rcm
+Operations,COO,ED median LOS,Median ED arrival-to-departure,228,minutes,180,200,FY26 YTD,daily,EHR,kpi-register.csv
+Operations,COO,OR on-time starts,% first cases on time,68,percent,85,80,FY26 YTD,weekly,Perioperative,kpi-register.csv
+Operations,COO,Contract labor %,Agency hours / total worked hours,9.5,percent,4.0,5.0,FY26 YTD,monthly,Workforce,kpi-register.csv
+Clinical,CMO,30-day readmission index,Observed/expected readmits,1.04,ratio,0.95,1.00,FY26 YTD,monthly,Quality,kpi-register.csv
+Nursing,CNO,RN turnover,Annualized RN turnover,18.5,percent,12,15,FY26 YTD,monthly,HR,kpi-register.csv
+IT,CIO,IT spend % of revenue,IT opex+capex / net revenue,3.0,percent,3.5,3-5 band,FY24,annual,Finance,"meridian.ts ($340M / $11.2B)"
+IT,CIO,Epic optimization score,Internal EHR optimization index,58,score,80,,FY24,quarterly,IT,meridian.ts technology
+IT,CISO,Security budget,Annual security spend,34,USD_millions,,,FY24,annual,Security,meridian.ts itBudgetBreakdown
+Data,CDAO,Cogito dashboards live,Live Cogito dashboards / planned,12,count,47,,FY24,quarterly,Analytics,meridian.ts technology
+Payer,Health Plan COO,Medicare Advantage Star rating,CMS Star rating,3.5,stars,4.0,4.0,FY24,annual,Plan ops,meridian.ts healthPlan
