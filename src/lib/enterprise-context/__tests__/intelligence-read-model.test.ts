@@ -388,6 +388,102 @@ describe("enterprise context Intelligence read model", () => {
     }
   });
 
+  it("counts committed chunks as evidence for Admin-promoted records when normalized evidence is empty", async () => {
+    let activeQueries = 0;
+    let maxActiveQueries = 0;
+    const queryOrder: string[] = [];
+    const countByTable: Record<string, number> = {
+      enterprise_context_sources: 1,
+      enterprise_context_records: 1,
+      enterprise_context_facts: 2,
+      enterprise_context_relationships: 0,
+      enterprise_context_evidence: 0,
+      enterprise_context_quality_issues: 0,
+      enterprise_context_stewardship_tasks: 0,
+      enterprise_context_chunk_queue: 0,
+      enterprise_context_chunks: 1542,
+    };
+    const rowsByTable: Record<string, unknown[]> = {
+      enterprise_context_records: [
+        record({
+          record_type: "cmdb_application",
+          title: "Oracle EBS",
+          payload: { criticality: "Tier 1" },
+        }),
+      ],
+      enterprise_context_sources: [
+        {
+          source_system: "admin_bulk_context_upload",
+          display_name: "Admin context upload",
+          system_of_record: true,
+          source_owner: "Context Stewardship",
+          last_synced_at: "2026-06-08T15:30:00Z",
+        },
+      ],
+      enterprise_context_quality_issues: [],
+      enterprise_context_evidence: [],
+    };
+
+    mockGetAzureReadFluentClient.mockReturnValue({
+      from: (table: string) => ({
+        select: (
+          _columns: string,
+          options?: { count?: "exact"; head?: boolean },
+        ) => ({
+          eq: () => ({
+            range: () => runQuery(table, options),
+            then: (
+              onfulfilled: (value: unknown) => unknown,
+              onrejected?: (error: unknown) => unknown,
+            ) => runQuery(table, options).then(onfulfilled, onrejected),
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof getAzureReadFluentClient>);
+
+    const overview = await getEnterpriseContextOverviewForTenant(
+      "lakeshore-holdings",
+      "Lakeshore Holdings",
+    );
+
+    expect(overview?.counts.records).toBe(1);
+    expect(overview?.counts.evidence).toBe(1542);
+    expect(overview?.sentinelFacts.join("\n")).toContain(
+      "1 records, 2 facts, 0 CI relationships, and 1542 evidence rows",
+    );
+    expect(maxActiveQueries).toBe(1);
+    expect(queryOrder).toEqual([
+      "enterprise_context_sources:count",
+      "enterprise_context_records:count",
+      "enterprise_context_facts:count",
+      "enterprise_context_relationships:count",
+      "enterprise_context_evidence:count",
+      "enterprise_context_quality_issues:count",
+      "enterprise_context_stewardship_tasks:count",
+      "enterprise_context_chunk_queue:count",
+      "enterprise_context_chunks:count",
+      "enterprise_context_records:rows",
+      "enterprise_context_sources:rows",
+      "enterprise_context_quality_issues:rows",
+      "enterprise_context_evidence:rows",
+    ]);
+
+    async function runQuery(
+      table: string,
+      options?: { count?: "exact"; head?: boolean },
+    ) {
+      activeQueries += 1;
+      maxActiveQueries = Math.max(maxActiveQueries, activeQueries);
+      const isCount = options?.head === true;
+      queryOrder.push(`${table}:${isCount ? "count" : "rows"}`);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      activeQueries -= 1;
+      if (isCount)
+        return { data: null, error: null, count: countByTable[table] ?? 0 };
+      return { data: rowsByTable[table] ?? [], error: null, count: null };
+    }
+  });
+
   it("falls back to Admin-loaded context chunks when normalized records are empty", async () => {
     const countByTable: Record<string, number> = {
       enterprise_context_sources: 0,
