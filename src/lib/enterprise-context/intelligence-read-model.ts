@@ -174,17 +174,35 @@ export function summarizeEnterpriseContextRows(input: {
     recordsByType.set(row.record_type, bucket);
   }
 
-  const applications = recordsByType.get("cmdb_applications_services") ?? [];
+  const rowsOf = (...recordTypes: string[]) =>
+    recordTypes.flatMap((recordType) => recordsByType.get(recordType) ?? []);
+
+  const orgRows = rowsOf("org_decision_rights", "org_role");
+  const businessUnitRows = rowsOf(
+    "facilities_business_units",
+    "business_unit",
+    "facility",
+  );
+  const applications = rowsOf(
+    "cmdb_applications_services",
+    "cmdb_application",
+    "configuration_item",
+  );
   const incidents = recordsByType.get("incidents") ?? [];
   const problems = recordsByType.get("problems") ?? [];
   const changes = recordsByType.get("changes") ?? [];
   const renewals = recordsByType.get("renewal_calendar") ?? [];
-  const contracts = recordsByType.get("vendors_contract_inventory") ?? [];
+  const contracts = rowsOf("vendors_contract_inventory", "contract");
   const spendRows = recordsByType.get("spend_baseline") ?? [];
   const policies = recordsByType.get("policies_procedures") ?? [];
-  const initiatives = recordsByType.get("initiative_portfolio") ?? [];
-  const dataDomains = recordsByType.get("data_domains_stewardship") ?? [];
-  const risks = recordsByType.get("risk_compliance_register") ?? [];
+  const initiatives = rowsOf("initiative_portfolio", "initiative");
+  const dataDomains = rowsOf(
+    "data_domains_stewardship",
+    "data_asset",
+    "business_capability",
+  );
+  const risks = rowsOf("risk_compliance_register", "risk");
+  const kpis = recordsByType.get("kpi_metric") ?? [];
   const slaBreaches = incidents.filter(
     (row) =>
       row.payload.breach_sla === "true" || row.payload.breach_sla === true,
@@ -322,7 +340,7 @@ export function summarizeEnterpriseContextRows(input: {
 
   const sentinelFacts = [
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
-    `Enterprise Context domains include org and decision rights (${recordTypeCounts.org_decision_rights ?? 0}), facilities/business units (${recordTypeCounts.facilities_business_units ?? 0}), systems/services (${recordTypeCounts.cmdb_applications_services ?? 0}), vendors/contracts (${recordTypeCounts.vendors_contract_inventory ?? 0}), renewals (${recordTypeCounts.renewal_calendar ?? 0}), spend baseline (${recordTypeCounts.spend_baseline ?? 0}), incidents (${recordTypeCounts.incidents ?? 0}), problems (${recordTypeCounts.problems ?? 0}), changes (${recordTypeCounts.changes ?? 0}), policies/procedures (${recordTypeCounts.policies_procedures ?? 0}), initiatives (${recordTypeCounts.initiative_portfolio ?? 0}), data domains (${recordTypeCounts.data_domains_stewardship ?? 0}), and risks/compliance (${recordTypeCounts.risk_compliance_register ?? 0}).`,
+    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), systems/services (${applications.length}), vendors/contracts (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data domains/capabilities (${dataDomains.length}), and risks/compliance (${risks.length}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
     `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
