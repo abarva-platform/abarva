@@ -5,6 +5,7 @@ import {
   readDiscoveryShapeFromCharter,
   readDiscoveryPlanFromCharter,
   readDiscoveryDataFromCharter,
+  applyDiscoveryShapeIfEnabled,
 } from '../charter-transformers';
 
 describe('charter-transformers — embed/read discovery in the charter JSONB', () => {
@@ -65,5 +66,25 @@ describe('charter-transformers — embed/read discovery in the charter JSONB', (
     const back = readDiscoveryShapeFromCharter(c);
     expect(back?.problem.value).toBe('reduce avoidable admissions');
     expect(back?.problem.review).toBe('confirmed');
+  });
+});
+
+describe('applyDiscoveryShapeIfEnabled — the P0 flag gate (S2b)', () => {
+  const shape = emptyDiscoveryShape();
+
+  it('embeds when the flag is on and a shape is present', () => {
+    const out = applyDiscoveryShapeIfEnabled({ version: 1 }, shape, true);
+    expect(out.discovery_shape).toBe(shape);
+  });
+
+  it('is a no-op (same reference) when the flag is off', () => {
+    const c = { version: 1 };
+    expect(applyDiscoveryShapeIfEnabled(c, shape, false)).toBe(c);
+  });
+
+  it('is a no-op when no shape was captured, even with the flag on', () => {
+    const c = { version: 1 };
+    expect(applyDiscoveryShapeIfEnabled(c, null, true)).toBe(c);
+    expect(applyDiscoveryShapeIfEnabled(c, undefined, true)).toBe(c);
   });
 });
