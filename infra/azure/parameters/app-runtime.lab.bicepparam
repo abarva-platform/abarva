@@ -49,6 +49,14 @@ param plainRuntimeEnv = [
     value: 'azure-postgres'
   }
   {
+    name: 'DATA_PLANE_OBJECT_STORE_ACCOUNT'
+    value: 'stabarvaprivatedplab001'
+  }
+  {
+    name: 'DATA_PLANE_OBJECT_STORE_CONTAINER'
+    value: 'context-drops'
+  }
+  {
     name: 'AZURE_CONNECTIVITY_SERVICE_BUS_QUEUE_NAME'
     value: 'q-connectivity-smoke'
   }

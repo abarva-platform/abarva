@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 
+import { emitNotification } from "@/lib/admin/broker/notification-broker";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
   parseBulkContextUploadManifest,
   runBulkContextUpload,
+  type BulkContextUploadInput,
+  type BulkContextUploadResult,
 } from "@/lib/context-ingestion/bulk-context-upload";
 import { validatePilotUploadAttestation } from "@/lib/context-ingestion/upload-attestation";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
@@ -113,6 +116,51 @@ async function readZipPackage(file: File): Promise<{
   };
 }
 
+async function emitBulkUploadSuccessNotification(args: {
+  tenantKey: string;
+  userId: string;
+  mode: BulkContextUploadInput["mode"];
+  result: BulkContextUploadResult;
+}): Promise<
+  | { ok: true; eventId: string; enqueuedDeliveries: number }
+  | { ok: false; error: string }
+  | null
+> {
+  if (!args.result.ok || args.mode === "validate_only") return null;
+
+  try {
+    const notification = await emitNotification({
+      tenantKey: args.tenantKey,
+      eventType: "intelligence.context_refreshed",
+      actorUserId: args.userId,
+      targetResourceId: args.result.workflow.jobId,
+      payload: {
+        title: "Context load completed",
+        body: `${args.result.loadName} processed ${args.result.filesProcessed} files and ${args.result.rowsParsed} rows.`,
+        href: "/admin/setup",
+        segmentId: args.result.loadName,
+        segmentLabel: args.result.loadName,
+        refreshedBy: args.userId,
+        loadName: args.result.loadName,
+        mode: args.mode,
+        jobId: args.result.workflow.jobId,
+        filesProcessed: args.result.filesProcessed,
+        rowsParsed: args.result.rowsParsed,
+        chunksQueued: args.result.chunksQueued,
+        blobBucket: args.result.blobBucket,
+        workflowStatus: args.result.workflow.status,
+        persistence: args.result.persistence,
+      },
+    });
+    return { ok: true, ...notification };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function POST(request: NextRequest) {
   let tenancy;
   try {
@@ -216,7 +264,17 @@ export async function POST(request: NextRequest) {
       ),
     });
 
-    return NextResponse.json(result, {
+    const notification = await emitBulkUploadSuccessNotification({
+      tenantKey,
+      userId: tenancy.userId,
+      mode,
+      result,
+    });
+
+    return NextResponse.json({
+      ...result,
+      adminNotification: notification,
+    }, {
       status: mode === "validate_only" ? 202 : 200,
     });
   } catch (error) {
