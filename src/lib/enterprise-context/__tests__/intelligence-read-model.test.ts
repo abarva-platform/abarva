@@ -235,7 +235,7 @@ describe("enterprise context Intelligence read model", () => {
         title: "Kyriba contract",
         payload: {
           vendor_name: "Kyriba",
-          annual_spend_usd: "1800000",
+          annual_value_usd: "1800000",
           category: "Treasury SaaS",
           renewal_risk: "Medium",
         },
