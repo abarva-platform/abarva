@@ -1,0 +1,15 @@
+app_name,vendor,product,capability,deployment_model,architecture,hosting_ref,lifecycle,compliance_scope,annual_tco_usd,users,criticality_tier,business_owner,it_owner,opco,source
+SAP S/4HANA,SAP,S/4HANA,ERP-Finance,private_cloud,cots_packaged,vsphere-clu-chi-01,sustain,SOX,1850000,420,1,Daniel Whitaker (Holdco CFO),Meera Rao (Global CIO),Holdco,illustrative-sample
+Dynamics 365 F&O,Microsoft,Dynamics 365 Finance & Operations,ERP-Finance,saas,cots_packaged,azure-sub-lakeshore-prod,tolerate,SOX,640000,310,1,Northline CFO,Northline IT Director,Northline Supply Chain,illustrative-sample
+Sage Intacct,Sage,Intacct,ERP-Finance,saas,cots_packaged,vendor_hosted,tolerate,SOX,210000,90,2,Brightmark CFO,Brightmark IT Lead,Brightmark Marketing Services,illustrative-sample
+NetSuite,Oracle,NetSuite ERP,ERP-Finance,saas,cots_packaged,vendor_hosted,sustain,"SOX,PCI",380000,140,1,Forge & Field CFO,Forge & Field CIO,Forge & Field,illustrative-sample
+Kyriba,Kyriba,Treasury Management,Treasury,saas,cots_packaged,vendor_hosted,invest,SOX,520000,60,1,Daniel Whitaker (Holdco CFO),Group Treasury / Meera Rao,Holdco,illustrative-sample
+Manhattan WMS,Manhattan Associates,Warehouse Management,Logistics-WMS,on_prem,client_server,vsphere-clu-chi-02,sustain,none,470000,260,1,Northline VP Ops,Northline IT Director,Northline Supply Chain,illustrative-sample
+Oracle TMS,Oracle,Transportation Management,Logistics-TMS,private_cloud,cots_packaged,vsphere-clu-chi-02,tolerate,none,290000,130,2,Northline VP Ops,Northline IT Director,Northline Supply Chain,illustrative-sample
+Workday HCM,Workday,Human Capital Management,HR-Payroll,saas,cots_packaged,vendor_hosted,invest,SOX,610000,9800,1,Holdco CHRO,Meera Rao (Global CIO),Holdco,illustrative-sample
+ADP Workforce Now,ADP,Workforce Now,HR-Payroll,saas,cots_packaged,vendor_hosted,retire,SOX,95000,5900,2,Northline HR,Northline IT Director,Northline Supply Chain,illustrative-sample
+Salesforce Sales Cloud,Salesforce,Sales Cloud,CRM,saas,cots_packaged,vendor_hosted,sustain,none,240000,210,2,Brightmark Commercial,Brightmark IT Lead,Brightmark Marketing Services,illustrative-sample
+Shopify Plus,Shopify,Plus Commerce,DTC-Commerce,saas,cots_packaged,vendor_hosted,invest,PCI,180000,75,1,Forge & Field VP Digital,Forge & Field CIO,Forge & Field,illustrative-sample
+Coupa,Coupa,Procurement / AP,Procurement,saas,cots_packaged,vendor_hosted,sustain,SOX,170000,340,2,Holdco Procurement,Surekha (VP Innovation/Delivery),Holdco,illustrative-sample
+Concur,SAP,Concur Expense,Expense-T&E,saas,cots_packaged,vendor_hosted,sustain,SOX,85000,2100,3,Daniel Whitaker (Holdco CFO),Holdco IT,Holdco,illustrative-sample
+ServiceNow ITSM,ServiceNow,IT Service Management,IT-Service-Mgmt,saas,cots_packaged,vendor_hosted,invest,none,260000,480,2,Meera Rao (Global CIO),Holdco IT Ops,Holdco,illustrative-sample
