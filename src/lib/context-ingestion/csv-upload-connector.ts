@@ -159,6 +159,8 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   nursing_workload_acuity: "org_structure",
   ai_tooling_model_inventory: "it_landscape",
   incidents_ops_telemetry: "it_landscape",
+  infrastructure_estate: "it_landscape",
+  business_capability: "enterprise_profile",
 };
 
 export function segmentKeyForContextDimension(

@@ -35,6 +35,8 @@ export const LOADER_DIMENSION_LABELS: Record<LoaderDimension, string> = {
   risks_controls: "Risks & controls",
   financial_baseline: "Financial baseline",
   processes_operating_model: "Processes & operating model",
+  infrastructure_estate: "Infrastructure estate",
+  business_capability: "Business capability",
   unknown: "Unknown",
 };
 

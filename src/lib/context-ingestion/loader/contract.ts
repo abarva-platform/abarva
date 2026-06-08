@@ -14,13 +14,15 @@ export type LoaderDimension =
   | 'risks_controls'
   | 'financial_baseline'
   | 'processes_operating_model'
+  | 'infrastructure_estate'
+  | 'business_capability'
   | 'unknown';
 
 export const LOADER_DIMENSIONS: LoaderDimension[] = [
   'leadership_org', 'kpis', 'applications_systems', 'data_analytics_stack',
   'integrations', 'vendors_contracts', 'business_units_geographies',
   'initiatives_roadmap', 'risks_controls', 'financial_baseline',
-  'processes_operating_model',
+  'processes_operating_model', 'infrastructure_estate', 'business_capability',
 ];
 
 /** Gate 0: a preserved original in Azure Blob, hash-verified. No fact without one. */
