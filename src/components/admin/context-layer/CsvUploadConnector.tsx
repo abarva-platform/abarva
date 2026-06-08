@@ -61,6 +61,25 @@ const inputStyle = {
   fontFamily: "DM Sans, sans-serif",
 };
 
+const workflowSteps = [
+  {
+    label: "Add data",
+    detail: "Choose the file and confirm tenant authority.",
+  },
+  {
+    label: "Understand",
+    detail: "AbarVa reads the shape and checks the mapping.",
+  },
+  {
+    label: "Review",
+    detail: "Warnings and missing fields are shown before use.",
+  },
+  {
+    label: "Loaded",
+    detail: "Approved rows become cited tenant context.",
+  },
+];
+
 function splitHeaderLine(line: string): string[] {
   const headers: string[] = [];
   let current = "";
@@ -93,6 +112,7 @@ export function CsvUploadConnector({
     "csv" | "json" | "jsonl" | "yaml" | "unknown"
   >("unknown");
   const [templateId, setTemplateId] = useState("application-portfolio");
+  const [showSpecificArea, setShowSpecificArea] = useState(false);
   const [sourceRecordIdColumn, setSourceRecordIdColumn] = useState("");
   const [titleColumn, setTitleColumn] = useState("");
   const [selectedTextColumns, setSelectedTextColumns] = useState<string[]>([]);
@@ -271,39 +291,140 @@ export function CsvUploadConnector({
     >
       <div>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, margin: 0 }}>
-          Upload structured data
+          Add {tenantName}&apos;s data
         </h2>
         <p style={{ color: "#514c43", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Load a template-mapped CSV, JSON, JSONL, or YAML file into{" "}
-          {tenantName}. The upload is tenant-checked, attested, scanned,
-          validated, and written as context only after the gates pass.
+          Drop or choose a file. AbarVa will preserve it, check the tenant,
+          validate the mapping, and only write context after the gates pass.
         </p>
       </div>
 
+      <ol
+        aria-label="Upload workflow"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 8,
+          listStyle: "none",
+          margin: 0,
+          padding: 0,
+        }}
+      >
+        {workflowSteps.map((step, index) => (
+          <li
+            key={step.label}
+            style={{
+              border: "1px solid #e3decf",
+              borderRadius: 8,
+              background: index === 0 ? "#171717" : "#fbfaf7",
+              color: index === 0 ? "#fff" : "#514c43",
+              minHeight: 82,
+              padding: 10,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 900 }}>
+              {index + 1}. {step.label}
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.4, marginTop: 6 }}>
+              {step.detail}
+            </div>
+          </li>
+        ))}
+      </ol>
+
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}
+        <label
+          style={{
+            position: "relative",
+            display: "grid",
+            placeItems: "center",
+            gap: 10,
+            minHeight: 168,
+            border: "1px dashed #b8b0a2",
+            borderRadius: 12,
+            background: "#fbfaf7",
+            padding: 22,
+            textAlign: "center",
+            cursor: "pointer",
+          }}
         >
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Structured file</span>
-            <input
-              style={inputStyle}
-              type="file"
-              accept={[
-                ".csv",
-                ".json",
-                ".jsonl",
-                ".yaml",
-                ".yml",
-                "text/csv",
-                "application/json",
-                "application/x-ndjson",
-                "application/yaml",
-                "text/yaml",
-              ].join(",")}
-              onChange={onFileChange}
-            />
-          </label>
+          <span
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: 22,
+              color: "#171717",
+            }}
+          >
+            Drop files or choose one structured file
+          </span>
+          <span style={{ color: "#6b665c", lineHeight: 1.45 }}>
+            CSV, JSON, JSONL, or YAML today. Excel, PDF, Word, PowerPoint, and
+            ZIP packages use the Advanced path until parser review is enabled.
+          </span>
+          <span
+            style={{
+              border: "1px solid #171717",
+              borderRadius: 999,
+              padding: "8px 14px",
+              background: "#171717",
+              color: "#fff",
+              fontWeight: 800,
+            }}
+          >
+            Choose file
+          </span>
+          <input
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              opacity: 0,
+              pointerEvents: "none",
+            }}
+            type="file"
+            accept={[
+              ".csv",
+              ".json",
+              ".jsonl",
+              ".yaml",
+              ".yml",
+              "text/csv",
+              "application/json",
+              "application/x-ndjson",
+              "application/yaml",
+              "text/yaml",
+            ].join(",")}
+            onChange={onFileChange}
+          />
+          {file ? (
+            <span style={{ color: "#171717", fontWeight: 800 }}>
+              Selected: {file.name}
+            </span>
+          ) : null}
+        </label>
+
+        <button
+          type="button"
+          onClick={() => setShowSpecificArea((current) => !current)}
+          style={{
+            border: 0,
+            background: "transparent",
+            color: "#171717",
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 14,
+            fontWeight: 800,
+            padding: 0,
+            textAlign: "left",
+            width: "fit-content",
+          }}
+        >
+          {showSpecificArea
+            ? "Hide specific-area mapping"
+            : "Load into a specific area"}
+        </button>
+
+        {showSpecificArea ? (
           <label style={{ display: "grid", gap: 6 }}>
             <span>Template</span>
             <select
@@ -345,7 +466,7 @@ export function CsvUploadConnector({
               </optgroup>
             </select>
           </label>
-        </div>
+        ) : null}
 
         {headers.length > 0 && !rateCardTemplate && (
           <div
@@ -624,7 +745,7 @@ export function CsvUploadConnector({
                   ? "Accept attestation"
                   : rateCardTemplate
                     ? "Validate rate card"
-                    : "Load structured data"}
+                    : "Start governed load"}
           </button>
         </div>
       </form>

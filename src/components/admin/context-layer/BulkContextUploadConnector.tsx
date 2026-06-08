@@ -258,6 +258,7 @@ export function BulkContextUploadConnector({
   tenantName,
 }: BulkContextUploadConnectorProps) {
   const [manifestJson, setManifestJson] = useState(defaultManifest);
+  const [showPackageMapping, setShowPackageMapping] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [mode, setMode] = useState<
     "validate_only" | "stage_and_enqueue" | "stage_and_process"
@@ -369,6 +370,13 @@ export function BulkContextUploadConnector({
     }
   }
 
+  const submitLabel =
+    mode === "stage_and_process"
+      ? "Process package"
+      : mode === "stage_and_enqueue"
+        ? "Stage package"
+        : "Validate package";
+
   return (
     <section
       style={{
@@ -391,42 +399,23 @@ export function BulkContextUploadConnector({
             textTransform: "uppercase",
           }}
         >
-          Bulk load
+          Advanced package loader
         </p>
         <h2 style={{ margin: 0, fontSize: 22 }}>
-          Stage files to Azure Blob and process through the loader
+          Use Azure landing-zone and package mapping
         </h2>
         <p style={{ margin: "8px 0 0", color: "#5f6673", lineHeight: 1.55 }}>
-          Upload a manifest plus matching template files for {tenantName}, or
-          upload one ZIP that contains a root <code>manifest.json</code> and
-          the referenced files. Use validation first; commit mode stages each
-          file to Azure Blob and then writes tenant context through the
-          governed loader when the format can be processed immediately.
+          This is the operator path for multi-file setup packets, Azure Blob
+          staging, worker handoff, and corpus-adjacent package handling. Most
+          uploads should start in Add data; use this only when file mapping or
+          IT-controlled landing is required.
         </p>
       </div>
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
         <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontWeight: 700 }}>Manifest JSON</span>
-          <textarea
-            value={manifestJson}
-            onChange={(event) => setManifestJson(event.target.value)}
-            rows={12}
-            spellCheck={false}
-            style={{
-              ...inputStyle,
-              minHeight: 220,
-              fontFamily:
-                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
-              fontSize: 13,
-              lineHeight: 1.45,
-            }}
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 6 }}>
           <span style={{ fontWeight: 700 }}>
-            Files referenced by manifest or one ZIP package
+            Files or ZIP package
           </span>
           <input
             type="file"
@@ -441,6 +430,68 @@ export function BulkContextUploadConnector({
             template files.
           </span>
         </label>
+
+        <div
+          style={{
+            border: "1px solid #e3decf",
+            borderRadius: 8,
+            background: "#fbfaf7",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            aria-expanded={showPackageMapping}
+            onClick={() => setShowPackageMapping((current) => !current)}
+            style={{
+              width: "100%",
+              border: 0,
+              background: "transparent",
+              color: "#171717",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "12px 14px",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 14,
+              fontWeight: 800,
+              textAlign: "left",
+            }}
+          >
+            <span>Advanced package mapping</span>
+            <span aria-hidden="true">{showPackageMapping ? "Hide" : "Show"}</span>
+          </button>
+          {showPackageMapping ? (
+            <label
+              style={{
+                display: "grid",
+                gap: 6,
+                padding: "0 14px 14px",
+              }}
+            >
+              <span style={{ color: "#5f6673", fontSize: 13, lineHeight: 1.45 }}>
+                Optional operator mapping. Edit only when the package needs
+                explicit file-to-template routing.
+              </span>
+              <textarea
+                aria-label="Advanced package mapping JSON"
+                value={manifestJson}
+                onChange={(event) => setManifestJson(event.target.value)}
+                rows={12}
+                spellCheck={false}
+                style={{
+                  ...inputStyle,
+                  minHeight: 220,
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                }}
+              />
+            </label>
+          ) : null}
+        </div>
 
         <label style={{ display: "grid", gap: 6 }}>
           <span style={{ fontWeight: 700 }}>Run mode</span>
@@ -518,7 +569,7 @@ export function BulkContextUploadConnector({
             fontWeight: 800,
           }}
         >
-          {pending ? "Running bulk load..." : "Run bulk load"}
+          {pending ? "Running package..." : submitLabel}
         </button>
       </form>
 
