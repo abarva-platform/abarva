@@ -37,7 +37,9 @@ export type ContextDimension =
   | "clinical_downtime_cyber"
   | "nursing_workload_acuity"
   | "ai_tooling_model_inventory"
-  | "incidents_ops_telemetry";
+  | "incidents_ops_telemetry"
+  | "infrastructure_estate"
+  | "business_capability";
 
 export type UploadedFileFormat =
   | "csv"

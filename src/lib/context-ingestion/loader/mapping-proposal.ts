@@ -44,15 +44,35 @@ export interface MappingModel {
 const FIELD_CATALOG: Record<LoaderDimension, string[]> = {
   leadership_org: ['person.name', 'person.title', 'person.reports_to', 'person.function', 'person.email'],
   kpis: ['kpi.name', 'kpi.current_value', 'kpi.target_value', 'kpi.unit', 'kpi.owner'],
-  applications_systems: ['system.name', 'system.vendor', 'system.owner', 'system.annual_cost_usd', 'system.criticality', 'system.renewal_date'],
-  data_analytics_stack: ['stack.tool', 'stack.layer', 'stack.vendor', 'stack.owner', 'stack.maturity'],
-  integrations: ['integration.source_system', 'integration.target_system', 'integration.pattern', 'integration.owner'],
-  vendors_contracts: ['vendor.name', 'vendor.spend_usd', 'contract.renewal_date', 'vendor.performance_score', 'vendor.risk_score'],
+  // L2 applications — deep: deployment model, architecture, hosting, lifecycle, compliance.
+  applications_systems: [
+    'system.name', 'system.vendor', 'system.product', 'system.capability', 'system.owner',
+    'system.deployment_model', 'system.architecture', 'system.hosting_ref', 'system.lifecycle',
+    'system.compliance_scope', 'system.annual_cost_usd', 'system.users', 'system.criticality', 'system.renewal_date',
+  ],
+  // L4 data & analytics — distinct classes (warehouse/lake/mart/cube/bi/etl), engine, host.
+  data_analytics_stack: [
+    'stack.asset_name', 'stack.class', 'stack.engine', 'stack.vendor', 'stack.host_ref',
+    'stack.owner', 'stack.data_domains', 'stack.refresh', 'stack.maturity', 'stack.criticality',
+  ],
+  // L3 integration — pattern taxonomy + middleware + flow.
+  integrations: [
+    'integration.name', 'integration.source_system', 'integration.target_system', 'integration.pattern',
+    'integration.middleware', 'integration.direction', 'integration.frequency', 'integration.data_volume', 'integration.owner',
+  ],
+  vendors_contracts: ['vendor.name', 'vendor.product', 'vendor.spend_usd', 'contract.type', 'contract.renewal_date', 'vendor.support_tier', 'vendor.baa_status', 'vendor.risk_score'],
   business_units_geographies: ['unit.name', 'unit.geography', 'unit.headcount', 'unit.revenue_usd'],
   initiatives_roadmap: ['initiative.name', 'initiative.phase', 'initiative.sponsor', 'initiative.budget_usd', 'initiative.target_date'],
-  risks_controls: ['risk.name', 'risk.severity', 'risk.owner', 'control.name', 'control.status'],
+  risks_controls: ['risk.name', 'risk.severity', 'risk.owner', 'control.name', 'control.status', 'control.compliance_scope'],
   financial_baseline: ['line.name', 'line.amount_usd', 'line.funding_source', 'line.fiscal_year', 'line.category'],
   processes_operating_model: ['process.name', 'process.owner', 'process.function', 'process.maturity'],
+  // L5 infrastructure — the layer the model added: compute/virt/storage/network/DC/cloud.
+  infrastructure_estate: [
+    'infra.asset_name', 'infra.class', 'infra.make_model', 'infra.location', 'infra.capacity',
+    'infra.virtualization', 'infra.cloud_account', 'infra.owner',
+  ],
+  // L1 business capability — the anchor systems hang off.
+  business_capability: ['capability.name', 'capability.function', 'capability.value_stream', 'capability.owner'],
   unknown: [],
 };
 

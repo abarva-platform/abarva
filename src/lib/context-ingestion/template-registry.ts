@@ -445,6 +445,26 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     "VP IT Operations",
     "weekly",
   ],
+  [
+    "infrastructure-estate",
+    "infrastructure_estate",
+    "Infrastructure estate",
+    ["csv", "xlsx", "json"],
+    ["asset_name", "asset_class", "make_model", "location"],
+    ["virtualization", "cloud_account", "capacity", "owner"],
+    "VP Infrastructure",
+    "monthly",
+  ],
+  [
+    "business-capability-map",
+    "business_capability",
+    "Business capability map",
+    ["csv", "xlsx", "json", "markdown"],
+    ["capability_name", "business_function"],
+    ["value_stream", "owner"],
+    "Enterprise Architect",
+    "quarterly",
+  ],
 ].map(
   ([
     id,
