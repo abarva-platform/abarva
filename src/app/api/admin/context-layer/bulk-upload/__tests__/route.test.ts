@@ -6,11 +6,16 @@ import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload
 import { POST } from "../route";
 
 const mockRequireTenancy = jest.fn();
+const mockEmitNotification = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
   tenancyErrorResponse: () =>
     new Response(JSON.stringify({ error: "unauthenticated" }), { status: 401 }),
+}));
+
+jest.mock("@/lib/admin/broker/notification-broker", () => ({
+  emitNotification: (...args: unknown[]) => mockEmitNotification(...args),
 }));
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
@@ -67,10 +72,15 @@ describe("/api/admin/context-layer/bulk-upload", () => {
       clientKey: "meridian-health",
       userId: "user-meridian",
     });
+    mockEmitNotification.mockResolvedValue({
+      eventId: "event-context-refreshed-1",
+      enqueuedDeliveries: 1,
+    });
   });
 
   afterEach(() => {
     mockRequireTenancy.mockReset();
+    mockEmitNotification.mockReset();
   });
 
   it("rejects cross-tenant bulk uploads before manifest processing", async () => {
@@ -127,6 +137,7 @@ describe("/api/admin/context-layer/bulk-upload", () => {
     expect(body).toMatchObject({
       ok: true,
       mode: "validate_only",
+      adminNotification: null,
       filesProcessed: 1,
       rowsParsed: 0,
       chunksQueued: 0,
@@ -154,6 +165,7 @@ describe("/api/admin/context-layer/bulk-upload", () => {
         },
       ],
     });
+    expect(mockEmitNotification).not.toHaveBeenCalled();
   });
 
   it("stages and queues files for private worker processing", async () => {
@@ -197,6 +209,11 @@ describe("/api/admin/context-layer/bulk-upload", () => {
     expect(body).toMatchObject({
       ok: true,
       mode: "stage_and_enqueue",
+      adminNotification: {
+        ok: true,
+        eventId: "event-context-refreshed-1",
+        enqueuedDeliveries: 1,
+      },
       filesProcessed: 1,
       rowsParsed: 0,
       chunksQueued: 0,
@@ -226,6 +243,19 @@ describe("/api/admin/context-layer/bulk-upload", () => {
         },
       ],
     });
+    expect(mockEmitNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantKey: "meridian-health",
+        eventType: "intelligence.context_refreshed",
+        actorUserId: "user-meridian",
+        payload: expect.objectContaining({
+          title: "Context load completed",
+          loadName: "meridian-phase-0",
+          mode: "stage_and_enqueue",
+          filesProcessed: 1,
+        }),
+      }),
+    );
   });
 
   it("accepts a ZIP package with manifest.json and stages files for private worker processing", async () => {
@@ -272,6 +302,10 @@ describe("/api/admin/context-layer/bulk-upload", () => {
     expect(body).toMatchObject({
       ok: true,
       mode: "stage_and_enqueue",
+      adminNotification: {
+        ok: true,
+        eventId: "event-context-refreshed-1",
+      },
       filesProcessed: 1,
       persistence: {
         status: "staged_and_enqueued",
@@ -291,6 +325,60 @@ describe("/api/admin/context-layer/bulk-upload", () => {
           },
         },
       ],
+    });
+  });
+
+  it("does not fail a successful load when notification fanout fails", async () => {
+    mockEmitNotification.mockRejectedValueOnce(new Error("notification offline"));
+    const zip = new JSZip();
+    zip.file(
+      "manifest.json",
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "enterprise-profile.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+    );
+    zip.file(
+      "enterprise-profile.yaml",
+      [
+        "enterprise_profile:",
+        "  - metric: headquarters",
+        "    value: Sacramento, California",
+        "    period: FY2026",
+        "    source: enterprise-profile",
+      ].join("\n"),
+    );
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("mode", "stage_and_enqueue");
+    addUploadAttestation(formData);
+    formData.append(
+      "files",
+      new File([bufferBlobPart(buffer)], "meridian-phase-0.zip", {
+        type: "application/zip",
+      }),
+    );
+
+    const response = await POST(bulkRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      adminNotification: {
+        ok: false,
+        error: "notification offline",
+      },
+      persistence: {
+        status: "staged_and_enqueued",
+      },
     });
   });
 

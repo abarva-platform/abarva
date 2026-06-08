@@ -1,0 +1,17 @@
+[
+  {
+    "revenue_usd": 4200000000,
+    "employees": 11000,
+    "countries": 12,
+    "business_units": "Lakeshore Holdings; Northline Supply Services; Brightmark Marketing Services; Forge & Field Consumer Products; Great Lakes Pantry",
+    "debt_usd": 780000000,
+    "it_budget_usd": 142000000,
+    "headquarters": "Chicago, Illinois",
+    "benchmark_profile": "Small diversified holding-company pilot, intentionally closer to Morgan Street Holdings / HAVI-style scale than Target or Delta.",
+    "operating_model": "Lean holdco with shared finance, treasury, architecture, cyber, data governance, and procurement; operating companies retain business-system ownership.",
+    "cloud_strategy": "Hybrid: private-cloud core for WMS/ERP legacy workloads, Azure for shared data/identity/finance analytics, AWS for DTC commerce.",
+    "private_cloud_summary": "Dell PowerEdge + VMware vSphere at Chicago primary, Nutanix AHV at Northline warehouse edge, NetApp/Pure storage, Cisco Nexus and Palo Alto segmentation.",
+    "data_center_summary": "Three major hosting locations: Chicago primary, Columbus colo, Indianapolis colo; Milwaukee closet retained for Great Lakes Pantry local services.",
+    "synthetic_state": "synthetic_admin_loader_backed"
+  }
+]
