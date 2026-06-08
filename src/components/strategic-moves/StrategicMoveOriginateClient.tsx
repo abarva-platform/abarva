@@ -422,6 +422,12 @@ export function StrategicMoveOriginateClient({
             evidenceFamily: brief.fields["evidence-family"] || null,
             // Origination chat transcript → persisted to turns table
             originationTurns,
+            // Discovery Intake (Tier B): persist the captured discovery shape so
+            // it carries into the charter. Server gates it by discovery_intake_v2
+            // (applyDiscoveryShapeIfEnabled); null when the flag is off here.
+            discoveryShape: discoveryIntakeEnabled
+              ? strategicMoveBriefToDiscoveryShape(brief.fields)
+              : null,
             // Packet 22: bind Intelligence -> Move handoff into a Decision Dossier.
             originatingIntelligenceSessionId,
             decisionThreadTitle: finalName,
