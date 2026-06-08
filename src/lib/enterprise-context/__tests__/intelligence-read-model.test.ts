@@ -187,6 +187,113 @@ describe("enterprise context Intelligence read model", () => {
     );
   });
 
+  it("groups Admin-promoted record types into Enterprise Context cards", () => {
+    const records: EnterpriseContextRecordRow[] = [
+      record({
+        record_type: "enterprise_profile",
+        title: "Lakeshore profile",
+      }),
+      record({
+        record_type: "org_role",
+        title: "Chief Information Officer",
+      }),
+      record({
+        record_type: "business_unit",
+        title: "Northline Logistics",
+      }),
+      record({
+        record_type: "facility",
+        title: "Chicago primary data center",
+      }),
+      record({
+        record_type: "cmdb_application",
+        title: "Oracle EBS",
+        payload: { criticality: "Tier 1" },
+      }),
+      record({
+        record_type: "configuration_item",
+        title: "Dell VMware private cloud",
+      }),
+      record({
+        record_type: "contract",
+        title: "Kyriba contract",
+      }),
+      record({
+        record_type: "kpi_metric",
+        title: "Inventory turns",
+      }),
+      record({
+        record_type: "initiative",
+        title: "Treasury modernization",
+      }),
+      record({
+        record_type: "data_asset",
+        title: "Finance data mart",
+      }),
+      record({
+        record_type: "business_capability",
+        title: "Liquidity forecasting",
+      }),
+      record({
+        record_type: "risk",
+        title: "Payment control gap",
+      }),
+    ];
+
+    const overview = summarizeEnterpriseContextRows({
+      tenantKey: "lakeshore-holdings",
+      tenantName: "Lakeshore Holdings",
+      counts: {
+        sources: 13,
+        records: records.length,
+        facts: 2949,
+        relationships: 0,
+        evidence: 1542,
+        qualityIssues: 0,
+        stewardshipTasks: 0,
+        chunkQueue: 1542,
+      },
+      records,
+      sources: [
+        {
+          source_system: "admin_bulk_context_upload",
+          display_name: "Admin context upload",
+          system_of_record: true,
+          source_owner: "Context Stewardship",
+          last_synced_at: "2026-06-08T15:30:00Z",
+        },
+      ],
+      qualityRows: [],
+      evidenceRows: [{ evidence_usable: true }],
+    });
+
+    const platformCard = overview.cards.find(
+      (card) => card.key === "platform-and-service-reliability",
+    );
+    const contractCard = overview.cards.find(
+      (card) => card.key === "contract-renewal-exposure",
+    );
+    const initiativeCard = overview.cards.find(
+      (card) => card.key === "initiative-dependency-map",
+    );
+    const facts = overview.sentinelFacts.join("\n");
+
+    expect(platformCard?.whatWeKnow).toContain("2 systems/services loaded");
+    expect(platformCard?.whatWeKnow).toContain("1 are Tier 1");
+    expect(contractCard?.whatWeKnow).toContain("1 vendor/contracts");
+    expect(initiativeCard?.whatWeKnow).toContain(
+      "1 initiatives and 2 data-domain stewardship records",
+    );
+    expect(facts).toContain("org and decision rights (1)");
+    expect(facts).toContain("facilities/business units (2)");
+    expect(facts).toContain("systems/services (2)");
+    expect(facts).toContain("vendors/contracts (1)");
+    expect(facts).toContain("KPIs/metrics (1)");
+    expect(facts).toContain("initiatives (1)");
+    expect(facts).toContain("data domains/capabilities (2)");
+    expect(facts).toContain("risks/compliance (1)");
+  });
+
   it("loads overview tables sequentially to avoid session-mode pool bursts", async () => {
     let activeQueries = 0;
     let maxActiveQueries = 0;
