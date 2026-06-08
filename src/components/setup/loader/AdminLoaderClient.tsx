@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { COLORS, RADIUS, TYPOGRAPHY } from "@/lib/design/design-tokens";
+import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
 import type {
   MappingProposal,
   StewardFinding,
@@ -175,7 +176,7 @@ export function AdminLoaderClient({ clientId, tenantName }: AdminLoaderClientPro
       fd.set("acceptedProposals", JSON.stringify(accepted));
       // Minimal pilot attestation (operator is signed-in admin; explicit confirm gate is upstream).
       fd.set("operatorAttestationAccepted", "true");
-      fd.set("operatorAttestationVersion", "1");
+      fd.set("operatorAttestationVersion", PILOT_UPLOAD_ATTESTATION_VERSION);
       fd.set("operatorDataAuthorityConfirmed", "true");
       fd.set("operatorDataUseConfirmed", "true");
       fd.set("operatorSensitiveDataConfirmed", "true");
