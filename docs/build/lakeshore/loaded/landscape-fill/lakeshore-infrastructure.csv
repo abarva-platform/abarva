@@ -1,0 +1,19 @@
+asset_name,class,make_model,location,capacity,virtualization,cloud_account,owner,opco,source
+Holdco Azure Production,cloud_account,Microsoft Azure,East US 2,~600 cores,—,azure-lsh-holdco-prod,Holdco Cloud Platform,Holdco,lakeshore-canonical
+Chicago Primary Datacenter,datacenter,Owned facility,Chicago IL,~2.5 MW,VMware vSphere,—,Holdco Infrastructure,Holdco,lakeshore-canonical
+Holdco vSphere Cluster,virtualization,VMware vSphere 8,Chicago IL,180 vCPU,VMware vSphere,—,Holdco Infrastructure,Holdco,lakeshore-canonical
+Holdco Compute,compute,Dell PowerEdge R760,Chicago IL,24 hosts,VMware vSphere,—,Holdco Infrastructure,Holdco,lakeshore-canonical
+Holdco Storage,storage,NetApp AFF A400,Chicago IL,400 TB,—,—,Holdco Infrastructure,Holdco,lakeshore-canonical
+Holdco Core Network,network,Cisco Nexus 9000,Chicago IL,—,—,—,Holdco Network,Holdco,lakeshore-canonical
+Group Identity,identity,Microsoft Entra ID,saas,~11k users,—,azure-lsh-holdco-prod,Holdco IAM,Holdco,lakeshore-canonical
+Northline Columbus Datacenter,datacenter,Colo (Flexential),Columbus OH,~1.2 MW,VMware vSphere,—,Northline Infrastructure,Northline,lakeshore-canonical
+Northline Warehouse Edge,compute,Nutanix Hyperconverged,Distributed DCs,12 sites,Nutanix AHV,—,Northline Infrastructure,Northline,lakeshore-canonical
+Northline Storage,storage,Pure FlashArray,Columbus OH,250 TB,—,—,Northline Infrastructure,Northline,lakeshore-canonical
+Northline Azure,cloud_account,Microsoft Azure,Central US,~200 cores,—,azure-northline-prod,Northline Cloud,Northline,lakeshore-canonical
+Brightmark Azure Primary,cloud_account,Microsoft Azure,East US 2,~150 cores,—,azure-brightmark-prod,Brightmark Cloud,Brightmark,lakeshore-canonical
+Brightmark vSphere,virtualization,VMware vSphere 7,Chicago IL (shared),40 vCPU,VMware vSphere,—,Brightmark Infrastructure,Brightmark,lakeshore-canonical
+Forge & Field AWS Commerce,cloud_account,AWS,us-east-1,~300 cores,—,aws-forge-field-prod,Forge & Field Digital,Forge & Field,lakeshore-canonical
+Forge & Field PCI Segment,network,Palo Alto + segmented VPC,us-east-1,PCI-DSS scope,—,aws-forge-field-prod,Forge & Field Security,Forge & Field,lakeshore-canonical
+Forge & Field Datacenter,datacenter,Colo,Indianapolis IN,~0.4 MW,VMware vSphere,—,Forge & Field Infrastructure,Forge & Field,lakeshore-canonical
+Great Lakes Pantry Datacenter,datacenter,On-prem closet,Milwaukee WI,~0.2 MW,VMware vSphere,—,Great Lakes Pantry IT,Great Lakes Pantry,lakeshore-canonical
+Great Lakes Pantry Compute,compute,Dell PowerEdge R650,Milwaukee WI,6 hosts,VMware vSphere,—,Great Lakes Pantry IT,Great Lakes Pantry,lakeshore-canonical

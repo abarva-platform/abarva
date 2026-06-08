@@ -28,7 +28,7 @@ export type TenantStructuredSource = TenantEnterpriseSource & {
 type TenantLookupInput = string | CanonicalTenant | null | undefined;
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?|data|analytics|warehouse|lakehouse|data\s*lake|\bbi\b|business\s+intelligence|reporting|dashboards?|etl|elt|\bcube\b|data\s*marts?|tableau|power\s*bi|cognos|teradata|infrastructure|infra|data\s*center|datacenter|datacentre|virtualization|virtualisation|vmware|vsphere|hyperconverged|nutanix|storage|\bsan\b|\bnas\b|netapp|network(ing)?|compute|hosting|colo|cloud\s+account|estate)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -39,6 +39,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   it_financials: "IT financials and funding authority",
   it_landscape: "IT landscape",
   program_inventory: "Program inventory",
+  data_estate: "Data and analytics estate",
+  infrastructure: "Infrastructure estate",
 };
 
 const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
@@ -47,6 +49,8 @@ const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
   it_financials: 48,
   it_landscape: 32,
   program_inventory: 12,
+  data_estate: 40,
+  infrastructure: 40,
 };
 
 const structuredFactSession = createDefaultSession(
@@ -128,6 +132,21 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
     )
   ) {
     segments.push("program_inventory");
+  }
+
+  if (
+    /\b(data\s+stack|analytics\s+stack|data\s+and\s+analytics|data\s+platform|data\s+warehouse|warehouse|lakehouse|data\s*lake|\bbi\b|business\s+intelligence|reporting|dashboards?|olap|cube|data\s*marts?|semantic\s+layer|etl|elt|pipelines?|snowflake|databricks|teradata|netezza|power\s*bi|tableau|cognos|microstrategy|clarity|caboodle|informatica|dbt)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("data_estate");
+  }
+  if (
+    /\b(infrastructure|infra|data\s*center|datacenter|datacentre|virtualization|virtualisation|vmware|vsphere|hyper-?v|hyperconverged|nutanix|vxrail|storage|san\b|nas\b|netapp|pure\s+storage|isilon|network(ing)?|cisco|arista|sd-?wan|f5|server|servers|compute|hosting|colo|cloud\s+account|subscription|landing\s+zone|estate)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("infrastructure");
   }
 
   if (segments.length === 0 && isTenantEnterpriseQuestion(query)) {
@@ -1450,6 +1469,22 @@ function scoreChunk(
     )
   ) {
     score += 6;
+  }
+  if (
+    segmentId === "data_estate" &&
+    /\b(data|analytics|warehouse|lakehouse|bi|reporting|dashboard|etl|elt|snowflake|databricks|tableau|power\s*bi|cube|mart)\b/.test(
+      normalizedQuery,
+    )
+  ) {
+    score += 8;
+  }
+  if (
+    segmentId === "infrastructure" &&
+    /\b(infrastructure|infra|data\s*center|datacenter|virtualization|vmware|storage|network|server|compute|hosting|cloud\s+account|colo)\b/.test(
+      normalizedQuery,
+    )
+  ) {
+    score += 8;
   }
 
   if (/\b(cio|cdio|cto|cmio|cfo)\b/.test(haystack)) score += 2;
