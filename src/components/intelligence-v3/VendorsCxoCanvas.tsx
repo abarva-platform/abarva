@@ -322,22 +322,26 @@ interface CategoryTotal {
 }
 
 function computeCategoryTotals(spend: ReadonlyArray<VendorSpendRow>): CategoryTotal[] {
-  return VENDOR_CATEGORIES.map((cat) => {
+  return VENDOR_CATEGORIES.flatMap((cat) => {
     const inCat = spend.filter((v) => v.category === cat.key);
+    if (inCat.length === 0) return [];
+
     const sorted = [...inCat].sort((a, b) => b.spendUsdM - a.spendUsdM);
     const total = sorted.reduce((sum, v) => sum + v.spendUsdM, 0);
-    return {
-      key: cat.key,
-      label: cat.label,
-      shortLabel: cat.shortLabel,
-      description: cat.description,
-      accent: cat.accent,
-      totalUsdM: total,
-      vendorCount: inCat.length,
-      topVendors: sorted,
-      watchCount: inCat.filter((v) => v.health === 'watch').length,
-      riskCount: inCat.filter((v) => v.health === 'risk').length,
-    };
+    return [
+      {
+        key: cat.key,
+        label: cat.label,
+        shortLabel: cat.shortLabel,
+        description: cat.description,
+        accent: cat.accent,
+        totalUsdM: total,
+        vendorCount: inCat.length,
+        topVendors: sorted,
+        watchCount: inCat.filter((v) => v.health === 'watch').length,
+        riskCount: inCat.filter((v) => v.health === 'risk').length,
+      },
+    ];
   });
 }
 
@@ -357,7 +361,7 @@ function SpendView({ totals, totalUsdM }: { totals: CategoryTotal[]; totalUsdM: 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: SPACING.md,
         }}
       >
