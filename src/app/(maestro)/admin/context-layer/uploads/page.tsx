@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BulkContextUploadConnector } from "@/components/admin/context-layer/BulkContextUploadConnector";
+import { ContextUploadsTabs } from "@/components/admin/context-layer/ContextUploadsTabs";
 import { CorpusJsonlImportConnector } from "@/components/admin/context-layer/CorpusJsonlImportConnector";
 import { CsvUploadConnector } from "@/components/admin/context-layer/CsvUploadConnector";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -18,6 +19,117 @@ function formatDate(value: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   });
+}
+
+function SourceFilesPanel({
+  sourceFiles,
+}: {
+  sourceFiles: Awaited<ReturnType<typeof getTenantSourceFiles>>;
+}) {
+  if (sourceFiles.length === 0) {
+    return (
+      <div
+        style={{
+          background: "#fffdf8",
+          border: "1px solid #d8d2c4",
+          borderRadius: 8,
+          padding: 18,
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        No source files are loaded for this tenant yet.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table
+        style={{
+          width: "100%",
+          minWidth: 820,
+          borderCollapse: "collapse",
+          background: "#fffdf8",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        <thead>
+          <tr>
+            {[
+              "Source document",
+              "Chunks",
+              "First loaded",
+              "Sample chunk",
+              "Evidence",
+            ].map((head) => (
+              <th
+                key={head}
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #d8d2c4",
+                  textAlign: "left",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sourceFiles.map((file) => (
+            <tr key={file.source_doc}>
+              <td
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #eee7d8",
+                }}
+              >
+                {file.source_doc}
+              </td>
+              <td
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #eee7d8",
+                }}
+              >
+                {file.chunk_count.toLocaleString()}
+              </td>
+              <td
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #eee7d8",
+                }}
+              >
+                {formatDate(file.first_loaded_at)}
+              </td>
+              <td
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #eee7d8",
+                }}
+              >
+                {file.sample_chunk_id}
+              </td>
+              <td
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #eee7d8",
+                }}
+              >
+                <Link
+                  href={`/admin/context-layer/evidence-map?source_doc=${encodeURIComponent(file.source_doc)}`}
+                  style={{ color: "#171717" }}
+                >
+                  View chunks
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default async function ContextUploadsPage() {
@@ -44,9 +156,22 @@ export default async function ContextUploadsPage() {
           </p>
           <h1 style={{ fontFamily: "Georgia, serif", fontSize: 42, margin: 0 }}>
             {activeClient
-              ? `${activeClient.name} source files`
-              : "Context uploads"}
+              ? `Add ${activeClient.name} data`
+              : "Add data"}
           </h1>
+          <p
+            style={{
+              margin: "8px 0 0",
+              color: "#5f6673",
+              fontFamily: "DM Sans, sans-serif",
+              lineHeight: 1.55,
+              maxWidth: 760,
+            }}
+          >
+            Start with files. AbarVa checks what they are, preserves the
+            original source, asks for only the missing context, and records the
+            evidence after the governed gates pass.
+          </p>
         </div>
 
         {!activeClient ? (
@@ -54,118 +179,29 @@ export default async function ContextUploadsPage() {
             No active client row is available for this session.
           </p>
         ) : (
-          <>
-            <CsvUploadConnector
-              clientId={activeClient.id}
-              tenantKey={activeClient.key}
-              tenantName={activeClient.name}
-            />
-            <BulkContextUploadConnector
-              clientId={activeClient.id}
-              tenantName={activeClient.name}
-            />
-            <CorpusJsonlImportConnector
-              clientId={activeClient.id}
-              tenantName={activeClient.name}
-            />
-
-            {sourceFiles.length === 0 ? (
-              <div
-                style={{
-                  background: "#fffdf8",
-                  border: "1px solid #d8d2c4",
-                  borderRadius: 8,
-                  padding: 18,
-                  fontFamily: "DM Sans, sans-serif",
-                }}
-              >
-                No source files are loaded for this tenant yet.
+          <ContextUploadsTabs
+            sourceFileCount={sourceFiles.length}
+            addData={
+              <CsvUploadConnector
+                clientId={activeClient.id}
+                tenantKey={activeClient.key}
+                tenantName={activeClient.name}
+              />
+            }
+            loadedFiles={<SourceFilesPanel sourceFiles={sourceFiles} />}
+            advancedTools={
+              <div style={{ display: "grid", gap: 16 }}>
+                <BulkContextUploadConnector
+                  clientId={activeClient.id}
+                  tenantName={activeClient.name}
+                />
+                <CorpusJsonlImportConnector
+                  clientId={activeClient.id}
+                  tenantName={activeClient.name}
+                />
               </div>
-            ) : (
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  background: "#fffdf8",
-                  fontFamily: "DM Sans, sans-serif",
-                }}
-              >
-                <thead>
-                  <tr>
-                    {[
-                      "Source document",
-                      "Chunks",
-                      "First loaded",
-                      "Sample chunk",
-                      "Evidence",
-                    ].map((head) => (
-                      <th
-                        key={head}
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #d8d2c4",
-                          textAlign: "left",
-                        }}
-                      >
-                        {head}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sourceFiles.map((file) => (
-                    <tr key={file.source_doc}>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #eee7d8",
-                        }}
-                      >
-                        {file.source_doc}
-                      </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #eee7d8",
-                        }}
-                      >
-                        {file.chunk_count.toLocaleString()}
-                      </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #eee7d8",
-                        }}
-                      >
-                        {formatDate(file.first_loaded_at)}
-                      </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #eee7d8",
-                        }}
-                      >
-                        {file.sample_chunk_id}
-                      </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #eee7d8",
-                        }}
-                      >
-                        <Link
-                          href={`/admin/context-layer/evidence-map?source_doc=${encodeURIComponent(file.source_doc)}`}
-                          style={{ color: "#171717" }}
-                        >
-                          View chunks
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
+            }
+          />
         )}
       </section>
     </main>
