@@ -50,6 +50,8 @@ import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFoot
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { CitationGapNotice } from "./CitationGapNotice";
+import { EvidenceBasis } from "./EvidenceBasis";
+import type { AskSource } from "@/lib/intelligence/ask/types";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -178,6 +180,11 @@ export interface ChatMessage {
   at?: string;
   /** Optional telemetry event id that can receive thumbs feedback. */
   feedbackEventId?: string;
+  /** Evidence sources the answer was grounded in (client context, corpus
+   *  patterns, industry/research). Streamed from the `sources` event and
+   *  surfaced via <EvidenceBasis>; when present the citation-gap warning is
+   *  suppressed because the answer is visibly grounded. */
+  citations?: AskSource[];
 }
 
 export interface AttachmentRef {
@@ -801,6 +808,7 @@ export function AgentDock(props: AgentDockProps) {
                 ) : null}
                 <div style={BUBBLE_STYLE}>
                   {turn.role === "agent" &&
+                  (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
                     <CitationGapNotice compact />
                   ) : null}
@@ -808,6 +816,11 @@ export function AgentDock(props: AgentDockProps) {
                     ? shapeAgentResponseForSurface(surface, turn.body)
                     : turn.body}
                 </div>
+                {turn.role === "agent" &&
+                turn.citations &&
+                turn.citations.length > 0 ? (
+                  <EvidenceBasis citations={turn.citations} />
+                ) : null}
                 {turn.role === "agent" && turn.feedbackEventId ? (
                   <div style={FEEDBACK_ROW_STYLE}>
                     <SynthesisFeedbackWidget
