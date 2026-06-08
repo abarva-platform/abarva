@@ -121,6 +121,32 @@ export const DEFAULT_MATURITY_DIMENSIONS: readonly string[] = [
   'Adoption / Change Readiness',
 ];
 
+/**
+ * The narrower core for a point use case riding an EXISTING foundation — the
+ * dimensions that use case actually needs assessed. The foundation-heavy
+ * dimensions (governance, platform, operating model, people) are assumed
+ * handled by the platform that already exists, so discovery stays scoped.
+ */
+export const POINT_USE_CASE_DIMENSIONS: readonly string[] = [
+  'Data Architecture',
+  'Data Management / Quality',
+  'Analytics / AI',
+  'Adoption / Change Readiness',
+];
+
+/**
+ * What gets discovered flexes by use case. A full data & AI strategy, or a
+ * first-of-kind that BUILDS the foundation, assesses the full dimension set
+ * (broad). A point use case riding an existing foundation assesses the narrower
+ * core. Driven by the shape's engagementMode + foundationIntent.
+ */
+export function dimensionsForShape(shape: DiscoveryShape): readonly string[] {
+  const broad =
+    shape.engagementMode.value === 'full_strategy' ||
+    shape.foundationIntent.value === 'first_of_kind';
+  return broad ? DEFAULT_MATURITY_DIMENSIONS : POINT_USE_CASE_DIMENSIONS;
+}
+
 function emptyField<T>(): CapturedField<T> {
   return { value: null, sources: [], confidence: 'low', review: 'empty' };
 }
@@ -215,12 +241,13 @@ export function shapeGateReady(shape: DiscoveryShape): boolean {
 
 /**
  * Seed a DiscoveryPlan from an emitted shape: the domains in scope become the
- * rows of the assessment matrix across a default dimension set. The maestro then
+ * rows of the assessment matrix across the dimension set. Breadth flexes by use
+ * case (`dimensionsForShape`) unless an explicit set is passed. The maestro then
  * refines targets, roster, and change ambition during Charter.
  */
 export function planFromShape(
   shape: DiscoveryShape,
-  dimensions: readonly string[] = DEFAULT_MATURITY_DIMENSIONS,
+  dimensions: readonly string[] = dimensionsForShape(shape),
 ): DiscoveryPlan {
   const plan = emptyDiscoveryPlan();
   const domains = shape.dataDomains.value ?? [];
