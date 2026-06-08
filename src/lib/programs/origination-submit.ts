@@ -29,6 +29,9 @@ import {
   optionalStringArray,
   validateIntelligencePromotionApproval,
 } from '@/lib/programs/intelligence-promotion-approval';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { applyDiscoveryShapeIfEnabled } from '@/lib/programs/discovery/charter-transformers';
+import type { DiscoveryShape } from '@/lib/programs/discovery/discovery-intake';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -60,6 +63,9 @@ export interface SubmitOriginationBriefInput {
   humanPromotionAccepted?: boolean | null;
   humanPromotionRationale?: string | null;
   promotionEvidenceRefs?: string[] | null;
+  // Discovery Intake (S2b): the captured P0 discovery shape. Persisted into the
+  // charter JSONB only when the tenant has `discovery_intake_v2` enabled.
+  discoveryShape?: DiscoveryShape | null;
 }
 
 export interface SubmitOriginationBriefResult {
@@ -625,6 +631,15 @@ export async function submitOriginationBrief(
     industryCode,
   );
 
+  // Discovery Intake (S2b): embed the captured P0 shape into the charter when
+  // `discovery_intake_v2` is enabled for this tenant. Default-off flag → no-op,
+  // so the charter written is byte-identical to today's behaviour.
+  const charterToWrite = applyDiscoveryShapeIfEnabled(
+    charter,
+    input.discoveryShape,
+    isFeatureEnabled({ clientKey: activeClient.key }, 'discovery_intake_v2'),
+  );
+
   const { data: inserted, error: insertError } = await sb
     .from('engagements')
     .insert({
@@ -656,7 +671,7 @@ export async function submitOriginationBrief(
       founder_approval_required: false,
       data_residency_region: null,
       retention_policy_years: 7,
-      charter,
+      charter: charterToWrite,
       // Function-identity spine · first-class column. Dual-written with
       // `charter.functionPackKey` (above) — the column is the queryable,
       // indexable source of truth; the charter copy keeps a rollback to the

@@ -65,3 +65,17 @@ export function readDiscoveryDataFromCharter(
     plan: readDiscoveryPlanFromCharter(charter),
   };
 }
+
+/**
+ * P0 gate helper (S2b): embed the shape only when the feature flag is on AND a
+ * shape was captured. Pure — the flag decision is passed in, so the wiring stays
+ * unit-testable without a live tenant or DB. No-op (same reference) otherwise.
+ */
+export function applyDiscoveryShapeIfEnabled(
+  charter: Record<string, unknown>,
+  shape: DiscoveryShape | null | undefined,
+  flagEnabled: boolean,
+): Record<string, unknown> {
+  if (!flagEnabled || !shape) return charter;
+  return embedDiscoveryShapeInCharter(charter, shape);
+}
