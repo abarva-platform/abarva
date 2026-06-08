@@ -7,6 +7,7 @@ import {
   detectOffTenantMention,
 } from './tenant-identity-pin';
 import { buildAgentContextContractBlock } from '@/lib/agent/module-context-contract';
+import { buildHealthcareAnswerContract } from '@/lib/intelligence/synthesis/healthcareAnswerContract';
 
 export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
@@ -313,9 +314,18 @@ export async function* synthesizeStream(args: {
     sources: args.sources,
   });
 
+  // Healthcare CXO answer contract — gated on the Healthcare vertical
+  // (Meridian / PHS). Returns '' for all other tenants, so the truthiness
+  // filter below drops it and non-healthcare tenants are byte-for-byte
+  // unchanged. Reinforces (never weakens) the no-fabrication posture.
+  const healthcareAnswerContract = buildHealthcareAnswerContract(
+    args.tenantClientKey ?? args.tenantId ?? null,
+  );
+
   const contextBlocks = [
     tenantIdentityPin,
     contextContractBlock,
+    healthcareAnswerContract,
     args.factAvailabilityBlock?.trim() ?? '',
     args.coverageReportBlock?.trim() ?? '',
     args.userContextBlock?.trim() ?? '',
