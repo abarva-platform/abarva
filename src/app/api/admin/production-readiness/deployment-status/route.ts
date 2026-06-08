@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 import {
   getDeploymentStatusGeneratedAt,
   getDeploymentStatusResults,
   summarizeDeploymentStatus,
-} from '@/lib/admin/deployment-status-ingestion';
+} from "@/lib/admin/deployment-status-ingestion";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const DEPLOYMENT_STATUS_NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store, no-cache, must-revalidate',
-  Pragma: 'no-cache',
-  Expires: '0',
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
 } as const;
 
 /**
@@ -20,7 +20,7 @@ const DEPLOYMENT_STATUS_NO_STORE_HEADERS = {
  * V1 deployment status ingestion endpoint.
  *
  * - No call to any GitHub provider host.
- * - No call to any Vercel provider host.
+ * - No call to any Azure provider host.
  * - No model invocation.
  * - No auth changes.
  * - No token value is read into a variable, returned, or logged.
@@ -34,5 +34,7 @@ export async function GET() {
   const results = getDeploymentStatusResults(generatedAt);
   const signal = summarizeDeploymentStatus(results);
 
-  return NextResponse.json(signal, { headers: DEPLOYMENT_STATUS_NO_STORE_HEADERS });
+  return NextResponse.json(signal, {
+    headers: DEPLOYMENT_STATUS_NO_STORE_HEADERS,
+  });
 }

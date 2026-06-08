@@ -1,10 +1,9 @@
+#!/usr/bin/env node
+
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { config as loadEnv } from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
-import { Pinecone } from '@pinecone-database/pinecone';
 
 const cwd = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -26,189 +25,102 @@ function envHas(name) {
   return Boolean(process.env[name]?.trim());
 }
 
-function readJsonIfExists(filePath) {
-  if (!fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
-
 function checkEnvFile() {
   const envPath = path.join(cwd, '.env.local');
   addResult(
     '.env.local',
     fs.existsSync(envPath),
     fs.existsSync(envPath) ? `Readable at ${envPath}` : `Missing ${envPath}`,
-    'Create .env.local with the required service keys.',
+    'Create .env.local with Clerk and Azure/Postgres runtime names only.',
   );
 }
 
-function checkSupabaseLocal() {
+function checkRuntimeEnv() {
   const required = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
+    'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
+    'CLERK_SECRET_KEY',
+    'DATABASE_URL',
+  ];
+  const optional = [
+    'ANTHROPIC_API_KEY',
+    'AZURE_STORAGE_CONNECTION_STRING',
+    'AZURE_SEARCH_ENDPOINT',
+    'AZURE_SEARCH_ADMIN_KEY',
   ];
   const missing = required.filter((name) => !envHas(name));
   addResult(
-    'Supabase local',
+    'Azure runtime env',
     missing.length === 0,
-    missing.length === 0 ? 'Required env vars are present.' : `Missing ${missing.join(', ')}`,
-    'Populate the missing Supabase keys in .env.local.',
+    missing.length === 0
+      ? `Required env vars are present. Optional present: ${optional.filter(envHas).join(', ') || 'none'}`
+      : `Missing ${missing.join(', ')}`,
+    'Populate Clerk and Azure/Postgres secrets through .env.local or the approved Azure Key Vault/operator environment.',
   );
 }
 
-async function checkSupabaseLive() {
-  if (!envHas('NEXT_PUBLIC_SUPABASE_URL') || !envHas('SUPABASE_SERVICE_ROLE_KEY')) {
-    addResult(
-      'Supabase live',
-      false,
-      'Skipped because local Supabase env is incomplete.',
-      'Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY first.',
-    );
-    return;
-  }
-
-  try {
-    const client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
-    const { error } = await client.from('engagements').select('id', { head: true, count: 'exact' }).limit(1);
-    if (error) {
-      addResult('Supabase live', false, `Query failed: ${error.message}`, 'Verify the project URL, key, and database schema.');
-      return;
-    }
-    addResult('Supabase live', true, 'Connected and queried the engagements table.', '');
-  } catch (error) {
-    addResult(
-      'Supabase live',
-      false,
-      `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
-      'Check network access and Supabase credentials.',
-    );
-  }
-}
-
-function checkPineconeLocal() {
-  const required = ['PINECONE_API_KEY', 'PINECONE_INDEX'];
-  const missing = required.filter((name) => !envHas(name));
+function checkLegacyEnvAbsence() {
+  const forbidden = [
+    ['NEXT_PUBLIC_', 'SUPABASE_URL'].join(''),
+    ['NEXT_PUBLIC_', 'SUPABASE_ANON_KEY'].join(''),
+    ['SUPABASE_', 'SERVICE_ROLE_KEY'].join(''),
+    ['PINECONE_', 'API_KEY'].join(''),
+    ['PINECONE_', 'INDEX'].join(''),
+    ['NEO4J_', 'URI'].join(''),
+    ['NEO4J_', 'USERNAME'].join(''),
+    ['NEO4J_', 'PASSWORD'].join(''),
+    ['VERCEL_', 'TOKEN'].join(''),
+  ];
+  const present = forbidden.filter(envHas);
   addResult(
-    'Pinecone local',
-    missing.length === 0,
-    missing.length === 0 ? 'Required env vars are present.' : `Missing ${missing.join(', ')}`,
-    'Populate the missing Pinecone keys in .env.local.',
+    'Legacy runtime env',
+    present.length === 0,
+    present.length === 0 ? 'No Supabase, Pinecone, Neo4j, or Vercel runtime tokens detected.' : `Remove ${present.join(', ')}`,
+    'Remove legacy service tokens from this runtime path. Use Azure/Postgres/Search/Blob and GitHub Actions instead.',
   );
 }
 
-async function checkPineconeLive() {
-  if (!envHas('PINECONE_API_KEY') || !envHas('PINECONE_INDEX')) {
-    addResult(
-      'Pinecone live',
-      false,
-      'Skipped because local Pinecone env is incomplete.',
-      'Set PINECONE_API_KEY and PINECONE_INDEX first.',
-    );
-    return;
-  }
-
-  try {
-    const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-    const stats = await pc.index(process.env.PINECONE_INDEX).describeIndexStats();
-    addResult(
-      'Pinecone live',
-      true,
-      `Connected to index ${process.env.PINECONE_INDEX} with ${stats.totalRecordCount ?? 0} total records.`,
-      '',
-    );
-  } catch (error) {
-    addResult(
-      'Pinecone live',
-      false,
-      `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
-      'Check network access, API key permissions, and index name.',
-    );
-  }
-}
-
-function checkVercelLocal() {
-  const vercelPath = path.join(cwd, '.vercel');
-  const project = readJsonIfExists(path.join(vercelPath, 'project.json'));
-  const authPath = path.join(os.homedir(), '.vercel', 'auth.json');
-  const hasToken = envHas('VERCEL_TOKEN');
-  const previewEnv = path.join(vercelPath, '.env.production.local');
-  const hasPreviewEnv = fs.existsSync(previewEnv);
-
-  addResult(
-    'Vercel local',
-    Boolean(project),
-    project
-      ? `Linked to ${project.projectName} (${project.projectId})`
-      : 'No .vercel/project.json link found.',
-    'Run `vercel link` in this repo.',
-  );
-
-  addResult(
-    'Vercel auth',
-    true,
-    hasToken
-      ? 'VERCEL_TOKEN is available in the environment.'
-      : fs.existsSync(authPath)
-        ? `Found ${authPath}`
-        : 'No ~/.vercel/auth.json or VERCEL_TOKEN found. The Vercel CLI may still be authenticated via a stored system session.',
-    hasToken || fs.existsSync(authPath)
-      ? ''
-      : 'Run the live check to confirm whether the installed Vercel CLI can already authenticate.',
-  );
-
-  addResult(
-    'Vercel env snapshot',
-    hasPreviewEnv,
-    hasPreviewEnv ? `Found ${previewEnv}` : 'No .vercel/.env.production.local snapshot found.',
-    'Run `vercel pull --environment=production` if you want local copies of Vercel env vars.',
-  );
-}
-
-function checkVercelLive() {
-  const token = process.env.VERCEL_TOKEN;
-  const baseArgs = token ? ['whoami', '--token', token] : ['whoami'];
-  const result = spawnSync('vercel', baseArgs, {
+function checkGithubLocal() {
+  const result = spawnSync('gh', ['auth', 'status'], {
     cwd,
     encoding: 'utf8',
     timeout: 6000,
     env: process.env,
   });
+  addResult(
+    'GitHub CLI',
+    result.status === 0,
+    result.status === 0 ? 'gh auth status succeeded.' : (result.stderr || result.stdout || 'gh auth status failed.').trim(),
+    'Run `gh auth login` or clear a stale GH_TOKEN override.',
+  );
+}
 
-  if (result.error) {
-    addResult(
-      'Vercel live',
-      false,
-      `CLI failed: ${result.error.message}`,
-      'Check that the Vercel CLI is installed and the network is available.',
-    );
-    return;
-  }
+function checkAzureLocal() {
+  const result = spawnSync('az', ['account', 'show', '--query', 'name', '-o', 'tsv'], {
+    cwd,
+    encoding: 'utf8',
+    timeout: 6000,
+    env: process.env,
+  });
+  addResult(
+    'Azure CLI',
+    result.status === 0,
+    result.status === 0 ? `Authenticated to ${result.stdout.trim() || 'an Azure subscription'}.` : (result.stderr || result.stdout || 'az account show failed.').trim(),
+    'Run `az login` or refresh the operator service-principal credentials.',
+  );
+}
 
-  if (result.signal === 'SIGTERM') {
-    addResult(
-      'Vercel live',
-      false,
-      'CLI timed out waiting for authentication or network response.',
-      'Run `vercel login`, set VERCEL_TOKEN, or retry with working network access.',
-    );
-    return;
-  }
-
-  if (result.status !== 0) {
-    addResult(
-      'Vercel live',
-      false,
-      (result.stderr || result.stdout || 'Unknown Vercel CLI error').trim(),
-      'Refresh your Vercel login or provide VERCEL_TOKEN.',
-    );
-    return;
-  }
-
-  addResult('Vercel live', true, (result.stdout || 'Authenticated with Vercel CLI.').trim(), '');
+function checkProductionHttp() {
+  const result = spawnSync(
+    'curl',
+    ['-fsS', '--max-time', '15', 'https://app.abarva.ai/api/health'],
+    { cwd, encoding: 'utf8', timeout: 20000, env: process.env },
+  );
+  addResult(
+    'Azure production health',
+    result.status === 0,
+    result.status === 0 ? 'https://app.abarva.ai/api/health returned success.' : (result.stderr || result.stdout || 'curl failed.').trim(),
+    'Check Azure Container Apps ingress, custom-domain binding, and app health logs.',
+  );
 }
 
 function printResults() {
@@ -221,16 +133,15 @@ function printResults() {
   }
 }
 
-async function main() {
+function main() {
   checkEnvFile();
-  checkSupabaseLocal();
-  checkPineconeLocal();
-  checkVercelLocal();
+  checkRuntimeEnv();
+  checkLegacyEnvAbsence();
+  checkGithubLocal();
+  checkAzureLocal();
 
   if (live) {
-    await checkSupabaseLive();
-    await checkPineconeLive();
-    checkVercelLive();
+    checkProductionHttp();
   }
 
   printResults();
@@ -239,4 +150,4 @@ async function main() {
   process.exitCode = failed ? 1 : 0;
 }
 
-await main();
+main();

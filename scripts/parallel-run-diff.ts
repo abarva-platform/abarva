@@ -16,7 +16,7 @@
 //
 // Usage:
 //   npx tsx scripts/parallel-run-diff.ts \
-//     --left-base-url  https://nexus-vert-kappa.vercel.app \
+//     --left-base-url  https://app.abarva.ai \
 //     --right-base-url https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io \
 //     [--tenant apex-retail] [--tenant meridian-health] \
 //     [--invariant-token <shared-secret>] \

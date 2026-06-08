@@ -34,30 +34,32 @@ Out of scope:
 
 ## Current Verified Posture
 
-| Area | Current posture | Evidence | Boundary |
-|---|---|---|---|
-| Product data boundary | AbarVa is designed to work on enterprise context and to reject suspected PHI, PII, direct identifiers, and regulated personal records before storage or indexing. | `docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md`, `docs/security/INFOSEC-ACCELERATOR.md`, `src/lib/security/sensitive-upload-guard.ts` | This is a product and upload-control posture, not a certification. |
-| Shared control plane | The current application control plane is Vercel-hosted Next.js. It owns app routing, Clerk session handling, UI, release behavior, and orchestration. | `docs/architecture/adr/ADR-0001-control-plane-vs-data-plane.md`, `vercel.ts`, `docs/deployment/migrations.md` | Do not describe Vercel as the private client data plane. |
-| Non-Vercel runtime path | A Docker runtime path exists for Azure Container Apps and other hosts. | `Dockerfile`, `docs/deployment/DOCKER_RUNTIME_PACKAGING.md`, `docs/architecture/azure/AZLAB20-app-parallel-runtime-smoke.md` | This proves portability and lab runtime, not full production cutover. |
-| Azure/Postgres reads | Azure/Postgres read adapters exist and use direct `pg` connections from `ABARVA_AZURE_DATABASE_URL` or `DATABASE_URL`. | `src/lib/data-plane/postgresCompat.ts`, `src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts` | Several docs note parallel-run status; do not claim every app path reads Azure/Postgres. |
-| Postgres transport encryption | Runtime Postgres config uses SSL for non-local connection strings unless `sslmode=disable` is explicitly present. | `src/lib/data-plane/postgresCompat.ts`, `src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts` | The current client configuration uses `rejectUnauthorized: false`; strict CA validation remains a hardening item. |
-| Azure Blob object storage | The object storage adapter targets Azure Blob Storage through a connection string, account key, or `DefaultAzureCredential`. | `src/lib/data-plane/objectStorage.ts` | Encryption at rest is inherited from Azure Storage account configuration; the adapter does not itself configure CMK. |
-| Azure lab secret projection | The Azure lab proved Key Vault projection of `DATABASE_URL` into a Container App and direct Azure Postgres connectivity. | `docs/architecture/azure/AZLAB20-app-parallel-runtime-smoke.md` | The lab document is synthetic/no-client-data and explicitly not full cutover proof. |
-| Azure full-stack lab | The Azure lab has real services through the documented layers, including Key Vault, private Postgres, Blob Storage, Service Bus, Event Grid, Azure AI Search, Log Analytics, App Insights, and the ingestion worker. | `docs/architecture/azure/AZURE-FULL-STACK-TEST-LAYERS.md` | The same document marks multiple gates as partial and lists missing pilot gates. |
-| Pilot private data lane | Pilot private lanes should provision private storage, queues, database, Key Vault secrets, private endpoints, managed identity RBAC, and per-client evidence boundaries. | `docs/architecture/azure/PILOT-PRIVATE-DATA-LANE-RUNBOOK-2026-05-22.md` | This is a runbook for the next pilot lane, not evidence that a named client lane is live. |
+| Area                          | Current posture                                                                                                                                                                                                      | Evidence                                                                                                                                                                                  | Boundary                                                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Product data boundary         | AbarVa is designed to work on enterprise context and to reject suspected PHI, PII, direct identifiers, and regulated personal records before storage or indexing.                                                    | `docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md`, `docs/security/INFOSEC-ACCELERATOR.md`, `src/lib/security/sensitive-upload-guard.ts`                                   | This is a product and upload-control posture, not a certification.                                                   |
+| Shared control plane          | The current application control plane is Azure Container Apps-hosted Next.js. It owns app routing, Clerk session handling, UI, release behavior, and orchestration.                                                  | `docs/architecture/adr/ADR-0001-control-plane-vs-data-plane.md`, `Dockerfile`, `docs/deployment/migrations.md`, `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md` | Do not describe Vercel as the current production runtime.                                                            |
+| Azure runtime path            | A Docker runtime path exists for Azure Container Apps and is the current production path.                                                                                                                            | `Dockerfile`, `docs/deployment/DOCKER_RUNTIME_PACKAGING.md`, `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`                                                    | Per-client private lanes still need customer-specific evidence before being represented as live.                     |
+| Azure/Postgres reads          | Azure/Postgres read adapters exist and use direct `pg` connections from `ABARVA_AZURE_DATABASE_URL` or `DATABASE_URL`.                                                                                               | `src/lib/data-plane/postgresCompat.ts`, `src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts`                                                                                    | Several docs note parallel-run status; do not claim every app path reads Azure/Postgres.                             |
+| Postgres transport encryption | Runtime Postgres config uses SSL for non-local connection strings unless `sslmode=disable` is explicitly present.                                                                                                    | `src/lib/data-plane/postgresCompat.ts`, `src/lib/data-plane/read-adapters/azurePostgresReadAdapter.ts`                                                                                    | The current client configuration uses `rejectUnauthorized: false`; strict CA validation remains a hardening item.    |
+| Azure Blob object storage     | The object storage adapter targets Azure Blob Storage through a connection string, account key, or `DefaultAzureCredential`.                                                                                         | `src/lib/data-plane/objectStorage.ts`                                                                                                                                                     | Encryption at rest is inherited from Azure Storage account configuration; the adapter does not itself configure CMK. |
+| Azure lab secret projection   | The Azure lab proved Key Vault projection of `DATABASE_URL` into a Container App and direct Azure Postgres connectivity.                                                                                             | `docs/architecture/azure/AZLAB20-app-parallel-runtime-smoke.md`                                                                                                                           | The lab document is synthetic/no-client-data and explicitly not full cutover proof.                                  |
+| Azure full-stack lab          | The Azure lab has real services through the documented layers, including Key Vault, private Postgres, Blob Storage, Service Bus, Event Grid, Azure AI Search, Log Analytics, App Insights, and the ingestion worker. | `docs/architecture/azure/AZURE-FULL-STACK-TEST-LAYERS.md`                                                                                                                                 | The same document marks multiple gates as partial and lists missing pilot gates.                                     |
+| Pilot private data lane       | Pilot private lanes should provision private storage, queues, database, Key Vault secrets, private endpoints, managed identity RBAC, and per-client evidence boundaries.                                             | `docs/architecture/azure/PILOT-PRIVATE-DATA-LANE-RUNBOOK-2026-05-22.md`                                                                                                                   | This is a runbook for the next pilot lane, not evidence that a named client lane is live.                            |
 
 ## Encryption in Transit
 
 ### Shared Control Plane
 
-The repository does not implement custom TLS termination for the Vercel-hosted
-Next.js control plane. TLS for the public app is platform-inherited from the
-hosting provider. Application code should assume that transport security at
-the edge is a hosting-platform responsibility, while route authorization and
+The repository does not implement custom TLS termination for the Azure
+Container Apps-hosted Next.js control plane. TLS for the public app is
+platform-inherited from Azure managed ingress and the bound managed
+certificate. Application code should assume that transport security at the
+edge is a hosting-platform responsibility, while route authorization and
 client scoping remain application responsibilities.
 
-The repo evidence for the Vercel control plane is `vercel.ts`,
-`docs/deployment/migrations.md`, and
+The repo evidence for the Azure control plane is `Dockerfile`,
+`docs/deployment/migrations.md`,
+`docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`, and
 `docs/architecture/adr/ADR-0001-control-plane-vs-data-plane.md`.
 
 ### Data Plane
@@ -129,11 +131,11 @@ Customer key custody posture:
 
 ## Client Applicability
 
-| Client posture | Encryption statement that is safe today |
-|---|---|
-| Public demo or synthetic lab | Synthetic data only; lab resources demonstrate Key Vault projection, Azure/Postgres connectivity, private-resource checks, and partial Azure gates. |
-| Shared SaaS pilot | Control plane is Vercel-hosted; client-scoped persistence should flow through data-plane adapters; cloud-provider encryption controls are inherited; managed-SaaS BYOK is not generally available unless separately provisioned and verified. |
-| Customer private data lane | Target posture is customer-owned Azure data plane with private endpoints, customer Key Vault, scoped managed identities, and customer-controlled retention/logging; treat each lane as requiring its own evidence pack. |
+| Client posture               | Encryption statement that is safe today                                                                                                                                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public demo or synthetic lab | Synthetic data only; lab resources demonstrate Key Vault projection, Azure/Postgres connectivity, private-resource checks, and partial Azure gates.                                                                                                                        |
+| Shared SaaS pilot            | Control plane is Azure Container Apps-hosted; client-scoped persistence should flow through Azure/Postgres data-plane adapters; cloud-provider encryption controls are inherited; managed-SaaS BYOK is not generally available unless separately provisioned and verified. |
+| Customer private data lane   | Target posture is customer-owned Azure data plane with private endpoints, customer Key Vault, scoped managed identities, and customer-controlled retention/logging; treat each lane as requiring its own evidence pack.                                                    |
 
 ## Required Evidence Before Stronger Claims
 
@@ -152,19 +154,20 @@ specific client, collect:
 
 ## Open Hardening Items
 
-| Item | Why it matters | Status |
-|---|---|---|
-| Strict Postgres certificate validation decision | Encrypted transport without strict server certificate validation leaves ambiguity in customer security reviews. | Open hardening item. |
-| Managed-SaaS BYOK evidence | Buyers may ask whether AbarVa-managed SaaS supports customer-managed keys. | Planned/target-state unless separately implemented and evidenced. |
-| Per-client encryption evidence pack | Encryption posture must be provable per customer lane, not only described globally. | Required before private client launch. |
-| Negative public-path tests | Private data resources should fail from public clients by network or firewall policy, not only by auth failure. | Listed as a missing L2 gate in `docs/architecture/azure/AZURE-FULL-STACK-TEST-LAYERS.md`. |
-| Authenticated Azure product smoke | Azure runtime proof does not yet prove every authenticated client flow. | Listed as missing in `docs/architecture/azure/AZLAB20-app-parallel-runtime-smoke.md`. |
+| Item                                            | Why it matters                                                                                                  | Status                                                                                    |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Strict Postgres certificate validation decision | Encrypted transport without strict server certificate validation leaves ambiguity in customer security reviews. | Open hardening item.                                                                      |
+| Managed-SaaS BYOK evidence                      | Buyers may ask whether AbarVa-managed SaaS supports customer-managed keys.                                      | Planned/target-state unless separately implemented and evidenced.                         |
+| Per-client encryption evidence pack             | Encryption posture must be provable per customer lane, not only described globally.                             | Required before private client launch.                                                    |
+| Negative public-path tests                      | Private data resources should fail from public clients by network or firewall policy, not only by auth failure. | Listed as a missing L2 gate in `docs/architecture/azure/AZURE-FULL-STACK-TEST-LAYERS.md`. |
+| Authenticated Azure product smoke               | Azure runtime proof does not yet prove every authenticated client flow.                                         | Listed as missing in `docs/architecture/azure/AZLAB20-app-parallel-runtime-smoke.md`.     |
 
 ## References
 
 - `AGENTS.md`
 - `Dockerfile`
-- `vercel.ts`
+- `Dockerfile`
+- `docs/build/azure-container-apps-cutover-2026-06-07/FINAL_DNS_CUTOVER.md`
 - `docs/architecture/adr/ADR-0001-control-plane-vs-data-plane.md`
 - `docs/architecture/ABARVA_DATA_PROTECTION_CONTROLS_2026-05-14.md`
 - `docs/architecture/ABARVA_PRIVATE_DATA_PLANE_MODEL.md`

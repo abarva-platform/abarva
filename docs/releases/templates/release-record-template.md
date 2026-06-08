@@ -36,7 +36,7 @@ List validation performed and the result. Include commands, CI checks, smoke tes
 
 ## Rollout Plan
 
-Describe how this becomes active: merge to main, Vercel production deploy, Azure control-lane deploy, migration apply, feature flag, manual runbook, or no runtime rollout.
+Describe how this becomes active: merge to main, Azure Container Apps image build/deploy, Azure control-lane deploy, migration apply, feature flag, manual runbook, or no runtime rollout.
 
 ## Rollback Plan
 
