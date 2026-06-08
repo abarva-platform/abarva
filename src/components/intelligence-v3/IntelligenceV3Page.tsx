@@ -54,32 +54,27 @@ import {
   APEX_RETAIL_SESSIONS,
   APEX_RETAIL_STRATEGY_BULLETS,
   APEX_RETAIL_VENDOR_SPEND,
+  BY_FN_OUTCOMES,
 } from './cxo-fixtures';
 import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
 import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
 import type { IntelligenceCorpusData } from '@/lib/intelligence-v3/corpus-types';
+import type { ByFunctionData, PeerActivityData, MyStrategyData } from '@/lib/intelligence-v3/stages-display';
+import type { VendorsData, VendorRollup } from '@/lib/intelligence-v3/vendors-display';
+import { type PeerRow, type StrategyBullet, type ByFnRow } from './cxo-fixtures';
+import type { PatternRow } from './cxo-fixtures';
+import type { VendorSpendRow } from './cxo-fixtures';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
   data?: IntelligenceV3PageData;
   /** True when `data` reflects real DB substrate; false for fallback. */
   isLiveBound?: boolean;
-  /**
-   * Legacy server-loaded props (vendorsData, byFunctionData, etc.)
-   * are accepted for back-compat but ignored — PR-K2.4 CXO canvases
-   * use their own embedded Meridian fixtures until the live overlay
-   * lands in PR-K3+.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  vendorsData?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  byFunctionData?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  peerActivityData?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  myStrategyData?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initiatives?: any;
+  vendorsData?: VendorsData | null;
+  byFunctionData?: ByFunctionData | null;
+  peerActivityData?: PeerActivityData | null;
+  myStrategyData?: MyStrategyData | null;
+  initiatives?: readonly unknown[];
   intelligenceCorpusData?: IntelligenceCorpusData | null;
   /** @deprecated Use intelligenceCorpusData. Kept for older tests/callers. */
   apexRetailData?: ApexRetailIntelligenceData | null;
@@ -94,6 +89,10 @@ export function IntelligenceV3Page({
   apexRetailData = null,
   clientKey = null,
   enterpriseContextOverview = null,
+  vendorsData = null,
+  byFunctionData = null,
+  peerActivityData = null,
+  myStrategyData = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -149,6 +148,13 @@ export function IntelligenceV3Page({
     normalizedTenantName.includes('meridian health');
   const shouldUseEmptyNonCorpusFixtures =
     !isApexBound && !isFirstCapitalBound && !isMeridianClient;
+  const shouldUseLiveSubstrateForSkyline = isLiveBound && !isApexBound && !isFirstCapitalBound && !isMeridianClient;
+  const byFunctionRows = buildByFunctionRows(byFunctionData, isMeridianClient || isFirstCapitalBound);
+  const byFunctionOutcomes = isApexBound ? APEX_RETAIL_BY_FN_OUTCOMES : BY_FN_OUTCOMES;
+  const mappedPatterns = mapCorpusPatterns(intelligenceCorpusData?.patterns);
+  const mappedVendors = mapVendorsData(vendorsData);
+  const mappedPeerRows = mapPeerRows(peerActivityData);
+  const mappedStrategyBullets = mapStrategyBullets(myStrategyData);
   const aopBands = isApexBound
     ? APEX_RETAIL_AOP_DEMO
     : isFirstCapitalBound
@@ -350,27 +356,34 @@ export function IntelligenceV3Page({
                     rows={
                       isApexBound
                         ? APEX_RETAIL_BY_FN_ROWS
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                        : isFirstCapitalBound || isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? byFunctionRows
+                            : []
                     }
                     outcomes={
                       isApexBound
                         ? APEX_RETAIL_BY_FN_OUTCOMES
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                        : isFirstCapitalBound || isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? byFunctionOutcomes
+                            : []
                     }
                   />
                 )}
                 {stage === 'patterns' && (
                   <PatternsCxoCanvas
-                    patterns={
-                      isApexBound
-                        ? apexRetailData?.patterns
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                    patterns={isApexBound
+                      ? apexRetailData?.patterns
+                      : isFirstCapitalBound
+                        ? []
+                        : isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? mappedPatterns
+                            : []
                     }
                   />
                 )}
@@ -379,9 +392,11 @@ export function IntelligenceV3Page({
                     spend={
                       isApexBound
                         ? APEX_RETAIL_VENDOR_SPEND
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                        : isFirstCapitalBound || isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? mappedVendors
+                            : []
                     }
                   />
                 )}
@@ -390,16 +405,20 @@ export function IntelligenceV3Page({
                     rows={
                       isApexBound
                         ? APEX_RETAIL_PEER_ROWS
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                        : isFirstCapitalBound || isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? mappedPeerRows
+                            : []
                     }
                     lead={
                       isApexBound
                         ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
+                        : isFirstCapitalBound
                           ? `${activeTenantName} substrate not yet bound · peer cohort view will surface once initiatives are loaded.`
-                          : undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? undefined
+                            : undefined
                     }
                   />
                 )}
@@ -408,9 +427,11 @@ export function IntelligenceV3Page({
                     bullets={
                       isApexBound
                         ? APEX_RETAIL_STRATEGY_BULLETS
-                        : isFirstCapitalBound || shouldUseEmptyNonCorpusFixtures
-                          ? []
-                          : undefined
+                        : isFirstCapitalBound || isMeridianClient
+                          ? undefined
+                          : shouldUseLiveSubstrateForSkyline
+                            ? mappedStrategyBullets
+                            : []
                     }
                   />
                 )}
@@ -492,4 +513,164 @@ function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {
       ))}
     </div>
   );
+}
+
+function buildByFunctionRows(
+  byFunctionData: ByFunctionData | null,
+  forceMeridianOutcomes = false,
+): ReadonlyArray<ByFnRow> {
+  if (!byFunctionData || forceMeridianOutcomes) return [];
+
+  if (byFunctionData.functions.length === 0) return [];
+
+  return byFunctionData.functions.map((rollup) => {
+    const initiativeRefs = rollup.initiatives.map((initiative) => initiative.displayId);
+    const healthyRef = rollup.initiatives.find((initiative) => initiative.statusFlag === 'healthy')?.displayId;
+    const alignedRef = rollup.initiatives.find((initiative) => initiative.alignedCallout)?.displayId;
+    const riskRef = rollup.initiatives.find((initiative) =>
+      ['stalled', 'cost_overrun', 'duplication_risk', 'value_lag'].includes(initiative.statusFlag),
+    )?.displayId;
+
+    const fallbackRef = initiativeRefs.at(0);
+
+    return {
+      function: rollup.function,
+      cells: [
+        { state: healthyRef ? 'in-flight' : rollup.counts.healthy > 0 ? 'in-flight' : 'empty', ref: healthyRef },
+        { state: alignedRef ? 'candidate' : rollup.counts.aligned > 0 ? 'candidate' : 'empty', ref: alignedRef },
+        { state: riskRef ? 'risk' : rollup.counts.atRisk > 0 ? 'risk' : 'empty', ref: riskRef },
+        { state: fallbackRef ? 'candidate' : 'empty', ref: fallbackRef },
+      ],
+    };
+  });
+}
+
+function mapCorpusPatterns(patterns: PatternRow[] | undefined): ReadonlyArray<PatternRow> {
+  return patterns ?? [];
+}
+
+function mapVendorsData(vendorsData: VendorsData | null): ReadonlyArray<VendorSpendRow> {
+  if (!vendorsData || vendorsData.vendors.length === 0) return [];
+
+  return vendorsData.vendors
+    .map((vendor) => mapVendorRow(vendor))
+    .sort((a, b) => b.spendUsdM - a.spendUsdM || a.vendor.localeCompare(b.vendor));
+}
+
+function mapVendorRow(vendor: VendorRollup): VendorSpendRow {
+  const spendUsdM = +(vendor.totalContractValueUsd ?? 0) / 1_000_000;
+  const health = mapVendorHealth(vendor.worstFinancialHealth);
+  const spendLabel = vendor.totalContractValueUsd === null
+    ? 'Not sized'
+    : `$${spendUsdM.toFixed(1)}M`;
+  const renewsInMonths = monthsUntilDate(vendor.earliestRenewal);
+  const vendorName = vendor.vendorName;
+  const topInitiative = vendor.initiatives[0];
+  const initiativeCount = vendor.totalInitiatives;
+  const renewalCount = vendor.earliestRenewal ? `renewal ${vendor.earliestRenewal}` : 'renewal window not set';
+
+  return {
+    vendor: vendorName,
+    category: inferVendorCategory(vendorName, topInitiative?.initiativeStatusFlag),
+    subcategory: `${topInitiative?.initiativeStatusFlag ?? 'Operational'} · ${initiativeCount} initiative${initiativeCount === 1 ? '' : 's'}`,
+    spendUsdM: Number.parseFloat(spendUsdM.toFixed(2)),
+    spendLabel,
+    tier: vendor.totalInitiatives > 4 ? 'incumbent' : initiativeCount > 1 ? 'challenger' : 'emerging',
+    health,
+    renewsInMonths,
+    takeaway: `${initiativeCount} tied initiative${initiativeCount === 1 ? '' : 's'} · ${renewalCount}.`,
+  };
+}
+
+function inferVendorCategory(
+  vendorName: string,
+  statusFlag: string | null,
+): VendorSpendRow['category'] {
+  const normalizedVendorName = vendorName.toLowerCase();
+  const normalizedStatus = statusFlag?.toLowerCase() ?? '';
+
+  if (/(aws|azure|gcp|oracle|dell|hp|cisco|hpe|vmware|datacenter|storage|server|network)/.test(normalizedVendorName)) {
+    return 'hardware-cloud';
+  }
+
+  if (/(accenture|deloitte|consult|partner|services|slalom|bain|advis|si|consulting)/.test(normalizedVendorName)
+      || /(stalled|value_lag|duplication_risk|cost_overrun)/.test(normalizedStatus)) {
+    return 'services-si';
+  }
+
+  return 'software-saas';
+}
+
+function mapVendorHealth(health: VendorRollup['worstFinancialHealth']): VendorSpendRow['health'] {
+  if (health === 'at_risk' || health === 'watch') {
+    return health === 'at_risk' ? 'risk' : 'watch';
+  }
+  return 'healthy';
+}
+
+function monthsUntilDate(dateString: string | null): number | null {
+  if (!dateString) return null;
+  const renewalDate = Date.parse(dateString);
+  if (Number.isNaN(renewalDate)) return null;
+  const now = Date.now();
+  const msInMonth = 1000 * 60 * 60 * 24 * 30.4375;
+  if (renewalDate < now) return 0;
+  return Math.round((renewalDate - now) / msInMonth);
+}
+
+function mapPeerRows(peerActivityData: PeerActivityData | null): ReadonlyArray<PeerRow> {
+  if (!peerActivityData || peerActivityData.signals.length === 0) return [];
+
+  return peerActivityData.signals.map((signal) => {
+    const base = signal.peerMedian === 0 ? 0 : signal.tenantValue / signal.peerMedian * 100;
+    const adoptionPct = Number.isFinite(base) ? clamp(Math.round(base), 0, 100) : 50;
+    const ref = signal.initiativeDisplayId ? ` ${signal.initiativeDisplayId}` : '';
+
+    return {
+      cohort: `${signal.quarter} · ${signal.kpiName}${ref}`,
+      size: Math.min(24, Math.max(1, Math.round(Math.abs(signal.deltaPctVsPeer) + 1))),
+      outcome: signal.deltaPctVsPeer > 0
+        ? 'Stronger than peer'
+        : signal.deltaPctVsPeer < 0
+          ? 'Weak vs peer'
+          : 'On par with peer',
+      adoptionPct,
+      delta:
+        signal.deltaPctVsPeer > 0
+          ? `+${Math.round(signal.deltaPctVsPeer)}% vs peer`
+          : `${Math.round(signal.deltaPctVsPeer)}% vs peer`,
+    };
+  });
+}
+
+function mapStrategyBullets(strategy: MyStrategyData | null): ReadonlyArray<StrategyBullet> {
+  if (!strategy || strategy.themes.length === 0) return [];
+
+  return strategy.themes.map((theme, index) => {
+    const committed = theme.committedAnnualUsd >= 1_000_000
+      ? `${(theme.committedAnnualUsd / 1_000_000).toFixed(1)}M`
+      : '$0';
+    const riskCount = theme.atRiskCount;
+
+    return {
+      number: String(index + 1).padStart(2, '0'),
+      title: theme.goalName,
+      body: `${theme.strategicContext} ${theme.initiativeCount > 0
+        ? `The goal has ${theme.initiativeCount} initiative${theme.initiativeCount === 1 ? '' : 's'} tied to ${theme.measuredValueUsd > 0 ? 'measured' : 'estimated'} value.` : ''}`,
+      evidence:
+        `${theme.goalId} · $${committed} committed · ${riskCount > 0 ? `${riskCount} at-risk signal` : 'no major risk signal'}`,
+      betLink:
+        theme.initiatives[0]
+          ? {
+              patternId: theme.initiatives[0].initiativeId,
+              patternName: theme.initiatives[0].name,
+              useCaseName: theme.goalName,
+            }
+          : undefined,
+    };
+  });
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
