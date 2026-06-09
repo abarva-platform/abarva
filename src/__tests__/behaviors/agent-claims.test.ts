@@ -170,6 +170,22 @@ describe('detectTenantLeakage', () => {
     expect(findings).toHaveLength(0);
   });
 
+  it('does NOT false-positive on generic "apex" (Apex Retail first word)', () => {
+    const findings = detectTenantLeakage(
+      'Lakeshore is at the apex of the diversified-holdings cycle.',
+      'lakeshore-holdings',
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it('still flags the full cover name "Apex Retail"', () => {
+    const findings = detectTenantLeakage(
+      'Lakeshore should benchmark against Apex Retail.',
+      'lakeshore-holdings',
+    );
+    expect(findings.some((f) => f.offendingTenantKey === 'apex-retail')).toBe(true);
+  });
+
   it('still flags the full cover name "First Capital"', () => {
     const findings = detectTenantLeakage(
       'SkyHarbor should copy what First Capital did.',

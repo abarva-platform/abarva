@@ -131,6 +131,7 @@ export function validatePatternNamespaces(input: {
 // token — the full name + canonical key still are.
 const COMMON_NAME_WORDS = new Set([
   'first',
+  'apex', // "apex" is a common English word (peak/summit); rely on full name "Apex Retail" + key
   'prime',
   'core',
   'united',
@@ -168,8 +169,16 @@ export function detectTenantLeakage(
     for (const token of tokens) {
       const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(`\\b${escaped}\\b`, 'i');
-      if (re.test(answerText)) {
-        findings.push({ detail: `answer referenced "${token}"`, offendingTenantKey: t.key });
+      const m = re.exec(answerText);
+      if (m) {
+        // Capture a short context window so a flagged leak is reviewable
+        // (real cross-tenant reference vs. coincidental token).
+        const start = Math.max(0, m.index - 35);
+        const snippet = answerText.slice(start, m.index + token.length + 35).replace(/\s+/g, ' ').trim();
+        findings.push({
+          detail: `referenced "${token}" — …${snippet}…`,
+          offendingTenantKey: t.key,
+        });
         break;
       }
     }
