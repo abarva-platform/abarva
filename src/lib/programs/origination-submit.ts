@@ -36,6 +36,11 @@ import {
 } from "@/lib/programs/discovery/charter-transformers";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
 import type { DiscoveryShape } from "@/lib/programs/discovery/discovery-intake";
+import {
+  parsePersonLabelForOrigination,
+  parsePersonMentionsForOrigination,
+  type ParsedPersonLabel,
+} from "@/lib/programs/person-label";
 
 export interface OriginationTurn {
   role: "user" | "assistant";
@@ -112,6 +117,8 @@ interface PersonRow {
   organization: string | null;
   email: string | null;
 }
+
+const ORIGINATION_PLACEHOLDER_PERSON_MARKER = "origination_placeholder";
 
 function requiredText(value: unknown, field: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -256,6 +263,7 @@ async function resolvePersonByLabel(input: {
   label: string;
   clientName: string;
   fallbackUserId: string;
+  parsedLabel?: ParsedPersonLabel;
 }): Promise<ResolvedPerson> {
   const sb = getAzureWriteFluentClient();
   const fallbackLooksLikeUuid =
@@ -263,7 +271,10 @@ async function resolvePersonByLabel(input: {
       input.fallbackUserId,
     );
 
-  const tokens = personTokens(input.label);
+  const parsedLabel =
+    input.parsedLabel ?? parsePersonLabelForOrigination(input.label);
+  const lookupLabel = parsedLabel.lookupLabel;
+  const tokens = personTokens(lookupLabel);
   const clauses = tokens.flatMap((token) => [
     `name.ilike.%${token}%`,
     `email.ilike.%${token}%`,
@@ -292,7 +303,7 @@ async function resolvePersonByLabel(input: {
     );
   }
 
-  const labelNorm = normalizeLabel(input.label);
+  const labelNorm = normalizeLabel(lookupLabel);
   const clientNorm = normalizeLabel(input.clientName);
   const rows = ((data ?? []) as PersonRow[]).filter((row) => {
     const orgNorm = normalizeLabel(row.organization ?? "");
@@ -301,7 +312,7 @@ async function resolvePersonByLabel(input: {
 
   const exact = rows.find((row) => normalizeLabel(row.name) === labelNorm);
   const scored = rows
-    .map((row) => ({ row, score: scorePersonLabelMatch(row, input.label) }))
+    .map((row) => ({ row, score: scorePersonLabelMatch(row, lookupLabel) }))
     .sort((a, b) => b.score - a.score);
   const contains = exact ?? (scored[0]?.score > 0 ? scored[0].row : undefined);
   const currentUser = rows.find(
@@ -309,10 +320,35 @@ async function resolvePersonByLabel(input: {
   );
   const picked = contains ?? currentUser ?? rows[0];
 
+  if (!picked && parsedLabel.placeholderName) {
+    const { data: placeholder, error: placeholderError } = await sb
+      .from("persons")
+      .insert({
+        name: parsedLabel.placeholderName,
+        email: null,
+        role: parsedLabel.placeholderRole,
+        organization: input.clientName,
+        familiarity: "first_meeting",
+        personal_threads: [ORIGINATION_PLACEHOLDER_PERSON_MARKER],
+      })
+      .select("id, name, role")
+      .single();
+    if (placeholderError || !placeholder) {
+      throw new OriginationSubmitError(
+        "person_placeholder_failed",
+        placeholderError?.message ??
+          `Could not register "${parsedLabel.placeholderName}" as a pending sponsor in ${input.clientName}'s people records`,
+        500,
+      );
+    }
+    const row = placeholder as Pick<PersonRow, "id" | "name" | "role">;
+    return { id: row.id, name: row.name, role: row.role };
+  }
+
   if (!picked) {
     throw new OriginationSubmitError(
       "person_not_found",
-      `Could not resolve "${input.label}" in ${input.clientName}'s people records`,
+      `Could not resolve "${lookupLabel}" in ${input.clientName}'s people records`,
       422,
     );
   }
@@ -606,11 +642,26 @@ export async function submitOriginationBrief(
     );
   }
 
+  const sponsorMentions = parsePersonMentionsForOrigination(input.sponsor);
   const sponsor = await resolvePersonByLabel({
     label: input.sponsor,
     clientName: activeClient.name,
     fallbackUserId: tenancy.userId,
+    parsedLabel: sponsorMentions.find(
+      (mention) => mention.relationship === "primary",
+    ),
   });
+  const coSponsorMention = sponsorMentions.find(
+    (mention) => mention.relationship === "co_sponsor",
+  );
+  const coSponsor = coSponsorMention
+    ? await resolvePersonByLabel({
+        label: input.sponsor,
+        clientName: activeClient.name,
+        fallbackUserId: tenancy.userId,
+        parsedLabel: coSponsorMention,
+      })
+    : null;
   const lead = input.lead
     ? await resolvePersonByLabel({
         label: input.lead,
@@ -755,6 +806,7 @@ export async function submitOriginationBrief(
       // production schemas can still enforce `solution`.
       solution: input.programName,
       sponsor_person_id: sponsor.id,
+      co_sponsor_person_id: coSponsor?.id ?? null,
       maestro_person_id: lead.id,
       status: "draft",
       lifecycle_state: "submitted_for_approval",
@@ -799,6 +851,8 @@ export async function submitOriginationBrief(
       problem_statement: input.problemStatement,
       sponsor_person_id: sponsor.id,
       sponsor_name: sponsor.name,
+      co_sponsor_person_id: coSponsor?.id ?? null,
+      co_sponsor_name: coSponsor?.name ?? null,
       lead_person_id: lead.id,
       lead_name: lead.name,
       function_code: derived.functionCode,
@@ -839,6 +893,14 @@ export async function submitOriginationBrief(
       role: "Sponsor",
       approvalAuthority: "sponsor",
     });
+    if (coSponsor && coSponsor.id !== sponsor.id) {
+      await insertParticipant({
+        programId,
+        person: coSponsor,
+        role: "Co-sponsor",
+        approvalAuthority: "sponsor",
+      });
+    }
     if (lead.id !== sponsor.id) {
       await insertParticipant({
         programId,
