@@ -103,11 +103,11 @@ export interface ProgramSummary {
   lastActivityAt: Date;
   attentionBadge?: { label: string; variant: AttentionVariant };
   shape: "template" | "pattern" | "custom";
-  clientName:
-    | "Meridian Health System"
-    | "First Capital Financial"
-    | "Apex Retail Group"
-    | "Lakeshore Holdings";
+  // Canonical tenant display name, resolved via canonicalClientDisplayName
+  // (src/lib/client-config.ts). String — NOT a closed union — so every tenant
+  // (SkyHarbor Air, Northstar Clinical, …) renders correctly and a new tenant
+  // never silently defaults to another tenant's name.
+  clientName: string;
 }
 
 export interface OriginationForm {
@@ -180,11 +180,11 @@ export interface ProgramFullState {
   activity: ActivityEntry[];
   linkedIntelligenceThreads?: ThreadRef[];
   archetype: ArchetypeKey;
-  clientName:
-    | "Meridian Health System"
-    | "First Capital Financial"
-    | "Apex Retail Group"
-    | "Lakeshore Holdings";
+  // Canonical tenant display name, resolved via canonicalClientDisplayName
+  // (src/lib/client-config.ts). String — NOT a closed union — so every tenant
+  // (SkyHarbor Air, Northstar Clinical, …) renders correctly and a new tenant
+  // never silently defaults to another tenant's name.
+  clientName: string;
   sponsorPerson: PersonRef;
   leadPerson: PersonRef;
   phaseStatus: ProgramSummary["phaseStatus"];

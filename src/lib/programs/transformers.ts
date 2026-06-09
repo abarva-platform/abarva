@@ -58,41 +58,22 @@ type TransformerOptions = {
 };
 
 // ── Client name mapping ────────────────────────────────────────────────
-const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary["clientName"]>([
-  ["meridian health", "Meridian Health System"],
-  ["meridian health system", "Meridian Health System"],
-  ["heliara", "Meridian Health System"],
-  ["heliara health", "Meridian Health System"],
-  ["heliara health alliance", "Meridian Health System"],
-  ["first capital", "First Capital Financial"],
-  ["first capital financial", "First Capital Financial"],
-  ["first capital financial group", "First Capital Financial"],
-  ["arcturus financial", "First Capital Financial"],
-  ["arcturus financial group", "First Capital Financial"],
-  ["apex retail", "Apex Retail Group"],
-  ["apex retail group", "Apex Retail Group"],
-  ["lakeshore", "Lakeshore Holdings"],
-  ["lakeshore holdings", "Lakeshore Holdings"],
-  ["lakeshore-holdings", "Lakeshore Holdings"],
-]);
-
+// Delegate to the canonical resolver (src/lib/client-config.ts), which knows
+// every tenant (Meridian, First Capital, Apex, Lakeshore, SkyHarbor Air,
+// Northstar Clinical, …). NEVER default to a specific tenant: an unresolved
+// client falls back to its own raw name, then a neutral dash. Previously this
+// hardcoded "Apex Retail Group" as the catch-all default, so any tenant not in
+// a stale closed list (SkyHarbor, Northstar) rendered as "Apex Retail Group" —
+// a cross-tenant name leak on every Move card/detail.
 function canonicalProgramClientName(args: {
   clientId?: string | null;
   name?: string | null;
 }): ProgramSummary["clientName"] {
-  const key = args.name?.trim().toLowerCase() ?? "";
-  const mapped = KNOWN_CLIENT_NAMES.get(key);
-  if (mapped) return mapped;
-
-  const canonical = canonicalClientDisplayName({
-    key: args.clientId,
-    name: args.name,
-  });
-  if (canonical === "Meridian Health") return "Meridian Health System";
-  if (canonical === "First Capital Financial") return "First Capital Financial";
-  if (canonical === "Apex Retail Group") return "Apex Retail Group";
-  if (canonical === "Lakeshore Holdings") return "Lakeshore Holdings";
-  return "Apex Retail Group";
+  return (
+    canonicalClientDisplayName({ key: args.clientId, name: args.name }) ??
+    args.name?.trim() ??
+    "—"
+  );
 }
 
 function sanitizeRetiredTenantText(
