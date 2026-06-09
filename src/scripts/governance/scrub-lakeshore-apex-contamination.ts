@@ -39,30 +39,17 @@ async function main(): Promise<void> {
   const client = new Client(postgresClientOptions(url, 'scrub-lakeshore-apex'));
   await client.connect();
   try {
-    // Build the candidate (table, column) list: static + dynamic text/jsonb
-    // columns of data_inventory_records.
-    const targets: Array<{ table: string; col: string }> = [
-      { table: 'enterprise_context_chunks', col: 'chunk_text' },
-      { table: 'enterprise_context_facts', col: 'fact_text' },
-      { table: 'enterprise_context_facts', col: 'fact_value' },
-      { table: 'enterprise_context_records', col: 'payload' },
-    ];
-    const dyn = await client.query(
-      `SELECT column_name, data_type FROM information_schema.columns
-        WHERE table_schema='public' AND table_name='data_inventory_records'
-          AND data_type IN ('text','character varying','jsonb')`,
+    // Full-schema hunt: enumerate every text/varchar/jsonb column in public so
+    // we find the unique "Composite Seed" marker wherever it lives (clients,
+    // enterprise_context_*, data_inventory_records, corpus_*, graph_*, …).
+    const cols = await client.query(
+      `SELECT table_name, column_name, data_type FROM information_schema.columns
+        WHERE table_schema='public' AND data_type IN ('text','character varying','jsonb')
+        ORDER BY table_name`,
     );
-    for (const r of dyn.rows) targets.push({ table: 'data_inventory_records', col: r.column_name });
-
+    const targets: Array<{ table: string; col: string }> = cols.rows.map((r) => ({ table: r.table_name, col: r.column_name }));
     const jsonbCols = new Set<string>();
-    {
-      const j = await client.query(
-        `SELECT table_name, column_name FROM information_schema.columns
-          WHERE table_schema='public' AND data_type='jsonb'
-            AND table_name IN ('enterprise_context_facts','enterprise_context_records','data_inventory_records')`,
-      );
-      for (const r of j.rows) jsonbCols.add(`${r.table_name}.${r.column_name}`);
-    }
+    for (const r of cols.rows) if (r.data_type === 'jsonb') jsonbCols.add(`${r.table_name}.${r.column_name}`);
     const asText = (t: string, c: string) => (jsonbCols.has(`${t}.${c}`) ? `${c}::text` : c);
 
     // 1. Locate the contamination (table, column, tenant_key, count).
@@ -73,10 +60,12 @@ async function main(): Promise<void> {
           `SELECT count(*)::int AS n, min(tenant_key) AS sample_tenant FROM ${table} WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`,
         );
         const n = rows[0].n as number;
-        console.log(JSON.stringify({ event: 'scrub_found', table, col, rows: n, sampleTenant: rows[0].sample_tenant }));
-        if (n > 0) hits.push({ table, col });
-      } catch (e) {
-        console.log(JSON.stringify({ event: 'scrub_skip', table, col, error: e instanceof Error ? e.message : String(e) }));
+        if (n > 0) {
+          console.log(JSON.stringify({ event: 'scrub_found', table, col, rows: n, sampleTenant: rows[0].sample_tenant }));
+          hits.push({ table, col });
+        }
+      } catch {
+        /* column not text-castable / not searchable — skip */
       }
     }
 
