@@ -19,9 +19,11 @@ uses a validated, policy-built, source-aware, confidence-scored bundle.
 
 - Azure Container Apps only. No Vercel deploys. No DNS change.
 - No Supabase / Neo4j / Pinecone **runtime** dependencies (legacy names may remain in shims/tests).
-- Retrieval readiness is **Azure-native** (Postgres full-text + Azure AI Search). The
-  `embed:pending-chunks` runner (OpenAI + Pinecone) is **BLOCKED** under the Anthropic-only rule —
-  do NOT make it a readiness requirement; do NOT run it without explicit approval.
+- Retrieval readiness is **Azure-native** (Postgres FTS + Azure AI Search). OpenAI
+  `text-embedding-3-*` embeddings feeding Azure AI Search vectors are the **live, allowed** path;
+  **Anthropic-only governs REASONING (Claude), not embeddings.** The retired/blocked item is the old
+  **Pinecone-targeting** `embed:pending-chunks` runner (no Pinecone runtime) — never make Pinecone a
+  readiness requirement.
 - No destructive migrations; additive-only; reverse SQL documented; run via `npm run db:migrate`
   (call out the manual paste step explicitly).
 - No data reload to "fix" an empty surface until a **read-only diagnostic proves data is missing**
