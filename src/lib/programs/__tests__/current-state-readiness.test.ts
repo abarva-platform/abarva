@@ -40,13 +40,18 @@ describe("requiredFamiliesForPhase", () => {
     expect(requiredFamiliesForPhase(0)).toEqual([]);
   });
 
-  it("P1 Charter requires DORA, IT org, and stakeholder map as hard", () => {
+  it("P1 Charter requires DORA, IT org, stakeholder map, and IT-systems as hard", () => {
     const hard = requiredFamiliesForPhase(1)
       .filter((f) => f.severity === "hard")
       .map((f) => f.key)
       .sort();
     expect(hard).toEqual(
-      ["eng_performance_dora", "it_org_structure", "stakeholder_map"].sort(),
+      [
+        "eng_performance_dora",
+        "it_org_structure",
+        "stakeholder_map",
+        "it_systems_landscape",
+      ].sort(),
     );
   });
 
@@ -70,7 +75,12 @@ describe("resolveCurrentStateReadiness", () => {
     const r = await resolveCurrentStateReadiness(ctx, 1);
     expect(r.coverageScore).toBe(0);
     expect(r.hardGaps.sort()).toEqual(
-      ["eng_performance_dora", "it_org_structure", "stakeholder_map"].sort(),
+      [
+        "eng_performance_dora",
+        "it_org_structure",
+        "stakeholder_map",
+        "it_systems_landscape",
+      ].sort(),
     );
     expect(r.families.every((f) => f.status === "missing")).toBe(true);
   });
@@ -86,12 +96,12 @@ describe("resolveCurrentStateReadiness", () => {
   });
 
   it("weights hard families 2x in the coverage score", async () => {
-    // P1: hard dora(2)+org(2)+stakeholder(2)=6, soft systems(1) => total 7.
-    // Commit only the soft systems family (weight 1) => 1/7 ≈ 14.
-    counts["tower_cmdb_cis"] = 5;
+    // P1: all four families hard => weights 2 each => total 8.
+    // Commit only DORA (weight 2) => 2/8 = 25.
+    counts["tower_dora_metrics"] = 5;
     const r = await resolveCurrentStateReadiness(ctx, 1);
-    expect(r.coverageScore).toBe(Math.round((1 / 7) * 100));
-    expect(r.softGaps).not.toContain("it_systems_landscape");
+    expect(r.coverageScore).toBe(Math.round((2 / 8) * 100));
+    expect(r.hardGaps).not.toContain("eng_performance_dora");
   });
 
   it("queries the tenant_key column for tower_itsm_records (P2 soft family)", async () => {

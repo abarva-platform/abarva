@@ -134,7 +134,7 @@ export function requiredFamiliesForPhase(phase: number): RequiredFamily[] {
         { key: "eng_performance_dora", severity: "hard" },
         { key: "it_org_structure", severity: "hard" },
         { key: "stakeholder_map", severity: "hard" },
-        { key: "it_systems_landscape", severity: "soft" },
+        { key: "it_systems_landscape", severity: "hard" },
       ];
     case 2:
       return [

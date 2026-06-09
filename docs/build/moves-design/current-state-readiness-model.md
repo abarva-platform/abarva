@@ -119,5 +119,142 @@ P2 Diagnose maturity model = separate arc, reuses `discovery-engine-design.md`.
 - Single-tenant: readiness is scoped to `ctx.clientId`; no cross-tenant reads.
 - Truth standard: states reported separately; no "loaded" until committed + retrievable; CSV-only auto-commit in v1, binaries stay review-required.
 - No seeded move: S6 originates for real.
-  </content>
-  </invoke>
+
+---
+
+# R1 — Profile-driven (non-linear) model · supersedes §3–§5 · 2026-06-09
+
+**Why:** §3's fixed family list (DORA + IT-systems + IT-org for every Move) is a
+**linear** model and is wrong. AI applicability across the product-development
+lifecycle is **non-linear**: a full-stack/cloud-native team, a mainframe/COBOL
+team, and a legacy DataStage analytics team have radically different AI-leverage
+ceilings — and therefore different current-state baselines, questions, and
+documents. DORA deploy-frequency is meaningful for the first and near-meaningless
+for the second. **The P0/P1/P2 criteria, inputs, and documents must be derived
+from the Move's profile, not hardcoded by phase.**
+
+## R1.1 Move Profile — the "shape" the system detects (at P0)
+
+Dimensions along which requirements branch (all optional; built up progressively,
+context-layer pre-filled — _don't re-ask what we already know_):
+
+| Dimension                           | Examples                                                                                                                                                       | Why it changes the requirements                                                |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Use-case archetype**              | code-gen / test-automation / reqs-&-design / legacy-modernization / data-pipeline / docs-&-review                                                              | Sets which baselines + "where to start"                                        |
+| **Team work archetype(s)**          | full_stack_cloud · mainframe · legacy_data_analytics (DataStage/Informatica) · packaged_cots (SAP/SFDC) · data_engineering · embedded                          | The crux of non-linearity — AI ceiling + relevant metrics differ per archetype |
+| **Delivery maturity / agility**     | waterfall ↔ hybrid ↔ scrum ↔ continuous; release cadence; test automation                                                                                      | DORA only meaningful where deployment is a practice                            |
+| **Org topology & change readiness** | centralized platform / federated squads / vendor-heavy; locations (on/off/near-shore); contractor ratio; culture for change; prior transformation track record | "How will they embark", who decides, adoption risk                             |
+| **Tech estate / tooling today**     | cloud posture (AWS/Azure/GCP/on-prem); existing AI tools (Copilot/CodeWhisperer/Claude/none) — where used, **benefits or gaps seen today**                     | What they already have + perceived value drives the first wave                 |
+| **Industry / regulatory**           | health / finance / airline / retail                                                                                                                            | Shifts data-handling, model-risk, approval evidence                            |
+
+## R1.2 Architecture: instrument library + applicability predicates + Claude tailoring
+
+A hardcoded if/else per archetype is itself a linear trap. Instead:
+
+1. **Dimension scaffold (deterministic):** the profile ontology above — stable, code-defined.
+2. **Evidence-instrument library (data, extensible):** each entry is an evidence
+   family / question instrument tagged with an **applicability predicate** over the
+   profile + the phase it becomes relevant + a profile-dependent severity. e.g.
+   - `dora_baseline` — applies when `team ∈ {full_stack_cloud, data_engineering}` **and** `delivery ∈ {scrum, continuous}`; **not** for mainframe/legacy-analytics.
+   - `mainframe_change_cadence`, `batch_window_profile`, `sme_coverage`, `modernization_candidates` — apply when `team includes mainframe`.
+   - `etl_job_inventory`, `data_lineage`, `run_sla` — apply when `team includes legacy_data_analytics`.
+   - `cloud_estate` — applies when `cloudPosture` is set (what's used, where).
+   - `ai_tooling_today` — applies when `existingAiTools` non-empty (adoption + **benefits/gaps seen**).
+   - `agility_assessment`, `change_readiness_culture`, `org_topology_locations` — broadly applicable, but the **questions inside** are tailored per profile.
+   - `stakeholder_map`, `sponsor_commitment` — universal.
+3. **Derivation = predicates ∪ Claude:** deterministic predicates pre-select the
+   obviously-applicable instruments; **Claude tailors and extends** — generating
+   profile-specific questions and additional doc requests the static library can't
+   anticipate, **grounded by the context layer and constrained to the ontology**
+   (every derived requirement cites _why it applies to this profile_; no invented asks).
+4. **Readiness resolver** then checks supplied-vs-needed against the **derived** set
+   (not a fixed list), honest committed/missing ladder unchanged.
+
+## R1.3 Phase intent (profile-driven)
+
+- **P0 Originate = profile detection.** Scoped adaptive Q&A (Nexus) + context-layer
+  pre-fill establishes the dimensions well enough to classify the Move's archetype(s).
+  Output: a `MoveProfile`. Surfaces "based on this, here's what we'll need" — no heavy docs yet.
+- **P1 Charter = derive the targeted current-state evidence + doc requests for THIS profile.**
+  Full-stack → DORA + CI/CD + Copilot adoption. Mainframe → change cadence + batch +
+  SME coverage + modernization candidates (not DORA). Universal: sponsor + stakeholders.
+  Plus the **"where to start"** framing (teams/areas ranked by AI leverage × readiness).
+- **P2 Diagnose = score maturity on the dimensions that apply**, two-gap model
+  (foundation vs use-case), benchmark vs industry/peer, name first-wave candidates.
+
+## R1.4 Code impact
+
+- `requiredFamiliesForPhase(phase)` (static) → **removed**, replaced by
+  `deriveCurrentStateRequirements(profile, phase)` over an `INSTRUMENT_LIBRARY` whose
+  entries carry `appliesWhen(profile)` + `phase` + `severityFor(profile)`.
+- `resolveCurrentStateReadiness(ctx, profile, phase)` now resolves the **derived** set.
+- The §3 families survive as **library instruments with predicates**, not an unconditional phase list.
+- Claude-augmented derivation + the P0 profiling flow are their own slices (R-S2/R-S3).
+
+## R1.5 Open design decisions (for confirmation)
+
+1. **Profile capture at P0:** adaptive Nexus Q&A (conversational, grounded) vs a short
+   structured intake vs both. Recommend: conversational, pre-filled from context layer,
+   with a compact structured summary the user can correct.
+2. **Deterministic vs Claude balance in derivation:** library predicates as the floor,
+   Claude as the tailoring layer (recommended) vs Claude-only (more flexible, less auditable).
+
+---
+
+# R2 — Moves is a consulting engine; collection feeds the recommendation · 2026-06-09
+
+**Why (supersedes any framing where we ask the client to self-decide):** The client
+does **not** have the answers. They don't know whether to start with mainframe, data,
+or full-stack, how to sequence the rollout, or what it will cost. **Producing the right
+approach, solution, rollout/roadmap, and estimates IS the product.** So:
+
+- **We never ask the client "where will you start?"** — sequencing/where-to-start is an
+  **output** the system computes, not an input. Asking it abdicates the consulting value.
+- **We must collect all the current-state detail needed to devise the right approach** —
+  comprehensively, **scoped to the client's actual estate** — so the system can reason to
+  the recommendation.
+- **Universal:** this holds for **any use case, any client**. The Moves module is a
+  consulting engine; current-state collection exists to _feed the recommendation_.
+
+## R2.1 Three movements (replaces "detect the profile by asking")
+
+- **A · Estate discovery (broad, shallow, mostly automatic).** Establish what the client
+  _has_ — which team/work archetypes, systems (CMDB), clouds, data platforms, tooling —
+  primarily from the **context layer** + high-level inventories, with minimal human
+  confirmation. This **scopes** what's relevant (no mainframe → skip mainframe instruments).
+  The "profile" is **inferred from evidence**, not self-declared.
+- **B · Comprehensive current-state collection (deep, within scope).** For every relevant
+  area, collect the evidence to assess **AI leverage × readiness**. The client supplies
+  **data/docs**, never decisions:
+  - full-stack/cloud → DORA, CI/CD maturity, test automation, Copilot/Claude adoption + **benefits/gaps seen**;
+  - mainframe → change cadence, batch windows, code size/complexity, SME coverage, modernization candidates;
+  - data/analytics (DataStage/Informatica) → job inventory, lineage, run SLAs, data quality;
+  - cross-cutting → org topology, locations, agility/ways-of-working, change-readiness/culture, tooling estate + perceived value.
+
+  _Scoped-not-exhaustive applies to the human interrogation, not the data:_ comprehensive
+  in evidence, minimal in questions, and never re-ask what the context layer already knows.
+
+- **C · Analysis → recommendation (the value).** Maturity scoring per area + **AI-leverage ×
+  readiness ranking** → **recommended sequencing / where-to-start**, target state, strategy
+  (workflow + dataflow), roadmap (work packages), and **estimates aligned to the roadmap**.
+  These are the Move deliverables (P2→P5), per `strategy-content-model.md` and the
+  consulting story arc (use case → current → gaps → target → approach → strategy → roadmap → estimates).
+
+## R2.2 What "readiness" now means
+
+Readiness = _"have we collected enough current-state, across the areas the estate makes
+relevant, to produce a defensible recommendation?"_ — **not** "did the client tick a
+checklist." The instrument library + predicates stay, but:
+
+- predicates branch on the **discovered estate** (what they have), not self-declared strategy;
+- the coverage score is **recommendation-readiness**; hard gaps = areas we cannot yet reason about;
+- "where to start" is **removed as an input** and added as a **derived output** of movement C.
+
+## R2.3 Build implication
+
+This grows the scope from a "readiness panel" to the **intake → analysis → recommendation**
+spine of the Moves engine. Current-state collection (this doc) is the intake half; the
+analysis/recommendation half is the maturity + leverage-scoring + sequencing engine
+(`discovery-engine-design.md` + `strategy-content-model.md`). They must be designed as one
+arc. SkyHarbor "AI-Powered Product Development Lifecycle" is the first real instance, but
+the engine is client/use-case agnostic.
