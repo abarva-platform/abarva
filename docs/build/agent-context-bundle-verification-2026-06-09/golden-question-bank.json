@@ -1,0 +1,1154 @@
+{
+  "generated": "2026-06-09",
+  "source": "CANONICAL_TENANT_KEYS (code-derived, not hand-typed)",
+  "tenantCount": 6,
+  "questionCount": 66,
+  "suites": [
+    {
+      "tenantKey": "apex-retail",
+      "tenantName": "Apex Retail",
+      "industry": "retail",
+      "questions": [
+        {
+          "id": "apex-retail:leadership",
+          "tenantKey": "apex-retail",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at Apex Retail, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:company_scale",
+          "tenantKey": "apex-retail",
+          "category": "company_scale",
+          "question": "What is Apex Retail's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:industry_corpus",
+          "tenantKey": "apex-retail",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to Apex Retail's retail operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:move_context",
+          "tenantKey": "apex-retail",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for Apex Retail, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:artifacts_evidence",
+          "tenantKey": "apex-retail",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for Apex Retail, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:kpi_value",
+          "tenantKey": "apex-retail",
+          "category": "kpi_value",
+          "question": "What are Apex Retail's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:vendor_source",
+          "tenantKey": "apex-retail",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to Apex Retail, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:systems_landscape",
+          "tenantKey": "apex-retail",
+          "category": "systems_landscape",
+          "question": "Describe Apex Retail's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:it_data_cloud_erp",
+          "tenantKey": "apex-retail",
+          "category": "it_data_cloud_erp",
+          "question": "What is Apex Retail's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:risk_failure_mode",
+          "tenantKey": "apex-retail",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for Apex Retail's retail operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "apex-retail:missing_unsupported",
+          "tenantKey": "apex-retail",
+          "category": "missing_unsupported",
+          "question": "What was Apex Retail's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "tenantName": "Meridian Health System",
+      "industry": "healthcare_provider",
+      "questions": [
+        {
+          "id": "meridian-health:leadership",
+          "tenantKey": "meridian-health",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at Meridian Health System, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:company_scale",
+          "tenantKey": "meridian-health",
+          "category": "company_scale",
+          "question": "What is Meridian Health System's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:industry_corpus",
+          "tenantKey": "meridian-health",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to Meridian Health System's care delivery operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:move_context",
+          "tenantKey": "meridian-health",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for Meridian Health System, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:artifacts_evidence",
+          "tenantKey": "meridian-health",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for Meridian Health System, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:kpi_value",
+          "tenantKey": "meridian-health",
+          "category": "kpi_value",
+          "question": "What are Meridian Health System's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:vendor_source",
+          "tenantKey": "meridian-health",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to Meridian Health System, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:systems_landscape",
+          "tenantKey": "meridian-health",
+          "category": "systems_landscape",
+          "question": "Describe Meridian Health System's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:it_data_cloud_erp",
+          "tenantKey": "meridian-health",
+          "category": "it_data_cloud_erp",
+          "question": "What is Meridian Health System's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:risk_failure_mode",
+          "tenantKey": "meridian-health",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for Meridian Health System's care delivery operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "meridian-health:missing_unsupported",
+          "tenantKey": "meridian-health",
+          "category": "missing_unsupported",
+          "question": "What was Meridian Health System's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    },
+    {
+      "tenantKey": "northstar-clinical",
+      "tenantName": "Northstar Clinical Technologies",
+      "industry": "healthcare_medtech",
+      "questions": [
+        {
+          "id": "northstar-clinical:leadership",
+          "tenantKey": "northstar-clinical",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at Northstar Clinical Technologies, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:company_scale",
+          "tenantKey": "northstar-clinical",
+          "category": "company_scale",
+          "question": "What is Northstar Clinical Technologies's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:industry_corpus",
+          "tenantKey": "northstar-clinical",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to Northstar Clinical Technologies's medical-device operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:move_context",
+          "tenantKey": "northstar-clinical",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for Northstar Clinical Technologies, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:artifacts_evidence",
+          "tenantKey": "northstar-clinical",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for Northstar Clinical Technologies, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:kpi_value",
+          "tenantKey": "northstar-clinical",
+          "category": "kpi_value",
+          "question": "What are Northstar Clinical Technologies's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:vendor_source",
+          "tenantKey": "northstar-clinical",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to Northstar Clinical Technologies, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:systems_landscape",
+          "tenantKey": "northstar-clinical",
+          "category": "systems_landscape",
+          "question": "Describe Northstar Clinical Technologies's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:it_data_cloud_erp",
+          "tenantKey": "northstar-clinical",
+          "category": "it_data_cloud_erp",
+          "question": "What is Northstar Clinical Technologies's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:risk_failure_mode",
+          "tenantKey": "northstar-clinical",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for Northstar Clinical Technologies's medical-device operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "northstar-clinical:missing_unsupported",
+          "tenantKey": "northstar-clinical",
+          "category": "missing_unsupported",
+          "question": "What was Northstar Clinical Technologies's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    },
+    {
+      "tenantKey": "first-capital",
+      "tenantName": "First Capital",
+      "industry": "financial_services_banking",
+      "questions": [
+        {
+          "id": "first-capital:leadership",
+          "tenantKey": "first-capital",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at First Capital, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:company_scale",
+          "tenantKey": "first-capital",
+          "category": "company_scale",
+          "question": "What is First Capital's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:industry_corpus",
+          "tenantKey": "first-capital",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to First Capital's banking operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:move_context",
+          "tenantKey": "first-capital",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for First Capital, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:artifacts_evidence",
+          "tenantKey": "first-capital",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for First Capital, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:kpi_value",
+          "tenantKey": "first-capital",
+          "category": "kpi_value",
+          "question": "What are First Capital's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:vendor_source",
+          "tenantKey": "first-capital",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to First Capital, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:systems_landscape",
+          "tenantKey": "first-capital",
+          "category": "systems_landscape",
+          "question": "Describe First Capital's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:it_data_cloud_erp",
+          "tenantKey": "first-capital",
+          "category": "it_data_cloud_erp",
+          "question": "What is First Capital's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:risk_failure_mode",
+          "tenantKey": "first-capital",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for First Capital's banking operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "first-capital:missing_unsupported",
+          "tenantKey": "first-capital",
+          "category": "missing_unsupported",
+          "question": "What was First Capital's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "tenantName": "SkyHarbor Air",
+      "industry": "airline",
+      "questions": [
+        {
+          "id": "skyharbor-air:leadership",
+          "tenantKey": "skyharbor-air",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at SkyHarbor Air, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:company_scale",
+          "tenantKey": "skyharbor-air",
+          "category": "company_scale",
+          "question": "What is SkyHarbor Air's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:industry_corpus",
+          "tenantKey": "skyharbor-air",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to SkyHarbor Air's airline operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:move_context",
+          "tenantKey": "skyharbor-air",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for SkyHarbor Air, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:artifacts_evidence",
+          "tenantKey": "skyharbor-air",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for SkyHarbor Air, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:kpi_value",
+          "tenantKey": "skyharbor-air",
+          "category": "kpi_value",
+          "question": "What are SkyHarbor Air's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:vendor_source",
+          "tenantKey": "skyharbor-air",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to SkyHarbor Air, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:systems_landscape",
+          "tenantKey": "skyharbor-air",
+          "category": "systems_landscape",
+          "question": "Describe SkyHarbor Air's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:it_data_cloud_erp",
+          "tenantKey": "skyharbor-air",
+          "category": "it_data_cloud_erp",
+          "question": "What is SkyHarbor Air's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:risk_failure_mode",
+          "tenantKey": "skyharbor-air",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for SkyHarbor Air's airline operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "skyharbor-air:missing_unsupported",
+          "tenantKey": "skyharbor-air",
+          "category": "missing_unsupported",
+          "question": "What was SkyHarbor Air's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "tenantName": "Lakeshore Holdings",
+      "industry": "diversified",
+      "questions": [
+        {
+          "id": "lakeshore-holdings:leadership",
+          "tenantKey": "lakeshore-holdings",
+          "category": "leadership",
+          "question": "Who are the named executives and leadership team at Lakeshore Holdings, and what are their remits?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:company_scale",
+          "tenantKey": "lakeshore-holdings",
+          "category": "company_scale",
+          "question": "What is Lakeshore Holdings's scale — revenue, business units, geographies, and headcount?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:industry_corpus",
+          "tenantKey": "lakeshore-holdings",
+          "category": "industry_corpus",
+          "question": "What are the leading industry patterns and benchmarks relevant to Lakeshore Holdings's portfolio operations?",
+          "expectedAnswerability": "FULLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "industry_benchmark"
+          ],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:move_context",
+          "tenantKey": "lakeshore-holdings",
+          "category": "move_context",
+          "question": "What transformation Moves or programs are in flight for Lakeshore Holdings, and what stage are they in?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "artifact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:artifacts_evidence",
+          "tenantKey": "lakeshore-holdings",
+          "category": "artifacts_evidence",
+          "question": "What board-grade artifacts or evidence packages exist for Lakeshore Holdings, and what do they conclude?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "artifact",
+            "evidence"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:kpi_value",
+          "tenantKey": "lakeshore-holdings",
+          "category": "kpi_value",
+          "question": "What are Lakeshore Holdings's key KPIs and value baselines, and who owns them?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "kpi_baseline",
+            "structured_fact"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:vendor_source",
+          "tenantKey": "lakeshore-holdings",
+          "category": "vendor_source",
+          "question": "Which vendors and sourcing relationships matter most to Lakeshore Holdings, and what is their status?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "context_record",
+            "source_event"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:systems_landscape",
+          "tenantKey": "lakeshore-holdings",
+          "category": "systems_landscape",
+          "question": "Describe Lakeshore Holdings's application and systems landscape — core platforms and how they connect.",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:it_data_cloud_erp",
+          "tenantKey": "lakeshore-holdings",
+          "category": "it_data_cloud_erp",
+          "question": "What is Lakeshore Holdings's IT / data / cloud / ERP architecture, and where are the modernization gaps?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "tenant_context",
+            "context_record"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:risk_failure_mode",
+          "tenantKey": "lakeshore-holdings",
+          "category": "risk_failure_mode",
+          "question": "What are the top risks and failure modes for Lakeshore Holdings's portfolio operations transformation, and how are they mitigated?",
+          "expectedAnswerability": "PARTIALLY_ANSWERABLE",
+          "requiredSourceTypes": [
+            "corpus_pattern",
+            "tenant_context"
+          ],
+          "expectsTenantContext": true,
+          "expectsApprovedPattern": true,
+          "expectsMissingContextWarning": false,
+          "expectsCitations": true,
+          "negativeTest": false,
+          "tenantIsolationTest": true
+        },
+        {
+          "id": "lakeshore-holdings:missing_unsupported",
+          "tenantKey": "lakeshore-holdings",
+          "category": "missing_unsupported",
+          "question": "What was Lakeshore Holdings's exact net profit in the most recent fiscal quarter, to the dollar?",
+          "expectedAnswerability": "NOT_LOADED",
+          "requiredSourceTypes": [],
+          "expectsTenantContext": false,
+          "expectsApprovedPattern": false,
+          "expectsMissingContextWarning": true,
+          "expectsCitations": false,
+          "negativeTest": true,
+          "tenantIsolationTest": true
+        }
+      ]
+    }
+  ]
+}
