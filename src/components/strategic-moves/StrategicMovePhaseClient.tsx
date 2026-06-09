@@ -1,11 +1,11 @@
 'use client';
 
-// StrategicMovePhaseClient · Strategic Moves Phase Workspace (P1–P5)
+// StrategicMovePhaseClient · Strategic Moves Phase Workspace (P0–P5)
 //
 // Two-pane phase workspace: Nexus chat on the left, phase canvas on the right.
 // Uses /api/chat/agent with surface `/strategic-moves/{moveId}/phase/{phaseNum}`
 // and passes moveId + phase in surfaceContext so the agent route loads the
-// correct phase pack (T-P1 through T-P5).
+// correct phase pack (T-P0 through T-P5).
 //
 // Design reference: StrategicMoveOriginateClient.tsx (P0) — same shell,
 // same chat patterns, phase-specific canvas on the right.
@@ -47,6 +47,17 @@ interface PhaseConfig {
 }
 
 const PHASE_CONFIGS: Record<number, PhaseConfig> = {
+  0: {
+    label: 'P0 Originate',
+    shortLabel: 'P0 ORIGINATE',
+    firstMessage: (move) =>
+      `**${move.name}** is in P0 Originate. The seed is approved for disciplined shaping, but P0 still has to leave behind a clean handoff: named sponsor, value hypothesis, scope boundary, evidence family, and Discovery capacity. We should close any remaining P0 evidence gaps, then advance to P1 Charter with a human-reviewed rationale.`,
+    suggestedPrompts: [
+      'Show me the P0 gate criteria',
+      'What is missing before P1 Charter?',
+      'Draft the P0 to P1 advance rationale',
+    ],
+  },
   1: {
     label: 'P1 Charter',
     shortLabel: 'P1 CHARTER',
@@ -118,6 +129,13 @@ interface CanvasSection {
 }
 
 const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
+  0: [
+    { id: 'seed', label: 'Move seed', placeholder: 'Problem signal, named outcome, and AI/transformation hypothesis' },
+    { id: 'sponsor-candidate', label: 'Sponsor candidate', placeholder: 'Named executive with plausible decision rights and approval path' },
+    { id: 'value-hypothesis', label: 'Value hypothesis', placeholder: 'Unvalidated value range, mechanism, and assumptions to test in Discovery' },
+    { id: 'scope-boundary', label: 'Scope boundary', placeholder: 'First cohort, use case, or disruption slice; what is explicitly out of scope' },
+    { id: 'evidence-family', label: 'Evidence family', placeholder: 'Current-state documents, datasets, interviews, and baselines P1/P2 must collect' },
+  ],
   1: [
     { id: 'sponsor', label: 'Sponsor commitment', placeholder: 'Confirm sponsor identity, commitment level, and decision rights' },
     { id: 'stakeholders', label: 'Stakeholders', placeholder: 'Map who has decision rights, contributes, and can block' },

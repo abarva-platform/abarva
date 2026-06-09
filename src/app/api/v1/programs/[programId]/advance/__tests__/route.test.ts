@@ -5,6 +5,7 @@ const mockEvaluateGate = jest.fn();
 const mockRequestFounderApproval = jest.fn();
 const mockAdvancePhase = jest.fn();
 const mockSupabaseMaybeSingle = jest.fn();
+const mockResolvePhaseGateActorPersonId = jest.fn();
 
 jest.mock("../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -42,6 +43,11 @@ jest.mock("@/lib/programs/governance", () => ({
 jest.mock("@/lib/programs/mutations", () => ({
   advancePhase: (ctx: unknown, input: unknown, opts: unknown) =>
     mockAdvancePhase(ctx, input, opts),
+}));
+
+jest.mock("@/lib/programs/phase-gate-actor", () => ({
+  resolvePhaseGateActorPersonId: (ctx: unknown) =>
+    mockResolvePhaseGateActorPersonId(ctx),
 }));
 
 jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
@@ -105,6 +111,10 @@ beforeEach(() => {
     newPhase: 1,
     snapshotId: "snap-1",
   });
+  mockResolvePhaseGateActorPersonId.mockResolvedValue({
+    ok: true,
+    personId: "person-1",
+  });
 });
 
 describe("POST /api/v1/programs/[programId]/advance", () => {
@@ -129,6 +139,9 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 1 });
     expect(mockRequestFounderApproval).not.toHaveBeenCalled();
+    expect(mockResolvePhaseGateActorPersonId).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "person-1" }),
+    );
     expect(mockAdvancePhase).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "person-1" }),
       expect.objectContaining({
@@ -172,6 +185,44 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
       approvalId: "approval-1",
     });
     expect(mockRequestFounderApproval).toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("returns a setup error instead of writing a Clerk id into UUID-backed audit fields", async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: "client-1",
+      clientKey: "skyharbor",
+      userId: "clerk:user_3EJHfSpLrv95DZg2h1cgpUT0cld",
+      role: "client_admin",
+      email: "anand.sundaram+skyharbor@thesundaram.com",
+    });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockResolvePhaseGateActorPersonId.mockResolvedValue({
+      ok: false,
+      error: "person_row_required",
+      detail:
+        "No tenant-scoped persons row was found for anand.sundaram+skyharbor@thesundaram.com; provision the operator/buyer persona before advancing this Move.",
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 1,
+        selfApproveIfAuthorized: true,
+        humanRationale:
+          "I reviewed the phase gate evidence and approve advancing this Move.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "operator_person_required",
+    });
+    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 

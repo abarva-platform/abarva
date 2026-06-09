@@ -10,3 +10,9 @@ const UUID_PATTERN =
 export function isStrategicMoveRouteId(value: string): boolean {
   return UUID_PATTERN.test(value);
 }
+
+export function parseStrategicMovePhaseNum(value: string): number | null {
+  const phase = Number.parseInt(value, 10);
+  if (!Number.isInteger(phase) || phase < 0 || phase > 5) return null;
+  return phase;
+}
