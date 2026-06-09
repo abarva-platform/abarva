@@ -63,9 +63,22 @@ Revert the PR. Pure detection-logic change.
 
 Not applicable.
 
+## Real finding (corrected)
+
+The live re-run's snippet proved the Lakeshore leak is REAL, not a false
+positive: Lakeshore's company_scale answer read "Lakeshore Holdings (legal
+entity: **Apex Retail Group Composite Seed**)". The string exists ONLY in the
+live Lakeshore DB record (not the repo source) — a synthetic-seed artifact that
+embedded another tenant's cover name into Lakeshore's enterprise profile,
+violating cover-name isolation. The detector caught it via the full-name match
+(the "apex" stoplist correctly did NOT suppress it). Fix = the detector-precision
+change (avoids bare-"apex" FPs) PLUS a surgical data scrub:
+`src/scripts/governance/scrub-lakeshore-apex-contamination.ts` replaces the Apex
+cover-name tokens in Lakeshore's chunks/facts/records (scoped to Lakeshore,
+idempotent), run in-VNet on ACA. Post-scrub probe confirms leakage 0.
+
 ## Known Gaps
 
-- Single-word references to "Apex" (without "Apex Retail") are no longer flagged,
-  matching the "First" trade-off — the full name + key still catch unambiguous
-  cross-tenant references. Separately, Lakeshore `artifacts`/`kpi` remain
-  NOT_LOADED (retrieval/ingestion gap) — tracked separately.
+- Single-word "Apex" (without "Apex Retail") references are no longer flagged
+  (the "First" trade-off); the full name + key still catch unambiguous leaks.
+- Lakeshore `artifacts`/`kpi` remain NOT_LOADED (separate retrieval/ingestion gap).
