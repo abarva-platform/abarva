@@ -25,6 +25,7 @@ import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { DiscoveryCapturePanel } from "../programs/discovery/DiscoveryCapturePanel";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
+import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -437,6 +438,7 @@ export function StrategicMoveOriginateClient({
         const payload = (await res.json()) as {
           ok?: boolean;
           engagementId?: string;
+          redirectTo?: string;
           decisionThreadId?: string | null;
           dossierUrl?: string | null;
           message?: string;
@@ -446,7 +448,12 @@ export function StrategicMoveOriginateClient({
           setSubmitError(payload.message ?? payload.error ?? "Submit failed.");
           return;
         }
-        router.push(`/strategic-moves/${payload.engagementId}`);
+        const redirectTo = resolveStrategicMoveOriginationRedirect(payload);
+        if (!redirectTo) {
+          setSubmitError("Submit succeeded but did not return a route.");
+          return;
+        }
+        router.push(redirectTo);
       })();
     });
   }
