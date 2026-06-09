@@ -30,28 +30,40 @@ import { CORPUS_GLOBAL_SCOPE } from "@/lib/governance/context-corpus-policy";
 const STORES: Array<{
   table: string;
   source_layer: string;
+  fromSql?: string;
   tenantColumn: string | null;
+  tenantValue?: "client_id" | "tenant_key";
 }> = [
   {
     table: "enterprise_context_chunks",
     source_layer: "tenant_context",
     tenantColumn: "client_id",
+    tenantValue: "client_id",
   },
-  { table: "ai_initiatives", source_layer: "move", tenantColumn: "client_id" },
+  {
+    table: "ai_initiatives",
+    source_layer: "move",
+    tenantColumn: "client_id",
+    tenantValue: "client_id",
+  },
   {
     table: "data_inventory_records",
     source_layer: "metric",
     tenantColumn: "client_id",
+    tenantValue: "client_id",
   },
   {
     table: "program_evidence_items",
     source_layer: "uploaded_evidence",
-    tenantColumn: "client_id",
+    tenantColumn: "tenant_key",
+    tenantValue: "tenant_key",
   },
   {
     table: "deliverables_v2",
     source_layer: "artifact",
-    tenantColumn: "client_id",
+    fromSql: "deliverables_v2 d JOIN engagements e ON e.id = d.engagement_id",
+    tenantColumn: "e.client_id",
+    tenantValue: "client_id",
   },
   { table: "genome_patterns", source_layer: "pattern", tenantColumn: null },
   { table: "pattern_packs", source_layer: "pattern", tenantColumn: null },
@@ -136,11 +148,13 @@ async function main(): Promise<void> {
       continue;
     }
     for (const key of CANONICAL_TENANT_KEYS) {
-      const clientId = keyToId.get(key) ?? key; // fall back to the key if not resolved
+      const tenantValue =
+        store.tenantValue === "tenant_key" ? key : (keyToId.get(key) ?? key);
+      const fromSql = store.fromSql ?? store.table;
       try {
         const rows = await azureRead.query<{ n: number }>(
-          `SELECT COUNT(*)::int AS n FROM ${store.table} WHERE ${store.tenantColumn} = $1`,
-          [clientId],
+          `SELECT COUNT(*)::int AS n FROM ${fromSql} WHERE ${store.tenantColumn} = $1`,
+          [tenantValue],
           { missingTable: "empty" },
         );
         const probe = emptyProbe(key, store.table, store.source_layer);

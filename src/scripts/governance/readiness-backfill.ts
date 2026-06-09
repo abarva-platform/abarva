@@ -36,38 +36,46 @@ import {
 const STORES: Array<{
   table: string;
   source_layer: string;
+  fromSql?: string;
   tenantColumn: string | null;
+  tenantValue?: "client_id" | "tenant_key";
   idColumn: string;
 }> = [
   {
     table: "enterprise_context_chunks",
     source_layer: "tenant_context",
     tenantColumn: "client_id",
+    tenantValue: "client_id",
     idColumn: "id",
   },
   {
     table: "ai_initiatives",
     source_layer: "move",
     tenantColumn: "client_id",
-    idColumn: "id",
+    tenantValue: "client_id",
+    idColumn: "initiative_id",
   },
   {
     table: "data_inventory_records",
     source_layer: "metric",
     tenantColumn: "client_id",
+    tenantValue: "client_id",
     idColumn: "id",
   },
   {
     table: "program_evidence_items",
     source_layer: "uploaded_evidence",
-    tenantColumn: "client_id",
+    tenantColumn: "tenant_key",
+    tenantValue: "tenant_key",
     idColumn: "id",
   },
   {
     table: "deliverables_v2",
     source_layer: "artifact",
-    tenantColumn: "client_id",
-    idColumn: "id",
+    fromSql: "deliverables_v2 d JOIN engagements e ON e.id = d.engagement_id",
+    tenantColumn: "e.client_id",
+    tenantValue: "client_id",
+    idColumn: "d.id",
   },
   {
     table: "genome_patterns",
@@ -141,8 +149,9 @@ async function main(): Promise<void> {
     params: unknown[],
   ): Promise<void> {
     try {
+      const fromSql = store.fromSql ?? store.table;
       const rows = await azureRead.query<{ n: number }>(
-        `SELECT COUNT(*)::int AS n FROM ${store.table}${whereSql}`,
+        `SELECT COUNT(*)::int AS n FROM ${fromSql}${whereSql}`,
         params,
         { missingTable: "empty" },
       );
@@ -170,9 +179,10 @@ async function main(): Promise<void> {
       continue;
     }
     for (const key of CANONICAL_TENANT_KEYS) {
-      const clientId = keyToId.get(key) ?? key;
+      const tenantValue =
+        store.tenantValue === "tenant_key" ? key : (keyToId.get(key) ?? key);
       await countCell(key, store, ` WHERE ${store.tenantColumn} = $1`, [
-        clientId,
+        tenantValue,
       ]);
     }
   }
@@ -192,20 +202,31 @@ async function main(): Promise<void> {
     for (const store of STORES) {
       const scopes =
         store.tenantColumn === null
-          ? [{ key: CORPUS_GLOBAL_SCOPE, id: null as string | null }]
+          ? [
+              {
+                key: CORPUS_GLOBAL_SCOPE,
+                filterValue: null as string | null,
+                tenantId: null as string | null,
+              },
+            ]
           : CANONICAL_TENANT_KEYS.map((key) => ({
               key,
-              id: keyToId.get(key) ?? key,
+              filterValue:
+                store.tenantValue === "tenant_key"
+                  ? key
+                  : (keyToId.get(key) ?? key),
+              tenantId: keyToId.get(key) ?? key,
             }));
       for (const scope of scopes) {
         try {
+          const fromSql = store.fromSql ?? store.table;
           const where =
             store.tenantColumn === null
               ? ""
               : ` WHERE ${store.tenantColumn} = $1`;
-          const params = store.tenantColumn === null ? [] : [scope.id];
+          const params = store.tenantColumn === null ? [] : [scope.filterValue];
           const ids = await azureRead.query<{ oid: string }>(
-            `SELECT ${store.idColumn}::text AS oid FROM ${store.table}${where}`,
+            `SELECT ${store.idColumn}::text AS oid FROM ${fromSql}${where}`,
             params,
             { missingTable: "empty" },
           );
@@ -230,7 +251,7 @@ async function main(): Promise<void> {
                   store.table,
                   row.oid,
                   scope.key,
-                  scope.id,
+                  scope.tenantId,
                   store.source_layer,
                   proposal.agent_readiness_status,
                   proposal.retrievability,
