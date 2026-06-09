@@ -32,7 +32,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1 · deps: install production + build dependencies on a stable base.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS deps
+FROM acrabarvalab001.azurecr.io/base/node:24-bookworm-slim AS deps
 WORKDIR /app
 
 # OS deps for native module builds (sharp, bcrypt, etc.). Kept minimal.
@@ -52,7 +52,7 @@ RUN npm ci --no-audit --no-fund --prefer-offline
 # Uses Next.js standalone output if next.config sets output: 'standalone';
 # otherwise falls back to a full .next + node_modules copy in stage 3.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS build
+FROM acrabarvalab001.azurecr.io/base/node:24-bookworm-slim AS build
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -72,7 +72,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 # Stage 3 · runtime: minimal image, non-root user, only build artifacts.
 # -----------------------------------------------------------------------------
-FROM node:24-bookworm-slim AS runtime
+FROM acrabarvalab001.azurecr.io/base/node:24-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
