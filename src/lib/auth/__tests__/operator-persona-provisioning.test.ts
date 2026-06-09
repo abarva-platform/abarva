@@ -76,6 +76,18 @@ describe("ensureOperatorPersonProvisioned — safety guards", () => {
     expect(state.inserts).toHaveLength(0);
   });
 
+  it("accepts the app-form tenant key (skyharbor -> skyharbor-air)", async () => {
+    const r = await ensureOperatorPersonProvisioned({
+      ...base,
+      clientKey: "skyharbor",
+    });
+    expect(r).not.toBeNull();
+    expect(createPersonMock).toHaveBeenCalledTimes(1);
+    expect(
+      state.inserts.filter((i) => i.table === "person_client_memberships"),
+    ).toHaveLength(1);
+  });
+
   it("refuses when email is missing (email is the idempotency key)", async () => {
     const r = await ensureOperatorPersonProvisioned({ ...base, email: null });
     expect(r).toBeNull();
