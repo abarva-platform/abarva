@@ -18,6 +18,7 @@ import {
   type AdminStructuredContextPromotionResult,
 } from "./admin-structured-context-promotion";
 import { classifyUploadedFile } from "./file-classifier";
+import { computeStableChunkId } from "./fact-identity";
 import { buildPHSEvidenceLedgerInputs } from "./phs-evidence-ledger-binding";
 import { buildTemplateSchemaPreflight } from "./schema-preflight";
 import {
@@ -547,7 +548,15 @@ export function prepareCsvUploadForTenantContext(
       ? row[mapping.sourceRecordIdColumn]
       : "";
     const sourceRecordId = mappedRecordId?.trim() || `row-${rowNumber}`;
-    const chunkId = `${uploadId}:row-${rowNumber}`;
+    // WS-B: content+location-stable chunk id (NOT the per-upload uploadId), so a
+    // re-upload of the same logical row upserts the same chunk instead of
+    // inserting a fresh duplicate set every time. See fact-identity.ts.
+    const chunkId = computeStableChunkId({
+      tenantKey: input.tenantKey,
+      sourceSegmentId,
+      sourceRecordId,
+      chunkIndex: index,
+    });
     const chunkText = buildChunkText({ template, mapping, row, rowNumber });
     return {
       client_id: input.clientId,
@@ -674,11 +683,14 @@ export async function loadCsvUploadToTenantContext(
   let inserted = 0;
   for (let index = 0; index < chunks.length; index += 100) {
     const batch = chunks.slice(index, index + 100);
+    // WS-B: upsert on the stable chunk id so re-uploading the same logical
+    // content updates the chunk in place instead of failing on a duplicate key
+    // or accumulating orphaned duplicate chunks across uploads.
     const { data, error, count } = await db
       .from("enterprise_context_chunks")
-      .insert(batch)
+      .upsert(batch, { onConflict: "tenant_key,chunk_id" })
       .select("chunk_id");
-    if (error) throw new Error(`csv_chunk_insert_failed: ${error.message}`);
+    if (error) throw new Error(`csv_chunk_upsert_failed: ${error.message}`);
     inserted += Array.isArray(data) ? data.length : (count ?? batch.length);
   }
 

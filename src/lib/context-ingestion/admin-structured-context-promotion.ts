@@ -645,6 +645,29 @@ export async function promoteAdminStructuredRowsToEnterpriseContext(
     },
   );
 
+  // WS-B: supersede any currently-active fact for the incoming logical fact
+  // keys BEFORE inserting the new values, so a CHANGED value updates the logical
+  // fact (exactly one active row per fact_key) instead of leaving a duplicate
+  // active row. The upsert below then revives-or-inserts the incoming value as
+  // the single active row; a partial unique index on active facts enforces this
+  // at the DB level (see the WS-B migration). Identical re-upload is a no-op
+  // (the same value_hash row is revived). Live replay is validated on ACA.
+  const incomingFactKeys = Array.from(
+    new Set(factRows.map((row) => String((row as { fact_key: string }).fact_key))),
+  );
+  for (let index = 0; index < incomingFactKeys.length; index += 200) {
+    await throwOnError(
+      "enterprise_context_facts supersede",
+      await db
+        .from("enterprise_context_facts")
+        .update({ lifecycle_state: "superseded", updated_at: input.uploadedAt })
+        .eq("tenant_key", input.tenantKey)
+        .eq("lifecycle_state", "active")
+        .in("fact_key", incomingFactKeys.slice(index, index + 200))
+        .select("id"),
+    );
+  }
+
   for (let index = 0; index < factRows.length; index += 250) {
     await throwOnError(
       "enterprise_context_facts upsert",

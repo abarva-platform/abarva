@@ -288,6 +288,7 @@
     "prepare": "husky",
     "governance:inventory-scan": "npx tsx src/scripts/governance/inventory-scan.ts",
     "governance:readiness-backfill": "npx tsx src/scripts/governance/readiness-backfill.ts",
+    "validate:fact-duplication": "npx tsx src/scripts/governance/validate-fact-duplication.ts",
     "validate:context-corpus": "npx tsx src/scripts/governance/validate-context-corpus.ts",
     "validate:context-corpus:exceptions": "npx tsx src/scripts/governance/validate-context-corpus.ts exceptions",
     "validate:context-corpus:tenant-coverage": "npx tsx src/scripts/governance/validate-context-corpus.ts tenant-coverage",
