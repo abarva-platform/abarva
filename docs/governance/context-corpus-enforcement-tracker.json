@@ -17,13 +17,13 @@
     {
       "id": "PR-1",
       "title": "policy + canonical contract (types/zod/enums/trackers/AGENTS hook)",
-      "status": "in-progress",
-      "pr": null
+      "status": "done",
+      "pr": 3329
     },
     {
       "id": "PR-2",
       "title": "inventory scanner + report",
-      "status": "queued",
+      "status": "done",
       "pr": null
     },
     {

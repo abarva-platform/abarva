@@ -285,7 +285,8 @@
     "db:dry:p18-apex-pack": "npx tsx src/scripts/setup-data/load-apex-p18-data-pack.ts",
     "db:load:p18-apex-pack": "npx tsx src/scripts/setup-data/load-apex-p18-data-pack.ts --apply",
     "db:verify:p18-apex-pack": "npx tsx src/scripts/setup-data/verify-apex-p18-data-pack.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "governance:inventory-scan": "npx tsx src/scripts/governance/inventory-scan.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
