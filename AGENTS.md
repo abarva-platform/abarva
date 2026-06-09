@@ -118,3 +118,8 @@ or future agents) may use it. This binds every agent — Codex, Claude Code, Cur
   bundle filters at query time. Any dataset that fails policy is `not_reviewed`/`blocked` until
   fixed. Temporary exceptions live in `docs/governance/policy-exceptions.json` with owner + reason
   - expiry + remediation PR — CI fails on expiry. No silent or blanket exceptions.
+- **New datasets declare a manifest first.** Before loading ANY new context/corpus dataset, add a
+  manifest under `docs/governance/dataset-manifests/<dataset_id>.json` (template:
+  `docs/governance/DATASET_POLICY_MANIFEST_TEMPLATE.json`; process:
+  `docs/governance/NEW_DATASET_ONBOARDING_POLICY.md`). `validate:context-corpus manifests` gates it.
+  No load without a passing manifest — no matter which agent or operator runs it.

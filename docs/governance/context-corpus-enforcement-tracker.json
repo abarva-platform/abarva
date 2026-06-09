@@ -48,7 +48,7 @@
       "id": "PR-6",
       "title": "tenant coverage report (end-to-end, readiness ledger)",
       "status": "done",
-      "pr": null
+      "pr": 3335
     },
     {
       "id": "PR-7",
@@ -58,8 +58,8 @@
     },
     {
       "id": "PR-8",
-      "title": "new-dataset onboarding gate",
-      "status": "queued",
+      "title": "new-dataset onboarding gate (manifest required)",
+      "status": "done",
       "pr": null
     }
   ]

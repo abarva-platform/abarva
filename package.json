@@ -293,6 +293,7 @@
     "validate:context-corpus:tenant-coverage": "npx tsx src/scripts/governance/validate-context-corpus.ts tenant-coverage",
     "validate:context-corpus:agent-readiness": "npx tsx src/scripts/governance/validate-context-corpus.ts agent-readiness",
     "validate:context-corpus:duplicates": "npx tsx src/scripts/governance/validate-context-corpus.ts duplicates",
+    "validate:context-corpus:manifests": "npx tsx src/scripts/governance/validate-context-corpus.ts manifests",
     "governance:tenant-coverage-report": "npx tsx src/scripts/governance/tenant-coverage-report.ts"
   },
   "dependencies": {
