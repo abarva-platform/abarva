@@ -22,10 +22,10 @@ not change DNS, Vercel, Supabase, drain/search/freeze, or shutdown logic.
 
 | PR | Title | Status | Notes |
 |----|-------|--------|-------|
-| 1 | Trace governed Nexus/Sentinel context bundles | 🟡 | Code + migration + tests landed; live ACA DB persistence pending |
+| 1 | Trace governed Nexus/Sentinel context bundles | ✅ | Merged #3349; live ACA DB persistence still to confirm on Azure |
 | 2 | Add golden tenant question suites for governed agents | ⬜ | |
-| 3 | Add response wisdom evaluation rubric | 🟡 | Pure rubric lib + auto-fail gate + real sample evals landed; subjective dims need Anthropic judge on ACA |
-| 4 | Validate governed agent claims and citations | ⬜ | |
+| 3 | Add response wisdom evaluation rubric | 🟡 | Pure rubric lib + auto-fail gate + real sample evals landed (PR #3350); subjective dims need Anthropic judge on ACA |
+| 4 | Validate governed agent claims and citations | 🟡 | Pure validation lib + Sentinel route wiring landed; live phantom catalog needs ACA |
 | 5 | Record production Azure context-bundle verification | ⬜ | |
 | 6 | Domain/subdomain expert consultant question matrix | ⬜ | |
 
@@ -41,11 +41,15 @@ Source of truth: `src/config/tenants/CANONICAL_TENANTS.ts` +
 | `northstar-clinical` | `northstar` | `northstar-clinical` | healthcare_medtech |
 | `first-capital` | `arcturus` | `first-capital` | financial_services_banking |
 | `skyharbor-air` | `skyharbor` | `skyharbor-air` | airline |
+| `lakeshore-holdings` | `lakeshore` | `lakeshore-holdings` | diversified / private_holdings |
 
-**Not canonical tenants** (appear only in build-doc / worktree scaffolding, not
-in the canonical registry): Lakeshore, Morgan Street. They are tracked as
-ingestion/onboarding gaps, not as testable live tenants, until they exist in
-`CANONICAL_TENANT_KEYS` with loaded Azure data. PHS = Meridian's shape.
+**Correction (2026-06-09, PR-4):** `lakeshore-holdings` **is** a canonical
+tenant in `CANONICAL_TENANTS` (industry `diversified`, scope `private_holdings`)
+— an earlier scan truncated the list. Golden suites (PR-2) and the matrix (PR-6)
+derive tenants from `CANONICAL_TENANT_KEYS` in code, so Lakeshore is included
+automatically. Whether Lakeshore has **loaded Azure data** is a separate
+ingestion-state question answered by the PR-5 live run. **Morgan Street** is
+NOT a canonical tenant (build-doc scaffolding only). PHS = Meridian's shape.
 
 ## Execution log
 
@@ -85,6 +89,19 @@ ingestion/onboarding gaps, not as testable live tenants, until they exist in
   architecture-rules + release:check green.
 - **Open / next:** wire an Anthropic judge for the subjective dimensions in the
   PR-5 harness (runs on ACA); feed PR-4 claim/namespace findings into the gate.
+
+### PR-4 — Validate governed agent claims and citations · 🟡 candidate
+
+- **What landed:** pure `src/lib/agent-claims/` — claim detection across 10
+  taxonomy types, evidence mapping to the trace, namespace-aware pattern
+  validation (phantom vs cross-namespace, case-insensitive slug lookup,
+  industry-scope grounding), and cross-tenant leakage detection. Sentinel ask
+  route now runs validation per answer, stamps `claim_validation_status` /
+  `tenant_isolation_status` on the trace, and emits a `validation` event.
+- **Validation:** 13/13 behavior tests; tsc/eslint clean; architecture-rules +
+  release:check green.
+- **Open / next:** inject a live Azure `PatternCatalog` for phantom detection
+  in the PR-5 harness; wire the Nexus route to surface findings on its payload.
 
 ## Remediation backlog (by lane)
 

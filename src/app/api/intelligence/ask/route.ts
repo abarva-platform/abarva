@@ -12,6 +12,7 @@ import {
   type RawAskSource,
 } from '@/lib/agent-trace';
 import { randomUUID } from 'node:crypto';
+import { validateClaimsAndCitations } from '@/lib/agent-claims';
 import {
   appendAskSessionTurn,
   normalizeAskTabId,
@@ -225,26 +226,53 @@ async function handleAsk(payload: AskPayload) {
             patternId,
             citationCount,
           });
-          // Observability · emit the context-bundle trace (non-blocking).
-          // Proves this Sentinel answer assembled its bundle before the model
-          // call. IDs only; the model input is captured as a sha256 hash.
-          emitAgentContextTraceAsync(
-            buildSentinelTrace({
-              questionId: randomUUID(),
-              tenantId,
-              tenantKey: tenantInventoryKey,
-              surface: 'intelligence',
-              userIntent:
-                (classificationForMemory as { intent?: string } | null)?.intent ?? null,
-              modelInputHash: traceModelInputHash ?? 'no_model_call',
-              responseId: event.id,
-              citationObjectsEmitted: traceSources
-                .map((s) => s.id)
-                .filter((id): id is string => Boolean(id)),
-              emittedAt: new Date().toISOString(),
-              sources: traceSources,
-            }),
-          );
+          // Observability · build the context-bundle trace, run post-response
+          // claim/citation + tenant-isolation validation against it, stamp the
+          // verdicts, then emit (non-blocking). IDs only; model input hashed.
+          const sentinelTrace = buildSentinelTrace({
+            questionId: randomUUID(),
+            tenantId,
+            tenantKey: tenantInventoryKey,
+            surface: 'intelligence',
+            userIntent:
+              (classificationForMemory as { intent?: string } | null)?.intent ?? null,
+            modelInputHash: traceModelInputHash ?? 'no_model_call',
+            responseId: event.id,
+            citationObjectsEmitted: traceSources
+              .map((s) => s.id)
+              .filter((id): id is string => Boolean(id)),
+            emittedAt: new Date().toISOString(),
+            sources: traceSources,
+          });
+          let validation: ReturnType<typeof validateClaimsAndCitations> | null = null;
+          try {
+            validation = validateClaimsAndCitations({
+              trace: {
+                tenant_key: sentinelTrace.tenant_key,
+                retrieved_tenant_context: sentinelTrace.retrieved_tenant_context,
+                retrieved_corpus_patterns: sentinelTrace.retrieved_corpus_patterns,
+                retrieved_artifacts: sentinelTrace.retrieved_artifacts,
+                citation_objects_emitted: sentinelTrace.citation_objects_emitted,
+              },
+              answerText: assistantText,
+            });
+            sentinelTrace.claim_validation_status = validation.claimValidationStatus;
+            sentinelTrace.tenant_isolation_status = validation.tenantIsolationStatus;
+          } catch {
+            // Validation must never break the response path.
+          }
+          emitAgentContextTraceAsync(sentinelTrace);
+          if (validation && (validation.unsupportedClaims.length > 0 ||
+            validation.namespaceFindings.length > 0 || validation.tenantLeakage.length > 0)) {
+            controller.enqueue(encoder.encode(JSON.stringify({
+              type: 'validation',
+              claimValidationStatus: validation.claimValidationStatus,
+              tenantIsolationStatus: validation.tenantIsolationStatus,
+              unsupportedClaims: validation.unsupportedClaims,
+              namespaceFindings: validation.namespaceFindings,
+              tenantLeakage: validation.tenantLeakage,
+            }) + '\n'));
+          }
           controller.enqueue(encoder.encode(JSON.stringify({
             type: 'done',
             telemetryEventId: event.id,
