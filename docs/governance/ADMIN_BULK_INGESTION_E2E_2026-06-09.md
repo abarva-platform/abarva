@@ -38,7 +38,19 @@ content-stable chunk upsert hold through the governed path.
 Run in-VNet via an Azure Container Apps job (private Postgres + KV secrets).
 Results captured from the job logs are appended below after the run:
 
-<!-- WSC_RESULT -->
+**Execution `job-ws-cde-eus-3e9w5bc` → Succeeded.** Two identical uploads of a
+canonical Vendors & Contracts payload through `loadCsvUploadToTenantContext`:
+
+| run | rowsParsed | recordsCommitted | factsCommitted | chunksUpserted |
+|-----|-----------:|-----------------:|---------------:|---------------:|
+| 1 | 2 | 2 | 10 | 2 |
+| 2 | 2 | 2 | 10 | 2 |
+
+`states={parsed:true, committed:true, chunked:true}`, **`idempotent: true`** —
+the second identical upload committed the SAME 10 facts / 2 chunks, zero
+duplication. WS-B supersede + the partial unique active-fact index +
+content-stable chunk upsert hold end-to-end through the governed Admin path on
+the live private DB.
 
 ## States reported separately (truth standard)
 
