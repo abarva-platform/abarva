@@ -30,12 +30,12 @@
       "id": "PR-3",
       "title": "readiness sidecar + additive migration + dry-run/backfill",
       "status": "done",
-      "pr": null
+      "pr": 3332
     },
     {
       "id": "PR-4",
-      "title": "CI validators + workflow + exception file",
-      "status": "queued",
+      "title": "CI validators + workflow + exception file (the hard gate)",
+      "status": "done",
       "pr": null
     },
     {
