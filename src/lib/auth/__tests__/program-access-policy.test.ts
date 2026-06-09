@@ -166,6 +166,63 @@ describe("program access policy", () => {
     expect(policy.programIdsAllowed).toBeNull();
   });
 
+  it("lets active-client Clerk tenant_admin override stale DB viewer membership drift", async () => {
+    setupRows({
+      person_client_memberships: {
+        role: "client_viewer",
+        access_level: "program_viewer",
+        financial_visibility: false,
+        can_admin_users: false,
+        can_create_programs: false,
+        can_approve_gates: false,
+      },
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor",
+      userId: "00000000-0000-4000-8000-000000000001",
+      clerkUserId: "user_anand_skyharbor",
+      role: "client_viewer",
+      tenantRole: "tenant_admin",
+      email: "anand.sundaram+skyharbor@thesundaram.com",
+    });
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(policy.canCreatePrograms).toBe(true);
+    expect(policy.canAdminUsers).toBe(true);
+    expect(policy.canApproveGates).toBe(true);
+  });
+
+  it("does not over-grant non-admin Clerk tenant roles", async () => {
+    setupRows({
+      person_client_memberships: {
+        role: "client_viewer",
+        access_level: "program_viewer",
+        financial_visibility: false,
+        can_create_programs: false,
+      },
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor",
+      userId: "00000000-0000-4000-8000-000000000001",
+      clerkUserId: "user_kk",
+      role: "client_viewer",
+      tenantRole: "viewer",
+      email: "cto@skyharbor-air.example.com",
+    });
+
+    expect(policy.accessLevel).toBe("program_viewer");
+    expect(policy.canCreatePrograms).toBe(false);
+  });
+
   it("treats source-only users as no program access", async () => {
     setupRows({
       person_client_memberships: {

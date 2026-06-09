@@ -87,6 +87,7 @@ beforeEach(() => {
     personId: 'person-1',
     clerkUserId: 'user_x',
     metadataClientKey: 'apexretail',
+    tenantRoles: {},
     name: 'A',
     email: 'a@b.com',
     primaryRole: 'client_viewer',

@@ -21,11 +21,23 @@ export interface CurrentUser {
   // session (e.g. `meridian`). Used as a client-access fallback when the
   // user has no rows in `person_client_memberships`.
   metadataClientKey: string | null;
+  tenantRoles: Record<string, string>;
   name: string;
   email: string | null;
   primaryRole: UserRole;
   accessibleClients: AccessibleClient[];
   defaultClientId: string | null;
+}
+
+function normalizeTenantRoles(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const roles: Record<string, string> = {};
+  for (const [key, role] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof role === 'string' && role.trim().length > 0) {
+      roles[key] = role;
+    }
+  }
+  return roles;
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
@@ -34,7 +46,12 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   const claims = sessionClaims as
     | {
-        publicMetadata?: { person_id?: string; role?: string; clientId?: string };
+        publicMetadata?: {
+          person_id?: string;
+          role?: string;
+          clientId?: string;
+          tenantRoles?: unknown;
+        };
         email_addresses?: Array<{ emailAddress: string }>;
         emailAddresses?: Array<{ emailAddress: string }>;
         email?: string;
@@ -73,6 +90,15 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
   const legacyRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, fallbackEmail);
   const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
+  let tenantRoles = normalizeTenantRoles(claims?.publicMetadata?.tenantRoles);
+  if (Object.keys(tenantRoles).length === 0) {
+    try {
+      const clerkUser = await clerkCurrentUser();
+      tenantRoles = normalizeTenantRoles(clerkUser?.publicMetadata?.tenantRoles);
+    } catch {
+      tenantRoles = {};
+    }
+  }
   const fallbackName =
     [claims?.firstName, claims?.lastName].filter(Boolean).join(' ') ||
     claims?.emailAddress ||
@@ -93,6 +119,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       personId: null,
       clerkUserId: userId,
       metadataClientKey,
+      tenantRoles,
       name: fallbackName,
       email: fallbackEmail,
       primaryRole: role,
@@ -140,6 +167,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     personId: (person as { id?: string } | null)?.id ?? resolvedPerson?.id ?? personId,
     clerkUserId: userId,
     metadataClientKey,
+    tenantRoles,
     name: (person as { name?: string } | null)?.name ?? resolvedPerson?.name ?? fallbackName,
     email: (person as { email?: string | null } | null)?.email ?? resolvedPerson?.email ?? fallbackEmail,
     primaryRole,

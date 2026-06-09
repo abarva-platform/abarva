@@ -56,6 +56,10 @@ export interface TenancyCtx {
   /** Tenant key (e.g. 'apexretail', 'meridian', 'arcturus') — string form alongside the UUID clientId. */
   clientKey?: string;
   userId: string;
+  /** Clerk user id for the signed-in session; present even when userId resolves to a persons UUID. */
+  clerkUserId?: string;
+  /** Clerk tenant role for the active client, when explicitly assigned. */
+  tenantRole?: string | null;
   role?: string;
   email?: string | null;
 }

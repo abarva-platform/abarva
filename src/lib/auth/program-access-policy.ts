@@ -136,6 +136,7 @@ function isClientAdminRole(role: string | null | undefined): boolean {
   return (
     role === "maestro" ||
     role === "admin" ||
+    role === "tenant_admin" ||
     role === "client_admin" ||
     role === "abarva_super_admin"
   );
@@ -261,6 +262,7 @@ function inferAccessLevel(
   membership: ClientMembershipRow | null,
   participants: ParticipantRow[],
 ): ClientAccessLevel {
+  if (ctx.tenantRole === "tenant_admin") return "client_admin";
   const explicit = normalizeAccessLevel(membership?.access_level);
   if (explicit) return explicit;
   if (isClientAdminRole(ctx.role) || isClientAdminRole(membership?.role))

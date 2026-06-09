@@ -50,6 +50,7 @@ function userFixture(overrides: Partial<CurrentUser> = {}): CurrentUser {
     personId: 'person-1',
     clerkUserId: 'clerk-1',
     metadataClientKey: null,
+    tenantRoles: {},
     name: 'Test User',
     email: 'test@example.com',
     primaryRole: 'client_viewer',
