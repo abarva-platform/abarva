@@ -150,7 +150,7 @@ async function main(): Promise<void> {
       answerability: answerability.status,
       claimStatus: validation.claimValidationStatus,
       isolationStatus: validation.tenantIsolationStatus,
-      leak: validation.tenantLeakage.map((f) => f.offendingTenantKey ?? f.detail),
+      leak: validation.tenantLeakage.map((f) => f.detail ?? f.offendingTenantKey),
       unsupportedClaims: validation.unsupportedClaims.length,
       rubricOverall: evaluation.overallScore,
       autoFail: evaluation.autoFailReasons,
