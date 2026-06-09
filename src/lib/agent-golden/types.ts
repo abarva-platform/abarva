@@ -23,10 +23,13 @@ export const GOLDEN_CATEGORIES = [
 
 export type GoldenCategory = (typeof GOLDEN_CATEGORIES)[number];
 
-export type Answerability =
-  | 'FULLY_ANSWERABLE'
-  | 'PARTIALLY_ANSWERABLE'
-  | 'NOT_LOADED';
+// WS-D: answerability is DERIVED from measured pipeline state, not a hardcoded
+// constant. The question bank only carries the honest pre-run hypothesis
+// (NOT_TESTED, or NOT_LOADED for designed negative tests); the live run computes
+// the real status via deriveAnswerability().
+import type { AnswerabilityStatus } from '@/lib/agent-data-coverage';
+
+export type Answerability = AnswerabilityStatus;
 
 export type RequiredSourceType =
   | 'tenant_context'
