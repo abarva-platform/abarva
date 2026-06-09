@@ -36,12 +36,12 @@
       "id": "PR-4",
       "title": "CI validators + workflow + exception file (the hard gate)",
       "status": "done",
-      "pr": null
+      "pr": 3333
     },
     {
       "id": "PR-5",
-      "title": "runtime buildValidatedAgentContextBundle",
-      "status": "queued",
+      "title": "runtime buildValidatedAgentContextBundle + adapters + broker wiring",
+      "status": "done",
       "pr": null
     },
     {
