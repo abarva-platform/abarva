@@ -4,7 +4,10 @@ import { getStrategicMoveById } from "@/lib/programs/queries";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { AppShell } from "@/components/shell/AppShell";
 import { StrategicMovePhaseClient } from "@/components/strategic-moves/StrategicMovePhaseClient";
-import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
+import {
+  isStrategicMoveRouteId,
+  parseStrategicMovePhaseNum,
+} from "@/lib/programs/strategic-move-route-params";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +29,8 @@ export default async function StrategicMovePhaseWorkspacePage({
     notFound();
   }
 
-  // Validate phaseNum is 1–5
-  const parsedPhase = parseInt(phaseNum, 10);
-  if (isNaN(parsedPhase) || parsedPhase < 1 || parsedPhase > 5) {
+  const parsedPhase = parseStrategicMovePhaseNum(phaseNum);
+  if (parsedPhase === null) {
     notFound();
   }
 

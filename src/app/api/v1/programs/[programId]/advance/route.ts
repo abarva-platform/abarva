@@ -24,6 +24,7 @@ import {
   normalizeMovesHumanRationale,
   validateMovesHumanRationale,
 } from "@/lib/programs/moves-ai-liability";
+import { resolvePhaseGateActorPersonId } from "@/lib/programs/phase-gate-actor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,10 +114,22 @@ export async function POST(
       strictRoleOk &&
       (accessPolicy.canApproveGates || ctx.role === "founder");
 
+    const actor = await resolvePhaseGateActorPersonId(ctx);
+    if (!actor.ok) {
+      return Response.json(
+        {
+          error: "operator_person_required",
+          detail: actor.detail,
+        },
+        { status: 409 },
+      );
+    }
+    const writeCtx = { ...ctx, userId: actor.personId };
+
     if (gate.requiresApproval && !body.approvalId && !canSelfApproveGate) {
       // Create a pending founder approval request and return it
       const approvalId = await requestFounderApproval(
-        ctx,
+        writeCtx,
         programId,
         {
           requestType: "phase_gate",
@@ -235,7 +248,7 @@ export async function POST(
         name: ctx.email ?? ctx.userId,
         title: ctx.role ?? "Gate approver",
         tenantName: ctx.clientKey ?? ctx.clientId,
-        userId: ctx.userId,
+        userId: actor.personId,
       },
       evidenceIds: coerceDecisionSupportList(body.evidenceIds),
       missingInputs: coerceDecisionSupportList(body.missingInputs),
@@ -247,7 +260,7 @@ export async function POST(
     });
 
     const result = await advancePhase(
-      ctx,
+      writeCtx,
       {
         programId,
         fromPhase,
@@ -256,7 +269,7 @@ export async function POST(
           body.snapshot ?? {},
           evidencePacket,
         ),
-        approvedByUserId: ctx.userId,
+        approvedByUserId: actor.personId,
         bypassGate: body.bypassGate,
       },
       { supabase },
