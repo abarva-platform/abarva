@@ -1,33 +1,29 @@
-const mockGetActiveClientRow = jest.fn();
-const mockGetCurrentUser = jest.fn();
+const mockRequireTenancy = jest.fn();
 
-jest.mock("@/lib/active-client", () => ({
-  getActiveClientRow: () => mockGetActiveClientRow(),
-}));
-
-jest.mock("@/lib/auth/current-user", () => ({
-  getCurrentUser: () => mockGetCurrentUser(),
+jest.mock("@/lib/auth/tenancy", () => ({
+  requireTenancy: () => mockRequireTenancy(),
+  TenancyError: class TenancyError extends Error {
+    constructor(public readonly code: "unauthenticated" | "no_client") {
+      super(code);
+    }
+  },
 }));
 
 describe("getStrategicMovesTenancy", () => {
   beforeEach(() => {
     jest.resetModules();
-    mockGetActiveClientRow.mockReset();
-    mockGetCurrentUser.mockReset();
+    mockRequireTenancy.mockReset();
   });
 
-  it("carries the active client key so Clerk persona policies can resolve same-tenant access", async () => {
-    mockGetActiveClientRow.mockResolvedValue({
-      id: "client-skyharbor",
-      key: "skyharbor",
-      name: "SkyHarbor Air",
-      industry_code: "airline",
-    });
-    mockGetCurrentUser.mockResolvedValue({
-      personId: null,
+  it("uses the shared tenancy resolver so server pages keep the same tenant-admin signal as APIs", async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor",
+      userId: "person-anand",
       clerkUserId: "user_skyharbor_cto",
+      tenantRole: "tenant_admin",
+      role: "client",
       email: "cto@skyharbor-air.example.com",
-      primaryRole: "client_viewer",
     });
 
     const { getStrategicMovesTenancy } =
@@ -36,8 +32,31 @@ describe("getStrategicMovesTenancy", () => {
     await expect(getStrategicMovesTenancy()).resolves.toMatchObject({
       clientId: "client-skyharbor",
       clientKey: "skyharbor",
-      userId: "clerk:user_skyharbor_cto",
+      userId: "person-anand",
+      tenantRole: "tenant_admin",
+      role: "client",
       email: "cto@skyharbor-air.example.com",
     });
+  });
+
+  it("keeps the previous null contract for unauthenticated or no-client sessions", async () => {
+    const { TenancyError } = await import("@/lib/auth/tenancy");
+    mockRequireTenancy.mockRejectedValue(new TenancyError("unauthenticated"));
+
+    const { getStrategicMovesTenancy } =
+      await import("../strategic-moves-context");
+
+    await expect(getStrategicMovesTenancy()).resolves.toBeNull();
+  });
+
+  it("does not hide unexpected tenancy failures", async () => {
+    mockRequireTenancy.mockRejectedValue(new Error("database unavailable"));
+
+    const { getStrategicMovesTenancy } =
+      await import("../strategic-moves-context");
+
+    await expect(getStrategicMovesTenancy()).rejects.toThrow(
+      "database unavailable",
+    );
   });
 });
