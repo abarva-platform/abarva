@@ -53,46 +53,51 @@ import {
   type EnterpriseDataRoomDomain,
   type EnterpriseDataRoomRecord,
   type EnterpriseEvidenceRecord,
-} from '@/lib/knowledge/enterprise-data-room';
-import { mapTenantRecordsToContextItems } from '@/lib/knowledge/tenant-data/mapper';
+} from "@/lib/knowledge/enterprise-data-room";
+import { mapTenantRecordsToContextItems } from "@/lib/knowledge/tenant-data/mapper";
 import {
   getTenantDataAdapter,
   type ContextChunk,
   type SegmentId,
   type TenantDataAdapter,
-} from '@/lib/knowledge/tenant-data';
-import { normalizePrivateTenantKey } from '@/lib/knowledge/private-data-plane/registry';
+} from "@/lib/knowledge/tenant-data";
+import { normalizePrivateTenantKey } from "@/lib/knowledge/private-data-plane/registry";
+import {
+  buildValidatedAgentContextBundle,
+  type ValidatedAgentContextBundle,
+} from "@/lib/governance/agent-context-bundle";
+import { fromEnterpriseBundle } from "@/lib/governance/context-bundle-adapters";
 
-export type EnterpriseAgentName = 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
+export type EnterpriseAgentName = "Nexus" | "Sentinel" | "Atlas" | "Steward";
 
 export type EnterpriseContextSurface =
-  | 'programs'
-  | 'source'
-  | 'intelligence'
-  | 'tower'
-  | 'chat'
-  | 'unknown';
+  | "programs"
+  | "source"
+  | "intelligence"
+  | "tower"
+  | "chat"
+  | "unknown";
 
 export type EnterpriseContextItemKind =
-  | 'tenant_summary'
-  | 'person'
-  | 'program'
-  | 'artifact'
-  | 'evidence'
-  | 'system'
-  | 'vendor_contract'
-  | 'sourcing_event'
-  | 'financial_metric'
-  | 'graph_candidate'
-  | 'policy_readiness'
+  | "tenant_summary"
+  | "person"
+  | "program"
+  | "artifact"
+  | "evidence"
+  | "system"
+  | "vendor_contract"
+  | "sourcing_event"
+  | "financial_metric"
+  | "graph_candidate"
+  | "policy_readiness"
   // TD-4 — persisted tenant-data layer surfaces two new context-item
   // kinds that have no fixture-side analog. The broker keeps emitting
   // existing kinds today; TD-5 wires the mapper output into the bundle
   // and starts emitting these.
-  | 'kpi_metric'
-  | 'cross_program_signal';
+  | "kpi_metric"
+  | "cross_program_signal";
 
-export type EnterpriseContextSensitivity = 'summary' | 'structured' | 'l4_raw';
+export type EnterpriseContextSensitivity = "summary" | "structured" | "l4_raw";
 
 export interface EnterpriseAgentContextRequest {
   tenantKey: string;
@@ -108,7 +113,7 @@ export interface EnterpriseEvidenceCitation {
   evidenceId: string;
   sourceArtifactId: string;
   citationLocator: string;
-  confidence: EnterpriseEvidenceRecord['confidence'];
+  confidence: EnterpriseEvidenceRecord["confidence"];
   approvalState: EnterpriseApprovalState;
 }
 
@@ -129,10 +134,10 @@ export interface EnterpriseBlockedContextItem {
   id: string;
   tenantKey: string;
   reason:
-    | 'unknown_tenant'
-    | 'l4_raw_not_allowed'
-    | 'domain_not_available'
-    | 'canonicalization_pending';
+    | "unknown_tenant"
+    | "l4_raw_not_allowed"
+    | "domain_not_available"
+    | "canonicalization_pending";
   message: string;
   requestedDomain?: EnterpriseDataRoomDomain;
 }
@@ -151,7 +156,7 @@ export interface EnterpriseAgentContextBundle {
   tenantKey: string;
   agentName: EnterpriseAgentName;
   surface: EnterpriseContextSurface;
-  generatedFrom: 'enterprise_agent_context_broker_v1';
+  generatedFrom: "enterprise_agent_context_broker_v1";
   runtimeSafe: true;
   directStoreAccess: false;
   items: EnterpriseAgentContextItem[];
@@ -159,15 +164,41 @@ export interface EnterpriseAgentContextBundle {
   citations: EnterpriseEvidenceCitation[];
   graphNeighborhood: EnterpriseGraphNeighborhoodSummary;
   warnings: string[];
+  /**
+   * PR-5 — governance verdict for this bundle's items, produced by routing them
+   * through the policy contract (buildValidatedAgentContextBundle). Additive and
+   * optional: existing consumers ignore it; governance-aware callers use
+   * `governance.usable` and never surface `governance.blocked` to a model.
+   */
+  governance?: ValidatedAgentContextBundle;
 }
 
-const BROKER_VERSION = 'enterprise_agent_context_broker_v1';
+const BROKER_VERSION = "enterprise_agent_context_broker_v1";
+
+/**
+ * Attach the governance verdict to a freshly-assembled bundle. Maps the broker
+ * items onto governed candidates and runs them through the policy seam. Pure;
+ * does not mutate `items` — it adds the `governance` field only.
+ */
+function withGovernance(
+  bundle: EnterpriseAgentContextBundle,
+): EnterpriseAgentContextBundle {
+  const candidates = fromEnterpriseBundle(
+    bundle,
+    bundle.tenantKey,
+    bundle.tenantKey,
+  );
+  return {
+    ...bundle,
+    governance: buildValidatedAgentContextBundle(candidates),
+  };
+}
 
 /** TD-5 — bundle-level warning strings emitted by the two-source consumer. */
 export const TENANT_DATA_PERSISTED_WARNING =
-  'Tenant context sourced from persisted data layer (tenant_admin_upload).';
+  "Tenant context sourced from persisted data layer (tenant_admin_upload).";
 export const TENANT_DATA_FIXTURE_WARNING =
-  'Tenant context sourced from synthetic Enterprise Data Room fixture.';
+  "Tenant context sourced from synthetic Enterprise Data Room fixture.";
 
 export function buildEnterpriseAgentContextBundle(
   request: EnterpriseAgentContextRequest,
@@ -182,7 +213,7 @@ export function buildEnterpriseAgentContextBundle(
   const citations = room.evidence.slice(0, 12).map(toCitation);
   const items = selectContextItems(room, request, citations);
 
-  return {
+  return withGovernance({
     tenantKey: request.tenantKey,
     agentName: request.agentName,
     surface: request.surface,
@@ -192,15 +223,18 @@ export function buildEnterpriseAgentContextBundle(
     items,
     blockedItems,
     citations,
-    graphNeighborhood: buildGraphNeighborhood(room, Boolean(request.includeGraphNeighborhood)),
+    graphNeighborhood: buildGraphNeighborhood(
+      room,
+      Boolean(request.includeGraphNeighborhood),
+    ),
     warnings: [
-      'Context broker is contract-only; it does not query persistent stores, generate embeddings, or mutate runtime routes.',
+      "Context broker is contract-only; it does not query persistent stores, generate embeddings, or mutate runtime routes.",
       validation.isRichTenantReady
-        ? 'Tenant meets current rich-readiness thresholds for synthetic demo context.'
-        : 'Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.',
+        ? "Tenant meets current rich-readiness thresholds for synthetic demo context."
+        : "Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.",
       TENANT_DATA_FIXTURE_WARNING,
     ],
-  };
+  });
 }
 
 /**
@@ -224,10 +258,13 @@ export async function buildEnterpriseAgentContextBundleAsync(
   request: EnterpriseAgentContextRequest,
 ): Promise<EnterpriseAgentContextBundle> {
   const dataTenantKey = normalizeEnterpriseTenantKey(request.tenantKey);
-  const normalizedRequest = dataTenantKey === request.tenantKey
-    ? request
-    : { ...request, tenantKey: dataTenantKey };
-  const room = getEnterpriseDataRoom(dataTenantKey) ?? getEnterpriseDataRoom(request.tenantKey);
+  const normalizedRequest =
+    dataTenantKey === request.tenantKey
+      ? request
+      : { ...request, tenantKey: dataTenantKey };
+  const room =
+    getEnterpriseDataRoom(dataTenantKey) ??
+    getEnterpriseDataRoom(request.tenantKey);
   if (!room) {
     return buildUnknownTenantBundle(request);
   }
@@ -252,7 +289,7 @@ export async function buildEnterpriseAgentContextBundleAsync(
     extraWarnings = [TENANT_DATA_FIXTURE_WARNING];
   }
 
-  return {
+  return withGovernance({
     tenantKey: dataTenantKey,
     agentName: request.agentName,
     surface: request.surface,
@@ -262,22 +299,27 @@ export async function buildEnterpriseAgentContextBundleAsync(
     items,
     blockedItems,
     citations,
-    graphNeighborhood: buildGraphNeighborhood(room, Boolean(request.includeGraphNeighborhood)),
+    graphNeighborhood: buildGraphNeighborhood(
+      room,
+      Boolean(request.includeGraphNeighborhood),
+    ),
     warnings: [
-      'Context broker is contract-only; it does not query persistent stores, generate embeddings, or mutate runtime routes.',
+      "Context broker is contract-only; it does not query persistent stores, generate embeddings, or mutate runtime routes.",
       validation.isRichTenantReady
-        ? 'Tenant meets current rich-readiness thresholds for synthetic demo context.'
-        : 'Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.',
+        ? "Tenant meets current rich-readiness thresholds for synthetic demo context."
+        : "Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.",
       ...extraWarnings,
     ],
-  };
+  });
 }
 
 function normalizeEnterpriseTenantKey(tenantKey: string): string {
   return normalizePrivateTenantKey(tenantKey) ?? tenantKey;
 }
 
-function buildUnknownTenantBundle(request: EnterpriseAgentContextRequest): EnterpriseAgentContextBundle {
+function buildUnknownTenantBundle(
+  request: EnterpriseAgentContextRequest,
+): EnterpriseAgentContextBundle {
   return {
     tenantKey: request.tenantKey,
     agentName: request.agentName,
@@ -290,8 +332,9 @@ function buildUnknownTenantBundle(request: EnterpriseAgentContextRequest): Enter
       {
         id: `blocked:${request.tenantKey}:unknown-tenant`,
         tenantKey: request.tenantKey,
-        reason: 'unknown_tenant',
-        message: 'No Enterprise Data Room exists for this tenant key; broker returned no fabricated context.',
+        reason: "unknown_tenant",
+        message:
+          "No Enterprise Data Room exists for this tenant key; broker returned no fabricated context.",
       },
     ],
     citations: [],
@@ -302,9 +345,11 @@ function buildUnknownTenantBundle(request: EnterpriseAgentContextRequest): Enter
       edgeCount: 0,
       topNodeTitles: [],
       edgeTypes: [],
-      note: 'Graph neighborhood withheld because the tenant data room was not found.',
+      note: "Graph neighborhood withheld because the tenant data room was not found.",
     },
-    warnings: ['Unknown tenant context request produced a blocked bundle instead of synthetic filler.'],
+    warnings: [
+      "Unknown tenant context request produced a blocked bundle instead of synthetic filler.",
+    ],
   };
 }
 
@@ -317,19 +362,21 @@ function buildBlockedItems(
     blocked.push({
       id: `blocked:${room.tenantKey}:l4-raw`,
       tenantKey: room.tenantKey,
-      reason: 'l4_raw_not_allowed',
-      message: 'Raw L4 client/private context is blocked unless the caller explicitly requests and is authorized for raw context.',
+      reason: "l4_raw_not_allowed",
+      message:
+        "Raw L4 client/private context is blocked unless the caller explicitly requests and is authorized for raw context.",
     });
   }
 
   for (const domain of request.requestedDomains ?? []) {
-    if (domain === 'operating_telemetry') {
+    if (domain === "operating_telemetry") {
       blocked.push({
         id: `blocked:${room.tenantKey}:${domain}`,
         tenantKey: room.tenantKey,
-        reason: 'domain_not_available',
+        reason: "domain_not_available",
         requestedDomain: domain,
-        message: 'Operating telemetry is not loaded into the source-code seeded Enterprise Data Room yet.',
+        message:
+          "Operating telemetry is not loaded into the source-code seeded Enterprise Data Room yet.",
       });
     }
   }
@@ -360,7 +407,7 @@ function selectFixtureContextItems(
 ): EnterpriseAgentContextItem[] {
   const items: EnterpriseAgentContextItem[] = [];
 
-  if (request.agentName === 'Nexus') {
+  if (request.agentName === "Nexus") {
     // PR-R · founder feedback #1 — "Nexus doesn't have context of
     // existing org structure ... who is who in IT". Expose the
     // executive bench (people domain) so Nexus can resolve role
@@ -369,262 +416,314 @@ function selectFixtureContextItems(
     // paths on the /programs surfaces. Slice 8 keeps the prompt
     // bounded; the seeded executive bench is sized so the top 8
     // already covers C-suite + IT/Apps leadership for Apex.
-    items.push(...room.people.slice(0, 8).map((person) => ({
-      id: `ctx:${person.id}`,
-      kind: 'person' as const,
-      title: `${person.name} — ${person.role}`,
-      summary: [
-        `Org unit: ${person.orgUnit}`,
-        person.reportsToRole ? `Reports to: ${person.reportsToRole}` : null,
-        person.decisionRights.length > 0
-          ? `Decision rights: ${person.decisionRights.slice(0, 3).join('; ')}`
-          : null,
-        person.priorities.length > 0
-          ? `Priorities: ${person.priorities.slice(0, 3).join('; ')}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join('. '),
-      tenantKey: room.tenantKey,
-      sourceBasis: person.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'structured' as const,
-      provenanceIds: [person.id, ...person.sponsorsPrograms, ...person.ownsSystems],
-      linkedEvidence: [],
-    })));
-    // OV2-1d-archetype · when the program carries a canonical pattern
-    // id, surface it in provenanceIds as `pattern:${patternId}` (same
-    // prefix-namespace convention used for `system:*` and `vendor:*`
-    // ids). Consumers like detectBriefOverlap filter by the prefix.
-    items.push(...room.programs.slice(0, 6).map((program) => ({
-      id: `ctx:${program.id}`,
-      kind: 'program' as const,
-      title: program.name,
-      summary: `${program.lifecycleState}; sponsor ${program.executiveSponsor}; timeline ${program.timeline}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: program.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'structured' as const,
-      provenanceIds: [
-        program.id,
-        ...program.linkedSystemIds,
-        ...program.linkedVendorIds,
-        ...(program.patternId ? [`pattern:${program.patternId}`] : []),
-      ],
-      linkedEvidence: citationsForIds(citations, program.linkedEvidenceIds),
-    })));
-    items.push(...room.artifacts.slice(0, 5).map((artifact) => ({
-      id: `ctx:${artifact.id}`,
-      kind: 'artifact' as const,
-      title: artifact.title,
-      summary: `${artifact.artifactType} in ${artifact.lifecyclePhase}; approval ${artifact.approvalState}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: artifact.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'structured' as const,
-      provenanceIds: [artifact.id, ...artifact.linkedProgramIds],
-      linkedEvidence: citationsForIds(citations, artifact.linkedEvidenceIds),
-    })));
-
-    const requestedDomains = new Set(request.requestedDomains ?? []);
-    if (requestedDomains.has('system_landscape')) {
-      items.push(...room.systems.slice(0, 8).map((system) => ({
-        id: `ctx:${system.id}`,
-        kind: 'system' as const,
-        title: system.name,
-        summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry ?? 'not recorded'}; criticality ${system.criticality}; lifecycle ${system.lifecycleState}`,
-        tenantKey: room.tenantKey,
-        sourceBasis: system.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
-        provenanceIds: [system.id],
-        linkedEvidence: [],
-      })));
-    }
-    if (requestedDomains.has('vendor_contracts')) {
-      items.push(...room.vendorContracts.slice(0, 6).map((contract) => ({
-        id: `ctx:${contract.id}`,
-        kind: 'vendor_contract' as const,
-        title: `${contract.vendorName} - ${contract.product}`,
-        summary: `${contract.category}; spend ${contract.annualSpendUsd}; status ${contract.contractStatus}; renewal ${contract.renewalOrExpiry ?? 'not recorded'}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
-        tenantKey: room.tenantKey,
-        sourceBasis: contract.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
-        provenanceIds: [contract.id],
-        linkedEvidence: [],
-      })));
-    }
-    if (requestedDomains.has('financials')) {
-      items.push(...room.financials.slice(0, 8).map((metric) => ({
-        id: `ctx:${metric.id}`,
-        kind: 'financial_metric' as const,
-        title: metric.metric,
-        summary: `${metric.value} ${metric.unit}; category ${metric.category}`,
-        tenantKey: room.tenantKey,
-        sourceBasis: metric.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'summary' as const,
-        provenanceIds: [metric.id],
-        linkedEvidence: citationsForIds(citations, metric.evidenceIds),
-      })));
-    }
-    if (requestedDomains.has('evidence_provenance')) {
-      items.push(...room.evidence.slice(0, 6).map((evidence) => ({
-        id: `ctx:${evidence.id}`,
-        kind: 'evidence' as const,
-        title: evidence.citationLocator,
-        summary: `${evidence.claimText} (${evidence.usabilityState}; confidence ${evidence.confidence})`,
-        tenantKey: room.tenantKey,
-        sourceBasis: evidence.sourceBasis,
-        dataClassification: evidence.dataClassification,
-        sensitivity: 'structured' as const,
-        provenanceIds: [evidence.id, evidence.sourceArtifactId, ...evidence.linkedArtifactIds],
-        linkedEvidence: [toCitation(evidence)],
-      })));
-    }
-  }
-
-  if (request.agentName === 'Sentinel') {
-    if (request.surface === 'source') {
-      items.push(...room.people.slice(0, 8).map((person) => ({
+    items.push(
+      ...room.people.slice(0, 8).map((person) => ({
         id: `ctx:${person.id}`,
-        kind: 'person' as const,
+        kind: "person" as const,
         title: `${person.name} — ${person.role}`,
         summary: [
           `Org unit: ${person.orgUnit}`,
           person.reportsToRole ? `Reports to: ${person.reportsToRole}` : null,
           person.decisionRights.length > 0
-            ? `Decision rights: ${person.decisionRights.slice(0, 3).join('; ')}`
+            ? `Decision rights: ${person.decisionRights.slice(0, 3).join("; ")}`
             : null,
           person.priorities.length > 0
-            ? `Priorities: ${person.priorities.slice(0, 3).join('; ')}`
+            ? `Priorities: ${person.priorities.slice(0, 3).join("; ")}`
             : null,
         ]
           .filter(Boolean)
-          .join('. '),
+          .join(". "),
         tenantKey: room.tenantKey,
         sourceBasis: person.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
-        provenanceIds: [person.id, ...person.sponsorsPrograms, ...person.ownsSystems],
+        dataClassification: "synthetic" as const,
+        sensitivity: "structured" as const,
+        provenanceIds: [
+          person.id,
+          ...person.sponsorsPrograms,
+          ...person.ownsSystems,
+        ],
         linkedEvidence: [],
-      })));
-      items.push(...room.systems.slice(0, 8).map((system) => ({
+      })),
+    );
+    // OV2-1d-archetype · when the program carries a canonical pattern
+    // id, surface it in provenanceIds as `pattern:${patternId}` (same
+    // prefix-namespace convention used for `system:*` and `vendor:*`
+    // ids). Consumers like detectBriefOverlap filter by the prefix.
+    items.push(
+      ...room.programs.slice(0, 6).map((program) => ({
+        id: `ctx:${program.id}`,
+        kind: "program" as const,
+        title: program.name,
+        summary: `${program.lifecycleState}; sponsor ${program.executiveSponsor}; timeline ${program.timeline}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: program.sourceBasis,
+        dataClassification: "synthetic" as const,
+        sensitivity: "structured" as const,
+        provenanceIds: [
+          program.id,
+          ...program.linkedSystemIds,
+          ...program.linkedVendorIds,
+          ...(program.patternId ? [`pattern:${program.patternId}`] : []),
+        ],
+        linkedEvidence: citationsForIds(citations, program.linkedEvidenceIds),
+      })),
+    );
+    items.push(
+      ...room.artifacts.slice(0, 5).map((artifact) => ({
+        id: `ctx:${artifact.id}`,
+        kind: "artifact" as const,
+        title: artifact.title,
+        summary: `${artifact.artifactType} in ${artifact.lifecyclePhase}; approval ${artifact.approvalState}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: artifact.sourceBasis,
+        dataClassification: "synthetic" as const,
+        sensitivity: "structured" as const,
+        provenanceIds: [artifact.id, ...artifact.linkedProgramIds],
+        linkedEvidence: citationsForIds(citations, artifact.linkedEvidenceIds),
+      })),
+    );
+
+    const requestedDomains = new Set(request.requestedDomains ?? []);
+    if (requestedDomains.has("system_landscape")) {
+      items.push(
+        ...room.systems.slice(0, 8).map((system) => ({
+          id: `ctx:${system.id}`,
+          kind: "system" as const,
+          title: system.name,
+          summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry ?? "not recorded"}; criticality ${system.criticality}; lifecycle ${system.lifecycleState}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: system.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [system.id],
+          linkedEvidence: [],
+        })),
+      );
+    }
+    if (requestedDomains.has("vendor_contracts")) {
+      items.push(
+        ...room.vendorContracts.slice(0, 6).map((contract) => ({
+          id: `ctx:${contract.id}`,
+          kind: "vendor_contract" as const,
+          title: `${contract.vendorName} - ${contract.product}`,
+          summary: `${contract.category}; spend ${contract.annualSpendUsd}; status ${contract.contractStatus}; renewal ${contract.renewalOrExpiry ?? "not recorded"}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: contract.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [contract.id],
+          linkedEvidence: [],
+        })),
+      );
+    }
+    if (requestedDomains.has("financials")) {
+      items.push(
+        ...room.financials.slice(0, 8).map((metric) => ({
+          id: `ctx:${metric.id}`,
+          kind: "financial_metric" as const,
+          title: metric.metric,
+          summary: `${metric.value} ${metric.unit}; category ${metric.category}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: metric.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "summary" as const,
+          provenanceIds: [metric.id],
+          linkedEvidence: citationsForIds(citations, metric.evidenceIds),
+        })),
+      );
+    }
+    if (requestedDomains.has("evidence_provenance")) {
+      items.push(
+        ...room.evidence.slice(0, 6).map((evidence) => ({
+          id: `ctx:${evidence.id}`,
+          kind: "evidence" as const,
+          title: evidence.citationLocator,
+          summary: `${evidence.claimText} (${evidence.usabilityState}; confidence ${evidence.confidence})`,
+          tenantKey: room.tenantKey,
+          sourceBasis: evidence.sourceBasis,
+          dataClassification: evidence.dataClassification,
+          sensitivity: "structured" as const,
+          provenanceIds: [
+            evidence.id,
+            evidence.sourceArtifactId,
+            ...evidence.linkedArtifactIds,
+          ],
+          linkedEvidence: [toCitation(evidence)],
+        })),
+      );
+    }
+  }
+
+  if (request.agentName === "Sentinel") {
+    if (request.surface === "source") {
+      items.push(
+        ...room.people.slice(0, 8).map((person) => ({
+          id: `ctx:${person.id}`,
+          kind: "person" as const,
+          title: `${person.name} — ${person.role}`,
+          summary: [
+            `Org unit: ${person.orgUnit}`,
+            person.reportsToRole ? `Reports to: ${person.reportsToRole}` : null,
+            person.decisionRights.length > 0
+              ? `Decision rights: ${person.decisionRights.slice(0, 3).join("; ")}`
+              : null,
+            person.priorities.length > 0
+              ? `Priorities: ${person.priorities.slice(0, 3).join("; ")}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(". "),
+          tenantKey: room.tenantKey,
+          sourceBasis: person.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [
+            person.id,
+            ...person.sponsorsPrograms,
+            ...person.ownsSystems,
+          ],
+          linkedEvidence: [],
+        })),
+      );
+      items.push(
+        ...room.systems.slice(0, 8).map((system) => ({
+          id: `ctx:${system.id}`,
+          kind: "system" as const,
+          title: system.name,
+          summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry}; risk ${system.criticality}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: system.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [system.id],
+          linkedEvidence: [],
+        })),
+      );
+      items.push(
+        ...room.vendorContracts.slice(0, 8).map((contract) => ({
+          id: `ctx:${contract.id}`,
+          kind: "vendor_contract" as const,
+          title: `${contract.vendorName} - ${contract.product}`,
+          summary: `${contract.category}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: contract.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [contract.id],
+          linkedEvidence: [],
+        })),
+      );
+      items.push(
+        ...room.sourcingEvents.slice(0, 4).map((event) => ({
+          id: `ctx:${event.id}`,
+          kind: "sourcing_event" as const,
+          title: event.title,
+          summary: `${event.workType}; status ${event.status}; recommended vendor ${event.recommendedVendorId}; linked programs ${event.linkedProgramIds.join(", ") || "none"}`,
+          tenantKey: room.tenantKey,
+          sourceBasis: event.sourceBasis,
+          dataClassification: "synthetic" as const,
+          sensitivity: "structured" as const,
+          provenanceIds: [
+            event.id,
+            ...event.linkedProgramIds,
+            ...event.linkedArtifactIds,
+          ],
+          linkedEvidence: [],
+        })),
+      );
+    }
+    items.push(
+      ...room.evidence.slice(0, 8).map((evidence) => ({
+        id: `ctx:${evidence.id}`,
+        kind: "evidence" as const,
+        title: evidence.citationLocator,
+        summary: `${evidence.claimText} (${evidence.usabilityState}; confidence ${evidence.confidence})`,
+        tenantKey: room.tenantKey,
+        sourceBasis: evidence.sourceBasis,
+        dataClassification: evidence.dataClassification,
+        sensitivity: "structured" as const,
+        provenanceIds: [
+          evidence.id,
+          evidence.sourceArtifactId,
+          ...evidence.linkedArtifactIds,
+        ],
+        linkedEvidence: [toCitation(evidence)],
+      })),
+    );
+    items.push(
+      ...room.graph.nodes.slice(0, 6).map((node) => ({
+        id: `ctx:${node.id}`,
+        kind: "graph_candidate" as const,
+        title: node.title,
+        summary: `${node.nodeType} graph candidate with stable key ${node.stableKey}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: node.sourceBasis,
+        dataClassification: "synthetic" as const,
+        sensitivity: "structured" as const,
+        provenanceIds: [node.id],
+        linkedEvidence: [],
+      })),
+    );
+  }
+
+  if (request.agentName === "Atlas") {
+    items.push(
+      ...room.financials.slice(0, 6).map((metric) => ({
+        id: `ctx:${metric.id}`,
+        kind: "financial_metric" as const,
+        title: metric.metric,
+        summary: `${metric.value} ${metric.unit}; category ${metric.category}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: metric.sourceBasis,
+        dataClassification: "synthetic" as const,
+        sensitivity: "summary" as const,
+        provenanceIds: [metric.id],
+        linkedEvidence: citationsForIds(citations, metric.evidenceIds),
+      })),
+    );
+    items.push(
+      ...room.systems.slice(0, 4).map((system) => ({
         id: `ctx:${system.id}`,
-        kind: 'system' as const,
+        kind: "system" as const,
         title: system.name,
-        summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry}; risk ${system.criticality}`,
+        summary: `${system.vendor}; ${system.category}; criticality ${system.criticality}; lifecycle ${system.lifecycleState}`,
         tenantKey: room.tenantKey,
         sourceBasis: system.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
+        dataClassification: "synthetic" as const,
+        sensitivity: "summary" as const,
         provenanceIds: [system.id],
         linkedEvidence: [],
-      })));
-      items.push(...room.vendorContracts.slice(0, 8).map((contract) => ({
-        id: `ctx:${contract.id}`,
-        kind: 'vendor_contract' as const,
-        title: `${contract.vendorName} - ${contract.product}`,
-        summary: `${contract.category}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
-        tenantKey: room.tenantKey,
-        sourceBasis: contract.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
-        provenanceIds: [contract.id],
-        linkedEvidence: [],
-      })));
-      items.push(...room.sourcingEvents.slice(0, 4).map((event) => ({
-        id: `ctx:${event.id}`,
-        kind: 'sourcing_event' as const,
-        title: event.title,
-        summary: `${event.workType}; status ${event.status}; recommended vendor ${event.recommendedVendorId}; linked programs ${event.linkedProgramIds.join(', ') || 'none'}`,
-        tenantKey: room.tenantKey,
-        sourceBasis: event.sourceBasis,
-        dataClassification: 'synthetic' as const,
-        sensitivity: 'structured' as const,
-        provenanceIds: [event.id, ...event.linkedProgramIds, ...event.linkedArtifactIds],
-        linkedEvidence: [],
-      })));
-    }
-    items.push(...room.evidence.slice(0, 8).map((evidence) => ({
-      id: `ctx:${evidence.id}`,
-      kind: 'evidence' as const,
-      title: evidence.citationLocator,
-      summary: `${evidence.claimText} (${evidence.usabilityState}; confidence ${evidence.confidence})`,
-      tenantKey: room.tenantKey,
-      sourceBasis: evidence.sourceBasis,
-      dataClassification: evidence.dataClassification,
-      sensitivity: 'structured' as const,
-      provenanceIds: [evidence.id, evidence.sourceArtifactId, ...evidence.linkedArtifactIds],
-      linkedEvidence: [toCitation(evidence)],
-    })));
-    items.push(...room.graph.nodes.slice(0, 6).map((node) => ({
-      id: `ctx:${node.id}`,
-      kind: 'graph_candidate' as const,
-      title: node.title,
-      summary: `${node.nodeType} graph candidate with stable key ${node.stableKey}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: node.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'structured' as const,
-      provenanceIds: [node.id],
-      linkedEvidence: [],
-    })));
+      })),
+    );
   }
 
-  if (request.agentName === 'Atlas') {
-    items.push(...room.financials.slice(0, 6).map((metric) => ({
-      id: `ctx:${metric.id}`,
-      kind: 'financial_metric' as const,
-      title: metric.metric,
-      summary: `${metric.value} ${metric.unit}; category ${metric.category}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: metric.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'summary' as const,
-      provenanceIds: [metric.id],
-      linkedEvidence: citationsForIds(citations, metric.evidenceIds),
-    })));
-    items.push(...room.systems.slice(0, 4).map((system) => ({
-      id: `ctx:${system.id}`,
-      kind: 'system' as const,
-      title: system.name,
-      summary: `${system.vendor}; ${system.category}; criticality ${system.criticality}; lifecycle ${system.lifecycleState}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: system.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'summary' as const,
-      provenanceIds: [system.id],
-      linkedEvidence: [],
-    })));
-  }
-
-  if (request.agentName === 'Steward') {
+  if (request.agentName === "Steward") {
     items.push({
       id: `ctx:${room.tenantKey}:policy-readiness`,
-      kind: 'policy_readiness',
-      title: 'Enterprise Data Room policy readiness',
+      kind: "policy_readiness",
+      title: "Enterprise Data Room policy readiness",
       summary: `Residency ${room.profile.residencyMode}; data policy ${room.profile.dataClassificationPolicyId}; vector indexes require tenant key: ${room.vectorReadiness.every((index) => index.tenantKeyRequired)}`,
       tenantKey: room.tenantKey,
       sourceBasis: room.profile.sourceBasis,
       dataClassification: room.profile.dataClassification,
-      sensitivity: 'summary',
+      sensitivity: "summary",
       provenanceIds: [room.profile.tenantKey],
       linkedEvidence: [],
     });
-    items.push(...room.vendorContracts.slice(0, 4).map((contract) => ({
-      id: `ctx:${contract.id}`,
-      kind: 'vendor_contract' as const,
-      title: `${contract.vendorName} - ${contract.product}`,
-      summary: `${contract.category}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
-      tenantKey: room.tenantKey,
-      sourceBasis: contract.sourceBasis,
-      dataClassification: 'synthetic' as const,
-      sensitivity: 'structured' as const,
-      provenanceIds: [contract.id],
-      linkedEvidence: [],
-    })));
+    items.push(
+      ...room.vendorContracts.slice(0, 4).map((contract) => ({
+        id: `ctx:${contract.id}`,
+        kind: "vendor_contract" as const,
+        title: `${contract.vendorName} - ${contract.product}`,
+        summary: `${contract.category}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: contract.sourceBasis,
+        dataClassification: "synthetic" as const,
+        sensitivity: "structured" as const,
+        provenanceIds: [contract.id],
+        linkedEvidence: [],
+      })),
+    );
   }
 
   return items;
@@ -669,75 +768,75 @@ async function selectPersistedContextItems(
   };
 
   switch (request.agentName) {
-    case 'Nexus':
+    case "Nexus":
       // Founder feedback #1 — Nexus needs the executive bench, the
       // active program inventory, the cross-program signals (so it can
       // talk about portfolio-wide patterns), and the top evidence
       // claims (provenance for any factual statement).
-      fetch('org_structure', 8);
-      fetch('program_inventory', 6);
-      fetch('cross_program_signals', 4);
-      fetch('evidence_ledger', 5);
-      if (request.requestedDomains?.includes('system_landscape')) {
-        fetch('it_landscape', 8);
+      fetch("org_structure", 8);
+      fetch("program_inventory", 6);
+      fetch("cross_program_signals", 4);
+      fetch("evidence_ledger", 5);
+      if (request.requestedDomains?.includes("system_landscape")) {
+        fetch("it_landscape", 8);
       }
-      if (request.requestedDomains?.includes('vendor_contracts')) {
-        fetch('vendor_contracts', 6);
+      if (request.requestedDomains?.includes("vendor_contracts")) {
+        fetch("vendor_contracts", 6);
       }
-      if (request.requestedDomains?.includes('financials')) {
-        fetch('kpi_dictionary', 24);
+      if (request.requestedDomains?.includes("financials")) {
+        fetch("kpi_dictionary", 24);
       }
       break;
-    case 'Sentinel':
+    case "Sentinel":
       // Sentinel is the librarian agent — corpus-wide retrieval and
       // citation discipline. Intelligence-surface questions often ask
       // for current-state technology, so include it_landscape before
       // falling back to doctrine/pattern-only answers.
-      fetch('org_structure', 8);
-      fetch('program_inventory', 6);
-      fetch('cross_program_signals', 4);
-      fetch('evidence_ledger', 8);
-      fetch('kpi_dictionary', 24);
-      fetch('it_landscape', request.surface === 'intelligence' ? 8 : 6);
+      fetch("org_structure", 8);
+      fetch("program_inventory", 6);
+      fetch("cross_program_signals", 4);
+      fetch("evidence_ledger", 8);
+      fetch("kpi_dictionary", 24);
+      fetch("it_landscape", request.surface === "intelligence" ? 8 : 6);
       fetchChunks(
         [
-          'application_portfolio',
-          'initiative_financials',
-          'regulatory_and_dependency_context',
-          'vendor_contract',
-          'sponsor_signal',
+          "application_portfolio",
+          "initiative_financials",
+          "regulatory_and_dependency_context",
+          "vendor_contract",
+          "sponsor_signal",
         ],
-        request.surface === 'intelligence' ? 300 : 120,
+        request.surface === "intelligence" ? 300 : 120,
       );
-      if (request.requestedDomains?.includes('vendor_contracts')) {
-        fetch('vendor_contracts', 6);
+      if (request.requestedDomains?.includes("vendor_contracts")) {
+        fetch("vendor_contracts", 6);
       }
       break;
-    case 'Atlas':
+    case "Atlas":
       // Atlas reasons over financial / system-landscape posture. KPI
       // metrics carry their own provenance (source_system, data_owner,
       // confidence) — surface those verbatim instead of folding into
       // financial_metric (per design doc §3.1).
-      fetch('org_structure', 8);
-      fetch('program_inventory', 6);
-      fetch('cross_program_signals', 4);
-      fetch('evidence_ledger', 6);
-      fetch('kpi_dictionary', 24);
-      fetch('it_landscape', 8);
-      if (request.requestedDomains?.includes('vendor_contracts')) {
-        fetch('vendor_contracts', 6);
+      fetch("org_structure", 8);
+      fetch("program_inventory", 6);
+      fetch("cross_program_signals", 4);
+      fetch("evidence_ledger", 6);
+      fetch("kpi_dictionary", 24);
+      fetch("it_landscape", 8);
+      if (request.requestedDomains?.includes("vendor_contracts")) {
+        fetch("vendor_contracts", 6);
       }
       break;
-    case 'Steward':
+    case "Steward":
       // Steward owns vendor + policy posture. Compliance segment has
       // no mapper case yet; the mapper drops those records and a
       // follow-on TD-4 extension can add the mapping.
-      fetch('org_structure', 8);
-      fetch('program_inventory', 6);
-      fetch('kpi_dictionary', 12);
-      fetch('it_landscape', 6);
-      fetch('evidence_ledger', 6);
-      fetch('vendor_contracts', 6);
+      fetch("org_structure", 8);
+      fetch("program_inventory", 6);
+      fetch("kpi_dictionary", 12);
+      fetch("it_landscape", 6);
+      fetch("evidence_ledger", 6);
+      fetch("vendor_contracts", 6);
       break;
     default:
       break;
@@ -748,7 +847,7 @@ async function selectPersistedContextItems(
 }
 
 function chunkToContextItem(chunk: ContextChunk): EnterpriseAgentContextItem {
-  const segment = chunk.sourceSegmentId ?? 'enterprise_context_chunks';
+  const segment = chunk.sourceSegmentId ?? "enterprise_context_chunks";
   const recordId = chunk.recordId ?? chunk.chunkId;
   return {
     id: `ctx:${segment}:${recordId}:${chunk.chunkId}`,
@@ -756,21 +855,22 @@ function chunkToContextItem(chunk: ContextChunk): EnterpriseAgentContextItem {
     title: `${segment}.${recordId}`,
     summary: chunk.text,
     tenantKey: chunk.tenantKey,
-    sourceBasis: chunk.sourceBasis ?? 'tenant_admin_upload',
-    dataClassification: chunk.classification ?? 'internal',
-    sensitivity: 'structured',
+    sourceBasis: chunk.sourceBasis ?? "tenant_admin_upload",
+    dataClassification: chunk.classification ?? "internal",
+    sensitivity: "structured",
     provenanceIds: [recordId, chunk.chunkId, segment],
     linkedEvidence: [],
   };
 }
 
 function chunkKind(segmentId: string): EnterpriseContextItemKind {
-  if (segmentId === 'application_portfolio') return 'system';
-  if (segmentId === 'initiative_financials') return 'program';
-  if (segmentId === 'vendor_contract') return 'vendor_contract';
-  if (segmentId === 'sponsor_signal') return 'person';
-  if (segmentId === 'regulatory_and_dependency_context') return 'graph_candidate';
-  return 'evidence';
+  if (segmentId === "application_portfolio") return "system";
+  if (segmentId === "initiative_financials") return "program";
+  if (segmentId === "vendor_contract") return "vendor_contract";
+  if (segmentId === "sponsor_signal") return "person";
+  if (segmentId === "regulatory_and_dependency_context")
+    return "graph_candidate";
+  return "evidence";
 }
 
 function buildTenantSummaryItem(
@@ -779,13 +879,13 @@ function buildTenantSummaryItem(
 ): EnterpriseAgentContextItem {
   return {
     id: `ctx:${room.tenantKey}:tenant-summary`,
-    kind: 'tenant_summary',
+    kind: "tenant_summary",
     title: room.profile.displayName,
-    summary: `${room.profile.industry} / ${room.profile.subIndustry}; ${room.profile.employeeCount} employees; ${room.profile.strategicPriorities.slice(0, 3).join('; ')}`,
+    summary: `${room.profile.industry} / ${room.profile.subIndustry}; ${room.profile.employeeCount} employees; ${room.profile.strategicPriorities.slice(0, 3).join("; ")}`,
     tenantKey: room.tenantKey,
     sourceBasis: room.profile.sourceBasis,
     dataClassification: room.profile.dataClassification,
-    sensitivity: 'summary',
+    sensitivity: "summary",
     provenanceIds: [room.profile.tenantKey],
     linkedEvidence: citations.slice(0, 3),
   };
@@ -803,7 +903,7 @@ function buildGraphNeighborhood(
       edgeCount: 0,
       topNodeTitles: [],
       edgeTypes: [],
-      note: 'Graph neighborhood was available but not requested for this broker call.',
+      note: "Graph neighborhood was available but not requested for this broker call.",
     };
   }
 
@@ -813,12 +913,16 @@ function buildGraphNeighborhood(
     nodeCount: room.graph.nodes.length,
     edgeCount: room.graph.edges.length,
     topNodeTitles: room.graph.nodes.slice(0, 8).map((node) => node.title),
-    edgeTypes: Array.from(new Set(room.graph.edges.map((edge) => edge.edgeType))).sort(),
-    note: 'Graph summary is metadata-only; raw private node payloads are not exposed by this broker contract.',
+    edgeTypes: Array.from(
+      new Set(room.graph.edges.map((edge) => edge.edgeType)),
+    ).sort(),
+    note: "Graph summary is metadata-only; raw private node payloads are not exposed by this broker contract.",
   };
 }
 
-function toCitation(evidence: EnterpriseEvidenceRecord): EnterpriseEvidenceCitation {
+function toCitation(
+  evidence: EnterpriseEvidenceRecord,
+): EnterpriseEvidenceCitation {
   return {
     evidenceId: evidence.id,
     sourceArtifactId: evidence.sourceArtifactId,

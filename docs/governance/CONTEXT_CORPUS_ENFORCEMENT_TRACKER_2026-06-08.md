@@ -12,13 +12,12 @@ when first client signs · compat-bridge retirement = gradual (block new `.from(
 | PR-1  | Policy doc + canonical types/Zod/enums + trackers + AGENTS.md hook | ✅ done        | #3329     |
 | PR-2  | Inventory scanner + aggregation + report/runbook (all tenants)     | ✅ done        | #3330     |
 | PR-3  | Readiness sidecar + additive migration + dry-run/backfill          | ✅ done        | #3332     |
-| PR-4  | CI validators + workflow + exception file (the hard gate)          | ✅ done        | (this PR) |
-| PR-5  | Runtime `buildValidatedAgentContextBundle`                         | ⏳ queued      | —         |
+| PR-4  | CI validators + workflow + exception file (the hard gate)          | ✅ done        | #3333     |
+| PR-5  | Runtime `buildValidatedAgentContextBundle` + adapters + broker     | ✅ done        | (this PR) |
 | PR-6  | Tenant coverage report (end-to-end, every canonical key)           | ⏳ queued      | —         |
 | PR-7  | Visible citations — 7a Sentinel ✅ (#3322); 7b Nexus               | 🔄 in-progress | #3322     |
 | PR-8  | New-dataset onboarding gate (manifest required)                    | ⏳ queued      | —         |
 
-**Overall: ~61% (5.5 / 9 slices: PR-0, PR-1, PR-2, PR-3, PR-4 done; PR-7a done).**
-Next: PR-5 (runtime `buildValidatedAgentContextBundle` — the single validated
-seam every agent bundle flows through; lets the CI agent-readiness check tighten
-to require that call site).
+**Overall: ~72% (6.5 / 9 slices: PR-0..PR-5 done; PR-7a done).**
+Next: PR-6 (end-to-end tenant coverage report — every canonical key, joining the
+PR-2 inventory + PR-3 readiness ledger into one coverage view).
