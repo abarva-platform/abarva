@@ -11,6 +11,7 @@ import type {
   ReadinessReport,
   ReadinessStatus,
 } from "@/lib/programs/current-state-readiness";
+import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 
 // Families with a wired deterministic CSV ingest (matches the ingest route).
 const INGEST_WIRED = new Set<string>(["eng_performance_dora"]);
@@ -30,9 +31,11 @@ const STATUS_COLOR: Record<ReadinessStatus, string> = {
 
 export function CurrentStateReadinessPanel({
   readiness,
+  recommendation,
   programId,
 }: {
   readiness: ReadinessReport | null;
+  recommendation?: CurrentStateRecommendation | null;
   programId: string;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -99,6 +102,83 @@ export function CurrentStateReadinessPanel({
             ` · ${readiness.hardGaps.length} hard gap${readiness.hardGaps.length > 1 ? "s" : ""}`}
         </span>
       </div>
+
+      {recommendation && recommendation.ranking.length > 0 && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 6,
+            background: "rgba(0,102,204,0.04)",
+            border: "1px solid rgba(0,102,204,0.16)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--abarva-mono)",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--abarva-slate)",
+              marginBottom: 6,
+            }}
+          >
+            Where to start
+            <span
+              style={{
+                marginLeft: 8,
+                fontWeight: 400,
+                textTransform: "none",
+                color: "var(--abarva-stone)",
+              }}
+            >
+              &mdash; confidence:{" "}
+              {recommendation.overallConfidence.replace(/_/g, " ")}
+            </span>
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--abarva-ink)",
+              lineHeight: 1.5,
+            }}
+          >
+            {recommendation.whereToStart}
+          </div>
+          <ul style={{ listStyle: "none", margin: "8px 0 0", padding: 0 }}>
+            {recommendation.ranking.map((t) => (
+              <li
+                key={t.teamArchetype}
+                style={{
+                  fontSize: 12,
+                  color: "var(--abarva-slate)",
+                  padding: "3px 0",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "baseline",
+                }}
+                title={`AI-applicability ${t.aiApplicability} × readiness ${t.normalizedReadiness} × gap-upside ${t.gapUpside}`}
+              >
+                <span style={{ fontWeight: 700, flexShrink: 0 }}>
+                  #{t.rank}
+                </span>
+                <span style={{ flex: 1 }}>{t.label}</span>
+                <span
+                  style={{
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 11,
+                    color: "var(--abarva-stone)",
+                  }}
+                >
+                  {t.aiApplicability}×{t.normalizedReadiness}×{t.gapUpside} ={" "}
+                  {t.score}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {readiness.instruments.map((i) => {

@@ -14,6 +14,10 @@ import {
   resolveCurrentStateReadiness,
   type ReadinessReport,
 } from "@/lib/programs/current-state-readiness";
+import {
+  buildCurrentStateRecommendation,
+  type CurrentStateRecommendation,
+} from "@/lib/programs/current-state-maturity";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +50,15 @@ export default async function StrategicMovePhaseWorkspacePage({
   // Estate-derived current-state readiness for this phase (best-effort; never
   // blocks the workspace render).
   let readiness: ReadinessReport | null = null;
+  let recommendation: CurrentStateRecommendation | null = null;
   try {
     const tctx = await requireTenancy();
     const profile = await inferMoveProfile(tctx);
     readiness = await resolveCurrentStateReadiness(tctx, profile, parsedPhase);
+    recommendation = await buildCurrentStateRecommendation(tctx, profile);
   } catch {
     readiness = null;
+    recommendation = null;
   }
 
   return (
@@ -60,6 +67,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         move={move}
         phaseNum={parsedPhase}
         readiness={readiness}
+        recommendation={recommendation}
       />
     </AppShell>
   );
