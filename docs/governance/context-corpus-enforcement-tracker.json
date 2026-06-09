@@ -42,12 +42,12 @@
       "id": "PR-5",
       "title": "runtime buildValidatedAgentContextBundle + adapters + broker wiring",
       "status": "done",
-      "pr": null
+      "pr": 3334
     },
     {
       "id": "PR-6",
-      "title": "tenant coverage report (end-to-end)",
-      "status": "queued",
+      "title": "tenant coverage report (end-to-end, readiness ledger)",
+      "status": "done",
       "pr": null
     },
     {
