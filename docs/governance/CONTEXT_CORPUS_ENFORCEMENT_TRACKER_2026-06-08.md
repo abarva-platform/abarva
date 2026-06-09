@@ -10,13 +10,14 @@ when first client signs · compat-bridge retirement = gradual (block new `.from(
 | ----- | ------------------------------------------------------------------ | -------------- | --------- |
 | PR-0  | Target data architecture (design)                                  | ✅ done        | #3328     |
 | PR-1  | Policy doc + canonical types/Zod/enums + trackers + AGENTS.md hook | ✅ done        | #3329     |
-| PR-2  | Inventory scanner + aggregation + report/runbook (all tenants)     | ✅ done        | (this PR) |
-| PR-3  | Readiness fields + additive migration + dry-run/backfill           | ⏳ queued      | —         |
+| PR-2  | Inventory scanner + aggregation + report/runbook (all tenants)     | ✅ done        | #3330     |
+| PR-3  | Readiness sidecar + additive migration + dry-run/backfill          | ✅ done        | (this PR) |
 | PR-4  | CI validators + workflow + exception file (the hard gate)          | ⏳ queued      | —         |
 | PR-5  | Runtime `buildValidatedAgentContextBundle`                         | ⏳ queued      | —         |
 | PR-6  | Tenant coverage report (end-to-end, every canonical key)           | ⏳ queued      | —         |
 | PR-7  | Visible citations — 7a Sentinel ✅ (#3322); 7b Nexus               | 🔄 in-progress | #3322     |
 | PR-8  | New-dataset onboarding gate (manifest required)                    | ⏳ queued      | —         |
 
-**Overall: ~39% (3.5 / 9 slices: PR-0, PR-1, PR-2 done; PR-7a done).**
-Next: PR-3 (readiness fields + additive migration).
+**Overall: ~50% (4.5 / 9 slices: PR-0, PR-1, PR-2, PR-3 done; PR-7a done).**
+Next: PR-4 (CI validators + workflow + exception file — the hard gate that reads
+the PR-3 readiness ledger).

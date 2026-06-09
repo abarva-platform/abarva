@@ -24,12 +24,12 @@
       "id": "PR-2",
       "title": "inventory scanner + report",
       "status": "done",
-      "pr": null
+      "pr": 3330
     },
     {
       "id": "PR-3",
-      "title": "readiness fields + additive migration + dry-run",
-      "status": "queued",
+      "title": "readiness sidecar + additive migration + dry-run/backfill",
+      "status": "done",
       "pr": null
     },
     {
