@@ -52,15 +52,15 @@
     },
     {
       "id": "PR-7",
-      "title": "visible citations (7a Sentinel done #3322; 7b Nexus)",
-      "status": "in-progress",
+      "title": "visible citations — 7a Sentinel #3322; 7b Nexus citation-gap",
+      "status": "done",
       "pr": 3322
     },
     {
       "id": "PR-8",
       "title": "new-dataset onboarding gate (manifest required)",
       "status": "done",
-      "pr": null
+      "pr": 3336
     }
   ]
 }
