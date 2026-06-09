@@ -1,6 +1,7 @@
 import { describe, it, expect } from "@jest/globals";
 import {
   evaluatePromotion,
+  isPromotionCandidate,
   type ReadinessRow,
 } from "../promotion-evaluator";
 
@@ -26,11 +27,23 @@ function row(overrides: Partial<ReadinessRow> = {}): ReadinessRow {
 }
 
 describe("evaluatePromotion", () => {
-  it("recommends agent_ready when every criterion passes", () => {
+  it("recommends promotion_candidate when every criterion passes but not yet approved", () => {
     const e = evaluatePromotion(row());
-    expect(e.recommendation).toBe("agent_ready");
+    expect(e.recommendation).toBe("promotion_candidate");
+    expect(isPromotionCandidate(e)).toBe(true);
     expect(e.failure_reasons).toEqual([]);
     expect(Object.values(e.criteria).every(Boolean)).toBe(true);
+  });
+
+  it("recommends agent_ready only when already governed-approved (status=agent_ready) and criteria still pass", () => {
+    const e = evaluatePromotion(row({ agent_readiness_status: "agent_ready" }));
+    expect(e.recommendation).toBe("agent_ready");
+    expect(isPromotionCandidate(e)).toBe(false);
+  });
+
+  it("never reaches agent_ready directly from ingestion (committed_not_indexed stays a gap, not agent_ready)", () => {
+    const e = evaluatePromotion(row({ agent_readiness_status: "committed_not_indexed" }));
+    expect(e.recommendation).toBe("promotion_candidate");
   });
 
   it("blocks a tenant object missing tenant_id", () => {
@@ -96,6 +109,6 @@ describe("evaluatePromotion", () => {
       row({ client_key: "corpus_global", tenant_id: null, source_layer: "industry_corpus" }),
     );
     expect(e.criteria.tenant_scoped).toBe(true);
-    expect(e.recommendation).toBe("agent_ready");
+    expect(e.recommendation).toBe("promotion_candidate");
   });
 });

@@ -54,6 +54,7 @@ export interface PromotionCriteria {
 
 export type PromotionRecommendation =
   | "agent_ready"
+  | "promotion_candidate"
   | "restricted"
   | "blocked"
   | "remain_not_reviewed";
@@ -159,8 +160,17 @@ export function evaluatePromotion(row: ReadinessRow): PromotionEvaluation {
     if (!applicable_agents_valid)
       failure_reasons.push("no valid applicable_agents");
 
-    recommendation =
-      failure_reasons.length === 0 ? "agent_ready" : "remain_not_reviewed";
+    // WS-F: split the terminal state so agent_ready is reached ONLY through a
+    // governed promotion (the persisted agent_readiness_status), never directly
+    // from evidence. A row that meets every criterion but is not yet approved is
+    // a promotion_candidate — eligible to be promoted, awaiting governed sign-off.
+    if (failure_reasons.length > 0) {
+      recommendation = "remain_not_reviewed";
+    } else if (row.agent_readiness_status === "agent_ready") {
+      recommendation = "agent_ready";
+    } else {
+      recommendation = "promotion_candidate";
+    }
   }
 
   return {
@@ -186,5 +196,11 @@ export const REQUIRED_CRITERIA: (keyof PromotionCriteria)[] = [
   "citation_renderable",
   "applicable_agents_valid",
 ];
+
+/** True when the row meets every criterion and is eligible to be promoted to
+ *  agent_ready through governed sign-off (it is not yet agent_ready itself). */
+export function isPromotionCandidate(evaluation: PromotionEvaluation): boolean {
+  return evaluation.recommendation === "promotion_candidate";
+}
 
 export type { ApplicableAgent };

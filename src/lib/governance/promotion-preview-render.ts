@@ -45,7 +45,10 @@ export function buildPreviewData(evals: PromotionEvaluation[]): PreviewData {
       inc(d.skyharbor.byRecommendation, e.recommendation);
       inc(d.skyharbor.byObjectType, e.object_table);
     }
-    if (e.recommendation === "agent_ready" && d.topPromote.length < 25)
+    // WS-F: the rows eligible to be promoted are promotion_candidates (every
+    // criterion met, awaiting governed sign-off). agent_ready rows are already
+    // promoted, so they are not re-listed as promotion targets.
+    if (e.recommendation === "promotion_candidate" && d.topPromote.length < 25)
       d.topPromote.push({ object_table: e.object_table, object_id: e.object_id, client_key: e.client_key, source_layer: e.source_layer });
     if (e.recommendation === "blocked" && d.topBlocked.length < 25)
       d.topBlocked.push({ object_table: e.object_table, object_id: e.object_id, client_key: e.client_key, recommendation: e.recommendation, reason: e.failure_reasons[0] ?? "" });
@@ -68,9 +71,9 @@ export function renderPreviewMarkdown(d: PreviewData, generatedAt: string): stri
   L.push("## By recommendation\n\n| Recommendation | Count |\n|---|---:|\n" + rows(d.byRecommendation) + "\n");
   L.push("## By tenant / client\n\n| Client | Count |\n|---|---:|\n" + rows(d.byTenant) + "\n");
   L.push("## By object type\n\n| Object table | Count |\n|---|---:|\n" + rows(d.byObjectType) + "\n");
-  L.push("## Recommendation by tenant\n\n| Client | agent_ready | restricted | blocked | remain_not_reviewed |\n|---|---:|---:|---:|---:|");
+  L.push("## Recommendation by tenant\n\n| Client | agent_ready | promotion_candidate | restricted | blocked | remain_not_reviewed |\n|---|---:|---:|---:|---:|---:|");
   for (const [c, m] of Object.entries(d.byTenantRecommendation).sort()) {
-    L.push(`| ${c} | ${m.agent_ready ?? 0} | ${m.restricted ?? 0} | ${m.blocked ?? 0} | ${m.remain_not_reviewed ?? 0} |`);
+    L.push(`| ${c} | ${m.agent_ready ?? 0} | ${m.promotion_candidate ?? 0} | ${m.restricted ?? 0} | ${m.blocked ?? 0} | ${m.remain_not_reviewed ?? 0} |`);
   }
   L.push("");
   L.push("## Failure reasons (why rows are not agent_ready)\n\n| Reason | Count |\n|---|---:|\n" + rows(d.failureReasons) + "\n");
@@ -78,10 +81,10 @@ export function renderPreviewMarkdown(d: PreviewData, generatedAt: string): stri
   L.push(`- Rows: **${d.skyharbor.total}**`);
   L.push("- By recommendation:\n\n| Recommendation | Count |\n|---|---:|\n" + rows(d.skyharbor.byRecommendation));
   L.push("\n- By object type:\n\n| Object table | Count |\n|---|---:|\n" + rows(d.skyharbor.byObjectType) + "\n");
-  L.push(`## Top ${d.topPromote.length} rows recommended for promotion (agent_ready)\n`);
+  L.push(`## Top ${d.topPromote.length} promotion candidates (eligible — awaiting governed sign-off)\n`);
   L.push("| Object table | Object id | Client | Source layer |\n|---|---|---|---|");
   for (const r of d.topPromote) L.push(`| ${r.object_table} | ${r.object_id} | ${r.client_key} | ${r.source_layer} |`);
-  if (d.topPromote.length === 0) L.push("| _(none — no row currently clears the cite-render gate; expected pre-PR-P2)_ | | | |");
+  if (d.topPromote.length === 0) L.push("| _(none — no row currently clears every criterion incl. the cite-render gate)_ | | | |");
   L.push("");
   L.push(`## Top ${d.topBlocked.length} blocked rows with reasons\n`);
   L.push("| Object table | Object id | Client | Reason |\n|---|---|---|---|");
@@ -89,9 +92,10 @@ export function renderPreviewMarkdown(d: PreviewData, generatedAt: string): stri
   if (d.topBlocked.length === 0) L.push("| _(none blocked)_ | | | |");
   L.push("");
   L.push("## SQL / update plan PR-P2 WOULD use (NOT executed here)\n");
-  L.push("Promotion is gated, stamped, reversible. For each row the evaluator returns `agent_ready`");
-  L.push("(every required criterion true), PR-P2 runs inside a transaction, idempotent, capturing the");
-  L.push("reverse statement first. Never promotes restricted/blocked/quarantined/PHI/PII rows.");
+  L.push("Promotion is gated, stamped, reversible. For each row the evaluator returns `promotion_candidate`");
+  L.push("(every required criterion true, not yet approved), the governed promotion runs inside a");
+  L.push("transaction, idempotent, capturing the reverse statement first. agent_ready is reached only");
+  L.push("through this step — never directly from ingestion. Never promotes restricted/blocked/quarantined/PHI/PII rows.");
   L.push("");
   L.push("```sql");
   L.push("-- forward (only rows passing ALL criteria)");
