@@ -190,6 +190,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                   textDecoration: "none",
                   padding: "0 12px",
                   minHeight: 34,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
                   letterSpacing: 0,
                   position: "relative",
                 }}
