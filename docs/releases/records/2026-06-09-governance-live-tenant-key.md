@@ -32,9 +32,11 @@ The governance inventory and readiness backfill jobs now resolve client IDs from
 
 ## QA / Validation
 
-- `git diff --check`
-- governance unit tests
-- live Azure operator job rerun for inventory, dry-run readiness, commit readiness, and tenant coverage.
+- `pass` — `git diff --check`
+- `pass` — `npm run validate:context-corpus`
+- `pass` — `npx jest src/lib/governance --runInBand`
+- `pass` — `npx tsc --noEmit --pretty false --incremental false`
+- `blocked until merge` — live Azure operator job rerun for inventory, dry-run readiness, commit readiness, and tenant coverage.
 
 ## Rollout Plan
 
