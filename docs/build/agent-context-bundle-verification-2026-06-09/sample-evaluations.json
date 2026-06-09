@@ -1,0 +1,372 @@
+{
+  "generated": "2026-06-09",
+  "illustrative": true,
+  "note": "Real evaluateAgentResponse() output over synthetic traces. Deterministic dimensions are genuine; subjective dimensions use illustrative injected judgments. Live Azure scores require the PR-5 harness on Azure Container Apps.",
+  "tenants_not_loaded": [
+    "lakeshore",
+    "morgan-street"
+  ],
+  "evaluations": [
+    {
+      "label": "apex-retail · grounded move answer",
+      "evaluation": {
+        "questionId": "sample-apex-1",
+        "agent": "nexus",
+        "surface": "moves",
+        "tenantKey": "apex-retail",
+        "overallScore": 4.2,
+        "dimensionScores": [
+          {
+            "dimension": "tenant_grounding",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "2 tenant context object(s) assembled into the bundle."
+          },
+          {
+            "dimension": "pattern_grounding",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "1 approved corpus pattern(s) in the bundle."
+          },
+          {
+            "dimension": "source_discipline",
+            "score": 5,
+            "basis": "deterministic",
+            "rationale": "3 citation object(s) emitted against source basis 2."
+          },
+          {
+            "dimension": "risk_failure_mode_awareness",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "Answer surfaces risk / failure-mode / trade-off language."
+          },
+          {
+            "dimension": "missing_context_honesty",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "Evidence is adequate; no missing-context warning required."
+          },
+          {
+            "dimension": "business_judgment",
+            "score": 4,
+            "basis": "injected",
+            "rationale": "sound sequencing and scoping"
+          },
+          {
+            "dimension": "specificity",
+            "score": 4,
+            "basis": "injected",
+            "rationale": "tenant-specific figures and systems"
+          },
+          {
+            "dimension": "actionability",
+            "score": 4,
+            "basis": "injected",
+            "rationale": "clear next action"
+          },
+          {
+            "dimension": "no_hallucination",
+            "score": 5,
+            "basis": "injected",
+            "rationale": "no invented facts"
+          },
+          {
+            "dimension": "executive_usefulness",
+            "score": 4,
+            "basis": "injected",
+            "rationale": "board-ready framing"
+          }
+        ],
+        "failedDimensions": [],
+        "supportingTraceIds": [
+          "sample-apex-1"
+        ],
+        "unsupportedClaims": [],
+        "missingCitations": [],
+        "tenantLeakageFindings": [],
+        "patternNamespaceFindings": [],
+        "autoFailReasons": [],
+        "recommendedFix": null,
+        "productionReady": true,
+        "threshold": 3
+      }
+    },
+    {
+      "label": "meridian-health · thin answer that over-claims (should fail)",
+      "evaluation": {
+        "questionId": "sample-meridian-1",
+        "agent": "sentinel",
+        "surface": "intelligence",
+        "tenantKey": "meridian-health",
+        "overallScore": 2,
+        "dimensionScores": [
+          {
+            "dimension": "tenant_grounding",
+            "score": 1,
+            "basis": "deterministic",
+            "rationale": "0 tenant context object(s) assembled into the bundle."
+          },
+          {
+            "dimension": "pattern_grounding",
+            "score": 2,
+            "basis": "deterministic",
+            "rationale": "0 approved corpus pattern(s) in the bundle."
+          },
+          {
+            "dimension": "source_discipline",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "No backend sources and no citations claimed — consistent."
+          },
+          {
+            "dimension": "risk_failure_mode_awareness",
+            "score": 2,
+            "basis": "deterministic",
+            "rationale": "Answer does not surface explicit risk or failure-mode awareness."
+          },
+          {
+            "dimension": "missing_context_honesty",
+            "score": 1,
+            "basis": "deterministic",
+            "rationale": "Evidence is thin but the answer does not flag missing context (over-claim risk)."
+          },
+          {
+            "dimension": "business_judgment",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "specificity",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "actionability",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "no_hallucination",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "executive_usefulness",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          }
+        ],
+        "failedDimensions": [
+          "tenant_grounding",
+          "pattern_grounding",
+          "risk_failure_mode_awareness",
+          "missing_context_honesty"
+        ],
+        "supportingTraceIds": [
+          "sample-meridian-1"
+        ],
+        "unsupportedClaims": [
+          {
+            "claimText": "30% overtime reduction",
+            "claimType": "kpi_outcome_claim",
+            "critical": true,
+            "recommendedFixLane": "answer_prompt_synthesis"
+          }
+        ],
+        "missingCitations": [],
+        "tenantLeakageFindings": [],
+        "patternNamespaceFindings": [],
+        "autoFailReasons": [
+          "unsupported critical claim(s) (1)"
+        ],
+        "recommendedFix": "Resolve auto-fail: unsupported critical claim(s) (1). Address unsupported claims via lane(s): answer_prompt_synthesis. Lift below-threshold dimensions: tenant_grounding, pattern_grounding, risk_failure_mode_awareness, missing_context_honesty.",
+        "productionReady": false,
+        "threshold": 3
+      }
+    },
+    {
+      "label": "skyharbor-air · grounded answer, no judge (subjective not assessed)",
+      "evaluation": {
+        "questionId": "sample-skyharbor-1",
+        "agent": "sentinel",
+        "surface": "intelligence",
+        "tenantKey": "skyharbor-air",
+        "overallScore": 4,
+        "dimensionScores": [
+          {
+            "dimension": "tenant_grounding",
+            "score": 3,
+            "basis": "deterministic",
+            "rationale": "1 tenant context object(s) assembled into the bundle."
+          },
+          {
+            "dimension": "pattern_grounding",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "1 approved corpus pattern(s) in the bundle."
+          },
+          {
+            "dimension": "source_discipline",
+            "score": 5,
+            "basis": "deterministic",
+            "rationale": "2 citation object(s) emitted against source basis 2."
+          },
+          {
+            "dimension": "risk_failure_mode_awareness",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "Answer surfaces risk / failure-mode / trade-off language."
+          },
+          {
+            "dimension": "missing_context_honesty",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "Evidence is adequate; no missing-context warning required."
+          },
+          {
+            "dimension": "business_judgment",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "specificity",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "actionability",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "no_hallucination",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "executive_usefulness",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          }
+        ],
+        "failedDimensions": [],
+        "supportingTraceIds": [
+          "sample-skyharbor-1"
+        ],
+        "unsupportedClaims": [],
+        "missingCitations": [],
+        "tenantLeakageFindings": [],
+        "patternNamespaceFindings": [],
+        "autoFailReasons": [],
+        "recommendedFix": null,
+        "productionReady": true,
+        "threshold": 3
+      }
+    },
+    {
+      "label": "apex-retail · cross-tenant leakage (auto-fail)",
+      "evaluation": {
+        "questionId": "sample-leakage-1",
+        "agent": "nexus",
+        "surface": "moves",
+        "tenantKey": "apex-retail",
+        "overallScore": 2.4,
+        "dimensionScores": [
+          {
+            "dimension": "tenant_grounding",
+            "score": 3,
+            "basis": "deterministic",
+            "rationale": "1 tenant context object(s) assembled into the bundle."
+          },
+          {
+            "dimension": "pattern_grounding",
+            "score": 2,
+            "basis": "deterministic",
+            "rationale": "0 approved corpus pattern(s) in the bundle."
+          },
+          {
+            "dimension": "source_discipline",
+            "score": 4,
+            "basis": "deterministic",
+            "rationale": "1 citation object(s) emitted against source basis 1."
+          },
+          {
+            "dimension": "risk_failure_mode_awareness",
+            "score": 2,
+            "basis": "deterministic",
+            "rationale": "Answer does not surface explicit risk or failure-mode awareness."
+          },
+          {
+            "dimension": "missing_context_honesty",
+            "score": 1,
+            "basis": "deterministic",
+            "rationale": "Evidence is thin but the answer does not flag missing context (over-claim risk)."
+          },
+          {
+            "dimension": "business_judgment",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "specificity",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "actionability",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "no_hallucination",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          },
+          {
+            "dimension": "executive_usefulness",
+            "score": null,
+            "basis": "not_assessed",
+            "rationale": "No model/human judgment injected; not assessed in this run."
+          }
+        ],
+        "failedDimensions": [
+          "pattern_grounding",
+          "risk_failure_mode_awareness",
+          "missing_context_honesty"
+        ],
+        "supportingTraceIds": [
+          "sample-leakage-1"
+        ],
+        "unsupportedClaims": [],
+        "missingCitations": [],
+        "tenantLeakageFindings": [
+          {
+            "detail": "referenced Meridian Health",
+            "offendingTenantKey": "meridian-health"
+          }
+        ],
+        "patternNamespaceFindings": [],
+        "autoFailReasons": [
+          "tenant leakage (1 finding(s))"
+        ],
+        "recommendedFix": "Resolve auto-fail: tenant leakage (1 finding(s)). Lift below-threshold dimensions: pattern_grounding, risk_failure_mode_awareness, missing_context_honesty.",
+        "productionReady": false,
+        "threshold": 3
+      }
+    }
+  ]
+}

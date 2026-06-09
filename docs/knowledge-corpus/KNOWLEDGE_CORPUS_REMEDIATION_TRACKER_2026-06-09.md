@@ -24,7 +24,7 @@ not change DNS, Vercel, Supabase, drain/search/freeze, or shutdown logic.
 |----|-------|--------|-------|
 | 1 | Trace governed Nexus/Sentinel context bundles | 🟡 | Code + migration + tests landed; live ACA DB persistence pending |
 | 2 | Add golden tenant question suites for governed agents | ⬜ | |
-| 3 | Add response wisdom evaluation rubric | ⬜ | |
+| 3 | Add response wisdom evaluation rubric | 🟡 | Pure rubric lib + auto-fail gate + real sample evals landed; subjective dims need Anthropic judge on ACA |
 | 4 | Validate governed agent claims and citations | ⬜ | |
 | 5 | Record production Azure context-bundle verification | ⬜ | |
 | 6 | Domain/subdomain expert consultant question matrix | ⬜ | |
@@ -71,6 +71,20 @@ ingestion/onboarding gaps, not as testable live tenants, until they exist in
   enrich `eligible_datasets` / `missing_context` / pattern `namespace`;
   instrument the `it_productivity` Sentinel sub-path and Source/Tower surfaces;
   confirm live DB persistence on Azure Container Apps after `npm run db:migrate`.
+
+### PR-3 — Add response wisdom evaluation rubric · 🟡 candidate
+
+- **What landed:** pure `src/lib/agent-eval/` rubric — 10 dimensions (5
+  deterministic from the trace + answer text, 5 subjective via injected
+  judgment), production-ready gate with auto-fail on tenant leakage / unsupported
+  critical claim / phantom or cross-namespace pattern citation. Doc
+  `docs/governance/AGENT_RESPONSE_EVALUATION_RUBRIC_2026-06-09.md`. Real sample
+  output (Apex/Meridian/SkyHarbor; Lakeshore=NOT_LOADED) at
+  `docs/build/agent-context-bundle-verification-2026-06-09/sample-evaluations.json`.
+- **Validation:** 9/9 behavior tests; sample generator run; tsc/eslint clean;
+  architecture-rules + release:check green.
+- **Open / next:** wire an Anthropic judge for the subjective dimensions in the
+  PR-5 harness (runs on ACA); feed PR-4 claim/namespace findings into the gate.
 
 ## Remediation backlog (by lane)
 
