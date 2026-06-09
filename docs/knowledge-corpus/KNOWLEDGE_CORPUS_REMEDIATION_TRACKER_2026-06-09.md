@@ -23,11 +23,15 @@ not change DNS, Vercel, Supabase, drain/search/freeze, or shutdown logic.
 | PR | Title | Status | Notes |
 |----|-------|--------|-------|
 | 1 | Trace governed Nexus/Sentinel context bundles | ✅ | Merged #3349; live ACA DB persistence still to confirm on Azure |
-| 2 | Add golden tenant question suites for governed agents | ⬜ | |
-| 3 | Add response wisdom evaluation rubric | 🟡 | Pure rubric lib + auto-fail gate + real sample evals landed (PR #3350); subjective dims need Anthropic judge on ACA |
-| 4 | Validate governed agent claims and citations | 🟡 | Pure validation lib + Sentinel route wiring landed; live phantom catalog needs ACA |
-| 5 | Record production Azure context-bundle verification | ⬜ | |
-| 6 | Domain/subdomain expert consultant question matrix | ⬜ | |
+| 2 | Add golden tenant question suites for governed agents | ✅ | Merged #3353; 6 tenants × 11 = 66 questions, code-derived |
+| 3 | Add response wisdom evaluation rubric | ✅ | Merged #3350; subjective dims need Anthropic judge on ACA |
+| 4 | Validate governed agent claims and citations | ✅ | Merged #3352; live phantom catalog needs ACA |
+| 5 | Record production Azure context-bundle verification | 🟡 | Framework + lab structural run + report landed; live ACA run pending |
+| 6 | Domain/subdomain expert consultant question matrix | ✅ | Merged #3354; 4,700 questions across 6 tenants |
+
+**All six slices merged except PR-5 (this PR). 59 behavior tests across the
+framework, all green. The one remaining action is the live Azure run on ACA —
+see `docs/governance/AGENT_CONTEXT_BUNDLE_PRODUCTION_VERIFICATION_2026-06-09.md`.**
 
 ## Active tenants (from code, not hand-typed)
 
@@ -102,6 +106,24 @@ NOT a canonical tenant (build-doc scaffolding only). PHS = Meridian's shape.
   release:check green.
 - **Open / next:** inject a live Azure `PatternCatalog` for phantom detection
   in the PR-5 harness; wire the Nexus route to surface findings on its payload.
+
+### PR-2 — Golden tenant question suites · ✅ merged #3353
+
+- Code-derived suites (CANONICAL_TENANT_KEYS), 66 questions across 6 tenants,
+  `assertGoldenQuestion`, JSON bank, 10 tests. Live per-tenant pass/fail = PR-5
+  on ACA.
+
+### PR-6 — Domain/subdomain expert matrix · ✅ merged #3354
+
+- 16 domains × 5 subdomains × 10 archetypes = 4,700 questions (industry-filtered,
+  code-derived), consultant-scoring dims, JSON bank + CSV templates, 8 tests.
+
+### PR-5 — Production/lab Azure verification · 🟡 candidate (this PR)
+
+- Verification runner (injectable agent driver) + summary aggregation + markdown
+  report renderer; lab structural run script; the production verification report.
+  59 framework behavior tests green. **Live Azure run on ACA is the one
+  outstanding action** (private DB unreachable from localhost; no results faked).
 
 ## Remediation backlog (by lane)
 
