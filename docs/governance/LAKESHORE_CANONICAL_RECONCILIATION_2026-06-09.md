@@ -48,7 +48,36 @@ data. No canonical dimension is empty.
    `lakeshore-holdings` in-VNet to prove the reconciled load is grounded,
    cited, and tenant-safe (results appended below).
 
-<!-- LAKESHORE_PROBE_RESULT -->
+**Execution `job-ws-cde-eus-knkn1w5` → Succeeded** (6 SkyHarbor-style golden
+questions for `lakeshore-holdings`, live Sentinel engine, private DB):
+
+| Question | sources | answerability | isolation | leak |
+|----------|--------:|---------------|-----------|------|
+| leadership | 2 | ANSWERED_AND_GROUNDED | pass | — |
+| company_scale | 3 | ANSWERED_AND_GROUNDED | **FAIL** | apex-retail |
+| industry_corpus | 3 | ANSWERED_AND_GROUNDED | pass | — |
+| move_context | 2 | ANSWERED_AND_GROUNDED | pass | — |
+| artifacts_evidence | 0 | **NOT_LOADED** | pass | — |
+| kpi_value | 0 | **NOT_LOADED** | pass | — |
+
+**Summary:** 4/6 grounded · 4/6 cited · 0 unsupported · 1 leakage.
+
+### Gaps classified (per the brief)
+
+- **ingestion / retrieval gap** — `artifacts_evidence` and `kpi_value` returned
+  no tenant context → derived answerability = `NOT_LOADED`. Lakeshore's artifact
+  and KPI dimensions did not surface through the retrieval gate (either not in a
+  retrievable segment, or the segment keyword gate did not match). Honest state:
+  these two dimensions are NOT answerable for Lakeshore today despite the broader
+  load — a real retrieval/ingestion gap, not a fabricated "loaded".
+- **tenant isolation gap (P0)** — `company_scale` flagged a cross-tenant
+  reference to **apex-retail**. With the precise detector this is a named
+  finding; a snippet capture (one-line probe change) confirms real Apex Retail
+  leak vs. generic "apex" before the tenant-pin fix. Routed to the
+  tenant-isolation lane.
+- **grounded** — leadership, company_scale, industry_corpus, move_context are
+  grounded + cited on live data, confirming Lakeshore's reconciled load is
+  agent-usable for those dimensions.
 
 ## Honest state
 
