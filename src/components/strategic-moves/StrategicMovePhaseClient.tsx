@@ -19,6 +19,7 @@ import {
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
+import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
 import {
   shapeAgentResponseForSurface,
   shapeStreamingAgentTextForSurface,
@@ -311,6 +312,7 @@ interface Props {
   phaseNum: number;
   readiness?: CurrentStateReadinessReport | null;
   recommendation?: CurrentStateRecommendation | null;
+  plan?: CurrentStatePlan | null;
 }
 
 export function StrategicMovePhaseClient({
@@ -318,6 +320,7 @@ export function StrategicMovePhaseClient({
   phaseNum,
   readiness,
   recommendation,
+  plan,
 }: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
@@ -853,6 +856,7 @@ export function StrategicMovePhaseClient({
               <CurrentStateReadinessPanel
                 readiness={readiness}
                 recommendation={recommendation}
+                plan={plan}
                 programId={move.id}
               />
             )}

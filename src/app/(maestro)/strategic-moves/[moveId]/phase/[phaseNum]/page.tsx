@@ -18,6 +18,10 @@ import {
   buildCurrentStateRecommendation,
   type CurrentStateRecommendation,
 } from "@/lib/programs/current-state-maturity";
+import {
+  buildCurrentStatePlan,
+  type CurrentStatePlan,
+} from "@/lib/programs/current-state-plan";
 
 export const dynamic = "force-dynamic";
 
@@ -51,14 +55,17 @@ export default async function StrategicMovePhaseWorkspacePage({
   // blocks the workspace render).
   let readiness: ReadinessReport | null = null;
   let recommendation: CurrentStateRecommendation | null = null;
+  let plan: CurrentStatePlan | null = null;
   try {
     const tctx = await requireTenancy();
     const profile = await inferMoveProfile(tctx);
     readiness = await resolveCurrentStateReadiness(tctx, profile, parsedPhase);
     recommendation = await buildCurrentStateRecommendation(tctx, profile);
+    plan = buildCurrentStatePlan(recommendation, { moveName: move.name });
   } catch {
     readiness = null;
     recommendation = null;
+    plan = null;
   }
 
   return (
@@ -68,6 +75,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         phaseNum={parsedPhase}
         readiness={readiness}
         recommendation={recommendation}
+        plan={plan}
       />
     </AppShell>
   );

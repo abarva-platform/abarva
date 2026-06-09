@@ -12,6 +12,12 @@ import type {
   ReadinessStatus,
 } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
+import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
+
+const usd = (n: number) =>
+  n >= 1_000_000
+    ? `$${(n / 1_000_000).toFixed(1)}M`
+    : `$${Math.round(n / 1000)}k`;
 
 // Families with a wired deterministic CSV ingest (matches the ingest route).
 const INGEST_WIRED = new Set<string>(["eng_performance_dora"]);
@@ -32,10 +38,12 @@ const STATUS_COLOR: Record<ReadinessStatus, string> = {
 export function CurrentStateReadinessPanel({
   readiness,
   recommendation,
+  plan,
   programId,
 }: {
   readiness: ReadinessReport | null;
   recommendation?: CurrentStateRecommendation | null;
+  plan?: CurrentStatePlan | null;
   programId: string;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -177,6 +185,78 @@ export function CurrentStateReadinessPanel({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {plan && plan.roadmap.phases.length > 0 && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 6,
+            background: "rgba(0,0,0,0.02)",
+            border: "1px solid var(--abarva-mist, #e6e3dc)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--abarva-mono)",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--abarva-slate)",
+              marginBottom: 6,
+            }}
+          >
+            Indicative plan &amp; cost
+            <span
+              style={{
+                marginLeft: 8,
+                fontWeight: 400,
+                textTransform: "none",
+                color: "var(--abarva-ink)",
+              }}
+            >
+              &mdash; {usd(plan.estimate.totalCost.low)}–
+              {usd(plan.estimate.totalCost.high)}
+            </span>
+          </div>
+          <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+            {plan.roadmap.phases.map((ph) => (
+              <li
+                key={ph.id}
+                style={{
+                  fontSize: 12,
+                  color: "var(--abarva-slate)",
+                  padding: "2px 0",
+                }}
+              >
+                {ph.label}
+                <span
+                  style={{
+                    color: "var(--abarva-stone)",
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 11,
+                  }}
+                >
+                  {" "}
+                  — {usd(ph.cost.low)}–{usd(ph.cost.high)}
+                  {ph.isFoundational ? " · enablement" : ""}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 10,
+              color: "var(--abarva-stone)",
+              lineHeight: 1.4,
+            }}
+          >
+            {plan.note} Rate card: {plan.rateCardProvenance}
+          </div>
         </div>
       )}
 
