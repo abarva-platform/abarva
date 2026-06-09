@@ -1,0 +1,23 @@
+{
+  "generated": "2026-06-09",
+  "mode": "lab_structural",
+  "modulesPresent": [
+    "agent-trace",
+    "agent-eval",
+    "agent-golden",
+    "agent-claims",
+    "agent-domain-matrix",
+    "agent-verification"
+  ],
+  "tenants": [
+    "apex-retail",
+    "meridian-health",
+    "northstar-clinical",
+    "first-capital",
+    "skyharbor-air",
+    "lakeshore-holdings"
+  ],
+  "goldenQuestionCount": 66,
+  "matrixQuestionCount": 4700,
+  "note": "LAB structural run: framework inventory only. No live agent answers were generated; no pass/fail was fabricated. Run on Azure Container Apps with AGENT_VERIFY_LIVE=1 for live verification."
+}
