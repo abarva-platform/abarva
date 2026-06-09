@@ -19,7 +19,6 @@ loadEnv({ path: '.env.local' });
 loadEnv();
 
 // Contamination-unique marker (never in Apex's legitimate data).
-const MARKER = 'Composite Seed';
 const REPLACES: Array<[string, string]> = [
   ['Apex Retail Group Composite Seed', 'Lakeshore Holdings'],
   ['Apex Retail Group', 'Lakeshore Holdings'],
@@ -47,17 +46,27 @@ async function main(): Promise<void> {
         WHERE table_schema='public' AND data_type IN ('text','character varying','jsonb')
         ORDER BY table_name`,
     );
-    const targets: Array<{ table: string; col: string }> = cols.rows.map((r) => ({ table: r.table_name, col: r.column_name }));
+    // Only tables that HAVE a tenant_key can be safely scrubbed — we must scope
+    // to Lakeshore so we never touch another tenant's legitimate data (e.g.
+    // Apex's own "Apex Retail Group Composite Seed" legal_name).
+    const tablesWithTenantKey = new Set(
+      cols.rows.filter((r) => r.column_name === 'tenant_key').map((r) => r.table_name),
+    );
+    const targets: Array<{ table: string; col: string }> = cols.rows
+      .filter((r) => tablesWithTenantKey.has(r.table_name) && r.column_name !== 'tenant_key')
+      .map((r) => ({ table: r.table_name, col: r.column_name }));
     const jsonbCols = new Set<string>();
     for (const r of cols.rows) if (r.data_type === 'jsonb') jsonbCols.add(`${r.table_name}.${r.column_name}`);
     const asText = (t: string, c: string) => (jsonbCols.has(`${t}.${c}`) ? `${c}::text` : c);
+    // Tenant-scope: only Lakeshore rows, only those containing an Apex reference.
+    const SCOPE = `tenant_key IN ('lakeshore','lakeshore-holdings')`;
 
     // 1. Locate the contamination (table, column, tenant_key, count).
     const hits: Array<{ table: string; col: string }> = [];
     for (const { table, col } of targets) {
       try {
         const { rows } = await client.query(
-          `SELECT count(*)::int AS n, min(tenant_key) AS sample_tenant FROM ${table} WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`,
+          `SELECT count(*)::int AS n, min(tenant_key) AS sample_tenant FROM ${table} WHERE ${SCOPE} AND ${asText(table, col)} ILIKE '%Apex Retail%'`,
         );
         const n = rows[0].n as number;
         if (n > 0) {
@@ -76,11 +85,11 @@ async function main(): Promise<void> {
       const isJsonb = jsonbCols.has(`${table}.${col}`);
       const setExpr = isJsonb ? `${col} = ${replExpr(`${col}::text`)}::jsonb` : `${col} = ${replExpr(col)}`;
       const r = await client.query(
-        `UPDATE ${table} SET ${setExpr}, updated_at = now() WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`,
+        `UPDATE ${table} SET ${setExpr}, updated_at = now() WHERE ${SCOPE} AND ${asText(table, col)} ILIKE '%Apex Retail%'`,
       ).catch(async (e) => {
         // some tables may lack updated_at
         if (String(e).includes('updated_at')) {
-          return client.query(`UPDATE ${table} SET ${setExpr} WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`);
+          return client.query(`UPDATE ${table} SET ${setExpr} WHERE ${SCOPE} AND ${asText(table, col)} ILIKE '%Apex Retail%'`);
         }
         throw e;
       });
