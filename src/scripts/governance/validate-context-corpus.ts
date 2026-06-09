@@ -22,10 +22,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateExceptions } from "@/lib/governance/policy-exceptions";
+import { validateManifest } from "@/lib/governance/dataset-manifest";
 
 const ROOT = process.cwd();
 const POLICY_FILE = "src/lib/governance/context-corpus-policy.ts";
 const EXCEPTIONS_FILE = "docs/governance/policy-exceptions.json";
+const MANIFESTS_DIR = "docs/governance/dataset-manifests";
 
 function today(): string {
   // CI runs on a real clock; a plain script (not a Workflow) may use Date.
@@ -146,11 +148,41 @@ function checkDuplicates(): Check {
   return { name: "duplicates", errors, warnings };
 }
 
+function checkManifests(): Check {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const dir = path.join(ROOT, MANIFESTS_DIR);
+  if (!fs.existsSync(dir)) {
+    // No registry yet — nothing to validate. PR-8 seeds the dir + template.
+    return { name: "manifests", errors, warnings };
+  }
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json") && !f.startsWith("_"));
+  for (const f of files) {
+    const p = path.join(dir, f);
+    let raw: unknown;
+    try {
+      raw = JSON.parse(fs.readFileSync(p, "utf8"));
+    } catch (e) {
+      errors.push(
+        `${MANIFESTS_DIR}/${f}: invalid JSON: ${(e as Error).message}`,
+      );
+      continue;
+    }
+    const v = validateManifest(raw);
+    errors.push(...v.errors.map((e) => `${f}: ${e}`));
+    warnings.push(...v.warnings.map((w) => `${f}: ${w}`));
+  }
+  return { name: "manifests", errors, warnings };
+}
+
 const CHECKS: Record<string, () => Check> = {
   exceptions: checkExceptions,
   "tenant-coverage": checkTenantCoverage,
   "agent-readiness": checkAgentReadiness,
   duplicates: checkDuplicates,
+  manifests: checkManifests,
 };
 
 function main(): void {
