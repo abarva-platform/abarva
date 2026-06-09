@@ -52,6 +52,11 @@ export interface AskOptions {
   surfaceContext?: AskSurfaceContext | null;
   activePersonGraphNodeId?: string | null;
   activePersonDisplayName?: string | null;
+  /**
+   * Observability hook forwarded to the synthesizer · invoked with the exact
+   * system + user content sent to the model. Used by the agent-trace spine.
+   */
+  onModelInput?: (parts: { system: string; user: string }) => void;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -201,6 +206,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       factAvailabilityBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
       averageConfidence,
+      onModelInput: opts.onModelInput,
     })) {
       answer += delta;
       yield { type: 'delta', text: delta };

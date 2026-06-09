@@ -6,6 +6,13 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 import type { AskSurfaceContext } from '@/lib/intelligence/ask';
 import {
+  buildSentinelTrace,
+  emitAgentContextTraceAsync,
+  hashModelInput,
+  type RawAskSource,
+} from '@/lib/agent-trace';
+import { randomUUID } from 'node:crypto';
+import {
   appendAskSessionTurn,
   normalizeAskTabId,
   prepareAskSessionMemory,
@@ -123,6 +130,9 @@ async function handleAsk(payload: AskPayload) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
+      // Agent-trace capture (Sentinel intelligence path).
+      let traceSources: RawAskSource[] = [];
+      let traceModelInputHash: string | undefined;
       try {
         if (memory?.sessionId) {
           controller.enqueue(encoder.encode(JSON.stringify({
@@ -192,11 +202,15 @@ async function handleAsk(payload: AskPayload) {
           conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
+          onModelInput: (parts) => {
+            traceModelInputHash = hashModelInput(parts);
+          },
         })) {
           if (event.type === 'classified') classificationForMemory = event.classification ?? classificationForMemory;
           if (event.type === 'sources') {
             citationCount = event.sources?.length ?? 0;
             patternId = event.sources?.find((source) => source.type === 'PATTERN')?.id ?? patternId;
+            traceSources = (event.sources ?? []) as RawAskSource[];
           }
           if (event.type === 'delta' && event.text) assistantText += event.text;
           if (event.type === 'error') sawStreamError = true;
@@ -211,6 +225,26 @@ async function handleAsk(payload: AskPayload) {
             patternId,
             citationCount,
           });
+          // Observability · emit the context-bundle trace (non-blocking).
+          // Proves this Sentinel answer assembled its bundle before the model
+          // call. IDs only; the model input is captured as a sha256 hash.
+          emitAgentContextTraceAsync(
+            buildSentinelTrace({
+              questionId: randomUUID(),
+              tenantId,
+              tenantKey: tenantInventoryKey,
+              surface: 'intelligence',
+              userIntent:
+                (classificationForMemory as { intent?: string } | null)?.intent ?? null,
+              modelInputHash: traceModelInputHash ?? 'no_model_call',
+              responseId: event.id,
+              citationObjectsEmitted: traceSources
+                .map((s) => s.id)
+                .filter((id): id is string => Boolean(id)),
+              emittedAt: new Date().toISOString(),
+              sources: traceSources,
+            }),
+          );
           controller.enqueue(encoder.encode(JSON.stringify({
             type: 'done',
             telemetryEventId: event.id,
