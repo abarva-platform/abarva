@@ -1,0 +1,17 @@
+{
+  "dataset_id": "lakeshore-holdings-current-state-v1",
+  "title": "Lakeshore Holdings — Current-State Context (canonical reconciliation)",
+  "client_key": "lakeshore-holdings",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "abarva-platform",
+  "source_basis": "tenant_admin_upload",
+  "ingestion_method": "admin_bulk_loader",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 1329,
+  "approved_by": "anand",
+  "approved_at": "2026-06-09",
+  "notes": "Reconciles the previously-loaded Lakeshore current-state context (docs/build/lakeshore/loaded/data/*.csv, 1,329 records committed, ~8,987 Azure Search docs) into the canonical CONTEXT_FRAMEWORK_v1 dimensions and the governed Admin bulk path. Cover name only; diversified/private-holdings shape. Mapping in LAKESHORE_CANONICAL_RECONCILIATION_2026-06-09.md."
+}
