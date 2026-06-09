@@ -12,7 +12,7 @@
 // - 28px AbarVa Option 2 compact nav lockup
 // - Centered nav · client context sits quietly before Home
 // - Module nav inactive items at 72% white · active = white raised pill
-// - Right rail: Learn, Product, avatar + first name + Sign-out
+// - Right rail: Learn, avatar + first name + Sign-out
 // - All colors from the locked brand kit (no green / teal in chrome)
 //
 // Backward-compat: the legacy props (showLocked, context, timeString)
@@ -77,7 +77,6 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
     .toUpperCase();
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
   const learnActive = pathname === "/home/learn" || pathname.startsWith("/home/learn/");
-  const productActive = pathname === "/product" || pathname.startsWith("/product/");
 
   function handleSignOut() {
     void signOut();
@@ -230,33 +229,6 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
             }}
           >
             Learn
-          </Link>
-        )}
-        {signedIn && (
-          <Link
-            href="/product"
-            data-nav-key="product"
-            aria-current={productActive ? "page" : undefined}
-            className="app-top-bar__nav-link"
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: 13,
-              fontWeight: productActive ? 750 : 600,
-              letterSpacing: 0,
-              color: productActive ? "#050505" : BRAND.textStrong,
-              background: productActive ? "white" : "transparent",
-              boxShadow: productActive ? BRAND.activePillShadow : "none",
-              borderRadius: 7,
-              textDecoration: "none",
-              padding: "0 12px",
-              minHeight: 34,
-              display: "inline-flex",
-              alignItems: "center",
-              whiteSpace: "nowrap",
-              marginRight: 2,
-            }}
-          >
-            Product
           </Link>
         )}
         {signedIn && <AdminInboxTopNavBadge />}
