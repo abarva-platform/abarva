@@ -24,6 +24,8 @@ export async function requireTenancy(): Promise<TenancyCtx> {
     clientId: client.id,
     clientKey: client.key,
     userId,
+    clerkUserId: user?.clerkUserId,
+    tenantRole: client.key ? (user?.tenantRoles?.[client.key] ?? null) : null,
     role: person?.role ?? user?.primaryRole ?? undefined,
     email: user?.email ?? person?.email ?? null,
   };

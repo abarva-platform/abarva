@@ -36,11 +36,14 @@ describe('programs requireTenancy', () => {
       personId: null,
       clerkUserId: 'user_demo_meridian',
       primaryRole: 'client_viewer',
+      tenantRoles: { meridian: 'tenant_admin' },
     });
 
     await expect(requireTenancy()).resolves.toMatchObject({
       clientId: 'client-meridian-uuid',
       userId: 'clerk:user_demo_meridian',
+      clerkUserId: 'user_demo_meridian',
+      tenantRole: 'tenant_admin',
       role: 'client_viewer',
     });
   });
