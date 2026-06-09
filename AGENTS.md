@@ -1,48 +1,60 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Cursor Cloud specific instructions
 
 ### Stack overview
+
 Next.js 16.2.2 (App Router + Turbopack), React 19, Tailwind CSS 4, TypeScript 5. Auth via Clerk, data via Azure/Postgres through the data-plane adapters. Production answer generation uses Anthropic Claude through the audited AI egress path. Optional non-reasoning utilities may degrade gracefully when configured (for example embeddings, Stripe, Resend, PostHog). Legacy Supabase/Neo4j/Pinecone names may still exist in compatibility shims, tests, migrations, or deprecation docs; do not introduce new runtime dependencies on them.
 
 ### Running the dev server
+
 ```
 npm run dev          # starts on http://localhost:3000
 ```
+
 Clerk authentication wraps the entire app. The root `/` route and `/sign-in` are public. Most other routes require a valid Clerk session. Without real `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`, only the homepage renders; all other pages redirect to Clerk's auth flow.
 
 The `.env.local` file must contain a validly-formatted `pk_test_*` key (base64-encoded Clerk frontend API domain) or Clerk middleware will crash with "Publishable key not valid." — a bare string like `pk_test_placeholder` is rejected at the SDK level.
 
 ### Linting
+
 ```
 npx eslint src/      # ESLint 9 flat config in eslint.config.mjs
 ```
 
 ### Testing
+
 - **Unit / behavior tests:** `npm run test:nav`, `npm run test:behaviors` — fast, no external deps.
 - **Integration tests:** `npm run test:integration` — most pass without a DB; suites that hit the Azure/Postgres data plane will fail with placeholder credentials.
 - **E2E tests:** `npm run test:e2e` — requires Playwright browsers (`npx playwright install chromium`) and a running dev server with real Clerk + Azure/Postgres credentials.
 - Jest picks up Playwright `*.spec.ts` files from `tests/e2e/` by default; the dedicated scripts (`test:nav`, `test:behaviors`, `test:integration`) correctly scope to their directories.
 
 ### Env vars
+
 Required for the app to serve any page:
+
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (must be valid `pk_test_*` or `pk_live_*` format)
 - `CLERK_SECRET_KEY`
 
 Required for data-backed pages:
+
 - `DATABASE_URL`
 - Any legacy `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, or `SUPABASE_SERVICE_ROLE_KEY` references are compatibility-era residue. New runtime code must use the Azure/Postgres data-plane adapters, not direct Supabase clients.
 
 Required for production answer generation:
+
 - `ANTHROPIC_API_KEY`
 
 Optional (features degrade gracefully): `STRIPE_SECRET_KEY`, `RESEND_API_KEY`, and explicitly scoped non-reasoning model utilities such as embeddings/demo audio when approved. `OPENAI_API_KEY` must not be required by Sentinel, Nexus, Source chat, Tower synthesis, or any production answer-generation path.
 
 ### Node.js version
+
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.
 
 ## Architecture and provider enforcement
@@ -72,6 +84,7 @@ Merge queue and the fuller pilot-hardening check suite can be re-enabled when th
 If GitHub CLI auth behaves strangely on this machine, check for an invalid shell-level `GH_TOKEN`; prefer `env -u GH_TOKEN gh ...` so the GitHub CLI keychain credential is used.
 
 Use these lanes consistently:
+
 - `global-control-lane`: shared app/control-plane behavior for all clients unless feature-gated.
 - `client-data-lane`: client-scoped schema, RLS, seed, ingestion, retrieval, or private data-plane changes.
 - `internal-admin`: AbarVa-only operations/admin capability.
@@ -79,3 +92,29 @@ Use these lanes consistently:
 - `experimental`: feature-flagged or non-default capability.
 
 If a PR changes release-relevant files, add or update a release record under `docs/releases/records/` using `docs/releases/templates/release-record-template.md`. The record must explain, in plain English, what changed, what layer changed, which clients are affected, what QA/validation was done, how it rolls out, how it rolls back, and what audit evidence exists. `npm run release:check` enforces this in CI; do not bypass it without explicit Anand approval.
+
+## Context & corpus governance (MANDATORY — all agents, all tenants)
+
+Every context/corpus object (tenant facts, enterprise chunks, uploaded evidence, artifacts,
+patterns, signals, metrics, vendor/system/KPI/financial records, graph edges, search chunks) MUST
+conform to the canonical policy before any agent (Nexus, Sentinel, Atlas, Source, Tower, Steward,
+or future agents) may use it. This binds every agent — Codex, Claude Code, Cursor, or otherwise.
+
+- **Canonical contract:** `src/lib/governance/context-corpus-policy.ts` (`GovernedObject` + Zod +
+  `evaluateGovernedObject`). Policy: `docs/governance/CONTEXT_CORPUS_POLICY.md`. Target data model:
+  `docs/governance/CONTEXT_CORPUS_DATA_ARCHITECTURE.md`.
+- **No raw context to models.** Agents consume only `buildValidatedAgentContextBundle`; objects that
+  evaluate to `block` never reach Claude.
+- **`agent_ready` is earned, not assumed.** Requires source_basis + confidence + provenance +
+  Azure-native index (`fts_indexed`/`search_indexed`) + end-to-end cite-render verification.
+  "Loaded" ≠ "indexed" ≠ "retrievable" ≠ "cited" — report each state separately.
+- **Tenants come from code** (`CANONICAL_TENANT_KEYS`), never a hand-typed list. No tenant
+  exceptions in any scanner/validator/report/test.
+- **Real client names never appear** in any agent-usable object or response. Cover names are
+  canonical; real identities are `restricted`, mapped at ingest, stored ops-only.
+- **No Pinecone runtime; Azure-native retrieval only.** Anthropic-only governs reasoning, not
+  embeddings (OpenAI `text-embedding-3-*` → Azure AI Search is allowed).
+- **Enforcement is strict:** CI validators (`validate:context-corpus*`) gate every PR; the runtime
+  bundle filters at query time. Any dataset that fails policy is `not_reviewed`/`blocked` until
+  fixed. Temporary exceptions live in `docs/governance/policy-exceptions.json` with owner + reason
+  - expiry + remediation PR — CI fails on expiry. No silent or blanket exceptions.
