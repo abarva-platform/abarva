@@ -22,10 +22,14 @@ export const NAV_ITEMS: CockpitNavItem[] = [
     key: "home",
     label: "Home",
     href: "/home",
+    // The Learn rail link lives at /home/learn but is its own nav item; Home
+    // must not also light up on Learn pages, so the Learn subtree is excluded.
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||
-      pathname.startsWith("/home/") ||
+      (pathname.startsWith("/home/") &&
+        pathname !== "/home/learn" &&
+        !pathname.startsWith("/home/learn/")) ||
       pathname === "/dashboard" ||
       pathname.startsWith("/dashboard/"),
   },
