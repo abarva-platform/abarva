@@ -6,10 +6,12 @@
 // (tenant, domain, subdomain) across ten archetypes. Expected answers are NOT
 // fabricated; the PR-5 Azure run derives ground truth and populates results.
 
-export type Answerability =
-  | 'FULLY_ANSWERABLE'
-  | 'PARTIALLY_ANSWERABLE'
-  | 'NOT_LOADED';
+// WS-D: answerability is DERIVED from measured pipeline state (deriveAnswerability),
+// not a hardcoded constant. The matrix carries only the honest pre-run hypothesis
+// (NOT_TESTED, or NOT_LOADED for designed negative tests).
+import type { AnswerabilityStatus } from '@/lib/agent-data-coverage';
+
+export type Answerability = AnswerabilityStatus;
 
 export type RequiredSourceType =
   | 'tenant_context'

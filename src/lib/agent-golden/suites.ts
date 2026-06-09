@@ -43,7 +43,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   company_scale: {
     q: (n) => `What is ${n}'s scale — revenue, business units, geographies, and headcount?`,
@@ -53,7 +53,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   industry_corpus: {
     q: (n, d) => `What are the leading industry patterns and benchmarks relevant to ${n}'s ${d}?`,
@@ -63,7 +63,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'FULLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   move_context: {
     q: (n) => `What transformation Moves or programs are in flight for ${n}, and what stage are they in?`,
@@ -73,7 +73,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   artifacts_evidence: {
     q: (n) => `What board-grade artifacts or evidence packages exist for ${n}, and what do they conclude?`,
@@ -83,7 +83,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   kpi_value: {
     q: (n) => `What are ${n}'s key KPIs and value baselines, and who owns them?`,
@@ -93,7 +93,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   vendor_source: {
     q: (n) => `Which vendors and sourcing relationships matter most to ${n}, and what is their status?`,
@@ -103,7 +103,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   systems_landscape: {
     q: (n) => `Describe ${n}'s application and systems landscape — core platforms and how they connect.`,
@@ -113,7 +113,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   it_data_cloud_erp: {
     q: (n) => `What is ${n}'s IT / data / cloud / ERP architecture, and where are the modernization gaps?`,
@@ -123,7 +123,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   risk_failure_mode: {
     q: (n, d) => `What are the top risks and failure modes for ${n}'s ${d} transformation, and how are they mitigated?`,
@@ -133,7 +133,7 @@ const CATEGORY_SPECS: Record<GoldenCategory, CategorySpec> = {
     expectsMissingContextWarning: false,
     expectsCitations: true,
     negativeTest: false,
-    answerability: 'PARTIALLY_ANSWERABLE',
+    answerability: 'NOT_TESTED',
   },
   missing_unsupported: {
     q: (n) => `What was ${n}'s exact net profit in the most recent fiscal quarter, to the dollar?`,
