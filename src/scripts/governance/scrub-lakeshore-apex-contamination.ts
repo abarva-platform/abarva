@@ -2,12 +2,12 @@
 //
 // The WS-E live probe surfaced a Lakeshore company_scale answer reading
 // "Lakeshore Holdings (legal entity: Apex Retail Group Composite Seed)" — a
-// synthetic-seed artifact that embedded ANOTHER tenant's cover name (Apex
-// Retail) into Lakeshore's enterprise-profile record. This violates the cover-
-// name isolation rule. The contamination is in the live DB only (not the repo
-// source), so this script scrubs the Apex tokens out of Lakeshore's chunks,
-// facts, and records. Scoped to Lakeshore + the Apex tokens; idempotent; runs
-// in-VNet on Azure Container Apps.
+// synthetic-seed artifact that embedded ANOTHER tenant's cover name into
+// Lakeshore's profile. The phrase "Composite Seed" is UNIQUE to this
+// contamination (Apex Retail's own legitimate data never contains it), so we
+// target that phrase — scrubbing only the contaminated rows, never Apex's real
+// data, without needing the (uncertain) Lakeshore tenant_key. Idempotent.
+// Searches enterprise_context_* AND data_inventory_records (dynamic columns).
 //
 // Usage (ACA job): npx tsx src/scripts/governance/scrub-lakeshore-apex-contamination.ts [--apply]
 
@@ -18,9 +18,8 @@ import { postgresClientOptions } from '../postgres-client-options';
 loadEnv({ path: '.env.local' });
 loadEnv();
 
-const TENANTS = ['lakeshore', 'lakeshore-holdings'];
-// Replacement: drop the cross-tenant legal-entity parenthetical and any bare
-// Apex cover-name token, normalising to the Lakeshore identity.
+// Contamination-unique marker (never in Apex's legitimate data).
+const MARKER = 'Composite Seed';
 const REPLACES: Array<[string, string]> = [
   ['Apex Retail Group Composite Seed', 'Lakeshore Holdings'],
   ['Apex Retail Group', 'Lakeshore Holdings'],
@@ -28,7 +27,6 @@ const REPLACES: Array<[string, string]> = [
 ];
 
 function replExpr(col: string): string {
-  // Nested replace() for each token, case-sensitive (cover names are proper nouns).
   let e = col;
   for (const [from, to] of REPLACES) e = `replace(${e}, '${from}', '${to}')`;
   return e;
@@ -41,39 +39,65 @@ async function main(): Promise<void> {
   const client = new Client(postgresClientOptions(url, 'scrub-lakeshore-apex'));
   await client.connect();
   try {
-    const tlist = TENANTS.map((t) => `'${t}'`).join(',');
-
-    // 1. Report what is contaminated (always).
-    for (const [table, col] of [
-      ['enterprise_context_chunks', 'chunk_text'],
-      ['enterprise_context_facts', 'fact_text'],
-      ['enterprise_context_facts', 'fact_value::text'],
-      ['enterprise_context_records', 'payload::text'],
-    ] as const) {
-      const { rows } = await client.query(
-        `SELECT count(*)::int AS n FROM ${table} WHERE tenant_key IN (${tlist}) AND ${col} ILIKE '%apex retail%'`,
-      );
-      console.log(JSON.stringify({ event: 'scrub_found', table, col, rows: rows[0].n }));
-    }
-
-    if (!apply) {
-      console.log(JSON.stringify({ event: 'scrub_dryrun', note: 'pass --apply to scrub' }));
-      return;
-    }
-
-    // 2. Scrub (idempotent — ILIKE filter targets only contaminated rows).
-    const updates: Array<{ table: string; set: string; where: string }> = [
-      { table: 'enterprise_context_chunks', set: `chunk_text = ${replExpr('chunk_text')}`, where: `chunk_text ILIKE '%apex retail%'` },
-      { table: 'enterprise_context_facts', set: `fact_text = ${replExpr('fact_text')}, fact_value = ${replExpr('fact_value::text')}::jsonb`, where: `fact_text ILIKE '%apex retail%' OR fact_value::text ILIKE '%apex retail%'` },
-      { table: 'enterprise_context_records', set: `payload = ${replExpr('payload::text')}::jsonb`, where: `payload::text ILIKE '%apex retail%'` },
+    // Build the candidate (table, column) list: static + dynamic text/jsonb
+    // columns of data_inventory_records.
+    const targets: Array<{ table: string; col: string }> = [
+      { table: 'enterprise_context_chunks', col: 'chunk_text' },
+      { table: 'enterprise_context_facts', col: 'fact_text' },
+      { table: 'enterprise_context_facts', col: 'fact_value' },
+      { table: 'enterprise_context_records', col: 'payload' },
     ];
-    for (const u of updates) {
-      const r = await client.query(
-        `UPDATE ${u.table} SET ${u.set}, updated_at = now() WHERE tenant_key IN (${tlist}) AND (${u.where})`,
+    const dyn = await client.query(
+      `SELECT column_name, data_type FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='data_inventory_records'
+          AND data_type IN ('text','character varying','jsonb')`,
+    );
+    for (const r of dyn.rows) targets.push({ table: 'data_inventory_records', col: r.column_name });
+
+    const jsonbCols = new Set<string>();
+    {
+      const j = await client.query(
+        `SELECT table_name, column_name FROM information_schema.columns
+          WHERE table_schema='public' AND data_type='jsonb'
+            AND table_name IN ('enterprise_context_facts','enterprise_context_records','data_inventory_records')`,
       );
-      console.log(JSON.stringify({ event: 'scrub_applied', table: u.table, rowsUpdated: r.rowCount }));
+      for (const r of j.rows) jsonbCols.add(`${r.table_name}.${r.column_name}`);
     }
-    console.log(JSON.stringify({ event: 'scrub_done' }));
+    const asText = (t: string, c: string) => (jsonbCols.has(`${t}.${c}`) ? `${c}::text` : c);
+
+    // 1. Locate the contamination (table, column, tenant_key, count).
+    const hits: Array<{ table: string; col: string }> = [];
+    for (const { table, col } of targets) {
+      try {
+        const { rows } = await client.query(
+          `SELECT count(*)::int AS n, min(tenant_key) AS sample_tenant FROM ${table} WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`,
+        );
+        const n = rows[0].n as number;
+        console.log(JSON.stringify({ event: 'scrub_found', table, col, rows: n, sampleTenant: rows[0].sample_tenant }));
+        if (n > 0) hits.push({ table, col });
+      } catch (e) {
+        console.log(JSON.stringify({ event: 'scrub_skip', table, col, error: e instanceof Error ? e.message : String(e) }));
+      }
+    }
+
+    if (!apply) { console.log(JSON.stringify({ event: 'scrub_dryrun' })); return; }
+
+    // 2. Scrub the located rows (target the unique marker; tenant-safe).
+    for (const { table, col } of hits) {
+      const isJsonb = jsonbCols.has(`${table}.${col}`);
+      const setExpr = isJsonb ? `${col} = ${replExpr(`${col}::text`)}::jsonb` : `${col} = ${replExpr(col)}`;
+      const r = await client.query(
+        `UPDATE ${table} SET ${setExpr}, updated_at = now() WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`,
+      ).catch(async (e) => {
+        // some tables may lack updated_at
+        if (String(e).includes('updated_at')) {
+          return client.query(`UPDATE ${table} SET ${setExpr} WHERE ${asText(table, col)} ILIKE '%${MARKER}%'`);
+        }
+        throw e;
+      });
+      console.log(JSON.stringify({ event: 'scrub_applied', table, col, rowsUpdated: r.rowCount }));
+    }
+    console.log(JSON.stringify({ event: 'scrub_done', hits: hits.length }));
   } finally {
     await client.end();
   }
