@@ -121,9 +121,13 @@ async function main(): Promise<void> {
   const { azureRead } = await import("@/lib/data-plane/azureRead");
 
   const clientRows = await azureRead
-    .query<{ id: string; key: string }>("SELECT id, key FROM clients", [], {
-      missingTable: "empty",
-    })
+    .query<{ id: string; key: string }>(
+      "SELECT id, COALESCE(tenant_key, slug) AS key FROM clients WHERE COALESCE(tenant_key, slug) IS NOT NULL",
+      [],
+      {
+        missingTable: "empty",
+      },
+    )
     .catch(() => [] as Array<{ id: string; key: string }>);
   const keyToId = new Map(clientRows.map((r) => [r.key, r.id]));
 

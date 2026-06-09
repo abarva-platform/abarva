@@ -103,7 +103,11 @@ async function main(): Promise<void> {
     .query<{
       id: string;
       key: string;
-    }>("SELECT id, key FROM clients", [], { missingTable: "empty" })
+    }>(
+      "SELECT id, COALESCE(tenant_key, slug) AS key FROM clients WHERE COALESCE(tenant_key, slug) IS NOT NULL",
+      [],
+      { missingTable: "empty" },
+    )
     .catch(() => [] as Array<{ id: string; key: string }>);
   const keyToId = new Map(clientRows.map((r) => [r.key, r.id]));
 
