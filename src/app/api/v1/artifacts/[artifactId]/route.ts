@@ -27,6 +27,19 @@ export async function GET(
       { status: 400 },
     );
   }
+  // `generated_artifacts.id` is a uuid column; a malformed id would otherwise
+  // reach the DB and throw "invalid input syntax for type uuid" → an unhandled
+  // 500. A non-uuid id can never match a row, so treat it as not-found.
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      artifactId,
+    )
+  ) {
+    return Response.json(
+      { error: "not_found", detail: "Generated artifact was not found." },
+      { status: 404 },
+    );
+  }
 
   const activeClientId = await getActiveClientKey().catch(() => null);
   if (!activeClientId) {
