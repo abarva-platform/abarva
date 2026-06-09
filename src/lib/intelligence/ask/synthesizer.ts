@@ -290,6 +290,12 @@ export async function* synthesizeStream(args: {
    * end, per the system prompt.
    */
   averageConfidence?: number;
+  /**
+   * Observability hook · invoked with the EXACT system + user content sent to
+   * the model, right before the model call. The agent-trace spine hashes this
+   * to prove Claude is downstream of retrieval. Must not mutate the args.
+   */
+  onModelInput?: (parts: { system: string; user: string }) => void;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
     yield 'Sentinel synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
@@ -342,6 +348,7 @@ export async function* synthesizeStream(args: {
 
   try {
     const model = chooseModel(args.intent, args.query);
+    args.onModelInput?.({ system: `${system}${continuityInstruction}`, user: prompt });
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,

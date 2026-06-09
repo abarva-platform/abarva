@@ -11,6 +11,8 @@ import { appendTurn, listTurns } from '@/lib/intelligence/db/turnRepository';
 import { makeNexusStream, SSE_HEADERS } from '@/lib/nexus/sseStream';
 import { requireTenancy, TenancyError } from '../../_intel-auth';
 import type { NexusFormat } from '@/lib/intelligence/types';
+import { buildNexusTrace, emitAgentContextTraceAsync, type RawNexusSource } from '@/lib/agent-trace';
+import { canonicalTenantKey } from '@/lib/tenant/aliases';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -123,6 +125,26 @@ export async function POST(req: NextRequest) {
       latencyMs: result.latencyMs.total,
       firstTokenMs: result.latencyMs.compose > 0 ? result.latencyMs.compose : null,
     });
+
+    // Observability · emit the context-bundle trace (non-blocking, never
+    // throws). Proves this Nexus answer assembled its bundle before the model
+    // call. IDs only; the model input is captured as a sha256 hash.
+    emitAgentContextTraceAsync(
+      buildNexusTrace({
+        questionId: turnId,
+        tenantId: ctx.clientId,
+        tenantKey: canonicalTenantKey(ctx.clientId),
+        surface: 'moves',
+        userIntent: result.mode,
+        resolvedPhase: result.format,
+        modelInputHash: result.modelInputHash ?? 'no_model_call',
+        responseId: assistantTurn.id,
+        citationObjectsEmitted: result.bundle.sources.map((s) => s.id),
+        bundleState: result.contextBundleState ?? null,
+        emittedAt: new Date().toISOString(),
+        sources: result.bundle.sources as unknown as RawNexusSource[],
+      }),
+    );
 
     // Auto-advance thread state at turn 3 per spec §1.3 state C
     if (turnCount + 1 >= 3) {

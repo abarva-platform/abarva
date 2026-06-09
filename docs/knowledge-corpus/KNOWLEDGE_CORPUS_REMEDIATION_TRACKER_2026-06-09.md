@@ -1,0 +1,84 @@
+# Knowledge-Corpus Remediation Tracker — 2026-06-09
+
+**Workstream:** Agent context-bundle validation framework — prove the
+context-bundle spine works end to end and that Nexus/Sentinel responses are
+wise, grounded, cited, source-aware, and tenant-safe, validated against
+production/lab Azure data (not manual chat testing).
+
+**Architecture truth (binding):** Azure/Postgres via `DATABASE_URL` is the
+runtime data plane; Azure Search / Blob / Postgres only; Claude/Anthropic is
+the governed reasoning provider; no Supabase runtime, no Supabase fallback.
+This lane is eval / observability / answer-quality validation only — it does
+not change DNS, Vercel, Supabase, drain/search/freeze, or shutdown logic.
+
+## Status legend
+
+- ✅ Done — merged, CI green
+- 🟡 Partial — code landed, live Azure proof pending (private DB is VNet-only,
+  unreachable from localhost; must run on Azure Container Apps)
+- ⬜ Not started
+
+## Slice ledger
+
+| PR | Title | Status | Notes |
+|----|-------|--------|-------|
+| 1 | Trace governed Nexus/Sentinel context bundles | 🟡 | Code + migration + tests landed; live ACA DB persistence pending |
+| 2 | Add golden tenant question suites for governed agents | ⬜ | |
+| 3 | Add response wisdom evaluation rubric | ⬜ | |
+| 4 | Validate governed agent claims and citations | ⬜ | |
+| 5 | Record production Azure context-bundle verification | ⬜ | |
+| 6 | Domain/subdomain expert consultant question matrix | ⬜ | |
+
+## Active tenants (from code, not hand-typed)
+
+Source of truth: `src/config/tenants/CANONICAL_TENANTS.ts` +
+`src/lib/tenant/aliases.ts` (`CANONICAL_TENANT_KEYS`).
+
+| Canonical key | App client key | Broker key | Industry |
+|---------------|----------------|------------|----------|
+| `apex-retail` | `apexretail` | `apex-retail` | retail |
+| `meridian-health` | `meridian` | `meridian` | healthcare_provider (PHS-shape) |
+| `northstar-clinical` | `northstar` | `northstar-clinical` | healthcare_medtech |
+| `first-capital` | `arcturus` | `first-capital` | financial_services_banking |
+| `skyharbor-air` | `skyharbor` | `skyharbor-air` | airline |
+
+**Not canonical tenants** (appear only in build-doc / worktree scaffolding, not
+in the canonical registry): Lakeshore, Morgan Street. They are tracked as
+ingestion/onboarding gaps, not as testable live tenants, until they exist in
+`CANONICAL_TENANT_KEYS` with loaded Azure data. PHS = Meridian's shape.
+
+## Execution log
+
+### PR-1 — Trace governed Nexus/Sentinel context bundles · 🟡 candidate
+
+- **What landed:**
+  - `public.agent_context_traces` append-only table (RLS per tenant key,
+    immutable by trigger, IDs + sha256 model-input hash only — no raw prompts,
+    PHI/PII, or source text). Migration
+    `supabase/migrations/20260609090000_agent_context_traces_v1.sql`.
+  - `src/lib/agent-trace/` spine: full `AgentContextTrace` contract (every
+    brief field), pure builders for Nexus/Sentinel, sha256 model-input hashing,
+    redacted-by-default mode, lab-mode structured-log fallback, repository.
+  - Non-blocking emission wired into the Nexus orchestrator/route and the
+    Sentinel intelligence ask route. Model input captured at the exact model
+    call (proves Claude is downstream of retrieval).
+- **Validation:** 16/16 behavior tests; tsc clean on touched files; eslint
+  clean; `audit:architecture-rules` green; `release:check` green.
+- **Evidence:** release record
+  `docs/releases/records/2026-06-09-agent-context-bundle-trace.md`.
+- **Open / next:** populate `validation_status` (PR-3),
+  `claim_validation_status` (PR-4), `tenant_isolation_status` (leakage tests);
+  enrich `eligible_datasets` / `missing_context` / pattern `namespace`;
+  instrument the `it_productivity` Sentinel sub-path and Source/Tower surfaces;
+  confirm live DB persistence on Azure Container Apps after `npm run db:migrate`.
+
+## Remediation backlog (by lane)
+
+- **ingestion/data-load:** Lakeshore / Morgan Street not in canonical registry —
+  cannot be tested as live tenants until onboarded with Azure-loaded context.
+- **retrieval/indexing:** (to be populated by PR-2/PR-5 lab runs).
+- **answer-prompt/synthesis:** (to be populated by PR-3).
+- **binder/pattern validation:** (to be populated by PR-4).
+- **tenant isolation:** (to be populated by leakage tests).
+- **provenance/source-state:** (to be populated by PR-4/PR-5).
+- **UI/module-binding:** (to be populated by PR-5).
