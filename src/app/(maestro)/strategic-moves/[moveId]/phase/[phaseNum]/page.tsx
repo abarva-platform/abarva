@@ -8,6 +8,12 @@ import {
   isStrategicMoveRouteId,
   parseStrategicMovePhaseNum,
 } from "@/lib/programs/strategic-move-route-params";
+import { requireTenancy } from "@/app/api/v1/programs/_auth";
+import {
+  inferMoveProfile,
+  resolveCurrentStateReadiness,
+  type ReadinessReport,
+} from "@/lib/programs/current-state-readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +43,24 @@ export default async function StrategicMovePhaseWorkspacePage({
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
+  // Estate-derived current-state readiness for this phase (best-effort; never
+  // blocks the workspace render).
+  let readiness: ReadinessReport | null = null;
+  try {
+    const tctx = await requireTenancy();
+    const profile = await inferMoveProfile(tctx);
+    readiness = await resolveCurrentStateReadiness(tctx, profile, parsedPhase);
+  } catch {
+    readiness = null;
+  }
+
   return (
     <AppShell surface="programs-detail">
-      <StrategicMovePhaseClient move={move} phaseNum={parsedPhase} />
+      <StrategicMovePhaseClient
+        move={move}
+        phaseNum={parsedPhase}
+        readiness={readiness}
+      />
     </AppShell>
   );
 }
