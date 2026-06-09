@@ -162,6 +162,27 @@ describe('detectTenantLeakage', () => {
     expect(findings).toHaveLength(0);
   });
 
+  it('does NOT false-positive on common words like "first" (First Capital first word)', () => {
+    const findings = detectTenantLeakage(
+      'In the first quarter, SkyHarbor should prioritise the first-half KPI baseline.',
+      'skyharbor-air',
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it('still flags the full cover name "First Capital"', () => {
+    const findings = detectTenantLeakage(
+      'SkyHarbor should copy what First Capital did.',
+      'skyharbor-air',
+    );
+    expect(findings.some((f) => f.offendingTenantKey === 'first-capital')).toBe(true);
+  });
+
+  it('still flags distinctive tenant first-words (Meridian)', () => {
+    const findings = detectTenantLeakage('Like Meridian did, SkyHarbor should...', 'skyharbor-air');
+    expect(findings.some((f) => f.offendingTenantKey === 'meridian-health')).toBe(true);
+  });
+
   it('full pipeline: leakage sets tenant_isolation_status to fail', () => {
     const result = validateClaimsAndCitations({
       trace: trace(),

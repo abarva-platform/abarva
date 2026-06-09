@@ -126,6 +126,23 @@ export function validatePatternNamespaces(input: {
   return findings;
 }
 
+// Common English words that appear as a tenant cover-name's first word
+// (e.g. "First" in "First Capital"). These are NOT matched as a lone leakage
+// token — the full name + canonical key still are.
+const COMMON_NAME_WORDS = new Set([
+  'first',
+  'prime',
+  'core',
+  'united',
+  'general',
+  'capital',
+  'national',
+  'global',
+  'american',
+  'metro',
+  'central',
+]);
+
 /** Detect references to OTHER canonical tenants in the answer. */
 export function detectTenantLeakage(
   answerText: string,
@@ -138,10 +155,16 @@ export function detectTenantLeakage(
   const findings: TenantLeakageFinding[] = [];
   for (const t of list) {
     if (t.key === own) continue;
-    // Distinctive token = the first word of the cover name (e.g. "Meridian",
-    // "SkyHarbor", "Northstar", "Lakeshore", "Apex") plus the canonical key.
-    const firstWord = t.name.split(/\s+/)[0];
-    const tokens = [t.name, firstWord, t.key].filter(Boolean);
+    // Always match the full cover name + the canonical key. The single first
+    // word is matched ONLY when it is a distinctive proper noun — common
+    // English words ("First" in "First Capital") would otherwise false-positive
+    // on phrases like "first quarter" in any tenant's own answer.
+    const firstWord = t.name.split(/\s+/)[0] ?? '';
+    const distinctiveFirst =
+      firstWord.length >= 4 && !COMMON_NAME_WORDS.has(firstWord.toLowerCase())
+        ? firstWord
+        : null;
+    const tokens = [t.name, distinctiveFirst, t.key].filter((x): x is string => Boolean(x));
     for (const token of tokens) {
       const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(`\\b${escaped}\\b`, 'i');

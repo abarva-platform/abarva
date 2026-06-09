@@ -57,3 +57,15 @@ a real Claude-backed answer.
 `az acr build` the branch → PUT/clone the migrate job with the probe image +
 args → `az containerapp job start` → read `ContainerAppConsoleLogs_CL` filtered
 by the execution name. See `project_aca_vnet_job_execution` memory for the recipe.
+
+## Re-run after the leakage fix (execution job-ws-g-probe-eus-myz6lxz)
+
+After the leakage-detector precision fix (full name + key + distinctive first
+word only; "First" excluded), the SkyHarbor probe was re-run in-VNet:
+
+`probe_summary: questions=6, grounded=6, withCitations=6, leakageFailures=0, unsupportedClaims=0`
+
+`kpi_value` (the prior failure) → `isolationStatus=pass`, `leak=[]`, no auto-fail.
+The earlier finding was the `"First"` (First Capital) false positive, not a real
+synthesizer leak — confirmed on live data. All 6 answers: grounded, cited,
+claim-clean, tenant-safe.
