@@ -90,12 +90,13 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         background: BRAND.ink,
         color: "white",
         height: 64,
-        display: "flex",
+        // 3-column grid so the product nav is TRUE-centered in the bar
+        // (Snowflake-style), independent of brand/right-rail widths. The 1fr
+        // side columns reserve space so the three groups can never overlap —
+        // the collision that ran the tenant name into the old tagline.
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
         alignItems: "center",
-        justifyContent: "space-between",
-        // Minimum spacing between the three groups (brand · module nav ·
-        // right rail) so they can never overlap under width pressure — the
-        // collision that ran the tenant name into the old tagline.
         gap: 24,
         padding: "0 32px",
         borderBottom: `1px solid ${BRAND.hair}`,
@@ -119,7 +120,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, justifySelf: "start" }}>
         <Link
           href="/home"
           aria-label="AbarVa Home"
@@ -134,44 +135,42 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
             priority
           />
         </Link>
+        {/* Active-client context sits beside the brand (left), so the product
+            nav can be dead-centered in the bar. */}
+        {signedIn && resolvedTenantName && (
+          <>
+            <span
+              aria-hidden="true"
+              style={{ width: 1, height: 16, background: BRAND.hair, marginLeft: 4 }}
+            />
+            <span
+              title={resolvedTenantName}
+              aria-label={`Active client ${resolvedTenantName}`}
+              style={{
+                display: "inline-block",
+                maxWidth: 210,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
+                fontSize: 13,
+                fontStyle: "italic",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.82)",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {resolvedTenantName}
+            </span>
+          </>
+        )}
       </div>
 
       {navItems.length > 0 && (
-        <nav aria-label="Product modules" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {signedIn && resolvedTenantName && (
-            <>
-              <span
-                title={resolvedTenantName}
-                aria-label={`Active client ${resolvedTenantName}`}
-                style={{
-                  display: "inline-block",
-                  maxWidth: 210,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
-                  fontSize: 13,
-                  fontStyle: "italic",
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.82)",
-                  letterSpacing: "0.01em",
-                  padding: "22px 12px 22px 0",
-                  transform: "translateY(1px)",
-                }}
-              >
-                {resolvedTenantName}
-              </span>
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 1,
-                  height: 16,
-                  background: BRAND.hair,
-                  marginRight: 2,
-                }}
-              />
-            </>
-          )}
+        <nav
+          aria-label="Product modules"
+          style={{ display: "flex", alignItems: "center", gap: 4, justifySelf: "center" }}
+        >
           {navItems.map((item) => {
             const active = item.match(pathname);
             return (
@@ -202,7 +201,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, justifySelf: "end" }}>
         {signedIn && (
           <Link
             href="/home/learn"
