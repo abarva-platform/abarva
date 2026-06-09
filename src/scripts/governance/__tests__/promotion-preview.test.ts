@@ -23,7 +23,10 @@ describe("buildPreviewData", () => {
     ].map(evaluatePromotion);
     const d = buildPreviewData(evals);
     expect(d.total).toBe(5);
-    expect(d.byRecommendation.agent_ready).toBe(2);
+    // WS-F: fully-eligible-but-unapproved rows are promotion_candidates, not
+    // agent_ready (agent_ready is reached only through governed sign-off).
+    expect(d.byRecommendation.promotion_candidate).toBe(2);
+    expect(d.byRecommendation.agent_ready ?? 0).toBe(0);
     expect(d.byRecommendation.blocked).toBe(1);
     expect(d.byRecommendation.restricted).toBe(1);
     expect(d.byRecommendation.remain_not_reviewed).toBe(1);
