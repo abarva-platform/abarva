@@ -25,6 +25,7 @@ import "server-only";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { createPerson } from "@/lib/db/person";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+import { canonicalTenantKey } from "@/lib/tenant-keys";
 
 export interface ProvisionInput {
   clerkUserId: string;
@@ -47,10 +48,13 @@ function isCanonical(key: string | null | undefined): boolean {
   return !!key && (CANONICAL_TENANT_KEYS as readonly string[]).includes(key);
 }
 
-function deriveIsAdmin(input: ProvisionInput): boolean {
+function deriveIsAdmin(input: ProvisionInput, canonicalKey: string): boolean {
   const r = (input.clerkRole ?? "").toLowerCase();
   if (r === "maestro" || r === "admin") return true;
-  const tr = input.tenantRoles?.[input.clientKey];
+  // tenantRoles may be keyed by the app-form key ("skyharbor") or the canonical
+  // form ("skyharbor-air"); accept either.
+  const tr =
+    input.tenantRoles?.[input.clientKey] ?? input.tenantRoles?.[canonicalKey];
   return tr === "tenant_admin" || tr === "admin";
 }
 
@@ -63,13 +67,17 @@ export async function ensureOperatorPersonProvisioned(
   input: ProvisionInput,
 ): Promise<ProvisionResult | null> {
   try {
-    // Single-tenant, canonical-only. Refuse anything ambiguous.
-    if (!isCanonical(input.clientKey)) return null;
+    // Single-tenant, canonical-only. The active tenant key may arrive in app
+    // form ("skyharbor") while CANONICAL_TENANT_KEYS holds the dashed canonical
+    // form ("skyharbor-air"); normalize before the guard so a real canonical
+    // tenant in either form is accepted, and a truly unknown tenant is refused.
+    const canonicalKey = canonicalTenantKey(input.clientKey);
+    if (!isCanonical(canonicalKey)) return null;
     const email = input.email?.trim().toLowerCase();
     if (!email) return null; // email is our idempotency key — no email, no provision
     if (!input.clientId) return null;
 
-    const isAdmin = deriveIsAdmin(input);
+    const isAdmin = deriveIsAdmin(input, canonicalKey);
     const primaryRole: ProvisionResult["role"] = isAdmin
       ? "maestro"
       : "client_viewer";
