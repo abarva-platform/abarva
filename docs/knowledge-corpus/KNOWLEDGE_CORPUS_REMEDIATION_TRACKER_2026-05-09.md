@@ -72,6 +72,7 @@ Current truth:
 | [#1871](https://github.com/anandsundaram-hash/abarva/pull/1871) | Done | `d64dfcece989d7b2a8f6896bd6afe4cb59bd01c6` | Canonical corpus strict-quality remediation: generated preview validates at `patterns=312 errors=0 warnings=0`; 312 remediated persisted rows written and verified unchanged afterward. |
 | [#1872](https://github.com/anandsundaram-hash/abarva/pull/1872) | Done | `6a2eddcf5ce9bde1edac2a2f5b5f43d3dc0ad5e3` | Persisted keyword fallback: canonical corpus search falls back to token scoring over persisted rows; context broker skips blocked vector calls; Intelligence Ask uses canonical fallback. |
 | [#1873](https://github.com/anandsundaram-hash/abarva/pull/1873) | Done | `7b0491ab8af464bc95555f3535a71db01ac3356c` | All-agent response-shape regression tests: deterministic coverage for Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat. |
+| [#3342](https://github.com/abarva-platform/abarva/pull/3342) | Done | `af55ae991dd6351cb59866b6798dc796bd237c09` | PR-P1 agent-ready promotion eligibility evaluator (read-only): pure 10-criteria `evaluatePromotion` over `governed_object_readiness` mirroring `evaluateGovernedObject`/`computeProposedReadiness`; live preview over 59,753 sidecar rows → 100% `remain_not_reviewed`, 0 auto-promotions; no writes, no migration, no source rows mutated. |
 
 ## Execution Ledger
 
@@ -186,7 +187,13 @@ All completion gates are green:
 
 ## Recommended Next PR Train
 
-No required remediation PR train remains.
+### Agent-Ready Promotion Workflow (governed not_reviewed → agent_ready)
+
+- **PR-P1 — promotion eligibility evaluator (read-only): Done / CI-green ([#3342](https://github.com/abarva-platform/abarva/pull/3342)).** Live preview committed at `docs/governance/AGENT_READY_PROMOTION_PREVIEW_2026-05-09.md`. Verdict over 59,753 sidecar rows: 100% `remain_not_reviewed`, 0 promotable — correct, because the sidecar evidence columns (source_basis/confidence/provenance/retrievability/cite-render/applicable_agents) are not yet populated/verified. No auto-promotion by design.
+- **PR-P2 — promotion write path: pending.** Reversible, criteria-gated promotion stamped with `policy_version`/`promoted_at`/`promoted_by_job`/`promotion_reason`; never promotes restricted/PHI/PII/quarantined/non-retrievable/non-cite-renderable rows. Gated on the PR-P1 preview being reviewed/accepted, and on an evidence-population + cite-render-verification pass that lets rows actually clear the criteria.
+- **PR-P3 — runtime enforcement proof: pending.** Tests that Sentinel/Nexus/Source/Atlas/Tower use only agent_ready (or policy-allowed restricted) objects; tenant isolation; no silent fallback to ungoverned rows.
+
+No other required remediation PR train remains.
 
 Recommended optional follow-up:
 
