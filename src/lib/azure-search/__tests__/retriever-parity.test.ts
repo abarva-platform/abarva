@@ -109,7 +109,10 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       // tenant filter first
       expect(filter.startsWith("tenant_key eq 'meridian-health'")).toBe(true);
       expect(filter).toMatch(/confidence ge 0.7/);
-      expect(filter).toMatch(/sensitivity in \('internal','confidential'\)/);
+      // Azure AI Search requires search.in(), NOT the OData `in (...)` list literal,
+      // which the service rejects as an unsupported language feature.
+      expect(filter).toMatch(/search\.in\(sensitivity, 'internal,confidential', ','\)/);
+      expect(filter).not.toMatch(/sensitivity in \(/);
       expect(filter).toMatch(/source_segment eq 'kpi_dictionary'/);
     });
 
