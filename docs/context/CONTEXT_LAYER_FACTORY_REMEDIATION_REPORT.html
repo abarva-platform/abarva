@@ -36,7 +36,7 @@
   <h1>Context Layer Factory — Remediation Report</h1>
   <p class="sub">Replicating the SkyHarbor governed context-layer pipeline for
      <b>Lakeshore Holdings</b>, <b>Apex Retail</b>, <b>Meridian Health</b>.</p>
-  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 (Phase 0 complete; live-DB diagnosis in progress)</span></p>
+  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2 complete (live-DB diagnosis done via ACA probe y0at6mk); generation/load next</span></p>
 
   <div class="card">
     <b>Operating principle (hard rule):</b> diagnose each client by <i>exact pipeline state</i>, not by
@@ -48,8 +48,8 @@
   <table>
     <tr><th>#</th><th>Phase</th><th>Status</th><th>Output</th></tr>
     <tr><td>0</td><td>Study SkyHarbor reference</td><td><span class="pill s-done">complete</span></td><td><code>SKYHARBOR_REFERENCE_IMPLEMENTATION_NOTES.md</code> + <code>CONTEXT_LAYER_SCHEMA_PIPELINE_REFERENCE.md</code></td></tr>
-    <tr><td>1</td><td>Resolve canonical client identity (live DB)</td><td><span class="pill s-prog">in progress</span></td><td>live-DB probe building → <code>CLIENT_IDENTITY_AND_CONTEXT_POSTURE_2026-06.md</code></td></tr>
-    <tr><td>2</td><td>Current dataset/context audit (pipeline-state)</td><td><span class="pill s-prog">in progress</span></td><td><code>CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026-06.md</code></td></tr>
+    <tr><td>1</td><td>Resolve canonical client identity (live DB)</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_IDENTITY_AND_CONTEXT_POSTURE_2026-06.md</code> (probe y0at6mk)</td></tr>
+    <tr><td>2</td><td>Current dataset/context audit (pipeline-state)</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026-06.md</code></td></tr>
     <tr><td>3</td><td>Enterprise-worthiness standard</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_ENTERPRISE_WORTHINESS_STANDARD_2026-06.md</code></td></tr>
     <tr><td>4</td><td>Generate template-aligned datasets</td><td><span class="pill s-todo">queued</span></td><td>generators + <code>datasets/*-synthetic-v2/</code></td></tr>
     <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_LOAD_VERIFICATION_2026-06.md</code></td></tr>
@@ -81,10 +81,22 @@
   <p class="sub">Hard constraint honored: targets are exactly Lakeshore Holdings / Apex Retail / Meridian Health.
      "Presbyterian / Northshore / Northstar" are NOT used (Northstar Clinical is a separate registered tenant; not in scope).</p>
 
-  <h2>Live-DB pipeline-state diagnosis</h2>
-  <p class="muted">Pending the read-only ACA/VNet probe (counts by table × tenant_key × dimension × lifecycle_state;
-     orphan/duplicate-active fact checks; Azure AI Search doc counts; governed_object_readiness census).
-     Per-client state table (NO_SOURCE_FILES → … → CONTEXT_BUNDLE_PROVEN) will be filled here next.</p>
+  <h2>Live-DB pipeline-state diagnosis (probe y0at6mk · 2026-06-10)</h2>
+  <p class="sub">Integrity across all targets: <b>0 duplicate-active facts · 0 orphan facts · 0 null-lifecycle facts</b>.
+     No Azure AI Search index answered for these tenants under tried names → indexing unconfirmed (Phase 6).</p>
+  <table>
+    <tr><th>Client</th><th>Files</th><th>Chunks</th><th>Records</th><th>Facts</th><th>Citation-ready</th><th>Promotion</th><th>Bundle-proven</th><th>State</th><th>Bottleneck</th></tr>
+    <tr><td><b>Apex Retail</b></td><td>42</td><td>6,497</td><td class="s-block" style="font-weight:700">0</td><td class="s-block" style="font-weight:700">0</td><td>✗</td><td>not_reviewed</td><td>✗</td><td><span class="pill s-block">CHUNKS_ONLY</span></td><td>fact-extraction gap</td></tr>
+    <tr><td><b>Meridian Health</b></td><td>15</td><td>3,506</td><td>3,503</td><td>38,640</td><td>✅ 100%</td><td>not_reviewed</td><td>✗</td><td><span class="pill s-prog">CITATION_READY_NOT_PROMOTED</span></td><td>index→retrieve→promote→bundle</td></tr>
+    <tr><td><b>Lakeshore Holdings</b></td><td>13</td><td>1,542<span class="muted"> (~373 pending)</span></td><td>179</td><td>2,949</td><td>✅ ~99.6%</td><td>not_reviewed</td><td>✗</td><td><span class="pill s-prog">CITATION_READY_NOT_PROMOTED + EMBED_INCOMPLETE</span></td><td>embed→index→register→promote→bundle (+scale)</td></tr>
+  </table>
+  <div class="grid3">
+    <div class="card"><b>Apex Retail</b><br><span class="muted">Inverted SkyHarbor problem: big embedded chunk corpus (program_inventory 5,695) but ZERO structured facts.</span><br>Fix: governed records+facts load from <code>datasets/apex-retail-synthetic-v1</code> (141 files).</div>
+    <div class="card"><b>Meridian Health</b><br><span class="muted">38,640 citation-ready facts across 15 enterprise dimensions. Does NOT need generation/load.</span><br>Fix: index → fix tenant/segment retrieval → cite proof → promote → bundle.</div>
+    <div class="card"><b>Lakeshore Holdings</b><br><span class="muted">2,949 citation-ready facts across 13 dims; ~373 chunks pending; unregistered in app alias layer; thin scale.</span><br>Fix: finish embeddings → register alias → index → cite proof → promote → bundle; assess scale expansion.</div>
+  </div>
+  <p class="sub"><b>Headline:</b> none of the three is empty, and none is <code>CONTEXT_BUNDLE_PROVEN</code> → none is "ready".
+     Bottlenecks are client-specific and at opposite ends of the pipeline.</p>
 
   <h2>Loads · indexing · proofs</h2>
   <p class="muted">Populated as phases 5–10 execute: job IDs, image tags/digests, Blob paths, DB counts,
