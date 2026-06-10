@@ -48,6 +48,7 @@ import {
   renderDeliverableDocx,
   renderDeliverableHtml,
 } from "@/lib/programs/deliverables/render";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -197,6 +198,42 @@ export async function GET(
         });
       } catch {
         /* best-effort persist */
+      }
+      // Durable Artifact Vault: render the board-grade DOCX, store to Azure Blob,
+      // register in move_artifacts (versioned). This is the File Cabinet entry.
+      try {
+        const docxBuf = await renderDeliverableDocx(orchestrated.result);
+        const safe =
+          `${orchestrated.result.clientName}_${orchestrated.result.label}`.replace(
+            /[^A-Za-z0-9]+/g,
+            "_",
+          );
+        await saveMoveArtifact(ctx, {
+          moveId: programId,
+          phase: PHASE_NUMBER[spec.phase] ?? 2,
+          archetype: archetype.id,
+          artifactType: spec.key,
+          artifactFamily: "generated_deliverable",
+          title: `${orchestrated.result.label} — ${orchestrated.result.moveName}`,
+          fileName: `${safe}.docx`,
+          fileFormat: "docx",
+          body: docxBuf,
+          status: orchestrated.quality.pass ? "review_required" : "preliminary",
+          qualityScore: orchestrated.quality.qualityScore,
+          unsupportedClaimsCount: orchestrated.result.unsupportedClaims.length,
+          citationReady: true,
+          sourceBasis: "governed_evidence",
+          confidence: "medium",
+          generatedBy: orchestrated.model,
+          metadata: {
+            sourceRegister: orchestrated.result.sourceRegister,
+            openItems: orchestrated.result.openItems,
+            passes: orchestrated.passes,
+            markdown: orchestrated.result.bodyMarkdown.slice(0, 40000),
+          },
+        });
+      } catch {
+        /* best-effort vault save */
       }
     }
     const {
