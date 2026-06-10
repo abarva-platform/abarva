@@ -20,7 +20,11 @@ const usd = (n: number) =>
     : `$${Math.round(n / 1000)}k`;
 
 // Families with a wired deterministic CSV ingest (matches the ingest route).
-const INGEST_WIRED = new Set<string>(["eng_performance_dora"]);
+const INGEST_WIRED = new Set<string>([
+  "eng_performance_dora",
+  "it_systems_landscape",
+  "it_org_structure",
+]);
 
 const STATUS_LABEL: Record<ReadinessStatus, string> = {
   committed: "Committed",

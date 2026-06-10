@@ -15,7 +15,11 @@ import { DEFAULT_ARCHETYPE_ID } from "@/lib/programs/archetypes/registry";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const INGEST_FAMILIES: IngestFamily[] = ["eng_performance_dora"];
+const INGEST_FAMILIES: IngestFamily[] = [
+  "eng_performance_dora",
+  "it_systems_landscape",
+  "it_org_structure",
+];
 const PROVENANCES: DatasetProvenance[] = [
   "client_export",
   "representative_synthetic",
