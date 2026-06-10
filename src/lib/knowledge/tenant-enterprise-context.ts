@@ -149,8 +149,123 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
     segments.push("infrastructure");
   }
 
+  // Meridian + Lakeshore enterprise-context-layer segments. These literal
+  // record_type values are stored as enterprise_context_chunks; map common
+  // intents onto them so those tenants' facts surface instead of being
+  // starved behind the 5 canonical segment ids.
+  if (
+    /\b(application|applications|apps?|cmdb|service\s+catalog|software\s+inventory|system\s+inventory)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("cmdb_applications_services", "cmdb_application");
+  }
+  if (
+    /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|spend|spending|spend\s+baseline|sourcing|procurement)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push(
+      "vendors_contract_inventory",
+      "renewal_calendar",
+      "spend_baseline",
+      "contract",
+    );
+  }
+  if (
+    /\b(risk|risks|compliance|regulatory|regulation|policy|policies|procedure|procedures|control|controls|audit)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push(
+      "risk_compliance_register",
+      "policies_procedures",
+      "risk",
+    );
+  }
+  if (
+    /\b(data\s+domain|data\s+domains|steward|stewardship|data\s+owner|data\s+asset|data\s+assets|master\s+data|golden\s+record)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("data_domains_stewardship", "data_asset");
+  }
+  if (
+    /\b(facility|facilities|site|sites|location|locations|business\s+unit|business\s+units|division|divisions)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push(
+      "facilities_business_units",
+      "facility",
+      "business_unit",
+    );
+  }
+  if (
+    /\b(incident|incidents|outage|outages|change|changes|problem|problems|sla|slas|service\s+level|ticket|tickets)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("incidents", "changes", "problems", "slas");
+  }
+  if (
+    /\b(dependency|dependencies|depends\s+on|integration|integrations|interface|interfaces|coupling|ci\s+relationship)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("ci_relationships_dependencies", "integration");
+  }
+  if (
+    /\b(initiative|initiatives|portfolio|program|programs|roadmap|project|projects)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("initiative_portfolio", "initiative");
+  }
+  if (
+    /\b(org|organization|organisation|role|roles|decision\s+rights?|accountab|raci|owner|ownership|governance)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("org_decision_rights", "org_role");
+  }
+  if (
+    /\b(capability|capabilities|business\s+capability|capability\s+map|value\s+stream)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("business_capability");
+  }
+  if (
+    /\b(kpi|kpis|metric|metrics|measure|measures|measurement|scorecard|target)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("kpi_metric");
+  }
+  if (
+    /\b(configuration\s+item|configuration\s+items|\bci\b|cis|asset|assets|hardware|server|servers)\b/.test(
+      normalized,
+    )
+  ) {
+    segments.push("configuration_item");
+  }
+
   if (segments.length === 0 && isTenantEnterpriseQuestion(query)) {
-    segments.push("enterprise_profile", "org_structure", "it_financials");
+    segments.push(
+      "enterprise_profile",
+      "org_structure",
+      "it_financials",
+      // Broaden the generic "what do you know about us" fallback so
+      // Meridian/Lakeshore enterprise-context rows surface too.
+      "cmdb_applications_services",
+      "initiative_portfolio",
+      "vendors_contract_inventory",
+      "cmdb_application",
+      "initiative",
+      "contract",
+      "business_capability",
+    );
   }
 
   return [...new Set(segments)];

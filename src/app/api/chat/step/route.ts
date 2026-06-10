@@ -174,6 +174,7 @@ export async function POST(request: Request) {
     query: retrievalQuery,
     clientVertical: body.clientContext?.vertical,
     topK: 4,
+    tenantKey: tenancy.clientKey ?? tenancy.clientId ?? body.clientId,
   })
   // F0.2 Layer 0 — user context, composed AFTER role line and BEFORE RAG/task
   const userContextBlock = await getUserContextPromptBlock()

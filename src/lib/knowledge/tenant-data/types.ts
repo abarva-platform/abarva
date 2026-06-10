@@ -43,7 +43,37 @@ export type SegmentId =
   // Landscape-model dedicated segments (data/analytics + infrastructure layers)
   // so these questions retrieve from clean segments instead of being starved
   // inside the overloaded it_landscape segment.
-  | 'infrastructure';
+  | 'infrastructure'
+  // Meridian enterprise-context-layer segments. These literal record_type
+  // values arrive as enterprise_context_chunks for the Meridian synthetic pack.
+  | 'cmdb_applications_services'
+  | 'data_domains_stewardship'
+  | 'ci_relationships_dependencies'
+  | 'facilities_business_units'
+  | 'incidents'
+  | 'changes'
+  | 'problems'
+  | 'slas'
+  | 'spend_baseline'
+  | 'vendors_contract_inventory'
+  | 'renewal_calendar'
+  | 'risk_compliance_register'
+  | 'org_decision_rights'
+  | 'policies_procedures'
+  | 'initiative_portfolio'
+  // Lakeshore Holdings enterprise-context-layer segments (literal record_type values).
+  | 'business_capability'
+  | 'business_unit'
+  | 'cmdb_application'
+  | 'configuration_item'
+  | 'contract'
+  | 'data_asset'
+  | 'facility'
+  | 'initiative'
+  | 'integration'
+  | 'kpi_metric'
+  | 'org_role'
+  | 'risk';
 
 /** Coverage / health status per segment, from segment rollups. See design doc §2. */
 export interface SegmentRollup {
