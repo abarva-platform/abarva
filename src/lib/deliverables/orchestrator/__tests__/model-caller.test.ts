@@ -1,7 +1,7 @@
 // PR-3 proof: the orchestrator's ModelCaller is backed by the audited Anthropic egress.
 // We mock the egress so no live key is needed and assert the wiring: every pass goes
 // through getAuditedAnthropicClient with a pass-specific workflow tag, the pass token
-// budget is passed to messages.create, system+user are sent, and text is extracted.
+// budget is passed to the streamed call, system+user are sent, and text is extracted.
 
 const auditedCalls: Array<Record<string, unknown>> = [];
 const createCalls: Array<Record<string, unknown>> = [];
@@ -9,18 +9,21 @@ const createCalls: Array<Record<string, unknown>> = [];
 jest.mock('@/lib/agent/stream', () => ({
   getAuditedAnthropicClient: jest.fn(async (args: Record<string, unknown>) => {
     auditedCalls.push(args);
+    const pass = String((args.workflow as string).split(':').pop());
+    const text = pass === 'architect'
+      ? JSON.stringify(goodPlan())
+      : pass === 'render_package'
+        ? JSON.stringify(goodDocument())
+        : 'word '.repeat(300);
     return {
       auditId: 'audit-1',
       dataClass: 'confidential',
       client: {
         messages: {
-          create: jest.fn(async (req: Record<string, unknown>) => {
+          // model-caller streams and resolves finalMessage()
+          stream: jest.fn((req: Record<string, unknown>) => {
             createCalls.push(req);
-            const pass = String((args.workflow as string).split(':').pop());
-            // return per-pass content so the full loop completes
-            if (pass === 'architect') return { id: `m-${pass}`, content: [{ type: 'text', text: JSON.stringify(goodPlan()) }] };
-            if (pass === 'render_package') return { id: `m-${pass}`, content: [{ type: 'text', text: JSON.stringify(goodDocument()) }] };
-            return { id: `m-${pass}`, content: [{ type: 'text', text: 'word '.repeat(300) }] };
+            return { finalMessage: async () => ({ id: `m-${pass}`, content: [{ type: 'text', text }] }) };
           }),
         },
       },

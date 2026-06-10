@@ -45,6 +45,7 @@ export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
 export const SOURCE_SUBNAV_TABS_V2: readonly SourceSubNavTab[] = [
   { key: "queue", label: "Decisions", href: "/source/queue" },
   { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
+  { key: "deliverables", label: "Deliverables", href: "/source/deliverables" },
   { key: "setup", label: "Setup", href: "/source/setup" },
 ] as const;
 
