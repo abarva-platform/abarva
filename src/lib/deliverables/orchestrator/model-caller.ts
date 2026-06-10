@@ -56,12 +56,16 @@ export function createAuditedModelCaller(opts: AuditedModelCallerOptions): Model
       },
     });
 
-    const message = await client.messages.create({
-      model,
-      max_tokens: prompt.maxTokens,
-      system: prompt.system,
-      messages: [{ role: 'user', content: prompt.user }],
-    });
+    // Stream and resolve the final message. Board-grade passes can exceed the SDK's
+    // 10-minute non-streaming ceiling; streaming removes that limit.
+    const message = await client.messages
+      .stream({
+        model,
+        max_tokens: prompt.maxTokens,
+        system: prompt.system,
+        messages: [{ role: 'user', content: prompt.user }],
+      })
+      .finalMessage();
 
     return { text: extractText(message.content), responseId: message.id };
   };
