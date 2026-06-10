@@ -8,6 +8,24 @@ import {
   isStrategicMoveRouteId,
   parseStrategicMovePhaseNum,
 } from "@/lib/programs/strategic-move-route-params";
+import { requireTenancy } from "@/app/api/v1/programs/_auth";
+import {
+  inferMoveProfile,
+  resolveCurrentStateReadiness,
+  type ReadinessReport,
+} from "@/lib/programs/current-state-readiness";
+import {
+  buildCurrentStateRecommendation,
+  type CurrentStateRecommendation,
+} from "@/lib/programs/current-state-maturity";
+import {
+  buildCurrentStatePlan,
+  type CurrentStatePlan,
+} from "@/lib/programs/current-state-plan";
+import {
+  getArchetype,
+  DEFAULT_ARCHETYPE_ID,
+} from "@/lib/programs/archetypes/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +55,39 @@ export default async function StrategicMovePhaseWorkspacePage({
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
+  // Estate-derived current-state readiness for this phase (best-effort; never
+  // blocks the workspace render).
+  let readiness: ReadinessReport | null = null;
+  let recommendation: CurrentStateRecommendation | null = null;
+  let plan: CurrentStatePlan | null = null;
+  try {
+    const tctx = await requireTenancy();
+    // Archetype selection per-move is wired in PR-2/PR-5; default for now.
+    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    const profile = await inferMoveProfile(tctx);
+    readiness = await resolveCurrentStateReadiness(
+      tctx,
+      archetype,
+      profile,
+      parsedPhase,
+    );
+    recommendation = await buildCurrentStateRecommendation(tctx, profile);
+    plan = buildCurrentStatePlan(recommendation, { moveName: move.name });
+  } catch {
+    readiness = null;
+    recommendation = null;
+    plan = null;
+  }
+
   return (
     <AppShell surface="programs-detail">
-      <StrategicMovePhaseClient move={move} phaseNum={parsedPhase} />
+      <StrategicMovePhaseClient
+        move={move}
+        phaseNum={parsedPhase}
+        readiness={readiness}
+        recommendation={recommendation}
+        plan={plan}
+      />
     </AppShell>
   );
 }
