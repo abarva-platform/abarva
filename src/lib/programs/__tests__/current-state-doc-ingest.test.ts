@@ -6,6 +6,7 @@ import {
 } from "../current-state-doc-ingest";
 import { AI_PRODUCT_DEVELOPMENT_LIFECYCLE } from "../archetypes/registry";
 import type { EvidenceFamilySpec } from "../archetypes/types";
+import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
 
 describe("current-state document path — governance helpers", () => {
   it("isDocumentFamily: structured (with backing) is NOT a document family", () => {
@@ -66,5 +67,44 @@ describe("current-state document path — governance helpers", () => {
   it("validateKpiTable: rejects header-only with no numeric data rows", () => {
     const text = "metric | current value";
     expect(validateKpiTable(text).valid).toBe(false);
+  });
+});
+
+// The current-state ingest routes (ingest-doc + ingest) call evaluateSensitiveUpload
+// scan-before-extract. These assertions lock the guard contract those routes rely
+// on: a mistaken sensitive upload is quarantined BEFORE parse/commit/auto-promotion.
+describe("current-state document path — sensitive-upload quarantine contract", () => {
+  const bytesOf = (s: string) => new TextEncoder().encode(s);
+
+  it("quarantines a declared regulated PHI/PII classification", () => {
+    const r = evaluateSensitiveUpload({
+      filename: "stakeholders.csv",
+      mimeType: "text/csv",
+      bytes: bytesOf("name,role\nJane,Sponsor"),
+      declaredClassification: "phi",
+    });
+    expect(r.decision).toBe("quarantine");
+    expect(r.evidenceExtractionAllowed).toBe(false);
+  });
+
+  it("quarantines content with a detected SSN pattern", () => {
+    const r = evaluateSensitiveUpload({
+      filename: "roster.csv",
+      mimeType: "text/csv",
+      bytes: bytesOf("name,ssn\nJane Doe,123-45-6789"),
+      declaredClassification: null,
+    });
+    expect(r.decision).toBe("quarantine");
+  });
+
+  it("allows clean, de-identified business context", () => {
+    const r = evaluateSensitiveUpload({
+      filename: "kpi.csv",
+      mimeType: "text/csv",
+      bytes: bytesOf("KPI,Baseline,Target\nDeployment frequency,9,30"),
+      declaredClassification: null,
+    });
+    expect(r.decision).toBe("allow");
+    expect(r.evidenceExtractionAllowed).toBe(true);
   });
 });
