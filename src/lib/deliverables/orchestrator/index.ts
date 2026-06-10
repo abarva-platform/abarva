@@ -1,0 +1,8 @@
+// Deliverable Intelligence Orchestrator — public surface.
+export * from './types';
+export * from './source-register';
+export * from './prompt-builder';
+export * from './generation-plan';
+export * from './quality-validator';
+export * from './artifact-brief-registry';
+export * from './orchestrator';
