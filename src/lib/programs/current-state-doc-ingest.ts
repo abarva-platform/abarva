@@ -108,6 +108,10 @@ export interface DocFamilyReviewState {
     confidence: number;
     submittedAt: string;
   }>;
+  /** Real, citation-ready content lines extracted from the APPROVED (committed)
+   *  document evidence — fed verbatim into grounded deliverables so the committed
+   *  facts (decisions, risks, baselines) appear, not just "committed". */
+  committedSignals: string[];
 }
 
 /** A family is DOCUMENT-eligible when it has no canonical committed-store table —
@@ -388,6 +392,7 @@ export async function resolveDocFamilyReviews(
     pending: 0,
     rejected: 0,
     pendingItems: [],
+    committedSignals: [],
   };
   if (!tenantKey || !moveId) return empty;
   try {
@@ -406,10 +411,17 @@ export async function resolveDocFamilyReviews(
       source_ref: Record<string, unknown> | null;
       created_at: string;
     }>;
-    const state: DocFamilyReviewState = { ...empty, pendingItems: [] };
+    const state: DocFamilyReviewState = {
+      ...empty,
+      pendingItems: [],
+      committedSignals: [],
+    };
+    const approvedEvidenceIds: string[] = [];
     for (const r of rows) {
-      if (r.decision === "approved") state.approved += 1;
-      else if (r.decision === "rejected") state.rejected += 1;
+      if (r.decision === "approved") {
+        state.approved += 1;
+        approvedEvidenceIds.push(r.evidence_id);
+      } else if (r.decision === "rejected") state.rejected += 1;
       else {
         state.pending += 1;
         const ref = r.source_ref ?? {};
@@ -423,8 +435,62 @@ export async function resolveDocFamilyReviews(
         });
       }
     }
+
+    // Pull the REAL extracted content from the approved (committed) evidence so
+    // grounded deliverables can cite actual decisions/risks/baselines — not just
+    // "committed". Generic across families (uses the shared extraction shape).
+    if (approvedEvidenceIds.length) {
+      const { data: ev } = await sb
+        .from("program_evidence_items")
+        .select("extracted_structured, summary, title")
+        .in("id", approvedEvidenceIds);
+      if (Array.isArray(ev)) {
+        state.committedSignals = buildCommittedSignals(
+          ev as Array<{
+            extracted_structured: Record<string, unknown> | null;
+            summary: string | null;
+            title: string | null;
+          }>,
+        );
+      }
+    }
     return state;
   } catch {
     return empty;
   }
+}
+
+/**
+ * Turn approved document evidence into a compact set of citation-ready content
+ * lines (decisions, risks, baselines, key facts). Generic, format-agnostic,
+ * bounded — so a deliverable cites the committed facts without flooding.
+ */
+function buildCommittedSignals(
+  items: Array<{
+    extracted_structured: Record<string, unknown> | null;
+    summary: string | null;
+    title: string | null;
+  }>,
+): string[] {
+  const out: string[] = [];
+  const take = (arr: unknown, label: string, max: number) => {
+    if (!Array.isArray(arr)) return;
+    for (const v of arr.slice(0, max)) {
+      const s = String(v ?? "").trim();
+      if (s) out.push(label ? `${label} — ${s}` : s);
+    }
+  };
+  for (const it of items) {
+    const es = it.extracted_structured ?? {};
+    take(es.decisions, "Decision", 4);
+    take(es.risks, "Risk", 4);
+    take(es.baseline_candidates, "Baseline", 6);
+    take(es.action_items, "Action", 2);
+    // Fall back to the summary if no structured signals were extracted.
+    if (out.length === 0 && it.summary) {
+      out.push(String(it.summary).slice(0, 240));
+    }
+  }
+  // De-dup + cap so deliverables stay tight.
+  return Array.from(new Set(out)).slice(0, 12);
 }

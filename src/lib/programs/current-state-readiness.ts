@@ -206,6 +206,10 @@ export interface InstrumentReadiness {
   /** Pending document reviews a reviewer can promote (governed). Empty for
    *  structured/backing-table families. */
   pendingReviews: DocFamilyReviewState["pendingItems"];
+  /** Real, citation-ready content from the committed evidence (decisions, risks,
+   *  baselines for document families; committed-record summary for structured).
+   *  Fed into grounded deliverables so they carry actual facts, not just status. */
+  evidenceDigest: string[];
 }
 
 export interface ReadinessReport {
@@ -246,6 +250,7 @@ export async function resolveCurrentStateReadiness(
     let committedRows = 0;
     let status: ReadinessStatus = "missing";
     let pendingReviews: DocFamilyReviewState["pendingItems"] = [];
+    let evidenceDigest: string[] = [];
     const documentFamily = !family.backing;
 
     if (family.backing) {
@@ -256,6 +261,13 @@ export async function resolveCurrentStateReadiness(
         family.backing.keyColumn,
       );
       status = committedRows > 0 ? "committed" : "missing";
+      if (status === "committed") {
+        evidenceDigest = [
+          `${family.label}: ${committedRows} record${
+            committedRows === 1 ? "" : "s"
+          } committed to ${family.backing.table}.`,
+        ];
+      }
     } else if (moveId) {
       // Document family — governed review ladder decides the state. Approved
       // (committed) > pending (review_required) > none (missing). Move-scoped.
@@ -264,6 +276,10 @@ export async function resolveCurrentStateReadiness(
       if (reviews.approved > 0) {
         committedRows = reviews.approved;
         status = "committed";
+        // Carry the REAL approved content (decisions/risks/baselines) forward.
+        evidenceDigest = reviews.committedSignals.length
+          ? reviews.committedSignals
+          : [`${family.label}: committed and approved for use.`];
       } else if (reviews.pending > 0) {
         status = "review_required";
       } else {
@@ -286,6 +302,7 @@ export async function resolveCurrentStateReadiness(
       rationale,
       documentFamily,
       pendingReviews,
+      evidenceDigest,
     });
   }
 

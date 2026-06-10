@@ -44,6 +44,7 @@ function inst(over: Partial<InstrumentReadiness>): InstrumentReadiness {
     rationale: "r",
     documentFamily: false,
     pendingReviews: [],
+    evidenceDigest: [],
     ...over,
   };
 }
@@ -195,6 +196,63 @@ describe("generateDeliverable — grounded-or-flagged, never unsupported", () =>
     const a = generateDeliverable(charterSpec, RICH);
     const b = generateDeliverable(charterSpec, RICH);
     expect(JSON.stringify(a.sections)).toBe(JSON.stringify(b.sections));
+  });
+
+  it("CREDITS committed DOCUMENT evidence — not flagged missing, and real content is cited", () => {
+    const inp: DeliverableInputs = {
+      tenant: "skyharbor-air",
+      moveId: "m1",
+      recommendation: null,
+      plan: null,
+      readiness: readiness([
+        inst({
+          key: "stakeholder_map",
+          label: "Stakeholder / decision-rights map",
+          status: "committed",
+          documentFamily: true,
+          backingTable: null,
+          committedRows: 1,
+          evidenceDigest: [
+            "Decision — AI tool rollout is gated by Security (CISO approves).",
+            "Risk — Reservations Core can block mainframe change cadence.",
+          ],
+        }),
+      ]),
+    };
+    const d = generateDeliverable(charterSpec, inp);
+    const all = d.sections.flatMap((s) => s.claims);
+    // The committed document family is NOT in missingEvidence.
+    expect(d.envelope.missingEvidence).not.toContain("stakeholder_map");
+    // Its source is credited and the REAL extracted content appears, cited.
+    expect(d.envelope.citations).toContain("document_extract:stakeholder_map");
+    const text = all.map((c) => c.text).join(" | ");
+    expect(text).toContain("Reservations Core can block mainframe");
+    // No fabrication invariant still holds.
+    expect(d.envelope.unsupportedClaims).toEqual([]);
+  });
+
+  it("review_required document evidence is honestly NOT committed", () => {
+    const inp: DeliverableInputs = {
+      tenant: "skyharbor-air",
+      moveId: "m1",
+      recommendation: null,
+      plan: null,
+      readiness: readiness([
+        inst({
+          key: "product_platform_operating_model",
+          label: "Operating model",
+          status: "review_required",
+          documentFamily: true,
+          backingTable: null,
+          evidenceDigest: [],
+        }),
+      ]),
+    };
+    const d = generateDeliverable(charterSpec, inp);
+    expect(d.envelope.missingEvidence).toContain(
+      "product_platform_operating_model",
+    );
+    expect(d.envelope.unsupportedClaims).toEqual([]);
   });
 });
 

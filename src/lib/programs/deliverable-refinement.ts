@@ -83,9 +83,23 @@ function buildClaimPool(inp: DeliverableInputs): GroundedClaim[] {
   const pool: GroundedClaim[] = [];
 
   for (const i of inp.readiness.instruments) {
-    if (i.status === "committed" && i.backingTable) {
+    if (i.status === "committed") {
+      // Credit EVERY committed family — structured (tower table) AND document
+      // (governed review→approved). The source is the backing table when present,
+      // else the governed document-extract for this family.
+      const source = i.backingTable ?? `document_extract:${i.key}`;
+      const digest =
+        i.evidenceDigest && i.evidenceDigest.length
+          ? i.evidenceDigest
+          : [`${i.label}: current-state baseline committed.`];
+      for (const line of digest) pool.push(cite(line, source));
+    } else if (i.status === "review_required") {
+      // Parsed but not yet promoted — honestly not committed evidence yet.
       pool.push(
-        cite(`${i.label}: current-state baseline committed.`, i.backingTable),
+        missing(
+          `${i.label}: parsed, pending review before it counts as committed.`,
+          i.key,
+        ),
       );
     } else {
       pool.push(missing(`${i.label}: not yet provided.`, i.key));
@@ -121,10 +135,12 @@ function buildClaimPool(inp: DeliverableInputs): GroundedClaim[] {
       ),
     );
     if (!inp.plan.valueRatified) {
+      // Ratification is a distinct P1 step from the KPI-baseline EVIDENCE; tag it
+      // separately so committed value_kpi_baseline evidence is not marked missing.
       pool.push(
         missing(
           "Value not yet ratified (P1 ValueTree) — value milestones show share only.",
-          "value_kpi_baseline",
+          "value_ratification",
         ),
       );
     }

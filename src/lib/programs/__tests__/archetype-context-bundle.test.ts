@@ -30,6 +30,7 @@ function inst(over: Partial<InstrumentReadiness>): InstrumentReadiness {
     rationale: "r",
     documentFamily: false,
     pendingReviews: [],
+    evidenceDigest: [],
     ...over,
   };
 }
