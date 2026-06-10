@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Context Layer Factory — Remediation Report</title>
+<style>
+  :root { --bg:#F8F7F4; --ink:#0b0b0c; --mute:#6b6b72; --line:#e4e2dc; --ok:#1c7c4a; --warn:#9a6a00; --block:#9a1c1c; --card:#fff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"DM Sans",system-ui,sans-serif; line-height:1.5; }
+  .wrap { max-width:1180px; margin:0 auto; padding:40px 28px 100px; }
+  h1,h2,h3 { font-family:Georgia,serif; font-weight:normal; }
+  h1 { font-size:30px; margin:0 0 6px; }
+  h2 { font-size:21px; margin:38px 0 10px; padding-top:18px; border-top:1px solid var(--line); }
+  h3 { font-size:16px; margin:22px 0 8px; }
+  .sub { color:var(--mute); font-size:14px; }
+  .stamp { display:inline-block; background:#111; color:#fff; font-size:12px; padding:4px 10px; border-radius:5px; }
+  table { width:100%; border-collapse:collapse; margin:12px 0 8px; font-size:12.5px; }
+  th,td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--mute); }
+  .pill { font-size:11px; padding:2px 8px; border-radius:20px; display:inline-block; }
+  .s-done { background:#e6f4ec; color:var(--ok); }
+  .s-prog { background:#fdf3df; color:var(--warn); }
+  .s-todo { background:#efeef0; color:var(--mute); }
+  .s-block{ background:#f7e3e3; color:var(--block); }
+  code { background:#efeee9; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:10px 0; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .muted { color:var(--mute); }
+  ul { margin:6px 0 6px 18px; padding:0; }
+  li { margin:3px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Context Layer Factory — Remediation Report</h1>
+  <p class="sub">Replicating the SkyHarbor governed context-layer pipeline for
+     <b>Lakeshore Holdings</b>, <b>Apex Retail</b>, <b>Meridian Health</b>.</p>
+  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 (Phase 0 complete; live-DB diagnosis in progress)</span></p>
+
+  <div class="card">
+    <b>Operating principle (hard rule):</b> diagnose each client by <i>exact pipeline state</i>, not by
+    whether some data exists. No client is "ready" unless it is <b>CONTEXT_BUNDLE_PROVEN</b>.
+    Chunks ≠ ready · Records ≠ ready · Facts ≠ ready · Indexed ≠ ready · Retrievable ≠ ready.
+  </div>
+
+  <h2>Phase status</h2>
+  <table>
+    <tr><th>#</th><th>Phase</th><th>Status</th><th>Output</th></tr>
+    <tr><td>0</td><td>Study SkyHarbor reference</td><td><span class="pill s-done">complete</span></td><td><code>SKYHARBOR_REFERENCE_IMPLEMENTATION_NOTES.md</code> + <code>CONTEXT_LAYER_SCHEMA_PIPELINE_REFERENCE.md</code></td></tr>
+    <tr><td>1</td><td>Resolve canonical client identity (live DB)</td><td><span class="pill s-prog">in progress</span></td><td>live-DB probe building → <code>CLIENT_IDENTITY_AND_CONTEXT_POSTURE_2026-06.md</code></td></tr>
+    <tr><td>2</td><td>Current dataset/context audit (pipeline-state)</td><td><span class="pill s-prog">in progress</span></td><td><code>CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026-06.md</code></td></tr>
+    <tr><td>3</td><td>Enterprise-worthiness standard</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_ENTERPRISE_WORTHINESS_STANDARD_2026-06.md</code></td></tr>
+    <tr><td>4</td><td>Generate template-aligned datasets</td><td><span class="pill s-todo">queued</span></td><td>generators + <code>datasets/*-synthetic-v2/</code></td></tr>
+    <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_LOAD_VERIFICATION_2026-06.md</code></td></tr>
+    <tr><td>6</td><td>Azure AI Search indexing</td><td><span class="pill s-todo">queued</span></td><td>index counts by client/dimension</td></tr>
+    <tr><td>7</td><td>Retrieval + citation proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_RETRIEVAL_CITATION_PROOF_2026-06.md</code></td></tr>
+    <tr><td>8</td><td>Promotion evaluation</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_PROMOTION_EVALUATION_2026-06.md</code></td></tr>
+    <tr><td>9</td><td>Context bundle proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_BUNDLE_PROOF_2026-06.md</code></td></tr>
+    <tr><td>10</td><td>Module readiness proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_MODULE_READINESS_PROOF_2026-06.md</code></td></tr>
+    <tr><td>11</td><td>Final executive report</td><td><span class="pill s-todo">queued</span></td><td>this file</td></tr>
+  </table>
+
+  <h2>Reference artifacts reviewed (SkyHarbor)</h2>
+  <ul>
+    <li><code>scripts/skyharbor/generate-skyharbor-substrate.mjs</code> (~90KB, 15-segment deterministic generator)</li>
+    <li><code>scripts/skyharbor/verify-skyharbor-substrate.mjs</code>, <code>stages/</code>, <code>07_verify/</code></li>
+    <li><code>scripts/seed/load-tenant-substrate.ts</code> (chunks-mostly path — the "stopped at chunks" trap)</li>
+    <li><code>src/scripts/enterprise-context/load-enterprise-context.ts</code> (governed records+facts loader — the path we use)</li>
+    <li><code>docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md</code>, <code>docs/source/SOURCE_SKYHARBOR_AMS_PROOF.md</code></li>
+    <li>Migrations <code>20260514100000_enterprise_context_layer.sql</code>, <code>20260515120000_tenant_key_canonicalization.sql</code></li>
+  </ul>
+
+  <h2>Client canonical keys (repo-resolved; live-DB confirmation pending)</h2>
+  <table>
+    <tr><th>Client</th><th>App key</th><th>Canonical tenant_key</th><th>Display</th><th>Repo dataset</th><th>Aliases / flags</th></tr>
+    <tr><td>Apex Retail</td><td><code>apexretail</code></td><td><code>apex-retail</code></td><td>Apex Retail Group</td><td>datasets/apex-retail-synthetic-v1 (141 files)</td><td>key split (no-dash app / dash canonical)</td></tr>
+    <tr><td>Meridian Health</td><td><code>meridian</code></td><td><code>meridian-health</code></td><td>Meridian Health System</td><td>datasets/meridian-health-synthetic-v1 (168 files; 26 live templates)</td><td>retired alias "Heliara Health" canonicalized</td></tr>
+    <tr><td>Lakeshore Holdings</td><td class="muted">unregistered</td><td><code>lakeshore-holdings</code> (to confirm)</td><td>Lakeshore Holdings</td><td class="muted">none</td><td>email route <code>+lakeshore@thesundaram.com</code>; live DB reportedly has ~179 records / 2,949 facts</td></tr>
+  </table>
+  <p class="sub">Hard constraint honored: targets are exactly Lakeshore Holdings / Apex Retail / Meridian Health.
+     "Presbyterian / Northshore / Northstar" are NOT used (Northstar Clinical is a separate registered tenant; not in scope).</p>
+
+  <h2>Live-DB pipeline-state diagnosis</h2>
+  <p class="muted">Pending the read-only ACA/VNet probe (counts by table × tenant_key × dimension × lifecycle_state;
+     orphan/duplicate-active fact checks; Azure AI Search doc counts; governed_object_readiness census).
+     Per-client state table (NO_SOURCE_FILES → … → CONTEXT_BUNDLE_PROVEN) will be filled here next.</p>
+
+  <h2>Loads · indexing · proofs</h2>
+  <p class="muted">Populated as phases 5–10 execute: job IDs, image tags/digests, Blob paths, DB counts,
+     index counts, retrieval/citation proof, promotion status, context-bundle traces, module readiness.</p>
+
+  <h2>PRs / commits / validation</h2>
+  <ul>
+    <li>Branch <code>feat/context-layer-factory-remediation</code> off <code>origin/main</code>.</li>
+    <li>(running log of commits, PRs, CI, job IDs appended here)</li>
+  </ul>
+</div>
+</body>
+</html>
