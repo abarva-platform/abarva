@@ -17,7 +17,22 @@ import {
   getArchetype,
   DEFAULT_ARCHETYPE_ID,
 } from "@/lib/programs/archetypes/registry";
+import { PHASE_NUMBER } from "@/lib/programs/archetypes/types";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { draftModuleDeliverable } from "@/lib/programs/nexus";
+
+// Map archetype deliverable keys → a REGISTERED deliverable_types.type_key (FK).
+// Unregistered types fall back to the generic "markdown" type.
+const PERSIST_TYPE_KEY: Record<string, string> = {
+  program_charter: "charter",
+  discovery_report: "discovery_report",
+  ai_enabled_sdlc_architecture: "markdown",
+  target_operating_model: "markdown",
+  business_case: "business_case",
+  execution_roadmap: "execution_roadmap",
+  mobilization_packet: "mobilization_roadmap",
+  handoff_package: "tower_handoff_plan",
+};
 import {
   orchestrateDeliverable,
   getCachedOrchestration,
@@ -160,6 +175,29 @@ export async function GET(
         userId: ctx.userId,
       });
       setCachedOrchestration(cacheKey, orchestrated);
+      // Persist-on-generate: save the artifact to the move's deliverable store so
+      // it appears in the Deliverables drawer with view/download. Best-effort —
+      // never fail generation if persistence hiccups.
+      try {
+        const moduleKey = `p${PHASE_NUMBER[spec.phase] ?? 2}`;
+        await draftModuleDeliverable(ctx, {
+          programId,
+          moduleKey,
+          deliverableTypeKey: PERSIST_TYPE_KEY[spec.key] ?? "markdown",
+          title: `${orchestrated.result.label} — ${orchestrated.result.moveName}`,
+          draftContent: orchestrated.result.bodyMarkdown,
+          structuredData: {
+            sourceRegister: orchestrated.result.sourceRegister,
+            openItems: orchestrated.result.openItems,
+            quality: orchestrated.quality,
+            generatedBy: orchestrated.model,
+            passes: orchestrated.passes,
+            grounded: true,
+          },
+        });
+      } catch {
+        /* best-effort persist */
+      }
     }
     const {
       result,
