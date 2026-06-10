@@ -1,0 +1,17 @@
+employee_id,function,sub_function,location,level,contractor_flag,start_date,as_of_date
+EMP0001,Engineering,Digital Web,Seattle,Staff,false,2021-03-01,2026-05-31
+EMP0002,Engineering,Digital Web,Seattle,Senior,false,2022-06-15,2026-05-31
+EMP0003,Engineering,Digital Web,Bangalore,Mid,true,2023-01-10,2026-05-31
+EMP0004,Engineering,Check-in Platform,Seattle,Senior,false,2020-09-01,2026-05-31
+EMP0005,Engineering,Check-in Platform,Bangalore,Mid,true,2023-04-01,2026-05-31
+EMP0006,Engineering,Loyalty,Seattle,Mid,false,2022-02-01,2026-05-31
+EMP0007,Engineering,Platform,Seattle,Principal,false,2019-05-01,2026-05-31
+EMP0008,Engineering,Platform,Bangalore,Senior,false,2021-11-01,2026-05-31
+EMP0009,Engineering,Data Engineering,Bangalore,Senior,true,2022-08-01,2026-05-31
+EMP0010,Engineering,Data Engineering,Bangalore,Mid,true,2024-01-15,2026-05-31
+EMP0011,Engineering,Reservations Core,Dallas,Principal,false,2008-04-01,2026-05-31
+EMP0012,Engineering,Reservations Core,Dallas,Senior,false,2011-07-01,2026-05-31
+EMP0013,Engineering,Crew Systems,Dallas,Senior,false,2015-03-01,2026-05-31
+EMP0014,Engineering,Revenue Systems,Seattle,Mid,false,2023-06-01,2026-05-31
+EMP0015,Product,Product Management,Seattle,Senior,false,2021-09-01,2026-05-31
+EMP0016,Product,Product Management,Seattle,Mid,false,2023-02-01,2026-05-31
