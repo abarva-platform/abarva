@@ -53,6 +53,21 @@ const ESTATE_PREDICATES: Record<
     appliesWhen: () => true,
     severityFor: () => "hard",
   },
+  // Mainframe baseline — the engineering-delivery family for mainframe estates
+  // (resolves INSTEAD of DORA). Applies only when a mainframe estate is present.
+  mainframe_change_cadence: {
+    appliesWhen: (p) => has(p, "mainframe"),
+    severityFor: () => "hard",
+  },
+  mainframe_modernization_candidates: {
+    appliesWhen: (p) => has(p, "mainframe"),
+    severityFor: () => "soft",
+  },
+  // DataStage/Informatica estates: the unit of leverage is the ETL job.
+  etl_job_inventory: {
+    appliesWhen: (p) => has(p, "legacy_data_analytics"),
+    severityFor: () => "soft",
+  },
 };
 
 /**

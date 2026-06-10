@@ -40,6 +40,9 @@ describe("archetype registry", () => {
 
 describe("resolveArchetypeRequirements — requirements come from the archetype", () => {
   it("AI-PDLC P1 Charter requirements are the archetype's, not hardcoded Charter logic", () => {
+    // Without an estate profile the resolver cannot prune estate-scoped families,
+    // so both engineering-delivery baselines (DORA + mainframe) pass through —
+    // honest: it doesn't yet know the estate.
     const reqs = resolveArchetypeRequirements(
       AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
       "charter",
@@ -47,6 +50,7 @@ describe("resolveArchetypeRequirements — requirements come from the archetype"
     expect(keys(reqs).sort()).toEqual(
       [
         "eng_performance_dora",
+        "mainframe_change_cadence",
         "it_systems_landscape",
         "it_org_structure",
         "stakeholder_map",

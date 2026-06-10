@@ -31,6 +31,15 @@ const REFINEMENT = {
   versioned: true,
 };
 
+// Fresh DeliverableRefinement (mutable arrays) per deliverable.
+const REF = () => ({
+  promptable: REFINEMENT.promptable,
+  scopes: [...REFINEMENT.scopes],
+  allowedIntents: [...REFINEMENT.allowedIntents],
+  groundingGuard: REFINEMENT.groundingGuard,
+  versioned: REFINEMENT.versioned,
+});
+
 // ── AI_PRODUCT_DEVELOPMENT_LIFECYCLE ─────────────────────────────────────────
 
 const AI_PDLC_FAMILIES: EvidenceFamilySpec[] = [
@@ -115,6 +124,37 @@ const AI_PDLC_FAMILIES: EvidenceFamilySpec[] = [
     acceptedFormats: ["csv"],
     backing: { table: "tower_ai_tool_usage", keyColumn: "client_id" },
   },
+  // ── Estate-conditional engineering baselines (resolve INSTEAD of DORA) ──
+  {
+    key: "mainframe_change_cadence",
+    label: "Mainframe change cadence & batch profile",
+    kind: "metric_baseline",
+    whyNeeded:
+      "For mainframe teams the engineering delivery baseline is release/change cadence, batch windows, and incident exposure — DORA deploy-frequency is meaningless here.",
+    sourceDocHint: "Change calendar + batch schedule export",
+    acceptedFormats: ["csv", "xlsx"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "mainframe_modernization_candidates",
+    label: "Mainframe code & modernization candidates",
+    kind: "inventory",
+    whyNeeded:
+      "Program/COBOL inventory, code size/complexity, SME coverage — where AI-assisted modernization has leverage vs risk.",
+    sourceDocHint: "Code inventory / static-analysis export",
+    acceptedFormats: ["csv", "xlsx"],
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "etl_job_inventory",
+    label: "ETL job inventory & run SLAs",
+    kind: "inventory",
+    whyNeeded:
+      "For DataStage/Informatica teams the unit of AI leverage is the job/pipeline — inventory, schedules, run SLAs.",
+    sourceDocHint: "ETL tool job export",
+    acceptedFormats: ["csv"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
 ];
 
 const AI_PDLC_PHASES: PhaseRequirements[] = [
@@ -139,7 +179,14 @@ const AI_PDLC_PHASES: PhaseRequirements[] = [
   {
     phase: "charter",
     requiredEvidence: [
+      // "Engineering delivery baseline" resolves per estate: DORA for cloud/
+      // full-stack, change-cadence for mainframe (only one applies).
       { family: "eng_performance_dora", severity: "hard", estateScoped: true },
+      {
+        family: "mainframe_change_cadence",
+        severity: "hard",
+        estateScoped: true,
+      },
       { family: "it_systems_landscape", severity: "hard", estateScoped: true },
       { family: "it_org_structure", severity: "hard" },
       { family: "stakeholder_map", severity: "hard" },
@@ -160,6 +207,17 @@ const AI_PDLC_PHASES: PhaseRequirements[] = [
     phase: "diagnose",
     requiredEvidence: [
       { family: "eng_performance_dora", severity: "hard", estateScoped: true },
+      {
+        family: "mainframe_change_cadence",
+        severity: "hard",
+        estateScoped: true,
+      },
+      {
+        family: "mainframe_modernization_candidates",
+        severity: "soft",
+        estateScoped: true,
+      },
+      { family: "etl_job_inventory", severity: "soft", estateScoped: true },
       { family: "it_systems_landscape", severity: "hard" },
       { family: "it_org_structure", severity: "hard" },
       { family: "delivery_quality_itsm", severity: "soft" },
@@ -228,6 +286,163 @@ export const AI_PRODUCT_DEVELOPMENT_LIFECYCLE: StrategicMoveArchetype = {
         scopes: [...REFINEMENT.scopes],
         allowedIntents: [...REFINEMENT.allowedIntents],
       },
+      formats: ["html", "docx"],
+      gateArtifact: true,
+    },
+    {
+      key: "discovery_report",
+      label: "Discovery & Diagnostic Report",
+      phase: "diagnose",
+      audience: "Sponsor · Steering committee",
+      sections: [
+        "Current-state baseline (quantified, cited)",
+        "Maturity profile (8 dimensions)",
+        "Capability gaps (foundation vs use-case)",
+        "Where to start (leverage × readiness)",
+        "Root causes",
+        "Continue / discontinue recommendation",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Every baseline metric cited to its source row",
+          "Maturity scores show confidence + insufficient_evidence where unbacked",
+          "Where-to-start ranking shows its math",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "pptx"],
+      gateArtifact: true,
+    },
+    {
+      key: "target_operating_model",
+      label: "Target AI-Powered Product Operating Model",
+      phase: "design",
+      audience: "Sponsor · Engineering leadership",
+      sections: [
+        "Human + agent workflow design",
+        "Ownership & decision rights",
+        "Funding & prioritization model",
+        "Adoption & change plan",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Grounded in the current operating model evidence",
+          "Names real teams/roles",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "ai_enabled_sdlc_architecture",
+      label: "AI-Enabled SDLC Architecture",
+      phase: "design",
+      audience: "Architecture · Platform",
+      sections: [
+        "Toolchain & integration design",
+        "Governance & control model",
+        "DevSecOps controls",
+        "Reference architecture",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "full",
+        rubric: [
+          "Maps to the client's actual systems landscape",
+          "Governance tied to real controls",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "business_case",
+      label: "Business Case & Financial Model",
+      phase: "roadmap_business_case",
+      audience: "CFO · Investment committee",
+      sections: [
+        "Investment summary",
+        "Value model (cited to baseline)",
+        "Cost model (rate-card provenance)",
+        "Payback & sensitivity",
+        "Roadmap cash flow",
+      ],
+      qualityBar: {
+        minSections: 5,
+        requiresCitations: true,
+        altitude: "board",
+        rubric: [
+          "Every value claim traces to the committed baseline",
+          "Cost phased BY the roadmap work-packages",
+          "Rate-card provenance banner present",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "xlsx"],
+      gateArtifact: true,
+    },
+    {
+      key: "execution_roadmap",
+      label: "Execution Roadmap",
+      phase: "roadmap_business_case",
+      audience: "Sponsor · Delivery leadership",
+      sections: [
+        "Phased work-packages",
+        "Sequencing rationale",
+        "Value milestones",
+        "Dependencies & risks",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Sequencing follows the leverage ranking",
+          "Each work-package closes named capability gaps",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "pptx"],
+    },
+    {
+      key: "mobilization_packet",
+      label: "Mobilization & Go-Decision Packet",
+      phase: "mobilize",
+      audience: "Delivery team · Tower",
+      sections: ["Team & RACI", "Approvals", "Handoff readiness"],
+      qualityBar: {
+        minSections: 3,
+        requiresCitations: false,
+        altitude: "exec",
+        rubric: ["Named delivery leads", "Explicit go/no-go"],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "handoff_package",
+      label: "Tower Handoff Package",
+      phase: "handoff_operate",
+      audience: "Tower delivery",
+      sections: [
+        "Executable plan",
+        "Value measurement contract",
+        "Open decisions (none)",
+      ],
+      qualityBar: {
+        minSections: 3,
+        requiresCitations: false,
+        altitude: "full",
+        rubric: ["Tower-accepted as executable by a named individual"],
+      },
+      refinement: REF(),
       formats: ["html", "docx"],
       gateArtifact: true,
     },
