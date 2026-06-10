@@ -1,0 +1,130 @@
+import { describe, it, expect } from "@jest/globals";
+import {
+  resolveSourceLabel,
+  buildSourceRegister,
+  findForbiddenTags,
+  applyCitationsToBody,
+} from "../source-labels";
+import { validateDeliverableQuality } from "../quality-validator";
+
+describe("source-labels — internal id → human-readable citation", () => {
+  it("maps known ids to clean titles (no raw id)", () => {
+    expect(resolveSourceLabel("tower_dora_metrics").title).toMatch(
+      /DORA|Delivery/,
+    );
+    expect(
+      resolveSourceLabel("document_extract:stakeholder_map").title,
+    ).toMatch(/Stakeholder/);
+    expect(resolveSourceLabel("tower_cmdb_cis").title).toMatch(
+      /Application|Systems/,
+    );
+  });
+
+  it("humanizes unknown ids deterministically (no leak)", () => {
+    const l = resolveSourceLabel("document_extract:vendor_contracts");
+    expect(l.title).not.toMatch(/document_extract|:/);
+    expect(l.title.toLowerCase()).toContain("vendor");
+  });
+
+  it("buildSourceRegister assigns stable [n] + citation map", () => {
+    const { register, citationMap } = buildSourceRegister([
+      "tower_dora_metrics",
+      "document_extract:stakeholder_map",
+      "tower_dora_metrics",
+    ]);
+    expect(register).toHaveLength(2);
+    expect(register[0].ref).toBe(1);
+    expect(citationMap["tower_dora_metrics"]).toBe(1);
+    expect(citationMap["document_extract:stakeholder_map"]).toBe(2);
+    // register never prints the raw id in title
+    for (const r of register)
+      expect(r.title).not.toMatch(/tower_|document_extract:/);
+  });
+});
+
+describe("forbidden-tag detection", () => {
+  it("catches every internal tag class", () => {
+    expect(
+      findForbiddenTags("see document_extract:stakeholder_map").length,
+    ).toBeGreaterThan(0);
+    expect(findForbiddenTags("rows in tower_cmdb_cis").length).toBeGreaterThan(
+      0,
+    );
+    expect(findForbiddenTags("chunk_id 5").length).toBeGreaterThan(0);
+    expect(findForbiddenTags("fact_key abc").length).toBeGreaterThan(0);
+    expect(findForbiddenTags("source_segment_id x").length).toBeGreaterThan(0);
+  });
+  it("clean prose passes", () => {
+    expect(
+      findForbiddenTags("The delivery baseline shows 9 deploys/month [2]."),
+    ).toEqual([]);
+  });
+});
+
+describe("applyCitationsToBody — scrub raw ids to [n]", () => {
+  const map = { tower_dora_metrics: 2, "document_extract:stakeholder_map": 1 };
+  it("rewrites (source: id) and bare ids to [n]", () => {
+    const out = applyCitationsToBody(
+      "DORA baseline (source: tower_dora_metrics); gates from document_extract:stakeholder_map.",
+      map,
+    );
+    expect(out).toContain("[2]");
+    expect(out).toContain("[1]");
+    expect(findForbiddenTags(out)).toEqual([]);
+  });
+});
+
+describe("validateDeliverableQuality — the export gate", () => {
+  const goodRegister = buildSourceRegister(["tower_dora_metrics"]).register;
+  const base = {
+    title: "Program Charter — X",
+    version: "0.1",
+    date: "2026-06-10",
+    sourceRegister: goodRegister,
+    requiredSections: ["Executive Summary", "Risks"],
+    requiredTableSections: ["Risks"],
+    bodyFontPt: 11,
+  };
+
+  it("FAILS on internal tag leakage", () => {
+    const r = validateDeliverableQuality({
+      ...base,
+      bodyMarkdown:
+        "## Executive Summary\nUses tower_dora_metrics [1].\n## Risks\n| Risk |\n| --- |\n| x |",
+      openItems: [],
+    });
+    expect(r.pass).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/Internal source tags/);
+  });
+
+  it("FAILS when a required section is missing", () => {
+    const r = validateDeliverableQuality({
+      ...base,
+      bodyMarkdown: "## Executive Summary\nClean text [1].",
+    });
+    expect(r.pass).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/Missing required sections/);
+  });
+
+  it("FAILS when evidence gaps exist but no client-to-complete items", () => {
+    const r = validateDeliverableQuality({
+      ...base,
+      bodyMarkdown:
+        "## Executive Summary\nClean [1].\n## Risks\n| Risk |\n| --- |\n| x |",
+      openItems: ["Value baseline missing"],
+    });
+    expect(r.pass).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/client-to-complete/);
+  });
+
+  it("PASSES a clean, structured, cited, placeholder-bearing doc", () => {
+    const r = validateDeliverableQuality({
+      ...base,
+      bodyMarkdown:
+        "## Executive Summary\nDelivery baseline is strong [1]. [CLIENT TO CONFIRM: value target].\n## Risks\n| Risk | Severity |\n| --- | --- |\n| Data maturity | High |",
+      openItems: ["Value baseline"],
+    });
+    expect(r.pass).toBe(true);
+    expect(r.qualityScore).toBeGreaterThanOrEqual(80);
+  });
+});
