@@ -174,10 +174,12 @@ function buildFilter(canonicalTenantKey: string, filters?: TenantContextFilters)
     parts.push(`confidence ge ${filters.minConfidence}`);
   }
   if (filters?.sensitivity && filters.sensitivity.length > 0) {
-    const list = filters.sensitivity
-      .map((s) => `'${escapeOdataLiteral(s)}'`)
-      .join(',');
-    parts.push(`sensitivity in (${list})`);
+    // Azure AI Search does not support the OData `in (...)` list-literal operator in
+    // $filter (it returns "unsupported OData language feature"). Use the supported
+    // search.in() function. Classification tokens carry no commas, so a comma delimiter
+    // is safe; quotes are escaped defensively.
+    const list = filters.sensitivity.map((s) => escapeOdataLiteral(s)).join(',');
+    parts.push(`search.in(sensitivity, '${list}', ',')`);
   }
   if (filters?.extra) {
     for (const expr of filters.extra) {
