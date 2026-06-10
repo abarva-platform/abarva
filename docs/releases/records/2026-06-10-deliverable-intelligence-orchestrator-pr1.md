@@ -38,8 +38,9 @@ follow in PR-2..PR-5.
 - `src/lib/deliverables/orchestrator/{types,source-register,prompt-builder,generation-plan,quality-validator,artifact-brief-registry,orchestrator,index}.ts`
 - `src/lib/deliverables/orchestrator/briefs/{archetype-packs,deliverable-structures}.ts` (PR-2)
 - `src/lib/deliverables/orchestrator/model-caller.ts` (PR-3 — audited-egress ModelCaller + `generateDeliverable`)
+- `src/lib/deliverables/orchestrator/renderers.ts` (PR-4 — DOCX/XLSX-companion/HTML from RenderableDeliverable, reusing exports-shared/docx-base)
 - `src/lib/deliverables/orchestrator/__fixtures__/ams-rfp.ts`
-- `src/lib/deliverables/orchestrator/__tests__/{orchestrator,brief-library,model-caller}.test.ts` (31 tests)
+- `src/lib/deliverables/orchestrator/__tests__/{orchestrator,brief-library,model-caller,renderers}.test.ts` (36 tests)
 - `docs/deliverables/DELIVERABLE_INTELLIGENCE_ORCHESTRATOR.md`
 
 ## QA / Validation
@@ -81,8 +82,10 @@ Tests in `__tests__/orchestrator.test.ts`; design note in
   case/roadmap/discovery; Source strategy-memo/evaluation-workbook/executive-
   recommendation), composed at resolve time. Combinations outside these still resolve to
   the sound module-level default; additional packs/structures can be added as data.
-- No renderers yet — `RenderableDeliverable` is not yet emitted to DOCX/PPTX/XLSX/HTML
-  (PR-4), and nothing is persisted via the artifacts repository (PR-5).
+- Renderers (PR-4) emit DOCX, an Excel companion for wide tables, and HTML; a PPTX
+  exec-deck renderer and persistence via the artifacts repository are deferred to PR-5.
+  Renderers are validated against the fixture document (real PK/.docx + .xlsx buffers,
+  clean HTML); board-grade *content* is proven by the PR-5 live Claude run.
 - The quality gate's unsupported-claim detector is heuristic (number/$/%/date sentences
   without a citation/assumption/placeholder); it complements, but does not replace, the
   governed-evidence binding enforced upstream.
