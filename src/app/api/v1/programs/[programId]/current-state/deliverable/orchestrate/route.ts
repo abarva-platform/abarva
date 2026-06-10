@@ -18,7 +18,12 @@ import {
   DEFAULT_ARCHETYPE_ID,
 } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
-import { orchestrateDeliverable } from "@/lib/programs/deliverables/orchestrator";
+import {
+  orchestrateDeliverable,
+  getCachedOrchestration,
+  setCachedOrchestration,
+  type OrchestratorResult,
+} from "@/lib/programs/deliverables/orchestrator";
 import { tenantDisplayName } from "@/lib/programs/deliverables/board-deliverable";
 import {
   renderDeliverableDocx,
@@ -76,6 +81,28 @@ export async function GET(
       plan,
     });
 
+    // Render-from-cache: the json pass generates + caches the 3-pass result;
+    // docx/html reuse it (fast render) instead of re-running passes past the
+    // gateway timeout. `fresh=1` forces regeneration.
+    const cacheKey = `${ctx.clientId}:${programId}:${spec.key}`;
+    const fresh = req.nextUrl.searchParams.get("fresh") === "1";
+    let orchestrated: OrchestratorResult | null = fresh
+      ? null
+      : getCachedOrchestration(cacheKey);
+    if (!orchestrated) {
+      orchestrated = await orchestrateDeliverable({
+        base,
+        archetypeId: archetype.id,
+        deliverableType: spec.key,
+        clientKey: ctx.clientKey ?? ctx.clientId,
+        tenantId: ctx.clientId,
+        moveId: programId,
+        moveName,
+        date: new Date().toISOString().slice(0, 10),
+        userId: ctx.userId,
+      });
+      setCachedOrchestration(cacheKey, orchestrated);
+    }
     const {
       result,
       quality,
@@ -83,17 +110,7 @@ export async function GET(
       critique,
       passes,
       model,
-    } = await orchestrateDeliverable({
-      base,
-      archetypeId: archetype.id,
-      deliverableType: spec.key,
-      clientKey: ctx.clientKey ?? ctx.clientId,
-      tenantId: ctx.clientId,
-      moveId: programId,
-      moveName,
-      date: new Date().toISOString().slice(0, 10),
-      userId: ctx.userId,
-    });
+    } = orchestrated;
 
     const safeName = `${result.clientName}_${result.label}`.replace(
       /[^A-Za-z0-9]+/g,

@@ -49,6 +49,38 @@ export interface OrchestratorResult {
   model: string;
 }
 
+// In-process result cache so a format change (json → docx/html) renders from the
+// already-generated result instead of re-running the 3 passes (which exceeds the
+// gateway timeout). TTL-bounded; keyed by tenant+move+deliverable.
+const RESULT_CACHE = new Map<
+  string,
+  { at: number; value: OrchestratorResult }
+>();
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+export function getCachedOrchestration(key: string): OrchestratorResult | null {
+  const hit = RESULT_CACHE.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > CACHE_TTL_MS) {
+    RESULT_CACHE.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+export function setCachedOrchestration(
+  key: string,
+  value: OrchestratorResult,
+): void {
+  RESULT_CACHE.set(key, { at: Date.now(), value });
+  if (RESULT_CACHE.size > 50) {
+    const oldest = [...RESULT_CACHE.entries()].sort(
+      (a, b) => a[1].at - b[1].at,
+    )[0];
+    if (oldest) RESULT_CACHE.delete(oldest[0]);
+  }
+}
+
 function humanGap(missing: string): string {
   if (missing.startsWith("section:"))
     return `${missing.replace("section:", "").trim()} — narrative content not yet evidenced`;
