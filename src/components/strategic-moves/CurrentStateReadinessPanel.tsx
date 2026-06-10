@@ -28,12 +28,14 @@ const INGEST_WIRED = new Set<string>([
 
 const STATUS_LABEL: Record<ReadinessStatus, string> = {
   committed: "Committed",
+  review_required: "Review required",
   parsing: "Parsing",
   staged: "Staged",
   missing: "Missing",
 };
 const STATUS_COLOR: Record<ReadinessStatus, string> = {
   committed: "#3a6a4f", // sober, earned — not a celebratory green
+  review_required: "#b26a00", // parsed but not yet promoted — amber, honest
   parsing: "#b26a00",
   staged: "#b26a00",
   missing: "var(--abarva-stone)",
@@ -68,7 +70,13 @@ const PROMOTION_BOUNDARY = FULL_LADDER.indexOf("indexed"); // governed beyond co
 
 /** The honest ladder as a sober progress track — the hero of each evidence row. */
 function LadderTrack({ status }: { status: ReadinessStatus }) {
-  const reached = FULL_LADDER.indexOf(status);
+  // 'review_required' is a document-path state that sits AFTER parsing but BEFORE
+  // committed — it is parsed, pending governed promotion. Map it onto the ladder
+  // at 'parsing' so committed stays honestly unfilled until approval.
+  const reached =
+    status === "review_required"
+      ? FULL_LADDER.indexOf("parsing")
+      : FULL_LADDER.indexOf(status);
   return (
     <div style={{ marginTop: 4 }}>
       <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
@@ -109,8 +117,10 @@ function LadderTrack({ status }: { status: ReadinessStatus }) {
           color: "var(--abarva-stone)",
         }}
       >
-        {LADDER_LABEL[status]} · stage {reached + 1}/9 · governed promotion
-        beyond committed (no auto agent-ready)
+        {status === "review_required"
+          ? "Review required · parsed, pending approval"
+          : `${LADDER_LABEL[status]} · stage ${reached + 1}/9`}{" "}
+        · governed promotion beyond committed (no auto agent-ready)
       </div>
     </div>
   );
@@ -138,12 +148,26 @@ export function CurrentStateReadinessPanel({
     .filter((i) => i.severity === "hard" && i.status !== "committed")
     .map((i) => {
       const wired = INGEST_WIRED.has(i.key) && !!i.backingTable;
-      const effort = wired ? 0 : i.backingTable ? 1 : 2;
+      // Document families: status review_required (parsed, awaiting approval)
+      // ranks ahead of missing — the cheapest next move is to approve.
+      const effort = wired
+        ? 0
+        : i.documentFamily
+          ? i.status === "review_required"
+            ? 0
+            : 1
+          : i.backingTable
+            ? 1
+            : 2;
       const path = wired
         ? `Upload ${i.sourceDocHint}`
-        : i.backingTable
-          ? "CSV ingest coming — supply via Nexus"
-          : "Capture with Nexus";
+        : i.documentFamily
+          ? i.status === "review_required"
+            ? "Approve parsed document below"
+            : "Upload document (review-required)"
+          : i.backingTable
+            ? "CSV ingest coming — supply via Nexus"
+            : "Capture with Nexus";
       return { i, effort, path, wired };
     })
     .sort((a, b) => a.effort - b.effort);
@@ -173,6 +197,72 @@ export function CurrentStateReadinessPanel({
       }
     } catch {
       setNote(`${family}: upload failed`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // Document path: PDF/PPTX/DOCX/XLSX/CSV → parse → review_required (or auto-commit
+  // for a schema-validated KPI table). Never silently committed.
+  async function provideDoc(family: string, file: File) {
+    setBusy(family);
+    setNote(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("family", family);
+      fd.append("phase", String(readiness?.phase ?? 1));
+      const res = await fetch(
+        `/api/v1/programs/${programId}/current-state/ingest-doc`,
+        { method: "POST", body: fd },
+      );
+      const j = await res.json();
+      if (res.ok && j.ok) {
+        setNote(
+          j.autoPromoted
+            ? `${family}: structured KPI table validated and committed — refreshing…`
+            : `${family}: parsed via ${j.parseMethod} (confidence ${Math.round((j.confidence ?? 0) * 100)}%) — review required before it counts as committed. Refreshing…`,
+        );
+        setTimeout(() => window.location.reload(), 1100);
+      } else {
+        setNote(`${family}: ${j.error || j.detail || "parse failed"}`);
+      }
+    } catch {
+      setNote(`${family}: upload failed`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // The governed promotion: approve/reject a pending document review. Approval is
+  // what turns review_required → committed.
+  async function decide(
+    family: string,
+    evidenceId: string,
+    decision: "approved" | "rejected",
+  ) {
+    setBusy(`${family}:${evidenceId}`);
+    setNote(null);
+    try {
+      const res = await fetch(
+        `/api/v1/programs/${programId}/current-state/evidence/${evidenceId}/approve`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ decision }),
+        },
+      );
+      const j = await res.json();
+      if (res.ok && j.ok) {
+        setNote(
+          `${family}: evidence ${decision} — ${decision === "approved" ? "now committed" : "rejected, not committed"}. Refreshing…`,
+        );
+        setTimeout(() => window.location.reload(), 900);
+      } else {
+        setNote(`${family}: ${j.error || "review action failed"}`);
+      }
+    } catch {
+      setNote(`${family}: review action failed`);
     } finally {
       setBusy(null);
     }
@@ -634,9 +724,129 @@ export function CurrentStateReadinessPanel({
                 {i.rationale}
                 {i.backingTable ? ` · committed to ${i.backingTable}` : ""}
               </div>
+              {/* Pending document reviews — the governed promotion control. */}
+              {i.documentFamily && i.pendingReviews.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    padding: "6px 8px",
+                    borderRadius: 5,
+                    background: "rgba(178,106,0,0.05)",
+                    border: "1px solid rgba(178,106,0,0.22)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontFamily: "var(--abarva-mono)",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                      color: "#8a5200",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {i.pendingReviews.length} parsed document
+                    {i.pendingReviews.length > 1 ? "s" : ""} awaiting review
+                  </div>
+                  {i.pendingReviews.map((p) => (
+                    <div
+                      key={p.evidenceId}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "3px 0",
+                        fontSize: 12,
+                      }}
+                    >
+                      <span style={{ flex: 1, color: "var(--abarva-slate)" }}>
+                        {p.title}
+                        <span
+                          style={{
+                            color: "var(--abarva-stone)",
+                            fontFamily: "var(--abarva-mono)",
+                            fontSize: 10,
+                          }}
+                        >
+                          {" "}
+                          · {p.parseMethod} · {Math.round(p.confidence * 100)}%
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => decide(i.key, p.evidenceId, "approved")}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "#fff",
+                          background: "var(--abarva-ink, #0a0a0a)",
+                          border: "none",
+                          borderRadius: 5,
+                          padding: "3px 10px",
+                          cursor: busy ? "default" : "pointer",
+                          opacity: busy ? 0.5 : 1,
+                        }}
+                      >
+                        {busy === `${i.key}:${p.evidenceId}`
+                          ? "Working…"
+                          : "Approve"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => decide(i.key, p.evidenceId, "rejected")}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--abarva-slate)",
+                          background: "transparent",
+                          border: "1px solid var(--abarva-mist, #d8d4ca)",
+                          borderRadius: 5,
+                          padding: "3px 10px",
+                          cursor: busy ? "default" : "pointer",
+                          opacity: busy ? 0.5 : 1,
+                        }}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {i.status !== "committed" && (
                 <div style={{ marginTop: 2 }}>
-                  {wired ? (
+                  {i.documentFamily ? (
+                    <label
+                      style={{
+                        display: "inline-block",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--abarva-ink, #0a0a0a)",
+                        border: "1px solid var(--abarva-ink, #0a0a0a)",
+                        borderRadius: 5,
+                        padding: "4px 10px",
+                        cursor: busy ? "default" : "pointer",
+                        opacity: busy ? 0.5 : 1,
+                      }}
+                    >
+                      {busy === i.key
+                        ? "Uploading…"
+                        : "Provide document (PDF / PPTX / DOCX / XLSX)"}
+                      <input
+                        type="file"
+                        accept=".pdf,.pptx,.docx,.xlsx,.csv,application/pdf"
+                        hidden
+                        disabled={busy !== null}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) provideDoc(i.key, f);
+                        }}
+                      />
+                    </label>
+                  ) : wired ? (
                     <label
                       style={{
                         display: "inline-block",
@@ -675,6 +885,19 @@ export function CurrentStateReadinessPanel({
                       {i.backingTable
                         ? "Deterministic CSV ingest coming — supply via Nexus for now."
                         : "Captured in the charter with Nexus."}
+                    </span>
+                  )}
+                  {i.documentFamily && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 10,
+                        color: "var(--abarva-stone)",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      Free-form docs enter review-required; only a
+                      schema-validated KPI table auto-commits.
                     </span>
                   )}
                 </div>

@@ -1,0 +1,93 @@
+// POST /api/v1/programs/:programId/current-state/ingest-doc
+// Multipart: file (PDF/PPTX/DOCX/XLSX/CSV) + family + phase? + archetypeId?
+// Parses the document for a QUALITATIVE current-state family, appends the cited
+// evidence (append-only), and opens the governed review record. Free-form docs
+// land 'review_required'; a schema-validated structured KPI table auto-commits.
+// Tenant + move scoped.
+
+import { NextRequest } from "next/server";
+import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
+import {
+  getArchetype,
+  DEFAULT_ARCHETYPE_ID,
+} from "@/lib/programs/archetypes/registry";
+import {
+  ingestCurrentStateDoc,
+  isDocumentFamily,
+} from "@/lib/programs/current-state-doc-ingest";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MIME_BY_EXT: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  csv: "text/csv",
+  txt: "text/plain",
+  md: "text/markdown",
+  json: "application/json",
+};
+
+function resolveMime(file: File): string {
+  if (file.type) return file.type;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return MIME_BY_EXT[ext] ?? "application/octet-stream";
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ programId: string }> },
+) {
+  try {
+    const { programId } = await params;
+    const ctx = await requireTenancy();
+
+    const form = await req.formData();
+    const file = form.get("file");
+    const familyKey = String(form.get("family") ?? "");
+    const phase = Number(form.get("phase") ?? "1");
+    const archetypeId = String(form.get("archetypeId") ?? DEFAULT_ARCHETYPE_ID);
+
+    if (!(file instanceof File)) {
+      return Response.json({ error: "file_required" }, { status: 400 });
+    }
+
+    const archetype =
+      getArchetype(archetypeId) ?? getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    const family = archetype.evidenceFamilies.find((f) => f.key === familyKey);
+    if (!family) {
+      return Response.json(
+        { error: "unknown_family", detail: `no family '${familyKey}'` },
+        { status: 400 },
+      );
+    }
+    if (!isDocumentFamily(family)) {
+      // Structured families have a canonical store — use the CSV ingest route.
+      return Response.json(
+        {
+          error: "structured_family",
+          detail: `'${familyKey}' is backed by ${family.backing?.table}; use /current-state/ingest (CSV).`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const mimeType = resolveMime(file);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const result = await ingestCurrentStateDoc(ctx, {
+      moveId: programId,
+      family,
+      archetypeId,
+      phase: Number.isFinite(phase) ? phase : 1,
+      filename: file.name,
+      mimeType,
+      buffer,
+    });
+
+    return Response.json(result, { status: 200 });
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+}

@@ -42,6 +42,8 @@ function inst(over: Partial<InstrumentReadiness>): InstrumentReadiness {
     backingTable: null,
     committedRows: 0,
     rationale: "r",
+    documentFamily: false,
+    pendingReviews: [],
     ...over,
   };
 }

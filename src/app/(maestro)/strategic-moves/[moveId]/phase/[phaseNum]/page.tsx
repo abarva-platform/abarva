@@ -70,6 +70,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       archetype,
       profile,
       parsedPhase,
+      moveId,
     );
     recommendation = await buildCurrentStateRecommendation(tctx, profile);
     plan = buildCurrentStatePlan(recommendation, { moveName: move.name });
