@@ -88,6 +88,7 @@ async function handle(req: NextRequest, programId: string) {
       spec,
       base,
       tenant: ctx.clientKey ?? ctx.clientId,
+      tenantId: ctx.clientId,
       moveId: programId,
       moveName,
       userId: ctx.userId,

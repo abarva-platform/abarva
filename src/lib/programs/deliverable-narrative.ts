@@ -98,10 +98,16 @@ function buildUserPrompt(args: {
  * governed evidence bundle. Throws if egress is unavailable/denied (caller falls
  * back to the deterministic grounded draft).
  */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function generateNarrativeDeliverable(args: {
   spec: DeliverableSpec;
   base: GeneratedDeliverable;
+  /** Display/grounding tenant (client key, e.g. "skyharbor"). */
   tenant: string;
+  /** Tenant UUID for the egress audit row (client_id). */
+  tenantId: string;
   moveId: string;
   moveName: string;
   userId?: string;
@@ -125,8 +131,10 @@ export async function generateNarrativeDeliverable(args: {
   });
 
   const { client } = await getAuditedAnthropicClient({
-    tenantId: args.tenant,
-    userId: args.userId,
+    // Audit columns are UUID-typed — pass the tenant UUID, not the client key,
+    // and only pass a UUID-shaped userId (operator personas may be "clerk:...").
+    tenantId: UUID_RE.test(args.tenantId) ? args.tenantId : args.tenant,
+    userId: args.userId && UUID_RE.test(args.userId) ? args.userId : undefined,
     workflow: "moves_deliverable_generation",
     model,
     prompt: [system, prompt].join("\n\n"),
