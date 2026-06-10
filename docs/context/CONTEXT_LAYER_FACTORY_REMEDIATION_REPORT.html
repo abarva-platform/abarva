@@ -36,7 +36,7 @@
   <h1>Context Layer Factory — Remediation Report</h1>
   <p class="sub">Replicating the SkyHarbor governed context-layer pipeline for
      <b>Lakeshore Holdings</b>, <b>Apex Retail</b>, <b>Meridian Health</b>.</p>
-  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2 + 6–7 done (index tenant-context-v1 backfilled & verified; tenant-scoped retrieval+citation proven for all 3). Next: Apex fact-load (Phase 5), code fixes, promotion, bundle proof.</span></p>
+  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2, 5 (Apex), 6–7 done. Apex now has 11,410 verified facts (was 0); index+retrieval proven for all 3. Next: code fixes (retrieval/segments/registry), Lakeshore embed, promotion (8), bundle proof (9), module readiness (10).</span></p>
 
   <div class="card">
     <b>Operating principle (hard rule):</b> diagnose each client by <i>exact pipeline state</i>, not by
@@ -52,7 +52,7 @@
     <tr><td>2</td><td>Current dataset/context audit (pipeline-state)</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026-06.md</code></td></tr>
     <tr><td>3</td><td>Enterprise-worthiness standard</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_ENTERPRISE_WORTHINESS_STANDARD_2026-06.md</code></td></tr>
     <tr><td>4</td><td>Generate template-aligned datasets</td><td><span class="pill s-todo">queued</span></td><td>generators + <code>datasets/*-synthetic-v2/</code></td></tr>
-    <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-prog">in progress</span></td><td>Apex only (others already have facts). Dry-run OK: 1,029 records / 11,410 facts. Blocked on Supabase-vs-pg write path — building pg applier.</td></tr>
+    <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-done">complete</span></td><td>Apex LOADED+VERIFIED: 1,029 records / 11,410 active facts / 1,029 evidence / 220 rels; 0 orphans, 0 dup-active. pg-applier (job 6y3pxr0). <code>CLIENT_CONTEXT_LOAD_VERIFICATION_2026-06.md</code></td></tr>
     <tr><td>6</td><td>Azure AI Search indexing</td><td><span class="pill s-done">complete</span></td><td>tenant-context-v1 backfilled+verified (apex 6,497 · meridian 3,506 · lakeshore 1,542)</td></tr>
     <tr><td>7</td><td>Retrieval + citation proof</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_CONTEXT_RETRIEVAL_CITATION_PROOF_2026-06.md</code> (job boshah8; tenant-isolated, cited)</td></tr>
     <tr><td>8</td><td>Promotion evaluation</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_PROMOTION_EVALUATION_2026-06.md</code></td></tr>
