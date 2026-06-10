@@ -49,6 +49,7 @@ import {
   renderDeliverableHtml,
 } from "@/lib/programs/deliverables/render";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import { buildMoveContextBundleTrace } from "@/lib/programs/deliverables/move-context-bundle-trace";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -208,6 +209,25 @@ export async function GET(
             /[^A-Za-z0-9]+/g,
             "_",
           );
+        // PR-8: emit the MoveContextBundleTrace — the audit provenance for this
+        // generation, attached to the artifact's vault metadata.
+        const trace = buildMoveContextBundleTrace({
+          tenantId: ctx.clientId,
+          tenantKey: ctx.clientKey ?? ctx.clientId,
+          moveId: programId,
+          deliverableType: spec.key,
+          moveName: orchestrated.result.moveName,
+          model: orchestrated.model,
+          passes: orchestrated.passes,
+          sourceRegister: orchestrated.result.sourceRegister as Array<
+            { marker?: string; label?: string } | string
+          >,
+          bodyMarkdown: orchestrated.result.bodyMarkdown,
+          unsupportedClaims: orchestrated.result.unsupportedClaims,
+          openItems: orchestrated.result.openItems,
+          qualityScore: orchestrated.quality.qualityScore,
+          qualityPass: orchestrated.quality.pass,
+        });
         await saveMoveArtifact(ctx, {
           moveId: programId,
           phase: PHASE_NUMBER[spec.phase] ?? 2,
@@ -230,6 +250,7 @@ export async function GET(
             openItems: orchestrated.result.openItems,
             passes: orchestrated.passes,
             markdown: orchestrated.result.bodyMarkdown.slice(0, 40000),
+            contextBundleTrace: trace,
           },
         });
       } catch {
