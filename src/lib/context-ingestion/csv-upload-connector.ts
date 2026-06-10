@@ -168,6 +168,7 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   incidents_ops_telemetry: "it_landscape",
   infrastructure_estate: "infrastructure",
   business_capability: "enterprise_profile",
+  service_levels: "it_landscape",
 };
 
 export function segmentKeyForContextDimension(

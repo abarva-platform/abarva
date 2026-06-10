@@ -283,6 +283,7 @@ function recordTypeFor(args: {
   if (args.dimension === "financial_kpis") return "kpi_metric";
   if (args.dimension === "vendor_contracts") return "contract";
   if (args.dimension === "transformation_initiatives") return "initiative";
+  if (args.dimension === "service_levels") return "service_level";
   if (args.dimension === "integration_topology") return "integration";
   if (args.dimension === "data_platform_lineage") return "data_asset";
   if (args.dimension === "business_capability") return "business_capability";
