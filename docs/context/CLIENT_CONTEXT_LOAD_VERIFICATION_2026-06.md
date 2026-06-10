@@ -55,3 +55,22 @@ is indexing (done, Phase 6), retrieval proof (done, Phase 7), promotion, and bun
 ## Operator hygiene
 Operator job patched + restored on every run (executions: dry 92fpya6/gkh91m5, apply qgu6yyf→6y3pxr0).
 Image `clf-apex-data:v1` is a throwaway data-layer image (not a deploy artifact).
+
+---
+
+## UPDATE — vector-parity polish (2026-06-10, jobs zzecc6m + 6j8ewfk)
+Closed the two data-polish gaps (`scripts/context/clf-polish.ts`). Embeddings use **real OpenAI
+`text-embedding-3-small` (1536-d)** called directly — the in-repo Azure-OpenAI path falls back to
+deterministic vectors when `AZURE_OPENAI_EMBEDDING_*` is unset (this lab has only `OPENAI_API_KEY`),
+which would be index-incompatible with the existing real embeddings.
+
+- **Pending embeddings finished:** Lakeshore 213 + Meridian 3 = **216** chunks `pending → embedded`.
+  Both tenants now **0 pending** (lakeshore 1,542 / meridian 3,506 fully embedded).
+- **Apex fact-chunking:** built **1,029 chunks** from the loaded records via the in-image
+  `buildEnterpriseContextChunksFromPlan`, inserted under `tenant_key='apex-retail'` (client_id c7578e7a),
+  embedded. apex-retail chunks 6,497 → **7,526** (all embedded).
+- **Re-indexed** `tenant-context-v1` (job 6j8ewfk): verified apex-retail **7,526** docs. Smoke retrieval now
+  returns Apex **fact-derived** chunks (top hit `risk_compliance_register` / `15-risk-compliance-register.csv`),
+  not just the legacy seed → **vector parity achieved**.
+
+All idempotent (`ON CONFLICT`/`UPDATE`); no destructive deletes; operator job restored after each run.
