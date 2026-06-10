@@ -1,6 +1,8 @@
 import {
   parseDoraCsv,
   parseCsv,
+  parseCmdbCsv,
+  parseWorkforceCsv,
   ingestCurrentStateCsv,
 } from "../current-state-ingest";
 import type { TenancyCtx } from "@/lib/programs/types.db";
@@ -204,5 +206,80 @@ describe("ingestCurrentStateCsv — DORA", () => {
     );
     // (eng_performance_dora IS wired; this asserts the lineage is always present.)
     expect(r.lineage.archetypeId).toBe("AI_PRODUCT_DEVELOPMENT_LIFECYCLE");
+  });
+});
+
+const VALID_CMDB = [
+  "ci_sys_id,ci_name,ci_type,ci_class,lifecycle_state,owner_team,business_service,criticality,environment",
+  "CI1,booking-web,application,cmdb_ci_appl,production,Digital,Booking,1,production",
+  "CI2,fds-mainframe-pnr,mainframe,cmdb_ci_mainframe,production,Reservations,Reservations,1,production",
+].join("\n");
+
+const VALID_WORKFORCE = [
+  "employee_id,function,sub_function,location,level,contractor_flag,start_date,as_of_date",
+  "E1,Engineering,Digital Web,Seattle,Staff,false,2021-03-01,2026-05-31",
+  "E2,Engineering,Data,Bangalore,Mid,true,2023-01-10,2026-05-31",
+].join("\n");
+
+describe("parseCmdbCsv / parseWorkforceCsv", () => {
+  it("parses CMDB rows; flags missing columns", () => {
+    expect(parseCmdbCsv(VALID_CMDB).rows).toHaveLength(2);
+    expect(parseCmdbCsv("ci_sys_id,ci_name\nA,B").errors[0]).toMatch(
+      /missing columns/,
+    );
+  });
+  it("parses workforce rows; rejects bad dates", () => {
+    expect(parseWorkforceCsv(VALID_WORKFORCE).rows).toHaveLength(2);
+    const bad = parseWorkforceCsv(
+      "employee_id,function,sub_function,location,level,contractor_flag,start_date,as_of_date\nE1,Eng,x,y,z,false,2021/03/01,2026-05-31",
+    );
+    expect(bad.rows).toHaveLength(0);
+  });
+});
+
+describe("ingestCurrentStateCsv — CMDB + workforce families wired", () => {
+  it("it_systems_landscape commits to tower_cmdb_cis + evidence_ledger", async () => {
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "it_systems_landscape",
+      VALID_CMDB,
+      "cmdb.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    expect(r.committedRows).toBe(2);
+    expect(r.readinessState).toBe("committed");
+    expect(r.promotedToAgent).toBe(false);
+    const upserts = writes.filter((w) => w.table === "tower_cmdb_cis");
+    expect(upserts).toHaveLength(2);
+    expect(upserts[0].row).toMatchObject({
+      client_id: ctx.clientId,
+      ci_sys_id: "CI1",
+    });
+    const led = writes.find((w) => w.table === "evidence_ledger");
+    expect((led?.row.source_ref as Record<string, unknown>).family).toBe(
+      "it_systems_landscape",
+    );
+  });
+
+  it("it_org_structure commits to tower_workforce", async () => {
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "it_org_structure",
+      VALID_WORKFORCE,
+      "workforce.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    expect(r.committedRows).toBe(2);
+    const upserts = writes.filter((w) => w.table === "tower_workforce");
+    expect(upserts).toHaveLength(2);
+    expect(upserts[0].row).toMatchObject({
+      client_id: ctx.clientId,
+      employee_id: "E1",
+      function: "Engineering",
+    });
   });
 });

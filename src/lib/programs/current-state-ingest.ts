@@ -246,9 +246,250 @@ async function commitDora(
   return { committed, ledger };
 }
 
+// ── Shared evidence_ledger writer ────────────────────────────────────────────
+
+async function writeLedger(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  ctx: TenancyCtx,
+  family: string,
+  artifactType: string,
+  committed: number,
+  fileRef: string,
+  provenance: DatasetProvenance,
+  nowIso: string,
+  lineage: EvidenceLineage,
+  claimText: string,
+): Promise<number> {
+  const synthetic = provenance === "representative_synthetic";
+  const { error } = await sb.from("evidence_ledger").insert({
+    client_id: ctx.clientId,
+    surface: "moves",
+    artifact_type: artifactType,
+    artifact_ref: `current_state:${family}:${lineage.moveId}:${fileRef}`,
+    claim_text: `${claimText}${synthetic ? " — REPRESENTATIVE/SYNTHETIC dataset, not a real client export" : ""}.`,
+    source_type: "document_extract",
+    source_ref: {
+      fileRef,
+      family,
+      datasetProvenance: provenance,
+      tenantKey: ctx.clientKey ?? null,
+      rows: committed,
+      moveId: lineage.moveId,
+      archetypeId: lineage.archetypeId,
+      phase: lineage.phase,
+      readinessState: "committed",
+      promotedToAgent: false,
+    },
+    freshness_at: nowIso,
+    confidence: synthetic ? 0.6 : 0.8,
+    confidence_basis: synthetic
+      ? "Representative/synthetic illustrative dataset ingested via the governed upload path; document_extract, not a real client export."
+      : "Client-supplied CSV ingested via the governed upload path; document_extract.",
+    not_enough_data_flag: false,
+    created_by: ctx.userId ?? "system",
+  });
+  return error ? 0 : 1;
+}
+
+// ── CMDB family (IT systems & application landscape) ──────────────────────────
+
+const CMDB_REQUIRED = [
+  "ci_sys_id",
+  "ci_name",
+  "ci_type",
+  "ci_class",
+  "lifecycle_state",
+  "owner_team",
+  "business_service",
+  "criticality",
+  "environment",
+] as const;
+
+export function parseCmdbCsv(text: string): {
+  rows: Record<string, string>[];
+  errors: string[];
+} {
+  const records = parseCsv(text);
+  if (records.length === 0)
+    return { rows: [], errors: ["empty or header-only CSV"] };
+  const missing = CMDB_REQUIRED.filter((h) => !(h in records[0]));
+  if (missing.length)
+    return { rows: [], errors: [`missing columns: ${missing.join(", ")}`] };
+  const errors: string[] = [];
+  const rows = records.filter((r, i) => {
+    if (!r.ci_sys_id || !r.ci_name) {
+      errors.push(`row ${i + 2}: ci_sys_id/ci_name required`);
+      return false;
+    }
+    return true;
+  });
+  return { rows, errors };
+}
+
+async function commitCmdb(
+  ctx: TenancyCtx,
+  rows: Record<string, string>[],
+  fileRef: string,
+  provenance: DatasetProvenance,
+  nowIso: string,
+  lineage: EvidenceLineage,
+): Promise<{ committed: number; ledger: number }> {
+  const sb = getAzureWriteFluentClient();
+  let committed = 0;
+  for (const r of rows) {
+    const { error } = await sb.from("tower_cmdb_cis").upsert(
+      {
+        client_id: ctx.clientId, // TEXT column; tenant uuid as text (read-consistent)
+        ci_sys_id: r.ci_sys_id,
+        ci_name: r.ci_name,
+        ci_type: r.ci_type || "application",
+        ci_class: r.ci_class || "cmdb_ci_appl",
+        lifecycle_state: r.lifecycle_state || "production",
+        owner_team: r.owner_team || "unassigned",
+        business_service: r.business_service || "unspecified",
+        criticality: r.criticality || "3",
+        environment: r.environment || "production",
+        source_system:
+          provenance === "representative_synthetic"
+            ? "representative_csv_upload"
+            : "client_csv_upload",
+      },
+      { onConflict: "client_id,ci_sys_id" },
+    );
+    if (!error) committed += 1;
+  }
+  const sb2 = getAzureWriteFluentClient();
+  const ledger =
+    committed > 0
+      ? await writeLedger(
+          sb2,
+          ctx,
+          "it_systems_landscape",
+          "citation",
+          committed,
+          fileRef,
+          provenance,
+          nowIso,
+          lineage,
+          `IT systems & application landscape ingested: ${committed} configuration items (type, criticality, owner, environment)`,
+        )
+      : 0;
+  return { committed, ledger };
+}
+
+// ── Workforce family (IT / engineering org structure) ─────────────────────────
+
+const WORKFORCE_REQUIRED = [
+  "employee_id",
+  "function",
+  "start_date",
+  "as_of_date",
+] as const;
+
+export function parseWorkforceCsv(text: string): {
+  rows: Record<string, string>[];
+  errors: string[];
+} {
+  const records = parseCsv(text);
+  if (records.length === 0)
+    return { rows: [], errors: ["empty or header-only CSV"] };
+  const missing = WORKFORCE_REQUIRED.filter((h) => !(h in records[0]));
+  if (missing.length)
+    return { rows: [], errors: [`missing columns: ${missing.join(", ")}`] };
+  const errors: string[] = [];
+  const rows = records.filter((r, i) => {
+    if (!r.employee_id || !r.function) {
+      errors.push(`row ${i + 2}: employee_id/function required`);
+      return false;
+    }
+    if (!isDate(r.start_date) || !isDate(r.as_of_date)) {
+      errors.push(`row ${i + 2}: start_date/as_of_date must be YYYY-MM-DD`);
+      return false;
+    }
+    return true;
+  });
+  return { rows, errors };
+}
+
+async function commitWorkforce(
+  ctx: TenancyCtx,
+  rows: Record<string, string>[],
+  fileRef: string,
+  provenance: DatasetProvenance,
+  nowIso: string,
+  lineage: EvidenceLineage,
+): Promise<{ committed: number; ledger: number }> {
+  const sb = getAzureWriteFluentClient();
+  let committed = 0;
+  for (const r of rows) {
+    const { error } = await sb.from("tower_workforce").upsert(
+      {
+        client_id: ctx.clientId,
+        employee_id: r.employee_id,
+        function: r.function,
+        sub_function: r.sub_function || null,
+        location: r.location || null,
+        level: r.level || null,
+        contractor_flag: /^(true|1|yes|y)$/i.test(r.contractor_flag ?? ""),
+        start_date: r.start_date,
+        as_of_date: r.as_of_date,
+      },
+      { onConflict: "client_id,employee_id,as_of_date" },
+    );
+    if (!error) committed += 1;
+  }
+  const sb2 = getAzureWriteFluentClient();
+  const ledger =
+    committed > 0
+      ? await writeLedger(
+          sb2,
+          ctx,
+          "it_org_structure",
+          "citation",
+          committed,
+          fileRef,
+          provenance,
+          nowIso,
+          lineage,
+          `IT / engineering org structure ingested: ${committed} workforce records (function, level, location, contractor mix)`,
+        )
+      : 0;
+  return { committed, ledger };
+}
+
 // ── Family registry + dispatch ───────────────────────────────────────────────
 
-export type IngestFamily = "eng_performance_dora";
+export type IngestFamily =
+  | "eng_performance_dora"
+  | "it_systems_landscape"
+  | "it_org_structure";
+
+interface FamilyHandler {
+  parse: (text: string) => { rows: unknown[]; errors: string[] };
+  commit: (
+    ctx: TenancyCtx,
+    rows: never[],
+    fileRef: string,
+    provenance: DatasetProvenance,
+    nowIso: string,
+    lineage: EvidenceLineage,
+  ) => Promise<{ committed: number; ledger: number }>;
+}
+
+const FAMILY_INGESTORS: Record<IngestFamily, FamilyHandler> = {
+  eng_performance_dora: {
+    parse: parseDoraCsv as FamilyHandler["parse"],
+    commit: commitDora as FamilyHandler["commit"],
+  },
+  it_systems_landscape: {
+    parse: parseCmdbCsv as FamilyHandler["parse"],
+    commit: commitCmdb as FamilyHandler["commit"],
+  },
+  it_org_structure: {
+    parse: parseWorkforceCsv as FamilyHandler["parse"],
+    commit: commitWorkforce as FamilyHandler["commit"],
+  },
+};
 
 /**
  * Ingest a current-state CSV for a family: parse -> validate -> commit to the
@@ -283,14 +524,15 @@ export async function ingestCurrentStateCsv(
     lineage,
   };
 
-  if (family !== "eng_performance_dora") {
+  const handler = FAMILY_INGESTORS[family];
+  if (!handler) {
     return {
       ...base,
       errors: [`family not yet wired for CSV ingest: ${family}`],
     };
   }
 
-  const { rows, errors } = parseDoraCsv(text);
+  const { rows, errors } = handler.parse(text);
   if (rows.length === 0) {
     return {
       ...base,
@@ -298,9 +540,9 @@ export async function ingestCurrentStateCsv(
     };
   }
 
-  const { committed, ledger } = await commitDora(
+  const { committed, ledger } = await handler.commit(
     ctx,
-    rows,
+    rows as never[],
     fileRef,
     provenance,
     nowIso,
