@@ -14,6 +14,7 @@ import {
 import {
   ingestCurrentStateDoc,
   isDocumentFamily,
+  QuarantinedDocumentError,
 } from "@/lib/programs/current-state-doc-ingest";
 import {
   evaluateSensitiveUpload,
@@ -81,20 +82,23 @@ export async function POST(
     const mimeType = resolveMime(file);
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Scan-before-extract (audit B5a): quarantine suspected PHI/PII/regulated
-    // identifiers BEFORE the parser, evidence write, or review record — same
-    // guard as the Moves workspace/data/tower upload routes. A mistaken
-    // sensitive upload never reaches program_evidence_items or auto-promotion.
+    const declaredClassification = form.get("dataClassification");
+
+    // Layer 1 — scan-before-extract (audit B5a): catches text/CSV PII and any
+    // declared regulated classification before the parser even runs.
     const dataProtection = evaluateSensitiveUpload({
       filename: file.name,
       mimeType,
       bytes: buffer,
-      declaredClassification: form.get("dataClassification"),
+      declaredClassification,
     });
     if (dataProtection.decision === "quarantine") {
       return sensitiveUploadRejectedResponse(dataProtection);
     }
 
+    // Layer 2 — office-aware post-extract scan happens inside ingestCurrentStateDoc
+    // (DOCX/PPTX/XLSX are ZIPs; their PII is only visible after decode). On a hit
+    // it throws QuarantinedDocumentError and nothing is written.
     const result = await ingestCurrentStateDoc(ctx, {
       moveId: programId,
       family,
@@ -103,10 +107,17 @@ export async function POST(
       filename: file.name,
       mimeType,
       buffer,
+      declaredClassification:
+        typeof declaredClassification === "string"
+          ? declaredClassification
+          : null,
     });
 
     return Response.json(result, { status: 200 });
   } catch (err) {
+    if (err instanceof QuarantinedDocumentError) {
+      return sensitiveUploadRejectedResponse(err.result);
+    }
     return tenancyErrorResponse(err);
   }
 }

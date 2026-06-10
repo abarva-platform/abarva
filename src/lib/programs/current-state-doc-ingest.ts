@@ -28,8 +28,49 @@ import {
   recordProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
+import {
+  evaluateSensitiveUpload,
+  type UploadProtectionResult,
+} from "@/lib/security/sensitive-upload-guard";
 
 export type ReviewDecision = "pending" | "approved" | "rejected";
+
+/**
+ * Thrown when a parsed document's EXTRACTED text trips the sensitive-data guard.
+ * Office formats (DOCX/PPTX/XLSX) are ZIP containers, so a raw-byte scan sees
+ * only compressed bytes — PHI/PII inside them must be scanned AFTER extraction,
+ * before anything is written. The route catches this and returns the standard
+ * `sensitive_data_quarantined` (422) response. Nothing is persisted.
+ */
+export class QuarantinedDocumentError extends Error {
+  readonly result: UploadProtectionResult;
+  constructor(result: UploadProtectionResult) {
+    super("document_quarantined_post_extract");
+    this.name = "QuarantinedDocumentError";
+    this.result = result;
+  }
+}
+
+/**
+ * Office-aware sensitivity check: run the same guard over the document's decoded
+ * text (and summary). Pure + exported for testing. Returns the guard result so
+ * the caller can decide. Declared classification still forces quarantine.
+ */
+export function assessExtractedTextSensitivity(
+  text: string,
+  opts: {
+    filename: string;
+    mimeType: string;
+    declaredClassification?: string | null;
+  },
+): UploadProtectionResult {
+  return evaluateSensitiveUpload({
+    filename: opts.filename,
+    mimeType: opts.mimeType,
+    bytes: new TextEncoder().encode(text || ""),
+    declaredClassification: opts.declaredClassification ?? null,
+  });
+}
 
 export interface DocIngestResult {
   ok: boolean;
@@ -119,6 +160,8 @@ export interface IngestDocArgs {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  /** Optional declared data classification (e.g. "phi") from the upload form. */
+  declaredClassification?: string | null;
 }
 
 /**
@@ -145,6 +188,23 @@ export async function ingestCurrentStateDoc(
   const parsed = Boolean(
     evidence.extractedText && evidence.extractedText.trim(),
   );
+
+  // Office-aware quarantine: DOCX/PPTX/XLSX are ZIP containers, so the route's
+  // raw-byte pre-scan sees compressed bytes. Re-scan the DECODED text here,
+  // before any write or auto-promotion. Quarantine → nothing is persisted.
+  const sensitivity = assessExtractedTextSensitivity(
+    [evidence.extractedText ?? "", evidence.summary ?? ""]
+      .filter(Boolean)
+      .join("\n"),
+    {
+      filename: args.filename,
+      mimeType: args.mimeType,
+      declaredClassification: args.declaredClassification,
+    },
+  );
+  if (sensitivity.decision === "quarantine") {
+    throw new QuarantinedDocumentError(sensitivity);
+  }
 
   // Auto-promotion is allowed ONLY for a schema-validated structured KPI table on
   // a financial/value family from a spreadsheet/CSV source. Never for free-form.
