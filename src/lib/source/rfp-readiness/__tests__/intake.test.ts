@@ -60,8 +60,7 @@ describe('PR-5 intake capture → governed context', () => {
   it('chat answer becomes user_attested governed context, NOT agent_ready', () => {
     const rec = buildGovernedIntakeRecord({ ...base, rfpSectionId: 'procurement_instructions', inputKey: 'procurement_timeline', method: 'chat_answer', value: 'due 2026-09-15' });
     expect(rec.source_basis).toBe('user_attested');
-    expect(rec.promotion_status).toBe('captured');
-    expect((rec as any).promotion_status).not.toBe('agent_ready');
+    expect(rec.promotion_status).toBe('captured'); // never agent_ready (type-enforced)
     expect(rec.lifecycle_state).toBe('active');
   });
   it('upload is promotion_candidate (never agent_ready) and yields a loader manifest entry', () => {
