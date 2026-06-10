@@ -108,19 +108,32 @@ A live audit found SkyHarbor's context was <strong>chunk-only</strong>: 3,240 na
 </div>
 <p class="muted">Chunk segments (client): it_landscape 114 · program_inventory 158 · enterprise_profile 102 · it_financials 66 · org_structure 40. All <code>committed_not_indexed</code> / <code>not_reviewed</code>.</p>
 
-<h3>v2 target after governed load (stage_and_process)</h3>
-<p class="muted">Expected structured rows once the v2 dataset loads — replacing the 2-record/10-fact smoke state with real per-dimension facts:</p>
-<table><thead><tr><th>record_type</th><th class="r">records (≈)</th><th>facts</th></tr></thead><tbody>
-<tr><td>cmdb_application (apps + erp)</td><td class="r">660</td><td>per-column facts (criticality, vendor, deployment, cost…)</td></tr>
-<tr><td>configuration_item / facility (infra)</td><td class="r">698</td><td>asset_class, make_model, cloud_account, lifecycle…</td></tr>
-<tr><td>integration</td><td class="r">500</td><td>type, latency_sla, kill_blocker…</td></tr>
-<tr><td>contract (vendors)</td><td class="r">120</td><td>annual_value_usd, renewal_date, exit_terms…</td></tr>
-<tr><td>org_role</td><td class="r">272</td><td>level, role, manager_id, cost_center…</td></tr>
-<tr><td>kpi_metric (IT budget)</td><td class="r">168</td><td>value, segment, period…</td></tr>
-<tr><td>incidents / dora / service_level / initiative / capability / ai-tool</td><td class="r">692</td><td>per-dimension facts</td></tr>
-<tr><th>Total structured records</th><th class="r">≈ 3,110</th><th>+ retrievable chunks per row</th></tr>
+<h3>v2 AFTER governed load — <span class="pill p-ok">LOADED &amp; VERIFIED 2026-06-10</span></h3>
+<p class="muted">Executed via VNet ACA job (image <code>abarva/skyload:v2</code> FROM the web image; DB via <code>DATABASE_URL</code>; 14 originals staged to Blob via managed identity). Independently re-queried from the DB — not the loader's self-report. <strong>3,101 active records · 23,895 active facts · 0 orphan facts · +3,099 chunks · 14 blobs staged.</strong></p>
+<div>
+<div class="kpi"><b>3,101</b><span>active enterprise_context_records (14 types)</span></div>
+<div class="kpi"><b>23,895</b><span>active enterprise_context_facts</span></div>
+<div class="kpi"><b>14</b><span>originals in Azure Blob (context-drops)</span></div>
+<div class="kpi"><b>0</b><span>orphan facts</span></div>
+</div>
+<table><thead><tr><th>record_type</th><th class="r">records (verified)</th></tr></thead><tbody>
+<tr><td>configuration_item (infra)</td><td class="r">680</td></tr>
+<tr><td>cmdb_application (apps + erp)</td><td class="r">660</td></tr>
+<tr><td>integration</td><td class="r">500</td></tr>
+<tr><td>incidents_ops_telemetry</td><td class="r">400</td></tr>
+<tr><td>org_role</td><td class="r">272</td></tr>
+<tr><td>kpi_metric (IT budget)</td><td class="r">168</td></tr>
+<tr><td>contract (vendors)</td><td class="r">122</td></tr>
+<tr><td>business_capability</td><td class="r">80</td></tr>
+<tr><td>service_level (SLA)</td><td class="r">72</td></tr>
+<tr><td>initiative</td><td class="r">60</td></tr>
+<tr><td>ai_tooling_model_inventory</td><td class="r">40</td></tr>
+<tr><td>delivery_dora_devex</td><td class="r">40</td></tr>
+<tr><td>facility (data centers)</td><td class="r">6</td></tr>
+<tr><td>enterprise_profile</td><td class="r">1</td></tr>
+<tr><th>Total active records</th><th class="r">3,101</th></tr>
 </tbody></table>
-<div class="note"><strong>Status:</strong> v2 dataset <span class="pill p-ok">generated &amp; PR'd (#3378)</span> · governed load <span class="pill p-warn">ready to execute via VNet job</span> (DB via <code>DATABASE_URL</code>; Blob via managed identity to <code>stabarvaprivatedplab001/context-drops</code>). Indexing (→ <code>retrievable</code>) and <code>agent_ready</code> promotion are the gated steps that follow.</div>
+<div class="note"><strong>Load notes (truth-standard):</strong> records committed to <code>enterprise_context_records</code>; field-level facts to <code>enterprise_context_facts</code> (active, value-hashed, supersede-ready); retrievable text to <code>enterprise_context_chunks</code>; 14 originals to Azure Blob <code>stabarvaprivatedplab001/context-drops</code> at <code>skyharbor-air/skyharbor-air-synthetic-v2/&lt;hash&gt;/&lt;file&gt;</code>. One post-load fix applied: the deployed <code>lifecycle_state</code> column did not enforce its <code>DEFAULT 'active'</code>, so the 3,099 new records were set <code>active</code> explicitly (loader updated to set it inline going forward). <strong>Still pending (gated next steps):</strong> Azure-native indexing (→ <code>retrievable</code>) and governed <code>agent_ready</code> promotion + cite-render verification — until then this evidence is <em>committed</em>, not yet agent-usable.</div>
 
 <h2>7 · Provenance &amp; governance</h2>
 <ul>
