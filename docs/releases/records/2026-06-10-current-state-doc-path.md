@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate`
+`candidate` — live-proven on the Azure lab (revision `--docpath-3af7876d4`,
+move `358233e6`); awaiting approval to squash-merge to main + redeploy from main.
 
 ## Plain-English Summary
 
@@ -75,12 +76,46 @@ uploaded" and "a fact from it is committed current-state evidence."
 - `npx tsc --noEmit` — clean (no src errors).
 - `npx jest` doc-ingest + readiness + bundle + refinement suites — 31/31 pass.
 - `npx eslint` on changed files — clean.
-- Pending (next cycle): private-DB migration apply via the in-VNet migrate job;
-  ACA image build/deploy from this branch (rollback anchor
-  `--main-28493f0cb3`); live proof on real move `358233e6` — upload a document
-  for `stakeholder_map` → review_required → approve → committed (coverage rises
-  past 50%); synthetic doc set (KPI XLSX, stakeholder DOCX, operating-model PPTX)
-  generated and run through the path. This record will be updated with receipts.
+
+### Live receipts (Azure lab, 2026-06-10)
+
+- **Migration applied in-VNet:** `job-abarva-db-migrate-lab-eastus` run on image
+  `abarva/web:docpath-3af7876d4`. Runner log: `Pending migrations (1):
+20260610120000_program_evidence_reviews.sql` → `→ … ✓` → `Applied 1 pending
+migration` (migration ledger 217 → 218). `program_evidence_reviews` now exists
+  on the private client data plane.
+- **App deployed:** revision `ca-abarva-web-lab-eastus--docpath-3af7876d4`
+  (Running + Healthy), 100% traffic, `/api/health` 200. Rollback anchor
+  `--main-28493f0cb3` retained.
+- **Live end-to-end on real move `358233e6-723d-492d-9e6b-6d8541b91207`
+  (AI-PDLC — Real-World Test):**
+  - Baseline coverage **50%** (DORA/CMDB/workforce committed; 3 document
+    families missing).
+  - `stakeholder_map`: document uploaded → parsed (markdown-line-parser,
+    confidence 0.78, 3 decisions + 2 risks extracted) → **review_required**
+    (evidence `2d13e94b-d93e-42e0-b2cc-aec70052214e`, review
+    `8f15f207-647e-4dc1-bb23-823e25193c99`); a prior parse-failed upload
+    (`e78635a5…`) was **rejected** (honest reject path). Approved → **committed**;
+    coverage **50% → 67%**.
+  - `value_kpi_baseline`: structured KPI table (5 rows) → **auto-committed**
+    (`auto_promoted=true`, no manual approval) — evidence
+    `a5a985c5-fdde-448b-b789-61d8f072fff0`; coverage **67% → 83%**.
+  - `product_platform_operating_model`: free-form doc → **review_required**
+    (left pending; evidence `d4dc83b0-03e5-4efd-91bc-21553dd2577e`).
+  - **Standing gate:** grounded answer cites committed evidence
+    (DORA→`tower_dora_metrics`, IT→`tower_cmdb_cis`, org→`tower_workforce`);
+    refusal/review-required surfaces `missingEvidence:
+[product_platform_operating_model]` only (the still-pending doc — the
+    missing-list shrank from 3 doc families to 1 after the commits, proving the
+    answer changed); swap test ("mainframe nightly batch window/SLA?") →
+    `confidence: insufficient_evidence`, `citations: []` — refuses, no fabrication.
+- **Transport note (honest):** the live uploads transferred document content as
+  lossless text/CSV through the same `ingest-doc` route and governance logic. The
+  committed **binary** synthetic doc set (DOCX/XLSX/PPTX) lives under
+  `docs/build/moves-design/representative-data/` and parses correctly locally
+  (mammoth/exceljs; KPI XLSX verified schema-valid for auto-promotion); a large
+  binary base64 round-trip through the browser test harness corrupted the ZIP
+  container, so text equivalents were used to exercise the identical path live.
 
 ## Rollout Plan
 
@@ -118,9 +153,16 @@ uploaded" and "a fact from it is committed current-state evidence."
 - Auto-promotion is limited to a single conservative KPI-table schema check on a
   `financial`-kind family from XLSX/CSV. Other structured spreadsheets are
   review-required by design.
-- Live private-DB migration apply, ACA deploy, and end-to-end live proof on move
-  `358233e6` (plus synthetic doc set) are pending the next cycle; this record is
-  the candidate and will be updated with receipts before it is marked released.
+- The grounded-answer engine reflects committed document evidence by SHRINKING
+  the `missingEvidence` list (proven live: 3 → 1 after commits), but its
+  per-question citation map does not yet weave the committed document evidence
+  (e.g. `stakeholder_map`) in as an explicit citation string — the org/stakeholder
+  answer still cites `tower_workforce`. Enriching the family→citation map to cite
+  committed document evidence is a follow-up (separate from this governance path).
+- A document `program_id` must be a full move UUID (the `program_id` column is
+  UUID). The product passes the full UUID on the real render path; a short id will
+  fail the cast (caught silently by the resolver → "missing"). Live proof used the
+  full UUID `358233e6-723d-492d-9e6b-6d8541b91207`.
 - Document evidence resolves only when a `moveId` is in scope (move-scoped). A
   purely tenant-scoped render reports these families as "missing" — intentional,
   since review state is per-move.
