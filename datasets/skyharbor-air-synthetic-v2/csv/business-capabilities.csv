@@ -1,0 +1,81 @@
+cap_id,capability_name,business_function,value_stream,owner
+CAP-001,Reservations L1,MRO,Serve,Director Reservations
+CAP-002,Reservations L2,MRO,Sell,Director Reservations
+CAP-003,Reservations L3,Safety,Serve,Director Reservations
+CAP-004,Reservations L4,Ground Ops,Operate,Director Reservations
+CAP-005,Check-in L1,Customer,Serve,Director Check-in
+CAP-006,Check-in L2,PSS,Support,Director Check-in
+CAP-007,Check-in L3,DCS,Operate,Director Check-in
+CAP-008,Check-in L4,Cargo,Serve,Director Check-in
+CAP-009,Boarding L1,Revenue Accounting,Support,Director Boarding
+CAP-010,Boarding L2,Finance,Serve,Director Boarding
+CAP-011,Boarding L3,Commercial,Serve,Director Boarding
+CAP-012,Boarding L4,Loyalty,Serve,Director Boarding
+CAP-013,Baggage L1,HR,Operate,Director Baggage
+CAP-014,Baggage L2,Ground Ops,Sell,Director Baggage
+CAP-015,Baggage L3,HR,Operate,Director Baggage
+CAP-016,Baggage L4,Flight Ops,Operate,Director Baggage
+CAP-017,Loyalty L1,Cargo,Sell,Director Loyalty
+CAP-018,Loyalty L2,Finance,Sell,Director Loyalty
+CAP-019,Loyalty L3,HR,Operate,Director Loyalty
+CAP-020,Loyalty L4,Safety,Serve,Director Loyalty
+CAP-021,Pricing & RM L1,Revenue Accounting,Support,Director Pricing
+CAP-022,Pricing & RM L2,DCS,Support,Director Pricing
+CAP-023,Pricing & RM L3,Maintenance,Sell,Director Pricing
+CAP-024,Pricing & RM L4,Crew,Sell,Director Pricing
+CAP-025,Cargo booking L1,Procurement,Sell,Director Cargo
+CAP-026,Cargo booking L2,Loyalty,Support,Director Cargo
+CAP-027,Cargo booking L3,Commercial,Support,Director Cargo
+CAP-028,Cargo booking L4,Loyalty,Operate,Director Cargo
+CAP-029,MRO planning L1,Customer,Operate,Director MRO
+CAP-030,MRO planning L2,Finance,Sell,Director MRO
+CAP-031,MRO planning L3,Revenue Accounting,Support,Director MRO
+CAP-032,MRO planning L4,Flight Ops,Sell,Director MRO
+CAP-033,Crew scheduling L1,Crew,Serve,Director Crew
+CAP-034,Crew scheduling L2,Cargo,Support,Director Crew
+CAP-035,Crew scheduling L3,Network Planning,Sell,Director Crew
+CAP-036,Crew scheduling L4,Commercial,Operate,Director Crew
+CAP-037,Flight planning L1,Loyalty,Serve,Director Flight
+CAP-038,Flight planning L2,Finance,Operate,Director Flight
+CAP-039,Flight planning L3,Maintenance,Serve,Director Flight
+CAP-040,Flight planning L4,Safety,Sell,Director Flight
+CAP-041,Disruption mgmt L1,Ground Ops,Support,Director Disruption
+CAP-042,Disruption mgmt L2,Procurement,Sell,Director Disruption
+CAP-043,Disruption mgmt L3,Finance,Sell,Director Disruption
+CAP-044,Disruption mgmt L4,Maintenance,Serve,Director Disruption
+CAP-045,Revenue accounting L1,Flight Ops,Support,Director Revenue
+CAP-046,Revenue accounting L2,Loyalty,Support,Director Revenue
+CAP-047,Revenue accounting L3,Catering,Support,Director Revenue
+CAP-048,Revenue accounting L4,Commercial,Support,Director Revenue
+CAP-049,Procurement L1,Cargo,Support,Director Procurement
+CAP-050,Procurement L2,Revenue Accounting,Operate,Director Procurement
+CAP-051,Procurement L3,HR,Serve,Director Procurement
+CAP-052,Procurement L4,Flight Ops,Sell,Director Procurement
+CAP-053,HR L1,Maintenance,Sell,Director HR
+CAP-054,HR L2,Safety,Support,Director HR
+CAP-055,HR L3,Revenue Accounting,Serve,Director HR
+CAP-056,HR L4,Cargo,Sell,Director HR
+CAP-057,Finance close L1,Procurement,Support,Director Finance
+CAP-058,Finance close L2,Revenue Accounting,Serve,Director Finance
+CAP-059,Finance close L3,DCS,Serve,Director Finance
+CAP-060,Finance close L4,MRO,Serve,Director Finance
+CAP-061,Customer care L1,DCS,Operate,Director Customer
+CAP-062,Customer care L2,HR,Operate,Director Customer
+CAP-063,Customer care L3,Loyalty,Support,Director Customer
+CAP-064,Customer care L4,Loyalty,Sell,Director Customer
+CAP-065,Fraud L1,DCS,Sell,Director Fraud
+CAP-066,Fraud L2,Ground Ops,Sell,Director Fraud
+CAP-067,Fraud L3,Revenue Accounting,Sell,Director Fraud
+CAP-068,Fraud L4,Revenue Accounting,Serve,Director Fraud
+CAP-069,Network planning L1,Safety,Support,Director Network
+CAP-070,Network planning L2,MRO,Sell,Director Network
+CAP-071,Network planning L3,MRO,Sell,Director Network
+CAP-072,Network planning L4,MRO,Sell,Director Network
+CAP-073,Fuel mgmt L1,Finance,Sell,Director Fuel
+CAP-074,Fuel mgmt L2,Flight Ops,Sell,Director Fuel
+CAP-075,Fuel mgmt L3,Network Planning,Serve,Director Fuel
+CAP-076,Fuel mgmt L4,Ground Ops,Serve,Director Fuel
+CAP-077,Safety reporting L1,Network Planning,Serve,Director Safety
+CAP-078,Safety reporting L2,Cargo,Operate,Director Safety
+CAP-079,Safety reporting L3,Safety,Support,Director Safety
+CAP-080,Safety reporting L4,Maintenance,Sell,Director Safety

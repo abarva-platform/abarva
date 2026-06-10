@@ -39,7 +39,8 @@ export type ContextDimension =
   | "ai_tooling_model_inventory"
   | "incidents_ops_telemetry"
   | "infrastructure_estate"
-  | "business_capability";
+  | "business_capability"
+  | "service_levels";
 
 export type UploadedFileFormat =
   | "csv"

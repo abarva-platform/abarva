@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkyHarbor v2 — Indexing · Retrieval · Promotion Report</title>
+<style>
+:root{--bg:#F8F7F4;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e4e1da;--accent:#23423a;--ok:#1f7a3d;--warn:#8a6d1a;--bad:#b3261e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",-apple-system,Segoe UI,sans-serif;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:38px 28px 90px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:400}h1{font-size:31px;margin:0 0 4px}
+h2{font-size:21px;margin:40px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.sub{color:var(--muted);margin:0 0 2px}table{border-collapse:collapse;width:100%;margin:10px 0;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f1efe9;font-weight:600}
+.r{text-align:right;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700}.p-ok{background:#dff3e4;color:var(--ok)}.p-warn{background:#fdf2d6;color:var(--warn)}.p-bad{background:#f6dedc;color:var(--bad)}.p-info{background:#e3eef6;color:#1d5e87}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:12px 0}
+.kpi{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:6px 8px 6px 0;min-width:120px}
+.kpi b{display:block;font-size:25px;font-family:Georgia,serif}.kpi span{color:var(--muted);font-size:12px}
+.flow{background:#23423a;color:#fff;border-radius:8px;padding:7px 13px;margin:5px 0;font-size:13px}.flow b{color:#cfe6d8}
+.note{border-left:4px solid var(--warn);background:#fff;padding:10px 14px;border-radius:6px;margin:10px 0;font-size:13px}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}ul{margin:6px 0 6px 20px}li{margin:3px 0;font-size:13.5px}
+</style></head><body><div class="wrap">
+
+<h1>SkyHarbor v2 — Indexing · Retrieval · Promotion</h1>
+<p class="sub">Tenant <code>skyharbor-air</code> · the governed lane: committed → Azure AI Search indexed → tenant-scoped retrieval proof → citation metadata → <code>agent_ready</code> promotion. Generated 2026-06-10.</p>
+<p class="sub muted">All evidence from live VNet ACA jobs against the private data plane + private search service. 100% synthetic data.</p>
+
+<h2>Governed lane status</h2>
+<div class="flow"><b>committed</b> (3,099 records / 23,895 facts / 3,099 chunks) → <b>Azure AI Search indexed</b> (3,099 docs in tenant-context-v1) → <b>retrieval proof</b> (12/12 categories) → <b>tenant isolation</b> (no leak) → <b>citation metadata</b> (present) → <b>agent_ready</b> (6,198 readiness rows, retrievability=search_indexed)</div>
+<div>
+<div class="kpi"><b>3,099</b><span>v2 chunks indexed</span></div>
+<div class="kpi"><b>12 / 12</b><span>retrieval categories pass</span></div>
+<div class="kpi"><b>0</b><span>cross-tenant leaks</span></div>
+<div class="kpi"><b>6,198</b><span>agent_ready (chunks + records)</span></div>
+</div>
+
+<h2>WS1 · Indexing machinery (audit)</h2>
+<table><tbody>
+<tr><th>Search service</th><td><code>srch-abarva-context-lab-eastus</code> · <span class="pill p-warn">publicNetworkAccess: Disabled</span> (VNet-only) · <code>disableLocalAuth: true</code> (AAD-only)</td></tr>
+<tr><th>Index</th><td><code>tenant-context-v1</code> — key <code>id</code>=base64(tenant_key:chunk_id); filterable <code>tenant_key</code>; searchable <code>title</code>,<code>body</code> (BM25, en.lucene); <code>source_uri</code>,<code>confidence</code>,<code>sensitivity</code>,<code>source_segment</code>,<code>record_id</code>,<code>chunk_id</code>; vector field present but unused (keyword retrieval)</td></tr>
+<tr><th>Source of docs</th><td><code>enterprise_context_chunks</code> → search docs (chunks are the retrieval/citation unit; the 23,895 facts are the structured truth behind records, not search docs)</td></tr>
+<tr><th>Indexer</th><td>repo: <code>src/scripts/azure-ai-search-backfill.ts</code> (BM25; no embeddings required). For this run: <code>scripts/skyharbor/index-and-prove-v2.cjs</code> via VNet ACA job (managed-identity AAD; same doc shape + stable id)</td></tr>
+<tr><th>Auth</th><td>Managed identity <code>id-abarva-scale-runtime-lab-eastus</code> holds <em>Search Index Data Contributor</em> (api-key disabled). Token scope <code>https://search.azure.com/.default</code></td></tr>
+<tr><th>Retrieval path</th><td><code>queryTenantContext</code> → POST <code>/docs/search</code> with mandatory <code>filter: tenant_key eq '…'</code>; feature flag <code>retrieval_azure_search</code> is <strong>ON for skyharbor-air</strong></td></tr>
+</tbody></table>
+<div class="note"><strong>Correction (honesty):</strong> an earlier step marked v2 <code>agent_ready</code> on a Postgres-FTS cite-render basis. Because SkyHarbor's governed retrieval path is <em>Azure AI Search</em> (not Postgres), that was premature — it was rolled back to <code>promotion_candidate</code> and only re-promoted after the Azure Search retrieval proof below.</div>
+
+<h2>WS2 · Azure AI Search indexing (executed)</h2>
+<ul>
+<li>Uploaded <strong>3,099</strong> v2 chunk docs to <code>tenant-context-v1</code> (action <code>mergeOrUpload</code>, stable id → idempotent, no duplicates).</li>
+<li>Each doc carries: <code>tenant_key=skyharbor-air</code>, <code>source_segment</code>, <code>record_id</code>, <code>chunk_id</code>, <code>title</code> (source doc), <code>body</code>, <code>source_uri</code> (blob/source path = citation pointer), <code>confidence</code>, <code>sensitivity=internal</code>.</li>
+<li>Run inside the VNet (search service is private). Re-runnable safely.</li>
+</ul>
+
+<h2>WS3 · Tenant-scoped retrieval + isolation proof</h2>
+<p class="muted">For each AMS category: query the index scoped to <code>tenant_key eq 'skyharbor-air'</code> (returns SkyHarbor docs, citation present), and the same query scoped to <code>apex-retail</code> (must NOT return SkyHarbor docs). All 12 pass.</p>
+<table><thead><tr><th>Category</th><th class="r">hits</th><th>tenant isolated</th><th>citation</th><th>result</th></tr></thead><tbody>
+<tr><td>applications / systems</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>infrastructure / cloud</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>vendor contracts</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>IT financials</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>IT org / workforce</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>DORA / engineering</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>incidents / ITSM</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>SLAs</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>initiatives / moves</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>AI tooling</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>business capabilities</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+<tr><td>integrations</td><td class="r">✓</td><td>yes</td><td>yes</td><td><span class="pill p-ok">pass</span></td></tr>
+</tbody></table>
+<div class="note">The index also still holds ~3,240 older v1 (industry-pattern) skyharbor chunks from a prior backfill; they remain <code>not_reviewed</code> in the readiness ledger (not promoted). Tenant isolation holds for all skyharbor docs; the runtime governance gate filters retrieved candidates by <code>agent_readiness_status</code>, so only the promoted v2 evidence is agent-usable.</div>
+
+<h2>WS5 · Promotion to <code>agent_ready</code> (gated on proof)</h2>
+<table><thead><tr><th>object_table</th><th>status</th><th>retrievability</th><th class="r">count</th></tr></thead><tbody>
+<tr><td>enterprise_context_chunks</td><td><span class="pill p-ok">agent_ready</span></td><td>search_indexed</td><td class="r">3,099</td></tr>
+<tr><td>enterprise_context_records</td><td><span class="pill p-ok">agent_ready</span></td><td>search_indexed</td><td class="r">3,099</td></tr>
+<tr><td>enterprise_context_chunks (v1)</td><td>not_reviewed</td><td>committed_not_indexed</td><td class="r">3,240</td></tr>
+<tr><td>ai_initiatives / deliverables_v2</td><td>not_reviewed</td><td>committed_not_indexed</td><td class="r">54</td></tr>
+</tbody></table>
+<p class="muted">Promotion was applied <strong>only after</strong> retrieval+isolation+citation proof, with policy_validation_status=pass, confidence, source_basis, provenance, applicable_agents=[source,sentinel,nexus]. Reversible: set <code>agent_readiness_status='promotion_candidate'</code> where dataset_id='skyharbor-air-synthetic-v2'.</p>
+
+<h2>What Source can now do — and cannot yet</h2>
+<div class="card"><strong>Can:</strong> retrieve SkyHarbor v2 evidence from Azure AI Search, tenant-isolated, with citations, across all 12 AMS categories; the evidence is <code>agent_ready</code> in the governance ledger.<br>
+<strong>WS7 — governed context-bundle proof: <span class="pill p-ok">DONE</span></strong> 10 SkyHarbor AMS questions run through the full chain (tenant+archetype resolve → Azure Search retrieval → ledger gate → <code>SourceContextBundleTrace</code> → Claude answer constrained to the governed bundle → claim/citation map → wisdom). 10/10 tenant-isolation clean; grounding honest (pass where required families covered, warn naming gaps); unsupported-claim flagging proven; answers SkyHarbor-specific + citation-backed. Evidence: <code>docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md</code> (incl. raw redacted bundle sample).<br>
+<strong>Still pending:</strong> WS6 AMS evidence-readiness rerun surfaced through the Source UI, and WS8 best-in-class AMS deliverable generation, both via the live <code>buildGroundedSourceAnswer</code> call-site (source-runtime-wiring lane). The trace runner already proves the governed bundle assembles correctly before any model call.</div>
+
+<h2>Evidence / run metadata</h2>
+<ul>
+<li>Search service <code>srch-abarva-context-lab-eastus</code> · index <code>tenant-context-v1</code> · api-version 2024-07-01</li>
+<li>Indexer: <code>scripts/skyharbor/index-and-prove-v2.cjs</code> (VNet ACA job, managed-identity AAD)</li>
+<li>Postgres FTS index also created: <code>idx_ecc_fts</code> (migration 20260610170000) — fallback path</li>
+<li>Migrate/operator job restored to original after each step; no admin key persisted in any job.</li>
+</ul>
+
+</div></body></html>

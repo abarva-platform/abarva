@@ -465,6 +465,16 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     "Enterprise Architect",
     "quarterly",
   ],
+  [
+    "sla-register",
+    "service_levels",
+    "Service level register",
+    ["csv", "xlsx", "json"],
+    ["sla_id", "service_name", "metric", "target", "measurement_window"],
+    ["actual", "breach_count", "credit_at_risk_usd", "tower", "owner_role"],
+    "VP IT Service Management",
+    "monthly",
+  ],
 ].map(
   ([
     id,

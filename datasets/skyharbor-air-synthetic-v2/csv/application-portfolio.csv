@@ -1,0 +1,601 @@
+app_id,name,criticality,owner_role,system_of_record,ams_vendor,time_classification,business_function,deployment_model,annual_run_cost_usd
+APP-0001,Revenue Accounting Core 1,tier1,Director Revenue Accounting,ServiceNow,TCS,transform,Revenue Accounting,aws,636759
+APP-0002,PSS Hub 2,tier2,Director PSS,ServiceNow,Internal,transform,PSS,saas,8746054
+APP-0003,MRO Portal 3,tier1,Director MRO,ServiceNow,Capgemini,transform,MRO,aws,5548264
+APP-0004,Commercial Hub 4,tier1,Director Commercial,Amadeus,Internal,transform,Commercial,gcp,9320777
+APP-0005,Customer Portal 5,tier3,Director Customer,SAP S/4HANA,Internal,transform,Customer,on_prem_distributed,6195417
+APP-0006,MRO Service 6,tier1,Director MRO,Oracle Fusion,TCS,grow,MRO,private_cloud,8583065
+APP-0007,HR Ledger 7,tier2,Director HR,ServiceNow,IBM Global Services,transform,HR,on_prem_mainframe,5473972
+APP-0008,Catering Hub 8,tier2,Director Catering,Custom Java,Wipro,grow,Catering,azure,364433
+APP-0009,Ground Ops Ledger 9,tier2,Director Ground Ops,Snowflake,Internal,transform,Ground Ops,azure,1933699
+APP-0010,Maintenance Gateway 10,tier1,Director Maintenance,SAP S/4HANA,Accenture,grow,Maintenance,saas,7860046
+APP-0011,Customer Hub 11,tier1,Director Customer,Workday,Infosys,transform,Customer,aws,5778304
+APP-0012,Finance Portal 12,tier1,Director Finance,Workday,TCS,grow,Finance,saas,3646042
+APP-0013,Commercial Hub 13,tier1,Director Commercial,Workday,Wipro,transform,Commercial,on_prem_mainframe,4704217
+APP-0014,PSS Engine 14,tier1,Director PSS,ServiceNow,Infosys,grow,PSS,private_cloud,6732020
+APP-0015,Loyalty Service 15,tier1,Director Loyalty,Amadeus,TCS,grow,Loyalty,aws,1244565
+APP-0016,MRO Ledger 16,tier1,Director MRO,Databricks,IBM Global Services,run,MRO,gcp,2303144
+APP-0017,Cargo Service 17,tier3,Director Cargo,Oracle Fusion,Accenture,run,Cargo,aws,1684445
+APP-0018,Ground Ops Manager 18,tier2,Director Ground Ops,Mainframe COBOL,TCS,transform,Ground Ops,private_cloud,5864179
+APP-0019,Catering Ledger 19,tier3,Director Catering,Oracle Fusion,TCS,transform,Catering,saas,7357366
+APP-0020,Commercial Gateway 20,tier2,Director Commercial,Databricks,Infosys,grow,Commercial,gcp,6149569
+APP-0021,HR Hub 21,tier3,Director HR,Workday,Internal,grow,HR,on_prem_mainframe,560183
+APP-0022,Revenue Accounting Engine 22,tier2,Director Revenue Accounting,Databricks,Internal,run,Revenue Accounting,on_prem_distributed,7284629
+APP-0023,Crew Ledger 23,tier3,Director Crew,Sabre,Accenture,run,Crew,saas,9496191
+APP-0024,Maintenance Service 24,tier1,Director Maintenance,SAP S/4HANA,Capgemini,grow,Maintenance,saas,2875118
+APP-0025,Maintenance Ledger 25,tier1,Director Maintenance,Snowflake,Capgemini,grow,Maintenance,gcp,3548802
+APP-0026,Revenue Accounting Core 26,tier1,Director Revenue Accounting,Databricks,Wipro,run,Revenue Accounting,aws,4484640
+APP-0027,Crew Gateway 27,tier1,Director Crew,Sabre,Infosys,transform,Crew,on_prem_distributed,5583318
+APP-0028,PSS Ledger 28,tier1,Director PSS,Databricks,Wipro,transform,PSS,private_cloud,695909
+APP-0029,MRO Service 29,tier2,Director MRO,Mainframe COBOL,Internal,transform,MRO,azure,4169833
+APP-0030,Safety Portal 30,tier3,Director Safety,SAP S/4HANA,IBM Global Services,transform,Safety,gcp,5515724
+APP-0031,Procurement Engine 31,tier2,Director Procurement,Databricks,TCS,transform,Procurement,on_prem_mainframe,3834206
+APP-0032,Customer Engine 32,tier1,Director Customer,Databricks,Accenture,transform,Customer,private_cloud,1715867
+APP-0033,Safety Ledger 33,tier1,Director Safety,Workday,TCS,grow,Safety,saas,3854935
+APP-0034,Commercial Service 34,tier2,Director Commercial,SAP S/4HANA,TCS,grow,Commercial,on_prem_mainframe,6714951
+APP-0035,Catering Service 35,tier2,Director Catering,SAP S/4HANA,Infosys,transform,Catering,private_cloud,3937578
+APP-0036,Catering Service 36,tier3,Director Catering,Oracle Fusion,Infosys,transform,Catering,private_cloud,8816939
+APP-0037,PSS Manager 37,tier1,Director PSS,Custom Java,Capgemini,transform,PSS,aws,9401551
+APP-0038,Ground Ops Gateway 38,tier3,Director Ground Ops,Workday,IBM Global Services,grow,Ground Ops,saas,4884094
+APP-0039,Maintenance Gateway 39,tier2,Director Maintenance,Snowflake,TCS,grow,Maintenance,azure,2464101
+APP-0040,Ground Ops Hub 40,tier2,Director Ground Ops,Mainframe COBOL,Wipro,run,Ground Ops,gcp,1370336
+APP-0041,Catering Core 41,tier2,Director Catering,Amadeus,TCS,transform,Catering,gcp,4234064
+APP-0042,HR Ledger 42,tier1,Director HR,Snowflake,Infosys,transform,HR,on_prem_distributed,490023
+APP-0043,HR Engine 43,tier2,Director HR,Snowflake,Accenture,run,HR,gcp,977631
+APP-0044,Customer Ledger 44,tier2,Director Customer,Amadeus,TCS,transform,Customer,on_prem_mainframe,9457480
+APP-0045,PSS Gateway 45,tier2,Director PSS,Workday,IBM Global Services,grow,PSS,on_prem_mainframe,5400405
+APP-0046,Safety Portal 46,tier2,Director Safety,Custom Java,Accenture,transform,Safety,gcp,1297875
+APP-0047,HR Portal 47,tier1,Director HR,Amadeus,Capgemini,run,HR,saas,6441676
+APP-0048,PSS Hub 48,tier3,Director PSS,Snowflake,Wipro,transform,PSS,private_cloud,9029625
+APP-0049,Flight Ops Core 49,tier3,Director Flight Ops,Salesforce,Capgemini,grow,Flight Ops,azure,2599372
+APP-0050,Finance Engine 50,tier1,Director Finance,Sabre,TCS,grow,Finance,private_cloud,3379184
+APP-0051,PSS Service 51,tier1,Director PSS,Snowflake,Capgemini,grow,PSS,on_prem_mainframe,8431079
+APP-0052,Customer Ledger 52,tier2,Director Customer,Mainframe COBOL,TCS,transform,Customer,on_prem_mainframe,9109387
+APP-0053,MRO Core 53,tier1,Director MRO,SAP S/4HANA,Infosys,transform,MRO,on_prem_distributed,6712533
+APP-0054,HR Engine 54,tier2,Director HR,Salesforce,Accenture,transform,HR,on_prem_distributed,8922798
+APP-0055,Cargo Manager 55,tier2,Director Cargo,Sabre,TCS,grow,Cargo,aws,1885393
+APP-0056,PSS Portal 56,tier1,Director PSS,Oracle Fusion,TCS,transform,PSS,on_prem_distributed,1724772
+APP-0057,Commercial Service 57,tier3,Director Commercial,SAP S/4HANA,TCS,grow,Commercial,azure,1651508
+APP-0058,Procurement Portal 58,tier1,Director Procurement,ServiceNow,Capgemini,run,Procurement,aws,1155154
+APP-0059,Customer Engine 59,tier1,Director Customer,Amadeus,TCS,run,Customer,on_prem_distributed,2431901
+APP-0060,Revenue Accounting Ledger 60,tier3,Director Revenue Accounting,SAP S/4HANA,Capgemini,transform,Revenue Accounting,private_cloud,6232697
+APP-0061,Procurement Hub 61,tier1,Director Procurement,Snowflake,Wipro,transform,Procurement,private_cloud,8300501
+APP-0062,MRO Manager 62,tier2,Director MRO,SAP S/4HANA,Infosys,run,MRO,private_cloud,5337164
+APP-0063,Network Planning Engine 63,tier1,Director Network Planning,SAP S/4HANA,Infosys,grow,Network Planning,aws,2596941
+APP-0064,Procurement Portal 64,tier1,Director Procurement,Snowflake,Infosys,grow,Procurement,on_prem_mainframe,5407684
+APP-0065,Customer Service 65,tier3,Director Customer,Amadeus,Capgemini,grow,Customer,azure,5207236
+APP-0066,Commercial Engine 66,tier2,Director Commercial,Sabre,Capgemini,run,Commercial,private_cloud,1078628
+APP-0067,Revenue Accounting Core 67,tier2,Director Revenue Accounting,Mainframe COBOL,TCS,transform,Revenue Accounting,on_prem_mainframe,591220
+APP-0068,Network Planning Core 68,tier1,Director Network Planning,Databricks,Capgemini,grow,Network Planning,saas,4565512
+APP-0069,Customer Ledger 69,tier3,Director Customer,Sabre,Infosys,run,Customer,on_prem_mainframe,5610982
+APP-0070,HR Gateway 70,tier3,Director HR,Amadeus,Internal,transform,HR,gcp,174647
+APP-0071,Safety Engine 71,tier1,Director Safety,Oracle Fusion,IBM Global Services,run,Safety,on_prem_mainframe,707509
+APP-0072,Flight Ops Engine 72,tier1,Director Flight Ops,Oracle Fusion,TCS,transform,Flight Ops,private_cloud,3997288
+APP-0073,Network Planning Ledger 73,tier2,Director Network Planning,Workday,Internal,run,Network Planning,on_prem_mainframe,3931887
+APP-0074,Revenue Accounting Hub 74,tier2,Director Revenue Accounting,Custom Java,TCS,run,Revenue Accounting,on_prem_distributed,4633688
+APP-0075,Revenue Accounting Gateway 75,tier3,Director Revenue Accounting,Mainframe COBOL,Infosys,grow,Revenue Accounting,azure,1047166
+APP-0076,MRO Service 76,tier1,Director MRO,Workday,Capgemini,transform,MRO,gcp,1061054
+APP-0077,Maintenance Ledger 77,tier3,Director Maintenance,Sabre,Internal,grow,Maintenance,on_prem_distributed,268845
+APP-0078,Crew Manager 78,tier3,Director Crew,Snowflake,Accenture,run,Crew,on_prem_distributed,779066
+APP-0079,Crew Portal 79,tier2,Director Crew,Workday,Capgemini,grow,Crew,azure,321071
+APP-0080,PSS Portal 80,tier1,Director PSS,Custom Java,Accenture,run,PSS,saas,3231307
+APP-0081,Revenue Accounting Core 81,tier1,Director Revenue Accounting,Amadeus,IBM Global Services,grow,Revenue Accounting,on_prem_mainframe,1751306
+APP-0082,PSS Core 82,tier2,Director PSS,Databricks,IBM Global Services,transform,PSS,azure,8019722
+APP-0083,Revenue Accounting Core 83,tier1,Director Revenue Accounting,Custom Java,Infosys,grow,Revenue Accounting,saas,7473336
+APP-0084,Procurement Portal 84,tier2,Director Procurement,Sabre,Infosys,transform,Procurement,azure,921005
+APP-0085,Customer Service 85,tier3,Director Customer,Databricks,Internal,run,Customer,saas,784351
+APP-0086,Catering Engine 86,tier1,Director Catering,ServiceNow,Capgemini,transform,Catering,gcp,8216387
+APP-0087,DCS Core 87,tier3,Director DCS,Mainframe COBOL,Accenture,transform,DCS,azure,8023965
+APP-0088,DCS Core 88,tier1,Director DCS,Workday,IBM Global Services,transform,DCS,saas,4674601
+APP-0089,Revenue Accounting Ledger 89,tier1,Director Revenue Accounting,SAP S/4HANA,IBM Global Services,transform,Revenue Accounting,gcp,8516353
+APP-0090,Customer Ledger 90,tier2,Director Customer,Custom Java,IBM Global Services,run,Customer,on_prem_mainframe,3509034
+APP-0091,Revenue Accounting Ledger 91,tier1,Director Revenue Accounting,Snowflake,Internal,run,Revenue Accounting,aws,6728241
+APP-0092,Commercial Hub 92,tier3,Director Commercial,Workday,Infosys,transform,Commercial,gcp,3269046
+APP-0093,Procurement Gateway 93,tier1,Director Procurement,Sabre,Capgemini,run,Procurement,on_prem_distributed,1941484
+APP-0094,DCS Manager 94,tier1,Director DCS,Sabre,Internal,grow,DCS,on_prem_mainframe,4707549
+APP-0095,Customer Core 95,tier3,Director Customer,Oracle Fusion,Capgemini,transform,Customer,private_cloud,3924031
+APP-0096,Ground Ops Engine 96,tier2,Director Ground Ops,Amadeus,Infosys,grow,Ground Ops,private_cloud,2115224
+APP-0097,Cargo Ledger 97,tier2,Director Cargo,SAP S/4HANA,IBM Global Services,run,Cargo,private_cloud,2156954
+APP-0098,Finance Core 98,tier2,Director Finance,Custom Java,Capgemini,transform,Finance,on_prem_distributed,8427379
+APP-0099,Customer Core 99,tier2,Director Customer,Workday,Infosys,transform,Customer,saas,2112965
+APP-0100,Cargo Manager 100,tier1,Director Cargo,Amadeus,Infosys,grow,Cargo,azure,7048753
+APP-0101,MRO Manager 101,tier1,Director MRO,Oracle Fusion,TCS,run,MRO,private_cloud,2579557
+APP-0102,MRO Core 102,tier3,Director MRO,SAP S/4HANA,Capgemini,grow,MRO,azure,9486714
+APP-0103,Network Planning Hub 103,tier2,Director Network Planning,Sabre,Internal,transform,Network Planning,azure,4820118
+APP-0104,Cargo Ledger 104,tier1,Director Cargo,Mainframe COBOL,TCS,run,Cargo,gcp,2048396
+APP-0105,PSS Manager 105,tier3,Director PSS,Workday,IBM Global Services,grow,PSS,on_prem_distributed,3715967
+APP-0106,DCS Service 106,tier3,Director DCS,Mainframe COBOL,Capgemini,run,DCS,private_cloud,7973188
+APP-0107,Commercial Ledger 107,tier2,Director Commercial,Workday,Internal,grow,Commercial,private_cloud,9173237
+APP-0108,Customer Manager 108,tier1,Director Customer,Databricks,TCS,grow,Customer,on_prem_distributed,5179773
+APP-0109,Finance Engine 109,tier1,Director Finance,Workday,Wipro,grow,Finance,saas,5344132
+APP-0110,Commercial Core 110,tier1,Director Commercial,Mainframe COBOL,IBM Global Services,grow,Commercial,gcp,9030521
+APP-0111,PSS Manager 111,tier2,Director PSS,Amadeus,IBM Global Services,grow,PSS,private_cloud,7125744
+APP-0112,Commercial Portal 112,tier1,Director Commercial,Snowflake,Wipro,transform,Commercial,private_cloud,5091767
+APP-0113,Ground Ops Ledger 113,tier3,Director Ground Ops,Amadeus,Infosys,grow,Ground Ops,private_cloud,472570
+APP-0114,PSS Manager 114,tier1,Director PSS,Custom Java,TCS,run,PSS,azure,2545677
+APP-0115,Ground Ops Manager 115,tier2,Director Ground Ops,Salesforce,TCS,grow,Ground Ops,on_prem_mainframe,3070956
+APP-0116,Ground Ops Ledger 116,tier3,Director Ground Ops,Amadeus,Accenture,transform,Ground Ops,aws,5712071
+APP-0117,MRO Portal 117,tier2,Director MRO,Workday,IBM Global Services,run,MRO,gcp,4871096
+APP-0118,Customer Ledger 118,tier2,Director Customer,Sabre,Capgemini,run,Customer,on_prem_distributed,942331
+APP-0119,Catering Hub 119,tier2,Director Catering,Custom Java,Internal,run,Catering,aws,1314720
+APP-0120,Customer Service 120,tier1,Director Customer,Mainframe COBOL,Capgemini,run,Customer,on_prem_mainframe,5015636
+APP-0121,Revenue Accounting Hub 121,tier1,Director Revenue Accounting,ServiceNow,Internal,transform,Revenue Accounting,gcp,2691125
+APP-0122,DCS Hub 122,tier1,Director DCS,SAP S/4HANA,Internal,grow,DCS,gcp,331985
+APP-0123,Network Planning Manager 123,tier1,Director Network Planning,Amadeus,Infosys,grow,Network Planning,saas,8203454
+APP-0124,DCS Service 124,tier1,Director DCS,Amadeus,TCS,run,DCS,on_prem_mainframe,2098349
+APP-0125,PSS Gateway 125,tier2,Director PSS,Oracle Fusion,Accenture,grow,PSS,azure,4940604
+APP-0126,Finance Service 126,tier3,Director Finance,Salesforce,TCS,transform,Finance,gcp,2001747
+APP-0127,Crew Gateway 127,tier1,Director Crew,ServiceNow,IBM Global Services,run,Crew,aws,5624594
+APP-0128,DCS Engine 128,tier2,Director DCS,Snowflake,Capgemini,run,DCS,private_cloud,6873230
+APP-0129,MRO Portal 129,tier2,Director MRO,Mainframe COBOL,Infosys,grow,MRO,private_cloud,7903717
+APP-0130,Commercial Core 130,tier1,Director Commercial,ServiceNow,TCS,run,Commercial,saas,3280631
+APP-0131,Procurement Core 131,tier1,Director Procurement,Salesforce,Infosys,transform,Procurement,gcp,947232
+APP-0132,Procurement Manager 132,tier1,Director Procurement,Sabre,TCS,transform,Procurement,saas,8930551
+APP-0133,Finance Manager 133,tier2,Director Finance,Snowflake,Wipro,run,Finance,aws,465595
+APP-0134,DCS Core 134,tier3,Director DCS,Snowflake,TCS,run,DCS,saas,5611197
+APP-0135,Flight Ops Portal 135,tier1,Director Flight Ops,Amadeus,Infosys,grow,Flight Ops,private_cloud,3871542
+APP-0136,Finance Manager 136,tier2,Director Finance,Databricks,TCS,transform,Finance,on_prem_mainframe,1362823
+APP-0137,HR Portal 137,tier2,Director HR,Salesforce,Wipro,run,HR,on_prem_distributed,8937588
+APP-0138,Cargo Engine 138,tier3,Director Cargo,Custom Java,Wipro,grow,Cargo,on_prem_mainframe,9278645
+APP-0139,Procurement Manager 139,tier3,Director Procurement,Amadeus,TCS,grow,Procurement,saas,6181359
+APP-0140,DCS Gateway 140,tier2,Director DCS,Databricks,Infosys,transform,DCS,saas,1407281
+APP-0141,Catering Manager 141,tier2,Director Catering,Workday,TCS,grow,Catering,private_cloud,5557494
+APP-0142,Customer Hub 142,tier3,Director Customer,Workday,Wipro,grow,Customer,azure,906176
+APP-0143,Ground Ops Gateway 143,tier1,Director Ground Ops,SAP S/4HANA,TCS,transform,Ground Ops,gcp,3875334
+APP-0144,PSS Gateway 144,tier3,Director PSS,Custom Java,Wipro,run,PSS,on_prem_mainframe,319313
+APP-0145,HR Service 145,tier2,Director HR,Salesforce,Internal,transform,HR,azure,3213728
+APP-0146,Ground Ops Core 146,tier1,Director Ground Ops,Oracle Fusion,Capgemini,transform,Ground Ops,on_prem_mainframe,2669905
+APP-0147,Flight Ops Core 147,tier1,Director Flight Ops,ServiceNow,Internal,grow,Flight Ops,private_cloud,3386779
+APP-0148,Loyalty Service 148,tier1,Director Loyalty,Snowflake,Internal,transform,Loyalty,on_prem_mainframe,6507772
+APP-0149,Procurement Ledger 149,tier2,Director Procurement,Sabre,Capgemini,grow,Procurement,saas,4720298
+APP-0150,Customer Core 150,tier1,Director Customer,Oracle Fusion,Infosys,run,Customer,saas,1358712
+APP-0151,Commercial Gateway 151,tier2,Director Commercial,Salesforce,Wipro,transform,Commercial,on_prem_distributed,2231013
+APP-0152,Procurement Manager 152,tier2,Director Procurement,Salesforce,IBM Global Services,transform,Procurement,saas,414301
+APP-0153,Network Planning Portal 153,tier1,Director Network Planning,Salesforce,Capgemini,run,Network Planning,azure,7167027
+APP-0154,Network Planning Service 154,tier2,Director Network Planning,Sabre,Internal,grow,Network Planning,on_prem_mainframe,7455898
+APP-0155,Crew Ledger 155,tier3,Director Crew,Databricks,Internal,transform,Crew,saas,2021855
+APP-0156,Finance Gateway 156,tier2,Director Finance,Amadeus,Wipro,run,Finance,azure,7363143
+APP-0157,HR Manager 157,tier2,Director HR,ServiceNow,Capgemini,transform,HR,on_prem_distributed,8275945
+APP-0158,Flight Ops Portal 158,tier2,Director Flight Ops,Amadeus,Internal,transform,Flight Ops,gcp,5643055
+APP-0159,Finance Manager 159,tier3,Director Finance,Mainframe COBOL,Infosys,run,Finance,on_prem_mainframe,5899460
+APP-0160,Network Planning Portal 160,tier2,Director Network Planning,Amadeus,Infosys,grow,Network Planning,private_cloud,1588904
+APP-0161,Finance Gateway 161,tier1,Director Finance,Workday,Internal,run,Finance,private_cloud,7761554
+APP-0162,Safety Core 162,tier3,Director Safety,Snowflake,TCS,transform,Safety,on_prem_mainframe,7659443
+APP-0163,Commercial Core 163,tier2,Director Commercial,SAP S/4HANA,IBM Global Services,grow,Commercial,aws,1135535
+APP-0164,Commercial Engine 164,tier3,Director Commercial,Custom Java,IBM Global Services,run,Commercial,on_prem_mainframe,7496056
+APP-0165,Network Planning Hub 165,tier1,Director Network Planning,Workday,Infosys,run,Network Planning,saas,8264883
+APP-0166,Flight Ops Engine 166,tier2,Director Flight Ops,SAP S/4HANA,Infosys,run,Flight Ops,gcp,1133153
+APP-0167,PSS Manager 167,tier1,Director PSS,Salesforce,Infosys,run,PSS,gcp,113036
+APP-0168,Maintenance Ledger 168,tier1,Director Maintenance,ServiceNow,Wipro,transform,Maintenance,private_cloud,2687053
+APP-0169,Commercial Core 169,tier3,Director Commercial,Mainframe COBOL,Wipro,transform,Commercial,private_cloud,6626679
+APP-0170,DCS Core 170,tier2,Director DCS,Snowflake,TCS,grow,DCS,saas,6409939
+APP-0171,Revenue Accounting Engine 171,tier2,Director Revenue Accounting,ServiceNow,Wipro,run,Revenue Accounting,gcp,1193957
+APP-0172,Procurement Manager 172,tier1,Director Procurement,ServiceNow,Internal,transform,Procurement,on_prem_mainframe,817367
+APP-0173,PSS Portal 173,tier2,Director PSS,Databricks,IBM Global Services,grow,PSS,on_prem_mainframe,2786856
+APP-0174,Flight Ops Service 174,tier2,Director Flight Ops,SAP S/4HANA,Wipro,run,Flight Ops,on_prem_mainframe,1324831
+APP-0175,Maintenance Engine 175,tier2,Director Maintenance,ServiceNow,IBM Global Services,grow,Maintenance,saas,1351053
+APP-0176,Cargo Portal 176,tier1,Director Cargo,Salesforce,IBM Global Services,transform,Cargo,saas,3066430
+APP-0177,Procurement Ledger 177,tier1,Director Procurement,Custom Java,Capgemini,grow,Procurement,aws,990728
+APP-0178,Catering Manager 178,tier3,Director Catering,Snowflake,TCS,transform,Catering,on_prem_distributed,5951898
+APP-0179,DCS Hub 179,tier1,Director DCS,Workday,Infosys,transform,DCS,azure,3609015
+APP-0180,PSS Gateway 180,tier2,Director PSS,Snowflake,Capgemini,transform,PSS,aws,8538594
+APP-0181,Flight Ops Manager 181,tier3,Director Flight Ops,SAP S/4HANA,Infosys,grow,Flight Ops,azure,1002292
+APP-0182,Ground Ops Portal 182,tier1,Director Ground Ops,Databricks,Wipro,transform,Ground Ops,aws,4171254
+APP-0183,MRO Gateway 183,tier1,Director MRO,ServiceNow,Infosys,transform,MRO,azure,2258661
+APP-0184,Catering Ledger 184,tier1,Director Catering,Snowflake,Infosys,run,Catering,private_cloud,2597073
+APP-0185,Ground Ops Gateway 185,tier1,Director Ground Ops,Workday,Wipro,run,Ground Ops,private_cloud,2732237
+APP-0186,Ground Ops Core 186,tier2,Director Ground Ops,Amadeus,IBM Global Services,grow,Ground Ops,azure,8457685
+APP-0187,Revenue Accounting Gateway 187,tier2,Director Revenue Accounting,Mainframe COBOL,Capgemini,grow,Revenue Accounting,gcp,6811030
+APP-0188,Finance Ledger 188,tier2,Director Finance,Salesforce,Infosys,transform,Finance,aws,2915001
+APP-0189,Revenue Accounting Service 189,tier1,Director Revenue Accounting,Snowflake,Infosys,transform,Revenue Accounting,aws,5241555
+APP-0190,Maintenance Gateway 190,tier2,Director Maintenance,Amadeus,Wipro,run,Maintenance,gcp,1265790
+APP-0191,Customer Core 191,tier2,Director Customer,Oracle Fusion,Accenture,transform,Customer,saas,5454825
+APP-0192,Network Planning Ledger 192,tier1,Director Network Planning,Salesforce,Capgemini,transform,Network Planning,on_prem_mainframe,2703759
+APP-0193,Procurement Engine 193,tier1,Director Procurement,Snowflake,Wipro,run,Procurement,on_prem_distributed,6110440
+APP-0194,Finance Service 194,tier2,Director Finance,Custom Java,Wipro,run,Finance,aws,663032
+APP-0195,Procurement Portal 195,tier2,Director Procurement,Custom Java,Accenture,transform,Procurement,on_prem_distributed,5717298
+APP-0196,Revenue Accounting Ledger 196,tier1,Director Revenue Accounting,Custom Java,IBM Global Services,transform,Revenue Accounting,private_cloud,7933103
+APP-0197,Commercial Engine 197,tier3,Director Commercial,Salesforce,IBM Global Services,grow,Commercial,gcp,4251399
+APP-0198,Cargo Service 198,tier2,Director Cargo,Sabre,Infosys,run,Cargo,on_prem_mainframe,7872796
+APP-0199,Customer Ledger 199,tier1,Director Customer,Workday,IBM Global Services,grow,Customer,on_prem_distributed,3853486
+APP-0200,Flight Ops Gateway 200,tier2,Director Flight Ops,Snowflake,Accenture,grow,Flight Ops,private_cloud,2173520
+APP-0201,Procurement Ledger 201,tier3,Director Procurement,Oracle Fusion,Infosys,grow,Procurement,aws,6599423
+APP-0202,PSS Portal 202,tier2,Director PSS,ServiceNow,Capgemini,transform,PSS,on_prem_distributed,551603
+APP-0203,HR Service 203,tier2,Director HR,SAP S/4HANA,Wipro,grow,HR,on_prem_distributed,5726217
+APP-0204,Customer Hub 204,tier3,Director Customer,Snowflake,TCS,grow,Customer,on_prem_mainframe,1437373
+APP-0205,Flight Ops Gateway 205,tier2,Director Flight Ops,Custom Java,Capgemini,transform,Flight Ops,azure,8232390
+APP-0206,Catering Gateway 206,tier2,Director Catering,Sabre,Internal,run,Catering,aws,7085665
+APP-0207,MRO Gateway 207,tier2,Director MRO,Workday,TCS,run,MRO,aws,6368697
+APP-0208,Cargo Ledger 208,tier2,Director Cargo,Sabre,Accenture,transform,Cargo,saas,5204832
+APP-0209,Safety Hub 209,tier2,Director Safety,Databricks,Infosys,transform,Safety,on_prem_mainframe,1332832
+APP-0210,Procurement Gateway 210,tier3,Director Procurement,Salesforce,Internal,grow,Procurement,on_prem_mainframe,625084
+APP-0211,Cargo Engine 211,tier1,Director Cargo,Databricks,IBM Global Services,transform,Cargo,private_cloud,5526751
+APP-0212,Finance Manager 212,tier2,Director Finance,Amadeus,Accenture,transform,Finance,on_prem_mainframe,7281601
+APP-0213,Procurement Hub 213,tier2,Director Procurement,ServiceNow,IBM Global Services,grow,Procurement,azure,9241231
+APP-0214,Catering Portal 214,tier3,Director Catering,Workday,IBM Global Services,grow,Catering,private_cloud,613066
+APP-0215,Loyalty Manager 215,tier1,Director Loyalty,Databricks,Wipro,run,Loyalty,on_prem_distributed,4285957
+APP-0216,Ground Ops Gateway 216,tier2,Director Ground Ops,Snowflake,IBM Global Services,grow,Ground Ops,aws,4069563
+APP-0217,Finance Portal 217,tier3,Director Finance,Snowflake,IBM Global Services,run,Finance,saas,3460201
+APP-0218,MRO Gateway 218,tier1,Director MRO,ServiceNow,Accenture,grow,MRO,saas,7853522
+APP-0219,DCS Gateway 219,tier1,Director DCS,Snowflake,IBM Global Services,run,DCS,private_cloud,2859999
+APP-0220,Procurement Gateway 220,tier2,Director Procurement,Salesforce,IBM Global Services,transform,Procurement,on_prem_distributed,9194910
+APP-0221,Network Planning Portal 221,tier2,Director Network Planning,Oracle Fusion,IBM Global Services,run,Network Planning,azure,2336057
+APP-0222,Safety Core 222,tier2,Director Safety,Salesforce,IBM Global Services,transform,Safety,gcp,6149799
+APP-0223,Maintenance Hub 223,tier1,Director Maintenance,Salesforce,Wipro,transform,Maintenance,on_prem_mainframe,2865944
+APP-0224,HR Manager 224,tier2,Director HR,SAP S/4HANA,TCS,grow,HR,aws,763137
+APP-0225,Network Planning Hub 225,tier1,Director Network Planning,Sabre,Capgemini,grow,Network Planning,private_cloud,3460769
+APP-0226,Network Planning Portal 226,tier2,Director Network Planning,Salesforce,Wipro,grow,Network Planning,private_cloud,4258006
+APP-0227,Flight Ops Gateway 227,tier1,Director Flight Ops,Mainframe COBOL,Internal,run,Flight Ops,aws,4948160
+APP-0228,Revenue Accounting Hub 228,tier1,Director Revenue Accounting,Salesforce,Accenture,transform,Revenue Accounting,private_cloud,3044163
+APP-0229,Catering Engine 229,tier2,Director Catering,Custom Java,Accenture,transform,Catering,aws,6329904
+APP-0230,Ground Ops Engine 230,tier1,Director Ground Ops,Custom Java,TCS,run,Ground Ops,on_prem_distributed,3700673
+APP-0231,Commercial Portal 231,tier1,Director Commercial,Salesforce,Infosys,grow,Commercial,azure,4887423
+APP-0232,Ground Ops Service 232,tier1,Director Ground Ops,ServiceNow,Infosys,grow,Ground Ops,on_prem_distributed,5676638
+APP-0233,Safety Core 233,tier3,Director Safety,ServiceNow,TCS,grow,Safety,on_prem_mainframe,1799198
+APP-0234,Procurement Gateway 234,tier3,Director Procurement,Custom Java,Capgemini,transform,Procurement,on_prem_mainframe,7553636
+APP-0235,Network Planning Portal 235,tier2,Director Network Planning,Sabre,Wipro,grow,Network Planning,gcp,4414824
+APP-0236,Loyalty Manager 236,tier2,Director Loyalty,Mainframe COBOL,Infosys,run,Loyalty,gcp,8697072
+APP-0237,Procurement Portal 237,tier2,Director Procurement,Custom Java,TCS,grow,Procurement,saas,8158216
+APP-0238,Safety Portal 238,tier3,Director Safety,Oracle Fusion,TCS,run,Safety,on_prem_mainframe,1631167
+APP-0239,HR Ledger 239,tier1,Director HR,Mainframe COBOL,Infosys,transform,HR,aws,4807225
+APP-0240,Safety Service 240,tier3,Director Safety,Sabre,Wipro,grow,Safety,gcp,6389549
+APP-0241,Cargo Portal 241,tier1,Director Cargo,SAP S/4HANA,Wipro,run,Cargo,gcp,2778922
+APP-0242,Customer Engine 242,tier3,Director Customer,Databricks,Wipro,run,Customer,aws,8007982
+APP-0243,Ground Ops Ledger 243,tier1,Director Ground Ops,Workday,Internal,grow,Ground Ops,private_cloud,4863191
+APP-0244,Crew Portal 244,tier3,Director Crew,Snowflake,Internal,grow,Crew,on_prem_mainframe,9142425
+APP-0245,Commercial Engine 245,tier1,Director Commercial,Snowflake,Capgemini,transform,Commercial,private_cloud,6276309
+APP-0246,Network Planning Manager 246,tier2,Director Network Planning,Workday,TCS,run,Network Planning,gcp,2733701
+APP-0247,Commercial Manager 247,tier3,Director Commercial,Sabre,Capgemini,transform,Commercial,on_prem_distributed,382514
+APP-0248,Commercial Ledger 248,tier2,Director Commercial,Custom Java,IBM Global Services,run,Commercial,private_cloud,9005896
+APP-0249,Crew Ledger 249,tier2,Director Crew,Amadeus,TCS,run,Crew,private_cloud,2623413
+APP-0250,Crew Portal 250,tier2,Director Crew,Salesforce,Capgemini,run,Crew,aws,5058683
+APP-0251,Network Planning Core 251,tier2,Director Network Planning,Oracle Fusion,Accenture,run,Network Planning,azure,8601073
+APP-0252,DCS Ledger 252,tier3,Director DCS,Snowflake,Wipro,run,DCS,on_prem_distributed,8839761
+APP-0253,Ground Ops Core 253,tier1,Director Ground Ops,Snowflake,Internal,grow,Ground Ops,azure,6849416
+APP-0254,Ground Ops Hub 254,tier1,Director Ground Ops,Databricks,TCS,run,Ground Ops,on_prem_distributed,4612699
+APP-0255,Safety Portal 255,tier2,Director Safety,Databricks,IBM Global Services,grow,Safety,saas,3194668
+APP-0256,Procurement Engine 256,tier1,Director Procurement,Workday,Capgemini,grow,Procurement,aws,3177429
+APP-0257,Crew Manager 257,tier1,Director Crew,Sabre,IBM Global Services,grow,Crew,private_cloud,7482438
+APP-0258,DCS Core 258,tier1,Director DCS,Databricks,IBM Global Services,run,DCS,on_prem_distributed,4757165
+APP-0259,Loyalty Ledger 259,tier2,Director Loyalty,Custom Java,Accenture,run,Loyalty,aws,2693398
+APP-0260,Finance Engine 260,tier2,Director Finance,Salesforce,IBM Global Services,transform,Finance,on_prem_mainframe,7275426
+APP-0261,Maintenance Core 261,tier2,Director Maintenance,Sabre,IBM Global Services,transform,Maintenance,saas,7417699
+APP-0262,Revenue Accounting Portal 262,tier2,Director Revenue Accounting,Snowflake,Capgemini,run,Revenue Accounting,on_prem_mainframe,1653910
+APP-0263,Finance Portal 263,tier2,Director Finance,Snowflake,TCS,grow,Finance,aws,3044738
+APP-0264,Commercial Gateway 264,tier2,Director Commercial,Oracle Fusion,Accenture,grow,Commercial,private_cloud,8983316
+APP-0265,Crew Ledger 265,tier1,Director Crew,Workday,Capgemini,grow,Crew,azure,8385963
+APP-0266,HR Gateway 266,tier2,Director HR,Amadeus,IBM Global Services,grow,HR,private_cloud,3810038
+APP-0267,Finance Engine 267,tier1,Director Finance,Salesforce,TCS,grow,Finance,aws,2033213
+APP-0268,Safety Hub 268,tier2,Director Safety,Sabre,Capgemini,run,Safety,aws,4886109
+APP-0269,MRO Service 269,tier3,Director MRO,Workday,TCS,run,MRO,saas,1905002
+APP-0270,MRO Portal 270,tier3,Director MRO,Mainframe COBOL,IBM Global Services,transform,MRO,gcp,8990411
+APP-0271,PSS Ledger 271,tier1,Director PSS,Oracle Fusion,Accenture,grow,PSS,on_prem_distributed,8605980
+APP-0272,PSS Service 272,tier3,Director PSS,Oracle Fusion,Internal,run,PSS,on_prem_distributed,4455818
+APP-0273,Procurement Engine 273,tier2,Director Procurement,SAP S/4HANA,TCS,transform,Procurement,on_prem_mainframe,3444582
+APP-0274,Commercial Core 274,tier2,Director Commercial,Amadeus,Infosys,run,Commercial,on_prem_mainframe,3471624
+APP-0275,Finance Service 275,tier1,Director Finance,Sabre,Internal,transform,Finance,azure,8255723
+APP-0276,Maintenance Engine 276,tier2,Director Maintenance,Oracle Fusion,Wipro,grow,Maintenance,saas,6913048
+APP-0277,Catering Portal 277,tier1,Director Catering,ServiceNow,Capgemini,run,Catering,private_cloud,6444415
+APP-0278,Revenue Accounting Service 278,tier2,Director Revenue Accounting,Salesforce,TCS,grow,Revenue Accounting,on_prem_distributed,5450238
+APP-0279,Maintenance Portal 279,tier1,Director Maintenance,Amadeus,Capgemini,transform,Maintenance,azure,3128588
+APP-0280,MRO Core 280,tier2,Director MRO,Oracle Fusion,Accenture,transform,MRO,saas,360442
+APP-0281,Flight Ops Gateway 281,tier1,Director Flight Ops,Sabre,Capgemini,transform,Flight Ops,private_cloud,7335850
+APP-0282,DCS Hub 282,tier2,Director DCS,Mainframe COBOL,Wipro,run,DCS,on_prem_mainframe,784295
+APP-0283,Flight Ops Portal 283,tier3,Director Flight Ops,Workday,Capgemini,run,Flight Ops,saas,3241959
+APP-0284,Ground Ops Ledger 284,tier1,Director Ground Ops,Mainframe COBOL,Infosys,grow,Ground Ops,azure,8364964
+APP-0285,HR Hub 285,tier3,Director HR,Oracle Fusion,Infosys,transform,HR,on_prem_mainframe,7879673
+APP-0286,Revenue Accounting Portal 286,tier1,Director Revenue Accounting,Sabre,Internal,run,Revenue Accounting,azure,3046212
+APP-0287,Ground Ops Core 287,tier1,Director Ground Ops,Databricks,Internal,grow,Ground Ops,saas,3634338
+APP-0288,Customer Engine 288,tier1,Director Customer,ServiceNow,Wipro,run,Customer,azure,4226357
+APP-0289,Network Planning Service 289,tier3,Director Network Planning,Sabre,Wipro,grow,Network Planning,aws,2009718
+APP-0290,DCS Gateway 290,tier1,Director DCS,Salesforce,Capgemini,run,DCS,private_cloud,2363122
+APP-0291,Commercial Hub 291,tier2,Director Commercial,Snowflake,Capgemini,grow,Commercial,saas,8856535
+APP-0292,Commercial Gateway 292,tier2,Director Commercial,Databricks,Internal,run,Commercial,saas,3048433
+APP-0293,Safety Engine 293,tier2,Director Safety,Snowflake,IBM Global Services,transform,Safety,on_prem_distributed,2169382
+APP-0294,Commercial Service 294,tier2,Director Commercial,Amadeus,Internal,transform,Commercial,on_prem_mainframe,6109011
+APP-0295,HR Service 295,tier2,Director HR,Databricks,TCS,run,HR,azure,5866360
+APP-0296,Cargo Hub 296,tier3,Director Cargo,ServiceNow,Internal,transform,Cargo,aws,7262662
+APP-0297,Revenue Accounting Gateway 297,tier2,Director Revenue Accounting,Custom Java,TCS,run,Revenue Accounting,saas,4575753
+APP-0298,Maintenance Ledger 298,tier2,Director Maintenance,Snowflake,Capgemini,grow,Maintenance,on_prem_distributed,3304628
+APP-0299,DCS Portal 299,tier3,Director DCS,Amadeus,Infosys,grow,DCS,azure,2144769
+APP-0300,Ground Ops Core 300,tier1,Director Ground Ops,Workday,Capgemini,grow,Ground Ops,on_prem_mainframe,236361
+APP-0301,Finance Gateway 301,tier3,Director Finance,Custom Java,Internal,grow,Finance,gcp,4655318
+APP-0302,DCS Hub 302,tier2,Director DCS,ServiceNow,Infosys,transform,DCS,gcp,7353867
+APP-0303,Crew Manager 303,tier3,Director Crew,Custom Java,Internal,transform,Crew,saas,2722855
+APP-0304,Flight Ops Portal 304,tier2,Director Flight Ops,ServiceNow,Accenture,transform,Flight Ops,on_prem_mainframe,7225063
+APP-0305,Maintenance Gateway 305,tier1,Director Maintenance,Workday,TCS,transform,Maintenance,saas,2355676
+APP-0306,DCS Service 306,tier1,Director DCS,Snowflake,Internal,transform,DCS,aws,4551855
+APP-0307,Customer Ledger 307,tier1,Director Customer,Databricks,Wipro,grow,Customer,on_prem_mainframe,2090458
+APP-0308,Commercial Hub 308,tier2,Director Commercial,Databricks,Infosys,grow,Commercial,private_cloud,5372293
+APP-0309,Ground Ops Hub 309,tier2,Director Ground Ops,Salesforce,Wipro,transform,Ground Ops,gcp,4069156
+APP-0310,Maintenance Core 310,tier3,Director Maintenance,Workday,IBM Global Services,grow,Maintenance,on_prem_distributed,3574198
+APP-0311,Catering Hub 311,tier1,Director Catering,Salesforce,Infosys,grow,Catering,saas,3004910
+APP-0312,Flight Ops Gateway 312,tier3,Director Flight Ops,Workday,Internal,grow,Flight Ops,azure,517381
+APP-0313,HR Portal 313,tier1,Director HR,Workday,Wipro,run,HR,private_cloud,765636
+APP-0314,Network Planning Hub 314,tier1,Director Network Planning,Custom Java,Accenture,transform,Network Planning,private_cloud,4167358
+APP-0315,MRO Ledger 315,tier1,Director MRO,Workday,TCS,transform,MRO,azure,5351309
+APP-0316,Flight Ops Gateway 316,tier3,Director Flight Ops,ServiceNow,Capgemini,run,Flight Ops,azure,3422821
+APP-0317,Revenue Accounting Hub 317,tier1,Director Revenue Accounting,Sabre,Infosys,grow,Revenue Accounting,aws,6084451
+APP-0318,Flight Ops Hub 318,tier2,Director Flight Ops,ServiceNow,Wipro,run,Flight Ops,gcp,5583848
+APP-0319,Cargo Core 319,tier3,Director Cargo,Custom Java,Infosys,transform,Cargo,gcp,4454939
+APP-0320,Network Planning Core 320,tier1,Director Network Planning,Databricks,Wipro,transform,Network Planning,azure,4062430
+APP-0321,Customer Ledger 321,tier2,Director Customer,Workday,IBM Global Services,grow,Customer,gcp,7771963
+APP-0322,Loyalty Engine 322,tier1,Director Loyalty,Mainframe COBOL,Capgemini,run,Loyalty,saas,3129492
+APP-0323,Finance Ledger 323,tier2,Director Finance,Snowflake,Wipro,transform,Finance,aws,8669243
+APP-0324,Catering Engine 324,tier2,Director Catering,Salesforce,Accenture,run,Catering,on_prem_mainframe,608247
+APP-0325,HR Hub 325,tier2,Director HR,Databricks,TCS,run,HR,on_prem_distributed,4382053
+APP-0326,Crew Ledger 326,tier2,Director Crew,Amadeus,IBM Global Services,grow,Crew,saas,2457467
+APP-0327,Customer Ledger 327,tier2,Director Customer,Custom Java,Wipro,run,Customer,gcp,5267243
+APP-0328,PSS Gateway 328,tier2,Director PSS,Custom Java,Wipro,grow,PSS,on_prem_distributed,8817335
+APP-0329,DCS Engine 329,tier2,Director DCS,Sabre,Infosys,grow,DCS,azure,6114451
+APP-0330,Procurement Gateway 330,tier2,Director Procurement,ServiceNow,Capgemini,run,Procurement,saas,5970557
+APP-0331,Cargo Hub 331,tier1,Director Cargo,SAP S/4HANA,Infosys,grow,Cargo,azure,6121775
+APP-0332,Crew Ledger 332,tier1,Director Crew,Sabre,Internal,grow,Crew,private_cloud,4150509
+APP-0333,Network Planning Core 333,tier2,Director Network Planning,ServiceNow,Wipro,grow,Network Planning,on_prem_distributed,4320355
+APP-0334,Commercial Portal 334,tier1,Director Commercial,SAP S/4HANA,Infosys,transform,Commercial,on_prem_mainframe,2646651
+APP-0335,Flight Ops Manager 335,tier2,Director Flight Ops,Sabre,Internal,transform,Flight Ops,saas,865776
+APP-0336,Loyalty Core 336,tier2,Director Loyalty,Amadeus,Internal,grow,Loyalty,gcp,6986437
+APP-0337,Crew Gateway 337,tier2,Director Crew,Workday,Infosys,grow,Crew,aws,4430277
+APP-0338,MRO Portal 338,tier1,Director MRO,Sabre,Capgemini,transform,MRO,on_prem_distributed,8503017
+APP-0339,Crew Portal 339,tier1,Director Crew,Salesforce,Wipro,transform,Crew,azure,2340967
+APP-0340,Network Planning Hub 340,tier2,Director Network Planning,Sabre,Capgemini,grow,Network Planning,aws,7053655
+APP-0341,Ground Ops Core 341,tier1,Director Ground Ops,SAP S/4HANA,Internal,grow,Ground Ops,on_prem_distributed,2288523
+APP-0342,Customer Core 342,tier2,Director Customer,Databricks,Wipro,run,Customer,on_prem_mainframe,2603579
+APP-0343,Revenue Accounting Core 343,tier1,Director Revenue Accounting,SAP S/4HANA,TCS,grow,Revenue Accounting,azure,4385237
+APP-0344,Loyalty Ledger 344,tier1,Director Loyalty,ServiceNow,Internal,run,Loyalty,gcp,1332089
+APP-0345,Maintenance Hub 345,tier2,Director Maintenance,Snowflake,Infosys,transform,Maintenance,on_prem_mainframe,6008943
+APP-0346,MRO Engine 346,tier2,Director MRO,Workday,Capgemini,grow,MRO,on_prem_distributed,4736071
+APP-0347,Flight Ops Service 347,tier1,Director Flight Ops,Workday,Capgemini,run,Flight Ops,on_prem_mainframe,5562267
+APP-0348,Commercial Portal 348,tier1,Director Commercial,Workday,TCS,grow,Commercial,aws,8560935
+APP-0349,Procurement Gateway 349,tier3,Director Procurement,Sabre,Accenture,run,Procurement,aws,7592143
+APP-0350,Procurement Hub 350,tier1,Director Procurement,Databricks,TCS,transform,Procurement,on_prem_mainframe,8219531
+APP-0351,Revenue Accounting Service 351,tier1,Director Revenue Accounting,Sabre,Internal,run,Revenue Accounting,aws,1777372
+APP-0352,HR Engine 352,tier1,Director HR,Workday,Infosys,grow,HR,private_cloud,9018994
+APP-0353,Flight Ops Ledger 353,tier2,Director Flight Ops,Custom Java,IBM Global Services,transform,Flight Ops,private_cloud,417306
+APP-0354,Loyalty Core 354,tier2,Director Loyalty,Databricks,IBM Global Services,transform,Loyalty,gcp,1579537
+APP-0355,Customer Engine 355,tier1,Director Customer,SAP S/4HANA,Wipro,run,Customer,azure,8135965
+APP-0356,Catering Portal 356,tier1,Director Catering,Oracle Fusion,Wipro,grow,Catering,on_prem_distributed,855332
+APP-0357,Crew Portal 357,tier1,Director Crew,Workday,Infosys,run,Crew,aws,5840026
+APP-0358,Catering Portal 358,tier1,Director Catering,Custom Java,IBM Global Services,transform,Catering,on_prem_mainframe,3431608
+APP-0359,Loyalty Portal 359,tier2,Director Loyalty,Sabre,Wipro,grow,Loyalty,private_cloud,4745481
+APP-0360,Finance Manager 360,tier2,Director Finance,Sabre,Accenture,run,Finance,azure,197111
+APP-0361,Maintenance Ledger 361,tier2,Director Maintenance,Salesforce,TCS,transform,Maintenance,saas,4883535
+APP-0362,Cargo Service 362,tier1,Director Cargo,SAP S/4HANA,Wipro,transform,Cargo,private_cloud,8486383
+APP-0363,Crew Ledger 363,tier1,Director Crew,SAP S/4HANA,IBM Global Services,run,Crew,on_prem_mainframe,4979433
+APP-0364,Procurement Hub 364,tier2,Director Procurement,Databricks,Infosys,transform,Procurement,saas,4549756
+APP-0365,PSS Ledger 365,tier1,Director PSS,ServiceNow,IBM Global Services,transform,PSS,on_prem_distributed,7209394
+APP-0366,Flight Ops Engine 366,tier1,Director Flight Ops,Mainframe COBOL,TCS,run,Flight Ops,gcp,1537522
+APP-0367,Commercial Manager 367,tier3,Director Commercial,Custom Java,Internal,grow,Commercial,aws,1159185
+APP-0368,Finance Portal 368,tier2,Director Finance,Oracle Fusion,Infosys,transform,Finance,gcp,1040114
+APP-0369,Ground Ops Gateway 369,tier1,Director Ground Ops,Sabre,TCS,grow,Ground Ops,azure,8656159
+APP-0370,Loyalty Engine 370,tier2,Director Loyalty,ServiceNow,Wipro,transform,Loyalty,gcp,2036541
+APP-0371,DCS Engine 371,tier2,Director DCS,Workday,Infosys,run,DCS,private_cloud,8043161
+APP-0372,Cargo Service 372,tier2,Director Cargo,Mainframe COBOL,Accenture,grow,Cargo,on_prem_distributed,8288264
+APP-0373,MRO Engine 373,tier1,Director MRO,Mainframe COBOL,Accenture,grow,MRO,azure,3294785
+APP-0374,Network Planning Service 374,tier3,Director Network Planning,Amadeus,Internal,grow,Network Planning,gcp,4619942
+APP-0375,DCS Hub 375,tier2,Director DCS,Custom Java,TCS,transform,DCS,private_cloud,1912967
+APP-0376,Loyalty Ledger 376,tier2,Director Loyalty,ServiceNow,Capgemini,grow,Loyalty,private_cloud,2716629
+APP-0377,Finance Engine 377,tier1,Director Finance,Sabre,Infosys,transform,Finance,aws,9322294
+APP-0378,Ground Ops Service 378,tier1,Director Ground Ops,Oracle Fusion,Wipro,grow,Ground Ops,private_cloud,2541384
+APP-0379,MRO Manager 379,tier2,Director MRO,SAP S/4HANA,IBM Global Services,transform,MRO,on_prem_mainframe,8784230
+APP-0380,HR Hub 380,tier2,Director HR,Snowflake,Capgemini,transform,HR,on_prem_distributed,4602980
+APP-0381,MRO Ledger 381,tier2,Director MRO,Mainframe COBOL,Wipro,run,MRO,saas,5435074
+APP-0382,Procurement Ledger 382,tier1,Director Procurement,ServiceNow,Accenture,run,Procurement,on_prem_mainframe,6135012
+APP-0383,Customer Gateway 383,tier3,Director Customer,Databricks,Infosys,transform,Customer,private_cloud,2189121
+APP-0384,Safety Service 384,tier3,Director Safety,Amadeus,Internal,transform,Safety,azure,6615678
+APP-0385,Loyalty Gateway 385,tier2,Director Loyalty,Mainframe COBOL,Accenture,transform,Loyalty,private_cloud,2203597
+APP-0386,Network Planning Hub 386,tier1,Director Network Planning,Sabre,TCS,grow,Network Planning,on_prem_mainframe,2190005
+APP-0387,Finance Core 387,tier1,Director Finance,Amadeus,TCS,transform,Finance,private_cloud,1111866
+APP-0388,MRO Engine 388,tier3,Director MRO,Snowflake,IBM Global Services,run,MRO,azure,4783729
+APP-0389,Customer Portal 389,tier1,Director Customer,Oracle Fusion,Capgemini,transform,Customer,gcp,4355080
+APP-0390,Customer Hub 390,tier1,Director Customer,Amadeus,Internal,run,Customer,private_cloud,2926053
+APP-0391,Catering Engine 391,tier1,Director Catering,Workday,Internal,transform,Catering,azure,3031855
+APP-0392,Customer Hub 392,tier2,Director Customer,SAP S/4HANA,Accenture,grow,Customer,on_prem_distributed,837421
+APP-0393,Network Planning Gateway 393,tier1,Director Network Planning,Databricks,Capgemini,transform,Network Planning,on_prem_mainframe,8954506
+APP-0394,MRO Ledger 394,tier2,Director MRO,Sabre,Internal,grow,MRO,on_prem_mainframe,8891902
+APP-0395,Safety Gateway 395,tier2,Director Safety,Amadeus,Wipro,run,Safety,on_prem_mainframe,3331868
+APP-0396,Ground Ops Hub 396,tier2,Director Ground Ops,SAP S/4HANA,Wipro,transform,Ground Ops,on_prem_distributed,1624441
+APP-0397,Revenue Accounting Engine 397,tier1,Director Revenue Accounting,Amadeus,TCS,grow,Revenue Accounting,on_prem_distributed,1032463
+APP-0398,Cargo Core 398,tier1,Director Cargo,Snowflake,IBM Global Services,transform,Cargo,aws,2235719
+APP-0399,Network Planning Core 399,tier2,Director Network Planning,Workday,Wipro,run,Network Planning,saas,4379205
+APP-0400,Procurement Core 400,tier1,Director Procurement,Amadeus,Accenture,grow,Procurement,on_prem_mainframe,545710
+APP-0401,Ground Ops Manager 401,tier1,Director Ground Ops,Databricks,Infosys,run,Ground Ops,on_prem_mainframe,3674460
+APP-0402,PSS Manager 402,tier1,Director PSS,ServiceNow,Accenture,transform,PSS,on_prem_distributed,8585149
+APP-0403,Loyalty Ledger 403,tier2,Director Loyalty,ServiceNow,Internal,grow,Loyalty,azure,294684
+APP-0404,Revenue Accounting Manager 404,tier2,Director Revenue Accounting,Amadeus,Wipro,transform,Revenue Accounting,saas,2865817
+APP-0405,Catering Portal 405,tier3,Director Catering,ServiceNow,Wipro,run,Catering,gcp,8468280
+APP-0406,Network Planning Manager 406,tier2,Director Network Planning,Oracle Fusion,Infosys,transform,Network Planning,private_cloud,7977375
+APP-0407,Safety Service 407,tier1,Director Safety,ServiceNow,Accenture,grow,Safety,azure,2102204
+APP-0408,Catering Manager 408,tier1,Director Catering,Databricks,Infosys,run,Catering,private_cloud,4643800
+APP-0409,Cargo Gateway 409,tier2,Director Cargo,Salesforce,TCS,transform,Cargo,azure,1183026
+APP-0410,Flight Ops Gateway 410,tier2,Director Flight Ops,Amadeus,IBM Global Services,grow,Flight Ops,on_prem_distributed,3139335
+APP-0411,Safety Core 411,tier3,Director Safety,SAP S/4HANA,Infosys,run,Safety,private_cloud,6897042
+APP-0412,Flight Ops Service 412,tier1,Director Flight Ops,Snowflake,Infosys,grow,Flight Ops,gcp,405142
+APP-0413,Commercial Core 413,tier2,Director Commercial,ServiceNow,Wipro,grow,Commercial,on_prem_mainframe,3606470
+APP-0414,Flight Ops Gateway 414,tier3,Director Flight Ops,Workday,Capgemini,transform,Flight Ops,saas,4624729
+APP-0415,Procurement Portal 415,tier3,Director Procurement,Workday,IBM Global Services,transform,Procurement,private_cloud,2779112
+APP-0416,MRO Hub 416,tier2,Director MRO,SAP S/4HANA,Infosys,transform,MRO,saas,832846
+APP-0417,Crew Ledger 417,tier1,Director Crew,Salesforce,IBM Global Services,transform,Crew,azure,3833015
+APP-0418,Catering Hub 418,tier1,Director Catering,Snowflake,Accenture,run,Catering,on_prem_distributed,1346300
+APP-0419,Revenue Accounting Portal 419,tier3,Director Revenue Accounting,ServiceNow,Capgemini,run,Revenue Accounting,private_cloud,5560221
+APP-0420,Loyalty Gateway 420,tier1,Director Loyalty,Custom Java,TCS,run,Loyalty,gcp,3027294
+APP-0421,Flight Ops Manager 421,tier3,Director Flight Ops,Amadeus,IBM Global Services,grow,Flight Ops,azure,9222779
+APP-0422,HR Portal 422,tier1,Director HR,Databricks,Infosys,transform,HR,on_prem_mainframe,8134629
+APP-0423,PSS Hub 423,tier2,Director PSS,Salesforce,Accenture,run,PSS,gcp,4880525
+APP-0424,Ground Ops Manager 424,tier2,Director Ground Ops,ServiceNow,Capgemini,run,Ground Ops,on_prem_distributed,1836333
+APP-0425,DCS Engine 425,tier1,Director DCS,Amadeus,Internal,run,DCS,on_prem_distributed,2656510
+APP-0426,Procurement Gateway 426,tier1,Director Procurement,Custom Java,Wipro,run,Procurement,on_prem_mainframe,7013802
+APP-0427,MRO Core 427,tier2,Director MRO,Salesforce,IBM Global Services,run,MRO,saas,5870423
+APP-0428,Ground Ops Core 428,tier1,Director Ground Ops,Sabre,Infosys,run,Ground Ops,on_prem_distributed,6868591
+APP-0429,Catering Gateway 429,tier1,Director Catering,SAP S/4HANA,IBM Global Services,run,Catering,gcp,3924259
+APP-0430,Maintenance Ledger 430,tier2,Director Maintenance,SAP S/4HANA,Internal,grow,Maintenance,on_prem_distributed,9008235
+APP-0431,Catering Gateway 431,tier1,Director Catering,Mainframe COBOL,Accenture,transform,Catering,on_prem_distributed,9212719
+APP-0432,PSS Engine 432,tier1,Director PSS,Amadeus,Wipro,grow,PSS,saas,7959445
+APP-0433,Commercial Core 433,tier1,Director Commercial,SAP S/4HANA,Infosys,run,Commercial,private_cloud,2308385
+APP-0434,Maintenance Gateway 434,tier2,Director Maintenance,SAP S/4HANA,Capgemini,run,Maintenance,private_cloud,6636758
+APP-0435,Flight Ops Gateway 435,tier2,Director Flight Ops,Salesforce,Wipro,grow,Flight Ops,on_prem_distributed,9027559
+APP-0436,Catering Hub 436,tier1,Director Catering,Sabre,IBM Global Services,transform,Catering,on_prem_mainframe,2266792
+APP-0437,Loyalty Manager 437,tier1,Director Loyalty,Custom Java,Capgemini,transform,Loyalty,on_prem_mainframe,5637072
+APP-0438,PSS Manager 438,tier3,Director PSS,ServiceNow,Capgemini,transform,PSS,saas,1243955
+APP-0439,Safety Core 439,tier2,Director Safety,Custom Java,Accenture,run,Safety,gcp,6246485
+APP-0440,HR Engine 440,tier1,Director HR,Amadeus,TCS,grow,HR,saas,8513610
+APP-0441,Crew Service 441,tier2,Director Crew,ServiceNow,IBM Global Services,grow,Crew,saas,4216569
+APP-0442,Crew Core 442,tier1,Director Crew,Oracle Fusion,IBM Global Services,run,Crew,saas,5764640
+APP-0443,Crew Ledger 443,tier2,Director Crew,Custom Java,Internal,grow,Crew,on_prem_mainframe,6819267
+APP-0444,Loyalty Portal 444,tier1,Director Loyalty,SAP S/4HANA,Internal,transform,Loyalty,saas,8764440
+APP-0445,DCS Gateway 445,tier2,Director DCS,Amadeus,IBM Global Services,run,DCS,on_prem_mainframe,8918775
+APP-0446,HR Hub 446,tier1,Director HR,Oracle Fusion,IBM Global Services,grow,HR,on_prem_mainframe,4835798
+APP-0447,Procurement Core 447,tier1,Director Procurement,Oracle Fusion,Infosys,transform,Procurement,azure,3323000
+APP-0448,Ground Ops Core 448,tier2,Director Ground Ops,Sabre,Accenture,transform,Ground Ops,saas,1020856
+APP-0449,Network Planning Core 449,tier2,Director Network Planning,ServiceNow,Accenture,transform,Network Planning,gcp,7239176
+APP-0450,Cargo Portal 450,tier1,Director Cargo,Databricks,Infosys,grow,Cargo,azure,917981
+APP-0451,Procurement Gateway 451,tier3,Director Procurement,Workday,Capgemini,grow,Procurement,on_prem_mainframe,2190722
+APP-0452,Commercial Portal 452,tier2,Director Commercial,Databricks,Infosys,grow,Commercial,aws,1476315
+APP-0453,Revenue Accounting Gateway 453,tier2,Director Revenue Accounting,ServiceNow,TCS,transform,Revenue Accounting,saas,6152452
+APP-0454,Customer Manager 454,tier3,Director Customer,Workday,Wipro,transform,Customer,saas,6385954
+APP-0455,Crew Core 455,tier1,Director Crew,Snowflake,Wipro,run,Crew,gcp,3908482
+APP-0456,Ground Ops Gateway 456,tier2,Director Ground Ops,SAP S/4HANA,IBM Global Services,transform,Ground Ops,on_prem_mainframe,6926893
+APP-0457,PSS Hub 457,tier2,Director PSS,Databricks,TCS,transform,PSS,private_cloud,6309873
+APP-0458,Customer Ledger 458,tier1,Director Customer,Mainframe COBOL,Internal,run,Customer,on_prem_mainframe,2758939
+APP-0459,DCS Engine 459,tier2,Director DCS,Amadeus,Internal,grow,DCS,private_cloud,7164633
+APP-0460,Crew Ledger 460,tier1,Director Crew,ServiceNow,Internal,run,Crew,azure,6396372
+APP-0461,Flight Ops Manager 461,tier3,Director Flight Ops,Databricks,IBM Global Services,run,Flight Ops,saas,2846433
+APP-0462,HR Service 462,tier1,Director HR,Sabre,Capgemini,transform,HR,private_cloud,3705313
+APP-0463,Procurement Portal 463,tier1,Director Procurement,Snowflake,Internal,run,Procurement,aws,2552407
+APP-0464,Network Planning Manager 464,tier2,Director Network Planning,Mainframe COBOL,IBM Global Services,grow,Network Planning,on_prem_mainframe,9035556
+APP-0465,HR Hub 465,tier2,Director HR,Oracle Fusion,Infosys,grow,HR,on_prem_distributed,2909661
+APP-0466,Crew Service 466,tier2,Director Crew,ServiceNow,Wipro,grow,Crew,private_cloud,514225
+APP-0467,Ground Ops Portal 467,tier3,Director Ground Ops,Snowflake,Infosys,grow,Ground Ops,on_prem_distributed,5853646
+APP-0468,Ground Ops Hub 468,tier1,Director Ground Ops,Salesforce,IBM Global Services,transform,Ground Ops,on_prem_mainframe,8160267
+APP-0469,Commercial Portal 469,tier1,Director Commercial,Sabre,Infosys,grow,Commercial,on_prem_distributed,4557684
+APP-0470,HR Ledger 470,tier3,Director HR,Oracle Fusion,Infosys,run,HR,on_prem_mainframe,798082
+APP-0471,Flight Ops Ledger 471,tier1,Director Flight Ops,Amadeus,Accenture,transform,Flight Ops,on_prem_distributed,5825397
+APP-0472,Revenue Accounting Portal 472,tier2,Director Revenue Accounting,Workday,Internal,transform,Revenue Accounting,private_cloud,1100181
+APP-0473,Flight Ops Service 473,tier2,Director Flight Ops,Salesforce,Infosys,run,Flight Ops,aws,5716474
+APP-0474,Commercial Gateway 474,tier1,Director Commercial,Amadeus,Wipro,run,Commercial,azure,104118
+APP-0475,Safety Manager 475,tier2,Director Safety,Sabre,Wipro,grow,Safety,saas,1711558
+APP-0476,Ground Ops Gateway 476,tier1,Director Ground Ops,Mainframe COBOL,IBM Global Services,transform,Ground Ops,on_prem_distributed,6737494
+APP-0477,Network Planning Manager 477,tier1,Director Network Planning,Mainframe COBOL,TCS,grow,Network Planning,on_prem_distributed,7786344
+APP-0478,Finance Core 478,tier3,Director Finance,ServiceNow,Capgemini,run,Finance,gcp,8528958
+APP-0479,DCS Ledger 479,tier3,Director DCS,Snowflake,Accenture,run,DCS,azure,6460826
+APP-0480,Commercial Manager 480,tier1,Director Commercial,Sabre,Internal,transform,Commercial,on_prem_mainframe,477841
+APP-0481,DCS Manager 481,tier3,Director DCS,Mainframe COBOL,Internal,grow,DCS,on_prem_distributed,7906481
+APP-0482,Ground Ops Hub 482,tier2,Director Ground Ops,Mainframe COBOL,Capgemini,run,Ground Ops,gcp,4623150
+APP-0483,Flight Ops Engine 483,tier2,Director Flight Ops,Mainframe COBOL,Internal,transform,Flight Ops,private_cloud,4830589
+APP-0484,Catering Gateway 484,tier3,Director Catering,Custom Java,Accenture,transform,Catering,azure,8249752
+APP-0485,Commercial Core 485,tier3,Director Commercial,Databricks,Internal,transform,Commercial,gcp,8444983
+APP-0486,PSS Service 486,tier1,Director PSS,Amadeus,Wipro,grow,PSS,gcp,6155544
+APP-0487,HR Gateway 487,tier2,Director HR,Mainframe COBOL,IBM Global Services,run,HR,azure,7075719
+APP-0488,Procurement Hub 488,tier2,Director Procurement,ServiceNow,Accenture,grow,Procurement,aws,413624
+APP-0489,HR Core 489,tier2,Director HR,Salesforce,Infosys,run,HR,on_prem_distributed,256943
+APP-0490,Procurement Manager 490,tier3,Director Procurement,Custom Java,Internal,grow,Procurement,on_prem_mainframe,664399
+APP-0491,Commercial Gateway 491,tier3,Director Commercial,Salesforce,Capgemini,transform,Commercial,gcp,8822086
+APP-0492,MRO Engine 492,tier2,Director MRO,Databricks,Capgemini,transform,MRO,saas,462571
+APP-0493,Flight Ops Service 493,tier1,Director Flight Ops,Amadeus,Wipro,transform,Flight Ops,on_prem_mainframe,6080093
+APP-0494,Loyalty Manager 494,tier3,Director Loyalty,Custom Java,IBM Global Services,run,Loyalty,aws,1632926
+APP-0495,Revenue Accounting Service 495,tier2,Director Revenue Accounting,Oracle Fusion,Wipro,transform,Revenue Accounting,gcp,5660408
+APP-0496,Revenue Accounting Hub 496,tier1,Director Revenue Accounting,SAP S/4HANA,Infosys,run,Revenue Accounting,aws,1243042
+APP-0497,Crew Portal 497,tier2,Director Crew,Salesforce,Internal,run,Crew,saas,3580583
+APP-0498,MRO Service 498,tier2,Director MRO,Amadeus,Capgemini,transform,MRO,gcp,9274378
+APP-0499,Safety Manager 499,tier3,Director Safety,Workday,TCS,transform,Safety,on_prem_distributed,1120806
+APP-0500,Flight Ops Gateway 500,tier2,Director Flight Ops,Workday,TCS,run,Flight Ops,on_prem_mainframe,1984406
+APP-0501,Safety Gateway 501,tier1,Director Safety,Salesforce,IBM Global Services,run,Safety,private_cloud,7708503
+APP-0502,Loyalty Hub 502,tier1,Director Loyalty,SAP S/4HANA,IBM Global Services,grow,Loyalty,azure,1852391
+APP-0503,Loyalty Service 503,tier2,Director Loyalty,Snowflake,Wipro,transform,Loyalty,aws,3176582
+APP-0504,Finance Hub 504,tier1,Director Finance,ServiceNow,Internal,grow,Finance,gcp,5531720
+APP-0505,Cargo Gateway 505,tier1,Director Cargo,Sabre,Capgemini,transform,Cargo,aws,3326660
+APP-0506,Cargo Service 506,tier2,Director Cargo,SAP S/4HANA,Infosys,grow,Cargo,aws,8141148
+APP-0507,Loyalty Ledger 507,tier2,Director Loyalty,Mainframe COBOL,Wipro,transform,Loyalty,private_cloud,1107644
+APP-0508,Catering Ledger 508,tier2,Director Catering,Mainframe COBOL,Accenture,transform,Catering,private_cloud,5195376
+APP-0509,Revenue Accounting Ledger 509,tier3,Director Revenue Accounting,Amadeus,TCS,run,Revenue Accounting,on_prem_distributed,4066789
+APP-0510,Flight Ops Gateway 510,tier1,Director Flight Ops,Amadeus,Infosys,run,Flight Ops,gcp,2562865
+APP-0511,DCS Gateway 511,tier2,Director DCS,Amadeus,Accenture,run,DCS,private_cloud,6248735
+APP-0512,Flight Ops Ledger 512,tier1,Director Flight Ops,Mainframe COBOL,TCS,transform,Flight Ops,aws,5086654
+APP-0513,Flight Ops Manager 513,tier2,Director Flight Ops,Oracle Fusion,Accenture,transform,Flight Ops,aws,5253950
+APP-0514,Crew Hub 514,tier1,Director Crew,SAP S/4HANA,TCS,grow,Crew,saas,4704321
+APP-0515,DCS Core 515,tier1,Director DCS,SAP S/4HANA,Infosys,grow,DCS,gcp,9203805
+APP-0516,Procurement Portal 516,tier1,Director Procurement,SAP S/4HANA,Wipro,transform,Procurement,private_cloud,5139771
+APP-0517,Commercial Core 517,tier1,Director Commercial,Databricks,TCS,transform,Commercial,on_prem_distributed,588793
+APP-0518,Network Planning Portal 518,tier1,Director Network Planning,SAP S/4HANA,Capgemini,run,Network Planning,private_cloud,5658182
+APP-0519,HR Ledger 519,tier1,Director HR,Sabre,Capgemini,run,HR,azure,4460450
+APP-0520,Safety Hub 520,tier1,Director Safety,Snowflake,Capgemini,run,Safety,aws,2479139
+APP-0521,DCS Core 521,tier1,Director DCS,Workday,IBM Global Services,transform,DCS,aws,8350850
+APP-0522,Flight Ops Gateway 522,tier3,Director Flight Ops,SAP S/4HANA,Wipro,grow,Flight Ops,gcp,5814170
+APP-0523,Procurement Portal 523,tier2,Director Procurement,Workday,Internal,run,Procurement,aws,646456
+APP-0524,Safety Ledger 524,tier2,Director Safety,Sabre,Wipro,transform,Safety,on_prem_mainframe,7620063
+APP-0525,Procurement Manager 525,tier3,Director Procurement,SAP S/4HANA,TCS,grow,Procurement,private_cloud,2888472
+APP-0526,Maintenance Ledger 526,tier2,Director Maintenance,Salesforce,IBM Global Services,transform,Maintenance,on_prem_mainframe,2545102
+APP-0527,Loyalty Hub 527,tier1,Director Loyalty,Databricks,IBM Global Services,transform,Loyalty,saas,2800501
+APP-0528,Ground Ops Gateway 528,tier2,Director Ground Ops,Databricks,Capgemini,transform,Ground Ops,azure,4771834
+APP-0529,Ground Ops Engine 529,tier1,Director Ground Ops,Amadeus,Internal,grow,Ground Ops,on_prem_mainframe,8491475
+APP-0530,Finance Hub 530,tier2,Director Finance,Sabre,Wipro,transform,Finance,gcp,7201411
+APP-0531,Customer Hub 531,tier2,Director Customer,Oracle Fusion,Infosys,grow,Customer,on_prem_mainframe,1983726
+APP-0532,Flight Ops Portal 532,tier2,Director Flight Ops,Custom Java,Capgemini,transform,Flight Ops,on_prem_distributed,8885865
+APP-0533,Loyalty Hub 533,tier2,Director Loyalty,Sabre,Wipro,run,Loyalty,on_prem_mainframe,3192731
+APP-0534,Safety Service 534,tier2,Director Safety,Oracle Fusion,IBM Global Services,transform,Safety,azure,205372
+APP-0535,Commercial Ledger 535,tier2,Director Commercial,SAP S/4HANA,IBM Global Services,grow,Commercial,azure,5427969
+APP-0536,Revenue Accounting Service 536,tier1,Director Revenue Accounting,Mainframe COBOL,Infosys,run,Revenue Accounting,gcp,2982573
+APP-0537,HR Engine 537,tier3,Director HR,Databricks,Accenture,grow,HR,on_prem_distributed,8124857
+APP-0538,Flight Ops Core 538,tier2,Director Flight Ops,Oracle Fusion,Wipro,run,Flight Ops,on_prem_mainframe,6256452
+APP-0539,Maintenance Manager 539,tier2,Director Maintenance,Snowflake,Wipro,grow,Maintenance,on_prem_mainframe,7622062
+APP-0540,Cargo Service 540,tier3,Director Cargo,Amadeus,Internal,grow,Cargo,aws,124933
+APP-0541,Loyalty Core 541,tier1,Director Loyalty,Oracle Fusion,TCS,run,Loyalty,saas,8646563
+APP-0542,Loyalty Service 542,tier3,Director Loyalty,Salesforce,TCS,grow,Loyalty,gcp,2878553
+APP-0543,MRO Engine 543,tier3,Director MRO,Mainframe COBOL,Accenture,grow,MRO,on_prem_distributed,8105629
+APP-0544,Catering Portal 544,tier3,Director Catering,Amadeus,Infosys,run,Catering,private_cloud,1478548
+APP-0545,Revenue Accounting Manager 545,tier1,Director Revenue Accounting,Oracle Fusion,IBM Global Services,transform,Revenue Accounting,private_cloud,7401939
+APP-0546,Procurement Portal 546,tier2,Director Procurement,Custom Java,Wipro,run,Procurement,on_prem_distributed,4180234
+APP-0547,Crew Hub 547,tier2,Director Crew,Salesforce,TCS,grow,Crew,private_cloud,5024858
+APP-0548,Procurement Ledger 548,tier2,Director Procurement,ServiceNow,TCS,run,Procurement,azure,6994843
+APP-0549,Flight Ops Ledger 549,tier1,Director Flight Ops,Custom Java,TCS,transform,Flight Ops,on_prem_distributed,6086781
+APP-0550,Finance Ledger 550,tier2,Director Finance,Amadeus,Infosys,grow,Finance,azure,8080324
+APP-0551,Ground Ops Ledger 551,tier2,Director Ground Ops,Workday,Capgemini,run,Ground Ops,private_cloud,8806615
+APP-0552,Cargo Portal 552,tier1,Director Cargo,Sabre,Internal,run,Cargo,private_cloud,7723790
+APP-0553,Commercial Manager 553,tier3,Director Commercial,Oracle Fusion,IBM Global Services,grow,Commercial,on_prem_mainframe,607804
+APP-0554,Network Planning Hub 554,tier3,Director Network Planning,Sabre,Wipro,transform,Network Planning,private_cloud,5880775
+APP-0555,PSS Core 555,tier3,Director PSS,Amadeus,TCS,grow,PSS,on_prem_distributed,8770034
+APP-0556,HR Portal 556,tier1,Director HR,Snowflake,IBM Global Services,transform,HR,saas,7154719
+APP-0557,Catering Manager 557,tier3,Director Catering,Custom Java,TCS,grow,Catering,on_prem_mainframe,5822082
+APP-0558,Maintenance Hub 558,tier3,Director Maintenance,Custom Java,Accenture,grow,Maintenance,aws,320494
+APP-0559,Customer Hub 559,tier1,Director Customer,ServiceNow,Accenture,transform,Customer,private_cloud,6561374
+APP-0560,Revenue Accounting Engine 560,tier1,Director Revenue Accounting,Mainframe COBOL,Internal,grow,Revenue Accounting,private_cloud,8335191
+APP-0561,Customer Core 561,tier3,Director Customer,Mainframe COBOL,Accenture,transform,Customer,saas,4582245
+APP-0562,Crew Ledger 562,tier2,Director Crew,Workday,Capgemini,transform,Crew,aws,5942941
+APP-0563,Ground Ops Hub 563,tier1,Director Ground Ops,Custom Java,IBM Global Services,grow,Ground Ops,on_prem_distributed,1915157
+APP-0564,Finance Manager 564,tier2,Director Finance,Snowflake,Infosys,grow,Finance,on_prem_distributed,8746927
+APP-0565,Finance Gateway 565,tier1,Director Finance,Databricks,Wipro,transform,Finance,azure,7965593
+APP-0566,Cargo Core 566,tier2,Director Cargo,Oracle Fusion,Capgemini,grow,Cargo,saas,2294156
+APP-0567,HR Manager 567,tier2,Director HR,Oracle Fusion,IBM Global Services,transform,HR,azure,6757531
+APP-0568,PSS Engine 568,tier1,Director PSS,Mainframe COBOL,TCS,transform,PSS,private_cloud,5515552
+APP-0569,Cargo Portal 569,tier2,Director Cargo,Amadeus,Capgemini,run,Cargo,private_cloud,8400544
+APP-0570,Customer Service 570,tier2,Director Customer,Salesforce,IBM Global Services,grow,Customer,saas,6530705
+APP-0571,Ground Ops Manager 571,tier2,Director Ground Ops,SAP S/4HANA,Accenture,run,Ground Ops,private_cloud,5252987
+APP-0572,Finance Gateway 572,tier1,Director Finance,Workday,TCS,grow,Finance,private_cloud,1807349
+APP-0573,Commercial Engine 573,tier1,Director Commercial,Salesforce,Capgemini,grow,Commercial,aws,8074446
+APP-0574,Procurement Portal 574,tier2,Director Procurement,Custom Java,Infosys,grow,Procurement,private_cloud,4533943
+APP-0575,Revenue Accounting Gateway 575,tier3,Director Revenue Accounting,Oracle Fusion,Internal,run,Revenue Accounting,saas,4342407
+APP-0576,Revenue Accounting Manager 576,tier2,Director Revenue Accounting,Sabre,Infosys,run,Revenue Accounting,azure,3410577
+APP-0577,MRO Engine 577,tier3,Director MRO,Amadeus,Accenture,run,MRO,gcp,7618656
+APP-0578,Crew Core 578,tier2,Director Crew,Amadeus,Capgemini,run,Crew,on_prem_mainframe,1761737
+APP-0579,Cargo Hub 579,tier2,Director Cargo,Sabre,IBM Global Services,run,Cargo,on_prem_distributed,6591080
+APP-0580,Network Planning Gateway 580,tier2,Director Network Planning,ServiceNow,Wipro,grow,Network Planning,saas,2553464
+APP-0581,HR Service 581,tier2,Director HR,Custom Java,Capgemini,run,HR,private_cloud,651324
+APP-0582,DCS Service 582,tier1,Director DCS,Oracle Fusion,Infosys,transform,DCS,private_cloud,3157515
+APP-0583,Commercial Portal 583,tier2,Director Commercial,Salesforce,Infosys,transform,Commercial,azure,4995820
+APP-0584,Flight Ops Portal 584,tier3,Director Flight Ops,Amadeus,Capgemini,grow,Flight Ops,on_prem_mainframe,1142516
+APP-0585,Crew Ledger 585,tier2,Director Crew,Amadeus,IBM Global Services,grow,Crew,on_prem_distributed,5993905
+APP-0586,Finance Gateway 586,tier1,Director Finance,Custom Java,Capgemini,transform,Finance,saas,3532312
+APP-0587,Catering Hub 587,tier2,Director Catering,Workday,Accenture,grow,Catering,azure,4259347
+APP-0588,Crew Gateway 588,tier2,Director Crew,Workday,Internal,grow,Crew,on_prem_distributed,8836476
+APP-0589,MRO Portal 589,tier2,Director MRO,Databricks,Accenture,transform,MRO,private_cloud,6339984
+APP-0590,Crew Gateway 590,tier1,Director Crew,Snowflake,Infosys,run,Crew,saas,4749064
+APP-0591,PSS Ledger 591,tier3,Director PSS,Workday,Capgemini,transform,PSS,on_prem_mainframe,1626257
+APP-0592,Ground Ops Service 592,tier2,Director Ground Ops,Sabre,Internal,grow,Ground Ops,private_cloud,4689590
+APP-0593,Commercial Hub 593,tier1,Director Commercial,Databricks,IBM Global Services,run,Commercial,saas,8662506
+APP-0594,PSS Engine 594,tier2,Director PSS,Sabre,Wipro,grow,PSS,gcp,9385589
+APP-0595,PSS Hub 595,tier2,Director PSS,Databricks,IBM Global Services,run,PSS,private_cloud,910018
+APP-0596,Customer Ledger 596,tier3,Director Customer,Databricks,IBM Global Services,run,Customer,aws,7689905
+APP-0597,Maintenance Portal 597,tier2,Director Maintenance,Salesforce,Accenture,transform,Maintenance,saas,5907942
+APP-0598,PSS Engine 598,tier1,Director PSS,ServiceNow,Accenture,run,PSS,on_prem_distributed,1505078
+APP-0599,Crew Core 599,tier1,Director Crew,Amadeus,Wipro,grow,Crew,private_cloud,5810663
+APP-0600,Revenue Accounting Gateway 600,tier3,Director Revenue Accounting,Salesforce,Accenture,run,Revenue Accounting,saas,1016366
