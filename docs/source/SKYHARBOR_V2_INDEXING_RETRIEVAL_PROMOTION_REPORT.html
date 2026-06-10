@@ -78,7 +78,8 @@ code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}ul{marg
 
 <h2>What Source can now do — and cannot yet</h2>
 <div class="card"><strong>Can:</strong> retrieve SkyHarbor v2 evidence from Azure AI Search, tenant-isolated, with citations, across all 12 AMS categories; the evidence is <code>agent_ready</code> in the governance ledger.<br>
-<strong>Cannot yet (remaining workstreams):</strong> the live Source answer path (<code>buildGroundedSourceAnswer</code>) must build its candidates' <code>agent_readiness_status</code> from this ledger so the governed bundle admits the v2 evidence (runtime wiring lane). Until then, the AMS readiness rerun (WS6), golden-question context-bundle proof (WS7), and AMS deliverable generation (WS8) are pending.</div>
+<strong>WS7 — governed context-bundle proof: <span class="pill p-ok">DONE</span></strong> 10 SkyHarbor AMS questions run through the full chain (tenant+archetype resolve → Azure Search retrieval → ledger gate → <code>SourceContextBundleTrace</code> → Claude answer constrained to the governed bundle → claim/citation map → wisdom). 10/10 tenant-isolation clean; grounding honest (pass where required families covered, warn naming gaps); unsupported-claim flagging proven; answers SkyHarbor-specific + citation-backed. Evidence: <code>docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md</code> (incl. raw redacted bundle sample).<br>
+<strong>Still pending:</strong> WS6 AMS evidence-readiness rerun surfaced through the Source UI, and WS8 best-in-class AMS deliverable generation, both via the live <code>buildGroundedSourceAnswer</code> call-site (source-runtime-wiring lane). The trace runner already proves the governed bundle assembles correctly before any model call.</div>
 
 <h2>Evidence / run metadata</h2>
 <ul>
