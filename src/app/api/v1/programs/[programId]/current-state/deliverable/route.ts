@@ -43,6 +43,7 @@ async function buildInputs(
     archetype,
     profile,
     1,
+    programId,
   );
   const recommendation = await buildCurrentStateRecommendation(ctx, profile);
   const plan = buildCurrentStatePlan(recommendation, { moveName: programId });

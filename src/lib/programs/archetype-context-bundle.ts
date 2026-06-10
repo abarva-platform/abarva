@@ -60,6 +60,7 @@ export async function buildArchetypeContextBundle(
     archetype,
     profile,
     phase,
+    moveId,
   );
   const recommendation = await buildCurrentStateRecommendation(ctx, profile);
   const plan = buildCurrentStatePlan(recommendation, { moveName: moveId });

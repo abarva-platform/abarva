@@ -17,6 +17,10 @@ import "server-only";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
+import {
+  resolveDocFamilyReviews,
+  type DocFamilyReviewState,
+} from "@/lib/programs/current-state-doc-ingest";
 import type {
   StrategicMoveArchetype,
   PhaseKey,
@@ -100,7 +104,12 @@ export function emptyProfile(): MoveProfile {
   };
 }
 
-export type ReadinessStatus = "committed" | "parsing" | "staged" | "missing";
+export type ReadinessStatus =
+  | "committed"
+  | "review_required"
+  | "parsing"
+  | "staged"
+  | "missing";
 export type Severity = "hard" | "soft";
 
 // ── Estate discovery: infer the profile from what the tenant HAS ─────────────
@@ -191,6 +200,12 @@ export interface InstrumentReadiness {
   committedRows: number;
   /** Why this requirement applies to THIS archetype + estate at this phase. */
   rationale: string;
+  /** True when this family is satisfied via the governed document→review→commit
+   *  path (no canonical tower_* table). */
+  documentFamily: boolean;
+  /** Pending document reviews a reviewer can promote (governed). Empty for
+   *  structured/backing-table families. */
+  pendingReviews: DocFamilyReviewState["pendingItems"];
 }
 
 export interface ReadinessReport {
@@ -219,6 +234,7 @@ export async function resolveCurrentStateReadiness(
   archetype: StrategicMoveArchetype,
   profile: MoveProfile,
   phase: number,
+  moveId?: string,
 ): Promise<ReadinessReport> {
   const phaseKey = PHASE_KEY_BY_NUM[phase];
   const required = phaseKey
@@ -228,14 +244,35 @@ export async function resolveCurrentStateReadiness(
   const instruments: InstrumentReadiness[] = [];
   for (const { family, severity, rationale } of required) {
     let committedRows = 0;
+    let status: ReadinessStatus = "missing";
+    let pendingReviews: DocFamilyReviewState["pendingItems"] = [];
+    const documentFamily = !family.backing;
+
     if (family.backing) {
+      // Structured family — committed when rows exist in the canonical store.
       committedRows = await tableCount(
         ctx,
         family.backing.table,
         family.backing.keyColumn,
       );
+      status = committedRows > 0 ? "committed" : "missing";
+    } else if (moveId) {
+      // Document family — governed review ladder decides the state. Approved
+      // (committed) > pending (review_required) > none (missing). Move-scoped.
+      const reviews = await resolveDocFamilyReviews(ctx, moveId, family.key);
+      pendingReviews = reviews.pendingItems;
+      if (reviews.approved > 0) {
+        committedRows = reviews.approved;
+        status = "committed";
+      } else if (reviews.pending > 0) {
+        status = "review_required";
+      } else {
+        status = "missing";
+      }
     }
-    const status: ReadinessStatus = committedRows > 0 ? "committed" : "missing";
+    // Without a moveId we cannot resolve document evidence — stays "missing"
+    // (honest: tenant-scoped renders can't see move-scoped review state).
+
     instruments.push({
       key: family.key,
       label: family.label,
@@ -247,6 +284,8 @@ export async function resolveCurrentStateReadiness(
       backingTable: family.backing?.table ?? null,
       committedRows,
       rationale,
+      documentFamily,
+      pendingReviews,
     });
   }
 

@@ -81,6 +81,7 @@ export async function POST(
       archetype,
       profile,
       1,
+      programId,
     );
     const recommendation = await buildCurrentStateRecommendation(ctx, profile);
     const plan = buildCurrentStatePlan(recommendation, { moveName: programId });

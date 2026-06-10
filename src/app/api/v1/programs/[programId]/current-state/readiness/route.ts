@@ -22,7 +22,7 @@ export async function GET(
   { params }: { params: Promise<{ programId: string }> },
 ) {
   try {
-    await params; // programId reserved for per-move declared-profile overrides (E6)
+    const { programId } = await params;
     const ctx = await requireTenancy();
 
     const phaseParam = req.nextUrl.searchParams.get("phase");
@@ -38,6 +38,7 @@ export async function GET(
       archetype,
       profile,
       phase,
+      programId,
     );
     return Response.json(report);
   } catch (err) {
