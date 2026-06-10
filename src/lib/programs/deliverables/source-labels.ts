@@ -98,6 +98,13 @@ const KNOWN: Record<string, SourceLabel & { notes: string }> = {
     family: "Maturity analysis",
     notes: "Five-dimension current-state maturity scoring.",
   },
+  "diagnose_intake:attested": {
+    title: "Diagnose Intake (attested)",
+    type: "Attested stakeholder intake",
+    family: "Diagnose discovery session",
+    notes:
+      "Answers captured in the governed Diagnose intake and attested by the responding stakeholder.",
+  },
 };
 
 const PREFIX_FAMILY: Array<{ test: RegExp; type: string; family: string }> = [

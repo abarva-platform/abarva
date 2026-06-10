@@ -25,6 +25,7 @@ import {
   type OrchestratorResult,
 } from "@/lib/programs/deliverables/orchestrator";
 import { tenantDisplayName } from "@/lib/programs/deliverables/board-deliverable";
+import { resolveDiagnoseIntake } from "@/lib/programs/deliverables/diagnose-intake";
 import {
   renderDeliverableDocx,
   renderDeliverableHtml,
@@ -80,6 +81,24 @@ export async function GET(
       recommendation,
       plan,
     });
+
+    // Ground the Discovery Report in governed, attested DIAGNOSE INTAKE (real
+    // elicited answers), not just current-state evidence. Each answer becomes a
+    // cited fact the orchestrator can build on.
+    if (spec.key === "discovery_report") {
+      const intake = await resolveDiagnoseIntake(ctx, programId);
+      const entries = Object.entries(intake).filter(([, a]) => a && a.trim());
+      if (entries.length) {
+        base.sections.push({
+          heading: "Diagnose intake (attested)",
+          claims: entries.map(([qid, ans]) => ({
+            text: `${qid.replace(/_/g, " ")}: ${ans}`,
+            citation: "diagnose_intake:attested",
+            missingEvidence: null,
+          })),
+        });
+      }
+    }
 
     // Render-from-cache: the json pass generates + caches the 3-pass result;
     // docx/html reuse it (fast render) instead of re-running passes past the
