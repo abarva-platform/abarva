@@ -31,7 +31,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 
 <h1>AbarVa Source — Master Thought-Leadership War Room</h1>
 <p class="sub">Mission: make AbarVa Source the best technology / IT sourcing <strong>decision operating system</strong> in the world.</p>
-<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 6 shipped (P0 fixed)</span></p>
+<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 7 shipped — all 7 phases green</span></p>
 
 <div class="role"><strong>Operating as:</strong> senior McKinsey sourcing-transformation partner · CIO advisor · commercial deal architect · enterprise-technology strategist · product architect · execution lead. My job is to <em>challenge</em> the current Source module, redesign where it is weak, and orchestrate parallel agents to build, prove, and deploy a sourcing decision OS — not a generic RFP generator.</div>
 
@@ -84,7 +84,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <tr><td>Phase 4 — Deliverable / RFP canon</td><td>Master</td><td><span class="pill p-ok">done · 8 tests green</span></td></tr>
 <tr><td>Phase 5 — Pricing / negotiation intelligence</td><td>Master</td><td><span class="pill p-ok">done · 8 tests green</span></td></tr>
 <tr><td>Phase 6 — Governed context-bundle proof (P0 fix)</td><td>Master</td><td><span class="pill p-ok">done · 9 tests green</span></td></tr>
-<tr><td>Phase 7 — Live proof (SkyHarbor AMS)</td><td>Master</td><td><span class="pill p-info">in progress</span></td></tr>
+<tr><td>Phase 7 — Live proof (SkyHarbor AMS)</td><td>Master</td><td><span class="pill p-ok">done · 8 tests + artifact</span></td></tr>
 </tbody></table>
 
 <h2>Progress log</h2>
@@ -98,13 +98,15 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <div class="row"><span class="t">P4 · 01:40</span><span><strong>RFP + deliverable canon shipped</strong> → <code>rfp-canon.ts</code>, <code>deliverable-canon.ts</code>. <code>buildArchetypeRfp</code> renders each archetype's <code>rfpDocumentStructure</code> and binds every section to its evidence dependencies — when those aren't agent_ready the section is <em>evidence_blocked</em> with an explicit "do NOT fabricate" note (markdown renderer surfaces it honestly). AMS and ERP RFPs are structurally different by construction. <code>evaluateDeliverableQuality</code> enforces the per-archetype qualityBar (min sections, citations, no unsupported claims). <strong>8/8 canon tests green.</strong></span></div>
 <div class="row"><span class="t">P5 · 02:05</span><span><strong>Pricing &amp; negotiation intelligence shipped</strong> → <code>pricing-engine.ts</code>. Four archetype-bound, evidence-grounded analyses: <code>shouldCostModel</code> (bottom-up baseline + productivity glide-path), <code>normalizeProposals</code> (peer-median add-back for excluded scope — exposes the vendor who looks cheapest only because they excluded transition), <code>switchingLeverage</code> (renewal payback → BATNA strength), <code>negotiationPlan</code> (levers sequenced pre_rfp→rfp→bafo→final). Every figure carries a citation; ungrounded inputs return <code>insufficient_evidence</code>, never a fabricated number. <strong>8/8 pricing tests green (37 total in module).</strong></span></div>
 <div class="row"><span class="t">P6 · 02:35</span><span><strong>P0 FIXED — governed Source reasoning shipped</strong> → <code>grounded-answer.ts</code>. Every Source answer now flows through <code>buildValidatedAgentContextBundle</code> → <code>evaluateGovernedObject</code>. Confidence is DERIVED from how much of the archetype's required evidence is agent-ready (high only at full coverage) — the hardcoded <code>'high'</code> is gone. Cross-tenant candidates are fenced and reported; committed-but-not-promoted evidence cannot ground an answer (promotion-only); unsupported claims block a clean answer; zero agent-ready evidence ⇒ the agent <em>refuses</em> with <code>insufficient_evidence</code> and names what's missing. Emits the <code>GroundedSourceAnswerEnvelope</code> contract. <strong>9/9 governance tests green (44 total in module).</strong></span></div>
+<div class="row"><span class="t">P7 · 03:05</span><span><strong>End-to-end proof shipped — SkyHarbor AMS</strong> → <code>scenarios/skyharbor-ams.ts</code> + <code>SOURCE_SKYHARBOR_AMS_PROOF.md</code>. One runnable scenario composes the WHOLE spine on the real framework code: classify→readiness→RFP→should-cost→TCO→negotiation→grounded envelope. Result on a realistic partial-evidence event: archetype <em>AMS</em>; <strong>confidence medium</strong> (derived, not asserted); <strong>2 required families named missing</strong> (transition_constraints, retained_org_model); <strong>4 RFP sections evidence-blocked</strong> (flagged, not fabricated); should-cost <strong>$8.20M/yr</strong> cited; TCO normalization exposes <strong>NorthOps</strong> as the true low bidder (SkyManage's lower headline hid an excluded transition); cross-tenant apex-retail candidate fenced; zero unsupported claims. <strong>8/8 scenario tests green — 52 total in module.</strong></span></div>
 </div>
 
-<div class="next"><h3>Next 15 minutes</h3>
+<div class="next"><h3>Framework complete — remaining runtime wiring (honest state separation)</h3>
+<p style="margin:4px 0 8px">All 7 phases of the thought-leadership arc are shipped and green as a self-contained, DB-free framework (<strong>52 tests</strong>). What is proven in <em>code</em> vs what still needs the <em>runtime / operator</em> path, stated per the context-ingestion truth standard:</p>
 <ul>
-<li>Commit + push Phase 6; update PR #3374.</li>
-<li>Phase 7: <strong>end-to-end live proof — SkyHarbor AMS</strong>. Compose the whole spine in one runnable scenario: classify → readiness (some families agent_ready, some missing) → strategy questions → event-specific RFP (blocked sections visible) → vendor discussion guide → should-cost + TCO normalization → negotiation plan → executive recommendation, all wrapped in a <code>GroundedSourceAnswerEnvelope</code>. Prove: event-specific output, missing evidence visible, citations + confidence + source basis, no cross-tenant leakage.</li>
-<li>Report the truth-standard state separation honestly: code-level end-to-end proof vs runtime-on-ACA-against-private-DB (the remaining operator wiring).</li>
+<li><strong>Proven in code:</strong> archetype contract + 4 archetypes · two-axis resolver · evidence-readiness promotion ladder · event-specific RFP canon · deliverable quality gate · pricing/negotiation intelligence · governed grounded-answer (P0) · SkyHarbor AMS end-to-end scenario + artifact.</li>
+<li><strong>Remaining runtime wiring:</strong> (1) swap the live Source answer call-site (<code>source-answer-engine.ts</code>) to call <code>buildGroundedSourceAnswer</code> instead of the hardcoded-confidence path; (2) bind <code>buildSourceEvidenceReadiness</code> to the real <code>EvidenceStateMap</code> from the data plane; (3) originate a real SkyHarbor AMS <code>source_event</code> and run the scenario on ACA against the private DB; (4) extend from 4 → 12 archetypes.</li>
+<li>None of the above is claimed as done. The framework is the spine; the runtime swap is a focused, low-risk follow-up lane.</li>
 </ul></div>
 
 <h2>Risks &amp; open questions</h2>
@@ -118,7 +120,13 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <p class="muted">(populated as work lands)</p>
 <table><thead><tr><th>PR</th><th>Slice</th><th>State</th></tr></thead><tbody>
 <tr><td>#3374</td><td>Phase 0/1 — audit + war-room report</td><td><span class="pill p-info">open</span></td></tr>
-<tr><td>#3374</td><td>Phase 2 — Source Event Archetype Framework (4 archetypes, 15 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 2 — Archetype Framework (4 archetypes, 15 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 3 — Evidence-readiness model (6 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 4 — RFP + deliverable canon (8 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 5 — Pricing/negotiation intelligence (8 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 6 — Governed reasoning / P0 fix (9 tests)</td><td><span class="pill p-info">pushed</span></td></tr>
+<tr><td>#3374</td><td>Phase 7 — SkyHarbor AMS end-to-end proof (8 tests + artifact)</td><td><span class="pill p-info">pushed</span></td></tr>
 </tbody></table>
+<p class="muted" style="margin-top:8px"><strong>52 tests green · tsc clean · module <code>src/lib/source/archetypes/</code>.</strong> Proof artifact: <code>docs/source/SOURCE_SKYHARBOR_AMS_PROOF.md</code>.</p>
 
 </div></body></html>
