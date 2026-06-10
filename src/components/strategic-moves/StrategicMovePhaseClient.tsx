@@ -17,6 +17,7 @@ import {
   visibleArtifactPendingText,
 } from "@/lib/agent/artifacts";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import { DeliverableArtifactCard } from "@/components/strategic-moves/DeliverableArtifactCard";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
@@ -859,6 +860,11 @@ export function StrategicMovePhaseClient({
                 plan={plan}
                 programId={move.id}
               />
+            )}
+
+            {/* Grounded deliverable draft (P1 Charter) */}
+            {isCurrentPhase && phaseNum === 1 && (
+              <DeliverableArtifactCard programId={move.id} />
             )}
 
             {/* Phase canvas sections */}
