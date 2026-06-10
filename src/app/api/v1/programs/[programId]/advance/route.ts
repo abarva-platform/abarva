@@ -25,6 +25,7 @@ import {
   validateMovesHumanRationale,
 } from "@/lib/programs/moves-ai-liability";
 import { resolvePhaseGateActorPersonId } from "@/lib/programs/phase-gate-actor";
+import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -275,12 +276,44 @@ export async function POST(
       { supabase },
     );
 
+    // PR-4 Phase Gate Flexibility: persist a durable Phase Gate Decision Record
+    // to the Artifact Vault. Soft-fail checks that were not satisfied are the
+    // carried-forward gaps — they stay visible in the File Cabinet (and on the
+    // record) instead of vanishing once the gate is crossed. Best-effort.
+    const carriedGaps = gate.failedChecks.filter((c) => c.severity === "soft");
+    const overrode = carriedGaps.length > 0 || !!body.bypassGate;
+    const gateArtifact = await saveGateDecisionArtifact(ctx, {
+      moveId: programId,
+      moveName: program.name ?? undefined,
+      fromPhase,
+      toPhase: body.toPhase,
+      approverName: ctx.email ?? actor.personId,
+      approverRole: ctx.role ?? "gate approver",
+      rationale: humanRationale,
+      override: overrode,
+      carriedGaps: carriedGaps.map((c) => ({
+        check: c.check,
+        reason: c.reason ?? null,
+        severity: c.severity,
+      })),
+      assumptions: coerceDecisionSupportList(body.assumptions),
+      missingInputs: coerceDecisionSupportList(body.missingInputs),
+      approvalId: body.approvalId ?? null,
+    });
+
     return Response.json({
       ok: true,
       programId: result.programId,
       newPhase: result.newPhase,
       snapshotId: result.snapshotId,
       evidencePacket,
+      gateDecision: {
+        recorded: !!gateArtifact,
+        artifactId: gateArtifact?.artifactId ?? null,
+        blobStored: gateArtifact?.blobStored ?? false,
+        override: overrode,
+        carriedGaps: carriedGaps.map((c) => c.check),
+      },
     });
   } catch (err) {
     try {
