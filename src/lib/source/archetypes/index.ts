@@ -9,3 +9,5 @@ export * from './method-library';
 export * from './registry';
 export * from './resolver';
 export * from './evidence-readiness';
+export * from './rfp-canon';
+export * from './deliverable-canon';

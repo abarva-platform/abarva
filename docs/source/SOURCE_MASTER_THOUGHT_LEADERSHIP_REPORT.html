@@ -31,7 +31,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 
 <h1>AbarVa Source — Master Thought-Leadership War Room</h1>
 <p class="sub">Mission: make AbarVa Source the best technology / IT sourcing <strong>decision operating system</strong> in the world.</p>
-<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 3 shipped</span></p>
+<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 4 shipped</span></p>
 
 <div class="role"><strong>Operating as:</strong> senior McKinsey sourcing-transformation partner · CIO advisor · commercial deal architect · enterprise-technology strategist · product architect · execution lead. My job is to <em>challenge</em> the current Source module, redesign where it is weak, and orchestrate parallel agents to build, prove, and deploy a sourcing decision OS — not a generic RFP generator.</div>
 
@@ -49,7 +49,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <tr><td>Sourcing corpus depth</td><td>4 / 5</td><td class="muted">150+ patterns (failure modes, pricing, contracts, vendors).<div class="bar"><i style="width:80%"></i></div></td></tr>
 <tr><td><strong>Event-type differentiation (archetype contract)</strong></td><td>3 / 5</td><td class="muted">Framework SHIPPED: <code>SourceEventArchetype</code> contract + registry + 2-axis resolver + method library; 4 seed archetypes; 15 tests prove different DNA. 8 more archetypes remain.<div class="bar"><i style="width:60%;background:#8a6d1a"></i></div></td></tr>
 <tr><td><strong>Evidence-readiness by event type</strong></td><td>4 / 5</td><td class="muted">SHIPPED: <code>buildSourceEvidenceReadiness</code> binds the 9-rung promotion ladder to archetype families; committed≠agent_ready enforced; per-stage gate blockers with reasons; agent reasons only over governed-promoted families. Runtime DB wiring remains.<div class="bar"><i style="width:80%"></i></div></td></tr>
-<tr><td><strong>Event-specific RFP quality</strong></td><td>1 / 5</td><td class="muted">One generic d09 RFP for AMS=ERP=SaaS=renewal.<div class="bar"><i style="width:20%;background:#b3261e"></i></div></td></tr>
+<tr><td><strong>Event-specific RFP quality</strong></td><td>4 / 5</td><td class="muted">SHIPPED: <code>buildArchetypeRfp</code> renders each archetype's structure; AMS≠ERP by construction; sections marked <em>evidence_blocked</em> (never fabricated) when deps aren't agent_ready. Deliverable qualityBar enforced. LLM body-fill + multi-format export remain.<div class="bar"><i style="width:80%"></i></div></td></tr>
 <tr><td>Pricing / negotiation intelligence</td><td>2 / 5</td><td class="muted">Corpus levers exist but not archetype-bound or vendor-specific.<div class="bar"><i style="width:40%;background:#8a6d1a"></i></div></td></tr>
 <tr><td><strong>Governed reasoning (context bundle + grounding)</strong></td><td>1 / 5</td><td class="muted">Bypasses evaluateGovernedObject; hardcoded 'high' confidence; no trace. P0.<div class="bar"><i style="width:20%;background:#b3261e"></i></div></td></tr>
 </tbody></table>
@@ -81,8 +81,8 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <tr><td>Phase 1 — End-to-end audit</td><td>3 parallel audit agents → Master synthesis</td><td><span class="pill p-ok">done</span></td></tr>
 <tr><td>Phase 2 — Source Event Archetype Framework</td><td>Master + impl agent (mirror #3371)</td><td><span class="pill p-ok">done · 15 tests green</span></td></tr>
 <tr><td>Phase 3 — Evidence readiness model</td><td>Master</td><td><span class="pill p-ok">done · 6 tests green</span></td></tr>
-<tr><td>Phase 4 — Deliverable / RFP canon</td><td>Master</td><td><span class="pill p-info">in progress</span></td></tr>
-<tr><td>Phase 5 — Pricing / negotiation intelligence</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
+<tr><td>Phase 4 — Deliverable / RFP canon</td><td>Master</td><td><span class="pill p-ok">done · 8 tests green</span></td></tr>
+<tr><td>Phase 5 — Pricing / negotiation intelligence</td><td>Master</td><td><span class="pill p-info">in progress</span></td></tr>
 <tr><td>Phase 6 — Governed context-bundle proof</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
 <tr><td>Phase 7 — Live proof (SkyHarbor AMS) on ACA</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
 </tbody></table>
@@ -95,14 +95,15 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <div class="row"><span class="t">P2 · 00:45</span><span><strong>Source Event Archetype Framework shipped</strong> → <code>src/lib/source/archetypes/{types,method-library,registry,resolver,index}.ts</code>. <code>SourceEventArchetype</code> contract (evidence families · vendor guide · RFP structure · pricing · evaluation · risk · negotiation levers · deliverables · gates · agentGuidance · stage model) + 2-axis resolver (archetype × spend-band) + 10-method library.</span></div>
 <div class="row"><span class="t">P2 · 00:55</span><span>4 seed archetypes — <strong>AMS, ERP/SI, AI-data-platform, renewal</strong> — each with materially different DNA. <code>differentiation.test.ts</code>: <strong>15/15 green</strong>, tsc clean. Proves AMS needs ticket-volumes where ERP needs data-migration; AMS prices resource-units where ERP fixed-price+T&amp;M; renewal levers timing where AMS levers productivity — <em>zero core-code change to add an archetype</em>.</span></div>
 <div class="row"><span class="t">P3 · 01:15</span><span><strong>Evidence-readiness model shipped</strong> → <code>evidence-readiness.ts</code>. <code>buildSourceEvidenceReadiness</code> maps each archetype family onto the 9-rung promotion ladder; enforces the governance rule that <em>committed ≠ indexed ≠ retrievable ≠ agent_ready</em> — only governed promotion to <code>agent_ready</code> makes a family agent-usable. Per-stage gate clearance returns explicit blockers + human reasons; <code>agentUsableFamilies()</code> is the allow-list the model context will draw from. <strong>6/6 readiness tests green.</strong></span></div>
+<div class="row"><span class="t">P4 · 01:40</span><span><strong>RFP + deliverable canon shipped</strong> → <code>rfp-canon.ts</code>, <code>deliverable-canon.ts</code>. <code>buildArchetypeRfp</code> renders each archetype's <code>rfpDocumentStructure</code> and binds every section to its evidence dependencies — when those aren't agent_ready the section is <em>evidence_blocked</em> with an explicit "do NOT fabricate" note (markdown renderer surfaces it honestly). AMS and ERP RFPs are structurally different by construction. <code>evaluateDeliverableQuality</code> enforces the per-archetype qualityBar (min sections, citations, no unsupported claims). <strong>8/8 canon tests green.</strong></span></div>
 </div>
 
 <div class="next"><h3>Next 15 minutes</h3>
 <ul>
-<li>Commit + push Phase 3; update PR #3374.</li>
-<li>Phase 4: <strong>event-specific RFP canon</strong> — a generator that renders an archetype's <code>rfpDocumentStructure</code> into a real RFP, marking each section <em>weak / blocked</em> when its <code>evidenceDependencies</code> are not agent_ready (no silent gaps). Prove AMS vs ERP produce structurally different RFPs.</li>
-<li>Deliverable-canon contract over <code>deliverablePack</code> with the quality rubric (min sections, citations required, altitude).</li>
-<li>Tests: an AMS RFP with missing ticket-volumes flags the resource-unit pricing section as evidence-blocked, not fabricated.</li>
+<li>Commit + push Phase 4; update PR #3374.</li>
+<li>Phase 5: <strong>pricing &amp; negotiation intelligence</strong> per archetype — bind <code>should_cost</code> / <code>tco_normalization</code> / <code>switching_cost</code> methods to each <code>pricingModel</code>; normalize multi-vendor proposals to a common basis; surface the archetype's pricing <em>traps</em> and time-sequenced <code>negotiationLevers</code>.</li>
+<li>Every pricing output cites the evidence family it draws from; no unsupported savings %, no fake benchmark.</li>
+<li>Tests: AMS should-cost vs proposal gap; renewal walk-away from switching cost; vendor TCO normalization across different commercial structures.</li>
 </ul></div>
 
 <h2>Risks &amp; open questions</h2>
