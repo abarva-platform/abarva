@@ -82,10 +82,18 @@ export async function GET(
       plan,
     });
 
-    // Ground the Discovery Report in governed, attested DIAGNOSE INTAKE (real
-    // elicited answers), not just current-state evidence. Each answer becomes a
-    // cited fact the orchestrator can build on.
-    if (spec.key === "discovery_report") {
+    // Ground later-phase deliverables (Discovery, Business Case, Roadmap,
+    // Mobilization, Handoff) in governed, attested DIAGNOSE INTAKE — real elicited
+    // answers (priorities, value levers, constraints, target state) — not just
+    // current-state evidence. Each answer becomes a cited fact.
+    const INTAKE_GROUNDED = new Set([
+      "discovery_report",
+      "business_case",
+      "execution_roadmap",
+      "mobilization_packet",
+      "handoff_package",
+    ]);
+    if (INTAKE_GROUNDED.has(spec.key)) {
       const intake = await resolveDiagnoseIntake(ctx, programId);
       const entries = Object.entries(intake).filter(([, a]) => a && a.trim());
       if (entries.length) {
