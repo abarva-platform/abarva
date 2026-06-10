@@ -37,8 +37,9 @@ follow in PR-2..PR-5.
 
 - `src/lib/deliverables/orchestrator/{types,source-register,prompt-builder,generation-plan,quality-validator,artifact-brief-registry,orchestrator,index}.ts`
 - `src/lib/deliverables/orchestrator/briefs/{archetype-packs,deliverable-structures}.ts` (PR-2)
+- `src/lib/deliverables/orchestrator/model-caller.ts` (PR-3 — audited-egress ModelCaller + `generateDeliverable`)
 - `src/lib/deliverables/orchestrator/__fixtures__/ams-rfp.ts`
-- `src/lib/deliverables/orchestrator/__tests__/{orchestrator,brief-library}.test.ts` (29 tests)
+- `src/lib/deliverables/orchestrator/__tests__/{orchestrator,brief-library,model-caller}.test.ts` (31 tests)
 - `docs/deliverables/DELIVERABLE_INTELLIGENCE_ORCHESTRATOR.md`
 
 ## QA / Validation
@@ -71,8 +72,10 @@ Tests in `__tests__/orchestrator.test.ts`; design note in
 
 ## Known Gaps
 
-- Not wired to any runtime surface: the `ModelCaller` is injected and exercised only by a
-  test stub. Live Claude generation lands in PR-3.
+- The audited-egress `ModelCaller` + `generateDeliverable` entry point are wired (PR-3),
+  but no API route/UI invokes them yet — there is no end-user surface until PR-5. The
+  egress wiring is proven via a mocked-egress test (all six passes routed with pass-
+  specific workflow tags + token budgets); a live Claude run is part of the PR-5 proof.
 - The brief library (PR-2) covers four archetype packs (AMS, ERP/SI, cloud
   modernization, AI-PDLC) and seven deliverable structures (Moves charter/business-
   case/roadmap/discovery; Source strategy-memo/evaluation-workbook/executive-
