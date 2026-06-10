@@ -347,7 +347,10 @@ async function commitCmdb(
         lifecycle_state: r.lifecycle_state || "production",
         owner_team: r.owner_team || "unassigned",
         business_service: r.business_service || "unspecified",
-        criticality: r.criticality || "3",
+        // tower_cmdb_cis.criticality CHECK IN (tier_1..tier_4); normalize "1".."4".
+        criticality: /^tier_[1-4]$/.test(r.criticality)
+          ? r.criticality
+          : `tier_${["1", "2", "3", "4"].includes(r.criticality) ? r.criticality : "3"}`,
         environment: r.environment || "production",
         source_system:
           provenance === "representative_synthetic"
