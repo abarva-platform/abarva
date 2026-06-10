@@ -26,6 +26,16 @@ import { draftModuleDeliverable } from "@/lib/programs/nexus";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// deliverables_v2.deliverable_type_key has an FK to deliverable_types — map the
+// archetype's deliverable key to the registered DB type key.
+const DB_TYPE_KEY: Record<string, string> = {
+  program_charter: "charter",
+  discovery_report: "discovery_report",
+  business_case: "business_case",
+  execution_roadmap: "execution_roadmap",
+  handoff_package: "handoff_package",
+};
+
 function renderMarkdown(doc: GeneratedDeliverable): string {
   const e = doc.envelope;
   const lines: string[] = [
@@ -85,7 +95,7 @@ export async function POST(
     const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
       programId,
       moduleKey: "p1",
-      deliverableTypeKey: key,
+      deliverableTypeKey: DB_TYPE_KEY[key] ?? key,
       title: doc.label,
       draftContent: renderMarkdown(doc),
       structuredData: {
