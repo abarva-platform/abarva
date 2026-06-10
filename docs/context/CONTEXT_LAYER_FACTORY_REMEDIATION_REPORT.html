@@ -36,7 +36,7 @@
   <h1>Context Layer Factory — Remediation Report</h1>
   <p class="sub">Replicating the SkyHarbor governed context-layer pipeline for
      <b>Lakeshore Holdings</b>, <b>Apex Retail</b>, <b>Meridian Health</b>.</p>
-  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2 complete (live-DB diagnosis done via ACA probe y0at6mk); generation/load next</span></p>
+  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2 + 6–7 done (index tenant-context-v1 backfilled & verified; tenant-scoped retrieval+citation proven for all 3). Next: Apex fact-load (Phase 5), code fixes, promotion, bundle proof.</span></p>
 
   <div class="card">
     <b>Operating principle (hard rule):</b> diagnose each client by <i>exact pipeline state</i>, not by
@@ -52,9 +52,9 @@
     <tr><td>2</td><td>Current dataset/context audit (pipeline-state)</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026-06.md</code></td></tr>
     <tr><td>3</td><td>Enterprise-worthiness standard</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_ENTERPRISE_WORTHINESS_STANDARD_2026-06.md</code></td></tr>
     <tr><td>4</td><td>Generate template-aligned datasets</td><td><span class="pill s-todo">queued</span></td><td>generators + <code>datasets/*-synthetic-v2/</code></td></tr>
-    <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_LOAD_VERIFICATION_2026-06.md</code></td></tr>
-    <tr><td>6</td><td>Azure AI Search indexing</td><td><span class="pill s-todo">queued</span></td><td>index counts by client/dimension</td></tr>
-    <tr><td>7</td><td>Retrieval + citation proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_RETRIEVAL_CITATION_PROOF_2026-06.md</code></td></tr>
+    <tr><td>5</td><td>Governed ACA/VNet load (records+facts+chunks)</td><td><span class="pill s-prog">in progress</span></td><td>Apex only (others already have facts). Dry-run OK: 1,029 records / 11,410 facts. Blocked on Supabase-vs-pg write path — building pg applier.</td></tr>
+    <tr><td>6</td><td>Azure AI Search indexing</td><td><span class="pill s-done">complete</span></td><td>tenant-context-v1 backfilled+verified (apex 6,497 · meridian 3,506 · lakeshore 1,542)</td></tr>
+    <tr><td>7</td><td>Retrieval + citation proof</td><td><span class="pill s-done">complete</span></td><td><code>CLIENT_CONTEXT_RETRIEVAL_CITATION_PROOF_2026-06.md</code> (job boshah8; tenant-isolated, cited)</td></tr>
     <tr><td>8</td><td>Promotion evaluation</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_PROMOTION_EVALUATION_2026-06.md</code></td></tr>
     <tr><td>9</td><td>Context bundle proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_CONTEXT_BUNDLE_PROOF_2026-06.md</code></td></tr>
     <tr><td>10</td><td>Module readiness proof</td><td><span class="pill s-todo">queued</span></td><td><code>CLIENT_MODULE_READINESS_PROOF_2026-06.md</code></td></tr>
@@ -99,8 +99,17 @@
      Bottlenecks are client-specific and at opposite ends of the pipeline.</p>
 
   <h2>Loads · indexing · proofs</h2>
-  <p class="muted">Populated as phases 5–10 execute: job IDs, image tags/digests, Blob paths, DB counts,
-     index counts, retrieval/citation proof, promotion status, context-bundle traces, module readiness.</p>
+  <h3>Azure AI Search indexing (Phase 6) — job boshah8 · index <code>tenant-context-v1</code></h3>
+  <p class="sub">Auth: managed identity (service has <code>disableLocalAuth=true</code>). Backfill verified doc counts =
+     live chunk census exactly. apex-retail 6,497 · meridian-health 3,506 · lakeshore-holdings 1,542 · skyharbor-air 6,341 · northstar 878 · first-capital 400.</p>
+  <h3>Retrieval + citation proof (Phase 7) — tenant-scoped, isolation-safe</h3>
+  <table>
+    <tr><th>Client</th><th>Result</th><th>Top hit + citation</th></tr>
+    <tr><td>Meridian Health</td><td class="s-prog" style="font-weight:700">✅</td><td>renewal_calendar REN-MH-009 (score 22.76) · <code>06-renewal-calendar.csv</code></td></tr>
+    <tr><td>Lakeshore Holdings</td><td class="s-prog" style="font-weight:700">✅</td><td>vendor contract "Databricks" $850k (score 26.93) · <code>data/lakeshore-vendor-contracts.csv</code></td></tr>
+    <tr><td>Apex Retail</td><td class="s-prog" style="font-weight:700">✅ chunk-only</td><td>APX-SAP-SD $1.8M run cost (score 14.18) · <code>renewal-calendar-12mo.csv</code> — chunk, not fact-backed</td></tr>
+  </table>
+  <p class="muted">Promotion (Phase 8), context-bundle proof (Phase 9), module readiness (Phase 10): pending. Apex fact-load (Phase 5) and code fixes (retrieval tenant filter, segment mapping, Lakeshore registry) in flight.</p>
 
   <h2>PRs / commits / validation</h2>
   <ul>
