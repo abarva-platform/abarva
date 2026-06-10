@@ -206,3 +206,147 @@ export function intakeAsFacts(answered: Record<string, string>): string[] {
     ([qid, answer]) => `${qid.replace(/_/g, " ")}: ${answer}`,
   );
 }
+
+// ── DESIGN intake (P3) — Solution Approach & Architecture ────────────────────
+// Scoped by the approved DISCOVERY (diagnose answers): it never re-asks the
+// priorities/constraints already captured; it elicits the design decisions those
+// imply. Separate namespace so it doesn't collide with diagnose intake.
+
+const DESIGN_PREFIX = "design-intake:";
+
+export interface DesignQuestion {
+  id: string;
+  prompt: string;
+  whyNeeded: string;
+  feedsSection: string;
+  answered: boolean;
+  answer?: string;
+}
+
+export function buildDesignQuestions(
+  diagnoseAnswers: Record<string, string> = {},
+  answered: Record<string, string> = {},
+): DesignQuestion[] {
+  const hasDiagnose = Object.keys(diagnoseAnswers).length > 0;
+  const q: Array<Omit<DesignQuestion, "answered" | "answer">> = [
+    {
+      id: "architecture_pattern",
+      prompt: hasDiagnose
+        ? "Given your priority use-cases (requirements-gen, code-review, incident-analysis) and the mainframe-last sequencing, what target architecture do you favour — a centralized AI platform/gateway, embedded per-team tools, or a hybrid? Any existing platform to build on?"
+        : "What target architecture do you favour for AI-assisted delivery — centralized AI platform/gateway, embedded per-team tools, or hybrid?",
+      whyNeeded:
+        "Sets the architecture backbone the roadmap and estimates sequence against.",
+      feedsSection: "Target architecture",
+    },
+    {
+      id: "build_vs_buy",
+      prompt:
+        "Build-vs-buy for the AI tooling — adopt commercial dev-AI tools, an internal gateway over foundation models, or both? Any approved or banned vendors given your Security/IP constraints?",
+      whyNeeded:
+        "Drives cost basis (licences vs build) and the security control model.",
+      feedsSection: "Approach & build-vs-buy",
+    },
+    {
+      id: "guardrail_model",
+      prompt:
+        "What control model keeps usage safe — code/data egress controls, human review gates, role-based access, prompt/policy governance — and who owns the guardrails?",
+      whyNeeded:
+        "Your change-readiness answer flagged Security caution and human-in-the-loop; the architecture must encode it.",
+      feedsSection: "Guardrails & controls",
+    },
+    {
+      id: "data_uplift_approach",
+      prompt:
+        "Given Data Architecture at 2/5, how should the data uplift the use-cases need be handled — a parallel data-integration workstream, scoped data products per use-case, or deferred with a documented risk?",
+      whyNeeded:
+        "Turns the binding data constraint into a design choice the roadmap can cost.",
+      feedsSection: "Data enablement",
+    },
+    {
+      id: "human_agent_workflow",
+      prompt:
+        "Across the SDLC (requirements, code, test, release, incident), where does the AI agent assist and where must a human decide/approve? Any hard human-gate points?",
+      whyNeeded:
+        "Defines the human + agent operating model and the guardrail gates.",
+      feedsSection: "Human + agent operating model",
+    },
+    {
+      id: "integration_scope",
+      prompt:
+        "What must the approach integrate with — the CI/CD, ITSM, CMDB, product-planning and value-tracking systems you flagged as fragmented? Any integration constraints or sequencing?",
+      whyNeeded:
+        "Integration scope is a major estimate driver and a feasibility constraint.",
+      feedsSection: "Integration & operating model",
+    },
+  ];
+  return q.map((item) => ({
+    ...item,
+    answered: Boolean(answered[item.id]),
+    answer: answered[item.id],
+  }));
+}
+
+export async function recordDesignAnswer(
+  ctx: TenancyCtx,
+  args: {
+    moveId: string;
+    questionId: string;
+    prompt: string;
+    answer: string;
+    attestation: "client_attested" | "sme_attested" | "representative_attested";
+  },
+): Promise<{ evidenceId: string }> {
+  const evidenceId = await recordProgramEvidence(ctx, {
+    tenantKey: ctx.clientKey ?? "",
+    programId: args.moveId,
+    phase: 3,
+    stepId: `${DESIGN_PREFIX}${args.questionId}`,
+    evidenceType: "workshop_output",
+    title: `Design intake — ${args.questionId}`,
+    summary: args.answer.slice(0, 700),
+    extractedText: `Q: ${args.prompt}\nA: ${args.answer}`,
+    extractedStructured: {
+      decisions: [],
+      action_items: [],
+      risks: [],
+      baseline_candidates: [],
+      attendees: [],
+      parse_method: `design-intake:${args.attestation}`,
+      warnings: [],
+    },
+    confidence: 0.8,
+  });
+  return { evidenceId };
+}
+
+export async function resolveDesignIntake(
+  ctx: TenancyCtx,
+  moveId: string,
+): Promise<Record<string, string>> {
+  const tenantKey = ctx.clientKey ?? "";
+  if (!tenantKey || !moveId) return {};
+  try {
+    const sb = getAzureWriteFluentClient();
+    const { data, error } = await sb
+      .from("program_evidence_items")
+      .select("step_id, extracted_text, summary")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", moveId)
+      .like("step_id", `${DESIGN_PREFIX}%`);
+    if (error || !Array.isArray(data)) return {};
+    const out: Record<string, string> = {};
+    for (const r of data as Array<{
+      step_id: string;
+      extracted_text: string | null;
+      summary: string | null;
+    }>) {
+      const qid = r.step_id.slice(DESIGN_PREFIX.length);
+      const txt = r.extracted_text ?? r.summary ?? "";
+      const m = txt.match(/\nA:\s*([\s\S]*)$/);
+      out[qid] = (m ? m[1] : txt).trim();
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}

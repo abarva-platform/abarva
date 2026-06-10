@@ -25,7 +25,10 @@ import {
   type OrchestratorResult,
 } from "@/lib/programs/deliverables/orchestrator";
 import { tenantDisplayName } from "@/lib/programs/deliverables/board-deliverable";
-import { resolveDiagnoseIntake } from "@/lib/programs/deliverables/diagnose-intake";
+import {
+  resolveDiagnoseIntake,
+  resolveDesignIntake,
+} from "@/lib/programs/deliverables/diagnose-intake";
 import {
   renderDeliverableDocx,
   renderDeliverableHtml,
@@ -82,30 +85,58 @@ export async function GET(
       plan,
     });
 
-    // Ground later-phase deliverables (Discovery, Business Case, Roadmap,
-    // Mobilization, Handoff) in governed, attested DIAGNOSE INTAKE — real elicited
-    // answers (priorities, value levers, constraints, target state) — not just
-    // current-state evidence. Each answer becomes a cited fact.
-    const INTAKE_GROUNDED = new Set([
+    // Deliverable dependency chain: each later-phase deliverable is grounded in
+    // the governed, attested intake captured upstream (never invented). Diagnose
+    // intake (priorities, value levers, constraints, target state) feeds Design
+    // and everything after; Design intake (architecture, build-vs-buy, guardrails,
+    // workflow) feeds the Roadmap/Business-Case/Handoff that consume the approach.
+    const DIAGNOSE_GROUNDED = new Set([
       "discovery_report",
+      "ai_enabled_sdlc_architecture",
+      "target_operating_model",
       "business_case",
       "execution_roadmap",
       "mobilization_packet",
       "handoff_package",
     ]);
-    if (INTAKE_GROUNDED.has(spec.key)) {
-      const intake = await resolveDiagnoseIntake(ctx, programId);
+    const DESIGN_GROUNDED = new Set([
+      "ai_enabled_sdlc_architecture",
+      "target_operating_model",
+      "business_case",
+      "execution_roadmap",
+      "mobilization_packet",
+      "handoff_package",
+    ]);
+    const injectIntake = (
+      heading: string,
+      intake: Record<string, string>,
+      citation: string,
+    ) => {
       const entries = Object.entries(intake).filter(([, a]) => a && a.trim());
       if (entries.length) {
         base.sections.push({
-          heading: "Diagnose intake (attested)",
+          heading,
           claims: entries.map(([qid, ans]) => ({
             text: `${qid.replace(/_/g, " ")}: ${ans}`,
-            citation: "diagnose_intake:attested",
+            citation,
             missingEvidence: null,
           })),
         });
       }
+    };
+    if (DIAGNOSE_GROUNDED.has(spec.key)) {
+      injectIntake(
+        "Diagnose intake (attested)",
+        await resolveDiagnoseIntake(ctx, programId),
+        "diagnose_intake:attested",
+      );
+    }
+    if (DESIGN_GROUNDED.has(spec.key)) {
+      injectIntake(
+        "Design intake (attested)",
+        await resolveDesignIntake(ctx, programId),
+        "design_intake:attested",
+      );
     }
 
     // Render-from-cache: the json pass generates + caches the 3-pass result;

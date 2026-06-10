@@ -105,6 +105,13 @@ const KNOWN: Record<string, SourceLabel & { notes: string }> = {
     notes:
       "Answers captured in the governed Diagnose intake and attested by the responding stakeholder.",
   },
+  "design_intake:attested": {
+    title: "Design Intake (attested)",
+    type: "Attested stakeholder intake",
+    family: "Design / solution-approach session",
+    notes:
+      "Architecture and approach decisions captured in the governed Design intake and attested by the responding stakeholder.",
+  },
 };
 
 const PREFIX_FAMILY: Array<{ test: RegExp; type: string; family: string }> = [

@@ -125,6 +125,37 @@ const DELIVERABLE_META: Record<
       "Risks / issues / dependencies",
     ],
   },
+  ai_enabled_sdlc_architecture: {
+    label: "Solution Approach & AI-Enabled SDLC Architecture",
+    purpose:
+      "Define the recommended approach and target architecture for AI-assisted delivery",
+    audience:
+      "CIO, chief architect, security, engineering & product leadership",
+    decision:
+      "Align on the solution approach, target architecture, guardrails, and human+agent operating model before roadmap and estimates",
+    sections: [
+      "Recommended approach & options analysis",
+      "Target architecture",
+      "Human + AI-agent operating model",
+      "Guardrails & controls",
+      "Data enablement",
+      "Integration",
+    ],
+  },
+  target_operating_model: {
+    label: "Target AI-Powered Product Operating Model",
+    purpose:
+      "Define how product/engineering run AI-assisted delivery at target state",
+    audience: "CIO, CPO, transformation leader, engineering leadership",
+    decision:
+      "Align on the target operating model, ownership, and ways of working",
+    sections: [
+      "Operating model",
+      "Ways of working",
+      "Roles & ownership",
+      "Governance & guardrails",
+    ],
+  },
   discovery_report: {
     label: "Discovery Report",
     purpose: "Establish the current-state baseline, gaps, and opportunity",
