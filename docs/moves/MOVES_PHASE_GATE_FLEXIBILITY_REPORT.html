@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moves Phase Gate Flexibility — Implementation Report</title>
+    <style>
+      :root { --bg:#f8f7f4; --ink:#1a1a18; --muted:#5a6472; --line:#e3e6eb; --navy:#1b2b5c; --green:#1e7e34; --amber:#b26a00; --red:#b71c1c; }
+      * { box-sizing: border-box; }
+      body { background: var(--bg); color: var(--ink); font-family: "DM Sans", -apple-system, system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 56px 28px 96px; line-height: 1.55; }
+      h1, h2, h3 { font-family: Georgia, serif; font-weight: 400; }
+      h1 { font-size: 32px; margin: 0 0 6px; }
+      h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+      h3 { font-size: 16px; margin: 24px 0 6px; }
+      .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+      code { font-family: Menlo, monospace; font-size: 12.5px; background: #eef0f3; padding: 1px 5px; border-radius: 3px; }
+      table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+      td, th { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+      th { background: #f1f2f4; font-weight: 600; }
+      ul { margin: 8px 0; padding-left: 22px; } li { margin: 4px 0; }
+      .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+      .ok { background: #e6f4ea; color: var(--green); }
+      .warn { background: #fff4e5; color: var(--amber); }
+      .flow { background: #eef0f3; border-radius: 8px; padding: 14px 18px; font-family: Menlo, monospace; font-size: 12.5px; line-height: 1.9; color: var(--navy); }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <h1>Moves Phase Gate Flexibility</h1>
+    <div class="sub">
+      Advance a Move through its phases without faking completeness — Maestro/Admin
+      can approve with gaps, the gaps stay visible, and every decision is recorded.
+    </div>
+
+    <h2>1. Principle</h2>
+    <p>
+      Real engagements do not stall because one soft criterion is unmet — a lead
+      makes a judgment call, advances, and carries the gap forward as a tracked
+      obligation. AbarVa models exactly this: <strong>hard</strong> gate criteria
+      block advancement (no fabrication, no bypass); <strong>soft</strong>
+      criteria can be carried forward by an authorized approver. The gap does not
+      disappear when the gate is crossed — it is written into a durable decision
+      record and surfaced on downstream artifacts.
+    </p>
+
+    <h2>2. The three dispositions</h2>
+    <table>
+      <tr><th>Disposition</th><th>Condition</th><th>Outcome</th></tr>
+      <tr>
+        <td><span class="pill ok">Clean advance</span></td>
+        <td>All gate criteria (hard + soft) satisfied.</td>
+        <td>Advance proceeds. Decision record written, status <code>approved</code>.</td>
+      </tr>
+      <tr>
+        <td><span class="pill warn">Override with gaps</span></td>
+        <td>Hard criteria satisfied; one or more soft criteria unmet, or explicit <code>bypassGate</code>.</td>
+        <td>Authorized approver advances. Carried-forward gaps recorded; record status <code>review_required</code>.</td>
+      </tr>
+      <tr>
+        <td><span class="pill" style="background:#fdecea;color:var(--red)">Blocked</span></td>
+        <td>Any hard criterion unmet.</td>
+        <td>Advance refused (HTTP 409). No override path. The gap must be closed first.</td>
+      </tr>
+    </table>
+
+    <h2>3. Governance the override does NOT weaken</h2>
+    <ul>
+      <li>Hard-fail checks always block — <code>evaluateGate</code> runs first; a single hard fail returns <code>gate_blocked</code>.</li>
+      <li>A human rationale (≥ 20 chars) is required for every advance.</li>
+      <li>Gate approval requires the <code>canApproveGates</code> capability; under <code>GATE_APPROVAL_STRICT_MODE</code> it requires an admin/maestro role.</li>
+      <li>Approvals are bound to the specific transition (from/to phase) and approval type — no replay of a stale or unrelated approval.</li>
+      <li>The AI/operator never self-approves (rule R8).</li>
+    </ul>
+
+    <h2>4. The Phase Gate Decision Record (durable + visible)</h2>
+    <p>
+      On every successful advance, a <strong>Phase Gate Decision Record</strong>
+      is written to the Artifact Vault (family <code>approval_artifact</code>) and
+      appears in the Move's File Cabinet. It captures:
+    </p>
+    <ul>
+      <li>the transition (phase <em>n</em> → <em>n+1</em>) and disposition;</li>
+      <li>the approver (name + role) and the human rationale;</li>
+      <li>the <strong>carried-forward gaps</strong> — each unmet soft criterion with the reason it remains open;</li>
+      <li>stated assumptions and acknowledged missing inputs;</li>
+      <li>the bound approval ID, when an approval was consumed.</li>
+    </ul>
+    <div class="flow">
+      POST /api/v1/programs/:id/advance<br />
+      &nbsp;&nbsp;&darr; evaluateGate &mdash; hard fails block (409)<br />
+      &nbsp;&nbsp;&darr; rationale + approval / capability checks<br />
+      advancePhase(...)<br />
+      &nbsp;&nbsp;&darr; carriedGaps = soft failedChecks<br />
+      saveGateDecisionArtifact(...) &rarr; Azure Blob + move_artifacts<br />
+      &nbsp;&nbsp;&darr;<br />
+      File Cabinet &mdash; Approvals section &mdash; gaps remain visible
+    </div>
+
+    <h2>5. Gaps carry forward, not away</h2>
+    <p>
+      Because the carried-forward gaps live in the decision record (and in the
+      registry metadata), they remain legible after the gate is crossed.
+      Downstream deliverables that rest on an unmet criterion keep a
+      <code>preliminary</code> / gap status rather than presenting as complete —
+      AbarVa does not fake completeness, and it does not let a judgment-call
+      advance erase the obligation that made it a judgment call.
+    </p>
+
+    <h2>6. Hard rules honored</h2>
+    <ul>
+      <li>Maestro/Admin can approve with gaps. <span class="pill ok">enforced</span></li>
+      <li>Gaps remain visible. <span class="pill ok">enforced</span></li>
+      <li>Downstream artifacts inherit preliminary/gap status. <span class="pill ok">enforced</span></li>
+      <li>Do not fake completeness. <span class="pill ok">enforced</span></li>
+      <li>AI/operator never self-approves. <span class="pill ok">enforced</span></li>
+    </ul>
+  </body>
+</html>

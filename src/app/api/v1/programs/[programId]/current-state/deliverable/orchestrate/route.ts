@@ -17,7 +17,22 @@ import {
   getArchetype,
   DEFAULT_ARCHETYPE_ID,
 } from "@/lib/programs/archetypes/registry";
+import { PHASE_NUMBER } from "@/lib/programs/archetypes/types";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { draftModuleDeliverable } from "@/lib/programs/nexus";
+
+// Map archetype deliverable keys → a REGISTERED deliverable_types.type_key (FK).
+// Unregistered types fall back to the generic "markdown" type.
+const PERSIST_TYPE_KEY: Record<string, string> = {
+  program_charter: "charter",
+  discovery_report: "discovery_report",
+  ai_enabled_sdlc_architecture: "markdown",
+  target_operating_model: "markdown",
+  business_case: "business_case",
+  execution_roadmap: "execution_roadmap",
+  mobilization_packet: "mobilization_roadmap",
+  handoff_package: "tower_handoff_plan",
+};
 import {
   orchestrateDeliverable,
   getCachedOrchestration,
@@ -33,6 +48,8 @@ import {
   renderDeliverableDocx,
   renderDeliverableHtml,
 } from "@/lib/programs/deliverables/render";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import { buildMoveContextBundleTrace } from "@/lib/programs/deliverables/move-context-bundle-trace";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -160,6 +177,85 @@ export async function GET(
         userId: ctx.userId,
       });
       setCachedOrchestration(cacheKey, orchestrated);
+      // Persist-on-generate: save the artifact to the move's deliverable store so
+      // it appears in the Deliverables drawer with view/download. Best-effort —
+      // never fail generation if persistence hiccups.
+      try {
+        const moduleKey = `p${PHASE_NUMBER[spec.phase] ?? 2}`;
+        await draftModuleDeliverable(ctx, {
+          programId,
+          moduleKey,
+          deliverableTypeKey: PERSIST_TYPE_KEY[spec.key] ?? "markdown",
+          title: `${orchestrated.result.label} — ${orchestrated.result.moveName}`,
+          draftContent: orchestrated.result.bodyMarkdown,
+          structuredData: {
+            sourceRegister: orchestrated.result.sourceRegister,
+            openItems: orchestrated.result.openItems,
+            quality: orchestrated.quality,
+            generatedBy: orchestrated.model,
+            passes: orchestrated.passes,
+            grounded: true,
+          },
+        });
+      } catch {
+        /* best-effort persist */
+      }
+      // Durable Artifact Vault: render the board-grade DOCX, store to Azure Blob,
+      // register in move_artifacts (versioned). This is the File Cabinet entry.
+      try {
+        const docxBuf = await renderDeliverableDocx(orchestrated.result);
+        const safe =
+          `${orchestrated.result.clientName}_${orchestrated.result.label}`.replace(
+            /[^A-Za-z0-9]+/g,
+            "_",
+          );
+        // PR-8: emit the MoveContextBundleTrace — the audit provenance for this
+        // generation, attached to the artifact's vault metadata.
+        const trace = buildMoveContextBundleTrace({
+          tenantId: ctx.clientId,
+          tenantKey: ctx.clientKey ?? ctx.clientId,
+          moveId: programId,
+          deliverableType: spec.key,
+          moveName: orchestrated.result.moveName,
+          model: orchestrated.model,
+          passes: orchestrated.passes,
+          sourceRegister: orchestrated.result.sourceRegister as Array<
+            { marker?: string; label?: string } | string
+          >,
+          bodyMarkdown: orchestrated.result.bodyMarkdown,
+          unsupportedClaims: orchestrated.result.unsupportedClaims,
+          openItems: orchestrated.result.openItems,
+          qualityScore: orchestrated.quality.qualityScore,
+          qualityPass: orchestrated.quality.pass,
+        });
+        await saveMoveArtifact(ctx, {
+          moveId: programId,
+          phase: PHASE_NUMBER[spec.phase] ?? 2,
+          archetype: archetype.id,
+          artifactType: spec.key,
+          artifactFamily: "generated_deliverable",
+          title: `${orchestrated.result.label} — ${orchestrated.result.moveName}`,
+          fileName: `${safe}.docx`,
+          fileFormat: "docx",
+          body: docxBuf,
+          status: orchestrated.quality.pass ? "review_required" : "preliminary",
+          qualityScore: orchestrated.quality.qualityScore,
+          unsupportedClaimsCount: orchestrated.result.unsupportedClaims.length,
+          citationReady: true,
+          sourceBasis: "governed_evidence",
+          confidence: "medium",
+          generatedBy: orchestrated.model,
+          metadata: {
+            sourceRegister: orchestrated.result.sourceRegister,
+            openItems: orchestrated.result.openItems,
+            passes: orchestrated.passes,
+            markdown: orchestrated.result.bodyMarkdown.slice(0, 40000),
+            contextBundleTrace: trace,
+          },
+        });
+      } catch {
+        /* best-effort vault save */
+      }
     }
     const {
       result,

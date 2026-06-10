@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moves File Cabinet &amp; Artifact Vault — Implementation Report</title>
+    <style>
+      :root {
+        --bg: #f8f7f4;
+        --ink: #1a1a18;
+        --muted: #5a6472;
+        --line: #e3e6eb;
+        --navy: #1b2b5c;
+        --green: #1e7e34;
+        --amber: #b26a00;
+      }
+      * { box-sizing: border-box; }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "DM Sans", -apple-system, system-ui, sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 56px 28px 96px;
+        line-height: 1.55;
+      }
+      h1, h2, h3 { font-family: Georgia, serif; font-weight: 400; }
+      h1 { font-size: 32px; margin: 0 0 6px; }
+      h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+      h3 { font-size: 16px; margin: 24px 0 6px; }
+      .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+      code { font-family: Menlo, monospace; font-size: 12.5px; background: #eef0f3; padding: 1px 5px; border-radius: 3px; }
+      table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+      td, th { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+      th { background: #f1f2f4; font-weight: 600; }
+      ul { margin: 8px 0; padding-left: 22px; }
+      li { margin: 4px 0; }
+      .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+      .ok { background: #e6f4ea; color: var(--green); }
+      .flow { background: #eef0f3; border-radius: 8px; padding: 14px 18px; font-family: Menlo, monospace; font-size: 12.5px; line-height: 1.9; color: var(--navy); }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <h1>Moves File Cabinet &amp; Artifact Vault</h1>
+    <div class="sub">
+      Durable, versioned, governed artifact storage for every Strategic Move —
+      Azure Blob + Postgres registry + File Cabinet UI. Implementation report.
+    </div>
+
+    <h2>1. The problem this closes</h2>
+    <p>
+      Before this work, generated deliverables lived in browser downloads or
+      ephemeral API responses. Nothing was durably stored, versioned, or
+      discoverable. A Move could not function as a professional engagement
+      workspace because its artifacts had no home. This implementation makes the
+      hard rule literal: <strong>no Move artifact exists only in browser
+      Downloads or temp output</strong> — every one is saved to Azure Blob, has
+      a Postgres metadata row, appears in the File Cabinet, and keeps its version
+      history.
+    </p>
+
+    <h2>2. Architecture</h2>
+    <div class="flow">
+      generate / upload / advance<br />
+      &nbsp;&nbsp;&darr;<br />
+      saveMoveArtifact(ctx, input)<br />
+      &nbsp;&nbsp;&darr; renders bytes (DOCX / HTML / XLSX)<br />
+      Azure Blob &mdash; objectStorage.upload(container, blobPath, bytes)<br />
+      &nbsp;&nbsp;&darr; canonical path<br />
+      <span class="muted">moves/{tenant_key}/{move_id}/{family}/v{n}/{file}</span><br />
+      &nbsp;&nbsp;&darr;<br />
+      Postgres &mdash; INSERT move_artifacts (sha256, version, status, governance)<br />
+      &nbsp;&nbsp;&darr; supersede prior current (version lineage preserved)<br />
+      File Cabinet API &mdash; GET /api/v1/programs/:id/artifacts<br />
+      &nbsp;&nbsp;&darr;<br />
+      File Cabinet tab &mdash; grouped, filterable, open + download
+    </div>
+
+    <h3>2.1 The registry table — <code>move_artifacts</code></h3>
+    <p>
+      One row per artifact version. Carries Blob location
+      (<code>blob_container</code>, <code>blob_path</code>,
+      <code>blob_sha256</code>), <code>file_size</code>, <code>version</code>,
+      a governed <code>status</code> (draft → preliminary → review_required →
+      aligned → approved → board_ready, plus gap states like
+      <code>client_to_complete</code>, <code>evidence_missing</code>,
+      <code>blocked</code>), version lineage
+      (<code>supersedes_artifact_id</code> /
+      <code>superseded_by_artifact_id</code>), a
+      <code>lifecycle_state</code> (current / superseded / retired), and quality
+      signals (<code>quality_score</code>,
+      <code>unsupported_claims_count</code>, <code>citation_ready</code>). Row
+      Level Security scopes reads to the tenant key — no cross-tenant access.
+    </p>
+
+    <h3>2.2 Artifact families</h3>
+    <table>
+      <tr><th>Family</th><th>What it holds</th></tr>
+      <tr><td><code>generated_deliverable</code></td><td>Charters, discovery reports, business cases, roadmaps — board-grade generated output.</td></tr>
+      <tr><td><code>uploaded_evidence</code></td><td>Client uploads, source documents, meeting notes.</td></tr>
+      <tr><td><code>session_artifact</code></td><td>Design-session packs, capture templates, playback decks, worksheets.</td></tr>
+      <tr><td><code>approval_artifact</code></td><td>Phase Gate Decision Records, approval packets.</td></tr>
+      <tr><td><code>template</code></td><td>Reusable framework templates handed to the client.</td></tr>
+      <tr><td><code>historical_version</code></td><td>Superseded versions, preserved for audit.</td></tr>
+    </table>
+
+    <h2>3. Versioning</h2>
+    <p>
+      <code>saveMoveArtifact</code> computes the next version per
+      <code>(move, artifact_type)</code> among <em>current</em> rows, writes the
+      new row as <code>lifecycle_state = current</code>, and atomically marks the
+      prior current row <code>superseded</code> with a back-pointer. Nothing is
+      deleted — the File Cabinet's “Show version history” toggle reveals the full
+      lineage. Every regeneration of the Charter produces v2, v3, … without
+      losing v1.
+    </p>
+
+    <h2>4. The File Cabinet UI</h2>
+    <p>
+      A dedicated <strong>File Cabinet</strong> tab on every Move detail page.
+      It reads the registry API and presents artifacts grouped by family, with
+      per-family filter chips and counts, a current-vs-history toggle, and per
+      row: title, format badge, version, governed status chip, phase, quality
+      score, unsupported-claim count, file size, timestamp, an explicit
+      <span class="pill ok">● Blob</span> storage indicator, and
+      <strong>Open</strong> / <strong>Download</strong> actions.
+    </p>
+
+    <h2>5. Download path — honest about storage</h2>
+    <p>
+      The download route streams the artifact bytes from Blob server-side via the
+      object-storage adapter (<code>download(container, path)</code>) rather than
+      minting a SAS URL — so it works under managed identity without
+      user-delegation-key rights, and tenant isolation is enforced before a byte
+      is read. The registry never lies about storage: an artifact whose bytes did
+      not reach Blob is marked <code>storage: unconfigured</code> and the UI shows
+      <span class="muted">○ no blob</span> rather than implying it was stored.
+    </p>
+
+    <h2>6. Hard rules honored</h2>
+    <ul>
+      <li>Every artifact saved to Azure Blob. <span class="pill ok">enforced</span></li>
+      <li>Every artifact has Postgres metadata. <span class="pill ok">enforced</span></li>
+      <li>Every artifact appears in the File Cabinet. <span class="pill ok">enforced</span></li>
+      <li>Version history preserved. <span class="pill ok">enforced</span></li>
+      <li>No cross-tenant access (RLS + tenant-key checks on read/download). <span class="pill ok">enforced</span></li>
+      <li>No browser-only or temp-only artifacts. <span class="pill ok">enforced</span></li>
+    </ul>
+  </body>
+</html>
