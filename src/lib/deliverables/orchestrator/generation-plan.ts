@@ -1,0 +1,75 @@
+// Plan validation — gates Claude's Pass-1 architect output before any drafting.
+//
+// The architect pass returns a DeliverableGenerationPlan. We validate that the plan
+// covers the brief's required sections, only cites evidence that exists, and handles
+// every missing-evidence family + client-to-complete item somewhere — so a thin or
+// fabricating plan is caught before we spend tokens on a full draft.
+
+import type {
+  DeliverableArtifactBrief,
+  DeliverableGenerationPlan,
+  DeliverableIntelligenceRequest,
+  PlanValidationResult,
+} from './types';
+
+export function validateGenerationPlan(
+  plan: DeliverableGenerationPlan,
+  req: DeliverableIntelligenceRequest,
+  brief: DeliverableArtifactBrief,
+): PlanValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const sectionKeys = new Set(plan.sectionPlan.map((s) => s.key));
+
+  // required sections present
+  for (const key of brief.requiredSections) {
+    if (!sectionKeys.has(key)) errors.push(`plan omits required section "${key}"`);
+  }
+
+  // every cited evidence number must exist in the bundle
+  const validCitations = new Set(req.governedEvidenceBundle.map((e) => e.citationNumber));
+  for (const s of plan.sectionPlan) {
+    for (const n of s.evidenceCitations) {
+      if (!validCitations.has(n)) errors.push(`section "${s.key}" cites [${n}] which is not in the governed evidence bundle`);
+    }
+    // a governed_facts / mixed section that cites nothing AND has no placeholder is a fabrication risk
+    if ((s.groundingMode === 'governed_facts' || s.groundingMode === 'mixed') &&
+        s.evidenceCitations.length === 0 && s.placeholders.length === 0 && s.assumptionsUsed.length === 0) {
+      errors.push(`section "${s.key}" is ${s.groundingMode} but cites no evidence, uses no assumption, and has no placeholder — would fabricate client facts`);
+    }
+  }
+
+  // every missing-evidence family must be handled (placeholder/assumption/client-complete), not silently dropped
+  const handledFamilies = new Set(plan.missingEvidenceHandling.map((m) => m.evidenceFamily));
+  for (const m of req.missingEvidence) {
+    if (!handledFamilies.has(m.evidenceFamily)) {
+      warnings.push(`missing-evidence family "${m.evidenceFamily}" not explicitly handled in the plan`);
+    }
+  }
+
+  // every client-to-complete item must be placed somewhere
+  const placedClientComplete = new Set(plan.clientCompletePlan.map((c) => c.key));
+  for (const c of req.clientCompleteItems) {
+    if (!placedClientComplete.has(c.key)) errors.push(`client-to-complete item "${c.key}" is not placed in the plan`);
+  }
+
+  // output package must cover the requested formats
+  const plannedFormats = new Set(plan.outputPackagePlan.map((o) => o.format));
+  for (const f of req.outputFormats) {
+    if (!plannedFormats.has(f)) warnings.push(`output format "${f}" not addressed in the output package plan`);
+  }
+
+  // thin-plan guard
+  if (plan.sectionPlan.length < brief.requiredSections.length) {
+    errors.push(`plan has ${plan.sectionPlan.length} sections; brief requires at least ${brief.requiredSections.length}`);
+  }
+  if (plan.tableAndExhibitPlan.length === 0 && (brief.expectedTables.length > 0 || brief.expectedExhibits.length > 0)) {
+    warnings.push('plan includes no tables/exhibits though the brief expects them');
+  }
+  if (plan.artifactEnhancementSuggestions.length === 0) {
+    warnings.push('plan proposes no enhancements beyond the baseline structure — may be too mechanical');
+  }
+
+  return { ok: errors.length === 0, errors, warnings };
+}
