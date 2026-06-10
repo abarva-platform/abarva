@@ -128,3 +128,35 @@ describe("validateDeliverableQuality — the export gate", () => {
     expect(r.qualityScore).toBeGreaterThanOrEqual(80);
   });
 });
+
+import { resolveArtifactBrief, expertRoleLine } from "../artifact-briefs";
+
+describe("artifact intelligence briefs — per use case, expert latitude", () => {
+  it("AI-PDLC charter brief carries AI-PDLC exhibits + expert latitude", () => {
+    const b = resolveArtifactBrief({
+      archetypeId: "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
+      deliverableType: "program_charter",
+    });
+    expect(b.module).toBe("moves");
+    expect(b.expectedExhibits.join(" ")).toMatch(/DORA/i);
+    expect(b.allowedExpertKnowledge.length).toBeGreaterThan(3);
+    expect(expertRoleLine(b.archetypeId)).toMatch(/senior|partner|expert/i);
+  });
+  it("AMS sourcing brief differs by use case (vendor/SLA exhibits)", () => {
+    const b = resolveArtifactBrief({
+      archetypeId: "IT_SOURCING_EVENT",
+      deliverableType: "rfp_package",
+    });
+    expect(b.module).toBe("source");
+    expect(b.expectedExhibits.join(" ")).toMatch(/vendor|SLA/i);
+    expect(b.label).toMatch(/RFP/i);
+  });
+  it("unknown archetype falls back without throwing", () => {
+    const b = resolveArtifactBrief({
+      archetypeId: "UNKNOWN_X",
+      deliverableType: "business_case",
+    });
+    expect(b.expectedExhibits.length).toBeGreaterThan(0);
+    expect(b.label).toMatch(/Business Case/i);
+  });
+});
