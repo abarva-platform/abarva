@@ -229,6 +229,28 @@ describe('classifySourcingEvent — confidence and pattern binding', () => {
     expect(r.matchReasons.join(' ')).toMatch(/defaulted to AMS/i);
   });
 
+  it('classifies a realistically-phrased AMS event at HIGH confidence (no bound pattern)', () => {
+    // Regression for the keyword-table strengthening: an unmistakable AMS event
+    // phrased the way a real RFP reads must score >=3 keyword hits → high, not
+    // limp in at medium on a single keyword.
+    const r = classifySourcingEvent(
+      event(
+        'Application Managed Services for Reservations & Airport Operations',
+        {
+          description:
+            'Multi-tower application management and support (L1/L2/L3); seeking a ' +
+            'managed-services partner with SLA-backed service levels and a service desk.',
+        },
+      ),
+      FULLY_LOADED,
+    );
+    expect(r.categoryId).toBe('ams');
+    expect(r.confidence).toBe('high');
+    // matchReasons must be auditable and name multiple keywords, not one.
+    expect(r.matchReasons.join(' ')).toMatch(/application management/);
+    expect(r.matchReasons.join(' ')).toMatch(/managed-services partner/);
+  });
+
   it('is a pure function — identical inputs yield identical output', () => {
     const attrs = event('Customer Data Platform selection — CDP');
     const a = classifySourcingEvent(attrs, FULLY_LOADED);

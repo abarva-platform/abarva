@@ -151,11 +151,16 @@ const CATEGORY_KEYWORDS: Readonly<Record<SourceCategoryId, readonly RegExp[]>> =
   ams: [
     /\bams\b/,
     /managed service(?!s? vs)/,
-    /application support/,
-    /application maintenance/,
+    /application (?:support|maintenance|management)/,
+    /application managed service/,
+    /managed[- ]services? partner/,
     /run\/maintain/,
+    /run and maintain/,
     /keep the lights on/,
     /l[123] support/,
+    /l[123]\/l[123]/,
+    /tier [123] (?:support|service)/,
+    /service desk/,
   ],
   data_ai_platform: [
     /\bcdp\b/,
