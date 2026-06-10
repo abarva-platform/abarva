@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Source File Cabinet / Artifact Vault</title><style>
+body{background:#F8F7F4;color:#1a1a1a;font-family:'DM Sans',Inter,Segoe UI,sans-serif;line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:40px 28px 80px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:400;color:#0C1A3A}
+h1{font-size:30px}h2{font-size:20px;border-bottom:1px solid #e4e1da;padding-bottom:6px;margin-top:30px}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}
+table{border-collapse:collapse;width:100%;margin:10px 0;background:#fff;border:1px solid #e4e1da;font-size:13px}
+th,td{border:1px solid #e4e1da;padding:7px 10px;text-align:left}th{background:#0C1A3A;color:#fff}
+.ok{color:#1f7a3d;font-weight:600}
+</style></head><body><div class="wrap">
+<h1>Source File Cabinet / Artifact Vault</h1>
+<p style="color:#706D66">Durable storage, versioning, and access for every artifact tied to a Source event. Implements the Addendum: no Source artifact may exist only in Downloads or browser memory.</p>
+
+<h2>Design</h2>
+<ul>
+<li><b>Azure Blob is the durable byte store</b> — every artifact is uploaded via the shared object-storage adapter (managed identity) to canonical paths under the <code>source-events</code> bucket. No local-only or browser-only files.</li>
+<li><b>Postgres is the metadata registry</b> — <code>source_artifacts</code> (migration <code>20260610203000</code>) records every artifact: group, type, title, file, blob location, version, status, evidence/citation linkage, approval state, lifecycle. RLS: service_role all + authenticated read scoped by <code>tenant_key</code>.</li>
+<li><b>File Cabinet is the access layer</b> — a per-event panel grouping Generated / Uploaded / Templates / Sessions / Approvals, with version + status chips and durable download links; history (superseded) is opt-in.</li>
+</ul>
+
+<h2>Canonical blob paths</h2>
+<table><tr><th>Group</th><th>Path</th></tr>
+<tr><td>Generated</td><td><code>source-events/{tenant}/{event}/generated/{type}/v{n}/{file}</code></td></tr>
+<tr><td>Uploads</td><td><code>source-events/{tenant}/{event}/uploads/{family}/{batch}/{file}</code></td></tr>
+<tr><td>Sessions</td><td><code>source-events/{tenant}/{event}/sessions/{session}/{type}/{file}</code></td></tr>
+<tr><td>Approvals</td><td><code>source-events/{tenant}/{event}/approvals/{gate}/{ts}/{file}</code></td></tr>
+</table>
+
+<h2>Versioning</h2>
+<p>Regenerating never overwrites. <code>persistSourceArtifact</code> computes the next version for an (event, type, group), uploads bytes at the versioned path, inserts a <code>lifecycle_state='current'</code> row, and flips the prior current row to <code>superseded</code> (back-linked via <code>superseded_by_artifact_id</code>). The default File Cabinet view shows current only; history is one toggle away. Every prior version remains downloadable.</p>
+
+<h2>Components</h2>
+<table><tr><th>Layer</th><th>File</th></tr>
+<tr><td>Schema</td><td><code>supabase/migrations/20260610203000_source_artifacts.sql</code></td></tr>
+<tr><td>Blob</td><td><code>src/lib/source/file-cabinet/blob-store.ts</code></td></tr>
+<tr><td>Registry</td><td><code>src/lib/source/file-cabinet/repository.ts</code></td></tr>
+<tr><td>Persist service</td><td><code>src/lib/source/file-cabinet/service.ts</code> (<code>persistSourceArtifact</code>)</td></tr>
+<tr><td>List API</td><td><code>GET /api/v1/source/events/{eventId}/artifacts</code></td></tr>
+<tr><td>Download API</td><td><code>GET /api/v1/source/artifacts/{artifactId}/download</code> (streams Blob bytes)</td></tr>
+<tr><td>UI</td><td><code>FileCabinetPanel</code> + <code>/source/events/{eventId}/file-cabinet</code></td></tr>
+</table>
+
+<h2>Acceptance status (this PR)</h2>
+<ul>
+<li class="ok">✓ Durable Azure Blob storage for artifacts (upload + canonical paths + signed/stream download)</li>
+<li class="ok">✓ Postgres metadata registry with full SourceArtifact schema</li>
+<li class="ok">✓ Versioning (current + superseded history; no overwrite)</li>
+<li class="ok">✓ Tenant-scoped list + download routes</li>
+<li class="ok">✓ File Cabinet UI grouped by artifact group with version/status/download</li>
+<li class="ok">✓ 15 unit tests (paths, versioning, repository, routes); tsc + eslint + architecture-rules clean</li>
+</ul>
+
+<h2>Next (follow-up PRs)</h2>
+<ul>
+<li>Wire the deliverable generator to <code>persistSourceArtifact</code> so generated RFP/pricing/SLA/strategy/recommendation land in the cabinet automatically (replaces the metadata-only generated_artifacts path for Source).</li>
+<li>Upload-evidence + session + approval-packet write paths (Maestro override → approval artifact).</li>
+<li>Source register / context-trace deep links from each artifact row.</li>
+</ul>
+</div></body></html>

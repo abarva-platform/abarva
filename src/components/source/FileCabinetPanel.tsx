@@ -1,0 +1,124 @@
+'use client';
+
+// Source File Cabinet — durable artifact vault for a Source event. Lists every
+// generated deliverable, uploaded evidence, template, session, and approval artifact
+// (stored in Azure Blob), grouped, with version + status chips and durable
+// download links. History (superseded versions) is opt-in.
+
+import { useCallback, useEffect, useState } from 'react';
+
+interface Artifact {
+  id: string;
+  artifactGroup: string;
+  artifactType: string;
+  title: string;
+  fileName: string;
+  fileFormat: string;
+  version: number;
+  status: string;
+  lifecycleState: string;
+  generatedAt: string;
+  citationReady: boolean;
+  missingInputs: string[];
+  sourcingStage: string | null;
+}
+
+const NAVY = '#0C1A3A';
+const GROUP_LABELS: Record<string, string> = {
+  generated: 'Generated Deliverables',
+  upload: 'Uploaded Evidence',
+  template: 'Templates',
+  session: 'Meeting / Session Artifacts',
+  approval: 'Approval / Gate Artifacts',
+};
+const STATUS_COLOR: Record<string, string> = {
+  issue_ready: '#1f7a3d', approved: '#1f7a3d', preliminary: '#8a6d1a', draft: '#6b6b6b',
+  client_to_complete: '#1d5e87', legal_review_required: '#8a6d1a', procurement_review_required: '#8a6d1a',
+  pricing_review_required: '#8a6d1a', blocked: '#b3261e', superseded: '#9a9a9a', retired: '#9a9a9a',
+};
+
+function Chip({ text, color }: { text: string; color?: string }) {
+  return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: `${color ?? '#6b6b6b'}1a`, color: color ?? '#6b6b6b' }}>{text}</span>;
+}
+
+export function FileCabinetPanel({ eventId, eventName }: { eventId: string; eventName?: string }) {
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [grouped, setGrouped] = useState<Record<string, Artifact[]>>({});
+  const [includeHistory, setIncludeHistory] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/source/events/${eventId}/artifacts${includeHistory ? '?includeHistory=1' : ''}`);
+      const data = (await res.json()) as { artifacts?: Artifact[]; grouped?: Record<string, Artifact[]>; detail?: string };
+      if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
+      setArtifacts(data.artifacts ?? []);
+      setGrouped(data.grouped ?? {});
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to load file cabinet');
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId, includeHistory]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  return (
+    <div style={{ maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: 24, color: NAVY, margin: 0 }}>File Cabinet</h1>
+          <p style={{ color: '#706D66', fontSize: 13, marginTop: 4 }}>
+            Every artifact for {eventName ? <strong>{eventName}</strong> : 'this sourcing event'} — durably stored in Azure Blob, versioned, and re-downloadable.
+          </p>
+        </div>
+        <label style={{ fontSize: 12, color: '#706D66', display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input type="checkbox" checked={includeHistory} onChange={(e) => setIncludeHistory(e.target.checked)} />
+          Show historical versions
+        </label>
+      </header>
+
+      {loading && <div style={{ color: '#706D66', fontSize: 13 }}>Loading artifacts…</div>}
+      {error && <div style={{ padding: '10px 12px', background: 'rgba(179,38,30,0.06)', border: '1px solid rgba(179,38,30,0.3)', borderRadius: 6, color: '#B3261E', fontSize: 13 }}>{error}</div>}
+      {!loading && !error && artifacts.length === 0 && (
+        <div style={{ color: '#706D66', fontSize: 13, padding: 16, background: '#fff', border: '1px solid #e4e1da', borderRadius: 8 }}>
+          No artifacts yet. Generated deliverables, uploaded evidence, and approval records will appear here automatically.
+        </div>
+      )}
+
+      {!loading && !error && ['generated', 'upload', 'template', 'session', 'approval'].map((group) => {
+        const items = grouped[group] ?? [];
+        if (items.length === 0) return null;
+        return (
+          <section key={group} style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ padding: '10px 14px', background: '#f1efe9', fontWeight: 600, fontSize: 13, color: NAVY }}>
+              {GROUP_LABELS[group]} <span style={{ color: '#9a9a9a', fontWeight: 400 }}>({items.length})</span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <tbody>
+                {items.map((a) => (
+                  <tr key={a.id} style={{ borderTop: '1px solid #efece5', opacity: a.lifecycleState === 'current' ? 1 : 0.6 }}>
+                    <td style={{ padding: '9px 14px' }}>
+                      <div style={{ fontWeight: 600 }}>{a.title}</div>
+                      <div style={{ color: '#9a9a9a', fontSize: 11 }}>{a.fileName} · {a.fileFormat.toUpperCase()}{a.sourcingStage ? ` · ${a.sourcingStage}` : ''}</div>
+                      {a.missingInputs.length > 0 && <div style={{ color: '#8a6d1a', fontSize: 11, marginTop: 2 }}>Missing: {a.missingInputs.slice(0, 4).join(', ')}</div>}
+                    </td>
+                    <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={`v${a.version}`} color="#1d5e87" /></td>
+                    <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={a.status.replace(/_/g, ' ')} color={STATUS_COLOR[a.status]} /></td>
+                    <td style={{ padding: '9px 8px', whiteSpace: 'nowrap', color: '#9a9a9a', fontSize: 11 }}>{a.generatedAt?.slice(0, 10)}</td>
+                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                      <a href={`/api/v1/source/artifacts/${a.id}/download`} style={{ color: '#fff', background: NAVY, padding: '5px 12px', borderRadius: 5, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>Download</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
