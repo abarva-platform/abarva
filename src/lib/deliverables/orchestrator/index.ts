@@ -14,3 +14,4 @@ export * from './persistence';
 export * from './build-request';
 export * from './evidence-assembler';
 export * from './generate-service';
+export * from './runs-repository';

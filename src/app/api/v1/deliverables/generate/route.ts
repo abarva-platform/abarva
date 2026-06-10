@@ -1,18 +1,19 @@
 // POST /api/v1/deliverables/generate
 //
-// In-product entry point for the Deliverable Intelligence Orchestrator. Resolves the
-// caller's tenant + user, runs the governed multi-pass generation, and returns the
-// persisted artifact reference (or the quality-gate blockers when the document is
-// refused). One client boundary is enforced by requireTenancy.
+// Kicks off async board-grade generation. Board-grade authoring is a six-pass Claude
+// flow (~5–10 min) that cannot complete inside one HTTP request, so this route creates
+// a run row, starts the generation in the persistent app process (fire-and-forget), and
+// returns the run id immediately (202). The client polls GET /deliverables/runs/{id}.
 
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { runDeliverableForTenant } from '@/lib/deliverables/orchestrator/generate-service';
+import { createDeliverableRun, completeDeliverableRun } from '@/lib/deliverables/orchestrator/runs-repository';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // multi-pass board-grade generation is long-running
+export const maxDuration = 60;
 
 interface GenerateBody {
   module?: DeliverableModule;
@@ -32,10 +33,11 @@ const MODULES: DeliverableModule[] = ['source', 'moves', 'tower', 'intelligence'
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireTenancy(); // { clientId, clientKey, userId }
+    const ctx = await requireTenancy();
     if (!ctx.clientKey) {
       return Response.json({ error: 'no_tenant_key', detail: 'Active tenant has no resolvable tenant key.' }, { status: 409 });
     }
+    const clientKey = ctx.clientKey;
 
     let body: GenerateBody;
     try {
@@ -56,46 +58,45 @@ export async function POST(req: NextRequest) {
     if (!sourceArtifactRef) return Response.json({ error: 'bad_request', detail: 'sourceArtifactRef is required.' }, { status: 400 });
     if (!decisionContext) return Response.json({ error: 'bad_request', detail: 'decisionContext is required.' }, { status: 400 });
 
-    const result = await runDeliverableForTenant({
-      module: body.module,
-      useCaseArchetype,
-      deliverableType,
-      audience: body.audience,
-      decisionContext,
-      clientDisplayName: body.clientDisplayName?.trim() || 'Client',
-      initiativeDisplayName: body.initiativeDisplayName?.trim() || useCaseArchetype,
-      sourceArtifactRef,
-      evidenceQuery: body.evidenceQuery,
-      outputFormats: body.outputFormats,
-      ...(body.model ? { model: body.model } : {}),
-      tenantClientKey: ctx.clientKey,
+    // 1 · create the run row (shared state — polls may hit a different replica)
+    const run = await createDeliverableRun({
       clientId: ctx.clientId,
+      tenantKey: clientKey,
       userId: ctx.userId,
+      module: body.module,
+      archetype: useCaseArchetype,
+      deliverableType,
     });
 
-    if (!result.ok) {
-      // 422: generated but refused by the quality/plan gate — surface why, don't ship a weak doc
-      return Response.json(
-        {
-          error: 'quality_gate_blocked',
-          detail: result.blockedReason ?? 'The deliverable did not meet the board-grade quality bar.',
-          blockers: result.blockers ?? [],
-          retrievedEvidence: result.retrievedEvidence,
-          sectionCount: result.sectionCount,
-        },
-        { status: 422 },
-      );
-    }
+    // 2 · start generation in the persistent app process; update the run on completion.
+    //     Not awaited — the HTTP response returns immediately.
+    void (async () => {
+      try {
+        const result = await runDeliverableForTenant({
+          module: body.module!,
+          useCaseArchetype,
+          deliverableType,
+          audience: body.audience,
+          decisionContext,
+          clientDisplayName: body.clientDisplayName?.trim() || 'Client',
+          initiativeDisplayName: body.initiativeDisplayName?.trim() || useCaseArchetype,
+          sourceArtifactRef,
+          evidenceQuery: body.evidenceQuery,
+          outputFormats: body.outputFormats,
+          ...(body.model ? { model: body.model } : {}),
+          tenantClientKey: clientKey,
+          clientId: ctx.clientId,
+          userId: ctx.userId,
+        });
+        await completeDeliverableRun(run.id, result.ok
+          ? { status: 'succeeded', artifactId: result.artifactId ?? null, sectionCount: result.sectionCount ?? null, retrievedEvidence: result.retrievedEvidence ?? null, warnings: result.warnings ?? [] }
+          : { status: 'blocked', blockers: result.blockers ?? [], retrievedEvidence: result.retrievedEvidence ?? null, sectionCount: result.sectionCount ?? null, error: result.blockedReason ?? null });
+      } catch (err) {
+        await completeDeliverableRun(run.id, { status: 'failed', error: (err instanceof Error ? err.message : String(err)).slice(0, 600) }).catch(() => {});
+      }
+    })();
 
-    return Response.json({
-      success: true,
-      artifactId: result.artifactId,
-      blobUrl: result.blobUrl,
-      qualityPass: result.qualityPass,
-      sectionCount: result.sectionCount,
-      retrievedEvidence: result.retrievedEvidence,
-      warnings: result.warnings ?? [],
-    });
+    return Response.json({ runId: run.id, status: 'running' }, { status: 202 });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
