@@ -196,6 +196,8 @@ export interface InstrumentReadiness {
 export interface ReadinessReport {
   phase: number;
   archetypeId: string;
+  archetypeName: string;
+  archetypeVersion: string;
   profile: MoveProfile;
   instruments: InstrumentReadiness[];
   /** 0–100, hard weighted 2×, soft 1× — "recommendation readiness". */
@@ -264,6 +266,8 @@ export async function resolveCurrentStateReadiness(
   return {
     phase,
     archetypeId: archetype.id,
+    archetypeName: archetype.name,
+    archetypeVersion: archetype.version,
     profile,
     instruments,
     coverageScore,

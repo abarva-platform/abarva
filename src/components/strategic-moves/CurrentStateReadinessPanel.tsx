@@ -29,11 +29,88 @@ const STATUS_LABEL: Record<ReadinessStatus, string> = {
   missing: "Missing",
 };
 const STATUS_COLOR: Record<ReadinessStatus, string> = {
-  committed: "#2e7d32",
+  committed: "#3a6a4f", // sober, earned — not a celebratory green
   parsing: "#b26a00",
   staged: "#b26a00",
   missing: "var(--abarva-stone)",
 };
+
+// The full governed evidence ladder. v1 reaches `committed`; the governed states
+// (indexed → agent_ready) require the promotion workflow (PR-4) and are NEVER
+// auto-advanced — shown here so the user sees the honest distance to agent-ready.
+const FULL_LADDER = [
+  "missing",
+  "staged",
+  "parsing",
+  "committed",
+  "indexed",
+  "retrievable",
+  "citation_ready",
+  "promotion_candidate",
+  "agent_ready",
+] as const;
+const LADDER_LABEL: Record<string, string> = {
+  missing: "Missing",
+  staged: "Staged",
+  parsing: "Parsing",
+  committed: "Committed",
+  indexed: "Indexed",
+  retrievable: "Retrievable",
+  citation_ready: "Cited",
+  promotion_candidate: "Promotable",
+  agent_ready: "Agent-ready",
+};
+const PROMOTION_BOUNDARY = FULL_LADDER.indexOf("indexed"); // governed beyond committed
+
+/** The honest ladder as a sober progress track — the hero of each evidence row. */
+function LadderTrack({ status }: { status: ReadinessStatus }) {
+  const reached = FULL_LADDER.indexOf(status);
+  return (
+    <div style={{ marginTop: 4 }}>
+      <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+        {FULL_LADDER.map((stage, idx) => {
+          const filled = idx <= reached && reached >= 0;
+          const governed = idx >= PROMOTION_BOUNDARY;
+          return (
+            <span
+              key={stage}
+              title={
+                LADDER_LABEL[stage] + (governed ? " (governed promotion)" : "")
+              }
+              style={{
+                width: idx === reached ? 16 : 10,
+                height: 5,
+                borderRadius: 2,
+                flexShrink: 0,
+                background: filled
+                  ? "var(--abarva-ink, #0a0a0a)"
+                  : governed
+                    ? "transparent"
+                    : "var(--abarva-mist, #e2ded5)",
+                border:
+                  governed && !filled
+                    ? "1px dashed var(--abarva-stone)"
+                    : "none",
+              }}
+            />
+          );
+        })}
+      </div>
+      <div
+        style={{
+          marginTop: 3,
+          fontSize: 9,
+          fontFamily: "var(--abarva-mono)",
+          letterSpacing: "0.06em",
+          color: "var(--abarva-stone)",
+        }}
+      >
+        {LADDER_LABEL[status]} · stage {reached + 1}/9 · governed promotion
+        beyond committed (no auto agent-ready)
+      </div>
+    </div>
+  );
+}
 
 export function CurrentStateReadinessPanel({
   readiness,
@@ -109,7 +186,41 @@ export function CurrentStateReadinessPanel({
           {readiness.hardGaps.length > 0 &&
             ` · ${readiness.hardGaps.length} hard gap${readiness.hardGaps.length > 1 ? "s" : ""}`}
         </span>
+        <span
+          style={{
+            float: "right",
+            fontWeight: 400,
+            fontSize: 9,
+            color: "var(--abarva-stone)",
+            textTransform: "none",
+          }}
+        >
+          {readiness.archetypeName} · v{readiness.archetypeVersion}
+        </span>
       </div>
+
+      {readiness.hardGaps.length > 0 && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 10px",
+            borderRadius: 6,
+            background: "rgba(179,38,30,0.04)",
+            border: "1px solid rgba(179,38,30,0.18)",
+            fontSize: 12,
+            color: "var(--abarva-slate)",
+            lineHeight: 1.45,
+          }}
+        >
+          <strong style={{ color: "var(--canon-red, #b3261e)" }}>
+            {readiness.hardGaps.length} hard current-state gap
+            {readiness.hardGaps.length > 1 ? "s" : ""}.
+          </strong>{" "}
+          Charter claims that rest on this evidence will be unsourced until it
+          is provided and committed — the engine will say so rather than
+          fabricate.
+        </div>
+      )}
 
       {recommendation && recommendation.ranking.length > 0 && (
         <div
@@ -154,37 +265,90 @@ export function CurrentStateReadinessPanel({
           >
             {recommendation.whereToStart}
           </div>
-          <ul style={{ listStyle: "none", margin: "8px 0 0", padding: 0 }}>
-            {recommendation.ranking.map((t) => (
-              <li
-                key={t.teamArchetype}
-                style={{
-                  fontSize: 12,
-                  color: "var(--abarva-slate)",
-                  padding: "3px 0",
-                  display: "flex",
-                  gap: 8,
-                  alignItems: "baseline",
-                }}
-                title={`AI-applicability ${t.aiApplicability} × readiness ${t.normalizedReadiness} × gap-upside ${t.gapUpside}`}
-              >
-                <span style={{ fontWeight: 700, flexShrink: 0 }}>
-                  #{t.rank}
-                </span>
-                <span style={{ flex: 1 }}>{t.label}</span>
-                <span
-                  style={{
-                    fontFamily: "var(--abarva-mono)",
-                    fontSize: 11,
-                    color: "var(--abarva-stone)",
-                  }}
-                >
-                  {t.aiApplicability}×{t.normalizedReadiness}×{t.gapUpside} ={" "}
-                  {t.score}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {/* Level 1: ranked rows. Level 2: the leverage breakdown. Level 3: each term's basis. */}
+          <div style={{ margin: "8px 0 0" }}>
+            {recommendation.ranking.map((t) => {
+              const terms = [
+                {
+                  k: "AI-applicability",
+                  v: t.aiApplicability,
+                  basis: t.aiApplicabilityBasis,
+                },
+                {
+                  k: "Readiness",
+                  v: t.normalizedReadiness,
+                  basis: t.readinessBasis,
+                },
+                { k: "Gap-upside", v: t.gapUpside, basis: t.gapUpsideBasis },
+              ];
+              return (
+                <details key={t.teamArchetype} style={{ padding: "2px 0" }}>
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: "var(--abarva-slate)",
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "baseline",
+                      listStyle: "none",
+                    }}
+                  >
+                    <span style={{ fontWeight: 700 }}>#{t.rank}</span>
+                    <span style={{ flex: 1 }}>{t.label}</span>
+                    <span
+                      style={{
+                        fontFamily: "var(--abarva-mono)",
+                        fontSize: 11,
+                        color: "var(--abarva-stone)",
+                      }}
+                    >
+                      {t.aiApplicability}×{t.normalizedReadiness}×{t.gapUpside}{" "}
+                      ={" "}
+                      <strong style={{ color: "var(--abarva-ink)" }}>
+                        {t.score}
+                      </strong>{" "}
+                      · {t.confidence.replace(/_/g, " ")}
+                    </span>
+                  </summary>
+                  <div style={{ paddingLeft: 18, marginTop: 4 }}>
+                    {terms.map((term) => (
+                      <details key={term.k} style={{ padding: "1px 0" }}>
+                        <summary
+                          style={{
+                            cursor: "pointer",
+                            fontSize: 11,
+                            color: "var(--abarva-slate)",
+                            listStyle: "none",
+                          }}
+                        >
+                          {term.k}:{" "}
+                          <span
+                            style={{
+                              fontFamily: "var(--abarva-mono)",
+                              color: "var(--abarva-ink)",
+                            }}
+                          >
+                            {term.v}
+                          </span>
+                        </summary>
+                        <div
+                          style={{
+                            paddingLeft: 14,
+                            fontSize: 11,
+                            color: "var(--abarva-stone)",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {term.basis}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -311,6 +475,7 @@ export function CurrentStateReadinessPanel({
                   {i.severity}
                 </span>
               </div>
+              <LadderTrack status={i.status} />
               <div
                 style={{
                   fontSize: 12,
@@ -319,6 +484,16 @@ export function CurrentStateReadinessPanel({
                 }}
               >
                 {i.whyNeeded}
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--abarva-stone)",
+                  lineHeight: 1.4,
+                }}
+              >
+                {i.rationale}
+                {i.backingTable ? ` · committed to ${i.backingTable}` : ""}
               </div>
               {i.status !== "committed" && (
                 <div style={{ marginTop: 2 }}>
