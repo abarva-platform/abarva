@@ -13,3 +13,4 @@ export * from './rfp-canon';
 export * from './deliverable-canon';
 export * from './pricing-engine';
 export * from './grounded-answer';
+export * from './event-archetype-resolver';
