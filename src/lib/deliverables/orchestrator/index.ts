@@ -5,4 +5,6 @@ export * from './prompt-builder';
 export * from './generation-plan';
 export * from './quality-validator';
 export * from './artifact-brief-registry';
+export * from './briefs/archetype-packs';
+export * from './briefs/deliverable-structures';
 export * from './orchestrator';

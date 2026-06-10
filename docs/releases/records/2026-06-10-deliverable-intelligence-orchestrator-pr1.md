@@ -36,8 +36,9 @@ follow in PR-2..PR-5.
 ## Changes Included
 
 - `src/lib/deliverables/orchestrator/{types,source-register,prompt-builder,generation-plan,quality-validator,artifact-brief-registry,orchestrator,index}.ts`
+- `src/lib/deliverables/orchestrator/briefs/{archetype-packs,deliverable-structures}.ts` (PR-2)
 - `src/lib/deliverables/orchestrator/__fixtures__/ams-rfp.ts`
-- `src/lib/deliverables/orchestrator/__tests__/orchestrator.test.ts` (21 tests)
+- `src/lib/deliverables/orchestrator/__tests__/{orchestrator,brief-library}.test.ts` (29 tests)
 - `docs/deliverables/DELIVERABLE_INTELLIGENCE_ORCHESTRATOR.md`
 
 ## QA / Validation
@@ -72,9 +73,11 @@ Tests in `__tests__/orchestrator.test.ts`; design note in
 
 - Not wired to any runtime surface: the `ModelCaller` is injected and exercised only by a
   test stub. Live Claude generation lands in PR-3.
-- The artifact brief registry seeds only the AMS / IT-outsourcing RFP brief; all other
-  (module × archetype × deliverable) combinations resolve to the module-level default
-  until PR-2 fills the full library.
+- The brief library (PR-2) covers four archetype packs (AMS, ERP/SI, cloud
+  modernization, AI-PDLC) and seven deliverable structures (Moves charter/business-
+  case/roadmap/discovery; Source strategy-memo/evaluation-workbook/executive-
+  recommendation), composed at resolve time. Combinations outside these still resolve to
+  the sound module-level default; additional packs/structures can be added as data.
 - No renderers yet — `RenderableDeliverable` is not yet emitted to DOCX/PPTX/XLSX/HTML
   (PR-4), and nothing is persisted via the artifacts repository (PR-5).
 - The quality gate's unsupported-claim detector is heuristic (number/$/%/date sentences

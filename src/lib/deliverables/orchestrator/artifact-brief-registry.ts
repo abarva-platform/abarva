@@ -8,7 +8,9 @@
 // seeds the contract, the resolver, the shared governance language, and the AMS
 // reference brief, with a sound module-level default so nothing ships unbriefed.
 
-import type { DeliverableArtifactBrief, DeliverableIntelligenceRequest, DeliverableModule } from './types';
+import type { BriefSection, DeliverableArtifactBrief, DeliverableIntelligenceRequest, DeliverableModule } from './types';
+import { getArchetypePack } from './briefs/archetype-packs';
+import { getDeliverableStructure } from './briefs/deliverable-structures';
 
 const CITATION_POLICY =
   'Cite every client-specific fact with [n] tied to the Source Register. Do not expose internal source ids, chunk ids, table names, or fact keys.';
@@ -164,9 +166,55 @@ function defaultBrief(req: DeliverableIntelligenceRequest): DeliverableArtifactB
   };
 }
 
+/**
+ * Compose a brief from a deliverable structure (section flow) × an archetype pack
+ * (use-case exhibits/tables/evidence). This is what makes the SAME deliverable type
+ * differ by archetype. Returns null when there is no structure to build on.
+ */
+function composeBrief(req: DeliverableIntelligenceRequest): DeliverableArtifactBrief | null {
+  const structure = getDeliverableStructure(req.module, req.deliverableType);
+  if (!structure) return null;
+  const pack = getArchetypePack(req.useCaseArchetype);
+
+  // enrich current-state/baseline sections with the archetype's key evidence families
+  const sections: BriefSection[] = structure.sections.map((sec) =>
+    pack && /current_state|baseline|signal|findings|environment/.test(sec.key)
+      ? { ...sec, expectedEvidenceFamilies: [...new Set([...sec.expectedEvidenceFamilies, ...pack.keyEvidenceFamilies])] }
+      : sec,
+  );
+
+  const disallowed = pack?.governanceNote
+    ? `${DISALLOWED_FABRICATION} ${pack.governanceNote}`
+    : DISALLOWED_FABRICATION;
+
+  return {
+    module: req.module,
+    useCaseArchetype: req.useCaseArchetype,
+    deliverableType: req.deliverableType,
+    purpose: structure.purpose,
+    audience: req.audience,
+    decisionToSupport: structure.decisionToSupport || req.decisionContext,
+    recommendedStructure: sections,
+    requiredSections: structure.requiredSectionKeys,
+    optionalSections: sections.map((s) => s.key).filter((k) => !structure.requiredSectionKeys.includes(k)),
+    expectedExhibits: pack?.exhibits ?? [],
+    expectedTables: pack?.tables ?? [
+      { key: 'risk_register', title: 'Risks, Issues & Dependencies', columns: ['Item', 'Type', 'Impact', 'Owner', 'Mitigation'], groundingMode: 'mixed', moveToExcelIfWide: false },
+    ],
+    requiredPlaceholders: sections.filter((s) => s.groundingMode === 'client_to_complete').map((s) => s.key),
+    requiredClientDecisions: sections.filter((s) => s.groundingMode === 'client_to_complete').map((s) => s.key),
+    citationPolicy: CITATION_POLICY,
+    allowedExpertKnowledge: ALLOWED_EXPERT_KNOWLEDGE,
+    disallowedFabrication: disallowed,
+    formattingInstructions: FORMATTING_INSTRUCTIONS,
+    qualityCriteria: BOARD_QUALITY_CRITERIA,
+  };
+}
+
 export function getArtifactBrief(req: DeliverableIntelligenceRequest): DeliverableArtifactBrief {
   return (
     BY_KEY.get(key(req.module, req.useCaseArchetype, req.deliverableType)) ??
+    composeBrief(req) ??
     defaultBrief(req)
   );
 }
