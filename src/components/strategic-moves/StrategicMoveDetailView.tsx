@@ -6,12 +6,13 @@ import { MoveArtifactUpload } from "./MoveArtifactUpload";
 import { NexusCurrentStateBriefingPanel } from "./NexusCurrentStateBriefingPanel";
 import { StrategicMoveDetailClient } from "./StrategicMoveDetailClient";
 import { PhaseDocumentsPanel } from "./PhaseDocumentsPanel";
+import { FileCabinetPanel } from "./FileCabinetPanel";
 import { BoardArtifactsPanel } from "./BoardArtifactsPanel";
 import { MoveToSourceHandoffCta } from "./MoveToSourceHandoffCta";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
-type Tab = "overview" | "documents" | "activity";
+type Tab = "overview" | "documents" | "cabinet" | "activity";
 
 /** A Source event already linked back to this Move, when one exists. */
 export interface LinkedSourceEvent {
@@ -83,6 +84,11 @@ function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
       key: "documents",
       label: "Documents",
       href: `/strategic-moves/${moveId}?tab=documents`,
+    },
+    {
+      key: "cabinet",
+      label: "File Cabinet",
+      href: `/strategic-moves/${moveId}?tab=cabinet`,
     },
     {
       key: "activity",
@@ -483,6 +489,7 @@ function RightPane({
         />
       )}
       {activeTab === "documents" && <DocumentsContent move={move} />}
+      {activeTab === "cabinet" && <FileCabinetPanel moveId={move.id} />}
       {activeTab === "activity" && (
         <ActivityContent
           move={move}

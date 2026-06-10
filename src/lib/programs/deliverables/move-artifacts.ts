@@ -229,6 +229,39 @@ export async function listMoveArtifacts(
   }
 }
 
+/** Stream an artifact's bytes from Blob (tenant-scoped). Robust download path
+ *  that doesn't depend on SAS generation under managed identity. */
+export async function downloadArtifactBytes(
+  ctx: TenancyCtx,
+  artifactId: string,
+): Promise<{ bytes: Buffer; fileName: string; fileFormat: string } | null> {
+  const tenantKey = ctx.clientKey ?? "";
+  try {
+    const sb = getAzureWriteFluentClient();
+    const { data, error } = await sb
+      .from("move_artifacts")
+      .select("blob_container, blob_path, file_name, file_format, tenant_key")
+      .eq("artifact_id", artifactId)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as {
+      blob_container: string;
+      blob_path: string;
+      file_name: string;
+      file_format: string;
+      tenant_key: string;
+    };
+    if (row.tenant_key !== tenantKey) return null; // tenant isolation
+    const bytes = await getObjectStorageAdapter().download(
+      row.blob_container,
+      row.blob_path,
+    );
+    return { bytes, fileName: row.file_name, fileFormat: row.file_format };
+  } catch {
+    return null;
+  }
+}
+
 /** A short-lived signed download URL for an artifact (tenant-scoped). */
 export async function getArtifactSignedUrl(
   ctx: TenancyCtx,
