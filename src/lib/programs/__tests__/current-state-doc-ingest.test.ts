@@ -4,6 +4,8 @@ import {
   isDocumentFamily,
   documentFamilyKeys,
 } from "../current-state-doc-ingest";
+import { assessExtractedTextSensitivity } from "../current-state-doc-ingest";
+import { extractTextFromSlideXml } from "../evidence-ingestion";
 import { AI_PRODUCT_DEVELOPMENT_LIFECYCLE } from "../archetypes/registry";
 import type { EvidenceFamilySpec } from "../archetypes/types";
 import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
@@ -106,5 +108,44 @@ describe("current-state document path — sensitive-upload quarantine contract",
     });
     expect(r.decision).toBe("allow");
     expect(r.evidenceExtractionAllowed).toBe(true);
+  });
+
+  // Office-aware (Layer 2): DOCX/PPTX/XLSX are ZIPs — the route's raw-byte scan
+  // sees compressed bytes, so the guard must re-scan the DECODED text.
+  it("office-aware: quarantines SSN found in extracted text", () => {
+    const r = assessExtractedTextSensitivity(
+      "Slide 1: Reservations team. Owner SSN 123-45-6789.",
+      { filename: "deck.pptx", mimeType: "application/octet-stream" },
+    );
+    expect(r.decision).toBe("quarantine");
+  });
+
+  it("office-aware: allows clean extracted operating-model text", () => {
+    const r = assessExtractedTextSensitivity(
+      "Slide 1: Federated squads over a central platform. VP Eng signs off.",
+      { filename: "deck.pptx", mimeType: "application/octet-stream" },
+    );
+    expect(r.decision).toBe("allow");
+  });
+});
+
+describe("PPTX slide text extraction", () => {
+  it("pulls text runs across paragraphs and decodes entities", () => {
+    const xml =
+      "<p:sld><a:t>Operating Model</a:t></a:p>" +
+      "<a:t>Funding &amp; cadence</a:t><a:br/><a:t>Risks &lt;here&gt;</a:t>";
+    const out = extractTextFromSlideXml(xml);
+    expect(out).toContain("Operating Model");
+    expect(out).toContain("Funding & cadence");
+    expect(out).toContain("Risks <here>");
+  });
+
+  it("returns empty string for slide XML with no text runs", () => {
+    expect(extractTextFromSlideXml("<p:sld><p:cSld/></p:sld>")).toBe("");
+    expect(extractTextFromSlideXml("")).toBe("");
+  });
+
+  it("decodes numeric character references", () => {
+    expect(extractTextFromSlideXml("<a:t>caf&#233;</a:t>")).toContain("café");
   });
 });

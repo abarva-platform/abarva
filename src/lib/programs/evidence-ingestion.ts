@@ -58,6 +58,8 @@ const DOCX_MIME =
 const PDF_MIME = "application/pdf";
 const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const PPTX_MIME =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 const PROGRAM_EVIDENCE_PARSER_VERSION = `${CONTENT_HASH_PARSE_CACHE_VERSION}:program-evidence-v1`;
 
 function normalizeLines(text: string): string[] {
@@ -276,9 +278,7 @@ interface ParserTextResult {
   parseMethod?: string;
 }
 
-async function extractDocxText(
-  buffer: Buffer,
-): Promise<ParserTextResult> {
+async function extractDocxText(buffer: Buffer): Promise<ParserTextResult> {
   const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ buffer });
   const warnings = Array.isArray(result.messages)
@@ -293,9 +293,7 @@ async function extractDocxText(
   return { text: result.value ?? "", warnings };
 }
 
-async function extractPdfText(
-  buffer: Buffer,
-): Promise<ParserTextResult> {
+async function extractPdfText(buffer: Buffer): Promise<ParserTextResult> {
   if (isDocumentIntelligenceConfigured()) {
     try {
       const result = await parsePdfWithDocumentIntelligenceLayout(buffer);
@@ -340,9 +338,76 @@ async function extractPdfTextWithPdfParse(
   }
 }
 
-async function extractXlsxText(
-  buffer: Buffer,
-): Promise<ParserTextResult> {
+const XML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&apos;": "'",
+};
+
+function decodeXmlEntities(s: string): string {
+  return s
+    .replace(/&(amp|lt|gt|quot|apos);/g, (m) => XML_ENTITIES[m] ?? m)
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) =>
+      String.fromCodePoint(parseInt(h, 16)),
+    );
+}
+
+/**
+ * Extract the visible text runs from a single PPTX slide's XML. PowerPoint stores
+ * each run of text in an `<a:t>` element; paragraph/line breaks are `<a:br>` and
+ * new paragraphs are `<a:p>`. Pure + exported for unit testing.
+ */
+export function extractTextFromSlideXml(xml: string): string {
+  if (!xml) return "";
+  // Insert soft breaks at paragraph/line boundaries so distinct bullets/lines
+  // don't run together (keeps the line-parser's section/heading logic working).
+  const withBreaks = xml
+    .replace(/<a:br\s*\/?>/g, "\n")
+    .replace(/<\/a:p>/g, "\n");
+  const runs = [...withBreaks.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map((m) =>
+    decodeXmlEntities(m[1]),
+  );
+  return runs
+    .join(" ")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+async function extractPptxText(buffer: Buffer): Promise<ParserTextResult> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(buffer);
+  const slideNames = Object.keys(zip.files)
+    .filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a, b) => {
+      const na = Number(a.match(/slide(\d+)\.xml$/)?.[1] ?? "0");
+      const nb = Number(b.match(/slide(\d+)\.xml$/)?.[1] ?? "0");
+      return na - nb;
+    });
+  const warnings: string[] = [];
+  if (!slideNames.length) {
+    warnings.push("No slide XML found in PPTX package.");
+    return { text: "", warnings, parseMethod: "pptx-jszip" };
+  }
+  const parts: string[] = [];
+  for (const name of slideNames) {
+    const xml = await zip.files[name].async("string");
+    const text = extractTextFromSlideXml(xml);
+    const slideNo = name.match(/slide(\d+)\.xml$/)?.[1] ?? "?";
+    if (text) parts.push(`Slide ${slideNo}: ${text}`);
+  }
+  return {
+    text: parts.join("\n"),
+    warnings,
+    parseMethod: "pptx-jszip",
+  };
+}
+
+async function extractXlsxText(buffer: Buffer): Promise<ParserTextResult> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
@@ -408,6 +473,8 @@ export async function extractProgramEvidenceFromUploadBuffer(args: {
       };
     if (args.mimeType === XLSX_MIME)
       return { method: "exceljs-xlsx", run: extractXlsxText };
+    if (args.mimeType === PPTX_MIME)
+      return { method: "pptx-jszip", run: extractPptxText };
     return null;
   })();
 
