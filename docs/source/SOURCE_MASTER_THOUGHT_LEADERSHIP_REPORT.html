@@ -31,7 +31,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 
 <h1>AbarVa Source — Master Thought-Leadership War Room</h1>
 <p class="sub">Mission: make AbarVa Source the best technology / IT sourcing <strong>decision operating system</strong> in the world.</p>
-<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 2 shipped</span></p>
+<p class="sub muted">Branch <code>source-thought-leadership</code> off <code>origin/main b7abce328</code> · last updated <span id="ts">2026-06-10 · Phase 3 shipped</span></p>
 
 <div class="role"><strong>Operating as:</strong> senior McKinsey sourcing-transformation partner · CIO advisor · commercial deal architect · enterprise-technology strategist · product architect · execution lead. My job is to <em>challenge</em> the current Source module, redesign where it is weak, and orchestrate parallel agents to build, prove, and deploy a sourcing decision OS — not a generic RFP generator.</div>
 
@@ -48,7 +48,7 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <tr><td>Deliverable rendering (md/html/pdf/docx/xlsx)</td><td>4 / 5</td><td class="muted">Multi-format engine is a real asset.<div class="bar"><i style="width:80%"></i></div></td></tr>
 <tr><td>Sourcing corpus depth</td><td>4 / 5</td><td class="muted">150+ patterns (failure modes, pricing, contracts, vendors).<div class="bar"><i style="width:80%"></i></div></td></tr>
 <tr><td><strong>Event-type differentiation (archetype contract)</strong></td><td>3 / 5</td><td class="muted">Framework SHIPPED: <code>SourceEventArchetype</code> contract + registry + 2-axis resolver + method library; 4 seed archetypes; 15 tests prove different DNA. 8 more archetypes remain.<div class="bar"><i style="width:60%;background:#8a6d1a"></i></div></td></tr>
-<tr><td><strong>Evidence-readiness by event type</strong></td><td>2 / 5</td><td class="muted">7-state ramp exists; required-evidence is generic, not per-archetype.<div class="bar"><i style="width:40%;background:#8a6d1a"></i></div></td></tr>
+<tr><td><strong>Evidence-readiness by event type</strong></td><td>4 / 5</td><td class="muted">SHIPPED: <code>buildSourceEvidenceReadiness</code> binds the 9-rung promotion ladder to archetype families; committed≠agent_ready enforced; per-stage gate blockers with reasons; agent reasons only over governed-promoted families. Runtime DB wiring remains.<div class="bar"><i style="width:80%"></i></div></td></tr>
 <tr><td><strong>Event-specific RFP quality</strong></td><td>1 / 5</td><td class="muted">One generic d09 RFP for AMS=ERP=SaaS=renewal.<div class="bar"><i style="width:20%;background:#b3261e"></i></div></td></tr>
 <tr><td>Pricing / negotiation intelligence</td><td>2 / 5</td><td class="muted">Corpus levers exist but not archetype-bound or vendor-specific.<div class="bar"><i style="width:40%;background:#8a6d1a"></i></div></td></tr>
 <tr><td><strong>Governed reasoning (context bundle + grounding)</strong></td><td>1 / 5</td><td class="muted">Bypasses evaluateGovernedObject; hardcoded 'high' confidence; no trace. P0.<div class="bar"><i style="width:20%;background:#b3261e"></i></div></td></tr>
@@ -80,8 +80,8 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <table><thead><tr><th>Lane</th><th>Owner</th><th>State</th></tr></thead><tbody>
 <tr><td>Phase 1 — End-to-end audit</td><td>3 parallel audit agents → Master synthesis</td><td><span class="pill p-ok">done</span></td></tr>
 <tr><td>Phase 2 — Source Event Archetype Framework</td><td>Master + impl agent (mirror #3371)</td><td><span class="pill p-ok">done · 15 tests green</span></td></tr>
-<tr><td>Phase 3 — Evidence readiness model</td><td>Master</td><td><span class="pill p-info">in progress</span></td></tr>
-<tr><td>Phase 4 — Deliverable / RFP canon</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
+<tr><td>Phase 3 — Evidence readiness model</td><td>Master</td><td><span class="pill p-ok">done · 6 tests green</span></td></tr>
+<tr><td>Phase 4 — Deliverable / RFP canon</td><td>Master</td><td><span class="pill p-info">in progress</span></td></tr>
 <tr><td>Phase 5 — Pricing / negotiation intelligence</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
 <tr><td>Phase 6 — Governed context-bundle proof</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
 <tr><td>Phase 7 — Live proof (SkyHarbor AMS) on ACA</td><td>planned</td><td><span class="pill p-plan">planned</span></td></tr>
@@ -94,14 +94,15 @@ ul{margin:6px 0 6px 20px}li{margin:3px 0}
 <div class="row"><span class="t">P1 · 00:20</span><span>End-to-end audit synthesized → <code>SOURCE_MODULE_END_TO_END_AUDIT_2026-06-09.md</code>. Verdict: strong spine, ~95% generic, governance bypass (P0).</span></div>
 <div class="row"><span class="t">P2 · 00:45</span><span><strong>Source Event Archetype Framework shipped</strong> → <code>src/lib/source/archetypes/{types,method-library,registry,resolver,index}.ts</code>. <code>SourceEventArchetype</code> contract (evidence families · vendor guide · RFP structure · pricing · evaluation · risk · negotiation levers · deliverables · gates · agentGuidance · stage model) + 2-axis resolver (archetype × spend-band) + 10-method library.</span></div>
 <div class="row"><span class="t">P2 · 00:55</span><span>4 seed archetypes — <strong>AMS, ERP/SI, AI-data-platform, renewal</strong> — each with materially different DNA. <code>differentiation.test.ts</code>: <strong>15/15 green</strong>, tsc clean. Proves AMS needs ticket-volumes where ERP needs data-migration; AMS prices resource-units where ERP fixed-price+T&amp;M; renewal levers timing where AMS levers productivity — <em>zero core-code change to add an archetype</em>.</span></div>
+<div class="row"><span class="t">P3 · 01:15</span><span><strong>Evidence-readiness model shipped</strong> → <code>evidence-readiness.ts</code>. <code>buildSourceEvidenceReadiness</code> maps each archetype family onto the 9-rung promotion ladder; enforces the governance rule that <em>committed ≠ indexed ≠ retrievable ≠ agent_ready</em> — only governed promotion to <code>agent_ready</code> makes a family agent-usable. Per-stage gate clearance returns explicit blockers + human reasons; <code>agentUsableFamilies()</code> is the allow-list the model context will draw from. <strong>6/6 readiness tests green.</strong></span></div>
 </div>
 
 <div class="next"><h3>Next 15 minutes</h3>
 <ul>
-<li>Commit + push Phase 2; update PR #3374.</li>
-<li>Phase 3: build the <strong>evidence-readiness model</strong> bound to archetype families — promotion-only ladder (<code>missing→staged→…→agent_ready</code>) with per-family state, never-silent missing list, and the readiness panel data contract. No automatic <code>agent_ready</code>; promotion is governed-only.</li>
-<li>Wire <code>evidenceReadiness()</code> + per-family promotion state into a single <code>SourceEvidenceReadiness</code> surface the agent and UI both consume.</li>
-<li>Tests: a half-loaded AMS event reports exactly which hard families block the RFP gate, with reasons.</li>
+<li>Commit + push Phase 3; update PR #3374.</li>
+<li>Phase 4: <strong>event-specific RFP canon</strong> — a generator that renders an archetype's <code>rfpDocumentStructure</code> into a real RFP, marking each section <em>weak / blocked</em> when its <code>evidenceDependencies</code> are not agent_ready (no silent gaps). Prove AMS vs ERP produce structurally different RFPs.</li>
+<li>Deliverable-canon contract over <code>deliverablePack</code> with the quality rubric (min sections, citations required, altitude).</li>
+<li>Tests: an AMS RFP with missing ticket-volumes flags the resource-unit pricing section as evidence-blocked, not fabricated.</li>
 </ul></div>
 
 <h2>Risks &amp; open questions</h2>
