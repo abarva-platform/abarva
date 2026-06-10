@@ -55,6 +55,10 @@ follow in PR-2..PR-5.
 - Governance: the source-register builder excludes `internal_only` evidence for
   vendor-facing audiences; the plan gate blocks fabrication-risk sections; the quality
   gate blocks leaked internal ids and unsupported number/$/%/date claims.
+- Live: six-pass `claude-opus-4-8` run on governed SkyHarbor evidence via an ACA job in
+  the VNet → board-grade RFP (39,356-char rewrite, 18-section architect plan) that PASSED
+  the real quality gate (0 unsupported claims, 0 leaks). See
+  `docs/deliverables/SKYHARBOR_AMS_LIVE_PROOF.md`.
 
 ## Rollout Plan
 
@@ -88,12 +92,19 @@ Tests in `__tests__/orchestrator.test.ts`; design note in
   the existing `generated_artifacts` repository contract (injectable save, unit-tested).
 - The quality gate is integrated end-to-end (orchestrator marks `ok` only when the gate
   passes; `persistDeliverable` refuses a blocked result).
-- **Live proof outstanding:** a board-grade Claude run requires `ANTHROPIC_API_KEY` +
-  the tenant AI-policy record + audit sink (the audited egress preflight) — none of which
-  are reachable from localhost. The SkyHarbor AMS live run must execute on Azure Container
-  Apps inside the VNet (key + private DB), from an image built off this branch. Renderers
-  and the full loop are proven against fixtures / mocked egress; the live run is the
-  remaining evidence and is scheduled as a follow-up ACA operation.
+- **Live proof DONE (2026-06-10):** the six-pass flow ran live on `claude-opus-4-8`,
+  grounded in governed evidence read from the private data plane (tenant `skyharbor-air`),
+  on an ACA job inside the VNet. Architect planned 18 sections (expert latitude beyond the
+  14-section baseline); the board-grade rewrite was 39,356 chars and self-organized into an
+  internal decision memo / bidder-facing RFP / internal annexes (disclose-vs-withhold
+  tiering); incumbent spend was excluded from bidder-facing evidence. The **real quality
+  gate passed** on the live document: 0 unsupported claims, 0 internal leaks, source
+  register + decision + recommendation + risk table present, 25 client-to-complete items.
+  Rendered to DOCX/XLSX/HTML by the real `renderers.ts`. Evidence:
+  `docs/deliverables/SKYHARBOR_AMS_LIVE_PROOF.md`. ACA migrate job restored to pristine.
+- Remaining: live persistence into `generated_artifacts` from a compiled context (adapter
+  is unit-proven); a PPTX exec-deck renderer; and a production API/UI surface that invokes
+  `generateDeliverable` (no end-user entry point yet).
 - The quality gate's unsupported-claim detector is heuristic (number/$/%/date sentences
   without a citation/assumption/placeholder); it complements, but does not replace, the
   governed-evidence binding enforced upstream.
