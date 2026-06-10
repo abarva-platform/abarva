@@ -1,30 +1,29 @@
 // =============================================================================
-// Moves consulting engine — E1: MoveProfile + estate-conditional current-state
-// instrument library + readiness resolver.
+// Current-state readiness — estate profile inference + archetype-driven resolver.
 // -----------------------------------------------------------------------------
-// The engine collects comprehensively (scoped to the client's REAL estate) so it
-// can later reason to a recommendation. WHAT current-state evidence is relevant is
-// NON-LINEAR: it depends on the Move's profile (use case × team archetypes × tech
-// estate × maturity), discovered from the context layer — NOT a fixed list, and
-// NOT something the client self-declares as a decision.
-//
-// Design: docs/build/moves-design/moves-consulting-engine-arc.md (+ current-state-
-// readiness-model.md R1/R2).
-//
-// This module is engine-general (no AI-SDLC hardcode): instruments carry
-// applicability predicates over the profile; derivation filters the library by
-// (phase, appliesWhen). Proven on the SkyHarbor AI-SDLC move.
+// WHAT current-state evidence is required at a phase is declared by the MOVE's
+// ARCHETYPE (src/lib/programs/archetypes), refined by the client's real ESTATE
+// (the MoveProfile inferred here). This module owns the ESTATE axis (profile
+// inference + committed-row checks); the ARCHETYPE axis lives in the registry +
+// resolver. There is NO hardcoded phase→family list here anymore.
 //
 // Honest ingestion ladder (AGENTS.md): missing -> staged -> parsing -> committed.
-// Read-only + defensive: every backing-table probe is wrapped; a missing/renamed
-// table or query error reads as "no committed data" rather than throwing.
+// v1 reports committed (rows in the backing tower_* table) vs missing.
+// Read-only + defensive: every probe is wrapped; a missing/renamed table reads as
+// "no committed data" rather than throwing.
 // =============================================================================
 
 import "server-only";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
+import type {
+  StrategicMoveArchetype,
+  PhaseKey,
+  EvidenceKind,
+} from "@/lib/programs/archetypes/types";
 
-// ── Profile dimensions ───────────────────────────────────────────────────────
+// ── Profile dimensions (the estate axis) ─────────────────────────────────────
 
 export type TeamArchetype =
   | "full_stack_cloud"
@@ -73,10 +72,10 @@ export type DimensionProvenance =
   | "unknown";
 
 /**
- * The estate-inferred shape of a Move. All dimensions are optional/explicitly
- * "unknown" — the profile is built up progressively (context-layer first, then
- * declared signals). `provenance` records HOW each dimension was set so the UI
- * can show confidence and the engine never silently fabricates a profile.
+ * The estate-inferred shape of a Move. All dimensions optional/explicitly
+ * "unknown"; built up progressively (context-layer first, then declared signals).
+ * `provenance` records HOW each dimension was set — the engine never silently
+ * fabricates a profile.
  */
 export interface MoveProfile {
   useCaseArchetype: UseCaseArchetype;
@@ -101,217 +100,8 @@ export function emptyProfile(): MoveProfile {
   };
 }
 
-// ── Instrument library (estate-conditional) ──────────────────────────────────
-
 export type ReadinessStatus = "committed" | "parsing" | "staged" | "missing";
 export type Severity = "hard" | "soft";
-export type InstrumentKind =
-  | "metric_baseline"
-  | "inventory"
-  | "org"
-  | "qualitative"
-  | "document";
-
-interface BackingSource {
-  table: string;
-  keyColumn: "client_id" | "tenant_key";
-}
-
-export interface EvidenceInstrument {
-  key: string;
-  label: string;
-  kind: InstrumentKind;
-  whyNeeded: string;
-  sourceDocHint: string;
-  acceptedFormats: string[];
-  /** Phase at which the instrument first becomes relevant (1=Charter, 2=Diagnose). */
-  phase: number;
-  /** Estate predicate — is this instrument relevant for THIS profile? */
-  appliesWhen: (p: MoveProfile) => boolean;
-  /** Severity may depend on the profile (e.g. DORA harder for continuous-delivery teams). */
-  severityFor: (p: MoveProfile) => Severity;
-  /** Committed-data source, when the instrument is backed by a domain table. */
-  backing?: BackingSource;
-}
-
-const has = (p: MoveProfile, ...t: TeamArchetype[]) =>
-  t.some((x) => p.teamArchetypes.includes(x));
-const archetypesUnknown = (p: MoveProfile) => p.teamArchetypes.length === 0;
-
-/**
- * Engine-general instrument library. Each entry's `appliesWhen` branches on the
- * discovered estate — this is where the non-linearity lives. Estate-inventory
- * instruments (systems/org) always apply because they also REVEAL the archetypes;
- * archetype-deep instruments (DORA, mainframe, ETL) apply only when that estate
- * is present (or, at cold-start when archetypes are still unknown, the broadly
- * relevant ones are included to be pruned once the estate is discovered).
- */
-export const INSTRUMENT_LIBRARY: EvidenceInstrument[] = [
-  // ── Universal estate inventory + charter basics ──
-  {
-    key: "it_systems_landscape",
-    label: "IT systems & dependency landscape",
-    kind: "inventory",
-    whyNeeded:
-      "The estate inventory — applications, criticality, dependencies. Foundational: it also reveals which team/work archetypes exist (mainframe? cloud-native? packaged?).",
-    sourceDocHint: "CMDB export (systems + dependencies) as CSV",
-    acceptedFormats: ["csv"],
-    phase: 1,
-    appliesWhen: () => true,
-    severityFor: () => "hard",
-    backing: { table: "tower_cmdb_cis", keyColumn: "client_id" },
-  },
-  {
-    key: "it_org_structure",
-    label: "IT / engineering org structure",
-    kind: "org",
-    whyNeeded:
-      "Teams, levels, contractor ratio, reporting lines, locations — who builds, who decides, and the change surface.",
-    sourceDocHint: "HRIS/Workday export or org chart (CSV preferred)",
-    acceptedFormats: ["csv", "xlsx"],
-    phase: 1,
-    appliesWhen: () => true,
-    severityFor: () => "hard",
-    backing: { table: "tower_workforce", keyColumn: "client_id" },
-  },
-  {
-    key: "stakeholder_map",
-    label: "Stakeholder / decision-rights map",
-    kind: "qualitative",
-    whyNeeded:
-      "Named owners, contributors, and blockers — who decides, who builds, who can stop it.",
-    sourceDocHint: "Captured in-charter with Nexus, or a stakeholder list",
-    acceptedFormats: ["csv", "docx"],
-    phase: 1,
-    appliesWhen: () => true,
-    severityFor: () => "hard",
-  },
-  // ── Archetype-conditional engineering baselines ──
-  {
-    key: "eng_performance_dora",
-    label: "Engineering performance baseline (DORA)",
-    kind: "metric_baseline",
-    whyNeeded:
-      "Deploy frequency, lead time, change-failure rate, MTTR — the measurable baseline for teams that actually ship via CI/CD. Targets are unsourced without it.",
-    sourceDocHint: "CI/CD export (e.g. GitHub Actions deployments) as CSV",
-    acceptedFormats: ["csv"],
-    phase: 1,
-    appliesWhen: (p) =>
-      has(p, "full_stack_cloud", "data_engineering") || archetypesUnknown(p),
-    // Hard where deployment is a practice; softer for waterfall/unknown cadence.
-    severityFor: (p) =>
-      p.deliveryMaturity === "scrum" ||
-      p.deliveryMaturity === "continuous" ||
-      archetypesUnknown(p)
-        ? "hard"
-        : "soft",
-    backing: { table: "tower_dora_metrics", keyColumn: "client_id" },
-  },
-  {
-    key: "delivery_quality_itsm",
-    label: "Delivery quality / ITSM",
-    kind: "metric_baseline",
-    whyNeeded:
-      "Incidents, changes, MTTR and change-success — the operational quality picture that complements DORA.",
-    sourceDocHint: "ServiceNow ITSM export as CSV",
-    acceptedFormats: ["csv"],
-    phase: 2,
-    appliesWhen: () => true,
-    severityFor: () => "soft",
-    backing: { table: "tower_itsm_records", keyColumn: "tenant_key" },
-  },
-  // ── Mainframe estate (only when present) ──
-  {
-    key: "mainframe_change_cadence",
-    label: "Mainframe change cadence & batch profile",
-    kind: "metric_baseline",
-    whyNeeded:
-      "For mainframe teams DORA deploy-frequency is meaningless — what matters is release/change cadence, batch windows, and incident exposure.",
-    sourceDocHint: "Change calendar + batch schedule export",
-    acceptedFormats: ["csv", "xlsx"],
-    phase: 2,
-    appliesWhen: (p) => has(p, "mainframe"),
-    severityFor: () => "soft",
-  },
-  {
-    key: "mainframe_modernization_candidates",
-    label: "Mainframe code & modernization candidates",
-    kind: "inventory",
-    whyNeeded:
-      "Program/COBOL inventory, code size/complexity, SME coverage — where AI-assisted modernization has leverage vs risk.",
-    sourceDocHint: "Code inventory / static-analysis export",
-    acceptedFormats: ["csv", "xlsx"],
-    phase: 2,
-    appliesWhen: (p) => has(p, "mainframe"),
-    severityFor: () => "soft",
-  },
-  // ── Legacy data-analytics estate (DataStage/Informatica) ──
-  {
-    key: "etl_job_inventory",
-    label: "ETL job inventory & run SLAs",
-    kind: "inventory",
-    whyNeeded:
-      "For DataStage/Informatica teams: job inventory, schedules, run SLAs — the unit of AI leverage is the job/pipeline, not a deploy.",
-    sourceDocHint: "ETL tool job export",
-    acceptedFormats: ["csv"],
-    phase: 2,
-    appliesWhen: (p) => has(p, "legacy_data_analytics"),
-    severityFor: () => "soft",
-  },
-  {
-    key: "data_lineage",
-    label: "Data lineage & quality",
-    kind: "inventory",
-    whyNeeded:
-      "Lineage and data-quality posture for analytics estates — constrains what can be automated safely.",
-    sourceDocHint: "Lineage/catalog export",
-    acceptedFormats: ["csv"],
-    phase: 2,
-    appliesWhen: (p) => has(p, "legacy_data_analytics"),
-    severityFor: () => "soft",
-  },
-  // ── Cross-cutting estate & readiness ──
-  {
-    key: "ai_tooling_today",
-    label: "AI tooling adoption — benefits & gaps today",
-    kind: "metric_baseline",
-    whyNeeded:
-      "What AI dev-tools they already use (Copilot/CodeWhisperer/Claude), where, adoption, and the benefits or gaps they see today — the 'before' for an AI-led SDLC.",
-    sourceDocHint: "Tool admin export as CSV",
-    acceptedFormats: ["csv"],
-    phase: 2,
-    appliesWhen: () => true,
-    severityFor: () => "soft",
-    backing: { table: "tower_ai_tool_usage", keyColumn: "client_id" },
-  },
-  {
-    key: "change_readiness_culture",
-    label: "Change readiness & ways of working",
-    kind: "qualitative",
-    whyNeeded:
-      "Agility today, locations/ways-of-working, culture for change, prior transformation track record — drives adoption risk and sequencing.",
-    sourceDocHint: "Captured with Nexus; prior assessments if any",
-    acceptedFormats: ["docx", "csv"],
-    phase: 2,
-    appliesWhen: () => true,
-    severityFor: () => "soft",
-  },
-];
-
-export interface DerivedRequirement {
-  instrument: EvidenceInstrument;
-  severity: Severity;
-}
-
-/** Derive the applicable current-state instruments for a profile at a phase. */
-export function deriveCurrentStateRequirements(
-  profile: MoveProfile,
-  phase: number,
-): DerivedRequirement[] {
-  return INSTRUMENT_LIBRARY.filter(
-    (i) => i.phase <= phase && i.appliesWhen(profile),
-  ).map((i) => ({ instrument: i, severity: i.severityFor(profile) }));
-}
 
 // ── Estate discovery: infer the profile from what the tenant HAS ─────────────
 
@@ -362,7 +152,7 @@ export async function inferMoveProfile(
     profile.provenance.deliveryMaturity = "context_layer";
   }
   if (aiToolRows > 0) {
-    profile.existingAiTools = ["present"]; // names resolved when the table is read in detail (E2)
+    profile.existingAiTools = ["present"];
     profile.provenance.existingAiTools = "context_layer";
   }
 
@@ -378,22 +168,34 @@ export async function inferMoveProfile(
   return profile;
 }
 
-// ── Readiness resolution over the derived set ────────────────────────────────
+// ── Archetype-driven readiness resolution ────────────────────────────────────
+
+const PHASE_KEY_BY_NUM: Record<number, PhaseKey> = {
+  0: "originate",
+  1: "charter",
+  2: "diagnose",
+  3: "design",
+  4: "roadmap_business_case",
+  5: "mobilize",
+};
 
 export interface InstrumentReadiness {
   key: string;
   label: string;
-  kind: InstrumentKind;
+  kind: EvidenceKind;
   whyNeeded: string;
   sourceDocHint: string;
   severity: Severity;
   status: ReadinessStatus;
   backingTable: string | null;
   committedRows: number;
+  /** Why this requirement applies to THIS archetype + estate at this phase. */
+  rationale: string;
 }
 
 export interface ReadinessReport {
   phase: number;
+  archetypeId: string;
   profile: MoveProfile;
   instruments: InstrumentReadiness[];
   /** 0–100, hard weighted 2×, soft 1× — "recommendation readiness". */
@@ -405,38 +207,44 @@ export interface ReadinessReport {
 const weightOf = (s: Severity): number => (s === "hard" ? 2 : 1);
 
 /**
- * Resolve current-state readiness for a Move at a phase, given its (estate-
- * inferred) profile. Reports committed-vs-missing per DERIVED instrument, a
- * weighted coverage score, and the hard/soft gaps. Read-only; safe per render.
+ * Resolve current-state readiness for a Move at a phase: the ARCHETYPE declares
+ * the required evidence families (refined by the estate profile), and this
+ * function reports committed-vs-missing per family plus a weighted coverage
+ * score. Read-only; safe per render.
  */
 export async function resolveCurrentStateReadiness(
   ctx: TenancyCtx,
+  archetype: StrategicMoveArchetype,
   profile: MoveProfile,
   phase: number,
 ): Promise<ReadinessReport> {
-  const required = deriveCurrentStateRequirements(profile, phase);
-  const instruments: InstrumentReadiness[] = [];
+  const phaseKey = PHASE_KEY_BY_NUM[phase];
+  const required = phaseKey
+    ? resolveArchetypeRequirements(archetype, phaseKey, profile)
+    : [];
 
-  for (const { instrument, severity } of required) {
+  const instruments: InstrumentReadiness[] = [];
+  for (const { family, severity, rationale } of required) {
     let committedRows = 0;
-    if (instrument.backing) {
+    if (family.backing) {
       committedRows = await tableCount(
         ctx,
-        instrument.backing.table,
-        instrument.backing.keyColumn,
+        family.backing.table,
+        family.backing.keyColumn,
       );
     }
     const status: ReadinessStatus = committedRows > 0 ? "committed" : "missing";
     instruments.push({
-      key: instrument.key,
-      label: instrument.label,
-      kind: instrument.kind,
-      whyNeeded: instrument.whyNeeded,
-      sourceDocHint: instrument.sourceDocHint,
+      key: family.key,
+      label: family.label,
+      kind: family.kind,
+      whyNeeded: family.whyNeeded,
+      sourceDocHint: family.sourceDocHint,
       severity,
       status,
-      backingTable: instrument.backing?.table ?? null,
+      backingTable: family.backing?.table ?? null,
       committedRows,
+      rationale,
     });
   }
 
@@ -453,5 +261,13 @@ export async function resolveCurrentStateReadiness(
     .reduce((a, i) => a + weightOf(i.severity), 0);
   const coverageScore = Math.round((gotW / totalW) * 100);
 
-  return { phase, profile, instruments, coverageScore, hardGaps, softGaps };
+  return {
+    phase,
+    archetypeId: archetype.id,
+    profile,
+    instruments,
+    coverageScore,
+    hardGaps,
+    softGaps,
+  };
 }

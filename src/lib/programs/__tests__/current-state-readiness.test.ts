@@ -1,14 +1,16 @@
 import {
-  deriveCurrentStateRequirements,
   resolveCurrentStateReadiness,
   inferMoveProfile,
   emptyProfile,
-  INSTRUMENT_LIBRARY,
   type MoveProfile,
 } from "../current-state-readiness";
+import {
+  AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
+  getArchetype,
+  DEFAULT_ARCHETYPE_ID,
+} from "../archetypes/registry";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
-// Per-table committed-row counts the mocked read client returns.
 const counts: Record<string, number> = {};
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -32,94 +34,14 @@ const ctx: TenancyCtx = {
   email: "anand.sundaram+skyharbor@thesundaram.com",
 } as TenancyCtx;
 
-function profile(over: Partial<MoveProfile>): MoveProfile {
-  return { ...emptyProfile(), ...over };
-}
-
-const keysAt = (p: MoveProfile, phase: number) =>
-  deriveCurrentStateRequirements(p, phase).map((r) => r.instrument.key);
+const AI_PDLC = AI_PRODUCT_DEVELOPMENT_LIFECYCLE;
+const profile = (over: Partial<MoveProfile>): MoveProfile => ({
+  ...emptyProfile(),
+  ...over,
+});
 
 beforeEach(() => {
   for (const k of Object.keys(counts)) delete counts[k];
-});
-
-describe("deriveCurrentStateRequirements — non-linearity by estate", () => {
-  it("universal estate instruments derive for any profile at P1", () => {
-    const keys = keysAt(emptyProfile(), 1);
-    expect(keys).toEqual(
-      expect.arrayContaining([
-        "it_systems_landscape",
-        "it_org_structure",
-        "stakeholder_map",
-      ]),
-    );
-  });
-
-  it("full-stack/cloud estate derives DORA, NOT mainframe/ETL instruments", () => {
-    const keys = keysAt(
-      profile({
-        teamArchetypes: ["full_stack_cloud"],
-        deliveryMaturity: "continuous",
-      }),
-      2,
-    );
-    expect(keys).toContain("eng_performance_dora");
-    expect(keys).not.toContain("mainframe_change_cadence");
-    expect(keys).not.toContain("etl_job_inventory");
-  });
-
-  it("mainframe estate derives mainframe instruments and NOT DORA", () => {
-    const keys = keysAt(profile({ teamArchetypes: ["mainframe"] }), 2);
-    expect(keys).toEqual(
-      expect.arrayContaining([
-        "mainframe_change_cadence",
-        "mainframe_modernization_candidates",
-      ]),
-    );
-    expect(keys).not.toContain("eng_performance_dora");
-  });
-
-  it("legacy data-analytics estate derives ETL + lineage instruments", () => {
-    const keys = keysAt(
-      profile({ teamArchetypes: ["legacy_data_analytics"] }),
-      2,
-    );
-    expect(keys).toEqual(
-      expect.arrayContaining(["etl_job_inventory", "data_lineage"]),
-    );
-    expect(keys).not.toContain("mainframe_change_cadence");
-  });
-
-  it("cold-start (unknown archetypes) includes DORA to be pruned once estate is known", () => {
-    expect(keysAt(emptyProfile(), 1)).toContain("eng_performance_dora");
-  });
-
-  it("DORA severity is hard for continuous delivery, soft for a known waterfall team", () => {
-    const cont = deriveCurrentStateRequirements(
-      profile({
-        teamArchetypes: ["full_stack_cloud"],
-        deliveryMaturity: "continuous",
-      }),
-      1,
-    ).find((r) => r.instrument.key === "eng_performance_dora");
-    const wf = deriveCurrentStateRequirements(
-      profile({
-        teamArchetypes: ["full_stack_cloud"],
-        deliveryMaturity: "waterfall",
-      }),
-      1,
-    ).find((r) => r.instrument.key === "eng_performance_dora");
-    expect(cont?.severity).toBe("hard");
-    expect(wf?.severity).toBe("soft");
-  });
-
-  it("every library instrument has the required predicate fields", () => {
-    for (const i of INSTRUMENT_LIBRARY) {
-      expect(typeof i.appliesWhen).toBe("function");
-      expect(typeof i.severityFor).toBe("function");
-      expect(i.phase).toBeGreaterThanOrEqual(1);
-    }
-  });
 });
 
 describe("inferMoveProfile — estate discovery from context layer", () => {
@@ -145,10 +67,34 @@ describe("inferMoveProfile — estate discovery from context layer", () => {
   });
 });
 
-describe("resolveCurrentStateReadiness — committed vs missing over derived set", () => {
+describe("resolveCurrentStateReadiness — archetype-driven", () => {
+  it("requirements come from the archetype (AI-PDLC P1), not a hardcoded list", async () => {
+    const r = await resolveCurrentStateReadiness(
+      ctx,
+      AI_PDLC,
+      profile({
+        teamArchetypes: ["full_stack_cloud"],
+        deliveryMaturity: "continuous",
+      }),
+      1,
+    );
+    expect(r.archetypeId).toBe("AI_PRODUCT_DEVELOPMENT_LIFECYCLE");
+    expect(r.instruments.map((i) => i.key).sort()).toEqual(
+      [
+        "eng_performance_dora",
+        "it_systems_landscape",
+        "it_org_structure",
+        "stakeholder_map",
+        "product_platform_operating_model",
+        "value_kpi_baseline",
+      ].sort(),
+    );
+  });
+
   it("reports all missing + coverage 0 when no current-state is committed", async () => {
     const r = await resolveCurrentStateReadiness(
       ctx,
+      AI_PDLC,
       profile({
         teamArchetypes: ["full_stack_cloud"],
         deliveryMaturity: "continuous",
@@ -160,10 +106,11 @@ describe("resolveCurrentStateReadiness — committed vs missing over derived set
     expect(r.hardGaps).toContain("eng_performance_dora");
   });
 
-  it("flips an instrument to committed when its backing table has rows", async () => {
+  it("flips a family to committed when its backing table has rows", async () => {
     counts["tower_dora_metrics"] = 42;
     const r = await resolveCurrentStateReadiness(
       ctx,
+      AI_PDLC,
       profile({
         teamArchetypes: ["full_stack_cloud"],
         deliveryMaturity: "continuous",
@@ -177,14 +124,32 @@ describe("resolveCurrentStateReadiness — committed vs missing over derived set
     expect(r.coverageScore).toBeGreaterThan(0);
   });
 
-  it("qualitative instruments (no backing table) stay missing in v1", async () => {
+  it("estate axis prunes DORA for a mainframe estate (not in the report)", async () => {
     const r = await resolveCurrentStateReadiness(
       ctx,
-      profile({ teamArchetypes: ["full_stack_cloud"] }),
+      AI_PDLC,
+      profile({ teamArchetypes: ["mainframe"] }),
       1,
     );
-    const sm = r.instruments.find((i) => i.key === "stakeholder_map");
-    expect(sm?.status).toBe("missing");
-    expect(sm?.backingTable).toBeNull();
+    expect(r.instruments.map((i) => i.key)).not.toContain(
+      "eng_performance_dora",
+    );
+    expect(r.instruments.map((i) => i.key)).toContain("stakeholder_map");
+  });
+
+  it("each instrument carries its archetype+estate rationale", async () => {
+    const r = await resolveCurrentStateReadiness(
+      ctx,
+      AI_PDLC,
+      emptyProfile(),
+      1,
+    );
+    expect(r.instruments.every((i) => i.rationale.length > 0)).toBe(true);
+  });
+
+  it("the default archetype resolves", () => {
+    expect(getArchetype(DEFAULT_ARCHETYPE_ID)?.id).toBe(
+      "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
+    );
   });
 });

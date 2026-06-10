@@ -9,6 +9,10 @@ import {
   inferMoveProfile,
   resolveCurrentStateReadiness,
 } from "@/lib/programs/current-state-readiness";
+import {
+  getArchetype,
+  DEFAULT_ARCHETYPE_ID,
+} from "@/lib/programs/archetypes/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,8 +31,14 @@ export async function GET(
       return Response.json({ error: "invalid_phase" }, { status: 400 });
     }
 
+    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
     const profile = await inferMoveProfile(ctx);
-    const report = await resolveCurrentStateReadiness(ctx, profile, phase);
+    const report = await resolveCurrentStateReadiness(
+      ctx,
+      archetype,
+      profile,
+      phase,
+    );
     return Response.json(report);
   } catch (err) {
     return tenancyErrorResponse(err);
