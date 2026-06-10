@@ -36,7 +36,7 @@
   <h1>Context Layer Factory — Remediation Report</h1>
   <p class="sub">Replicating the SkyHarbor governed context-layer pipeline for
      <b>Lakeshore Holdings</b>, <b>Apex Retail</b>, <b>Meridian Health</b>.</p>
-  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2, 5 (Apex), 6–7 done. Apex now has 11,410 verified facts (was 0); index+retrieval proven for all 3. Next: code fixes (retrieval/segments/registry), Lakeshore embed, promotion (8), bundle proof (9), module readiness (10).</span></p>
+  <p><span class="stamp" id="stamp">Last updated: 2026-06-10 — Phases 0–2, 5, 6, 7 done + retrieval security fix DEPLOYED (PR #3384, rev --0000080). Apex 0→11,410 facts; tenant-scoped retrieval live. Next: Lakeshore embed, promotion (8), bundle proof (9), module readiness (10).</span></p>
 
   <div class="card">
     <b>Operating principle (hard rule):</b> diagnose each client by <i>exact pipeline state</i>, not by
@@ -113,8 +113,11 @@
 
   <h2>PRs / commits / validation</h2>
   <ul>
-    <li>Branch <code>feat/context-layer-factory-remediation</code> off <code>origin/main</code>.</li>
-    <li>(running log of commits, PRs, CI, job IDs appended here)</li>
+    <li>Docs/applier lane: branch <code>feat/context-layer-factory-remediation</code> off <code>origin/main</code> (Phase 0–7 deliverables + pg-applier).</li>
+    <li><b>PR #3384 MERGED + DEPLOYED</b> — <code>fix(retrieval): tenant-scope enterprise-context retrieval + route Meridian/Lakeshore segments</code>.
+        Closes the cross-tenant retrieval leak in <code>src/lib/retrieval.ts</code> (tenant_key filter + lifecycle filter, dead allow-list removed) and routes Meridian/Lakeshore record-type segments so their facts surface in askIntelligence. tsc clean; 100 tenant-isolation/segment/retrieval tests pass. Live on ACA rev <code>--0000080</code> (image cutover-ctxretrieval-7975a54a1).</li>
+    <li>ACA job IDs: probe y0at6mk · index/retrieval boshah8 · apex dry gkh91m5 · apex apply 6y3pxr0.</li>
+    <li>Throwaway data image <code>clf-apex-data:v1</code> (apex dataset layer for the load).</li>
   </ul>
 </div>
 </body>
