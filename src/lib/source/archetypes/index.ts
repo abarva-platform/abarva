@@ -12,3 +12,4 @@ export * from './evidence-readiness';
 export * from './rfp-canon';
 export * from './deliverable-canon';
 export * from './pricing-engine';
+export * from './grounded-answer';
