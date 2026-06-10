@@ -54,6 +54,19 @@ route.ts` (byte stream), `…/current-state/deliverable/orchestrate/route.ts`
   (persist-on-generate to vault), `…/advance/route.ts` (gate decision record).
 - UI: `src/components/strategic-moves/FileCabinetPanel.tsx` + File Cabinet tab in
   `StrategicMoveDetailView.tsx`; tab routing in the Move page.
+- Backfill: `src/lib/programs/deliverables/move-artifacts-backfill.ts` +
+  `…/artifacts/backfill/route.ts` — registers pre-existing `deliverables_v2`
+  records into the vault (idempotent).
+- PR-5 MovePhasePlaybook: `src/lib/programs/playbook/move-phase-playbook.ts`
+  (facilitated-session framework, P1–P5) + `…/playbook/route.ts`.
+- PR-6 AI-PDLC P3 Solution Design Workbench:
+  `src/lib/programs/playbook/ai-pdlc-design-sessions.ts` (8 sessions),
+  `…/design-session-pack.ts` (renders + stores the pack as a session_artifact),
+  `SessionPlaybookPanel.tsx` + Sessions tab.
+- PR-8 MoveContextBundleTrace:
+  `src/lib/programs/deliverables/move-context-bundle-trace.ts`, emitted in the
+  orchestrate route into artifact metadata, read by
+  `…/artifacts/[artifactId]/trace/route.ts`.
 - Reports under `docs/moves/` (File Cabinet/Vault, Phase Gate Flexibility,
   Board-Grade Deliverable, SkyHarbor live proof).
 
