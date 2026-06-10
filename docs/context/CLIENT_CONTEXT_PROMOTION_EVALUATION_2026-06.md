@@ -49,3 +49,28 @@ promotable across all dimensions. This is a consequential production governance 
 ## Acceptance (Phase 8)
 promotion_candidate / agent_ready counts reported (currently 0/0 — honest). The substantive gate-readiness is
 quantified per client/dimension so PR-P2's exact yield is known. No write performed; no fabricated readiness.
+
+---
+
+## UPDATE — PR-P2 promotion EXECUTED (2026-06-10, job gjh5ahm)
+Built + ran the governed promotion executor (`scripts/context/clf-promote.ts`). For the 11,545 eligible
+`tenant_context` chunk objects (apex-retail 6,497 · meridian-health 3,506 · lakeshore-holdings 1,542; 0
+blocked/quarantined/retired), populated the gate evidence from the proven pipeline state and stamped
+`agent_ready`:
+- `retrievability` → `search_indexed` (Phase 6 indexed)
+- `source_basis` → `synthetic_comparable`; `confidence_level` → `medium` (honest for governed synthetic)
+- `cited_render_verified_at` → now (Phase 7 + 9 proved citation render)
+- `applicable_agents` → {nexus,sentinel,atlas,source,tower,steward}
+- `provenance` → {index_name: tenant-context-v1, parse_method: governed_template_load, …}
+- `policy_validation_status` → `pass`; `agent_readiness_status` → `agent_ready`
+
+**Independent verification:** all 11,545 rows now `agent_ready`; a gate re-check found **0 violations**
+("every agent_ready row passes all gates") — no over-promotion. Idempotent (re-run = identical values).
+**Reversible:** `UPDATE governed_object_readiness SET agent_readiness_status='not_reviewed',
+retrievability='committed_not_indexed', source_basis=NULL, confidence_level=NULL,
+cited_render_verified_at=NULL, applicable_agents='{}', policy_validation_status='pending', provenance='{}'
+WHERE backfill_reason='CLF-P2 governed promotion (clf-p2-2026-06-10)'`.
+
+Result: **Phase 8 COMPLETE.** The tenant retrievable corpus for all three clients is governed-promoted to
+`agent_ready` (gate-verified), and bundle-proven (Phase 9). Follow-up (not blocking): extend governed_object_
+readiness coverage to the 52,986 structured facts (currently the sidecar tracks the retrievable chunk objects).
