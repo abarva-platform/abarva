@@ -1,0 +1,75 @@
+<!doctype html><html><head><meta charset=utf-8><title>SkyHarbor AMS RFP Readiness</title><style>
+body{background:#F8F7F4;color:#1a1a1a;font-family:"DM Sans",Segoe UI,sans-serif;line-height:1.5}.wrap{max-width:1100px;margin:0 auto;padding:36px 26px 80px}
+h1,h2{font-family:Georgia,serif;font-weight:400}h2{font-size:21px;border-bottom:1px solid #e4e1da;padding-bottom:7px;margin-top:34px}
+table{border-collapse:collapse;width:100%;margin:10px 0;background:#fff;border:1px solid #e4e1da;font-size:13px}th,td{border:1px solid #e4e1da;padding:7px 10px;text-align:left}th{background:#f1efe9}.r{text-align:right}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700}.ok{background:#dff3e4;color:#1f7a3d}.warn{background:#fdf2d6;color:#8a6d1a}.bad{background:#f6dedc;color:#b3261e}.info{background:#e3eef6;color:#1d5e87}
+.kpi{display:inline-block;background:#fff;border:1px solid #e4e1da;border-radius:10px;padding:12px 16px;margin:6px 8px 6px 0}.kpi b{display:block;font-size:26px;font-family:Georgia,serif}.kpi span{color:#6b6b6b;font-size:12px}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}pre{background:#fff;border:1px solid #e4e1da;border-radius:8px;padding:12px;overflow:auto;font-size:11px}</style></head><body><div class=wrap>
+<h1>SkyHarbor Air — AMS RFP Readiness (PR-9 live proof)</h1>
+<p style="color:#6b6b6b">Real engine (PR-1..8) run against the live private data plane. Tenant <code>skyharbor-air</code> · archetype AMS_MANAGED_SERVICES · 2026-06-10.</p>
+<h2>Readiness — before vs after intake</h2>
+<div><div class=kpi><b>59%</b><span>overall BEFORE</span></div>
+<div class=kpi><b>66%</b><span>overall AFTER</span></div>
+<div class=kpi><b>7 → 8</b><span>issue-ready sections</span></div>
+<div class=kpi><b>3 → 2</b><span>evidence-missing</span></div></div>
+<p>Captured this run (governed, user_attested): <b>ticket_volumes</b> (uploaded ITSM export → committed → governed-promoted to agent_ready) and <b>procurement_timeline</b> (Nexus chat answer → committed, NOT agent_ready). Effect: <code>current_state</code> moves <b>evidence missing → issue ready</b>.</p>
+<h2>Section readiness — AFTER</h2>
+<table><thead><tr><th>Section</th><th>Mode</th><th>Status</th><th class=r>Complete</th><th>Missing inputs</th></tr></thead><tbody><tr><td>1. Executive Overview</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>2. Procurement Instructions &amp; Timeline</td><td><code>auto_template</code></td><td><span class="pill warn">procurement review required</span></td><td class=r>50%</td><td>procurement_contact</td></tr><tr><td>3. Background &amp; Current-State Context</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>4. Scope of Services by Tower</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>5. Current Environment Exhibits</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>6. Service Requirements</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>7. Transition Requirements</td><td><code>elicit</code></td><td><span class="pill bad">evidence missing</span></td><td class=r>0%</td><td>transition_constraints</td></tr><tr><td>8. SLA / KPI Schedule</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>9. Security, Compliance &amp; Risk Requirements</td><td><code>client_complete</code></td><td><span class="pill info">client to complete</span></td><td class=r>0%</td><td>security_requirements</td></tr><tr><td>10. Governance &amp; Retained Organization Model</td><td><code>elicit</code></td><td><span class="pill bad">evidence missing</span></td><td class=r>0%</td><td>retained_org_model</td></tr><tr><td>11. Vendor Response Instructions</td><td><code>auto_template</code></td><td><span class="pill warn">procurement review required</span></td><td class=r>100%</td><td>—</td></tr><tr><td>12. Pricing Template &amp; Commercial Model</td><td><code>auto_template</code></td><td><span class="pill warn">pricing review required</span></td><td class=r>100%</td><td>—</td></tr><tr><td>13. Evaluation Criteria</td><td><code>auto_template</code></td><td><span class="pill warn">procurement review required</span></td><td class=r>0%</td><td>evaluation_weights</td></tr><tr><td>14. Assumptions, Dependencies &amp; Client-to-Complete</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr><tr><td>15. Contracting / Terms Appendix</td><td><code>client_complete</code></td><td><span class="pill warn">legal review required</span></td><td class=r>0%</td><td>legal_terms</td></tr><tr><td>16. Source Register &amp; Evidence Appendix</td><td><code>auto_governed</code></td><td><span class="pill ok">issue ready</span></td><td class=r>100%</td><td>—</td></tr></tbody></table>
+<h2>Nexus intake queue (top gaps, BEFORE)</h2>
+<table><thead><tr><th>#</th><th>Question</th><th>Family</th><th>Options</th><th>Owner</th></tr></thead><tbody><tr><td>1</td><td>To make "Background &amp; Current-State Context" defensible, I need ticket/incident volumes. Do you have an export, or should I provide the AMS ITSM volume template (tickets/incidents/changes by tower &amp; priority)?</td><td><code>ticket_volumes</code></td><td>upload · template</td><td>CIO / Sourcing Lead</td></tr><tr><td>1</td><td>For "Procurement Instructions &amp; Timeline", we need your decision on procurement timeline (issue/q&amp;a/due/orals/award). Can you confirm it, or should this stay marked client-to-complete?</td><td><code>procurement_timeline</code></td><td>upload · template · chat · client-complete</td><td>Procurement / Sourcing</td></tr><tr><td>1</td><td>For "Procurement Instructions &amp; Timeline", we need your decision on sourcing contact + submission channel. Can you confirm it, or should this stay marked client-to-complete?</td><td><code>—</code></td><td>chat · client-complete</td><td>Procurement / Sourcing</td></tr><tr><td>6</td><td>To make "Transition Requirements" defensible, I need transition constraints. Do you have an export, or should I provide the Transition constraints (blackouts, parallel-run, KT, critical events)?</td><td><code>transition_constraints</code></td><td>upload · template</td><td>CIO / IT Ops</td></tr><tr><td>8</td><td>For "Security, Compliance &amp; Risk Requirements", we need your decision on required frameworks / data residency / background checks. Can you confirm it, or should this stay marked client-to-complete?</td><td><code>security_requirements</code></td><td>upload · template · chat · client-complete</td><td>CISO / Security</td></tr><tr><td>9</td><td>To make "Governance &amp; Retained Organization Model" defensible, I need retained organization model. Do you have an export, or should I provide the IT org / retained organization model?</td><td><code>retained_org_model</code></td><td>upload · template · client-complete</td><td>CIO / IT Ops</td></tr><tr><td>11</td><td>"Vendor Response Instructions" is drafted but requires procurement sign-off before issuance. Who owns procurement approval, and can they confirm?</td><td><code>—</code></td><td>chat · client-complete</td><td>procurement</td></tr><tr><td>12</td><td>For "Evaluation Criteria", we need your decision on final evaluation criteria weights &amp; disqualifiers. Can you confirm it, or should this stay marked client-to-complete?</td><td><code>evaluation_weights</code></td><td>upload · template · chat · client-complete</td><td>Procurement / Sourcing</td></tr></tbody></table>
+<h2>SourceRfpContextBundleTrace — current_state (after capture)</h2>
+<pre>{
+ "trace_id": "rfptr-evt-skyharbor-ams-2026-current_state",
+ "source_event_id": "evt-skyharbor-ams-2026",
+ "tenant_id": "t",
+ "tenant_key": "skyharbor-air",
+ "archetype": "AMS_MANAGED_SERVICES",
+ "section_id": "current_state",
+ "section_mode": "auto_governed",
+ "readiness_status": "issue_ready",
+ "user_intent": "generate_section:current_state",
+ "required_inputs": [
+  "application_inventory",
+  "ticket_volumes"
+ ],
+ "present_inputs": [
+  "application_inventory",
+  "ticket_volumes"
+ ],
+ "missing_inputs": [],
+ "retrieved_facts": [
+  "ev:itsm#1"
+ ],
+ "retrieved_artifacts": [],
+ "retrieved_corpus_patterns": [],
+ "excluded_objects_by_reason": {},
+ "assumptions_used": [],
+ "client_complete_items": [],
+ "source_basis_distribution": {
+  "application_inventory": 1,
+  "ticket_volumes": 1,
+  "incident_problem_change": 1
+ },
+ "confidence_distribution": {
+  "high": 1
+ },
+ "citation_ready_count": 2,
+ "model_input_context_hash": "e3d58a5c92237353",
+ "model_call_allowed": true,
+ "model_call_kind": "governed_facts",
+ "response_id": null,
+ "claims_detected": 1,
+ "claims_supported": 1,
+ "claims_unsupported": 0,
+ "citations_emitted": [
+  "ev:app#1",
+  "ev:itsm#1"
+ ],
+ "tenant_leakage_status": "clean"
+}</pre>
+<h2>Governance proof</h2>
+<ul><li>ticket_volumes: uploaded → committed → governed-promoted to <code>agent_ready</code> (search_indexed, cite-render verified) — NOT auto-promoted.</li>
+<li>procurement_timeline: <code>source_basis=user_attested</code>, committed, <b>not</b> agent_ready (a chat answer never becomes agent evidence without governed promotion).</li>
+<li>current_state generation: model_call_allowed=true, kind=<code>governed_facts</code>, tenant_leakage=<code>clean</code>, unsupported_claims=0.</li>
+<li>No section with missing evidence is AUTO-GOVERNED (enforced by resolver, proven across the pack).</li></ul>
+</div></body></html>
