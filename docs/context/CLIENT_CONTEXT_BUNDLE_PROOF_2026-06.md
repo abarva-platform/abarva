@@ -40,10 +40,12 @@ data defect:
 2. `retrieveTenantEnterpriseSources` reads **`opts.tenant ?? opts.tenantInventoryKey`** (NOT `tenantClientKey`)
    → without it, returns `[]` → 0 tenant sources.
 With `{ tenant, tenantId, tenantClientKey, tenantInventoryKey, userId }` all supplied, the full governed chain
-retrieves the tenant's facts, grounds, cites, and refuses to fabricate. **Operational lesson for runtime callers:**
-the enterprise-context retrieval requires `tenant`/`tenantInventoryKey` + `tenantId` to be threaded, not just
-`tenantClientKey`. (Worth auditing live call sites to ensure they pass these — a missing inventory key would
-silently ungroundedly answer.)
+retrieves the tenant's facts, grounds, cites, and refuses to fabricate. **Production verified sound:** the live
+call site `src/app/api/intelligence/ask/route.ts` resolves all of these via `resolveTenant(session)` and passes
+`tenantId`, `tenantClientKey`, `tenant`, and `tenantInventoryKey` to `askIntelligence` (lines 195–205). So
+signed-in users get the grounded, tenant-correct, cited behavior proven here — the ungrounding was a harness
+omission only, not a runtime defect. (Operational note: any FUTURE programmatic caller of `askIntelligence`
+must thread the same four tenant fields; `tenantClientKey` alone silently ungrounds.)
 
 ## Status vs "ready"
 This satisfies the **CONTEXT_BUNDLE_PROVEN** bar (real retrieve→ground→cite→answer, tenant-correct, isolated,
