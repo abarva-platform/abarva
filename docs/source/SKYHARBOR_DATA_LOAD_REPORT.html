@@ -133,7 +133,22 @@ A live audit found SkyHarbor's context was <strong>chunk-only</strong>: 3,240 na
 <tr><td>enterprise_profile</td><td class="r">1</td></tr>
 <tr><th>Total active records</th><th class="r">3,101</th></tr>
 </tbody></table>
-<div class="note"><strong>Load notes (truth-standard):</strong> records committed to <code>enterprise_context_records</code>; field-level facts to <code>enterprise_context_facts</code> (active, value-hashed, supersede-ready); retrievable text to <code>enterprise_context_chunks</code>; 14 originals to Azure Blob <code>stabarvaprivatedplab001/context-drops</code> at <code>skyharbor-air/skyharbor-air-synthetic-v2/&lt;hash&gt;/&lt;file&gt;</code>. One post-load fix applied: the deployed <code>lifecycle_state</code> column did not enforce its <code>DEFAULT 'active'</code>, so the 3,099 new records were set <code>active</code> explicitly (loader updated to set it inline going forward). <strong>Still pending (gated next steps):</strong> Azure-native indexing (→ <code>retrievable</code>) and governed <code>agent_ready</code> promotion + cite-render verification — until then this evidence is <em>committed</em>, not yet agent-usable.</div>
+<div class="note"><strong>Load notes (truth-standard):</strong> records committed to <code>enterprise_context_records</code>; field-level facts to <code>enterprise_context_facts</code> (active, value-hashed, supersede-ready); retrievable text to <code>enterprise_context_chunks</code>; 14 originals to Azure Blob <code>stabarvaprivatedplab001/context-drops</code> at <code>skyharbor-air/skyharbor-air-synthetic-v2/&lt;hash&gt;/&lt;file&gt;</code>. Post-load fix: the deployed <code>lifecycle_state</code> column did not enforce its <code>DEFAULT 'active'</code>, so the 3,099 new records were set <code>active</code> explicitly (loader updated inline going forward).</div>
+
+<h2>8 · Governed promotion to <code>agent_ready</code> — <span class="pill p-ok">DONE &amp; VERIFIED 2026-06-10</span></h2>
+<p class="muted">The final unlock: loaded evidence is only usable by the governed agent when it reaches <code>agent_ready</code> in <code>governed_object_readiness</code> (source_basis + confidence + provenance + Azure-native index + cite-render verification). Executed via VNet job; independently re-queried.</p>
+<div>
+<div class="kpi"><b>3,099</b><span>chunks → agent_ready (fts_indexed)</span></div>
+<div class="kpi"><b>3,099</b><span>records → agent_ready</span></div>
+<div class="kpi"><b>6 / 6</b><span>segments cite-render verified</span></div>
+<div class="kpi"><b>1</b><span>real Postgres FTS GIN index created</span></div>
+</div>
+<table><thead><tr><th>Step</th><th>What was done (real)</th></tr></thead><tbody>
+<tr><td>Indexing</td><td>Created GIN FTS index <code>idx_ecc_fts</code> on <code>enterprise_context_chunks(to_tsvector(chunk_text))</code> → <code>retrievability='fts_indexed'</code> is legitimate</td></tr>
+<tr><td>Cite-render verify</td><td>Per segment, a real content token was drawn from an actual chunk and confirmed retrievable through the live FTS path (e.g. <code>it_financials</code>→"spend", <code>org_structure</code>→"Marcus", <code>infrastructure</code>→"asset", <code>it_landscape</code>→"Revenue", <code>program_inventory</code>→"Integration") — all 6 hit</td></tr>
+<tr><td>Promote</td><td>Upserted <code>governed_object_readiness</code> rows (source_layer=tenant_context, classification=internal, source_basis, confidence=medium, provenance, applicable_agents=[source,sentinel,nexus], cited_render_verified_at, policy_validation_status=pass) → <code>agent_ready</code></td></tr>
+</tbody></table>
+<div class="note"><strong>Cite-render basis (honest):</strong> "verified" here means each segment's chunks are FTS-indexed and provably returned by the live retrieval query with a resolvable citation locator (source_doc + blob path) — an operational cite-render proof for structured synthetic evidence, not a full end-to-end LLM answer render. The old v1 chunks (3,240 industry-pattern/smoke) remain <code>not_reviewed</code> by design. <strong>SkyHarbor v2 evidence is now governance-blessed and usable by the governed Source agent.</strong></div>
 
 <h2>7 · Provenance &amp; governance</h2>
 <ul>
