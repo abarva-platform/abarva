@@ -10,6 +10,7 @@ import {
   type DatasetProvenance,
   type IngestFamily,
 } from "@/lib/programs/current-state-ingest";
+import { DEFAULT_ARCHETYPE_ID } from "@/lib/programs/archetypes/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export async function POST(
   { params }: { params: Promise<{ programId: string }> },
 ) {
   try {
-    await params; // programId reserved for per-move attachment linkage (S4)
+    const { programId } = await params;
     const ctx = await requireTenancy();
 
     const form = await req.formData();
@@ -34,6 +35,8 @@ export async function POST(
     const provenanceRaw = String(
       form.get("provenance") ?? "representative_synthetic",
     );
+    const phase = Number(form.get("phase") ?? "1");
+    const archetypeId = String(form.get("archetypeId") ?? DEFAULT_ARCHETYPE_ID);
 
     if (!(file instanceof File)) {
       return Response.json({ error: "file_required" }, { status: 400 });
@@ -61,6 +64,11 @@ export async function POST(
       file.name,
       provenance,
       new Date().toISOString(),
+      {
+        moveId: programId,
+        archetypeId,
+        phase: Number.isFinite(phase) ? phase : 1,
+      },
     );
 
     // Honest ladder: surface parsed vs committed separately; committed>0 means

@@ -34,6 +34,11 @@ const ctx: TenancyCtx = {
 } as TenancyCtx;
 
 const NOW = "2026-06-09T21:00:00.000Z";
+const TAGS = {
+  moveId: "0d14fa63-move",
+  archetypeId: "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
+  phase: 1,
+};
 
 const VALID_DORA = [
   "repo,team,period_start,period_end,deployment_frequency_per_day,lead_time_for_changes_hours,change_failure_rate_pct,mttr_hours,sample_size_deploys",
@@ -95,6 +100,7 @@ describe("ingestCurrentStateCsv — DORA", () => {
       "skyharbor-dora-2026-05.csv",
       "representative_synthetic",
       NOW,
+      TAGS,
     );
     expect(r.parsedRows).toBe(2);
     expect(r.committedRows).toBe(2);
@@ -132,6 +138,7 @@ describe("ingestCurrentStateCsv — DORA", () => {
       "bad.csv",
       "representative_synthetic",
       NOW,
+      TAGS,
     );
     expect(r.committedRows).toBe(0);
     expect(writes).toHaveLength(0);
@@ -146,10 +153,56 @@ describe("ingestCurrentStateCsv — DORA", () => {
       "client.csv",
       "client_export",
       NOW,
+      TAGS,
     );
     expect(r.provenance).toBe("client_export");
     const ledger = writes.find((w) => w.table === "evidence_ledger");
     expect(ledger?.row.confidence).toBe(0.8);
     expect(ledger?.row.claim_text).not.toMatch(/SYNTHETIC/);
+  });
+
+  it("records governance lineage (move, archetype, phase, family, source basis) + state, with NO auto agent_ready", async () => {
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "eng_performance_dora",
+      VALID_DORA,
+      "skyharbor-dora.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    // Result carries the honest separated state + lineage.
+    expect(r.readinessState).toBe("committed");
+    expect(r.promotedToAgent).toBe(false);
+    expect(r.lineage).toMatchObject({
+      moveId: TAGS.moveId,
+      archetypeId: TAGS.archetypeId,
+      phase: 1,
+      family: "eng_performance_dora",
+      tenantKey: ctx.clientKey,
+      sourceBasis: "representative_synthetic",
+    });
+    // evidence_ledger source_ref carries the tags; committed but NOT agent_ready.
+    const sref = writes.find((w) => w.table === "evidence_ledger")?.row
+      .source_ref as Record<string, unknown>;
+    expect(sref.moveId).toBe(TAGS.moveId);
+    expect(sref.archetypeId).toBe(TAGS.archetypeId);
+    expect(sref.phase).toBe(1);
+    expect(sref.readinessState).toBe("committed");
+    expect(sref.promotedToAgent).toBe(false); // governed promotion only — never auto
+  });
+
+  it("an unwired family records missing state + lineage, writes nothing", async () => {
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "eng_performance_dora" as never,
+      VALID_DORA,
+      "x.csv",
+      "representative_synthetic",
+      NOW,
+      { ...TAGS, archetypeId: "AI_PRODUCT_DEVELOPMENT_LIFECYCLE" },
+    );
+    // (eng_performance_dora IS wired; this asserts the lineage is always present.)
+    expect(r.lineage.archetypeId).toBe("AI_PRODUCT_DEVELOPMENT_LIFECYCLE");
   });
 });

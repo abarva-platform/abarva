@@ -25,12 +25,27 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 
 export type DatasetProvenance = "client_export" | "representative_synthetic";
 
+/** Governance lineage recorded for every uploaded evidence file. */
+export interface EvidenceLineage {
+  moveId: string;
+  archetypeId: string;
+  phase: number;
+  family: string;
+  tenantKey: string | null;
+  sourceBasis: DatasetProvenance;
+}
+
 export interface IngestResult {
   family: string;
   parsedRows: number;
   committedRows: number;
   ledgerEntries: number;
   provenance: DatasetProvenance;
+  /** Honest ladder: committed means rows landed; agent_ready is NEVER set here
+   *  (it requires the governed promotion workflow). */
+  readinessState: "missing" | "committed";
+  promotedToAgent: false;
+  lineage: EvidenceLineage;
   errors: string[];
 }
 
@@ -163,6 +178,7 @@ async function commitDora(
   fileRef: string,
   provenance: DatasetProvenance,
   nowIso: string,
+  lineage: EvidenceLineage,
 ): Promise<{ committed: number; ledger: number }> {
   const sb = getAzureWriteFluentClient();
   let committed = 0;
@@ -199,7 +215,7 @@ async function commitDora(
       client_id: ctx.clientId,
       surface: "moves",
       artifact_type: "metric",
-      artifact_ref: `current_state:eng_performance_dora:${fileRef}`,
+      artifact_ref: `current_state:eng_performance_dora:${lineage.moveId}:${fileRef}`,
       claim_text: `DORA engineering baseline ingested: ${committed} repo-period rows (deploy frequency, lead time, change-failure rate, MTTR)${synthetic ? " — REPRESENTATIVE/SYNTHETIC dataset, not a real client export" : ""}.`,
       source_type: "document_extract",
       source_ref: {
@@ -208,6 +224,13 @@ async function commitDora(
         datasetProvenance: provenance,
         tenantKey: ctx.clientKey ?? null,
         rows: committed,
+        // Governance lineage tags (PR-4).
+        moveId: lineage.moveId,
+        archetypeId: lineage.archetypeId,
+        phase: lineage.phase,
+        readinessState: "committed",
+        // agent_ready is NEVER set on ingest — only via governed promotion.
+        promotedToAgent: false,
       },
       freshness_at: nowIso,
       confidence: synthetic ? 0.6 : 0.8,
@@ -239,14 +262,30 @@ export async function ingestCurrentStateCsv(
   fileRef: string,
   provenance: DatasetProvenance,
   nowIso: string,
+  tags: { moveId: string; archetypeId: string; phase: number },
 ): Promise<IngestResult> {
+  const lineage: EvidenceLineage = {
+    moveId: tags.moveId,
+    archetypeId: tags.archetypeId,
+    phase: tags.phase,
+    family,
+    tenantKey: ctx.clientKey ?? null,
+    sourceBasis: provenance,
+  };
+  const base = {
+    family,
+    parsedRows: 0,
+    committedRows: 0,
+    ledgerEntries: 0,
+    provenance,
+    readinessState: "missing" as const,
+    promotedToAgent: false as const,
+    lineage,
+  };
+
   if (family !== "eng_performance_dora") {
     return {
-      family,
-      parsedRows: 0,
-      committedRows: 0,
-      ledgerEntries: 0,
-      provenance,
+      ...base,
       errors: [`family not yet wired for CSV ingest: ${family}`],
     };
   }
@@ -254,11 +293,7 @@ export async function ingestCurrentStateCsv(
   const { rows, errors } = parseDoraCsv(text);
   if (rows.length === 0) {
     return {
-      family,
-      parsedRows: 0,
-      committedRows: 0,
-      ledgerEntries: 0,
-      provenance,
+      ...base,
       errors: errors.length ? errors : ["no valid rows parsed"],
     };
   }
@@ -269,6 +304,7 @@ export async function ingestCurrentStateCsv(
     fileRef,
     provenance,
     nowIso,
+    lineage,
   );
   return {
     family,
@@ -276,6 +312,10 @@ export async function ingestCurrentStateCsv(
     committedRows: committed,
     ledgerEntries: ledger,
     provenance,
+    // Honest separated state: committed when rows landed; agent_ready stays false.
+    readinessState: committed > 0 ? "committed" : "missing",
+    promotedToAgent: false,
+    lineage,
     errors,
   };
 }

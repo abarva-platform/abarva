@@ -128,6 +128,22 @@ export function CurrentStateReadinessPanel({
 
   if (!readiness || readiness.instruments.length === 0) return null;
 
+  // The hard gaps as a ranked "what's the cheapest thing to do next" list —
+  // wired CSV ingest (upload) ranks cheapest, then CSV-coming, then chat-captured.
+  const unblockGaps = readiness.instruments
+    .filter((i) => i.severity === "hard" && i.status !== "committed")
+    .map((i) => {
+      const wired = INGEST_WIRED.has(i.key) && !!i.backingTable;
+      const effort = wired ? 0 : i.backingTable ? 1 : 2;
+      const path = wired
+        ? `Upload ${i.sourceDocHint}`
+        : i.backingTable
+          ? "CSV ingest coming — supply via Nexus"
+          : "Capture with Nexus";
+      return { i, effort, path, wired };
+    })
+    .sort((a, b) => a.effort - b.effort);
+
   async function provide(family: string, file: File) {
     setBusy(family);
     setNote(null);
@@ -219,6 +235,125 @@ export function CurrentStateReadinessPanel({
           Charter claims that rest on this evidence will be unsourced until it
           is provided and committed — the engine will say so rather than
           fabricate.
+        </div>
+      )}
+
+      {unblockGaps.length > 0 && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 6,
+            background: "#fff",
+            borderLeft: "3px solid var(--abarva-ink, #0a0a0a)",
+            border: "1px solid var(--abarva-mist, #e6e3dc)",
+            borderLeftWidth: 3,
+            borderLeftColor: "var(--abarva-ink, #0a0a0a)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--abarva-mono)",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--abarva-ink)",
+              marginBottom: 6,
+            }}
+          >
+            To unblock this charter
+            <span
+              style={{
+                marginLeft: 8,
+                fontWeight: 400,
+                textTransform: "none",
+                color: "var(--abarva-stone)",
+              }}
+            >
+              &mdash; {unblockGaps.length} hard gap
+              {unblockGaps.length > 1 ? "s" : ""}, cheapest first
+            </span>
+          </div>
+          <ol
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              counterReset: "g",
+            }}
+          >
+            {unblockGaps.map((g) => (
+              <li
+                key={g.i.key}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "5px 0",
+                  borderTop: "1px solid var(--abarva-mist, #efece5)",
+                  fontSize: 12,
+                }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    fontWeight: 600,
+                    color: "var(--abarva-ink)",
+                  }}
+                >
+                  {g.i.label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 10,
+                    color: "var(--abarva-stone)",
+                  }}
+                >
+                  {g.i.backingTable ?? "charter"}
+                </span>
+                {g.wired ? (
+                  <label
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#fff",
+                      background: "var(--abarva-ink, #0a0a0a)",
+                      borderRadius: 5,
+                      padding: "3px 10px",
+                      cursor: busy ? "default" : "pointer",
+                      opacity: busy ? 0.5 : 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {busy === g.i.key ? "Uploading…" : g.path}
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      hidden
+                      disabled={busy !== null}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) provide(g.i.key, f);
+                      }}
+                    />
+                  </label>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--abarva-stone)",
+                      fontStyle: "italic",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {g.path}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 
