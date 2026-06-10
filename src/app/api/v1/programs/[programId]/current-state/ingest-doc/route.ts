@@ -15,6 +15,10 @@ import {
   ingestCurrentStateDoc,
   isDocumentFamily,
 } from "@/lib/programs/current-state-doc-ingest";
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from "@/lib/security/sensitive-upload-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +80,21 @@ export async function POST(
 
     const mimeType = resolveMime(file);
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Scan-before-extract (audit B5a): quarantine suspected PHI/PII/regulated
+    // identifiers BEFORE the parser, evidence write, or review record — same
+    // guard as the Moves workspace/data/tower upload routes. A mistaken
+    // sensitive upload never reaches program_evidence_items or auto-promotion.
+    const dataProtection = evaluateSensitiveUpload({
+      filename: file.name,
+      mimeType,
+      bytes: buffer,
+      declaredClassification: form.get("dataClassification"),
+    });
+    if (dataProtection.decision === "quarantine") {
+      return sensitiveUploadRejectedResponse(dataProtection);
+    }
+
     const result = await ingestCurrentStateDoc(ctx, {
       moveId: programId,
       family,

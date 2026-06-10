@@ -11,6 +11,10 @@ import {
   type IngestFamily,
 } from "@/lib/programs/current-state-ingest";
 import { DEFAULT_ARCHETYPE_ID } from "@/lib/programs/archetypes/registry";
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from "@/lib/security/sensitive-upload-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,7 +64,21 @@ export async function POST(
       ? (provenanceRaw as DatasetProvenance)
       : "representative_synthetic";
 
-    const text = await file.text();
+    // Scan-before-commit (audit B5a): quarantine suspected PHI/PII/regulated
+    // identifiers BEFORE parse/commit to tower_* + evidence_ledger — same guard
+    // as the Moves workspace/data/tower upload routes.
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const dataProtection = evaluateSensitiveUpload({
+      filename: file.name,
+      mimeType: file.type || "text/csv",
+      bytes: buffer,
+      declaredClassification: form.get("dataClassification"),
+    });
+    if (dataProtection.decision === "quarantine") {
+      return sensitiveUploadRejectedResponse(dataProtection);
+    }
+
+    const text = buffer.toString("utf-8");
     const result = await ingestCurrentStateCsv(
       ctx,
       familyRaw as IngestFamily,
