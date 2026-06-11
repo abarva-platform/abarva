@@ -19,6 +19,11 @@ type RequestAccessBody = {
 
 // Inbound private-preview lead notifications go here.
 const LEAD_INBOX = 'admin@abarva.ai';
+const DEFAULT_FROM_EMAIL = 'AbarVa Preview <support@send.abarva.ai>';
+
+function resolveLeadFromEmail(): string {
+  return process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_FROM_EMAIL;
+}
 
 /**
  * Public, unauthenticated lead capture for the signed-out marketing landing page.
@@ -80,7 +85,7 @@ export async function POST(req: NextRequest) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: 'AbarVa Preview <noreply@abarva.ai>',
+        from: resolveLeadFromEmail(),
         to: LEAD_INBOX,
         replyTo: email,
         subject: `Preview request — ${name} · ${company}`,
