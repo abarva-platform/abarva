@@ -62,6 +62,12 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // route returns 503 (misconfigured) rather than accepting unsigned
   // payloads.
   '/api/webhooks/resend(.*)',
+  // Private-preview lead capture from the public marketing landing page.
+  // POST /api/request-access must be reachable without a Clerk session —
+  // it is the signed-out "Request access" form. The route validates a work
+  // email, stores the lead via the service-role write client, and notifies
+  // admin@abarva.ai via Resend. No tenant data is read or written.
+  '/api/request-access(.*)',
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is
