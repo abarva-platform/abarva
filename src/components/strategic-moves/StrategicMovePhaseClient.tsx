@@ -457,6 +457,11 @@ export function StrategicMovePhaseClient({
       setAttachments([]);
       setStreaming(true);
 
+      // A hung request must never brick the dock: abort after 3 minutes so
+      // `finally` re-enables send and the user sees an honest error turn.
+      const abort = new AbortController();
+      const hangTimer = setTimeout(() => abort.abort(), 180_000);
+
       try {
         const conversationHistory = turnsRef.current
           .filter(
@@ -468,6 +473,7 @@ export function StrategicMovePhaseClient({
 
         const res = await fetch("/api/chat/agent", {
           method: "POST",
+          signal: abort.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: fullMessage,
@@ -563,6 +569,7 @@ export function StrategicMovePhaseClient({
           ),
         );
       } finally {
+        clearTimeout(hangTimer);
         setStreaming(false);
       }
     },
@@ -727,8 +734,11 @@ export function StrategicMovePhaseClient({
                     void send();
                   }
                 }}
-                placeholder={`Ask Nexus about ${move.displayCode} ${config.label}…`}
-                disabled={streaming}
+                placeholder={
+                  streaming
+                    ? "Nexus is responding… you can type your next message"
+                    : `Ask Nexus about ${move.displayCode} ${config.label}…`
+                }
                 spellCheck
               />
               <button

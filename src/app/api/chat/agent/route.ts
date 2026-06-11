@@ -492,15 +492,23 @@ export async function POST(request: Request) {
   }
 
   // Phase 4 doctrine wiring — Nexus on Moves/Programs surfaces.
+  // Normalize before matching: clients send both "/strategic-moves/…" and bare
+  // "strategic-moves-workspace" — the un-slashed form silently skipped the
+  // doctrine entirely (founder-reported: charter dumped into chat).
+  const nexusSurface =
+    typeof surface === "string" && surface.length > 0
+      ? surface.startsWith("/")
+        ? surface
+        : `/${surface}`
+      : "";
   if (
     agentName === "Nexus" &&
-    typeof surface === "string" &&
-    (surface.startsWith("/moves") ||
-      surface.startsWith("/programs") ||
-      surface.startsWith("/strategic-moves")) &&
+    (nexusSurface.startsWith("/moves") ||
+      nexusSurface.startsWith("/programs") ||
+      nexusSurface.startsWith("/strategic-moves")) &&
     isNexusVoiceDoctrineEnabled()
   ) {
-    voiceLine = composeNexusSystemPrompt({ surface });
+    voiceLine = composeNexusSystemPrompt({ surface: nexusSurface });
   }
 
   // Phase 4 doctrine wiring — Atlas on Tower surface.
