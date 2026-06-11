@@ -47,6 +47,11 @@ export interface CsvUploadInput {
   fileName: string;
   csvText: string;
   uploadedBy: string;
+  sourceBlob?: {
+    bucket: string;
+    path: string;
+    sha256: string;
+  } | null;
   mapping?: CsvSchemaMapping;
   attestation?: PilotUploadAttestation;
   uploadedAt?: string;
@@ -84,6 +89,8 @@ export interface PreparedCsvContextChunk {
   embedding_status: "pending";
   embedding_model: null;
   embedding_error: null;
+  lifecycle_state: "active";
+  load_batch_id: string;
   provenance: Record<string, unknown>;
   chunk_metadata: Record<string, unknown>;
 }
@@ -201,6 +208,15 @@ function compactTimestamp(value: string): string {
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
+}
+
+function sourcePathBase(
+  input: Pick<CsvUploadInput, "tenantKey" | "fileName" | "sourceBlob">,
+): string {
+  if (input.sourceBlob) {
+    return `azure-blob://${input.sourceBlob.bucket}/${input.sourceBlob.path}`;
+  }
+  return `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}`;
 }
 
 function findHeader(headers: string[], candidates: string[]): string | null {
@@ -542,6 +558,12 @@ export function prepareCsvUploadForTenantContext(
     compactTimestamp(uploadedAt),
   ].join(":");
   const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
+  const sourceBase = sourcePathBase(input);
+  const dataClassification =
+    input.mapping?.dataClassification ?? "confidential";
+  const sourceBasis = input.sourceBlob
+    ? "azure_blob_admin_upload"
+    : "direct_structured_upload";
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;
@@ -566,24 +588,32 @@ export function prepareCsvUploadForTenantContext(
       source_segment_id: sourceSegmentId,
       source_record_id: sourceRecordId,
       source_doc: input.fileName,
-      source_path: `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}#row=${rowNumber}`,
+      source_path: `${sourceBase}#row=${rowNumber}`,
       chunk_index: index,
       chunk_text: chunkText,
       token_count: estimateTokens(chunkText),
       embedding_status: "pending",
       embedding_model: null,
       embedding_error: null,
+      lifecycle_state: "active",
+      load_batch_id: uploadId,
       provenance: {
         loader: "c5-csv-upload-connector",
         upload_id: uploadId,
         tenant_key: input.tenantKey,
         client_id: input.clientId,
         source_doc: input.fileName,
+        source_path: sourceBase,
+        source_basis: sourceBasis,
+        source_citation: `${sourceBase}#row=${rowNumber}`,
         source_row: rowNumber,
         uploaded_by: input.uploadedBy,
         uploaded_at: uploadedAt,
-        data_classification:
-          input.mapping?.dataClassification ?? "confidential",
+        data_classification: dataClassification,
+        classification: dataClassification,
+        confidence: 0.86,
+        lifecycle_state: "active",
+        source_blob: input.sourceBlob ?? null,
         schema_mapping: mapping,
         upload_attestation: input.attestation ?? null,
       },
@@ -592,6 +622,14 @@ export function prepareCsvUploadForTenantContext(
         template_id: template.id,
         context_dimension: template.dimension,
         source_record_id: sourceRecordId,
+        source_basis: sourceBasis,
+        source_citation: `${sourceBase}#row=${rowNumber}`,
+        classification: dataClassification,
+        sensitivity: dataClassification,
+        confidence: 0.86,
+        lifecycle_state: "active",
+        source_blob: input.sourceBlob ?? null,
+        load_batch_id: uploadId,
         title: mapping.titleColumn ? row[mapping.titleColumn] : null,
         csv_headers: parsed.headers,
       },
@@ -724,6 +762,7 @@ export async function loadCsvUploadToTenantContext(
       uploadedBy: input.uploadedBy,
       uploadedAt: input.uploadedAt ?? new Date().toISOString(),
       uploadId: prepared.uploadId,
+      sourcePathBase: sourcePathBase(input),
       template: prepared.template,
       mapping: prepared.mapping,
       rows: parsedForPromotion.rows,

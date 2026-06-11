@@ -28,4 +28,26 @@ describe('azureSearchIndexContracts', () => {
       expect(index.vectorSearch?.profiles).toHaveLength(1);
     }
   });
+
+  it('keeps tenant-context-v1 governance fields retrievable and filterable', () => {
+    const tenantContext = azureSearchIndexContracts().find((index) => index.name === 'tenant-context-v1');
+    expect(tenantContext).toBeDefined();
+    const fields = new Map(tenantContext!.fields.map((field) => [field.name, field]));
+    for (const fieldName of [
+      'tenant_key',
+      'client_id',
+      'client_key',
+      'source_basis',
+      'source_citation',
+      'confidence_level',
+      'classification',
+      'lifecycle_state',
+      'agent_readiness_status',
+    ]) {
+      expect(fields.get(fieldName)).toMatchObject({
+        filterable: true,
+        retrievable: true,
+      });
+    }
+  });
 });

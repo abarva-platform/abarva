@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import {
@@ -20,17 +21,39 @@ import {
 } from "@/lib/programs/expert-kernel/rate-card/rate-card-row-parser";
 import { getRateCardTemplateById } from "@/lib/programs/expert-kernel/rate-card/rate-card-templates";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 5 * 1024 * 1024;
+const DIRECT_CONTEXT_BUCKET = "context-uploads";
 
 function formString(formData: FormData, key: string): string | null {
   const value = formData.get(key);
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function safePathPart(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 96) || "upload"
+  );
+}
+
+function compactTimestamp(): string {
+  return new Date().toISOString().replace(/[^0-9a-z]/gi, "").slice(0, 15);
+}
+
+function metadataValue(value: unknown): string {
+  return String(value ?? "")
+    .replace(/[^a-zA-Z0-9 _.-]/g, "_")
+    .slice(0, 256);
 }
 
 export async function POST(request: NextRequest) {
@@ -152,12 +175,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const tenantKey = canonicalTenantKey(tenancy.clientKey);
+    const fileHash = crypto
+      .createHash("sha256")
+      .update(Buffer.from(bytes))
+      .digest("hex");
+    const blobPath = [
+      safePathPart(tenantKey),
+      "_direct-csv",
+      fileHash.slice(0, 12),
+      compactTimestamp(),
+      safePathPart(file.name),
+    ].join("/");
+    await getObjectStorageAdapter().upload(
+      DIRECT_CONTEXT_BUCKET,
+      blobPath,
+      Buffer.from(bytes),
+      {
+        contentType: file.type || "text/csv",
+        upsert: false,
+        metadata: {
+          tenantClientKey: metadataValue(tenantKey),
+          tenantKey: metadataValue(tenantKey),
+          clientId: metadataValue(tenancy.clientId),
+          sourceSystem: "admin_direct_csv_upload",
+          templateId: metadataValue(templateId ?? "auto"),
+          attestationVersion: metadataValue(attestation.version),
+          declaredClassification: metadataValue(
+            formString(formData, "dataClassification") ?? "confidential",
+          ),
+          sha256: fileHash,
+          uploadedBy: metadataValue(tenancy.userId),
+          initiatedByUserId: metadataValue(tenancy.userId),
+        },
+      },
+    );
+
     const result = await loadCsvUploadToTenantContext({
       clientId: tenancy.clientId,
-      tenantKey: canonicalTenantKey(tenancy.clientKey),
+      tenantKey,
       uploadedBy: tenancy.userId,
       fileName: file.name,
       csvText,
+      sourceBlob: {
+        bucket: DIRECT_CONTEXT_BUCKET,
+        path: blobPath,
+        sha256: fileHash,
+      },
       attestation,
       mapping: {
         templateId: templateId ?? undefined,
@@ -175,6 +239,11 @@ export async function POST(request: NextRequest) {
         ...result,
         attestation,
         dataProtection,
+        sourceBlob: {
+          bucket: DIRECT_CONTEXT_BUCKET,
+          path: blobPath,
+          sha256: fileHash,
+        },
       },
       { status: result.persistence.status === "inserted" ? 200 : 202 },
     );
