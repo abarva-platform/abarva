@@ -34,6 +34,10 @@ import {
 import { getCriterionIdsForArtifactFamily } from '@/lib/source/artifact-gate-map';
 import { addEvidence } from '@/lib/reasoning/evidence-ingestion-store';
 import {
+  syncUploadToCanvasSubstrate,
+  type UploadSubstrateSyncResult,
+} from '@/lib/source/canvas-substrate/upload-sync';
+import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from '@/lib/security/sensitive-upload-guard';
@@ -280,6 +284,40 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
       }
     }
 
+    // Durably reflect the upload in the canvas substrate (evidence readiness
+    // ladder + gate-criterion evidence links). The in-memory addEvidence above
+    // only survives the current process; the canvas reads the Postgres
+    // substrate tables, so without this write an upload never moves the
+    // Evidence/Gate panels (audit F1, 2026-06-11). Best-effort: a sync failure
+    // must not lose the uploaded file, but it is logged and surfaced.
+    let substrateSync:
+      | UploadSubstrateSyncResult
+      | { skippedReason: string }
+      | { error: string } = {
+      skippedReason: 'no persisted source_events row for this event',
+    };
+    if (scope.sourceEventRowId) {
+      try {
+        substrateSync = await syncUploadToCanvasSubstrate({
+          sourceEventRowId: scope.sourceEventRowId,
+          tenantKey,
+          stageKey: scope.stageKey,
+          artifactId: artifact.id,
+          artifactFamily: artifact.artifactFamily,
+          filename,
+          parsed: artifact.parseStatus === 'parsed',
+        });
+      } catch (syncError) {
+        const message = syncError instanceof Error ? syncError.message : 'substrate sync failed';
+        substrateSync = { error: message };
+        console.error('[POST /api/v1/source/:eventId/artifacts/upload] substrate_sync_failed', {
+          artifactId: artifact.id,
+          sourceEventId: artifact.sourceEventId,
+          message,
+        });
+      }
+    }
+
     const activityWrite = await selectSourceWriteAdapter(undefined, client.key).insertActivityLog({
       eventId: scope.sourceEventRowId ?? scope.eventId,
       clientKey: client.key,
@@ -315,6 +353,7 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
         ok: true,
         artifact,
         dataProtection,
+        substrateSync,
         ...(parseWarnings.length > 0 ? { parseWarnings } : {}),
       },
       { status: 200 },
