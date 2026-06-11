@@ -55,6 +55,7 @@ export function GateTab({
   promotePending,
 }: GateTabProps) {
   const [promotionReason, setPromotionReason] = useState('');
+  const [gapsPending, setGapsPending] = useState(false);
   const ordered = [...states].sort((a, b) => a.criterionId.localeCompare(b.criterionId));
   const total = ordered.length;
   const met = ordered.filter((s) => s.state === 'met' || s.state === 'waived').length;
@@ -83,6 +84,38 @@ export function GateTab({
     targetStage !== 'closed' &&
     !promotePending;
 
+  // Approve with gaps — the Maestro path. Open items are deferred with the
+  // approver's rationale (recorded per criterion) and carried forward; the
+  // stage then advances. Gaps are never hidden, and a rationale is required.
+  const canApproveWithGaps =
+    !allMet &&
+    total > 0 &&
+    promotionReasonReady &&
+    Boolean(onPromoteStage) &&
+    Boolean(onChangeCriterionState) &&
+    Boolean(targetStage) &&
+    targetStage !== 'closed' &&
+    !promotePending &&
+    !gapsPending;
+
+  const approveWithGaps = async () => {
+    if (!canApproveWithGaps || !onPromoteStage || !onChangeCriterionState || !targetStage) return;
+    const reason = promotionReason.trim();
+    setGapsPending(true);
+    try {
+      for (const b of blockers) {
+        await onChangeCriterionState(
+          b.state.criterionId,
+          'deferred',
+          `Approved with gaps: ${reason}`,
+        );
+      }
+      await onPromoteStage(targetStage as SourceStageKey, `Approved with gaps: ${reason}`);
+    } finally {
+      setGapsPending(false);
+    }
+  };
+
   return (
     <div data-testid="source-canvas-gate-tab" style={CONTAINER_STYLE}>
       <header style={HEADER_STYLE}>
@@ -95,12 +128,16 @@ export function GateTab({
           </h2>
           {!allMet && total > 0 ? (
             <p style={SUBLINE_STYLE}>
-              {total - met} outstanding · review each criterion below or open the
-              detail drawer for the waiver path.
+              You&apos;re approving: advance to {targetLabel}. {total - met} item
+              {total - met === 1 ? ' is' : 's are'} still open — mark them met below,
+              or approve with gaps (your rationale is recorded and the open items
+              are deferred and carried forward, never hidden).
             </p>
           ) : null}
           {allMet ? (
-            <p style={SUBLINE_STYLE}>All criteria met. Promote when ready.</p>
+            <p style={SUBLINE_STYLE}>
+              All items met. Write the reason and approve — the event advances to {targetLabel}.
+            </p>
           ) : null}
         </div>
         <div style={PROMOTE_CONTROL_STYLE}>
@@ -134,8 +171,35 @@ export function GateTab({
             }}
             data-testid="source-canvas-gate-promote"
           >
-            {promotePending ? 'Promoting…' : `Promote to ${targetLabel}`}
+            {promotePending ? 'Promoting…' : `Approve & advance to ${targetLabel}`}
           </button>
+          {!allMet && total > 0 && onChangeCriterionState && onPromoteStage ? (
+            <button
+              type="button"
+              disabled={!canApproveWithGaps}
+              onClick={() => void approveWithGaps()}
+              style={{
+                ...PROMOTE_BUTTON_STYLE,
+                background: 'transparent',
+                border: `1px solid ${canApproveWithGaps ? CANVAS.INK : 'rgba(10,10,11,0.15)'}`,
+                color: canApproveWithGaps ? CANVAS.INK : CANVAS.INK_MUTED,
+                cursor: canApproveWithGaps ? 'pointer' : 'not-allowed',
+                opacity: gapsPending ? 0.7 : 1,
+                marginTop: 8,
+              }}
+              data-testid="source-canvas-gate-approve-with-gaps"
+            >
+              {gapsPending
+                ? 'Approving with gaps…'
+                : `Approve with gaps (${total - met} deferred)`}
+            </button>
+          ) : null}
+          {!promotionReasonReady ? (
+            <p style={{ ...SUBLINE_STYLE, marginTop: 6 }}>
+              Add your reason above to enable approval
+              {` (min ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}.
+            </p>
+          ) : null}
         </div>
       </header>
 

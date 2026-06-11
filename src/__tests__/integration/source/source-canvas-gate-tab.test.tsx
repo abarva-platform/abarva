@@ -58,7 +58,7 @@ describe('GateTab · B3 blocker diagnostics', () => {
     expect(html).toContain('source-canvas-gate-criterion-state-met');
   });
 
-  it('hides the blocker callout and shows "All criteria met" when nothing is blocking', () => {
+  it('hides the blocker callout and shows the all-met approval line when nothing is blocking', () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
         fromStage: 'scope',
@@ -69,7 +69,7 @@ describe('GateTab · B3 blocker diagnostics', () => {
       }),
     );
     expect(html).not.toContain('source-canvas-gate-blockers');
-    expect(html).toContain('All criteria met');
+    expect(html).toContain('All items met. Write the reason and approve');
     // Promote button has no aria-describedby when nothing is blocking.
     expect(html).not.toContain('aria-describedby="source-canvas-gate-promote-help"');
   });
