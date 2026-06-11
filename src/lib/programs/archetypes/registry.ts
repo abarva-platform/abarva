@@ -1071,8 +1071,18 @@ export function resolveProgramArchetype(input: {
   if (/sourcing|vendor|renegoti/.test(haystack)) {
     return IT_SOURCING_EVENT;
   }
+  // Strong operations tokens outrank PDLC: an IROPS Move whose classification
+  // happens to mention "product development" must still resolve to ops
+  // (founder-reported: DORA shown on an IROPS Move's workspace).
   if (
-    /pdlc|sdlc|product development|software|code|engineering lifecycle/.test(
+    /irops|re-?accom|operational_optimization|recovery|disruption/.test(
+      haystack,
+    )
+  ) {
+    return AI_OPERATIONS_DECISION_SUPPORT;
+  }
+  if (
+    /pdlc|sdlc|product development|software|engineering lifecycle/.test(
       haystack,
     )
   ) {
