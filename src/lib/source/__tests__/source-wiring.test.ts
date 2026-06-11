@@ -74,14 +74,22 @@ describe('approval artifact', () => {
     expect(html).toMatch(/Confirm weights/);
   });
 
-  it('persists into the File Cabinet approval group', async () => {
-    let saved: Record<string, unknown> | null = null;
-    const persist = (async (input: Record<string, unknown>) => { saved = input; return { id: 'appr-1' } as unknown as SourceArtifactRecord; }) as never;
-    const out = await persistApprovalArtifact(rec, { clientId: 'c1', tenantKey: 'skyharbor-air', sourceEventId: 'evt-1' }, { persist });
-    expect(out.id).toBe('appr-1');
-    expect(saved!.artifactGroup).toBe('approval');
-    expect(saved!.fileFormat).toBe('html');
-    expect(saved!.status).toBe('approved');
-    expect((saved!.artifactType as string)).toContain('rfp_design');
+  it('persists through the EXISTING source artifact registry (blob + decision_brief row)', async () => {
+    let uploadedPath: string | null = null;
+    let registered: Record<string, unknown> | null = null;
+    const upload = (async (_bucket: string, path: string) => { uploadedPath = path; }) as never;
+    const register = (async (input: Record<string, unknown>) => { registered = input; return { id: input.artifactId } as never; }) as never;
+    const out = await persistApprovalArtifact(
+      rec,
+      { tenantKey: 'skyharbor-air', sourceEventId: 'evt-1', sourceEventRowId: 'evt-1', generatedBy: 'maestro' },
+      { upload, register },
+    );
+    expect(out.id).toBeTruthy();
+    expect(uploadedPath).toMatch(/^skyharbor-air\/evt-1\//); // existing registry path convention
+    expect(registered!.artifactFamily).toBe('decision_brief');
+    expect(registered!.artifactKind).toBe('gate_approval_record');
+    expect(registered!.sourceOrigin).toBe('generated');
+    expect(registered!.sourceFormat).toBe('html');
+    expect((registered!.originalName as string)).toContain('rfp_design');
   });
 });

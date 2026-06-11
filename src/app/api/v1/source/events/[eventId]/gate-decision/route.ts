@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, ctxParam: { params: Promise<{ event
 
     const approvalArtifact = await persistApprovalArtifact(
       decisionResult.resolved!.approvalRecord,
-      { clientId: ctx.clientId, tenantKey: ctx.clientKey, sourceEventId: eventId, generatedBy: ctx.userId },
+      { tenantKey: ctx.clientKey, sourceEventId: eventId, sourceEventRowId: eventId, generatedBy: ctx.userId },
     );
 
     return Response.json({

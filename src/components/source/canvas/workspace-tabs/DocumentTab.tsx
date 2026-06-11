@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
+import { UploadEventDocumentButton } from "./UploadEventDocumentButton";
 import {
   specByCode,
   type SourceArtifactSpec,
@@ -183,7 +184,7 @@ export function DocumentTab({
 
   return (
     <div data-testid="source-canvas-document-tab" style={DOCUMENT_TAB_STYLE}>
-      <RegistryDocumentsShelf eventId={eventId} documents={registryArtifacts} />
+      <RegistryDocumentsShelf eventId={eventId} stage={stage} documents={registryArtifacts} onUploaded={onRegistryUploaded} />
       <div style={CONTAINER_STYLE}>
         {/* Artifact list (left) */}
         <aside
@@ -336,12 +337,16 @@ export function DocumentTab({
 
 interface RegistryDocumentsShelfProps {
   eventId?: string;
+  stage: SourceStageKey;
   documents: SourceArtifactRegistryRecord[];
+  onUploaded?: () => void;
 }
 
 function RegistryDocumentsShelf({
   eventId,
+  stage,
   documents,
+  onUploaded,
 }: RegistryDocumentsShelfProps) {
   return (
     <section style={REGISTRY_SHELF_STYLE} aria-label="Event documents">
@@ -354,6 +359,13 @@ function RegistryDocumentsShelf({
               : `${documents.length} document${documents.length === 1 ? "" : "s"} available`}
           </h2>
         </div>
+        {eventId ? (
+          <UploadEventDocumentButton
+            eventId={eventId}
+            stageKey={stage}
+            onUploaded={onUploaded}
+          />
+        ) : null}
       </div>
       {documents.length === 0 ? (
         <p style={REGISTRY_EMPTY_STYLE}>
