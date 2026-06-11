@@ -2057,3 +2057,189 @@
   outline-offset: 1px;
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* ─── Phase workspace progressive disclosure (capture tracker + collapse) ─── */
+
+.captureTracker {
+  background: var(--canon-bg-surface);
+  border: 1px solid #e3e6eb;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.captureTrackerHead {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: #5a6472;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.captureChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.captureChip {
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #e3e6eb;
+  background: transparent;
+  color: #5a6472;
+  cursor: pointer;
+  transition:
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    background 150ms var(--ease-out);
+}
+
+.captureChip:hover {
+  border-color: var(--abarva-ink-black);
+  color: var(--abarva-ink-black);
+}
+
+.captureChipFilled {
+  background: rgba(30, 126, 52, 0.08);
+  border-color: rgba(30, 126, 52, 0.45);
+  color: #1e7e34;
+  font-weight: 600;
+}
+
+.captureChipFilled:hover {
+  border-color: #1e7e34;
+  color: #1e7e34;
+}
+
+.nextActionStrip {
+  margin-top: 10px;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: #1b2b5c;
+  line-height: 1.4;
+}
+
+.panelCollapse {
+  background: var(--canon-bg-surface);
+  border: 1px solid #e3e6eb;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.panelSummary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  padding: 12px 18px;
+  list-style: none;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: #5a6472;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.panelSummary::-webkit-details-marker {
+  display: none;
+}
+
+.panelSummaryMeta {
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #5a6472;
+}
+
+.panelChevron {
+  margin-left: auto;
+  color: #5a6472;
+  transition: transform 150ms var(--ease-out);
+}
+
+.panelCollapse[open] > .panelSummary .panelChevron {
+  transform: rotate(90deg);
+}
+
+.panelBody {
+  padding: 0 18px 14px;
+}
+
+/* Inner sections keep their content; the collapse shell carries the border. */
+.panelBody > .detailSection {
+  border: none;
+  border-top: 1px solid #e3e6eb;
+  border-radius: 0;
+  padding: 12px 0;
+  margin-bottom: 0;
+  background: transparent;
+}
+
+.panelBody > .detailSection:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.captureCardSummary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.captureCardSummary::-webkit-details-marker {
+  display: none;
+}
+
+.captureBadgeDone {
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #1e7e34;
+  background: rgba(30, 126, 52, 0.08);
+  border: 1px solid rgba(30, 126, 52, 0.45);
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
+.captureBadgePending {
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #5a6472;
+  background: transparent;
+  border: 1px solid #e3e6eb;
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
+.captureContent {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(30, 126, 52, 0.05);
+  border: 1px solid rgba(30, 126, 52, 0.18);
+  font-size: 13px;
+  color: var(--abarva-ink-black);
+  line-height: 1.5;
+}

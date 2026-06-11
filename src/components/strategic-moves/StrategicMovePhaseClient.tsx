@@ -10,13 +10,23 @@
 // Design reference: StrategicMoveOriginateClient.tsx (P0) — same shell,
 // same chat patterns, phase-specific canvas on the right.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import {
   extractArtifacts,
   visibleArtifactPendingText,
 } from "@/lib/agent/artifacts";
-import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import {
+  CurrentStateReadinessPanel,
+  WhereToStartBlock,
+  IndicativePlanBlock,
+} from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { DeliverableArtifactCard } from "@/components/strategic-moves/DeliverableArtifactCard";
 import type { ReadinessReport as CurrentStateReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
@@ -317,6 +327,174 @@ function generateTurnId(): string {
   return `turn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// ── Capture-slot fill derivation (presentational, derived state only) ─────────
+//
+// A capture section is "filled" when the Move already carries real content for
+// it — the origination charter JSONB (`engagements.charter`, snake_case and
+// camelCase variants both occur in the wild) or the structured Move fields
+// (sponsor, participants, valueAtStake). Nothing is fabricated: no matching
+// data → the slot stays hollow.
+
+const SECTION_CHARTER_KEYS: Record<string, string[]> = {
+  // P0
+  seed: ["problem_statement", "problemStatement", "problem", "move_seed"],
+  "sponsor-candidate": ["sponsor_candidate", "sponsorCandidate", "sponsor"],
+  "value-hypothesis": [
+    "value_hypothesis",
+    "valueHypothesis",
+    "target_outcome",
+    "targetOutcome",
+  ],
+  "scope-boundary": ["scope_boundary", "scopeBoundary", "initial_scope"],
+  "evidence-family": ["evidence_family", "evidenceFamily"],
+  // P1
+  sponsor: [
+    "sponsor_commitment",
+    "sponsorCommitment",
+    "sponsor_candidate",
+    "sponsorCandidate",
+    "sponsor",
+  ],
+  stakeholders: ["stakeholders", "stakeholder_map", "stakeholderMap"],
+  "success-metrics": [
+    "success_metrics",
+    "successMetrics",
+    "primary_metric",
+    "primaryMetric",
+  ],
+  "value-range": [
+    "value_range",
+    "valueRange",
+    "value_hypothesis",
+    "valueHypothesis",
+  ],
+  scope: [
+    "scope",
+    "charter_scope",
+    "charterScope",
+    "scope_boundary",
+    "scopeBoundary",
+  ],
+};
+
+function charterText(
+  charter: Record<string, unknown> | null,
+  keys: string[],
+): string | null {
+  for (const k of keys) {
+    const v = charter?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+/** Charter keys to probe for a section: explicit map + id-derived variants. */
+function sectionCharterKeys(sectionId: string): string[] {
+  const snake = sectionId.replace(/-/g, "_");
+  const camel = snake.replace(/_(\w)/g, (_, c: string) => c.toUpperCase());
+  return Array.from(
+    new Set([...(SECTION_CHARTER_KEYS[sectionId] ?? []), snake, camel]),
+  );
+}
+
+function formatUsdCompact(n: number): string {
+  return n >= 1_000_000
+    ? `$${(n / 1_000_000).toFixed(1)}M`
+    : `$${Math.round(n / 1000)}k`;
+}
+
+/**
+ * The real content backing a capture section, or null when nothing has been
+ * captured yet ("content beyond placeholder = filled").
+ */
+function sectionCapturedContent(
+  move: StrategicMove,
+  sectionId: string,
+): string | null {
+  const fromCharter = charterText(move.charter, sectionCharterKeys(sectionId));
+  switch (sectionId) {
+    case "sponsor":
+    case "sponsor-candidate":
+      if (move.sponsor?.name) {
+        return `${move.sponsor.name} — ${move.sponsor.role}`;
+      }
+      return fromCharter;
+    case "stakeholders":
+      if (move.participants.length > 0) {
+        return move.participants
+          .map((p) => `${p.name} (${p.role})`)
+          .join(" · ");
+      }
+      return fromCharter;
+    case "value-range":
+    case "value-hypothesis": {
+      if (fromCharter) return fromCharter;
+      const projected = move.valueAtStake.projected;
+      if (projected) {
+        return `Projected ${formatUsdCompact(projected.low)}–${formatUsdCompact(
+          projected.high,
+        )} ${projected.currency}`;
+      }
+      return null;
+    }
+    default:
+      return fromCharter;
+  }
+}
+
+// ── Progressive-disclosure panel keys + collapse shell ─────────────────────────
+
+type PanelKey =
+  | "gate"
+  | "readiness"
+  | "start"
+  | "plan"
+  | "capture"
+  | "generate"
+  | "artifacts";
+
+/**
+ * Native <details> collapse shell for a canvas panel. Controlled `open` so the
+ * auto-expand state machine (and the capture chips) can drive it; user toggles
+ * are synced back via onToggle. Wraps existing content — never replaces it.
+ */
+function CollapsePanel({
+  id,
+  title,
+  meta,
+  open,
+  onOpenChange,
+  children,
+}: {
+  id: string;
+  title: string;
+  meta?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      id={id}
+      className={styles.panelCollapse}
+      open={open}
+      onToggle={(e) => {
+        const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+        if (isOpen !== open) onOpenChange(isOpen);
+      }}
+    >
+      <summary className={styles.panelSummary}>
+        <span>{title}</span>
+        {meta ? <span className={styles.panelSummaryMeta}>{meta}</span> : null}
+        <span className={styles.panelChevron} aria-hidden>
+          &#9656;
+        </span>
+      </summary>
+      <div className={styles.panelBody}>{children}</div>
+    </details>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -592,6 +770,73 @@ export function StrategicMovePhaseClient({
   ).length;
   const totalGateDone = gateItemsWithStatus.filter((g) => g.completed).length;
 
+  // ── Progressive disclosure: derived capture state + auto-expand machine ────
+  const capturedSections = canvasSections.map((section) => ({
+    section,
+    content: sectionCapturedContent(move, section.id),
+  }));
+  const filledCount = capturedSections.filter((c) => c.content !== null).length;
+  const firstUnfilled =
+    capturedSections.find((c) => c.content === null)?.section ?? null;
+  const capturesIncomplete =
+    canvasSections.length > 0 && filledCount < canvasSections.length;
+  const hardGapCount =
+    isCurrentPhase && readiness ? readiness.hardGaps.length : 0;
+
+  // One state machine drives both the next-action strip and the auto-expand:
+  // captures incomplete → CAPTURE; else hard gaps → READINESS; else GENERATE.
+  const autoOpenPanel: PanelKey = capturesIncomplete
+    ? "capture"
+    : hardGapCount > 0
+      ? "readiness"
+      : "generate";
+  const nextActionText = firstUnfilled
+    ? `Next: work with Nexus to capture — ${firstUnfilled.label}`
+    : hardGapCount > 0
+      ? `Next: upload evidence — ${hardGapCount} hard gap${
+          hardGapCount > 1 ? "s" : ""
+        } block${hardGapCount === 1 ? "s" : ""} the charter`
+      : "Next: generate the phase deliverable, sign it off, then approve the gate";
+
+  const [openPanels, setOpenPanels] = useState<
+    Partial<Record<PanelKey, boolean>>
+  >(() => ({ [autoOpenPanel]: true }));
+  const isPanelOpen = (key: PanelKey) => openPanels[key] ?? false;
+  const setPanelOpen = useCallback(
+    (key: PanelKey, open: boolean) =>
+      setOpenPanels((prev) =>
+        (prev[key] ?? false) === open ? prev : { ...prev, [key]: open },
+      ),
+    [],
+  );
+
+  // Per-capture-card expansion (default open inside the CAPTURE panel).
+  const [openCaptureCards, setOpenCaptureCards] = useState<
+    Record<string, boolean>
+  >({});
+  const isCaptureCardOpen = (id: string) => openCaptureCards[id] ?? true;
+
+  // Chip click: open the CAPTURE panel, expand that card, scroll to it.
+  const focusCaptureSection = useCallback(
+    (sectionId: string) => {
+      setPanelOpen("capture", true);
+      setOpenCaptureCards((prev) => ({ ...prev, [sectionId]: true }));
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`ws-canvas-p${phaseNum}-${sectionId}-panel`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    },
+    [phaseNum, setPanelOpen],
+  );
+
+  const phaseArtifactCount = move.deliverables.filter((d) => {
+    const phasePrefix = `p${phaseNum}_`;
+    return (
+      d.typeKey.startsWith(phasePrefix) || d.typeKey.includes(`_p${phaseNum}`)
+    );
+  }).length;
+
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
       {/* Phase context bar */}
@@ -789,56 +1034,121 @@ export function StrategicMovePhaseClient({
 
           {/* Canvas body */}
           <div className={styles.detailBody}>
+            {/* Capture tracker — one chip per capture slot of this phase */}
+            {canvasSections.length > 0 && (
+              <div
+                id={`ws-canvas-p${phaseNum}-capture-tracker`}
+                className={styles.captureTracker}
+              >
+                <div className={styles.captureTrackerHead}>
+                  P{phaseNum} capture &mdash; {filledCount} of{" "}
+                  {canvasSections.length}
+                </div>
+                <div className={styles.captureChipRow}>
+                  {capturedSections.map(({ section, content }) => (
+                    <button
+                      key={section.id}
+                      id={`ws-canvas-p${phaseNum}-capture-chip-${section.id}`}
+                      type="button"
+                      className={`${styles.captureChip} ${
+                        content !== null ? styles.captureChipFilled : ""
+                      }`}
+                      aria-pressed={
+                        isCaptureCardOpen(section.id) && isPanelOpen("capture")
+                      }
+                      onClick={() => focusCaptureSection(section.id)}
+                    >
+                      {content !== null ? "✓ " : ""}
+                      {section.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Next-action strip — same state machine as the auto-expand */}
+                <div
+                  id={`ws-canvas-p${phaseNum}-next-action`}
+                  className={styles.nextActionStrip}
+                >
+                  {nextActionText}
+                </div>
+              </div>
+            )}
+
             {/* Gate criteria panel */}
-            <section
-              id={`ws-canvas-p${phaseNum}-gate-panel`}
-              className={styles.detailSection}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-gate-collapse`}
+              title="Gate criteria"
+              meta={
+                gateItemsWithStatus.length > 0
+                  ? `— ${totalGateDone} of ${gateItemsWithStatus.length} met (${hardGateDone} of ${hardGateCount} hard)`
+                  : undefined
+              }
+              open={isPanelOpen("gate")}
+              onOpenChange={(open) => setPanelOpen("gate", open)}
             >
-              <div className={styles.detailSectionTitle}>
-                {config.label.toUpperCase()} &middot; Gate criteria
-                {gateItemsWithStatus.length > 0 && (
-                  <span
+              <section
+                id={`ws-canvas-p${phaseNum}-gate-panel`}
+                className={styles.detailSection}
+              >
+                <div className={styles.detailSectionTitle}>
+                  {config.label.toUpperCase()} &middot; Gate criteria
+                  {gateItemsWithStatus.length > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontWeight: 400,
+                        textTransform: "none",
+                      }}
+                    >
+                      &mdash; {totalGateDone} of {gateItemsWithStatus.length}{" "}
+                      met ({hardGateDone} of {hardGateCount} hard)
+                    </span>
+                  )}
+                </div>
+                {gateItemsWithStatus.length === 0 ? (
+                  <p
                     style={{
-                      marginLeft: 8,
-                      fontWeight: 400,
-                      textTransform: "none",
+                      fontSize: 13,
+                      color: "var(--abarva-stone)",
+                      margin: 0,
                     }}
                   >
-                    &mdash; {totalGateDone} of {gateItemsWithStatus.length} met
-                    ({hardGateDone} of {hardGateCount} hard)
-                  </span>
-                )}
-              </div>
-              {gateItemsWithStatus.length === 0 ? (
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "var(--abarva-stone)",
-                    margin: 0,
-                  }}
-                >
-                  {isCurrentPhase
-                    ? "No outgoing gate for this phase — there are no further gate criteria to evaluate."
-                    : "Gate criteria are shown on the phase the Move is currently in."}
-                </p>
-              ) : (
-                <ul
-                  id={`ws-canvas-p${phaseNum}-gate-list`}
-                  className={styles.critList}
-                >
-                  {gateItemsWithStatus.map((item) => (
-                    <li
-                      key={item.id}
-                      id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}
-                    >
-                      <span
-                        className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ""}`}
-                        aria-hidden
+                    {isCurrentPhase
+                      ? "No outgoing gate for this phase — there are no further gate criteria to evaluate."
+                      : "Gate criteria are shown on the phase the Move is currently in."}
+                  </p>
+                ) : (
+                  <ul
+                    id={`ws-canvas-p${phaseNum}-gate-list`}
+                    className={styles.critList}
+                  >
+                    {gateItemsWithStatus.map((item) => (
+                      <li
+                        key={item.id}
+                        id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}
                       >
-                        {item.completed ? "✓" : ""}
-                      </span>
-                      <span style={{ flex: 1 }}>{item.label}</span>
-                      {!item.verified && (
+                        <span
+                          className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ""}`}
+                          aria-hidden
+                        >
+                          {item.completed ? "✓" : ""}
+                        </span>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        {!item.verified && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontFamily: "var(--abarva-mono)",
+                              letterSpacing: "0.12em",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color: "var(--abarva-stone)",
+                              flexShrink: 0,
+                              marginLeft: 8,
+                            }}
+                          >
+                            Not yet verified
+                          </span>
+                        )}
                         <span
                           style={{
                             fontSize: 9,
@@ -846,190 +1156,280 @@ export function StrategicMovePhaseClient({
                             letterSpacing: "0.12em",
                             textTransform: "uppercase",
                             fontWeight: 700,
-                            color: "var(--abarva-stone)",
+                            color:
+                              item.severity === "hard"
+                                ? "var(--canon-red)"
+                                : "var(--abarva-stone)",
                             flexShrink: 0,
                             marginLeft: 8,
                           }}
                         >
-                          Not yet verified
+                          {item.severity}
                         </span>
-                      )}
-                      <span
-                        style={{
-                          fontSize: 9,
-                          fontFamily: "var(--abarva-mono)",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          fontWeight: 700,
-                          color:
-                            item.severity === "hard"
-                              ? "var(--canon-red)"
-                              : "var(--abarva-stone)",
-                          flexShrink: 0,
-                          marginLeft: 8,
-                        }}
-                      >
-                        {item.severity}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </CollapsePanel>
 
             {/* Current-state readiness panel (estate-derived instruments) */}
-            {isCurrentPhase && readiness && (
-              <CurrentStateReadinessPanel
-                readiness={readiness}
-                recommendation={recommendation}
-                plan={plan}
-                programId={move.id}
-              />
-            )}
+            {isCurrentPhase &&
+              readiness &&
+              readiness.instruments.length > 0 && (
+                <CollapsePanel
+                  id={`ws-canvas-p${phaseNum}-readiness-collapse`}
+                  title="Current-state readiness"
+                  meta={`— ${readiness.coverageScore}% collected${
+                    hardGapCount > 0
+                      ? ` · ${hardGapCount} hard gap${hardGapCount > 1 ? "s" : ""}`
+                      : ""
+                  }`}
+                  open={isPanelOpen("readiness")}
+                  onOpenChange={(open) => setPanelOpen("readiness", open)}
+                >
+                  <CurrentStateReadinessPanel
+                    readiness={readiness}
+                    programId={move.id}
+                  />
+                </CollapsePanel>
+              )}
 
-            {/* Grounded deliverable draft (P1 Charter) */}
-            {isCurrentPhase && phaseNum === 1 && (
-              <DeliverableArtifactCard programId={move.id} />
-            )}
+            {/* Where to start (estate-derived recommendation) */}
+            {isCurrentPhase &&
+              readiness &&
+              recommendation &&
+              recommendation.ranking.length > 0 && (
+                <CollapsePanel
+                  id={`ws-canvas-p${phaseNum}-where-to-start-collapse`}
+                  title="Where to start"
+                  open={isPanelOpen("start")}
+                  onOpenChange={(open) => setPanelOpen("start", open)}
+                >
+                  <WhereToStartBlock recommendation={recommendation} />
+                </CollapsePanel>
+              )}
 
-            {/* Phase canvas sections */}
-            {canvasSections.map((section) => (
+            {/* Indicative plan & cost */}
+            {isCurrentPhase &&
+              readiness &&
+              plan &&
+              plan.roadmap.phases.length > 0 && (
+                <CollapsePanel
+                  id={`ws-canvas-p${phaseNum}-plan-collapse`}
+                  title="Indicative plan & cost"
+                  open={isPanelOpen("plan")}
+                  onOpenChange={(open) => setPanelOpen("plan", open)}
+                >
+                  <IndicativePlanBlock plan={plan} />
+                </CollapsePanel>
+              )}
+
+            {/* Phase capture sections */}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-capture-collapse`}
+              title="Capture details"
+              meta={
+                canvasSections.length > 0
+                  ? `— ${filledCount} of ${canvasSections.length} captured`
+                  : undefined
+              }
+              open={isPanelOpen("capture")}
+              onOpenChange={(open) => setPanelOpen("capture", open)}
+            >
+              {capturedSections.map(({ section, content }) => (
+                <section
+                  key={section.id}
+                  id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                  className={styles.detailSection}
+                >
+                  <details
+                    open={isCaptureCardOpen(section.id)}
+                    onToggle={(e) => {
+                      const isOpen = (e.currentTarget as HTMLDetailsElement)
+                        .open;
+                      setOpenCaptureCards((prev) =>
+                        (prev[section.id] ?? true) === isOpen
+                          ? prev
+                          : { ...prev, [section.id]: isOpen },
+                      );
+                    }}
+                  >
+                    <summary className={styles.captureCardSummary}>
+                      <span
+                        className={styles.detailSectionTitle}
+                        style={{ marginBottom: 0 }}
+                      >
+                        {section.label}
+                      </span>
+                      <span
+                        className={
+                          content !== null
+                            ? styles.captureBadgeDone
+                            : styles.captureBadgePending
+                        }
+                      >
+                        {content !== null ? "✓ Captured" : "Not captured"}
+                      </span>
+                    </summary>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "var(--abarva-slate)",
+                        fontStyle: "italic",
+                        lineHeight: 1.5,
+                        padding: "4px 0 2px",
+                      }}
+                    >
+                      {section.placeholder}
+                    </div>
+                    {content !== null ? (
+                      <div className={styles.captureContent}>{content}</div>
+                    ) : (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: "8px 10px",
+                          borderRadius: 6,
+                          background: "rgba(0,102,204,0.04)",
+                          border: "1px dashed rgba(0,102,204,0.18)",
+                          fontSize: 12,
+                          color: "var(--abarva-slate)",
+                        }}
+                      >
+                        Work with Nexus in the chat pane to populate this
+                        section.
+                      </div>
+                    )}
+                  </details>
+                </section>
+              ))}
+            </CollapsePanel>
+
+            {/* Generate & documents */}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-generate-collapse`}
+              title="Generate & documents"
+              open={isPanelOpen("generate")}
+              onOpenChange={(open) => setPanelOpen("generate", open)}
+            >
+              {/* Grounded deliverable draft (P1 Charter) */}
+              {isCurrentPhase && phaseNum === 1 && (
+                <DeliverableArtifactCard programId={move.id} />
+              )}
+
+              {/* Generate full package */}
               <section
-                key={section.id}
-                id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                id={`ws-canvas-p${phaseNum}-generate`}
                 className={styles.detailSection}
               >
-                <div className={styles.detailSectionTitle}>{section.label}</div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "var(--abarva-slate)",
-                    fontStyle: "italic",
-                    lineHeight: 1.5,
-                    padding: "4px 0 2px",
-                  }}
-                >
-                  {section.placeholder}
+                <div className={styles.detailSectionTitle}>
+                  Generate full package
                 </div>
                 <div
                   style={{
-                    marginTop: 8,
-                    padding: "8px 10px",
-                    borderRadius: 6,
-                    background: "rgba(0,102,204,0.04)",
-                    border: "1px dashed rgba(0,102,204,0.18)",
                     fontSize: 12,
                     color: "var(--abarva-slate)",
+                    marginBottom: 10,
+                    lineHeight: 1.5,
                   }}
                 >
-                  Work with Nexus in the chat pane to populate this section.
+                  Assembles all available context — engagement data, prior phase
+                  deliverables, client segments, matched patterns, and phase
+                  methodology — and generates a complete consulting-grade
+                  document. Equivalent to a McKinsey phase deliverable. Saves to
+                  the Evidence Hub.
                 </div>
+                <GeneratePhasePackage
+                  programId={move.id}
+                  phaseNum={phaseNum}
+                  phaseLabel={config.label}
+                />
               </section>
-            ))}
-
-            {/* Generate full package */}
-            <section
-              id={`ws-canvas-p${phaseNum}-generate`}
-              className={styles.detailSection}
-            >
-              <div className={styles.detailSectionTitle}>
-                Generate full package
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "var(--abarva-slate)",
-                  marginBottom: 10,
-                  lineHeight: 1.5,
-                }}
-              >
-                Assembles all available context — engagement data, prior phase
-                deliverables, client segments, matched patterns, and phase
-                methodology — and generates a complete consulting-grade
-                document. Equivalent to a McKinsey phase deliverable. Saves to
-                the Evidence Hub.
-              </div>
-              <GeneratePhasePackage
-                programId={move.id}
-                phaseNum={phaseNum}
-                phaseLabel={config.label}
-              />
-            </section>
+            </CollapsePanel>
 
             {/* Artifact shelf */}
-            <section
-              id={`ws-canvas-p${phaseNum}-artifact-shelf`}
-              className={styles.detailSection}
+            <CollapsePanel
+              id={`ws-canvas-p${phaseNum}-artifacts-collapse`}
+              title="Artifacts"
+              meta={`— ${phaseArtifactCount}`}
+              open={isPanelOpen("artifacts")}
+              onOpenChange={(open) => setPanelOpen("artifacts", open)}
             >
-              <div className={styles.detailSectionTitle}>
-                {config.label} &middot; Artifacts
-              </div>
-              {move.deliverables.filter((d) => {
-                // Show deliverables relevant to this phase by checking naming conventions
-                const phasePrefix = `p${phaseNum}_`;
-                return (
-                  d.typeKey.startsWith(phasePrefix) ||
-                  d.typeKey.includes(`_p${phaseNum}`)
-                );
-              }).length === 0 ? (
-                <div
-                  id={`ws-canvas-p${phaseNum}-artifact-empty-state`}
-                  style={{
-                    fontSize: 13,
-                    color: "var(--abarva-slate)",
-                    fontStyle: "italic",
-                    padding: "4px 0",
-                  }}
-                >
-                  No {config.label} artifacts yet. Nexus will generate artifacts
-                  as you work through the phase steps.
+              <section
+                id={`ws-canvas-p${phaseNum}-artifact-shelf`}
+                className={styles.detailSection}
+              >
+                <div className={styles.detailSectionTitle}>
+                  {config.label} &middot; Artifacts
                 </div>
-              ) : (
-                <div className={styles.evidenceList}>
-                  {move.deliverables
-                    .filter((d) => {
-                      const phasePrefix = `p${phaseNum}_`;
-                      return (
-                        d.typeKey.startsWith(phasePrefix) ||
-                        d.typeKey.includes(`_p${phaseNum}`)
-                      );
-                    })
-                    .map((deliverable) => (
-                      <a
-                        key={deliverable.id}
-                        className={styles.evItem}
-                        href={deliverable.url}
-                      >
-                        <span className={styles.evNum}>
-                          {deliverable.typeKey}
-                        </span>
-                        <span className={styles.evText}>
-                          {deliverable.title}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontFamily: "var(--abarva-mono)",
-                            letterSpacing: "0.1em",
-                            textTransform: "uppercase",
-                            fontWeight: 700,
-                            color:
-                              deliverable.status === "signed"
-                                ? "var(--canon-teal)"
-                                : "var(--abarva-stone)",
-                            flexShrink: 0,
-                          }}
+                {move.deliverables.filter((d) => {
+                  // Show deliverables relevant to this phase by checking naming conventions
+                  const phasePrefix = `p${phaseNum}_`;
+                  return (
+                    d.typeKey.startsWith(phasePrefix) ||
+                    d.typeKey.includes(`_p${phaseNum}`)
+                  );
+                }).length === 0 ? (
+                  <div
+                    id={`ws-canvas-p${phaseNum}-artifact-empty-state`}
+                    style={{
+                      fontSize: 13,
+                      color: "var(--abarva-slate)",
+                      fontStyle: "italic",
+                      padding: "4px 0",
+                    }}
+                  >
+                    No {config.label} artifacts yet. Nexus will generate
+                    artifacts as you work through the phase steps.
+                  </div>
+                ) : (
+                  <div className={styles.evidenceList}>
+                    {move.deliverables
+                      .filter((d) => {
+                        const phasePrefix = `p${phaseNum}_`;
+                        return (
+                          d.typeKey.startsWith(phasePrefix) ||
+                          d.typeKey.includes(`_p${phaseNum}`)
+                        );
+                      })
+                      .map((deliverable) => (
+                        <a
+                          key={deliverable.id}
+                          className={styles.evItem}
+                          href={deliverable.url}
                         >
-                          {deliverable.status}
-                        </span>
-                        <span className={styles.evLink} aria-hidden>
-                          &#8599;
-                        </span>
-                      </a>
-                    ))}
-                </div>
-              )}
-            </section>
+                          <span className={styles.evNum}>
+                            {deliverable.typeKey}
+                          </span>
+                          <span className={styles.evText}>
+                            {deliverable.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontFamily: "var(--abarva-mono)",
+                              letterSpacing: "0.1em",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color:
+                                deliverable.status === "signed"
+                                  ? "var(--canon-teal)"
+                                  : "var(--abarva-stone)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {deliverable.status}
+                          </span>
+                          <span className={styles.evLink} aria-hidden>
+                            &#8599;
+                          </span>
+                        </a>
+                      ))}
+                  </div>
+                )}
+              </section>
+            </CollapsePanel>
           </div>
         </article>
       </section>
