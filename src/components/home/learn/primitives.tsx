@@ -135,7 +135,7 @@ export function InlineAbarvaLogo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={light ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-wordmark-color.svg'}
+      src={light ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-logo.svg'}
       alt="AbarVa"
       style={{
         display: 'inline-block',
