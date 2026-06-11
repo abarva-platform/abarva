@@ -1,3 +1,9 @@
+/*
+ * AbarVa Confidential — Trade Secret (TS-05)
+ * Protected under the AbarVa Trade Secret Policy (docs/ip/trade-secret-policy.md) and
+ * Trade Secret Register (docs/ip/trade-secret-register.md). Do not distribute externally
+ * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
+ */
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { searchCorpus } from '@/lib/corpus/retrieval';
 
