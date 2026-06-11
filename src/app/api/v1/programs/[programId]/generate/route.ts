@@ -440,7 +440,7 @@ export async function POST(
       system: 'You are a senior transformation consultant generating a complete consulting deliverable. Be specific, substantive, and comprehensive. Do not truncate.',
       messages: [{ role: 'user', content: generationPrompt }],
       aiEgress: {
-        tenantId: ctx.clientKey ?? ctx.clientId,
+        tenantId: ctx.clientId, // uuid-first: key fallback fails the audit uuid insert for non-canonical keys (class fix 2026-06-11)
         userId: ctx.userId,
         workflow: 'programs-deliverable-generate-stream',
         dataClass: 'confidential',

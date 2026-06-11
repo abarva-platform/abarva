@@ -124,7 +124,7 @@ export async function POST(
       model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
       maxTokens: 4096,
       aiEgress: {
-        tenantId: ctx.clientKey ?? ctx.clientId,
+        tenantId: ctx.clientId, // uuid-first: key fallback fails the audit uuid insert for non-canonical keys (class fix 2026-06-11)
         userId: ctx.userId,
         workflow: 'programs-workspace-artifact-stream',
         dataClass: 'confidential',
