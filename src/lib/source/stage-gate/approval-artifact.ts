@@ -22,6 +22,32 @@ import type { ApprovalRecord } from './types';
 
 const STORAGE_BUCKET = 'source-artifacts';
 
+/**
+ * The stage-gate playbook uses sourcing-process stage keys (origination,
+ * evidence_baseline, …); the artifact registry's DB CHECK accepts only its own
+ * stage vocabulary. Map explicitly — passing a playbook key through raised
+ * "stageKey not supported" → HTTP 500 (found by the pre-flight UI click pass).
+ */
+const PLAYBOOK_TO_REGISTRY_STAGE: Record<string, SourceStageKey> = {
+  origination: 'intake' as SourceStageKey,
+  evidence_baseline: 'scope' as SourceStageKey,
+  sourcing_strategy: 'sourcing_strategy' as SourceStageKey,
+  rfp_design: 'rfp_rfi_package' as SourceStageKey,
+  vendor_briefing: 'rfp_rfi_package' as SourceStageKey,
+  proposal_intake: 'vendor_responses' as SourceStageKey,
+  evaluation: 'evaluation' as SourceStageKey,
+  commercial_analysis: 'evaluation' as SourceStageKey,
+  negotiation: 'orals_bafo' as SourceStageKey,
+  award_recommendation: 'selection' as SourceStageKey,
+  contracting_handoff: 'contract_mobilization' as SourceStageKey,
+  post_award_controls: 'value_realization' as SourceStageKey,
+};
+
+function registryStageFor(playbookStageKey: string): SourceStageKey {
+  return PLAYBOOK_TO_REGISTRY_STAGE[playbookStageKey] ?? ('intake' as SourceStageKey);
+}
+
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -108,7 +134,7 @@ export async function persistApprovalArtifact(
     tenantKey: opts.tenantKey,
     sourceEventId: opts.sourceEventId,
     ...(opts.sourceEventRowId ? { sourceEventRowId: opts.sourceEventRowId } : {}),
-    stageKey: rec.stageKey as SourceStageKey,
+    stageKey: registryStageFor(rec.stageKey),
     artifactFamily: 'decision_brief',
     artifactKind: 'gate_approval_record',
     sourceOrigin: 'generated',
