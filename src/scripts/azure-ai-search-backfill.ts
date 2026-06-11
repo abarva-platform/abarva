@@ -129,9 +129,9 @@ async function* readChunks(
         c.chunk_index,
         c.chunk_text,
         coalesce(c.lifecycle_state, 'active') as lifecycle_state,
-        embedded_at,
-        provenance,
-        chunk_metadata,
+        c.embedded_at,
+        c.provenance,
+        c.chunk_metadata,
         gor.agent_readiness_status,
         coalesce(
           nullif(c.chunk_metadata->>'source_file_id', ''),
