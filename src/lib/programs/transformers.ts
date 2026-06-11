@@ -1588,6 +1588,11 @@ export async function buildStrategicMove(
     mapLabel: deriveMapLabel(move),
     createdAt: move.createdAt,
     updatedAt: move.updatedAt ?? move.createdAt,
+    lifecycleState: move.lifecycleState,
+    archivedAt: move.archivedAt,
+    archiveReason: move.archiveReason,
+    archiveExplanation: move.archiveExplanation,
+    archivedFromState: move.archivedFromState,
   };
 }
 
