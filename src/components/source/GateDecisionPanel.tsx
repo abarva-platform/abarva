@@ -45,6 +45,8 @@ export function GateDecisionPanel({ eventId }: { eventId: string }) {
   const [result, setResult] = useState<{ gateStatus: string; allowIssueReady: boolean; approvalArtifactId?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const [notify, setNotify] = useState<{ channel: string; to: string } | null>(null);
 
   useEffect(() => {
     void fetch(`/api/v1/source/events/${eventId}/gate`).then((r) => r.json()).then((d: { stages?: StageItem[] }) => {
@@ -84,6 +86,23 @@ export function GateDecisionPanel({ eventId }: { eventId: string }) {
       if (!r.ok) throw new Error(d.detail ?? `HTTP ${r.status}`);
       setResult({ gateStatus: d.resolved!.gateStatus, allowIssueReady: d.resolved!.allowIssueReady, approvalArtifactId: d.approvalArtifactId });
     } catch (e) { setError(e instanceof Error ? e.message : 'failed'); } finally { setBusy(false); }
+  };
+
+  const requestApproval = async () => {
+    setNotifyBusy(true); setError(null); setNotify(null);
+    try {
+      const stage = stages.find((s) => s.stageKey === stageKey);
+      const r = await fetch(`/api/v1/source/events/${eventId}/request-approval`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          stageKey,
+          stageLabel: stage ? `${stage.stageNumber}. ${stage.stageName}` : (assessment?.stageName ?? undefined),
+        }),
+      });
+      const d = (await r.json()) as { channel?: string; to?: string; error?: string };
+      if (!r.ok) { setError(d.error ?? `request-approval HTTP ${r.status}`); return; }
+      setNotify({ channel: d.channel ?? 'unknown', to: d.to ?? '' });
+    } catch (e) { setError(e instanceof Error ? e.message : 'failed to notify approver'); } finally { setNotifyBusy(false); }
   };
 
   const statusColor = useMemo(() => (assessment ? STATUS_COLOR[assessment.gateStatus] ?? '#6b6b6b' : '#6b6b6b'), [assessment]);
@@ -141,9 +160,19 @@ export function GateDecisionPanel({ eventId }: { eventId: string }) {
               {ACTIONS.map((a) => <option key={a.v} value={a.v}>{a.l}</option>)}
             </select>
             <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="Rationale (required to approve past gaps): why proceed, what risk is accepted, follow-ups…" rows={3} style={{ fontSize: 13, padding: 8, border: '1px solid #e4e1da', borderRadius: 6, resize: 'vertical' }} />
-            <button type="button" onClick={submit} disabled={busy} style={{ alignSelf: 'flex-start', padding: '8px 16px', background: NAVY, color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1 }}>
-              {busy ? 'Recording…' : 'Record decision'}
-            </button>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button type="button" onClick={submit} disabled={busy} style={{ padding: '8px 16px', background: NAVY, color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1 }}>
+                {busy ? 'Recording…' : 'Record decision'}
+              </button>
+              <button type="button" onClick={requestApproval} disabled={notifyBusy || !stageKey} style={{ padding: '8px 16px', background: '#fff', color: NAVY, border: `1px solid ${NAVY}`, borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: notifyBusy || !stageKey ? 'not-allowed' : 'pointer', opacity: notifyBusy || !stageKey ? 0.6 : 1 }}>
+                {notifyBusy ? 'Emailing…' : 'Email approver'}
+              </button>
+              {notify && (
+                <span style={{ fontSize: 12, color: notify.channel === 'email_sent' ? '#1f7a3d' : '#1d5e87' }}>
+                  {notify.channel === 'email_sent' ? 'Sent' : notify.channel === 'logged_fallback' ? 'Logged (no mail key)' : notify.channel} → {notify.to}
+                </span>
+              )}
+            </div>
           </section>
 
           {result && (
