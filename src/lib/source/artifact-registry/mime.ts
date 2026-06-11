@@ -5,21 +5,28 @@
 // explicit documents/workbooks/media, not opaque bundles.
 
 export const SOURCE_ARTIFACT_MIME_ALLOWLIST = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/markdown',
-  'text/plain',
-  'text/csv',
-  'image/png',
-  'image/jpeg',
-  'audio/mpeg',
-  'audio/mp4',
-  'video/mp4',
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/markdown",
+  "text/plain",
+  "text/csv",
+  // HTML is a first-class generated-artifact format (SourceArtifactFormat includes
+  // 'html'): governance records (gate approval records) and board-grade deliverables
+  // render to HTML and persist through registerSourceArtifactUpload. Omitting text/html
+  // here made every HTML artifact write throw the allowlist guard → 500 (gate-decision
+  // pre-flight, 2026-06-11). It belongs on the allowlist with the other text formats.
+  "text/html",
+  "image/png",
+  "image/jpeg",
+  "audio/mpeg",
+  "audio/mp4",
+  "video/mp4",
 ] as const;
 
-export type SourceArtifactAllowedMimeType = (typeof SOURCE_ARTIFACT_MIME_ALLOWLIST)[number];
+export type SourceArtifactAllowedMimeType =
+  (typeof SOURCE_ARTIFACT_MIME_ALLOWLIST)[number];
 
 export const MAX_SOURCE_ARTIFACT_SIZE_BYTES = 104_857_600; // 100 MB
 
@@ -30,5 +37,9 @@ export function isAllowedSourceArtifactMimeType(
 }
 
 export function isWithinSourceArtifactSizeLimit(bytes: number): boolean {
-  return Number.isFinite(bytes) && bytes > 0 && bytes <= MAX_SOURCE_ARTIFACT_SIZE_BYTES;
+  return (
+    Number.isFinite(bytes) &&
+    bytes > 0 &&
+    bytes <= MAX_SOURCE_ARTIFACT_SIZE_BYTES
+  );
 }

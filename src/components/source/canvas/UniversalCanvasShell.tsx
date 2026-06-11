@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
@@ -330,6 +336,12 @@ export function UniversalCanvasShell({
   // without a full page revalidate.
   const [registryArtifactsState, setRegistryArtifactsState] =
     useState<SourceArtifactRegistryRecord[]>(registryArtifacts);
+  // Server re-renders (e.g. router.refresh() after an Upload-document POST) pass a
+  // fresh registryArtifacts prop, but useState ignores prop updates — the shelf
+  // looked frozen after a successful upload (pre-flight finding, 2026-06-11).
+  useEffect(() => {
+    setRegistryArtifactsState(registryArtifacts);
+  }, [registryArtifacts]);
   const generatableCodes = useMemo(
     () => new Set(listSupportedGenerationCodes()),
     [],

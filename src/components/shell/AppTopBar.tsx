@@ -48,20 +48,27 @@ const BRAND = {
   hair: "rgba(255,255,255,0.10)",
   textMute: "rgba(255,255,255,0.72)",
   textStrong: "rgba(255,255,255,0.92)",
-  activePillShadow: "0 0 0 1px rgba(255,255,255,0.95), 0 8px 22px rgba(34,174,234,0.28)",
+  activePillShadow:
+    "0 0 0 1px rgba(255,255,255,0.95), 0 8px 22px rgba(34,174,234,0.28)",
 };
 
 const OPTION2_NAV_LOGO =
   "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg";
 
-export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps = {}) {
+export function AppTopBar({
+  tenantName,
+  showProductNav = true,
+}: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
   const { isLoaded, user } = useUser();
   const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
   const resolvedTenantName =
-    canonicalClientDisplayName({ key: currentClient?.id, name: tenantName ?? currentClient?.name }) ??
+    canonicalClientDisplayName({
+      key: currentClient?.id,
+      name: tenantName ?? currentClient?.name,
+    }) ??
     tenantName ??
     currentClient?.name ??
     null;
@@ -76,7 +83,8 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
     .slice(0, 2)
     .toUpperCase();
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
-  const learnActive = pathname === "/home/learn" || pathname.startsWith("/home/learn/");
+  const learnActive =
+    pathname === "/home/learn" || pathname.startsWith("/home/learn/");
 
   function handleSignOut() {
     void signOut();
@@ -107,7 +115,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
     >
       <style jsx global>{`
         .app-top-bar__nav-link {
-          transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+          transition:
+            background 140ms ease,
+            color 140ms ease,
+            box-shadow 140ms ease;
         }
         .app-top-bar__nav-link:hover {
           background: rgba(255, 255, 255, 0.08);
@@ -119,11 +130,24 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, justifySelf: "start" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          minWidth: 0,
+          justifySelf: "start",
+        }}
+      >
         <Link
           href="/home"
           aria-label="AbarVa Home"
-          style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            flexShrink: 0,
+          }}
         >
           <Image
             src={OPTION2_NAV_LOGO}
@@ -140,7 +164,12 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           <>
             <span
               aria-hidden="true"
-              style={{ width: 1, height: 16, background: BRAND.hair, marginLeft: 4 }}
+              style={{
+                width: 1,
+                height: 16,
+                background: BRAND.hair,
+                marginLeft: 4,
+              }}
             />
             <span
               title={resolvedTenantName}
@@ -168,7 +197,12 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
       {navItems.length > 0 && (
         <nav
           aria-label="Product modules"
-          style={{ display: "flex", alignItems: "center", gap: 4, justifySelf: "center" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            justifySelf: "center",
+          }}
         >
           {navItems.map((item) => {
             const active = item.match(pathname);
@@ -196,15 +230,22 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
                   letterSpacing: 0,
                   position: "relative",
                 }}
-                >
-                  {item.label}
+              >
+                {item.label}
               </a>
             );
           })}
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, justifySelf: "end" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          justifySelf: "end",
+        }}
+      >
         {signedIn && (
           <Link
             href="/home/learn"
@@ -232,7 +273,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           </Link>
         )}
         {signedIn && <AdminInboxTopNavBadge />}
-        {signedIn ? (
+        {/* While Clerk is still resolving the session, auth state is
+            indeterminate — render neither chip nor "Sign in" (a signed-in user
+            briefly seeing "Sign in" reads as being logged out; audit F4). */}
+        {!isLoaded ? null : signedIn ? (
           <>
             <div
               title={displayName}
