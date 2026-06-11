@@ -126,6 +126,225 @@ function LadderTrack({ status }: { status: ReadinessStatus }) {
   );
 }
 
+/**
+ * "Where to start" — the ranked team-archetype recommendation. Extracted
+ * verbatim from the readiness panel body so the phase workspace can collapse
+ * it as its own progressive-disclosure panel. Pure presentational.
+ */
+export function WhereToStartBlock({
+  recommendation,
+}: {
+  recommendation: CurrentStateRecommendation;
+}) {
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        padding: "10px 12px",
+        borderRadius: 6,
+        background: "rgba(0,102,204,0.04)",
+        border: "1px solid rgba(0,102,204,0.16)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--abarva-mono)",
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontWeight: 700,
+          color: "var(--abarva-slate)",
+          marginBottom: 6,
+        }}
+      >
+        Where to start
+        <span
+          style={{
+            marginLeft: 8,
+            fontWeight: 400,
+            textTransform: "none",
+            color: "var(--abarva-stone)",
+          }}
+        >
+          &mdash; confidence:{" "}
+          {recommendation.overallConfidence.replace(/_/g, " ")}
+        </span>
+      </div>
+      <div
+        style={{
+          fontSize: 13,
+          color: "var(--abarva-ink)",
+          lineHeight: 1.5,
+        }}
+      >
+        {recommendation.whereToStart}
+      </div>
+      {/* Level 1: ranked rows. Level 2: the leverage breakdown. Level 3: each term's basis. */}
+      <div style={{ margin: "8px 0 0" }}>
+        {recommendation.ranking.map((t) => {
+          const terms = [
+            {
+              k: "AI-applicability",
+              v: t.aiApplicability,
+              basis: t.aiApplicabilityBasis,
+            },
+            {
+              k: "Readiness",
+              v: t.normalizedReadiness,
+              basis: t.readinessBasis,
+            },
+            { k: "Gap-upside", v: t.gapUpside, basis: t.gapUpsideBasis },
+          ];
+          return (
+            <details key={t.teamArchetype} style={{ padding: "2px 0" }}>
+              <summary
+                style={{
+                  cursor: "pointer",
+                  fontSize: 12,
+                  color: "var(--abarva-slate)",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "baseline",
+                  listStyle: "none",
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>#{t.rank}</span>
+                <span style={{ flex: 1 }}>{t.label}</span>
+                <span
+                  style={{
+                    fontFamily: "var(--abarva-mono)",
+                    fontSize: 11,
+                    color: "var(--abarva-stone)",
+                  }}
+                >
+                  {t.aiApplicability}×{t.normalizedReadiness}×{t.gapUpside} ={" "}
+                  <strong style={{ color: "var(--abarva-ink)" }}>
+                    {t.score}
+                  </strong>{" "}
+                  · {t.confidence.replace(/_/g, " ")}
+                </span>
+              </summary>
+              <div style={{ paddingLeft: 18, marginTop: 4 }}>
+                {terms.map((term) => (
+                  <details key={term.k} style={{ padding: "1px 0" }}>
+                    <summary
+                      style={{
+                        cursor: "pointer",
+                        fontSize: 11,
+                        color: "var(--abarva-slate)",
+                        listStyle: "none",
+                      }}
+                    >
+                      {term.k}:{" "}
+                      <span
+                        style={{
+                          fontFamily: "var(--abarva-mono)",
+                          color: "var(--abarva-ink)",
+                        }}
+                      >
+                        {term.v}
+                      </span>
+                    </summary>
+                    <div
+                      style={{
+                        paddingLeft: 14,
+                        fontSize: 11,
+                        color: "var(--abarva-stone)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {term.basis}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Indicative plan & cost" — the roadmap-phase cost ladder. Extracted verbatim
+ * from the readiness panel body so the phase workspace can collapse it as its
+ * own progressive-disclosure panel. Pure presentational.
+ */
+export function IndicativePlanBlock({ plan }: { plan: CurrentStatePlan }) {
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        padding: "10px 12px",
+        borderRadius: 6,
+        background: "rgba(0,0,0,0.02)",
+        border: "1px solid var(--abarva-mist, #e6e3dc)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--abarva-mono)",
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontWeight: 700,
+          color: "var(--abarva-slate)",
+          marginBottom: 6,
+        }}
+      >
+        Indicative plan &amp; cost
+        <span
+          style={{
+            marginLeft: 8,
+            fontWeight: 400,
+            textTransform: "none",
+            color: "var(--abarva-ink)",
+          }}
+        >
+          &mdash; {usd(plan.estimate.totalCost.low)}–
+          {usd(plan.estimate.totalCost.high)}
+        </span>
+      </div>
+      <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+        {plan.roadmap.phases.map((ph) => (
+          <li
+            key={ph.id}
+            style={{
+              fontSize: 12,
+              color: "var(--abarva-slate)",
+              padding: "2px 0",
+            }}
+          >
+            {ph.label}
+            <span
+              style={{
+                color: "var(--abarva-stone)",
+                fontFamily: "var(--abarva-mono)",
+                fontSize: 11,
+              }}
+            >
+              {" "}
+              — {usd(ph.cost.low)}–{usd(ph.cost.high)}
+              {ph.isFoundational ? " · enablement" : ""}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 10,
+          color: "var(--abarva-stone)",
+          lineHeight: 1.4,
+        }}
+      >
+        {plan.note} Rate card: {plan.rateCardProvenance}
+      </div>
+    </div>
+  );
+}
+
 export function CurrentStateReadinessPanel({
   readiness,
   recommendation,
@@ -180,6 +399,9 @@ export function CurrentStateReadinessPanel({
       fd.append("file", file);
       fd.append("family", family);
       fd.append("provenance", "representative_synthetic");
+      if (readiness?.archetypeId) {
+        fd.append("archetypeId", readiness.archetypeId);
+      }
       const res = await fetch(
         `/api/v1/programs/${programId}/current-state/ingest`,
         { method: "POST", body: fd },
@@ -212,6 +434,11 @@ export function CurrentStateReadinessPanel({
       fd.append("file", file);
       fd.append("family", family);
       fd.append("phase", String(readiness?.phase ?? 1));
+      // The family must be looked up in the SAME archetype this readiness
+      // report was resolved against (e.g. ops families don't exist in AI-PDLC).
+      if (readiness?.archetypeId) {
+        fd.append("archetypeId", readiness.archetypeId);
+      }
       const res = await fetch(
         `/api/v1/programs/${programId}/current-state/ingest-doc`,
         { method: "POST", body: fd },
@@ -452,205 +679,11 @@ export function CurrentStateReadinessPanel({
       )}
 
       {recommendation && recommendation.ranking.length > 0 && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "10px 12px",
-            borderRadius: 6,
-            background: "rgba(0,102,204,0.04)",
-            border: "1px solid rgba(0,102,204,0.16)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--abarva-mono)",
-              fontSize: 10,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontWeight: 700,
-              color: "var(--abarva-slate)",
-              marginBottom: 6,
-            }}
-          >
-            Where to start
-            <span
-              style={{
-                marginLeft: 8,
-                fontWeight: 400,
-                textTransform: "none",
-                color: "var(--abarva-stone)",
-              }}
-            >
-              &mdash; confidence:{" "}
-              {recommendation.overallConfidence.replace(/_/g, " ")}
-            </span>
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "var(--abarva-ink)",
-              lineHeight: 1.5,
-            }}
-          >
-            {recommendation.whereToStart}
-          </div>
-          {/* Level 1: ranked rows. Level 2: the leverage breakdown. Level 3: each term's basis. */}
-          <div style={{ margin: "8px 0 0" }}>
-            {recommendation.ranking.map((t) => {
-              const terms = [
-                {
-                  k: "AI-applicability",
-                  v: t.aiApplicability,
-                  basis: t.aiApplicabilityBasis,
-                },
-                {
-                  k: "Readiness",
-                  v: t.normalizedReadiness,
-                  basis: t.readinessBasis,
-                },
-                { k: "Gap-upside", v: t.gapUpside, basis: t.gapUpsideBasis },
-              ];
-              return (
-                <details key={t.teamArchetype} style={{ padding: "2px 0" }}>
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontSize: 12,
-                      color: "var(--abarva-slate)",
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "baseline",
-                      listStyle: "none",
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>#{t.rank}</span>
-                    <span style={{ flex: 1 }}>{t.label}</span>
-                    <span
-                      style={{
-                        fontFamily: "var(--abarva-mono)",
-                        fontSize: 11,
-                        color: "var(--abarva-stone)",
-                      }}
-                    >
-                      {t.aiApplicability}×{t.normalizedReadiness}×{t.gapUpside}{" "}
-                      ={" "}
-                      <strong style={{ color: "var(--abarva-ink)" }}>
-                        {t.score}
-                      </strong>{" "}
-                      · {t.confidence.replace(/_/g, " ")}
-                    </span>
-                  </summary>
-                  <div style={{ paddingLeft: 18, marginTop: 4 }}>
-                    {terms.map((term) => (
-                      <details key={term.k} style={{ padding: "1px 0" }}>
-                        <summary
-                          style={{
-                            cursor: "pointer",
-                            fontSize: 11,
-                            color: "var(--abarva-slate)",
-                            listStyle: "none",
-                          }}
-                        >
-                          {term.k}:{" "}
-                          <span
-                            style={{
-                              fontFamily: "var(--abarva-mono)",
-                              color: "var(--abarva-ink)",
-                            }}
-                          >
-                            {term.v}
-                          </span>
-                        </summary>
-                        <div
-                          style={{
-                            paddingLeft: 14,
-                            fontSize: 11,
-                            color: "var(--abarva-stone)",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {term.basis}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </div>
-        </div>
+        <WhereToStartBlock recommendation={recommendation} />
       )}
 
       {plan && plan.roadmap.phases.length > 0 && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "10px 12px",
-            borderRadius: 6,
-            background: "rgba(0,0,0,0.02)",
-            border: "1px solid var(--abarva-mist, #e6e3dc)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--abarva-mono)",
-              fontSize: 10,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontWeight: 700,
-              color: "var(--abarva-slate)",
-              marginBottom: 6,
-            }}
-          >
-            Indicative plan &amp; cost
-            <span
-              style={{
-                marginLeft: 8,
-                fontWeight: 400,
-                textTransform: "none",
-                color: "var(--abarva-ink)",
-              }}
-            >
-              &mdash; {usd(plan.estimate.totalCost.low)}–
-              {usd(plan.estimate.totalCost.high)}
-            </span>
-          </div>
-          <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
-            {plan.roadmap.phases.map((ph) => (
-              <li
-                key={ph.id}
-                style={{
-                  fontSize: 12,
-                  color: "var(--abarva-slate)",
-                  padding: "2px 0",
-                }}
-              >
-                {ph.label}
-                <span
-                  style={{
-                    color: "var(--abarva-stone)",
-                    fontFamily: "var(--abarva-mono)",
-                    fontSize: 11,
-                  }}
-                >
-                  {" "}
-                  — {usd(ph.cost.low)}–{usd(ph.cost.high)}
-                  {ph.isFoundational ? " · enablement" : ""}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 10,
-              color: "var(--abarva-stone)",
-              lineHeight: 1.4,
-            }}
-          >
-            {plan.note} Rate card: {plan.rateCardProvenance}
-          </div>
-        </div>
+        <IndicativePlanBlock plan={plan} />
       )}
 
       <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>

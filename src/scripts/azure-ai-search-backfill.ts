@@ -177,7 +177,10 @@ async function* readNonActiveChunkDeletes(
     );
     if (result.rows.length === 0) return;
     yield result.rows.map((row) =>
-      toTenantContextDeleteDocument(canonicalTenantKey(row.tenant_key), row.chunk_id),
+      toTenantContextDeleteDocument(
+        canonicalTenantKey(row.tenant_key),
+        row.chunk_id,
+      ),
     );
     offset += result.rows.length;
   }

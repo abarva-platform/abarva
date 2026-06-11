@@ -496,7 +496,9 @@ function RightPane({
       )}
       {activeTab === "documents" && <DocumentsContent move={move} />}
       {activeTab === "sessions" && <SessionPlaybookPanel moveId={move.id} />}
-      {activeTab === "cabinet" && <FileCabinetPanel moveId={move.id} />}
+      {activeTab === "cabinet" && (
+        <FileCabinetPanel moveId={move.id} phase={move.currentPhase ?? 0} />
+      )}
       {activeTab === "activity" && (
         <ActivityContent
           move={move}

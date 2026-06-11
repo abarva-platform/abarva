@@ -47,7 +47,10 @@ function safePathPart(value: string): string {
 }
 
 function compactTimestamp(): string {
-  return new Date().toISOString().replace(/[^0-9a-z]/gi, "").slice(0, 15);
+  return new Date()
+    .toISOString()
+    .replace(/[^0-9a-z]/gi, "")
+    .slice(0, 15);
 }
 
 function metadataValue(value: unknown): string {

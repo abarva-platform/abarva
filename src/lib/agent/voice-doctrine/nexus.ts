@@ -24,9 +24,9 @@
 // ── Doctrine version + surface caps ──────────────────────────────────────────
 
 export const NEXUS_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-16b',
-  primarySurface: 'moves',
-  alsoUsedOn: ['programs'],
+  voice: "0.draft.2026-05-16b",
+  primarySurface: "moves",
+  alsoUsedOn: ["programs"],
 } as const;
 
 export function getNexusDoctrineVersionString(): string {
@@ -34,25 +34,25 @@ export function getNexusDoctrineVersionString(): string {
 }
 
 export const NEXUS_SURFACE_WORD_CAPS: Readonly<Record<string, number>> = {
-  '/moves': 140,
-  '/programs': 140,
-  '/source': 120,
-  '/intelligence': 120,
-  '/admin': 100,
+  "/moves": 140,
+  "/programs": 140,
+  "/source": 120,
+  "/intelligence": 120,
+  "/admin": 100,
   default: 140,
 } as const;
 
 // ── Banned-pattern catalog ───────────────────────────────────────────────────
 
 export type NexusDriftCategory =
-  | 'hedge_drift'
-  | 'vague_advice'
-  | 'no_next_action'
-  | 'sponsor_softener'
-  | 'passive_watcher'
-  | 'aspiration_drift'
-  | 'consultant_jargon'
-  | 'hollow_opener';
+  | "hedge_drift"
+  | "vague_advice"
+  | "no_next_action"
+  | "sponsor_softener"
+  | "passive_watcher"
+  | "aspiration_drift"
+  | "consultant_jargon"
+  | "hollow_opener";
 
 export interface NexusBannedPattern {
   id: string;
@@ -63,16 +63,81 @@ export interface NexusBannedPattern {
 }
 
 export const NEXUS_BANNED_PATTERNS: ReadonlyArray<NexusBannedPattern> = [
-  { id: 'nx-hedge-1', category: 'hedge_drift', pattern: /\b(might be worth|could potentially|may want to|perhaps consider)\b/i, example: '"You might want to consider..."', remediation: 'Say what to do next; defer choice to user only when there is a real fork.' },
-  { id: 'nx-hedge-2', category: 'hedge_drift', pattern: /\b(it depends|hard to say|tough to know)\b/i, example: '"It depends on context."', remediation: 'Name the dependency; surface the missing input.' },
-  { id: 'nx-vague-1', category: 'vague_advice', pattern: /\b(work on|focus on|prioritize) (this|these|the program)\b/i, example: '"Focus on the program."', remediation: 'Name the specific deliverable, gate, or workshop.' },
-  { id: 'nx-no-action-1', category: 'no_next_action', pattern: /\b(let me know|reach out|happy to help|here for you)\b/i, example: '"Let me know if I can help."', remediation: 'Propose the next action explicitly; remove conversational filler.' },
-  { id: 'nx-sponsor-1', category: 'sponsor_softener', pattern: /\b(you might want to talk to|please consult|consider asking)\b/i, example: '"You might want to talk to your sponsor."', remediation: 'Name the sponsor handoff with the specific question to bring them.' },
-  { id: 'nx-passive-1', category: 'passive_watcher', pattern: /\b(I am tracking|I am monitoring|I am watching)\b/i, example: '"I am tracking three risks."', remediation: 'Name the action: report, escalate, or defer with reason.' },
-  { id: 'nx-aspiration-1', category: 'aspiration_drift', pattern: /\b(strive to|aim to|work toward|aspire to)\b/i, example: '"We aim to close the gate."', remediation: 'State the gate criterion and what closes it.' },
-  { id: 'nx-jargon-1', category: 'consultant_jargon', pattern: /\b(synergize|leverage learnings|circle back|drive value)\b/i, example: '"We will leverage learnings."', remediation: 'Name the specific pattern, finding, or evidence.' },
-  { id: 'nx-hollow-1', category: 'hollow_opener', pattern: /^\s*(Great question|Excellent point|Sure|Of course)/i, example: '"Great question. Here is..."', remediation: 'Open with the answer, not the compliment.' },
-  { id: 'nx-hollow-2', category: 'hollow_opener', pattern: /^\s*(Let me|I will|I am going to) (help|walk you through|explain)/i, example: '"Let me walk you through..."', remediation: 'Just walk through it; remove the announcement.' },
+  {
+    id: "nx-hedge-1",
+    category: "hedge_drift",
+    pattern:
+      /\b(might be worth|could potentially|may want to|perhaps consider)\b/i,
+    example: '"You might want to consider..."',
+    remediation:
+      "Say what to do next; defer choice to user only when there is a real fork.",
+  },
+  {
+    id: "nx-hedge-2",
+    category: "hedge_drift",
+    pattern: /\b(it depends|hard to say|tough to know)\b/i,
+    example: '"It depends on context."',
+    remediation: "Name the dependency; surface the missing input.",
+  },
+  {
+    id: "nx-vague-1",
+    category: "vague_advice",
+    pattern: /\b(work on|focus on|prioritize) (this|these|the program)\b/i,
+    example: '"Focus on the program."',
+    remediation: "Name the specific deliverable, gate, or workshop.",
+  },
+  {
+    id: "nx-no-action-1",
+    category: "no_next_action",
+    pattern: /\b(let me know|reach out|happy to help|here for you)\b/i,
+    example: '"Let me know if I can help."',
+    remediation:
+      "Propose the next action explicitly; remove conversational filler.",
+  },
+  {
+    id: "nx-sponsor-1",
+    category: "sponsor_softener",
+    pattern: /\b(you might want to talk to|please consult|consider asking)\b/i,
+    example: '"You might want to talk to your sponsor."',
+    remediation:
+      "Name the sponsor handoff with the specific question to bring them.",
+  },
+  {
+    id: "nx-passive-1",
+    category: "passive_watcher",
+    pattern: /\b(I am tracking|I am monitoring|I am watching)\b/i,
+    example: '"I am tracking three risks."',
+    remediation: "Name the action: report, escalate, or defer with reason.",
+  },
+  {
+    id: "nx-aspiration-1",
+    category: "aspiration_drift",
+    pattern: /\b(strive to|aim to|work toward|aspire to)\b/i,
+    example: '"We aim to close the gate."',
+    remediation: "State the gate criterion and what closes it.",
+  },
+  {
+    id: "nx-jargon-1",
+    category: "consultant_jargon",
+    pattern: /\b(synergize|leverage learnings|circle back|drive value)\b/i,
+    example: '"We will leverage learnings."',
+    remediation: "Name the specific pattern, finding, or evidence.",
+  },
+  {
+    id: "nx-hollow-1",
+    category: "hollow_opener",
+    pattern: /^\s*(Great question|Excellent point|Sure|Of course)/i,
+    example: '"Great question. Here is..."',
+    remediation: "Open with the answer, not the compliment.",
+  },
+  {
+    id: "nx-hollow-2",
+    category: "hollow_opener",
+    pattern:
+      /^\s*(Let me|I will|I am going to) (help|walk you through|explain)/i,
+    example: '"Let me walk you through..."',
+    remediation: "Just walk through it; remove the announcement.",
+  },
 ] as const;
 
 // ── Drift detector ───────────────────────────────────────────────────────────
@@ -115,14 +180,15 @@ export function checkNexusVoice(
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
   const surfaceCap = options.surface
-    ? NEXUS_SURFACE_WORD_CAPS[options.surface] ?? NEXUS_SURFACE_WORD_CAPS.default
+    ? (NEXUS_SURFACE_WORD_CAPS[options.surface] ??
+      NEXUS_SURFACE_WORD_CAPS.default)
     : NEXUS_SURFACE_WORD_CAPS.default;
   if (wordCount > surfaceCap) {
     violations.push({
-      patternId: 'nx-word-cap',
-      category: 'vague_advice',
+      patternId: "nx-word-cap",
+      category: "vague_advice",
       matchedText: `${wordCount} words (cap ${surfaceCap})`,
-      remediation: `Trim response to under ${surfaceCap} words for surface ${options.surface ?? 'default'}.`,
+      remediation: `Trim response to under ${surfaceCap} words for surface ${options.surface ?? "default"}.`,
     });
   }
 
@@ -378,7 +444,8 @@ export function composeNexusSystemPrompt(
   input: ComposeNexusSystemPromptInput = {},
 ): string {
   const wordCap = input.surface
-    ? NEXUS_SURFACE_WORD_CAPS[input.surface] ?? NEXUS_SURFACE_WORD_CAPS.default
+    ? (NEXUS_SURFACE_WORD_CAPS[input.surface] ??
+      NEXUS_SURFACE_WORD_CAPS.default)
     : NEXUS_SURFACE_WORD_CAPS.default;
 
   // Brief B role text is the consultant identity. The footer is preserved
@@ -386,19 +453,28 @@ export function composeNexusSystemPrompt(
   // sit outside the conversational role.
   return [
     NEXUS_ROLE_TEXT,
-    '',
-    'OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.',
-    '',
+    "",
+    "OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.",
+    "",
     `  The chat surface for this turn renders plain text. Length budget for this surface: ${wordCap} words. Do not use Markdown headings, **bold** markers, or formal bullet lists in the response body. Inline em-dashes and "(1) … (2) …" markers are fine; Markdown lists are not.`,
-    input.programContext ? `  Active program context: ${input.programContext}` : '',
-    input.blockerSummary ? `  Current blockers: ${input.blockerSummary}` : '',
-    '',
-    '  Open with the answer, not the compliment. Close with the next concrete action where there is one.',
-  ].filter(Boolean).join('\n');
+    input.programContext
+      ? `  Active program context: ${input.programContext}`
+      : "",
+    input.blockerSummary ? `  Current blockers: ${input.blockerSummary}` : "",
+    input.surface === "/strategic-moves/new"
+      ? "  Origination is a DRAFT conversation — shaping the brief does NOT create, originate, save, or persist the Move. The Move exists only after the user clicks the 'Promote to P1 Charter' button on this surface. Never tell the user the Move is created/originated/saved, and never say you are 'advancing to P1 Charter' as though it already happened. When P0's fields are complete, say the brief is ready and explicitly invite the user to click 'Promote to P1 Charter' to create the Move."
+      : "",
+    "  DELIVERABLES ARE DOCUMENTS, NOT CHAT. When the user asks you to draft, write, or produce a phase deliverable (charter, discovery report, business case, roadmap, etc.), NEVER print the document body in the chat window. Use your deliverable/artifact tool (draftArtifact / completeDeliverable) to create it as a governed document, then reply with a 2-3 sentence summary, where it lives (the Documents tab / File Cabinet), and what happens next (review, sign-off, gate). A document that exists only as chat text does not exist: it cannot be signed off, satisfies no gate criterion, and appears in no File Cabinet. If your tools fail, say so and point the user to the workspace Generate action — do not fall back to dumping the document into chat.",
+    "  PHASE COMPLETION IS A GATE STATE, NOT A FEELING. When the user asks whether a phase is done, answer from the recorded gate criteria: name each hard criterion as met or unmet (e.g. 'Charter exists at v1 but is not signed off — that is the open hard criterion'), then name the ONE action that closes it ('sign off the Charter, then approve the gate — approving advances the Move'). Never declare a phase done or nearly done based on conversation content that has not been recorded as a deliverable or committed evidence.",
+    "",
+    "  Open with the answer, not the compliment. Close with the next concrete action where there is one.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 // ── Doctrine gating ──────────────────────────────────────────────────────────
 
 export function isNexusVoiceDoctrineEnabled(): boolean {
-  return process.env.NEXUS_VOICE_DOCTRINE !== 'disabled';
+  return process.env.NEXUS_VOICE_DOCTRINE !== "disabled";
 }

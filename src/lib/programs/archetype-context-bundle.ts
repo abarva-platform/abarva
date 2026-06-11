@@ -31,8 +31,9 @@ import {
 } from "@/lib/programs/current-state-plan";
 import {
   getArchetype,
-  DEFAULT_ARCHETYPE_ID,
+  resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
+import { getStrategicMoveById } from "@/lib/programs/queries";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import type { GroundedAnswerEnvelope } from "@/lib/programs/archetypes/types";
 
@@ -53,7 +54,24 @@ export async function buildArchetypeContextBundle(
   moveId: string,
   phase: number,
 ): Promise<ArchetypeContextBundle> {
-  const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+  // Archetype resolved from the Move's own row (best-effort) — never a
+  // hardcoded default for a Move we can read.
+  let moveName = moveId;
+  let archetype = resolveProgramArchetype({});
+  try {
+    const move = await getStrategicMoveById(ctx, moveId);
+    if (move?.name) moveName = move.name;
+    if (move) {
+      archetype = resolveProgramArchetype({
+        archetype: move.archetype,
+        classification: (move.charter as { classification?: string } | null)
+          ?.classification,
+        name: move.name,
+      });
+    }
+  } catch {
+    /* best-effort */
+  }
   const profile = await inferMoveProfile(ctx);
   const readiness = await resolveCurrentStateReadiness(
     ctx,
@@ -63,7 +81,7 @@ export async function buildArchetypeContextBundle(
     moveId,
   );
   const recommendation = await buildCurrentStateRecommendation(ctx, profile);
-  const plan = buildCurrentStatePlan(recommendation, { moveName: moveId });
+  const plan = buildCurrentStatePlan(recommendation, { moveName });
   const missingEvidence = readiness.instruments
     .filter((i) => i.status !== "committed")
     .map((i) => i.key);

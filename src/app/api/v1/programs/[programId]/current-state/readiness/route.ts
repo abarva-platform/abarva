@@ -9,10 +9,8 @@ import {
   inferMoveProfile,
   resolveCurrentStateReadiness,
 } from "@/lib/programs/current-state-readiness";
-import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
+import { getStrategicMoveById } from "@/lib/programs/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +29,22 @@ export async function GET(
       return Response.json({ error: "invalid_phase" }, { status: 400 });
     }
 
-    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    // Archetype resolved from the Move's own row (best-effort) — never a
+    // hardcoded default for a Move we can read.
+    let archetype = resolveProgramArchetype({});
+    try {
+      const move = await getStrategicMoveById(ctx, programId);
+      if (move) {
+        archetype = resolveProgramArchetype({
+          archetype: move.archetype,
+          classification: (move.charter as { classification?: string } | null)
+            ?.classification,
+          name: move.name,
+        });
+      }
+    } catch {
+      /* best-effort */
+    }
     const profile = await inferMoveProfile(ctx);
     const report = await resolveCurrentStateReadiness(
       ctx,

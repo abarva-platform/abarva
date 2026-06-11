@@ -7,7 +7,7 @@
 //  - Locked scores are immutable except through an explicit unlock (with reason).
 //  - Criteria must be client-approved before any score can be locked against them.
 
-import type { EvaluationCriterion, VendorScore } from './types';
+import type { EvaluationCriterion, VendorScore } from "./types";
 
 export interface ScoreActionResult {
   ok: boolean;
@@ -18,9 +18,14 @@ export interface ScoreActionResult {
 /** Record an AI suggestion. Never touches evaluator/final fields. */
 export function applyAiSuggestion(
   score: VendorScore,
-  suggestion: { score: number; rationale: string; evidenceReference: string | null; confidence: 'high' | 'medium' | 'low' },
+  suggestion: {
+    score: number;
+    rationale: string;
+    evidenceReference: string | null;
+    confidence: "high" | "medium" | "low";
+  },
 ): ScoreActionResult {
-  if (score.locked) return { ok: false, error: 'score is locked' };
+  if (score.locked) return { ok: false, error: "score is locked" };
   return {
     ok: true,
     score: {
@@ -36,14 +41,23 @@ export function applyAiSuggestion(
 /** Evaluator sets their score/comment. A reason is required when departing from the AI suggestion. */
 export function applyEvaluatorScore(
   score: VendorScore,
-  input: { evaluatorId: string; score: number; comment?: string; overrideReason?: string },
+  input: {
+    evaluatorId: string;
+    score: number;
+    comment?: string;
+    overrideReason?: string;
+  },
 ): ScoreActionResult {
-  if (score.locked) return { ok: false, error: 'score is locked' };
-  if (!input.evaluatorId.trim()) return { ok: false, error: 'a named evaluator is required' };
+  if (score.locked) return { ok: false, error: "score is locked" };
+  if (!input.evaluatorId.trim())
+    return { ok: false, error: "a named evaluator is required" };
   const departs =
     score.aiSuggestedScore !== null && input.score !== score.aiSuggestedScore;
   if (departs && !input.overrideReason?.trim()) {
-    return { ok: false, error: 'override reason required when departing from the AI suggestion' };
+    return {
+      ok: false,
+      error: "override reason required when departing from the AI suggestion",
+    };
   }
   return {
     ok: true,
@@ -52,7 +66,9 @@ export function applyEvaluatorScore(
       evaluatorScore: input.score,
       evaluatorComment: input.comment?.trim() || score.evaluatorComment,
       evaluatorId: input.evaluatorId,
-      overrideReason: departs ? input.overrideReason!.trim() : score.overrideReason,
+      overrideReason: departs
+        ? input.overrideReason!.trim()
+        : score.overrideReason,
       finalScore: input.score, // final = the evaluator's decision
     },
   };
@@ -65,22 +81,36 @@ export function lockScore(
   by: string,
   atIso: string,
 ): ScoreActionResult {
-  if (score.locked) return { ok: false, error: 'score is already locked' };
-  if (!by.trim()) return { ok: false, error: 'a named locker is required' };
+  if (score.locked) return { ok: false, error: "score is already locked" };
+  if (!by.trim()) return { ok: false, error: "a named locker is required" };
   if (!criterion.approvedBy) {
-    return { ok: false, error: 'criteria must be client-approved before scores can lock' };
+    return {
+      ok: false,
+      error: "criteria must be client-approved before scores can lock",
+    };
   }
   if (score.finalScore === null || score.evaluatorId === null) {
     // hard rule: AI alone never finalizes
-    return { ok: false, error: 'an evaluator must set the score before it can lock — AI suggestions are never final' };
+    return {
+      ok: false,
+      error:
+        "an evaluator must set the score before it can lock — AI suggestions are never final",
+    };
   }
-  return { ok: true, score: { ...score, locked: true, lockedBy: by, lockedAt: atIso } };
+  return {
+    ok: true,
+    score: { ...score, locked: true, lockedBy: by, lockedAt: atIso },
+  };
 }
 
 /** Unlock requires an explicit reason (kept in evaluatorComment trail). */
-export function unlockScore(score: VendorScore, by: string, reason: string): ScoreActionResult {
-  if (!score.locked) return { ok: false, error: 'score is not locked' };
-  if (!reason.trim()) return { ok: false, error: 'unlock reason required' };
+export function unlockScore(
+  score: VendorScore,
+  by: string,
+  reason: string,
+): ScoreActionResult {
+  if (!score.locked) return { ok: false, error: "score is not locked" };
+  if (!reason.trim()) return { ok: false, error: "unlock reason required" };
   return {
     ok: true,
     score: {
@@ -88,7 +118,8 @@ export function unlockScore(score: VendorScore, by: string, reason: string): Sco
       locked: false,
       lockedBy: null,
       lockedAt: null,
-      evaluatorComment: `${score.evaluatorComment ?? ''}\n[unlocked by ${by}: ${reason.trim()}]`.trim(),
+      evaluatorComment:
+        `${score.evaluatorComment ?? ""}\n[unlocked by ${by}: ${reason.trim()}]`.trim(),
     },
   };
 }
@@ -127,7 +158,8 @@ export function computeVendorTotals(
         sum += (s.finalScore as number) * w;
         weightSum += w;
       }
-      weighted = weightSum > 0 ? Math.round((sum / weightSum) * 100) / 100 : null;
+      weighted =
+        weightSum > 0 ? Math.round((sum / weightSum) * 100) / 100 : null;
     }
     totals.push({
       vendorName,
@@ -137,5 +169,7 @@ export function computeVendorTotals(
       overrideCount: list.filter((s) => s.overrideReason !== null).length,
     });
   }
-  return totals.sort((a, b) => (b.weightedTotal ?? -1) - (a.weightedTotal ?? -1));
+  return totals.sort(
+    (a, b) => (b.weightedTotal ?? -1) - (a.weightedTotal ?? -1),
+  );
 }

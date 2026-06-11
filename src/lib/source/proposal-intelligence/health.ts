@@ -12,7 +12,7 @@ import type {
   ProposalNormalizationRow,
   ScoreReadiness,
   VendorResponseFile,
-} from './types';
+} from "./types";
 
 export interface HealthScaffoldInput {
   sourceEventId: string;
@@ -28,18 +28,29 @@ export interface HealthScaffoldInput {
   narrativeFindings?: HealthFinding[];
 }
 
-const REQUIRED_FILE_ROLES: { role: VendorResponseFile['role']; label: string }[] = [
-  { role: 'response_package', label: 'main response package' },
-  { role: 'pricing_workbook', label: 'pricing workbook' },
+const REQUIRED_FILE_ROLES: {
+  role: VendorResponseFile["role"];
+  label: string;
+}[] = [
+  { role: "response_package", label: "main response package" },
+  { role: "pricing_workbook", label: "pricing workbook" },
 ];
 
-export function buildHealthScaffold(input: HealthScaffoldInput): ProposalHealthAssessment {
+export function buildHealthScaffold(
+  input: HealthScaffoldInput,
+): ProposalHealthAssessment {
   const answered = new Set(input.answeredSections);
-  const missingSections = input.requiredSections.filter((s) => !answered.has(s));
+  const missingSections = input.requiredSections.filter(
+    (s) => !answered.has(s),
+  );
   const completeness =
     input.requiredSections.length === 0
       ? 1
-      : Math.round(((input.requiredSections.length - missingSections.length) / input.requiredSections.length) * 100) / 100;
+      : Math.round(
+          ((input.requiredSections.length - missingSections.length) /
+            input.requiredSections.length) *
+            100,
+        ) / 100;
 
   const findings: HealthFinding[] = [...(input.narrativeFindings ?? [])];
 
@@ -48,8 +59,8 @@ export function buildHealthScaffold(input: HealthScaffoldInput): ProposalHealthA
   for (const req of REQUIRED_FILE_ROLES) {
     if (!roles.has(req.role)) {
       findings.push({
-        dimension: 'completeness',
-        severity: 'red',
+        dimension: "completeness",
+        severity: "red",
         finding: `Required ${req.label} not received.`,
         evidenceReference: null,
         clarificationQuestion: `Please submit the ${req.label} required by the RFP instructions.`,
@@ -60,8 +71,8 @@ export function buildHealthScaffold(input: HealthScaffoldInput): ProposalHealthA
   // missing sections → red findings
   for (const s of missingSections) {
     findings.push({
-      dimension: 'completeness',
-      severity: 'red',
+      dimension: "completeness",
+      severity: "red",
       finding: `RFP section "${s}" not substantively answered.`,
       evidenceReference: null,
       clarificationQuestion: `Provide a substantive response to RFP section "${s}".`,
@@ -72,20 +83,30 @@ export function buildHealthScaffold(input: HealthScaffoldInput): ProposalHealthA
   for (const row of input.rows) {
     if (row.normalizedAnswer === null || row.deviations.length > 0) {
       findings.push({
-        dimension: row.normalizedCategory === 'pricing_structure' || row.normalizedCategory === 'commercial_model' ? 'pricing' : 'answer_quality',
-        severity: row.normalizedAnswer === null ? 'red' : 'amber',
-        finding: row.deviations[0] ?? `Non-comparable answer in ${row.normalizedCategory}.`,
+        dimension:
+          row.normalizedCategory === "pricing_structure" ||
+          row.normalizedCategory === "commercial_model"
+            ? "pricing"
+            : "answer_quality",
+        severity: row.normalizedAnswer === null ? "red" : "amber",
+        finding:
+          row.deviations[0] ??
+          `Non-comparable answer in ${row.normalizedCategory}.`,
         evidenceReference: row.evidenceReference,
         clarificationQuestion: row.deviations[0]
           ? `Clarify: ${row.deviations[0]} (section ${row.rfpSection}).`
-          : `Restate the ${row.normalizedCategory.replace(/_/g, ' ')} response in the requested comparable format (section ${row.rfpSection}).`,
+          : `Restate the ${row.normalizedCategory.replace(/_/g, " ")} response in the requested comparable format (section ${row.rfpSection}).`,
       });
     }
   }
 
-  const reds = findings.filter((f) => f.severity === 'red').length;
+  const reds = findings.filter((f) => f.severity === "red").length;
   const scoreReadiness: ScoreReadiness =
-    reds === 0 ? 'ready_to_score' : reds <= 2 && completeness >= 0.7 ? 'score_with_caveats' : 'not_ready';
+    reds === 0
+      ? "ready_to_score"
+      : reds <= 2 && completeness >= 0.7
+        ? "score_with_caveats"
+        : "not_ready";
 
   return {
     sourceEventId: input.sourceEventId,
@@ -96,8 +117,18 @@ export function buildHealthScaffold(input: HealthScaffoldInput): ProposalHealthA
     findings,
     strengths: [],
     weaknesses: [],
-    clarificationQuestions: [...new Set(findings.map((f) => f.clarificationQuestion).filter((q): q is string => Boolean(q)))],
-    evaluatorFocusAreas: [...new Set(findings.filter((f) => f.severity !== 'info').map((f) => f.dimension))],
+    clarificationQuestions: [
+      ...new Set(
+        findings
+          .map((f) => f.clarificationQuestion)
+          .filter((q): q is string => Boolean(q)),
+      ),
+    ],
+    evaluatorFocusAreas: [
+      ...new Set(
+        findings.filter((f) => f.severity !== "info").map((f) => f.dimension),
+      ),
+    ],
     scoreReadiness,
   };
 }

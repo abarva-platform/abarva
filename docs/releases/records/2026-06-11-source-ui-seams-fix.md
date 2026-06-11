@@ -12,6 +12,7 @@
 
 Two bugs found by applying the "user's crawl, not author's crawl" lesson — sweeping the
 seams users actually click rather than the routes the author tested:
+
 1. **No UI path to the governed upload.** The only visible upload affordance on the Source
    canvas (the chat paperclip) posts to `/api/v1/agent/attachments` — a chat attachment
    that never reaches the artifact registry, EVENT DOCUMENTS, or the Evidence ladder. The

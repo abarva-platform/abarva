@@ -13,15 +13,15 @@
 // ── Vendor response intake ──────────────────────────────────────────────────
 
 export type VendorResponseFileRole =
-  | 'response_package'
-  | 'pricing_workbook'
-  | 'exceptions_redlines'
-  | 'assumptions'
-  | 'exhibits'
-  | 'compliance_matrix'
-  | 'security_questionnaire'
-  | 'signed_forms'
-  | 'other';
+  | "response_package"
+  | "pricing_workbook"
+  | "exceptions_redlines"
+  | "assumptions"
+  | "exhibits"
+  | "compliance_matrix"
+  | "security_questionnaire"
+  | "signed_forms"
+  | "other";
 
 export interface VendorResponseFile {
   role: VendorResponseFileRole;
@@ -47,31 +47,34 @@ export interface VendorResponseSubmission {
 // ── Proposal health assessment ──────────────────────────────────────────────
 
 export type HealthDimensionKey =
-  | 'completeness'
-  | 'instruction_compliance'
-  | 'answer_quality'
-  | 'exceptions_assumptions'
-  | 'pricing'
-  | 'sla'
-  | 'transition'
-  | 'staffing'
-  | 'security_compliance'
-  | 'delivery_model'
-  | 'automation_claims'
-  | 'subcontractors'
-  | 'risk_transfer'
-  | 'evidence_quality';
+  | "completeness"
+  | "instruction_compliance"
+  | "answer_quality"
+  | "exceptions_assumptions"
+  | "pricing"
+  | "sla"
+  | "transition"
+  | "staffing"
+  | "security_compliance"
+  | "delivery_model"
+  | "automation_claims"
+  | "subcontractors"
+  | "risk_transfer"
+  | "evidence_quality";
 
 export interface HealthFinding {
   dimension: HealthDimensionKey;
-  severity: 'red' | 'amber' | 'info';
+  severity: "red" | "amber" | "info";
   finding: string;
   /** citation into THIS vendor's documents; null when the finding is an absence. */
   evidenceReference: string | null;
   clarificationQuestion: string | null;
 }
 
-export type ScoreReadiness = 'ready_to_score' | 'score_with_caveats' | 'not_ready';
+export type ScoreReadiness =
+  | "ready_to_score"
+  | "score_with_caveats"
+  | "not_ready";
 
 export interface ProposalHealthAssessment {
   sourceEventId: string;
@@ -91,22 +94,22 @@ export interface ProposalHealthAssessment {
 // ── Normalization ───────────────────────────────────────────────────────────
 
 export type NormalizedCategory =
-  | 'scope_coverage'
-  | 'service_tower_coverage'
-  | 'sla_commitments'
-  | 'transition_approach'
-  | 'staffing_model'
-  | 'delivery_locations'
-  | 'automation_productivity'
-  | 'governance_model'
-  | 'tooling_approach'
-  | 'security_compliance'
-  | 'commercial_model'
-  | 'pricing_structure'
-  | 'assumptions_dependencies'
-  | 'exceptions_redlines'
-  | 'innovation_value_add'
-  | 'risk_positions';
+  | "scope_coverage"
+  | "service_tower_coverage"
+  | "sla_commitments"
+  | "transition_approach"
+  | "staffing_model"
+  | "delivery_locations"
+  | "automation_productivity"
+  | "governance_model"
+  | "tooling_approach"
+  | "security_compliance"
+  | "commercial_model"
+  | "pricing_structure"
+  | "assumptions_dependencies"
+  | "exceptions_redlines"
+  | "innovation_value_add"
+  | "risk_positions";
 
 export interface ProposalNormalizationRow {
   sourceEventId: string;
@@ -118,8 +121,8 @@ export interface ProposalNormalizationRow {
   evidenceReference: string | null;
   /** the comparable value — null when the vendor's answer is non-comparable. */
   normalizedAnswer: string | null;
-  confidence: 'high' | 'medium' | 'low';
-  completeness: 'complete' | 'partial' | 'missing';
+  confidence: "high" | "medium" | "low";
+  completeness: "complete" | "partial" | "missing";
   /** why this is not apples-to-apples, when it isn't. */
   deviations: string[];
   assumptions: string[];
@@ -152,7 +155,7 @@ export interface VendorScore {
   aiSuggestedScore: number | null;
   aiRationale: string | null;
   evidenceReference: string | null;
-  aiConfidence: 'high' | 'medium' | 'low' | null;
+  aiConfidence: "high" | "medium" | "low" | null;
   evaluatorScore: number | null;
   evaluatorComment: string | null;
   evaluatorId: string | null;
@@ -167,39 +170,39 @@ export interface VendorScore {
 // ── Negotiation levers / price optimization ─────────────────────────────────
 
 export type LeverType =
-  | 'pricing_structure'
-  | 'cola_indexation'
-  | 'productivity_commitment'
-  | 'cost_transparency'
-  | 'transition_risk'
-  | 'volume_banding'
-  | 'service_credits'
-  | 'automation_savings'
-  | 'location_mix'
-  | 'subcontractor_terms'
-  | 'rate_card'
-  | 'volume_commitment'
-  | 'termination_assistance'
-  | 'innovation_fund'
-  | 'scope_protection'
-  | 'payment_milestones'
-  | 'gainshare'
-  | 'pass_through';
+  | "pricing_structure"
+  | "cola_indexation"
+  | "productivity_commitment"
+  | "cost_transparency"
+  | "transition_risk"
+  | "volume_banding"
+  | "service_credits"
+  | "automation_savings"
+  | "location_mix"
+  | "subcontractor_terms"
+  | "rate_card"
+  | "volume_commitment"
+  | "termination_assistance"
+  | "innovation_fund"
+  | "scope_protection"
+  | "payment_milestones"
+  | "gainshare"
+  | "pass_through";
 
 export interface NegotiationLever {
   leverId: string;
-  vendorName: string | 'all';
+  vendorName: string | "all";
   leverType: LeverType;
   currentIssue: string;
   negotiationAsk: string;
   /** quantified ONLY with evidence; otherwise 'opportunity_to_test' with null range. */
-  valueBasis: 'evidenced' | 'opportunity_to_test';
+  valueBasis: "evidenced" | "opportunity_to_test";
   expectedValueLowUsd: number | null;
   expectedValueHighUsd: number | null;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   evidenceBasis: string[];
   owner: string;
-  bafoPriority: 'P0' | 'P1' | 'P2';
+  bafoPriority: "P0" | "P1" | "P2";
 }
 
 // ── Context bundle trace (vendor isolation proof) ───────────────────────────
@@ -226,6 +229,6 @@ export interface SourceProposalContextBundleTrace {
   claims_supported: number;
   claims_unsupported: number;
   citations_emitted: string[];
-  tenant_leakage_status: 'clean' | 'leak_detected';
-  vendor_isolation_status: 'isolated' | 'violation_detected';
+  tenant_leakage_status: "clean" | "leak_detected";
+  vendor_isolation_status: "isolated" | "violation_detected";
 }

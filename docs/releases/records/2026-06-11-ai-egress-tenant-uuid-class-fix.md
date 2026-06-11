@@ -12,7 +12,7 @@
 
 Generating a deliverable for a tenant whose app client key is not the canonical tenant key (for example `skyharbor` vs `skyharbor-air`) failed inside the run with `AI egress audit write failed: invalid input syntax for type uuid: "skyharbor"`. The audited AI egress path was being handed the tenant's string key as its `tenantId`; when the key could not be resolved to a `clients` row it fell through as a raw string and the audit insert (a uuid column) rejected it, killing the run.
 
-This is the same bug class previously fixed elsewhere, so the fix is a class sweep, not a single instance: every call site that passed a tenant *key* into the egress identity now passes the tenant's uuid (`clientId`) directly. The tenant key remains in use where it belongs — retrieval scoping — but never as the egress audit identity.
+This is the same bug class previously fixed elsewhere, so the fix is a class sweep, not a single instance: every call site that passed a tenant _key_ into the egress identity now passes the tenant's uuid (`clientId`) directly. The tenant key remains in use where it belongs — retrieval scoping — but never as the egress audit identity.
 
 ## Layer Impact
 

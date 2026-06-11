@@ -12,7 +12,7 @@
 // orchestrator to a thin generic default, which is exactly what we are trying to
 // avoid.
 
-import { getDeliverableStructure } from '@/lib/deliverables/orchestrator/briefs/deliverable-structures';
+import { getDeliverableStructure } from "@/lib/deliverables/orchestrator/briefs/deliverable-structures";
 
 export interface SourceStageDeliverable {
   stageKey: string;
@@ -24,36 +24,36 @@ export interface SourceStageDeliverable {
 
 export const SOURCE_STAGE_DELIVERABLES: SourceStageDeliverable[] = [
   {
-    stageKey: 'strategy',
-    phase: 'Plan',
-    deliverableType: 'sourcing_strategy_memo',
-    label: 'Sourcing strategy memo',
+    stageKey: "strategy",
+    phase: "Plan",
+    deliverableType: "sourcing_strategy_memo",
+    label: "Sourcing strategy memo",
     decisionContext:
-      'Approve the sourcing strategy, go-to-market approach, commercial model, and evaluation design for this event.',
+      "Approve the sourcing strategy, go-to-market approach, commercial model, and evaluation design for this event.",
   },
   {
-    stageKey: 'rfp',
-    phase: 'Solicit',
-    deliverableType: 'rfp_package',
-    label: 'RFP / RFI package',
+    stageKey: "rfp",
+    phase: "Solicit",
+    deliverableType: "rfp_package",
+    label: "RFP / RFI package",
     decisionContext:
-      'Approve issuance of the RFP and the scope, evaluation criteria, and commercial model it commits the client to.',
+      "Approve issuance of the RFP and the scope, evaluation criteria, and commercial model it commits the client to.",
   },
   {
-    stageKey: 'evaluation',
-    phase: 'Evaluate',
-    deliverableType: 'evaluation_workbook',
-    label: 'Evaluation workbook',
+    stageKey: "evaluation",
+    phase: "Evaluate",
+    deliverableType: "evaluation_workbook",
+    label: "Evaluation workbook",
     decisionContext:
-      'Adopt the evaluation framework and scoring model, and record the preferred vendor with rationale.',
+      "Adopt the evaluation framework and scoring model, and record the preferred vendor with rationale.",
   },
   {
-    stageKey: 'executive_decision',
-    phase: 'Decide',
-    deliverableType: 'executive_recommendation',
-    label: 'Executive recommendation',
+    stageKey: "executive_decision",
+    phase: "Decide",
+    deliverableType: "executive_recommendation",
+    label: "Executive recommendation",
     decisionContext:
-      'Approve the recommended vendor selection and the negotiation/award mandate.',
+      "Approve the recommended vendor selection and the negotiation/award mandate.",
   },
 ];
 
@@ -62,7 +62,7 @@ export const SOURCE_STAGE_DELIVERABLES: SourceStageDeliverable[] = [
 // here instead of importing the brief registry directly, because the registry is
 // server-only (it pulls in archetype packs and orchestrator wiring) and importing
 // it from a shared module risks pulling server-only code into client bundles.
-const BESPOKE_BRIEF_DELIVERABLE_TYPES = new Set<string>(['rfp_package']);
+const BESPOKE_BRIEF_DELIVERABLE_TYPES = new Set<string>(["rfp_package"]);
 
 /**
  * Returns the list of deliverableTypes in SOURCE_STAGE_DELIVERABLES that do NOT
@@ -74,6 +74,6 @@ const BESPOKE_BRIEF_DELIVERABLE_TYPES = new Set<string>(['rfp_package']);
 export function assertEveryStageDeliverableHasBrief(): string[] {
   return SOURCE_STAGE_DELIVERABLES.filter((d) => {
     if (BESPOKE_BRIEF_DELIVERABLE_TYPES.has(d.deliverableType)) return false;
-    return getDeliverableStructure('source', d.deliverableType) === undefined;
+    return getDeliverableStructure("source", d.deliverableType) === undefined;
   }).map((d) => d.deliverableType);
 }

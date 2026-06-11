@@ -18,7 +18,7 @@ resets on restart), while the canvas reads the per-event Postgres substrate tabl
 adds the missing durable write path: an upload now matches its canonical evidence
 requirement (filename + stage), upgrades `source_event_evidence_states` on the seven-state
 ramp (never downgrades; links the artifact), and updates `source_event_gate_criterion_states`
-(appends evidence links; auto-meets ONLY ART-* artifact-presence criteria — HARD human
+(appends evidence links; auto-meets ONLY ART-\* artifact-presence criteria — HARD human
 gates stay pending for a named approver). Also fixes two classification bugs that could
 falsely satisfy gate criteria, and the header "Sign in" flicker while authenticated.
 
@@ -38,13 +38,13 @@ falsely satisfy gate criteria, and the header "Sign in" flicker while authentica
 
 - `src/lib/source/canvas-substrate/upload-sync.ts` — requirement matcher (curated,
   stage-scoped filename keywords for all canonical requirement ids) + durable sync
-  (upgrade-only evidence ramp; ART-*-only auto-met; injectable db).
+  (upgrade-only evidence ramp; ART-\*-only auto-met; injectable db).
 - `src/app/api/v1/source/[eventId]/artifacts/upload/route.ts` — calls the sync after
   parse; returns `substrateSync` for observability.
 - `src/lib/source/artifact-registry/upload-contract.ts` —
   (a) raw client evidence (contracts, inventories, telemetry, org/financial files) now
   classifies as `other` instead of stage-defaulting to a deliverable family, which could
-  falsely auto-satisfy that family's ART-* criterion (audit F2);
+  falsely auto-satisfy that family's ART-\* criterion (audit F2);
   (b) fixed `includes('rate')` matching st-RATE-gy, which sent every "strategy" file to
   `pricing_workbook` (pre-existing latent bug caught by the new tests).
 - `src/components/shell/AppTopBar.tsx` — while Clerk is resolving the session, render

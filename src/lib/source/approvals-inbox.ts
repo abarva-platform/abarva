@@ -8,13 +8,13 @@
 //
 // Pure builder (testable) + a thin loader over the existing read adapters.
 
-import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import type { SourceStageKey } from '@/lib/source/types';
+import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import type { SourceStageKey } from "@/lib/source/types";
 
 export interface ApprovalsInboxItem {
-  kind: 'intake_approval' | 'stage_gate';
+  kind: "intake_approval" | "stage_gate";
   eventId: string;
   eventCode: string;
   eventName: string;
@@ -23,7 +23,7 @@ export interface ApprovalsInboxItem {
   /** plain-English readiness, e.g. "2 of 3 gate items met". */
   readiness: string;
   /** 'ready' = approve now · 'ready_with_gaps' = approvable with rationale · 'waiting' = items open */
-  status: 'ready' | 'ready_with_gaps' | 'waiting';
+  status: "ready" | "ready_with_gaps" | "waiting";
   stageKey: string | null;
   stageLabel: string | null;
   estimatedValueUsd: number | null;
@@ -64,18 +64,18 @@ export function buildApprovalsInbox(args: {
   // 1 · intake approvals — the event cannot start until a named person approves.
   for (const e of args.pendingEvents) {
     items.push({
-      kind: 'intake_approval',
+      kind: "intake_approval",
       eventId: e.id,
       eventCode: e.event_code,
       eventName: e.event_name,
-      ask: 'Approve the event intake to unlock the working canvas.',
-      readiness: 'Review the five captured facts, add your rationale, approve.',
-      status: 'ready',
+      ask: "Approve the event intake to unlock the working canvas.",
+      readiness: "Review the five captured facts, add your rationale, approve.",
+      status: "ready",
       stageKey: null,
       stageLabel: null,
       estimatedValueUsd: e.estimated_value_usd,
       href: `/source/events/${e.id}/approval`,
-      actionLabel: 'Review & approve',
+      actionLabel: "Review & approve",
     });
   }
 
@@ -87,15 +87,22 @@ export function buildApprovalsInbox(args: {
     byEvent.set(row.source_event_id, list);
   }
   for (const e of args.activeEvents) {
-    if (e.lifecycle_state === 'waiting_on_client') continue; // shown as intake above
-    const stageRows = (byEvent.get(e.id) ?? []).filter((r) => r.from_stage === e.current_stage_key);
+    if (e.lifecycle_state === "waiting_on_client") continue; // shown as intake above
+    const stageRows = (byEvent.get(e.id) ?? []).filter(
+      (r) => r.from_stage === e.current_stage_key,
+    );
     if (stageRows.length === 0) continue; // no gate defined → nothing to approve
-    const met = stageRows.filter((r) => r.state === 'met' || r.state === 'waived').length;
+    const met = stageRows.filter(
+      (r) => r.state === "met" || r.state === "waived",
+    ).length;
     const total = stageRows.length;
-    const stageLabel = SOURCE_STAGE_LABELS[e.current_stage_key as SourceStageKey] ?? e.current_stage_key;
-    const status: ApprovalsInboxItem['status'] = met === total ? 'ready' : 'ready_with_gaps';
+    const stageLabel =
+      SOURCE_STAGE_LABELS[e.current_stage_key as SourceStageKey] ??
+      e.current_stage_key;
+    const status: ApprovalsInboxItem["status"] =
+      met === total ? "ready" : "ready_with_gaps";
     items.push({
-      kind: 'stage_gate',
+      kind: "stage_gate",
       eventId: e.id,
       eventCode: e.event_code,
       eventName: e.event_name,
@@ -109,19 +116,21 @@ export function buildApprovalsInbox(args: {
       stageLabel,
       estimatedValueUsd: e.estimated_value_usd,
       href: `/source/events/${e.id}?stage=${encodeURIComponent(e.current_stage_key)}`,
-      actionLabel: met === total ? 'Approve now' : 'Review & decide',
+      actionLabel: met === total ? "Approve now" : "Review & decide",
     });
   }
 
   // intake first (blocks everything), then ready gates, then gates with gaps.
   const rank = (i: ApprovalsInboxItem) =>
-    i.kind === 'intake_approval' ? 0 : i.status === 'ready' ? 1 : 2;
+    i.kind === "intake_approval" ? 0 : i.status === "ready" ? 1 : 2;
   items.sort((a, b) => rank(a) - rank(b));
 
   return {
     items,
     intakeCount: args.pendingEvents.length,
-    gateReadyCount: items.filter((i) => i.kind === 'stage_gate' && i.status === 'ready').length,
+    gateReadyCount: items.filter(
+      (i) => i.kind === "stage_gate" && i.status === "ready",
+    ).length,
   };
 }
 
@@ -139,10 +148,11 @@ export async function loadApprovalsInbox(
   let criterionRows: CriterionRowLike[] = [];
   if (eventIds.length > 0) {
     const { data, error } = await db
-      .from('source_event_gate_criterion_states')
-      .select('source_event_id, from_stage, state')
-      .in('source_event_id', eventIds);
-    if (!error && Array.isArray(data)) criterionRows = data as CriterionRowLike[];
+      .from("source_event_gate_criterion_states")
+      .select("source_event_id, from_stage, state")
+      .in("source_event_id", eventIds);
+    if (!error && Array.isArray(data))
+      criterionRows = data as CriterionRowLike[];
   }
   return buildApprovalsInbox({
     pendingEvents: pendingEvents as EventRowLike[],

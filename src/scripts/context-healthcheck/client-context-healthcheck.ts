@@ -7,7 +7,10 @@ import {
   buildValidatedAgentContextBundle,
   type GovernedCandidate,
 } from "@/lib/governance/agent-context-bundle";
-import { evaluatePromotion, type ReadinessRow } from "@/lib/governance/promotion-evaluator";
+import {
+  evaluatePromotion,
+  type ReadinessRow,
+} from "@/lib/governance/promotion-evaluator";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 
 type Json = Record<string, unknown>;
@@ -153,19 +156,31 @@ const ARTIFACT_TABLES = [
 
 const RETRIEVAL_DIMENSIONS = [
   ["enterprise profile", "enterprise profile revenue employees business units"],
-  ["leadership/org", "CIO CTO CFO CDAO leadership organization reporting lines"],
+  [
+    "leadership/org",
+    "CIO CTO CFO CDAO leadership organization reporting lines",
+  ],
   ["applications/systems", "application portfolio ERP CRM EHR core systems"],
-  ["infrastructure/cloud", "cloud infrastructure data center AWS Azure mainframe"],
+  [
+    "infrastructure/cloud",
+    "cloud infrastructure data center AWS Azure mainframe",
+  ],
   ["integrations", "integration topology APIs ETL interfaces"],
   ["vendor contracts", "vendor contracts renewal annual value sourcing"],
   ["IT financials", "IT budget run spend capital operating cost"],
   ["KPIs/value", "KPI value baseline target benefits"],
-  ["DORA/engineering metrics", "DORA deployment frequency lead time change failure MTTR"],
+  [
+    "DORA/engineering metrics",
+    "DORA deployment frequency lead time change failure MTTR",
+  ],
   ["incidents/ITSM", "incidents problems changes ITSM service management"],
   ["SLAs", "SLA service level uptime availability response"],
   ["initiatives/moves", "AI initiatives strategic moves roadmap portfolio"],
   ["risks/controls", "risk controls compliance audit security"],
-  ["artifacts/evidence", "evidence artifacts documents deliverables source citations"],
+  [
+    "artifacts/evidence",
+    "evidence artifacts documents deliverables source citations",
+  ],
   ["AI/data/use cases", "AI use cases data platform analytics governance"],
 ] as const;
 
@@ -222,14 +237,20 @@ async function tableColumns(pool: Pool, tableName: string): Promise<string[]> {
   return rows.map((row) => row.column_name);
 }
 
-function scopedPredicate(columns: Set<string>, client: TargetClient, alias = ""): {
+function scopedPredicate(
+  columns: Set<string>,
+  client: TargetClient,
+  alias = "",
+): {
   where: string;
   params: unknown[];
 } {
   const prefix = alias ? `${alias}.` : "";
   const clauses: string[] = [];
   const params: unknown[] = [];
-  const aliases = Array.from(new Set([client.canonicalKey, ...client.aliases])).filter(Boolean);
+  const aliases = Array.from(
+    new Set([client.canonicalKey, ...client.aliases]),
+  ).filter(Boolean);
 
   if (columns.has("client_id") && client.clientId) {
     params.push(client.clientId);
@@ -266,28 +287,44 @@ async function resolveClients(pool: Pool): Promise<TargetClient[]> {
 
   return TARGETS.map((target) => {
     const aliases = tenantAliasesFor(target.canonicalKey);
-    const aliasSet = new Set([...aliases, target.canonicalKey, target.label].map(normalize));
+    const aliasSet = new Set(
+      [...aliases, target.canonicalKey, target.label].map(normalize),
+    );
     const row =
       clients.find((candidate) =>
         Object.entries(candidate).some(([key, value]) => {
-          if (!/(name|key|slug|alias|workspace|tenant|client)/i.test(key)) return false;
+          if (!/(name|key|slug|alias|workspace|tenant|client)/i.test(key))
+            return false;
           if (value == null) return false;
           if (Array.isArray(value)) {
             return value.some((item) => aliasSet.has(normalize(item)));
           }
           if (typeof value === "object") return false;
-          return aliasSet.has(normalize(value)) || aliasSet.has(normalize(String(value).replace(/\s+/g, "-")));
+          return (
+            aliasSet.has(normalize(value)) ||
+            aliasSet.has(normalize(String(value).replace(/\s+/g, "-")))
+          );
         }),
       ) ?? null;
 
     const clientId = row ? String(row.id ?? row.client_id ?? "") || null : null;
-    const liveTenantKey = row ? String(row.tenant_key ?? row.key ?? row.client_key ?? "") || null : null;
-    const liveClientKey = row ? String(row.client_key ?? row.key ?? row.tenant_key ?? "") || null : null;
-    const liveName = row ? String(row.legal_name ?? row.name ?? row.display_name ?? "") || null : null;
-    const workspaceKey = row ? String(row.workspace_key ?? row.slug ?? row.key ?? "") || null : null;
+    const liveTenantKey = row
+      ? String(row.tenant_key ?? row.key ?? row.client_key ?? "") || null
+      : null;
+    const liveClientKey = row
+      ? String(row.client_key ?? row.key ?? row.tenant_key ?? "") || null
+      : null;
+    const liveName = row
+      ? String(row.legal_name ?? row.name ?? row.display_name ?? "") || null
+      : null;
+    const workspaceKey = row
+      ? String(row.workspace_key ?? row.slug ?? row.key ?? "") || null
+      : null;
     const risks: string[] = [];
     if (!row) risks.push("No matching clients row found in live DB");
-    for (const key of [liveTenantKey, liveClientKey, workspaceKey].filter(Boolean)) {
+    for (const key of [liveTenantKey, liveClientKey, workspaceKey].filter(
+      Boolean,
+    )) {
       if (key && !aliasSet.has(normalize(key))) {
         risks.push(`Live key "${key}" is outside known aliases`);
       }
@@ -308,7 +345,11 @@ async function resolveClients(pool: Pool): Promise<TargetClient[]> {
   });
 }
 
-async function tableCount(pool: Pool, table: string, client: TargetClient): Promise<TableSnapshot> {
+async function tableCount(
+  pool: Pool,
+  table: string,
+  client: TargetClient,
+): Promise<TableSnapshot> {
   const columns = await tableColumns(pool, table);
   if (columns.length === 0) return { exists: false, columns: [], count: null };
   const columnSet = new Set(columns);
@@ -324,10 +365,14 @@ async function tableCount(pool: Pool, table: string, client: TargetClient): Prom
     count: numberValue(countRows[0]?.count),
   };
 
-  const groupColumn =
-    ["record_type", "lifecycle_state", "source_segment_id", "segment", "agent_readiness_status", "artifact_type"].find(
-      (column) => columnSet.has(column),
-    );
+  const groupColumn = [
+    "record_type",
+    "lifecycle_state",
+    "source_segment_id",
+    "segment",
+    "agent_readiness_status",
+    "artifact_type",
+  ].find((column) => columnSet.has(column));
   if (groupColumn) {
     const groupRows = await queryRows<{ k: string | null; count: string }>(
       pool,
@@ -339,7 +384,9 @@ async function tableCount(pool: Pool, table: string, client: TargetClient): Prom
         LIMIT 80`,
       scoped.params,
     );
-    snapshot.by = Object.fromEntries(groupRows.map((row) => [String(row.k), numberValue(row.count)]));
+    snapshot.by = Object.fromEntries(
+      groupRows.map((row) => [String(row.k), numberValue(row.count)]),
+    );
   }
 
   const wanted = columns
@@ -376,7 +423,10 @@ async function tableCount(pool: Pool, table: string, client: TargetClient): Prom
   return snapshot;
 }
 
-async function countFactsByLifecycle(pool: Pool, client: TargetClient): Promise<Record<string, number>> {
+async function countFactsByLifecycle(
+  pool: Pool,
+  client: TargetClient,
+): Promise<Record<string, number>> {
   const columns = await tableColumns(pool, "enterprise_context_facts");
   if (columns.length === 0) return {};
   const scoped = scopedPredicate(new Set(columns), client);
@@ -389,17 +439,23 @@ async function countFactsByLifecycle(pool: Pool, client: TargetClient): Promise<
       ORDER BY count(*) DESC`,
     scoped.params,
   );
-  return Object.fromEntries(rows.map((row) => [row.state, numberValue(row.count)]));
+  return Object.fromEntries(
+    rows.map((row) => [row.state, numberValue(row.count)]),
+  );
 }
 
-async function readiness(pool: Pool, client: TargetClient): Promise<{
+async function readiness(
+  pool: Pool,
+  client: TargetClient,
+): Promise<{
   byStatus: Record<string, number>;
   recommendations: Record<string, number>;
   failures: Record<string, number>;
   rows: ReadinessRow[];
 }> {
   const columns = await tableColumns(pool, "governed_object_readiness");
-  if (columns.length === 0) return { byStatus: {}, recommendations: {}, failures: {}, rows: [] };
+  if (columns.length === 0)
+    return { byStatus: {}, recommendations: {}, failures: {}, rows: [] };
   const scoped = scopedPredicate(new Set(columns), client);
   const select = [
     "object_table",
@@ -431,8 +487,12 @@ async function readiness(pool: Pool, client: TargetClient): Promise<{
   for (const row of rows) {
     const status = String(row.agent_readiness_status ?? "<null>");
     byStatus[status] = (byStatus[status] ?? 0) + 1;
-    const evaluation = evaluatePromotion({ ...row, applicable_agents: row.applicable_agents ?? [] });
-    recommendations[evaluation.recommendation] = (recommendations[evaluation.recommendation] ?? 0) + 1;
+    const evaluation = evaluatePromotion({
+      ...row,
+      applicable_agents: row.applicable_agents ?? [],
+    });
+    recommendations[evaluation.recommendation] =
+      (recommendations[evaluation.recommendation] ?? 0) + 1;
     for (const reason of evaluation.failure_reasons) {
       failures[reason] = (failures[reason] ?? 0) + 1;
     }
@@ -443,7 +503,10 @@ async function readiness(pool: Pool, client: TargetClient): Promise<{
 async function idempotency(pool: Pool, client: TargetClient): Promise<Json> {
   const factsColumns = await tableColumns(pool, "enterprise_context_facts");
   const chunksColumns = await tableColumns(pool, "enterprise_context_chunks");
-  const sourceFileColumns = await tableColumns(pool, "enterprise_context_source_files");
+  const sourceFileColumns = await tableColumns(
+    pool,
+    "enterprise_context_source_files",
+  );
   const result: Json = {};
 
   if (factsColumns.length) {
@@ -488,7 +551,11 @@ async function idempotency(pool: Pool, client: TargetClient): Promise<Json> {
   if (chunksColumns.length) {
     const chunkSet = new Set(chunksColumns);
     const scoped = scopedPredicate(chunkSet, client, "c");
-    const idColumn = chunksColumns.includes("chunk_id") ? "chunk_id" : chunksColumns.includes("id") ? "id" : null;
+    const idColumn = chunksColumns.includes("chunk_id")
+      ? "chunk_id"
+      : chunksColumns.includes("id")
+        ? "id"
+        : null;
     if (idColumn) {
       const activeClause = chunkSet.has("lifecycle_state")
         ? "AND COALESCE(c.lifecycle_state, 'active') = 'active'"
@@ -512,9 +579,14 @@ async function idempotency(pool: Pool, client: TargetClient): Promise<Json> {
     const fileSet = new Set(sourceFileColumns);
     const scoped = scopedPredicate(fileSet, client, "sf");
     const fileKey =
-      ["content_hash", "blob_path", "storage_path", "source_file", "file_name", "name"].find((column) =>
-        fileSet.has(column),
-      ) ?? null;
+      [
+        "content_hash",
+        "blob_path",
+        "storage_path",
+        "source_file",
+        "file_name",
+        "name",
+      ].find((column) => fileSet.has(column)) ?? null;
     if (fileKey) {
       result.duplicateSourceFiles = await queryRows(
         pool,
@@ -533,9 +605,16 @@ async function idempotency(pool: Pool, client: TargetClient): Promise<Json> {
   return result;
 }
 
-async function blobProof(pool: Pool, client: TargetClient): Promise<ClientHealth["blobProof"]> {
-  const account = process.env.DATA_PLANE_OBJECT_STORE_ACCOUNT ?? process.env.AZURE_STORAGE_ACCOUNT_NAME ?? null;
-  const containerName = process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops";
+async function blobProof(
+  pool: Pool,
+  client: TargetClient,
+): Promise<ClientHealth["blobProof"]> {
+  const account =
+    process.env.DATA_PLANE_OBJECT_STORE_ACCOUNT ??
+    process.env.AZURE_STORAGE_ACCOUNT_NAME ??
+    null;
+  const containerName =
+    process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops";
   const proof: ClientHealth["blobProof"] = {
     account,
     container: containerName,
@@ -545,14 +624,18 @@ async function blobProof(pool: Pool, client: TargetClient): Promise<ClientHealth
     stagedButNotProcessed: null,
   };
   if (!account) {
-    proof.error = "No DATA_PLANE_OBJECT_STORE_ACCOUNT/AZURE_STORAGE_ACCOUNT_NAME configured";
+    proof.error =
+      "No DATA_PLANE_OBJECT_STORE_ACCOUNT/AZURE_STORAGE_ACCOUNT_NAME configured";
     return proof;
   }
   try {
     const credential = new DefaultAzureCredential({
       managedIdentityClientId: process.env.AZURE_CLIENT_ID,
     });
-    const service = new BlobServiceClient(`https://${account}.blob.core.windows.net`, credential);
+    const service = new BlobServiceClient(
+      `https://${account}.blob.core.windows.net`,
+      credential,
+    );
     const container = service.getContainerClient(containerName);
     const needles = new Set(client.aliases.map(normalize));
     const matches: Json[] = [];
@@ -573,12 +656,21 @@ async function blobProof(pool: Pool, client: TargetClient): Promise<ClientHealth
     proof.listed = listed;
     proof.matchingBlobs = matches;
 
-    const sourceFileColumns = await tableColumns(pool, "enterprise_context_source_files");
+    const sourceFileColumns = await tableColumns(
+      pool,
+      "enterprise_context_source_files",
+    );
     if (sourceFileColumns.length && matches.length) {
       const scoped = scopedPredicate(new Set(sourceFileColumns), client);
       const dbFileRows = await queryRows<{ path: string | null }>(
         pool,
-        `SELECT COALESCE(${["blob_path", "storage_path", "source_file", "file_name", "name"]
+        `SELECT COALESCE(${[
+          "blob_path",
+          "storage_path",
+          "source_file",
+          "file_name",
+          "name",
+        ]
           .filter((column) => sourceFileColumns.includes(column))
           .map(sqlIdent)
           .join(", ")}) AS path
@@ -587,8 +679,12 @@ async function blobProof(pool: Pool, client: TargetClient): Promise<ClientHealth
           LIMIT 2000`,
         scoped.params,
       );
-      const dbPaths = new Set(dbFileRows.map((row) => normalize(row.path)).filter(Boolean));
-      proof.stagedButNotProcessed = matches.filter((blob) => !dbPaths.has(normalize(blob.name))).length;
+      const dbPaths = new Set(
+        dbFileRows.map((row) => normalize(row.path)).filter(Boolean),
+      );
+      proof.stagedButNotProcessed = matches.filter(
+        (blob) => !dbPaths.has(normalize(blob.name)),
+      ).length;
     }
   } catch (error) {
     proof.error = error instanceof Error ? error.message : String(error);
@@ -604,32 +700,52 @@ async function searchRequest<T = Json>(path: string, body?: Json): Promise<T> {
     managedIdentityClientId: process.env.AZURE_CLIENT_ID,
   });
   const token = await credential.getToken("https://search.azure.com/.default");
-  const response = await fetch(`https://${service}.search.windows.net${path}${path.includes("?") ? "&" : "?"}api-version=${apiVersion}`, {
-    method: body ? "POST" : "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token?.token}`,
+  const response = await fetch(
+    `https://${service}.search.windows.net${path}${path.includes("?") ? "&" : "?"}api-version=${apiVersion}`,
+    {
+      method: body ? "POST" : "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.token}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
     },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  );
   if (!response.ok) {
-    throw new Error(`${response.status} ${response.statusText}: ${await response.text()}`);
+    throw new Error(
+      `${response.status} ${response.statusText}: ${await response.text()}`,
+    );
   }
   return (await response.json()) as T;
 }
 
-function searchFilter(client: TargetClient, fields: Set<string>): string | null {
+function searchFilter(
+  client: TargetClient,
+  fields: Set<string>,
+): string | null {
   const clauses: string[] = [];
-  const aliases = Array.from(new Set([client.canonicalKey, ...client.aliases])).filter(Boolean);
+  const aliases = Array.from(
+    new Set([client.canonicalKey, ...client.aliases]),
+  ).filter(Boolean);
   const escaped = (value: string) => value.replace(/'/g, "''");
-  if (fields.has("tenant_key")) clauses.push(...aliases.map((alias) => `tenant_key eq '${escaped(alias)}'`));
-  if (fields.has("client_key")) clauses.push(...aliases.map((alias) => `client_key eq '${escaped(alias)}'`));
-  if (fields.has("client_id") && client.clientId) clauses.push(`client_id eq '${escaped(client.clientId)}'`);
+  if (fields.has("tenant_key"))
+    clauses.push(
+      ...aliases.map((alias) => `tenant_key eq '${escaped(alias)}'`),
+    );
+  if (fields.has("client_key"))
+    clauses.push(
+      ...aliases.map((alias) => `client_key eq '${escaped(alias)}'`),
+    );
+  if (fields.has("client_id") && client.clientId)
+    clauses.push(`client_id eq '${escaped(client.clientId)}'`);
   return clauses.length ? `(${clauses.join(" or ")})` : null;
 }
 
-async function searchProof(client: TargetClient): Promise<ClientHealth["search"]> {
-  const indexName = process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1";
+async function searchProof(
+  client: TargetClient,
+): Promise<ClientHealth["search"]> {
+  const indexName =
+    process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1";
   const proof: ClientHealth["search"] = {
     indexName,
     availableFields: [],
@@ -639,7 +755,9 @@ async function searchProof(client: TargetClient): Promise<ClientHealth["search"]
     fieldPresence: {},
   };
   try {
-    const schema = await searchRequest<{ fields: { name: string }[] }>(`/indexes/${indexName}`);
+    const schema = await searchRequest<{ fields: { name: string }[] }>(
+      `/indexes/${indexName}`,
+    );
     const fields = new Set(schema.fields.map((field) => field.name));
     proof.availableFields = [...fields].sort();
     proof.tenantFilterUsed = searchFilter(client, fields);
@@ -660,16 +778,16 @@ async function searchProof(client: TargetClient): Promise<ClientHealth["search"]
       "lifecycle_state",
       "content",
     ].filter((field) => fields.has(field));
-    const result = await searchRequest<{ "@odata.count"?: number; value?: SearchDoc[] }>(
-      `/indexes/${indexName}/docs/search`,
-      {
-        search: "*",
-        count: true,
-        top: 5,
-        filter: proof.tenantFilterUsed,
-        select: select.join(","),
-      },
-    );
+    const result = await searchRequest<{
+      "@odata.count"?: number;
+      value?: SearchDoc[];
+    }>(`/indexes/${indexName}/docs/search`, {
+      search: "*",
+      count: true,
+      top: 5,
+      filter: proof.tenantFilterUsed,
+      select: select.join(","),
+    });
     proof.documentCount = result["@odata.count"] ?? null;
     proof.sampleDocs = (result.value ?? []).map((doc) => ({
       ...doc,
@@ -679,7 +797,12 @@ async function searchProof(client: TargetClient): Promise<ClientHealth["search"]
       tenant_key: fields.has("tenant_key"),
       client_id: fields.has("client_id"),
       client_key: fields.has("client_key"),
-      sourceCitation: ["source_uri", "source_file", "record_id", "chunk_id"].some((field) => fields.has(field)),
+      sourceCitation: [
+        "source_uri",
+        "source_file",
+        "record_id",
+        "chunk_id",
+      ].some((field) => fields.has(field)),
       lifecycle_state: fields.has("lifecycle_state"),
       confidence: fields.has("confidence"),
     };
@@ -689,10 +812,17 @@ async function searchProof(client: TargetClient): Promise<ClientHealth["search"]
   return proof;
 }
 
-async function retrievalProbe(client: TargetClient, dimension: string, query: string): Promise<RetrievalProbe> {
-  const indexName = process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1";
+async function retrievalProbe(
+  client: TargetClient,
+  dimension: string,
+  query: string,
+): Promise<RetrievalProbe> {
+  const indexName =
+    process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1";
   try {
-    const schema = await searchRequest<{ fields: { name: string }[] }>(`/indexes/${indexName}`);
+    const schema = await searchRequest<{ fields: { name: string }[] }>(
+      `/indexes/${indexName}`,
+    );
     const fields = new Set(schema.fields.map((field) => field.name));
     const filter = searchFilter(client, fields);
     const select = [
@@ -712,16 +842,16 @@ async function retrievalProbe(client: TargetClient, dimension: string, query: st
       "lifecycle_state",
       "content",
     ].filter((field) => fields.has(field));
-    const result = await searchRequest<{ "@odata.count"?: number; value?: SearchDoc[] }>(
-      `/indexes/${indexName}/docs/search`,
-      {
-        search: query,
-        count: true,
-        top: 3,
-        filter,
-        select: select.join(","),
-      },
-    );
+    const result = await searchRequest<{
+      "@odata.count"?: number;
+      value?: SearchDoc[];
+    }>(`/indexes/${indexName}/docs/search`, {
+      search: query,
+      count: true,
+      top: 3,
+      filter,
+      select: select.join(","),
+    });
     const docs: SearchDoc[] = (result.value ?? []).map((doc) => ({
       ...doc,
       content: doc.content ? truncate(doc.content, 240) : undefined,
@@ -731,18 +861,36 @@ async function retrievalProbe(client: TargetClient, dimension: string, query: st
       docs.length === 0
         ? "unknown"
         : docs.every((doc) =>
-            [doc.tenant_key, doc.client_key, doc.client_id].some((value) =>
-              value && (aliases.has(normalize(value)) || String(value) === client.clientId),
-            ),
-          )
+              [doc.tenant_key, doc.client_key, doc.client_id].some(
+                (value) =>
+                  value &&
+                  (aliases.has(normalize(value)) ||
+                    String(value) === client.clientId),
+              ),
+            )
           ? "pass"
           : "fail";
     const citationMetadataPresent = docs.every((doc) =>
-      [doc.source_uri, doc.source_file, doc.record_id, doc.chunk_id, doc.id].some(Boolean),
+      [
+        doc.source_uri,
+        doc.source_file,
+        doc.record_id,
+        doc.chunk_id,
+        doc.id,
+      ].some(Boolean),
     );
-    const sourceBasisConfidencePresent = docs.every((doc) => doc.confidence != null || doc.source_basis != null);
-    const staleSupersededExcluded = docs.some((doc) => doc.lifecycle_state != null)
-      ? docs.every((doc) => !["superseded", "retired", "stale"].includes(String(doc.lifecycle_state)))
+    const sourceBasisConfidencePresent = docs.every(
+      (doc) => doc.confidence != null || doc.source_basis != null,
+    );
+    const staleSupersededExcluded = docs.some(
+      (doc) => doc.lifecycle_state != null,
+    )
+      ? docs.every(
+          (doc) =>
+            !["superseded", "retired", "stale"].includes(
+              String(doc.lifecycle_state),
+            ),
+        )
       : "unknown";
     return {
       dimension,
@@ -769,8 +917,19 @@ async function retrievalProbe(client: TargetClient, dimension: string, query: st
   }
 }
 
-function candidateFromDoc(client: TargetClient, doc: SearchDoc, moduleName: BundleProbe["module"]): GovernedCandidate {
-  const citation = String(doc.source_uri ?? doc.source_file ?? doc.record_id ?? doc.chunk_id ?? doc.id ?? "");
+function candidateFromDoc(
+  client: TargetClient,
+  doc: SearchDoc,
+  moduleName: BundleProbe["module"],
+): GovernedCandidate {
+  const citation = String(
+    doc.source_uri ??
+      doc.source_file ??
+      doc.record_id ??
+      doc.chunk_id ??
+      doc.id ??
+      "",
+  );
   const confidenceRaw = doc.confidence;
   const confidenceLevel =
     typeof confidenceRaw === "number"
@@ -783,12 +942,18 @@ function candidateFromDoc(client: TargetClient, doc: SearchDoc, moduleName: Bund
         ? String(confidenceRaw)
         : "medium";
   return {
-    id: String(doc.id ?? doc.chunk_id ?? `${client.canonicalKey}:${moduleName}:${citation}`),
+    id: String(
+      doc.id ??
+        doc.chunk_id ??
+        `${client.canonicalKey}:${moduleName}:${citation}`,
+    ),
     client_key: client.canonicalKey,
     tenant_id: client.clientId,
     source_layer: "search_chunk",
     source_basis: citation || "azure-search",
-    classification: String(doc.classification ?? "internal") as GovernedCandidate["classification"],
+    classification: String(
+      doc.classification ?? "internal",
+    ) as GovernedCandidate["classification"],
     retrievability: "search_indexed",
     agent_readiness_status: "agent_ready",
     confidence_level: confidenceLevel as GovernedCandidate["confidence_level"],
@@ -798,18 +963,36 @@ function candidateFromDoc(client: TargetClient, doc: SearchDoc, moduleName: Bund
   };
 }
 
-async function bundleProbe(client: TargetClient, moduleName: BundleProbe["module"]): Promise<BundleProbe> {
-  const retrieval = await retrievalProbe(client, moduleName, MODULE_QUERIES[moduleName]);
-  const candidates = retrieval.topDocs.map((doc) => candidateFromDoc(client, doc, moduleName));
+async function bundleProbe(
+  client: TargetClient,
+  moduleName: BundleProbe["module"],
+): Promise<BundleProbe> {
+  const retrieval = await retrievalProbe(
+    client,
+    moduleName,
+    MODULE_QUERIES[moduleName],
+  );
+  const candidates = retrieval.topDocs.map((doc) =>
+    candidateFromDoc(client, doc, moduleName),
+  );
   const bundle = buildValidatedAgentContextBundle(candidates);
   const hash = createHash("sha256")
-    .update(JSON.stringify(bundle.usable.map((candidate) => [candidate.id, candidate.source_basis, candidate.citations])))
+    .update(
+      JSON.stringify(
+        bundle.usable.map((candidate) => [
+          candidate.id,
+          candidate.source_basis,
+          candidate.citations,
+        ]),
+      ),
+    )
     .digest("hex");
   return {
     module: moduleName,
     tenantResolved: !!client.clientId && !client.keyMismatchRisks.length,
     moduleResolved: true,
-    evidenceRequirementsResolved: candidates.length > 0 && bundle.citations.length > 0,
+    evidenceRequirementsResolved:
+      candidates.length > 0 && bundle.citations.length > 0,
     currentFactsSelected: retrieval.staleSupersededExcluded === true,
     wrongTenantFactsExcluded: retrieval.tenantIsolation !== "fail",
     supersededFactsExcluded: retrieval.staleSupersededExcluded === true,
@@ -836,32 +1019,56 @@ function classifyModule(
   bundle: BundleProbe,
 ): { status: string; why: string[] } {
   const why: string[] = [];
-  const retrievalPasses = retrieval.filter((probe) => (probe.count ?? 0) > 0 && probe.tenantIsolation !== "fail").length;
-  if (dbRecords === 0) why.push("No scoped enterprise_context_records were found.");
-  if (factsActive === 0) why.push("No active/current enterprise_context_facts were found.");
-  if (!searchCount) why.push("No Azure AI Search documents were proven for this client.");
-  if (retrievalPasses < 4) why.push(`Only ${retrievalPasses} retrieval dimensions returned tenant-scoped evidence.`);
-  if (bundle.usable === 0) why.push(`${bundle.module} context bundle had no usable candidates.`);
-  if (bundle.citationsEmitted === 0) why.push(`${bundle.module} emitted no citation locators.`);
+  const retrievalPasses = retrieval.filter(
+    (probe) => (probe.count ?? 0) > 0 && probe.tenantIsolation !== "fail",
+  ).length;
+  if (dbRecords === 0)
+    why.push("No scoped enterprise_context_records were found.");
+  if (factsActive === 0)
+    why.push("No active/current enterprise_context_facts were found.");
+  if (!searchCount)
+    why.push("No Azure AI Search documents were proven for this client.");
+  if (retrievalPasses < 4)
+    why.push(
+      `Only ${retrievalPasses} retrieval dimensions returned tenant-scoped evidence.`,
+    );
+  if (bundle.usable === 0)
+    why.push(`${bundle.module} context bundle had no usable candidates.`);
+  if (bundle.citationsEmitted === 0)
+    why.push(`${bundle.module} emitted no citation locators.`);
   if (!bundle.currentFactsSelected) {
-    why.push(`${bundle.module} could not prove current-only selection from the search result payload.`);
+    why.push(
+      `${bundle.module} could not prove current-only selection from the search result payload.`,
+    );
   }
   if (!bundle.supersededFactsExcluded) {
-    why.push(`${bundle.module} could not prove stale/superseded exclusion from the search result payload.`);
+    why.push(
+      `${bundle.module} could not prove stale/superseded exclusion from the search result payload.`,
+    );
   }
   if (!bundle.unsupportedClaimsFlagged) {
-    why.push(`${bundle.module} did not exercise the unsupported-claim response validator because this probe stopped before model generation.`);
+    why.push(
+      `${bundle.module} did not exercise the unsupported-claim response validator because this probe stopped before model generation.`,
+    );
   }
 
-  if (!why.length) return { status: "READY", why: ["Fact-backed, indexed, retrievable, cited, and bundle-proven."] };
+  if (!why.length)
+    return {
+      status: "READY",
+      why: ["Fact-backed, indexed, retrievable, cited, and bundle-proven."],
+    };
   if (dbRecords > 0 && factsActive > 0 && searchCount && bundle.usable > 0) {
     return { status: "READY_WITH_GAPS", why };
   }
-  if (dbRecords > 0 || factsActive > 0 || searchCount) return { status: "PRELIMINARY_ONLY", why };
+  if (dbRecords > 0 || factsActive > 0 || searchCount)
+    return { status: "PRELIMINARY_ONLY", why };
   return { status: "NOT_READY", why };
 }
 
-async function artifactReadiness(pool: Pool, client: TargetClient): Promise<Record<string, TableSnapshot>> {
+async function artifactReadiness(
+  pool: Pool,
+  client: TargetClient,
+): Promise<Record<string, TableSnapshot>> {
   const result: Record<string, TableSnapshot> = {};
   for (const table of ARTIFACT_TABLES) {
     result[table] = await tableCount(pool, table, client);
@@ -869,7 +1076,10 @@ async function artifactReadiness(pool: Pool, client: TargetClient): Promise<Reco
   return result;
 }
 
-async function collectClient(pool: Pool, client: TargetClient): Promise<ClientHealth> {
+async function collectClient(
+  pool: Pool,
+  client: TargetClient,
+): Promise<ClientHealth> {
   const tables: Record<string, TableSnapshot> = {};
   for (const table of RECORD_TABLES) {
     tables[table] = await tableCount(pool, table, client);
@@ -884,7 +1094,9 @@ async function collectClient(pool: Pool, client: TargetClient): Promise<ClientHe
     retrieval.push(await retrievalProbe(client, dimension, query));
   }
   const contextBundles: BundleProbe[] = [];
-  for (const moduleKey of Object.keys(MODULE_QUERIES) as BundleProbe["module"][]) {
+  for (const moduleKey of Object.keys(
+    MODULE_QUERIES,
+  ) as BundleProbe["module"][]) {
     contextBundles.push(await bundleProbe(client, moduleKey));
   }
   const artifacts = await artifactReadiness(pool, client);
@@ -894,37 +1106,68 @@ async function collectClient(pool: Pool, client: TargetClient): Promise<ClientHe
   const moduleReadiness = Object.fromEntries(
     contextBundles.map((probe) => [
       probe.module,
-      classifyModule(dbRecords, activeFacts, search.documentCount, retrieval, probe),
+      classifyModule(
+        dbRecords,
+        activeFacts,
+        search.documentCount,
+        retrieval,
+        probe,
+      ),
     ]),
   );
 
   const defects: string[] = [];
   const remediation: string[] = [];
   if (client.keyMismatchRisks.length) defects.push(...client.keyMismatchRisks);
-  if ((tables.enterprise_context_records.count ?? 0) === 0) defects.push("No enterprise_context_records found for resolved client scope.");
-  if (activeFacts === 0) defects.push("No active/current enterprise_context_facts found.");
-  if (!search.documentCount) defects.push("No Azure AI Search indexed documents proven.");
+  if ((tables.enterprise_context_records.count ?? 0) === 0)
+    defects.push(
+      "No enterprise_context_records found for resolved client scope.",
+    );
+  if (activeFacts === 0)
+    defects.push("No active/current enterprise_context_facts found.");
+  if (!search.documentCount)
+    defects.push("No Azure AI Search indexed documents proven.");
   if (search.fieldPresence && search.fieldPresence.client_id !== true) {
-    defects.push("Azure AI Search index does not expose client_id; tenant isolation was proven with tenant_key/client_key filters only.");
+    defects.push(
+      "Azure AI Search index does not expose client_id; tenant isolation was proven with tenant_key/client_key filters only.",
+    );
   }
   if (search.fieldPresence && search.fieldPresence.lifecycle_state !== true) {
-    defects.push("Azure AI Search index does not expose lifecycle_state; stale/superseded exclusion cannot be proven at the search-result layer.");
+    defects.push(
+      "Azure AI Search index does not expose lifecycle_state; stale/superseded exclusion cannot be proven at the search-result layer.",
+    );
   }
-  if ((idempotencyProof.duplicateActiveFacts as unknown[])?.length) defects.push("Duplicate active facts found.");
-  if (retrieval.some((probe) => probe.tenantIsolation === "fail")) defects.push("Tenant leakage risk in Azure Search retrieval.");
+  if ((idempotencyProof.duplicateActiveFacts as unknown[])?.length)
+    defects.push("Duplicate active facts found.");
+  if (retrieval.some((probe) => probe.tenantIsolation === "fail"))
+    defects.push("Tenant leakage risk in Azure Search retrieval.");
   if (retrieval.some((probe) => probe.staleSupersededExcluded === "unknown")) {
-    defects.push("One or more retrieval dimensions returned results without lifecycle_state, so current-only proof is DB-level/search-loader-inferred rather than index-field-proven.");
+    defects.push(
+      "One or more retrieval dimensions returned results without lifecycle_state, so current-only proof is DB-level/search-loader-inferred rather than index-field-proven.",
+    );
   }
-  if (retrieval.filter((probe) => (probe.count ?? 0) > 0).length < RETRIEVAL_DIMENSIONS.length) {
+  if (
+    retrieval.filter((probe) => (probe.count ?? 0) > 0).length <
+    RETRIEVAL_DIMENSIONS.length
+  ) {
     defects.push("Not every required retrieval dimension returned evidence.");
   }
-  if (Object.values(moduleReadiness).some((entry) => entry.status !== "READY")) {
-    remediation.push("Use module-specific retrieval gaps to load or index the missing context dimensions before pilot claims.");
+  if (
+    Object.values(moduleReadiness).some((entry) => entry.status !== "READY")
+  ) {
+    remediation.push(
+      "Use module-specific retrieval gaps to load or index the missing context dimensions before pilot claims.",
+    );
   }
   if ((readinessResult.recommendations.agent_ready ?? 0) === 0) {
-    remediation.push("Keep rows not_reviewed/promotion_candidate until cite-render and bundle proof is captured; do not auto-promote.");
+    remediation.push(
+      "Keep rows not_reviewed/promotion_candidate until cite-render and bundle proof is captured; do not auto-promote.",
+    );
   }
-  if (!blob.matchingBlobs.length) remediation.push("Verify original files are staged in Blob under a tenant-identifiable prefix.");
+  if (!blob.matchingBlobs.length)
+    remediation.push(
+      "Verify original files are staged in Blob under a tenant-identifiable prefix.",
+    );
 
   return {
     identity: client,
@@ -950,14 +1193,18 @@ async function collectClient(pool: Pool, client: TargetClient): Promise<ClientHe
 async function main(): Promise<void> {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
+    ssl: process.env.DATABASE_URL?.includes("localhost")
+      ? false
+      : { rejectUnauthorized: false },
     max: 4,
   });
   try {
     const clients = await resolveClients(pool);
     const targets: ClientHealth[] = [];
     for (const client of clients) {
-      console.log(`healthcheck: collecting ${client.label} (${client.canonicalKey})`);
+      console.log(
+        `healthcheck: collecting ${client.label} (${client.canonicalKey})`,
+      );
       targets.push(await collectClient(pool, client));
     }
     const report: HealthReport = {
@@ -971,14 +1218,21 @@ async function main(): Promise<void> {
         imageTag: process.env.ABARVA_HEALTHCHECK_IMAGE_TAG ?? null,
         imageDigest: process.env.ABARVA_HEALTHCHECK_IMAGE_DIGEST ?? null,
         searchService: process.env.AZURE_SEARCH_SERVICE_NAME ?? null,
-        searchIndex: process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1",
-        blobAccount: process.env.DATA_PLANE_OBJECT_STORE_ACCOUNT ?? process.env.AZURE_STORAGE_ACCOUNT_NAME ?? null,
-        blobContainer: process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops",
+        searchIndex:
+          process.env.TENANT_CONTEXT_INDEX_NAME ?? "tenant-context-v1",
+        blobAccount:
+          process.env.DATA_PLANE_OBJECT_STORE_ACCOUNT ??
+          process.env.AZURE_STORAGE_ACCOUNT_NAME ??
+          null,
+        blobContainer:
+          process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops",
       },
       targets,
       globalDefects: [],
     };
-    const payload = gzipSync(Buffer.from(JSON.stringify(report), "utf8")).toString("base64");
+    const payload = gzipSync(
+      Buffer.from(JSON.stringify(report), "utf8"),
+    ).toString("base64");
     console.log(`HEALTHCHECK_RESULT_GZIP_BASE64:${payload}`);
   } finally {
     await pool.end();

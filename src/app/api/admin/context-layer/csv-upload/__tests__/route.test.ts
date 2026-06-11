@@ -56,7 +56,10 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
             rows.forEach((row, index) => {
               const record = row as { canonical_record_id?: string };
               if (record.canonical_record_id) {
-                mockRecordIds.set(record.canonical_record_id, `record-${index}`);
+                mockRecordIds.set(
+                  record.canonical_record_id,
+                  `record-${index}`,
+                );
               }
             });
           }

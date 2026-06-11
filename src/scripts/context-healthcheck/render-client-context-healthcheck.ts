@@ -18,7 +18,16 @@ type ClientHealth = {
   };
   blobProof: Json;
   db: {
-    tables: Record<string, { exists: boolean; columns: string[]; count: number | null; by?: Record<string, number>; issues?: Json }>;
+    tables: Record<
+      string,
+      {
+        exists: boolean;
+        columns: string[];
+        count: number | null;
+        by?: Record<string, number>;
+        issues?: Json;
+      }
+    >;
     factsByLifecycle: Record<string, number>;
     readinessByStatus: Record<string, number>;
     promotionRecommendations: Record<string, number>;
@@ -67,7 +76,15 @@ type ClientHealth = {
     warnings: string[];
   }[];
   moduleReadiness: Record<string, { status: string; why: string[] }>;
-  artifactReadiness: Record<string, { exists: boolean; columns: string[]; count: number | null; by?: Record<string, number> }>;
+  artifactReadiness: Record<
+    string,
+    {
+      exists: boolean;
+      columns: string[];
+      count: number | null;
+      by?: Record<string, number>;
+    }
+  >;
   defects: string[];
   remediation: string[];
 };
@@ -91,8 +108,11 @@ function readReport(path: string): HealthReport {
       .split(/\r?\n/, 1)[0]
       .trim();
     const encoded = raw.match(/^[A-Za-z0-9+/=]+/)?.[0];
-    if (!encoded) throw new Error("Found health-check marker without base64 payload");
-    return JSON.parse(gunzipSync(Buffer.from(encoded, "base64")).toString("utf8")) as HealthReport;
+    if (!encoded)
+      throw new Error("Found health-check marker without base64 payload");
+    return JSON.parse(
+      gunzipSync(Buffer.from(encoded, "base64")).toString("utf8"),
+    ) as HealthReport;
   }
   return JSON.parse(text) as HealthReport;
 }
@@ -140,7 +160,9 @@ function objectSummary(value: Json | undefined): string {
 
 function statusFor(client: ClientHealth): string {
   const blockers = client.defects.filter((defect) =>
-    /No enterprise|No active|No Azure|Tenant leakage|Duplicate active/.test(defect),
+    /No enterprise|No active|No Azure|Tenant leakage|Duplicate active/.test(
+      defect,
+    ),
   );
   if (blockers.length > 0) return "FAIL";
   if (client.defects.length > 0) return "PASS_WITH_GAPS";
@@ -149,18 +171,70 @@ function statusFor(client: ClientHealth): string {
 
 function pipelineRows(client: ClientHealth): unknown[][] {
   const tables = client.db.tables;
-  const retrievalPasses = client.retrieval.filter((probe) => (probe.count ?? 0) > 0 && probe.tenantIsolation !== "fail").length;
+  const retrievalPasses = client.retrieval.filter(
+    (probe) => (probe.count ?? 0) > 0 && probe.tenantIsolation !== "fail",
+  ).length;
   return [
-    ["Source files", tables.enterprise_context_source_files?.count ?? 0, tables.enterprise_context_source_files?.exists ? "present" : "missing table"],
-    ["Azure Blob staged", client.blobProof.matchingBlobs ? (client.blobProof.matchingBlobs as unknown[]).length : 0, client.blobProof.error ?? "listed"],
-    ["Sources", tables.enterprise_context_sources?.count ?? 0, tables.enterprise_context_sources?.exists ? "present" : "missing table"],
-    ["Records", tables.enterprise_context_records?.count ?? 0, objectSummary(tables.enterprise_context_records?.by)],
-    ["Facts", Object.values(client.db.factsByLifecycle).reduce((sum, val) => sum + val, 0), objectSummary(client.db.factsByLifecycle)],
-    ["Chunks", tables.enterprise_context_chunks?.count ?? 0, objectSummary(tables.enterprise_context_chunks?.by)],
-    ["Search indexed", client.search.documentCount ?? 0, client.search.error ?? client.search.indexName],
-    ["Retrieval dimensions", `${retrievalPasses}/${client.retrieval.length}`, retrievalPasses === client.retrieval.length ? "all returned" : "gaps"],
-    ["Promotion evaluated", Object.values(client.db.promotionRecommendations).reduce((sum, val) => sum + val, 0), objectSummary(client.db.promotionRecommendations)],
-    ["Context bundle proof", client.contextBundles.filter((probe) => probe.usable > 0).length, "modules with usable bundle candidates"],
+    [
+      "Source files",
+      tables.enterprise_context_source_files?.count ?? 0,
+      tables.enterprise_context_source_files?.exists
+        ? "present"
+        : "missing table",
+    ],
+    [
+      "Azure Blob staged",
+      client.blobProof.matchingBlobs
+        ? (client.blobProof.matchingBlobs as unknown[]).length
+        : 0,
+      client.blobProof.error ?? "listed",
+    ],
+    [
+      "Sources",
+      tables.enterprise_context_sources?.count ?? 0,
+      tables.enterprise_context_sources?.exists ? "present" : "missing table",
+    ],
+    [
+      "Records",
+      tables.enterprise_context_records?.count ?? 0,
+      objectSummary(tables.enterprise_context_records?.by),
+    ],
+    [
+      "Facts",
+      Object.values(client.db.factsByLifecycle).reduce(
+        (sum, val) => sum + val,
+        0,
+      ),
+      objectSummary(client.db.factsByLifecycle),
+    ],
+    [
+      "Chunks",
+      tables.enterprise_context_chunks?.count ?? 0,
+      objectSummary(tables.enterprise_context_chunks?.by),
+    ],
+    [
+      "Search indexed",
+      client.search.documentCount ?? 0,
+      client.search.error ?? client.search.indexName,
+    ],
+    [
+      "Retrieval dimensions",
+      `${retrievalPasses}/${client.retrieval.length}`,
+      retrievalPasses === client.retrieval.length ? "all returned" : "gaps",
+    ],
+    [
+      "Promotion evaluated",
+      Object.values(client.db.promotionRecommendations).reduce(
+        (sum, val) => sum + val,
+        0,
+      ),
+      objectSummary(client.db.promotionRecommendations),
+    ],
+    [
+      "Context bundle proof",
+      client.contextBundles.filter((probe) => probe.usable > 0).length,
+      "modules with usable bundle candidates",
+    ],
   ];
 }
 
@@ -188,14 +262,26 @@ function renderMarkdown(report: HealthReport): string {
     "## Executive Summary",
     "",
     table(
-      ["Client", "Overall", "client_id", "Records", "Facts by lifecycle", "Search docs", "Retrieval", "Module readiness"],
+      [
+        "Client",
+        "Overall",
+        "client_id",
+        "Records",
+        "Facts by lifecycle",
+        "Search docs",
+        "Retrieval",
+        "Module readiness",
+      ],
       executiveRows,
     ),
     "## Azure / Job Evidence",
     "",
     table(
       ["Field", "Value"],
-      Object.entries(report.azure).map(([key, value]) => [key, typeof value === "object" ? JSON.stringify(value) : value ?? ""]),
+      Object.entries(report.azure).map(([key, value]) => [
+        key,
+        typeof value === "object" ? JSON.stringify(value) : (value ?? ""),
+      ]),
     ),
   ];
 
@@ -215,14 +301,19 @@ function renderMarkdown(report: HealthReport): string {
           ["legal/client name", client.identity.liveName ?? ""],
           ["active workspace key", client.identity.workspaceKey ?? ""],
           ["aliases", client.identity.aliases.join(", ")],
-          ["key mismatch risk", client.identity.keyMismatchRisks.join("; ") || "none observed"],
+          [
+            "key mismatch risk",
+            client.identity.keyMismatchRisks.join("; ") || "none observed",
+          ],
         ],
       ),
     );
 
     lines.push("### Pipeline State");
     lines.push("");
-    lines.push(table(["Stage", "Count / proof", "Evidence"], pipelineRows(client)));
+    lines.push(
+      table(["Stage", "Count / proof", "Evidence"], pipelineRows(client)),
+    );
 
     lines.push("### DB Counts");
     lines.push("");
@@ -239,15 +330,23 @@ function renderMarkdown(report: HealthReport): string {
     );
     lines.push("Facts by lifecycle:");
     lines.push("");
-    lines.push(table(["Lifecycle", "Count"], Object.entries(client.db.factsByLifecycle)));
+    lines.push(
+      table(["Lifecycle", "Count"], Object.entries(client.db.factsByLifecycle)),
+    );
     lines.push("Promotion/readiness:");
     lines.push("");
     lines.push(
       table(
         ["Metric", "Counts"],
         [
-          ["Persisted readiness status", objectSummary(client.db.readinessByStatus)],
-          ["Calculated promotion recommendation", objectSummary(client.db.promotionRecommendations)],
+          [
+            "Persisted readiness status",
+            objectSummary(client.db.readinessByStatus),
+          ],
+          [
+            "Calculated promotion recommendation",
+            objectSummary(client.db.promotionRecommendations),
+          ],
           ["Top failure reasons", objectSummary(client.db.promotionFailures)],
         ],
       ),
@@ -257,21 +356,39 @@ function renderMarkdown(report: HealthReport): string {
     lines.push("");
     lines.push(
       table(
-        ["Container", "Listed", "Matching source blobs", "Staged-not-processed", "Error"],
+        [
+          "Container",
+          "Listed",
+          "Matching source blobs",
+          "Staged-not-processed",
+          "Error",
+        ],
         [
           [
             `${client.blobProof.account ?? ""}/${client.blobProof.container ?? ""}`,
             client.blobProof.listed ?? 0,
-            (client.blobProof.matchingBlobs as unknown[] | undefined)?.length ?? 0,
+            (client.blobProof.matchingBlobs as unknown[] | undefined)?.length ??
+              0,
             client.blobProof.stagedButNotProcessed ?? "not calculated",
             client.blobProof.error ?? "",
           ],
         ],
       ),
     );
-    const blobSamples = ((client.blobProof.matchingBlobs as Json[] | undefined) ?? []).slice(0, 10);
+    const blobSamples = (
+      (client.blobProof.matchingBlobs as Json[] | undefined) ?? []
+    ).slice(0, 10);
     if (blobSamples.length) {
-      lines.push(table(["Blob sample", "Size", "Last modified"], blobSamples.map((blob) => [blob.name, blob.contentLength, blob.lastModified])));
+      lines.push(
+        table(
+          ["Blob sample", "Size", "Last modified"],
+          blobSamples.map((blob) => [
+            blob.name,
+            blob.contentLength,
+            blob.lastModified,
+          ]),
+        ),
+      );
     }
 
     lines.push("### Idempotency And Duplication");
@@ -281,7 +398,9 @@ function renderMarkdown(report: HealthReport): string {
         ["Check", "Result"],
         Object.entries(client.idempotency).map(([key, value]) => [
           key,
-          Array.isArray(value) ? `${value.length} rows${value.length ? `: ${JSON.stringify(value.slice(0, 3))}` : ""}` : value,
+          Array.isArray(value)
+            ? `${value.length} rows${value.length ? `: ${JSON.stringify(value.slice(0, 3))}` : ""}`
+            : value,
         ]),
       ),
     );
@@ -306,13 +425,19 @@ function renderMarkdown(report: HealthReport): string {
       lines.push(
         table(
           ["Doc id", "Tenant", "Segment", "Citation", "Title/content"],
-          client.search.sampleDocs.slice(0, 5).map((doc) => [
-            doc.id ?? "",
-            doc.tenant_key ?? doc.client_key ?? doc.client_id ?? "",
-            doc.source_segment ?? doc.source_segment_id ?? "",
-            doc.source_uri ?? doc.source_file ?? doc.record_id ?? doc.chunk_id ?? "",
-            doc.title ?? doc.content ?? "",
-          ]),
+          client.search.sampleDocs
+            .slice(0, 5)
+            .map((doc) => [
+              doc.id ?? "",
+              doc.tenant_key ?? doc.client_key ?? doc.client_id ?? "",
+              doc.source_segment ?? doc.source_segment_id ?? "",
+              doc.source_uri ??
+                doc.source_file ??
+                doc.record_id ??
+                doc.chunk_id ??
+                "",
+              doc.title ?? doc.content ?? "",
+            ]),
         ),
       );
     }
@@ -321,7 +446,15 @@ function renderMarkdown(report: HealthReport): string {
     lines.push("");
     lines.push(
       table(
-        ["Dimension", "Count", "Tenant isolation", "Citations", "Source/conf", "Current only", "Top returned docs / error"],
+        [
+          "Dimension",
+          "Count",
+          "Tenant isolation",
+          "Citations",
+          "Source/conf",
+          "Current only",
+          "Top returned docs / error",
+        ],
         client.retrieval.map((probe) => [
           probe.dimension,
           probe.count ?? "",
@@ -332,7 +465,10 @@ function renderMarkdown(report: HealthReport): string {
           probe.error ??
             probe.topDocs
               .slice(0, 3)
-              .map((doc) => `${doc.id ?? doc.chunk_id ?? ""} ${doc.title ?? doc.source_segment ?? ""}`)
+              .map(
+                (doc) =>
+                  `${doc.id ?? doc.chunk_id ?? ""} ${doc.title ?? doc.source_segment ?? ""}`,
+              )
               .join("; "),
         ]),
       ),
@@ -372,7 +508,11 @@ function renderMarkdown(report: HealthReport): string {
     lines.push(
       table(
         ["Module", "Status", "Why"],
-        Object.entries(client.moduleReadiness).map(([module, entry]) => [module, entry.status, entry.why.join("; ")]),
+        Object.entries(client.moduleReadiness).map(([module, entry]) => [
+          module,
+          entry.status,
+          entry.why.join("; "),
+        ]),
       ),
     );
 
@@ -381,12 +521,14 @@ function renderMarkdown(report: HealthReport): string {
     lines.push(
       table(
         ["Table", "Exists", "Count", "Grouping"],
-        Object.entries(client.artifactReadiness).map(([tableName, snapshot]) => [
-          tableName,
-          yesNo(snapshot.exists),
-          snapshot.count ?? "",
-          objectSummary(snapshot.by),
-        ]),
+        Object.entries(client.artifactReadiness).map(
+          ([tableName, snapshot]) => [
+            tableName,
+            yesNo(snapshot.exists),
+            snapshot.count ?? "",
+            objectSummary(snapshot.by),
+          ],
+        ),
       ),
     );
 
@@ -394,14 +536,20 @@ function renderMarkdown(report: HealthReport): string {
     lines.push("");
     lines.push("Defects found:");
     lines.push("");
-    lines.push(...(client.defects.length ? client.defects.map((defect) => `- ${defect}`) : ["- None observed by this read-only probe."]));
+    lines.push(
+      ...(client.defects.length
+        ? client.defects.map((defect) => `- ${defect}`)
+        : ["- None observed by this read-only probe."]),
+    );
     lines.push("");
     lines.push("Prioritized remediation backlog:");
     lines.push("");
     lines.push(
       ...(client.remediation.length
         ? client.remediation.map((item, index) => `${index + 1}. ${item}`)
-        : ["1. Keep current monitoring; no immediate remediation was inferred by this probe."]),
+        : [
+            "1. Keep current monitoring; no immediate remediation was inferred by this probe.",
+          ]),
     );
     lines.push("");
   }
@@ -432,10 +580,14 @@ function renderHtml(markdown: string): string {
 function main(): void {
   const input = process.argv[2];
   if (!input || !existsSync(input)) {
-    throw new Error("Usage: npx tsx src/scripts/context-healthcheck/render-client-context-healthcheck.ts <job-log-or-json>");
+    throw new Error(
+      "Usage: npx tsx src/scripts/context-healthcheck/render-client-context-healthcheck.ts <job-log-or-json>",
+    );
   }
-  const mdOut = process.argv[3] ?? "docs/context/CLIENT_CONTEXT_HEALTHCHECK_2026-06.md";
-  const htmlOut = process.argv[4] ?? "docs/context/CLIENT_CONTEXT_HEALTHCHECK_2026-06.html";
+  const mdOut =
+    process.argv[3] ?? "docs/context/CLIENT_CONTEXT_HEALTHCHECK_2026-06.md";
+  const htmlOut =
+    process.argv[4] ?? "docs/context/CLIENT_CONTEXT_HEALTHCHECK_2026-06.html";
   const report = readReport(input);
   if (process.env.ABARVA_HEALTHCHECK_EXECUTION_NAME) {
     report.azure.executionName = process.env.ABARVA_HEALTHCHECK_EXECUTION_NAME;

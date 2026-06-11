@@ -1,8 +1,8 @@
 # Source — Vendor Response & Proposal Intelligence Strategy
 
-*Master Source thought-leadership document. Written from the standpoint of a 25-year IT
+_Master Source thought-leadership document. Written from the standpoint of a 25-year IT
 sourcing advisor and an AI systems architect. Source-only; grounded in a full audit of
-what already exists in the codebase (paths cited throughout).*
+what already exists in the codebase (paths cited throughout)._
 
 ---
 
@@ -15,20 +15,20 @@ how they compare, where they're weak, and how to negotiate better.
 
 **Build-vs-reuse, grounded in the actual codebase** (audited 2026-06-11):
 
-| Capability | Status | Action |
-|---|---|---|
-| Pricing submission intake (xlsx, parse, supersede chain) | EXISTS — `vendor-submission/route.ts`, `pricing-submissions/` | Reuse |
-| Pricing comparison + TCO workbooks | EXISTS — `exports/renderers/pricing-comparison.ts`, `tco-iceberg.ts` | Reuse |
-| Proposal normalization (8-dimension matrix) | EXISTS — `proposal-normalization/` | Extend to the AMS comparable-fields set |
-| Risk/exception capture | EXISTS — `trap-log.ts` (P0/P1/P2) + `source_commercial_exceptions` | Reuse |
-| BAFO question pack | EXISTS — `bafo-question-pack.ts` | Reuse; feed from levers engine |
-| Scorecard workbook | EXISTS — `scorecard.ts` + payload binder | Reuse as the export |
-| Parsed-extraction tables (`source_pricing_components`, `source_vendor_commitments`, `source_commercial_exceptions` — all with `vendor_id` columns) | EXIST, vendor_id unused | Activate vendor linkage |
-| **Proposal package intake** (full response, multi-file, versioned, vendor-isolated) | MISSING | **Build** |
-| **Proposal Health Assessment** | MISSING | **Build (flagship)** |
-| **Evaluator scoring workflow** (AI-suggest → evaluator edit/override → lock) | MISSING (workbook exists, workflow doesn't) | **Build** |
-| **Negotiation levers engine** (Top-10, evidence-cited, no fabricated savings) | MISSING | **Build** |
-| **Vendor-isolation context trace** | MISSING | **Build** |
+| Capability                                                                                                                                         | Status                                                               | Action                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------- |
+| Pricing submission intake (xlsx, parse, supersede chain)                                                                                           | EXISTS — `vendor-submission/route.ts`, `pricing-submissions/`        | Reuse                                   |
+| Pricing comparison + TCO workbooks                                                                                                                 | EXISTS — `exports/renderers/pricing-comparison.ts`, `tco-iceberg.ts` | Reuse                                   |
+| Proposal normalization (8-dimension matrix)                                                                                                        | EXISTS — `proposal-normalization/`                                   | Extend to the AMS comparable-fields set |
+| Risk/exception capture                                                                                                                             | EXISTS — `trap-log.ts` (P0/P1/P2) + `source_commercial_exceptions`   | Reuse                                   |
+| BAFO question pack                                                                                                                                 | EXISTS — `bafo-question-pack.ts`                                     | Reuse; feed from levers engine          |
+| Scorecard workbook                                                                                                                                 | EXISTS — `scorecard.ts` + payload binder                             | Reuse as the export                     |
+| Parsed-extraction tables (`source_pricing_components`, `source_vendor_commitments`, `source_commercial_exceptions` — all with `vendor_id` columns) | EXIST, vendor_id unused                                              | Activate vendor linkage                 |
+| **Proposal package intake** (full response, multi-file, versioned, vendor-isolated)                                                                | MISSING                                                              | **Build**                               |
+| **Proposal Health Assessment**                                                                                                                     | MISSING                                                              | **Build (flagship)**                    |
+| **Evaluator scoring workflow** (AI-suggest → evaluator edit/override → lock)                                                                       | MISSING (workbook exists, workflow doesn't)                          | **Build**                               |
+| **Negotiation levers engine** (Top-10, evidence-cited, no fabricated savings)                                                                      | MISSING                                                              | **Build**                               |
+| **Vendor-isolation context trace**                                                                                                                 | MISSING                                                              | **Build**                               |
 
 ## 2 · Own vendor upload, or integrate?
 
@@ -40,7 +40,7 @@ fast-follow.
 The sourcing-advisor reasoning: the submission of record lives in the client's compliant
 channel — sealed-bid discipline, timestamp integrity, and protest defense depend on it.
 Procurement will not (and should not) move it. The AI reasoning: owning intake only buys
-marginal metadata; the hard problem is making *inconsistent received packages*
+marginal metadata; the hard problem is making _inconsistent received packages_
 comparable — which a structured client-upload form (vendor, version, date, file roles)
 solves at 5% of the cost of a portal. **The value is not "vendors can upload files." The
 value is "AbarVa tells you what the proposals mean."**
@@ -48,18 +48,19 @@ value is "AbarVa tells you what the proposals mean."**
 ## 3 · MVP (and 4 · future state)
 
 **MVP** — exactly the ten steps, mapped to assets:
-1. Client/procurement uploads vendor response packages → *new intake route extending the
+
+1. Client/procurement uploads vendor response packages → _new intake route extending the
    existing registry pattern; canonical Blob path
-   `source-events/{tenant}/{event}/vendor-responses/{vendor}/{version}/{file}`*.
-2. Parse each response → *existing `text-parser.ts` + extraction tables, vendor_id activated*.
+   `source-events/{tenant}/{event}/vendor-responses/{vendor}/{version}/{file}`_.
+2. Parse each response → _existing `text-parser.ts` + extraction tables, vendor_id activated_.
 3. Proposal Health Summaries → **new** governed generator (per-vendor, isolated bundle).
-4. Normalize into the comparison model → *extend `proposal-normalization/` with the AMS
-   comparable-fields set; non-comparable answers auto-generate clarification questions*.
+4. Normalize into the comparison model → _extend `proposal-normalization/` with the AMS
+   comparable-fields set; non-comparable answers auto-generate clarification questions_.
 5. Client-approved scoring criteria → **new** criteria model (import / archetype-generate /
    AbarVa-propose + client approve).
 6. Client edits scores/comments → **new** evaluator workflow (AI-suggested score +
    rationale + evidence; evaluator score/comment/override; lock; consensus).
-7. Pricing/commercial comparison → *existing d19 pipeline + TCO*.
+7. Pricing/commercial comparison → _existing d19 pipeline + TCO_.
 8. Top negotiation/BAFO levers → **new** engine feeding the existing BAFO pack.
 9. Evaluation committee pack → governed deliverable orchestrator (multi-pass, cited).
 10. All artifacts in the File Cabinet (registry + Blob, versioned).
@@ -70,7 +71,8 @@ response intake and re-scoring; award-pack automation into contracting handoff.
 
 ## 5 · What differentiates AbarVa from procurement tools
 
-Procurement suites manage *process*; AbarVa produces *judgment with evidence*:
+Procurement suites manage _process_; AbarVa produces _judgment with evidence_:
+
 - **Proposal Health Assessment** — a senior reviewer's read of each proposal (gaps,
   ambiguous commitments, risk-transfer positions, weak answers) before scoring starts.
 - **Normalization with honesty** — when answers aren't comparable, AbarVa says so and
@@ -79,7 +81,7 @@ Procurement suites manage *process*; AbarVa produces *judgment with evidence*:
 - **Governed scoring** — AI suggests with citations; the human decides; overrides are
   recorded; nothing locks without a named evaluator.
 - **Levers, not vibes** — every optimization opportunity carries evidence, value range
-  *only when supported*, otherwise labelled **"opportunity to test"**. No fabricated savings.
+  _only when supported_, otherwise labelled **"opportunity to test"**. No fabricated savings.
 - **Provable isolation** — vendor-scoped context bundles with a trace asserting
   `vendor_isolation_status` per output.
 
@@ -125,7 +127,7 @@ productivity, automation, credits, gainshare, termination assistance, exit, excl
 options, rate cards, location mix, pyramid, subcontractor) → normalized TCO Y1–Y5, total
 contract value, one-time vs run-rate, risk-adjusted and scope-adjusted views (existing
 d19c + iceberg). Then the **levers engine** emits Top-10 opportunities — each with vendor,
-lever type, current-proposal issue, the ask, value range *only when evidenced* (else
+lever type, current-proposal issue, the ask, value range _only when evidenced_ (else
 "opportunity to test"), confidence, evidence basis, owner, BAFO priority — feeding the
 BAFO Ask Sheet (vendor, issue, current language, requested change, rationale, impact,
 fallback, owner, status).
@@ -156,8 +158,8 @@ categories, evidence used, pricing inputs, exclusions-by-reason, criteria used,
 assumptions, missing inputs, model-input hash, claims detected/supported/unsupported,
 citations, `tenant_leakage_status`, **`vendor_isolation_status`** — asserting that no
 other vendor's objects entered the bundle. **Hard rule enforced structurally**: bundles
-are built per (event, vendor, version); cross-vendor analysis consumes only *normalized
-outputs*, never raw rival documents.
+are built per (event, vendor, version); cross-vendor analysis consumes only _normalized
+outputs_, never raw rival documents.
 
 ## Naming note (governance)
 

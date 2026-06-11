@@ -1,23 +1,23 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from "react";
 import {
   criterionById,
   type SourceGateCriterion,
-} from '@/lib/source/canonical-specs';
+} from "@/lib/source/canonical-specs";
 import type {
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
-} from '@/lib/source/canvas-substrate';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from '@/lib/source/source-governance-enforcement';
-import type { SourceStageKey } from '@/lib/source/types';
-import { CANVAS } from '../canvas-tokens';
+} from "@/lib/source/canvas-substrate";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
+import type { SourceStageKey } from "@/lib/source/types";
+import { CANVAS } from "../canvas-tokens";
 
 const STATE_LABEL: Record<SourceEventGateCriterionState, string> = {
-  pending: 'Pending',
-  met: 'Met',
-  not_met: 'Not met',
-  waived: 'Waived',
-  deferred: 'Deferred',
+  pending: "Pending",
+  met: "Met",
+  not_met: "Not met",
+  waived: "Waived",
+  deferred: "Deferred",
 };
 
 interface GateTabProps {
@@ -54,26 +54,30 @@ export function GateTab({
   onPromoteStage,
   promotePending,
 }: GateTabProps) {
-  const [promotionReason, setPromotionReason] = useState('');
+  const [promotionReason, setPromotionReason] = useState("");
   const [gapsPending, setGapsPending] = useState(false);
-  const ordered = [...states].sort((a, b) => a.criterionId.localeCompare(b.criterionId));
+  const ordered = [...states].sort((a, b) =>
+    a.criterionId.localeCompare(b.criterionId),
+  );
   const total = ordered.length;
-  const met = ordered.filter((s) => s.state === 'met' || s.state === 'waived').length;
+  const met = ordered.filter(
+    (s) => s.state === "met" || s.state === "waived",
+  ).length;
   const allMet = total > 0 && met === total;
   const targetStage = ordered[0]?.toStage ?? null;
   const targetLabel =
-    targetStage && targetStage !== 'closed'
+    targetStage && targetStage !== "closed"
       ? SOURCE_STAGE_LABELS[targetStage as SourceStageKey]
-      : 'Closed';
+      : "Closed";
 
   // B3 — explicit blocker summary. List the criteria that are
   // actually preventing promotion (pending / not_met) with their
   // titles, so the user has a diagnosis instead of a disabled button.
   const blockers = ordered
-    .filter((s) => s.state !== 'met' && s.state !== 'waived')
+    .filter((s) => s.state !== "met" && s.state !== "waived")
     .map((s) => ({ state: s, def: criterionById(s.criterionId) }));
-  const hardBlockers = blockers.filter((b) => b.def?.severity === 'hard');
-  const promoteHelpId = 'source-canvas-gate-promote-help';
+  const hardBlockers = blockers.filter((b) => b.def?.severity === "hard");
+  const promoteHelpId = "source-canvas-gate-promote-help";
   const promotionReasonReady =
     promotionReason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
   const canPromote =
@@ -81,7 +85,7 @@ export function GateTab({
     promotionReasonReady &&
     Boolean(onPromoteStage) &&
     Boolean(targetStage) &&
-    targetStage !== 'closed' &&
+    targetStage !== "closed" &&
     !promotePending;
 
   // Approve with gaps — the Maestro path. Open items are deferred with the
@@ -94,23 +98,32 @@ export function GateTab({
     Boolean(onPromoteStage) &&
     Boolean(onChangeCriterionState) &&
     Boolean(targetStage) &&
-    targetStage !== 'closed' &&
+    targetStage !== "closed" &&
     !promotePending &&
     !gapsPending;
 
   const approveWithGaps = async () => {
-    if (!canApproveWithGaps || !onPromoteStage || !onChangeCriterionState || !targetStage) return;
+    if (
+      !canApproveWithGaps ||
+      !onPromoteStage ||
+      !onChangeCriterionState ||
+      !targetStage
+    )
+      return;
     const reason = promotionReason.trim();
     setGapsPending(true);
     try {
       for (const b of blockers) {
         await onChangeCriterionState(
           b.state.criterionId,
-          'deferred',
+          "deferred",
           `Approved with gaps: ${reason}`,
         );
       }
-      await onPromoteStage(targetStage as SourceStageKey, `Approved with gaps: ${reason}`);
+      await onPromoteStage(
+        targetStage as SourceStageKey,
+        `Approved with gaps: ${reason}`,
+      );
     } finally {
       setGapsPending(false);
     }
@@ -128,20 +141,25 @@ export function GateTab({
           </h2>
           {!allMet && total > 0 ? (
             <p style={SUBLINE_STYLE}>
-              You&apos;re approving: advance to {targetLabel}. {total - met} item
-              {total - met === 1 ? ' is' : 's are'} still open — mark them met below,
-              or approve with gaps (your rationale is recorded and the open items
-              are deferred and carried forward, never hidden).
+              You&apos;re approving: advance to {targetLabel}. {total - met}{" "}
+              item
+              {total - met === 1 ? " is" : "s are"} still open — mark them met
+              below, or approve with gaps (your rationale is recorded and the
+              open items are deferred and carried forward, never hidden).
             </p>
           ) : null}
           {allMet ? (
             <p style={SUBLINE_STYLE}>
-              All items met. Write the reason and approve — the event advances to {targetLabel}.
+              All items met. Write the reason and approve — the event advances
+              to {targetLabel}.
             </p>
           ) : null}
         </div>
         <div style={PROMOTE_CONTROL_STYLE}>
-          <label style={REASON_LABEL_STYLE} htmlFor="source-canvas-gate-promote-reason">
+          <label
+            style={REASON_LABEL_STYLE}
+            htmlFor="source-canvas-gate-promote-reason"
+          >
             Promotion reason
           </label>
           <textarea
@@ -159,19 +177,24 @@ export function GateTab({
             aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
             onClick={() => {
               if (canPromote && onPromoteStage && targetStage) {
-                void onPromoteStage(targetStage as SourceStageKey, promotionReason.trim());
+                void onPromoteStage(
+                  targetStage as SourceStageKey,
+                  promotionReason.trim(),
+                );
               }
             }}
             style={{
               ...PROMOTE_BUTTON_STYLE,
-              background: canPromote ? CANVAS.INK : 'rgba(10,10,11,0.08)',
-              color: canPromote ? '#fff' : CANVAS.INK_MUTED,
-              cursor: canPromote ? 'pointer' : 'not-allowed',
+              background: canPromote ? CANVAS.INK : "rgba(10,10,11,0.08)",
+              color: canPromote ? "#fff" : CANVAS.INK_MUTED,
+              cursor: canPromote ? "pointer" : "not-allowed",
               opacity: promotePending ? 0.7 : 1,
             }}
             data-testid="source-canvas-gate-promote"
           >
-            {promotePending ? 'Promoting…' : `Approve & advance to ${targetLabel}`}
+            {promotePending
+              ? "Promoting…"
+              : `Approve & advance to ${targetLabel}`}
           </button>
           {!allMet && total > 0 && onChangeCriterionState && onPromoteStage ? (
             <button
@@ -180,17 +203,17 @@ export function GateTab({
               onClick={() => void approveWithGaps()}
               style={{
                 ...PROMOTE_BUTTON_STYLE,
-                background: 'transparent',
-                border: `1px solid ${canApproveWithGaps ? CANVAS.INK : 'rgba(10,10,11,0.15)'}`,
+                background: "transparent",
+                border: `1px solid ${canApproveWithGaps ? CANVAS.INK : "rgba(10,10,11,0.15)"}`,
                 color: canApproveWithGaps ? CANVAS.INK : CANVAS.INK_MUTED,
-                cursor: canApproveWithGaps ? 'pointer' : 'not-allowed',
+                cursor: canApproveWithGaps ? "pointer" : "not-allowed",
                 opacity: gapsPending ? 0.7 : 1,
                 marginTop: 8,
               }}
               data-testid="source-canvas-gate-approve-with-gaps"
             >
               {gapsPending
-                ? 'Approving with gaps…'
+                ? "Approving with gaps…"
                 : `Approve with gaps (${total - met} deferred)`}
             </button>
           ) : null}
@@ -214,43 +237,47 @@ export function GateTab({
         >
           <div style={BLOCKERS_TITLE_STYLE}>
             {hardBlockers.length > 0
-              ? `${hardBlockers.length} hard ${hardBlockers.length === 1 ? 'blocker' : 'blockers'}`
-              : `${blockers.length} ${blockers.length === 1 ? 'criterion pending' : 'criteria pending'}`}
-            {' '}before you can promote
+              ? `${hardBlockers.length} hard ${hardBlockers.length === 1 ? "blocker" : "blockers"}`
+              : `${blockers.length} ${blockers.length === 1 ? "criterion pending" : "criteria pending"}`}{" "}
+            before you can promote
           </div>
           <ul style={BLOCKERS_LIST_STYLE}>
-            {[...hardBlockers, ...blockers.filter((b) => b.def?.severity !== 'hard')].map(
-              ({ state, def }) => (
-                <li
-                  key={state.criterionId}
-                  style={BLOCKERS_LIST_ITEM_STYLE}
-                  data-testid={`source-canvas-gate-blocker-${state.criterionId}`}
-                >
-                  <span style={BLOCKERS_BULLET_STYLE}>·</span>
-                  <span>
-                    <span style={BLOCKERS_ITEM_TITLE_STYLE}>
-                      {def?.title ?? state.criterionId}
-                    </span>
-                    {def?.severity === 'hard' ? (
-                      <span style={INLINE_HARD_TAG_STYLE}>hard</span>
-                    ) : null}
-                    <span style={BLOCKERS_STATE_STYLE}>
-                      {' — '}
-                      {STATE_LABEL[state.state]}
-                      {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0
-                        ? ` · evidence ${def.linkedArtifactCodes.join(', ')}`
-                        : ''}
-                    </span>
+            {[
+              ...hardBlockers,
+              ...blockers.filter((b) => b.def?.severity !== "hard"),
+            ].map(({ state, def }) => (
+              <li
+                key={state.criterionId}
+                style={BLOCKERS_LIST_ITEM_STYLE}
+                data-testid={`source-canvas-gate-blocker-${state.criterionId}`}
+              >
+                <span style={BLOCKERS_BULLET_STYLE}>·</span>
+                <span>
+                  <span style={BLOCKERS_ITEM_TITLE_STYLE}>
+                    {def?.title ?? state.criterionId}
                   </span>
-                </li>
-              ),
-            )}
+                  {def?.severity === "hard" ? (
+                    <span style={INLINE_HARD_TAG_STYLE}>hard</span>
+                  ) : null}
+                  <span style={BLOCKERS_STATE_STYLE}>
+                    {" — "}
+                    {STATE_LABEL[state.state]}
+                    {def?.linkedArtifactCodes &&
+                    def.linkedArtifactCodes.length > 0
+                      ? ` · evidence ${def.linkedArtifactCodes.join(", ")}`
+                      : ""}
+                  </span>
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
       ) : null}
 
       {total === 0 ? (
-        <p style={EMPTY_BODY_STYLE}>No gate criteria defined for this stage transition.</p>
+        <p style={EMPTY_BODY_STYLE}>
+          No gate criteria defined for this stage transition.
+        </p>
       ) : (
         <ul style={LIST_STYLE}>
           {ordered.map((s) => {
@@ -282,47 +309,65 @@ interface CriterionRowProps {
   pending: boolean;
 }
 
-function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps) {
-  const [reason, setReason] = useState('');
-  const isMet = state.state === 'met' || state.state === 'waived';
+function CriterionRow({
+  state,
+  def,
+  onChangeState,
+  pending,
+}: CriterionRowProps) {
+  const [reason, setReason] = useState("");
+  const isMet = state.state === "met" || state.state === "waived";
   const indicatorColor = isMet
     ? CANVAS.ACTIVE
-    : state.state === 'not_met'
+    : state.state === "not_met"
       ? CANVAS.BLOCKED
-      : state.state === 'deferred'
+      : state.state === "deferred"
         ? CANVAS.WAITING
         : CANVAS.GRAY;
 
-  const isMetOrWaived = state.state === 'met' || state.state === 'waived';
+  const isMetOrWaived = state.state === "met" || state.state === "waived";
   const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
   return (
-    <li style={ROW_STYLE} data-testid={`source-canvas-gate-criterion-${state.criterionId}`}>
+    <li
+      style={ROW_STYLE}
+      data-testid={`source-canvas-gate-criterion-${state.criterionId}`}
+    >
       <span aria-hidden style={{ ...DOT_STYLE, background: indicatorColor }} />
       <div style={ROW_BODY_STYLE}>
         <div style={ROW_TITLE_STYLE}>
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
           <StatePill state={state.state} />
-          {def?.severity === 'hard' ? <span style={HARD_TAG_STYLE}>hard</span> : null}
-          {onChangeState && state.state !== 'waived' ? (
+          {def?.severity === "hard" ? (
+            <span style={HARD_TAG_STYLE}>hard</span>
+          ) : null}
+          {onChangeState && state.state !== "waived" ? (
             isMetOrWaived ? (
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => onChangeState(state.criterionId, 'pending', '')}
+                onClick={() => onChangeState(state.criterionId, "pending", "")}
                 data-testid={`source-canvas-gate-criterion-reopen-${state.criterionId}`}
-                style={{ ...ROW_GHOST_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+                style={{
+                  ...ROW_GHOST_BUTTON_STYLE,
+                  opacity: pending ? 0.55 : 1,
+                }}
               >
-                {pending ? 'Reopening…' : 'Reopen'}
+                {pending ? "Reopening…" : "Reopen"}
               </button>
             ) : (
               <button
                 type="button"
                 disabled={pending || !reasonReady}
-                onClick={() => onChangeState(state.criterionId, 'met', reason.trim())}
+                onClick={() =>
+                  onChangeState(state.criterionId, "met", reason.trim())
+                }
                 data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
-                style={{ ...ROW_PRIMARY_BUTTON_STYLE, opacity: pending || !reasonReady ? 0.55 : 1 }}
+                style={{
+                  ...ROW_PRIMARY_BUTTON_STYLE,
+                  opacity: pending || !reasonReady ? 0.55 : 1,
+                }}
               >
-                {pending ? 'Saving…' : 'Mark met'}
+                {pending ? "Saving…" : "Mark met"}
               </button>
             )
           ) : null}
@@ -341,24 +386,30 @@ function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps)
           </label>
         ) : null}
         {isMetOrWaived && state.reviewedAt ? (
-          <div style={ROW_AUDIT_STYLE} data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}>
-            Approved by {state.reviewerUserId ?? 'recorded user'} · {formatAuditTimestamp(state.reviewedAt)}
-            {state.notes ? ` · Reason: ${state.notes}` : ''}
+          <div
+            style={ROW_AUDIT_STYLE}
+            data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}
+          >
+            Approved by {state.reviewerUserId ?? "recorded user"} ·{" "}
+            {formatAuditTimestamp(state.reviewedAt)}
+            {state.notes ? ` · Reason: ${state.notes}` : ""}
           </div>
         ) : null}
-        {def?.description ? <div style={ROW_DESC_STYLE}>{def.description}</div> : null}
+        {def?.description ? (
+          <div style={ROW_DESC_STYLE}>{def.description}</div>
+        ) : null}
         <div style={ROW_META_STYLE}>
           <span style={CRITERION_CODE}>{state.criterionId}</span>
           {def?.ownerRole ? (
             <>
               <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Owner: {def.ownerRole.replace(/-/g, ' ')}</span>
+              <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
             </>
           ) : null}
           {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
             <>
               <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Evidence: {def.linkedArtifactCodes.join(', ')}</span>
+              <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
             </>
           ) : null}
         </div>
@@ -371,10 +422,10 @@ function formatAuditTimestamp(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -383,7 +434,12 @@ function StatePill({ state }: { state: SourceEventGateCriterionState }) {
   return (
     <span
       data-testid={`source-canvas-gate-criterion-state-${state}`}
-      style={{ ...STATE_PILL_STYLE, background: tone.bg, color: tone.fg, borderColor: tone.border }}
+      style={{
+        ...STATE_PILL_STYLE,
+        background: tone.bg,
+        color: tone.fg,
+        borderColor: tone.border,
+      }}
     >
       {STATE_LABEL[state]}
     </span>
@@ -396,30 +452,50 @@ function stateTone(state: SourceEventGateCriterionState): {
   border: string;
 } {
   switch (state) {
-    case 'met':
-      return { bg: 'rgba(46,125,50,0.10)', fg: '#2E7D32', border: 'rgba(46,125,50,0.32)' };
-    case 'not_met':
-      return { bg: 'rgba(211,84,0,0.10)', fg: '#B85B00', border: 'rgba(211,84,0,0.30)' };
-    case 'deferred':
-      return { bg: 'rgba(186,117,23,0.10)', fg: '#A66400', border: 'rgba(186,117,23,0.30)' };
-    case 'waived':
-      return { bg: 'rgba(10,10,11,0.06)', fg: CANVAS.INK, border: 'rgba(10,10,11,0.22)' };
-    case 'pending':
+    case "met":
+      return {
+        bg: "rgba(46,125,50,0.10)",
+        fg: "#2E7D32",
+        border: "rgba(46,125,50,0.32)",
+      };
+    case "not_met":
+      return {
+        bg: "rgba(211,84,0,0.10)",
+        fg: "#B85B00",
+        border: "rgba(211,84,0,0.30)",
+      };
+    case "deferred":
+      return {
+        bg: "rgba(186,117,23,0.10)",
+        fg: "#A66400",
+        border: "rgba(186,117,23,0.30)",
+      };
+    case "waived":
+      return {
+        bg: "rgba(10,10,11,0.06)",
+        fg: CANVAS.INK,
+        border: "rgba(10,10,11,0.22)",
+      };
+    case "pending":
     default:
-      return { bg: 'rgba(10,10,11,0.04)', fg: CANVAS.INK_SOFT, border: 'rgba(10,10,11,0.14)' };
+      return {
+        bg: "rgba(10,10,11,0.04)",
+        fg: CANVAS.INK_SOFT,
+        border: "rgba(10,10,11,0.14)",
+      };
   }
 }
 
 const CONTAINER_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 24,
   maxWidth: 880,
 };
 
 const HEADER_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) auto',
-  alignItems: 'end',
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto",
+  alignItems: "end",
   gap: 16,
   paddingBottom: 16,
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
@@ -428,8 +504,8 @@ const HEADER_STYLE: CSSProperties = {
 const EYEBROW_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   marginBottom: 6,
 };
@@ -438,14 +514,14 @@ const TITLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SERIF,
   fontSize: 24,
   fontWeight: 400,
-  letterSpacing: '-0.015em',
+  letterSpacing: "-0.015em",
   color: CANVAS.INK,
   margin: 0,
   lineHeight: 1.2,
 };
 
 const SUBLINE_STYLE: CSSProperties = {
-  margin: '6px 0 0',
+  margin: "6px 0 0",
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   color: CANVAS.INK_SOFT,
@@ -453,18 +529,18 @@ const SUBLINE_STYLE: CSSProperties = {
 };
 
 const PROMOTE_BUTTON_STYLE: CSSProperties = {
-  padding: '10px 16px',
+  padding: "10px 16px",
   borderRadius: CANVAS.RADIUS_TIGHT,
-  border: 'none',
+  border: "none",
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   fontWeight: 500,
-  whiteSpace: 'nowrap',
-  alignSelf: 'center',
+  whiteSpace: "nowrap",
+  alignSelf: "center",
 };
 
 const PROMOTE_CONTROL_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 8,
   minWidth: 260,
   maxWidth: 320,
@@ -473,39 +549,39 @@ const PROMOTE_CONTROL_STYLE: CSSProperties = {
 const REASON_LABEL_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   fontWeight: 700,
 };
 
 const REASON_TEXTAREA_STYLE: CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  resize: 'vertical',
+  width: "100%",
+  boxSizing: "border-box",
+  resize: "vertical",
   border: `1px solid ${CANVAS.RULE}`,
   borderRadius: CANVAS.RADIUS_TIGHT,
-  padding: '8px 10px',
+  padding: "8px 10px",
   fontFamily: CANVAS.SANS,
   fontSize: 12,
   lineHeight: 1.45,
   color: CANVAS.INK,
-  background: '#ffffff',
+  background: "#ffffff",
 };
 
 const LIST_STYLE: CSSProperties = {
-  listStyle: 'none',
+  listStyle: "none",
   padding: 0,
   margin: 0,
-  display: 'grid',
+  display: "grid",
   gap: 0,
 };
 
 const ROW_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto minmax(0, 1fr)',
+  display: "grid",
+  gridTemplateColumns: "auto minmax(0, 1fr)",
   gap: 14,
-  padding: '14px 0',
+  padding: "14px 0",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
@@ -518,20 +594,20 @@ const DOT_STYLE: CSSProperties = {
 };
 
 const ROW_BODY_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 4,
   minWidth: 0,
 };
 
 const ROW_TITLE_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 8,
-  flexWrap: 'wrap',
+  flexWrap: "wrap",
 };
 
 const ROW_REASON_WRAP_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 5,
   maxWidth: 540,
   marginTop: 4,
@@ -554,8 +630,8 @@ const ROW_TITLE_TEXT: CSSProperties = {
 const HARD_TAG_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
   color: CANVAS.BLOCKED,
   fontWeight: 600,
 };
@@ -563,8 +639,8 @@ const HARD_TAG_STYLE: CSSProperties = {
 const WAIVED_TAG_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
   color: CANVAS.WAITING,
   fontWeight: 600,
 };
@@ -577,14 +653,14 @@ const ROW_DESC_STYLE: CSSProperties = {
 };
 
 const ROW_META_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   gap: 6,
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.04em',
+  letterSpacing: "0.04em",
   color: CANVAS.GRAY_DK,
-  flexWrap: 'wrap',
+  flexWrap: "wrap",
 };
 
 const CRITERION_CODE: CSSProperties = {
@@ -603,34 +679,34 @@ const EMPTY_BODY_STYLE: CSSProperties = {
 };
 
 const BLOCKERS_STYLE: CSSProperties = {
-  display: 'grid',
+  display: "grid",
   gap: 8,
-  padding: '12px 14px',
+  padding: "12px 14px",
   borderRadius: CANVAS.RADIUS_TIGHT,
   border: `1px solid rgba(211,84,0,0.20)`,
-  background: 'rgba(211,84,0,0.04)',
+  background: "rgba(211,84,0,0.04)",
 };
 
 const BLOCKERS_TITLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 10,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: '#B85B00',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  color: "#B85B00",
   fontWeight: 700,
 };
 
 const BLOCKERS_LIST_STYLE: CSSProperties = {
-  listStyle: 'none',
+  listStyle: "none",
   padding: 0,
   margin: 0,
-  display: 'grid',
+  display: "grid",
   gap: 4,
 };
 
 const BLOCKERS_LIST_ITEM_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
+  display: "grid",
+  gridTemplateColumns: "auto 1fr",
   gap: 8,
   fontFamily: CANVAS.SANS,
   fontSize: 13,
@@ -655,57 +731,57 @@ const INLINE_HARD_TAG_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
   fontWeight: 700,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
   color: CANVAS.BLOCKED,
 };
 
 const ROW_PRIMARY_BUTTON_STYLE: CSSProperties = {
   marginLeft: 6,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '4px 10px',
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "4px 10px",
   borderRadius: 5,
-  border: 'none',
+  border: "none",
   background: CANVAS.INK,
-  color: '#ffffff',
+  color: "#ffffff",
   fontFamily: CANVAS.MONO,
   fontSize: 9,
   fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  cursor: 'pointer',
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
 };
 
 const ROW_GHOST_BUTTON_STYLE: CSSProperties = {
   marginLeft: 6,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '3px 9px',
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "3px 9px",
   borderRadius: 5,
   border: `1px solid ${CANVAS.RULE}`,
-  background: 'transparent',
+  background: "transparent",
   color: CANVAS.INK,
   fontFamily: CANVAS.MONO,
   fontSize: 9,
   fontWeight: 600,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  cursor: 'pointer',
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
 };
 
 const STATE_PILL_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+  display: "inline-flex",
+  alignItems: "center",
   fontFamily: CANVAS.MONO,
   fontSize: 9,
   fontWeight: 700,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  padding: '2px 7px',
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  padding: "2px 7px",
   borderRadius: 999,
-  border: '1px solid transparent',
-  whiteSpace: 'nowrap',
+  border: "1px solid transparent",
+  whiteSpace: "nowrap",
 };

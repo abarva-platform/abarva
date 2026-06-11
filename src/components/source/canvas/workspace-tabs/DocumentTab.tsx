@@ -184,7 +184,12 @@ export function DocumentTab({
 
   return (
     <div data-testid="source-canvas-document-tab" style={DOCUMENT_TAB_STYLE}>
-      <RegistryDocumentsShelf eventId={eventId} stage={stage} documents={registryArtifacts} onUploaded={onRegistryUploaded} />
+      <RegistryDocumentsShelf
+        eventId={eventId}
+        stage={stage}
+        documents={registryArtifacts}
+        onUploaded={onRegistryUploaded}
+      />
       <div style={CONTAINER_STYLE}>
         {/* Artifact list (left) */}
         <aside

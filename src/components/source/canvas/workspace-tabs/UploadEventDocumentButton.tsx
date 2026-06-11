@@ -15,7 +15,11 @@ interface Props {
   onUploaded?: () => void;
 }
 
-export function UploadEventDocumentButton({ eventId, stageKey, onUploaded }: Props) {
+export function UploadEventDocumentButton({
+  eventId,
+  stageKey,
+  onUploaded,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +39,13 @@ export function UploadEventDocumentButton({ eventId, stageKey, onUploaded }: Pro
           { method: "POST", body: fd, credentials: "include" },
         );
         if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
-          throw new Error(body?.detail ?? body?.error ?? `Upload failed (${res.status}).`);
+          const body = (await res.json().catch(() => null)) as {
+            detail?: string;
+            error?: string;
+          } | null;
+          throw new Error(
+            body?.detail ?? body?.error ?? `Upload failed (${res.status}).`,
+          );
         }
       }
       onUploaded?.();
@@ -51,7 +60,9 @@ export function UploadEventDocumentButton({ eventId, stageKey, onUploaded }: Pro
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       {error ? (
-        <span style={{ fontSize: 11, color: "#B3261E", maxWidth: 280 }}>{error}</span>
+        <span style={{ fontSize: 11, color: "#B3261E", maxWidth: 280 }}>
+          {error}
+        </span>
       ) : null}
       <input
         ref={inputRef}

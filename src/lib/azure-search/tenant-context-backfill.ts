@@ -1,4 +1,4 @@
-import type { SearchDocument } from './types';
+import type { SearchDocument } from "./types";
 
 export type EnterpriseContextChunkRow = {
   readonly client_id: string | null;
@@ -20,27 +20,27 @@ export type EnterpriseContextChunkRow = {
 };
 
 const TENANT_KEY_ALIASES: Record<string, string> = {
-  'apex-retail-group': 'apex-retail',
-  apexretail: 'apex-retail',
-  arcturus: 'first-capital',
-  firstcapital: 'first-capital',
-  'first-capital-bank': 'first-capital',
-  lakeshore: 'lakeshore-holdings',
-  'lakeshore-holding': 'lakeshore-holdings',
-  meridian: 'meridian-health',
-  'meridian-healthcare': 'meridian-health',
-  northstar: 'northstar-clinical',
-  skyharbor: 'skyharbor-air',
-  'skyharbor-airlines': 'skyharbor-air',
+  "apex-retail-group": "apex-retail",
+  apexretail: "apex-retail",
+  arcturus: "first-capital",
+  firstcapital: "first-capital",
+  "first-capital-bank": "first-capital",
+  lakeshore: "lakeshore-holdings",
+  "lakeshore-holding": "lakeshore-holdings",
+  meridian: "meridian-health",
+  "meridian-healthcare": "meridian-health",
+  northstar: "northstar-clinical",
+  skyharbor: "skyharbor-air",
+  "skyharbor-airlines": "skyharbor-air",
 };
 
 function safeString(value: unknown, fallback: string): string {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
 function safeNumber(value: unknown, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim()) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
     const parsed = Number.parseFloat(value);
     if (Number.isFinite(parsed)) return parsed;
   }
@@ -48,16 +48,16 @@ function safeNumber(value: unknown, fallback: number): number {
 }
 
 function confidenceLevel(value: number): string {
-  if (value >= 0.85) return 'high';
-  if (value >= 0.6) return 'medium';
-  return 'low';
+  if (value >= 0.85) return "high";
+  if (value >= 0.6) return "medium";
+  return "low";
 }
 
 function truncateUtf8(value: string, maxBytes: number): string {
   let bytes = 0;
-  let output = '';
+  let output = "";
   for (const char of value) {
-    const charBytes = Buffer.byteLength(char, 'utf8');
+    const charBytes = Buffer.byteLength(char, "utf8");
     if (bytes + charBytes > maxBytes) break;
     output += char;
     bytes += charBytes;
@@ -69,18 +69,24 @@ function safeSearchBody(value: string): string {
   return truncateUtf8(value, 30_000);
 }
 
-export function tenantContextSearchId(tenantKey: string, chunkId: string): string {
-  return Buffer.from(`${tenantKey}:${chunkId}`, 'utf-8').toString('base64url');
+export function tenantContextSearchId(
+  tenantKey: string,
+  chunkId: string,
+): string {
+  return Buffer.from(`${tenantKey}:${chunkId}`, "utf-8").toString("base64url");
 }
 
 export function canonicalTenantKey(tenantKey: string): string {
-  const normalized = tenantKey.trim().toLowerCase().replace(/_/g, '-');
+  const normalized = tenantKey.trim().toLowerCase().replace(/_/g, "-");
   return TENANT_KEY_ALIASES[normalized] ?? normalized;
 }
 
-export function toTenantContextDeleteDocument(tenantKey: string, chunkId: string): SearchDocument {
+export function toTenantContextDeleteDocument(
+  tenantKey: string,
+  chunkId: string,
+): SearchDocument {
   return {
-    '@search.action': 'delete',
+    "@search.action": "delete",
     id: tenantContextSearchId(tenantKey, chunkId),
   };
 }
@@ -92,24 +98,29 @@ export function toTenantContextSearchDocument(
   const tenantKey = canonicalTenantKey(row.tenant_key);
   const metadata = row.chunk_metadata ?? {};
   const provenance = row.provenance ?? {};
-  const sourceSegment = safeString(row.source_segment_id, 'unknown');
+  const sourceSegment = safeString(row.source_segment_id, "unknown");
   const sourceDoc = safeString(row.source_doc, sourceSegment);
   const sourcePath = safeString(row.source_path, sourceDoc);
-  const confidence = safeNumber(metadata.confidence ?? provenance.confidence, 0.8);
+  const confidence = safeNumber(
+    metadata.confidence ?? provenance.confidence,
+    0.8,
+  );
   const sensitivity = safeString(
     metadata.classification ??
       metadata.sensitivity ??
       provenance.classification ??
       provenance.data_classification,
-    'internal',
+    "internal",
   );
   const sourceBasis = safeString(
     metadata.source_basis ?? provenance.source_basis ?? provenance.loader,
-    'enterprise_context_chunks',
+    "enterprise_context_chunks",
   );
   const lifecycleState = safeString(
-    row.lifecycle_state ?? metadata.lifecycle_state ?? provenance.lifecycle_state,
-    'active',
+    row.lifecycle_state ??
+      metadata.lifecycle_state ??
+      provenance.lifecycle_state,
+    "active",
   );
   const sourceCitation = safeString(
     metadata.source_citation ?? provenance.source_citation ?? sourcePath,
@@ -117,10 +128,12 @@ export function toTenantContextSearchDocument(
   );
 
   return {
-    '@search.action': 'upload',
+    "@search.action": "upload",
     id: tenantContextSearchId(tenantKey, row.chunk_id),
     tenant_key: tenantKey,
-    client_id: row.client_id ?? safeString(metadata.client_id ?? provenance.client_id, ''),
+    client_id:
+      row.client_id ??
+      safeString(metadata.client_id ?? provenance.client_id, ""),
     client_key: tenantKey,
     source_segment: sourceSegment,
     record_id: safeString(row.source_record_id, row.chunk_id),
@@ -135,11 +148,17 @@ export function toTenantContextSearchDocument(
     sensitivity,
     classification: sensitivity,
     lifecycle_state: lifecycleState,
-    agent_readiness_status: safeString(row.agent_readiness_status ?? metadata.agent_readiness_status, 'not_reviewed'),
-    source_file_id: row.source_file_id ?? safeString(metadata.source_file_id ?? provenance.source_file_id, ''),
-    source_row_number: typeof row.source_row_number === 'number'
-      ? row.source_row_number
-      : safeNumber(metadata.source_row_number ?? provenance.source_row, 0),
+    agent_readiness_status: safeString(
+      row.agent_readiness_status ?? metadata.agent_readiness_status,
+      "not_reviewed",
+    ),
+    source_file_id:
+      row.source_file_id ??
+      safeString(metadata.source_file_id ?? provenance.source_file_id, ""),
+    source_row_number:
+      typeof row.source_row_number === "number"
+        ? row.source_row_number
+        : safeNumber(metadata.source_row_number ?? provenance.source_row, 0),
     last_seen_at: row.embedded_at ?? now.toISOString(),
   };
 }
