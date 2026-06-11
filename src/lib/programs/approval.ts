@@ -470,6 +470,33 @@ export async function decideApprovalRequest(
     },
   );
 
+  // One approval closes P0 (founder spec 2026-06-11): the sponsor's approval
+  // of the origination request IS the origination-brief sign-off, and the Move
+  // advances P0→P1 through the governed gate in the same act. Best-effort —
+  // a failure logs loudly and leaves the Move at P0 with the approval intact.
+  if (request.requestStatus === "approved") {
+    try {
+      const { closeP0OnApproval } = await import("./origination-close");
+      const closed = await closeP0OnApproval({
+        programId: request.programId,
+        tenantKey: request.tenantKey,
+        deciderUserId: input.decidedByUserId,
+        rationale: input.rationale ?? null,
+      });
+      if (!closed.advanced && closed.blockedBy.length > 0) {
+        console.error("[approval] P0 close blocked after approval", {
+          requestId: request.id,
+          blockedBy: closed.blockedBy,
+        });
+      }
+    } catch (err) {
+      console.error("[approval] closeP0OnApproval threw", {
+        requestId: request.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
   // failures must not block the approval workflow.
   const notify =

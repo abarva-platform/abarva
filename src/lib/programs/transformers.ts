@@ -1152,10 +1152,17 @@ export async function getMoveStatus(
     pendingFounder.length > 0 ||
     approvalStatus === "pending"
   ) {
+    // Say what the approval IS and what approving DOES — "P0 Originate ·
+    // decision pending" tells the approver neither (founder feedback
+    // 2026-06-11). At P0 the pending decision is the origination brief, and
+    // approving it closes P0 and advances the Move to P1 Charter in one act.
+    const isP0 = (move.currentPhase ?? 0) === 0;
     return {
       statusKey: "awaiting_decision",
       statusText: "AWAITING DECISION",
-      statusDescription: `${getPhaseLabel(move.currentPhase)} · sponsor/founder decision pending`,
+      statusDescription: isP0
+        ? "Origination brief awaiting sponsor approval — approving closes P0 and advances this Move to P1 Charter"
+        : `${getPhaseLabel(move.currentPhase)} gate awaiting sponsor approval — approving advances this Move to ${getPhaseLabel((move.currentPhase ?? 0) + 1)}`,
       statusColor: "amber",
     };
   }
