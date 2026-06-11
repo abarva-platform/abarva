@@ -36,6 +36,7 @@ Closes the post-remediation context-health gaps that prevented the Azure Search 
 - `src/app/api/admin/context-layer/csv-upload/route.ts`
 - `src/lib/context-ingestion/csv-upload-connector.ts`
 - `src/lib/context-ingestion/admin-structured-context-promotion.ts`
+- `supabase/migrations/20260610203000_source_artifacts.sql` compatibility hardening so live Azure environments with the older Source artifact registry can add the newer File Cabinet metadata contract without rebuilding the table.
 - Focused unit/route tests for Search contracts, Search mapping, retriever filters, CSV connector, and direct CSV route.
 
 ## QA / Validation
