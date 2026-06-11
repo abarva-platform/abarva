@@ -2,6 +2,7 @@ import {
   inferSourceArtifactFamily,
   sourceArtifactFormatFromMime,
 } from '../upload-contract';
+import { isAllowedSourceArtifactMimeType } from '../mime';
 
 describe('Source artifact upload contract', () => {
   it('maps allowed office/document mime types to registry formats', () => {
@@ -9,6 +10,14 @@ describe('Source artifact upload contract', () => {
     expect(sourceArtifactFormatFromMime('application/vnd.openxmlformats-officedocument.wordprocessingml.document')).toBe('docx');
     expect(sourceArtifactFormatFromMime('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')).toBe('xlsx');
     expect(sourceArtifactFormatFromMime('text/markdown')).toBe('markdown');
+  });
+
+  it('accepts text/html as a first-class artifact format (gate records, deliverables)', () => {
+    // Regression: gate approval records + board-grade deliverables render to HTML and
+    // persist via registerSourceArtifactUpload. text/html missing from the allowlist
+    // made every such write 500 (gate-decision pre-flight, 2026-06-11).
+    expect(isAllowedSourceArtifactMimeType('text/html')).toBe(true);
+    expect(sourceArtifactFormatFromMime('text/html')).toBe('html');
   });
 
   it('honors a valid requested family over filename and stage inference', () => {

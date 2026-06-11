@@ -12,6 +12,12 @@ export const SOURCE_ARTIFACT_MIME_ALLOWLIST = [
   'text/markdown',
   'text/plain',
   'text/csv',
+  // HTML is a first-class generated-artifact format (SourceArtifactFormat includes
+  // 'html'): governance records (gate approval records) and board-grade deliverables
+  // render to HTML and persist through registerSourceArtifactUpload. Omitting text/html
+  // here made every HTML artifact write throw the allowlist guard → 500 (gate-decision
+  // pre-flight, 2026-06-11). It belongs on the allowlist with the other text formats.
+  'text/html',
   'image/png',
   'image/jpeg',
   'audio/mpeg',
