@@ -2243,3 +2243,119 @@
   color: var(--abarva-ink-black);
   line-height: 1.5;
 }
+
+/* ── Charter capture editor (P1) ─────────────────────────────────────────── */
+
+.captureTextarea {
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--abarva-ink-black);
+  padding: 8px 10px;
+  border: 1px solid #e3e6eb;
+  border-radius: 6px;
+  background: #fff;
+  resize: vertical;
+}
+
+.captureTextarea:focus {
+  outline: none;
+  border-color: var(--abarva-ink-black);
+}
+
+/* ── Ordered Save → Approve → Generate sequence ──────────────────────────── */
+
+.charterSequence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.charterStep {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 180px;
+  min-width: 180px;
+  padding: 12px 14px;
+  border: 1px solid #e3e6eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.charterStepActive {
+  border-color: var(--abarva-ink-black);
+}
+
+.charterStepDone {
+  border-color: rgba(30, 126, 52, 0.45);
+  background: rgba(30, 126, 52, 0.04);
+}
+
+.charterStepNum {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #5a6472;
+}
+
+.charterStepArrow {
+  align-self: center;
+  color: #9aa3b2;
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+
+.charterPrimaryBtn {
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--abarva-ink-black);
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: opacity 150ms var(--ease-out);
+}
+
+.charterPrimaryBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.charterStepHint {
+  font-size: 11px;
+  color: #5a6472;
+  line-height: 1.4;
+}
+
+.charterStepError {
+  font-size: 11px;
+  color: var(--canon-red, #b3261e);
+  line-height: 1.4;
+}
+
+.charterStepOk {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e7e34;
+  line-height: 1.4;
+}
+
+.charterAdvancedNote {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #9aa3b2;
+  margin: 6px 0 8px;
+}

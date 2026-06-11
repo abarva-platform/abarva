@@ -321,6 +321,21 @@ const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
   ],
 };
 
+// ── P1 charter capture → save-key mapping ─────────────────────────────────────
+//
+// The five P1 capture cards (section ids) map 1:1 onto the snake_case keys the
+// charter-capture backend (POST .../charter-capture) accepts. Order matches the
+// five P1 capture slots.
+
+const P1_SECTION_SAVE_KEY: Record<string, string> = {
+  sponsor: "sponsor",
+  stakeholders: "stakeholders",
+  "success-metrics": "success_metrics",
+  "value-range": "value_range",
+  scope: "scope",
+};
+const P1_SECTION_IDS = Object.keys(P1_SECTION_SAVE_KEY);
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function generateTurnId(): string {
@@ -492,6 +507,412 @@ function CollapsePanel({
       </summary>
       <div className={styles.panelBody}>{children}</div>
     </details>
+  );
+}
+
+// ── P1 charter 4-step gated workflow ──────────────────────────────────────────
+//
+// Founder-locked sequence: (1) capture all 5 → (2) Save the record (deterministic
+// POST, NOT chat) → (3) Approve the saved record (enabled only when all 5 saved)
+// → (4) Generate the board-grade artifact from the approved record (enabled only
+// after approval). Each step is gated on the previous.
+
+type GenState =
+  | { status: "idle" }
+  | { status: "generating" }
+  | { status: "done"; qualityScore: number; pass: boolean }
+  | { status: "error"; message: string };
+
+function CharterWorkflow({
+  move,
+  phaseNum,
+  canvasSections,
+  capturedSections,
+  isCaptureCardOpen,
+  setOpenCaptureCards,
+}: {
+  move: StrategicMove;
+  phaseNum: number;
+  canvasSections: CanvasSection[];
+  capturedSections: { section: CanvasSection; content: string | null }[];
+  isCaptureCardOpen: (id: string) => boolean;
+  setOpenCaptureCards: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+}) {
+  // Editable textarea values, seeded from already-captured content so the three
+  // pre-filled slots prefill. Keyed by section id.
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      capturedSections.map(({ section, content }) => [
+        section.id,
+        content ?? "",
+      ]),
+    ),
+  );
+
+  // Save state
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState<number | null>(null);
+  const [allFiveSaved, setAllFiveSaved] = useState(false);
+  // deliverableId from the save response, or seeded from an existing in-review
+  // charter deliverable on the Move so Approve works without re-saving.
+  const [deliverableId, setDeliverableId] = useState<string | null>(
+    () => move.deliverables.find((d) => d.typeKey === "charter")?.id ?? null,
+  );
+
+  // Approve state
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [approved, setApproved] = useState<boolean>(
+    () =>
+      move.deliverables.find((d) => d.typeKey === "charter")?.status ===
+      "signed_off",
+  );
+
+  // Generate state
+  const [gen, setGen] = useState<GenState>({ status: "idle" });
+
+  const filledNow = P1_SECTION_IDS.filter((id) =>
+    (values[id] ?? "").trim(),
+  ).length;
+
+  const saveRecord = useCallback(async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const items: Record<string, string> = {};
+      for (const id of P1_SECTION_IDS) {
+        const v = (values[id] ?? "").trim();
+        if (v) items[P1_SECTION_SAVE_KEY[id]] = v;
+      }
+      const res = await fetch(`/api/v1/programs/${move.id}/charter-capture`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        savedFields?: string[];
+        allFiveSaved?: boolean;
+        recordCreated?: boolean;
+        deliverableId?: string;
+        recordError?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `Save failed (HTTP ${res.status})`,
+        );
+      }
+      setSavedCount(data.savedFields?.length ?? 0);
+      setAllFiveSaved(Boolean(data.allFiveSaved));
+      if (data.deliverableId) setDeliverableId(data.deliverableId);
+      if (data.recordCreated === false && data.recordError) {
+        setSaveError(
+          `Charter saved, but record not created: ${data.recordError}`,
+        );
+      }
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }, [move.id, values]);
+
+  const approveRecord = useCallback(async () => {
+    if (!deliverableId) {
+      setApproveError("Save the record first.");
+      return;
+    }
+    setApproving(true);
+    setApproveError(null);
+    try {
+      const sponsorVal = (values.sponsor ?? "").trim();
+      const rationale = sponsorVal
+        ? `Sponsor committed: ${sponsorVal.slice(0, 160)}`
+        : "Charter record reviewed and approved.";
+      const res = await fetch(
+        `/api/v1/programs/${move.id}/deliverables/${deliverableId}/sign-off`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rationale }),
+        },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        status?: string;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `Approve failed (HTTP ${res.status})`,
+        );
+      }
+      setApproved(true);
+    } catch (err) {
+      setApproveError(err instanceof Error ? err.message : "Approve failed");
+    } finally {
+      setApproving(false);
+    }
+  }, [deliverableId, move.id, values.sponsor]);
+
+  const generateArtifact = useCallback(async () => {
+    setGen({ status: "generating" });
+    try {
+      const res = await fetch(
+        `/api/v1/programs/${move.id}/current-state/deliverable/orchestrate?key=program_charter&format=json&fresh=1`,
+        { credentials: "include" },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        quality?: { qualityScore?: number; pass?: boolean };
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `Generate failed (HTTP ${res.status})`,
+        );
+      }
+      setGen({
+        status: "done",
+        qualityScore: data.quality?.qualityScore ?? 0,
+        pass: Boolean(data.quality?.pass),
+      });
+    } catch (err) {
+      setGen({
+        status: "error",
+        message: err instanceof Error ? err.message : "Generate failed",
+      });
+    }
+  }, [move.id]);
+
+  // Derived enable/disable:
+  //  • Save: enabled unless a save is in flight.
+  //  • Approve: enabled only when all 5 are saved AND a deliverableId exists,
+  //    and not already approved / approving.
+  //  • Generate: enabled only after approval, and not already generating.
+  const canApprove = allFiveSaved && Boolean(deliverableId) && !approved;
+  const canGenerate = approved && gen.status !== "generating";
+
+  const sequenceState = (n: 1 | 2 | 3): "done" | "active" | "" => {
+    if (n === 1) return approved || allFiveSaved ? "done" : "active";
+    if (n === 2) return approved ? "done" : allFiveSaved ? "active" : "";
+    return gen.status === "done" ? "done" : approved ? "active" : "";
+  };
+  const stepClass = (n: 1 | 2 | 3) => {
+    const s = sequenceState(n);
+    return `${styles.charterStep} ${
+      s === "done"
+        ? styles.charterStepDone
+        : s === "active"
+          ? styles.charterStepActive
+          : ""
+    }`;
+  };
+
+  return (
+    <>
+      {/* Editable capture cards */}
+      {capturedSections.map(({ section, content }) => {
+        const val = values[section.id] ?? "";
+        const isSaved = val.trim().length > 0;
+        return (
+          <section
+            key={section.id}
+            id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+            className={styles.detailSection}
+          >
+            <details
+              open={isCaptureCardOpen(section.id)}
+              onToggle={(e) => {
+                const isOpen = (e.currentTarget as HTMLDetailsElement).open;
+                setOpenCaptureCards((prev) =>
+                  (prev[section.id] ?? true) === isOpen
+                    ? prev
+                    : { ...prev, [section.id]: isOpen },
+                );
+              }}
+            >
+              <summary className={styles.captureCardSummary}>
+                <span
+                  className={styles.detailSectionTitle}
+                  style={{ marginBottom: 0 }}
+                >
+                  {section.label}
+                </span>
+                <span
+                  className={
+                    isSaved
+                      ? styles.captureBadgeDone
+                      : styles.captureBadgePending
+                  }
+                >
+                  {isSaved ? "✓ Captured" : "Not captured"}
+                </span>
+              </summary>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--abarva-slate)",
+                  fontStyle: "italic",
+                  lineHeight: 1.5,
+                  padding: "4px 0 2px",
+                }}
+              >
+                {section.placeholder}
+              </div>
+              <textarea
+                id={`ws-canvas-p${phaseNum}-${section.id}-input`}
+                className={styles.captureTextarea}
+                rows={3}
+                value={val}
+                placeholder={section.placeholder}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    [section.id]: e.target.value,
+                  }))
+                }
+                spellCheck
+              />
+              {content !== null && !val.trim() && (
+                <div className={styles.captureContent}>{content}</div>
+              )}
+            </details>
+          </section>
+        );
+      })}
+
+      {/* Ordered Save → Approve → Generate sequence */}
+      <section
+        id={`ws-canvas-p${phaseNum}-charter-sequence`}
+        className={styles.detailSection}
+      >
+        <div className={styles.detailSectionTitle}>
+          Charter workflow &mdash; {filledNow} of {canvasSections.length}{" "}
+          captured
+        </div>
+        <div className={styles.charterSequence}>
+          {/* Step 1 — Save */}
+          <div className={stepClass(1)} id={`ws-canvas-p${phaseNum}-step-save`}>
+            <span className={styles.charterStepNum}>1 · Save record</span>
+            <button
+              type="button"
+              className={styles.charterPrimaryBtn}
+              onClick={() => void saveRecord()}
+              disabled={saving}
+            >
+              {saving ? "Saving…" : "Save charter record"}
+            </button>
+            {savedCount !== null && !saveError && (
+              <span className={styles.charterStepOk}>
+                Saved ✓ — {savedCount} of {canvasSections.length}
+                {allFiveSaved ? " · all 5 saved" : ""}
+              </span>
+            )}
+            {saveError && (
+              <span className={styles.charterStepError}>{saveError}</span>
+            )}
+            {savedCount === null && !saveError && (
+              <span className={styles.charterStepHint}>
+                Persists the 5 inputs to the backend.
+              </span>
+            )}
+          </div>
+
+          <span className={styles.charterStepArrow} aria-hidden>
+            &rarr;
+          </span>
+
+          {/* Step 2 — Approve */}
+          <div
+            className={stepClass(2)}
+            id={`ws-canvas-p${phaseNum}-step-approve`}
+          >
+            <span className={styles.charterStepNum}>2 · Approve</span>
+            <button
+              type="button"
+              className={styles.charterPrimaryBtn}
+              onClick={() => void approveRecord()}
+              disabled={!canApprove || approving}
+            >
+              {approved
+                ? "Approved ✓"
+                : approving
+                  ? "Approving…"
+                  : "Approve charter record"}
+            </button>
+            {approveError && (
+              <span className={styles.charterStepError}>{approveError}</span>
+            )}
+            {!approved && !approveError && (
+              <span className={styles.charterStepHint}>
+                {allFiveSaved
+                  ? deliverableId
+                    ? "Sign off the saved record."
+                    : "Save the record first."
+                  : "Save all 5 inputs first."}
+              </span>
+            )}
+            {approved && !approveError && (
+              <span className={styles.charterStepOk}>Record signed off ✓</span>
+            )}
+          </div>
+
+          <span className={styles.charterStepArrow} aria-hidden>
+            &rarr;
+          </span>
+
+          {/* Step 3 — Generate artifact */}
+          <div
+            className={stepClass(3)}
+            id={`ws-canvas-p${phaseNum}-step-generate`}
+          >
+            <span className={styles.charterStepNum}>3 · Generate artifact</span>
+            <button
+              type="button"
+              className={styles.charterPrimaryBtn}
+              onClick={() => void generateArtifact()}
+              disabled={!canGenerate}
+            >
+              {gen.status === "generating"
+                ? "Generating…"
+                : "Generate artifact"}
+            </button>
+            {gen.status === "generating" && (
+              <span className={styles.charterStepHint}>
+                Drafting the board-grade charter — this takes 1–4 minutes.
+              </span>
+            )}
+            {gen.status === "done" && (
+              <span className={styles.charterStepOk}>
+                Quality {gen.qualityScore}
+                {gen.pass ? " · passed" : " · below gate"} ·{" "}
+                <Link href={`/strategic-moves/${move.id}/evidence`}>
+                  Open File Cabinet →
+                </Link>
+              </span>
+            )}
+            {gen.status === "error" && (
+              <span className={styles.charterStepError}>{gen.message}</span>
+            )}
+            {gen.status === "idle" && !approved && (
+              <span className={styles.charterStepHint}>
+                Approve the record first.
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -1237,73 +1658,84 @@ export function StrategicMovePhaseClient({
               open={isPanelOpen("capture")}
               onOpenChange={(open) => setPanelOpen("capture", open)}
             >
-              {capturedSections.map(({ section, content }) => (
-                <section
-                  key={section.id}
-                  id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
-                  className={styles.detailSection}
-                >
-                  <details
-                    open={isCaptureCardOpen(section.id)}
-                    onToggle={(e) => {
-                      const isOpen = (e.currentTarget as HTMLDetailsElement)
-                        .open;
-                      setOpenCaptureCards((prev) =>
-                        (prev[section.id] ?? true) === isOpen
-                          ? prev
-                          : { ...prev, [section.id]: isOpen },
-                      );
-                    }}
+              {phaseNum === 1 ? (
+                <CharterWorkflow
+                  move={move}
+                  phaseNum={phaseNum}
+                  canvasSections={canvasSections}
+                  capturedSections={capturedSections}
+                  isCaptureCardOpen={isCaptureCardOpen}
+                  setOpenCaptureCards={setOpenCaptureCards}
+                />
+              ) : (
+                capturedSections.map(({ section, content }) => (
+                  <section
+                    key={section.id}
+                    id={`ws-canvas-p${phaseNum}-${section.id}-panel`}
+                    className={styles.detailSection}
                   >
-                    <summary className={styles.captureCardSummary}>
-                      <span
-                        className={styles.detailSectionTitle}
-                        style={{ marginBottom: 0 }}
-                      >
-                        {section.label}
-                      </span>
-                      <span
-                        className={
-                          content !== null
-                            ? styles.captureBadgeDone
-                            : styles.captureBadgePending
-                        }
-                      >
-                        {content !== null ? "✓ Captured" : "Not captured"}
-                      </span>
-                    </summary>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: "var(--abarva-slate)",
-                        fontStyle: "italic",
-                        lineHeight: 1.5,
-                        padding: "4px 0 2px",
+                    <details
+                      open={isCaptureCardOpen(section.id)}
+                      onToggle={(e) => {
+                        const isOpen = (e.currentTarget as HTMLDetailsElement)
+                          .open;
+                        setOpenCaptureCards((prev) =>
+                          (prev[section.id] ?? true) === isOpen
+                            ? prev
+                            : { ...prev, [section.id]: isOpen },
+                        );
                       }}
                     >
-                      {section.placeholder}
-                    </div>
-                    {content !== null ? (
-                      <div className={styles.captureContent}>{content}</div>
-                    ) : (
+                      <summary className={styles.captureCardSummary}>
+                        <span
+                          className={styles.detailSectionTitle}
+                          style={{ marginBottom: 0 }}
+                        >
+                          {section.label}
+                        </span>
+                        <span
+                          className={
+                            content !== null
+                              ? styles.captureBadgeDone
+                              : styles.captureBadgePending
+                          }
+                        >
+                          {content !== null ? "✓ Captured" : "Not captured"}
+                        </span>
+                      </summary>
                       <div
                         style={{
-                          marginTop: 8,
-                          padding: "8px 10px",
-                          borderRadius: 6,
-                          background: "rgba(0,102,204,0.04)",
-                          border: "1px dashed rgba(0,102,204,0.18)",
-                          fontSize: 12,
+                          fontSize: 13,
                           color: "var(--abarva-slate)",
+                          fontStyle: "italic",
+                          lineHeight: 1.5,
+                          padding: "4px 0 2px",
                         }}
                       >
-                        Work with Nexus in the chat pane to populate this
-                        section.
+                        {section.placeholder}
                       </div>
-                    )}
-                  </details>
-                </section>
-              ))}
+                      {content !== null ? (
+                        <div className={styles.captureContent}>{content}</div>
+                      ) : (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: "8px 10px",
+                            borderRadius: 6,
+                            background: "rgba(0,102,204,0.04)",
+                            border: "1px dashed rgba(0,102,204,0.18)",
+                            fontSize: 12,
+                            color: "var(--abarva-slate)",
+                          }}
+                        >
+                          Work with Nexus in the chat pane to populate this
+                          section.
+                        </div>
+                      )}
+                    </details>
+                  </section>
+                ))
+              )}
             </CollapsePanel>
 
             {/* Generate & documents */}
@@ -1326,6 +1758,12 @@ export function StrategicMovePhaseClient({
                 <div className={styles.detailSectionTitle}>
                   Generate full package
                 </div>
+                {phaseNum === 1 && (
+                  <div className={styles.charterAdvancedNote}>
+                    Manual / advanced path — the gated Save → Approve → Generate
+                    sequence above is the primary route.
+                  </div>
+                )}
                 <div
                   style={{
                     fontSize: 12,
