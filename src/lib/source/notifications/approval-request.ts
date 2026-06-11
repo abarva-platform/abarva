@@ -16,8 +16,17 @@ import 'server-only';
 
 import { sendEmail } from '@/lib/email/send';
 
-const APPROVAL_FROM = 'support@abarva.ai';
+// The from-address domain MUST be a Resend-verified domain or sends bounce. The
+// verified sender domain is the `send.abarva.ai` subdomain (root abarva.ai keeps
+// its Google MX and is intentionally NOT verified in Resend). Override via
+// SOURCE_APPROVAL_FROM_EMAIL only with an address on a verified domain.
+const DEFAULT_APPROVAL_FROM = 'support@send.abarva.ai';
 const APPROVAL_DEFAULT_TO = 'admin@abarva.ai';
+
+function resolveApprovalFrom(): string {
+  const override = process.env.SOURCE_APPROVAL_FROM_EMAIL?.trim();
+  return override && override.length > 0 ? override : DEFAULT_APPROVAL_FROM;
+}
 
 export interface ApprovalRequestInput {
   eventId: string;
@@ -129,7 +138,7 @@ export async function sendApprovalRequestEmail(
   const subject = `Approval needed: ${input.eventName} — ${input.stageLabel}`;
 
   const result = await sendEmail({
-    from: APPROVAL_FROM,
+    from: resolveApprovalFrom(),
     to: recipient,
     subject,
     html: buildHtml(input),

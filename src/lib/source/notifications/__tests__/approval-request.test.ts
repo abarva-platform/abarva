@@ -31,12 +31,22 @@ const baseInput = {
   reviewUrl: 'https://app.abarva.ai/source/events/evt-123/approval',
 };
 
-test('sends from support@abarva.ai', async () => {
+test('sends from the Resend-verified subdomain support@send.abarva.ai by default', async () => {
+  delete process.env.SOURCE_APPROVAL_FROM_EMAIL;
   sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
   await sendApprovalRequestEmail(baseInput);
   expect(sendEmailMock).toHaveBeenCalledTimes(1);
   const msg = sendEmailMock.mock.calls[0][0];
-  expect(msg.from).toBe('support@abarva.ai');
+  expect(msg.from).toBe('support@send.abarva.ai');
+});
+
+test('SOURCE_APPROVAL_FROM_EMAIL overrides the sender (must be a verified domain)', async () => {
+  process.env.SOURCE_APPROVAL_FROM_EMAIL = 'sourcing@send.abarva.ai';
+  sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
+  await sendApprovalRequestEmail(baseInput);
+  const msg = sendEmailMock.mock.calls[0][0];
+  expect(msg.from).toBe('sourcing@send.abarva.ai');
+  delete process.env.SOURCE_APPROVAL_FROM_EMAIL;
 });
 
 test('recipient defaults to admin@abarva.ai when no approverEmail and no env', async () => {
