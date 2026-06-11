@@ -29,6 +29,7 @@ import type { StrategicMove } from "@/lib/programs/types.ui";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { GeneratePhasePackage } from "./GeneratePhasePackage";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -74,10 +75,20 @@ const PHASE_CONFIGS: Record<number, PhaseConfig> = {
     shortLabel: "P1 CHARTER",
     firstMessage: (move) => {
       const sponsorName = move.sponsor?.name ?? null;
+      const p1Steps = [
+        `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn it into a sponsor-committed charter. The five P1 steps:`,
+        "",
+        "1. Confirm sponsor commitment",
+        "2. Map stakeholders & decision rights",
+        "3. Lock success metrics + value range",
+        "4. Draft the charter document",
+        "5. Prepare for gate review",
+        "",
+      ].join("\n");
       if (sponsorName) {
-        return `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn that into a sponsor-committed charter. P1 has five steps: confirm sponsor commitment, map stakeholders, lock success metrics and value range, draft the charter document, and prepare for gate review. The first thing we need: has **${sponsorName}** formally committed to sponsoring this Move?`;
+        return `${p1Steps}First up: has **${sponsorName}** formally committed to sponsoring this Move?`;
       }
-      return `**${move.name}** has been promoted to P1 Charter. The origination brief is complete — now we turn that into a sponsor-committed charter. P1 has five steps: confirm sponsor commitment, map stakeholders, lock success metrics and value range, draft the charter document, and prepare for gate review. Who should sponsor this Move — which executive owns the outcome this Move is targeting?`;
+      return `${p1Steps}First up: who should sponsor this Move — which executive owns the outcome it targets?`;
     },
     suggestedPrompts: [
       "Walk me through the P1 gate criteria",
@@ -89,7 +100,7 @@ const PHASE_CONFIGS: Record<number, PhaseConfig> = {
     label: "P2 Discover & Diagnose",
     shortLabel: "P2 DISCOVER",
     firstMessage: (move) =>
-      `**${move.name}** has entered P2 Discover & Diagnose. The charter is signed — now we establish the evidence that will determine whether this move goes to P3 or stops here. P2 has five steps: map the current-state process, capture baseline metrics, identify root causes, assess data readiness, and make the continue/discontinue decision. Where do you want to start — process mapping or baseline data?`,
+      `**${move.name}** has entered P2 Discover & Diagnose. The charter is signed — now we establish the evidence that decides whether this Move goes to P3 or stops here. The five P2 steps:\n\n1. Map the current-state process\n2. Capture baseline metrics (attested, with owners)\n3. Identify root causes\n4. Assess data readiness\n5. Make the continue / discontinue decision\n\nWhere do you want to start — process mapping or baseline data?`,
     suggestedPrompts: [
       "Start with current-state process mapping",
       "What baseline metrics do we need to capture?",
@@ -111,7 +122,7 @@ const PHASE_CONFIGS: Record<number, PhaseConfig> = {
     label: "P4 Roadmap & Business Case",
     shortLabel: "P4 ROADMAP",
     firstMessage: (move) =>
-      `P3 design is signed off for **${move.name}**. P4 builds the plan and the economics.\n\nBefore we start the roadmap, one thing: we need to define the Tower metric plan — the measurable signals that confirm this program is succeeding post-handoff. Without it, we're measuring at gate, not at execution. We'll lock these alongside the business case, not after.\n\nP4 has four steps: roadmap construction from the P3 design, business case economics, Tower metric plan, and gate review. Ready to start with the roadmap?`,
+      `P3 design is signed off for **${move.name}**. P4 builds the plan and the economics. The four P4 steps:\n\n1. Roadmap construction from the P3 design\n2. Business case economics (derived from approved estimates/value only)\n3. Tower metric plan — the post-handoff success signals, locked alongside the business case, not after\n4. Gate review\n\nReady to start with the roadmap?`,
     suggestedPrompts: [
       "Start roadmap construction",
       "Help me draft the business case",
@@ -122,7 +133,7 @@ const PHASE_CONFIGS: Record<number, PhaseConfig> = {
     label: "P5 Mobilize & Handoff",
     shortLabel: "P5 MOBILIZE",
     firstMessage: (move) =>
-      `P4 gate passed for **${move.name}**. P5 begins now: mobilize the delivery team and assemble the Tower handoff package.\n\nP5 has five steps: team assembly and RACI confirmation, handoff package assembly, readiness verification, explicit Tower acceptance, and gate-out. P5 ends when a named Tower representative explicitly confirms the package is executable — not when the package is sent, not when Tower attends a session.\n\nFirst: let's confirm the delivery team. For each workstream from the P4 roadmap, we need a named delivery lead with confirmed availability. Ready to go through the workstreams?`,
+      `P4 gate passed for **${move.name}**. P5 begins now: mobilize delivery and hand off to Tower. The five P5 steps:\n\n1. Team assembly + RACI confirmation\n2. Handoff package assembly\n3. Readiness verification\n4. Explicit Tower acceptance — a named Tower representative confirms the package is executable (not "sent", not "attended a session")\n5. Gate-out\n\nFirst: the delivery team. For each P4 workstream we need a named delivery lead with confirmed availability. Ready to go through the workstreams?`,
     suggestedPrompts: [
       "Confirm the delivery team RACI",
       "Assemble the Tower handoff package",
@@ -630,8 +641,12 @@ export function StrategicMovePhaseClient({
                     : styles.bubbleUser
                 }
               >
-                {turn.text ||
-                  (streaming && turn.role === "assistant" ? "…" : "")}
+                {turn.role === "assistant" && turn.text ? (
+                  <AgentMarkdown text={turn.text} />
+                ) : (
+                  turn.text ||
+                  (streaming && turn.role === "assistant" ? "…" : "")
+                )}
               </div>
             ))}
           </div>
