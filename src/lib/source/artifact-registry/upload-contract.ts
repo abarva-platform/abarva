@@ -42,7 +42,9 @@ export function inferSourceArtifactFamily(args: {
   if (name.includes('rfp')) return 'rfp';
   if (name.includes('rfi')) return 'rfi';
   if (name.includes('scorecard') || name.includes('evaluation')) return 'scorecard';
-  if (name.includes('pricing') || name.includes('rate') || name.includes('commercial')) {
+  // 'rate' must be word-bounded: bare includes('rate') matched st-RATE-gy and
+  // sent every "strategy" file to pricing_workbook (audit F2 follow-on).
+  if (name.includes('pricing') || /\brate\b|rate[ _-]?card/.test(name) || name.includes('commercial')) {
     return 'pricing_workbook';
   }
   if (name.includes('meeting') || name.includes('minutes') || name.includes('notes')) {
@@ -55,6 +57,23 @@ export function inferSourceArtifactFamily(args: {
   if (name.includes('strategy')) return 'sourcing_strategy';
   if (name.includes('scope')) return 'scope_document';
   if (name.includes('transition') || name.includes('risk')) return 'transition_risk_register';
+
+  // Raw client evidence (contracts, inventories, telemetry, org/financial data)
+  // is NOT a stage deliverable. Falling through to the stage default would tag
+  // e.g. an incumbent-contract CSV as 'sourcing_strategy' and falsely satisfy
+  // the ART-* artifact-presence gate criterion for that family — a governance
+  // bug (audit F2, 2026-06-11). Tag it 'other'; the evidence-readiness sync
+  // (canvas-substrate/upload-sync) routes it to the right evidence requirement.
+  if (
+    /(contract|incumbent|msa|sow|renewal|agreement)/.test(name) ||
+    /(inventory|cmdb|portfolio)/.test(name) ||
+    /(sponsor|commitment|governance|mandate)/.test(name) ||
+    /(incident|ticket|volume|itsm|telemetry|servicenow)/.test(name) ||
+    /(roster|headcount|workforce|staffing)/.test(name) ||
+    /(budget|spend|run[ _-]?cost|gl[ _-]?export)/.test(name)
+  ) {
+    return 'other';
+  }
 
   switch (args.stageKey) {
     case 'strategy':

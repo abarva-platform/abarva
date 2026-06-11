@@ -232,7 +232,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
           </Link>
         )}
         {signedIn && <AdminInboxTopNavBadge />}
-        {signedIn ? (
+        {/* While Clerk is still resolving the session, auth state is
+            indeterminate — render neither chip nor "Sign in" (a signed-in user
+            briefly seeing "Sign in" reads as being logged out; audit F4). */}
+        {!isLoaded ? null : signedIn ? (
           <>
             <div
               title={displayName}
