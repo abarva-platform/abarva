@@ -169,6 +169,8 @@ export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
   >("idle");
   const [genMsg, setGenMsg] = useState<string>("");
 
+  const [phaseNum, setPhaseNum] = useState<number | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -177,6 +179,7 @@ export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
       });
       const j = await r.json();
       setPb(j.playbook ?? null);
+      setPhaseNum(typeof j.phase === "number" ? j.phase : null);
       setPhaseLabel(j.playbook?.label ?? "");
     } catch {
       setPb(null);
@@ -302,7 +305,9 @@ export function SessionPlaybookPanel({ moveId }: { moveId: string }) {
             marginTop: 10,
           }}
         >
-          No facilitated-session playbook for this phase yet.
+          {phaseNum === 0
+            ? "Facilitated sessions begin at P1 Charter. Advance this Move to P1 to see its session playbook (discussion guides, frameworks, capture templates, and alignment gates)."
+            : "No facilitated-session playbook for this phase yet."}
         </div>
       )}
       {!loading &&
