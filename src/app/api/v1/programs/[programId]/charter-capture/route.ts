@@ -11,6 +11,7 @@ import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { publishDeliverable } from "@/lib/programs/mutations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,6 +101,10 @@ export async function POST(
         structuredData: { capturedCharter: merged, savedFields: saved },
       });
       deliverableId = res.deliverableId;
+      // Move draft → in_review so the sponsor can sign it off (signOffDeliverable
+      // only matches status='in_review'). Without this the record exists but
+      // Approve returns not_found.
+      await publishDeliverable(ctx, programId, deliverableId);
     } catch (e) {
       // Charter JSONB is already saved (tracker truthful); surface the record
       // failure honestly rather than pretending the deliverable exists.
