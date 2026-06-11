@@ -91,5 +91,8 @@ describe('approval artifact', () => {
     expect(registered!.sourceOrigin).toBe('generated');
     expect(registered!.sourceFormat).toBe('html');
     expect((registered!.originalName as string)).toContain('rfp_design');
+    // playbook stage keys must map to the registry's stage vocabulary (DB CHECK):
+    // 'rfp_design' -> 'rfp_rfi_package'; an unmapped key 500s in prod (pre-flight find).
+    expect(registered!.stageKey).toBe('rfp_rfi_package');
   });
 });
