@@ -13,6 +13,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -321,20 +322,52 @@ const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
   ],
 };
 
-// ── P1 charter capture → save-key mapping ─────────────────────────────────────
+// ── Phase capture → save-key + gate-deliverable + orchestrate-key mapping ─────
 //
-// The five P1 capture cards (section ids) map 1:1 onto the snake_case keys the
-// charter-capture backend (POST .../charter-capture) accepts. Order matches the
-// five P1 capture slots.
+// The capture cards (section ids) map onto the snake_case keys the phase-capture
+// backend (POST .../phase-capture) accepts: the section id with hyphens→
+// underscores (e.g. "success-metrics" → "success_metrics", "rootcause-trace" →
+// "rootcause_trace"). No per-phase save-key table is needed — the transform is
+// uniform across phases and matches PHASE_CAPTURE.fields in the route.
+//
+// `deliverableTypeKey` is the deliverable type the phase gate checks signed_off
+// against (verified against governance.ts) — used to seed reload state from the
+// persisted Move. `orchestrateKey` is the orchestrate `key=` value for the
+// Generate step (verified present in the archetype deliverablePack).
+//
+//   Phase  Save deliverableTypeKey  Gate criterion / findDeliverable        orchestrateKey
+//   P1     charter                  charter_signed_off / 'charter'          program_charter
+//   P2     discovery_report         discovery_report_signed_off / …         discovery_report
+//   P3     design_spec              design_approved / 'design_spec','design'  ai_enabled_sdlc_architecture
+//   P4     business_case            business_case_approved / …              business_case
+//   P5     tower_handoff_plan       tower_handoff_plan_accepted (soft) / …  handoff_package
 
-const P1_SECTION_SAVE_KEY: Record<string, string> = {
-  sponsor: "sponsor",
-  stakeholders: "stakeholders",
-  "success-metrics": "success_metrics",
-  "value-range": "value_range",
-  scope: "scope",
+interface PhaseWorkflowConfig {
+  deliverableTypeKey: string;
+  orchestrateKey: string;
+}
+
+const PHASE_WORKFLOW: Record<number, PhaseWorkflowConfig> = {
+  1: { deliverableTypeKey: "charter", orchestrateKey: "program_charter" },
+  2: {
+    deliverableTypeKey: "discovery_report",
+    orchestrateKey: "discovery_report",
+  },
+  3: {
+    deliverableTypeKey: "design_spec",
+    orchestrateKey: "ai_enabled_sdlc_architecture",
+  },
+  4: { deliverableTypeKey: "business_case", orchestrateKey: "business_case" },
+  5: {
+    deliverableTypeKey: "tower_handoff_plan",
+    orchestrateKey: "handoff_package",
+  },
 };
-const P1_SECTION_IDS = Object.keys(P1_SECTION_SAVE_KEY);
+
+/** The phase-capture save key for a section id: hyphens → underscores. */
+function sectionSaveKey(sectionId: string): string {
+  return sectionId.replace(/-/g, "_");
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -510,12 +543,15 @@ function CollapsePanel({
   );
 }
 
-// ── P1 charter 4-step gated workflow ──────────────────────────────────────────
+// ── Phase 4-step gated capture workflow (P1–P5) ───────────────────────────────
 //
-// Founder-locked sequence: (1) capture all 5 → (2) Save the record (deterministic
-// POST, NOT chat) → (3) Approve the saved record (enabled only when all 5 saved)
+// Founder-locked sequence, generalized from the proven P1 charter workflow:
+// (1) capture all → (2) Save the record (deterministic POST to /phase-capture,
+// NOT chat) → (3) Approve the saved record (enabled only when all sections saved)
 // → (4) Generate the board-grade artifact from the approved record (enabled only
-// after approval). Each step is gated on the previous.
+// after approval). Each step is gated on the previous. Reload-safe: Save/Approve/
+// Generate eligibility is SEEDED from persisted Move data on mount so a refresh
+// keeps the user's place.
 
 type GenState =
   | { status: "idle" }
@@ -540,8 +576,14 @@ function CharterWorkflow({
     React.SetStateAction<Record<string, boolean>>
   >;
 }) {
-  // Editable textarea values, seeded from already-captured content so the three
-  // pre-filled slots prefill. Keyed by section id.
+  const workflow = PHASE_WORKFLOW[phaseNum];
+  const sectionIds = useMemo(
+    () => canvasSections.map((s) => s.id),
+    [canvasSections],
+  );
+
+  // Editable textarea values, seeded from already-captured content so pre-filled
+  // slots prefill. Keyed by section id.
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       capturedSections.map(({ section, content }) => [
@@ -551,52 +593,59 @@ function CharterWorkflow({
     ),
   );
 
-  // Save state
+  // The persisted gate deliverable for THIS phase, used to seed reload state.
+  const persistedDeliverable = move.deliverables.find(
+    (d) => d.typeKey === workflow?.deliverableTypeKey,
+  );
+
+  // Save state. RELOAD-SEED `allSaved` from persisted data: every section already
+  // carries captured content (sectionCapturedContent reads engagements.charter,
+  // which the Save route wrote) → Approve stays enabled after a refresh.
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
-  const [allFiveSaved, setAllFiveSaved] = useState(false);
-  // deliverableId from the save response, or seeded from an existing in-review
-  // charter deliverable on the Move so Approve works without re-saving.
+  const [allSaved, setAllSaved] = useState<boolean>(
+    () =>
+      capturedSections.length > 0 &&
+      capturedSections.every(({ content }) => content !== null),
+  );
+  // deliverableId from the save response, or RELOAD-SEEDED from the existing
+  // phase gate deliverable on the Move so Approve works without re-saving.
   const [deliverableId, setDeliverableId] = useState<string | null>(
-    () => move.deliverables.find((d) => d.typeKey === "charter")?.id ?? null,
+    () => persistedDeliverable?.id ?? null,
   );
 
-  // Approve state
+  // Approve state. RELOAD-SEED `approved` from the persisted deliverable status.
   const [approving, setApproving] = useState(false);
   const [approveError, setApproveError] = useState<string | null>(null);
   const [approved, setApproved] = useState<boolean>(
-    () =>
-      move.deliverables.find((d) => d.typeKey === "charter")?.status ===
-      "signed_off",
+    () => persistedDeliverable?.status === "signed_off",
   );
 
   // Generate state
   const [gen, setGen] = useState<GenState>({ status: "idle" });
 
-  const filledNow = P1_SECTION_IDS.filter((id) =>
-    (values[id] ?? "").trim(),
-  ).length;
+  const filledNow = sectionIds.filter((id) => (values[id] ?? "").trim()).length;
 
   const saveRecord = useCallback(async () => {
     setSaving(true);
     setSaveError(null);
     try {
       const items: Record<string, string> = {};
-      for (const id of P1_SECTION_IDS) {
+      for (const id of sectionIds) {
         const v = (values[id] ?? "").trim();
-        if (v) items[P1_SECTION_SAVE_KEY[id]] = v;
+        if (v) items[sectionSaveKey(id)] = v;
       }
-      const res = await fetch(`/api/v1/programs/${move.id}/charter-capture`, {
+      const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ phase: phaseNum, items }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         savedFields?: string[];
-        allFiveSaved?: boolean;
+        allSaved?: boolean;
         recordCreated?: boolean;
         deliverableId?: string;
         recordError?: string;
@@ -609,11 +658,11 @@ function CharterWorkflow({
         );
       }
       setSavedCount(data.savedFields?.length ?? 0);
-      setAllFiveSaved(Boolean(data.allFiveSaved));
+      setAllSaved(Boolean(data.allSaved));
       if (data.deliverableId) setDeliverableId(data.deliverableId);
       if (data.recordCreated === false && data.recordError) {
         setSaveError(
-          `Charter saved, but record not created: ${data.recordError}`,
+          `Inputs saved, but record not created: ${data.recordError}`,
         );
       }
     } catch (err) {
@@ -621,7 +670,7 @@ function CharterWorkflow({
     } finally {
       setSaving(false);
     }
-  }, [move.id, values]);
+  }, [move.id, phaseNum, sectionIds, values]);
 
   const approveRecord = useCallback(async () => {
     if (!deliverableId) {
@@ -631,10 +680,12 @@ function CharterWorkflow({
     setApproving(true);
     setApproveError(null);
     try {
-      const sponsorVal = (values.sponsor ?? "").trim();
-      const rationale = sponsorVal
-        ? `Sponsor committed: ${sponsorVal.slice(0, 160)}`
-        : "Charter record reviewed and approved.";
+      // Rationale draws on the first captured section (sponsor for P1, the
+      // phase's leading input otherwise); falls back to a generic attestation.
+      const leadVal = (values[sectionIds[0]] ?? "").trim();
+      const rationale = leadVal
+        ? `Record reviewed and approved — ${leadVal.slice(0, 160)}`
+        : "Phase record reviewed and approved.";
       const res = await fetch(
         `/api/v1/programs/${move.id}/deliverables/${deliverableId}/sign-off`,
         {
@@ -661,13 +712,14 @@ function CharterWorkflow({
     } finally {
       setApproving(false);
     }
-  }, [deliverableId, move.id, values.sponsor]);
+  }, [deliverableId, move.id, sectionIds, values]);
 
   const generateArtifact = useCallback(async () => {
     setGen({ status: "generating" });
     try {
+      const orchestrateKey = workflow?.orchestrateKey ?? "program_charter";
       const res = await fetch(
-        `/api/v1/programs/${move.id}/current-state/deliverable/orchestrate?key=program_charter&format=json&fresh=1`,
+        `/api/v1/programs/${move.id}/current-state/deliverable/orchestrate?key=${orchestrateKey}&format=json&fresh=1`,
         { credentials: "include" },
       );
       const data = (await res.json().catch(() => ({}))) as {
@@ -692,19 +744,19 @@ function CharterWorkflow({
         message: err instanceof Error ? err.message : "Generate failed",
       });
     }
-  }, [move.id]);
+  }, [move.id, workflow]);
 
   // Derived enable/disable:
   //  • Save: enabled unless a save is in flight.
-  //  • Approve: enabled only when all 5 are saved AND a deliverableId exists,
-  //    and not already approved / approving.
+  //  • Approve: enabled only when all sections are saved AND a deliverableId
+  //    exists, and not already approved / approving.
   //  • Generate: enabled only after approval, and not already generating.
-  const canApprove = allFiveSaved && Boolean(deliverableId) && !approved;
+  const canApprove = allSaved && Boolean(deliverableId) && !approved;
   const canGenerate = approved && gen.status !== "generating";
 
   const sequenceState = (n: 1 | 2 | 3): "done" | "active" | "" => {
-    if (n === 1) return approved || allFiveSaved ? "done" : "active";
-    if (n === 2) return approved ? "done" : allFiveSaved ? "active" : "";
+    if (n === 1) return approved || allSaved ? "done" : "active";
+    if (n === 2) return approved ? "done" : allSaved ? "active" : "";
     return gen.status === "done" ? "done" : approved ? "active" : "";
   };
   const stepClass = (n: 1 | 2 | 3) => {
@@ -797,8 +849,7 @@ function CharterWorkflow({
         className={styles.detailSection}
       >
         <div className={styles.detailSectionTitle}>
-          Charter workflow &mdash; {filledNow} of {canvasSections.length}{" "}
-          captured
+          Phase workflow &mdash; {filledNow} of {canvasSections.length} captured
         </div>
         <div className={styles.charterSequence}>
           {/* Step 1 — Save */}
@@ -810,12 +861,12 @@ function CharterWorkflow({
               onClick={() => void saveRecord()}
               disabled={saving}
             >
-              {saving ? "Saving…" : "Save charter record"}
+              {saving ? "Saving…" : "Save record"}
             </button>
             {savedCount !== null && !saveError && (
               <span className={styles.charterStepOk}>
                 Saved ✓ — {savedCount} of {canvasSections.length}
-                {allFiveSaved ? " · all 5 saved" : ""}
+                {allSaved ? " · all saved" : ""}
               </span>
             )}
             {saveError && (
@@ -823,7 +874,7 @@ function CharterWorkflow({
             )}
             {savedCount === null && !saveError && (
               <span className={styles.charterStepHint}>
-                Persists the 5 inputs to the backend.
+                Persists the {canvasSections.length} inputs to the backend.
               </span>
             )}
           </div>
@@ -848,18 +899,18 @@ function CharterWorkflow({
                 ? "Approved ✓"
                 : approving
                   ? "Approving…"
-                  : "Approve charter record"}
+                  : "Approve record"}
             </button>
             {approveError && (
               <span className={styles.charterStepError}>{approveError}</span>
             )}
             {!approved && !approveError && (
               <span className={styles.charterStepHint}>
-                {allFiveSaved
+                {allSaved
                   ? deliverableId
                     ? "Sign off the saved record."
                     : "Save the record first."
-                  : "Save all 5 inputs first."}
+                  : "Save all inputs first."}
               </span>
             )}
             {approved && !approveError && (
@@ -1658,7 +1709,7 @@ export function StrategicMovePhaseClient({
               open={isPanelOpen("capture")}
               onOpenChange={(open) => setPanelOpen("capture", open)}
             >
-              {phaseNum === 1 ? (
+              {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 ? (
                 <CharterWorkflow
                   move={move}
                   phaseNum={phaseNum}
@@ -1758,7 +1809,7 @@ export function StrategicMovePhaseClient({
                 <div className={styles.detailSectionTitle}>
                   Generate full package
                 </div>
-                {phaseNum === 1 && (
+                {PHASE_WORKFLOW[phaseNum] && canvasSections.length > 0 && (
                   <div className={styles.charterAdvancedNote}>
                     Manual / advanced path — the gated Save → Approve → Generate
                     sequence above is the primary route.
