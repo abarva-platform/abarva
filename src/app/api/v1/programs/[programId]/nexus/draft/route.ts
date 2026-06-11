@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       model: plan.model,
       maxTokens: 4096,
       aiEgress: {
-        tenantId: ctx.clientKey ?? ctx.clientId,
+        tenantId: ctx.clientId, // uuid-first: key fallback fails the audit uuid insert for non-canonical keys (class fix 2026-06-11)
         userId: ctx.userId,
         workflow: 'programs-nexus-draft-stream',
         dataClass: 'confidential',

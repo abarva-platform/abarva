@@ -80,7 +80,12 @@ export async function runDeliverableForTenant(
 
   // 3 · multi-pass generation through the audited egress (plan gate + quality gate inside)
   const result = await generate(req, {
-    tenantId: input.tenantClientKey,
+    // Egress identity must be the client UUID: the audit sink writes tenant_id (uuid),
+    // and policy resolution falls back to the raw string when a non-canonical client
+    // key (e.g. 'skyharbor' vs tenant_key 'skyharbor-air') doesn't match — which then
+    // fails the uuid insert ("invalid input syntax for type uuid"). Class bug, found
+    // live by clicking the Generate button (2026-06-11).
+    tenantId: input.clientId,
     userId: input.userId,
     ...(input.model ? { model: input.model } : {}),
   });
