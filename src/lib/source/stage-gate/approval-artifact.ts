@@ -1,19 +1,34 @@
-// Approval artifact — render a Maestro ApprovalRecord to HTML and persist it durably in
-// the Source File Cabinet (group 'approval'), so every gate decision is recoverable with
-// its rationale, gaps, risks, follow-ups, and readiness snapshot.
+// Approval artifact — render a Maestro ApprovalRecord to HTML and persist it durably
+// through the EXISTING source artifact registry (source_artifacts table + the
+// `source-artifacts` blob bucket), so it appears in the EVENT DOCUMENTS shelf alongside
+// every other event artifact.
+//
+// Seam-sweep fix (2026-06-11): the first version persisted via the new File-Cabinet
+// repository, whose schema collides with the pre-existing `source_artifacts` table —
+// the insert would fail in production. This version uses the real registry. (Lesson:
+// click the write seam, not just the read; sweep the class, not the instance.)
 
 import 'server-only';
 
-import { persistSourceArtifact as defaultPersist } from '@/lib/source/file-cabinet/service';
-import type { SourceArtifactRecord } from '@/lib/source/file-cabinet/types';
+import { createHash, randomUUID } from 'node:crypto';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
+import {
+  buildSourceArtifactBlobPath,
+  registerSourceArtifactUpload,
+} from '@/lib/source/artifact-registry';
+import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry';
+import type { SourceStageKey } from '@/lib/source/types';
 import type { ApprovalRecord } from './types';
+
+const STORAGE_BUCKET = 'source-artifacts';
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function renderApprovalRecordHtml(rec: ApprovalRecord): string {
-  const list = (items: string[]) => (items.length ? `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : '<p style="color:#9a9a9a">(none)</p>');
+  const list = (items: string[]) =>
+    items.length ? `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : '<p style="color:#9a9a9a">(none)</p>';
   const follow = rec.followUpItems.length
     ? `<ul>${rec.followUpItems.map((f) => `<li>${esc(f.item)} — <b>${esc(f.owner)}</b></li>`).join('')}</ul>`
     : '<p style="color:#9a9a9a">(none)</p>';
@@ -43,28 +58,68 @@ export function renderApprovalRecordHtml(rec: ApprovalRecord): string {
 }
 
 export interface PersistApprovalDeps {
-  persist?: typeof defaultPersist;
+  /** injectable for tests. */
+  upload?: (bucket: string, path: string, bytes: Buffer, opts: { contentType: string; upsert: boolean }) => Promise<void>;
+  register?: typeof registerSourceArtifactUpload;
 }
 
+/**
+ * Persist the approval record durably: HTML bytes → `source-artifacts` blob bucket →
+ * row in the existing `source_artifacts` registry (family `decision_brief`, generated).
+ * It then renders in the EVENT DOCUMENTS shelf like every other artifact.
+ */
 export async function persistApprovalArtifact(
   rec: ApprovalRecord,
-  opts: { clientId: string; tenantKey: string; sourceEventId: string; generatedBy?: string },
+  opts: {
+    tenantKey: string;
+    sourceEventId: string;
+    /** persisted source_events.id row when known (FK linkage). */
+    sourceEventRowId?: string | null;
+    generatedBy?: string;
+  },
   deps: PersistApprovalDeps = {},
-): Promise<SourceArtifactRecord> {
-  const persist = deps.persist ?? defaultPersist;
+): Promise<SourceArtifactRegistryRecord> {
+  const upload =
+    deps.upload ??
+    (async (bucket: string, path: string, bytes: Buffer, o: { contentType: string; upsert: boolean }) => {
+      await getObjectStorageAdapter().upload(bucket, path, bytes, {
+        contentType: o.contentType,
+        cacheControl: 'private, max-age=0',
+        upsert: o.upsert,
+      });
+    });
+  const register = deps.register ?? registerSourceArtifactUpload;
+
   const html = renderApprovalRecordHtml(rec);
-  return persist({
-    clientId: opts.clientId,
+  const bytes = Buffer.from(html, 'utf8');
+  const artifactId = randomUUID();
+  const filename = `gate_approval_${rec.stageKey}_${rec.approvedAt.replace(/[:.]/g, '-')}.html`;
+  const blobUri = buildSourceArtifactBlobPath({
     tenantKey: opts.tenantKey,
     sourceEventId: opts.sourceEventId,
-    artifactGroup: 'approval',
-    artifactType: `gate_approval__${rec.stageKey}`,
-    sourcingStage: rec.stageKey,
-    title: `Gate Approval — ${rec.stageName}`,
-    fileName: `gate_approval_${rec.stageKey}.html`,
-    fileFormat: 'html',
-    bytes: Buffer.from(html, 'utf8'),
-    status: 'approved',
-    generatedBy: opts.generatedBy,
+    artifactId,
+    filename,
+  });
+
+  await upload(STORAGE_BUCKET, blobUri, bytes, { contentType: 'text/html; charset=utf-8', upsert: false });
+
+  return register({
+    artifactId,
+    tenantKey: opts.tenantKey,
+    sourceEventId: opts.sourceEventId,
+    ...(opts.sourceEventRowId ? { sourceEventRowId: opts.sourceEventRowId } : {}),
+    stageKey: rec.stageKey as SourceStageKey,
+    artifactFamily: 'decision_brief',
+    artifactKind: 'gate_approval_record',
+    sourceOrigin: 'generated',
+    sourceFormat: 'html',
+    originalName: filename,
+    blobUri,
+    uploaderUserId: opts.generatedBy ?? rec.approver,
+    mimeType: 'text/html',
+    sizeBytes: bytes.length,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+    dataClassification: 'Internal',
+    createdBy: opts.generatedBy ?? rec.approver,
   });
 }
