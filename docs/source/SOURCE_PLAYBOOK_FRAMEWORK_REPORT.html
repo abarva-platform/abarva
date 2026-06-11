@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Source Playbook & Stage-Gate Framework</title><style>
+body{background:#F8F7F4;color:#1a1a1a;font-family:'DM Sans',Inter,Segoe UI,sans-serif;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 28px 90px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:400;color:#0C1A3A}h1{font-size:31px}h2{font-size:21px;border-bottom:1px solid #e4e1da;padding-bottom:6px;margin-top:34px}h3{font-size:16px;margin-top:22px}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}
+table{border-collapse:collapse;width:100%;margin:12px 0;background:#fff;border:1px solid #e4e1da;font-size:13px}
+th,td{border:1px solid #e4e1da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#0C1A3A;color:#fff}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.ok{background:#dff3e4;color:#1f7a3d}.warn{background:#fdf2d6;color:#8a6d1a}.info{background:#e3eef6;color:#1d5e87}
+.lead{color:#706D66;font-size:15px}
+</style></head><body><div class="wrap">
+<h1>AbarVa Source — Playbook & Stage-Gate Framework</h1>
+<p class="lead">How Source behaves like a senior sourcing engagement workbench: it shows the full professional standard, exposes gaps and the risk of proceeding, and lets the Maestro/Admin advance with gaps — transparently — without ever faking completeness.</p>
+
+<h2>1 · Design principle</h2>
+<p>Source is not a generic RFP generator. It is a governed sourcing decision platform. The product states: <em>"Here is what a best-practice sourcing event should include. Here is what you have. Here is what is missing. Here is the risk of proceeding. Maestro can approve moving forward with gaps, and we carry those gaps forward transparently."</em> Gaps are allowed; gaps are never hidden; completeness is never faked.</p>
+
+<h2>2 · The universal Source spine</h2>
+<p>Every Source event follows a common 14-step spine (origination → archetype classification → intake/evidence readiness → current-state baseline → sourcing strategy → RFP design → vendor engagement → proposal intake → evaluation → commercial/pricing → negotiation → executive recommendation → contracting handoff → post-award controls). Each archetype specializes the evidence, sessions, RFP sections, pricing model, evaluation criteria, negotiation levers, deliverables, and gates — no single hardcoded RFP flow.</p>
+
+<h2>3 · Event archetypes</h2>
+<p>Source is built around <code>SourceEventArchetype</code> (merged in #3374). The first fully-implemented archetype is <b>AMS_IT_OUTSOURCING</b>; the framework is designed to extend to application modernization, cloud migration, ERP/SI selection, data/AI platform sourcing, GenAI/agentic platform sourcing, cybersecurity services, SaaS selection, BPO, vendor consolidation, renewal/renegotiation, and staff augmentation.</p>
+
+<h2>4 · The three-level Maestro Stage-Gate (PR #3391)</h2>
+<p>Every stage gate exposes three levels, computed by <code>assessStageGate</code>:</p>
+<table>
+<tr><th>Level</th><th>Meaning</th><th>In code</th></tr>
+<tr><td><b>Recommended standard</b></td><td>What good looks like — the full set of evidence, sessions, reviews, decisions, and artifacts.</td><td>all <code>StageGateRequirement</code>s</td></tr>
+<tr><td><b>Minimum-viable gate</b></td><td>The smallest responsible bar to advance without an override.</td><td>requirements with <code>tier: 'minimum_viable'</code></td></tr>
+<tr><td><b>Maestro override</b></td><td>Advance despite gaps — with rationale, gaps acknowledged, risks accepted, follow-ups, and a preliminary label.</td><td><code>applyMaestroDecision</code></td></tr>
+</table>
+
+<h3>Gate statuses</h3>
+<p><span class="pill ok">ready</span> <span class="pill warn">ready_with_gaps</span> <span class="pill warn">preliminary_only</span> <span class="pill info">client_to_complete</span> <span class="pill warn">needs_review</span> <span class="pill warn">maestro_override_approved</span> <span class="pill" style="background:#f6dedc;color:#b3261e">blocked</span></p>
+
+<h3>Hard rules enforced in code</h3>
+<ul>
+<li>Advancing past gaps <b>requires a rationale</b> (no silent approval) — the gate-decision API returns 422 otherwise.</li>
+<li>An artifact is <b>never</b> marked final / issue-ready while gaps exist — a plain "approve" with gaps is honestly recorded as <code>maestro_override_approved</code> with a <code>preliminary</code> label.</li>
+<li>Gaps + risks are <b>carried forward</b> (defaulted from the assessment if the approver didn't restate them).</li>
+<li>Every decision yields a persistable <code>ApprovalRecord</code> with a readiness snapshot.</li>
+</ul>
+
+<h2>5 · AMS 12-stage gate playbook</h2>
+<table>
+<tr><th>#</th><th>Stage</th><th>Minimum-viable bar (examples)</th></tr>
+<tr><td>1</td><td>Origination & Event Framing</td><td>event type confirmed; directional scope agreed</td></tr>
+<tr><td>2</td><td>Evidence Readiness & Current-State Baseline</td><td>application inventory + service-tower scope agent_ready</td></tr>
+<tr><td>3</td><td>Sourcing Strategy</td><td>strategy session held; commercial model chosen</td></tr>
+<tr><td>4</td><td>RFP Package Design</td><td>all sections drafted; pricing template</td></tr>
+<tr><td>5</td><td>Vendor Briefing / Market Engagement</td><td>discussion guide; Q&A process</td></tr>
+<tr><td>6</td><td>Proposal Intake & Normalization</td><td>proposals received + normalized</td></tr>
+<tr><td>7</td><td>Evaluation & Scoring</td><td>scoring model approved; evaluators scored</td></tr>
+<tr><td>8</td><td>Commercial & Pricing Analysis</td><td>pricing normalized & compared</td></tr>
+<tr><td>9</td><td>Negotiation / BAFO Strategy</td><td>negotiation strategy memo</td></tr>
+<tr><td>10</td><td>Award Recommendation</td><td>recommendation drafted; evaluation outcome finalized</td></tr>
+<tr><td>11</td><td>Contracting Handoff</td><td>handoff pack</td></tr>
+<tr><td>12</td><td>Post-Award Controls</td><td>governance & SLA controls stood up</td></tr>
+</table>
+
+<h2>6 · Nexus/Sentinel gate guidance</h2>
+<p><code>buildGateGuidance</code> turns an assessment into senior-advisor language — never just "approved" / "blocked": <em>"The full standard for RFP Package Design is 5 items; 2 are met (40%). Missing: final evaluation weights, procurement review, legal review. If you proceed, these stay preliminary and cannot be marked issue-ready: evaluation_criteria, contracting_terms. You may proceed with Maestro approval, but the affected deliverables must remain preliminary and the gaps are carried forward."</em></p>
+
+<h2>7 · Components & tests</h2>
+<table>
+<tr><th>Capability</th><th>Module</th><th>PR</th></tr>
+<tr><td>Event archetype + AMS + evidence readiness + RFP canon</td><td><code>src/lib/source/archetypes/</code></td><td>#3374</td></tr>
+<tr><td>4-mode RFP sections, AMS 16-section map, intake registry, Nexus queue, capture, trace</td><td><code>src/lib/source/rfp-readiness/</code></td><td>#3381</td></tr>
+<tr><td>Stage-gate model + AMS 12 stages + guidance</td><td><code>src/lib/source/stage-gate/</code></td><td>#3391</td></tr>
+<tr><td>File Cabinet / Artifact Vault</td><td><code>src/lib/source/file-cabinet/</code></td><td>#3390</td></tr>
+<tr><td>Wiring: generator→cabinet, completion feeder, gate-decision→approval</td><td>bridge / feeder / approval-artifact + routes</td><td>#3393</td></tr>
+<tr><td>Maestro Gate UI</td><td><code>GateDecisionPanel</code></td><td>#3394</td></tr>
+</table>
+
+<h2>8 · Remaining</h2>
+<ul>
+<li>Bind the completion feeder to live evidence-readiness + File Cabinet artifact presence (auto-derived completion).</li>
+<li>Extend the stage-gate playbook + archetype packs beyond AMS to the full archetype set.</li>
+<li>SkyHarbor AMS full live proof (deploy-gated) and the proof report.</li>
+</ul>
+</div></body></html>

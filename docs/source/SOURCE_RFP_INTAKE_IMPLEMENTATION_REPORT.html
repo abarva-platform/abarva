@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Source RFP, Intake & Artifact Implementation</title><style>
+body{background:#F8F7F4;color:#1a1a1a;font-family:'DM Sans',Inter,Segoe UI,sans-serif;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 28px 90px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:400;color:#0C1A3A}h1{font-size:31px}h2{font-size:21px;border-bottom:1px solid #e4e1da;padding-bottom:6px;margin-top:34px}h3{font-size:16px;margin-top:22px}
+code{background:#efece5;padding:1px 5px;border-radius:4px;font-size:12px}
+table{border-collapse:collapse;width:100%;margin:12px 0;background:#fff;border:1px solid #e4e1da;font-size:13px}
+th,td{border:1px solid #e4e1da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#0C1A3A;color:#fff}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.ok{background:#dff3e4;color:#1f7a3d}.warn{background:#fdf2d6;color:#8a6d1a}.info{background:#e3eef6;color:#1d5e87}.bad{background:#f6dedc;color:#b3261e}
+.lead{color:#706D66;font-size:15px}
+</style></head><body><div class="wrap">
+<h1>Source — RFP, Evidence Intake & Artifact Implementation</h1>
+<p class="lead">How a sourcing event moves from missing evidence to a board-grade, citation-disciplined, durably-stored RFP package — with every section honestly labelled.</p>
+
+<h2>1 · The 4-mode RFP section model (#3381)</h2>
+<p>Every RFP/RFx section resolves to one of four modes, so Source never silently ships a weak section:</p>
+<table>
+<tr><th>Mode</th><th>Meaning</th></tr>
+<tr><td><b>AUTO-GOVERNED</b></td><td>Generated from governed, cited client evidence.</td></tr>
+<tr><td><b>AUTO-TEMPLATE</b></td><td>Standard RFP/procurement boilerplate — polished by Claude, marked review-required.</td></tr>
+<tr><td><b>ELICIT</b></td><td>Missing client-specific input — Nexus asks / requests upload or template.</td></tr>
+<tr><td><b>CLIENT-COMPLETE</b></td><td>Client / procurement / legal / commercial decision — AbarVa must not invent.</td></tr>
+</table>
+<p>Each section carries an explicit label: <span class="pill ok">issue-ready</span> <span class="pill warn">preliminary</span> <span class="pill bad">evidence missing</span> <span class="pill info">client to complete</span> <span class="pill warn">legal review required</span> <span class="pill warn">procurement review required</span> <span class="pill warn">pricing review required</span> <span class="pill bad">blocked</span></p>
+
+<h2>2 · Evidence readiness ladder</h2>
+<p>Evidence is only truly ready when it is current, tenant-scoped, fact-backed, indexed, retrievable, citation-ready, promotion-evaluated, and context-bundle-proven. "Chunks exist", "records exist", "facts exist", and "indexed" are each insufficient. <code>agent_ready</code> is earned, never assumed.</p>
+
+<h2>3 · AMS evidence families & completion paths (#3381)</h2>
+<p>Every AMS evidence family has concrete completion paths — upload source file, download template & upload, answer in chat, mark client-to-complete, mark assumption (preliminary), or skip. 14 families: ticket/incident volumes, SLA baseline, labor/staffing, run-cost, vendor contracts, application inventory, infra/cloud estate, IT/retained org, transition constraints, security/compliance, evaluation criteria (client-complete), procurement timeline, legal terms (client-complete/legal-review), pricing preferences.</p>
+
+<h2>4 · Captured intake → governed context</h2>
+<p>Captured answers/uploads become governed objects — never chat-only, never auto-promoted to <code>agent_ready</code>. Chat answers are <code>user_attested / captured</code>; uploads are <code>promotion_candidate</code> after commit+index; promotion to agent_ready requires the governed ladder (verified live on SkyHarbor: an uploaded ticket-volume family was committed → governed-promoted → the affected current-state section lifted evidence_missing → issue_ready).</p>
+
+<h2>5 · Board-grade document generation</h2>
+<p>Major deliverables use the Deliverable Intelligence Orchestrator: a six-pass flow (architect → evidence-grounding → full-draft → red-team → board-grade-rewrite → render-package) on <code>claude-opus-4-8</code>, given both the governed evidence and an artifact-intelligence brief. Claude is told to use expert sourcing judgment to improve structure/exhibits/tables, but every client-specific fact must be cited <code>[n]</code>, marked an approved assumption, or a placeholder. A quality gate blocks export on unsupported claims, leaked internal ids, missing source register / decision / recommendation / risk table, or tiny formatting.</p>
+<h3>Live proof</h3>
+<p>On SkyHarbor AMS the live run produced a 39,356-char board-grade RFP that self-organized into an internal decision memo / bidder-facing RFP / internal annexes (disclose-vs-withhold tiering); incumbent spend was excluded from the bidder-facing evidence. The real quality gate <b>passed</b>: 0 unsupported claims, 0 internal leaks, source register + decision + recommendation + risk table present, 25 client-to-complete items.</p>
+
+<h2>6 · Durable storage — File Cabinet / Artifact Vault (#3390, #3393)</h2>
+<p>No artifact exists only in Downloads/browser. Every generated deliverable, uploaded evidence file, template, session artifact, and approval packet is uploaded to <b>Azure Blob</b> (canonical paths under <code>source-events/{tenant}/{event}/…</code>), registered in the <code>source_artifacts</code> Postgres table, and surfaced in the per-event File Cabinet UI — grouped, versioned (regeneration supersedes; history preserved), and re-downloadable. The generator→cabinet bridge persists DOCX + HTML preview + Excel companion as independently-versioned artifacts; Maestro approvals persist as durable approval artifacts.</p>
+
+<h2>7 · Citation discipline & context bundle trace</h2>
+<p>Every generation emits a context-bundle trace (evidence requirements resolved, eligible vs missing families, retrieval results, current vs superseded fact counts, citation-ready count, confidence/source-basis distributions, grounding status, model-input hash, claims detected/supported/unsupported, tenant-leakage status). Internal source ids/tags never appear in the body; the source register exposes only label + family + confidence + as-of.</p>
+
+<h2>8 · Status</h2>
+<table>
+<tr><th>Capability</th><th>State</th></tr>
+<tr><td>4-mode sections + AMS 16-section map + intake registry + Nexus queue + capture + trace</td><td><span class="pill ok">merged #3381</span></td></tr>
+<tr><td>Board-grade multi-pass generation + renderers + async + live proof</td><td><span class="pill ok">merged</span></td></tr>
+<tr><td>File Cabinet (Blob + registry + versioning + UI) + generator bridge</td><td><span class="pill ok">merged #3390/#3393</span></td></tr>
+<tr><td>Live evidence-readiness → section/gate auto-derivation</td><td><span class="pill warn">follow-up</span></td></tr>
+<tr><td>SkyHarbor full live proof report</td><td><span class="pill warn">deploy-gated</span></td></tr>
+</table>
+</div></body></html>
