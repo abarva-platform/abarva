@@ -521,6 +521,16 @@ export interface StrategicMove {
   mapLabel: string;
   createdAt: string;
   updatedAt: string;
+  // Manage Moves: lifecycle + archive provenance, surfaced so the manage
+  // surface can render the Archived filter and the archive metadata without a
+  // second read. `lifecycleState === 'archived'` ⇒ the Move is archived.
+  // Optional: only the Manage Moves read path populates them; other producers
+  // (and test fixtures) may omit them.
+  lifecycleState?: string | null;
+  archivedAt?: string | null;
+  archiveReason?: string | null;
+  archiveExplanation?: string | null;
+  archivedFromState?: string | null;
 }
 
 export interface StrategicMovePortfolio {

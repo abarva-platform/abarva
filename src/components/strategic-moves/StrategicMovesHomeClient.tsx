@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useMemo, useState, useTransition } from 'react';
-import styles from './StrategicMoves.module.css';
-import type { StrategicMovePortfolio } from '@/lib/programs/types.ui';
+import Link from "next/link";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import styles from "./StrategicMoves.module.css";
+import type { StrategicMovePortfolio } from "@/lib/programs/types.ui";
 import type {
   StrategicMovesListView,
   StrategicMovesSort,
-} from '@/lib/programs/strategic-moves-preferences';
-import { SHELL } from '@/lib/shell/shell-tokens';
+} from "@/lib/programs/strategic-moves-preferences";
+import { SHELL } from "@/lib/shell/shell-tokens";
 
 /* Scatter view needs enough captured value data to be meaningful.
  * Below this ratio the chart collapses to the "unknown lane" and the
@@ -16,12 +16,12 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.3;
 
 const PHASE_AXIS: Array<{ code: string; name: string }> = [
-  { code: 'P0', name: 'Originate' },
-  { code: 'P1', name: 'Charter' },
-  { code: 'P2', name: 'Diagnose' },
-  { code: 'P3', name: 'Design' },
-  { code: 'P4', name: 'Roadmap' },
-  { code: 'P5', name: 'Mobilize' },
+  { code: "P0", name: "Originate" },
+  { code: "P1", name: "Charter" },
+  { code: "P2", name: "Diagnose" },
+  { code: "P3", name: "Design" },
+  { code: "P4", name: "Roadmap" },
+  { code: "P5", name: "Mobilize" },
 ];
 
 interface Props {
@@ -30,15 +30,20 @@ interface Props {
   initialSort: StrategicMovesSort;
 }
 
-function moveValueScore(move: StrategicMovePortfolio['moves'][number]): number | null {
-  if (move.valueAtStake.projected?.high !== undefined) return move.valueAtStake.projected.high;
-  if (move.valueAtStake.verified?.amount !== undefined) return move.valueAtStake.verified.amount;
+function moveValueScore(
+  move: StrategicMovePortfolio["moves"][number],
+): number | null {
+  if (move.valueAtStake.projected?.high !== undefined)
+    return move.valueAtStake.projected.high;
+  if (move.valueAtStake.verified?.amount !== undefined)
+    return move.valueAtStake.verified.amount;
   return null;
 }
 
 function formatValueAtStake(amountUsd: number): string {
-  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return '$—';
-  if (amountUsd >= 1_000_000_000) return `$${(amountUsd / 1_000_000_000).toFixed(1)}B`;
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return "$—";
+  if (amountUsd >= 1_000_000_000)
+    return `$${(amountUsd / 1_000_000_000).toFixed(1)}B`;
   if (amountUsd >= 1_000_000) return `$${Math.round(amountUsd / 1_000_000)}M`;
   if (amountUsd >= 1_000) return `$${Math.round(amountUsd / 1_000)}K`;
   return `$${Math.round(amountUsd).toLocaleString()}`;
@@ -50,10 +55,10 @@ function phaseNumber(value: string): number {
 }
 
 function statusRank(value: string): number {
-  if (value === 'gate_blocked') return 0;
-  if (value === 'awaiting_decision') return 1;
-  if (value === 'idle') return 2;
-  if (value === 'on_track') return 3;
+  if (value === "gate_blocked") return 0;
+  if (value === "awaiting_decision") return 1;
+  if (value === "idle") return 2;
+  if (value === "on_track") return 3;
   return 4;
 }
 
@@ -62,31 +67,39 @@ export function StrategicMovesHomeClient({
   initialListView,
   initialSort,
 }: Props) {
-  const [listView, setListView] = useState<StrategicMovesListView>(initialListView);
+  const [listView, setListView] =
+    useState<StrategicMovesListView>(initialListView);
   const [sort, setSort] = useState<StrategicMovesSort>(initialSort);
   const [, startTransition] = useTransition();
 
-  function persist(nextListView: StrategicMovesListView, nextSort: StrategicMovesSort) {
+  function persist(
+    nextListView: StrategicMovesListView,
+    nextSort: StrategicMovesSort,
+  ) {
     startTransition(() => {
-      void fetch('/api/v1/users/me/preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ strategicMoves: { listView: nextListView, sort: nextSort } }),
+      void fetch("/api/v1/users/me/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          strategicMoves: { listView: nextListView, sort: nextSort },
+        }),
       });
     });
   }
 
   const sortedMoves = useMemo(() => {
     const copy = [...portfolio.moves];
-    if (sort === 'value') {
+    if (sort === "value") {
       copy.sort((a, b) => {
         const av = a.valueAtStake.projected?.high ?? 0;
         const bv = b.valueAtStake.projected?.high ?? 0;
         return bv - av;
       });
-    } else if (sort === 'phase') {
-      copy.sort((a, b) => phaseNumber(a.phaseLabel) - phaseNumber(b.phaseLabel));
-    } else if (sort === 'status') {
+    } else if (sort === "phase") {
+      copy.sort(
+        (a, b) => phaseNumber(a.phaseLabel) - phaseNumber(b.phaseLabel),
+      );
+    } else if (sort === "status") {
       copy.sort((a, b) => statusRank(a.status.key) - statusRank(b.status.key));
     } else {
       copy.sort((a, b) => a.name.localeCompare(b.name));
@@ -95,7 +108,9 @@ export function StrategicMovesHomeClient({
   }, [portfolio.moves, sort]);
 
   const mapStats = useMemo(() => {
-    const values = sortedMoves.map(moveValueScore).filter((v): v is number => v !== null);
+    const values = sortedMoves
+      .map(moveValueScore)
+      .filter((v): v is number => v !== null);
     const min = values.length ? Math.min(...values) : 0;
     const max = values.length ? Math.max(...values) : 0;
     return {
@@ -108,23 +123,26 @@ export function StrategicMovesHomeClient({
 
   const scatterAvailable =
     sortedMoves.length > 0 &&
-    mapStats.capturedCount / sortedMoves.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
+    mapStats.capturedCount / sortedMoves.length >=
+      SCATTER_VALUE_COVERAGE_THRESHOLD;
 
   useEffect(() => {
-    if (!scatterAvailable && listView === 'scatter') {
-      setListView('cards');
-      persist('cards', sort);
+    if (!scatterAvailable && listView === "scatter") {
+      setListView("cards");
+      persist("cards", sort);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scatterAvailable]);
 
   const totalCapturedValue = useMemo(
-    () => sortedMoves.reduce((sum, move) => sum + (moveValueScore(move) ?? 0), 0),
+    () =>
+      sortedMoves.reduce((sum, move) => sum + (moveValueScore(move) ?? 0), 0),
     [sortedMoves],
   );
   const phaseCounts = useMemo(() => {
     const counts: Record<number, number> = {};
-    for (const move of sortedMoves) counts[move.currentPhase] = (counts[move.currentPhase] ?? 0) + 1;
+    for (const move of sortedMoves)
+      counts[move.currentPhase] = (counts[move.currentPhase] ?? 0) + 1;
     return counts;
   }, [sortedMoves]);
 
@@ -133,9 +151,14 @@ export function StrategicMovesHomeClient({
       <div className={styles.page}>
         <div className={styles.topbar}>
           <h1 className={styles.pageTitle}>Strategic Moves</h1>
-          <Link className={styles.newMove} href="/strategic-moves/new">
-            + New Move
-          </Link>
+          <div className={styles.topbarActions}>
+            <Link className={styles.manageMoves} href="/strategic-moves/manage">
+              Manage Moves
+            </Link>
+            <Link className={styles.newMove} href="/strategic-moves/new">
+              + New Move
+            </Link>
+          </div>
         </div>
         <StrategicMovesEmptyState />
       </div>
@@ -146,9 +169,14 @@ export function StrategicMovesHomeClient({
     <div className={styles.page}>
       <div className={styles.topbar}>
         <h1 className={styles.pageTitle}>Strategic Moves</h1>
-        <Link className={styles.newMove} href="/strategic-moves/new">
-          + New Move
-        </Link>
+        <div className={styles.topbarActions}>
+          <Link className={styles.manageMoves} href="/strategic-moves/manage">
+            Manage Moves
+          </Link>
+          <Link className={styles.newMove} href="/strategic-moves/new">
+            + New Move
+          </Link>
+        </div>
       </div>
 
       <section className={styles.ribbon} aria-label="Portfolio summary">
@@ -156,8 +184,12 @@ export function StrategicMovesHomeClient({
           <span className={styles.ribbonNum}>{portfolio.counts.total}</span>
           <span className={styles.ribbonLbl}>Moves</span>
         </div>
-        <div className={`${styles.ribbonSeg} ${portfolio.counts.needAttention > 0 ? styles.ribbonSegAttn : ''}`}>
-          <span className={styles.ribbonNum}>{portfolio.counts.needAttention}</span>
+        <div
+          className={`${styles.ribbonSeg} ${portfolio.counts.needAttention > 0 ? styles.ribbonSegAttn : ""}`}
+        >
+          <span className={styles.ribbonNum}>
+            {portfolio.counts.needAttention}
+          </span>
           <span className={styles.ribbonLbl}>Need attention</span>
         </div>
         <div className={styles.ribbonSeg}>
@@ -165,7 +197,9 @@ export function StrategicMovesHomeClient({
           <span className={styles.ribbonLbl}>On track</span>
         </div>
         <div className={styles.ribbonSeg}>
-          <span className={styles.ribbonNum}>{formatValueAtStake(totalCapturedValue)}</span>
+          <span className={styles.ribbonNum}>
+            {formatValueAtStake(totalCapturedValue)}
+          </span>
           <span className={styles.ribbonLbl}>At stake</span>
         </div>
         <div className={styles.ribbonMeta}>Live</div>
@@ -174,12 +208,19 @@ export function StrategicMovesHomeClient({
       {portfolio.needAttentionMoves.length > 0 ? (
         <div className={styles.attnDrilldown}>
           {portfolio.needAttentionMoves.map((row) => (
-            <Link className={styles.attnRow} key={row.id} href={`/strategic-moves/${row.id}`} prefetch={false}>
+            <Link
+              className={styles.attnRow}
+              key={row.id}
+              href={`/strategic-moves/${row.id}`}
+              prefetch={false}
+            >
               <span className={styles.attnBranch}>└─</span>
               <span className={styles.attnBody}>
                 <span className={styles.attnMoveId}>{row.displayCode}</span>
                 <span className={styles.attnSep}>·</span>
-                <span className={styles.attnText}>{row.statusDescription || row.statusText}</span>
+                <span className={styles.attnText}>
+                  {row.statusDescription || row.statusText}
+                </span>
               </span>
               <span className={styles.attnArrow}>→</span>
             </Link>
@@ -192,25 +233,37 @@ export function StrategicMovesHomeClient({
           <div>
             <h2 className={styles.mapTitleH2}>Portfolio map</h2>
             <div className={styles.mapTitleSub}>
-              Phase × value at stake.{' '}
-              {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+              Phase × value at stake. {portfolio.counts.total}{" "}
+              {portfolio.counts.total === 1 ? "move" : "moves"} in flight.
             </div>
           </div>
           <div className={styles.mapLegend} aria-label="Status legend">
             <span className={styles.mapLegendItem}>
-              <i className={`${styles.legendDot} ${styles.legendRed}`} aria-hidden />
+              <i
+                className={`${styles.legendDot} ${styles.legendRed}`}
+                aria-hidden
+              />
               Needs attention
             </span>
             <span className={styles.mapLegendItem}>
-              <i className={`${styles.legendDot} ${styles.legendAmber}`} aria-hidden />
+              <i
+                className={`${styles.legendDot} ${styles.legendAmber}`}
+                aria-hidden
+              />
               Awaiting decision
             </span>
             <span className={styles.mapLegendItem}>
-              <i className={`${styles.legendDot} ${styles.legendGreen}`} aria-hidden />
+              <i
+                className={`${styles.legendDot} ${styles.legendGreen}`}
+                aria-hidden
+              />
               On track
             </span>
             <span className={styles.mapLegendItem}>
-              <i className={`${styles.legendDot} ${styles.legendTeal}`} aria-hidden />
+              <i
+                className={`${styles.legendDot} ${styles.legendTeal}`}
+                aria-hidden
+              />
               Healthy / early
             </span>
           </div>
@@ -221,7 +274,8 @@ export function StrategicMovesHomeClient({
         <h2 className={styles.cardsHeadH2}>Strategic moves</h2>
         <div className={styles.cardsHeadControls}>
           <span className={styles.cardsHeadCount}>
-            {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} · all tenants
+            {portfolio.counts.total}{" "}
+            {portfolio.counts.total === 1 ? "move" : "moves"} · all tenants
           </span>
           <select
             className={styles.sortSelect}
@@ -238,13 +292,13 @@ export function StrategicMovesHomeClient({
             <option value="name">Sort: Name</option>
           </select>
           <div className={styles.viewToggle} role="tablist">
-            {(['cards', 'kanban', 'scatter'] as const).map((mode) => {
-              const disabled = mode === 'scatter' && !scatterAvailable;
+            {(["cards", "kanban", "scatter"] as const).map((mode) => {
+              const disabled = mode === "scatter" && !scatterAvailable;
               return (
                 <button
                   key={mode}
-                  className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ''} ${
-                    disabled ? styles.viewToggleBtnDisabled : ''
+                  className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ""} ${
+                    disabled ? styles.viewToggleBtnDisabled : ""
                   }`}
                   onClick={() => {
                     if (disabled) return;
@@ -257,7 +311,7 @@ export function StrategicMovesHomeClient({
                   disabled={disabled}
                   title={
                     disabled
-                      ? 'Value-at-stake not captured yet — scatter view disabled.'
+                      ? "Value-at-stake not captured yet — scatter view disabled."
                       : undefined
                   }
                   type="button"
@@ -271,22 +325,25 @@ export function StrategicMovesHomeClient({
       </div>
       {!scatterAvailable ? (
         <div className={styles.scatterGateCaption}>
-          Scatter view requires value-at-stake on at least{' '}
-          {Math.round(SCATTER_VALUE_COVERAGE_THRESHOLD * 100)}% of moves. Currently{' '}
-          {mapStats.capturedCount}/{sortedMoves.length} captured.
+          Scatter view requires value-at-stake on at least{" "}
+          {Math.round(SCATTER_VALUE_COVERAGE_THRESHOLD * 100)}% of moves.
+          Currently {mapStats.capturedCount}/{sortedMoves.length} captured.
         </div>
       ) : null}
 
       <section className={styles.canvas}>
-        {listView === 'cards' ? (
+        {listView === "cards" ? (
           <div className={styles.cards}>
             {sortedMoves.map((move) => (
               <Link
                 className={`${styles.card} ${
-                  move.statusColor === 'red' ? styles.cardRed :
-                  move.statusColor === 'amber' ? styles.cardAmber :
-                  move.statusColor === 'teal' ? styles.cardTeal :
-                  styles.cardGreen
+                  move.statusColor === "red"
+                    ? styles.cardRed
+                    : move.statusColor === "amber"
+                      ? styles.cardAmber
+                      : move.statusColor === "teal"
+                        ? styles.cardTeal
+                        : styles.cardGreen
                 }`}
                 key={move.id}
                 href={`/strategic-moves/${move.id}`}
@@ -304,25 +361,37 @@ export function StrategicMovesHomeClient({
                 </div>
                 <div
                   className={`${styles.gateLine} ${
-                    move.statusColor === 'red' ? styles.gateLineRed :
-                    move.statusColor === 'amber' ? styles.gateLineAmber :
-                    move.statusColor === 'teal' ? styles.gateLineTeal :
-                    styles.gateLineGreen
+                    move.statusColor === "red"
+                      ? styles.gateLineRed
+                      : move.statusColor === "amber"
+                        ? styles.gateLineAmber
+                        : move.statusColor === "teal"
+                          ? styles.gateLineTeal
+                          : styles.gateLineGreen
                   }`}
                 >
                   <span className={styles.pulse} aria-hidden />
                   <span className={styles.statusText}>{move.status.text}</span>
-                  <span className={styles.gateDetail}>· {move.status.description}</span>
+                  <span className={styles.gateDetail}>
+                    · {move.status.description}
+                  </span>
                 </div>
                 <div className={styles.cardMeta}>
                   <span>
-                    Sponsor: <strong>{move.sponsor?.name ?? 'Unassigned'}</strong>
+                    Sponsor:{" "}
+                    <strong>{move.sponsor?.name ?? "Unassigned"}</strong>
                   </span>
                   <span>
-                    Value:{' '}
+                    Value:{" "}
                     <span className={styles.cardMetaVal}>
-                      {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}{' '}
-                      {move.valueAtStake.verified?.status === 'tracked' ? 'tracked' : 'projected'}
+                      {formatValueAtStake(
+                        move.valueAtStake.projected?.high ??
+                          move.valueAtStake.verified?.amount ??
+                          0,
+                      )}{" "}
+                      {move.valueAtStake.verified?.status === "tracked"
+                        ? "tracked"
+                        : "projected"}
                     </span>
                   </span>
                 </div>
@@ -331,11 +400,13 @@ export function StrategicMovesHomeClient({
           </div>
         ) : null}
 
-        {listView === 'kanban' ? (
+        {listView === "kanban" ? (
           <div className={styles.kanban}>
             {Array.from({ length: PHASE_AXIS.length }).map((_, phase) => {
-              const inPhase = sortedMoves.filter((move) => move.currentPhase === phase);
-              const phaseLabel = PHASE_AXIS[phase]?.name ?? '';
+              const inPhase = sortedMoves.filter(
+                (move) => move.currentPhase === phase,
+              );
+              const phaseLabel = PHASE_AXIS[phase]?.name ?? "";
               return (
                 <section className={styles.kanbanCol} key={`kanban-${phase}`}>
                   <div className={styles.kanbanHead}>
@@ -347,19 +418,28 @@ export function StrategicMovesHomeClient({
                     {inPhase.map((move) => (
                       <Link
                         className={`${styles.kanbanCard} ${
-                          move.statusColor === 'red' ? styles.kanbanCardRed :
-                          move.statusColor === 'amber' ? styles.kanbanCardAmber :
-                          move.statusColor === 'teal' ? styles.kanbanCardTeal :
-                          styles.kanbanCardGreen
+                          move.statusColor === "red"
+                            ? styles.kanbanCardRed
+                            : move.statusColor === "amber"
+                              ? styles.kanbanCardAmber
+                              : move.statusColor === "teal"
+                                ? styles.kanbanCardTeal
+                                : styles.kanbanCardGreen
                         }`}
                         key={move.id}
                         href={`/strategic-moves/${move.id}`}
                         prefetch={false}
                       >
-                        <div className={styles.kanbanId}>{move.displayCode}</div>
+                        <div className={styles.kanbanId}>
+                          {move.displayCode}
+                        </div>
                         <div className={styles.kanbanName}>{move.name}</div>
                         <div className={styles.kanbanVal}>
-                          {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
+                          {formatValueAtStake(
+                            move.valueAtStake.projected?.high ??
+                              move.valueAtStake.verified?.amount ??
+                              0,
+                          )}
                         </div>
                       </Link>
                     ))}
@@ -370,11 +450,14 @@ export function StrategicMovesHomeClient({
           </div>
         ) : null}
 
-        {listView === 'scatter' ? (
+        {listView === "scatter" ? (
           <div className={styles.scatter}>
             <div className={styles.scatterBands} aria-hidden>
               {PHASE_AXIS.map((phase) => (
-                <div className={styles.scatterBand} key={`band-${phase.code}`} />
+                <div
+                  className={styles.scatterBand}
+                  key={`band-${phase.code}`}
+                />
               ))}
             </div>
             <div className={styles.scatterGrid} aria-hidden>
@@ -385,12 +468,15 @@ export function StrategicMovesHomeClient({
             {mapStats.capturedCount === 0 ? (
               <div className={styles.scatterNotice}>
                 Value-at-stake has not been captured yet for this portfolio.
-                Bubbles are pinned to the unknown-value lane until projected or verified values are entered.
+                Bubbles are pinned to the unknown-value lane until projected or
+                verified values are entered.
               </div>
             ) : null}
             {mapStats.unknownCount > 0 ? (
               <div className={styles.scatterNoticeSecondary}>
-                {mapStats.unknownCount} move{mapStats.unknownCount === 1 ? '' : 's'} currently missing projected or verified value.
+                {mapStats.unknownCount} move
+                {mapStats.unknownCount === 1 ? "" : "s"} currently missing
+                projected or verified value.
               </div>
             ) : null}
             <div className={styles.scatterXAxis}>Phase progression →</div>
@@ -405,7 +491,10 @@ export function StrategicMovesHomeClient({
             </div>
             <div className={styles.scatterXTicks} aria-hidden>
               {PHASE_AXIS.map((phase) => (
-                <div className={styles.scatterXTick} key={`phase-tick-${phase.code}`}>
+                <div
+                  className={styles.scatterXTick}
+                  key={`phase-tick-${phase.code}`}
+                >
                   <span className={styles.scatterPhaseCode}>{phase.code}</span>
                   <span className={styles.scatterPhaseName}>{phase.name}</span>
                 </div>
@@ -415,7 +504,10 @@ export function StrategicMovesHomeClient({
               const phaseIndex = sortedMoves
                 .slice(0, index)
                 .filter((m) => m.currentPhase === move.currentPhase).length;
-              const phaseCount = Math.max(1, phaseCounts[move.currentPhase] ?? 1);
+              const phaseCount = Math.max(
+                1,
+                phaseCounts[move.currentPhase] ?? 1,
+              );
               const valueScore = moveValueScore(move);
               const valueKnown = valueScore !== null;
               const normalized =
@@ -424,23 +516,35 @@ export function StrategicMovesHomeClient({
                   : valueKnown
                     ? 0.5
                     : 0;
-              const bubbleSize = valueKnown ? Math.max(42, Math.min(92, 48 + normalized * 36)) : 52;
+              const bubbleSize = valueKnown
+                ? Math.max(42, Math.min(92, 48 + normalized * 36))
+                : 52;
               const phaseSlots = Math.max(1, PHASE_AXIS.length - 1);
               const xBase = 8 + move.currentPhase * (80 / phaseSlots);
-              const xSpread = phaseCount > 1 ? ((phaseIndex / (phaseCount - 1)) - 0.5) * 6.4 : 0;
+              const xSpread =
+                phaseCount > 1
+                  ? (phaseIndex / (phaseCount - 1) - 0.5) * 6.4
+                  : 0;
               const x = Math.min(94, Math.max(6, xBase + xSpread));
               const unknownBandRows = Math.max(1, Math.min(4, phaseCount));
               const unknownRow = phaseIndex % unknownBandRows;
               const unknownY = 84 - unknownRow * 5.3;
-              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : unknownY;
+              const y = valueKnown
+                ? Math.max(14, 82 - normalized * 68)
+                : unknownY;
               return (
                 <Link
                   key={move.id}
                   className={`${styles.bubble} ${
-                    move.statusColor === 'red' ? styles.bubbleRed :
-                    move.statusColor === 'amber' ? styles.bubbleAmber :
-                    move.statusColor === 'teal' ? styles.bubbleTeal :
-                    valueKnown ? styles.bubbleGreen : styles.bubbleUnknown
+                    move.statusColor === "red"
+                      ? styles.bubbleRed
+                      : move.statusColor === "amber"
+                        ? styles.bubbleAmber
+                        : move.statusColor === "teal"
+                          ? styles.bubbleTeal
+                          : valueKnown
+                            ? styles.bubbleGreen
+                            : styles.bubbleUnknown
                   }`}
                   href={`/strategic-moves/${move.id}`}
                   prefetch={false}
@@ -472,17 +576,17 @@ function StrategicMovesEmptyState() {
         background: SHELL.PAPER_SOFT,
         borderTop: `1px solid ${SHELL.CARD_LINE}`,
         borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-        padding: '56px clamp(24px, 5vw, 72px)',
+        padding: "56px clamp(24px, 5vw, 72px)",
       }}
     >
       <div style={{ maxWidth: 720 }}>
         <p
           style={{
-            margin: '0 0 8px',
+            margin: "0 0 8px",
             fontFamily: SHELL.MONO,
             fontSize: 10,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
             color: SHELL.INK_SOFT,
             fontWeight: 700,
           }}
@@ -491,7 +595,7 @@ function StrategicMovesEmptyState() {
         </p>
         <h2
           style={{
-            margin: '0 0 10px',
+            margin: "0 0 10px",
             fontFamily: SHELL.SERIF,
             fontSize: 32,
             lineHeight: 1.12,
@@ -499,11 +603,12 @@ function StrategicMovesEmptyState() {
             fontWeight: 700,
           }}
         >
-          Strategic Moves appear here once a signal becomes an executive program.
+          Strategic Moves appear here once a signal becomes an executive
+          program.
         </h2>
         <p
           style={{
-            margin: '0 0 22px',
+            margin: "0 0 22px",
             fontFamily: SHELL.SANS,
             fontSize: 14,
             lineHeight: 1.55,
@@ -518,17 +623,17 @@ function StrategicMovesEmptyState() {
         <Link
           href="/strategic-moves/new"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
+            display: "inline-flex",
+            alignItems: "center",
             minHeight: 40,
-            padding: '0 18px',
+            padding: "0 18px",
             borderRadius: 8,
             background: SHELL.INK,
             color: SHELL.PAPER,
             fontFamily: SHELL.SANS,
             fontSize: 13,
             fontWeight: 700,
-            textDecoration: 'none',
+            textDecoration: "none",
           }}
         >
           Create a Move

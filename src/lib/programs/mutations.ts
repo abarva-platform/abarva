@@ -6,8 +6,8 @@
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
-} from '@/lib/data-plane/postgresCompat';
-import { industryCodeForClientName } from '@/lib/client-config';
+} from "@/lib/data-plane/postgresCompat";
+import { industryCodeForClientName } from "@/lib/client-config";
 import type {
   MilestoneStatus,
   ModuleStatus,
@@ -19,23 +19,23 @@ import type {
   TenancyCtx,
   WorkItemStatus,
   WorkItemType,
-} from './types.db';
-import type { ArchetypeKey } from './types.ui';
-import { getProgramById } from './queries';
-import { writeProgramAuditLogBestEffort } from './audit-log';
+} from "./types.db";
+import type { ArchetypeKey } from "./types.ui";
+import { getProgramById } from "./queries";
+import { writeProgramAuditLogBestEffort } from "./audit-log";
 import {
   createSupabaseProgramsWriteAdapter,
   selectProgramsWriteAdapter,
   type ProgramsWriteAdapter,
-} from '@/lib/data-plane/write-adapters/programsWriteAdapter';
-import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
-import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
+} from "@/lib/data-plane/write-adapters/programsWriteAdapter";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import type { DiscoveryPlan } from "@/lib/programs/discovery/discovery-intake";
 import {
   applyEvidenceToCharter,
   type ExtractionReceipt,
-} from '@/lib/programs/discovery/extraction-planner';
-import type { ExtractedProgramEvidence } from '@/lib/programs/evidence-ingestion';
-import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
+} from "@/lib/programs/discovery/extraction-planner";
+import type { ExtractedProgramEvidence } from "@/lib/programs/evidence-ingestion";
+import { resolveDataPlane } from "@/lib/data-plane/read-adapters/resolveDataPlane";
 
 /**
  * Resolve the programs write adapter, threading any route-scoped Supabase
@@ -44,15 +44,18 @@ import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlan
  * transactional session) and is opt-in via `ABARVA_DATA_PLANE`.
  */
 function programsWriteAdapter(supabase?: SupabaseClient): ProgramsWriteAdapter {
-  if (resolveDataPlane() === 'azure-postgres') return selectProgramsWriteAdapter();
+  if (resolveDataPlane() === "azure-postgres")
+    return selectProgramsWriteAdapter();
   return supabase
     ? createSupabaseProgramsWriteAdapter(() => supabase)
-    : selectProgramsWriteAdapter('supabase');
+    : selectProgramsWriteAdapter("supabase");
 }
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
-    throw new Error('[programs/mutations] TenancyCtx missing clientId or userId');
+    throw new Error(
+      "[programs/mutations] TenancyCtx missing clientId or userId",
+    );
   }
 }
 
@@ -61,8 +64,11 @@ async function assertProgramTenancy(
   programId: string,
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<void> {
-  const program = await getProgramById(ctx, programId, { supabase: opts.supabase });
-  if (!program) throw new Error(`[programs/mutations] program ${programId} not accessible`);
+  const program = await getProgramById(ctx, programId, {
+    supabase: opts.supabase,
+  });
+  if (!program)
+    throw new Error(`[programs/mutations] program ${programId} not accessible`);
 }
 
 export function resolveProgramIndustryCode(
@@ -73,13 +79,13 @@ export function resolveProgramIndustryCode(
     client?.industry_code?.trim() ||
     industryCodeForClientName(client?.name) ||
     fallback?.trim() ||
-    'UNKNOWN'
+    "UNKNOWN"
   ).toUpperCase();
 }
 
 export interface ProgramClassificationCodes {
-  functionCode: 'FRONT_OFFICE' | 'MIDDLE_OFFICE' | 'BACK_OFFICE';
-  objectiveCode: 'GROW' | 'OPTIMISE' | 'CONTROL';
+  functionCode: "FRONT_OFFICE" | "MIDDLE_OFFICE" | "BACK_OFFICE";
+  objectiveCode: "GROW" | "OPTIMISE" | "CONTROL";
   topicCode: string;
 }
 
@@ -87,10 +93,10 @@ function slugifyTopicCode(value: string): string {
   const slug = value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
     .slice(0, 80);
-  return slug || 'program_origination';
+  return slug || "program_origination";
 }
 
 export function buildEngagementGraphNodeId(name: string): string {
@@ -107,26 +113,41 @@ export function resolveProgramClassificationCodes(input: {
   const text = [
     input.name,
     input.useCase,
-    input.archetype ?? '',
-    input.acceptedPatternKey ?? '',
-  ].join(' ').toLowerCase();
+    input.archetype ?? "",
+    input.acceptedPatternKey ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
 
-  let functionCode: ProgramClassificationCodes['functionCode'] = 'MIDDLE_OFFICE';
+  let functionCode: ProgramClassificationCodes["functionCode"] =
+    "MIDDLE_OFFICE";
   if (
-    /\b(finance|financial close|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(text)
+    /\b(finance|financial close|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(
+      text,
+    )
   ) {
-    functionCode = 'BACK_OFFICE';
+    functionCode = "BACK_OFFICE";
   } else if (
-    /\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|abandonment|store|portal|front door|front[- ]office)\b/.test(text)
+    /\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|abandonment|store|portal|front door|front[- ]office)\b/.test(
+      text,
+    )
   ) {
-    functionCode = 'FRONT_OFFICE';
+    functionCode = "FRONT_OFFICE";
   }
 
-  let objectiveCode: ProgramClassificationCodes['objectiveCode'] = 'OPTIMISE';
-  if (/\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(text)) {
-    objectiveCode = 'CONTROL';
-  } else if (/\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(text)) {
-    objectiveCode = 'GROW';
+  let objectiveCode: ProgramClassificationCodes["objectiveCode"] = "OPTIMISE";
+  if (
+    /\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(
+      text,
+    )
+  ) {
+    objectiveCode = "CONTROL";
+  } else if (
+    /\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(
+      text,
+    )
+  ) {
+    objectiveCode = "GROW";
   }
 
   return {
@@ -143,9 +164,9 @@ async function resolveClientIndustryCode(
 ): Promise<string> {
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   const { data } = await sb
-    .from('clients')
-    .select('name, industry_code')
-    .eq('id', clientId)
+    .from("clients")
+    .select("name, industry_code")
+    .eq("id", clientId)
     .maybeSingle();
   return resolveProgramIndustryCode(
     data as { name?: string | null; industry_code?: string | null } | null,
@@ -175,7 +196,11 @@ export async function originateProgram(
 ): Promise<ProgramCore> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
-  const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint, { supabase: sb });
+  const industryCode = await resolveClientIndustryCode(
+    ctx.clientId,
+    input.industryHint,
+    { supabase: sb },
+  );
   const classificationCodes = resolveProgramClassificationCodes({
     name: input.name,
     useCase: input.useCase,
@@ -187,7 +212,7 @@ export async function originateProgram(
   // and downstream participant rows. Don't reintroduce a created_by write.
   const graphNodeId = buildEngagementGraphNodeId(input.name);
   const { data, error } = await sb
-    .from('engagements')
+    .from("engagements")
     .insert({
       graph_node_id: graphNodeId,
       client_id: ctx.clientId,
@@ -200,17 +225,17 @@ export async function originateProgram(
       // as the required program label. Live DBs can still carry that NOT NULL
       // constraint even though Programs now reads `name`.
       solution: input.name,
-      status: 'active',
+      status: "active",
       current_phase: 0,
       program_archetype: input.archetype,
       origin_source: input.originSource,
       origin_source_ref: input.originSourceRef ?? null,
-      maestro_oversight_level: input.maestroOversightLevel ?? 'partial',
+      maestro_oversight_level: input.maestroOversightLevel ?? "partial",
       founder_approval_required: input.founderApprovalRequired ?? false,
       data_residency_region: input.dataResidencyRegion ?? null,
       retention_policy_years: 7,
     })
-    .select('*')
+    .select("*")
     .single();
   if (error) throw error;
 
@@ -218,42 +243,49 @@ export async function originateProgram(
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,
-    action: 'program_originated',
+    action: "program_originated",
     fromState: null,
-    toState: 'phase_0_seed_created',
+    toState: "phase_0_seed_created",
     rationale: input.useCase,
     evidenceRefs: input.acceptedPatternKey ? [input.acceptedPatternKey] : [],
   });
 
   // Record the pattern match event if a pattern was accepted
   if (input.acceptedPatternKey) {
-    const { error: pmErr } = await sb.from('pattern_match_logs').insert({
+    const { error: pmErr } = await sb.from("pattern_match_logs").insert({
       engagement_id: programId,
       pattern_key: input.acceptedPatternKey,
       match_confidence: null,
-      match_context_jsonb: { use_case: input.useCase, accepted_at_origination: true },
-      suggested_action: 'pattern',
+      match_context_jsonb: {
+        use_case: input.useCase,
+        accepted_at_origination: true,
+      },
+      suggested_action: "pattern",
       acted_upon: true,
       acted_upon_at: new Date().toISOString(),
       acted_upon_by_user_id: ctx.userId,
-      matched_by_agent: 'classifier_v1',
+      matched_by_agent: "classifier_v1",
     });
     if (pmErr) throw pmErr;
   }
 
   // Log initial state
-  const { error: logErr } = await sb.from('module_state_log').insert({
+  const { error: logErr } = await sb.from("module_state_log").insert({
     engagement_id: programId,
-    module_key: 'origination',
+    module_key: "origination",
     previous_state: null,
-    new_state: 'completed',
+    new_state: "completed",
     changed_by_user_id: ctx.userId,
-    context_jsonb: { pattern_key: input.acceptedPatternKey, origin: input.originSource },
+    context_jsonb: {
+      pattern_key: input.acceptedPatternKey,
+      origin: input.originSource,
+    },
   });
   if (logErr) throw logErr;
 
   const program = await getProgramById(ctx, programId, { supabase: sb });
-  if (!program) throw new Error('[originateProgram] created program not readable');
+  if (!program)
+    throw new Error("[originateProgram] created program not readable");
   return program;
 }
 
@@ -286,7 +318,7 @@ export async function advancePhase(
   // tenant has `discovery_intake_v2` enabled. Flag off → null → the adapter's
   // engagement update is byte-identical to today.
   const discoveryPlanToWrite =
-    input.discoveryPlan && isFeatureEnabled(ctx, 'discovery_intake_v2')
+    input.discoveryPlan && isFeatureEnabled(ctx, "discovery_intake_v2")
       ? input.discoveryPlan
       : null;
 
@@ -302,21 +334,128 @@ export async function advancePhase(
     discoveryPlan: discoveryPlanToWrite,
   });
   if (!written.ok || !written.data) {
-    throw new Error(written.error ?? '[advancePhase] write failed');
+    throw new Error(written.error ?? "[advancePhase] write failed");
   }
   const snapshotId = written.data.snapshotId;
 
   await writeProgramAuditLogBestEffort(ctx, {
     programId: input.programId,
     engagementId: input.programId,
-    action: 'program_phase_advanced',
+    action: "program_phase_advanced",
     fromState: `P${input.fromPhase}`,
     toState: `P${input.toPhase}`,
-    rationale: input.bypassGate ? 'Phase advanced with gate bypass flag.' : 'Phase advanced after gate evaluation.',
+    rationale: input.bypassGate
+      ? "Phase advanced with gate bypass flag."
+      : "Phase advanced after gate evaluation.",
     evidenceRefs: [snapshotId],
   });
 
   return { programId: input.programId, newPhase: input.toPhase, snapshotId };
+}
+
+/**
+ * Manage Moves · archive a single Move (reversible soft state — NEVER a hard
+ * delete). Sets `lifecycle_state='archived'`, stamps archive provenance, and
+ * records the prior lifecycle_state in `archived_from_state` so Restore can
+ * return the Move to exactly where it was. Evidence, artifacts, approvals,
+ * deliverables, traces, and audit history are untouched.
+ *
+ * Tenancy is asserted via `assertProgramTenancy` (the row must be readable by
+ * `ctx` and scoped to `ctx.clientId`). Writes a `program_archived` audit-log
+ * entry. Idempotent for an already-archived Move (the read still passes; the
+ * update is scoped by id+client so it is a safe no-op refresh).
+ */
+export async function archiveMove(
+  ctx: TenancyCtx,
+  input: { programId: string; reason: string; explanation?: string | null },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
+  assertTenancy(ctx);
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const program = await getProgramById(ctx, input.programId, { supabase: sb });
+  if (!program)
+    throw new Error(`[archiveMove] program ${input.programId} not accessible`);
+
+  const fromState = program.lifecycleState ?? null;
+  const nowIso = new Date().toISOString();
+  const { data, error } = await sb
+    .from("engagements")
+    .update({
+      lifecycle_state: "archived",
+      archived_at: nowIso,
+      archived_by: ctx.userId,
+      archive_reason: input.reason,
+      archive_explanation: input.explanation ?? null,
+      // Only capture the prior state when the Move was not already archived,
+      // so a double-archive cannot overwrite the real restore target.
+      ...(fromState === "archived" ? {} : { archived_from_state: fromState }),
+      updated_at: nowIso,
+    })
+    .eq("id", input.programId)
+    .eq("client_id", ctx.clientId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId: input.programId,
+    engagementId: input.programId,
+    action: "program_archived",
+    fromState,
+    toState: "archived",
+    rationale: input.explanation?.trim()
+      ? `${input.reason} — ${input.explanation.trim()}`
+      : input.reason,
+  });
+
+  return Boolean(data);
+}
+
+/**
+ * Manage Moves · restore an archived Move to its prior lifecycle_state
+ * (`archived_from_state`, falling back to 'approved' when unknown). Clears all
+ * archive-provenance fields. Writes a `program_restored` audit-log entry.
+ */
+export async function restoreMove(
+  ctx: TenancyCtx,
+  input: { programId: string },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
+  assertTenancy(ctx);
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const program = await getProgramById(ctx, input.programId, { supabase: sb });
+  if (!program)
+    throw new Error(`[restoreMove] program ${input.programId} not accessible`);
+
+  const targetState = program.archivedFromState ?? "approved";
+  const nowIso = new Date().toISOString();
+  const { data, error } = await sb
+    .from("engagements")
+    .update({
+      lifecycle_state: targetState,
+      archived_at: null,
+      archived_by: null,
+      archive_reason: null,
+      archive_explanation: null,
+      archived_from_state: null,
+      updated_at: nowIso,
+    })
+    .eq("id", input.programId)
+    .eq("client_id", ctx.clientId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId: input.programId,
+    engagementId: input.programId,
+    action: "program_restored",
+    fromState: "archived",
+    toState: targetState,
+    rationale: "Move restored from archive.",
+  });
+
+  return Boolean(data);
 }
 
 /**
@@ -328,26 +467,38 @@ export async function advancePhase(
  */
 export async function applyUploadedEvidenceToMove(
   ctx: TenancyCtx,
-  input: { programId: string; evidence: ExtractedProgramEvidence; sourceFile: string },
+  input: {
+    programId: string;
+    evidence: ExtractedProgramEvidence;
+    sourceFile: string;
+  },
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<ExtractionReceipt | null> {
   assertTenancy(ctx);
-  if (!isFeatureEnabled(ctx, 'discovery_intake_v2')) return null;
+  if (!isFeatureEnabled(ctx, "discovery_intake_v2")) return null;
 
   const program = await getProgramById(ctx, input.programId, opts);
   if (!program) return null;
 
-  const { charter, receipt } = applyEvidenceToCharter(program.charter, input.evidence, {
-    sourceFile: input.sourceFile,
-  });
+  const { charter, receipt } = applyEvidenceToCharter(
+    program.charter,
+    input.evidence,
+    {
+      sourceFile: input.sourceFile,
+    },
+  );
 
-  const written = await programsWriteAdapter(opts.supabase).updateEngagementCharter({
+  const written = await programsWriteAdapter(
+    opts.supabase,
+  ).updateEngagementCharter({
     programId: input.programId,
     clientId: ctx.clientId,
     charter,
   });
   if (!written.ok) {
-    throw new Error(written.error ?? '[applyUploadedEvidenceToMove] charter update failed');
+    throw new Error(
+      written.error ?? "[applyUploadedEvidenceToMove] charter update failed",
+    );
   }
   return receipt;
 }
@@ -366,12 +517,12 @@ export async function publishDeliverable(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
-    .from('deliverables_v2')
-    .update({ status: 'in_review', updated_at: new Date().toISOString() })
-    .eq('id', deliverableId)
-    .eq('engagement_id', programId)
-    .eq('status', 'draft')
-    .select('id')
+    .from("deliverables_v2")
+    .update({ status: "in_review", updated_at: new Date().toISOString() })
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .eq("status", "draft")
+    .select("id")
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
@@ -387,17 +538,17 @@ export async function signOffDeliverable(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
-    .from('deliverables_v2')
+    .from("deliverables_v2")
     .update({
-      status: 'signed_off',
+      status: "signed_off",
       signed_off_by: ctx.userId,
       signed_off_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', deliverableId)
-    .eq('engagement_id', programId)
-    .eq('status', 'in_review')
-    .select('id')
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .eq("status", "in_review")
+    .select("id")
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
@@ -446,32 +597,33 @@ const LIFECYCLE_DELIVERABLE_PHASES: Record<string, number[]> = {
 
 function titleizeDeliverableType(typeKey: string): string {
   return typeKey
-    .split('_')
+    .split("_")
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
-async function ensureDeliverableType(sb: ReturnType<typeof getAzureWriteFluentClient>, deliverableTypeKey: string): Promise<void> {
-  const { error } = await sb
-    .from('deliverable_types')
-    .upsert(
-      {
-        type_key: deliverableTypeKey,
-        title: titleizeDeliverableType(deliverableTypeKey),
-        description: `Lifecycle deliverable type used by Nexus for ${deliverableTypeKey}.`,
-        applicable_phases: LIFECYCLE_DELIVERABLE_PHASES[deliverableTypeKey] ?? [],
-        applicable_topics: [],
-        template_structure: { sections: [] },
-        required_data_inputs: {},
-        quality_rubric: {},
-        generation_prompt_template: null,
-        output_format: 'markdown',
-        version: 1,
-        maturity: 'pilot',
-      },
-      { onConflict: 'type_key', ignoreDuplicates: true },
-    );
+async function ensureDeliverableType(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  deliverableTypeKey: string,
+): Promise<void> {
+  const { error } = await sb.from("deliverable_types").upsert(
+    {
+      type_key: deliverableTypeKey,
+      title: titleizeDeliverableType(deliverableTypeKey),
+      description: `Lifecycle deliverable type used by Nexus for ${deliverableTypeKey}.`,
+      applicable_phases: LIFECYCLE_DELIVERABLE_PHASES[deliverableTypeKey] ?? [],
+      applicable_topics: [],
+      template_structure: { sections: [] },
+      required_data_inputs: {},
+      quality_rubric: {},
+      generation_prompt_template: null,
+      output_format: "markdown",
+      version: 1,
+      maturity: "pilot",
+    },
+    { onConflict: "type_key", ignoreDuplicates: true },
+  );
   if (error) throw error;
 }
 
@@ -486,51 +638,59 @@ export async function completeDeliverable(
   programId: string,
   input: CompleteDeliverableInput,
   opts: { supabase?: SupabaseClient } = {},
-): Promise<{ deliverableId: string; versionId: string | null; status: 'draft' | 'signed_off' }> {
+): Promise<{
+  deliverableId: string;
+  versionId: string | null;
+  status: "draft" | "signed_off";
+}> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const deliverableTypeKey = input.deliverableTypeKey.trim();
   const title = input.title.trim();
-  if (!deliverableTypeKey) throw new Error('[completeDeliverable] deliverableTypeKey is required');
-  if (!title) throw new Error('[completeDeliverable] title is required');
+  if (!deliverableTypeKey)
+    throw new Error("[completeDeliverable] deliverableTypeKey is required");
+  if (!title) throw new Error("[completeDeliverable] title is required");
 
   const now = new Date().toISOString();
   await ensureDeliverableType(sb, deliverableTypeKey);
   const { data: existing, error: existingError } = await sb
-    .from('deliverables_v2')
-    .select('id, current_version')
-    .eq('engagement_id', programId)
-    .eq('deliverable_type_key', deliverableTypeKey)
+    .from("deliverables_v2")
+    .select("id, current_version")
+    .eq("engagement_id", programId)
+    .eq("deliverable_type_key", deliverableTypeKey)
     .maybeSingle();
   if (existingError) throw existingError;
 
   let deliverableId: string;
   let nextVersion = 1;
   if (existing) {
-    deliverableId = (existing as { id: string; current_version: number | null }).id;
-    nextVersion = ((existing as { current_version: number | null }).current_version ?? 0) + 1;
+    deliverableId = (existing as { id: string; current_version: number | null })
+      .id;
+    nextVersion =
+      ((existing as { current_version: number | null }).current_version ?? 0) +
+      1;
     const { error } = await sb
-      .from('deliverables_v2')
+      .from("deliverables_v2")
       .update({
         title,
         current_version: nextVersion,
-        status: input.signOff === false ? 'draft' : 'signed_off',
+        status: input.signOff === false ? "draft" : "signed_off",
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
         updated_at: now,
       })
-      .eq('id', deliverableId)
-      .eq('engagement_id', programId);
+      .eq("id", deliverableId)
+      .eq("engagement_id", programId);
     if (error) throw error;
   } else {
     const { data: created, error } = await sb
-      .from('deliverables_v2')
+      .from("deliverables_v2")
       .insert({
         engagement_id: programId,
         deliverable_type_key: deliverableTypeKey,
         title,
-        status: input.signOff === false ? 'draft' : 'signed_off',
+        status: input.signOff === false ? "draft" : "signed_off",
         current_version: 1,
         // Actor fields should identify the signed-in user/person. Nexus
         // authorship is recorded in structured provenance below.
@@ -538,7 +698,7 @@ export async function completeDeliverable(
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
       })
-      .select('id')
+      .select("id")
       .single();
     if (error) throw error;
     deliverableId = (created as { id: string }).id;
@@ -548,7 +708,7 @@ export async function completeDeliverable(
   const content = input.content?.trim();
   if (content) {
     const { data: version, error } = await sb
-      .from('deliverable_versions')
+      .from("deliverable_versions")
       .insert({
         deliverable_id: deliverableId,
         version: nextVersion,
@@ -557,25 +717,27 @@ export async function completeDeliverable(
           ...(input.structuredData ?? {}),
           module_key: input.moduleKey ?? null,
           completed_by_tool: true,
-          generated_by_agent: 'Nexus',
+          generated_by_agent: "Nexus",
           signed_off: input.signOff !== false,
         },
-        quality_issues: input.provenanceMap ? { provenance_map: input.provenanceMap } : null,
+        quality_issues: input.provenanceMap
+          ? { provenance_map: input.provenanceMap }
+          : null,
         generated_from_context_hash: null,
       })
-      .select('id')
+      .select("id")
       .single();
     if (error) throw error;
     versionId = (version as { id: string }).id;
   }
 
-  const { error: logErr } = await sb.from('module_state_log').insert({
+  const { error: logErr } = await sb.from("module_state_log").insert({
     engagement_id: programId,
     module_key: input.moduleKey ?? deliverableTypeKey,
     previous_state: null,
-    new_state: input.signOff === false ? 'drafted' : 'signed_off',
+    new_state: input.signOff === false ? "drafted" : "signed_off",
     changed_by_user_id: ctx.userId,
-    notes: `${title} ${input.signOff === false ? 'drafted' : 'signed off'} by Nexus tool`,
+    notes: `${title} ${input.signOff === false ? "drafted" : "signed off"} by Nexus tool`,
     context_jsonb: {
       deliverable_id: deliverableId,
       deliverable_type_key: deliverableTypeKey,
@@ -587,9 +749,12 @@ export async function completeDeliverable(
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,
-    action: input.signOff === false ? 'deliverable_drafted' : 'deliverable_signed_off',
-    fromState: existing ? 'existing_deliverable' : 'new_deliverable',
-    toState: input.signOff === false ? 'draft' : 'signed_off',
+    action:
+      input.signOff === false
+        ? "deliverable_drafted"
+        : "deliverable_signed_off",
+    fromState: existing ? "existing_deliverable" : "new_deliverable",
+    toState: input.signOff === false ? "draft" : "signed_off",
     rationale: title,
     evidenceRefs: [deliverableId, ...(versionId ? [versionId] : [])],
   });
@@ -597,7 +762,7 @@ export async function completeDeliverable(
   return {
     deliverableId,
     versionId,
-    status: input.signOff === false ? 'draft' : 'signed_off',
+    status: input.signOff === false ? "draft" : "signed_off",
   };
 }
 
@@ -615,29 +780,29 @@ export async function setModuleStatus(
 
   // Read current state for audit log
   const { data: current } = await sb
-    .from('program_modules')
-    .select('status')
-    .eq('engagement_id', programId)
-    .eq('module_key', moduleKey)
+    .from("program_modules")
+    .select("status")
+    .eq("engagement_id", programId)
+    .eq("module_key", moduleKey)
     .maybeSingle();
 
   const now = new Date().toISOString();
   const update: Record<string, unknown> = { status };
-  if (status === 'in_progress' && !current) update.started_at = now;
-  if (status === 'completed') update.completed_at = now;
+  if (status === "in_progress" && !current) update.started_at = now;
+  if (status === "completed") update.completed_at = now;
   if (patch.assignedUserId) update.assigned_user_id = patch.assignedUserId;
 
   const { data: updatedRow, error } = await sb
-    .from('program_modules')
+    .from("program_modules")
     .update(update)
-    .eq('engagement_id', programId)
-    .eq('module_key', moduleKey)
-    .select('id')
+    .eq("engagement_id", programId)
+    .eq("module_key", moduleKey)
+    .select("id")
     .maybeSingle();
   if (error) throw error;
   if (!updatedRow) return false;
 
-  const { error: logErr } = await sb.from('module_state_log').insert({
+  const { error: logErr } = await sb.from("module_state_log").insert({
     engagement_id: programId,
     module_key: moduleKey,
     previous_state: (current as { status: string } | null)?.status ?? null,
@@ -650,7 +815,7 @@ export async function setModuleStatus(
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,
-    action: 'program_module_status_changed',
+    action: "program_module_status_changed",
     fromState: (current as { status: string } | null)?.status ?? null,
     toState: status,
     rationale: patch.notes ?? null,
@@ -662,7 +827,14 @@ export async function setModuleStatus(
 export async function createMilestone(
   ctx: TenancyCtx,
   programId: string,
-  input: { name: string; description?: string; targetDate?: string; phaseNumber?: number; moduleKey?: string; ownerUserId?: string },
+  input: {
+    name: string;
+    description?: string;
+    targetDate?: string;
+    phaseNumber?: number;
+    moduleKey?: string;
+    ownerUserId?: string;
+  },
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
@@ -671,50 +843,53 @@ export async function createMilestone(
   const phaseNumber = input.phaseNumber ?? null;
   const moduleKey = input.moduleKey ?? null;
   let existingQuery = sb
-    .from('program_milestones')
-    .select('id')
-    .eq('engagement_id', programId)
-    .eq('name', input.name)
-    .order('created_at', { ascending: true })
+    .from("program_milestones")
+    .select("id")
+    .eq("engagement_id", programId)
+    .eq("name", input.name)
+    .order("created_at", { ascending: true })
     .limit(1);
 
-  existingQuery = phaseNumber === null
-    ? existingQuery.is('phase_number', null)
-    : existingQuery.eq('phase_number', phaseNumber);
-  existingQuery = moduleKey === null
-    ? existingQuery.is('module_key', null)
-    : existingQuery.eq('module_key', moduleKey);
+  existingQuery =
+    phaseNumber === null
+      ? existingQuery.is("phase_number", null)
+      : existingQuery.eq("phase_number", phaseNumber);
+  existingQuery =
+    moduleKey === null
+      ? existingQuery.is("module_key", null)
+      : existingQuery.eq("module_key", moduleKey);
 
-  const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+  const { data: existing, error: existingError } =
+    await existingQuery.maybeSingle();
   if (existingError) throw existingError;
   if (existing) {
     const existingId = (existing as { id: string }).id;
     const { error: updateError } = await sb
-      .from('program_milestones')
+      .from("program_milestones")
       .update({
         description: input.description ?? null,
         target_date: input.targetDate ?? null,
         owner_user_id: input.ownerUserId ?? null,
       })
-      .eq('id', existingId)
-      .eq('engagement_id', programId);
+      .eq("id", existingId)
+      .eq("engagement_id", programId);
     if (updateError) throw updateError;
     return existingId;
   }
 
   const { data, error } = await sb
-    .from('program_milestones')
+    .from("program_milestones")
     .insert({
       engagement_id: programId,
       name: input.name,
       description: input.description ?? null,
       target_date: input.targetDate ?? null,
-      status: 'upcoming',
+      status: "upcoming",
       phase_number: phaseNumber,
       module_key: moduleKey,
       owner_user_id: input.ownerUserId ?? null,
     })
-    .select('id')
+    .select("id")
     .single();
   if (error) throw error;
   return (data as { id: string }).id;
@@ -732,11 +907,11 @@ export async function updateMilestoneStatus(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
-    .from('program_milestones')
+    .from("program_milestones")
     .update({ status, actual_date: actualDate ?? null })
-    .eq('id', milestoneId)
-    .eq('engagement_id', programId)
-    .select('id')
+    .eq("id", milestoneId)
+    .eq("engagement_id", programId)
+    .select("id")
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
@@ -750,7 +925,7 @@ export async function createWorkItem(
     description?: string;
     itemType: WorkItemType;
     parentId?: string;
-    priority?: 'critical' | 'high' | 'medium' | 'low';
+    priority?: "critical" | "high" | "medium" | "low";
     assignedUserId?: string;
     moduleKey?: string;
     phaseNumber?: number;
@@ -762,21 +937,21 @@ export async function createWorkItem(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
-    .from('program_work_items')
+    .from("program_work_items")
     .insert({
       engagement_id: programId,
       parent_id: input.parentId ?? null,
       title: input.title,
       description: input.description ?? null,
       item_type: input.itemType,
-      status: 'open',
+      status: "open",
       priority: input.priority ?? null,
       assigned_user_id: input.assignedUserId ?? null,
       module_key: input.moduleKey ?? null,
       phase_number: input.phaseNumber ?? null,
       due_date: input.dueDate ?? null,
     })
-    .select('id')
+    .select("id")
     .single();
   if (error) throw error;
   return (data as { id: string }).id;
@@ -793,13 +968,13 @@ export async function updateWorkItemStatus(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const update: Record<string, unknown> = { status };
-  if (status === 'done') update.completed_at = new Date().toISOString();
+  if (status === "done") update.completed_at = new Date().toISOString();
   const { data, error } = await sb
-    .from('program_work_items')
+    .from("program_work_items")
     .update(update)
-    .eq('id', workItemId)
-    .eq('engagement_id', programId)
-    .select('id')
+    .eq("id", workItemId)
+    .eq("engagement_id", programId)
+    .select("id")
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
@@ -824,20 +999,20 @@ export async function createRisk(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
-    .from('program_risks')
+    .from("program_risks")
     .insert({
       engagement_id: programId,
       title: input.title,
       description: input.description ?? null,
-      likelihood: input.likelihood ?? 'medium',
-      impact: input.impact ?? 'medium',
-      status: 'open',
+      likelihood: input.likelihood ?? "medium",
+      impact: input.impact ?? "medium",
+      status: "open",
       mitigation_plan: input.mitigationPlan ?? null,
       owner_user_id: input.ownerUserId ?? null,
       phase_number: input.phaseNumber ?? null,
       module_key: input.moduleKey ?? null,
     })
-    .select('id')
+    .select("id")
     .single();
   if (error) throw error;
   return (data as { id: string }).id;
