@@ -13,6 +13,8 @@ export function sourceArtifactFormatFromMime(mimeType: string): SourceArtifactFo
       return 'pptx';
     case 'text/markdown':
       return 'markdown';
+    case 'text/html':
+      return 'html';
     case 'text/csv':
       return 'csv';
     case 'text/plain':
