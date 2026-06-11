@@ -96,6 +96,7 @@ import { AUTH_TOKEN } from '../_helpers/env';
 
 export type SourcePersonaKey =
   | 'apex-vp-sourcing'
+  | 'skyharbor-vp-itops'
   | 'apex-non-approver'
   | 'meridian-cdio'
   | 'apex-cio'
@@ -136,6 +137,13 @@ const PERSONAS: Record<SourcePersonaKey, PersonaConfig> = {
       'persona analyst@apex-retail.example.com is not provisioned, the fallback ' +
       'is the Apex CIO demo user — which IS an approver. Specs asserting ' +
       'non-approver behavior should call sourcePersonaIsFallback() and skip.',
+  },
+  'skyharbor-vp-itops': {
+    email: 'cto@skyharbor-air.example.com',
+    fallbackEmail: DEMO_ACCOUNTS.skyharbor.email,
+    fallbackDemoAccount: 'skyharbor',
+    activeClient: 'skyharbor',
+    postLoginProbe: '/source',
   },
   'meridian-cdio': {
     email: 'cdio@meridian-health.example.com',
