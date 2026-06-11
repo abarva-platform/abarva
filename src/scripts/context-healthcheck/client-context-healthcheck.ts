@@ -769,7 +769,7 @@ async function retrievalProbe(client: TargetClient, dimension: string, query: st
   }
 }
 
-function candidateFromDoc(client: TargetClient, doc: SearchDoc, module: BundleProbe["module"]): GovernedCandidate {
+function candidateFromDoc(client: TargetClient, doc: SearchDoc, moduleName: BundleProbe["module"]): GovernedCandidate {
   const citation = String(doc.source_uri ?? doc.source_file ?? doc.record_id ?? doc.chunk_id ?? doc.id ?? "");
   const confidenceRaw = doc.confidence;
   const confidenceLevel =
@@ -783,7 +783,7 @@ function candidateFromDoc(client: TargetClient, doc: SearchDoc, module: BundlePr
         ? String(confidenceRaw)
         : "medium";
   return {
-    id: String(doc.id ?? doc.chunk_id ?? `${client.canonicalKey}:${module}:${citation}`),
+    id: String(doc.id ?? doc.chunk_id ?? `${client.canonicalKey}:${moduleName}:${citation}`),
     client_key: client.canonicalKey,
     tenant_id: client.clientId,
     source_layer: "search_chunk",
@@ -793,20 +793,20 @@ function candidateFromDoc(client: TargetClient, doc: SearchDoc, module: BundlePr
     agent_readiness_status: "agent_ready",
     confidence_level: confidenceLevel as GovernedCandidate["confidence_level"],
     cited_render_verified_at: citation ? new Date().toISOString() : null,
-    title: String(doc.title ?? doc.source_segment ?? doc.id ?? module),
+    title: String(doc.title ?? doc.source_segment ?? doc.id ?? moduleName),
     citations: citation ? [citation] : [],
   };
 }
 
-async function bundleProbe(client: TargetClient, module: BundleProbe["module"]): Promise<BundleProbe> {
-  const retrieval = await retrievalProbe(client, module, MODULE_QUERIES[module]);
-  const candidates = retrieval.topDocs.map((doc) => candidateFromDoc(client, doc, module));
+async function bundleProbe(client: TargetClient, moduleName: BundleProbe["module"]): Promise<BundleProbe> {
+  const retrieval = await retrievalProbe(client, moduleName, MODULE_QUERIES[moduleName]);
+  const candidates = retrieval.topDocs.map((doc) => candidateFromDoc(client, doc, moduleName));
   const bundle = buildValidatedAgentContextBundle(candidates);
   const hash = createHash("sha256")
     .update(JSON.stringify(bundle.usable.map((candidate) => [candidate.id, candidate.source_basis, candidate.citations])))
     .digest("hex");
   return {
-    module,
+    module: moduleName,
     tenantResolved: !!client.clientId && !client.keyMismatchRisks.length,
     moduleResolved: true,
     evidenceRequirementsResolved: candidates.length > 0 && bundle.citations.length > 0,
@@ -884,8 +884,8 @@ async function collectClient(pool: Pool, client: TargetClient): Promise<ClientHe
     retrieval.push(await retrievalProbe(client, dimension, query));
   }
   const contextBundles: BundleProbe[] = [];
-  for (const module of Object.keys(MODULE_QUERIES) as BundleProbe["module"][]) {
-    contextBundles.push(await bundleProbe(client, module));
+  for (const moduleKey of Object.keys(MODULE_QUERIES) as BundleProbe["module"][]) {
+    contextBundles.push(await bundleProbe(client, moduleKey));
   }
   const artifacts = await artifactReadiness(pool, client);
 
