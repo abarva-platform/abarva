@@ -644,11 +644,395 @@ export const IT_SOURCING_EVENT: StrategicMoveArchetype = {
   },
 };
 
+// ── AI_OPERATIONS_DECISION_SUPPORT (third archetype — operations work) ───────
+// An AI decision-support/recommendation layer for operational workflows (e.g.
+// airline IROPS recovery, claims operations, supply-chain exceptions). The
+// evidence axis is the OPERATION (process/decision flow, event volume + cost),
+// not the SDLC — no DORA, no product/platform operating model.
+
+const AI_OPS_FAMILIES: EvidenceFamilySpec[] = [
+  {
+    key: "ops_process_baseline",
+    label: "Operational process & decision-flow baseline",
+    kind: "qualitative",
+    whyNeeded:
+      "The current operational process / decision flow the AI layer must support — events in, decisions made, by whom, against which systems and SLAs. Without it, recommendations have no workflow to land in.",
+    sourceDocHint: "Process map / SOP / decision-flow document",
+    acceptedFormats: ["pdf", "docx", "pptx"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "ops_event_cost_baseline",
+    label: "Operational event volume & cost baseline",
+    kind: "financial",
+    whyNeeded:
+      "Disruption/exception event volumes and cost per event (recovery cost, penalties, lost revenue, manual effort) — the measurable baseline the decision-support value case is built on.",
+    sourceDocHint: "Event/disruption log + cost baseline (CSV or XLSX)",
+    acceptedFormats: ["csv", "xlsx"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "it_systems_landscape",
+    label: "IT systems & application landscape",
+    kind: "inventory",
+    whyNeeded:
+      "The operational systems the decision layer must read from and recommend into — applications, criticality, dependencies, integration points.",
+    sourceDocHint: "CMDB export as CSV",
+    acceptedFormats: ["csv"],
+    backing: { table: "tower_cmdb_cis", keyColumn: "client_id" },
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "it_org_structure",
+    label: "Operations / IT org structure",
+    kind: "org",
+    whyNeeded:
+      "Operations teams, roles, shift coverage, reporting lines — who makes the operational decisions today and who adopts the recommendations.",
+    sourceDocHint: "HRIS export or org chart (CSV preferred)",
+    acceptedFormats: ["csv", "xlsx"],
+    backing: { table: "tower_workforce", keyColumn: "client_id" },
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "stakeholder_map",
+    label: "Stakeholder / decision-rights map",
+    kind: "qualitative",
+    whyNeeded:
+      "Named owners, contributors, and blockers — who decides, who operates, who can stop it.",
+    sourceDocHint: "Captured in-charter with Nexus, or a stakeholder list",
+    acceptedFormats: ["csv", "docx"],
+  },
+  {
+    key: "value_kpi_baseline",
+    label: "Value & KPI baseline",
+    kind: "financial",
+    whyNeeded:
+      "Current operational KPI baselines the Move's value will be measured against — without them, targets are unsourced.",
+    sourceDocHint: "KPI export or finance baseline (CSV)",
+    acceptedFormats: ["csv", "xlsx"],
+  },
+  {
+    key: "ops_change_readiness",
+    label: "Operational change readiness",
+    kind: "qualitative",
+    whyNeeded:
+      "How ready the operations teams are to act on AI recommendations — trust/override norms, training, prior automation experience, union/regulatory constraints.",
+    sourceDocHint: "Change-readiness assessment or captured with Nexus",
+    acceptedFormats: ["docx", "pdf"],
+  },
+];
+
+const AI_OPS_PHASES: PhaseRequirements[] = [
+  {
+    phase: "originate",
+    requiredEvidence: [],
+    analysisMethods: [],
+    deliverables: ["origination_brief"],
+    gateRequirements: [
+      {
+        key: "program_seed_recorded",
+        describe: "Brief signed off with archetype",
+        severity: "hard",
+      },
+      {
+        key: "value_hypothesis_seed",
+        describe: "Value hypothesis names trigger + outcome",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "charter",
+    requiredEvidence: [
+      { family: "ops_process_baseline", severity: "hard" },
+      { family: "ops_event_cost_baseline", severity: "hard" },
+      { family: "it_systems_landscape", severity: "hard" },
+      { family: "it_org_structure", severity: "hard" },
+      { family: "stakeholder_map", severity: "hard" },
+      { family: "value_kpi_baseline", severity: "hard" },
+      { family: "ops_change_readiness", severity: "soft" },
+    ],
+    analysisMethods: ["maturity_scoring", "two_gap", "leverage_ranking"],
+    deliverables: ["program_charter"],
+    gateRequirements: [
+      {
+        key: "charter_signed_off",
+        describe: "Charter signed off by sponsor",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "diagnose",
+    requiredEvidence: [
+      { family: "ops_process_baseline", severity: "hard" },
+      { family: "ops_event_cost_baseline", severity: "hard" },
+      { family: "it_systems_landscape", severity: "hard" },
+      { family: "it_org_structure", severity: "hard" },
+      { family: "ops_change_readiness", severity: "soft" },
+    ],
+    analysisMethods: [
+      "maturity_scoring",
+      "two_gap",
+      "leverage_ranking",
+      "workpackage_roadmap_estimate",
+    ],
+    deliverables: ["discovery_report"],
+    gateRequirements: [
+      {
+        key: "baseline_evidence_committed",
+        describe: "Current-state baseline committed + cited",
+        severity: "hard",
+      },
+    ],
+  },
+];
+
+export const AI_OPERATIONS_DECISION_SUPPORT: StrategicMoveArchetype = {
+  id: "AI_OPERATIONS_DECISION_SUPPORT",
+  name: "AI Operations Decision Support",
+  description:
+    "Build an AI decision-support/recommendation layer for operational workflows (e.g., airline IROPS recovery, claims ops, supply-chain exceptions). Grounded in the operational process, event volume + cost, and systems evidence — not SDLC metrics.",
+  version: "0.1.0",
+  status: "draft",
+  applicableIndustries: ["*"],
+  applicableFunctions: [
+    "operations",
+    "service operations",
+    "supply chain",
+    "customer operations",
+  ],
+  phaseModel: AI_OPS_PHASES,
+  evidenceFamilies: AI_OPS_FAMILIES,
+  analysisMethods: [
+    "maturity_scoring",
+    "two_gap",
+    "leverage_ranking",
+    "workpackage_roadmap_estimate",
+  ],
+  // Same deliverable keys as AI-PDLC (routes look deliverables up by key);
+  // labels/sections/rubrics adapted to operations language.
+  deliverablePack: [
+    {
+      key: "program_charter",
+      label: "Program Charter",
+      phase: "charter",
+      audience: "Sponsor · Operations leadership",
+      sections: [
+        "Executive summary",
+        "Sponsor commitment & decision rights",
+        "Stakeholder map",
+        "Current-state operational baseline (cited)",
+        "Success metrics & value range",
+        "Scope boundary",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Names this client's actual operations, systems and teams (not generic)",
+          "Every quantitative claim cited or marked missing",
+          "Value range stated as a range with assumptions, not a point",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+      gateArtifact: true,
+    },
+    {
+      key: "discovery_report",
+      label: "Discovery & Diagnostic Report",
+      phase: "diagnose",
+      audience: "Sponsor · Steering committee",
+      sections: [
+        "Current-state operational baseline (quantified, cited)",
+        "Decision-flow & process analysis",
+        "Capability gaps (foundation vs use-case)",
+        "Where to start (event leverage × readiness)",
+        "Root causes",
+        "Continue / discontinue recommendation",
+      ],
+      qualityBar: {
+        minSections: 6,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Every baseline metric cited to its source row",
+          "Event-cost analysis shows confidence + insufficient_evidence where unbacked",
+          "Where-to-start ranking shows its math",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "pptx"],
+      gateArtifact: true,
+    },
+    {
+      key: "target_operating_model",
+      label: "Target AI-Augmented Operations Model",
+      phase: "design",
+      audience: "Sponsor · Operations leadership",
+      sections: [
+        "Human + agent decision workflow design",
+        "Ownership, escalation & override rights",
+        "Operational governance model",
+        "Adoption & change plan",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Grounded in the current process/decision-flow evidence",
+          "Names real teams/roles",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "ai_enabled_sdlc_architecture",
+      label: "AI Decision-Support Architecture",
+      phase: "design",
+      audience: "Architecture · Platform",
+      sections: [
+        "Data & integration design",
+        "Recommendation / decision engine design",
+        "Governance, guardrails & override controls",
+        "Reference architecture",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "full",
+        rubric: [
+          "Maps to the client's actual systems landscape",
+          "Guardrails tied to real operational controls",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "business_case",
+      label: "Business Case & Financial Model",
+      phase: "roadmap_business_case",
+      audience: "CFO · Investment committee",
+      sections: [
+        "Investment summary",
+        "Value model (cited to event-cost baseline)",
+        "Cost model (rate-card provenance)",
+        "Payback & sensitivity",
+        "Roadmap cash flow",
+      ],
+      qualityBar: {
+        minSections: 5,
+        requiresCitations: true,
+        altitude: "board",
+        rubric: [
+          "Every value claim traces to the committed event/KPI baseline",
+          "Cost phased BY the roadmap work-packages",
+          "Rate-card provenance banner present",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "docx", "xlsx"],
+      gateArtifact: true,
+    },
+    {
+      key: "execution_roadmap",
+      label: "Execution Roadmap",
+      phase: "roadmap_business_case",
+      audience: "Sponsor · Delivery leadership",
+      sections: [
+        "Phased work-packages",
+        "Sequencing rationale",
+        "Value milestones",
+        "Dependencies & risks",
+      ],
+      qualityBar: {
+        minSections: 4,
+        requiresCitations: true,
+        altitude: "exec",
+        rubric: [
+          "Sequencing follows the event-leverage ranking",
+          "Each work-package closes named capability gaps",
+        ],
+      },
+      refinement: REF(),
+      formats: ["html", "pptx"],
+    },
+    {
+      key: "mobilization_packet",
+      label: "Mobilization & Go-Decision Packet",
+      phase: "mobilize",
+      audience: "Delivery team · Tower",
+      sections: ["Team & RACI", "Approvals", "Handoff readiness"],
+      qualityBar: {
+        minSections: 3,
+        requiresCitations: false,
+        altitude: "exec",
+        rubric: ["Named delivery leads", "Explicit go/no-go"],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+    },
+    {
+      key: "handoff_package",
+      label: "Tower Handoff Package",
+      phase: "handoff_operate",
+      audience: "Tower delivery",
+      sections: [
+        "Executable plan",
+        "Value measurement contract",
+        "Open decisions (none)",
+      ],
+      qualityBar: {
+        minSections: 3,
+        requiresCitations: false,
+        altitude: "full",
+        rubric: ["Tower-accepted as executable by a named individual"],
+      },
+      refinement: REF(),
+      formats: ["html", "docx"],
+      gateArtifact: true,
+    },
+  ],
+  valueModel: {
+    key: "ops_event_cost_value",
+    label: "Operational event cost & recovery uplift",
+    method: "leverage_ranking",
+    baselineFamilies: ["ops_event_cost_baseline", "value_kpi_baseline"],
+    ratifiedAtPhase: "charter",
+  },
+  riskModel: {
+    key: "ai_ops_decision_risk",
+    label: "AI-in-operations risk",
+    dimensions: [
+      "recommendation quality / trust & override behavior",
+      "operational disruption during adoption",
+      "data freshness & integration reliability",
+      "regulatory / safety / customer-impact exposure",
+    ],
+  },
+  agentGuidance: {
+    systemFraming:
+      "This Move is an AI Operations Decision Support archetype: an AI recommendation/decision-support layer for an operational workflow (e.g., IROPS recovery, claims ops, supply-chain exceptions). Reason over the client's committed operational process, event volume + cost, systems, and org evidence. Never assert an operational baseline or recommendation without committed evidence; name missing evidence explicitly. Do NOT require SDLC metrics (DORA) — they do not apply here.",
+    keyQuestions: [
+      "What current-state evidence is missing before the charter can be approved?",
+      "What does the event volume + cost baseline imply for AI decision-support leverage?",
+      "Which operational decisions/events should the AI layer support first, and why (computed)?",
+    ],
+    requiresGroundedAnswer: true,
+  },
+};
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
   [AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id]: AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
   [IT_SOURCING_EVENT.id]: IT_SOURCING_EVENT,
+  [AI_OPERATIONS_DECISION_SUPPORT.id]: AI_OPERATIONS_DECISION_SUPPORT,
 };
 
 export const DEFAULT_ARCHETYPE_ID = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
@@ -659,4 +1043,48 @@ export function getArchetype(id: string): StrategicMoveArchetype | undefined {
 
 export function listArchetypes(): StrategicMoveArchetype[] {
   return Object.values(ARCHETYPE_REGISTRY);
+}
+
+// ── Per-Move archetype resolution ────────────────────────────────────────────
+// A Move's framework archetype is resolved from what the program row actually
+// carries: an exact registry id wins; otherwise a heuristic over the program's
+// archetype key (e.g. "operational_optimization"), charter classification, and
+// name. Unknown/empty input falls back to AI-PDLC (back-compat with the
+// pre-resolver behavior — DEFAULT_ARCHETYPE_ID).
+
+export function resolveProgramArchetype(input: {
+  archetype?: string | null;
+  classification?: string | null;
+  name?: string | null;
+}): StrategicMoveArchetype {
+  // Exact registry id (e.g. a route that already carries a framework id).
+  if (input.archetype) {
+    const exact = getArchetype(input.archetype);
+    if (exact) return exact;
+  }
+
+  const haystack = [input.archetype, input.classification, input.name]
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .join(" ")
+    .toLowerCase();
+
+  if (/sourcing|vendor|renegoti/.test(haystack)) {
+    return IT_SOURCING_EVENT;
+  }
+  if (
+    /pdlc|sdlc|product development|software|code|engineering lifecycle/.test(
+      haystack,
+    )
+  ) {
+    return AI_PRODUCT_DEVELOPMENT_LIFECYCLE;
+  }
+  if (
+    /irops|operations|operational_optimization|ops |recovery|disruption|claims|exception|contact center|re-?accommodation/.test(
+      haystack,
+    )
+  ) {
+    return AI_OPERATIONS_DECISION_SUPPORT;
+  }
+  // Back-compat default: behave exactly like the old DEFAULT_ARCHETYPE_ID path.
+  return AI_PRODUCT_DEVELOPMENT_LIFECYCLE;
 }

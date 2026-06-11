@@ -13,10 +13,7 @@ import {
 import { buildCurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import { buildCurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { generateDeliverable } from "@/lib/programs/deliverable-refinement";
-import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { getDeliverableContract } from "@/lib/programs/deliverables/contracts";
 import {
@@ -58,7 +55,25 @@ export async function GET(
       return Response.json({ error: "unknown_deliverable" }, { status: 404 });
     }
 
-    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    // Resolve the Move row first (best-effort) so the archetype comes from the
+    // Move's own data, not a hardcoded default.
+    let moveName = tenantDisplayName(ctx.clientKey ?? "") + " initiative";
+    let archetype = resolveProgramArchetype({});
+    try {
+      const move = await getStrategicMoveById(ctx, programId);
+      if (move?.name) moveName = move.name;
+      if (move) {
+        archetype = resolveProgramArchetype({
+          archetype: move.archetype,
+          classification: (move.charter as { classification?: string } | null)
+            ?.classification,
+          name: move.name,
+        });
+      }
+    } catch {
+      /* best-effort */
+    }
+
     const profile = await inferMoveProfile(ctx);
     const readiness = await resolveCurrentStateReadiness(
       ctx,
@@ -68,14 +83,6 @@ export async function GET(
       programId,
     );
     const recommendation = await buildCurrentStateRecommendation(ctx, profile);
-
-    let moveName = tenantDisplayName(ctx.clientKey ?? "") + " initiative";
-    try {
-      const move = await getStrategicMoveById(ctx, programId);
-      if (move?.name) moveName = move.name;
-    } catch {
-      /* best-effort */
-    }
     const plan = buildCurrentStatePlan(recommendation, { moveName });
 
     // Map the archetype's charter deliverable spec → grounded base.

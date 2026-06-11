@@ -17,10 +17,8 @@ import {
   generateDeliverable,
   type GeneratedDeliverable,
 } from "@/lib/programs/deliverable-refinement";
-import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
+import { getStrategicMoveById } from "@/lib/programs/queries";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 
 export const runtime = "nodejs";
@@ -69,7 +67,24 @@ export async function POST(
     const body = (await req.json().catch(() => ({}))) as { key?: string };
     const key = body.key ?? "program_charter";
 
-    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    // Archetype resolved from the Move's own row (best-effort) — never a
+    // hardcoded default for a Move we can read.
+    let moveName = programId;
+    let archetype = resolveProgramArchetype({});
+    try {
+      const move = await getStrategicMoveById(ctx, programId);
+      if (move?.name) moveName = move.name;
+      if (move) {
+        archetype = resolveProgramArchetype({
+          archetype: move.archetype,
+          classification: (move.charter as { classification?: string } | null)
+            ?.classification,
+          name: move.name,
+        });
+      }
+    } catch {
+      /* best-effort */
+    }
     const spec = archetype.deliverablePack.find((d) => d.key === key);
     if (!spec) {
       return Response.json({ error: "unknown_deliverable" }, { status: 404 });
@@ -84,7 +99,7 @@ export async function POST(
       programId,
     );
     const recommendation = await buildCurrentStateRecommendation(ctx, profile);
-    const plan = buildCurrentStatePlan(recommendation, { moveName: programId });
+    const plan = buildCurrentStatePlan(recommendation, { moveName });
     const doc = generateDeliverable(spec, {
       tenant: ctx.clientKey ?? ctx.clientId,
       moveId: programId,

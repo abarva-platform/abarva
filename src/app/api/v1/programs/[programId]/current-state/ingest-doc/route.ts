@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
 import {
   getArchetype,
-  DEFAULT_ARCHETYPE_ID,
+  resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
 import {
   ingestCurrentStateDoc,
@@ -53,14 +53,17 @@ export async function POST(
     const file = form.get("file");
     const familyKey = String(form.get("family") ?? "");
     const phase = Number(form.get("phase") ?? "1");
-    const archetypeId = String(form.get("archetypeId") ?? DEFAULT_ARCHETYPE_ID);
+    const archetypeId = String(form.get("archetypeId") ?? "");
 
     if (!(file instanceof File)) {
       return Response.json({ error: "file_required" }, { status: 400 });
     }
 
+    // Caller-declared archetype id wins (the readiness panel sends the id its
+    // report was resolved against); otherwise resolve (defaults to AI-PDLC).
     const archetype =
-      getArchetype(archetypeId) ?? getArchetype(DEFAULT_ARCHETYPE_ID)!;
+      getArchetype(archetypeId) ??
+      resolveProgramArchetype({ archetype: archetypeId || null });
     const family = archetype.evidenceFamilies.find((f) => f.key === familyKey);
     if (!family) {
       return Response.json(
@@ -102,7 +105,7 @@ export async function POST(
     const result = await ingestCurrentStateDoc(ctx, {
       moveId: programId,
       family,
-      archetypeId,
+      archetypeId: archetype.id,
       phase: Number.isFinite(phase) ? phase : 1,
       filename: file.name,
       mimeType,

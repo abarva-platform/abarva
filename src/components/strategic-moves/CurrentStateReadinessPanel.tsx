@@ -180,6 +180,9 @@ export function CurrentStateReadinessPanel({
       fd.append("file", file);
       fd.append("family", family);
       fd.append("provenance", "representative_synthetic");
+      if (readiness?.archetypeId) {
+        fd.append("archetypeId", readiness.archetypeId);
+      }
       const res = await fetch(
         `/api/v1/programs/${programId}/current-state/ingest`,
         { method: "POST", body: fd },
@@ -212,6 +215,11 @@ export function CurrentStateReadinessPanel({
       fd.append("file", file);
       fd.append("family", family);
       fd.append("phase", String(readiness?.phase ?? 1));
+      // The family must be looked up in the SAME archetype this readiness
+      // report was resolved against (e.g. ops families don't exist in AI-PDLC).
+      if (readiness?.archetypeId) {
+        fd.append("archetypeId", readiness.archetypeId);
+      }
       const res = await fetch(
         `/api/v1/programs/${programId}/current-state/ingest-doc`,
         { method: "POST", body: fd },
