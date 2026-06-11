@@ -29,6 +29,17 @@ seams users actually click rather than the routes the author tested:
 - `global-control-lane`: UploadEventDocumentButton + DocumentTab shelf wiring;
   approval-artifact rewrite; gate-decision route call update. No schema change.
 
+## Client Applicability
+
+- All clients: yes — every tenant's Source canvas gains the Upload document affordance,
+  and every tenant's gate decisions persist correctly.
+
+## Rollout Plan
+
+Squash-merge to main → build web image from main → roll `ca-abarva-web-lab-eastus` →
+real-UI click verification (upload via the button moves the Evidence chip; Record decision
+persists and the approval record appears in EVENT DOCUMENTS).
+
 ## Changes Included
 
 - `src/components/source/canvas/workspace-tabs/UploadEventDocumentButton.tsx` (new)
@@ -45,7 +56,7 @@ seams users actually click rather than the routes the author tested:
   Evidence chip; Record decision persists and the approval record appears in EVENT
   DOCUMENTS) — not API calls.
 
-## Known Gaps / class-sweep log
+## Known Gaps
 
 - File-Cabinet list/download routes + page remain schema-colliding (no nav links;
   deprecated pending reconciliation onto the existing registry).
