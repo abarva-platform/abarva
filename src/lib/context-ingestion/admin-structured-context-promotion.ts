@@ -19,6 +19,7 @@ export interface AdminStructuredContextPromotionInput {
   uploadedBy: string;
   uploadedAt: string;
   uploadId: string;
+  sourcePathBase?: string | null;
   template: ContextTemplateDefinition;
   mapping: CsvMappingSuggestion;
   rows: CsvRow[];
@@ -338,12 +339,19 @@ function sourceFileIdFor(tenantKey: string, fileName: string): string {
   return `admin-upload:${safeSlug(tenantKey)}:${safeSlug(fileName)}`;
 }
 
-function evidencePointer(
-  tenantKey: string,
-  fileName: string,
-  row: number,
-): string {
-  return `csv-upload://${tenantKey}/${encodeURIComponent(fileName)}#row=${row}`;
+function sourcePathBaseFor(input: {
+  tenantKey: string;
+  fileName: string;
+  sourcePathBase?: string | null;
+}): string {
+  return (
+    input.sourcePathBase ??
+    `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}`
+  );
+}
+
+function evidencePointer(sourcePathBase: string, row: number): string {
+  return `${sourcePathBase}#row=${row}`;
 }
 
 function factColumns(row: CsvRow): string[] {
@@ -354,6 +362,7 @@ export function buildAdminStructuredContextPromotionPlan(
   input: AdminStructuredContextPromotionInput,
 ): AdminStructuredContextPromotionPlan {
   const sourceFileId = sourceFileIdFor(input.tenantKey, input.fileName);
+  const sourceBase = sourcePathBaseFor(input);
   const fileHash =
     input.sourceFileHash ??
     hashJson({
@@ -394,7 +403,7 @@ export function buildAdminStructuredContextPromotionPlan(
     const owner = ownerFor(row, input.template);
     const confidence = confidenceFor(row);
     const lastValidatedAt = lastValidatedFor(row, input.uploadedAt);
-    const pointer = evidencePointer(input.tenantKey, input.fileName, sourceRow);
+    const pointer = evidencePointer(sourceBase, sourceRow);
     const recordType = recordTypeFor({
       dimension,
       row,
@@ -495,7 +504,7 @@ export function buildAdminStructuredContextPromotionPlan(
       last_validated_at: input.uploadedAt.slice(0, 10),
       confidence: 0.86,
       freshness_status: "fresh",
-      evidence_pointer: `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}`,
+      evidence_pointer: sourceBase,
       metadata: {
         loader: "admin_structured_context_promotion",
         upload_id: input.uploadId,
@@ -513,7 +522,7 @@ export function buildAdminStructuredContextPromotionPlan(
       source_file_id: sourceFileId,
       source_system: SOURCE_SYSTEM,
       source_file: input.fileName,
-      source_path: `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}`,
+      source_path: sourceBase,
       workbook_name: null,
       sheet_names: [],
       file_hash: fileHash,
@@ -523,7 +532,7 @@ export function buildAdminStructuredContextPromotionPlan(
       last_validated_at: input.uploadedAt.slice(0, 10),
       confidence: 0.86,
       freshness_status: "fresh",
-      evidence_pointer: `csv-upload://${input.tenantKey}/${encodeURIComponent(input.fileName)}`,
+      evidence_pointer: sourceBase,
       metadata: {
         loader: "admin_structured_context_promotion",
         upload_id: input.uploadId,

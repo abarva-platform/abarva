@@ -77,6 +77,7 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       const body = lastBody();
       expect(body.filter).toBeDefined();
       expect(String(body.filter)).toMatch(/tenant_key eq 'apex-retail'/);
+      expect(String(body.filter)).toMatch(/lifecycle_state eq 'active'/);
     });
 
     it('canonicalizes legacy aliases before composing the filter', async () => {
@@ -89,6 +90,7 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       });
       const body = lastBody();
       expect(String(body.filter)).toMatch(/tenant_key eq 'apex-retail'/);
+      expect(String(body.filter)).toMatch(/lifecycle_state eq 'active'/);
       expect(String(body.filter)).not.toMatch(/apexretail/);
     });
 
@@ -108,6 +110,7 @@ describe('Azure AI Search retriever — parity & invariants', () => {
       const filter = String(lastBody().filter);
       // tenant filter first
       expect(filter.startsWith("tenant_key eq 'meridian-health'")).toBe(true);
+      expect(filter).toMatch(/lifecycle_state eq 'active'/);
       expect(filter).toMatch(/confidence ge 0.7/);
       // Azure AI Search requires search.in(), NOT the OData `in (...)` list literal,
       // which the service rejects as an unsupported language feature.

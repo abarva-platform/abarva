@@ -97,6 +97,7 @@ async function sourceCounts(db: Pool): Promise<Record<string, number>> {
   const result = await db.query<{ tenant_key: string; count: string }>(`
     select tenant_key, count(*)::text as count
     from enterprise_context_chunks
+    where coalesce(lifecycle_state, 'active') = 'active'
     group by tenant_key
     order by tenant_key
   `);
@@ -118,25 +119,66 @@ async function* readChunks(
     const result = await db.query<EnterpriseContextChunkRow>(
       `
       select
-        tenant_key,
-        chunk_id,
-        source_segment_id,
-        source_record_id,
-        source_doc,
-        source_path,
-        chunk_index,
-        chunk_text,
-        embedded_at,
-        provenance,
-        chunk_metadata
-      from enterprise_context_chunks
-      order by tenant_key, chunk_id
+        c.client_id::text as client_id,
+        c.tenant_key,
+        c.chunk_id,
+        c.source_segment_id,
+        c.source_record_id,
+        c.source_doc,
+        c.source_path,
+        c.chunk_index,
+        c.chunk_text,
+        coalesce(c.lifecycle_state, 'active') as lifecycle_state,
+        c.embedded_at,
+        c.provenance,
+        c.chunk_metadata,
+        gor.agent_readiness_status,
+        coalesce(
+          nullif(c.chunk_metadata->>'source_file_id', ''),
+          nullif(c.provenance->>'source_file_id', '')
+        ) as source_file_id,
+        case
+          when coalesce(c.chunk_metadata->>'source_row_number', c.provenance->>'source_row') ~ '^[0-9]+$'
+          then coalesce(c.chunk_metadata->>'source_row_number', c.provenance->>'source_row')::int
+          else null
+        end as source_row_number
+      from enterprise_context_chunks c
+      left join governed_object_readiness gor
+        on gor.object_table = 'enterprise_context_chunks'
+       and gor.object_id = c.chunk_id
+       and gor.client_key = c.tenant_key
+      where coalesce(c.lifecycle_state, 'active') = 'active'
+      order by c.tenant_key, c.chunk_id
       limit $1 offset $2
     `,
       [batchSize, offset],
     );
     if (result.rows.length === 0) return;
     yield result.rows;
+    offset += result.rows.length;
+  }
+}
+
+async function* readNonActiveChunkDeletes(
+  db: Pool,
+  batchSize: number,
+): AsyncGenerator<SearchDocument[]> {
+  let offset = 0;
+  for (;;) {
+    const result = await db.query<{ tenant_key: string; chunk_id: string }>(
+      `
+      select tenant_key, chunk_id
+      from enterprise_context_chunks
+      where coalesce(lifecycle_state, 'active') <> 'active'
+      order by tenant_key, chunk_id
+      limit $1 offset $2
+    `,
+      [batchSize, offset],
+    );
+    if (result.rows.length === 0) return;
+    yield result.rows.map((row) =>
+      toTenantContextDeleteDocument(canonicalTenantKey(row.tenant_key), row.chunk_id),
+    );
     offset += result.rows.length;
   }
 }
@@ -271,6 +313,17 @@ async function main(): Promise<void> {
             uploaded,
           }),
         );
+      }
+      for await (const deletes of readNonActiveChunkDeletes(db, batchSize)) {
+        if (deletes.length > 0) {
+          await uploadBatch(deletes);
+          console.log(
+            JSON.stringify({
+              event: "azure_search_backfill_non_active_deleted",
+              deleted: deletes.length,
+            }),
+          );
+        }
       }
     }
 

@@ -123,14 +123,22 @@ interface TenantContextSearchHit {
   '@search.score'?: number;
   id?: string;
   tenant_key?: string;
+  client_id?: string;
+  client_key?: string;
   source_segment?: string;
   record_id?: string;
   chunk_id?: string;
   title?: string;
   body?: string;
   source_uri?: string;
+  source_basis?: string;
+  source_citation?: string;
   confidence?: number;
+  confidence_level?: string;
   sensitivity?: string;
+  classification?: string;
+  lifecycle_state?: string;
+  agent_readiness_status?: string;
   last_seen_at?: string;
 }
 
@@ -168,7 +176,10 @@ function escapeOdataLiteral(value: string): string {
 
 function buildFilter(canonicalTenantKey: string, filters?: TenantContextFilters): string {
   // tenant_key is always pinned — broker boundary invariant.
-  const parts: string[] = [`tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`];
+  const parts: string[] = [
+    `tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`,
+    "lifecycle_state eq 'active'",
+  ];
 
   if (filters?.minConfidence !== undefined && Number.isFinite(filters.minConfidence)) {
     parts.push(`confidence ge ${filters.minConfidence}`);
@@ -214,9 +225,13 @@ function mapHitToTenantContextChunk(
     // only writes embedded chunks). Keep the field present so downstream
     // type-checks behave identically to pgvector.
     embeddingStatus: 'embedded',
-    sourceBasis: hit.source_uri ? normalizeLegacyClientAliases(hit.source_uri) : undefined,
+    sourceBasis: hit.source_basis
+      ? normalizeLegacyClientAliases(hit.source_basis)
+      : hit.source_uri
+        ? normalizeLegacyClientAliases(hit.source_uri)
+        : undefined,
     // `sensitivity` field in the index is the chunk's classification.
-    classification: normalizeClassification(hit.sensitivity),
+    classification: normalizeClassification(hit.classification ?? hit.sensitivity),
     vectorScore: typeof hit['@search.score'] === 'number' ? hit['@search.score'] : undefined,
   };
 }
