@@ -1,23 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./StrategicMoves.module.css";
-import type {
-  StrategicMove,
-  StrategicMovePortfolio,
-} from "@/lib/programs/types.ui";
+import type { StrategicMovePortfolio } from "@/lib/programs/types.ui";
+import { MoveListTable } from "./MoveListTable";
+import {
+  MOVE_CHIPS,
+  type MoveChipKey,
+  chipCounts,
+  filterByChip,
+  isArchived,
+} from "./move-list-format";
 
-type FilterKey = "all" | "attention" | "awaiting" | "on_track" | "archived";
-
-const FILTERS: Array<{ key: FilterKey; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "attention", label: "Needs attention" },
-  { key: "awaiting", label: "Awaiting decision" },
-  { key: "on_track", label: "On track" },
-  { key: "archived", label: "Archived" },
-];
+type FilterKey = MoveChipKey;
 
 const ARCHIVE_REASONS: Array<{ value: string; label: string }> = [
   { value: "no_longer_needed", label: "No longer needed" },
@@ -39,22 +36,14 @@ interface Props {
   canManage: boolean;
 }
 
-function isArchived(move: StrategicMove): boolean {
-  return move.lifecycleState === "archived" || Boolean(move.archivedAt);
-}
-
-function formatValueAtStake(amountUsd: number): string {
-  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return "$—";
-  if (amountUsd >= 1_000_000_000)
-    return `$${(amountUsd / 1_000_000_000).toFixed(1)}B`;
-  if (amountUsd >= 1_000_000) return `$${Math.round(amountUsd / 1_000_000)}M`;
-  if (amountUsd >= 1_000) return `$${Math.round(amountUsd / 1_000)}K`;
-  return `$${Math.round(amountUsd).toLocaleString()}`;
-}
-
 export function ManageMovesClient({ portfolio, canManage }: Props) {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -63,41 +52,12 @@ export function ManageMovesClient({ portfolio, canManage }: Props) {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const moves = portfolio.moves;
-    switch (filter) {
-      case "archived":
-        return moves.filter(isArchived);
-      case "attention":
-        return moves.filter(
-          (m) => !isArchived(m) && m.status.key === "gate_blocked",
-        );
-      case "awaiting":
-        return moves.filter(
-          (m) => !isArchived(m) && m.status.key === "awaiting_decision",
-        );
-      case "on_track":
-        return moves.filter(
-          (m) => !isArchived(m) && m.status.key === "on_track",
-        );
-      case "all":
-      default:
-        // Default view excludes archived — archived live behind their own chip.
-        return moves.filter((m) => !isArchived(m));
-    }
-  }, [portfolio.moves, filter]);
+  const filtered = useMemo(
+    () => filterByChip(portfolio.moves, filter),
+    [portfolio.moves, filter],
+  );
 
-  const counts = useMemo(() => {
-    const active = portfolio.moves.filter((m) => !isArchived(m));
-    return {
-      all: active.length,
-      attention: active.filter((m) => m.status.key === "gate_blocked").length,
-      awaiting: active.filter((m) => m.status.key === "awaiting_decision")
-        .length,
-      on_track: active.filter((m) => m.status.key === "on_track").length,
-      archived: portfolio.moves.filter(isArchived).length,
-    } satisfies Record<FilterKey, number>;
-  }, [portfolio.moves]);
+  const counts = useMemo(() => chipCounts(portfolio.moves), [portfolio.moves]);
 
   const selectedMoves = useMemo(
     () => portfolio.moves.filter((m) => selected.has(m.id)),
@@ -254,7 +214,7 @@ export function ManageMovesClient({ portfolio, canManage }: Props) {
         role="tablist"
         aria-label="Filter moves"
       >
-        {FILTERS.map((f) => (
+        {MOVE_CHIPS.map((f) => (
           <button
             key={f.key}
             type="button"
@@ -321,88 +281,14 @@ export function ManageMovesClient({ portfolio, canManage }: Props) {
         </div>
       ) : null}
 
-      <div className={styles.manageList}>
-        <div className={styles.manageRowHead}>
-          <label className={styles.manageCheckCell}>
-            <input
-              type="checkbox"
-              checked={
-                filtered.length > 0 && filtered.every((m) => selected.has(m.id))
-              }
-              onChange={toggleAll}
-              aria-label="Select all visible moves"
-            />
-          </label>
-          <span className={styles.manageColMove}>Move</span>
-          <span className={styles.manageColStatus}>Status</span>
-          <span className={styles.manageColValue}>Value</span>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className={styles.manageEmpty}>No moves in this filter.</div>
-        ) : (
-          filtered.map((move) => {
-            const archived = isArchived(move);
-            const checked = selected.has(move.id);
-            return (
-              <div
-                key={move.id}
-                className={`${styles.manageRow} ${checked ? styles.manageRowSelected : ""} ${
-                  archived ? styles.manageRowArchived : ""
-                }`}
-              >
-                <label className={styles.manageCheckCell}>
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggle(move.id)}
-                    aria-label={`Select ${move.displayCode}`}
-                  />
-                </label>
-                <div className={styles.manageColMove}>
-                  <Link
-                    className={styles.manageMoveName}
-                    href={`/strategic-moves/${move.id}`}
-                    prefetch={false}
-                  >
-                    {move.name}
-                  </Link>
-                  <div className={styles.manageMoveMeta}>
-                    {move.displayCode} · {move.tenant.name} · {move.phaseLabel}
-                    {archived ? (
-                      <span className={styles.manageArchivedTag}>Archived</span>
-                    ) : null}
-                  </div>
-                </div>
-                <div className={styles.manageColStatus}>
-                  <span
-                    className={`${styles.manageStatusDot} ${
-                      move.statusColor === "red"
-                        ? styles.legendRed
-                        : move.statusColor === "amber"
-                          ? styles.legendAmber
-                          : move.statusColor === "teal"
-                            ? styles.legendTeal
-                            : styles.legendGreen
-                    }`}
-                    aria-hidden
-                  />
-                  {archived
-                    ? `Archived${move.archiveReason ? ` · ${move.archiveReason}` : ""}`
-                    : move.status.text}
-                </div>
-                <div className={styles.manageColValue}>
-                  {formatValueAtStake(
-                    move.valueAtStake.projected?.high ??
-                      move.valueAtStake.verified?.amount ??
-                      0,
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+      <MoveListTable
+        moves={filtered}
+        now={now}
+        selectable
+        selected={selected}
+        onToggle={toggle}
+        onToggleAll={toggleAll}
+      />
 
       {drawerOpen ? (
         <>
