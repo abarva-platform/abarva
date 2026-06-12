@@ -136,9 +136,9 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 4,
+    version: 5,
     model: DEFAULT_MODEL,
-    maxTokens: 4500,
+    maxTokens: 3800,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -166,7 +166,9 @@ Mandatory tables:
 - Evaluation weights and evidence-required scoring table.
 - Client-to-complete / vendor-to-confirm register.
 
-Tone: formal procurement style, but executive-polished. Vendor-facing — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and concise enough to fit a first-market draft: target 2,800-3,800 words. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.`,
+Tone: formal procurement style, but executive-polished. Vendor-facing — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and concise enough to fit a first-market draft: target 2,400-3,200 words. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.
+
+First-pass quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every required section and mandatory table must be present. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap. Avoid verbose narrative that crowds out the tables vendors need to price against.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Tenant: ${ctx.tenantName}`,
