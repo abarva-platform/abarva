@@ -18,7 +18,7 @@ describe("Source artifact prompt registry provider config", () => {
   it("configures the D09 RFP package as a board-grade, source-disciplined deliverable", () => {
     const template = getPromptTemplate("d09_rfp_pack");
 
-    expect(template?.version).toBeGreaterThanOrEqual(7);
+    expect(template?.version).toBeGreaterThanOrEqual(8);
     expect(template?.maxTokens).toBeGreaterThanOrEqual(5000);
     expect(template?.systemPrompt).toContain("Source register");
     expect(template?.systemPrompt).toContain("Risk, issue, dependency");
@@ -27,6 +27,12 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain("Never stop after a partial table");
     expect(template?.systemPrompt).toContain("Section budget");
     expect(template?.systemPrompt).toContain("Preserve sections §7–§11");
+    expect(template?.systemPrompt).toContain(
+      "Do not leave process dates as bare [CLIENT TO SET]",
+    );
+    expect(template?.systemPrompt).toContain(
+      "blocking gate, and downstream impact",
+    );
     expect(template?.systemPrompt).toContain(
       "RFP package draft complete — pending client closure of registered gaps.",
     );
@@ -64,6 +70,15 @@ describe("Source artifact prompt registry provider config", () => {
     );
     expect(message).toContain("§10 must include a risk register");
     expect(message).toContain("§11 must include a gap closure register");
+    expect(message).toContain(
+      "do not call that requirement Not Requested in the source register",
+    );
+    expect(message).toContain(
+      "§9 must include weights/scoring/disqualification controls",
+    );
+    expect(message).toContain(
+      "blocking-gap closure table with owner placeholder",
+    );
     expect(message).toContain("every section §1 through §11 must appear");
     expect(message).toContain("§7–§11 must not be sacrificed");
   });

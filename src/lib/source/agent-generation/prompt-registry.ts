@@ -136,7 +136,7 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 7,
+    version: 8,
     model: DEFAULT_MODEL,
     maxTokens: 5600,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
@@ -185,9 +185,9 @@ Section budget:
 - §6: 300 words max plus one transition/blackout table, 6 rows max.
 - §7: must include commercial terms and pricing instructions table.
 - §8: must include vendor response/submission requirements table.
-- §9: must include evaluation methodology table with weights/scoring bands/disqualification controls.
-- §10: must include consolidated risk register table with owner and mitigation.
-- §11: must include source register and gap closure/client-to-complete register with owner, due date placeholder, blocking gate, and downstream impact.
+- §9: must include evaluation methodology table with weights/scoring bands/disqualification controls. If Exhibit 09 is uploaded, treat it as the governed basis for the weights; do not call EVID-SRC-EVAL-WEIGHT-RATIONALE Not Requested.
+- §10: must include consolidated risk register table with owner, mitigation, and explicit transition/security/commercial failure modes. Use Exhibits 07, 13, and 14 when uploaded.
+- §11: must include source register and gap closure/client-to-complete register with owner, due date placeholder, blocking gate, and downstream impact. Every [CLIENT TO SET], [CLIENT TO COMPLETE], [ASSUMPTION TO VALIDATE], and unresolved gate blocker must appear in that table.
 
 Required compact section skeleton:
 ## §1 · Executive summary and decision context
@@ -202,7 +202,7 @@ Required compact section skeleton:
 ## §10 · Risk register, transition controls, and failure modes
 ## §11 · Source register, assumptions, and client-to-complete gaps
 
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with owner/action. Include practical mitigations for risks; do not merely flag them.`,
+Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with owner/action. Include practical mitigations for risks; do not merely flag them. Do not leave process dates as bare [CLIENT TO SET]; either provide the governed date from evidence or put the item in the §11 closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Tenant: ${ctx.tenantName}`,
@@ -254,7 +254,7 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       );
 
       lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, and the final line must confirm the draft is complete pending registered gap closure.",
+        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
       );
       return lines.join("\n");
     },
@@ -439,7 +439,9 @@ const D09_RFP_EVIDENCE_COVERAGE_RULES: RfpEvidenceCoverageRule[] = [
   },
 ];
 
-function formatD09RfpEvidenceCoverage(ctx: SourceGenerationContext): string {
+export function formatD09RfpEvidenceCoverage(
+  ctx: SourceGenerationContext,
+): string {
   const uploaded = ctx.uploadedEvidence ?? [];
   if (uploaded.length === 0) {
     return [
