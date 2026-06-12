@@ -380,15 +380,15 @@ function RegistryDocumentsShelf({
       ) : (
         <div style={REGISTRY_GRID_STYLE}>
           {documents.map((doc) => {
-            const href = eventId
+            const detailHref = eventId
               ? `/source/events/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.id)}`
               : undefined;
+            const downloadHref = `/api/v1/source/artifacts/${encodeURIComponent(doc.id)}/download`;
             return (
-              <a
+              <article
                 key={doc.id}
-                href={href}
                 data-testid={`source-canvas-registry-doc-${doc.id}`}
-                style={REGISTRY_DOC_LINK_STYLE}
+                style={REGISTRY_DOC_CARD_STYLE}
               >
                 <span style={REGISTRY_DOC_TOPLINE_STYLE}>
                   <span>{SOURCE_STAGE_LABELS[doc.stageKey]}</span>
@@ -400,12 +400,42 @@ function RegistryDocumentsShelf({
                     <span style={REGISTRY_SHELF_BADGE_STYLE}>AI Draft</span>
                   ) : null}
                 </span>
-                <span style={REGISTRY_DOC_NAME_STYLE}>{doc.originalName}</span>
+                {detailHref ? (
+                  <a
+                    href={detailHref}
+                    data-testid={`source-canvas-registry-doc-open-${doc.id}`}
+                    style={REGISTRY_DOC_NAME_LINK_STYLE}
+                    aria-label={`Open ${doc.originalName}`}
+                  >
+                    {doc.originalName}
+                  </a>
+                ) : (
+                  <span style={REGISTRY_DOC_NAME_STYLE}>{doc.originalName}</span>
+                )}
                 <span style={REGISTRY_DOC_META_STYLE}>
                   {formatDocumentFamily(doc.artifactFamily)} · parse{" "}
                   {doc.parseStatus} · approval {doc.approvalState}
                 </span>
-              </a>
+                <span style={REGISTRY_DOC_ACTIONS_STYLE}>
+                  {detailHref ? (
+                    <a
+                      href={detailHref}
+                      data-testid={`source-canvas-registry-doc-open-action-${doc.id}`}
+                      style={REGISTRY_DOC_ACTION_STYLE}
+                    >
+                      Open detail
+                    </a>
+                  ) : null}
+                  <a
+                    href={downloadHref}
+                    data-testid={`source-canvas-registry-doc-download-${doc.id}`}
+                    style={REGISTRY_DOC_ACTION_STYLE}
+                    download
+                  >
+                    Download file
+                  </a>
+                </span>
+              </article>
             );
           })}
         </div>
@@ -902,7 +932,7 @@ const REGISTRY_GRID_STYLE: CSSProperties = {
   gap: 8,
 };
 
-const REGISTRY_DOC_LINK_STYLE: CSSProperties = {
+const REGISTRY_DOC_CARD_STYLE: CSSProperties = {
   display: "grid",
   gap: 5,
   minWidth: 0,
@@ -935,11 +965,38 @@ const REGISTRY_DOC_NAME_STYLE: CSSProperties = {
   overflowWrap: "anywhere",
 };
 
+const REGISTRY_DOC_NAME_LINK_STYLE: CSSProperties = {
+  ...REGISTRY_DOC_NAME_STYLE,
+  textDecoration: "none",
+};
+
 const REGISTRY_DOC_META_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 12,
   lineHeight: 1.35,
   color: CANVAS.INK_SOFT,
+};
+
+const REGISTRY_DOC_ACTIONS_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexWrap: "wrap",
+  marginTop: 4,
+};
+
+const REGISTRY_DOC_ACTION_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 999,
+  padding: "4px 8px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 11,
+  fontWeight: 650,
+  color: CANVAS.INK,
+  textDecoration: "none",
+  background: "#fff",
 };
 
 const CONTAINER_STYLE: CSSProperties = {
