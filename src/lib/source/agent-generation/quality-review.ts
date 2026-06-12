@@ -9,7 +9,10 @@ import {
   summarizeConsultingGradeReview,
   type ConsultingGradeReview,
 } from "@/lib/deliverables/quality/consulting-grade-rubric";
-import { formatD09RfpEvidenceCoverage } from "./prompt-registry";
+import {
+  formatD09RfpEvidenceCoverage,
+  getD09RfpSatisfiedRequirementIds,
+} from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 
 const SOURCE_CONSULTING_GRADE_CODES = new Set(["d09_rfp_pack"]);
@@ -40,16 +43,22 @@ export function buildSourceQualitySourceContext(args: {
     const excerpt = body.replace(/\s+/g, " ").trim().slice(0, 900);
     return `- ${code}: ${excerpt}${body.length > 900 ? "..." : ""}`;
   });
-  const evidenceLines = ctx.evidence.map((item) =>
-    [
+  const d09SatisfiedIds = getD09RfpSatisfiedRequirementIds(ctx);
+  const evidenceLines = ctx.evidence.map((item) => {
+    const state =
+      item.currentState === "Not Requested" &&
+      d09SatisfiedIds.has(item.requirementId)
+        ? "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)"
+        : item.currentState;
+    return [
       `- ${item.requirementId}`,
-      `state=${item.currentState}`,
+      `state=${state}`,
       item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
       item.notes ? `notes=${item.notes}` : null,
     ]
       .filter(Boolean)
-      .join("; "),
-  );
+      .join("; ");
+  });
   const uploadedEvidenceLines = (ctx.uploadedEvidence ?? []).flatMap(
     (artifact) => {
       const header = [

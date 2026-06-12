@@ -33,6 +33,8 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain(
       "blocking gate, and downstream impact",
     );
+    expect(template?.systemPrompt).toContain("Compact required appendix block");
+    expect(template?.systemPrompt).toContain("§11A table");
     expect(template?.systemPrompt).toContain(
       "RFP package draft complete — pending client closure of registered gaps.",
     );
@@ -55,6 +57,10 @@ describe("Source artifact prompt registry provider config", () => {
     });
 
     expect(message).toContain("D09 RFP EVIDENCE COVERAGE MAP");
+    expect(message).toContain("GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09)");
+    expect(message).toContain(
+      "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)",
+    );
     expect(message).toContain("Exhibit 08 — Locked pricing assumptions");
     expect(message).toContain("satisfies=EVID-SRC-PRICE-ASSUMPTIONS");
     expect(message).toContain("Exhibit 09 — Approved evaluation criteria");
@@ -103,7 +109,21 @@ function makeD09Context(filenames: string[]): SourceGenerationContext {
     },
     artifactStates: [],
     gateCriteria: [],
-    evidence: [],
+    evidence: [
+      {
+        id: "evidence-price",
+        sourceEventId: "event-1",
+        tenantKey: "skyharbor",
+        requirementId: "EVID-SRC-PRICE-ASSUMPTIONS",
+        stage: "pricing",
+        currentState: "Not Requested",
+        sourceArtifactId: null,
+        notes: "Stale scaffold row overridden by Exhibit 08 upload.",
+        lastSyncedAt: "2026-06-12T00:00:00.000Z",
+        createdAt: "2026-06-12T00:00:00.000Z",
+        updatedAt: "2026-06-12T00:00:00.000Z",
+      },
+    ],
     uploadedEvidence: filenames.map((filename, index) => ({
       id: `artifact-${index + 1}`,
       originalName: filename,

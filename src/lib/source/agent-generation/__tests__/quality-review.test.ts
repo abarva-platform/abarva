@@ -121,6 +121,10 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(context).toContain("Exhibit 09 — Approved evaluation criteria");
     expect(context).toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
     expect(context).toContain(
+      "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)",
+    );
+    expect(context).not.toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
+    expect(context).toContain(
       "Blocking gaps are only items still missing after this coverage map",
     );
     expect(context).toContain("rfp-package-complete");
