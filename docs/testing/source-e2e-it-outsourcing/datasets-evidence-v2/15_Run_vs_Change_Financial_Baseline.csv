@@ -1,0 +1,13 @@
+line_id,tower_id,tower,spend_type,accounting_class,annual_value_usd,description,disclosure_tier,evidence_refs,notes
+FIN-APP-RUN,T1,Application Support,run,opex,74400000,"Existing managed service run support, L2/L3, batch, interfaces",Internal only,"Exhibits 01,04,07",Do not expose incumbent spend in issued RFP content.
+FIN-APP-CHANGE,T1,Application Support,change,opex,12000000,"Minor enhancements <=40h, compliance changes",Bidder-facing aggregate only,"Exhibits 01,06,08",May be disclosed as planning baseline without incumbent name.
+FIN-INFRA-RUN,T2,Infrastructure Operations,run,opex,62600000,Mainframe/private cloud/cloud ops/database/storage,Internal only,"Exhibits 03,04,07,11",Do not expose incumbent spend in issued RFP content.
+FIN-INFRA-CHANGE,T2,Infrastructure Operations,change,capex/opex,10000000,"Refresh support, automation, migration run-change",Bidder-facing aggregate only,"Exhibits 03,11,14",May be disclosed as planning baseline without incumbent name.
+FIN-DESK-RUN,T3,Service Desk,run,opex,39700000,Omnichannel desk and crew emergency line operations,Internal only,"Exhibits 02,04,05",Do not expose incumbent spend in issued RFP content.
+FIN-DESK-CHANGE,T3,Service Desk,change,opex,5000000,"Knowledge, deflection, chatbot tuning, transformation support",Bidder-facing aggregate only,"Exhibits 02,06,08",May be disclosed as planning baseline without incumbent name.
+FIN-EUC-RUN,T4,EUC & Field Services,run,opex,33400000,"Endpoint lifecycle, field services, depot",Internal only,"Exhibits 03,04,05",Do not expose incumbent spend in issued RFP content.
+FIN-EUC-CHANGE,T4,EUC & Field Services,change,capex/opex,5000000,Endpoint refresh wave support and patch factory uplift,Bidder-facing aggregate only,"Exhibits 03,11,13",May be disclosed as planning baseline without incumbent name.
+FIN-NET-RUN,T5,Network Operations,run,opex,28900000,"NOC, LAN/WLAN, WAN, voice ops",Internal only,"Exhibits 03,05,12",Do not expose incumbent spend in issued RFP content.
+FIN-NET-CHANGE,T5,Network Operations,change,opex,4000000,SD-WAN policy migration and observability uplift,Bidder-facing aggregate only,"Exhibits 12,14",May be disclosed as planning baseline without incumbent name.
+FIN-XT-RUN,T6,Cross-tower Governance & Automation,run,opex,18000000,"SIAM, reporting, observability operations",Internal only,"Exhibits 05,06",Do not expose incumbent spend in issued RFP content.
+FIN-XT-CHANGE,T6,Cross-tower Governance & Automation,change,opex,7000000,"Transition office, automation factory, productivity glidepath",Bidder-facing aggregate only,"Exhibits 06,08,14",May be disclosed as planning baseline without incumbent name.

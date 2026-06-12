@@ -136,28 +136,37 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 2,
+    version: 3,
     model: DEFAULT_MODEL,
-    maxTokens: 5000,
+    maxTokens: 8000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
 
-You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing document. Vendors will price + propose against this. It must be complete, unambiguous, and structured so vendor responses are comparable downstream.
+You are drafting the RFP Package (artifact d09_rfp_pack) — the flagship vendor-facing document. Vendors will price + propose against this, and executives will judge whether the event is ready to enter market. It must read like a partner-grade consulting artifact for an $80B enterprise-scale sourcing event: complete, unambiguous, quantified, evidence-aware, and structured so vendor responses are comparable downstream.
 
 Required structural sections:
-## §1 · Executive summary + scope
-## §2 · Sourcing background
-## §3 · In-scope services + applications
-## §4 · Service-level expectations
-## §5 · Required vendor capabilities
-## §6 · Response format + completeness checklist
-## §7 · Pricing instructions
-## §8 · Evaluation criteria + weights
-## §9 · Timeline + key dates
-## §10 · Submission instructions
+## §1 · Executive summary and decision context
+## §2 · Enterprise current-state baseline
+## §3 · Scope, service towers, and exclusions
+## §4 · Application, workload, infrastructure, network, and cloud estate
+## §5 · Service-level, operational, and security obligations
+## §6 · Transition approach, blackout constraints, and risk controls
+## §7 · Commercial model, run/change baseline, and pricing instructions
+## §8 · Vendor response instructions and mandatory submission tables
+## §9 · Evaluation framework, weights, and disqualification rules
+## §10 · Source register, assumptions, and client-to-complete gaps
 
-Tone: formal procurement style. Vendor-facing — assume the reader is a sales engineer at AWS/Azure/GCP/Coupa-tier vendor. Explicit, exhaustive, no procurement boilerplate. Quote scope from d05 verbatim where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Pricing instructions point to the assumption set d21 + the empty pricing template d19a (note: those exist as separate artifacts; the RFP body references them).`,
+Mandatory tables:
+- In-scope / out-of-scope service tower matrix.
+- Current-state baseline table covering applications, workloads, tickets, FTE, run cost, data center/private cloud, network, security/compliance, contracts, and run-vs-change spend.
+- SLA and operational obligations table.
+- Transition constraints and blackout calendar table.
+- Pricing and volume-basis instruction table.
+- Evaluation weights and evidence-required scoring table.
+- Client-to-complete / vendor-to-confirm register.
+
+Tone: formal procurement style, but executive-polished. Vendor-facing — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, exhaustive, and evidence-disciplined. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Tenant: ${ctx.tenantName}`,
@@ -175,6 +184,12 @@ Tone: formal procurement style. Vendor-facing — assume the reader is a sales e
         "Approved Scope Memo (d05_scope_memo):",
         upstream.d05_scope_memo ??
           "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
+        "",
+        "— GOVERNED EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— PARSED UPLOADED EVIDENCE EXCERPTS —",
+        formatUploadedEvidence(ctx),
         "",
       ].filter((line): line is string => line !== null);
 
@@ -196,7 +211,9 @@ Tone: formal procurement style. Vendor-facing — assume the reader is a sales e
         lines.push("");
       }
 
-      lines.push("Draft the RFP Package per the system prompt requirements.");
+      lines.push(
+        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary as a completeness checklist: when a category is loaded or usable, reflect it in the right section; when a category is missing or low confidence, add it to the client-to-complete register instead of filling with generic text.",
+      );
       return lines.join("\n");
     },
   },
@@ -206,6 +223,47 @@ export function getPromptTemplate(
   artifactCode: string,
 ): SourceArtifactPromptTemplate | null {
   return REGISTRY[artifactCode] ?? null;
+}
+
+function formatEvidenceStates(ctx: SourceGenerationContext): string {
+  if (ctx.evidence.length === 0) return "(no evidence states recorded)";
+  return ctx.evidence
+    .map((item) =>
+      [
+        `- ${item.requirementId}`,
+        `stage=${item.stage}`,
+        `state=${item.currentState}`,
+        item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
+        item.notes ? `notes=${item.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+    )
+    .join("\n");
+}
+
+function formatUploadedEvidence(ctx: SourceGenerationContext): string {
+  const evidence = ctx.uploadedEvidence ?? [];
+  if (evidence.length === 0) return "(no parsed uploaded evidence available)";
+  return evidence
+    .map((artifact) => {
+      const lines = [
+        `### ${artifact.originalName}`,
+        `artifact_id=${artifact.id}; family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
+      ];
+      const excerpts = artifact.chunkExcerpts.slice(0, 4);
+      if (excerpts.length > 0) {
+        lines.push("Chunk excerpts:");
+        lines.push(...excerpts.map((excerpt) => `- ${excerpt}`));
+      }
+      const facts = artifact.factSummaries.slice(0, 4);
+      if (facts.length > 0) {
+        lines.push("Structured fact summaries:");
+        lines.push(...facts.map((fact) => `- ${fact}`));
+      }
+      return lines.join("\n");
+    })
+    .join("\n\n");
 }
 
 export function listSupportedGenerationCodes(): string[] {

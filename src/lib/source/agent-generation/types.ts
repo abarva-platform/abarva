@@ -10,7 +10,7 @@
 //      tenant/event metadata).
 //   4. Prompt registry returns the per-artifact prompt template
 //      (versioned). Builder fills the template with bound context.
-//   5. OpenAI Responses API call returns the markdown body.
+//   5. Anthropic Claude returns the markdown body.
 //   6. Server writes the body to source_event_artifact_states.body
 //      AND a generation receipt to body_generation_metadata.
 //
@@ -25,12 +25,12 @@ import type {
 import type { SourceStageKey } from "@/lib/source/types";
 
 /**
- * Audit receipt persisted to body_generation_metadata after an OpenAI
+ * Audit receipt persisted to body_generation_metadata after an Anthropic
  * generation. Survives the body itself; if the body is later
  * hand-edited the metadata still describes the original generation.
  */
 export interface SourceArtifactBodyGenerationMetadata {
-  /** OpenAI model id used (e.g. `gpt-5.1`). */
+  /** Anthropic model id used (e.g. `claude-sonnet-4-6`). */
   model: string;
   /** Prompt template id — typically the artifact code. */
   promptTemplateId: string;
@@ -48,12 +48,14 @@ export interface SourceArtifactBodyGenerationMetadata {
   generatedAt: string;
   /** Clerk user id of whoever clicked Generate. */
   generatedByUserId: string | null;
-  /** From OpenAI usage: input tokens (best-effort). */
+  /** From Anthropic usage: input tokens (best-effort). */
   tokensIn: number | null;
-  /** From OpenAI usage: output tokens (best-effort). */
+  /** From Anthropic usage: output tokens (best-effort). */
   tokensOut: number | null;
   /** Provider stop reason (`completed`, `max_output_tokens`, etc.). */
   stopReason: string | null;
+  /** Optional consulting-grade quality gate for flagship artifacts. */
+  qualityGate?: Record<string, unknown>;
   /** ISO timestamp set when a human edits/saves the AI draft. */
   humanEditedAt?: string;
   /** Clerk user id of the human who edited/saved the AI draft. */
@@ -88,6 +90,19 @@ export interface SourceGenerationContext {
   artifactStates: SourceEventArtifactState[];
   gateCriteria: SourceEventGateCriterion[];
   evidence: SourceEventEvidence[];
+  uploadedEvidence?: SourceGenerationUploadedArtifact[];
+}
+
+export interface SourceGenerationUploadedArtifact {
+  id: string;
+  originalName: string;
+  artifactFamily: string;
+  sourceFormat: string;
+  parseStatus: string;
+  evidenceState: string;
+  stageKey: SourceStageKey;
+  chunkExcerpts: string[];
+  factSummaries: string[];
 }
 
 /**
