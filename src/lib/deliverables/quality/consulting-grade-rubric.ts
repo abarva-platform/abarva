@@ -194,12 +194,40 @@ export function parseConsultingGradeReviewJson(args: {
 }): ConsultingGradeReview {
   const parsed = JSON.parse(stripCodeFence(args.raw)) as Partial<
     Omit<ConsultingGradeReview, "dimensionScores"> & {
-      dimensionScores?: Partial<ConsultingGradeDimensionScore>[];
+      dimensionScores?: Array<
+        Partial<ConsultingGradeDimensionScore> & {
+          dimension?: string;
+          dimensionId?: string;
+          label?: string;
+          name?: string;
+          fixes?: unknown;
+          required_fixes?: unknown;
+        }
+      >;
     }
   >;
-  const scoresById = new Map(
-    (parsed.dimensionScores ?? []).map((score) => [score.id, score]),
-  );
+  if (!Array.isArray(parsed.dimensionScores)) {
+    throw new Error("Quality review is missing dimensionScores array.");
+  }
+
+  const scoresById = new Map<
+    ConsultingGradeDimensionId,
+    (typeof parsed.dimensionScores)[number]
+  >();
+  for (const score of parsed.dimensionScores) {
+    const id = resolveDimensionId(score);
+    if (id && !scoresById.has(id)) scoresById.set(id, score);
+  }
+
+  const missingDimensionIds = CONSULTING_GRADE_DIMENSIONS.filter(
+    (dimension) => !scoresById.has(dimension.id),
+  ).map((dimension) => dimension.id);
+  if (missingDimensionIds.length > 0) {
+    throw new Error(
+      `Quality review is missing rubric dimension score(s): ${missingDimensionIds.join(", ")}.`,
+    );
+  }
+
   const dimensionScores = CONSULTING_GRADE_DIMENSIONS.map((dimension) => {
     const score = scoresById.get(dimension.id);
     return {
@@ -209,7 +237,9 @@ export function parseConsultingGradeReviewJson(args: {
         typeof score?.rationale === "string" && score.rationale.trim()
           ? score.rationale.trim()
           : "Reviewer did not provide rationale.",
-      requiredFixes: normalizeStringArray(score?.requiredFixes),
+      requiredFixes: normalizeStringArray(
+        score?.requiredFixes ?? score?.required_fixes ?? score?.fixes,
+      ),
     };
   });
   const failed = dimensionScores.some(
@@ -259,6 +289,45 @@ function normalizeStringArray(value: unknown): string[] {
   return value
     .map((item) => (typeof item === "string" ? item.trim() : ""))
     .filter(Boolean);
+}
+
+function resolveDimensionId(
+  score:
+    | (Partial<ConsultingGradeDimensionScore> & {
+        dimension?: string;
+        dimensionId?: string;
+        label?: string;
+        name?: string;
+      })
+    | undefined,
+): ConsultingGradeDimensionId | null {
+  const candidates = [
+    score?.id,
+    score?.dimensionId,
+    score?.dimension,
+    score?.label,
+    score?.name,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") continue;
+    const normalized = normalizeDimensionKey(candidate);
+    const match = CONSULTING_GRADE_DIMENSIONS.find(
+      (dimension) =>
+        normalizeDimensionKey(dimension.id) === normalized ||
+        normalizeDimensionKey(dimension.label) === normalized,
+    );
+    if (match) return match.id;
+  }
+  return null;
+}
+
+function normalizeDimensionKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 function stripCodeFence(raw: string): string {
