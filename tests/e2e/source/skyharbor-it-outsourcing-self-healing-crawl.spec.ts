@@ -7,7 +7,7 @@ import {
   expect,
   step,
 } from "./_audit-harness";
-import { signInAs, sourcePersonaStorageState } from "./_auth";
+import { signInAs } from "./_auth";
 
 const EVIDENCE_DIR = path.resolve(
   process.cwd(),
@@ -56,13 +56,6 @@ const VENDOR_PACKAGES = [
 
 test.describe("SkyHarbor IT outsourcing Source self-healing crawl", () => {
   test.describe.configure({ timeout: 900_000 });
-  test.use({ storageState: sourcePersonaStorageState("skyharbor-vp-itops") });
-
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
-    await signInAs(page, "skyharbor-vp-itops");
-    await page.close();
-  });
 
   test("runs the governed crawl with Gate A/Gate B state-level proof", async ({
     page,
