@@ -192,29 +192,32 @@ export function parseConsultingGradeReviewJson(args: {
   artifactName: string;
   raw: string;
 }): ConsultingGradeReview {
+  type ParsedDimensionScore = Partial<ConsultingGradeDimensionScore> & {
+    dimension?: string;
+    dimensionId?: string;
+    dimension_id?: string;
+    label?: string;
+    name?: string;
+    fixes?: unknown;
+    required_fixes?: unknown;
+  };
   const parsed = JSON.parse(stripCodeFence(args.raw)) as Partial<
     Omit<ConsultingGradeReview, "dimensionScores"> & {
-      dimensionScores?: Array<
-        Partial<ConsultingGradeDimensionScore> & {
-          dimension?: string;
-          dimensionId?: string;
-          label?: string;
-          name?: string;
-          fixes?: unknown;
-          required_fixes?: unknown;
-        }
-      >;
+      dimensionScores?: ParsedDimensionScore[] | Record<string, unknown>;
+      dimension_scores?: ParsedDimensionScore[] | Record<string, unknown>;
+      rubricScores?: ParsedDimensionScore[] | Record<string, unknown>;
+      rubric_scores?: ParsedDimensionScore[] | Record<string, unknown>;
+      scores?: ParsedDimensionScore[] | Record<string, unknown>;
+      dimensions?: ParsedDimensionScore[] | Record<string, unknown>;
     }
   >;
-  if (!Array.isArray(parsed.dimensionScores)) {
-    throw new Error("Quality review is missing dimensionScores array.");
-  }
+  const parsedDimensionScores = collectDimensionScores(parsed);
 
   const scoresById = new Map<
     ConsultingGradeDimensionId,
-    (typeof parsed.dimensionScores)[number]
+    ParsedDimensionScore
   >();
-  for (const score of parsed.dimensionScores) {
+  for (const score of parsedDimensionScores) {
     const id = resolveDimensionId(score);
     if (id && !scoresById.has(id)) scoresById.set(id, score);
   }
@@ -296,6 +299,7 @@ function resolveDimensionId(
     | (Partial<ConsultingGradeDimensionScore> & {
         dimension?: string;
         dimensionId?: string;
+        dimension_id?: string;
         label?: string;
         name?: string;
       })
@@ -304,6 +308,7 @@ function resolveDimensionId(
   const candidates = [
     score?.id,
     score?.dimensionId,
+    score?.dimension_id,
     score?.dimension,
     score?.label,
     score?.name,
@@ -319,6 +324,77 @@ function resolveDimensionId(
     if (match) return match.id;
   }
   return null;
+}
+
+function collectDimensionScores(
+  parsed: Partial<{
+    dimensionScores: unknown;
+    dimension_scores: unknown;
+    rubricScores: unknown;
+    rubric_scores: unknown;
+    scores: unknown;
+    dimensions: unknown;
+  }>,
+): Array<
+  Partial<ConsultingGradeDimensionScore> & {
+    dimension?: string;
+    dimensionId?: string;
+    dimension_id?: string;
+    label?: string;
+    name?: string;
+    fixes?: unknown;
+    required_fixes?: unknown;
+  }
+> {
+  const candidates = [
+    parsed.dimensionScores,
+    parsed.dimension_scores,
+    parsed.rubricScores,
+    parsed.rubric_scores,
+    parsed.scores,
+    parsed.dimensions,
+  ];
+  for (const candidate of candidates) {
+    const normalized = normalizeDimensionScoreCollection(candidate);
+    if (normalized.length > 0) return normalized;
+  }
+  throw new Error(
+    "Quality review is missing dimensionScores array or equivalent rubric score collection.",
+  );
+}
+
+function normalizeDimensionScoreCollection(
+  value: unknown,
+): Array<
+  Partial<ConsultingGradeDimensionScore> & {
+    dimension?: string;
+    dimensionId?: string;
+    dimension_id?: string;
+    label?: string;
+    name?: string;
+    fixes?: unknown;
+    required_fixes?: unknown;
+  }
+> {
+  if (Array.isArray(value)) {
+    return value.filter(isObjectRecord);
+  }
+  if (!isObjectRecord(value)) return [];
+  const entries: ReturnType<typeof normalizeDimensionScoreCollection> = [];
+  for (const [key, entry] of Object.entries(value)) {
+    if (!isObjectRecord(entry)) continue;
+    const entryId = typeof entry.id === "string" ? entry.id : key;
+    entries.push({
+      ...entry,
+      id: entryId as ConsultingGradeDimensionId,
+      dimension: typeof entry.dimension === "string" ? entry.dimension : key,
+    });
+  }
+  return entries;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
 function normalizeDimensionKey(value: string): string {
