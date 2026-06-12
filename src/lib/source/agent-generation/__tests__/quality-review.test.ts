@@ -58,6 +58,19 @@ function makeContext(): SourceGenerationContext {
         createdAt: "2026-06-12T00:00:00.000Z",
         updatedAt: "2026-06-12T00:00:00.000Z",
       },
+      {
+        id: "evidence-2",
+        sourceEventId: "event-1",
+        tenantKey: "skyharbor",
+        requirementId: "EVID-SRC-EVAL-WEIGHT-RATIONALE",
+        stage: "rfp",
+        currentState: "Not Requested",
+        sourceArtifactId: null,
+        notes: "Scaffold state is stale when the approved weights upload is present.",
+        lastSyncedAt: "2026-06-12T00:00:00.000Z",
+        createdAt: "2026-06-12T00:00:00.000Z",
+        updatedAt: "2026-06-12T00:00:00.000Z",
+      },
     ],
     uploadedEvidence: [
       {
@@ -69,6 +82,17 @@ function makeContext(): SourceGenerationContext {
         evidenceState: "parsed_uncited",
         stageKey: "scope",
         chunkExcerpts: ["7 data centers with VMware Cloud Foundation footprint."],
+        factSummaries: ["artifact_summary: {\"chunk_count\":1}"],
+      },
+      {
+        id: "artifact-2",
+        originalName: "09_Evaluation_Criteria_Weights_APPROVED.csv",
+        artifactFamily: "other",
+        sourceFormat: "csv",
+        parseStatus: "parsed",
+        evidenceState: "parsed_uncited",
+        stageKey: "rfp",
+        chunkExcerpts: ["Technical 35%, commercial 30%, transition 20%, governance 15%."],
         factSummaries: ["artifact_summary: {\"chunk_count\":1}"],
       },
     ],
@@ -93,6 +117,12 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(context).toContain("Estimated value: $300,000,000");
     expect(context).toContain("dc-infra-inventory");
     expect(context).toContain("11_Data_Center_Infrastructure_Inventory.csv");
+    expect(context).toContain("D09 RFP evidence coverage semantics");
+    expect(context).toContain("Exhibit 09 — Approved evaluation criteria");
+    expect(context).toContain("satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE");
+    expect(context).toContain(
+      "Blocking gaps are only items still missing after this coverage map",
+    );
     expect(context).toContain("rfp-package-complete");
   });
 

@@ -69,6 +69,21 @@ describe("consulting-grade deliverable rubric", () => {
     );
   });
 
+  it("tells reviewers not to double-count stale Not Requested scaffold rows", () => {
+    const prompt = buildConsultingGradeReviewPrompt({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      bodyMarkdown: "# RFP Package\n\n## §11 · Source register",
+      sourceContext:
+        "D09 RFP evidence coverage semantics:\n- Exhibit 09 — Approved evaluation criteria: uploaded as \"09_Evaluation_Criteria_Weights_APPROVED.csv\"; satisfies=EVID-SRC-EVAL-WEIGHT-RATIONALE\nEvidence states:\n- EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested",
+    });
+
+    expect(prompt).toContain("D09 RFP evidence coverage map");
+    expect(prompt).toContain(
+      "do not treat an older scaffold row saying Not Requested as missing",
+    );
+  });
+
   it("normalizes evaluator JSON when a model wraps the fenced block in prose", () => {
     const review = parseConsultingGradeReviewJson({
       artifactCode: "d09_rfp_pack",

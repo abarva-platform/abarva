@@ -9,6 +9,7 @@ import {
   summarizeConsultingGradeReview,
   type ConsultingGradeReview,
 } from "@/lib/deliverables/quality/consulting-grade-rubric";
+import { formatD09RfpEvidenceCoverage } from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 
 const SOURCE_CONSULTING_GRADE_CODES = new Set(["d09_rfp_pack"]);
@@ -91,6 +92,9 @@ export function buildSourceQualitySourceContext(args: {
     uploadedEvidenceLines.length
       ? uploadedEvidenceLines.join("\n")
       : "- none",
+    "",
+    "D09 RFP evidence coverage semantics:",
+    formatD09RfpEvidenceCoverage(ctx),
     "",
     "Gate criteria states:",
     gateLines.length ? gateLines.join("\n") : "- none",
