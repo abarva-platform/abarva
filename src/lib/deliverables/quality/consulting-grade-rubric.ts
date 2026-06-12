@@ -146,6 +146,68 @@ export function buildConsultingGradeReviewPrompt(args: {
   ].join("\n");
 }
 
+export function buildConsultingGradeCompactRetryPrompt(args: {
+  artifactCode: string;
+  artifactName: string;
+  bodyMarkdown: string;
+  sourceContext: string;
+  previousError: string;
+}): string {
+  return [
+    "Your previous quality-review response was not usable.",
+    `Parser error: ${args.previousError}`,
+    "",
+    "Use the record_source_quality_review tool exactly once.",
+    "The tool input must include dimensionScores with exactly these ids, one score per id:",
+    ...CONSULTING_GRADE_DIMENSIONS.map(
+      (dimension) => `- ${dimension.id}: ${dimension.standard}`,
+    ),
+    "",
+    "Rules:",
+    `- Every dimension must have score, rationale, and requiredFixes.`,
+    `- Passing requires every score >= ${CONSULTING_GRADE_MIN_SCORE}.`,
+    "- If the artifact is generic, thin, uncited, internally tagged, or missing evidence, score the affected dimensions below 8.",
+    "- Keep each rationale under 160 characters and each fix under 120 characters.",
+    "- Do not omit dimensionScores.",
+    "",
+    `Artifact: ${args.artifactName} (${args.artifactCode})`,
+    "",
+    "Source context excerpt:",
+    excerptForReviewRetry(args.sourceContext, 6_000),
+    "",
+    "Artifact body excerpt:",
+    excerptForReviewRetry(args.bodyMarkdown, 16_000),
+  ].join("\n");
+}
+
+export function buildMalformedConsultingGradeReview(args: {
+  artifactCode: string;
+  artifactName: string;
+  reason: string;
+}): ConsultingGradeReview {
+  const reason = args.reason.trim() || "Quality review was not structured.";
+  return {
+    standardId: CONSULTING_GRADE_STANDARD_ID,
+    minRequiredScore: CONSULTING_GRADE_MIN_SCORE,
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    pass: false,
+    overallScore: 0,
+    dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+      id: dimension.id,
+      score: 0,
+      rationale:
+        "Quality review was not parseable, so this artifact cannot pass Gate B.",
+      requiredFixes: [reason],
+    })),
+    unsupportedClaims: [],
+    missingEvidence: [],
+    rewriteGuidance: [
+      "Regenerate the quality review with the required 10-dimension rubric before export.",
+    ],
+  };
+}
+
 export function buildConsultingGradeRewritePrompt(args: {
   artifactCode: string;
   artifactName: string;
@@ -421,4 +483,12 @@ function stripCodeFence(raw: string): string {
   }
 
   return trimmed;
+}
+
+function excerptForReviewRetry(value: string, maxChars: number): string {
+  const normalized = value.replace(/\s+\n/g, "\n").trim();
+  if (normalized.length <= maxChars) return normalized || "(none)";
+  const head = normalized.slice(0, Math.floor(maxChars * 0.7));
+  const tail = normalized.slice(-Math.floor(maxChars * 0.3));
+  return `${head}\n\n[...middle omitted for compact quality-review retry...]\n\n${tail}`;
 }

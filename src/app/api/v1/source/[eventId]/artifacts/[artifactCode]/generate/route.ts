@@ -38,7 +38,9 @@ import {
 } from "@/lib/source/agent-generation/server";
 import {
   buildSourceConsultingGradeReviewPrompt,
+  buildSourceConsultingGradeCompactRetryPrompt,
   buildSourceConsultingGradeRewritePrompt,
+  buildMalformedSourceConsultingGradeReview,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
   parseSourceConsultingGradeReview,
@@ -70,7 +72,7 @@ const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
 const SOURCE_SYNC_GENERATION_BUDGET_MS = 220_000;
 const SOURCE_JSON_HEARTBEAT_INTERVAL_MS = 12_000;
-const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 1_800;
+const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 3_200;
 const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 85_000;
 const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
   name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
@@ -886,6 +888,13 @@ async function runConsultingGradeReview(args: {
       error instanceof Error
         ? error.message
         : "Claude returned invalid quality-review JSON.";
+    const retryPrompt = buildSourceConsultingGradeCompactRetryPrompt({
+      artifactCode: args.artifactCode,
+      artifactName: args.artifactName,
+      bodyMarkdown: args.body,
+      sourceContext: args.sourceContext,
+      previousError: firstError,
+    });
     const retryResponse = await preflight.client.messages.create({
       model: args.model,
       max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
@@ -893,6 +902,7 @@ async function runConsultingGradeReview(args: {
         "You are a strict consulting-deliverable quality evaluator.",
         "Your previous response was not parseable as the required structured review.",
         "Use the record_source_quality_review tool exactly once.",
+        "The tool input must include all 10 dimensionScores entries.",
         "Keep rationales and fixes concise.",
       ].join(" "),
       tools: [SOURCE_QUALITY_REVIEW_TOOL],
@@ -900,7 +910,7 @@ async function runConsultingGradeReview(args: {
         type: "tool",
         name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
       },
-      messages: [{ role: "user", content: reviewPrompt }],
+      messages: [{ role: "user", content: retryPrompt }],
     });
     const retryRaw = extractSourceQualityReviewPayload(retryResponse.content);
     try {
@@ -923,10 +933,12 @@ async function runConsultingGradeReview(args: {
         retryError: retryMessage,
       });
       return {
-        ok: false,
-        error: "quality_review_parse_failed",
-        detail: `${firstError}; retry failed: ${retryMessage}`,
-        status: 502,
+        ok: true,
+        review: buildMalformedSourceConsultingGradeReview({
+          artifactCode: args.artifactCode,
+          artifactName: args.artifactName,
+          reason: `${firstError}; retry failed: ${retryMessage}`,
+        }),
       };
     }
   }
