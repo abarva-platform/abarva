@@ -68,6 +68,9 @@ import {
 const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
+const SOURCE_SYNC_GENERATION_BUDGET_MS = 220_000;
+const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 1_800;
+const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 85_000;
 const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
   name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
   description:
@@ -420,18 +423,19 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
 
   let qualityGate: SourceArtifactQualityGateMetadata | undefined;
   if (requiresQualityGate) {
-    const qualityResult = await runConsultingGradeQualityGate({
-      artifactCode,
-      artifactName: specByCode(artifactCode)?.name ?? artifactCode,
-      body,
-      ctx,
+      const qualityResult = await runConsultingGradeQualityGate({
+        artifactCode,
+        artifactName: specByCode(artifactCode)?.name ?? artifactCode,
+        body,
+        ctx,
       upstreamBound,
       tenantId: tenancy.clientId,
-      userId: tenancy.userId,
-      artifactId: artifactRow.id,
-      model: template.model,
-      maxTokens: template.maxTokens,
-    });
+        userId: tenancy.userId,
+        artifactId: artifactRow.id,
+        model: template.model,
+        maxTokens: template.maxTokens,
+        requestStartedAtMs: startedAt,
+      });
     if (!qualityResult.ok) {
       return Response.json(
         {
@@ -606,6 +610,7 @@ async function runConsultingGradeQualityGate(args: {
   artifactId: string;
   model: string;
   maxTokens: number;
+  requestStartedAtMs: number;
 }): Promise<QualityGateResult> {
   const sourceContext = buildSourceQualitySourceContext({
     ctx: args.ctx,
@@ -632,6 +637,25 @@ async function runConsultingGradeQualityGate(args: {
         reviews,
         rewriteAttempted: false,
       }),
+    };
+  }
+
+  const remainingBudgetMs =
+    SOURCE_SYNC_GENERATION_BUDGET_MS - (Date.now() - args.requestStartedAtMs);
+  if (remainingBudgetMs < SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS) {
+    const qualityGate = buildSourceQualityGateMetadata({
+      reviews,
+      rewriteAttempted: false,
+    });
+    return {
+      ok: false,
+      error: "quality_gate_failed",
+      detail: [
+        qualityGate.finalSummary,
+        "Skipped automatic rewrite because the synchronous request budget was nearly exhausted; regenerate after strengthening the upstream evidence or artifact prompt.",
+      ].join(" "),
+      status: 422,
+      qualityGate,
     };
   }
 
@@ -770,7 +794,7 @@ async function runConsultingGradeReview(args: {
   }
   const response = await preflight.client.messages.create({
     model: args.model,
-    max_tokens: 2500,
+    max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
     system:
       "You are a strict consulting-deliverable quality evaluator. Use the record_source_quality_review tool exactly once.",
     tools: [SOURCE_QUALITY_REVIEW_TOOL],
@@ -797,7 +821,7 @@ async function runConsultingGradeReview(args: {
         : "Claude returned invalid quality-review JSON.";
     const retryResponse = await preflight.client.messages.create({
       model: args.model,
-      max_tokens: 2500,
+      max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
       system: [
         "You are a strict consulting-deliverable quality evaluator.",
         "Your previous response was not parseable as the required structured review.",
