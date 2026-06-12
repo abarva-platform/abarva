@@ -309,6 +309,20 @@ describe("azure source write adapter", () => {
     expect(createAzureSourceWriteAdapter().name).toBe("azure-postgres");
   });
 
+  it("insertParticipant casts the shared event id for text and uuid columns", async () => {
+    const { session, statements } = fakeTxSession(() => []);
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.insertParticipant({
+      clientKey: "skyharbor",
+      sourceEventId: "75016006-1177-485f-99e3-bb7fec9efc11",
+      userId: "user_123",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("INSERT INTO source_event_participants");
+    expect(statements[0]).toContain("$2::text,$2::uuid");
+  });
+
   it("applyApproval issues the event UPDATE and the approval INSERT in one tx", async () => {
     const { session, statements } = fakeTxSession(() => []);
     const adapter = createAzureSourceWriteAdapter(session);
