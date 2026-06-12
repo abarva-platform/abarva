@@ -69,6 +69,7 @@ const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
 const SOURCE_SYNC_GENERATION_BUDGET_MS = 220_000;
+const SOURCE_JSON_HEARTBEAT_INTERVAL_MS = 12_000;
 const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 1_800;
 const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 85_000;
 const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
@@ -167,7 +168,73 @@ function isCanonicalClientAdminEmail(
   );
 }
 
-export async function POST(_req: NextRequest, { params }: RouteCtx) {
+export async function POST(req: NextRequest, { params }: RouteCtx) {
+  const resolvedParams = await params;
+  const invoke = () =>
+    generateArtifact(req, { params: Promise.resolve(resolvedParams) });
+  if (resolvedParams.artifactCode === "d09_rfp_pack") {
+    return streamJsonHeartbeat(invoke);
+  }
+  return invoke();
+}
+
+function streamJsonHeartbeat(run: () => Promise<Response>): Response {
+  const encoder = new TextEncoder();
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  const clearHeartbeat = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    heartbeat = null;
+  };
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode("\n"));
+      heartbeat = setInterval(() => {
+        controller.enqueue(encoder.encode(" \n"));
+      }, SOURCE_JSON_HEARTBEAT_INTERVAL_MS);
+
+      run()
+        .then(async (response) => {
+          const body = await response.text();
+          clearHeartbeat();
+          controller.enqueue(encoder.encode(body || "null"));
+          controller.close();
+        })
+        .catch((error) => {
+          clearHeartbeat();
+          console.error(
+            "[source artifact generation heartbeat] generation failed",
+            error,
+          );
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                error: "generation_failed",
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : "Source artifact generation failed.",
+              }),
+            ),
+          );
+          controller.close();
+        });
+    },
+    cancel() {
+      clearHeartbeat();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+      "X-Abarva-Json-Heartbeat": "source-d09",
+    },
+  });
+}
+
+async function generateArtifact(_req: NextRequest, { params }: RouteCtx) {
   let tenancy;
   let tenancyError: unknown = null;
   try {
