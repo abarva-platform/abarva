@@ -36,6 +36,7 @@ import {
   type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
+import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import {
   buildSourceConsultingGradeReviewPrompt,
   buildSourceConsultingGradeCompactRetryPrompt,
@@ -489,6 +490,7 @@ async function generateArtifact(_req: NextRequest, { params }: RouteCtx) {
       { status: 502 },
     );
   }
+  body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
 
   let qualityGate: SourceArtifactQualityGateMetadata | undefined;
   if (requiresQualityGate) {
