@@ -692,7 +692,7 @@ async function runConsultingGradeReview(args: {
   }
   const response = await preflight.client.messages.create({
     model: args.model,
-    max_tokens: 3000,
+    max_tokens: 1200,
     system:
       "You are a strict consulting-deliverable quality evaluator. Return valid JSON only.",
     messages: [{ role: "user", content: reviewPrompt }],

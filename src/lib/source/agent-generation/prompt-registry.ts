@@ -136,9 +136,9 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 3,
+    version: 4,
     model: DEFAULT_MODEL,
-    maxTokens: 8000,
+    maxTokens: 4500,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -166,7 +166,7 @@ Mandatory tables:
 - Evaluation weights and evidence-required scoring table.
 - Client-to-complete / vendor-to-confirm register.
 
-Tone: formal procurement style, but executive-polished. Vendor-facing — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, exhaustive, and evidence-disciplined. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.`,
+Tone: formal procurement style, but executive-polished. Vendor-facing — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and concise enough to fit a first-market draft: target 2,800-3,800 words. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Tenant: ${ctx.tenantName}`,
@@ -251,12 +251,12 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
         `### ${artifact.originalName}`,
         `artifact_id=${artifact.id}; family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
       ];
-      const excerpts = artifact.chunkExcerpts.slice(0, 4);
+      const excerpts = artifact.chunkExcerpts.slice(0, 2);
       if (excerpts.length > 0) {
         lines.push("Chunk excerpts:");
         lines.push(...excerpts.map((excerpt) => `- ${excerpt}`));
       }
-      const facts = artifact.factSummaries.slice(0, 4);
+      const facts = artifact.factSummaries.slice(0, 2);
       if (facts.length > 0) {
         lines.push("Structured fact summaries:");
         lines.push(...facts.map((fact) => `- ${fact}`));
