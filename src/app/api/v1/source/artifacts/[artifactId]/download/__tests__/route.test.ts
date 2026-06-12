@@ -2,6 +2,7 @@
 // download disposition + correct content-type when found.
 const tenancy = { clientId: 'c1', clientKey: 'skyharbor-air', userId: 'u1' };
 let artifact: Record<string, unknown> | null = null;
+let registryArtifact: Record<string, unknown> | null = null;
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -13,12 +14,31 @@ jest.mock('@/lib/source/file-cabinet/repository', () => ({
 jest.mock('@/lib/source/file-cabinet/blob-store', () => ({
   downloadArtifactBytes: jest.fn(async () => Buffer.from('PK docx bytes')),
 }));
+jest.mock('@/lib/active-client', () => ({
+  getActiveClientRow: jest.fn(async () => ({ key: 'skyharbor' })),
+}));
+jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
+  clientKeyToInventorySubstrateKey: jest.fn((key: string) => (key === 'skyharbor' ? 'skyharbor-air' : key)),
+}));
+jest.mock('@/lib/source/artifact-registry', () => ({
+  getSourceArtifactRegistryRecord: jest.fn(async (id: string) => (
+    registryArtifact ? { ...registryArtifact, id } : null
+  )),
+}));
+jest.mock('@/lib/data-plane/objectStorage', () => ({
+  getObjectStorageAdapter: jest.fn(() => ({
+    download: jest.fn(async () => Buffer.from('app_id,app_name\nAPP-001,Reservations Core\n')),
+  })),
+}));
 
 import { GET } from '../route';
 
 function params(artifactId: string) { return { params: Promise.resolve({ artifactId }) }; }
 
-beforeEach(() => { artifact = null; });
+beforeEach(() => {
+  artifact = null;
+  registryArtifact = null;
+});
 
 describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
   it('404 when the artifact is not owned by this tenant', async () => {
@@ -34,5 +54,23 @@ describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
     expect(res.headers.get('x-source-artifact-version')).toBe('2');
     const buf = Buffer.from(await res.arrayBuffer());
     expect(buf.subarray(0, 2).toString('latin1')).toBe('PK');
+  });
+
+  it('falls back to source_artifacts registry uploads and streams original bytes', async () => {
+    registryArtifact = {
+      tenantKey: 'skyharbor-air',
+      deletedAt: null,
+      blobUri: 'skyharbor-air/event/a1/portfolio.csv',
+      mimeType: 'text/csv',
+      originalName: '01_Application_Portfolio.csv',
+      version: 1,
+    };
+
+    const res = await GET({} as never, params('a1'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('text/csv');
+    expect(res.headers.get('content-disposition')).toContain('attachment; filename="01_Application_Portfolio.csv"');
+    expect(res.headers.get('x-source-artifact-registry')).toBe('source_artifacts');
+    await expect(res.text()).resolves.toContain('Reservations Core');
   });
 });
