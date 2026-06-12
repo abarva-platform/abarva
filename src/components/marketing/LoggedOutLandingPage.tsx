@@ -1459,11 +1459,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               Private preview · founder-led
             </span>
             <h1 className="fb-head">
-              Turn AI ambition into <span className="grad">governed execution</span> and measurable value.
+              If your enterprise is spending on AI, and you&apos;re the CXO accountable,
+              <span className="grad"> prove which bets deserve to scale</span>.
             </h1>
             <p className="fb-sub">
-              AbarVa helps enterprise leaders decide which AI bets deserve funding, turn them into
-              governed programs, source with leverage, and prove whether value actually landed.
+              AbarVa helps executives see which AI bets are real, which ones need more evidence,
+              and how to move from ambition to governed execution and measurable value.
             </p>
             <div className="fb-cta">
               <button className="btn btn-prime" type="button" onClick={openReq}>
