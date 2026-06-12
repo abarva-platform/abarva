@@ -21,6 +21,10 @@ jest.mock('@/lib/client-config', () => ({
   canonicalClientDisplayName: jest.fn(() => 'Apex Retail'),
 }));
 
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureReadFluentClient: jest.fn(),
+}));
+
 const {
   listArtifactStatesForEvent,
   listEvidenceStatesForEvent,
@@ -41,6 +45,52 @@ const { getSourcingEvent, isUuid, resolveSourceEventUuidForClient } =
 const { getActiveClientRow } = jest.requireMock('@/lib/active-client') as {
   getActiveClientRow: jest.Mock;
 };
+
+const { getAzureReadFluentClient } = jest.requireMock(
+  '@/lib/data-plane/postgresCompat',
+) as {
+  getAzureReadFluentClient: jest.Mock;
+};
+
+function makeFluentResult(data: unknown[] = []) {
+  const chain: {
+    select: jest.MockedFunction<() => typeof chain>;
+    eq: jest.MockedFunction<() => typeof chain>;
+    in: jest.MockedFunction<() => typeof chain>;
+    order: jest.MockedFunction<() => typeof chain>;
+    limit: jest.MockedFunction<() => Promise<{ data: unknown[]; error: null }>>;
+  } = {} as {
+    select: jest.MockedFunction<() => typeof chain>;
+    eq: jest.MockedFunction<() => typeof chain>;
+    in: jest.MockedFunction<() => typeof chain>;
+    order: jest.MockedFunction<() => typeof chain>;
+    limit: jest.MockedFunction<() => Promise<{ data: unknown[]; error: null }>>;
+  };
+  chain.select = jest.fn(() => chain);
+  chain.eq = jest.fn(() => chain);
+  chain.in = jest.fn(() => chain);
+  chain.order = jest.fn(() => chain);
+  chain.limit = jest.fn(() => Promise.resolve({ data, error: null }));
+  return chain;
+}
+
+function mockUploadedEvidenceQueries(args: {
+  artifacts?: unknown[];
+  chunks?: unknown[];
+  facts?: unknown[];
+} = {}) {
+  const artifacts = makeFluentResult(args.artifacts ?? []);
+  const chunks = makeFluentResult(args.chunks ?? []);
+  const facts = makeFluentResult(args.facts ?? []);
+  getAzureReadFluentClient.mockReturnValue({
+    from: jest.fn((table: string) => {
+      if (table === 'source_artifacts') return artifacts;
+      if (table === 'source_artifact_chunks') return chunks;
+      if (table === 'source_artifact_facts') return facts;
+      return makeFluentResult([]);
+    }),
+  });
+}
 
 function makeSeedEvent(): SourcingEventDetail {
   return {
@@ -92,12 +142,69 @@ describe('buildSourceGenerationContext', () => {
     listArtifactStatesForEvent.mockResolvedValue([]);
     listGateCriterionStatesForEvent.mockResolvedValue([]);
     listEvidenceStatesForEvent.mockResolvedValue([]);
+    mockUploadedEvidenceQueries();
     getActiveClientRow.mockResolvedValue({
       id: 'client-apex',
       key: 'apexretail',
       name: 'Apex Retail',
       industry_code: 'RETAIL',
     });
+  });
+
+  it('binds parsed uploaded evidence chunks and facts for generation prompts', async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: 'artifact-1',
+          original_name: '11_Data_Center_Infrastructure_Inventory.csv',
+          artifact_family: 'other',
+          source_format: 'csv',
+          parse_status: 'parsed',
+          evidence_state: 'parsed_uncited',
+          stage_key: 'scope',
+          created_at: '2026-06-12T00:00:00.000Z',
+        },
+      ],
+      chunks: [
+        {
+          artifact_id: 'artifact-1',
+          chunk_text: 'VMware Cloud Foundation footprint across seven data centers.',
+          confidence: 0.91,
+        },
+      ],
+      facts: [
+        {
+          artifact_id: 'artifact-1',
+          fact_type: 'artifact_summary',
+          fact_key: 'text_uploaded',
+          fact_value: { chunk_count: 1 },
+          confidence: 0.85,
+        },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+
+    expect(ctx?.uploadedEvidence).toEqual([
+      expect.objectContaining({
+        originalName: '11_Data_Center_Infrastructure_Inventory.csv',
+        chunkExcerpts: [
+          'VMware Cloud Foundation footprint across seven data centers.',
+        ],
+        factSummaries: [
+          'artifact_summary/text_uploaded: {"chunk_count":1}',
+        ],
+      }),
+    ]);
   });
 
   it('re-binds seeded golden slugs to the persisted event UUID before substrate reads', async () => {

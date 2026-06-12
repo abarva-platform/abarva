@@ -34,6 +34,15 @@ import {
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
 import {
+  buildSourceConsultingGradeReviewPrompt,
+  buildSourceConsultingGradeRewritePrompt,
+  buildSourceQualityGateMetadata,
+  buildSourceQualitySourceContext,
+  parseSourceConsultingGradeReview,
+  requiresSourceConsultingGradeGate,
+  type SourceArtifactQualityGateMetadata,
+} from "@/lib/source/agent-generation/quality-review";
+import {
   artifactStateRowToView,
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
@@ -232,6 +241,17 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     ...template.upstreamOptional,
   ]);
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
+  const requiresQualityGate = requiresSourceConsultingGradeGate(artifactCode);
+  if (requiresQualityGate && !process.env.ANTHROPIC_API_KEY) {
+    return Response.json(
+      {
+        error: "quality_gate_requires_anthropic",
+        detail:
+          "Flagship Source artifacts require Claude generation plus consulting-grade review; deterministic fallback is disabled for this artifact.",
+      },
+      { status: 503 },
+    );
+  }
 
   // Call Anthropic when configured. If ANTHROPIC_API_KEY is absent, write a
   // deterministic Source draft so the canvas remains useful in local/dev
@@ -320,6 +340,34 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     );
   }
 
+  let qualityGate: SourceArtifactQualityGateMetadata | undefined;
+  if (requiresQualityGate) {
+    const qualityResult = await runConsultingGradeQualityGate({
+      artifactCode,
+      artifactName: specByCode(artifactCode)?.name ?? artifactCode,
+      body,
+      ctx,
+      upstreamBound,
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      artifactId: artifactRow.id,
+      model: template.model,
+      maxTokens: template.maxTokens,
+    });
+    if (!qualityResult.ok) {
+      return Response.json(
+        {
+          error: qualityResult.error,
+          detail: qualityResult.detail,
+          qualityGate: qualityResult.qualityGate ?? null,
+        },
+        { status: qualityResult.status },
+      );
+    }
+    body = qualityResult.body;
+    qualityGate = qualityResult.qualityGate;
+  }
+
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
   const generationMetadata: SourceArtifactBodyGenerationMetadata = {
@@ -332,6 +380,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     tokensIn,
     tokensOut,
     stopReason,
+    qualityGate: qualityGate as unknown as Record<string, unknown> | undefined,
   };
 
   const update: Partial<SourceEventArtifactStateRow> = {
@@ -426,6 +475,14 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       tokensIn,
       tokensOut,
       latencyMs: Date.now() - startedAt,
+      qualityGate: qualityGate
+        ? {
+            standardId: qualityGate.standardId,
+            passed: qualityGate.passed,
+            attempts: qualityGate.attempts,
+            rewriteAttempted: qualityGate.rewriteAttempted,
+          }
+        : null,
     },
     occurredAtIso: nowIso,
   });
@@ -444,6 +501,226 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       latencyMs: Date.now() - startedAt,
     },
   });
+}
+
+type QualityGateResult =
+  | {
+      ok: true;
+      body: string;
+      qualityGate: SourceArtifactQualityGateMetadata;
+    }
+  | {
+      ok: false;
+      error: string;
+      detail: string;
+      status: number;
+      qualityGate?: SourceArtifactQualityGateMetadata;
+    };
+
+async function runConsultingGradeQualityGate(args: {
+  artifactCode: string;
+  artifactName: string;
+  body: string;
+  ctx: SourceGenerationContext;
+  upstreamBound: Record<string, string>;
+  tenantId: string;
+  userId: string;
+  artifactId: string;
+  model: string;
+  maxTokens: number;
+}): Promise<QualityGateResult> {
+  const sourceContext = buildSourceQualitySourceContext({
+    ctx: args.ctx,
+    upstreamBound: args.upstreamBound,
+  });
+  const reviews = [];
+  const firstReview = await runConsultingGradeReview({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    body: args.body,
+    sourceContext,
+    tenantId: args.tenantId,
+    userId: args.userId,
+    artifactId: args.artifactId,
+    model: args.model,
+  });
+  if (!firstReview.ok) return firstReview;
+  reviews.push(firstReview.review);
+  if (firstReview.review.pass) {
+    return {
+      ok: true,
+      body: args.body,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: false,
+      }),
+    };
+  }
+
+  const rewritePrompt = buildSourceConsultingGradeRewritePrompt({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    bodyMarkdown: args.body,
+    sourceContext,
+    review: firstReview.review,
+  });
+  const rewritePreflight = await preflightAnthropicDirectClient({
+    tenantId: args.tenantId,
+    userId: args.userId,
+    workflow: "source-artifact-quality-rewrite",
+    artifactId: args.artifactId,
+    artifactType: args.artifactCode,
+    model: args.model,
+    prompt: rewritePrompt,
+    dataClass: "confidential",
+    metadata: {
+      eventId: args.ctx.event.id,
+      sourceEventId: args.ctx.event.id,
+      artifactCode: args.artifactCode,
+      qualityStandard: "partner-grade-consulting-deliverable-v1",
+    },
+  });
+  if (!rewritePreflight.ok) {
+    return {
+      ok: false,
+      error: "ai_egress_denied",
+      detail: rewritePreflight.reason,
+      status: 403,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: true,
+      }),
+    };
+  }
+  const rewriteResponse = await rewritePreflight.client.messages.create({
+    model: args.model,
+    max_tokens: args.maxTokens,
+    system:
+      "You are Sentinel writing a client-ready, evidence-disciplined Source deliverable. Return markdown only.",
+    messages: [{ role: "user", content: rewritePrompt }],
+  });
+  const rewrittenBody = rewriteResponse.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("")
+    .trim();
+  if (!rewrittenBody) {
+    return {
+      ok: false,
+      error: "quality_rewrite_empty",
+      detail: "Claude returned an empty quality-rewrite body.",
+      status: 502,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: true,
+      }),
+    };
+  }
+
+  const secondReview = await runConsultingGradeReview({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    body: rewrittenBody,
+    sourceContext,
+    tenantId: args.tenantId,
+    userId: args.userId,
+    artifactId: args.artifactId,
+    model: args.model,
+  });
+  if (!secondReview.ok) return secondReview;
+  reviews.push(secondReview.review);
+  const qualityGate = buildSourceQualityGateMetadata({
+    reviews,
+    rewriteAttempted: true,
+  });
+  if (!qualityGate.passed) {
+    return {
+      ok: false,
+      error: "quality_gate_failed",
+      detail: qualityGate.finalSummary,
+      status: 422,
+      qualityGate,
+    };
+  }
+  return { ok: true, body: rewrittenBody, qualityGate };
+}
+
+async function runConsultingGradeReview(args: {
+  artifactCode: string;
+  artifactName: string;
+  body: string;
+  sourceContext: string;
+  tenantId: string;
+  userId: string;
+  artifactId: string;
+  model: string;
+}): Promise<
+  | { ok: true; review: ReturnType<typeof parseSourceConsultingGradeReview> }
+  | {
+      ok: false;
+      error: string;
+      detail: string;
+      status: number;
+    }
+> {
+  const reviewPrompt = buildSourceConsultingGradeReviewPrompt({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    bodyMarkdown: args.body,
+    sourceContext: args.sourceContext,
+  });
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: args.tenantId,
+    userId: args.userId,
+    workflow: "source-artifact-quality-review",
+    artifactId: args.artifactId,
+    artifactType: args.artifactCode,
+    model: args.model,
+    prompt: reviewPrompt,
+    dataClass: "confidential",
+    metadata: {
+      artifactCode: args.artifactCode,
+      qualityStandard: "partner-grade-consulting-deliverable-v1",
+    },
+  });
+  if (!preflight.ok) {
+    return {
+      ok: false,
+      error: "ai_egress_denied",
+      detail: preflight.reason,
+      status: 403,
+    };
+  }
+  const response = await preflight.client.messages.create({
+    model: args.model,
+    max_tokens: 3000,
+    system:
+      "You are a strict consulting-deliverable quality evaluator. Return valid JSON only.",
+    messages: [{ role: "user", content: reviewPrompt }],
+  });
+  const raw = response.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("")
+    .trim();
+  try {
+    return {
+      ok: true,
+      review: parseSourceConsultingGradeReview({
+        artifactCode: args.artifactCode,
+        artifactName: args.artifactName,
+        raw,
+      }),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: "quality_review_parse_failed",
+      detail:
+        error instanceof Error
+          ? error.message
+          : "Claude returned invalid quality-review JSON.",
+      status: 502,
+    };
+  }
 }
 
 function buildDeterministicFallbackBody(args: {

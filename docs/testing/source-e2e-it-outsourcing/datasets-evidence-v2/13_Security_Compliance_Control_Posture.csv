@@ -1,0 +1,13 @@
+control_id,domain,control,current_state,target_state,risk_level,audit_status,certification_mapping,affected_towers,bidder_requirement
+SEC-001,Identity and access,MFA for privileged access,98.7%,100%,Medium,Open,ISO27001/SOC2,"T1,T2,T3,T4,T5,T6",Privileged exceptions must be remediated before transition wave 1.
+SEC-002,Endpoint security,Critical endpoint patch within 14 days,88.5%,95%,High,Open,PCI/SOC2,T4,Chronic miss called out in source brief; bidder must show patch factory capacity.
+SEC-003,Server security,Critical server patch within 14 days,91.2%,95%,High,Open,SOC2/ISO27001,T2,Legacy airport middleware drives exception backlog.
+SEC-004,Vulnerability management,Critical vuln aging >30 days,184 items,<25 items,High,Open,PCI/SOC2,"T1,T2,T4",Requires evidence-backed remediation glidepath.
+SEC-005,Security logging,Tier-0 log ingestion coverage,93%,99%,Medium,Open,SOC2,"T2,T5,T6",Splunk forwarder drift at airport sites.
+SEC-006,Third-party access,Vendor access reviewed quarterly,82%,100%,Medium,Open,SOC2,"T1,T2,T3,T4,T5",New MSP must accept named-user access reviews.
+SEC-007,Data protection,Immutable backup coverage,82%,95%,High,Open,SOX/SOC2,T2,Coverage gap material for ransomware resilience.
+SEC-008,PCI scope,Cardholder-data support center segmentation,Compliant with exceptions,No open high exceptions,High,Open,PCI DSS,"T3,T5",Service desk tooling touches payment escalation flows.
+SEC-009,SOX controls,Change evidence completeness,94%,98%,Medium,Open,SOX,"T1,T2,T6",Evidence missing in emergency changes.
+SEC-010,Business continuity,Annual DR exercise completion,Passed 2025-11,Pass annually,Medium,Closed-monitor,ISO22301,"T2,T5,T6",Next test cannot overlap transition blackout.
+SEC-011,Endpoint encryption,Managed endpoints encrypted,99.1%,100%,Low,Open,SOC2,T4,Airport kiosk exceptions remain.
+SEC-012,Cloud posture,Critical CSPM findings,27 findings,<5 findings,High,Open,SOC2/ISO27001,T2,AWS/Azure operations must include posture remediation.

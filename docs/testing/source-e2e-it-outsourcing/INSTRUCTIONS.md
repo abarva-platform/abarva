@@ -1,6 +1,6 @@
 # COPY/PASTE TEST SCRIPT — SkyHarbor IT Managed Services Outsourcing
 Every step below gives you the EXACT text to type. Paste verbatim. Datasets:
-`datasets-evidence-v2/` (10 files) and `datasets-vendor-responses-v2/` (5 vendors × 5 files).
+`datasets-evidence-v2/` (15 files) and `datasets-vendor-responses-v2/` (5 vendors × 5 files).
 The context layer already holds SkyHarbor's entity substrate (apps/contracts/SLAs/org/
 financials); these uploads are the RFP-grade volumetric gap data on top of it.
 
@@ -83,6 +83,11 @@ Advance to Stage 2 (see STEP 4), then at Stage 2 (Scope) upload the rest:
     08_Locked_Pricing_Assumptions_Volume_Bands.csv
     09_Evaluation_Criteria_Weights_APPROVED.csv
     10_Vendor_Response_Expectations.csv
+    11_Data_Center_Infrastructure_Inventory.csv       → DC/private-cloud footprint
+    12_Network_Topology_Circuit_Inventory.csv         → 214-site network topology
+    13_Security_Compliance_Control_Posture.csv        → security/compliance posture
+    14_Transition_Ops_Blackout_Calendar.csv           → transition blackout constraints
+    15_Run_vs_Change_Financial_Baseline.csv           → run/change financial baseline
 After EACH upload EXPECT: file appears in EVENT DOCUMENTS with "parse parsed"
 WITHOUT a page reload (the frozen-shelf fix). If you must reload to see it → file a P1.
 
