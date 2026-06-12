@@ -692,7 +692,7 @@ async function runConsultingGradeReview(args: {
   }
   const response = await preflight.client.messages.create({
     model: args.model,
-    max_tokens: 1200,
+    max_tokens: 2200,
     system:
       "You are a strict consulting-deliverable quality evaluator. Return valid JSON only.",
     messages: [{ role: "user", content: reviewPrompt }],
@@ -711,15 +711,51 @@ async function runConsultingGradeReview(args: {
       }),
     };
   } catch (error) {
-    return {
-      ok: false,
-      error: "quality_review_parse_failed",
-      detail:
-        error instanceof Error
-          ? error.message
-          : "Claude returned invalid quality-review JSON.",
-      status: 502,
-    };
+    const firstError =
+      error instanceof Error
+        ? error.message
+        : "Claude returned invalid quality-review JSON.";
+    const retryResponse = await preflight.client.messages.create({
+      model: args.model,
+      max_tokens: 2200,
+      system: [
+        "You are a strict consulting-deliverable quality evaluator.",
+        "Your previous response was invalid JSON.",
+        "Return one compact, valid JSON object only.",
+        "Do not use markdown fences, comments, trailing commas, or prose.",
+      ].join(" "),
+      messages: [{ role: "user", content: reviewPrompt }],
+    });
+    const retryRaw = retryResponse.content
+      .map((block) => (block.type === "text" ? block.text : ""))
+      .join("")
+      .trim();
+    try {
+      return {
+        ok: true,
+        review: parseSourceConsultingGradeReview({
+          artifactCode: args.artifactCode,
+          artifactName: args.artifactName,
+          raw: retryRaw,
+        }),
+      };
+    } catch (retryError) {
+      const retryMessage =
+        retryError instanceof Error
+          ? retryError.message
+          : "Claude returned invalid quality-review JSON on retry.";
+      console.warn("[source quality review] invalid JSON after retry", {
+        artifactCode: args.artifactCode,
+        firstError,
+        retryError: retryMessage,
+      });
+      return {
+        ok: false,
+        error: "quality_review_parse_failed",
+        detail: `${firstError}; retry failed: ${retryMessage}`,
+        status: 502,
+      };
+    }
   }
 }
 
