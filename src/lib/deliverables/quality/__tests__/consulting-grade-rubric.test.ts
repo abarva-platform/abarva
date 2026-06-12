@@ -253,6 +253,8 @@ Done.`,
     expect(prompt).toContain("Minimum passing score: 8/10");
     expect(prompt).toContain("technical_operational_depth");
     expect(prompt).toContain("Evidence: 300M baseline");
+    expect(prompt).toContain("Score this as a governed draft");
+    expect(prompt).toContain("owner/action/impact");
   });
 
   it("builds a compact retry prompt with every required rubric dimension", () => {

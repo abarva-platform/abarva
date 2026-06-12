@@ -114,6 +114,8 @@ export function buildConsultingGradeReviewPrompt(args: {
     "- Unsupported quantified claims, missing source discipline, or thin generic writing must score below 8.",
     "- A clean, well-formatted but shallow artifact must fail.",
     "- Flag any claim that needs evidence, any missing table, and any client-to-complete gap.",
+    "- Score this as a governed draft, not an issued final. Do not penalize explicit [CLIENT TO SET], [CLIENT TO COMPLETE], [ASSUMPTION TO VALIDATE], or evidence-pending placeholders when they are clearly registered with owner/action/impact and not hidden as facts.",
+    "- Penalize placeholders that are buried in the narrative, lack an owner/action, or would make the artifact unusable for its stated gate.",
     "",
     "Return exactly this JSON shape:",
     JSON.stringify(
@@ -167,6 +169,7 @@ export function buildConsultingGradeCompactRetryPrompt(args: {
     `- Every dimension must have score, rationale, and requiredFixes.`,
     `- Passing requires every score >= ${CONSULTING_GRADE_MIN_SCORE}.`,
     "- If the artifact is generic, thin, uncited, internally tagged, or missing evidence, score the affected dimensions below 8.",
+    "- Explicit client-to-complete placeholders are acceptable for governed drafts only when the artifact names the gap, owner/action, and downstream impact.",
     "- Keep each rationale under 160 characters and each fix under 120 characters.",
     "- Do not omit dimensionScores.",
     "",
