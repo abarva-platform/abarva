@@ -67,6 +67,37 @@ describe("consulting-grade deliverable rubric", () => {
     );
   });
 
+  it("normalizes evaluator JSON when a model wraps the fenced block in prose", () => {
+    const review = parseConsultingGradeReviewJson({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      raw: `Here is the requested strict review:
+
+\`\`\`json
+{
+  "pass": true,
+  "overallScore": 9,
+  "dimensionScores": ${JSON.stringify(
+    CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+      id: dimension.id,
+      score: 9,
+      rationale: "Passes with event-specific evidence.",
+      requiredFixes: [],
+    })),
+  )},
+  "unsupportedClaims": [],
+  "missingEvidence": [],
+  "rewriteGuidance": []
+}
+\`\`\`
+
+Done.`,
+    });
+
+    expect(review.pass).toBe(true);
+    expect(review.overallScore).toBe(9);
+  });
+
   it("builds a review prompt that asks for JSON and strict scoring", () => {
     const prompt = buildConsultingGradeReviewPrompt({
       artifactCode: "d09_rfp_pack",

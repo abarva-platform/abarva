@@ -263,6 +263,17 @@ function normalizeStringArray(value: unknown): string[] {
 
 function stripCodeFence(raw: string): string {
   const trimmed = raw.trim();
-  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return match?.[1]?.trim() ?? trimmed;
+  const exactFence = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (exactFence?.[1]) return exactFence[1].trim();
+
+  const embeddedFence = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (embeddedFence?.[1]) return embeddedFence[1].trim();
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1).trim();
+  }
+
+  return trimmed;
 }
