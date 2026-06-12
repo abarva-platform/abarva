@@ -222,6 +222,12 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       }
 
       lines.push(
+        "— D09 RFP EVIDENCE COVERAGE MAP —",
+        formatD09RfpEvidenceCoverage(ctx),
+        "",
+      );
+
+      lines.push(
         "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative.",
       );
       return lines.join("\n");
@@ -274,6 +280,183 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
       return lines.join("\n");
     })
     .join("\n\n");
+}
+
+interface RfpEvidenceCoverageRule {
+  label: string;
+  keywords: string[];
+  satisfies: string[];
+  sections: string[];
+  requiredUse: string;
+}
+
+const D09_RFP_EVIDENCE_COVERAGE_RULES: RfpEvidenceCoverageRule[] = [
+  {
+    label: "Exhibit 01 — Application portfolio and criticality baseline",
+    keywords: ["application", "portfolio", "inscope"],
+    satisfies: ["EVID-SRC-SCOPE-APP-INV"],
+    sections: ["§2", "§3", "§4"],
+    requiredUse:
+      "Quantify in-scope application estate, tiering, stacks, interfaces, incident pressure, disposition, and support ownership.",
+  },
+  {
+    label: "Exhibit 02 — ITSM ticket volumetrics and service demand baseline",
+    keywords: ["itsm", "ticket", "volumetrics"],
+    satisfies: ["EVID-SRC-SCOPE-TICKET-HISTORY"],
+    sections: ["§2", "§5", "§7"],
+    requiredUse:
+      "Ground SLA/XLA obligations, service-desk sizing, incident demand, seasonality, and tower workload assumptions.",
+  },
+  {
+    label: "Exhibit 03 — System workload volumetrics",
+    keywords: ["system", "workload", "volumetrics"],
+    satisfies: ["EVID-SRC-SCOPE-APP-INV"],
+    sections: ["§2", "§4", "§7"],
+    requiredUse:
+      "Ground mainframe, batch, VM/container, database, storage, API, endpoint, and surge-volume instructions.",
+  },
+  {
+    label: "Exhibit 04 — Resource capacity and FTE pyramid",
+    keywords: ["resource", "capacity", "pyramid"],
+    satisfies: ["EVID-SRC-SCOPE-ORG"],
+    sections: ["§2", "§6", "§7"],
+    requiredUse:
+      "Ground retained/provider staffing, loaded-cost logic, transition capacity, KT exposure, and role mix.",
+  },
+  {
+    label: "Exhibit 05 — SLA/XLA matrix",
+    keywords: ["sla", "xla", "matrix"],
+    satisfies: ["EVID-SRC-SCOPE-TICKET-HISTORY"],
+    sections: ["§5", "§8", "§9"],
+    requiredUse:
+      "Populate service levels, credits, response/resolution commitments, and vendor response compliance requirements.",
+  },
+  {
+    label: "Exhibit 06 — Tower scope and service catalog",
+    keywords: ["tower", "scope", "service", "catalog"],
+    satisfies: ["EVID-SRC-SCOPE-FY-CONTRACT"],
+    sections: ["§3", "§5", "§8"],
+    requiredUse:
+      "Define tower inclusions, exclusions, volumetric basis, dependencies, service levels, and response tables.",
+  },
+  {
+    label: "Exhibit 07 — Incumbent contract baseline (internal-only)",
+    keywords: ["incumbent", "contract", "baseline"],
+    satisfies: ["EVID-SRC-STR-INCUMBENT", "EVID-SRC-SCOPE-FY-CONTRACT"],
+    sections: ["§1", "§2", "§6", "§7"],
+    requiredUse:
+      "Ground renewal/notice windows, KT provisions, run-cost baseline, and commercial guardrails without exposing incumbent names/spend in vendor-facing body.",
+  },
+  {
+    label: "Exhibit 08 — Locked pricing assumptions and volume bands",
+    keywords: ["locked", "pricing", "assumptions", "volume", "bands"],
+    satisfies: ["EVID-SRC-PRICE-ASSUMPTIONS"],
+    sections: ["§7", "§8", "§9"],
+    requiredUse:
+      "Ground pricing normalization, should-cost assumptions, volume bands, pass-through rules, productivity glidepath, COLA caps, and pricing-template instructions.",
+  },
+  {
+    label: "Exhibit 09 — Approved evaluation criteria and weights",
+    keywords: ["evaluation", "criteria", "weights", "approved"],
+    satisfies: ["EVID-SRC-EVAL-WEIGHT-RATIONALE"],
+    sections: ["§8", "§9", "§11"],
+    requiredUse:
+      "Populate weighted scorecard, scoring guidance, red-flag/disqualification rules, shortlist thresholds, and evaluation gate criteria.",
+  },
+  {
+    label: "Exhibit 10 — Vendor response expectations",
+    keywords: ["vendor", "response", "expectations"],
+    satisfies: ["EVID-SRC-RFP-LEGAL-TEMPLATE"],
+    sections: ["§8", "§9", "§11"],
+    requiredUse:
+      "Treat as the governed response-format and RFP-instruction template for required forms, pricing workbook instructions, BAFO/compliance placeholders, and submission rules.",
+  },
+  {
+    label: "Exhibit 11 — Data center and infrastructure inventory",
+    keywords: ["data", "center", "infrastructure", "inventory"],
+    satisfies: ["EVID-SRC-SCOPE-APP-INV"],
+    sections: ["§2", "§4", "§6"],
+    requiredUse:
+      "Ground data centers, private-cloud/HCI footprint, storage/compute refresh status, operational dependencies, and transition constraints.",
+  },
+  {
+    label: "Exhibit 12 — Network topology and circuit inventory",
+    keywords: ["network", "topology", "circuit"],
+    satisfies: ["EVID-SRC-SCOPE-APP-INV"],
+    sections: ["§2", "§4", "§6"],
+    requiredUse:
+      "Ground SD-WAN/MPLS, bandwidth, redundancy, airport/site connectivity, carrier handoffs, and network operations obligations.",
+  },
+  {
+    label: "Exhibit 13 — Security and compliance control posture",
+    keywords: ["security", "compliance", "control", "posture"],
+    satisfies: ["EVID-SRC-DEC-RISK-REGISTER"],
+    sections: ["§5", "§6", "§10", "§11"],
+    requiredUse:
+      "Ground control obligations, open findings, patch/compliance gaps, CSPM remediation, risk register entries, and security response requirements.",
+  },
+  {
+    label: "Exhibit 14 — Transition operations blackout calendar",
+    keywords: ["transition", "ops", "blackout", "calendar"],
+    satisfies: ["EVID-SRC-TRAN-MILESTONES", "EVID-SRC-DEC-RISK-REGISTER"],
+    sections: ["§6", "§8", "§10", "§11"],
+    requiredUse:
+      "Ground transition timeline, blackout/freeze periods, critical decision dates, cutover constraints, and transition risk mitigations.",
+  },
+  {
+    label: "Exhibit 15 — Run-vs-change financial baseline",
+    keywords: ["run", "change", "financial", "baseline"],
+    satisfies: ["EVID-SRC-SCOPE-FY-CONTRACT", "EVID-SRC-PRICE-ASSUMPTIONS"],
+    sections: ["§1", "§2", "§7", "§9"],
+    requiredUse:
+      "Ground run/change spend, tower financial baseline, pricing normalization, value target, and commercial comparison controls.",
+  },
+];
+
+function formatD09RfpEvidenceCoverage(ctx: SourceGenerationContext): string {
+  const uploaded = ctx.uploadedEvidence ?? [];
+  if (uploaded.length === 0) {
+    return [
+      "- No uploaded evidence artifacts are available to bind. The RFP must remain a client-to-complete draft.",
+      "- Do not claim pricing, evaluation, risk, legal, or transition evidence is loaded unless an uploaded artifact supports it.",
+    ].join("\n");
+  }
+
+  const lines = [
+    "Use this map as the authoritative bridge from uploaded evidence-room files to D09 RFP sections. If a mapped file appears below, do not call that requirement Not Requested in the source register; mark it as Available parsed evidence — citation review pending when parseStatus/evidenceState is still draft.",
+  ];
+
+  for (const rule of D09_RFP_EVIDENCE_COVERAGE_RULES) {
+    const match = uploaded.find((artifact) =>
+      rule.keywords.every((keyword) =>
+        artifact.originalName.toLowerCase().includes(keyword),
+      ),
+    );
+    if (!match) {
+      lines.push(
+        `- ${rule.label}: [CLIENT TO COMPLETE] missing upload; satisfies ${rule.satisfies.join(", ")}; required for ${rule.sections.join(", ")}.`,
+      );
+      continue;
+    }
+    lines.push(
+      [
+        `- ${rule.label}: uploaded as "${match.originalName}"`,
+        `parse=${match.parseStatus}`,
+        `evidence=${match.evidenceState}`,
+        `satisfies=${rule.satisfies.join(", ")}`,
+        `use_in=${rule.sections.join(", ")}`,
+        `required_use=${rule.requiredUse}`,
+      ].join("; "),
+    );
+  }
+
+  lines.push(
+    "Source register rule: list every mapped exhibit above with status, section use, and any remaining client-to-complete action. Blocking gaps are only items still missing after this coverage map, not mapped files that were uploaded.",
+  );
+  lines.push(
+    "Risk/action rule: §10 must include a risk register derived from Exhibits 07, 13, and 14; §11 must include a gap closure register with owner placeholders, due-date placeholders, blocking gate, and downstream impact.",
+  );
+  return lines.join("\n");
 }
 
 export function listSupportedGenerationCodes(): string[] {
