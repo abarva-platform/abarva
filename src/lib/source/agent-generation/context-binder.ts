@@ -158,14 +158,37 @@ async function listUploadedEvidenceForGeneration(
   const { data: artifactRows, error: artifactError } = await supabase
     .from('source_artifacts')
     .select(
-      'id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at',
+      'id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin',
     )
     .eq('source_event_id', sourceEventId)
-    .order('created_at', { ascending: true })
-    .limit(40);
+    .eq('source_origin', 'uploaded')
+    .order('created_at', { ascending: false })
+    .limit(200);
   if (artifactError || !artifactRows?.length) return [];
 
-  const artifactIds = artifactRows
+  const latestRowsByName = new Map<string, unknown>();
+  for (const row of artifactRows) {
+    const typed = row as {
+      id?: unknown;
+      original_name?: unknown;
+      source_origin?: unknown;
+    };
+    if (String(typed.source_origin ?? 'uploaded') !== 'uploaded') continue;
+    const key = String(typed.original_name ?? typed.id ?? '')
+      .toLowerCase()
+      .trim();
+    if (!key || latestRowsByName.has(key)) continue;
+    latestRowsByName.set(key, row);
+  }
+  const latestArtifactRows = Array.from(latestRowsByName.values()).sort(
+    (a, b) => {
+      const left = String((a as { created_at?: unknown }).created_at ?? '');
+      const right = String((b as { created_at?: unknown }).created_at ?? '');
+      return left.localeCompare(right);
+    },
+  );
+
+  const artifactIds = latestArtifactRows
     .map((row) => String((row as { id?: unknown }).id ?? ''))
     .filter(Boolean);
   if (artifactIds.length === 0) return [];
@@ -222,7 +245,7 @@ async function listUploadedEvidenceForGeneration(
     }
   }
 
-  return artifactRows.map((row) => {
+  return latestArtifactRows.map((row) => {
     const typed = row as {
       id: string;
       original_name: string | null;
