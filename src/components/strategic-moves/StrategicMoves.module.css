@@ -2701,3 +2701,269 @@
   box-shadow: 0 8px 24px rgba(20, 20, 18, 0.18);
   z-index: 70;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Simplified Moves landing (wireframe: moves-manage-wireframe)
+   4 summary cards · filter chips · search · View menu · shared list table.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.pageSub {
+  margin: 4px 0 0;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  color: var(--canon-gray-600);
+}
+
+/* 4 summary cards */
+.statCards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 880px) {
+  .statCards { grid-template-columns: repeat(2, 1fr); }
+}
+
+.statCard {
+  border: 1px solid var(--canon-gray-200);
+  border-radius: 10px;
+  background: var(--canon-bg-cream);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statCardAttn {
+  border-color: var(--canon-red);
+}
+
+.statCardValue {
+  font-family: var(--abarva-serif);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  color: var(--abarva-ink-black);
+}
+
+.statCardLabel {
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  color: var(--canon-gray-700);
+}
+
+/* controls row: chips left, search + view + map link right */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--canon-gray-300, #d8d6cf);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--canon-gray-900);
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
+
+.chip:hover { border-color: var(--abarva-ink-black); }
+
+.chipActive {
+  background: var(--abarva-ink-black);
+  border-color: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
+}
+
+.chipCount {
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.controlsRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--canon-gray-300, #d8d6cf);
+  border-radius: 8px;
+  background: var(--canon-bg-cream);
+  padding: 0 10px;
+  height: 38px;
+}
+
+.searchIcon { color: var(--canon-gray-600); font-size: 15px; }
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  color: var(--canon-gray-900);
+  width: 200px;
+  max-width: 42vw;
+}
+
+.viewMenu { display: inline-flex; }
+
+.viewSelect {
+  height: 38px;
+  border: 1px solid var(--canon-gray-300, #d8d6cf);
+  border-radius: 8px;
+  background: var(--canon-bg-cream);
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--canon-gray-900);
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.openMapLink {
+  border: none;
+  background: transparent;
+  color: var(--abarva-signal-blue, #1b2b5c);
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+
+.openMapLink:disabled { color: var(--canon-gray-600); cursor: not-allowed; }
+
+.srOnly {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* ── shared list table (landing + Manage Moves) ── */
+.tbl {
+  border: 1px solid var(--canon-gray-200);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--canon-bg-cream);
+}
+
+.tblRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--canon-gray-100);
+}
+
+.tblRow:last-child { border-bottom: none; }
+
+.tblHead {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--canon-gray-600);
+  background: var(--canon-bg-surface);
+}
+
+.tblRowSelected { background: color-mix(in srgb, var(--abarva-signal-blue) 7%, transparent); }
+.tblRowArchived { opacity: 0.62; }
+
+.tblCheck { flex: none; width: 26px; display: flex; align-items: center; }
+.tblCol { min-width: 0; font-family: var(--abarva-sans); font-size: 13px; color: var(--canon-gray-900); }
+.colMove { flex: 2.4; display: flex; flex-direction: column; gap: 2px; }
+.colPhase { flex: 1; }
+.colStatus { flex: 1.4; }
+.colSponsor { flex: 1.1; }
+.colValue { flex: 0.95; }
+.colActivity { flex: 0.95; color: var(--canon-gray-600); }
+.colAction { flex: none; width: 64px; text-align: right; }
+
+.tblMoveName {
+  font-weight: 700;
+  color: var(--abarva-ink-black);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tblMoveName:hover { text-decoration: underline; }
+
+.tblMoveCode {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--canon-gray-600);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--canon-gray-700);
+}
+
+.statusBadgeDot { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+
+.tblValTag {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  color: var(--canon-gray-600);
+}
+
+.tblOpen {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--canon-gray-300, #d8d6cf);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--abarva-ink-black);
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  text-decoration: none;
+}
+.tblOpen:hover { border-color: var(--abarva-ink-black); background: var(--canon-bg-surface); }
+
+.tblEmpty {
+  padding: 28px 16px;
+  text-align: center;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  color: var(--canon-gray-600);
+}
