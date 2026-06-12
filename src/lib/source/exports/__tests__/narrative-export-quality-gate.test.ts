@@ -11,7 +11,7 @@ function makeState(
     tenantKey: "skyharbor",
     artifactCode: "d09_rfp_pack",
     stage: "rfp",
-    family: "workproduct",
+    family: "rfp",
     tier: "outline",
     status: body ? "approved" : "not_started",
     requirementLevel: "required",
