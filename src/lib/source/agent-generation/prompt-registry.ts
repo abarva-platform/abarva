@@ -136,9 +136,9 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 6,
+    version: 7,
     model: DEFAULT_MODEL,
-    maxTokens: 6200,
+    maxTokens: 5600,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -170,11 +170,37 @@ Mandatory tables:
 - Source register separating locked uploaded evidence, upstream draft artifacts, working assumptions, and client-to-complete gaps.
 - Client-to-complete / vendor-to-confirm register with owner, due date placeholder, why it matters, and downstream impact.
 
-Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and concise enough to fit a first-market draft: target 3,800-5,000 words. Quote scope from d05 where possible. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.
+Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and compact enough to complete in one synchronous generation: target 2,800-3,500 words. Quote scope from d05 only where needed. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.
 
 Source discipline requirement: treat parsed uploaded evidence as governed draft evidence. Assign friendly exhibit labels such as Exhibit 01 — Run/Change Financial Baseline and cite those labels in the body. Do not expose artifact_id, chunk_id, raw table names, or other internal ids. If an evidence row is parsed_uncited, mark it as "Available parsed evidence — citation review pending" in the source register instead of ignoring it.
 
-Completeness requirement: every required section and mandatory table must be present, even if concise. Never stop after a partial table or omit downstream sections. If token budget feels tight, shorten narrative first; preserve all sections, all tables, and the source/client-to-complete registers.
+Hard output budget and completion requirement: every required section and mandatory table must be present, even if concise. Never stop after a partial table or omit downstream sections. Preserve sections §7–§11; they are more important than long prose in §2–§6. If token budget feels tight, shorten narrative first; use exhibit references instead of restating full datasets; keep every table to 4–8 rows unless the row is mandatory. Do not end mid-sentence. The final line must be: "RFP package draft complete — pending client closure of registered gaps."
+
+Section budget:
+- §1: 250 words max plus a 5-row decision table.
+- §2: 300 words max plus one current-state baseline table, 6 rows max.
+- §3: 250 words max plus one tower matrix, 6 rows max.
+- §4: 250 words max plus one estate table, 6 rows max.
+- §5: 250 words max plus one obligations table, 6 rows max.
+- §6: 300 words max plus one transition/blackout table, 6 rows max.
+- §7: must include commercial terms and pricing instructions table.
+- §8: must include vendor response/submission requirements table.
+- §9: must include evaluation methodology table with weights/scoring bands/disqualification controls.
+- §10: must include consolidated risk register table with owner and mitigation.
+- §11: must include source register and gap closure/client-to-complete register with owner, due date placeholder, blocking gate, and downstream impact.
+
+Required compact section skeleton:
+## §1 · Executive summary and decision context
+## §2 · Enterprise current-state baseline
+## §3 · Scope, service towers, and exclusions
+## §4 · Application, workload, infrastructure, network, and cloud estate
+## §5 · Service-level, operational, and security obligations
+## §6 · Transition approach, blackout constraints, and risk controls
+## §7 · Commercial model, run/change baseline, and pricing instructions
+## §8 · Vendor response instructions and mandatory submission tables
+## §9 · Evaluation framework, weights, and disqualification rules
+## §10 · Risk register, transition controls, and failure modes
+## §11 · Source register, assumptions, and client-to-complete gaps
 
 Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with owner/action. Include practical mitigations for risks; do not merely flag them.`,
     buildUserMessage: (ctx, upstream) => {
@@ -228,7 +254,7 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       );
 
       lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative.",
+        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, and the final line must confirm the draft is complete pending registered gap closure.",
       );
       return lines.join("\n");
     },

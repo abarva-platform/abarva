@@ -18,13 +18,18 @@ describe("Source artifact prompt registry provider config", () => {
   it("configures the D09 RFP package as a board-grade, source-disciplined deliverable", () => {
     const template = getPromptTemplate("d09_rfp_pack");
 
-    expect(template?.version).toBeGreaterThanOrEqual(6);
-    expect(template?.maxTokens).toBeGreaterThanOrEqual(6000);
+    expect(template?.version).toBeGreaterThanOrEqual(7);
+    expect(template?.maxTokens).toBeGreaterThanOrEqual(5000);
     expect(template?.systemPrompt).toContain("Source register");
     expect(template?.systemPrompt).toContain("Risk, issue, dependency");
     expect(template?.systemPrompt).toContain("client-to-complete");
     expect(template?.systemPrompt).toContain("friendly exhibit labels");
     expect(template?.systemPrompt).toContain("Never stop after a partial table");
+    expect(template?.systemPrompt).toContain("Section budget");
+    expect(template?.systemPrompt).toContain("Preserve sections §7–§11");
+    expect(template?.systemPrompt).toContain(
+      "RFP package draft complete — pending client closure of registered gaps.",
+    );
   });
 
   it("binds uploaded evidence-room files into the D09 RFP coverage map", () => {
@@ -59,6 +64,8 @@ describe("Source artifact prompt registry provider config", () => {
     );
     expect(message).toContain("§10 must include a risk register");
     expect(message).toContain("§11 must include a gap closure register");
+    expect(message).toContain("every section §1 through §11 must appear");
+    expect(message).toContain("§7–§11 must not be sacrificed");
   });
 });
 
