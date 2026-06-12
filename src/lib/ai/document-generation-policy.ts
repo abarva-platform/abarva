@@ -86,6 +86,8 @@ const DELIVERABLE_TIER: Readonly<Record<string, DocGenTier>> = {
   program_charter: "tier3_board_grade",
   charter: "tier3_board_grade",
   discovery_report: "tier3_board_grade",
+  discovery_plan: "tier3_board_grade",
+  evidence_request_pack: "tier3_board_grade",
   current_state_assessment: "tier3_board_grade",
   current_state: "tier3_board_grade",
   solution_design: "tier3_board_grade",
