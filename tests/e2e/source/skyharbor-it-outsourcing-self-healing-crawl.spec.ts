@@ -143,7 +143,9 @@ test.describe("SkyHarbor IT outsourcing Source self-healing crawl", () => {
             : "Confidential",
         });
         expect(upload.ok).toBe(true);
-        expect(upload.artifact.blobUri).toContain("source-artifacts");
+        expect(upload.artifact.blobUri).toContain(`/`);
+        expect(upload.artifact.blobUri).toContain(eventId);
+        expect(upload.artifact.blobUri).toContain(filename);
         expect(upload.artifact.sourceOrigin).toBe("uploaded");
         uploadedEvidenceArtifactIds.push(upload.artifact.id);
         if (filename.endsWith(".csv")) {
