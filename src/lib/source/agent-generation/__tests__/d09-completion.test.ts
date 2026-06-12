@@ -62,6 +62,22 @@ describe("completeD09RfpGovernanceSections", () => {
     });
     expect(twice).toBe(once);
   });
+
+  it("redacts raw incumbent names from client-facing D09 output", () => {
+    const completed = completeD09RfpGovernanceSections({
+      artifactCode: "d09_rfp_pack",
+      body: [
+        "# RFP Package",
+        "Northwind IT has auto-renew risk.",
+        "Apex Digital has a disputed gainshare clause.",
+      ].join("\n"),
+      ctx: makeContext(),
+    });
+
+    expect(completed).not.toMatch(/Northwind|Apex Digital/i);
+    expect(completed).toContain("Incumbent Provider A");
+    expect(completed).toContain("Incumbent Provider B");
+  });
 });
 
 function makeContext(): SourceGenerationContext {

@@ -50,13 +50,21 @@ export function completeD09RfpGovernanceSections(args: {
   ctx: SourceGenerationContext;
 }): string {
   if (args.artifactCode !== "d09_rfp_pack") return args.body;
-  if (args.body.includes(COMPLETION_MARKER)) return args.body;
+  const sanitizedBody = sanitizeD09ClientFacingNames(args.body);
+  if (sanitizedBody.includes(COMPLETION_MARKER)) return sanitizedBody;
 
-  const body = stripFinalCompletionLine(args.body.trim());
+  const body = stripFinalCompletionLine(sanitizedBody.trim());
   const appendix = buildD09CompletionAppendix(args.ctx);
   return [body, appendix, "RFP package draft complete — pending client closure of registered gaps."]
     .filter(Boolean)
     .join("\n\n");
+}
+
+export function sanitizeD09ClientFacingNames(body: string): string {
+  return body
+    .replace(/\bNorthwind\s+IT\b/giu, "Incumbent Provider A")
+    .replace(/\bNorthwind\b/giu, "Incumbent Provider A")
+    .replace(/\bApex\s+Digital\b/giu, "Incumbent Provider B");
 }
 
 function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
